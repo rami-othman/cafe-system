@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+
+abstract final class AppColors {
+  static const Color primary = Color(0xFF3B2417);
+  static const Color secondary = Color(0xFF6B4226);
+  static const Color tertiary = Color(0xFFC47A3A);
+  static const Color neutral = Color(0xFF1F1F1F);
+
+  static const Color background = Color(0xFFFAF7F2);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceAlt = Color(0xFFF0EDED);
+  static const Color border = Color(0xFFE7E2DA);
+  static const Color divider = Color(0xFFE7E2DA);
+  static const Color shellBackground = Color(0xFFFAF7F2);
+  static const Color contentBackground = Color(0xFFFCF9F8);
+  static const Color sidebarBackground = Color(0xFFF0EDED);
+  static const Color shellBorder = Color(0xFFE7E2DA);
+  static const Color navActiveBackground = Color(0xFFFEC29E);
+  static const Color navActiveText = Color(0xFF794E31);
+
+  static const Color textPrimary = Color(0xFF231005);
+  static const Color textDark = Color(0xFF1B1B1C);
+  static const Color textSecondary = Color(0xFF50443F);
+  static const Color textMuted = Color(0xFF6B6B6B);
+  static const Color textInverse = Color(0xFFFFFFFF);
+
+  static const Color success = Color(0xFF2E7D32);
+  static const Color warning = Color(0xFFC47A3A);
+  static const Color danger = Color(0xFFC62828);
+  static const Color dangerStrong = Color(0xFFBA1A1A);
+  static const Color info = Color(0xFF1565C0);
+  static const Color dashedBorder = Color(0xFFD3C3BC);
+  static const Color productVisualBackground = Color(0x4DF4E7D3);
+
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
+  static const Color transparent = Colors.transparent;
+
+  static const Color primarySoft = Color(0xFFE8DDD5);
+}

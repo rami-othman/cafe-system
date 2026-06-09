@@ -1,0 +1,3 @@
+class PosRepository {
+  const PosRepository();
+}
