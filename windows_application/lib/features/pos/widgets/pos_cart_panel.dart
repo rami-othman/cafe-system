@@ -1,13 +1,17 @@
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../controllers/pos_cubit.dart';
+import '../controllers/pos_state.dart';
 import '../models/cart_item.dart';
+import '../models/order_type.dart';
 import 'cart_item_tile.dart';
 import 'order_totals_panel.dart';
 import 'order_type_selector.dart';
@@ -16,73 +20,90 @@ import 'pos_action_buttons.dart';
 class PosCartPanel extends StatelessWidget {
   const PosCartPanel({super.key});
 
-  static const List<CartItem> _items = <CartItem>[
-    CartItem(
-      name: 'Cappuccino',
-      modifiers: 'Oat Milk, Extra Shot',
-      price: r'$5.50',
-      quantity: 1,
-    ),
-    CartItem(
-      name: 'Almond Croissant',
-      modifiers: 'Warmed',
-      price: r'$9.00',
-      quantity: 2,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        border: Border(left: BorderSide(color: AppColors.shellBorder)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x12000000),
-            offset: Offset(-2, 0),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        children: <Widget>[
-          const _OrderControls(),
-          Expanded(
-            child: ListView.separated(
-              padding: AppSpacing.allLg,
-              itemCount: _items.length + 1,
-              separatorBuilder: (BuildContext context, int index) {
-                return const SizedBox(height: AppSpacing.md);
-              },
-              itemBuilder: (BuildContext context, int index) {
-                if (index == _items.length) {
-                  return const _AddDiscountButton();
-                }
+    return BlocBuilder<PosCubit, PosState>(
+      builder: (BuildContext context, PosState state) {
+        final PosCubit cubit = context.read<PosCubit>();
 
-                return CartItemTile(item: _items[index]);
-              },
-            ),
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            border: Border(left: BorderSide(color: AppColors.shellBorder)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Color(0x12000000),
+                offset: Offset(-2, 0),
+                blurRadius: 10,
+              ),
+            ],
           ),
-          const _CartFooter(),
-        ],
-      ),
+          child: Column(
+            children: <Widget>[
+              _OrderControls(
+                orderType: state.orderType,
+                onOrderTypeChanged: cubit.changeOrderType,
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: AppSpacing.allLg,
+                  itemCount: state.cartItems.length + 1,
+                  separatorBuilder: (BuildContext context, int index) {
+                    return const SizedBox(height: AppSpacing.md);
+                  },
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == state.cartItems.length) {
+                      return const _AddDiscountButton();
+                    }
+
+                    final CartItem item = state.cartItems[index];
+
+                    return CartItemTile(
+                      item: item,
+                      onIncreaseQuantity: () =>
+                          cubit.increaseQuantity(item.product.id),
+                      onDecreaseQuantity: () =>
+                          cubit.decreaseQuantity(item.product.id),
+                      onRemoveItem: () => cubit.removeCartItem(item.product.id),
+                    );
+                  },
+                ),
+              ),
+              _CartFooter(
+                subtotal: state.subtotal,
+                tax: state.tax,
+                total: state.total,
+                onClearCart: cubit.clearCart,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 class _OrderControls extends StatelessWidget {
-  const _OrderControls();
+  const _OrderControls({
+    required this.orderType,
+    required this.onOrderTypeChanged,
+  });
+
+  final OrderType orderType;
+  final ValueChanged<OrderType> onOrderTypeChanged;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: AppSpacing.allMd,
       child: Column(
         children: <Widget>[
-          OrderTypeSelector(),
-          SizedBox(height: AppSpacing.md),
-          _TableCustomerRow(),
+          OrderTypeSelector(
+            selectedOrderType: orderType,
+            onOrderTypeSelected: onOrderTypeChanged,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          const _TableCustomerRow(),
         ],
       ),
     );
@@ -219,12 +240,22 @@ class _AddDiscountButton extends StatelessWidget {
 }
 
 class _CartFooter extends StatelessWidget {
-  const _CartFooter();
+  const _CartFooter({
+    required this.subtotal,
+    required this.tax,
+    required this.total,
+    required this.onClearCart,
+  });
+
+  final double subtotal;
+  final double tax;
+  final double total;
+  final VoidCallback onClearCart;
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
+    return DecoratedBox(
+      decoration: const BoxDecoration(
         color: AppColors.shellBackground,
         border: Border(top: BorderSide(color: AppColors.shellBorder)),
       ),
@@ -232,9 +263,9 @@ class _CartFooter extends StatelessWidget {
         padding: AppSpacing.allLg,
         child: Column(
           children: <Widget>[
-            OrderTotalsPanel(),
-            SizedBox(height: AppSpacing.lg),
-            PosActionButtons(),
+            OrderTotalsPanel(subtotal: subtotal, tax: tax, total: total),
+            const SizedBox(height: AppSpacing.lg),
+            PosActionButtons(total: total, onCancel: onClearCart),
           ],
         ),
       ),

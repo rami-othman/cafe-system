@@ -3,17 +3,30 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 
 class OrderTotalsPanel extends StatelessWidget {
-  const OrderTotalsPanel({super.key});
+  const OrderTotalsPanel({
+    super.key,
+    required this.subtotal,
+    required this.tax,
+    required this.total,
+  });
+
+  final double subtotal;
+  final double tax;
+  final double total;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        const _TotalLine(label: 'Subtotal', value: r'$14.50'),
+        _TotalLine(
+          label: 'Subtotal',
+          value: CurrencyFormatter.format(subtotal),
+        ),
         const SizedBox(height: AppSpacing.xs),
-        const _TotalLine(label: 'Tax (8%)', value: r'$1.16'),
+        _TotalLine(label: 'Tax (8%)', value: CurrencyFormatter.format(tax)),
         const SizedBox(height: AppSpacing.sm),
         DecoratedBox(
           decoration: const BoxDecoration(
@@ -34,7 +47,7 @@ class OrderTotalsPanel extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  r'$15.66',
+                  CurrencyFormatter.format(total),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.headlineMedium.copyWith(

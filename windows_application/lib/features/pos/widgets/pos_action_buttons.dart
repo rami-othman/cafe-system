@@ -5,26 +5,31 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 
 class PosActionButtons extends StatelessWidget {
-  const PosActionButtons({super.key});
+  const PosActionButtons({super.key, required this.total, this.onCancel});
+
+  final double total;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        const Row(
+        Row(
           children: <Widget>[
-            Expanded(child: _SecondaryActionButton(label: 'HOLD')),
-            SizedBox(width: AppSpacing.sm),
+            const Expanded(child: _SecondaryActionButton(label: 'HOLD')),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _SecondaryActionButton(
                 label: 'CANCEL',
                 foreground: AppColors.dangerStrong,
+                onPressed: onCancel,
               ),
             ),
-            SizedBox(width: AppSpacing.sm),
-            Expanded(child: _SecondaryActionButton(label: 'PRINT')),
+            const SizedBox(width: AppSpacing.sm),
+            const Expanded(child: _SecondaryActionButton(label: 'PRINT')),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -45,7 +50,7 @@ class PosActionButtons extends StatelessWidget {
                 letterSpacing: 0.45,
               ),
             ),
-            child: const Text('PAY \$15.66'),
+            child: Text('PAY ${CurrencyFormatter.format(total)}'),
           ),
         ),
       ],
@@ -57,17 +62,19 @@ class _SecondaryActionButton extends StatelessWidget {
   const _SecondaryActionButton({
     required this.label,
     this.foreground = AppColors.textMuted,
+    this.onPressed,
   });
 
   final String label;
   final Color foreground;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: AppSizes.cartControlHeight,
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: onPressed ?? () {},
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surface,
           foregroundColor: foreground,

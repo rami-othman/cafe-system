@@ -100,6 +100,11 @@ Controllers contain Cubits and state files. Cubits receive user intent from the
 UI, coordinate state changes, and communicate with repositories when data access
 is needed.
 
+The POS route uses `PosCubit` for local fake-data interactions. The route shell
+provides the Cubit above both the POS content view and the shell right cart
+panel so product selection, cart updates, order type, and totals stay in one
+feature-owned state object.
+
 ### `models`
 
 Models contain feature data objects and value types. They should be simple,
@@ -110,3 +115,6 @@ predictable, and kept close to the feature that owns them.
 Repositories isolate data access for a feature. They may later coordinate with
 API clients, databases, or local storage, but those integrations should only be
 added when explicitly required.
+
+`PosRepository` currently returns deterministic fake categories and products
+only. It does not connect to backend APIs, database, or local storage.

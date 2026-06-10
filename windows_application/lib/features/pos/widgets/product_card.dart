@@ -5,17 +5,19 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../models/pos_product.dart';
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key, required this.product});
+  const ProductCard({super.key, required this.product, this.onTap});
 
   final PosProduct product;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Opacity(
-      opacity: product.available ? 1 : 0.6,
+      opacity: product.isAvailable ? 1 : 0.6,
       child: Stack(
         children: <Widget>[
           Material(
@@ -25,15 +27,18 @@ class ProductCard extends StatelessWidget {
               borderRadius: AppRadius.card,
               side: BorderSide(color: AppColors.border),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _ProductVisual(product: product),
-                Expanded(child: _ProductDetails(product: product)),
-              ],
+            child: InkWell(
+              onTap: onTap,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _ProductVisual(product: product),
+                  Expanded(child: _ProductDetails(product: product)),
+                ],
+              ),
             ),
           ),
-          if (!product.available) const _UnavailableOverlay(),
+          if (!product.isAvailable) const _UnavailableOverlay(),
         ],
       ),
     );
@@ -50,10 +55,14 @@ class _ProductVisual extends StatelessWidget {
     return Container(
       height: AppSizes.productCardImageHeight,
       width: double.infinity,
-      color: product.available
+      color: product.isAvailable
           ? AppColors.productVisualBackground
           : AppColors.surfaceAlt,
-      child: Icon(product.icon, color: AppColors.secondary, size: 34),
+      child: Icon(
+        product.icon ?? Icons.restaurant_menu_outlined,
+        color: AppColors.secondary,
+        size: 34,
+      ),
     );
   }
 }
@@ -65,7 +74,7 @@ class _ProductDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color priceColor = product.available
+    final Color priceColor = product.isAvailable
         ? AppColors.tertiary
         : AppColors.textMuted;
 
@@ -100,7 +109,7 @@ class _ProductDetails extends StatelessWidget {
                 ),
               ),
               Text(
-                product.price,
+                CurrencyFormatter.format(product.price),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.titleMedium.copyWith(

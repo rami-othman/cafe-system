@@ -5,45 +5,14 @@ import '../models/pos_product.dart';
 import 'product_card.dart';
 
 class ProductGrid extends StatelessWidget {
-  const ProductGrid({super.key});
+  const ProductGrid({
+    super.key,
+    required this.products,
+    required this.onProductTap,
+  });
 
-  static const List<PosProduct> _products = <PosProduct>[
-    PosProduct(
-      name: 'Espresso',
-      size: '1.5 oz',
-      price: r'$3.50',
-      available: true,
-      icon: Icons.local_cafe_outlined,
-    ),
-    PosProduct(
-      name: 'Cold Brew Reserve',
-      size: '16 oz',
-      price: r'$5.50',
-      available: false,
-      icon: Icons.local_drink_outlined,
-    ),
-    PosProduct(
-      name: 'Cappuccino',
-      size: '8 oz',
-      price: r'$4.50',
-      available: true,
-      icon: Icons.coffee_outlined,
-    ),
-    PosProduct(
-      name: 'Pour Over V60',
-      size: '10 oz',
-      price: r'$6.00',
-      available: true,
-      icon: Icons.coffee_maker_outlined,
-    ),
-    PosProduct(
-      name: 'Americano',
-      size: '12 oz',
-      price: r'$3.75',
-      available: true,
-      icon: Icons.coffee_outlined,
-    ),
-  ];
+  final List<PosProduct> products;
+  final ValueChanged<PosProduct> onProductTap;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +21,7 @@ class ProductGrid extends StatelessWidget {
         final int crossAxisCount = _columnCount(constraints.maxWidth);
 
         return GridView.builder(
-          itemCount: _products.length,
+          itemCount: products.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             mainAxisExtent: AppSizes.productCardHeight,
@@ -60,7 +29,12 @@ class ProductGrid extends StatelessWidget {
             mainAxisSpacing: AppSizes.productGridGap,
           ),
           itemBuilder: (BuildContext context, int index) {
-            return ProductCard(product: _products[index]);
+            final PosProduct product = products[index];
+
+            return ProductCard(
+              product: product,
+              onTap: product.isAvailable ? () => onProductTap(product) : null,
+            );
           },
         );
       },

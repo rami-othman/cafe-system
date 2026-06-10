@@ -27,6 +27,8 @@ Phase 1 — Project Foundation
   right panel slot.
 - Implemented static POS screen UI with product area and cart panel.
 - Fixed responsive/adaptive layout behavior for POS shell and static POS UI.
+- Implemented POS Cubit with fake data interactions, cart updates, order type
+  selection, and local totals calculation.
 
 ## In Progress
 
@@ -34,7 +36,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Add POS Cubit state and fake data interactions for selecting products, updating quantities, and calculating totals.
+Implement product customization/modifiers dialog for configurable POS items.
 
 ## Architecture Decisions
 
@@ -79,6 +81,10 @@ Add POS Cubit state and fake data interactions for selecting products, updating 
   collapsed sidebar rail at medium/compact widths, hidden inline cart in compact
   mode, adaptive topbar cart action, bounded search width, adaptive product
   grid columns, and safer cart rows.
+- 2026-06-09: Implemented POS Cubit fake-data interactions for loading
+  products/categories, category and search filtering, cart add/update/remove,
+  order type selection, Cancel cart clearing, and local subtotal/tax/total
+  calculations.
 - 2026-06-09: Created general project documentation/control files:
   `AGENTS.md`, `PROJECT_STATUS.md`, `README.md`, `docs/ARCHITECTURE.md`,
   `docs/CODEX_WORKFLOW.md`, `docs/ROADMAP.md`, `docs/DESIGN_SYSTEM.md`, and

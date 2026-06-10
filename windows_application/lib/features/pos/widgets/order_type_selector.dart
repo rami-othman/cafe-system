@@ -5,14 +5,22 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../models/order_type.dart';
 
 class OrderTypeSelector extends StatelessWidget {
-  const OrderTypeSelector({super.key});
+  const OrderTypeSelector({
+    super.key,
+    required this.selectedOrderType,
+    required this.onOrderTypeSelected,
+  });
 
-  static const List<String> _types = <String>[
-    'DINE-IN',
-    'TAKEAWAY',
-    'DELIVERY',
+  final OrderType selectedOrderType;
+  final ValueChanged<OrderType> onOrderTypeSelected;
+
+  static const List<OrderType> _types = <OrderType>[
+    OrderType.dineIn,
+    OrderType.takeaway,
+    OrderType.delivery,
   ];
 
   @override
@@ -29,8 +37,9 @@ class OrderTypeSelector extends StatelessWidget {
           for (int index = 0; index < _types.length; index += 1)
             Expanded(
               child: _OrderTypeSegment(
-                label: _types[index],
-                isActive: index == 0,
+                label: _types[index].label,
+                isActive: _types[index] == selectedOrderType,
+                onTap: () => onOrderTypeSelected(_types[index]),
               ),
             ),
         ],
@@ -40,36 +49,35 @@ class OrderTypeSelector extends StatelessWidget {
 }
 
 class _OrderTypeSegment extends StatelessWidget {
-  const _OrderTypeSegment({required this.label, required this.isActive});
+  const _OrderTypeSegment({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
 
   final String label;
   final bool isActive;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.surface : AppColors.transparent,
+    return Material(
+      color: isActive ? AppColors.surface : AppColors.transparent,
+      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm / 2)),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm / 2)),
-        boxShadow: isActive
-            ? const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x0D000000),
-                  offset: Offset(0, 1),
-                  blurRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTextStyles.labelSmall.copyWith(
-          color: isActive ? AppColors.primary : AppColors.textSecondary,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
+        child: Center(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: isActive ? AppColors.primary : AppColors.textSecondary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+            ),
+          ),
         ),
       ),
     );

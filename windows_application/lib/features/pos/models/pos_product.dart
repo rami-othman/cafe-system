@@ -1,17 +1,33 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-class PosProduct {
+class PosProduct extends Equatable {
   const PosProduct({
+    required this.id,
     required this.name,
+    required this.category,
     required this.size,
     required this.price,
-    required this.available,
-    required this.icon,
+    required this.isAvailable,
+    this.icon,
   });
 
+  final String id;
   final String name;
+  final String category;
   final String size;
-  final String price;
-  final bool available;
-  final IconData icon;
+  final double price;
+  final bool isAvailable;
+  final IconData? icon;
+
+  @override
+  List<Object?> get props => <Object?>[
+    id,
+    name,
+    category,
+    size,
+    price,
+    isAvailable,
+    icon,
+  ];
 }

@@ -5,13 +5,23 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../models/cart_item.dart';
 import 'quantity_stepper.dart';
 
 class CartItemTile extends StatelessWidget {
-  const CartItemTile({super.key, required this.item});
+  const CartItemTile({
+    super.key,
+    required this.item,
+    required this.onIncreaseQuantity,
+    required this.onDecreaseQuantity,
+    required this.onRemoveItem,
+  });
 
   final CartItem item;
+  final VoidCallback onIncreaseQuantity;
+  final VoidCallback onDecreaseQuantity;
+  final VoidCallback onRemoveItem;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +42,7 @@ class CartItemTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      item.name,
+                      item.product.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.labelLarge.copyWith(
@@ -43,7 +53,7 @@ class CartItemTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      item.modifiers,
+                      item.modifiers.join(', '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.labelSmall.copyWith(
@@ -56,7 +66,7 @@ class CartItemTile extends StatelessWidget {
                 ),
               ),
               Text(
-                item.price,
+                CurrencyFormatter.format(item.lineTotal),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.bodySmall.copyWith(
@@ -70,12 +80,23 @@ class CartItemTile extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              const Icon(
-                Icons.delete_outline,
-                size: 16,
+              IconButton(
+                onPressed: onRemoveItem,
+                icon: const Icon(Icons.delete_outline),
                 color: AppColors.dangerStrong,
+                iconSize: 16,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: AppSizes.quantityButtonSize,
+                  height: AppSizes.quantityButtonSize,
+                ),
+                tooltip: 'Remove item',
               ),
-              QuantityStepper(quantity: item.quantity),
+              QuantityStepper(
+                quantity: item.quantity,
+                onDecrease: onDecreaseQuantity,
+                onIncrease: onIncreaseQuantity,
+              ),
             ],
           ),
         ],

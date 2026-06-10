@@ -7,9 +7,16 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 class QuantityStepper extends StatelessWidget {
-  const QuantityStepper({super.key, required this.quantity});
+  const QuantityStepper({
+    super.key,
+    required this.quantity,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
 
   final int quantity;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +28,7 @@ class QuantityStepper extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          const _QuantityButton(label: '-'),
+          _QuantityButton(label: '-', onTap: onDecrease),
           const SizedBox(width: AppSpacing.md),
           SizedBox(
             width: AppSpacing.lg,
@@ -35,7 +42,7 @@ class QuantityStepper extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-          const _QuantityButton(label: '+'),
+          _QuantityButton(label: '+', onTap: onIncrease),
         ],
       ),
     );
@@ -43,30 +50,29 @@ class QuantityStepper extends StatelessWidget {
 }
 
 class _QuantityButton extends StatelessWidget {
-  const _QuantityButton({required this.label});
+  const _QuantityButton({required this.label, required this.onTap});
 
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: AppSizes.quantityButtonSize,
-      height: AppSizes.quantityButtonSize,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.all(Radius.circular(AppRadius.sm / 2)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x0D000000),
-            offset: Offset(0, 1),
-            blurRadius: 1,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm / 2)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm / 2)),
+        child: SizedBox(
+          width: AppSizes.quantityButtonSize,
+          height: AppSizes.quantityButtonSize,
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary),
+            ),
           ),
-        ],
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary),
+        ),
       ),
     );
   }

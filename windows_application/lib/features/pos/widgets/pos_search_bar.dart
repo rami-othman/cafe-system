@@ -7,9 +7,16 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 class PosSearchBar extends StatelessWidget {
-  const PosSearchBar({super.key, this.width = AppSizes.posSearchWidth});
+  const PosSearchBar({
+    super.key,
+    this.width = AppSizes.posSearchWidth,
+    required this.query,
+    required this.onChanged,
+  });
 
   final double width;
+  final String query;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +41,19 @@ class PosSearchBar extends StatelessWidget {
           children: <Widget>[
             const Icon(Icons.search, color: AppColors.textMuted, size: 18),
             const SizedBox(width: AppSpacing.md),
-            Text(
-              'Search products...',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w400,
+            Expanded(
+              child: TextFormField(
+                key: ValueKey<String>('pos-search-$query'),
+                initialValue: query,
+                onChanged: onChanged,
+                decoration: const InputDecoration.collapsed(
+                  hintText: 'Search products...',
+                ),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w400,
+                ),
+                cursorColor: AppColors.primary,
               ),
             ),
           ],

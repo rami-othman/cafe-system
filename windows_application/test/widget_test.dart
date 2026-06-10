@@ -23,8 +23,14 @@ void main() {
     expect(find.text('COFFEE'), findsOneWidget);
     expect(find.text('Espresso'), findsOneWidget);
     expect(find.text('DINE-IN'), findsOneWidget);
-    expect(find.text('Cappuccino'), findsNWidgets(2));
-    expect(find.text('PAY \$15.66'), findsOneWidget);
+    expect(find.text('Cappuccino'), findsOneWidget);
+    expect(find.text('PAY \$0.00'), findsOneWidget);
+
+    await tester.tap(find.text('Espresso'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Espresso'), findsNWidgets(2));
+    expect(find.text('PAY \$3.78'), findsOneWidget);
   });
 
   testWidgets('adapts the POS shell across desktop breakpoints', (
@@ -34,15 +40,15 @@ void main() {
 
     await _pumpAtSize(tester, const Size(1280, 800));
     expect(find.text('Dashboard'), findsOneWidget);
-    expect(find.text('PAY \$15.66'), findsOneWidget);
+    expect(find.text('PAY \$0.00'), findsOneWidget);
 
     await _pumpAtSize(tester, const Size(1000, 800));
     expect(find.text('Dashboard'), findsNothing);
-    expect(find.text('PAY \$15.66'), findsOneWidget);
+    expect(find.text('PAY \$0.00'), findsOneWidget);
 
     await _pumpAtSize(tester, const Size(820, 760));
     expect(find.text('Dashboard'), findsNothing);
-    expect(find.text('PAY \$15.66'), findsNothing);
+    expect(find.text('PAY \$0.00'), findsNothing);
     expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
 
     addTearDown(() {
