@@ -29,14 +29,25 @@ Phase 1 — Project Foundation
 - Fixed responsive/adaptive layout behavior for POS shell and static POS UI.
 - Implemented POS Cubit with fake data interactions, cart updates, order type
   selection, and local totals calculation.
+- Fixed POS search field focus/typing bug and improved search field
+  spacing/alignment.
+- Fixed POS search field visual design by removing nested input border and
+  aligning icon/text spacing.
+- Fixed compact window overflow bugs in topbar and collapsed sidebar.
+- Implemented product customization/modifiers dialog with local selection state
+  and cart integration.
+- Implemented POS discount dialog with coupon code input, available discount
+  cards, and local totals integration.
+- Fixed POS discount dialog coupon Apply button text wrapping and added compact
+  layout coverage.
 
 ## In Progress
 
-- None. Ready for POS Cubit fake-data interaction work.
+- None.
 
 ## Next Step
 
-Implement product customization/modifiers dialog for configurable POS items.
+Implement payment flow static UI from the approved Figma design.
 
 ## Architecture Decisions
 
@@ -92,3 +103,8 @@ Implement product customization/modifiers dialog for configurable POS items.
 - 2026-06-09: Established the initial Flutter app foundation with app routing,
   desktop shell placeholder, core/shared folders, POS placeholder files, and
   foundation dependencies.
+- 2026-06-16: Implemented POS discount dialog with coupon entry, fake available
+  discount cards, local validation, applied discount state, and pre-tax totals
+  integration.
+- 2026-06-16: Fixed the POS discount dialog coupon Apply button wrapping issue
+  and covered compact discount dialog layout behavior with widget tests.

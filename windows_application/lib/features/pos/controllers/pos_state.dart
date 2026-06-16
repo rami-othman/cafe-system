@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
 import '../models/order_type.dart';
 import '../models/pos_product.dart';
@@ -11,6 +12,7 @@ class PosState extends Equatable {
     this.selectedCategory = '',
     this.searchQuery = '',
     this.cartItems = const <CartItem>[],
+    this.appliedDiscount,
     this.orderType = OrderType.dineIn,
     this.isLoading = false,
     this.errorMessage,
@@ -23,6 +25,7 @@ class PosState extends Equatable {
   final String selectedCategory;
   final String searchQuery;
   final List<CartItem> cartItems;
+  final AppliedDiscount? appliedDiscount;
   final OrderType orderType;
   final bool isLoading;
   final String? errorMessage;
@@ -51,11 +54,17 @@ class PosState extends Equatable {
     );
   }
 
-  double get discountTotal => 0;
+  double get discountTotal {
+    return appliedDiscount?.calculateAmount(subtotal) ?? 0;
+  }
 
-  double get tax => subtotal * taxRate;
+  double get taxableAmount {
+    return (subtotal - discountTotal).clamp(0, double.infinity).toDouble();
+  }
 
-  double get total => subtotal - discountTotal + tax;
+  double get tax => taxableAmount * taxRate;
+
+  double get total => taxableAmount + tax;
 
   int get totalItems {
     return cartItems.fold<int>(
@@ -72,10 +81,12 @@ class PosState extends Equatable {
     String? selectedCategory,
     String? searchQuery,
     List<CartItem>? cartItems,
+    AppliedDiscount? appliedDiscount,
     OrderType? orderType,
     bool? isLoading,
     String? errorMessage,
     bool clearErrorMessage = false,
+    bool clearAppliedDiscount = false,
   }) {
     return PosState(
       products: products ?? this.products,
@@ -83,6 +94,9 @@ class PosState extends Equatable {
       selectedCategory: selectedCategory ?? this.selectedCategory,
       searchQuery: searchQuery ?? this.searchQuery,
       cartItems: cartItems ?? this.cartItems,
+      appliedDiscount: clearAppliedDiscount
+          ? null
+          : appliedDiscount ?? this.appliedDiscount,
       orderType: orderType ?? this.orderType,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearErrorMessage
@@ -98,6 +112,7 @@ class PosState extends Equatable {
     selectedCategory,
     searchQuery,
     cartItems,
+    appliedDiscount,
     orderType,
     isLoading,
     errorMessage,

@@ -326,3 +326,101 @@ Pay button:
 - Text: `textInverse`
 - Radius: `AppRadius.sm`
 - Label style: Manrope semibold, 18px, uppercase, `0.45` letter spacing
+
+## POS Customization Modal
+
+The product customization dialog is a desktop-first modal used before adding a
+configured POS item to the cart.
+
+- Backdrop: black at roughly 40% opacity with subtle blur
+- Width: `AppSizes.customizationDialogWidth`
+- Max height: `AppSizes.customizationDialogMaxHeight`
+- Radius: `AppRadius.md`
+- Header height: `AppSizes.customizationDialogHeaderHeight`
+- Header background: `primarySoft`
+- Header title: Manrope semibold, 24px, `primary`
+- Left product column: `surfaceAlt`, 320px on desktop, right border
+- Right modifier column: `white`, scrollable, `AppSpacing.xl` padding
+- Footer: fixed bottom, `white`, top border `border`
+
+Modifier option styling:
+
+- Option height: `AppSizes.customizationOptionHeight`
+- Radius: `AppRadius.sm`
+- Unselected background: `surface`
+- Unselected border: `border`
+- Selected background: `primarySoft`
+- Selected border: `tertiary`
+- Card-style option groups use `white`, `border`, `AppRadius.sm`, and a soft
+  low-opacity shadow
+
+Segmented selectors:
+
+- Container background: `surfaceAlt`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Selected segment background: `white`
+- Selected segment shadow: subtle 1px vertical lift
+
+Footer actions:
+
+- Cancel: text button, `primary`
+- Add to Order: filled `tertiary`, `white` text, `AppRadius.sm`,
+  `AppSizes.buttonHeight`, optional cart icon
+
+## POS Discount Modal
+
+The POS discount dialog is a centered, desktop-first modal for local coupon and
+available-discount application.
+
+- Backdrop: black at roughly 40% opacity
+- Width: `AppSizes.discountDialogWidth`
+- Max height: `AppSizes.discountDialogMaxHeight`
+- Radius: `AppRadius.md`
+- Surface: `white`
+- Header height: `AppSizes.discountDialogHeaderHeight`
+- Header background: `white`
+- Header bottom border: `border`
+- Header title: Manrope semibold/bold, 24px, `primary`
+- Body padding: `AppSpacing.xl`
+- Footer background: `shellBackground`
+- Footer top border: `border`
+
+Coupon input styling:
+
+- Label: uppercase Manrope bold, 12px, `textSecondary`
+- Input height: `AppSizes.inputHeight`
+- Input background: `white`
+- Input border: `border`
+- Input radius: `AppRadius.sm`
+- Apply button width: `AppSizes.discountInputApplyWidth`
+- Apply button background: `tertiary`, text `white`
+- Validation messages use `dangerStrong`, 12px text, and a small warning icon
+
+Discount card styling:
+
+- Background: `white`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Minimum height: `AppSizes.discountCardMinHeight`
+- Padding: `AppSpacing.md`
+- Leading icon container: `AppSizes.discountIconContainerSize`,
+  `discountIconBackground`, pill radius
+- Title: Manrope bold, 14px, `textPrimary`
+- Subtitle: Manrope medium, 12px, `textMuted`
+- Apply action: Manrope bold, 12px, `secondary`
+
+Discount badge styling:
+
+- Morning Rush: `discountOrangeBadge` background, `discountOrangeText` text
+- VIP Reward: `discountBlueBadge` background, `discountBlueText` text
+- Pastry Special: `discountGreenBadge` background, `discountGreenText` text
+- Badge radius: `AppRadius.pillRadius`
+
+Applied discount total row:
+
+- Appears between Subtotal and Tax
+- Label: `Discount`
+- Value: negative currency amount
+- Text color: `dangerStrong`
+- Remove action: compact text action in `secondary`

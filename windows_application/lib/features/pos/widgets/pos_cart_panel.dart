@@ -10,9 +10,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../controllers/pos_cubit.dart';
 import '../controllers/pos_state.dart';
+import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
 import '../models/order_type.dart';
 import 'cart_item_tile.dart';
+import 'discount_dialog.dart';
 import 'order_totals_panel.dart';
 import 'order_type_selector.dart';
 import 'pos_action_buttons.dart';
@@ -53,26 +55,32 @@ class PosCartPanel extends StatelessWidget {
                   },
                   itemBuilder: (BuildContext context, int index) {
                     if (index == state.cartItems.length) {
-                      return const _AddDiscountButton();
+                      return _AddDiscountButton(
+                        isEnabled: state.hasCartItems,
+                        onPressed: state.hasCartItems
+                            ? () => _showDiscountDialog(context, state, cubit)
+                            : null,
+                      );
                     }
 
                     final CartItem item = state.cartItems[index];
 
                     return CartItemTile(
                       item: item,
-                      onIncreaseQuantity: () =>
-                          cubit.increaseQuantity(item.product.id),
-                      onDecreaseQuantity: () =>
-                          cubit.decreaseQuantity(item.product.id),
-                      onRemoveItem: () => cubit.removeCartItem(item.product.id),
+                      onIncreaseQuantity: () => cubit.increaseQuantity(item.id),
+                      onDecreaseQuantity: () => cubit.decreaseQuantity(item.id),
+                      onRemoveItem: () => cubit.removeCartItem(item.id),
                     );
                   },
                 ),
               ),
               _CartFooter(
                 subtotal: state.subtotal,
+                discountTotal: state.discountTotal,
                 tax: state.tax,
                 total: state.total,
+                appliedDiscount: state.appliedDiscount,
+                onRemoveDiscount: cubit.removeDiscount,
                 onClearCart: cubit.clearCart,
               ),
             ],
@@ -80,6 +88,27 @@ class PosCartPanel extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _showDiscountDialog(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+  ) async {
+    final AppliedDiscount? discount = await showDialog<AppliedDiscount>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: AppColors.black.withValues(alpha: 0.4),
+      builder: (BuildContext context) {
+        return DiscountDialog(subtotal: state.subtotal);
+      },
+    );
+
+    if (!context.mounted || discount == null) {
+      return;
+    }
+
+    cubit.applyDiscount(discount);
   }
 }
 
@@ -204,35 +233,55 @@ class _CustomerButton extends StatelessWidget {
 }
 
 class _AddDiscountButton extends StatelessWidget {
-  const _AddDiscountButton();
+  const _AddDiscountButton({required this.isEnabled, required this.onPressed});
+
+  final bool isEnabled;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedBorderPainter(
-        color: AppColors.dashedBorder,
-        radius: AppRadius.sm,
-      ),
-      child: SizedBox(
-        height: AppSizes.cartControlHeight,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Icon(
-              Icons.local_offer_outlined,
-              color: AppColors.tertiary,
-              size: 14,
+    final Color contentColor = isEnabled
+        ? AppColors.tertiary
+        : AppColors.textMuted;
+    final Color borderColor = isEnabled
+        ? AppColors.dashedBorder
+        : AppColors.border;
+
+    return MouseRegion(
+      cursor: isEnabled ? SystemMouseCursors.click : MouseCursor.defer,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: Opacity(
+          opacity: isEnabled ? 1 : 0.55,
+          child: CustomPaint(
+            painter: _DashedBorderPainter(
+              color: borderColor,
+              radius: AppRadius.sm,
             ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              'ADD DISCOUNT',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.tertiary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.6,
+            child: SizedBox(
+              height: AppSizes.cartControlHeight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.local_offer_outlined,
+                    color: contentColor,
+                    size: 14,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    'ADD DISCOUNT',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: contentColor,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -242,14 +291,20 @@ class _AddDiscountButton extends StatelessWidget {
 class _CartFooter extends StatelessWidget {
   const _CartFooter({
     required this.subtotal,
+    required this.discountTotal,
     required this.tax,
     required this.total,
+    required this.appliedDiscount,
+    required this.onRemoveDiscount,
     required this.onClearCart,
   });
 
   final double subtotal;
+  final double discountTotal;
   final double tax;
   final double total;
+  final AppliedDiscount? appliedDiscount;
+  final VoidCallback onRemoveDiscount;
   final VoidCallback onClearCart;
 
   @override
@@ -263,7 +318,14 @@ class _CartFooter extends StatelessWidget {
         padding: AppSpacing.allLg,
         child: Column(
           children: <Widget>[
-            OrderTotalsPanel(subtotal: subtotal, tax: tax, total: total),
+            OrderTotalsPanel(
+              subtotal: subtotal,
+              discountTotal: discountTotal,
+              tax: tax,
+              total: total,
+              appliedDiscount: appliedDiscount,
+              onRemoveDiscount: onRemoveDiscount,
+            ),
             const SizedBox(height: AppSpacing.lg),
             PosActionButtons(total: total, onCancel: onClearCart),
           ],

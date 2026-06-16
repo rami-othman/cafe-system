@@ -31,6 +31,13 @@ abstract final class AppColors {
   static const Color info = Color(0xFF1565C0);
   static const Color dashedBorder = Color(0xFFD3C3BC);
   static const Color productVisualBackground = Color(0x4DF4E7D3);
+  static const Color discountIconBackground = Color(0xFFF4E7D3);
+  static const Color discountOrangeBadge = Color(0xFFFFE6D1);
+  static const Color discountOrangeText = Color(0xFF9B4D12);
+  static const Color discountBlueBadge = Color(0xFFE4EEFF);
+  static const Color discountBlueText = Color(0xFF1B5AAA);
+  static const Color discountGreenBadge = Color(0xFFE3F5E8);
+  static const Color discountGreenText = Color(0xFF2E7D32);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

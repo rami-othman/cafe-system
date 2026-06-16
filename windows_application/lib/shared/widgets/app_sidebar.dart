@@ -37,33 +37,57 @@ class AppSidebar extends StatelessWidget {
         color: AppColors.sidebarBackground,
         border: Border(right: BorderSide(color: AppColors.shellBorder)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        isCollapsed ? AppSpacing.sm : AppSpacing.lg,
-        AppSpacing.xxl,
-        isCollapsed ? AppSpacing.sm : AppSpacing.md,
-        AppSpacing.xxl,
-      ),
-      child: Column(
-        crossAxisAlignment: isCollapsed
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
-        children: <Widget>[
-          _LogoBlock(isCollapsed: isCollapsed),
-          const SizedBox(height: AppSpacing.xxxl),
-          for (final _SidebarDestination destination in _destinations)
-            AppSidebarItem(
-              icon: destination.icon,
-              label: destination.label,
-              isActive: destination.label == activeLabel,
-              isCollapsed: isCollapsed,
-            ),
-          const Spacer(),
-          AppSidebarItem(
-            icon: Icons.settings_outlined,
-            label: 'Settings',
-            isCollapsed: isCollapsed,
-          ),
-        ],
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          isCollapsed ? AppSpacing.sm : AppSpacing.lg,
+          AppSpacing.xxl,
+          isCollapsed ? AppSpacing.sm : AppSpacing.md,
+          AppSpacing.xxl,
+        ),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool pinSettings =
+                constraints.maxHeight >=
+                AppSizes.sidebarPinnedSettingsMinHeight;
+
+            return Column(
+              crossAxisAlignment: isCollapsed
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
+              children: <Widget>[
+                _LogoBlock(isCollapsed: isCollapsed),
+                const SizedBox(height: AppSpacing.xxxl),
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: <Widget>[
+                      for (final _SidebarDestination destination
+                          in _destinations)
+                        AppSidebarItem(
+                          icon: destination.icon,
+                          label: destination.label,
+                          isActive: destination.label == activeLabel,
+                          isCollapsed: isCollapsed,
+                        ),
+                      if (!pinSettings)
+                        AppSidebarItem(
+                          icon: Icons.settings_outlined,
+                          label: 'Settings',
+                          isCollapsed: isCollapsed,
+                        ),
+                    ],
+                  ),
+                ),
+                if (pinSettings)
+                  AppSidebarItem(
+                    icon: Icons.settings_outlined,
+                    label: 'Settings',
+                    isCollapsed: isCollapsed,
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

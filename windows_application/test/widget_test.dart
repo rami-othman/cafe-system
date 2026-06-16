@@ -29,6 +29,10 @@ void main() {
     await tester.tap(find.text('Espresso'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Customize Item'), findsOneWidget);
+    await tester.tap(find.text('Add to Order'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Espresso'), findsNWidgets(2));
     expect(find.text('PAY \$3.78'), findsOneWidget);
   });
@@ -50,6 +54,57 @@ void main() {
     expect(find.text('Dashboard'), findsNothing);
     expect(find.text('PAY \$0.00'), findsNothing);
     expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
+
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+  });
+
+  testWidgets('does not overflow in very compact windows', (
+    WidgetTester tester,
+  ) async {
+    setupServiceLocator();
+
+    await _pumpAtSize(tester, const Size(360, 420));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
+    expect(find.text('PAY \$0.00'), findsNothing);
+
+    await _pumpAtSize(tester, const Size(520, 320));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+  });
+
+  testWidgets('opens customization dialog and adds item to cart', (
+    WidgetTester tester,
+  ) async {
+    setupServiceLocator();
+    await _pumpAtSize(tester, const Size(1280, 800));
+
+    await tester.tap(find.text('Cappuccino'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Customize Item'), findsOneWidget);
+    expect(find.text('Add to Order'), findsOneWidget);
+
+    await tester.tap(find.text('Add to Order'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Customize Item'), findsNothing);
+    expect(find.text('Cappuccino'), findsNWidgets(2));
+    expect(
+      find.textContaining('Hot, Medium (12oz), Whole Milk'),
+      findsOneWidget,
+    );
 
     addTearDown(() {
       tester.view.resetPhysicalSize();

@@ -14,49 +14,67 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: AppSizes.topBarHeight,
-      decoration: const BoxDecoration(
-        color: AppColors.shellBackground,
-        border: Border(bottom: BorderSide(color: AppColors.shellBorder)),
-      ),
-      padding: AppSpacing.horizontalXl,
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: const <Widget>[
-                _BranchTab(label: 'DOWNTOWN', isActive: true),
-                _BranchTab(label: 'Mall'),
-                _BranchTab(label: 'Airport'),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool isVeryCompact =
+            constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
+        final bool isCompact =
+            constraints.maxWidth < AppSizes.topBarCompactWidth;
+        final EdgeInsets padding = isVeryCompact
+            ? AppSpacing.horizontalSm
+            : AppSpacing.horizontalXl;
+        final bool showShiftBadge = !isVeryCompact;
+        final bool showOptionalIcons = !isCompact;
+
+        return Container(
+          height: AppSizes.topBarHeight,
+          decoration: const BoxDecoration(
+            color: AppColors.shellBackground,
+            border: Border(bottom: BorderSide(color: AppColors.shellBorder)),
+          ),
+          padding: padding,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: const <Widget>[
+                    _BranchTab(label: 'DOWNTOWN', isActive: true),
+                    _BranchTab(label: 'Mall'),
+                    _BranchTab(label: 'Airport'),
+                  ],
+                ),
+              ),
+              if (showShiftBadge) ...const <Widget>[
+                SizedBox(width: AppSpacing.lg),
+                ShiftStatusBadge(),
               ],
-            ),
+              if (showCartButton) ...<Widget>[
+                const SizedBox(width: AppSpacing.sm),
+                _TopBarIconButton(
+                  icon: Icons.shopping_cart_outlined,
+                  tooltip: 'Cart',
+                  onPressed: () {},
+                ),
+              ],
+              if (showOptionalIcons) ...<Widget>[
+                const SizedBox(width: AppSpacing.sm),
+                _TopBarIconButton(
+                  icon: Icons.notifications_none_outlined,
+                  tooltip: 'Notifications',
+                  onPressed: () {},
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                _TopBarIconButton(
+                  icon: Icons.account_circle_outlined,
+                  tooltip: 'Profile',
+                  onPressed: () {},
+                ),
+              ],
+            ],
           ),
-          const SizedBox(width: AppSpacing.lg),
-          const ShiftStatusBadge(),
-          const SizedBox(width: AppSpacing.lg),
-          if (showCartButton) ...<Widget>[
-            _TopBarIconButton(
-              icon: Icons.shopping_cart_outlined,
-              tooltip: 'Cart',
-              onPressed: () {},
-            ),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          _TopBarIconButton(
-            icon: Icons.notifications_none_outlined,
-            tooltip: 'Notifications',
-            onPressed: () {},
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          _TopBarIconButton(
-            icon: Icons.account_circle_outlined,
-            tooltip: 'Profile',
-            onPressed: () {},
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

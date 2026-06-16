@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_sizes.dart';
@@ -33,40 +31,29 @@ class PosProductArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double searchWidth = math.min(
-          constraints.maxWidth,
-          AppSizes.posSearchWidth,
-        );
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _ProductAreaHeader(
-              searchWidth: searchWidth,
-              categories: categories,
-              selectedCategory: selectedCategory,
-              searchQuery: searchQuery,
-              onSearchChanged: onSearchChanged,
-              onCategorySelected: onCategorySelected,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ProductGrid(products: products, onProductTap: onProductTap),
-            ),
-          ],
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _ProductAreaHeader(
+          categories: categories,
+          selectedCategory: selectedCategory,
+          searchQuery: searchQuery,
+          onSearchChanged: onSearchChanged,
+          onCategorySelected: onCategorySelected,
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Expanded(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : ProductGrid(products: products, onProductTap: onProductTap),
+        ),
+      ],
     );
   }
 }
 
 class _ProductAreaHeader extends StatelessWidget {
   const _ProductAreaHeader({
-    required this.searchWidth,
     required this.categories,
     required this.selectedCategory,
     required this.searchQuery,
@@ -74,7 +61,6 @@ class _ProductAreaHeader extends StatelessWidget {
     required this.onCategorySelected,
   });
 
-  final double searchWidth;
   final List<String> categories;
   final String selectedCategory;
   final String searchQuery;
@@ -86,10 +72,9 @@ class _ProductAreaHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        PosSearchBar(
-          width: searchWidth,
-          query: searchQuery,
-          onChanged: onSearchChanged,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: AppSizes.posSearchWidth),
+          child: PosSearchBar(query: searchQuery, onChanged: onSearchChanged),
         ),
         const SizedBox(height: AppSpacing.lg),
         PosCategoryTabs(
