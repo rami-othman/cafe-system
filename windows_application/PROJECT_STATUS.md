@@ -40,6 +40,16 @@ Phase 1 — Project Foundation
   cards, and local totals integration.
 - Fixed POS discount dialog coupon Apply button text wrapping and added compact
   layout coverage.
+- Implemented POS payment flow modal with local cash/card/wallet payment
+  handling and cart clearing on completion.
+- Implemented receipt preview modal with completed order snapshot after local
+  payment.
+- Updated receipt preview Print Receipt placeholder to close the dialog and
+  show payment completion feedback.
+- Implemented Select Customer modal and connected optional customer selection
+  to the POS cart flow.
+- Fixed Select Customer dialog footer button wrapping and blocked hidden
+  filtered selections from being confirmed.
 
 ## In Progress
 
@@ -47,7 +57,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Implement payment flow static UI from the approved Figma design.
+Polish POS flow edge cases and prepare for backend/order persistence planning.
 
 ## Architecture Decisions
 
@@ -108,3 +118,16 @@ Implement payment flow static UI from the approved Figma design.
   integration.
 - 2026-06-16: Fixed the POS discount dialog coupon Apply button wrapping issue
   and covered compact discount dialog layout behavior with widget tests.
+- 2026-06-16: Implemented POS payment flow modal with cash amount entry, quick
+  cash buttons, payment method selection, local fake card/wallet completion,
+  split-payment placeholder, and cart clearing after completion.
+- 2026-06-17: Implemented receipt preview modal with local completed-order
+  snapshot, thermal receipt paper preview, placeholder WhatsApp/print actions,
+  and receipt snapshot Cubit coverage.
+- 2026-06-17: Updated the receipt preview Print Receipt placeholder so it
+  dismisses the preview and shows `Payment completed`.
+- 2026-06-17: Implemented Select Customer modal with fake local customers,
+  cart header selection, receipt customer snapshot display, and payment reset
+  to Walk-in Customer.
+- 2026-06-17: Fixed Select Customer dialog footer button wrapping and disabled
+  confirmation when the selected customer is filtered out of the visible list.

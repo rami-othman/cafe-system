@@ -8,10 +8,18 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 
 class PosActionButtons extends StatelessWidget {
-  const PosActionButtons({super.key, required this.total, this.onCancel});
+  const PosActionButtons({
+    super.key,
+    required this.total,
+    this.onCancel,
+    this.onPay,
+    this.isPaymentEnabled = true,
+  });
 
   final double total;
   final VoidCallback? onCancel;
+  final VoidCallback? onPay;
+  final bool isPaymentEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +45,12 @@ class PosActionButtons extends StatelessWidget {
           width: double.infinity,
           height: AppSizes.payButtonHeight,
           child: FilledButton(
-            onPressed: () {},
+            onPressed: isPaymentEnabled ? onPay : null,
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.tertiary,
+              disabledBackgroundColor: AppColors.paymentDisabledBackground,
               foregroundColor: AppColors.textInverse,
+              disabledForegroundColor: AppColors.textMuted,
               shape: const RoundedRectangleBorder(
                 borderRadius: AppRadius.control,
               ),

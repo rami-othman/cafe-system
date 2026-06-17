@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/customer.dart';
 import '../models/pos_product.dart';
 
 class PosRepository {
@@ -89,6 +90,32 @@ class PosRepository {
         price: 4.50,
         isAvailable: true,
         icon: Icons.bakery_dining_outlined,
+      ),
+    ];
+  }
+
+  List<Customer> getCustomers() {
+    return const <Customer>[
+      Customer(
+        id: 'jane-doe',
+        name: 'Jane Doe',
+        phone: '+1 (555) 019-8234',
+        tier: 'VIP',
+        points: 1450,
+      ),
+      Customer(
+        id: 'janet-smith',
+        name: 'Janet Smith',
+        phone: '+1 (555) 342-9901',
+        tier: 'REGULAR',
+        points: 320,
+      ),
+      Customer(
+        id: 'jane-williams',
+        name: 'Jane Williams',
+        phone: '+1 (555) 781-2245',
+        tier: 'NEW',
+        points: 50,
       ),
     ];
   }

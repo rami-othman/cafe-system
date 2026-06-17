@@ -288,6 +288,15 @@ The POS cart panel renders inside the app shell right panel slot.
 - Footer background: `shellBackground`
 - Footer top border: `shellBorder`
 
+Cart customer selector:
+
+- Defaults to `Walk-in Customer` when no customer is selected
+- Opens the Select Customer modal from the cart header
+- Shows the selected customer name in the same control position
+- Shows a compact tier label when a customer is selected and space allows
+- Keeps the table number input beside it on normal cart widths and stacks under
+  the table input below `AppSizes.cartControlsStackBreakpoint`
+
 ## Order Type Selector
 
 - Container background: `surfaceAlt`
@@ -424,3 +433,164 @@ Applied discount total row:
 - Value: negative currency amount
 - Text color: `dangerStrong`
 - Remove action: compact text action in `secondary`
+
+## POS Payment Modal
+
+The POS payment dialog is a centered modal for local fake payment completion.
+
+- Backdrop: black/dark gray at roughly 40% opacity
+- Width: `AppSizes.paymentDialogWidth`
+- Max height: `AppSizes.paymentDialogMaxHeight`
+- Radius: `AppRadius.md`
+- Surface: `white`
+- Header height: `AppSizes.paymentDialogHeaderHeight`
+- Header background: `paymentHeaderBackground`
+- Header title: Manrope semibold, 24px, `primary`
+- Header subtitle: Manrope medium, 13-14px, `textSecondary`
+- Summary panel: `shellBackground`, `AppSpacing.xl` padding, bottom border
+- Body: scrollable, `AppSpacing.xl` padding
+- Footer: `white`, top border `border`, horizontal action layout
+
+Payment method cards:
+
+- Four equal cards on desktop, two-column grid on compact dialog widths
+- Height: `AppSizes.paymentMethodCardHeight`
+- Background: `white`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Selected border: `tertiary`
+- Selected background: `paymentSelectedBackground`
+- Icon above label, both `primary` when selected
+
+Amount input styling:
+
+- Height: `AppSizes.inputHeight`
+- Background: `white`
+- Radius: `AppRadius.sm`
+- Border: `border`, focused border `tertiary`
+- Prefix: `$`
+- Text input has no nested border and keeps its controller/focus local to the
+  dialog state
+
+Quick amount buttons:
+
+- Generated from the current total due
+- Height: `AppSizes.paymentQuickAmountButtonHeight`
+- Background: `white`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Labels use compact Manrope button text
+
+Footer actions:
+
+- Button height: `AppSizes.paymentFooterButtonHeight`
+- Cancel: `shellBackground`, `primary` text, `border`
+- Confirm Payment: `tertiary`, `white` text, trailing arrow icon
+- Disabled confirm: `paymentDisabledBackground`, `textMuted`
+
+## Select Customer Modal
+
+The Select Customer dialog is a centered modal for optional local customer
+selection in the POS cart flow. It does not create customers, apply loyalty, or
+connect to persistence yet.
+
+- Backdrop: black at roughly 40% opacity
+- Width: `AppSizes.selectCustomerDialogWidth`
+- Max height: `AppSizes.selectCustomerDialogMaxHeight`
+- Radius: `AppRadius.dialog`
+- Surface: `white`
+- Header height: `AppSizes.selectCustomerDialogHeaderHeight`
+- Header background: `white`
+- Header bottom border: `border`
+- Header title: Manrope semibold/bold, 16px, `textPrimary`
+- Body padding: `AppSpacing.lg`
+- Customer list scrolls when available height is limited
+- Footer background: `white`
+- Footer top border: `border`
+- Footer actions wrap on compact modal widths to avoid overflow
+
+Customer search field:
+
+- Height: `AppSizes.customerSearchHeight`
+- Background: `surface`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Leading search icon
+- Uses a local persistent controller in the dialog so typing does not lose
+  focus
+- Searches customer name and phone only in dialog-local state
+
+Customer list tile:
+
+- Minimum height: `AppSizes.customerTileMinHeight`
+- Background: `white`
+- Border: `border`
+- Selected border: `tertiary`
+- Selected background: `paymentSelectedBackground`
+- Radius: `AppRadius.sm`
+- Avatar size: `AppSizes.customerAvatarSize`
+- Avatar background: `primarySoft`
+- Avatar text: customer initials in `primary`
+- Name: Manrope bold, `textPrimary`
+- Phone: Manrope body small, `textSecondary`
+- Points: compact right-aligned label
+- Selected row shows a `tertiary` check icon
+
+Tier badges:
+
+- VIP: `customerVipBadge` background, `customerVipText` text
+- REGULAR: `customerRegularBadge` background, `customerRegularText` text
+- NEW: `customerNewBadge` background, `customerNewText` text
+- Badge radius: `AppRadius.pillRadius`
+
+Footer actions:
+
+- Create New: text button, `secondary`
+- Cancel: outlined button, `shellBackground`, `primary`, `border`
+- Select Customer: filled `tertiary`, `white` text
+- Select Customer remains disabled until a customer row is selected
+- Create New currently shows `Customer creation will be added later.`
+
+## Receipt Preview Modal
+
+The receipt preview dialog appears after successful local POS payment and uses a
+completed order snapshot, not the cleared live cart.
+
+- Backdrop: black at roughly 42% opacity
+- Width: `AppSizes.receiptDialogWidth`
+- Max height: `AppSizes.receiptDialogMaxHeight`
+- Radius: `AppRadius.dialog`
+- Surface: `white`
+- Header height: `AppSizes.receiptDialogHeaderHeight`
+- Header background: `white`
+- Header bottom border: `border`
+- Header title: Manrope semibold, 15px, `textPrimary`
+- Body background: `receiptPreviewBackground` (`#F6F3F2`)
+- Body padding: `AppSpacing.xl`
+- Body scrolls when available height is limited
+
+Receipt paper:
+
+- Width: `AppSizes.receiptPaperWidth`
+- Background: `white`
+- Padding: 20px horizontal and `AppSpacing.xl` vertical
+- Text color: `receiptInk`
+- Header uses Manrope for the cafe name and compact monospace-style text for
+  receipt details
+- Line items use compact receipt text with quantity, product name, modifiers,
+  special instructions, and line total
+- Dividers use dashed receipt-style lines
+- Totals include subtotal, tax, discount when present, and total
+- Payment details include payment method, placeholder auth for card/wallet, and
+  cash change when applicable
+
+Footer actions:
+
+- Background: `white`
+- Top border: `border`
+- Padding: `AppSpacing.lg`
+- Buttons align to the right and wrap on compact widths
+- Send via WhatsApp: outlined, `primary` text/icon, send icon placeholder
+- Print Receipt: filled `tertiary`, `white` text/icon, print icon
+- Current behavior is placeholder only:
+  `WhatsApp sending will be added later.` and `Printing will be added later.`

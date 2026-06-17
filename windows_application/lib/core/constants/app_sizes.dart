@@ -60,6 +60,27 @@ abstract final class AppSizes {
   static const double discountInputApplyWidth = 84;
   static const double discountCardMinHeight = 74;
   static const double discountIconContainerSize = 40;
+  static const double paymentDialogWidth = 480;
+  static const double paymentDialogMaxHeight = 760;
+  static const double paymentDialogHeaderHeight = 104;
+  static const double paymentMethodCardHeight = 64;
+  static const double paymentFooterButtonHeight = 56;
+  static const double paymentQuickAmountButtonHeight = 42;
+  static const double receiptDialogWidth = 440;
+  static const double receiptDialogMaxHeight = 760;
+  static const double receiptDialogHeaderHeight = 56;
+  static const double receiptPaperWidth = 270;
+  static const double receiptActionButtonHeight = 44;
+  static const double selectCustomerDialogWidth = 460;
+  static const double selectCustomerDialogMaxHeight = 660;
+  static const double selectCustomerDialogHeaderHeight = 56;
+  static const double customerSearchHeight = 46;
+  static const double customerTileMinHeight = 74;
+  static const double customerAvatarSize = 40;
+  static const double customerFooterButtonHeight = 44;
+  static const double customerFooterCancelButtonWidth = 104;
+  static const double customerFooterSelectButtonWidth = 170;
+  static const double customerFooterStackBreakpoint = 390;
 
   static const double desktopNavigationWidth = sidebarWidth;
   static const double desktopCartPanelWidth = cartPanelWidth;

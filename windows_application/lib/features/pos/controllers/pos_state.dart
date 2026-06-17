@@ -2,7 +2,9 @@ import 'package:equatable/equatable.dart';
 
 import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
+import '../models/customer.dart';
 import '../models/order_type.dart';
+import '../models/order_receipt.dart';
 import '../models/pos_product.dart';
 
 class PosState extends Equatable {
@@ -12,7 +14,10 @@ class PosState extends Equatable {
     this.selectedCategory = '',
     this.searchQuery = '',
     this.cartItems = const <CartItem>[],
+    this.customers = const <Customer>[],
+    this.selectedCustomer,
     this.appliedDiscount,
+    this.lastReceipt,
     this.orderType = OrderType.dineIn,
     this.isLoading = false,
     this.errorMessage,
@@ -25,7 +30,10 @@ class PosState extends Equatable {
   final String selectedCategory;
   final String searchQuery;
   final List<CartItem> cartItems;
+  final List<Customer> customers;
+  final Customer? selectedCustomer;
   final AppliedDiscount? appliedDiscount;
+  final OrderReceipt? lastReceipt;
   final OrderType orderType;
   final bool isLoading;
   final String? errorMessage;
@@ -75,18 +83,27 @@ class PosState extends Equatable {
 
   bool get hasCartItems => cartItems.isNotEmpty;
 
+  String get customerDisplayName {
+    return selectedCustomer?.name ?? 'Walk-in Customer';
+  }
+
   PosState copyWith({
     List<PosProduct>? products,
     List<String>? categories,
     String? selectedCategory,
     String? searchQuery,
     List<CartItem>? cartItems,
+    List<Customer>? customers,
+    Customer? selectedCustomer,
     AppliedDiscount? appliedDiscount,
+    OrderReceipt? lastReceipt,
     OrderType? orderType,
     bool? isLoading,
     String? errorMessage,
     bool clearErrorMessage = false,
+    bool clearSelectedCustomer = false,
     bool clearAppliedDiscount = false,
+    bool clearLastReceipt = false,
   }) {
     return PosState(
       products: products ?? this.products,
@@ -94,9 +111,14 @@ class PosState extends Equatable {
       selectedCategory: selectedCategory ?? this.selectedCategory,
       searchQuery: searchQuery ?? this.searchQuery,
       cartItems: cartItems ?? this.cartItems,
+      customers: customers ?? this.customers,
+      selectedCustomer: clearSelectedCustomer
+          ? null
+          : selectedCustomer ?? this.selectedCustomer,
       appliedDiscount: clearAppliedDiscount
           ? null
           : appliedDiscount ?? this.appliedDiscount,
+      lastReceipt: clearLastReceipt ? null : lastReceipt ?? this.lastReceipt,
       orderType: orderType ?? this.orderType,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearErrorMessage
@@ -112,7 +134,10 @@ class PosState extends Equatable {
     selectedCategory,
     searchQuery,
     cartItems,
+    customers,
+    selectedCustomer,
     appliedDiscount,
+    lastReceipt,
     orderType,
     isLoading,
     errorMessage,

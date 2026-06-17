@@ -38,6 +38,18 @@ abstract final class AppColors {
   static const Color discountBlueText = Color(0xFF1B5AAA);
   static const Color discountGreenBadge = Color(0xFFE3F5E8);
   static const Color discountGreenText = Color(0xFF2E7D32);
+  static const Color paymentHeaderBackground = Color(0xFFF4E7D3);
+  static const Color paymentSelectedBackground = Color(0xFFFFF8F1);
+  static const Color paymentDisabledBackground = Color(0xFFD9D1C8);
+  static const Color paymentSuccessText = Color(0xFF1E7A35);
+  static const Color receiptPreviewBackground = Color(0xFFF6F3F2);
+  static const Color receiptInk = Color(0xFF16110E);
+  static const Color customerVipBadge = Color(0xFFE3F5E8);
+  static const Color customerVipText = Color(0xFF2E7D32);
+  static const Color customerRegularBadge = Color(0xFFE4EEFF);
+  static const Color customerRegularText = Color(0xFF1B5AAA);
+  static const Color customerNewBadge = Color(0xFFFFE6D1);
+  static const Color customerNewText = Color(0xFF9B4D12);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

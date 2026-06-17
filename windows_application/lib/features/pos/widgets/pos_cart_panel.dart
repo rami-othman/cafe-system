@@ -12,12 +12,17 @@ import '../controllers/pos_cubit.dart';
 import '../controllers/pos_state.dart';
 import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
+import '../models/customer.dart';
 import '../models/order_type.dart';
+import '../models/payment_result.dart';
+import 'cart_customer_selector.dart';
 import 'cart_item_tile.dart';
 import 'discount_dialog.dart';
 import 'order_totals_panel.dart';
+import 'payment_dialog.dart';
 import 'order_type_selector.dart';
 import 'pos_action_buttons.dart';
+import 'select_customer_dialog.dart';
 
 class PosCartPanel extends StatelessWidget {
   const PosCartPanel({super.key});
@@ -44,7 +49,10 @@ class PosCartPanel extends StatelessWidget {
             children: <Widget>[
               _OrderControls(
                 orderType: state.orderType,
+                selectedCustomer: state.selectedCustomer,
                 onOrderTypeChanged: cubit.changeOrderType,
+                onCustomerSelectorPressed: () =>
+                    _showCustomerDialog(context, state, cubit),
               ),
               Expanded(
                 child: ListView.separated(
@@ -79,9 +87,12 @@ class PosCartPanel extends StatelessWidget {
                 discountTotal: state.discountTotal,
                 tax: state.tax,
                 total: state.total,
+                itemCount: state.totalItems,
+                hasCartItems: state.hasCartItems,
                 appliedDiscount: state.appliedDiscount,
                 onRemoveDiscount: cubit.removeDiscount,
                 onClearCart: cubit.clearCart,
+                onPay: () => _showPaymentDialog(context, state, cubit),
               ),
             ],
           ),
@@ -110,16 +121,72 @@ class PosCartPanel extends StatelessWidget {
 
     cubit.applyDiscount(discount);
   }
+
+  Future<void> _showCustomerDialog(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+  ) async {
+    final Customer? selected = await showDialog<Customer>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: AppColors.black.withValues(alpha: 0.4),
+      builder: (BuildContext context) {
+        return SelectCustomerDialog(
+          customers: state.customers,
+          selectedCustomer: state.selectedCustomer,
+        );
+      },
+    );
+
+    if (!context.mounted || selected == null) {
+      return;
+    }
+
+    cubit.selectCustomer(selected);
+  }
+
+  Future<void> _showPaymentDialog(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+  ) async {
+    if (!state.hasCartItems || state.total <= 0) {
+      return;
+    }
+
+    final PaymentResult? result = await showDialog<PaymentResult>(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: AppColors.black.withValues(alpha: 0.4),
+      builder: (BuildContext context) {
+        return PaymentDialog(
+          totalDue: state.total,
+          itemCount: state.totalItems,
+        );
+      },
+    );
+
+    if (!context.mounted || result == null) {
+      return;
+    }
+
+    cubit.completeLocalPayment(result);
+  }
 }
 
 class _OrderControls extends StatelessWidget {
   const _OrderControls({
     required this.orderType,
+    required this.selectedCustomer,
     required this.onOrderTypeChanged,
+    required this.onCustomerSelectorPressed,
   });
 
   final OrderType orderType;
+  final Customer? selectedCustomer;
   final ValueChanged<OrderType> onOrderTypeChanged;
+  final VoidCallback onCustomerSelectorPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +199,10 @@ class _OrderControls extends StatelessWidget {
             onOrderTypeSelected: onOrderTypeChanged,
           ),
           const SizedBox(height: AppSpacing.md),
-          const _TableCustomerRow(),
+          _TableCustomerRow(
+            selectedCustomer: selectedCustomer,
+            onCustomerSelectorPressed: onCustomerSelectorPressed,
+          ),
         ],
       ),
     );
@@ -140,27 +210,44 @@ class _OrderControls extends StatelessWidget {
 }
 
 class _TableCustomerRow extends StatelessWidget {
-  const _TableCustomerRow();
+  const _TableCustomerRow({
+    required this.selectedCustomer,
+    required this.onCustomerSelectorPressed,
+  });
+
+  final Customer? selectedCustomer;
+  final VoidCallback onCustomerSelectorPressed;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         if (constraints.maxWidth < AppSizes.cartControlsStackBreakpoint) {
-          return const Column(
+          return Column(
             children: <Widget>[
-              SizedBox(width: double.infinity, child: _TableInput()),
-              SizedBox(height: AppSpacing.sm),
-              _CustomerButton(),
+              const SizedBox(width: double.infinity, child: _TableInput()),
+              const SizedBox(height: AppSpacing.sm),
+              CartCustomerSelector(
+                customer: selectedCustomer,
+                onTap: onCustomerSelectorPressed,
+              ),
             ],
           );
         }
 
-        return const Row(
+        return Row(
           children: <Widget>[
-            SizedBox(width: AppSizes.tableInputWidth, child: _TableInput()),
-            SizedBox(width: AppSpacing.sm),
-            Expanded(child: _CustomerButton()),
+            const SizedBox(
+              width: AppSizes.tableInputWidth,
+              child: _TableInput(),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: CartCustomerSelector(
+                customer: selectedCustomer,
+                onTap: onCustomerSelectorPressed,
+              ),
+            ),
           ],
         );
       },
@@ -184,49 +271,6 @@ class _TableInput extends StatelessWidget {
       child: Text(
         '12',
         style: AppTextStyles.bodySmall.copyWith(color: AppColors.textDark),
-      ),
-    );
-  }
-}
-
-class _CustomerButton extends StatelessWidget {
-  const _CustomerButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: AppSizes.cartControlHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
-        borderRadius: AppRadius.control,
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(
-            Icons.person_outline,
-            size: 14,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              'Walk-in Customer',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textDark,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-          const Icon(
-            Icons.keyboard_arrow_down,
-            size: 16,
-            color: AppColors.textSecondary,
-          ),
-        ],
       ),
     );
   }
@@ -294,18 +338,24 @@ class _CartFooter extends StatelessWidget {
     required this.discountTotal,
     required this.tax,
     required this.total,
+    required this.itemCount,
+    required this.hasCartItems,
     required this.appliedDiscount,
     required this.onRemoveDiscount,
     required this.onClearCart,
+    required this.onPay,
   });
 
   final double subtotal;
   final double discountTotal;
   final double tax;
   final double total;
+  final int itemCount;
+  final bool hasCartItems;
   final AppliedDiscount? appliedDiscount;
   final VoidCallback onRemoveDiscount;
   final VoidCallback onClearCart;
+  final VoidCallback onPay;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +377,12 @@ class _CartFooter extends StatelessWidget {
               onRemoveDiscount: onRemoveDiscount,
             ),
             const SizedBox(height: AppSpacing.lg),
-            PosActionButtons(total: total, onCancel: onClearCart),
+            PosActionButtons(
+              total: total,
+              onCancel: onClearCart,
+              onPay: onPay,
+              isPaymentEnabled: hasCartItems && total > 0 && itemCount > 0,
+            ),
           ],
         ),
       ),

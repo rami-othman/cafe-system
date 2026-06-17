@@ -111,6 +111,111 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
   });
+
+  testWidgets('opens receipt preview and clears cart after card payment', (
+    WidgetTester tester,
+  ) async {
+    setupServiceLocator();
+    await _pumpAtSize(tester, const Size(1280, 800));
+
+    await tester.tap(find.text('Espresso'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to Order'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PAY \$3.78'), findsOneWidget);
+
+    await tester.tap(find.text('PAY \$3.78'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Payment'), findsOneWidget);
+    expect(find.text('Order #618-42'), findsOneWidget);
+
+    await tester.tap(find.text('Card'));
+    await tester.pump();
+    await tester.tap(find.text('Confirm Payment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Payment'), findsNothing);
+    expect(find.text('Receipt Preview'), findsOneWidget);
+    expect(find.text('CAFE SYSTEM 618'), findsOneWidget);
+    expect(find.text('ESPRESSO'), findsOneWidget);
+    expect(find.text('PAID VIA:'), findsOneWidget);
+    expect(find.text('CARD'), findsOneWidget);
+    expect(find.text('PAY \$0.00'), findsOneWidget);
+
+    await tester.tap(find.text('Send via WhatsApp'));
+    await tester.pump();
+    expect(find.text('WhatsApp sending will be added later.'), findsOneWidget);
+
+    await tester.tap(find.text('Print Receipt'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Receipt Preview'), findsNothing);
+    expect(find.text('Payment completed'), findsOneWidget);
+    expect(find.text('PAY \$0.00'), findsOneWidget);
+
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+  });
+
+  testWidgets('selects optional customer and includes it on receipt', (
+    WidgetTester tester,
+  ) async {
+    setupServiceLocator();
+    await _pumpAtSize(tester, const Size(1280, 800));
+
+    await tester.tap(find.text('Walk-in Customer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select Customer'), findsNWidgets(2));
+    expect(find.text('Jane Doe'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('customer-search')),
+      'Janet',
+    );
+    await tester.pump();
+
+    expect(find.text('Janet Smith'), findsOneWidget);
+    expect(find.text('Jane Doe'), findsNothing);
+
+    await tester.tap(find.text('Janet Smith'));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('confirm-customer-selection')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select Customer'), findsNothing);
+    expect(find.text('Janet Smith'), findsOneWidget);
+
+    await tester.tap(find.text('Espresso'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to Order'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('PAY \$3.78'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Card'));
+    await tester.pump();
+    await tester.tap(find.text('Confirm Payment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CUSTOMER:'), findsOneWidget);
+    expect(find.text('JANET SMITH'), findsOneWidget);
+
+    await tester.tap(find.text('Print Receipt'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Walk-in Customer'), findsOneWidget);
+    expect(find.text('Payment completed'), findsOneWidget);
+
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+  });
 }
 
 Future<void> _pumpAtSize(WidgetTester tester, Size size) async {

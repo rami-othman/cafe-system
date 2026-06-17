@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/models/applied_discount.dart';
+import 'package:windows_application/features/pos/models/customer.dart';
 import 'package:windows_application/features/pos/models/order_type.dart';
+import 'package:windows_application/features/pos/models/payment_method.dart';
+import 'package:windows_application/features/pos/models/payment_result.dart';
 import 'package:windows_application/features/pos/models/product_customization.dart';
 import 'package:windows_application/features/pos/models/product_modifier.dart';
 import 'package:windows_application/features/pos/repositories/pos_repository.dart';
@@ -21,8 +24,10 @@ void main() {
     await cubit.loadInitialData();
 
     expect(cubit.state.products, hasLength(8));
+    expect(cubit.state.customers, hasLength(3));
     expect(cubit.state.categories, contains('COFFEE'));
     expect(cubit.state.selectedCategory, 'COFFEE');
+    expect(cubit.state.customerDisplayName, 'Walk-in Customer');
     expect(cubit.state.filteredProducts.map((product) => product.name), [
       'Espresso',
       'Cold Brew Reserve',
@@ -30,6 +35,23 @@ void main() {
       'Pour Over V60',
       'Americano',
     ]);
+  });
+
+  test('selects and clears optional customer', () async {
+    await cubit.loadInitialData();
+    final Customer customer = cubit.state.customers.firstWhere(
+      (Customer customer) => customer.name == 'Janet Smith',
+    );
+
+    cubit.selectCustomer(customer);
+
+    expect(cubit.state.selectedCustomer, customer);
+    expect(cubit.state.customerDisplayName, 'Janet Smith');
+
+    cubit.clearSelectedCustomer();
+
+    expect(cubit.state.selectedCustomer, isNull);
+    expect(cubit.state.customerDisplayName, 'Walk-in Customer');
   });
 
   test('filters products by category and search query', () async {
@@ -156,6 +178,147 @@ void main() {
     expect(cubit.state.cartItems, isEmpty);
     expect(cubit.state.appliedDiscount, isNull);
     expect(cubit.state.discountTotal, 0);
+  });
+
+  test('completing local payment clears cart and applied discount', () async {
+    await cubit.loadInitialData();
+    final cappuccino = cubit.state.products.firstWhere(
+      (product) => product.name == 'Cappuccino',
+    );
+
+    cubit.addProductToCart(cappuccino);
+    cubit.applyDiscount(
+      const AppliedDiscount(
+        id: 'vip-reward',
+        title: 'VIP Reward',
+        type: AppliedDiscountType.fixedAmount,
+        value: 1,
+      ),
+    );
+    cubit.completeLocalPayment(
+      const PaymentResult(
+        method: PaymentMethod.card,
+        totalDue: 3.78,
+        amountReceived: 3.78,
+        changeDue: 0,
+      ),
+    );
+
+    expect(cubit.state.cartItems, isEmpty);
+    expect(cubit.state.appliedDiscount, isNull);
+    expect(cubit.state.total, 0);
+  });
+
+  test(
+    'completing local payment creates receipt before clearing cart',
+    () async {
+      await cubit.loadInitialData();
+      final cappuccino = cubit.state.products.firstWhere(
+        (product) => product.name == 'Cappuccino',
+      );
+      final croissant = cubit.state.products.firstWhere(
+        (product) => product.name == 'Almond Croissant',
+      );
+
+      cubit.addProductToCart(cappuccino);
+      cubit.addProductToCart(croissant);
+      final double totalBeforePayment = cubit.state.total;
+
+      cubit.completeLocalPayment(
+        PaymentResult(
+          method: PaymentMethod.cash,
+          totalDue: totalBeforePayment,
+          amountReceived: 20,
+          changeDue: 20 - totalBeforePayment,
+        ),
+      );
+
+      final receipt = cubit.state.lastReceipt;
+
+      expect(receipt, isNotNull);
+      expect(receipt!.items, hasLength(2));
+      expect(receipt.items.first.name, 'Cappuccino');
+      expect(receipt.items.first.quantity, 1);
+      expect(receipt.items.first.modifiers, ['Oat Milk', 'Extra Shot']);
+      expect(receipt.subtotal, 9);
+      expect(receipt.tax, closeTo(0.72, 0.001));
+      expect(receipt.total, closeTo(totalBeforePayment, 0.001));
+      expect(receipt.payment.method, PaymentMethod.cash);
+      expect(receipt.payment.amountReceived, 20);
+      expect(cubit.state.cartItems, isEmpty);
+      expect(cubit.state.appliedDiscount, isNull);
+    },
+  );
+
+  test('local payment receipt keeps selected customer before reset', () async {
+    await cubit.loadInitialData();
+    final espresso = cubit.state.products.firstWhere(
+      (product) => product.name == 'Espresso',
+    );
+    final Customer customer = cubit.state.customers.firstWhere(
+      (Customer customer) => customer.name == 'Janet Smith',
+    );
+
+    cubit.selectCustomer(customer);
+    cubit.addProductToCart(espresso);
+    final double totalBeforePayment = cubit.state.total;
+
+    cubit.completeLocalPayment(
+      PaymentResult(
+        method: PaymentMethod.card,
+        totalDue: totalBeforePayment,
+        amountReceived: totalBeforePayment,
+        changeDue: 0,
+      ),
+    );
+
+    expect(cubit.state.lastReceipt?.customerName, 'Janet Smith');
+    expect(cubit.state.selectedCustomer, isNull);
+    expect(cubit.state.customerDisplayName, 'Walk-in Customer');
+  });
+
+  test('local payment receipt includes applied discount', () async {
+    await cubit.loadInitialData();
+    final cappuccino = cubit.state.products.firstWhere(
+      (product) => product.name == 'Cappuccino',
+    );
+
+    cubit.addProductToCart(cappuccino);
+    cubit.applyDiscount(
+      const AppliedDiscount(
+        id: 'vip-reward',
+        title: 'VIP Reward',
+        type: AppliedDiscountType.fixedAmount,
+        value: 1,
+        code: 'VIP1',
+      ),
+    );
+    final double totalBeforePayment = cubit.state.total;
+
+    cubit.completeLocalPayment(
+      PaymentResult(
+        method: PaymentMethod.card,
+        totalDue: totalBeforePayment,
+        amountReceived: totalBeforePayment,
+        changeDue: 0,
+      ),
+    );
+
+    final receipt = cubit.state.lastReceipt;
+
+    expect(receipt, isNotNull);
+    expect(receipt!.discountTotal, 1);
+    expect(receipt.discountLabel, 'VIP Reward');
+    expect(receipt.total, closeTo(totalBeforePayment, 0.001));
+    expect(cubit.state.cartItems, isEmpty);
+    expect(cubit.state.appliedDiscount, isNull);
+  });
+
+  test('clearLastReceipt removes completed receipt without changing cart', () {
+    cubit.clearLastReceipt();
+
+    expect(cubit.state.lastReceipt, isNull);
+    expect(cubit.state.cartItems, isEmpty);
   });
 
   test(

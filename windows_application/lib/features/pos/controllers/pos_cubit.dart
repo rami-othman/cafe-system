@@ -2,9 +2,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
+import '../models/customer.dart';
 import '../models/order_type.dart';
+import '../models/order_receipt.dart';
+import '../models/payment_result.dart';
 import '../models/pos_product.dart';
 import '../models/product_customization.dart';
+import '../models/receipt_line_item.dart';
 import '../repositories/pos_repository.dart';
 import 'pos_state.dart';
 
@@ -19,11 +23,13 @@ class PosCubit extends Cubit<PosState> {
     try {
       final List<String> categories = repository.getCategories();
       final List<PosProduct> products = repository.getProducts();
+      final List<Customer> customers = repository.getCustomers();
 
       emit(
         state.copyWith(
           products: products,
           categories: categories,
+          customers: customers,
           selectedCategory: categories.isEmpty ? '' : categories.first,
           isLoading: false,
           clearErrorMessage: true,
@@ -160,6 +166,14 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(orderType: orderType));
   }
 
+  void selectCustomer(Customer customer) {
+    emit(state.copyWith(selectedCustomer: customer));
+  }
+
+  void clearSelectedCustomer() {
+    emit(state.copyWith(clearSelectedCustomer: true));
+  }
+
   void applyDiscount(AppliedDiscount discount) {
     if (!state.hasCartItems) {
       return;
@@ -178,6 +192,27 @@ class PosCubit extends Cubit<PosState> {
     );
   }
 
+  void completeLocalPayment(PaymentResult result) {
+    if (!state.hasCartItems || result.totalDue <= 0) {
+      return;
+    }
+
+    final OrderReceipt receipt = _buildReceiptSnapshot(result);
+
+    emit(
+      state.copyWith(
+        cartItems: const <CartItem>[],
+        lastReceipt: receipt,
+        clearSelectedCustomer: true,
+        clearAppliedDiscount: true,
+      ),
+    );
+  }
+
+  void clearLastReceipt() {
+    emit(state.copyWith(clearLastReceipt: true));
+  }
+
   void _emitCartItems(List<CartItem> cartItems) {
     emit(
       state.copyWith(
@@ -193,5 +228,42 @@ class PosCubit extends Cubit<PosState> {
       'almond-croissant' => const <String>['Warmed'],
       _ => const <String>[],
     };
+  }
+
+  OrderReceipt _buildReceiptSnapshot(PaymentResult payment) {
+    final DateTime completedAt = DateTime.now();
+
+    return OrderReceipt(
+      orderNumber: _orderNumberFor(completedAt),
+      branchName: 'DOWNTOWN BRANCH',
+      cashierName: 'ALEX M.',
+      completedAt: completedAt,
+      items: state.cartItems
+          .map(
+            (CartItem item) => ReceiptLineItem(
+              name: item.product.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              lineTotal: item.lineTotal,
+              modifiers: item.modifiers,
+              specialInstructions: item.specialInstructions.trim().isEmpty
+                  ? null
+                  : item.specialInstructions.trim(),
+            ),
+          )
+          .toList(growable: false),
+      subtotal: state.subtotal,
+      discountTotal: state.discountTotal,
+      discountLabel: state.appliedDiscount?.title,
+      tax: state.tax,
+      total: state.total,
+      payment: payment,
+      customerName: state.selectedCustomer?.name,
+    );
+  }
+
+  String _orderNumberFor(DateTime completedAt) {
+    final int suffix = completedAt.millisecondsSinceEpoch % 10000;
+    return '#618-${suffix.toString().padLeft(4, '0')}';
   }
 }
