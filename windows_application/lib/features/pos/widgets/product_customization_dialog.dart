@@ -1,0 +1,801 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/constants/app_sizes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../models/pos_product.dart';
+import '../models/product_customization.dart';
+import '../models/product_modifier.dart';
+import 'customization_option_tile.dart';
+import 'customization_quantity_panel.dart';
+import 'customization_section.dart';
+import 'customization_segmented_selector.dart';
+
+class ProductCustomizationDialog extends StatefulWidget {
+  const ProductCustomizationDialog({super.key, required this.product});
+
+  final PosProduct product;
+
+  @override
+  State<ProductCustomizationDialog> createState() =>
+      _ProductCustomizationDialogState();
+}
+
+class _ProductCustomizationDialogState
+    extends State<ProductCustomizationDialog> {
+  static const List<ProductModifierOption>
+  _sizeOptions = <ProductModifierOption>[
+    ProductModifierOption(id: 'small', label: 'Small (8oz)', priceDelta: -0.50),
+    ProductModifierOption(id: 'medium', label: 'Medium (12oz)'),
+    ProductModifierOption(id: 'large', label: 'Large (16oz)', priceDelta: 0.75),
+  ];
+  static const List<ProductModifierOption> _milkOptions =
+      <ProductModifierOption>[
+        ProductModifierOption(
+          id: 'whole',
+          label: 'Whole Milk',
+          helperLabel: 'Default',
+        ),
+        ProductModifierOption(id: 'oat', label: 'Oat Milk', priceDelta: 0.75),
+        ProductModifierOption(
+          id: 'almond',
+          label: 'Almond Milk',
+          priceDelta: 0.75,
+        ),
+      ];
+  static const List<ProductModifierOption> _addOnOptions =
+      <ProductModifierOption>[
+        ProductModifierOption(
+          id: 'extra-espresso',
+          label: 'Extra Espresso Shot',
+          priceDelta: 1,
+        ),
+        ProductModifierOption(
+          id: 'caramel',
+          label: 'Caramel Syrup',
+          priceDelta: 0.50,
+        ),
+        ProductModifierOption(
+          id: 'vanilla',
+          label: 'Vanilla Syrup',
+          priceDelta: 0.50,
+        ),
+        ProductModifierOption(
+          id: 'whipped-cream',
+          label: 'Whipped Cream',
+          priceDelta: 0.50,
+        ),
+      ];
+  static const List<String> _sweetnessOptions = <String>[
+    '0%',
+    '50%',
+    '100%',
+    '150%',
+  ];
+
+  late final TextEditingController _instructionsController;
+  int _quantity = 1;
+  String _temperature = 'Hot';
+  ProductModifierOption _selectedSize = _sizeOptions[1];
+  ProductModifierOption _selectedMilk = _milkOptions[0];
+  final Set<ProductModifierOption> _selectedAddOns = <ProductModifierOption>{};
+  String _sweetness = '100%';
+
+  @override
+  void initState() {
+    super.initState();
+    _instructionsController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _instructionsController.dispose();
+    super.dispose();
+  }
+
+  ProductCustomization get _customization {
+    return ProductCustomization(
+      product: widget.product,
+      quantity: _quantity,
+      temperature: _temperature,
+      size: _selectedSize,
+      milkBase: _selectedMilk,
+      addOns: _selectedAddOns.toList(growable: false),
+      sweetness: _sweetness,
+      specialInstructions: _instructionsController.text,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints viewport) {
+        final double maxWidth = (viewport.maxWidth - AppSpacing.xxl).clamp(
+          280,
+          AppSizes.customizationDialogWidth,
+        );
+        final double maxHeight = (viewport.maxHeight - AppSpacing.xxl).clamp(
+          360,
+          AppSizes.customizationDialogMaxHeight,
+        );
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              maxHeight: maxHeight,
+            ),
+            child: Material(
+              color: AppColors.white,
+              elevation: 0,
+              clipBehavior: Clip.antiAlias,
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.md),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppRadius.md),
+                  ),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x26000000),
+                      offset: Offset(0, 16),
+                      blurRadius: 32,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: <Widget>[
+                    _DialogHeader(onClose: () => Navigator.of(context).pop()),
+                    Expanded(child: _dialogBody(customization: _customization)),
+                    _DialogFooter(
+                      onCancel: () => Navigator.of(context).pop(),
+                      onAdd: () => Navigator.of(
+                        context,
+                      ).pop<ProductCustomization>(_customization),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _dialogBody({required ProductCustomization customization}) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool stackColumns =
+            constraints.maxWidth < AppSizes.customizationDialogStackBreakpoint;
+        final Widget productColumn = _ProductInfoColumn(
+          product: widget.product,
+          quantity: _quantity,
+          total: customization.totalPrice,
+          onDecrease: () {
+            if (_quantity > 1) {
+              setState(() => _quantity -= 1);
+            }
+          },
+          onIncrease: () => setState(() => _quantity += 1),
+        );
+        final Widget modifiers = _ModifiersColumn(
+          temperature: _temperature,
+          selectedSize: _selectedSize,
+          selectedMilk: _selectedMilk,
+          selectedAddOns: _selectedAddOns,
+          sweetness: _sweetness,
+          instructionsController: _instructionsController,
+          onTemperatureSelected: (String value) {
+            setState(() => _temperature = value);
+          },
+          onSizeSelected: (ProductModifierOption option) {
+            setState(() => _selectedSize = option);
+          },
+          onMilkSelected: (ProductModifierOption option) {
+            setState(() => _selectedMilk = option);
+          },
+          onAddOnToggled: (ProductModifierOption option) {
+            setState(() {
+              if (_selectedAddOns.contains(option)) {
+                _selectedAddOns.remove(option);
+              } else {
+                _selectedAddOns.add(option);
+              }
+            });
+          },
+          onSweetnessSelected: (String value) {
+            setState(() => _sweetness = value);
+          },
+        );
+
+        if (stackColumns) {
+          return SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                productColumn,
+                const Divider(height: 1, color: AppColors.border),
+                modifiers,
+              ],
+            ),
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            SizedBox(
+              width: AppSizes.customizationDialogLeftColumnWidth,
+              child: productColumn,
+            ),
+            const VerticalDivider(width: 1, color: AppColors.border),
+            Expanded(child: modifiers),
+          ],
+        );
+      },
+    );
+  }
+
+  static List<ProductModifierOption> get sizeOptions => _sizeOptions;
+  static List<ProductModifierOption> get milkOptions => _milkOptions;
+  static List<ProductModifierOption> get addOnOptions => _addOnOptions;
+  static List<String> get sweetnessOptions => _sweetnessOptions;
+}
+
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppSizes.customizationDialogHeaderHeight,
+      padding: AppSpacing.horizontalXl,
+      decoration: const BoxDecoration(
+        color: AppColors.primarySoft,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Customize Item',
+              style: AppTextStyles.headlineMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onClose,
+            icon: const Icon(Icons.close),
+            color: AppColors.primary,
+            tooltip: 'Close',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductInfoColumn extends StatelessWidget {
+  const _ProductInfoColumn({
+    required this.product,
+    required this.quantity,
+    required this.total,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
+
+  final PosProduct product;
+  final int quantity;
+  final double total;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.surfaceAlt,
+      child: SingleChildScrollView(
+        padding: AppSpacing.allXl,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            AspectRatio(
+              aspectRatio: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: AppRadius.control,
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  product.icon ?? Icons.local_cafe_outlined,
+                  color: AppColors.secondary,
+                  size: 72,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              product.name,
+              style: AppTextStyles.headlineMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'A classic Italian espresso-based beverage with steamed milk and a thick layer of micro-foam.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              '${product.size} base - ${CurrencyFormatter.format(product.price)}',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            CustomizationQuantityPanel(
+              quantity: quantity,
+              total: total,
+              onDecrease: onDecrease,
+              onIncrease: onIncrease,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModifiersColumn extends StatelessWidget {
+  const _ModifiersColumn({
+    required this.temperature,
+    required this.selectedSize,
+    required this.selectedMilk,
+    required this.selectedAddOns,
+    required this.sweetness,
+    required this.instructionsController,
+    required this.onTemperatureSelected,
+    required this.onSizeSelected,
+    required this.onMilkSelected,
+    required this.onAddOnToggled,
+    required this.onSweetnessSelected,
+  });
+
+  final String temperature;
+  final ProductModifierOption selectedSize;
+  final ProductModifierOption selectedMilk;
+  final Set<ProductModifierOption> selectedAddOns;
+  final String sweetness;
+  final TextEditingController instructionsController;
+  final ValueChanged<String> onTemperatureSelected;
+  final ValueChanged<ProductModifierOption> onSizeSelected;
+  final ValueChanged<ProductModifierOption> onMilkSelected;
+  final ValueChanged<ProductModifierOption> onAddOnToggled;
+  final ValueChanged<String> onSweetnessSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.white,
+      child: SingleChildScrollView(
+        padding: AppSpacing.allXl,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            CustomizationSection(
+              title: 'Temperature',
+              child: _ResponsiveOptionGrid(
+                itemCount: 2,
+                minTileWidth: 160,
+                itemBuilder: (BuildContext context, int index) {
+                  final String option = index == 0 ? 'Hot' : 'Iced';
+                  return CustomizationOptionTile(
+                    label: option,
+                    icon: index == 0
+                        ? Icons.local_fire_department_outlined
+                        : Icons.ac_unit_outlined,
+                    isSelected: option == temperature,
+                    onTap: () => onTemperatureSelected(option),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            CustomizationSection(
+              title: 'Size',
+              trailing: const _RequiredLabel(),
+              child: _SelectionCard(
+                children: <Widget>[
+                  for (final ProductModifierOption option
+                      in _ProductCustomizationDialogState.sizeOptions)
+                    _SingleSelectRow(
+                      option: option,
+                      isSelected: option == selectedSize,
+                      onTap: () => onSizeSelected(option),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            CustomizationSection(
+              title: 'Milk Base',
+              child: _ResponsiveOptionGrid(
+                itemCount: _ProductCustomizationDialogState.milkOptions.length,
+                minTileWidth: 120,
+                itemBuilder: (BuildContext context, int index) {
+                  final ProductModifierOption option =
+                      _ProductCustomizationDialogState.milkOptions[index];
+                  return CustomizationOptionTile(
+                    label: option.label,
+                    helperLabel:
+                        option.helperLabel ??
+                        _formatPriceDelta(option.priceDelta),
+                    isSelected: option == selectedMilk,
+                    onTap: () => onMilkSelected(option),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            CustomizationSection(
+              title: 'Add-ons',
+              child: _SelectionCard(
+                children: <Widget>[
+                  for (final ProductModifierOption option
+                      in _ProductCustomizationDialogState.addOnOptions)
+                    _MultiSelectRow(
+                      option: option,
+                      isSelected: selectedAddOns.contains(option),
+                      onTap: () => onAddOnToggled(option),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            CustomizationSection(
+              title: 'Sweetness',
+              child: CustomizationSegmentedSelector(
+                options: _ProductCustomizationDialogState.sweetnessOptions,
+                selectedOption: sweetness,
+                onSelected: onSweetnessSelected,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            CustomizationSection(
+              title: 'Special Instructions',
+              child: _InstructionsField(controller: instructionsController),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResponsiveOptionGrid extends StatelessWidget {
+  const _ResponsiveOptionGrid({
+    required this.itemCount,
+    required this.minTileWidth,
+    required this.itemBuilder,
+  });
+
+  final int itemCount;
+  final double minTileWidth;
+  final Widget Function(BuildContext context, int index) itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final int columns = (constraints.maxWidth / minTileWidth).floor().clamp(
+          1,
+          itemCount,
+        );
+
+        return GridView.builder(
+          itemCount: itemCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisExtent: AppSizes.customizationOptionHeight,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisSpacing: AppSpacing.md,
+          ),
+          itemBuilder: itemBuilder,
+        );
+      },
+    );
+  }
+}
+
+class _SelectionCard extends StatelessWidget {
+  const _SelectionCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadius.control,
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x0A000000),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Column(
+        children: <Widget>[
+          for (int index = 0; index < children.length; index++) ...<Widget>[
+            if (index > 0) const Divider(height: 1, color: AppColors.border),
+            children[index],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SingleSelectRow extends StatelessWidget {
+  const _SingleSelectRow({
+    required this.option,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final ProductModifierOption option;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: AppSizes.customizationRowHeight,
+        child: Padding(
+          padding: AppSpacing.horizontalLg,
+          child: Row(
+            children: <Widget>[
+              Icon(
+                isSelected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: 18,
+                color: isSelected ? AppColors.tertiary : AppColors.textMuted,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  option.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                _formatPriceDelta(option.priceDelta),
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiSelectRow extends StatelessWidget {
+  const _MultiSelectRow({
+    required this.option,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final ProductModifierOption option;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: AppSizes.customizationRowHeight,
+        child: Padding(
+          padding: AppSpacing.horizontalLg,
+          child: Row(
+            children: <Widget>[
+              Checkbox(
+                value: isSelected,
+                onChanged: (_) => onTap(),
+                activeColor: AppColors.tertiary,
+                side: const BorderSide(color: AppColors.border),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  option.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                _formatPriceDelta(option.priceDelta),
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InstructionsField extends StatelessWidget {
+  const _InstructionsField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppSizes.customizationInstructionsHeight,
+      padding: AppSpacing.allMd,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadius.control,
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x0A000000),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: null,
+        expands: true,
+        cursorColor: AppColors.primary,
+        textAlignVertical: TextAlignVertical.top,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          isCollapsed: true,
+          hintText: 'E.g., Extra hot, in a to-go cup...',
+          hintStyle: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+      ),
+    );
+  }
+}
+
+class _RequiredLabel extends StatelessWidget {
+  const _RequiredLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Required',
+      style: AppTextStyles.labelSmall.copyWith(
+        color: AppColors.tertiary,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _DialogFooter extends StatelessWidget {
+  const _DialogFooter({required this.onCancel, required this.onAdd});
+
+  final VoidCallback onCancel;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.lg,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        border: Border(top: BorderSide(color: AppColors.border)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Color(0x0A000000),
+            offset: Offset(0, -2),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          TextButton(
+            onPressed: onCancel,
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          FilledButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.shopping_cart_outlined),
+            label: const Text('Add to Order'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, AppSizes.buttonHeight),
+              backgroundColor: AppColors.tertiary,
+              foregroundColor: AppColors.white,
+              textStyle: AppTextStyles.buttonLarge,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadius.control,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatPriceDelta(double amount) {
+  if (amount == 0) {
+    return CurrencyFormatter.format(0);
+  }
+
+  final String formatted = CurrencyFormatter.format(amount.abs());
+  return amount > 0 ? '+$formatted' : '-$formatted';
+}
