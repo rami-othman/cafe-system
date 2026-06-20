@@ -6,6 +6,8 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+    ports:
+      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy

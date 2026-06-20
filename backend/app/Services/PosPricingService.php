@@ -1,0 +1,139 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+class PosPricingService
+{
+    public function priceItem(int $tenantId, int $productId, int|float $quantity, array $modifiers = []): array
+    {
+        $product = DB::table('products')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $productId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $product || ! $product->is_active) {
+            throw ValidationException::withMessages(['productId' => 'Product is not available.']);
+        }
+
+        $selectedOptions = $this->selectedOptions($tenantId, $productId, $modifiers);
+        $modifierTotal = $selectedOptions->sum(fn ($option) => (float) $option->price_delta);
+        $unitPrice = (float) $product->price + $modifierTotal;
+
+        return [
+            'product' => $product,
+            'selected_options' => $selectedOptions,
+            'unit_price' => round($unitPrice, 2),
+            'line_total' => round($unitPrice * (float) $quantity, 2),
+        ];
+    }
+
+    public function recalculateOrder(int $tenantId, int $orderId): object
+    {
+        $subtotal = (float) DB::table('order_items')
+            ->where('tenant_id', $tenantId)
+            ->where('order_id', $orderId)
+            ->whereNull('deleted_at')
+            ->sum('total');
+
+        $discountTotal = (float) DB::table('order_discounts')
+            ->where('tenant_id', $tenantId)
+            ->where('order_id', $orderId)
+            ->sum('discount_amount');
+
+        $taxable = max(0, $subtotal - $discountTotal);
+        $taxTotal = round($taxable * 0.08, 2);
+        $total = round($taxable + $taxTotal, 2);
+
+        DB::table('orders')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $orderId)
+            ->update([
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'tax_total' => $taxTotal,
+                'total' => $total,
+                'updated_at' => now(),
+            ]);
+
+        return DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->first();
+    }
+
+    private function selectedOptions(int $tenantId, int $productId, array $modifiers): Collection
+    {
+        $groups = DB::table('product_modifier_group')
+            ->join('modifier_groups', 'modifier_groups.id', '=', 'product_modifier_group.modifier_group_id')
+            ->where('product_modifier_group.tenant_id', $tenantId)
+            ->where('product_modifier_group.product_id', $productId)
+            ->where('modifier_groups.is_active', true)
+            ->whereNull('modifier_groups.deleted_at')
+            ->select([
+                'modifier_groups.id',
+                'modifier_groups.name',
+                'modifier_groups.selection_type',
+                'modifier_groups.is_required',
+                'modifier_groups.min_selections',
+                'modifier_groups.max_selections',
+            ])
+            ->get();
+
+        $optionIds = collect($modifiers)->pluck('optionId')->filter()->map(fn ($id) => (int) $id)->values();
+
+        if ($optionIds->isEmpty()) {
+            $requiredGroup = $groups->first(fn ($group) => $group->is_required || $group->min_selections > 0);
+
+            if ($requiredGroup) {
+                throw ValidationException::withMessages(['modifiers' => "{$requiredGroup->name} is required."]);
+            }
+
+            return collect();
+        }
+
+        $options = DB::table('modifier_options')
+            ->join('modifier_groups', 'modifier_groups.id', '=', 'modifier_options.modifier_group_id')
+            ->join('product_modifier_group', 'product_modifier_group.modifier_group_id', '=', 'modifier_groups.id')
+            ->where('modifier_options.tenant_id', $tenantId)
+            ->where('product_modifier_group.product_id', $productId)
+            ->whereIn('modifier_options.id', $optionIds)
+            ->where('modifier_options.is_available', true)
+            ->where('modifier_groups.is_active', true)
+            ->whereNull('modifier_options.deleted_at')
+            ->whereNull('modifier_groups.deleted_at')
+            ->select([
+                'modifier_options.id',
+                'modifier_options.modifier_group_id',
+                'modifier_options.name',
+                'modifier_options.price_delta',
+                'modifier_groups.name as group_name',
+            ])
+            ->get();
+
+        if ($options->count() !== $optionIds->count()) {
+            throw ValidationException::withMessages(['modifiers' => 'One or more selected modifiers are invalid.']);
+        }
+
+        $optionsByGroup = $options->groupBy('modifier_group_id');
+
+        foreach ($groups as $group) {
+            $count = $optionsByGroup->get($group->id, collect())->count();
+
+            if (($group->is_required || $group->min_selections > 0) && $count < $group->min_selections) {
+                throw ValidationException::withMessages(['modifiers' => "{$group->name} requires at least {$group->min_selections} selection(s)."]);
+            }
+
+            if ($count > $group->max_selections) {
+                throw ValidationException::withMessages(['modifiers' => "{$group->name} allows at most {$group->max_selections} selection(s)."]);
+            }
+
+            if ($group->selection_type === 'single' && $count > 1) {
+                throw ValidationException::withMessages(['modifiers' => "{$group->name} allows only one selection."]);
+            }
+        }
+
+        return $options;
+    }
+}
