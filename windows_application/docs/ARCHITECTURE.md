@@ -105,6 +105,11 @@ provides the Cubit above both the POS content view and the shell right cart
 panel so product selection, cart updates, order type, and totals stay in one
 feature-owned state object.
 
+The Orders route uses its own `OrdersCubit` and `OrdersRepository` for fake
+active and held order summaries. Orders filtering, local cancel, and local
+complete behavior stay inside the `orders` feature and do not depend on POS
+cart state.
+
 ### `models`
 
 Models contain feature data objects and value types. They should be simple,
@@ -118,3 +123,7 @@ added when explicitly required.
 
 `PosRepository` currently returns deterministic fake categories and products
 only. It does not connect to backend APIs, database, or local storage.
+
+`OrdersRepository` currently returns deterministic fake order summaries only.
+It does not connect to backend APIs, database, local storage, or receipt
+printing.

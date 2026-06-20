@@ -551,6 +551,66 @@ Footer actions:
 - Select Customer remains disabled until a customer row is selected
 - Create New currently shows `Customer creation will be added later.`
 
+## Orders Screen
+
+The Orders screen renders inside the global app shell without the POS right
+cart panel. The content area uses `contentBackground`, desktop padding, and a
+scrollable column constrained to the approved wide dashboard width.
+
+Header:
+
+- Title: `Order Management`, Manrope bold, 24px, `primary`
+- Subtitle: Manrope body small/medium, 14px, `textMuted`
+- Filters align to the right on wide widths and stack below the title on
+  compact widths
+
+Order filter tabs:
+
+- Height: `AppSizes.orderFilterTabHeight`
+- Gap: `AppSpacing.sm`
+- Active background: `primary`
+- Active text: `textInverse`
+- Inactive background: `surface`
+- Inactive border: `border`
+- Inactive text: `textDark`
+- Radius: `AppRadius.sm`
+- Label style: Manrope bold, 12px, uppercase, `0.6` letter spacing
+- The tab row scrolls horizontally when space is constrained
+
+Order cards:
+
+- Responsive wrap grid: 3 columns at `>= 1000px`, 2 columns at `>= 650px`, and
+  1 column below that
+- Gap: `AppSizes.ordersGridGap`
+- Background: `surface`
+- Border: `border`
+- Radius: `AppRadius.md`
+- Padding: `AppSpacing.lg`
+- Shadow: subtle 2px vertical lift
+- Order meta uses `textMuted`; customer/table title uses `primary`
+- Items preview uses `contentBackground`, a low-opacity border, and
+  `AppRadius.sm`
+- Totals use bold Manrope title text in `primary`
+
+Order status badges:
+
+- Preparing: light green/teal background and `orderPreparingText`
+- Held: light orange background and `orderHeldText`
+- Ready: light blue background and `orderReadyText`
+- Completed: light green background and `orderCompletedText`
+- Cancelled: muted red background and `orderCancelledText`
+- Badges use compact icons, `AppRadius.sm`, and uppercase 12px bold text
+
+Order action buttons:
+
+- Height: `AppSizes.orderActionButtonHeight`
+- Radius: `AppRadius.sm`
+- Secondary actions use `surface`, `border`, and muted text
+- Primary actions use `tertiary` with `textInverse`
+- Destructive cancel uses outlined styling with `dangerStrong` text
+- Current placeholder actions show SnackBar feedback; local cancel and complete
+  update fake Cubit state only
+
 ## Receipt Preview Modal
 
 The receipt preview dialog appears after successful local POS payment and uses a

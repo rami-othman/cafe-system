@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../features/orders/controllers/orders_cubit.dart';
+import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
 import '../../features/pos/repositories/pos_repository.dart';
 
@@ -13,6 +15,18 @@ void setupServiceLocator() {
   if (!serviceLocator.isRegistered<PosCubit>()) {
     serviceLocator.registerFactory<PosCubit>(
       () => PosCubit(repository: serviceLocator<PosRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<OrdersRepository>()) {
+    serviceLocator.registerLazySingleton<OrdersRepository>(
+      OrdersRepository.new,
+    );
+  }
+
+  if (!serviceLocator.isRegistered<OrdersCubit>()) {
+    serviceLocator.registerFactory<OrdersCubit>(
+      () => OrdersCubit(repository: serviceLocator<OrdersRepository>()),
     );
   }
 }

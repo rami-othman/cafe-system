@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_sizes.dart';
@@ -20,8 +21,8 @@ class AppSidebar extends StatelessWidget {
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
     _SidebarDestination('Dashboard', Icons.dashboard_outlined),
-    _SidebarDestination('POS', Icons.point_of_sale_outlined),
-    _SidebarDestination('Orders', Icons.receipt_long_outlined),
+    _SidebarDestination('POS', Icons.point_of_sale_outlined, '/'),
+    _SidebarDestination('Orders', Icons.receipt_long_outlined, '/orders'),
     _SidebarDestination('Customers', Icons.groups_outlined),
     _SidebarDestination('Discounts', Icons.local_offer_outlined),
     _SidebarDestination('Menu', Icons.restaurant_menu_outlined),
@@ -68,6 +69,9 @@ class AppSidebar extends StatelessWidget {
                           label: destination.label,
                           isActive: destination.label == activeLabel,
                           isCollapsed: isCollapsed,
+                          onTap: destination.routePath == null
+                              ? null
+                              : () => context.go(destination.routePath!),
                         ),
                       if (!pinSettings)
                         AppSidebarItem(
@@ -156,8 +160,9 @@ class _LogoBlock extends StatelessWidget {
 }
 
 class _SidebarDestination {
-  const _SidebarDestination(this.label, this.icon);
+  const _SidebarDestination(this.label, this.icon, [this.routePath]);
 
   final String label;
   final IconData icon;
+  final String? routePath;
 }

@@ -50,6 +50,21 @@ abstract final class AppColors {
   static const Color customerRegularText = Color(0xFF1B5AAA);
   static const Color customerNewBadge = Color(0xFFFFE6D1);
   static const Color customerNewText = Color(0xFF9B4D12);
+  static const Color orderPreparingBadge = Color(0x1A2F855A);
+  static const Color orderPreparingBorder = Color(0x332F855A);
+  static const Color orderPreparingText = Color(0xFF2F855A);
+  static const Color orderHeldBadge = Color(0x1AD97706);
+  static const Color orderHeldBorder = Color(0x33D97706);
+  static const Color orderHeldText = Color(0xFFD97706);
+  static const Color orderReadyBadge = Color(0x1A1565C0);
+  static const Color orderReadyBorder = Color(0x331565C0);
+  static const Color orderReadyText = Color(0xFF1565C0);
+  static const Color orderCompletedBadge = Color(0x1A2E7D32);
+  static const Color orderCompletedBorder = Color(0x332E7D32);
+  static const Color orderCompletedText = Color(0xFF2E7D32);
+  static const Color orderCancelledBadge = Color(0x1AC62828);
+  static const Color orderCancelledBorder = Color(0x33C62828);
+  static const Color orderCancelledText = Color(0xFFC62828);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

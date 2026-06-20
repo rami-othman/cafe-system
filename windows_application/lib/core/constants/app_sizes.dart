@@ -81,6 +81,12 @@ abstract final class AppSizes {
   static const double customerFooterCancelButtonWidth = 104;
   static const double customerFooterSelectButtonWidth = 170;
   static const double customerFooterStackBreakpoint = 390;
+  static const double ordersContentMaxWidth = 1600;
+  static const double orderCardMinWidth = 280;
+  static const double orderCardMaxWidth = 312;
+  static const double ordersGridGap = 16;
+  static const double orderFilterTabHeight = 40;
+  static const double orderActionButtonHeight = 40;
 
   static const double desktopNavigationWidth = sidebarWidth;
   static const double desktopCartPanelWidth = cartPanelWidth;

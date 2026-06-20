@@ -50,6 +50,10 @@ Phase 1 — Project Foundation
   to the POS cart flow.
 - Fixed Select Customer dialog footer button wrapping and blocked hidden
   filtered selections from being confirmed.
+- Implemented Orders screen with fake active/held order data, filters,
+  responsive order cards, and sidebar routing.
+- Adjusted Orders card grid widths to keep cards closer to the design while
+  still wrapping responsively.
 
 ## In Progress
 
@@ -57,7 +61,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Polish POS flow edge cases and prepare for backend/order persistence planning.
+Review and polish the full POS flow before backend/order persistence planning.
 
 ## Architecture Decisions
 
@@ -131,3 +135,8 @@ Polish POS flow edge cases and prepare for backend/order persistence planning.
   to Walk-in Customer.
 - 2026-06-17: Fixed Select Customer dialog footer button wrapping and disabled
   confirmation when the selected customer is filtered out of the visible list.
+- 2026-06-20: Implemented Orders screen with fake active/held order data,
+  filters, responsive order cards, local placeholder actions, and sidebar
+  routing.
+- 2026-06-20: Adjusted Orders card grid widths to keep order cards compact and
+  responsive across desktop window sizes.
