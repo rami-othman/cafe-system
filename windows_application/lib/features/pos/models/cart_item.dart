@@ -8,11 +8,13 @@ class CartItem extends Equatable {
     required this.product,
     required this.quantity,
     required this.unitPrice,
+    this.backendItemId,
     this.modifiers = const <String>[],
     this.specialInstructions = '',
   });
 
   final String id;
+  final int? backendItemId;
   final PosProduct product;
   final int quantity;
   final double unitPrice;
@@ -26,6 +28,7 @@ class CartItem extends Equatable {
     PosProduct? product,
     int? quantity,
     double? unitPrice,
+    int? backendItemId,
     List<String>? modifiers,
     String? specialInstructions,
   }) {
@@ -34,6 +37,7 @@ class CartItem extends Equatable {
       product: product ?? this.product,
       quantity: quantity ?? this.quantity,
       unitPrice: unitPrice ?? this.unitPrice,
+      backendItemId: backendItemId ?? this.backendItemId,
       modifiers: modifiers ?? this.modifiers,
       specialInstructions: specialInstructions ?? this.specialInstructions,
     );
@@ -42,6 +46,7 @@ class CartItem extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     id,
+    backendItemId,
     product,
     quantity,
     unitPrice,

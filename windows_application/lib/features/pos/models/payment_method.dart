@@ -11,3 +11,23 @@ enum PaymentMethod {
   final String label;
   final IconData icon;
 }
+
+extension PaymentMethodApiValue on PaymentMethod {
+  String get apiValue {
+    return switch (this) {
+      PaymentMethod.cash => 'cash',
+      PaymentMethod.card => 'card',
+      PaymentMethod.wallet => 'wallet',
+      PaymentMethod.split => 'split',
+    };
+  }
+}
+
+PaymentMethod paymentMethodFromApi(String value) {
+  return switch (value) {
+    'card' => PaymentMethod.card,
+    'wallet' => PaymentMethod.wallet,
+    'split' => PaymentMethod.split,
+    _ => PaymentMethod.cash,
+  };
+}

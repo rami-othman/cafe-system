@@ -58,6 +58,11 @@ Phase 1 — Project Foundation
   item breakdown, payment summary, and timeline.
 - Implemented local Refund Flow modal from Order Details with full/partial
   refund selection and validation.
+- Connected POS order flow to Laravel backend API using Dio for catalog loading,
+  backend order creation, cart item updates, discounts, payment, and receipt
+  preview.
+- Fixed backend POS product category mapping so products returned with
+  `categoryId` display under the selected category tabs.
 
 ## In Progress
 
@@ -65,8 +70,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Review and polish the full POS and Orders flow before backend/order
-persistence planning.
+Connect Orders screen, Order Details, and Refund flow to backend API.
 
 ## Architecture Decisions
 
@@ -83,7 +87,6 @@ persistence planning.
 
 - Do not create feature-specific documentation until requested.
 - Do not create `POS_FLOW.md` yet.
-- Do not implement backend API integration yet.
 - Do not add database or local storage yet.
 - Keep changes focused and avoid unrelated refactors.
 - Avoid over-engineering.
@@ -92,7 +95,6 @@ persistence planning.
 
 - Detailed component states are not fully defined yet.
 - The expected Manrope variable font file still needs to be added if absent.
-- Backend integration approach is not defined yet.
 - Tablet support requirements are not defined yet.
 
 ## Recent Changes Log
@@ -151,3 +153,9 @@ persistence planning.
 - 2026-06-20: Implemented local Refund Flow modal from Order Details with
   safety warning, full/partial refund selection, amount validation, reasons,
   manager notes, and local refund state updates.
+- 2026-06-20: Connected POS order flow to Laravel backend API using Dio for
+  catalog loading, backend order creation, cart item updates, discounts,
+  payment, and receipt preview.
+- 2026-06-20: Fixed POS product grid filtering by mapping backend product
+  `categoryId` values to category names and returning `categoryName` from the
+  menu products API.

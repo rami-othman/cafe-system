@@ -7,7 +7,7 @@ void main() {
   testWidgets('opens Orders from sidebar and hides POS cart panel', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -56,7 +56,7 @@ void main() {
   testWidgets('opens and closes order details panel from an order card', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -88,7 +88,7 @@ void main() {
   testWidgets('opens refund dialog and validates partial amount', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -132,7 +132,7 @@ void main() {
   testWidgets('confirming full refund updates order details panel', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -156,4 +156,9 @@ void main() {
     expect(find.text('Refunded'), findsWidgets);
     expect(find.text('Refund recorded locally.'), findsOneWidget);
   });
+}
+
+Future<void> _setupTestLocator() async {
+  await serviceLocator.reset();
+  setupServiceLocator(useBackend: false);
 }

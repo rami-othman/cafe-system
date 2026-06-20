@@ -13,7 +13,7 @@ void main() {
   late PosCubit cubit;
 
   setUp(() {
-    cubit = PosCubit(repository: const PosRepository());
+    cubit = PosCubit(repository: PosRepository());
   });
 
   tearDown(() {

@@ -5,7 +5,7 @@ import 'package:windows_application/core/services/service_locator.dart';
 
 void main() {
   testWidgets('shows the initial POS route', (WidgetTester tester) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -40,7 +40,7 @@ void main() {
   testWidgets('adapts the POS shell across desktop breakpoints', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
 
     await _pumpAtSize(tester, const Size(1280, 800));
     expect(find.text('Dashboard'), findsOneWidget);
@@ -64,7 +64,7 @@ void main() {
   testWidgets('does not overflow in very compact windows', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
 
     await _pumpAtSize(tester, const Size(360, 420));
     await tester.pump();
@@ -87,7 +87,7 @@ void main() {
   testWidgets('opens customization dialog and adds item to cart', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     await _pumpAtSize(tester, const Size(1280, 800));
 
     await tester.tap(find.text('Cappuccino'));
@@ -115,7 +115,7 @@ void main() {
   testWidgets('opens receipt preview and clears cart after card payment', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     await _pumpAtSize(tester, const Size(1280, 800));
 
     await tester.tap(find.text('Espresso'));
@@ -164,7 +164,7 @@ void main() {
   testWidgets('selects optional customer and includes it on receipt', (
     WidgetTester tester,
   ) async {
-    setupServiceLocator();
+    await _setupTestLocator();
     await _pumpAtSize(tester, const Size(1280, 800));
 
     await tester.tap(find.text('Walk-in Customer'));
@@ -224,4 +224,9 @@ Future<void> _pumpAtSize(WidgetTester tester, Size size) async {
 
   await tester.pumpWidget(const App());
   await tester.pumpAndSettle();
+}
+
+Future<void> _setupTestLocator() async {
+  await serviceLocator.reset();
+  setupServiceLocator(useBackend: false);
 }

@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import '../network/dio_api_client.dart';
 import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
@@ -7,9 +8,17 @@ import '../../features/pos/repositories/pos_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
-void setupServiceLocator() {
+void setupServiceLocator({bool useBackend = true}) {
+  if (!serviceLocator.isRegistered<DioApiClient>()) {
+    serviceLocator.registerLazySingleton<DioApiClient>(DioApiClient.new);
+  }
+
   if (!serviceLocator.isRegistered<PosRepository>()) {
-    serviceLocator.registerLazySingleton<PosRepository>(PosRepository.new);
+    serviceLocator.registerLazySingleton<PosRepository>(
+      () => useBackend
+          ? PosRepository(apiClient: serviceLocator<DioApiClient>())
+          : PosRepository(),
+    );
   }
 
   if (!serviceLocator.isRegistered<PosCubit>()) {

@@ -131,6 +131,7 @@ class MenuController extends Controller
         return [
             'id' => $product->id,
             'categoryId' => $product->category_id,
+            'categoryName' => property_exists($product, 'category_name') ? $product->category_name : null,
             'name' => $product->name,
             'description' => $product->description,
             'imageUrl' => $product->image_url,

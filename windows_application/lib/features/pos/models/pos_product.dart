@@ -9,10 +9,14 @@ class PosProduct extends Equatable {
     required this.size,
     required this.price,
     required this.isAvailable,
+    this.backendId,
+    this.categoryId,
     this.icon,
   });
 
   final String id;
+  final int? backendId;
+  final int? categoryId;
   final String name;
   final String category;
   final String size;
@@ -23,6 +27,8 @@ class PosProduct extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     id,
+    backendId,
+    categoryId,
     name,
     category,
     size,

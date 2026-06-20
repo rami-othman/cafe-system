@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'pos_product.dart';
 import 'product_modifier.dart';
+import 'selected_modifier.dart';
 
 class ProductCustomization extends Equatable {
   const ProductCustomization({
@@ -13,6 +14,8 @@ class ProductCustomization extends Equatable {
     required this.addOns,
     required this.sweetness,
     required this.specialInstructions,
+    this.selectedModifiers = const <SelectedModifier>[],
+    this.backendModifierLabels = const <String>[],
   });
 
   final PosProduct product;
@@ -23,6 +26,8 @@ class ProductCustomization extends Equatable {
   final List<ProductModifierOption> addOns;
   final String sweetness;
   final String specialInstructions;
+  final List<SelectedModifier> selectedModifiers;
+  final List<String> backendModifierLabels;
 
   double get unitPrice {
     final double addOnsTotal = addOns.fold<double>(
@@ -38,6 +43,13 @@ class ProductCustomization extends Equatable {
   double get totalPrice => unitPrice * quantity;
 
   List<String> get modifierLabels {
+    if (backendModifierLabels.isNotEmpty) {
+      return <String>[
+        ...backendModifierLabels,
+        if (specialInstructions.trim().isNotEmpty) specialInstructions.trim(),
+      ];
+    }
+
     return <String>[
       temperature,
       size.label,
@@ -76,5 +88,7 @@ class ProductCustomization extends Equatable {
     addOns,
     sweetness,
     specialInstructions,
+    selectedModifiers,
+    backendModifierLabels,
   ];
 }

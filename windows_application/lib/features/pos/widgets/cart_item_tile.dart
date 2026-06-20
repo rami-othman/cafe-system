@@ -16,12 +16,14 @@ class CartItemTile extends StatelessWidget {
     required this.onIncreaseQuantity,
     required this.onDecreaseQuantity,
     required this.onRemoveItem,
+    this.isEnabled = true,
   });
 
   final CartItem item;
   final VoidCallback onIncreaseQuantity;
   final VoidCallback onDecreaseQuantity;
   final VoidCallback onRemoveItem;
+  final bool isEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +83,7 @@ class CartItemTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               IconButton(
-                onPressed: onRemoveItem,
+                onPressed: isEnabled ? onRemoveItem : null,
                 icon: const Icon(Icons.delete_outline),
                 color: AppColors.dangerStrong,
                 iconSize: 16,
@@ -94,8 +96,8 @@ class CartItemTile extends StatelessWidget {
               ),
               QuantityStepper(
                 quantity: item.quantity,
-                onDecrease: onDecreaseQuantity,
-                onIncrease: onIncreaseQuantity,
+                onDecrease: isEnabled ? onDecreaseQuantity : null,
+                onIncrease: isEnabled ? onIncreaseQuantity : null,
               ),
             ],
           ),

@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/pos_cubit.dart';
 import '../controllers/pos_state.dart';
+import '../models/backend_product_detail.dart';
 import '../models/order_receipt.dart';
 import '../models/pos_product.dart';
 import '../models/product_customization.dart';
@@ -22,11 +23,20 @@ class PosScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<PosCubit, PosState>(
       listenWhen: (PosState previous, PosState current) {
-        return previous.lastReceipt != current.lastReceipt &&
-            current.lastReceipt != null;
+        return (previous.lastReceipt != current.lastReceipt &&
+                current.lastReceipt != null) ||
+            previous.apiErrorMessage != current.apiErrorMessage;
       },
       listener: (BuildContext context, PosState state) {
-        unawaited(_showReceiptDialog(context, state.lastReceipt!));
+        if (state.apiErrorMessage != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.apiErrorMessage!)));
+        }
+
+        if (state.lastReceipt != null) {
+          unawaited(_showReceiptDialog(context, state.lastReceipt!));
+        }
       },
       child: BlocBuilder<PosCubit, PosState>(
         builder: (BuildContext context, PosState state) {
@@ -59,6 +69,14 @@ class PosScreen extends StatelessWidget {
       return;
     }
 
+    final BackendProductDetail? productDetail = await cubit.loadProductDetail(
+      product,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
     final ProductCustomization? customization =
         await showGeneralDialog<ProductCustomization>(
           context: context,
@@ -74,7 +92,10 @@ class PosScreen extends StatelessWidget {
               ) {
                 return BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                  child: ProductCustomizationDialog(product: product),
+                  child: ProductCustomizationDialog(
+                    product: product,
+                    productDetail: productDetail,
+                  ),
                 );
               },
         );
@@ -83,7 +104,7 @@ class PosScreen extends StatelessWidget {
       return;
     }
 
-    cubit.addCustomizedProductToCart(customization);
+    unawaited(cubit.addCustomizedProductToCart(customization));
   }
 
   Future<void> _showReceiptDialog(

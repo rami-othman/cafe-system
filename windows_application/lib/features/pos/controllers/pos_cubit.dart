@@ -1,14 +1,21 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../models/applied_discount.dart';
+import '../models/backend_order.dart';
+import '../models/backend_order_item.dart';
+import '../models/backend_product_detail.dart';
 import '../models/cart_item.dart';
+import '../models/create_order_request.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
 import '../models/order_receipt.dart';
+import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/pos_product.dart';
 import '../models/product_customization.dart';
 import '../models/receipt_line_item.dart';
+import '../models/update_order_item_request.dart';
 import '../repositories/pos_repository.dart';
 import 'pos_state.dart';
 
@@ -21,22 +28,43 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
-      final List<String> categories = repository.getCategories();
-      final List<PosProduct> products = repository.getProducts();
-      final List<Customer> customers = repository.getCustomers();
+      final branches = await repository.getBranches();
+      final int branchId = branches.isEmpty ? 1 : branches.first.id;
+      final shift = await repository.getCurrentShift(branchId: branchId);
+      final List<String> categories = await repository.getCategories(
+        branchId: branchId,
+      );
+      final List<PosProduct> products = await repository.getProducts(
+        branchId: branchId,
+      );
+      final List<Customer> customers = await repository.getCustomers();
+      final tables = await repository.getTables(branchId: branchId);
+      await repository.getPosState(branchId: branchId);
 
       emit(
         state.copyWith(
+          branchId: branchId,
+          shiftId: shift?.id,
+          isBackendMode: repository.usesBackend,
           products: products,
           categories: categories,
           customers: customers,
+          tables: tables,
           selectedCategory: categories.isEmpty ? '' : categories.first,
           isLoading: false,
           clearErrorMessage: true,
+          clearApiErrorMessage: true,
         ),
       );
     } catch (error) {
-      emit(state.copyWith(isLoading: false, errorMessage: error.toString()));
+      final String message = _messageFor(error);
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: message,
+          apiErrorMessage: message,
+        ),
+      );
     }
   }
 
@@ -84,8 +112,35 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(cartItems: updatedItems));
   }
 
-  void addCustomizedProductToCart(ProductCustomization customization) {
+  Future<BackendProductDetail?> loadProductDetail(PosProduct product) async {
+    final int? productId = product.backendId;
+    if (!repository.usesBackend || productId == null) {
+      return null;
+    }
+
+    try {
+      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
+      return await repository.getProductDetail(
+        productId: productId,
+        branchId: state.branchId,
+      );
+    } catch (error) {
+      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+      return null;
+    } finally {
+      emit(state.copyWith(isSyncingOrder: false));
+    }
+  }
+
+  Future<void> addCustomizedProductToCart(
+    ProductCustomization customization,
+  ) async {
     if (!customization.product.isAvailable) {
+      return;
+    }
+
+    if (repository.usesBackend && customization.product.backendId != null) {
+      await _addCustomizedProductToBackendOrder(customization);
       return;
     }
 
@@ -122,7 +177,23 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(cartItems: updatedItems));
   }
 
-  void increaseQuantity(String cartItemId) {
+  Future<void> increaseQuantity(String cartItemId) async {
+    final CartItem? item = _cartItemById(cartItemId);
+    if (item == null) {
+      return;
+    }
+
+    if (state.currentOrderId != null && item.backendItemId != null) {
+      await _syncOrder(
+        () => repository.updateOrderItem(
+          orderId: state.currentOrderId!,
+          itemId: item.backendItemId!,
+          request: UpdateOrderItemRequest(quantity: item.quantity + 1),
+        ),
+      );
+      return;
+    }
+
     final List<CartItem> updatedItems = state.cartItems
         .map((CartItem item) {
           if (item.id != cartItemId) {
@@ -136,7 +207,32 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(cartItems: updatedItems));
   }
 
-  void decreaseQuantity(String cartItemId) {
+  Future<void> decreaseQuantity(String cartItemId) async {
+    final CartItem? item = _cartItemById(cartItemId);
+    if (item == null) {
+      return;
+    }
+
+    if (state.currentOrderId != null && item.backendItemId != null) {
+      if (item.quantity <= 1) {
+        await _syncOrder(
+          () => repository.removeOrderItem(
+            orderId: state.currentOrderId!,
+            itemId: item.backendItemId!,
+          ),
+        );
+      } else {
+        await _syncOrder(
+          () => repository.updateOrderItem(
+            orderId: state.currentOrderId!,
+            itemId: item.backendItemId!,
+            request: UpdateOrderItemRequest(quantity: item.quantity - 1),
+          ),
+        );
+      }
+      return;
+    }
+
     final List<CartItem> updatedItems = <CartItem>[];
 
     for (final CartItem item in state.cartItems) {
@@ -154,7 +250,22 @@ class PosCubit extends Cubit<PosState> {
     _emitCartItems(updatedItems);
   }
 
-  void removeCartItem(String cartItemId) {
+  Future<void> removeCartItem(String cartItemId) async {
+    final CartItem? item = _cartItemById(cartItemId);
+    if (item == null) {
+      return;
+    }
+
+    if (state.currentOrderId != null && item.backendItemId != null) {
+      await _syncOrder(
+        () => repository.removeOrderItem(
+          orderId: state.currentOrderId!,
+          itemId: item.backendItemId!,
+        ),
+      );
+      return;
+    }
+
     _emitCartItems(
       state.cartItems
           .where((CartItem item) => item.id != cartItemId)
@@ -174,26 +285,84 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(clearSelectedCustomer: true));
   }
 
-  void applyDiscount(AppliedDiscount discount) {
+  Future<void> applyDiscount(AppliedDiscount discount) async {
     if (!state.hasCartItems) {
+      return;
+    }
+
+    if (state.currentOrderId != null) {
+      await _syncOrder(
+        () => repository.applyDiscount(
+          orderId: state.currentOrderId!,
+          code: discount.code,
+          discountId: discount.backendId,
+        ),
+      );
       return;
     }
 
     emit(state.copyWith(appliedDiscount: discount));
   }
 
-  void removeDiscount() {
+  Future<void> removeDiscount() async {
+    if (state.currentOrderId != null) {
+      await _syncOrder(() => repository.removeDiscount(state.currentOrderId!));
+      return;
+    }
+
     emit(state.copyWith(clearAppliedDiscount: true));
   }
 
-  void clearCart() {
+  Future<void> clearCart() async {
+    if (state.currentOrderId != null) {
+      try {
+        emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
+        await repository.cancelOrder(state.currentOrderId!);
+      } catch (error) {
+        emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+        return;
+      } finally {
+        emit(state.copyWith(isSyncingOrder: false));
+      }
+    }
+
+    _clearCurrentOrderState();
+  }
+
+  Future<void> holdCurrentOrder() async {
+    if (state.currentOrderId == null) {
+      return;
+    }
+
+    try {
+      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
+      await repository.holdOrder(state.currentOrderId!);
+      _clearCurrentOrderState();
+    } catch (error) {
+      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+    } finally {
+      emit(state.copyWith(isSyncingOrder: false));
+    }
+  }
+
+  void _clearCurrentOrderState() {
     emit(
-      state.copyWith(cartItems: const <CartItem>[], clearAppliedDiscount: true),
+      state.copyWith(
+        cartItems: const <CartItem>[],
+        clearAppliedDiscount: true,
+        clearCurrentOrderId: true,
+        clearBackendTotals: true,
+      ),
     );
   }
 
-  void completeLocalPayment(PaymentResult result) {
+  Future<void> completeLocalPayment(PaymentResult result) async {
     if (!state.hasCartItems || result.totalDue <= 0) {
+      return;
+    }
+
+    if (state.currentOrderId != null) {
+      await _completeBackendPayment(result);
       return;
     }
 
@@ -220,6 +389,180 @@ class PosCubit extends Cubit<PosState> {
         clearAppliedDiscount: cartItems.isEmpty,
       ),
     );
+  }
+
+  Future<void> _addCustomizedProductToBackendOrder(
+    ProductCustomization customization,
+  ) async {
+    final int? productId = customization.product.backendId;
+    if (productId == null) {
+      emit(state.copyWith(apiErrorMessage: 'Product is missing backend id.'));
+      return;
+    }
+
+    final AddOrderItemRequest itemRequest = AddOrderItemRequest(
+      productId: productId,
+      quantity: customization.quantity,
+      modifiers: customization.selectedModifiers,
+      note: customization.specialInstructions,
+    );
+
+    if (state.currentOrderId == null) {
+      if (state.shiftId == null) {
+        emit(
+          state.copyWith(
+            apiErrorMessage:
+                'No open shift found. Open a shift before creating an order.',
+          ),
+        );
+        return;
+      }
+
+      await _syncOrder(
+        () => repository.createOrder(
+          CreateOrderRequest(
+            branchId: state.branchId,
+            shiftId: state.shiftId,
+            orderType: state.orderType,
+            tableId: state.tables.isEmpty ? null : state.tables.first.id,
+            customerId: state.selectedCustomer?.backendId,
+            items: <AddOrderItemRequest>[itemRequest],
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _syncOrder(
+      () => repository.addOrderItem(
+        orderId: state.currentOrderId!,
+        request: itemRequest,
+      ),
+    );
+  }
+
+  Future<void> _syncOrder(Future<BackendOrder> Function() action) async {
+    try {
+      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
+      final BackendOrder order = await action();
+      _emitBackendOrder(order);
+    } catch (error) {
+      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+    } finally {
+      emit(state.copyWith(isSyncingOrder: false));
+    }
+  }
+
+  void _emitBackendOrder(BackendOrder order) {
+    final List<CartItem> cartItems = order.items
+        .map(_cartItemFromBackend)
+        .toList(growable: false);
+
+    emit(
+      state.copyWith(
+        cartItems: cartItems,
+        currentOrderId: order.id,
+        branchId: order.branchId,
+        shiftId: order.shiftId,
+        orderType: orderTypeFromApi(order.orderType),
+        appliedDiscount: _discountFromBackend(order),
+        backendSubtotal: order.totals.subtotal,
+        backendDiscountTotal: order.totals.discountTotal,
+        backendTax: order.totals.taxTotal,
+        backendTotal: order.totals.total,
+        clearAppliedDiscount: order.discountAmount == null,
+      ),
+    );
+  }
+
+  CartItem _cartItemFromBackend(BackendOrderItem item) {
+    final PosProduct product = state.products.firstWhere(
+      (PosProduct product) => product.backendId == item.productId,
+      orElse: () => PosProduct(
+        id: item.productId.toString(),
+        backendId: item.productId,
+        name: item.name,
+        category: 'MENU',
+        size: '1 item',
+        price: item.unitPrice,
+        isAvailable: true,
+      ),
+    );
+
+    return CartItem(
+      id: item.id.toString(),
+      backendItemId: item.id,
+      product: product,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      modifiers: item.modifierLabels,
+      specialInstructions: item.note ?? '',
+    );
+  }
+
+  AppliedDiscount? _discountFromBackend(BackendOrder order) {
+    final double? amount = order.discountAmount;
+    if (amount == null || amount <= 0) {
+      return null;
+    }
+
+    return AppliedDiscount(
+      id: 'backend-${order.id}',
+      title: order.discountName ?? 'Discount',
+      type: order.discountType == 'percentage'
+          ? AppliedDiscountType.percentage
+          : AppliedDiscountType.fixedAmount,
+      value: order.discountValue ?? amount,
+    );
+  }
+
+  CartItem? _cartItemById(String cartItemId) {
+    for (final CartItem item in state.cartItems) {
+      if (item.id == cartItemId) {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _completeBackendPayment(PaymentResult result) async {
+    final int orderId = state.currentOrderId!;
+    try {
+      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
+      await repository.payOrder(
+        orderId: orderId,
+        method: result.method.apiValue,
+        amount: result.amountReceived,
+        totalDue: state.total,
+      );
+      final OrderReceipt receipt = await repository.getReceipt(orderId);
+      emit(
+        state.copyWith(
+          cartItems: const <CartItem>[],
+          lastReceipt: receipt,
+          clearSelectedCustomer: true,
+          clearAppliedDiscount: true,
+          clearCurrentOrderId: true,
+          clearBackendTotals: true,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+    } finally {
+      emit(state.copyWith(isSyncingOrder: false));
+    }
+  }
+
+  String _messageFor(Object error) {
+    if (error is ApiException) {
+      if (error.validationErrors?.isNotEmpty ?? false) {
+        return error.validationErrors!.values.first.first;
+      }
+      return error.message;
+    }
+
+    return error.toString();
   }
 
   List<String> _defaultModifiersFor(PosProduct product) {

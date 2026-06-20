@@ -15,8 +15,8 @@ class QuantityStepper extends StatelessWidget {
   });
 
   final int quantity;
-  final VoidCallback onDecrease;
-  final VoidCallback onIncrease;
+  final VoidCallback? onDecrease;
+  final VoidCallback? onIncrease;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +53,7 @@ class _QuantityButton extends StatelessWidget {
   const _QuantityButton({required this.label, required this.onTap});
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

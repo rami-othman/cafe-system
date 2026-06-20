@@ -10,10 +10,12 @@ class AppliedDiscount extends Equatable {
     required this.title,
     required this.type,
     required this.value,
+    this.backendId,
     this.code,
   });
 
   final String id;
+  final int? backendId;
   final String title;
   final AppliedDiscountType type;
   final double value;
@@ -36,5 +38,5 @@ class AppliedDiscount extends Equatable {
   }
 
   @override
-  List<Object?> get props => <Object?>[id, title, type, value, code];
+  List<Object?> get props => <Object?>[id, backendId, title, type, value, code];
 }
