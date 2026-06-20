@@ -579,8 +579,9 @@ Order filter tabs:
 
 Order cards:
 
-- Responsive wrap grid: 3 columns at `>= 1000px`, 2 columns at `>= 650px`, and
-  1 column below that
+- Responsive wrap grid: cards use `AppSizes.orderCardMinWidth` and cap at
+  `AppSizes.orderCardMaxWidth` so they stay close to the approved compact
+  card width while wrapping to available desktop space
 - Gap: `AppSizes.ordersGridGap`
 - Background: `surface`
 - Border: `border`
@@ -610,6 +611,157 @@ Order action buttons:
 - Destructive cancel uses outlined styling with `dangerStrong` text
 - Current placeholder actions show SnackBar feedback; local cancel and complete
   update fake Cubit state only
+
+## Order Details Side Panel
+
+The Order Details panel opens over the Orders screen content when a card
+`DETAILS` action is selected. The Orders page remains visible behind a dark
+semi-transparent backdrop with subtle blur; clicking the backdrop closes the
+panel.
+
+Panel container:
+
+- Width: `AppSizes.orderDetailsPanelWidth` on desktop
+- Compact sizing subtracts `AppSizes.orderDetailsCompactGutter` from the
+  available content width to avoid overflow
+- Height: full content area
+- Background: `surface`
+- Left border: `border`
+- Shadow: soft left-side elevation
+- Body scrolls vertically inside the fixed panel frame
+
+Header:
+
+- Padding: `AppSpacing.xl`
+- Bottom border: `border`
+- Close, print, and copy controls use compact outlined icon buttons
+- Refund is a small outlined warm action
+- Order number uses Manrope bold, 22px, `primary`
+- Date/time uses muted body text
+- Status uses the shared `OrderStatusBadge`
+- Print, copy, and refund are placeholder-only SnackBar actions
+
+Customer section:
+
+- Section title: Manrope semibold/bold, 14px, `primary`
+- Divider below title
+- Avatar size: `AppSizes.orderDetailsAvatarSize`
+- Avatar background: `primarySoft`
+- Customer name uses compact bold text
+- Phone/email use muted compact body text
+- Missing customers show `Walk-in Customer`
+
+Order item detail rows:
+
+- Quantity box size: `AppSizes.orderDetailsQuantityBoxSize`
+- Quantity box background: `surfaceAlt`, `border`, `AppRadius.sm`
+- Item name uses bold compact text
+- Modifiers use muted 12px text with a leading hyphen
+- Item totals align to the right
+- Dividers separate rows
+
+Totals:
+
+- Normal rows use muted body text
+- Total row uses bold `titleMedium` text in `primary`
+- Divider appears before total
+- Amounts align right
+
+Payment card:
+
+- Background: `orderDetailsPaymentBackground`
+- Border: `border`
+- Radius: `AppRadius.md`
+- Leading payment icon sits on `primarySoft`
+- Method label is bold compact text
+- Approval/auth line is muted 12px text
+- Amount aligns right in `primary`
+
+Timeline:
+
+- Section title and divider match other panel sections
+- Events use a left dot and `orderDetailsTimelineLine` connector
+- Event title uses dark bold compact text
+- Time/source text is muted 12px
+
+## Refund Flow Modal
+
+The Refund Flow modal opens from the Order Details panel `Refund` action. It is
+local UI/state only and does not reverse payments, connect to backend services,
+or update accounting records.
+
+Modal container:
+
+- Uses `showDialog` with a dark gray/black backdrop at roughly 40% opacity
+- Width: `AppSizes.refundDialogWidth`
+- Max height: `AppSizes.refundDialogMaxHeight`
+- Surface: `white`
+- Radius: `AppRadius.dialog`
+- Body scrolls when the available height is constrained
+- Footer remains fixed below the scrollable body
+
+Header:
+
+- Height: `AppSizes.refundDialogHeaderHeight`
+- Background: `white`
+- Bottom border: `border`
+- Left icon: refund/return icon in `dangerStrong`
+- Title: `Refund Order #...`, Manrope semibold, 16px, `primary`
+- Close icon appears on the right
+
+Warning box:
+
+- Background: `refundWarningBackground`
+- Border: `refundWarningBorder`
+- Radius: `AppRadius.sm`
+- Padding: `AppSpacing.md`
+- Warning icon and text use `dangerStrong`
+- Text is compact 12px body copy
+
+Summary card:
+
+- Background: `orderDetailsPaymentBackground`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Padding: `AppSpacing.md`
+- Labels are uppercase, compact, muted, and letter-spaced
+- Values are bold/dark and right-aligned
+
+Refund type selector:
+
+- Two equal cards in a row: `Full Refund` and `Partial Refund`
+- Selected card border uses `tertiary`
+- Selected background uses `paymentSelectedBackground`
+- Selected card shows a `tertiary` check indicator
+- Unselected cards use `white` and `border`
+
+Refund amount input:
+
+- Height: `AppSizes.refundInputHeight`
+- Border: `border`
+- Radius: `AppRadius.sm`
+- Prefix: `$`
+- Full refunds show the full order total in a read-only input
+- Partial refunds use an editable numeric input with persistent controller
+- Validation messages use `dangerStrong`, 12px text
+
+Reason and notes:
+
+- Reason dropdown uses the same 44px input height, white surface, `border`,
+  `AppRadius.sm`, and a down arrow
+- Manager notes textarea uses `AppSizes.refundNotesHeight`, white surface,
+  `border`, `AppRadius.sm`, and no nested input border
+- Notes use a persistent local controller so typing does not lose focus
+
+Footer:
+
+- Background: `shellBackground`
+- Top border: `border`
+- Padding: `AppSpacing.lg`
+- Actions align right
+- Cancel uses a text button
+- Confirm Refund uses `dangerStrong` background, white text, and disables when
+  refund amount validation fails
 
 ## Receipt Preview Modal
 

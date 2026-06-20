@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/order_status.dart';
 import '../models/order_summary.dart';
+import '../models/refund_result.dart';
+import '../models/refund_type.dart';
 import '../repositories/orders_repository.dart';
 import 'orders_state.dart';
 
@@ -28,6 +30,69 @@ class OrdersCubit extends Cubit<OrdersState> {
 
   void selectFilter(OrdersFilter filter) {
     emit(state.copyWith(selectedFilter: filter));
+  }
+
+  Future<void> openOrderDetails(String orderId) async {
+    emit(
+      state.copyWith(isDetailsLoading: true, clearDetailsErrorMessage: true),
+    );
+
+    try {
+      final detail = await repository.getOrderDetail(orderId);
+
+      emit(
+        state.copyWith(
+          selectedOrderDetail: detail,
+          isDetailsLoading: false,
+          clearDetailsErrorMessage: true,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          isDetailsLoading: false,
+          detailsErrorMessage: error.toString(),
+        ),
+      );
+    }
+  }
+
+  void closeOrderDetails() {
+    emit(
+      state.copyWith(
+        clearSelectedOrderDetail: true,
+        isDetailsLoading: false,
+        clearDetailsErrorMessage: true,
+      ),
+    );
+  }
+
+  void confirmRefund(RefundResult result) {
+    final selectedDetail = state.selectedOrderDetail;
+    if (selectedDetail == null || selectedDetail.id != result.orderId) {
+      return;
+    }
+
+    final OrderStatus status = result.type == RefundType.full
+        ? OrderStatus.refunded
+        : OrderStatus.partiallyRefunded;
+    final updatedDetail = selectedDetail.copyWith(
+      status: status,
+      isRefunded: result.type == RefundType.full,
+      refundedAmount: result.amount,
+      refundedAt: result.refundedAt,
+    );
+    final List<OrderSummary> orders = state.orders
+        .map((OrderSummary order) {
+          if (order.id != result.orderId) {
+            return order;
+          }
+
+          return order.copyWith(status: status);
+        })
+        .toList(growable: false);
+
+    emit(state.copyWith(orders: orders, selectedOrderDetail: updatedDetail));
   }
 
   void cancelOrder(String orderId) {

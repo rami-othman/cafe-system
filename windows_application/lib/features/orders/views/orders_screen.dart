@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,9 +11,13 @@ import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_empty_state.dart';
 import '../controllers/orders_cubit.dart';
 import '../controllers/orders_state.dart';
+import '../models/order_detail.dart';
 import '../models/order_summary.dart';
+import '../models/refund_result.dart';
 import '../widgets/order_filter_tabs.dart';
+import '../widgets/order_details_panel.dart';
 import '../widgets/order_summary_card.dart';
+import '../widgets/refund_dialog.dart';
 
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
@@ -23,48 +29,75 @@ class OrdersScreen extends StatelessWidget {
         final OrdersCubit cubit = context.read<OrdersCubit>();
 
         return DesktopPageLayout(
-          padding: AppSpacing.allXxl,
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppSizes.ordersContentMaxWidth,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _OrdersHeader(
-                    selectedFilter: state.selectedFilter,
-                    onFilterSelected: cubit.selectFilter,
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
-                  if (state.isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else if (state.filteredOrders.isEmpty)
-                    const AppEmptyState(
-                      message: 'No orders match this filter yet.',
-                      icon: Icons.receipt_long_outlined,
-                    )
-                  else
-                    _OrdersGrid(
-                      orders: state.filteredOrders,
-                      onDetails: () => _showSnackBar(
-                        context,
-                        'Order details will be added later.',
-                      ),
-                      onPay: () => _showSnackBar(
-                        context,
-                        'Payment from Orders screen will be added later.',
-                      ),
-                      onResume: () => _showSnackBar(
-                        context,
-                        'Resume held order will be connected to POS later.',
-                      ),
-                      onCancel: cubit.cancelOrder,
-                      onComplete: cubit.completeOrder,
+          padding: EdgeInsets.zero,
+          child: Stack(
+            children: <Widget>[
+              Padding(
+                padding: AppSpacing.allXxl,
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: AppSizes.ordersContentMaxWidth,
                     ),
-                ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _OrdersHeader(
+                          selectedFilter: state.selectedFilter,
+                          onFilterSelected: cubit.selectFilter,
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
+                        if (state.isLoading)
+                          const Center(child: CircularProgressIndicator())
+                        else if (state.filteredOrders.isEmpty)
+                          const AppEmptyState(
+                            message: 'No orders match this filter yet.',
+                            icon: Icons.receipt_long_outlined,
+                          )
+                        else
+                          _OrdersGrid(
+                            orders: state.filteredOrders,
+                            onDetails: cubit.openOrderDetails,
+                            onPay: () => _showSnackBar(
+                              context,
+                              'Payment from Orders screen will be added later.',
+                            ),
+                            onResume: () => _showSnackBar(
+                              context,
+                              'Resume held order will be connected to POS later.',
+                            ),
+                            onCancel: cubit.cancelOrder,
+                            onComplete: cubit.completeOrder,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+              if (state.selectedOrderDetail != null)
+                Positioned.fill(
+                  child: _OrderDetailsOverlay(
+                    onClose: cubit.closeOrderDetails,
+                    child: OrderDetailsPanel(
+                      detail: state.selectedOrderDetail!,
+                      onClose: cubit.closeOrderDetails,
+                      onPrint: () => _showSnackBar(
+                        context,
+                        'Printing will be added later.',
+                      ),
+                      onCopy: () => _showSnackBar(
+                        context,
+                        'Copy order will be added later.',
+                      ),
+                      onRefund: () => _showRefundDialog(
+                        context,
+                        state.selectedOrderDetail!,
+                        cubit,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -75,6 +108,27 @@ class OrdersScreen extends StatelessWidget {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _showRefundDialog(
+    BuildContext context,
+    OrderDetail detail,
+    OrdersCubit cubit,
+  ) async {
+    final RefundResult? result = await showDialog<RefundResult>(
+      context: context,
+      barrierColor: AppColors.black.withValues(alpha: 0.42),
+      builder: (BuildContext dialogContext) {
+        return RefundDialog(orderDetail: detail);
+      },
+    );
+
+    if (result == null || !context.mounted) {
+      return;
+    }
+
+    cubit.confirmRefund(result);
+    _showSnackBar(context, 'Refund recorded locally.');
   }
 }
 
@@ -153,7 +207,7 @@ class _OrdersGrid extends StatelessWidget {
   });
 
   final List<OrderSummary> orders;
-  final VoidCallback onDetails;
+  final ValueChanged<String> onDetails;
   final VoidCallback onPay;
   final VoidCallback onResume;
   final ValueChanged<String> onCancel;
@@ -175,7 +229,7 @@ class _OrdersGrid extends StatelessWidget {
                 width: cardWidth,
                 child: OrderSummaryCard(
                   order: order,
-                  onDetails: onDetails,
+                  onDetails: () => onDetails(order.id),
                   onPay: onPay,
                   onResume: onResume,
                   onCancel: () => onCancel(order.id),
@@ -203,5 +257,30 @@ class _OrdersGrid extends StatelessWidget {
     return fillWidth
         .clamp(AppSizes.orderCardMinWidth, AppSizes.orderCardMaxWidth)
         .toDouble();
+  }
+}
+
+class _OrderDetailsOverlay extends StatelessWidget {
+  const _OrderDetailsOverlay({required this.onClose, required this.child});
+
+  final VoidCallback onClose;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: onClose,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+              child: const ColoredBox(color: AppColors.orderDetailsBackdrop),
+            ),
+          ),
+        ),
+        Positioned.fill(child: child),
+      ],
+    );
   }
 }

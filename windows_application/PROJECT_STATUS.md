@@ -54,6 +54,10 @@ Phase 1 — Project Foundation
   responsive order cards, and sidebar routing.
 - Adjusted Orders card grid widths to keep cards closer to the design while
   still wrapping responsively.
+- Implemented Order Details side panel with fake detail data, customer info,
+  item breakdown, payment summary, and timeline.
+- Implemented local Refund Flow modal from Order Details with full/partial
+  refund selection and validation.
 
 ## In Progress
 
@@ -61,7 +65,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Review and polish the full POS flow before backend/order persistence planning.
+Review and polish the full POS and Orders flow before backend/order
+persistence planning.
 
 ## Architecture Decisions
 
@@ -140,3 +145,9 @@ Review and polish the full POS flow before backend/order persistence planning.
   routing.
 - 2026-06-20: Adjusted Orders card grid widths to keep order cards compact and
   responsive across desktop window sizes.
+- 2026-06-20: Implemented Order Details side panel with fake detail data,
+  customer info, item breakdown, payment summary, placeholder actions, and
+  timeline.
+- 2026-06-20: Implemented local Refund Flow modal from Order Details with
+  safety warning, full/partial refund selection, amount validation, reasons,
+  manager notes, and local refund state updates.

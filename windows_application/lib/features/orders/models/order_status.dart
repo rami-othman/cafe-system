@@ -1,4 +1,12 @@
-enum OrderStatus { preparing, held, ready, completed, cancelled }
+enum OrderStatus {
+  preparing,
+  held,
+  ready,
+  completed,
+  cancelled,
+  refunded,
+  partiallyRefunded,
+}
 
 extension OrderStatusLabel on OrderStatus {
   String get label {
@@ -8,6 +16,8 @@ extension OrderStatusLabel on OrderStatus {
       OrderStatus.ready => 'READY',
       OrderStatus.completed => 'COMPLETED',
       OrderStatus.cancelled => 'CANCELLED',
+      OrderStatus.refunded => 'REFUNDED',
+      OrderStatus.partiallyRefunded => 'PARTIAL REFUND',
     };
   }
 }

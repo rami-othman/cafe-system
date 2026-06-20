@@ -41,7 +41,10 @@ class OrderCardActions extends StatelessWidget {
         _OrderAction.outlined('DETAILS', onDetails),
         _OrderAction.primary('PAY', onPay),
       ],
-      OrderStatus.completed || OrderStatus.cancelled => <_OrderAction>[
+      OrderStatus.completed ||
+      OrderStatus.cancelled ||
+      OrderStatus.refunded ||
+      OrderStatus.partiallyRefunded => <_OrderAction>[
         _OrderAction.outlined('DETAILS', onDetails),
       ],
     };

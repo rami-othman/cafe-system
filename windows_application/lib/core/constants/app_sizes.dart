@@ -87,6 +87,16 @@ abstract final class AppSizes {
   static const double ordersGridGap = 16;
   static const double orderFilterTabHeight = 40;
   static const double orderActionButtonHeight = 40;
+  static const double orderDetailsPanelWidth = 460;
+  static const double orderDetailsCompactGutter = 72;
+  static const double orderDetailsHeaderIconSize = 36;
+  static const double orderDetailsAvatarSize = 44;
+  static const double orderDetailsQuantityBoxSize = 32;
+  static const double refundDialogWidth = 520;
+  static const double refundDialogMaxHeight = 760;
+  static const double refundDialogHeaderHeight = 56;
+  static const double refundInputHeight = 44;
+  static const double refundNotesHeight = 80;
 
   static const double desktopNavigationWidth = sidebarWidth;
   static const double desktopCartPanelWidth = cartPanelWidth;

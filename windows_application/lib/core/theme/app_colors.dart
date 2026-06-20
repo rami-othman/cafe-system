@@ -65,6 +65,14 @@ abstract final class AppColors {
   static const Color orderCancelledBadge = Color(0x1AC62828);
   static const Color orderCancelledBorder = Color(0x33C62828);
   static const Color orderCancelledText = Color(0xFFC62828);
+  static const Color orderRefundedBadge = Color(0x1ABA1A1A);
+  static const Color orderRefundedBorder = Color(0x33BA1A1A);
+  static const Color orderRefundedText = Color(0xFFBA1A1A);
+  static const Color orderDetailsBackdrop = Color(0x59000000);
+  static const Color orderDetailsPaymentBackground = Color(0xFFFFF8F1);
+  static const Color orderDetailsTimelineLine = Color(0xFFD8CEC6);
+  static const Color refundWarningBackground = Color(0xFFFFF1F0);
+  static const Color refundWarningBorder = Color(0xFFFFD2CF);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

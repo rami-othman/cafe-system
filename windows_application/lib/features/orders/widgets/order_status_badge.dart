@@ -75,6 +75,18 @@ class OrderStatusBadge extends StatelessWidget {
         foreground: AppColors.orderCancelledText,
         icon: Icons.cancel_outlined,
       ),
+      OrderStatus.refunded => const _BadgeStyle(
+        background: AppColors.orderRefundedBadge,
+        border: AppColors.orderRefundedBorder,
+        foreground: AppColors.orderRefundedText,
+        icon: Icons.keyboard_return_outlined,
+      ),
+      OrderStatus.partiallyRefunded => const _BadgeStyle(
+        background: AppColors.orderHeldBadge,
+        border: AppColors.orderHeldBorder,
+        foreground: AppColors.orderHeldText,
+        icon: Icons.keyboard_return_outlined,
+      ),
     };
   }
 }
