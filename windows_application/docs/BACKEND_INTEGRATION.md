@@ -4,7 +4,7 @@
 
 The Flutter POS flow uses `DioApiClient` in `lib/core/network`. The client wraps Dio with:
 
-- Base URL: `http://127.0.0.1:8000/api/v1`
+- Base URL: `http://localhost:8000/api/v1`
 - Default headers: `Accept: application/json`, `Content-Type: application/json`, `X-Tenant-Id: 1`
 - Connect, send, and receive timeouts
 - Laravel `{ "data": ... }` response unwrapping
@@ -13,7 +13,7 @@ The Flutter POS flow uses `DioApiClient` in `lib/core/network`. The client wraps
 `ApiConfig.baseUrl` can be overridden at build time with:
 
 ```bash
---dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
+--dart-define=API_BASE_URL=http://localhost:8000/api/v1
 ```
 
 ## Startup Flow
@@ -56,9 +56,43 @@ After `currentOrderId` is set, `PosState` displays subtotal, discount, tax, and 
 
 Backend order item IDs are stored on `CartItem.backendItemId`, and quantity/remove actions use those IDs.
 
+## Orders Backend Integration
+
+The Orders screen and Order Details side panel are backend-backed through the existing `DioApiClient`.
+
+Connected endpoints:
+
+- Order list: `GET /orders`
+- Branch order list: `GET /orders?branchId=1`
+- Held orders: `GET /orders?branchId=1&status=held`
+- Dine-in orders: `GET /orders?branchId=1&orderType=dine_in`
+- Takeaway orders: `GET /orders?branchId=1&orderType=takeaway`
+- Order detail: `GET /orders/{id}`
+
+Filter mapping:
+
+- Active Orders calls `GET /orders?branchId=1` and keeps `draft`, `preparing`, and `ready` style orders in the UI.
+- Held Orders calls `GET /orders?branchId=1&status=held`.
+- Dine-in calls `GET /orders?branchId=1&orderType=dine_in`.
+- Takeaway calls `GET /orders?branchId=1&orderType=takeaway`.
+
+Status mapping:
+
+- `draft` -> `PREPARING`
+- `held` -> `HELD`
+- `paid` -> `COMPLETED`
+- `refunded` -> `REFUNDED`
+- `partially_refunded` -> `PARTIAL REFUND`
+- `cancelled` -> `CANCELLED`
+
+Order list responses are treated as summaries. If `items` is empty on `GET /orders`, the card safely shows zero items and no line item preview. The side panel fetches `GET /orders/{id}` and maps full items, modifiers, notes, payments, refunds, timeline, and totals.
+
 ## Current Limitations
 
-- Orders screen list, Order Details, and Refund flow still use fake/local data.
+- PAY from Orders is not connected yet.
+- RESUME held order is not connected to POS yet.
+- CANCEL and COMPLETE backend mutations from Orders are not connected yet.
+- Refund backend connection is pending; the current refund modal remains local.
 - Real print endpoint is not connected.
 - Payment dialog still keeps its existing UI and local amount-entry behavior; backend payment summary is fetched when the dialog opens.
 - Product customization renders backend modifier groups when available, but the visual design remains the existing modal.
@@ -66,4 +100,4 @@ Backend order item IDs are stored on `CartItem.backendItemId`, and quantity/remo
 
 ## Next Backend Step
 
-Connect Orders screen, Order Details, and Refund flow to backend API.
+Connect Orders actions: resume held order, pay from orders, cancel/complete, and refund backend flow.

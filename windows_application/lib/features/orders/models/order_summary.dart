@@ -14,9 +14,13 @@ class OrderSummary extends Equatable {
     required this.timeAgo,
     required this.items,
     required this.total,
-  });
+    this.backendId,
+    String? displayNumber,
+  }) : displayNumber = displayNumber ?? '#$id';
 
   final String id;
+  final int? backendId;
+  final String displayNumber;
   final OrderSummaryType type;
   final String customerName;
   final OrderStatus status;
@@ -28,6 +32,8 @@ class OrderSummary extends Equatable {
   OrderSummary copyWith({OrderStatus? status}) {
     return OrderSummary(
       id: id,
+      backendId: backendId,
+      displayNumber: displayNumber,
       type: type,
       customerName: customerName,
       status: status ?? this.status,
@@ -41,6 +47,8 @@ class OrderSummary extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     id,
+    backendId,
+    displayNumber,
     type,
     customerName,
     status,

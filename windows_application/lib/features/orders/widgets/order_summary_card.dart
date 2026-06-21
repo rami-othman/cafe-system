@@ -55,7 +55,7 @@ class OrderSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '#${order.id} • ${order.type.label}',
+                      '${order.displayNumber} • ${order.type.label}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.labelSmall.copyWith(

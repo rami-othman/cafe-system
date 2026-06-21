@@ -105,7 +105,7 @@ class DioApiClient {
     if (_isBackendOffline(error)) {
       return const ApiException(
         message:
-            'Backend is not reachable. Start Laravel server on http://127.0.0.1:8000.',
+            'Backend is not reachable. Start Laravel server on http://localhost:8000.',
       );
     }
 

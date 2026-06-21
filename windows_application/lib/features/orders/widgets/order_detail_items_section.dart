@@ -19,6 +19,13 @@ class OrderDetailItemsSection extends StatelessWidget {
       title: 'Order Items',
       child: Column(
         children: <Widget>[
+          if (items.isEmpty)
+            Text(
+              'No line items',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
           for (int index = 0; index < items.length; index++) ...<Widget>[
             _OrderDetailItemRow(item: items[index]),
             if (index != items.length - 1)

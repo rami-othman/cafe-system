@@ -52,14 +52,16 @@ class OrderPaymentSection extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    '${payment.statusLabel} - Auth: ${payment.authCode}',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
+                  if (payment.hasPayment) ...<Widget>[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      '${payment.statusLabel} - Auth: ${payment.authCode}',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -67,12 +69,13 @@ class OrderPaymentSection extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
-                Text(
-                  CurrencyFormatter.format(payment.amount),
-                  style: AppTextStyles.labelLarge.copyWith(
-                    color: AppColors.primary,
+                if (payment.hasPayment)
+                  Text(
+                    CurrencyFormatter.format(payment.amount),
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
                 if (detail.hasRefund) ...<Widget>[
                   const SizedBox(height: AppSpacing.xs),
                   Text(

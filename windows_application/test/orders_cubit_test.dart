@@ -18,27 +18,30 @@ void main() {
     cubit.close();
   });
 
-  test('loads fake orders with active orders selected by default', () async {
-    await cubit.loadOrders();
+  test(
+    'loads active fake orders with active orders selected by default',
+    () async {
+      await cubit.loadOrders();
 
-    expect(cubit.state.orders, hasLength(4));
-    expect(cubit.state.selectedFilter, OrdersFilter.activeOrders);
-    expect(cubit.state.filteredOrders.map((order) => order.id), <String>[
-      'ORD-1042',
-      'ORD-1041',
-      'ORD-1044',
-    ]);
-  });
+      expect(cubit.state.orders, hasLength(3));
+      expect(cubit.state.selectedFilter, OrdersFilter.activeOrders);
+      expect(cubit.state.filteredOrders.map((order) => order.id), <String>[
+        '1042',
+        '1041',
+        '1044',
+      ]);
+    },
+  );
 
   test('filters held, dine-in, and takeaway orders', () async {
     await cubit.loadOrders();
 
-    cubit.selectFilter(OrdersFilter.heldOrders);
+    await cubit.selectFilter(OrdersFilter.heldOrders);
     expect(cubit.state.filteredOrders.map((order) => order.id), <String>[
-      'ORD-1043',
+      '1043',
     ]);
 
-    cubit.selectFilter(OrdersFilter.dineIn);
+    await cubit.selectFilter(OrdersFilter.dineIn);
     expect(
       cubit.state.filteredOrders.every((order) {
         return order.type == OrderSummaryType.dineIn;
@@ -46,7 +49,7 @@ void main() {
       isTrue,
     );
 
-    cubit.selectFilter(OrdersFilter.takeaway);
+    await cubit.selectFilter(OrdersFilter.takeaway);
     expect(
       cubit.state.filteredOrders.every((order) {
         return order.type == OrderSummaryType.takeaway;
@@ -58,23 +61,26 @@ void main() {
   test('cancel and complete update order status locally', () async {
     await cubit.loadOrders();
 
-    cubit.cancelOrder('ORD-1043');
+    await cubit.selectFilter(OrdersFilter.heldOrders);
+    cubit.cancelOrder('1043');
     expect(
-      cubit.state.orders.singleWhere((order) => order.id == 'ORD-1043').status,
+      cubit.state.orders.singleWhere((order) => order.id == '1043').status,
       OrderStatus.cancelled,
     );
 
-    cubit.completeOrder('ORD-1041');
+    await cubit.selectFilter(OrdersFilter.activeOrders);
+    cubit.completeOrder('1041');
     expect(
-      cubit.state.orders.singleWhere((order) => order.id == 'ORD-1041').status,
+      cubit.state.orders.singleWhere((order) => order.id == '1041').status,
       OrderStatus.completed,
     );
   });
 
   test('repository returns fake detail data for an order', () async {
-    final detail = await const OrdersRepository().getOrderDetail('ORD-1042');
+    final detail = await const OrdersRepository().getOrderDetail(1042);
 
-    expect(detail.id, 'ORD-1042');
+    expect(detail.id, '1042');
+    expect(detail.displayNumber, '#ORD-1042');
     expect(detail.customerName, 'Sarah Jenkins');
     expect(detail.items, isNotEmpty);
     expect(detail.payment.methodLabel, contains('Visa'));
@@ -84,9 +90,9 @@ void main() {
   test('opens and closes selected order details', () async {
     await cubit.loadOrders();
 
-    await cubit.openOrderDetails('ORD-1042');
+    await cubit.openOrderDetails('1042');
 
-    expect(cubit.state.selectedOrderDetail?.id, 'ORD-1042');
+    expect(cubit.state.selectedOrderDetail?.id, '1042');
     expect(cubit.state.isDetailsLoading, isFalse);
     expect(cubit.state.detailsErrorMessage, isNull);
 
@@ -97,13 +103,13 @@ void main() {
 
   test('confirm refund updates selected order detail locally', () async {
     await cubit.loadOrders();
-    await cubit.openOrderDetails('ORD-1042');
+    await cubit.openOrderDetails('1042');
 
     final double total = cubit.state.selectedOrderDetail!.total;
 
     cubit.confirmRefund(
       RefundResult(
-        orderId: 'ORD-1042',
+        orderId: '1042',
         type: RefundType.full,
         amount: total,
         reason: 'Customer Request',
@@ -121,11 +127,11 @@ void main() {
 
   test('confirm partial refund keeps order open with partial marker', () async {
     await cubit.loadOrders();
-    await cubit.openOrderDetails('ORD-1042');
+    await cubit.openOrderDetails('1042');
 
     cubit.confirmRefund(
       RefundResult(
-        orderId: 'ORD-1042',
+        orderId: '1042',
         type: RefundType.partial,
         amount: 5,
         reason: 'Item Quality Issue',

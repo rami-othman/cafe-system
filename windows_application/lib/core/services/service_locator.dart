@@ -29,7 +29,9 @@ void setupServiceLocator({bool useBackend = true}) {
 
   if (!serviceLocator.isRegistered<OrdersRepository>()) {
     serviceLocator.registerLazySingleton<OrdersRepository>(
-      OrdersRepository.new,
+      () => useBackend
+          ? OrdersRepository(apiClient: serviceLocator<DioApiClient>())
+          : const OrdersRepository(),
     );
   }
 

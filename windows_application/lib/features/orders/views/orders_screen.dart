@@ -49,6 +49,11 @@ class OrdersScreen extends StatelessWidget {
                         const SizedBox(height: AppSpacing.xxl),
                         if (state.isLoading)
                           const Center(child: CircularProgressIndicator())
+                        else if (state.errorMessage != null)
+                          AppEmptyState(
+                            message: state.errorMessage!,
+                            icon: Icons.cloud_off_outlined,
+                          )
                         else if (state.filteredOrders.isEmpty)
                           const AppEmptyState(
                             message: 'No orders match this filter yet.',
@@ -60,21 +65,36 @@ class OrdersScreen extends StatelessWidget {
                             onDetails: cubit.openOrderDetails,
                             onPay: () => _showSnackBar(
                               context,
-                              'Payment from Orders screen will be added later.',
+                              'Payment from Orders screen will be connected later.',
                             ),
                             onResume: () => _showSnackBar(
                               context,
                               'Resume held order will be connected to POS later.',
                             ),
-                            onCancel: cubit.cancelOrder,
-                            onComplete: cubit.completeOrder,
+                            onCancel: () => _showSnackBar(
+                              context,
+                              'Cancel order from Orders screen will be connected later.',
+                            ),
+                            onComplete: () => _showSnackBar(
+                              context,
+                              'Complete order from Orders screen will be connected later.',
+                            ),
                           ),
                       ],
                     ),
                   ),
                 ),
               ),
-              if (state.selectedOrderDetail != null)
+              if (state.isDetailsLoading || state.detailsErrorMessage != null)
+                Positioned.fill(
+                  child: _OrderDetailsOverlay(
+                    onClose: cubit.closeOrderDetails,
+                    child: _OrderDetailsStatusPanel(
+                      message: state.detailsErrorMessage,
+                    ),
+                  ),
+                )
+              else if (state.selectedOrderDetail != null)
                 Positioned.fill(
                   child: _OrderDetailsOverlay(
                     onClose: cubit.closeOrderDetails,
@@ -210,8 +230,8 @@ class _OrdersGrid extends StatelessWidget {
   final ValueChanged<String> onDetails;
   final VoidCallback onPay;
   final VoidCallback onResume;
-  final ValueChanged<String> onCancel;
-  final ValueChanged<String> onComplete;
+  final VoidCallback onCancel;
+  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -232,8 +252,8 @@ class _OrdersGrid extends StatelessWidget {
                   onDetails: () => onDetails(order.id),
                   onPay: onPay,
                   onResume: onResume,
-                  onCancel: () => onCancel(order.id),
-                  onComplete: () => onComplete(order.id),
+                  onCancel: onCancel,
+                  onComplete: onComplete,
                 ),
               ),
           ],
@@ -257,6 +277,60 @@ class _OrdersGrid extends StatelessWidget {
     return fillWidth
         .clamp(AppSizes.orderCardMinWidth, AppSizes.orderCardMaxWidth)
         .toDouble();
+  }
+}
+
+class _OrderDetailsStatusPanel extends StatelessWidget {
+  const _OrderDetailsStatusPanel({this.message});
+
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasError = message != null;
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double compactWidth =
+            constraints.maxWidth - AppSizes.orderDetailsCompactGutter;
+        final double panelWidth = AppSizes.orderDetailsPanelWidth.clamp(
+          0,
+          compactWidth > 0 ? compactWidth : constraints.maxWidth,
+        );
+
+        return Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: panelWidth,
+            height: double.infinity,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(left: BorderSide(color: AppColors.border)),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    offset: Offset(-8, 0),
+                    blurRadius: 24,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: hasError
+                    ? Padding(
+                        padding: AppSpacing.allXl,
+                        child: AppEmptyState(
+                          message: message!,
+                          icon: Icons.cloud_off_outlined,
+                        ),
+                      )
+                    : const CircularProgressIndicator(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

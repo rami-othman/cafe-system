@@ -63,6 +63,8 @@ Phase 1 — Project Foundation
   preview.
 - Fixed backend POS product category mapping so products returned with
   `categoryId` display under the selected category tabs.
+- Connected Orders screen and Order Details side panel to Laravel backend using
+  Dio.
 
 ## In Progress
 
@@ -70,7 +72,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Connect Orders screen, Order Details, and Refund flow to backend API.
+Connect Orders actions: resume held order, pay from orders, cancel/complete,
+and refund backend flow.
 
 ## Architecture Decisions
 
@@ -159,3 +162,6 @@ Connect Orders screen, Order Details, and Refund flow to backend API.
 - 2026-06-20: Fixed POS product grid filtering by mapping backend product
   `categoryId` values to category names and returning `categoryName` from the
   menu products API.
+- 2026-06-20: Connected Orders screen and Order Details side panel to Laravel
+  backend using Dio, including list/detail endpoints, filter mapping, status
+  mapping, and safe placeholders for order actions.
