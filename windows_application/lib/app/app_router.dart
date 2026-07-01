@@ -3,6 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/services/service_locator.dart';
+import '../features/menu/controllers/menu_cubit.dart';
+import '../features/menu/views/categories_management_screen.dart';
+import '../features/menu/views/combo_builder_screen.dart';
+import '../features/menu/views/create_edit_product_screen.dart';
+import '../features/menu/views/menu_overview_screen.dart';
+import '../features/menu/views/modifier_groups_screen.dart';
+import '../features/menu/views/product_availability_screen.dart';
+import '../features/menu/views/product_variants_pricing_screen.dart';
+import '../features/menu/views/products_list_screen.dart';
 import '../features/orders/controllers/orders_cubit.dart';
 import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
@@ -29,6 +38,9 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<OrdersCubit>(
               create: (_) => serviceLocator<OrdersCubit>()..loadOrders(),
             ),
+            BlocProvider<MenuCubit>(
+              create: (_) => serviceLocator<MenuCubit>()..loadMenuData(),
+            ),
           ],
           child: shell,
         );
@@ -44,6 +56,49 @@ final GoRouter appRouter = GoRouter(
           name: AppRouteNames.orders,
           builder: (context, state) => const OrdersScreen(),
         ),
+        GoRoute(
+          path: AppRoutes.menu,
+          name: AppRouteNames.menu,
+          builder: (context, state) => const MenuOverviewScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.menuProducts,
+          name: AppRouteNames.menuProducts,
+          builder: (context, state) => const ProductsListScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.menuProductCreate,
+          name: AppRouteNames.menuProductCreate,
+          builder: (context, state) => const CreateEditProductScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.menuCategories,
+          name: AppRouteNames.menuCategories,
+          builder: (context, state) => const CategoriesManagementScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.menuModifiers,
+          name: AppRouteNames.menuModifiers,
+          builder: (context, state) => const ModifierGroupsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.menuCombos,
+          name: AppRouteNames.menuCombos,
+          builder: (context, state) => const ComboBuilderScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.menuProductVariants,
+          name: AppRouteNames.menuProductVariants,
+          builder: (context, state) => ProductVariantsPricingScreen(
+            productId: state.pathParameters['id']!,
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.menuProductAvailability,
+          name: AppRouteNames.menuProductAvailability,
+          builder: (context, state) =>
+              ProductAvailabilityScreen(productId: state.pathParameters['id']!),
+        ),
       ],
     ),
   ],
@@ -57,6 +112,10 @@ Widget? _rightPanelFor(GoRouterState state) {
 }
 
 String _activeLabelFor(GoRouterState state) {
+  if (state.matchedLocation.startsWith(AppRoutes.menu)) {
+    return 'Menu';
+  }
+
   return switch (state.matchedLocation) {
     AppRoutes.orders => 'Orders',
     _ => 'POS',
@@ -66,9 +125,26 @@ String _activeLabelFor(GoRouterState state) {
 abstract final class AppRoutes {
   static const String pos = '/';
   static const String orders = '/orders';
+  static const String menu = '/menu';
+  static const String menuProducts = '/menu/products';
+  static const String menuProductCreate = '/menu/products/create';
+  static const String menuCategories = '/menu/categories';
+  static const String menuModifiers = '/menu/modifiers';
+  static const String menuCombos = '/menu/combos';
+  static const String menuProductVariants = '/menu/products/:id/variants';
+  static const String menuProductAvailability =
+      '/menu/products/:id/availability';
 }
 
 abstract final class AppRouteNames {
   static const String pos = 'pos';
   static const String orders = 'orders';
+  static const String menu = 'menu';
+  static const String menuProducts = 'menu-products';
+  static const String menuProductCreate = 'menu-product-create';
+  static const String menuCategories = 'menu-categories';
+  static const String menuModifiers = 'menu-modifiers';
+  static const String menuCombos = 'menu-combos';
+  static const String menuProductVariants = 'menu-product-variants';
+  static const String menuProductAvailability = 'menu-product-availability';
 }

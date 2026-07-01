@@ -65,6 +65,9 @@ Phase 1 — Project Foundation
   `categoryId` display under the selected category tabs.
 - Connected Orders screen and Order Details side panel to Laravel backend using
   Dio.
+- Added the Menu Management foundation with immutable menu domain models, mock
+  repository data, Menu Cubit/state, dependency injection, placeholder routes,
+  sidebar navigation, and automated repository/routing coverage.
 
 ## In Progress
 
@@ -165,3 +168,6 @@ and refund backend flow.
 - 2026-06-20: Connected Orders screen and Order Details side panel to Laravel
   backend using Dio, including list/detail endpoints, filter mapping, status
   mapping, and safe placeholders for order actions.
+- 2026-07-01: Added the Menu Management foundation with menu catalog models,
+  mock repository data, Cubit/state filtering, eight title-only routes, Menu
+  sidebar activation, service-locator registrations, and automated tests.
