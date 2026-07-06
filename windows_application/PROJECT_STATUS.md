@@ -68,6 +68,8 @@ Phase 1 — Project Foundation
 - Added the Menu Management foundation with immutable menu domain models, mock
   repository data, Menu Cubit/state, dependency injection, placeholder routes,
   sidebar navigation, and automated repository/routing coverage.
+- Implemented the Figma-based Menu Overview UI with a Menu-specific top bar,
+  action buttons, KPI cards, internal tabs, filters, and recent activity table.
 
 ## In Progress
 
@@ -75,8 +77,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Connect Orders actions: resume held order, pay from orders, cancel/complete,
-and refund backend flow.
+Implement the Menu Products UI while keeping the remaining Menu Management
+screens as placeholders.
 
 ## Architecture Decisions
 
@@ -171,3 +173,7 @@ and refund backend flow.
 - 2026-07-01: Added the Menu Management foundation with menu catalog models,
   mock repository data, Cubit/state filtering, eight title-only routes, Menu
   sidebar activation, service-locator registrations, and automated tests.
+- 2026-07-06: Implemented the desktop-first Menu Overview UI from Figma,
+  including the scoped shell header, action controls, Cubit-backed KPI cards,
+  responsive tabs and filters, exact mock activity rows, status chips, and
+  widget/routing coverage.

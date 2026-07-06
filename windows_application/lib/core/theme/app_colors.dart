@@ -73,6 +73,13 @@ abstract final class AppColors {
   static const Color orderDetailsTimelineLine = Color(0xFFD8CEC6);
   static const Color refundWarningBackground = Color(0xFFFFF1F0);
   static const Color refundWarningBorder = Color(0xFFFFD2CF);
+  static const Color menuToolbarBackground = Color(0x4DF4E7D3);
+  static const Color menuTableHeader = Color(0xFFF4E7D3);
+  static const Color menuAppliedBadge = Color(0x1A2F855A);
+  static const Color menuAppliedText = Color(0xFF2F855A);
+  static const Color menuPendingBadge = Color(0x1AD97706);
+  static const Color menuPendingText = Color(0xFFD97706);
+  static const Color menuInactiveIcon = Color(0xFFE2521D);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../models/menu_activity.dart';
 import '../models/menu_category.dart';
 import '../models/menu_enums.dart';
+import '../models/menu_kpis.dart';
 import '../models/menu_product.dart';
 import '../models/modifier_group.dart';
 
@@ -18,6 +19,7 @@ class MenuState extends Equatable {
     this.products = const <MenuProduct>[],
     this.modifierGroups = const <ModifierGroup>[],
     this.recentActivities = const <MenuActivity>[],
+    this.kpis,
     this.selectedMenuTab = MenuTab.overview,
     this.searchQuery = '',
     this.selectedCategoryFilter,
@@ -33,6 +35,7 @@ class MenuState extends Equatable {
   final List<MenuProduct> products;
   final List<ModifierGroup> modifierGroups;
   final List<MenuActivity> recentActivities;
+  final MenuKpis? kpis;
   final MenuTab selectedMenuTab;
   final String searchQuery;
   final String? selectedCategoryFilter;
@@ -49,6 +52,7 @@ class MenuState extends Equatable {
     List<MenuProduct>? products,
     List<ModifierGroup>? modifierGroups,
     List<MenuActivity>? recentActivities,
+    MenuKpis? kpis,
     MenuTab? selectedMenuTab,
     String? searchQuery,
     String? selectedCategoryFilter,
@@ -71,6 +75,7 @@ class MenuState extends Equatable {
       products: products ?? this.products,
       modifierGroups: modifierGroups ?? this.modifierGroups,
       recentActivities: recentActivities ?? this.recentActivities,
+      kpis: kpis ?? this.kpis,
       selectedMenuTab: selectedMenuTab ?? this.selectedMenuTab,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedCategoryFilter: clearCategoryFilter
@@ -99,6 +104,7 @@ class MenuState extends Equatable {
     products,
     modifierGroups,
     recentActivities,
+    kpis,
     selectedMenuTab,
     searchQuery,
     selectedCategoryFilter,

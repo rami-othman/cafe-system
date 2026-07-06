@@ -6,6 +6,7 @@ class MenuActivity extends Equatable {
     required this.activity,
     required this.user,
     required this.dateTime,
+    required this.dateTimeLabel,
     required this.status,
   });
 
@@ -13,8 +14,16 @@ class MenuActivity extends Equatable {
   final String activity;
   final String user;
   final DateTime dateTime;
+  final String dateTimeLabel;
   final String status;
 
   @override
-  List<Object?> get props => <Object?>[id, activity, user, dateTime, status];
+  List<Object?> get props => <Object?>[
+    id,
+    activity,
+    user,
+    dateTime,
+    dateTimeLabel,
+    status,
+  ];
 }

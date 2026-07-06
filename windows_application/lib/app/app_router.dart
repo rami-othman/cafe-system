@@ -12,6 +12,7 @@ import '../features/menu/views/modifier_groups_screen.dart';
 import '../features/menu/views/product_availability_screen.dart';
 import '../features/menu/views/product_variants_pricing_screen.dart';
 import '../features/menu/views/products_list_screen.dart';
+import '../features/menu/widgets/menu_top_bar.dart';
 import '../features/orders/controllers/orders_cubit.dart';
 import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
@@ -27,6 +28,7 @@ final GoRouter appRouter = GoRouter(
         final AppShell shell = AppShell(
           activeLabel: _activeLabelFor(state),
           rightPanel: _rightPanelFor(state),
+          topBar: _topBarFor(state),
           child: child,
         );
 
@@ -107,6 +109,13 @@ final GoRouter appRouter = GoRouter(
 Widget? _rightPanelFor(GoRouterState state) {
   return switch (state.matchedLocation) {
     AppRoutes.pos => const PosCartPanel(),
+    _ => null,
+  };
+}
+
+Widget? _topBarFor(GoRouterState state) {
+  return switch (state.matchedLocation) {
+    AppRoutes.menu => const MenuTopBar(),
     _ => null,
   };
 }

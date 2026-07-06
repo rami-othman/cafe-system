@@ -23,7 +23,23 @@ void main() {
     await tester.tap(find.text('Menu'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Menu Management'), findsOneWidget);
+    expect(find.text('Cafe System 618'), findsWidgets);
+    expect(find.text('Search menu...'), findsOneWidget);
+    expect(find.text('Recent Menu Activity'), findsOneWidget);
+    expect(_menuSidebarItem(tester).isActive, isTrue);
+  });
+
+  testWidgets('Products tab opens its placeholder route', (
+    WidgetTester tester,
+  ) async {
+    appRouter.go(AppRoutes.menu);
+    await _pumpApp(tester);
+
+    await tester.tap(find.text('Products'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Recent Menu Activity'), findsNothing);
     expect(_menuSidebarItem(tester).isActive, isTrue);
   });
 

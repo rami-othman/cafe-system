@@ -24,7 +24,7 @@ void main() {
       );
     });
 
-    test('returns modifiers, activities, and derived KPI counts', () async {
+    test('returns modifiers, overview activities, and KPI counts', () async {
       final modifierGroups = await repository.getModifierGroups();
       final activities = await repository.getRecentActivities();
       final kpis = await repository.getMenuKpis();
@@ -33,10 +33,17 @@ void main() {
         modifierGroups.map((group) => group.name),
         contains('Milk Options'),
       );
-      expect(activities, isNotEmpty);
-      expect(kpis.totalCategories, 7);
-      expect(kpis.totalProducts, 7);
-      expect(kpis.modifierGroups, 5);
+      expect(activities, hasLength(5));
+      expect(
+        activities.first.activity,
+        'Latte price updated from \$4.50 to \$4.75',
+      );
+      expect(activities[2].status, 'Pending Sync');
+      expect(kpis.totalCategories, 12);
+      expect(kpis.totalProducts, 84);
+      expect(kpis.activeProducts, 78);
+      expect(kpis.inactiveProducts, 6);
+      expect(kpis.modifierGroups, 15);
     });
   });
 }

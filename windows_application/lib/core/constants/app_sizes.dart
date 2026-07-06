@@ -97,6 +97,14 @@ abstract final class AppSizes {
   static const double refundDialogHeaderHeight = 56;
   static const double refundInputHeight = 44;
   static const double refundNotesHeight = 80;
+  static const double menuContentMaxWidth = 1600;
+  static const double menuSearchWidth = 256;
+  static const double menuSearchHeight = 40;
+  static const double menuKpiHeight = 112;
+  static const double menuKpiMinWidth = 160;
+  static const double menuTabsFiltersBreakpoint = 820;
+  static const double menuTableMinWidth = 900;
+  static const double menuTableRowHeight = 40;
 
   static const double desktopNavigationWidth = sidebarWidth;
   static const double desktopCartPanelWidth = cartPanelWidth;

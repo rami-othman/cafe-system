@@ -22,6 +22,11 @@ void main() {
       expect(cubit.state.products, hasLength(7));
       expect(cubit.state.modifierGroups, hasLength(5));
       expect(cubit.state.recentActivities, isNotEmpty);
+      expect(cubit.state.kpis?.totalCategories, 12);
+      expect(cubit.state.kpis?.totalProducts, 84);
+      expect(cubit.state.kpis?.activeProducts, 78);
+      expect(cubit.state.kpis?.inactiveProducts, 6);
+      expect(cubit.state.kpis?.modifierGroups, 15);
       expect(cubit.state.errorMessage, isNull);
     });
 

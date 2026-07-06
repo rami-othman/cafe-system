@@ -30,31 +30,54 @@ class MockMenuRepository implements MenuRepository {
   Future<List<MenuActivity>> getRecentActivities() async => <MenuActivity>[
     MenuActivity(
       id: 'activity-1',
-      activity: 'Updated Caffe Latte pricing',
-      user: 'Rami',
-      dateTime: DateTime(2026, 7, 1, 9, 30),
-      status: 'Completed',
+      activity: 'Latte price updated from \$4.50 to \$4.75',
+      user: 'Sarah J.',
+      dateTime: DateTime(2026, 7, 6, 9, 41),
+      dateTimeLabel: 'Today, 09:41 AM',
+      status: 'Applied',
     ),
     MenuActivity(
       id: 'activity-2',
-      activity: 'Added Morning Start Combo',
-      user: 'Manager',
-      dateTime: DateTime(2026, 6, 30, 16, 15),
-      status: 'Published',
+      activity: 'New category: Seasonal Brews added',
+      user: 'Admin',
+      dateTime: DateTime(2026, 7, 5, 14, 30),
+      dateTimeLabel: 'Yesterday, 14:30 PM',
+      status: 'Applied',
+    ),
+    MenuActivity(
+      id: 'activity-3',
+      activity: 'Disabled item: Pumpkin Spice Muffin',
+      user: 'Mike T.',
+      dateTime: DateTime(2025, 10, 24, 8, 15),
+      dateTimeLabel: 'Oct 24, 08:15 AM',
+      status: 'Pending Sync',
+    ),
+    MenuActivity(
+      id: 'activity-4',
+      activity: 'Added modifier: Almond Milk (+\$0.50)',
+      user: 'Sarah J.',
+      dateTime: DateTime(2025, 10, 22, 11, 20),
+      dateTimeLabel: 'Oct 22, 11:20 AM',
+      status: 'Applied',
+    ),
+    MenuActivity(
+      id: 'activity-5',
+      activity: 'Image updated for: Croissant',
+      user: 'Admin',
+      dateTime: DateTime(2025, 10, 20, 16, 45),
+      dateTimeLabel: 'Oct 20, 16:45 PM',
+      status: 'Applied',
     ),
   ];
 
   @override
   Future<MenuKpis> getMenuKpis() async {
-    final int inactive = _products
-        .where((MenuProduct product) => product.status != ProductStatus.active)
-        .length;
-    return MenuKpis(
-      totalCategories: _categories.length,
-      totalProducts: _products.length,
-      activeProducts: _products.length - inactive,
-      inactiveProducts: inactive,
-      modifierGroups: _modifierGroups.length,
+    return const MenuKpis(
+      totalCategories: 12,
+      totalProducts: 84,
+      activeProducts: 78,
+      inactiveProducts: 6,
+      modifierGroups: 15,
     );
   }
 

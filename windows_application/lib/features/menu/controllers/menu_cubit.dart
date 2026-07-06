@@ -25,6 +25,7 @@ class MenuCubit extends Cubit<MenuState> {
         repository.getProducts(),
         repository.getModifierGroups(),
         repository.getRecentActivities(),
+        repository.getMenuKpis(),
       ]);
       emit(
         state.copyWith(
@@ -33,6 +34,7 @@ class MenuCubit extends Cubit<MenuState> {
           products: results[1] as dynamic,
           modifierGroups: results[2] as dynamic,
           recentActivities: results[3] as dynamic,
+          kpis: results[4] as MenuKpis,
           clearErrorMessage: true,
         ),
       );
