@@ -79,6 +79,9 @@ Phase 1 — Project Foundation
 - Implemented the Figma-based Modifier Groups UI with Cubit-loaded mock data,
   local search and selection, responsive master/detail layout, options table,
   assigned product chips, and placeholder actions.
+- Implemented the Create Discount Policy UI with local form state, responsive
+  policy sections, POS preview, configuration summary, sticky actions, sidebar
+  routing, and automated route/layout coverage.
 
 ## In Progress
 
@@ -86,8 +89,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Implement the Menu Categories UI while keeping backend integration and
-modifier CRUD out of scope.
+Implement the Discounts list UI while keeping discount calculation, backend
+integration, and persistence out of scope.
 
 ## Architecture Decisions
 
@@ -200,3 +203,7 @@ modifier CRUD out of scope.
   exact mock group counts, local search/selection, reusable group/detail/table
   widgets, assigned product chips, placeholder actions, responsive stacking,
   and widget/routing coverage.
+- 2026-07-06: Implemented the desktop-first Create Discount Policy UI from the
+  supplied Figma reference and screenshot, including the `/discounts/create`
+  route, active Discounts sidebar state, local-only policy controls, responsive
+  form cards, POS preview, summary panel, sticky actions, and widget coverage.

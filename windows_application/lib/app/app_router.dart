@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/services/service_locator.dart';
+import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/menu/controllers/menu_cubit.dart';
 import '../features/menu/views/categories_management_screen.dart';
 import '../features/menu/views/combo_builder_screen.dart';
@@ -57,6 +58,11 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.orders,
           name: AppRouteNames.orders,
           builder: (context, state) => const OrdersScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.discountCreate,
+          name: AppRouteNames.discountCreate,
+          builder: (context, state) => const CreateDiscountPolicyScreen(),
         ),
         GoRoute(
           path: AppRoutes.menu,
@@ -139,6 +145,7 @@ String _activeLabelFor(GoRouterState state) {
   }
 
   return switch (state.matchedLocation) {
+    AppRoutes.discountCreate => 'Discounts',
     AppRoutes.orders => 'Orders',
     _ => 'POS',
   };
@@ -147,6 +154,7 @@ String _activeLabelFor(GoRouterState state) {
 abstract final class AppRoutes {
   static const String pos = '/';
   static const String orders = '/orders';
+  static const String discountCreate = '/discounts/create';
   static const String menu = '/menu';
   static const String menuProducts = '/menu/products';
   static const String menuProductCreate = '/menu/products/create';
@@ -161,6 +169,7 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const String pos = 'pos';
   static const String orders = 'orders';
+  static const String discountCreate = 'discount-create';
   static const String menu = 'menu';
   static const String menuProducts = 'menu-products';
   static const String menuProductCreate = 'menu-product-create';
