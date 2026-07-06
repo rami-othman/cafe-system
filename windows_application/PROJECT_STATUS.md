@@ -70,6 +70,15 @@ Phase 1 — Project Foundation
   sidebar navigation, and automated repository/routing coverage.
 - Implemented the Figma-based Menu Overview UI with a Menu-specific top bar,
   action buttons, KPI cards, internal tabs, filters, and recent activity table.
+- Implemented the Figma-based Products List UI with responsive filters, mock
+  product rows, reusable type/status chips, row actions, and pagination.
+- Implemented the Figma-based Create Product General Information UI with local
+  form state, responsive form sections, product summary/progress, channel
+  visibility controls, a fixed action footer, and navigable Menu/Products
+  breadcrumbs.
+- Implemented the Figma-based Modifier Groups UI with Cubit-loaded mock data,
+  local search and selection, responsive master/detail layout, options table,
+  assigned product chips, and placeholder actions.
 
 ## In Progress
 
@@ -77,8 +86,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Implement the Menu Products UI while keeping the remaining Menu Management
-screens as placeholders.
+Implement the Menu Categories UI while keeping backend integration and
+modifier CRUD out of scope.
 
 ## Architecture Decisions
 
@@ -177,3 +186,17 @@ screens as placeholders.
   including the scoped shell header, action controls, Cubit-backed KPI cards,
   responsive tabs and filters, exact mock activity rows, status chips, and
   widget/routing coverage.
+- 2026-07-06: Implemented the desktop-first Products List UI from Figma with a
+  Menu Management top bar, page actions, responsive search/filter controls,
+  five exact mock catalog rows, reusable product chips, icon thumbnails, row
+  actions, pagination, and widget/routing coverage.
+- 2026-07-06: Implemented the desktop-first Create Product General Information
+  UI from Figma with local-only form state, reusable Menu form widgets,
+  responsive two-column layout, locked setup progress, fixed action footer,
+  placeholder save feedback, and widget/routing coverage.
+- 2026-07-06: Made the Create Product Menu and Products breadcrumbs navigate
+  directly to `/menu` and `/menu/products`, with routing test coverage.
+- 2026-07-06: Implemented the desktop-first Modifier Groups UI from Figma with
+  exact mock group counts, local search/selection, reusable group/detail/table
+  widgets, assigned product chips, placeholder actions, responsive stacking,
+  and widget/routing coverage.

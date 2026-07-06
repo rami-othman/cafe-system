@@ -4,31 +4,31 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../models/menu_enums.dart';
 
-class ProductTypeChip extends StatelessWidget {
-  const ProductTypeChip({super.key, required this.type});
+enum MenuStatusTone { success, warning, neutral }
 
-  final ProductType type;
+class MenuStatusChip extends StatelessWidget {
+  const MenuStatusChip({
+    super.key,
+    required this.label,
+    this.tone = MenuStatusTone.success,
+  });
+
+  final String label;
+  final MenuStatusTone tone;
 
   @override
   Widget build(BuildContext context) {
-    final (Color background, Color foreground, String label) = switch (type) {
-      ProductType.simple => (
-        AppColors.primarySoft,
-        AppColors.textSecondary,
-        'Simple',
+    final (Color background, Color foreground) = switch (tone) {
+      MenuStatusTone.success => (
+        AppColors.menuAppliedBadge,
+        AppColors.menuAppliedText,
       ),
-      ProductType.variant => (
-        AppColors.discountBlueBadge,
-        AppColors.discountBlueText,
-        'Variant',
+      MenuStatusTone.warning => (
+        const Color(0x1AC2410C),
+        const Color(0xFFC2410C),
       ),
-      ProductType.combo => (
-        AppColors.orderHeldBadge,
-        AppColors.orderHeldText,
-        'Combo',
-      ),
+      MenuStatusTone.neutral => (AppColors.surfaceAlt, AppColors.textMuted),
     };
 
     return Container(
@@ -41,11 +41,11 @@ class ProductTypeChip extends StatelessWidget {
         borderRadius: AppRadius.pillRadius,
       ),
       child: Text(
-        label,
+        label.toUpperCase(),
         style: AppTextStyles.labelSmall.copyWith(
           color: foreground,
           fontSize: 10,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

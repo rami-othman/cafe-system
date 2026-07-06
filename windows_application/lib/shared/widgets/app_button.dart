@@ -6,7 +6,7 @@ import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 
-enum AppButtonVariant { primary, secondary, outlined, inverted, danger }
+enum AppButtonVariant { primary, secondary, accent, outlined, inverted, danger }
 
 class AppButton extends StatelessWidget {
   const AppButton({
@@ -96,6 +96,7 @@ class AppButton extends StatelessWidget {
   Color get _filledColor {
     return switch (variant) {
       AppButtonVariant.secondary => AppColors.secondary,
+      AppButtonVariant.accent => AppColors.tertiary,
       AppButtonVariant.inverted => AppColors.neutral,
       AppButtonVariant.danger => AppColors.danger,
       AppButtonVariant.primary ||
@@ -107,6 +108,7 @@ class AppButton extends StatelessWidget {
     return switch (variant) {
       AppButtonVariant.primary ||
       AppButtonVariant.secondary ||
+      AppButtonVariant.accent ||
       AppButtonVariant.inverted ||
       AppButtonVariant.danger => AppColors.textInverse,
       AppButtonVariant.outlined => AppColors.primary,

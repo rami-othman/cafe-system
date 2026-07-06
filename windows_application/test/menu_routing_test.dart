@@ -29,7 +29,7 @@ void main() {
     expect(_menuSidebarItem(tester).isActive, isTrue);
   });
 
-  testWidgets('Products tab opens its placeholder route', (
+  testWidgets('Products tab opens the Products List route', (
     WidgetTester tester,
   ) async {
     appRouter.go(AppRoutes.menu);
@@ -39,6 +39,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Products'), findsOneWidget);
+    expect(
+      find.text('Manage your catalog, pricing, and availability.'),
+      findsOneWidget,
+    );
     expect(find.text('Recent Menu Activity'), findsNothing);
     expect(_menuSidebarItem(tester).isActive, isTrue);
   });
@@ -50,6 +54,61 @@ void main() {
     await _pumpApp(tester);
 
     expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Menu Management'), findsWidgets);
+    expect(find.text('Search by name, SKU...'), findsOneWidget);
+    expect(_menuSidebarItem(tester).isActive, isTrue);
+  });
+
+  testWidgets('Add Product opens General Information and keeps Menu active', (
+    WidgetTester tester,
+  ) async {
+    appRouter.go(AppRoutes.menuProducts);
+    await _pumpApp(tester);
+
+    await tester.tap(find.text('Add Product'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Menu Management'), findsOneWidget);
+    expect(find.text('General Information'), findsOneWidget);
+    expect(find.text('Product Summary'), findsOneWidget);
+    expect(find.text('Save & Continue'), findsOneWidget);
+    expect(_menuSidebarItem(tester).isActive, isTrue);
+  });
+
+  testWidgets('Create Product breadcrumbs navigate to Products and Menu', (
+    WidgetTester tester,
+  ) async {
+    appRouter.go(AppRoutes.menuProductCreate);
+    await _pumpApp(tester);
+
+    await tester.tap(find.byKey(const Key('breadcrumb-products')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Manage your catalog, pricing, and availability.'),
+      findsOneWidget,
+    );
+
+    appRouter.go(AppRoutes.menuProductCreate);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('breadcrumb-menu')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recent Menu Activity'), findsOneWidget);
+    expect(_menuSidebarItem(tester).isActive, isTrue);
+  });
+
+  testWidgets('/menu/modifiers opens Modifier Groups and keeps Menu active', (
+    WidgetTester tester,
+  ) async {
+    appRouter.go(AppRoutes.menuModifiers);
+    await _pumpApp(tester);
+
+    expect(find.text('Menu Management'), findsWidgets);
+    expect(find.text('Modifier Groups'), findsWidgets);
+    expect(find.text('Milk Options'), findsWidgets);
+    expect(find.byTooltip('Search'), findsOneWidget);
     expect(_menuSidebarItem(tester).isActive, isTrue);
   });
 }

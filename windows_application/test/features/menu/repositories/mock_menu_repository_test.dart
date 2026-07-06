@@ -16,6 +16,18 @@ void main() {
         contains('Hot Coffee'),
       );
       expect(products.map((product) => product.name), contains('Espresso'));
+      expect(products.first.sku, 'BEV-ESP-01');
+      expect(products.first.categoryName, 'Beverages');
+      expect(products.first.basePrice, 3.50);
+      expect(products[1].sku, 'BEV-LAT-00');
+      expect(products[1].listSubtitle, '3 Variants (Size)');
+      expect(products[2].status, ProductStatus.inactive);
+      expect(
+        products
+            .singleWhere((product) => product.name == 'Morning Start Combo')
+            .basePrice,
+        8.00,
+      );
       expect(
         products
             .singleWhere((product) => product.name == 'Morning Start Combo')
@@ -33,6 +45,15 @@ void main() {
         modifierGroups.map((group) => group.name),
         contains('Milk Options'),
       );
+      final milkOptions = modifierGroups.first;
+      expect(milkOptions.options, hasLength(4));
+      expect(milkOptions.assignedProductIds, hasLength(12));
+      expect(modifierGroups[1].options, hasLength(3));
+      expect(modifierGroups[1].assignedProductIds, hasLength(8));
+      expect(modifierGroups[2].options, hasLength(6));
+      expect(modifierGroups[2].assignedProductIds, hasLength(15));
+      expect(modifierGroups[3].options, hasLength(4));
+      expect(modifierGroups[3].assignedProductIds, hasLength(5));
       expect(activities, hasLength(5));
       expect(
         activities.first.activity,

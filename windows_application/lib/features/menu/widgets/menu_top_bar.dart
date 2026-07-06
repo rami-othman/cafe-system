@@ -11,13 +11,22 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/menu_cubit.dart';
 
 class MenuTopBar extends StatelessWidget {
-  const MenuTopBar({super.key});
+  const MenuTopBar({
+    super.key,
+    this.title = AppConstants.appName,
+    this.showSearch = true,
+    this.showSearchAction = false,
+  });
+
+  final String title;
+  final bool showSearch;
+  final bool showSearchAction;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool showContext = constraints.maxWidth >= 1150;
+        final bool showContext = constraints.maxWidth >= 1120;
         final bool showTitle = constraints.maxWidth >= 610;
 
         return Container(
@@ -41,40 +50,44 @@ class MenuTopBar extends StatelessWidget {
           child: Row(
             children: <Widget>[
               if (showTitle) ...<Widget>[
-                Text(AppConstants.appName, style: AppTextStyles.headlineMedium),
-                const SizedBox(width: AppSpacing.xl),
+                Text(title, style: AppTextStyles.headlineMedium),
+                if (showSearch) const SizedBox(width: AppSpacing.xl),
               ],
-              SizedBox(
-                width: AppSizes.menuSearchWidth,
-                height: AppSizes.menuSearchHeight,
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    inputDecorationTheme: Theme.of(context).inputDecorationTheme
-                        .copyWith(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.sm,
+              if (showSearch)
+                SizedBox(
+                  width: AppSizes.menuSearchWidth,
+                  height: AppSizes.menuSearchHeight,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      inputDecorationTheme: Theme.of(context)
+                          .inputDecorationTheme
+                          .copyWith(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            border: const OutlineInputBorder(
+                              borderRadius: AppRadius.pillRadius,
+                            ),
+                            enabledBorder: const OutlineInputBorder(
+                              borderRadius: AppRadius.pillRadius,
+                              borderSide: BorderSide(color: AppColors.border),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderRadius: AppRadius.pillRadius,
+                              borderSide: BorderSide(
+                                color: AppColors.secondary,
+                              ),
+                            ),
                           ),
-                          border: const OutlineInputBorder(
-                            borderRadius: AppRadius.pillRadius,
-                          ),
-                          enabledBorder: const OutlineInputBorder(
-                            borderRadius: AppRadius.pillRadius,
-                            borderSide: BorderSide(color: AppColors.border),
-                          ),
-                          focusedBorder: const OutlineInputBorder(
-                            borderRadius: AppRadius.pillRadius,
-                            borderSide: BorderSide(color: AppColors.secondary),
-                          ),
-                        ),
-                  ),
-                  child: AppTextField(
-                    hintText: 'Search menu...',
-                    prefixIcon: Icons.search,
-                    onChanged: context.read<MenuCubit>().updateSearchQuery,
+                    ),
+                    child: AppTextField(
+                      hintText: 'Search menu...',
+                      prefixIcon: Icons.search,
+                      onChanged: context.read<MenuCubit>().updateSearchQuery,
+                    ),
                   ),
                 ),
-              ),
               const Spacer(),
               if (showContext) ...const <Widget>[
                 _ContextLabel(text: 'Branch: Central Branch'),
@@ -87,6 +100,13 @@ class MenuTopBar extends StatelessWidget {
                 ),
                 SizedBox(width: AppSpacing.lg),
               ],
+              if (showSearchAction)
+                IconButton(
+                  onPressed: () {},
+                  tooltip: 'Search',
+                  icon: const Icon(Icons.search),
+                  color: AppColors.textSecondary,
+                ),
               IconButton(
                 onPressed: () {},
                 tooltip: 'Notifications',

@@ -22,6 +22,7 @@ class MenuProduct extends Equatable {
     this.arabicName,
     this.cost,
     this.imageUrl,
+    this.listSubtitle,
   });
 
   final String id;
@@ -36,6 +37,7 @@ class MenuProduct extends Equatable {
   final double basePrice;
   final double? cost;
   final String? imageUrl;
+  final String? listSubtitle;
   final bool isTaxable;
   final List<ChannelType> availableChannels;
   final List<String> branchIds;
@@ -56,6 +58,7 @@ class MenuProduct extends Equatable {
     basePrice,
     cost,
     imageUrl,
+    listSubtitle,
     isTaxable,
     availableChannels,
     branchIds,

@@ -116,6 +116,19 @@ Widget? _rightPanelFor(GoRouterState state) {
 Widget? _topBarFor(GoRouterState state) {
   return switch (state.matchedLocation) {
     AppRoutes.menu => const MenuTopBar(),
+    AppRoutes.menuProducts => const MenuTopBar(
+      title: 'Menu Management',
+      showSearch: false,
+    ),
+    AppRoutes.menuProductCreate => const MenuTopBar(
+      title: 'Menu Management',
+      showSearch: false,
+    ),
+    AppRoutes.menuModifiers => const MenuTopBar(
+      title: 'Menu Management',
+      showSearch: false,
+      showSearchAction: true,
+    ),
     _ => null,
   };
 }
