@@ -25,7 +25,6 @@ The Flutter POS flow uses `DioApiClient` in `lib/core/network`. The client wraps
 - `GET /menu/categories?branchId=1`
 - `GET /menu/products?branchId=1&availability=all`
 - `GET /customers`
-- `GET /tables?branchId=1`
 - `GET /pos/state?branchId=1`
 
 If the backend is unreachable, the POS state receives the clear API error message from `ApiException`.
@@ -36,7 +35,7 @@ The current POS checkout flow is backend-backed through Dio:
 
 - Product details and modifiers: `GET /menu/products/{productId}?branchId=1`
 - Create order: `POST /orders`
-- Update order context: `PATCH /orders/{orderId}` for `orderType`, `tableId`, and `customerId`; explicit `null` clears a table or customer.
+- Update order context: `PATCH /orders/{orderId}` for `orderType` and `customerId`; Flutter sends `tableId: null` when changing order type.
 - Add item: `POST /orders/{orderId}/items`
 - Update quantity: `PATCH /orders/{orderId}/items/{itemId}`
 - Remove item: `DELETE /orders/{orderId}/items/{itemId}`
@@ -51,7 +50,7 @@ The current POS checkout flow is backend-backed through Dio:
 
 The existing POS screens and dialogs are preserved. Backend model mapping stays in repository/model code rather than widgets.
 
-Backend product-detail loading is explicit in Flutter: a successful detail response (including zero modifier groups) opens the backend customization flow, while a failed request shows Retry/Cancel and never falls back to local fake modifiers. Dine-in orders require a selected backend table; first-order creation and later customer/type/table changes use the selected context and synchronize from the returned order response.
+Backend product-detail loading is explicit in Flutter: a successful detail response (including zero modifier groups) opens the backend customization flow, while a failed request shows Retry/Cancel and never falls back to local fake modifiers. Cafe System 618 does not use table management in the current phase, so all new orders send `tableId: null` and order-type updates explicitly clear any table context.
 
 ## Backend Totals
 

@@ -5,7 +5,6 @@ import '../models/applied_discount.dart';
 import '../models/backend_order.dart';
 import '../models/backend_order_item.dart';
 import '../models/backend_product_detail.dart';
-import '../models/cafe_table.dart';
 import '../models/cart_item.dart';
 import '../models/create_order_request.dart';
 import '../models/customer.dart';
@@ -46,7 +45,6 @@ class PosCubit extends Cubit<PosState> {
         branchId: branchId,
       );
       final List<Customer> customers = await repository.getCustomers();
-      final tables = await repository.getTables(branchId: branchId);
       await repository.getPosState(branchId: branchId);
 
       emit(
@@ -57,7 +55,6 @@ class PosCubit extends Cubit<PosState> {
           products: products,
           categories: categories,
           customers: customers,
-          tables: tables,
           selectedCategory: categories.isEmpty ? '' : categories.first,
           isLoading: false,
           clearErrorMessage: true,
@@ -316,34 +313,14 @@ class PosCubit extends Cubit<PosState> {
     );
   }
 
-  Future<bool> changeOrderType(
-    OrderType orderType, {
-    CafeTable? selectedTable,
-  }) {
+  Future<bool> changeOrderType(OrderType orderType) {
     if (state.orderType == orderType) {
       return Future<bool>.value(true);
     }
     if (state.currentOrderId == null) {
-      emit(
-        state.copyWith(
-          orderType: orderType,
-          selectedTable: selectedTable,
-          clearSelectedTable: orderType != OrderType.dineIn,
-          clearCartMutationError: true,
-        ),
-      );
+      emit(state.copyWith(orderType: orderType, clearCartMutationError: true));
       return Future<bool>.value(true);
     }
-    final CafeTable? table = selectedTable ?? state.selectedTable;
-    if (orderType == OrderType.dineIn && table == null) {
-      emit(
-        state.copyWith(
-          cartMutationError: 'Please select a table for dine-in orders.',
-        ),
-      );
-      return Future<bool>.value(false);
-    }
-
     final int orderId = state.currentOrderId!;
     return _enqueueCartMutation(
       fallbackMessage: 'Could not update order type. Please try again.',
@@ -351,8 +328,7 @@ class PosCubit extends Cubit<PosState> {
         final BackendOrder order = await repository.updateOrderContext(
           orderId: orderId,
           orderType: orderType.apiValue,
-          tableId: orderType == OrderType.dineIn ? table!.id : null,
-          clearTable: orderType != OrderType.dineIn,
+          clearTable: true,
         );
         _emitBackendOrder(order);
       },
@@ -390,31 +366,6 @@ class PosCubit extends Cubit<PosState> {
 
   Future<bool> clearSelectedCustomer() {
     return selectCustomer(null);
-  }
-
-  Future<bool> selectTable(CafeTable table) {
-    if (state.orderType != OrderType.dineIn) {
-      return Future<bool>.value(false);
-    }
-    if (state.selectedTable == table) {
-      return Future<bool>.value(true);
-    }
-    if (state.currentOrderId == null) {
-      emit(state.copyWith(selectedTable: table, clearCartMutationError: true));
-      return Future<bool>.value(true);
-    }
-
-    final int orderId = state.currentOrderId!;
-    return _enqueueCartMutation(
-      fallbackMessage: 'Could not update table. Please try again.',
-      action: () async {
-        final BackendOrder order = await repository.updateOrderContext(
-          orderId: orderId,
-          tableId: table.id,
-        );
-        _emitBackendOrder(order);
-      },
-    );
   }
 
   Future<void> applyDiscount(AppliedDiscount discount) async {
@@ -481,7 +432,6 @@ class PosCubit extends Cubit<PosState> {
         orderType: OrderType.dineIn,
         clearAppliedDiscount: true,
         clearSelectedCustomer: true,
-        clearSelectedTable: true,
         clearCurrentOrderId: true,
         clearBackendTotals: true,
       ),
@@ -634,20 +584,12 @@ class PosCubit extends Cubit<PosState> {
               'No open shift found. Open a shift before creating an order.',
         );
       }
-      if (state.orderType == OrderType.dineIn && state.selectedTable == null) {
-        throw const ApiException(
-          message: 'Please select a table for dine-in orders.',
-        );
-      }
-
       final BackendOrder order = await repository.createOrder(
         CreateOrderRequest(
           branchId: state.branchId,
           shiftId: state.shiftId,
           orderType: state.orderType,
-          tableId: state.orderType == OrderType.dineIn
-              ? state.selectedTable!.id
-              : null,
+          tableId: null,
           customerId: state.selectedCustomer?.backendId,
           items: <AddOrderItemRequest>[itemRequest],
         ),
@@ -753,9 +695,7 @@ class PosCubit extends Cubit<PosState> {
         shiftId: order.shiftId,
         orderType: orderTypeFromApi(order.orderType),
         selectedCustomer: _customerFromBackendOrder(order),
-        selectedTable: _tableFromBackendOrder(order),
         clearSelectedCustomer: order.customerId == null,
-        clearSelectedTable: order.tableId == null,
         appliedDiscount: _discountFromBackend(order),
         backendSubtotal: order.totals.subtotal,
         backendDiscountTotal: order.totals.discountTotal,
@@ -783,26 +723,6 @@ class PosCubit extends Cubit<PosState> {
       phone: order.customerPhone ?? '',
       tier: 'CUSTOMER',
       points: 0,
-    );
-  }
-
-  CafeTable? _tableFromBackendOrder(BackendOrder order) {
-    final int? tableId = order.tableId;
-    if (tableId == null) {
-      return null;
-    }
-    for (final CafeTable table in state.tables) {
-      if (table.id == tableId) {
-        return table;
-      }
-    }
-    return CafeTable(
-      id: tableId,
-      branchId: order.branchId,
-      name: order.tableName ?? 'Table $tableId',
-      code: order.tableCode ?? tableId.toString(),
-      status: 'unknown',
-      seats: 0,
     );
   }
 
@@ -886,7 +806,6 @@ class PosCubit extends Cubit<PosState> {
         pendingReceiptOrderId: orderId,
         isPaymentSubmitting: false,
         clearSelectedCustomer: true,
-        clearSelectedTable: true,
         clearAppliedDiscount: true,
         clearCurrentOrderId: true,
         clearBackendTotals: true,
