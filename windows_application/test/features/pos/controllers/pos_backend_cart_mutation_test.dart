@@ -5,7 +5,6 @@ import 'package:windows_application/features/pos/models/backend_order.dart';
 import 'package:windows_application/features/pos/models/backend_order_item.dart';
 import 'package:windows_application/features/pos/models/backend_order_totals.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
-import 'package:windows_application/features/pos/models/cafe_table.dart';
 import 'package:windows_application/features/pos/models/create_order_request.dart';
 import 'package:windows_application/features/pos/models/customer.dart';
 import 'package:windows_application/features/pos/models/order_type.dart';
@@ -25,7 +24,6 @@ void main() {
     repository = _BackendCartRepository();
     cubit = PosCubit(repository: repository);
     await cubit.loadInitialData();
-    await cubit.selectTable(cubit.state.tables.single);
   });
 
   tearDown(() => cubit.close());
@@ -163,19 +161,6 @@ class _BackendCartRepository extends PosRepository {
   @override
   Future<List<Customer>> getCustomers({String? search}) async =>
       const <Customer>[];
-
-  @override
-  Future<List<CafeTable>> getTables({required int branchId}) async =>
-      const <CafeTable>[
-        CafeTable(
-          id: 12,
-          branchId: 1,
-          name: 'Table 12',
-          code: '12',
-          status: 'available',
-          seats: 4,
-        ),
-      ];
 
   @override
   Future<Map<String, dynamic>> getPosState({required int branchId}) async =>

@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
-import '../models/cafe_table.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
 import '../models/order_receipt.dart';
@@ -17,9 +16,7 @@ class PosState extends Equatable {
     this.searchQuery = '',
     this.cartItems = const <CartItem>[],
     this.customers = const <Customer>[],
-    this.tables = const <CafeTable>[],
     this.selectedCustomer,
-    this.selectedTable,
     this.loadingProductId,
     this.isProductDetailLoading = false,
     this.productDetailError,
@@ -59,9 +56,7 @@ class PosState extends Equatable {
   final String searchQuery;
   final List<CartItem> cartItems;
   final List<Customer> customers;
-  final List<CafeTable> tables;
   final Customer? selectedCustomer;
-  final CafeTable? selectedTable;
   final int? loadingProductId;
   final bool isProductDetailLoading;
   final String? productDetailError;
@@ -168,9 +163,7 @@ class PosState extends Equatable {
     String? searchQuery,
     List<CartItem>? cartItems,
     List<Customer>? customers,
-    List<CafeTable>? tables,
     Customer? selectedCustomer,
-    CafeTable? selectedTable,
     int? loadingProductId,
     bool? isProductDetailLoading,
     String? productDetailError,
@@ -204,7 +197,6 @@ class PosState extends Equatable {
     bool clearApiErrorMessage = false,
     bool clearCartMutationError = false,
     bool clearSelectedCustomer = false,
-    bool clearSelectedTable = false,
     bool clearLoadingProductId = false,
     bool clearProductDetailError = false,
     bool clearAppliedDiscount = false,
@@ -224,13 +216,9 @@ class PosState extends Equatable {
       searchQuery: searchQuery ?? this.searchQuery,
       cartItems: cartItems ?? this.cartItems,
       customers: customers ?? this.customers,
-      tables: tables ?? this.tables,
       selectedCustomer: clearSelectedCustomer
           ? null
           : selectedCustomer ?? this.selectedCustomer,
-      selectedTable: clearSelectedTable
-          ? null
-          : selectedTable ?? this.selectedTable,
       loadingProductId: clearLoadingProductId
           ? null
           : loadingProductId ?? this.loadingProductId,
@@ -303,9 +291,7 @@ class PosState extends Equatable {
     searchQuery,
     cartItems,
     customers,
-    tables,
     selectedCustomer,
-    selectedTable,
     loadingProductId,
     isProductDetailLoading,
     productDetailError,

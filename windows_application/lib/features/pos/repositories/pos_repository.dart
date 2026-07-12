@@ -5,7 +5,6 @@ import '../models/available_discount.dart';
 import '../models/backend_order.dart';
 import '../models/backend_product_detail.dart';
 import '../models/branch.dart';
-import '../models/cafe_table.dart';
 import '../models/create_order_request.dart';
 import '../models/customer.dart';
 import '../models/json_helpers.dart';
@@ -126,27 +125,6 @@ class PosRepository {
       queryParameters: query,
     );
     return _mapList(response).map(_customerFromJson).toList(growable: false);
-  }
-
-  Future<List<CafeTable>> getTables({required int branchId}) async {
-    if (!_usesBackend) {
-      return const <CafeTable>[
-        CafeTable(
-          id: 1,
-          branchId: 1,
-          name: 'Table 12',
-          code: '12',
-          status: 'available',
-          seats: 4,
-        ),
-      ];
-    }
-
-    final dynamic response = await apiClient!.get(
-      'tables',
-      queryParameters: <String, dynamic>{'branchId': branchId},
-    );
-    return _mapList(response).map(CafeTable.fromJson).toList(growable: false);
   }
 
   Future<Map<String, dynamic>> getPosState({required int branchId}) async {

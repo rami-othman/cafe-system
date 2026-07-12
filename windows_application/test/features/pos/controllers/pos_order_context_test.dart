@@ -5,7 +5,6 @@ import 'package:windows_application/features/pos/models/backend_order.dart';
 import 'package:windows_application/features/pos/models/backend_order_item.dart';
 import 'package:windows_application/features/pos/models/backend_order_totals.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
-import 'package:windows_application/features/pos/models/cafe_table.dart';
 import 'package:windows_application/features/pos/models/create_order_request.dart';
 import 'package:windows_application/features/pos/models/customer.dart';
 import 'package:windows_application/features/pos/models/order_type.dart';
@@ -28,72 +27,55 @@ void main() {
   tearDown(() => cubit.close());
 
   test(
-    'first dine-in order uses the selected real table and customer',
+    'new orders use a null table for every order type and keep customer context',
     () async {
-      await cubit.selectTable(repository.tables.last);
       await cubit.selectCustomer(repository.customers.single);
 
       await cubit.addCustomizedProductToCart(_customization());
 
-      expect(repository.createRequest?.tableId, repository.tables.last.id);
+      expect(repository.createRequest?.tableId, isNull);
       expect(
         repository.createRequest?.customerId,
         repository.customers.single.backendId,
       );
       expect(repository.createRequest?.orderType, OrderType.dineIn);
-      expect(cubit.state.selectedTable, repository.tables.last);
       expect(cubit.state.selectedCustomer, repository.customers.single);
     },
   );
 
-  test('dine-in without a table blocks backend order creation', () async {
-    final bool added = await cubit.addCustomizedProductToCart(_customization());
+  test('dine-in, takeaway, and delivery all create without a table', () async {
+    for (final OrderType orderType in OrderType.values) {
+      final _OrderContextRepository typeRepository = _OrderContextRepository();
+      final PosCubit typeCubit = PosCubit(repository: typeRepository);
+      await typeCubit.loadInitialData();
+      await typeCubit.changeOrderType(orderType);
+      await typeCubit.addCustomizedProductToCart(_customization());
 
-    expect(added, isFalse);
-    expect(repository.createRequest, isNull);
-    expect(
-      cubit.state.cartMutationError,
-      'Please select a table for dine-in orders.',
-    );
-  });
-
-  test('takeaway first order explicitly sends a null table', () async {
-    await cubit.changeOrderType(OrderType.takeaway);
-    await cubit.addCustomizedProductToCart(_customization());
-
-    expect(repository.createRequest?.orderType, OrderType.takeaway);
-    expect(repository.createRequest?.tableId, isNull);
-    expect(repository.createRequest?.customerId, isNull);
+      expect(typeRepository.createRequest?.orderType, orderType);
+      expect(typeRepository.createRequest?.tableId, isNull);
+      await typeCubit.close();
+    }
   });
 
   test(
-    'active context updates PATCH customer, table, and order type',
+    'active context updates PATCH customer and clears table on order type change',
     () async {
-      await cubit.selectTable(repository.tables.first);
       await cubit.addCustomizedProductToCart(_customization());
 
       await cubit.selectCustomer(repository.customers.single);
       expect(repository.contextRequests.last.customerId, 7);
       expect(cubit.state.selectedCustomer, repository.customers.single);
 
-      await cubit.selectTable(repository.tables.last);
-      expect(
-        repository.contextRequests.last.tableId,
-        repository.tables.last.id,
-      );
-      expect(cubit.state.selectedTable, repository.tables.last);
-
       await cubit.changeOrderType(OrderType.takeaway);
       final _ContextRequest typeRequest = repository.contextRequests.last;
       expect(typeRequest.orderType, 'takeaway');
       expect(typeRequest.clearTable, isTrue);
+      expect(typeRequest.tableId, isNull);
       expect(cubit.state.orderType, OrderType.takeaway);
-      expect(cubit.state.selectedTable, isNull);
     },
   );
 
   test('walking in and failed updates retain confirmed context', () async {
-    await cubit.selectTable(repository.tables.first);
     await cubit.addCustomizedProductToCart(_customization());
     await cubit.selectCustomer(repository.customers.single);
 
@@ -101,14 +83,14 @@ void main() {
     expect(repository.contextRequests.last.clearCustomer, isTrue);
     expect(cubit.state.selectedCustomer, isNull);
 
-    final CafeTable confirmedTable = cubit.state.selectedTable!;
-    repository.contextError = const ApiException(message: 'Table unavailable.');
-    final bool updated = await cubit.selectTable(repository.tables.last);
+    final OrderType confirmedType = cubit.state.orderType;
+    repository.contextError = const ApiException(message: 'Type unavailable.');
+    final bool updated = await cubit.changeOrderType(OrderType.delivery);
 
     expect(updated, isFalse);
-    expect(cubit.state.selectedTable, confirmedTable);
+    expect(cubit.state.orderType, confirmedType);
     expect(cubit.state.isCartMutationInProgress, isFalse);
-    expect(cubit.state.cartMutationError, 'Table unavailable.');
+    expect(cubit.state.cartMutationError, 'Type unavailable.');
   });
 }
 
@@ -134,24 +116,6 @@ ProductCustomization _customization() => ProductCustomization(
 class _OrderContextRepository extends PosRepository {
   _OrderContextRepository() : super();
 
-  final List<CafeTable> tables = const <CafeTable>[
-    CafeTable(
-      id: 12,
-      branchId: 1,
-      name: 'Table 12',
-      code: 'T12',
-      status: 'available',
-      seats: 4,
-    ),
-    CafeTable(
-      id: 24,
-      branchId: 1,
-      name: 'Table 24',
-      code: 'T24',
-      status: 'available',
-      seats: 2,
-    ),
-  ];
   final List<Customer> customers = const <Customer>[
     Customer(
       id: '7',
@@ -166,7 +130,6 @@ class _OrderContextRepository extends PosRepository {
   final List<_ContextRequest> contextRequests = <_ContextRequest>[];
   Object? contextError;
   int? _customerId;
-  int? _tableId;
   String _orderType = 'dine_in';
 
   @override
@@ -202,9 +165,6 @@ class _OrderContextRepository extends PosRepository {
   Future<List<Customer>> getCustomers({String? search}) async => customers;
 
   @override
-  Future<List<CafeTable>> getTables({required int branchId}) async => tables;
-
-  @override
   Future<Map<String, dynamic>> getPosState({required int branchId}) async =>
       const <String, dynamic>{};
 
@@ -212,7 +172,6 @@ class _OrderContextRepository extends PosRepository {
   Future<BackendOrder> createOrder(CreateOrderRequest request) async {
     createRequest = request;
     _customerId = request.customerId;
-    _tableId = request.tableId;
     _orderType = request.orderType.apiValue;
     return _order();
   }
@@ -237,16 +196,11 @@ class _OrderContextRepository extends PosRepository {
     );
     if (contextError != null) throw contextError!;
     _orderType = orderType ?? _orderType;
-    if (clearTable || tableId != null) _tableId = tableId;
     if (clearCustomer || customerId != null) _customerId = customerId;
     return _order();
   }
 
   BackendOrder _order() {
-    final CafeTable? table = tables
-        .where((CafeTable table) => table.id == _tableId)
-        .cast<CafeTable?>()
-        .firstOrNull;
     final Customer? customer = customers
         .where((Customer customer) => customer.backendId == _customerId)
         .cast<Customer?>()
@@ -279,9 +233,7 @@ class _OrderContextRepository extends PosRepository {
       customerId: customer?.backendId,
       customerName: customer?.name,
       customerPhone: customer?.phone,
-      tableId: table?.id,
-      tableName: table?.name,
-      tableCode: table?.code,
+      tableId: null,
     );
   }
 }
