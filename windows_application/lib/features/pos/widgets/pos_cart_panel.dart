@@ -13,6 +13,7 @@ import '../controllers/pos_state.dart';
 import '../models/applied_discount.dart';
 import '../models/available_discount.dart';
 import '../models/cart_item.dart';
+import '../models/cafe_table.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
 import '../models/payment_result.dart';
@@ -51,7 +52,12 @@ class PosCartPanel extends StatelessWidget {
               _OrderControls(
                 orderType: state.orderType,
                 selectedCustomer: state.selectedCustomer,
-                onOrderTypeChanged: cubit.changeOrderType,
+                tables: state.tables,
+                selectedTable: state.selectedTable,
+                isUpdating: state.isCartMutationInProgress,
+                onOrderTypeChanged: (OrderType orderType) =>
+                    _changeOrderType(context, state, cubit, orderType),
+                onTableSelected: cubit.selectTable,
                 onCustomerSelectorPressed: () =>
                     _showCustomerDialog(context, state, cubit),
               ),
@@ -99,8 +105,13 @@ class PosCartPanel extends StatelessWidget {
                 onRemoveDiscount: cubit.removeDiscount,
                 onClearCart: cubit.clearCart,
                 onHold: cubit.holdCurrentOrder,
-                onPay: () => _showPaymentDialog(context, state, cubit),
-                isSyncingOrder: state.isCartMutationInProgress,
+                onPay:
+                    state.isPaymentSubmitting ||
+                        state.uncertainPaymentOrderId != null
+                    ? null
+                    : () => _showPaymentDialog(context, state, cubit),
+                isSyncingOrder:
+                    state.isCartMutationInProgress || state.isPaymentSubmitting,
               ),
             ],
           ),
@@ -158,7 +169,7 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
-    final Customer? selected = await showDialog<Customer>(
+    await showDialog<Customer>(
       context: context,
       barrierDismissible: true,
       barrierColor: AppColors.black.withValues(alpha: 0.4),
@@ -166,15 +177,57 @@ class PosCartPanel extends StatelessWidget {
         return SelectCustomerDialog(
           customers: state.customers,
           selectedCustomer: state.selectedCustomer,
+          onSubmit: cubit.selectCustomer,
         );
       },
     );
+  }
 
-    if (!context.mounted || selected == null) {
+  Future<void> _changeOrderType(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+    OrderType orderType,
+  ) async {
+    if (orderType != OrderType.dineIn || state.selectedTable != null) {
+      await cubit.changeOrderType(orderType);
       return;
     }
 
-    cubit.selectCustomer(selected);
+    final CafeTable? table = await showDialog<CafeTable>(
+      context: context,
+      builder: (BuildContext context) {
+        if (state.tables.isEmpty) {
+          return AlertDialog(
+            content: const Text('No tables available.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        }
+        return SimpleDialog(
+          title: const Text('Select table'),
+          children: state.tables
+              .map(
+                (CafeTable table) => SimpleDialogOption(
+                  onPressed: () => Navigator.of(context).pop(table),
+                  child: Text(
+                    table.code.trim().isEmpty
+                        ? table.name
+                        : '${table.name} (${table.code})',
+                  ),
+                ),
+              )
+              .toList(growable: false),
+        );
+      },
+    );
+    if (table != null && context.mounted) {
+      await cubit.changeOrderType(orderType, selectedTable: table);
+    }
   }
 
   Future<void> _showPaymentDialog(
@@ -214,15 +267,12 @@ class PosCartPanel extends StatelessWidget {
         return PaymentDialog(
           totalDue: state.total,
           itemCount: state.totalItems,
+          onSubmit: cubit.completeLocalPayment,
         );
       },
     );
 
-    if (!context.mounted || result == null) {
-      return;
-    }
-
-    await cubit.completeLocalPayment(result);
+    if (!context.mounted || result == null) return;
   }
 }
 
@@ -230,13 +280,21 @@ class _OrderControls extends StatelessWidget {
   const _OrderControls({
     required this.orderType,
     required this.selectedCustomer,
+    required this.tables,
+    required this.selectedTable,
+    required this.isUpdating,
     required this.onOrderTypeChanged,
+    required this.onTableSelected,
     required this.onCustomerSelectorPressed,
   });
 
   final OrderType orderType;
   final Customer? selectedCustomer;
+  final List<CafeTable> tables;
+  final CafeTable? selectedTable;
+  final bool isUpdating;
   final ValueChanged<OrderType> onOrderTypeChanged;
+  final ValueChanged<CafeTable> onTableSelected;
   final VoidCallback onCustomerSelectorPressed;
 
   @override
@@ -251,7 +309,12 @@ class _OrderControls extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           _TableCustomerRow(
+            orderType: orderType,
             selectedCustomer: selectedCustomer,
+            tables: tables,
+            selectedTable: selectedTable,
+            isUpdating: isUpdating,
+            onTableSelected: onTableSelected,
             onCustomerSelectorPressed: onCustomerSelectorPressed,
           ),
         ],
@@ -262,43 +325,58 @@ class _OrderControls extends StatelessWidget {
 
 class _TableCustomerRow extends StatelessWidget {
   const _TableCustomerRow({
+    required this.orderType,
     required this.selectedCustomer,
+    required this.tables,
+    required this.selectedTable,
+    required this.isUpdating,
+    required this.onTableSelected,
     required this.onCustomerSelectorPressed,
   });
 
+  final OrderType orderType;
   final Customer? selectedCustomer;
+  final List<CafeTable> tables;
+  final CafeTable? selectedTable;
+  final bool isUpdating;
+  final ValueChanged<CafeTable> onTableSelected;
   final VoidCallback onCustomerSelectorPressed;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
+        final Widget customerSelector = CartCustomerSelector(
+          customer: selectedCustomer,
+          onTap: isUpdating ? () {} : onCustomerSelectorPressed,
+          onClear: selectedCustomer == null || isUpdating
+              ? null
+              : () => context.read<PosCubit>().clearSelectedCustomer(),
+        );
+        if (orderType != OrderType.dineIn) {
+          return customerSelector;
+        }
+        final Widget tableSelector = _TableSelector(
+          tables: tables,
+          selectedTable: selectedTable,
+          isEnabled: !isUpdating,
+          onSelected: onTableSelected,
+        );
         if (constraints.maxWidth < AppSizes.cartControlsStackBreakpoint) {
           return Column(
             children: <Widget>[
-              const SizedBox(width: double.infinity, child: _TableInput()),
+              SizedBox(width: double.infinity, child: tableSelector),
               const SizedBox(height: AppSpacing.sm),
-              CartCustomerSelector(
-                customer: selectedCustomer,
-                onTap: onCustomerSelectorPressed,
-              ),
+              customerSelector,
             ],
           );
         }
 
         return Row(
           children: <Widget>[
-            const SizedBox(
-              width: AppSizes.tableInputWidth,
-              child: _TableInput(),
-            ),
+            SizedBox(width: AppSizes.tableInputWidth, child: tableSelector),
             const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: CartCustomerSelector(
-                customer: selectedCustomer,
-                onTap: onCustomerSelectorPressed,
-              ),
-            ),
+            Expanded(child: customerSelector),
           ],
         );
       },
@@ -306,22 +384,70 @@ class _TableCustomerRow extends StatelessWidget {
   }
 }
 
-class _TableInput extends StatelessWidget {
-  const _TableInput();
+class _TableSelector extends StatelessWidget {
+  const _TableSelector({
+    required this.tables,
+    required this.selectedTable,
+    required this.isEnabled,
+    required this.onSelected,
+  });
+
+  final List<CafeTable> tables;
+  final CafeTable? selectedTable;
+  final bool isEnabled;
+  final ValueChanged<CafeTable> onSelected;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: AppSizes.cartControlHeight,
-      alignment: Alignment.center,
+      padding: AppSpacing.horizontalMd,
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: AppRadius.control,
       ),
-      child: Text(
-        '12',
-        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textDark),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: selectedTable?.id,
+          isExpanded: true,
+          hint: Text(
+            tables.isEmpty ? 'No tables available.' : 'Select table',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+          ),
+          icon: const Icon(
+            Icons.keyboard_arrow_down,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          items: tables
+              .map(
+                (CafeTable table) => DropdownMenuItem<int>(
+                  value: table.id,
+                  child: Text(
+                    table.code.trim().isEmpty
+                        ? table.name
+                        : '${table.name} (${table.code})',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ),
+              )
+              .toList(growable: false),
+          onChanged: !isEnabled || tables.isEmpty
+              ? null
+              : (int? tableId) {
+                  if (tableId == null) return;
+                  onSelected(
+                    tables.firstWhere((CafeTable table) => table.id == tableId),
+                  );
+                },
+        ),
       ),
     );
   }
@@ -409,7 +535,7 @@ class _CartFooter extends StatelessWidget {
   final VoidCallback onRemoveDiscount;
   final VoidCallback onClearCart;
   final VoidCallback onHold;
-  final VoidCallback onPay;
+  final VoidCallback? onPay;
   final bool isSyncingOrder;
 
   @override

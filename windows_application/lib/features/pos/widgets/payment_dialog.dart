@@ -10,6 +10,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/payment_method.dart';
 import '../models/payment_result.dart';
+import '../controllers/pos_cubit.dart';
 import 'payment_amount_input.dart';
 import 'payment_method_selector.dart';
 import 'payment_quick_amount_buttons.dart';
@@ -20,10 +21,13 @@ class PaymentDialog extends StatefulWidget {
     super.key,
     required this.totalDue,
     required this.itemCount,
+    this.onSubmit,
   });
 
   final double totalDue;
   final int itemCount;
+  final Future<PaymentCompletionStatus> Function(PaymentResult result)?
+  onSubmit;
 
   @override
   State<PaymentDialog> createState() => _PaymentDialogState();
@@ -34,6 +38,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
   late final FocusNode _amountFocusNode;
   PaymentMethod _selectedMethod = PaymentMethod.cash;
   bool _hasEditedCashAmount = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -98,70 +103,83 @@ class _PaymentDialogState extends State<PaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints viewport) {
-        final double maxWidth = (viewport.maxWidth - AppSpacing.xxl).clamp(
-          280,
-          AppSizes.paymentDialogWidth,
-        );
-        final double maxHeight = (viewport.maxHeight - AppSpacing.xxl).clamp(
-          360,
-          AppSizes.paymentDialogMaxHeight,
-        );
+    return PopScope(
+      canPop: !_isSubmitting,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints viewport) {
+          final double maxWidth = (viewport.maxWidth - AppSpacing.xxl).clamp(
+            280,
+            AppSizes.paymentDialogWidth,
+          );
+          final double maxHeight = (viewport.maxHeight - AppSpacing.xxl).clamp(
+            360,
+            AppSizes.paymentDialogMaxHeight,
+          );
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-            ),
-            child: Material(
-              color: AppColors.white,
-              clipBehavior: Clip.antiAlias,
-              borderRadius: const BorderRadius.all(
-                Radius.circular(AppRadius.md),
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: maxHeight,
               ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(AppRadius.md),
-                  ),
-                  boxShadow: const <BoxShadow>[
-                    BoxShadow(
-                      color: Color(0x26000000),
-                      offset: Offset(0, 16),
-                      blurRadius: 32,
-                    ),
-                  ],
+              child: Material(
+                color: AppColors.white,
+                clipBehavior: Clip.antiAlias,
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(AppRadius.md),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    _PaymentHeader(onClose: () => Navigator.of(context).pop()),
-                    PaymentSummaryPanel(
-                      totalDue: widget.totalDue,
-                      itemCount: widget.itemCount,
-                      onViewDetails: () {},
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppRadius.md),
                     ),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: AppSpacing.allXl,
-                        child: _PaymentBody(state: this),
+                    boxShadow: const <BoxShadow>[
+                      BoxShadow(
+                        color: Color(0x26000000),
+                        offset: Offset(0, 16),
+                        blurRadius: 32,
                       ),
-                    ),
-                    _PaymentFooter(
-                      canConfirm: _canConfirm,
-                      onCancel: () => Navigator.of(context).pop(),
-                      onConfirm: _confirmPayment,
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      _PaymentHeader(
+                        onClose: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                      ),
+                      PaymentSummaryPanel(
+                        totalDue: widget.totalDue,
+                        itemCount: widget.itemCount,
+                        onViewDetails: () {},
+                      ),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: AppSpacing.allXl,
+                          child: AbsorbPointer(
+                            absorbing: _isSubmitting,
+                            child: _PaymentBody(state: this),
+                          ),
+                        ),
+                      ),
+                      _PaymentFooter(
+                        canConfirm: _canConfirm && !_isSubmitting,
+                        isSubmitting: _isSubmitting,
+                        onCancel: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        onConfirm: _confirmPayment,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -185,8 +203,8 @@ class _PaymentDialogState extends State<PaymentDialog> {
     setState(() => _hasEditedCashAmount = true);
   }
 
-  void _confirmPayment() {
-    if (!_canConfirm) {
+  Future<void> _confirmPayment() async {
+    if (_isSubmitting || !_canConfirm) {
       setState(() => _hasEditedCashAmount = true);
       return;
     }
@@ -197,21 +215,36 @@ class _PaymentDialogState extends State<PaymentDialog> {
       PaymentMethod.split => 0,
     };
 
-    Navigator.of(context).pop<PaymentResult>(
-      PaymentResult(
-        method: _selectedMethod,
-        totalDue: widget.totalDue,
-        amountReceived: amountReceived,
-        changeDue: _selectedMethod == PaymentMethod.cash ? _changeDue : 0,
-      ),
+    final PaymentResult result = PaymentResult(
+      method: _selectedMethod,
+      totalDue: widget.totalDue,
+      amountReceived: amountReceived,
+      changeDue: _selectedMethod == PaymentMethod.cash ? _changeDue : 0,
     );
+
+    if (widget.onSubmit == null) {
+      Navigator.of(context).pop<PaymentResult>(result);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    final PaymentCompletionStatus status = await widget.onSubmit!(result);
+    if (!mounted) {
+      return;
+    }
+    if (status == PaymentCompletionStatus.completed ||
+        status == PaymentCompletionStatus.uncertain) {
+      Navigator.of(context).pop<PaymentResult>(result);
+      return;
+    }
+    setState(() => _isSubmitting = false);
   }
 }
 
 class _PaymentHeader extends StatelessWidget {
   const _PaymentHeader({required this.onClose});
 
-  final VoidCallback onClose;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -457,13 +490,15 @@ class _ValidationMessage extends StatelessWidget {
 class _PaymentFooter extends StatelessWidget {
   const _PaymentFooter({
     required this.canConfirm,
+    required this.isSubmitting,
     required this.onCancel,
     required this.onConfirm,
   });
 
   final bool canConfirm;
-  final VoidCallback onCancel;
-  final VoidCallback onConfirm;
+  final bool isSubmitting;
+  final VoidCallback? onCancel;
+  final Future<void> Function() onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -513,20 +548,29 @@ class _PaymentFooter extends StatelessWidget {
                     borderRadius: AppRadius.control,
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Flexible(
-                      child: Text(
-                        'Confirm Payment',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Flexible(
+                            child: Text(
+                              'Confirm Payment',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: AppSpacing.sm),
+                          Icon(Icons.arrow_forward, size: 18),
+                        ],
                       ),
-                    ),
-                    SizedBox(width: AppSpacing.sm),
-                    Icon(Icons.arrow_forward, size: 18),
-                  ],
-                ),
               ),
             ),
           ),

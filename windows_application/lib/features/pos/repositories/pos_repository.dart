@@ -187,6 +187,32 @@ class PosRepository {
     return BackendOrder.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
+  Future<BackendOrder> updateOrderContext({
+    required int orderId,
+    String? orderType,
+    int? tableId,
+    int? customerId,
+    bool clearTable = false,
+    bool clearCustomer = false,
+  }) async {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (orderType != null) {
+      data['orderType'] = orderType;
+    }
+    if (tableId != null || clearTable) {
+      data['tableId'] = tableId;
+    }
+    if (customerId != null || clearCustomer) {
+      data['customerId'] = customerId;
+    }
+
+    final dynamic response = await apiClient!.patch(
+      'orders/$orderId',
+      data: data,
+    );
+    return BackendOrder.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
   Future<BackendOrder> addOrderItem({
     required int orderId,
     required AddOrderItemRequest request,

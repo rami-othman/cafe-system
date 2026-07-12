@@ -19,6 +19,12 @@ class BackendOrder extends Equatable {
     this.discountType,
     this.discountValue,
     this.discountAmount,
+    this.customerId,
+    this.customerName,
+    this.customerPhone,
+    this.tableId,
+    this.tableName,
+    this.tableCode,
   });
 
   factory BackendOrder.fromJson(Map<String, dynamic> json) {
@@ -52,6 +58,20 @@ class BackendOrder extends Equatable {
       discountAmount: (json['discount'] as Map?) == null
           ? null
           : readDouble((json['discount'] as Map?)?['amount']),
+      customerId: readInt((json['customer'] as Map?)?['id']),
+      customerName: readString((json['customer'] as Map?)?['name']).isEmpty
+          ? null
+          : readString((json['customer'] as Map?)?['name']),
+      customerPhone: readString((json['customer'] as Map?)?['phone']).isEmpty
+          ? null
+          : readString((json['customer'] as Map?)?['phone']),
+      tableId: readInt((json['table'] as Map?)?['id']),
+      tableName: readString((json['table'] as Map?)?['name']).isEmpty
+          ? null
+          : readString((json['table'] as Map?)?['name']),
+      tableCode: readString((json['table'] as Map?)?['code']).isEmpty
+          ? null
+          : readString((json['table'] as Map?)?['code']),
     );
   }
 
@@ -68,6 +88,12 @@ class BackendOrder extends Equatable {
   final String? discountType;
   final double? discountValue;
   final double? discountAmount;
+  final int? customerId;
+  final String? customerName;
+  final String? customerPhone;
+  final int? tableId;
+  final String? tableName;
+  final String? tableCode;
 
   @override
   List<Object?> get props => <Object?>[
@@ -84,5 +110,11 @@ class BackendOrder extends Equatable {
     discountType,
     discountValue,
     discountAmount,
+    customerId,
+    customerName,
+    customerPhone,
+    tableId,
+    tableName,
+    tableCode,
   ];
 }

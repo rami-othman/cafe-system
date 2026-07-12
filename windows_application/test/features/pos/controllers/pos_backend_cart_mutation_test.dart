@@ -25,6 +25,7 @@ void main() {
     repository = _BackendCartRepository();
     cubit = PosCubit(repository: repository);
     await cubit.loadInitialData();
+    await cubit.selectTable(cubit.state.tables.single);
   });
 
   tearDown(() => cubit.close());
@@ -165,7 +166,16 @@ class _BackendCartRepository extends PosRepository {
 
   @override
   Future<List<CafeTable>> getTables({required int branchId}) async =>
-      const <CafeTable>[];
+      const <CafeTable>[
+        CafeTable(
+          id: 12,
+          branchId: 1,
+          name: 'Table 12',
+          code: '12',
+          status: 'available',
+          seats: 4,
+        ),
+      ];
 
   @override
   Future<Map<String, dynamic>> getPosState({required int branchId}) async =>

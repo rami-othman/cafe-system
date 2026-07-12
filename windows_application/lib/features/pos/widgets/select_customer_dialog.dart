@@ -16,10 +16,12 @@ class SelectCustomerDialog extends StatefulWidget {
     super.key,
     required this.customers,
     required this.selectedCustomer,
+    this.onSubmit,
   });
 
   final List<Customer> customers;
   final Customer? selectedCustomer;
+  final Future<bool> Function(Customer customer)? onSubmit;
 
   @override
   State<SelectCustomerDialog> createState() => _SelectCustomerDialogState();
@@ -29,6 +31,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   late final TextEditingController _searchController;
   Customer? _temporaryCustomer;
   String _query = '';
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -128,12 +131,12 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                       ),
                     ),
                     _DialogFooter(
-                      canSelect: canSelectTemporaryCustomer,
+                      canSelect: canSelectTemporaryCustomer && !_isSubmitting,
                       onCreateNew: _showCreateNewPlaceholder,
-                      onCancel: () => Navigator.of(context).pop(),
-                      onSelect: () => Navigator.of(
-                        context,
-                      ).pop<Customer>(_temporaryCustomer),
+                      onCancel: _isSubmitting
+                          ? () {}
+                          : () => Navigator.of(context).pop(),
+                      onSelect: _submit,
                     ),
                   ],
                 ),
@@ -151,6 +154,28 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
       ..showSnackBar(
         const SnackBar(content: Text('Customer creation will be added later.')),
       );
+  }
+
+  Future<void> _submit() async {
+    final Customer? customer = _temporaryCustomer;
+    if (_isSubmitting || customer == null) {
+      return;
+    }
+    if (widget.onSubmit == null) {
+      Navigator.of(context).pop<Customer>(customer);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    final bool succeeded = await widget.onSubmit!(customer);
+    if (!mounted) {
+      return;
+    }
+    if (succeeded) {
+      Navigator.of(context).pop<Customer>(customer);
+      return;
+    }
+    setState(() => _isSubmitting = false);
   }
 }
 

@@ -84,6 +84,8 @@ Phase 1 — Project Foundation
   routing, and automated route/layout coverage.
 - Completed a full POS and Orders flow audit across Flutter, Dio, Laravel, and database behavior. See docs/POS_FLOW_AUDIT.md.
 - Implemented Flutter-side canonical cart configuration matching, defensive quantity merging, and serialized cart mutations.
+- Implemented Flutter payment submission guards, payment/receipt separation, uncertain-payment verification, and receipt retry recovery.
+- Implemented safe backend product-detail loading and Flutter order-context persistence for customer, order type, and table selection.
 
 ## In Progress
 
@@ -91,7 +93,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Fix Flutter payment submission guards and receipt-fetch failure recovery.
+Fix Flutter Orders list/detail request races, stale panel state, and API error presentation.
 
 ## Architecture Decisions
 
@@ -208,3 +210,9 @@ Fix Flutter payment submission guards and receipt-fetch failure recovery.
   supplied Figma reference and screenshot, including the `/discounts/create`
   route, active Discounts sidebar state, local-only policy controls, responsive
   form cards, POS preview, summary panel, sticky actions, and widget coverage.
+- 2026-07-12: Implemented guarded Flutter payment submission, confirmed-payment
+  cart clearing before independent receipt retrieval, receipt retry recovery,
+  uncertain-payment order-status verification, and focused payment tests.
+- 2026-07-12: Implemented explicit backend product-detail loading, safe
+  no-fallback failure handling, real table selection, and serialized order
+  context persistence for customer, type, and table updates.

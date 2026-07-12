@@ -6,6 +6,7 @@ import '../models/cafe_table.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
 import '../models/order_receipt.dart';
+import '../models/payment_result.dart';
 import '../models/pos_product.dart';
 
 class PosState extends Equatable {
@@ -18,8 +19,21 @@ class PosState extends Equatable {
     this.customers = const <Customer>[],
     this.tables = const <CafeTable>[],
     this.selectedCustomer,
+    this.selectedTable,
+    this.loadingProductId,
+    this.isProductDetailLoading = false,
+    this.productDetailError,
     this.appliedDiscount,
     this.lastReceipt,
+    this.isPaymentSubmitting = false,
+    this.paymentErrorMessage,
+    this.lastPaidOrderId,
+    this.lastPaymentResult,
+    this.pendingReceiptOrderId,
+    this.isReceiptLoading = false,
+    this.receiptErrorMessage,
+    this.uncertainPaymentOrderId,
+    this.uncertainPaymentMessage,
     this.orderType = OrderType.dineIn,
     this.branchId = 1,
     this.shiftId,
@@ -47,8 +61,21 @@ class PosState extends Equatable {
   final List<Customer> customers;
   final List<CafeTable> tables;
   final Customer? selectedCustomer;
+  final CafeTable? selectedTable;
+  final int? loadingProductId;
+  final bool isProductDetailLoading;
+  final String? productDetailError;
   final AppliedDiscount? appliedDiscount;
   final OrderReceipt? lastReceipt;
+  final bool isPaymentSubmitting;
+  final String? paymentErrorMessage;
+  final int? lastPaidOrderId;
+  final PaymentResult? lastPaymentResult;
+  final int? pendingReceiptOrderId;
+  final bool isReceiptLoading;
+  final String? receiptErrorMessage;
+  final int? uncertainPaymentOrderId;
+  final String? uncertainPaymentMessage;
   final OrderType orderType;
   final int branchId;
   final int? shiftId;
@@ -143,8 +170,21 @@ class PosState extends Equatable {
     List<Customer>? customers,
     List<CafeTable>? tables,
     Customer? selectedCustomer,
+    CafeTable? selectedTable,
+    int? loadingProductId,
+    bool? isProductDetailLoading,
+    String? productDetailError,
     AppliedDiscount? appliedDiscount,
     OrderReceipt? lastReceipt,
+    bool? isPaymentSubmitting,
+    String? paymentErrorMessage,
+    int? lastPaidOrderId,
+    PaymentResult? lastPaymentResult,
+    int? pendingReceiptOrderId,
+    bool? isReceiptLoading,
+    String? receiptErrorMessage,
+    int? uncertainPaymentOrderId,
+    String? uncertainPaymentMessage,
     OrderType? orderType,
     int? branchId,
     int? shiftId,
@@ -164,8 +204,15 @@ class PosState extends Equatable {
     bool clearApiErrorMessage = false,
     bool clearCartMutationError = false,
     bool clearSelectedCustomer = false,
+    bool clearSelectedTable = false,
+    bool clearLoadingProductId = false,
+    bool clearProductDetailError = false,
     bool clearAppliedDiscount = false,
     bool clearLastReceipt = false,
+    bool clearPaymentErrorMessage = false,
+    bool clearPendingReceiptOrderId = false,
+    bool clearReceiptErrorMessage = false,
+    bool clearUncertainPayment = false,
     bool clearShiftId = false,
     bool clearCurrentOrderId = false,
     bool clearBackendTotals = false,
@@ -181,10 +228,40 @@ class PosState extends Equatable {
       selectedCustomer: clearSelectedCustomer
           ? null
           : selectedCustomer ?? this.selectedCustomer,
+      selectedTable: clearSelectedTable
+          ? null
+          : selectedTable ?? this.selectedTable,
+      loadingProductId: clearLoadingProductId
+          ? null
+          : loadingProductId ?? this.loadingProductId,
+      isProductDetailLoading:
+          isProductDetailLoading ?? this.isProductDetailLoading,
+      productDetailError: clearProductDetailError
+          ? null
+          : productDetailError ?? this.productDetailError,
       appliedDiscount: clearAppliedDiscount
           ? null
           : appliedDiscount ?? this.appliedDiscount,
       lastReceipt: clearLastReceipt ? null : lastReceipt ?? this.lastReceipt,
+      isPaymentSubmitting: isPaymentSubmitting ?? this.isPaymentSubmitting,
+      paymentErrorMessage: clearPaymentErrorMessage
+          ? null
+          : paymentErrorMessage ?? this.paymentErrorMessage,
+      lastPaidOrderId: lastPaidOrderId ?? this.lastPaidOrderId,
+      lastPaymentResult: lastPaymentResult ?? this.lastPaymentResult,
+      pendingReceiptOrderId: clearPendingReceiptOrderId
+          ? null
+          : pendingReceiptOrderId ?? this.pendingReceiptOrderId,
+      isReceiptLoading: isReceiptLoading ?? this.isReceiptLoading,
+      receiptErrorMessage: clearReceiptErrorMessage
+          ? null
+          : receiptErrorMessage ?? this.receiptErrorMessage,
+      uncertainPaymentOrderId: clearUncertainPayment
+          ? null
+          : uncertainPaymentOrderId ?? this.uncertainPaymentOrderId,
+      uncertainPaymentMessage: clearUncertainPayment
+          ? null
+          : uncertainPaymentMessage ?? this.uncertainPaymentMessage,
       orderType: orderType ?? this.orderType,
       branchId: branchId ?? this.branchId,
       shiftId: clearShiftId ? null : shiftId ?? this.shiftId,
@@ -228,8 +305,21 @@ class PosState extends Equatable {
     customers,
     tables,
     selectedCustomer,
+    selectedTable,
+    loadingProductId,
+    isProductDetailLoading,
+    productDetailError,
     appliedDiscount,
     lastReceipt,
+    isPaymentSubmitting,
+    paymentErrorMessage,
+    lastPaidOrderId,
+    lastPaymentResult,
+    pendingReceiptOrderId,
+    isReceiptLoading,
+    receiptErrorMessage,
+    uncertainPaymentOrderId,
+    uncertainPaymentMessage,
     orderType,
     branchId,
     shiftId,

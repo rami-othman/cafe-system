@@ -9,7 +9,10 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
     json['payment'] as Map? ?? <String, dynamic>{},
   );
   final double total = readDouble(json['total']);
-  final double amount = readDouble(payment['amount'], fallback: total);
+  final double amount = readDouble(
+    payment['amountReceived'],
+    fallback: readDouble(payment['amount'], fallback: total),
+  );
 
   return OrderReceipt(
     orderNumber: readString(json['orderNumber']),
@@ -31,6 +34,17 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
       totalDue: total,
       amountReceived: amount,
       changeDue: (amount - total).clamp(0, double.infinity).toDouble(),
+      status:
+          readString(
+            payment['status'],
+            fallback: readString(json['paymentStatus']),
+          ).trim().isEmpty
+          ? null
+          : readString(
+              payment['status'],
+              fallback: readString(json['paymentStatus']),
+            ).trim(),
+      paymentId: readInt(payment['id']) ?? readInt(json['paymentId']),
     ),
   );
 }

@@ -5,6 +5,7 @@ import '../models/applied_discount.dart';
 import '../models/backend_order.dart';
 import '../models/backend_order_item.dart';
 import '../models/backend_product_detail.dart';
+import '../models/cafe_table.dart';
 import '../models/cart_item.dart';
 import '../models/create_order_request.dart';
 import '../models/customer.dart';
@@ -14,10 +15,13 @@ import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/pos_product.dart';
 import '../models/product_customization.dart';
+import '../models/product_detail_load_result.dart';
 import '../models/receipt_line_item.dart';
 import '../models/update_order_item_request.dart';
 import '../repositories/pos_repository.dart';
 import 'pos_state.dart';
+
+enum PaymentCompletionStatus { completed, retryableFailure, uncertain }
 
 class PosCubit extends Cubit<PosState> {
   PosCubit({required this.repository}) : super(const PosState());
@@ -25,6 +29,8 @@ class PosCubit extends Cubit<PosState> {
   final PosRepository repository;
   Future<void> _cartMutationQueue = Future<void>.value();
   int _queuedCartMutations = 0;
+  int _receiptRequestGeneration = 0;
+  int _productDetailRequestVersion = 0;
 
   Future<void> loadInitialData() async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
@@ -114,28 +120,55 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(cartItems: updatedItems));
   }
 
-  Future<BackendProductDetail?> loadProductDetail(PosProduct product) async {
+  Future<ProductDetailLoadResult> loadProductDetail(PosProduct product) async {
     final int? productId = product.backendId;
     if (!repository.usesBackend || productId == null) {
-      return null;
+      return const ProductDetailNotRequired();
     }
 
+    if (state.isProductDetailLoading && state.loadingProductId == productId) {
+      return const ProductDetailLoadStale();
+    }
+
+    final int requestVersion = ++_productDetailRequestVersion;
+    emit(
+      state.copyWith(
+        loadingProductId: productId,
+        isProductDetailLoading: true,
+        clearProductDetailError: true,
+      ),
+    );
+
     try {
-      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
       final BackendProductDetail detail = await repository.getProductDetail(
         productId: productId,
         branchId: state.branchId,
       );
-      return detail;
+      if (isClosed || requestVersion != _productDetailRequestVersion) {
+        return const ProductDetailLoadStale();
+      }
+      emit(
+        state.copyWith(
+          isProductDetailLoading: false,
+          clearLoadingProductId: true,
+          clearProductDetailError: true,
+        ),
+      );
+      return ProductDetailLoaded(detail);
     } catch (error) {
-      if (!isClosed) {
-        emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+      if (isClosed || requestVersion != _productDetailRequestVersion) {
+        return const ProductDetailLoadStale();
       }
-      return null;
-    } finally {
-      if (!isClosed) {
-        emit(state.copyWith(isSyncingOrder: false));
-      }
+      const String message =
+          'Could not load product options. Please try again.';
+      emit(
+        state.copyWith(
+          isProductDetailLoading: false,
+          clearLoadingProductId: true,
+          productDetailError: message,
+        ),
+      );
+      return const ProductDetailLoadFailed(message);
     }
   }
 
@@ -283,16 +316,105 @@ class PosCubit extends Cubit<PosState> {
     );
   }
 
-  void changeOrderType(OrderType orderType) {
-    emit(state.copyWith(orderType: orderType));
+  Future<bool> changeOrderType(
+    OrderType orderType, {
+    CafeTable? selectedTable,
+  }) {
+    if (state.orderType == orderType) {
+      return Future<bool>.value(true);
+    }
+    if (state.currentOrderId == null) {
+      emit(
+        state.copyWith(
+          orderType: orderType,
+          selectedTable: selectedTable,
+          clearSelectedTable: orderType != OrderType.dineIn,
+          clearCartMutationError: true,
+        ),
+      );
+      return Future<bool>.value(true);
+    }
+    final CafeTable? table = selectedTable ?? state.selectedTable;
+    if (orderType == OrderType.dineIn && table == null) {
+      emit(
+        state.copyWith(
+          cartMutationError: 'Please select a table for dine-in orders.',
+        ),
+      );
+      return Future<bool>.value(false);
+    }
+
+    final int orderId = state.currentOrderId!;
+    return _enqueueCartMutation(
+      fallbackMessage: 'Could not update order type. Please try again.',
+      action: () async {
+        final BackendOrder order = await repository.updateOrderContext(
+          orderId: orderId,
+          orderType: orderType.apiValue,
+          tableId: orderType == OrderType.dineIn ? table!.id : null,
+          clearTable: orderType != OrderType.dineIn,
+        );
+        _emitBackendOrder(order);
+      },
+    );
   }
 
-  void selectCustomer(Customer customer) {
-    emit(state.copyWith(selectedCustomer: customer));
+  Future<bool> selectCustomer(Customer? customer) {
+    if (state.selectedCustomer == customer) {
+      return Future<bool>.value(true);
+    }
+    if (state.currentOrderId == null) {
+      emit(
+        state.copyWith(
+          selectedCustomer: customer,
+          clearSelectedCustomer: customer == null,
+          clearCartMutationError: true,
+        ),
+      );
+      return Future<bool>.value(true);
+    }
+
+    final int orderId = state.currentOrderId!;
+    return _enqueueCartMutation(
+      fallbackMessage: 'Could not update customer. Please try again.',
+      action: () async {
+        final BackendOrder order = await repository.updateOrderContext(
+          orderId: orderId,
+          customerId: customer?.backendId,
+          clearCustomer: customer == null,
+        );
+        _emitBackendOrder(order);
+      },
+    );
   }
 
-  void clearSelectedCustomer() {
-    emit(state.copyWith(clearSelectedCustomer: true));
+  Future<bool> clearSelectedCustomer() {
+    return selectCustomer(null);
+  }
+
+  Future<bool> selectTable(CafeTable table) {
+    if (state.orderType != OrderType.dineIn) {
+      return Future<bool>.value(false);
+    }
+    if (state.selectedTable == table) {
+      return Future<bool>.value(true);
+    }
+    if (state.currentOrderId == null) {
+      emit(state.copyWith(selectedTable: table, clearCartMutationError: true));
+      return Future<bool>.value(true);
+    }
+
+    final int orderId = state.currentOrderId!;
+    return _enqueueCartMutation(
+      fallbackMessage: 'Could not update table. Please try again.',
+      action: () async {
+        final BackendOrder order = await repository.updateOrderContext(
+          orderId: orderId,
+          tableId: table.id,
+        );
+        _emitBackendOrder(order);
+      },
+    );
   }
 
   Future<void> applyDiscount(AppliedDiscount discount) async {
@@ -356,16 +478,21 @@ class PosCubit extends Cubit<PosState> {
     emit(
       state.copyWith(
         cartItems: const <CartItem>[],
+        orderType: OrderType.dineIn,
         clearAppliedDiscount: true,
+        clearSelectedCustomer: true,
+        clearSelectedTable: true,
         clearCurrentOrderId: true,
         clearBackendTotals: true,
       ),
     );
   }
 
-  Future<void> completeLocalPayment(PaymentResult result) async {
+  Future<PaymentCompletionStatus> completeLocalPayment(
+    PaymentResult result,
+  ) async {
     if (!state.hasCartItems || result.totalDue <= 0) {
-      return;
+      return PaymentCompletionStatus.retryableFailure;
     }
     if (state.isCartMutationInProgress) {
       emit(
@@ -373,12 +500,11 @@ class PosCubit extends Cubit<PosState> {
           cartMutationError: 'Please wait for the current cart update.',
         ),
       );
-      return;
+      return PaymentCompletionStatus.retryableFailure;
     }
 
     if (state.currentOrderId != null) {
-      await _completeBackendPayment(result);
-      return;
+      return completeBackendPayment(result);
     }
 
     final OrderReceipt receipt = _buildReceiptSnapshot(result);
@@ -391,9 +517,89 @@ class PosCubit extends Cubit<PosState> {
         clearAppliedDiscount: true,
       ),
     );
+    return PaymentCompletionStatus.completed;
   }
 
-  void clearLastReceipt() {
+  Future<PaymentCompletionStatus> completeBackendPayment(
+    PaymentResult requestedPayment,
+  ) async {
+    if (state.isPaymentSubmitting || state.uncertainPaymentOrderId != null) {
+      return PaymentCompletionStatus.uncertain;
+    }
+
+    final int? orderId = state.currentOrderId;
+    final double totalDue = state.total;
+    if (orderId == null || totalDue <= 0 || !state.hasCartItems) {
+      return PaymentCompletionStatus.retryableFailure;
+    }
+
+    emit(
+      state.copyWith(
+        isPaymentSubmitting: true,
+        clearPaymentErrorMessage: true,
+        clearApiErrorMessage: true,
+      ),
+    );
+
+    try {
+      final PaymentResult payment = await repository.payOrder(
+        orderId: orderId,
+        method: requestedPayment.method.apiValue,
+        amount: requestedPayment.amountReceived,
+        totalDue: totalDue,
+      );
+      if (isClosed) {
+        return PaymentCompletionStatus.uncertain;
+      }
+
+      await _confirmBackendPayment(orderId: orderId, payment: payment);
+      return PaymentCompletionStatus.completed;
+    } catch (error) {
+      if (isClosed) {
+        return PaymentCompletionStatus.uncertain;
+      }
+      if (_isPotentiallyUncertainPaymentFailure(error)) {
+        return _verifyUncertainPayment(
+          orderId: orderId,
+          requestedPayment: requestedPayment,
+        );
+      }
+
+      emit(
+        state.copyWith(
+          isPaymentSubmitting: false,
+          paymentErrorMessage: _messageFor(error),
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+  }
+
+  Future<void> retryPendingReceipt() async {
+    final int? orderId = state.pendingReceiptOrderId;
+    if (orderId == null || state.isReceiptLoading) {
+      return;
+    }
+
+    await _loadReceipt(orderId);
+  }
+
+  Future<void> checkUncertainPaymentStatus() async {
+    final int? orderId = state.uncertainPaymentOrderId;
+    if (orderId == null || state.isPaymentSubmitting) {
+      return;
+    }
+
+    emit(
+      state.copyWith(isPaymentSubmitting: true, clearPaymentErrorMessage: true),
+    );
+    await _verifyUncertainPayment(orderId: orderId, requestedPayment: null);
+  }
+
+  void clearLastReceipt([OrderReceipt? expectedReceipt]) {
+    if (expectedReceipt != null && state.lastReceipt != expectedReceipt) {
+      return;
+    }
     emit(state.copyWith(clearLastReceipt: true));
   }
 
@@ -428,13 +634,20 @@ class PosCubit extends Cubit<PosState> {
               'No open shift found. Open a shift before creating an order.',
         );
       }
+      if (state.orderType == OrderType.dineIn && state.selectedTable == null) {
+        throw const ApiException(
+          message: 'Please select a table for dine-in orders.',
+        );
+      }
 
       final BackendOrder order = await repository.createOrder(
         CreateOrderRequest(
           branchId: state.branchId,
           shiftId: state.shiftId,
           orderType: state.orderType,
-          tableId: state.tables.isEmpty ? null : state.tables.first.id,
+          tableId: state.orderType == OrderType.dineIn
+              ? state.selectedTable!.id
+              : null,
           customerId: state.selectedCustomer?.backendId,
           items: <AddOrderItemRequest>[itemRequest],
         ),
@@ -539,6 +752,10 @@ class PosCubit extends Cubit<PosState> {
         branchId: order.branchId,
         shiftId: order.shiftId,
         orderType: orderTypeFromApi(order.orderType),
+        selectedCustomer: _customerFromBackendOrder(order),
+        selectedTable: _tableFromBackendOrder(order),
+        clearSelectedCustomer: order.customerId == null,
+        clearSelectedTable: order.tableId == null,
         appliedDiscount: _discountFromBackend(order),
         backendSubtotal: order.totals.subtotal,
         backendDiscountTotal: order.totals.discountTotal,
@@ -546,6 +763,46 @@ class PosCubit extends Cubit<PosState> {
         backendTotal: order.totals.total,
         clearAppliedDiscount: order.discountAmount == null,
       ),
+    );
+  }
+
+  Customer? _customerFromBackendOrder(BackendOrder order) {
+    final int? customerId = order.customerId;
+    if (customerId == null) {
+      return null;
+    }
+    for (final Customer customer in state.customers) {
+      if (customer.backendId == customerId) {
+        return customer;
+      }
+    }
+    return Customer(
+      id: customerId.toString(),
+      backendId: customerId,
+      name: order.customerName ?? 'Customer $customerId',
+      phone: order.customerPhone ?? '',
+      tier: 'CUSTOMER',
+      points: 0,
+    );
+  }
+
+  CafeTable? _tableFromBackendOrder(BackendOrder order) {
+    final int? tableId = order.tableId;
+    if (tableId == null) {
+      return null;
+    }
+    for (final CafeTable table in state.tables) {
+      if (table.id == tableId) {
+        return table;
+      }
+    }
+    return CafeTable(
+      id: tableId,
+      branchId: order.branchId,
+      name: order.tableName ?? 'Table $tableId',
+      code: order.tableCode ?? tableId.toString(),
+      status: 'unknown',
+      seats: 0,
     );
   }
 
@@ -602,32 +859,137 @@ class PosCubit extends Cubit<PosState> {
     return null;
   }
 
-  Future<void> _completeBackendPayment(PaymentResult result) async {
-    final int orderId = state.currentOrderId!;
+  Future<void> _confirmBackendPayment({
+    required int orderId,
+    required PaymentResult payment,
+  }) async {
+    if (isClosed) {
+      return;
+    }
+    _completeConfirmedOrder(orderId: orderId, payment: payment);
+    await _loadReceipt(orderId);
+  }
+
+  void _completeConfirmedOrder({
+    required int orderId,
+    required PaymentResult payment,
+  }) {
+    if (isClosed) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        cartItems: const <CartItem>[],
+        orderType: OrderType.dineIn,
+        lastPaidOrderId: orderId,
+        lastPaymentResult: payment,
+        pendingReceiptOrderId: orderId,
+        isPaymentSubmitting: false,
+        clearSelectedCustomer: true,
+        clearSelectedTable: true,
+        clearAppliedDiscount: true,
+        clearCurrentOrderId: true,
+        clearBackendTotals: true,
+        clearPaymentErrorMessage: true,
+        clearUncertainPayment: true,
+        clearReceiptErrorMessage: true,
+      ),
+    );
+  }
+
+  Future<void> _loadReceipt(int orderId) async {
+    if (isClosed || state.pendingReceiptOrderId != orderId) {
+      return;
+    }
+    final int requestId = ++_receiptRequestGeneration;
+    emit(
+      state.copyWith(isReceiptLoading: true, clearReceiptErrorMessage: true),
+    );
     try {
-      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
-      await repository.payOrder(
-        orderId: orderId,
-        method: result.method.apiValue,
-        amount: result.amountReceived,
-        totalDue: state.total,
-      );
       final OrderReceipt receipt = await repository.getReceipt(orderId);
+      if (isClosed ||
+          requestId != _receiptRequestGeneration ||
+          state.pendingReceiptOrderId != orderId) {
+        return;
+      }
       emit(
         state.copyWith(
-          cartItems: const <CartItem>[],
           lastReceipt: receipt,
-          clearSelectedCustomer: true,
-          clearAppliedDiscount: true,
-          clearCurrentOrderId: true,
-          clearBackendTotals: true,
+          isReceiptLoading: false,
+          clearPendingReceiptOrderId: true,
+          clearReceiptErrorMessage: true,
         ),
       );
     } catch (error) {
-      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
-    } finally {
-      emit(state.copyWith(isSyncingOrder: false));
+      if (isClosed ||
+          requestId != _receiptRequestGeneration ||
+          state.pendingReceiptOrderId != orderId) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          isReceiptLoading: false,
+          receiptErrorMessage:
+              'Payment completed, but the receipt could not be loaded.',
+        ),
+      );
     }
+  }
+
+  Future<PaymentCompletionStatus> _verifyUncertainPayment({
+    required int orderId,
+    required PaymentResult? requestedPayment,
+  }) async {
+    try {
+      final BackendOrder order = await repository.getOrder(orderId);
+      if (isClosed) {
+        return PaymentCompletionStatus.uncertain;
+      }
+      if (_isConfirmedPaid(order)) {
+        final PaymentResult payment =
+            requestedPayment ??
+            PaymentResult(
+              method: PaymentMethod.cash,
+              totalDue: order.totals.total,
+              amountReceived: order.totals.total,
+              changeDue: 0,
+              status: order.paymentStatus,
+            );
+        await _confirmBackendPayment(orderId: orderId, payment: payment);
+        return PaymentCompletionStatus.completed;
+      }
+
+      emit(
+        state.copyWith(
+          isPaymentSubmitting: false,
+          paymentErrorMessage: 'Payment was not completed. Please try again.',
+          clearUncertainPayment: true,
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    } catch (_) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isPaymentSubmitting: false,
+            uncertainPaymentOrderId: orderId,
+            uncertainPaymentMessage:
+                'Payment status could not be confirmed. Check the Orders screen before retrying.',
+          ),
+        );
+      }
+      return PaymentCompletionStatus.uncertain;
+    }
+  }
+
+  bool _isPotentiallyUncertainPaymentFailure(Object error) {
+    return error is! ApiException || error.statusCode == null;
+  }
+
+  bool _isConfirmedPaid(BackendOrder order) {
+    const Set<String> paidValues = <String>{'paid', 'completed', 'complete'};
+    return paidValues.contains(order.status.toLowerCase()) ||
+        paidValues.contains(order.paymentStatus.toLowerCase());
   }
 
   String _messageFor(Object error) {
