@@ -10,7 +10,7 @@ class DioApiClient {
           Dio(
             BaseOptions(
               baseUrl: _normalizedBaseUrl,
-              connectTimeout: const Duration(seconds: 5),
+              connectTimeout: const Duration(seconds: 15),
               sendTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 15),
               headers: const <String, Object?>{

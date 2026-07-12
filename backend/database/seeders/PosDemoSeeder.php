@@ -21,15 +21,15 @@ class PosDemoSeeder extends Seeder
             'branch_id' => $branchId,
             'user_id' => $cashierId,
             'opening_cash' => 125,
-            'closing_cash' => 125,
+            'closing_cash' => null,
             'expected_cash' => 125,
             'cash_difference' => 0,
-            'status' => 'closed',
-            'opened_at' => $now->copy()->subHours(8),
-            'closed_at' => $now->copy()->subHours(1),
-            'notes' => 'Demo closed shift',
-            'created_at' => $now->copy()->subHours(8),
-            'updated_at' => $now->copy()->subHours(1),
+            'status' => 'open',
+            'opened_at' => $now,
+            'closed_at' => null,
+            'notes' => 'Demo shift opened for POS testing',
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
         $orderId = DB::table('orders')->insertGetId([
