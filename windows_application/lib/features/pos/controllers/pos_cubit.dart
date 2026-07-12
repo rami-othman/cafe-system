@@ -23,6 +23,8 @@ class PosCubit extends Cubit<PosState> {
   PosCubit({required this.repository}) : super(const PosState());
 
   final PosRepository repository;
+  Future<void> _cartMutationQueue = Future<void>.value();
+  int _queuedCartMutations = 0;
 
   Future<void> loadInitialData() async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
@@ -120,28 +122,35 @@ class PosCubit extends Cubit<PosState> {
 
     try {
       emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
-      return await repository.getProductDetail(
+      final BackendProductDetail detail = await repository.getProductDetail(
         productId: productId,
         branchId: state.branchId,
       );
+      return detail;
     } catch (error) {
-      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+      if (!isClosed) {
+        emit(state.copyWith(apiErrorMessage: _messageFor(error)));
+      }
       return null;
     } finally {
-      emit(state.copyWith(isSyncingOrder: false));
+      if (!isClosed) {
+        emit(state.copyWith(isSyncingOrder: false));
+      }
     }
   }
 
-  Future<void> addCustomizedProductToCart(
+  Future<bool> addCustomizedProductToCart(
     ProductCustomization customization,
   ) async {
     if (!customization.product.isAvailable) {
-      return;
+      return false;
     }
 
     if (repository.usesBackend && customization.product.backendId != null) {
-      await _addCustomizedProductToBackendOrder(customization);
-      return;
+      return _enqueueCartMutation(
+        fallbackMessage: 'Could not add item. Please try again.',
+        action: () => _addCustomizedProductToBackendOrder(customization),
+      );
     }
 
     final String cartItemId = customization.configurationKey;
@@ -165,7 +174,7 @@ class PosCubit extends Cubit<PosState> {
           ],
         ),
       );
-      return;
+      return true;
     }
 
     final List<CartItem> updatedItems = List<CartItem>.of(state.cartItems);
@@ -175,6 +184,7 @@ class PosCubit extends Cubit<PosState> {
     );
 
     emit(state.copyWith(cartItems: updatedItems));
+    return true;
   }
 
   Future<void> increaseQuantity(String cartItemId) async {
@@ -315,15 +325,14 @@ class PosCubit extends Cubit<PosState> {
 
   Future<void> clearCart() async {
     if (state.currentOrderId != null) {
-      try {
-        emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
-        await repository.cancelOrder(state.currentOrderId!);
-      } catch (error) {
-        emit(state.copyWith(apiErrorMessage: _messageFor(error)));
-        return;
-      } finally {
-        emit(state.copyWith(isSyncingOrder: false));
-      }
+      await _enqueueCartMutation(
+        fallbackMessage: 'Could not cancel order. Please try again.',
+        action: () async {
+          await repository.cancelOrder(state.currentOrderId!);
+          _clearCurrentOrderState();
+        },
+      );
+      return;
     }
 
     _clearCurrentOrderState();
@@ -334,15 +343,13 @@ class PosCubit extends Cubit<PosState> {
       return;
     }
 
-    try {
-      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
-      await repository.holdOrder(state.currentOrderId!);
-      _clearCurrentOrderState();
-    } catch (error) {
-      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
-    } finally {
-      emit(state.copyWith(isSyncingOrder: false));
-    }
+    await _enqueueCartMutation(
+      fallbackMessage: 'Could not hold order. Please try again.',
+      action: () async {
+        await repository.holdOrder(state.currentOrderId!);
+        _clearCurrentOrderState();
+      },
+    );
   }
 
   void _clearCurrentOrderState() {
@@ -358,6 +365,14 @@ class PosCubit extends Cubit<PosState> {
 
   Future<void> completeLocalPayment(PaymentResult result) async {
     if (!state.hasCartItems || result.totalDue <= 0) {
+      return;
+    }
+    if (state.isCartMutationInProgress) {
+      emit(
+        state.copyWith(
+          cartMutationError: 'Please wait for the current cart update.',
+        ),
+      );
       return;
     }
 
@@ -396,8 +411,7 @@ class PosCubit extends Cubit<PosState> {
   ) async {
     final int? productId = customization.product.backendId;
     if (productId == null) {
-      emit(state.copyWith(apiErrorMessage: 'Product is missing backend id.'));
-      return;
+      throw const ApiException(message: 'Product is missing backend id.');
     }
 
     final AddOrderItemRequest itemRequest = AddOrderItemRequest(
@@ -409,48 +423,108 @@ class PosCubit extends Cubit<PosState> {
 
     if (state.currentOrderId == null) {
       if (state.shiftId == null) {
-        emit(
-          state.copyWith(
-            apiErrorMessage:
-                'No open shift found. Open a shift before creating an order.',
-          ),
+        throw const ApiException(
+          message:
+              'No open shift found. Open a shift before creating an order.',
         );
-        return;
       }
 
-      await _syncOrder(
-        () => repository.createOrder(
-          CreateOrderRequest(
-            branchId: state.branchId,
-            shiftId: state.shiftId,
-            orderType: state.orderType,
-            tableId: state.tables.isEmpty ? null : state.tables.first.id,
-            customerId: state.selectedCustomer?.backendId,
-            items: <AddOrderItemRequest>[itemRequest],
-          ),
+      final BackendOrder order = await repository.createOrder(
+        CreateOrderRequest(
+          branchId: state.branchId,
+          shiftId: state.shiftId,
+          orderType: state.orderType,
+          tableId: state.tables.isEmpty ? null : state.tables.first.id,
+          customerId: state.selectedCustomer?.backendId,
+          items: <AddOrderItemRequest>[itemRequest],
         ),
       );
+      _emitBackendOrder(order);
       return;
     }
 
-    await _syncOrder(
-      () => repository.addOrderItem(
+    final String? configurationKey = customization.backendConfigurationKey;
+    final CartItem? existing = configurationKey == null
+        ? null
+        : state.cartItems.cast<CartItem?>().firstWhere(
+            (CartItem? item) =>
+                item?.backendItemId != null &&
+                item?.hasCompleteBackendConfiguration == true &&
+                item?.backendConfigurationKey == configurationKey,
+            orElse: () => null,
+          );
+    final BackendOrder order;
+    if (existing != null) {
+      order = await repository.updateOrderItem(
+        orderId: state.currentOrderId!,
+        itemId: existing.backendItemId!,
+        request: UpdateOrderItemRequest(
+          quantity: existing.quantity + customization.quantity,
+        ),
+      );
+    } else {
+      order = await repository.addOrderItem(
         orderId: state.currentOrderId!,
         request: itemRequest,
-      ),
-    );
+      );
+    }
+    _emitBackendOrder(order);
   }
 
   Future<void> _syncOrder(Future<BackendOrder> Function() action) async {
-    try {
-      emit(state.copyWith(isSyncingOrder: true, clearApiErrorMessage: true));
-      final BackendOrder order = await action();
-      _emitBackendOrder(order);
-    } catch (error) {
-      emit(state.copyWith(apiErrorMessage: _messageFor(error)));
-    } finally {
-      emit(state.copyWith(isSyncingOrder: false));
+    await _enqueueCartMutation(
+      fallbackMessage: 'Could not update order. Please try again.',
+      action: () async => _emitBackendOrder(await action()),
+    );
+  }
+
+  Future<bool> _enqueueCartMutation({
+    required String fallbackMessage,
+    required Future<void> Function() action,
+  }) {
+    _queuedCartMutations += 1;
+    if (!isClosed && !state.isCartMutationInProgress) {
+      emit(
+        state.copyWith(
+          isCartMutationInProgress: true,
+          isSyncingOrder: true,
+          clearCartMutationError: true,
+        ),
+      );
     }
+
+    bool succeeded = false;
+    final Future<void> scheduled = _cartMutationQueue.then((_) async {
+      if (isClosed) {
+        return;
+      }
+      try {
+        await action();
+        succeeded = true;
+      } catch (error) {
+        if (!isClosed) {
+          emit(
+            state.copyWith(
+              cartMutationError: error is ApiException
+                  ? _messageFor(error)
+                  : fallbackMessage,
+            ),
+          );
+        }
+      } finally {
+        _queuedCartMutations -= 1;
+        if (!isClosed && _queuedCartMutations == 0) {
+          emit(
+            state.copyWith(
+              isCartMutationInProgress: false,
+              isSyncingOrder: false,
+            ),
+          );
+        }
+      }
+    });
+    _cartMutationQueue = scheduled.catchError((Object _) {});
+    return scheduled.then((_) => succeeded);
   }
 
   void _emitBackendOrder(BackendOrder order) {
@@ -492,10 +566,12 @@ class PosCubit extends Cubit<PosState> {
     return CartItem(
       id: item.id.toString(),
       backendItemId: item.id,
+      backendProductId: item.productId,
       product: product,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       modifiers: item.modifierLabels,
+      selectedModifiers: item.selectedModifiers,
       specialInstructions: item.note ?? '',
     );
   }

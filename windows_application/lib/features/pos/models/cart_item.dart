@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 import 'pos_product.dart';
+import 'cart_configuration.dart';
+import 'selected_modifier.dart';
 
 class CartItem extends Equatable {
   const CartItem({
@@ -9,19 +11,41 @@ class CartItem extends Equatable {
     required this.quantity,
     required this.unitPrice,
     this.backendItemId,
+    this.backendProductId,
     this.modifiers = const <String>[],
+    this.selectedModifiers = const <SelectedModifier>[],
     this.specialInstructions = '',
   });
 
   final String id;
   final int? backendItemId;
+  final int? backendProductId;
   final PosProduct product;
   final int quantity;
   final double unitPrice;
   final List<String> modifiers;
+  final List<SelectedModifier> selectedModifiers;
   final String specialInstructions;
 
   double get lineTotal => unitPrice * quantity;
+
+  bool get hasCompleteBackendConfiguration {
+    return backendProductId != null &&
+        CartConfiguration.hasCompleteModifierIdentity(selectedModifiers);
+  }
+
+  String? get backendConfigurationKey {
+    if (!hasCompleteBackendConfiguration) {
+      return null;
+    }
+    return CartConfiguration.build(
+      productId: backendProductId!,
+      modifiers: selectedModifiers,
+      specialInstructions: specialInstructions,
+    );
+  }
+
+  String get configurationKey => backendConfigurationKey ?? id;
 
   CartItem copyWith({
     String? id,
@@ -29,7 +53,9 @@ class CartItem extends Equatable {
     int? quantity,
     double? unitPrice,
     int? backendItemId,
+    int? backendProductId,
     List<String>? modifiers,
+    List<SelectedModifier>? selectedModifiers,
     String? specialInstructions,
   }) {
     return CartItem(
@@ -38,7 +64,9 @@ class CartItem extends Equatable {
       quantity: quantity ?? this.quantity,
       unitPrice: unitPrice ?? this.unitPrice,
       backendItemId: backendItemId ?? this.backendItemId,
+      backendProductId: backendProductId ?? this.backendProductId,
       modifiers: modifiers ?? this.modifiers,
+      selectedModifiers: selectedModifiers ?? this.selectedModifiers,
       specialInstructions: specialInstructions ?? this.specialInstructions,
     );
   }
@@ -47,10 +75,12 @@ class CartItem extends Equatable {
   List<Object?> get props => <Object?>[
     id,
     backendItemId,
+    backendProductId,
     product,
     quantity,
     unitPrice,
     modifiers,
+    selectedModifiers,
     specialInstructions,
   ];
 }

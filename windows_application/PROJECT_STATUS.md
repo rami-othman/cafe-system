@@ -82,6 +82,8 @@ Phase 1 — Project Foundation
 - Implemented the Create Discount Policy UI with local form state, responsive
   policy sections, POS preview, configuration summary, sticky actions, sidebar
   routing, and automated route/layout coverage.
+- Completed a full POS and Orders flow audit across Flutter, Dio, Laravel, and database behavior. See docs/POS_FLOW_AUDIT.md.
+- Implemented Flutter-side canonical cart configuration matching, defensive quantity merging, and serialized cart mutations.
 
 ## In Progress
 
@@ -89,8 +91,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Implement the Discounts list UI while keeping discount calculation, backend
-integration, and persistence out of scope.
+Fix Flutter payment submission guards and receipt-fetch failure recovery.
 
 ## Architecture Decisions
 

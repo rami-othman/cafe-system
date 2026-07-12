@@ -26,6 +26,8 @@ class PosState extends Equatable {
     this.currentOrderId,
     this.isBackendMode = false,
     this.isSyncingOrder = false,
+    this.isCartMutationInProgress = false,
+    this.cartMutationError,
     this.apiErrorMessage,
     this.backendSubtotal,
     this.backendDiscountTotal,
@@ -53,6 +55,8 @@ class PosState extends Equatable {
   final int? currentOrderId;
   final bool isBackendMode;
   final bool isSyncingOrder;
+  final bool isCartMutationInProgress;
+  final String? cartMutationError;
   final String? apiErrorMessage;
   final double? backendSubtotal;
   final double? backendDiscountTotal;
@@ -147,6 +151,8 @@ class PosState extends Equatable {
     int? currentOrderId,
     bool? isBackendMode,
     bool? isSyncingOrder,
+    bool? isCartMutationInProgress,
+    String? cartMutationError,
     String? apiErrorMessage,
     double? backendSubtotal,
     double? backendDiscountTotal,
@@ -156,6 +162,7 @@ class PosState extends Equatable {
     String? errorMessage,
     bool clearErrorMessage = false,
     bool clearApiErrorMessage = false,
+    bool clearCartMutationError = false,
     bool clearSelectedCustomer = false,
     bool clearAppliedDiscount = false,
     bool clearLastReceipt = false,
@@ -186,6 +193,11 @@ class PosState extends Equatable {
           : currentOrderId ?? this.currentOrderId,
       isBackendMode: isBackendMode ?? this.isBackendMode,
       isSyncingOrder: isSyncingOrder ?? this.isSyncingOrder,
+      isCartMutationInProgress:
+          isCartMutationInProgress ?? this.isCartMutationInProgress,
+      cartMutationError: clearCartMutationError
+          ? null
+          : cartMutationError ?? this.cartMutationError,
       apiErrorMessage: clearApiErrorMessage
           ? null
           : apiErrorMessage ?? this.apiErrorMessage,
@@ -224,6 +236,8 @@ class PosState extends Equatable {
     currentOrderId,
     isBackendMode,
     isSyncingOrder,
+    isCartMutationInProgress,
+    cartMutationError,
     apiErrorMessage,
     backendSubtotal,
     backendDiscountTotal,

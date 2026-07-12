@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 import 'json_helpers.dart';
+import 'selected_modifier.dart';
+import 'cart_configuration.dart';
 
 class BackendOrderItemModifier extends Equatable {
   const BackendOrderItemModifier({
@@ -79,6 +81,27 @@ class BackendOrderItem extends Equatable {
         .map((BackendOrderItemModifier modifier) => modifier.optionName)
         .where((String label) => label.trim().isNotEmpty)
         .toList(growable: false);
+  }
+
+  List<SelectedModifier> get selectedModifiers => modifiers
+      .map(
+        (BackendOrderItemModifier modifier) => SelectedModifier(
+          groupId: modifier.groupId,
+          optionId: modifier.optionId,
+        ),
+      )
+      .toList(growable: false);
+
+  String? get configurationKey {
+    if (productId <= 0 ||
+        !CartConfiguration.hasCompleteModifierIdentity(selectedModifiers)) {
+      return null;
+    }
+    return CartConfiguration.build(
+      productId: productId,
+      modifiers: selectedModifiers,
+      specialInstructions: note ?? '',
+    );
   }
 
   @override

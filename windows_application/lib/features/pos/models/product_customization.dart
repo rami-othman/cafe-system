@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'pos_product.dart';
+import 'cart_configuration.dart';
 import 'product_modifier.dart';
 import 'selected_modifier.dart';
 
@@ -61,6 +62,11 @@ class ProductCustomization extends Equatable {
   }
 
   String get configurationKey {
+    final String? backendKey = backendConfigurationKey;
+    if (backendKey != null) {
+      return backendKey;
+    }
+
     final List<String> addOnIds =
         addOns
             .map((ProductModifierOption option) => option.id)
@@ -76,6 +82,19 @@ class ProductCustomization extends Equatable {
       sweetness,
       specialInstructions.trim(),
     ].join('|');
+  }
+
+  String? get backendConfigurationKey {
+    final int? productId = product.backendId;
+    if (productId == null ||
+        !CartConfiguration.hasCompleteModifierIdentity(selectedModifiers)) {
+      return null;
+    }
+    return CartConfiguration.build(
+      productId: productId,
+      modifiers: selectedModifiers,
+      specialInstructions: specialInstructions,
+    );
   }
 
   @override

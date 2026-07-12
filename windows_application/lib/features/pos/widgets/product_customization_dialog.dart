@@ -23,10 +23,12 @@ class ProductCustomizationDialog extends StatefulWidget {
     super.key,
     required this.product,
     this.productDetail,
+    this.onSubmit,
   });
 
   final PosProduct product;
   final BackendProductDetail? productDetail;
+  final Future<bool> Function(ProductCustomization customization)? onSubmit;
 
   @override
   State<ProductCustomizationDialog> createState() =>
@@ -93,6 +95,7 @@ class _ProductCustomizationDialogState
   final Set<ProductModifierOption> _selectedAddOns = <ProductModifierOption>{};
   String _sweetness = '100%';
   final Map<int, Set<int>> _backendSelections = <int, Set<int>>{};
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -257,9 +260,8 @@ class _ProductCustomizationDialogState
                     Expanded(child: _dialogBody(customization: _customization)),
                     _DialogFooter(
                       onCancel: () => Navigator.of(context).pop(),
-                      onAdd: () => Navigator.of(
-                        context,
-                      ).pop<ProductCustomization>(_customization),
+                      isSubmitting: _isSubmitting,
+                      onAdd: _submit,
                     ),
                   ],
                 ),
@@ -269,6 +271,23 @@ class _ProductCustomizationDialogState
         );
       },
     );
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    final ProductCustomization customization = _customization;
+    if (widget.onSubmit == null) {
+      Navigator.of(context).pop<ProductCustomization>(customization);
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    final bool succeeded = await widget.onSubmit!(customization);
+    if (!mounted) return;
+    if (succeeded) {
+      Navigator.of(context).pop<ProductCustomization>(customization);
+      return;
+    }
+    setState(() => _isSubmitting = false);
   }
 
   Widget _dialogBody({required ProductCustomization customization}) {
@@ -962,10 +981,15 @@ class _RequiredLabel extends StatelessWidget {
 }
 
 class _DialogFooter extends StatelessWidget {
-  const _DialogFooter({required this.onCancel, required this.onAdd});
+  const _DialogFooter({
+    required this.onCancel,
+    required this.onAdd,
+    required this.isSubmitting,
+  });
 
   final VoidCallback onCancel;
   final VoidCallback onAdd;
+  final bool isSubmitting;
 
   @override
   Widget build(BuildContext context) {
@@ -999,9 +1023,15 @@ class _DialogFooter extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.lg),
           FilledButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.shopping_cart_outlined),
-            label: const Text('Add to Order'),
+            onPressed: isSubmitting ? null : onAdd,
+            icon: isSubmitting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.shopping_cart_outlined),
+            label: Text(isSubmitting ? 'Adding...' : 'Add to Order'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, AppSizes.buttonHeight),
               backgroundColor: AppColors.tertiary,

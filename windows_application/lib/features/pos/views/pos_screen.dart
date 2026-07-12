@@ -25,13 +25,16 @@ class PosScreen extends StatelessWidget {
       listenWhen: (PosState previous, PosState current) {
         return (previous.lastReceipt != current.lastReceipt &&
                 current.lastReceipt != null) ||
-            previous.apiErrorMessage != current.apiErrorMessage;
+            previous.apiErrorMessage != current.apiErrorMessage ||
+            previous.cartMutationError != current.cartMutationError;
       },
       listener: (BuildContext context, PosState state) {
-        if (state.apiErrorMessage != null) {
+        final String? errorMessage =
+            state.cartMutationError ?? state.apiErrorMessage;
+        if (errorMessage != null) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(state.apiErrorMessage!)));
+          ).showSnackBar(SnackBar(content: Text(errorMessage)));
         }
 
         if (state.lastReceipt != null) {
@@ -51,8 +54,10 @@ class PosScreen extends StatelessWidget {
               isLoading: state.isLoading,
               onSearchChanged: cubit.updateSearchQuery,
               onCategorySelected: cubit.selectCategory,
-              onProductTap: (PosProduct product) =>
-                  _showCustomizationDialog(context, cubit, product),
+              onProductTap: state.isCartMutationInProgress
+                  ? (_) {}
+                  : (PosProduct product) =>
+                        _showCustomizationDialog(context, cubit, product),
             ),
           );
         },
@@ -95,16 +100,13 @@ class PosScreen extends StatelessWidget {
                   child: ProductCustomizationDialog(
                     product: product,
                     productDetail: productDetail,
+                    onSubmit: cubit.addCustomizedProductToCart,
                   ),
                 );
               },
         );
 
-    if (!context.mounted || customization == null) {
-      return;
-    }
-
-    unawaited(cubit.addCustomizedProductToCart(customization));
+    if (!context.mounted || customization == null) return;
   }
 
   Future<void> _showReceiptDialog(

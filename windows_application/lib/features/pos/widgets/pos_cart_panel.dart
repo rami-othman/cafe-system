@@ -65,8 +65,12 @@ class PosCartPanel extends StatelessWidget {
                   itemBuilder: (BuildContext context, int index) {
                     if (index == state.cartItems.length) {
                       return _AddDiscountButton(
-                        isEnabled: state.hasCartItems,
-                        onPressed: state.hasCartItems
+                        isEnabled:
+                            state.hasCartItems &&
+                            !state.isCartMutationInProgress,
+                        onPressed:
+                            state.hasCartItems &&
+                                !state.isCartMutationInProgress
                             ? () => _showDiscountDialog(context, state, cubit)
                             : null,
                       );
@@ -79,7 +83,7 @@ class PosCartPanel extends StatelessWidget {
                       onIncreaseQuantity: () => cubit.increaseQuantity(item.id),
                       onDecreaseQuantity: () => cubit.decreaseQuantity(item.id),
                       onRemoveItem: () => cubit.removeCartItem(item.id),
-                      isEnabled: !state.isSyncingOrder,
+                      isEnabled: !state.isCartMutationInProgress,
                     );
                   },
                 ),
@@ -96,7 +100,7 @@ class PosCartPanel extends StatelessWidget {
                 onClearCart: cubit.clearCart,
                 onHold: cubit.holdCurrentOrder,
                 onPay: () => _showPaymentDialog(context, state, cubit),
-                isSyncingOrder: state.isSyncingOrder,
+                isSyncingOrder: state.isCartMutationInProgress,
               ),
             ],
           ),
