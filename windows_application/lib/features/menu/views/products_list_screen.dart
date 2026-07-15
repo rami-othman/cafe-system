@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_empty_state.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../controllers/menu_cubit.dart';
@@ -109,6 +110,17 @@ class _ProductsPageHeader extends StatelessWidget {
         final Widget heading = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            AppBreadcrumbs(
+              items: <AppBreadcrumbItem>[
+                AppBreadcrumbItem(
+                  label: 'Menu',
+                  onTap: () => context.go(AppRoutes.menu),
+                  key: const Key('breadcrumb-menu'),
+                ),
+                const AppBreadcrumbItem(label: 'Products'),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               'Products',
               style: AppTextStyles.displayMedium.copyWith(letterSpacing: -0.6),

@@ -119,6 +119,13 @@ abstract final class AppSizes {
   static const double modifierGroupsListWidth = 300;
   static const double modifierGroupsStackBreakpoint = 900;
   static const double modifierOptionsTableMinWidth = 660;
+  static const double discountsContentMaxWidth = 1600;
+  static const double discountsSearchWidth = 288;
+  static const double discountsControlHeight = 40;
+  static const double discountsTableMinWidth = 900;
+  static const double discountsTableHeaderHeight = 43;
+  static const double discountsTableRowMinHeight = 72;
+  static const double discountsSummaryCardMinWidth = 238;
 
   static const double desktopNavigationWidth = sidebarWidth;
   static const double desktopCartPanelWidth = cartPanelWidth;

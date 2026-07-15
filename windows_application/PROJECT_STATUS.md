@@ -82,6 +82,9 @@ Phase 1 — Project Foundation
 - Implemented the Create Discount Policy UI with local form state, responsive
   policy sections, POS preview, configuration summary, sticky actions, sidebar
   routing, and automated route/layout coverage.
+- Implemented the Figma-based Discounts & Coupons list with typed local mock
+  data, Cubit-backed search/status/pagination state, summary cards, table
+  actions, and preserved Create Discount routing.
 - Completed a full POS and Orders flow audit across Flutter, Dio, Laravel, and database behavior. See docs/POS_FLOW_AUDIT.md.
 - Implemented Flutter-side canonical cart configuration matching, defensive quantity merging, and serialized cart mutations.
 - Implemented Flutter payment submission guards, payment/receipt separation, uncertain-payment verification, and receipt retry recovery.
@@ -218,3 +221,13 @@ Fix Flutter Orders list/detail request races, stale panel state, and API error p
   no-fallback failure handling, and serialized order-context persistence for
   customer and type updates. Table selection is intentionally deferred; all
   POS order creation sends `tableId: null`.
+- 2026-07-15: Implemented the desktop-first Discounts & Coupons list from
+  Figma node 66:2 with local-only filtering and pagination, reusable discount
+  widgets, active sidebar routing, and a local branch selector in the shared
+  top bar. No discount backend or calculation logic was added.
+- 2026-07-15: Fixed the Discounts table action-cell overflow at the desktop
+  sidebar breakpoint by matching the two Figma row actions, with a shell-level
+  regression test at 1200 px.
+- 2026-07-15: Added reusable clickable breadcrumbs to Discounts Create and
+  Menu child routes so direct navigation no longer requires using the sidebar
+  to return to an ancestor screen.

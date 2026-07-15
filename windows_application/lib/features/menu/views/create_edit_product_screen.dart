@@ -6,6 +6,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../models/menu_enums.dart';
 import '../widgets/channel_visibility_tile.dart';
@@ -336,63 +337,24 @@ class _PageHeading extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: AppSpacing.sm,
-          children: <Widget>[
-            _BreadcrumbLink(
+        AppBreadcrumbs(
+          items: <AppBreadcrumbItem>[
+            AppBreadcrumbItem(
               key: const Key('breadcrumb-menu'),
               label: 'Menu',
               onTap: () => context.go(AppRoutes.menu),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 14,
-              color: AppColors.textMuted,
-            ),
-            _BreadcrumbLink(
+            AppBreadcrumbItem(
               key: const Key('breadcrumb-products'),
               label: 'Products',
               onTap: () => context.go(AppRoutes.menuProducts),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 14,
-              color: AppColors.textMuted,
-            ),
-            Text(
-              'Create New Product',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
+            const AppBreadcrumbItem(label: 'Create New Product'),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
         Text('General Information', style: AppTextStyles.headlineMedium),
       ],
-    );
-  }
-}
-
-class _BreadcrumbLink extends StatelessWidget {
-  const _BreadcrumbLink({super.key, required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: onTap,
-      style: TextButton.styleFrom(
-        minimumSize: Size.zero,
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: AppColors.secondary,
-        textStyle: AppTextStyles.bodySmall,
-      ),
-      child: Text(label),
     );
   }
 }

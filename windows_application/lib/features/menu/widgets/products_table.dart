@@ -378,12 +378,12 @@ class _PageButton extends StatelessWidget {
           padding: EdgeInsets.zero,
           minimumSize: const Size.square(32),
           foregroundColor: isActive
-              ? AppColors.textInverse
+              ? AppColors.paginationActive
               : AppColors.textMuted,
-          backgroundColor: isActive ? AppColors.primary : AppColors.surface,
+          backgroundColor: isActive ? AppColors.background : AppColors.surface,
           disabledForegroundColor: AppColors.textMuted,
           side: BorderSide(
-            color: isActive ? AppColors.primary : AppColors.border,
+            color: isActive ? AppColors.paginationActive : AppColors.border,
           ),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(6)),

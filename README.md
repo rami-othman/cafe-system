@@ -28,10 +28,10 @@ Phase 1 does not include:
 
 ## Architecture
 
-| Service | Purpose |
-| --- | --- |
-| `backend` | Custom PHP 8.4 container running Laravel on port 8000, with Composer and the PostgreSQL PHP extension |
-| `postgres` | PostgreSQL 16 database with a persistent Docker volume |
+| Service      | Purpose                                                                                               |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
+| `backend`  | Custom PHP 8.4 container running Laravel on port 8000, with Composer and the PostgreSQL PHP extension |
+| `postgres` | PostgreSQL 16 database with a persistent Docker volume                                                |
 
 The Laravel project is stored in `/backend` on the host and mounted at
 `/var/www/html` inside the backend container.
@@ -175,9 +175,9 @@ Password: postgres
 
 The demo seeder creates these local-development users:
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Owner | `owner@cafe618.local` | `password` |
+| Role    | Email                     | Password     |
+| ------- | ------------------------- | ------------ |
+| Owner   | `owner@cafe618.local`   | `password` |
 | Cashier | `cashier@cafe618.local` | `password` |
 
 ## Demo Data
@@ -197,16 +197,16 @@ Running `php artisan migrate:fresh --seed` creates:
 
 The application schema contains 21 domain tables:
 
-| Group | Tables |
-| --- | --- |
-| Tenancy and access | `tenants`, `branches`, `users`, `user_branches` |
-| Menu | `categories`, `products` |
-| Cafe operations | `cafe_tables`, `customers`, `shifts` |
-| Orders and payments | `orders`, `order_items`, `payments` |
-| Discounts | `discounts`, `discount_targets`, `order_discounts` |
-| Loyalty | `loyalty_accounts`, `loyalty_transactions` |
-| Inventory | `warehouses`, `inventory_items`, `stock_movements` |
-| Auditing | `activity_logs` |
+| Group               | Tables                                                   |
+| ------------------- | -------------------------------------------------------- |
+| Tenancy and access  | `tenants`, `branches`, `users`, `user_branches`  |
+| Menu                | `categories`, `products`                             |
+| Cafe operations     | `cafe_tables`, `customers`, `shifts`               |
+| Orders and payments | `orders`, `order_items`, `payments`                |
+| Discounts           | `discounts`, `discount_targets`, `order_discounts` |
+| Loyalty             | `loyalty_accounts`, `loyalty_transactions`           |
+| Inventory           | `warehouses`, `inventory_items`, `stock_movements` |
+| Auditing            | `activity_logs`                                        |
 
 The database also contains Laravel's `migrations` tracking table.
 
