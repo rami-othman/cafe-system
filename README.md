@@ -1,10 +1,5 @@
 # Cafe System 618 Backend
 
-* [ ] 
-
-The backend runs entirely through Docker. Teammates do not need PHP, Composer,
-or PostgreSQL installed on the host machine.
-
 ## Current Scope
 
 Phase 1 includes:
