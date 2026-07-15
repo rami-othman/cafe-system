@@ -24,11 +24,7 @@ class AppSidebar extends StatelessWidget {
     _SidebarDestination('POS', Icons.point_of_sale_outlined, '/'),
     _SidebarDestination('Orders', Icons.receipt_long_outlined, '/orders'),
     _SidebarDestination('Customers', Icons.groups_outlined),
-    _SidebarDestination(
-      'Discounts',
-      Icons.local_offer_outlined,
-      '/discounts/create',
-    ),
+    _SidebarDestination('Discounts', Icons.local_offer_outlined, '/discounts'),
     _SidebarDestination('Menu', Icons.restaurant_menu_outlined, '/menu'),
     _SidebarDestination('Inventory', Icons.inventory_2_outlined),
     _SidebarDestination('Reports', Icons.bar_chart_outlined),

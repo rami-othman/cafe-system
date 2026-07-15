@@ -16,6 +16,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.variant = AppButtonVariant.primary,
     this.isExpanded = false,
+    this.minimumHeight = AppSizes.buttonHeight,
   });
 
   final String label;
@@ -23,6 +24,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final AppButtonVariant variant;
   final bool isExpanded;
+  final double minimumHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,7 @@ class AppButton extends StatelessWidget {
 
   Widget _buildFilledButton(Color backgroundColor, Color foregroundColor) {
     final ButtonStyle style = FilledButton.styleFrom(
-      minimumSize: const Size(0, AppSizes.buttonHeight),
+      minimumSize: Size(0, minimumHeight),
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       disabledBackgroundColor: AppColors.border,
@@ -68,7 +70,7 @@ class AppButton extends StatelessWidget {
 
   Widget _buildOutlinedButton() {
     final ButtonStyle style = OutlinedButton.styleFrom(
-      minimumSize: const Size(0, AppSizes.buttonHeight),
+      minimumSize: Size(0, minimumHeight),
       foregroundColor: AppColors.primary,
       disabledForegroundColor: AppColors.textMuted,
       textStyle: AppTextStyles.buttonMedium,

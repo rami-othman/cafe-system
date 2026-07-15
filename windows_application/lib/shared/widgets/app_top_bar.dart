@@ -7,10 +7,38 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import 'shift_status_badge.dart';
 
-class AppTopBar extends StatelessWidget {
-  const AppTopBar({super.key, this.showCartButton = false});
+class AppTopBar extends StatefulWidget {
+  const AppTopBar({
+    super.key,
+    this.showCartButton = false,
+    this.onRefresh,
+  });
 
   final bool showCartButton;
+  final Future<void> Function(BuildContext context)? onRefresh;
+
+  @override
+  State<AppTopBar> createState() => _AppTopBarState();
+}
+
+class _AppTopBarState extends State<AppTopBar> {
+  String _selectedBranch = 'DOWNTOWN';
+  bool _isRefreshing = false;
+
+  Future<void> _refresh() async {
+    if (_isRefreshing || widget.onRefresh == null) {
+      return;
+    }
+
+    setState(() => _isRefreshing = true);
+    try {
+      await widget.onRefresh!(context);
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +66,17 @@ class AppTopBar extends StatelessWidget {
               Expanded(
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: const <Widget>[
-                    _BranchTab(label: 'DOWNTOWN', isActive: true),
-                    _BranchTab(label: 'Mall'),
-                    _BranchTab(label: 'Airport'),
+                  children: <Widget>[
+                    for (final String branch in <String>[
+                      'DOWNTOWN',
+                      'Mall',
+                      'Airport',
+                    ])
+                      _BranchTab(
+                        label: branch,
+                        isActive: branch == _selectedBranch,
+                        onTap: () => setState(() => _selectedBranch = branch),
+                      ),
                   ],
                 ),
               ),
@@ -49,12 +84,21 @@ class AppTopBar extends StatelessWidget {
                 SizedBox(width: AppSpacing.lg),
                 ShiftStatusBadge(),
               ],
-              if (showCartButton) ...<Widget>[
+              if (widget.showCartButton) ...<Widget>[
                 const SizedBox(width: AppSpacing.sm),
                 _TopBarIconButton(
                   icon: Icons.shopping_cart_outlined,
                   tooltip: 'Cart',
                   onPressed: () {},
+                ),
+              ],
+              if (widget.onRefresh != null) ...<Widget>[
+                const SizedBox(width: AppSpacing.sm),
+                _TopBarIconButton(
+                  icon: Icons.refresh_outlined,
+                  tooltip: 'Refresh screen data',
+                  isLoading: _isRefreshing,
+                  onPressed: _isRefreshing ? null : _refresh,
                 ),
               ],
               if (showOptionalIcons) ...<Widget>[
@@ -80,10 +124,15 @@ class AppTopBar extends StatelessWidget {
 }
 
 class _BranchTab extends StatelessWidget {
-  const _BranchTab({required this.label, this.isActive = false});
+  const _BranchTab({
+    required this.label,
+    required this.onTap,
+    this.isActive = false,
+  });
 
   final String label;
   final bool isActive;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -91,30 +140,33 @@ class _BranchTab extends StatelessWidget {
         ? AppColors.textPrimary
         : AppColors.textSecondary;
 
-    return SizedBox(
-      height: AppSizes.topBarHeight,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            Expanded(
-              child: Center(
-                child: Text(
-                  label,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: foreground,
-                    fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: AppSizes.topBarHeight,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Center(
+                  child: Text(
+                    label,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: foreground,
+                      fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
-            ),
-            Container(
-              width: AppSizes.branchTabUnderlineWidth,
-              height: 2,
-              color: isActive ? AppColors.textPrimary : AppColors.transparent,
-            ),
-          ],
+              Container(
+                width: AppSizes.branchTabUnderlineWidth,
+                height: 2,
+                color: isActive ? AppColors.textPrimary : AppColors.transparent,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -126,11 +178,13 @@ class _TopBarIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   final IconData icon;
   final String tooltip;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -144,11 +198,19 @@ class _TopBarIconButton extends StatelessWidget {
           borderRadius: AppRadius.pillRadius,
           child: SizedBox.square(
             dimension: AppSizes.iconButtonSize,
-            child: Icon(
-              icon,
-              color: AppColors.primary,
-              size: AppSizes.topBarIconSize,
-            ),
+            child: isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(AppSpacing.sm),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : Icon(
+                    icon,
+                    color: AppColors.primary,
+                    size: AppSizes.topBarIconSize,
+                  ),
           ),
         ),
       ),

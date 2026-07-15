@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/menu_cubit.dart';
+import '../controllers/menu_state.dart';
 
 class MenuTopBar extends StatelessWidget {
   const MenuTopBar({
@@ -107,6 +108,26 @@ class MenuTopBar extends StatelessWidget {
                   icon: const Icon(Icons.search),
                   color: AppColors.textSecondary,
                 ),
+              BlocSelector<MenuCubit, MenuState, MenuLoadingStatus>(
+                selector: (MenuState state) => state.loadingStatus,
+                builder: (BuildContext context, MenuLoadingStatus status) {
+                  final bool isRefreshing = status == MenuLoadingStatus.loading;
+
+                  return IconButton(
+                    onPressed: isRefreshing
+                        ? null
+                        : context.read<MenuCubit>().loadMenuData,
+                    tooltip: 'Refresh screen data',
+                    icon: isRefreshing
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_outlined),
+                    color: AppColors.textSecondary,
+                  );
+                },
+              ),
               IconButton(
                 onPressed: () {},
                 tooltip: 'Notifications',
