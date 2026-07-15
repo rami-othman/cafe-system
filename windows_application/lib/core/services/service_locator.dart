@@ -8,6 +8,7 @@ import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
 import '../../features/pos/repositories/pos_repository.dart';
+import '../../features/discounts/controllers/discounts_cubit.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -54,5 +55,9 @@ void setupServiceLocator({bool useBackend = true}) {
     serviceLocator.registerFactory<MenuCubit>(
       () => MenuCubit(repository: serviceLocator<MenuRepository>()),
     );
+  }
+
+  if (!serviceLocator.isRegistered<DiscountsCubit>()) {
+    serviceLocator.registerFactory<DiscountsCubit>(DiscountsCubit.new);
   }
 }

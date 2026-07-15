@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
+import '../features/discounts/controllers/discounts_cubit.dart';
+import '../features/discounts/views/discounts_list_screen.dart';
 import '../features/menu/controllers/menu_cubit.dart';
 import '../features/menu/views/categories_management_screen.dart';
 import '../features/menu/views/combo_builder_screen.dart';
@@ -30,6 +32,7 @@ final GoRouter appRouter = GoRouter(
           activeLabel: _activeLabelFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
+          onRefresh: _refreshActionFor(state),
           child: child,
         );
 
@@ -44,11 +47,19 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<MenuCubit>(
               create: (_) => serviceLocator<MenuCubit>()..loadMenuData(),
             ),
+            BlocProvider<DiscountsCubit>(
+              create: (_) => serviceLocator<DiscountsCubit>(),
+            ),
           ],
           child: shell,
         );
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: AppRoutes.discounts,
+          name: AppRouteNames.discounts,
+          builder: (context, state) => const DiscountsListScreen(),
+        ),
         GoRoute(
           path: AppRoutes.pos,
           name: AppRouteNames.pos,
@@ -139,13 +150,29 @@ Widget? _topBarFor(GoRouterState state) {
   };
 }
 
+Future<void> Function(BuildContext context)? _refreshActionFor(
+  GoRouterState state,
+) {
+  if (state.matchedLocation.startsWith(AppRoutes.menu)) {
+    return (BuildContext context) => context.read<MenuCubit>().loadMenuData();
+  }
+
+  return switch (state.matchedLocation) {
+    AppRoutes.pos =>
+      (BuildContext context) => context.read<PosCubit>().loadInitialData(),
+    AppRoutes.orders =>
+      (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
+    _ => null,
+  };
+}
+
 String _activeLabelFor(GoRouterState state) {
   if (state.matchedLocation.startsWith(AppRoutes.menu)) {
     return 'Menu';
   }
 
   return switch (state.matchedLocation) {
-    AppRoutes.discountCreate => 'Discounts',
+    AppRoutes.discounts || AppRoutes.discountCreate => 'Discounts',
     AppRoutes.orders => 'Orders',
     _ => 'POS',
   };
@@ -154,6 +181,7 @@ String _activeLabelFor(GoRouterState state) {
 abstract final class AppRoutes {
   static const String pos = '/';
   static const String orders = '/orders';
+  static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String menu = '/menu';
   static const String menuProducts = '/menu/products';
@@ -169,6 +197,7 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const String pos = 'pos';
   static const String orders = 'orders';
+  static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
   static const String menu = 'menu';
   static const String menuProducts = 'menu-products';

@@ -30,6 +30,19 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Discounts breadcrumb returns to the discounts list', (
+    WidgetTester tester,
+  ) async {
+    appRouter.go(AppRoutes.discountCreate);
+    await _pumpApp(tester);
+
+    await tester.tap(find.byKey(const Key('breadcrumb-discounts')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Discounts & Coupons'), findsOneWidget);
+    expect(_discountsSidebarItem(tester).isActive, isTrue);
+  });
+
   testWidgets('renders all policy sections and bottom actions', (
     WidgetTester tester,
   ) async {

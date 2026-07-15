@@ -38,7 +38,7 @@ void main() {
     await tester.tap(find.text('Products'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Products'), findsNWidgets(2));
     expect(
       find.text('Manage your catalog, pricing, and availability.'),
       findsOneWidget,
@@ -53,7 +53,7 @@ void main() {
     appRouter.go(AppRoutes.menuProducts);
     await _pumpApp(tester);
 
-    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Products'), findsNWidgets(2));
     expect(find.text('Menu Management'), findsWidgets);
     expect(find.text('Search by name, SKU...'), findsOneWidget);
     expect(_menuSidebarItem(tester).isActive, isTrue);

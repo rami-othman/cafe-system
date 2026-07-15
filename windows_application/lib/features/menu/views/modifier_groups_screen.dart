@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_empty_state.dart';
 import '../../../shared/widgets/app_loading.dart';
@@ -180,35 +181,14 @@ class _PageHeader extends StatelessWidget {
         final Widget heading = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: AppSpacing.sm,
-              children: <Widget>[
-                const Icon(
-                  Icons.restaurant_menu,
-                  size: 15,
-                  color: AppColors.textMuted,
+            AppBreadcrumbs(
+              items: <AppBreadcrumbItem>[
+                AppBreadcrumbItem(
+                  label: 'Menu',
+                  onTap: () => context.go(AppRoutes.menu),
+                  key: const Key('breadcrumb-menu'),
                 ),
-                TextButton(
-                  onPressed: () => context.go(AppRoutes.menu),
-                  style: TextButton.styleFrom(
-                    minimumSize: Size.zero,
-                    padding: EdgeInsets.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text('Menu Management'),
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  size: 15,
-                  color: AppColors.textMuted,
-                ),
-                Text(
-                  'Modifier Groups',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+                const AppBreadcrumbItem(label: 'Modifier Groups'),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

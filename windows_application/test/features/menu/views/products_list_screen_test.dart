@@ -36,7 +36,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('Products'), findsNWidgets(2));
     expect(
       find.text('Manage your catalog, pricing, and availability.'),
       findsOneWidget,
