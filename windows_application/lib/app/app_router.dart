@@ -21,6 +21,8 @@ import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
 import '../features/pos/views/pos_screen.dart';
 import '../features/pos/widgets/pos_cart_panel.dart';
+import '../features/reports/controllers/daily_report_cubit.dart';
+import '../features/reports/views/daily_operational_report_screen.dart';
 import 'app_shell.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -50,11 +52,19 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<DiscountsCubit>(
               create: (_) => serviceLocator<DiscountsCubit>(),
             ),
+            BlocProvider<DailyReportCubit>(
+              create: (_) => serviceLocator<DailyReportCubit>()..loadReport(),
+            ),
           ],
           child: shell,
         );
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: AppRoutes.reports,
+          name: AppRouteNames.reports,
+          builder: (context, state) => const DailyOperationalReportScreen(),
+        ),
         GoRoute(
           path: AppRoutes.discounts,
           name: AppRouteNames.discounts,
@@ -162,6 +172,8 @@ Future<void> Function(BuildContext context)? _refreshActionFor(
       (BuildContext context) => context.read<PosCubit>().loadInitialData(),
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
+    AppRoutes.reports =>
+      (BuildContext context) => context.read<DailyReportCubit>().loadReport(),
     _ => null,
   };
 }
@@ -174,6 +186,7 @@ String _activeLabelFor(GoRouterState state) {
   return switch (state.matchedLocation) {
     AppRoutes.discounts || AppRoutes.discountCreate => 'Discounts',
     AppRoutes.orders => 'Orders',
+    AppRoutes.reports => 'Reports',
     _ => 'POS',
   };
 }
@@ -181,6 +194,7 @@ String _activeLabelFor(GoRouterState state) {
 abstract final class AppRoutes {
   static const String pos = '/';
   static const String orders = '/orders';
+  static const String reports = '/reports';
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String menu = '/menu';
@@ -197,6 +211,7 @@ abstract final class AppRoutes {
 abstract final class AppRouteNames {
   static const String pos = 'pos';
   static const String orders = 'orders';
+  static const String reports = 'reports';
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
   static const String menu = 'menu';
