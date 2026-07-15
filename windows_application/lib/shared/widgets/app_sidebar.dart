@@ -27,7 +27,7 @@ class AppSidebar extends StatelessWidget {
     _SidebarDestination('Discounts', Icons.local_offer_outlined, '/discounts'),
     _SidebarDestination('Menu', Icons.restaurant_menu_outlined, '/menu'),
     _SidebarDestination('Inventory', Icons.inventory_2_outlined),
-    _SidebarDestination('Reports', Icons.bar_chart_outlined),
+    _SidebarDestination('Reports', Icons.bar_chart_outlined, '/reports'),
   ];
 
   @override
