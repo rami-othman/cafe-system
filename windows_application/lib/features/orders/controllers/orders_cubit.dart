@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/order_status.dart';
@@ -16,20 +17,28 @@ class OrdersCubit extends Cubit<OrdersState> {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
+      _debugLog('Loading orders for filter ${state.selectedFilter}');
       emit(
         state.copyWith(
-          orders: repository.getOrders(),
+          orders: await repository.getOrders(filter: state.selectedFilter),
           isLoading: false,
           clearErrorMessage: true,
         ),
       );
     } catch (error) {
-      emit(state.copyWith(isLoading: false, errorMessage: error.toString()));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: 'Could not load orders. Check backend connection.',
+        ),
+      );
     }
   }
 
-  void selectFilter(OrdersFilter filter) {
+  Future<void> selectFilter(OrdersFilter filter) async {
+    _debugLog('Selected filter $filter');
     emit(state.copyWith(selectedFilter: filter));
+    await loadOrders();
   }
 
   Future<void> openOrderDetails(String orderId) async {
@@ -38,7 +47,12 @@ class OrdersCubit extends Cubit<OrdersState> {
     );
 
     try {
-      final detail = await repository.getOrderDetail(orderId);
+      final int? backendId = int.tryParse(orderId);
+      if (backendId == null) {
+        throw StateError('Order id is not a backend id.');
+      }
+      _debugLog('Opening details for order $backendId');
+      final detail = await repository.getOrderDetail(backendId);
 
       emit(
         state.copyWith(
@@ -51,7 +65,8 @@ class OrdersCubit extends Cubit<OrdersState> {
       emit(
         state.copyWith(
           isDetailsLoading: false,
-          detailsErrorMessage: error.toString(),
+          detailsErrorMessage:
+              'Could not load order details. Check backend connection.',
         ),
       );
     }
@@ -65,6 +80,10 @@ class OrdersCubit extends Cubit<OrdersState> {
         clearDetailsErrorMessage: true,
       ),
     );
+  }
+
+  Future<void> refreshOrders() async {
+    await loadOrders();
   }
 
   void confirmRefund(RefundResult result) {
@@ -115,5 +134,11 @@ class OrdersCubit extends Cubit<OrdersState> {
         .toList(growable: false);
 
     emit(state.copyWith(orders: orders));
+  }
+
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      debugPrint('[OrdersCubit] $message');
+    }
   }
 }

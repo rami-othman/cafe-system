@@ -30,14 +30,14 @@ Phase 1 does not include:
 
 | Service | Purpose |
 | --- | --- |
-| `backend` | Custom PHP 8.4 CLI container with Composer and the PostgreSQL PHP extension |
+| `backend` | Custom PHP 8.4 container running Laravel on port 8000, with Composer and the PostgreSQL PHP extension |
 | `postgres` | PostgreSQL 16 database with a persistent Docker volume |
 
 The Laravel project is stored in `/backend` on the host and mounted at
 `/var/www/html` inside the backend container.
 
-The backend service is currently a CLI development container. It does not expose
-an HTTP port because APIs and a web server are outside the Phase 1 scope.
+The backend service runs Laravel's development server on port `8000` for the
+Flutter POS API integration.
 
 ## Requirements
 
@@ -100,6 +100,12 @@ Check container status or view logs:
 ```bash
 docker compose ps
 docker compose logs -f
+```
+
+Confirm the API is reachable from Windows:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/branches
 ```
 
 Open a shell inside the backend container:

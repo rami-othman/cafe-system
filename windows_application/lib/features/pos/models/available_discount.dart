@@ -10,11 +10,15 @@ class AvailableDiscount extends Equatable {
     required this.badgeLabel,
     required this.type,
     required this.value,
+    this.backendId,
     this.minimumSubtotal = 0,
     this.couponCode,
+    this.isEligible = true,
+    this.message,
   });
 
   final String id;
+  final int? backendId;
   final String title;
   final String subtitle;
   final String badgeLabel;
@@ -22,10 +26,13 @@ class AvailableDiscount extends Equatable {
   final double value;
   final double minimumSubtotal;
   final String? couponCode;
+  final bool isEligible;
+  final String? message;
 
   @override
   List<Object?> get props => <Object?>[
     id,
+    backendId,
     title,
     subtitle,
     badgeLabel,
@@ -33,5 +40,7 @@ class AvailableDiscount extends Equatable {
     value,
     minimumSubtotal,
     couponCode,
+    isEligible,
+    message,
   ];
 }

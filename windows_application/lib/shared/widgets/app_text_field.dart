@@ -14,6 +14,9 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.keyboardType,
     this.enabled = true,
+    this.maxLines = 1,
+    this.textAlign = TextAlign.start,
+    this.prefixText,
   });
 
   final TextEditingController? controller;
@@ -25,6 +28,9 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextInputType? keyboardType;
   final bool enabled;
+  final int maxLines;
+  final TextAlign textAlign;
+  final String? prefixText;
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +39,13 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       keyboardType: keyboardType,
       enabled: enabled,
+      maxLines: maxLines,
+      textAlign: textAlign,
       decoration: InputDecoration(
         constraints: const BoxConstraints(minHeight: AppSizes.inputHeight),
         labelText: label,
         hintText: hint ?? hintText,
+        prefixText: prefixText,
         prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
         suffixIcon: suffixIcon == null ? null : Icon(suffixIcon),
       ),

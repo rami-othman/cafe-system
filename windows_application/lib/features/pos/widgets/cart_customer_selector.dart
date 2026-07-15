@@ -12,10 +12,12 @@ class CartCustomerSelector extends StatelessWidget {
     super.key,
     required this.customer,
     required this.onTap,
+    this.onClear,
   });
 
   final Customer? customer;
   final VoidCallback onTap;
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,17 @@ class CartCustomerSelector extends StatelessWidget {
                       color: AppColors.textMuted,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onClear,
+                    icon: const Icon(Icons.close, size: 14),
+                    color: AppColors.textSecondary,
+                    tooltip: 'Use walk-in customer',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 22,
+                      height: 22,
                     ),
                   ),
                 ],

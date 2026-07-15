@@ -1,5 +1,9 @@
 import 'package:get_it/get_it.dart';
 
+import '../network/dio_api_client.dart';
+import '../../features/menu/controllers/menu_cubit.dart';
+import '../../features/menu/repositories/menu_repository.dart';
+import '../../features/menu/repositories/mock_menu_repository.dart';
 import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
@@ -7,9 +11,17 @@ import '../../features/pos/repositories/pos_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
-void setupServiceLocator() {
+void setupServiceLocator({bool useBackend = true}) {
+  if (!serviceLocator.isRegistered<DioApiClient>()) {
+    serviceLocator.registerLazySingleton<DioApiClient>(DioApiClient.new);
+  }
+
   if (!serviceLocator.isRegistered<PosRepository>()) {
-    serviceLocator.registerLazySingleton<PosRepository>(PosRepository.new);
+    serviceLocator.registerLazySingleton<PosRepository>(
+      () => useBackend
+          ? PosRepository(apiClient: serviceLocator<DioApiClient>())
+          : PosRepository(),
+    );
   }
 
   if (!serviceLocator.isRegistered<PosCubit>()) {
@@ -20,13 +32,27 @@ void setupServiceLocator() {
 
   if (!serviceLocator.isRegistered<OrdersRepository>()) {
     serviceLocator.registerLazySingleton<OrdersRepository>(
-      OrdersRepository.new,
+      () => useBackend
+          ? OrdersRepository(apiClient: serviceLocator<DioApiClient>())
+          : const OrdersRepository(),
     );
   }
 
   if (!serviceLocator.isRegistered<OrdersCubit>()) {
     serviceLocator.registerFactory<OrdersCubit>(
       () => OrdersCubit(repository: serviceLocator<OrdersRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<MenuRepository>()) {
+    serviceLocator.registerLazySingleton<MenuRepository>(
+      MockMenuRepository.new,
+    );
+  }
+
+  if (!serviceLocator.isRegistered<MenuCubit>()) {
+    serviceLocator.registerFactory<MenuCubit>(
+      () => MenuCubit(repository: serviceLocator<MenuRepository>()),
     );
   }
 }

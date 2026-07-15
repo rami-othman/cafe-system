@@ -12,11 +12,13 @@ class AppShell extends StatelessWidget {
     required this.child,
     required this.activeLabel,
     this.rightPanel,
+    this.topBar,
   });
 
   final Widget child;
   final String activeLabel;
   final Widget? rightPanel;
+  final Widget? topBar;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,10 @@ class AppShell extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: <Widget>[
-                    AppTopBar(showCartButton: isCompact && rightPanel != null),
+                    topBar ??
+                        AppTopBar(
+                          showCartButton: isCompact && rightPanel != null,
+                        ),
                     Expanded(child: child),
                   ],
                 ),

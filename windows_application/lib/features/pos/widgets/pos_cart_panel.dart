@@ -11,6 +11,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../controllers/pos_cubit.dart';
 import '../controllers/pos_state.dart';
 import '../models/applied_discount.dart';
+import '../models/available_discount.dart';
 import '../models/cart_item.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
@@ -50,7 +51,9 @@ class PosCartPanel extends StatelessWidget {
               _OrderControls(
                 orderType: state.orderType,
                 selectedCustomer: state.selectedCustomer,
-                onOrderTypeChanged: cubit.changeOrderType,
+                isUpdating: state.isCartMutationInProgress,
+                onOrderTypeChanged: (OrderType orderType) =>
+                    _changeOrderType(context, state, cubit, orderType),
                 onCustomerSelectorPressed: () =>
                     _showCustomerDialog(context, state, cubit),
               ),
@@ -64,8 +67,12 @@ class PosCartPanel extends StatelessWidget {
                   itemBuilder: (BuildContext context, int index) {
                     if (index == state.cartItems.length) {
                       return _AddDiscountButton(
-                        isEnabled: state.hasCartItems,
-                        onPressed: state.hasCartItems
+                        isEnabled:
+                            state.hasCartItems &&
+                            !state.isCartMutationInProgress,
+                        onPressed:
+                            state.hasCartItems &&
+                                !state.isCartMutationInProgress
                             ? () => _showDiscountDialog(context, state, cubit)
                             : null,
                       );
@@ -78,6 +85,7 @@ class PosCartPanel extends StatelessWidget {
                       onIncreaseQuantity: () => cubit.increaseQuantity(item.id),
                       onDecreaseQuantity: () => cubit.decreaseQuantity(item.id),
                       onRemoveItem: () => cubit.removeCartItem(item.id),
+                      isEnabled: !state.isCartMutationInProgress,
                     );
                   },
                 ),
@@ -92,7 +100,14 @@ class PosCartPanel extends StatelessWidget {
                 appliedDiscount: state.appliedDiscount,
                 onRemoveDiscount: cubit.removeDiscount,
                 onClearCart: cubit.clearCart,
-                onPay: () => _showPaymentDialog(context, state, cubit),
+                onHold: cubit.holdCurrentOrder,
+                onPay:
+                    state.isPaymentSubmitting ||
+                        state.uncertainPaymentOrderId != null
+                    ? null
+                    : () => _showPaymentDialog(context, state, cubit),
+                isSyncingOrder:
+                    state.isCartMutationInProgress || state.isPaymentSubmitting,
               ),
             ],
           ),
@@ -106,12 +121,35 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
+    List<AvailableDiscount>? availableDiscounts;
+    if (state.currentOrderId != null) {
+      try {
+        availableDiscounts = await cubit.repository.getAvailableDiscounts(
+          state.currentOrderId!,
+        );
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
+        }
+        return;
+      }
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
     final AppliedDiscount? discount = await showDialog<AppliedDiscount>(
       context: context,
       barrierDismissible: true,
       barrierColor: AppColors.black.withValues(alpha: 0.4),
       builder: (BuildContext context) {
-        return DiscountDialog(subtotal: state.subtotal);
+        return DiscountDialog(
+          subtotal: state.subtotal,
+          availableDiscounts: availableDiscounts,
+        );
       },
     );
 
@@ -119,7 +157,7 @@ class PosCartPanel extends StatelessWidget {
       return;
     }
 
-    cubit.applyDiscount(discount);
+    await cubit.applyDiscount(discount);
   }
 
   Future<void> _showCustomerDialog(
@@ -127,7 +165,7 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
-    final Customer? selected = await showDialog<Customer>(
+    await showDialog<Customer>(
       context: context,
       barrierDismissible: true,
       barrierColor: AppColors.black.withValues(alpha: 0.4),
@@ -135,15 +173,19 @@ class PosCartPanel extends StatelessWidget {
         return SelectCustomerDialog(
           customers: state.customers,
           selectedCustomer: state.selectedCustomer,
+          onSubmit: cubit.selectCustomer,
         );
       },
     );
+  }
 
-    if (!context.mounted || selected == null) {
-      return;
-    }
-
-    cubit.selectCustomer(selected);
+  Future<void> _changeOrderType(
+    BuildContext context,
+    PosState state,
+    PosCubit cubit,
+    OrderType orderType,
+  ) async {
+    await cubit.changeOrderType(orderType);
   }
 
   Future<void> _showPaymentDialog(
@@ -155,6 +197,26 @@ class PosCartPanel extends StatelessWidget {
       return;
     }
 
+    if (state.currentOrderId != null) {
+      try {
+        await cubit.repository.getPaymentSummary(
+          orderId: state.currentOrderId!,
+          amountReceived: state.total,
+        );
+      } catch (error) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
+        }
+        return;
+      }
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
     final PaymentResult? result = await showDialog<PaymentResult>(
       context: context,
       barrierDismissible: true,
@@ -163,15 +225,12 @@ class PosCartPanel extends StatelessWidget {
         return PaymentDialog(
           totalDue: state.total,
           itemCount: state.totalItems,
+          onSubmit: cubit.completeLocalPayment,
         );
       },
     );
 
-    if (!context.mounted || result == null) {
-      return;
-    }
-
-    cubit.completeLocalPayment(result);
+    if (!context.mounted || result == null) return;
   }
 }
 
@@ -179,12 +238,14 @@ class _OrderControls extends StatelessWidget {
   const _OrderControls({
     required this.orderType,
     required this.selectedCustomer,
+    required this.isUpdating,
     required this.onOrderTypeChanged,
     required this.onCustomerSelectorPressed,
   });
 
   final OrderType orderType;
   final Customer? selectedCustomer;
+  final bool isUpdating;
   final ValueChanged<OrderType> onOrderTypeChanged;
   final VoidCallback onCustomerSelectorPressed;
 
@@ -199,8 +260,9 @@ class _OrderControls extends StatelessWidget {
             onOrderTypeSelected: onOrderTypeChanged,
           ),
           const SizedBox(height: AppSpacing.md),
-          _TableCustomerRow(
+          _CustomerRow(
             selectedCustomer: selectedCustomer,
+            isUpdating: isUpdating,
             onCustomerSelectorPressed: onCustomerSelectorPressed,
           ),
         ],
@@ -209,69 +271,25 @@ class _OrderControls extends StatelessWidget {
   }
 }
 
-class _TableCustomerRow extends StatelessWidget {
-  const _TableCustomerRow({
+class _CustomerRow extends StatelessWidget {
+  const _CustomerRow({
     required this.selectedCustomer,
+    required this.isUpdating,
     required this.onCustomerSelectorPressed,
   });
 
   final Customer? selectedCustomer;
+  final bool isUpdating;
   final VoidCallback onCustomerSelectorPressed;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        if (constraints.maxWidth < AppSizes.cartControlsStackBreakpoint) {
-          return Column(
-            children: <Widget>[
-              const SizedBox(width: double.infinity, child: _TableInput()),
-              const SizedBox(height: AppSpacing.sm),
-              CartCustomerSelector(
-                customer: selectedCustomer,
-                onTap: onCustomerSelectorPressed,
-              ),
-            ],
-          );
-        }
-
-        return Row(
-          children: <Widget>[
-            const SizedBox(
-              width: AppSizes.tableInputWidth,
-              child: _TableInput(),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: CartCustomerSelector(
-                customer: selectedCustomer,
-                onTap: onCustomerSelectorPressed,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _TableInput extends StatelessWidget {
-  const _TableInput();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: AppSizes.cartControlHeight,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
-        borderRadius: AppRadius.control,
-      ),
-      child: Text(
-        '12',
-        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textDark),
-      ),
+    return CartCustomerSelector(
+      customer: selectedCustomer,
+      onTap: isUpdating ? () {} : onCustomerSelectorPressed,
+      onClear: selectedCustomer == null || isUpdating
+          ? null
+          : () => context.read<PosCubit>().clearSelectedCustomer(),
     );
   }
 }
@@ -343,7 +361,9 @@ class _CartFooter extends StatelessWidget {
     required this.appliedDiscount,
     required this.onRemoveDiscount,
     required this.onClearCart,
+    required this.onHold,
     required this.onPay,
+    required this.isSyncingOrder,
   });
 
   final double subtotal;
@@ -355,7 +375,9 @@ class _CartFooter extends StatelessWidget {
   final AppliedDiscount? appliedDiscount;
   final VoidCallback onRemoveDiscount;
   final VoidCallback onClearCart;
-  final VoidCallback onPay;
+  final VoidCallback onHold;
+  final VoidCallback? onPay;
+  final bool isSyncingOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -374,14 +396,16 @@ class _CartFooter extends StatelessWidget {
               tax: tax,
               total: total,
               appliedDiscount: appliedDiscount,
-              onRemoveDiscount: onRemoveDiscount,
+              onRemoveDiscount: isSyncingOrder ? null : onRemoveDiscount,
             ),
             const SizedBox(height: AppSpacing.lg),
             PosActionButtons(
               total: total,
-              onCancel: onClearCart,
-              onPay: onPay,
-              isPaymentEnabled: hasCartItems && total > 0 && itemCount > 0,
+              onCancel: isSyncingOrder ? null : onClearCart,
+              onHold: isSyncingOrder || !hasCartItems ? null : onHold,
+              onPay: isSyncingOrder ? null : onPay,
+              isPaymentEnabled:
+                  !isSyncingOrder && hasCartItems && total > 0 && itemCount > 0,
             ),
           ],
         ),

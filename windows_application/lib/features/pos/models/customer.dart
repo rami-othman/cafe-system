@@ -7,9 +7,11 @@ class Customer extends Equatable {
     required this.phone,
     required this.tier,
     required this.points,
+    this.backendId,
   });
 
   final String id;
+  final int? backendId;
   final String name;
   final String phone;
   final String tier;
@@ -33,5 +35,12 @@ class Customer extends Equatable {
   }
 
   @override
-  List<Object?> get props => <Object?>[id, name, phone, tier, points];
+  List<Object?> get props => <Object?>[
+    id,
+    backendId,
+    name,
+    phone,
+    tier,
+    points,
+  ];
 }

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/models/payment_method.dart';
 import 'package:windows_application/features/pos/models/payment_result.dart';
 import 'package:windows_application/features/pos/widgets/payment_dialog.dart';
@@ -80,6 +83,50 @@ void main() {
     );
     expect(find.text('Split payment will be supported later.'), findsOneWidget);
     expect(confirmButton.onPressed, isNull);
+  });
+
+  testWidgets('confirm ignores a second click while payment is submitting', (
+    WidgetTester tester,
+  ) async {
+    final Completer<PaymentCompletionStatus> completion =
+        Completer<PaymentCompletionStatus>();
+    int submissions = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PaymentDialog(
+            totalDue: 24.5,
+            itemCount: 3,
+            onSubmit: (_) {
+              submissions += 1;
+              return completion.future;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Confirm Payment'));
+    await tester.pump();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pump();
+
+    expect(submissions, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+
+    completion.complete(PaymentCompletionStatus.retryableFailure);
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+    );
   });
 
   testWidgets('payment dialog does not overflow in compact layouts', (

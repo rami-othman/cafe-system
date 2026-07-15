@@ -6,12 +6,14 @@ class OrderPaymentSummary extends Equatable {
     required this.statusLabel,
     required this.authCode,
     required this.amount,
+    this.hasPayment = true,
   });
 
   final String methodLabel;
   final String statusLabel;
   final String authCode;
   final double amount;
+  final bool hasPayment;
 
   @override
   List<Object?> get props => <Object?>[
@@ -19,5 +21,6 @@ class OrderPaymentSummary extends Equatable {
     statusLabel,
     authCode,
     amount,
+    hasPayment,
   ];
 }

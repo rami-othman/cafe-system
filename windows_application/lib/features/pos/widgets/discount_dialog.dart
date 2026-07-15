@@ -11,9 +11,14 @@ import 'coupon_code_input.dart';
 import 'discount_card.dart';
 
 class DiscountDialog extends StatefulWidget {
-  const DiscountDialog({super.key, required this.subtotal});
+  const DiscountDialog({
+    super.key,
+    required this.subtotal,
+    this.availableDiscounts,
+  });
 
   final double subtotal;
+  final List<AvailableDiscount>? availableDiscounts;
 
   @override
   State<DiscountDialog> createState() => _DiscountDialogState();
@@ -55,6 +60,9 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
   late final TextEditingController _couponController;
   String? _validationMessage;
+
+  List<AvailableDiscount> get _discounts =>
+      widget.availableDiscounts ?? _availableDiscounts;
 
   @override
   void initState() {
@@ -132,7 +140,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     }
 
     AvailableDiscount? discount;
-    for (final AvailableDiscount availableDiscount in _availableDiscounts) {
+    for (final AvailableDiscount availableDiscount in _discounts) {
       if (availableDiscount.couponCode == code) {
         discount = availableDiscount;
         break;
@@ -153,6 +161,11 @@ class _DiscountDialogState extends State<DiscountDialog> {
       return;
     }
 
+    if (!discount.isEligible) {
+      _showValidation(discount.message ?? _minimumOrderMessage);
+      return;
+    }
+
     if (widget.subtotal < discount.minimumSubtotal) {
       _showValidation(_minimumOrderMessage);
       return;
@@ -161,6 +174,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     Navigator.of(context).pop<AppliedDiscount>(
       AppliedDiscount(
         id: discount.id,
+        backendId: discount.backendId,
         title: discount.title,
         type: switch (discount.type) {
           AvailableDiscountType.percentage => AppliedDiscountType.percentage,
@@ -256,12 +270,12 @@ class _DialogBody extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           for (final AvailableDiscount discount
-              in _DiscountDialogState._availableDiscounts) ...<Widget>[
+              in state._discounts) ...<Widget>[
             DiscountCard(
               discount: discount,
               onApply: () => state._applyAvailableDiscount(discount),
             ),
-            if (discount != _DiscountDialogState._availableDiscounts.last)
+            if (discount != state._discounts.last)
               const SizedBox(height: AppSpacing.md),
           ],
         ],

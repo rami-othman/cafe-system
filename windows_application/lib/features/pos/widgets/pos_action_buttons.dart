@@ -12,12 +12,14 @@ class PosActionButtons extends StatelessWidget {
     super.key,
     required this.total,
     this.onCancel,
+    this.onHold,
     this.onPay,
     this.isPaymentEnabled = true,
   });
 
   final double total;
   final VoidCallback? onCancel;
+  final VoidCallback? onHold;
   final VoidCallback? onPay;
   final bool isPaymentEnabled;
 
@@ -27,7 +29,9 @@ class PosActionButtons extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            const Expanded(child: _SecondaryActionButton(label: 'HOLD')),
+            Expanded(
+              child: _SecondaryActionButton(label: 'HOLD', onPressed: onHold),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _SecondaryActionButton(
@@ -37,7 +41,9 @@ class PosActionButtons extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            const Expanded(child: _SecondaryActionButton(label: 'PRINT')),
+            Expanded(
+              child: _SecondaryActionButton(label: 'PRINT', onPressed: () {}),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -84,7 +90,7 @@ class _SecondaryActionButton extends StatelessWidget {
     return SizedBox(
       height: AppSizes.cartControlHeight,
       child: OutlinedButton(
-        onPressed: onPressed ?? () {},
+        onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surface,
           foregroundColor: foreground,

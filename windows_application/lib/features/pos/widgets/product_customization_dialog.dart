@@ -6,18 +6,29 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../models/backend_product_detail.dart';
+import '../models/modifier_group.dart';
+import '../models/modifier_option.dart';
 import '../models/pos_product.dart';
 import '../models/product_customization.dart';
 import '../models/product_modifier.dart';
+import '../models/selected_modifier.dart';
 import 'customization_option_tile.dart';
 import 'customization_quantity_panel.dart';
 import 'customization_section.dart';
 import 'customization_segmented_selector.dart';
 
 class ProductCustomizationDialog extends StatefulWidget {
-  const ProductCustomizationDialog({super.key, required this.product});
+  const ProductCustomizationDialog({
+    super.key,
+    required this.product,
+    this.productDetail,
+    this.onSubmit,
+  });
 
   final PosProduct product;
+  final BackendProductDetail? productDetail;
+  final Future<bool> Function(ProductCustomization customization)? onSubmit;
 
   @override
   State<ProductCustomizationDialog> createState() =>
@@ -83,11 +94,14 @@ class _ProductCustomizationDialogState
   ProductModifierOption _selectedMilk = _milkOptions[0];
   final Set<ProductModifierOption> _selectedAddOns = <ProductModifierOption>{};
   String _sweetness = '100%';
+  final Map<int, Set<int>> _backendSelections = <int, Set<int>>{};
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _instructionsController = TextEditingController();
+    _initializeBackendSelections();
   }
 
   @override
@@ -97,6 +111,9 @@ class _ProductCustomizationDialogState
   }
 
   ProductCustomization get _customization {
+    final List<SelectedModifier> selectedModifiers = _selectedModifiers();
+    final List<String> backendModifierLabels = _selectedBackendLabels();
+
     return ProductCustomization(
       product: widget.product,
       quantity: _quantity,
@@ -106,7 +123,95 @@ class _ProductCustomizationDialogState
       addOns: _selectedAddOns.toList(growable: false),
       sweetness: _sweetness,
       specialInstructions: _instructionsController.text,
+      selectedModifiers: selectedModifiers,
+      backendModifierLabels: backendModifierLabels,
     );
+  }
+
+  void _initializeBackendSelections() {
+    final BackendProductDetail? detail = widget.productDetail;
+    if (detail == null) {
+      return;
+    }
+
+    for (final ModifierGroup group in detail.modifierGroups) {
+      final List<ModifierOption> available = group.options
+          .where((ModifierOption option) => option.isAvailable)
+          .toList(growable: false);
+      if (available.isEmpty) {
+        _backendSelections[group.id] = <int>{};
+        continue;
+      }
+
+      final Iterable<ModifierOption> defaults = available.where(
+        (ModifierOption option) => option.isDefault,
+      );
+      if (defaults.isNotEmpty) {
+        _backendSelections[group.id] = defaults
+            .take(group.maxSelections <= 0 ? 1 : group.maxSelections)
+            .map((ModifierOption option) => option.id)
+            .toSet();
+      } else if (group.required || group.minSelections > 0) {
+        _backendSelections[group.id] = <int>{available.first.id};
+      } else {
+        _backendSelections[group.id] = <int>{};
+      }
+    }
+  }
+
+  List<SelectedModifier> _selectedModifiers() {
+    return _backendSelections.entries
+        .expand(
+          (MapEntry<int, Set<int>> entry) => entry.value.map(
+            (int optionId) =>
+                SelectedModifier(groupId: entry.key, optionId: optionId),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  List<String> _selectedBackendLabels() {
+    final BackendProductDetail? detail = widget.productDetail;
+    if (detail == null) {
+      return const <String>[];
+    }
+
+    final List<String> labels = <String>[];
+    for (final ModifierGroup group in detail.modifierGroups) {
+      final Set<int> selected = _backendSelections[group.id] ?? <int>{};
+      for (final ModifierOption option in group.options) {
+        if (selected.contains(option.id)) {
+          labels.add(option.name);
+        }
+      }
+    }
+
+    return labels;
+  }
+
+  void _toggleBackendOption(ModifierGroup group, ModifierOption option) {
+    if (!option.isAvailable) {
+      return;
+    }
+
+    setState(() {
+      final Set<int> selected = _backendSelections[group.id] ?? <int>{};
+      final bool multi = group.type == 'multiple' || group.maxSelections > 1;
+      if (!multi) {
+        _backendSelections[group.id] = <int>{option.id};
+        return;
+      }
+
+      if (selected.contains(option.id)) {
+        if (!group.required || selected.length > group.minSelections) {
+          selected.remove(option.id);
+        }
+      } else if (group.maxSelections <= 0 ||
+          selected.length < group.maxSelections) {
+        selected.add(option.id);
+      }
+      _backendSelections[group.id] = selected;
+    });
   }
 
   @override
@@ -155,9 +260,8 @@ class _ProductCustomizationDialogState
                     Expanded(child: _dialogBody(customization: _customization)),
                     _DialogFooter(
                       onCancel: () => Navigator.of(context).pop(),
-                      onAdd: () => Navigator.of(
-                        context,
-                      ).pop<ProductCustomization>(_customization),
+                      isSubmitting: _isSubmitting,
+                      onAdd: _submit,
                     ),
                   ],
                 ),
@@ -167,6 +271,23 @@ class _ProductCustomizationDialogState
         );
       },
     );
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    final ProductCustomization customization = _customization;
+    if (widget.onSubmit == null) {
+      Navigator.of(context).pop<ProductCustomization>(customization);
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    final bool succeeded = await widget.onSubmit!(customization);
+    if (!mounted) return;
+    if (succeeded) {
+      Navigator.of(context).pop<ProductCustomization>(customization);
+      return;
+    }
+    setState(() => _isSubmitting = false);
   }
 
   Widget _dialogBody({required ProductCustomization customization}) {
@@ -214,6 +335,14 @@ class _ProductCustomizationDialogState
             setState(() => _sweetness = value);
           },
         );
+        final Widget activeModifiers = widget.productDetail == null
+            ? modifiers
+            : _BackendModifiersColumn(
+                detail: widget.productDetail!,
+                selections: _backendSelections,
+                instructionsController: _instructionsController,
+                onOptionToggled: _toggleBackendOption,
+              );
 
         if (stackColumns) {
           return SingleChildScrollView(
@@ -221,7 +350,7 @@ class _ProductCustomizationDialogState
               children: <Widget>[
                 productColumn,
                 const Divider(height: 1, color: AppColors.border),
-                modifiers,
+                activeModifiers,
               ],
             ),
           );
@@ -235,7 +364,7 @@ class _ProductCustomizationDialogState
               child: productColumn,
             ),
             const VerticalDivider(width: 1, color: AppColors.border),
-            Expanded(child: modifiers),
+            Expanded(child: activeModifiers),
           ],
         );
       },
@@ -246,6 +375,124 @@ class _ProductCustomizationDialogState
   static List<ProductModifierOption> get milkOptions => _milkOptions;
   static List<ProductModifierOption> get addOnOptions => _addOnOptions;
   static List<String> get sweetnessOptions => _sweetnessOptions;
+}
+
+class _BackendModifiersColumn extends StatelessWidget {
+  const _BackendModifiersColumn({
+    required this.detail,
+    required this.selections,
+    required this.instructionsController,
+    required this.onOptionToggled,
+  });
+
+  final BackendProductDetail detail;
+  final Map<int, Set<int>> selections;
+  final TextEditingController instructionsController;
+  final void Function(ModifierGroup group, ModifierOption option)
+  onOptionToggled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.white,
+      child: SingleChildScrollView(
+        padding: AppSpacing.allXl,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            for (final ModifierGroup group
+                in detail.modifierGroups) ...<Widget>[
+              CustomizationSection(
+                title: group.name,
+                trailing: group.required ? const _RequiredLabel() : null,
+                child: _SelectionCard(
+                  children: <Widget>[
+                    for (final ModifierOption option in group.options)
+                      _BackendOptionRow(
+                        option: option,
+                        isSelected:
+                            selections[group.id]?.contains(option.id) ?? false,
+                        isMulti:
+                            group.type == 'multiple' || group.maxSelections > 1,
+                        onTap: () => onOptionToggled(group, option),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+            ],
+            CustomizationSection(
+              title: 'Special Instructions',
+              child: _InstructionsField(controller: instructionsController),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BackendOptionRow extends StatelessWidget {
+  const _BackendOptionRow({
+    required this.option,
+    required this.isSelected,
+    required this.isMulti,
+    required this.onTap,
+  });
+
+  final ModifierOption option;
+  final bool isSelected;
+  final bool isMulti;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: option.isAvailable ? onTap : null,
+      child: Opacity(
+        opacity: option.isAvailable ? 1 : 0.45,
+        child: SizedBox(
+          height: AppSizes.customizationRowHeight,
+          child: Padding(
+            padding: AppSpacing.horizontalLg,
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  isMulti
+                      ? isSelected
+                            ? Icons.check_box
+                            : Icons.check_box_outline_blank
+                      : isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  size: 18,
+                  color: isSelected ? AppColors.tertiary : AppColors.textMuted,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    option.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  _formatPriceDelta(option.priceDelta),
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DialogHeader extends StatelessWidget {
@@ -734,10 +981,15 @@ class _RequiredLabel extends StatelessWidget {
 }
 
 class _DialogFooter extends StatelessWidget {
-  const _DialogFooter({required this.onCancel, required this.onAdd});
+  const _DialogFooter({
+    required this.onCancel,
+    required this.onAdd,
+    required this.isSubmitting,
+  });
 
   final VoidCallback onCancel;
   final VoidCallback onAdd;
+  final bool isSubmitting;
 
   @override
   Widget build(BuildContext context) {
@@ -771,9 +1023,15 @@ class _DialogFooter extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.lg),
           FilledButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.shopping_cart_outlined),
-            label: const Text('Add to Order'),
+            onPressed: isSubmitting ? null : onAdd,
+            icon: isSubmitting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.shopping_cart_outlined),
+            label: Text(isSubmitting ? 'Adding...' : 'Add to Order'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, AppSizes.buttonHeight),
               backgroundColor: AppColors.tertiary,

@@ -58,6 +58,35 @@ Phase 1 — Project Foundation
   item breakdown, payment summary, and timeline.
 - Implemented local Refund Flow modal from Order Details with full/partial
   refund selection and validation.
+- Connected POS order flow to Laravel backend API using Dio for catalog loading,
+  backend order creation, cart item updates, discounts, payment, and receipt
+  preview.
+- Fixed backend POS product category mapping so products returned with
+  `categoryId` display under the selected category tabs.
+- Connected Orders screen and Order Details side panel to Laravel backend using
+  Dio.
+- Added the Menu Management foundation with immutable menu domain models, mock
+  repository data, Menu Cubit/state, dependency injection, placeholder routes,
+  sidebar navigation, and automated repository/routing coverage.
+- Implemented the Figma-based Menu Overview UI with a Menu-specific top bar,
+  action buttons, KPI cards, internal tabs, filters, and recent activity table.
+- Implemented the Figma-based Products List UI with responsive filters, mock
+  product rows, reusable type/status chips, row actions, and pagination.
+- Implemented the Figma-based Create Product General Information UI with local
+  form state, responsive form sections, product summary/progress, channel
+  visibility controls, a fixed action footer, and navigable Menu/Products
+  breadcrumbs.
+- Implemented the Figma-based Modifier Groups UI with Cubit-loaded mock data,
+  local search and selection, responsive master/detail layout, options table,
+  assigned product chips, and placeholder actions.
+- Implemented the Create Discount Policy UI with local form state, responsive
+  policy sections, POS preview, configuration summary, sticky actions, sidebar
+  routing, and automated route/layout coverage.
+- Completed a full POS and Orders flow audit across Flutter, Dio, Laravel, and database behavior. See docs/POS_FLOW_AUDIT.md.
+- Implemented Flutter-side canonical cart configuration matching, defensive quantity merging, and serialized cart mutations.
+- Implemented Flutter payment submission guards, payment/receipt separation, uncertain-payment verification, and receipt retry recovery.
+- Implemented safe backend product-detail loading and Flutter order-context persistence for customer and order type.
+- Removed Flutter table selection for the current phase; all new orders use `tableId: null`.
 
 ## In Progress
 
@@ -65,8 +94,7 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Review and polish the full POS and Orders flow before backend/order
-persistence planning.
+Fix Flutter Orders list/detail request races, stale panel state, and API error presentation.
 
 ## Architecture Decisions
 
@@ -83,7 +111,6 @@ persistence planning.
 
 - Do not create feature-specific documentation until requested.
 - Do not create `POS_FLOW.md` yet.
-- Do not implement backend API integration yet.
 - Do not add database or local storage yet.
 - Keep changes focused and avoid unrelated refactors.
 - Avoid over-engineering.
@@ -92,7 +119,6 @@ persistence planning.
 
 - Detailed component states are not fully defined yet.
 - The expected Manrope variable font file still needs to be added if absent.
-- Backend integration approach is not defined yet.
 - Tablet support requirements are not defined yet.
 
 ## Recent Changes Log
@@ -151,3 +177,44 @@ persistence planning.
 - 2026-06-20: Implemented local Refund Flow modal from Order Details with
   safety warning, full/partial refund selection, amount validation, reasons,
   manager notes, and local refund state updates.
+- 2026-06-20: Connected POS order flow to Laravel backend API using Dio for
+  catalog loading, backend order creation, cart item updates, discounts,
+  payment, and receipt preview.
+- 2026-06-20: Fixed POS product grid filtering by mapping backend product
+  `categoryId` values to category names and returning `categoryName` from the
+  menu products API.
+- 2026-06-20: Connected Orders screen and Order Details side panel to Laravel
+  backend using Dio, including list/detail endpoints, filter mapping, status
+  mapping, and safe placeholders for order actions.
+- 2026-07-01: Added the Menu Management foundation with menu catalog models,
+  mock repository data, Cubit/state filtering, eight title-only routes, Menu
+  sidebar activation, service-locator registrations, and automated tests.
+- 2026-07-06: Implemented the desktop-first Menu Overview UI from Figma,
+  including the scoped shell header, action controls, Cubit-backed KPI cards,
+  responsive tabs and filters, exact mock activity rows, status chips, and
+  widget/routing coverage.
+- 2026-07-06: Implemented the desktop-first Products List UI from Figma with a
+  Menu Management top bar, page actions, responsive search/filter controls,
+  five exact mock catalog rows, reusable product chips, icon thumbnails, row
+  actions, pagination, and widget/routing coverage.
+- 2026-07-06: Implemented the desktop-first Create Product General Information
+  UI from Figma with local-only form state, reusable Menu form widgets,
+  responsive two-column layout, locked setup progress, fixed action footer,
+  placeholder save feedback, and widget/routing coverage.
+- 2026-07-06: Made the Create Product Menu and Products breadcrumbs navigate
+  directly to `/menu` and `/menu/products`, with routing test coverage.
+- 2026-07-06: Implemented the desktop-first Modifier Groups UI from Figma with
+  exact mock group counts, local search/selection, reusable group/detail/table
+  widgets, assigned product chips, placeholder actions, responsive stacking,
+  and widget/routing coverage.
+- 2026-07-06: Implemented the desktop-first Create Discount Policy UI from the
+  supplied Figma reference and screenshot, including the `/discounts/create`
+  route, active Discounts sidebar state, local-only policy controls, responsive
+  form cards, POS preview, summary panel, sticky actions, and widget coverage.
+- 2026-07-12: Implemented guarded Flutter payment submission, confirmed-payment
+  cart clearing before independent receipt retrieval, receipt retry recovery,
+  uncertain-payment order-status verification, and focused payment tests.
+- 2026-07-12: Implemented explicit backend product-detail loading, safe
+  no-fallback failure handling, and serialized order-context persistence for
+  customer and type updates. Table selection is intentionally deferred; all
+  POS order creation sends `tableId: null`.
