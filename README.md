@@ -1,8 +1,6 @@
 # Cafe System 618 Backend
 
-Cafe System 618 is a multi-tenant cafe management system. This repository
-currently contains the Phase 1 Laravel backend workspace and PostgreSQL
-database schema.
+* [ ] 
 
 The backend runs entirely through Docker. Teammates do not need PHP, Composer,
 or PostgreSQL installed on the host machine.
