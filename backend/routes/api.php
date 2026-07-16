@@ -28,6 +28,13 @@ Route::prefix('v1')->group(function (): void {
     Route::get('tables', [TableController::class, 'index']);
     Route::get('pos/state', [PosStateController::class, 'show']);
     Route::get('discounts/available', [DiscountController::class, 'available']);
+    Route::get('discounts', [DiscountController::class, 'index']);
+    Route::post('discounts', [DiscountController::class, 'store']);
+    Route::get('discounts/{discount}', [DiscountController::class, 'show']);
+    Route::put('discounts/{discount}', [DiscountController::class, 'update']);
+    Route::patch('discounts/{discount}', [DiscountController::class, 'update']);
+    Route::patch('discounts/{discount}/status', [DiscountController::class, 'updateStatus']);
+    Route::delete('discounts/{discount}', [DiscountController::class, 'destroy']);
 
     Route::get('orders', [PosOrderController::class, 'index']);
     Route::post('orders', [PosOrderController::class, 'store']);

@@ -12,9 +12,8 @@ class TenantAccessSeeder extends Seeder
     {
         $now = now();
 
-        $tenantId = DB::table('tenants')->insertGetId([
+        DB::table('tenants')->updateOrInsert(['slug' => 'cafe-618'], [
             'name' => 'Cafe 6:18',
-            'slug' => 'cafe-618',
             'status' => 'active',
             'plan' => 'starter',
             'currency' => 'SYP',
@@ -22,6 +21,7 @@ class TenantAccessSeeder extends Seeder
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
 
         $branchIds = [];
         foreach ([
@@ -29,9 +29,10 @@ class TenantAccessSeeder extends Seeder
             ['name' => 'Mall', 'address' => 'Level 2, City Mall', 'phone' => '+963 11 555 0102'],
             ['name' => 'Airport', 'address' => 'Departures Hall', 'phone' => '+963 11 555 0103'],
         ] as $branch) {
-            $branchIds[$branch['name']] = DB::table('branches')->insertGetId([
+            DB::table('branches')->updateOrInsert([
                 'tenant_id' => $tenantId,
                 'name' => $branch['name'],
+            ], [
                 'address' => $branch['address'],
                 'phone' => $branch['phone'],
                 'currency' => 'SYP',
@@ -39,6 +40,10 @@ class TenantAccessSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+            $branchIds[$branch['name']] = (int) DB::table('branches')
+                ->where('tenant_id', $tenantId)
+                ->where('name', $branch['name'])
+                ->value('id');
         }
 
         $userIds = [];
@@ -47,16 +52,21 @@ class TenantAccessSeeder extends Seeder
             ['name' => 'Cashier User', 'email' => 'cashier@cafe618.local', 'role' => 'cashier'],
             ['name' => 'Shift Manager', 'email' => 'manager@cafe618.local', 'role' => 'manager'],
         ] as $user) {
-            $userIds[$user['email']] = DB::table('users')->insertGetId([
+            DB::table('users')->updateOrInsert([
                 'tenant_id' => $tenantId,
-                'name' => $user['name'],
                 'email' => $user['email'],
+            ], [
+                'name' => $user['name'],
                 'password' => Hash::make('password'),
                 'role' => $user['role'],
                 'email_verified_at' => $now,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+            $userIds[$user['email']] = (int) DB::table('users')
+                ->where('tenant_id', $tenantId)
+                ->where('email', $user['email'])
+                ->value('id');
         }
 
         $assignments = [];
@@ -70,12 +80,19 @@ class TenantAccessSeeder extends Seeder
             ];
         }
 
-        DB::table('user_branches')->insert($assignments);
+        foreach ($assignments as $assignment) {
+            DB::table('user_branches')->updateOrInsert([
+                'tenant_id' => $assignment['tenant_id'],
+                'user_id' => $assignment['user_id'],
+                'branch_id' => $assignment['branch_id'],
+            ], $assignment);
+        }
 
-        DB::table('api_tokens')->insert([
+        DB::table('api_tokens')->updateOrInsert([
             'tenant_id' => $tenantId,
             'user_id' => $userIds['cashier@cafe618.local'],
             'name' => 'demo-pos-token',
+        ], [
             'token_hash' => hash('sha256', 'demo-pos-token'),
             'expires_at' => $now->copy()->addDays(30),
             'created_at' => $now,

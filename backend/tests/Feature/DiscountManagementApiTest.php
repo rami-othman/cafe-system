@@ -1,0 +1,93 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class DiscountManagementApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_tenant_can_manage_its_discounts_without_cross_tenant_access(): void
+    {
+        $this->seed();
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->value('id');
+        $headers = ['X-Tenant-Id' => $tenantId];
+
+        $this->getJson('/api/v1/discounts', $headers)
+            ->assertOk()->assertJsonCount(24, 'data')->assertJsonPath('data.0.status', 'active');
+
+        $created = $this->postJson('/api/v1/discounts', $this->payload(['name' => 'Targeted Test', 'scope' => 'product', 'targetProductIds' => [$productId]]), $headers)
+            ->assertCreated()->assertJsonPath('data.type', 'percentage')->assertJsonPath('data.targetProductIds.0', $productId);
+        $discountId = $created->json('data.id');
+
+        $this->patchJson("/api/v1/discounts/{$discountId}", $this->payload(['name' => 'Updated Fixed', 'type' => 'fixed', 'value' => 5]), $headers)
+            ->assertOk()->assertJsonPath('data.name', 'Updated Fixed')->assertJsonPath('data.type', 'fixed');
+        $this->patchJson("/api/v1/discounts/{$discountId}/status", ['isActive' => false], $headers)
+            ->assertOk()->assertJsonPath('data.status', 'inactive');
+
+        $otherTenant = DB::table('tenants')->insertGetId(['name' => 'Other', 'slug' => 'other', 'created_at' => now(), 'updated_at' => now()]);
+        $this->getJson("/api/v1/discounts/{$discountId}", ['X-Tenant-Id' => $otherTenant])->assertNotFound();
+        $this->deleteJson("/api/v1/discounts/{$discountId}", [], $headers)->assertNoContent();
+    }
+
+    public function test_validation_rejects_duplicate_codes_and_invalid_dates(): void
+    {
+        $this->seed();
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $headers = ['X-Tenant-Id' => $tenantId];
+
+        $this->postJson('/api/v1/discounts', $this->payload(['code' => 'MRNG15']), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('code');
+        $this->postJson('/api/v1/discounts', $this->payload(['startsAt' => '2026-08-02T00:00:00Z', 'endsAt' => '2026-08-01T00:00:00Z']), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('endsAt');
+    }
+
+    public function test_branch_targets_are_tenant_scoped_and_can_be_cleared_for_all_branches(): void
+    {
+        $this->seed();
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $headers = ['X-Tenant-Id' => $tenantId];
+        $branchIds = DB::table('branches')->where('tenant_id', $tenantId)->orderBy('id')->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $this->postJson('/api/v1/discounts', $this->payload(['name' => 'All Branches', 'code' => 'ALL-BRANCHES', 'branchIds' => []]), $headers)
+            ->assertCreated()->assertJsonPath('data.appliesToAllBranches', true)->assertJsonCount(0, 'data.branchIds');
+        $created = $this->postJson('/api/v1/discounts', $this->payload(['name' => 'One Branch', 'code' => 'ONE-BRANCH', 'appliesToAllBranches' => false, 'branchIds' => [$branchIds[0]]]), $headers)
+            ->assertCreated()->assertJsonPath('data.appliesToAllBranches', false)->assertJsonPath('data.branchIds.0', $branchIds[0]);
+        $this->postJson('/api/v1/discounts', $this->payload(['name' => 'Many Branches', 'code' => 'MANY-BRANCHES', 'appliesToAllBranches' => false, 'branchIds' => array_slice($branchIds, 0, 2)]), $headers)
+            ->assertCreated()->assertJsonCount(2, 'data.branchIds');
+        $this->postJson('/api/v1/discounts', $this->payload(['name' => 'Invalid Branch', 'code' => 'INVALID-BRANCH', 'appliesToAllBranches' => false, 'branchIds' => [999999]]), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('branchIds.0');
+
+        $otherTenant = DB::table('tenants')->insertGetId(['name' => 'Other Branch Tenant', 'slug' => 'other-branch-tenant', 'created_at' => now(), 'updated_at' => now()]);
+        $otherBranch = DB::table('branches')->insertGetId(['tenant_id' => $otherTenant, 'name' => 'Other Branch', 'created_at' => now(), 'updated_at' => now()]);
+        $this->postJson('/api/v1/discounts', $this->payload(['name' => 'Foreign Branch', 'code' => 'FOREIGN-BRANCH', 'appliesToAllBranches' => false, 'branchIds' => [$otherBranch]]), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('branchIds.0');
+
+        $discountId = $created->json('data.id');
+        $this->patchJson("/api/v1/discounts/{$discountId}", $this->payload(['name' => 'Now All Branches', 'code' => 'ONE-BRANCH', 'branchIds' => []]), $headers)
+            ->assertOk()->assertJsonPath('data.appliesToAllBranches', true)->assertJsonCount(0, 'data.branchIds');
+    }
+
+    public function test_tenant_and_branch_seed_data_is_idempotent(): void
+    {
+        $this->seed(\Database\Seeders\TenantAccessSeeder::class);
+        $this->seed(\Database\Seeders\TenantAccessSeeder::class);
+
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $this->assertSame(1, DB::table('tenants')->where('slug', 'cafe-618')->count());
+        $this->assertSame(3, DB::table('branches')->where('tenant_id', $tenantId)->count());
+    }
+
+    private function payload(array $overrides = []): array
+    {
+        return $overrides + [
+            'name' => 'Management Test', 'code' => 'MANAGE10', 'applicationMode' => 'code', 'type' => 'percentage',
+            'scope' => 'order', 'value' => 10, 'minimumOrderAmount' => 0, 'isActive' => true,
+            'appliesToAllBranches' => true, 'branchIds' => [],
+        ];
+    }
+}

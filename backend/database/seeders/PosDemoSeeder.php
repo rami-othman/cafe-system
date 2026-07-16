@@ -59,14 +59,14 @@ class PosDemoSeeder extends Seeder
         $this->insertItem($tenantId, $orderId, 'Butter Croissant', 2, 3.50);
         $this->insertItem($tenantId, $orderId, 'Avocado Toast', 1, 9.00, [], 'Extra chili flakes');
 
-        $discountId = (int) DB::table('discounts')->where('tenant_id', $tenantId)->where('code', 'VIP5')->value('id');
+        $discountId = (int) DB::table('discounts')->where('tenant_id', $tenantId)->where('name', 'Student Discount')->value('id');
         DB::table('order_discounts')->insert([
             'tenant_id' => $tenantId,
             'order_id' => $orderId,
             'discount_id' => $discountId,
-            'discount_name' => 'VIP Reward',
+            'discount_name' => 'Student Discount',
             'discount_type' => 'fixed',
-            'discount_value' => 5,
+            'discount_value' => 2,
             'discount_amount' => 2,
             'created_at' => $now->copy()->subHours(2),
             'updated_at' => $now->copy()->subHours(2),
