@@ -13,10 +13,11 @@ class DioApiClient {
               connectTimeout: const Duration(seconds: 15),
               sendTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 15),
-              headers: const <String, Object?>{
+              headers: <String, Object?>{
                 Headers.acceptHeader: 'application/json',
                 Headers.contentTypeHeader: 'application/json',
-                'X-Tenant-Id': ApiConfig.defaultTenantId,
+                if (ApiConfig.defaultTenantId > 0)
+                  'X-Tenant-Id': ApiConfig.defaultTenantId,
               },
             ),
           ) {
@@ -25,7 +26,11 @@ class DioApiClient {
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
           options.headers[Headers.contentTypeHeader] = 'application/json';
-          options.headers['X-Tenant-Id'] = ApiConfig.defaultTenantId;
+          if (ApiConfig.defaultTenantId > 0) {
+            options.headers['X-Tenant-Id'] = ApiConfig.defaultTenantId;
+          } else {
+            options.headers.remove('X-Tenant-Id');
+          }
           handler.next(options);
         },
       ),

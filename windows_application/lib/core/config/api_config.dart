@@ -6,5 +6,11 @@ class ApiConfig {
     defaultValue: 'http://localhost:8000/api/v1',
   );
 
-  static const int defaultTenantId = 1;
+  /// Leave tenant resolution to the backend unless a deployment explicitly
+  /// supplies a tenant ID at build time. Database IDs are not stable across
+  /// fresh installs or reseeds.
+  static const int defaultTenantId = int.fromEnvironment(
+    'TENANT_ID',
+    defaultValue: 0,
+  );
 }

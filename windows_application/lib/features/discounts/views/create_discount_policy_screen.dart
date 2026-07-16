@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
@@ -16,9 +17,15 @@ import '../widgets/discount_form_section_card.dart';
 import '../widgets/discount_pos_preview_card.dart';
 import '../widgets/discount_summary_panel.dart';
 import '../widgets/discount_toggle_row.dart';
+import '../controllers/discounts_cubit.dart';
+import '../controllers/discounts_state.dart';
+import '../models/discount_list_item.dart';
+import '../models/discount_upsert_request.dart';
 
 class CreateDiscountPolicyScreen extends StatefulWidget {
-  const CreateDiscountPolicyScreen({super.key});
+  const CreateDiscountPolicyScreen({super.key, this.initialDiscount});
+
+  final DiscountListItem? initialDiscount;
 
   @override
   State<CreateDiscountPolicyScreen> createState() =>
@@ -47,7 +54,7 @@ class _CreateDiscountPolicyScreenState
   int _discountPercent = 10;
   String _customerGroup = 'All Customers';
   String _paymentMethod = 'Any Payment Method';
-  String _branchCondition = 'All Branches & Channels';
+  int? _selectedBranchId;
   final Set<String> _selectedDays = <String>{'Mon', 'Tue', 'Wed', 'Thu', 'Fri'};
   final Set<String> _approvalLevels = <String>{'Manager', 'Admin'};
   final Set<String> _ruleTargets = <String>{'Category', 'Day/Hour'};
@@ -66,6 +73,39 @@ class _CreateDiscountPolicyScreenState
     'Track by reason': true,
     'Include in discount export': true,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    final DiscountListItem? discount = widget.initialDiscount;
+    if (discount != null) {
+      _nameController.text = discount.name;
+      _codeController.text = discount.code ?? '';
+      _descriptionController.text = discount.description ?? '';
+      _minSpendController.text = discount.minimumOrderAmount == 0
+          ? ''
+          : discount.minimumOrderAmount.toStringAsFixed(2);
+      _maxDiscountController.text =
+          discount.maximumDiscountAmount?.toStringAsFixed(2) ?? '';
+      _active = discount.isActive;
+      _discountMode = _modeLabel(discount.applicationMode);
+      _appliesTo = _scopeLabel(discount.scope);
+      _valueType = discount.type == 'fixed' ? 'Fixed Amount' : 'Percentage';
+      _discountPercent = discount.value.round();
+      _selectedBranchId =
+          discount.appliesToAllBranches || discount.branchIds.isEmpty
+          ? null
+          : discount.branchIds.first;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        context.read<DiscountsCubit>().loadBranches();
+      } catch (_) {
+        // Widget-only visual tests intentionally do not install application DI.
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -141,9 +181,8 @@ class _CreateDiscountPolicyScreenState
         ),
         DiscountBottomActionBar(
           onDiscard: _discardChanges,
-          onSaveDraft: () => _showMessage('Discount draft saved locally.'),
-          onActivate: () =>
-              _showMessage('Discount activation is a UI placeholder.'),
+          onSaveDraft: () => _submit(false),
+          onActivate: () => _submit(true),
         ),
       ],
     );
@@ -319,18 +358,7 @@ class _CreateDiscountPolicyScreenState
               ),
               _LabeledField(
                 label: 'Branch / Channel',
-                child: _SelectField(
-                  value: _branchCondition,
-                  options: const <String>[
-                    'All Branches & Channels',
-                    'Downtown POS',
-                    'Mall POS',
-                    'Airport POS',
-                  ],
-                  onChanged: (String value) {
-                    setState(() => _branchCondition = value);
-                  },
-                ),
+                child: _buildBranchField(),
               ),
             ],
           ),
@@ -628,7 +656,7 @@ class _CreateDiscountPolicyScreenState
       _discountPercent = 10;
       _customerGroup = 'All Customers';
       _paymentMethod = 'Any Payment Method';
-      _branchCondition = 'All Branches & Channels';
+      _selectedBranchId = null;
       _selectedDays
         ..clear()
         ..addAll(<String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
@@ -657,6 +685,162 @@ class _CreateDiscountPolicyScreenState
         });
     });
     _showMessage('Changes discarded.');
+  }
+
+  Future<void> _submit(bool activate) async {
+    final DiscountsCubit cubit = context.read<DiscountsCubit>();
+    if (cubit.state.isSaving) {
+      return;
+    }
+    final String name = _nameController.text.trim();
+    if (name.isEmpty) {
+      _showMessage('Discount name is required.');
+      return;
+    }
+    final double? minimum = _decimalValue(_minSpendController.text);
+    final double? maximum = _decimalValue(_maxDiscountController.text);
+    if ((minimum == null && _minSpendController.text.trim().isNotEmpty) ||
+        (maximum == null && _maxDiscountController.text.trim().isNotEmpty)) {
+      _showMessage('Enter valid monetary amounts.');
+      return;
+    }
+    final bool appliesToAllBranches = _selectedBranchId == null;
+    final validBranchIds = cubit.state.branches
+        .map((branch) => branch.id)
+        .toSet();
+    if (!appliesToAllBranches && !validBranchIds.contains(_selectedBranchId)) {
+      _showMessage('Select a valid branch before saving this discount.');
+      return;
+    }
+    final DiscountUpsertRequest request = DiscountUpsertRequest(
+      name: name,
+      code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+      applicationMode: _backendMode,
+      type: _valueType == 'Fixed Amount' ? 'fixed' : 'percentage',
+      scope: _backendScope,
+      value: _discountPercent.toDouble(),
+      conditions: _minimumOrderController.text.trim().isEmpty
+          ? null
+          : 'Minimum order ${_minimumOrderController.text.trim()}',
+      minimumOrderAmount: minimum,
+      maximumDiscountAmount: maximum,
+      activeDays: _selectedDays.toList(growable: false),
+      customerEligibility: _customerGroup == 'All Customers'
+          ? null
+          : _customerGroup,
+      paymentMethod: _paymentMethod == 'Any Payment Method'
+          ? null
+          : _paymentMethod,
+      appliesToAllBranches: appliesToAllBranches,
+      branchIds: appliesToAllBranches ? const <int>[] : <int>[_selectedBranchId!],
+      isActive: activate,
+    );
+    final bool saved = widget.initialDiscount == null
+        ? await cubit.createDiscount(request)
+        : await cubit.updateDiscount(widget.initialDiscount!.id, request);
+    if (!mounted) return;
+    if (saved) {
+      _showMessage(activate ? 'Discount saved and activated.' : 'Discount saved as inactive.');
+      context.go(AppRoutes.discounts);
+      return;
+    }
+    _showMessage(cubit.state.errorMessage ?? 'Unable to save discount.');
+  }
+
+  double? _decimalValue(String value) =>
+      value.trim().isEmpty ? null : double.tryParse(value.trim().replaceAll(',', ''));
+
+  String get _backendMode => switch (_discountMode) {
+    'Auto' => 'auto',
+    'Manual' => 'manual',
+    _ => 'code',
+  };
+
+  String get _backendScope => switch (_appliesTo) {
+    'Selected Items' => 'product',
+    'Categories' => 'category',
+    _ => 'order',
+  };
+
+  String _modeLabel(String mode) => switch (mode) {
+    'auto' => 'Auto',
+    'manual' => 'Manual',
+    _ => 'Code',
+  };
+
+  String _scopeLabel(String scope) => switch (scope) {
+    'product' => 'Selected Items',
+    'category' => 'Categories',
+    _ => 'Entire Order',
+  };
+
+  Widget _buildBranchField() {
+    return BlocBuilder<DiscountsCubit, DiscountsState>(
+      builder: (BuildContext context, DiscountsState state) {
+        final availableBranches = state.branches
+            .where((branch) => branch.isActive && branch.id > 0)
+            .toList(growable: false);
+        final int? value = availableBranches.any(
+          (branch) => branch.id == _selectedBranchId,
+        )
+            ? _selectedBranchId
+            : null;
+        final String? branchError = _branchError(state);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            DropdownButtonFormField<int?>(
+              key: const Key('discount-branch-field'),
+              value: value,
+              isExpanded: true,
+              hint: Text(
+                state.isLoadingBranches
+                    ? 'Loading branches...'
+                    : 'All Branches & Channels',
+              ),
+              items: <DropdownMenuItem<int?>>[
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text('All Branches & Channels'),
+                ),
+                ...availableBranches.map(
+                  (branch) => DropdownMenuItem<int?>(
+                    value: branch.id,
+                    child: Text(branch.name),
+                  ),
+                ),
+              ],
+              onChanged: state.isLoadingBranches
+                  ? null
+                  : (int? branchId) =>
+                        setState(() => _selectedBranchId = branchId),
+            ),
+            if (branchError != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                branchError,
+                style: AppTextStyles.labelSmall.copyWith(color: AppColors.danger),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  String? _branchError(DiscountsState state) {
+    for (final String key in <String>[
+      'branchIds',
+      'branchIds.0',
+      'branch_id',
+      'appliesToAllBranches',
+      'applies_to_all_branches',
+    ]) {
+      final List<String>? messages = state.validationErrors[key];
+      if (messages != null && messages.isNotEmpty) return messages.first;
+    }
+    return state.branchErrorMessage;
   }
 
   void _showMessage(String message) {

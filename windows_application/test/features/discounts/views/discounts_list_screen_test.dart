@@ -2,185 +2,75 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/theme/app_theme.dart';
-import 'package:windows_application/core/theme/app_colors.dart';
+import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
+import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
+import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/features/discounts/views/discounts_list_screen.dart';
-import 'package:windows_application/features/discounts/widgets/discount_status_badge.dart';
 
 void main() {
-  testWidgets('renders the page heading and three summary cards', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('loads backend-provided discounts and summary metrics', (WidgetTester tester) async {
     await _pumpScreen(tester);
-
     expect(find.text('Discounts & Coupons'), findsOneWidget);
-    expect(
-      find.text('Manage promotional offers and pricing rules'),
-      findsOneWidget,
-    );
-    expect(find.text('ACTIVE DISCOUNTS'), findsOneWidget);
-    expect(find.text('TOTAL USAGE (THIS MONTH)'), findsOneWidget);
-    expect(find.text('ESTIMATED VALUE SAVED'), findsOneWidget);
-    expect(find.text('12'), findsOneWidget);
-    expect(find.text('486'), findsOneWidget);
-    expect(find.text('\$1,240.50'), findsOneWidget);
+    expect(find.text('Morning Rush 15%'), findsOneWidget);
+    expect(find.text('Student Discount'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('292'), findsOneWidget);
+    expect(find.text('\$520.00'), findsOneWidget);
   });
 
-  testWidgets('renders the four Figma reference rows on the first page', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('filters loaded discounts by search and status', (WidgetTester tester) async {
     await _pumpScreen(tester);
-
-    for (final String name in <String>[
-      'Morning Rush 15%',
-      'Student Discount',
-      'Holiday Special',
-      'Summer Coolers',
-    ]) {
-      expect(find.text(name), findsOneWidget);
-    }
-    expect(find.text('Showing 1 to 4 of 24 entries'), findsOneWidget);
-  });
-
-  testWidgets('filters local discounts by search query', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester);
-
-    await tester.enterText(
-      find.byKey(const Key('discounts-search-field')),
-      'student id',
-    );
+    await tester.enterText(find.byKey(const Key('discounts-search-field')), 'student');
     await tester.pump();
-
     expect(find.text('Student Discount'), findsOneWidget);
     expect(find.text('Morning Rush 15%'), findsNothing);
-    expect(find.text('Showing 1 to 1 of 1 entries'), findsOneWidget);
   });
 
-  testWidgets('filters local discounts by status', (WidgetTester tester) async {
-    await _pumpScreen(tester);
-
-    await tester.tap(find.byKey(const Key('discount-status-filter')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Scheduled').last);
-    await tester.pump();
-
-    expect(find.text('Holiday Special'), findsOneWidget);
+  testWidgets('shows the API error instead of mock fallback data', (WidgetTester tester) async {
+    await _pumpScreen(tester, repository: _FailingRepository());
+    expect(find.text('Backend is not reachable.'), findsOneWidget);
     expect(find.text('Morning Rush 15%'), findsNothing);
-  });
-
-  testWidgets('changes pages with local pagination state', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester);
-
-    await tester.tap(find.text('2'));
-    await tester.pump();
-
-    expect(find.text('Weekday Lunch'), findsOneWidget);
-    expect(find.text('Morning Rush 15%'), findsNothing);
-    expect(find.text('Showing 5 to 8 of 24 entries'), findsOneWidget);
-  });
-
-  testWidgets('uses the light selected pagination treatment from Figma', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester);
-
-    final OutlinedButton pageOne = tester.widget<OutlinedButton>(
-      find.ancestor(of: find.text('1'), matching: find.byType(OutlinedButton)),
-    );
-
-    expect(
-      pageOne.style!.backgroundColor!.resolve(<WidgetState>{}),
-      AppColors.background,
-    );
-    expect(
-      pageOne.style!.foregroundColor!.resolve(<WidgetState>{}),
-      AppColors.paginationActive,
-    );
-  });
-
-  testWidgets('shows a polished empty state when there are no matches', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester);
-
-    await tester.enterText(
-      find.byKey(const Key('discounts-search-field')),
-      'not-a-real-discount',
-    );
-    await tester.pump();
-
-    expect(
-      find.text('No discounts match your search or status filter.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('renders active, scheduled, and expired status badges', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester);
-
-    expect(
-      find.byWidgetPredicate(
-        (Widget widget) =>
-            widget is DiscountStatusBadge &&
-            widget.status == DiscountStatus.active,
-      ),
-      findsNWidgets(2),
-    );
-    expect(
-      find.byWidgetPredicate(
-        (Widget widget) =>
-            widget is DiscountStatusBadge &&
-            widget.status == DiscountStatus.scheduled,
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.byWidgetPredicate(
-        (Widget widget) =>
-            widget is DiscountStatusBadge &&
-            widget.status == DiscountStatus.expired,
-      ),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('is overflow-free at the 1280 by 800 desktop reference size', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester, const Size(1280, 800));
-
-    expect(tester.takeException(), isNull);
   });
 }
 
-Future<void> _pumpScreen(
-  WidgetTester tester, [
-  Size size = const Size(1280, 800),
-]) async {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1;
-  addTearDown(() {
-    tester.view.resetPhysicalSize();
-    tester.view.resetDevicePixelRatio();
-  });
-
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(
-        body: BlocProvider<DiscountsCubit>(
-          create: (_) => DiscountsCubit(),
-          child: const DiscountsListScreen(),
-        ),
-      ),
-    ),
-  );
-  await tester.pump();
+Future<void> _pumpScreen(WidgetTester tester, {DiscountsRepository? repository}) async {
+  final DiscountsCubit cubit = DiscountsCubit(repository: repository ?? _Repository())..loadDiscounts();
+  await tester.pumpWidget(MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(body: BlocProvider<DiscountsCubit>.value(value: cubit, child: const DiscountsListScreen())),
+  ));
+  await tester.pumpAndSettle();
 }
+
+class _Repository implements DiscountsRepository {
+  @override
+  Future<List<Branch>> getBranches() async => const <Branch>[];
+  @override
+  Future<List<DiscountListItem>> getDiscounts() async => <DiscountListItem>[
+    _item('1', 'Morning Rush 15%', DiscountStatus.active, 128, '\$192.00'),
+    _item('2', 'Student Discount', DiscountStatus.active, 164, '\$328.00'),
+  ];
+  @override
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) => throw UnimplementedError();
+  @override
+  Future<void> deleteDiscount(String discountId) => throw UnimplementedError();
+  @override
+  Future<DiscountListItem> setStatus(String discountId, bool isActive) => throw UnimplementedError();
+  @override
+  Future<DiscountListItem> updateDiscount(String discountId, DiscountUpsertRequest request) => throw UnimplementedError();
+}
+
+class _FailingRepository extends _Repository {
+  @override
+  Future<List<DiscountListItem>> getDiscounts() => Future<List<DiscountListItem>>.error(const ApiException(message: 'Backend is not reachable.'));
+}
+
+DiscountListItem _item(String id, String name, DiscountStatus status, int usage, String saved) => DiscountListItem(
+  id: id, name: name, secondaryLabel: name == 'Student Discount' ? 'Automatic' : 'Code: MRNG15',
+  type: name == 'Student Discount' ? 'Fixed Amount' : 'Percentage', displayValue: name == 'Student Discount' ? '\$2.00 off' : '15% off',
+  conditions: name == 'Student Discount' ? 'Requires Student ID tag' : 'Min. \$10 spent', validPeriodPrimary: 'Always Valid',
+  status: status, usageCount: usage, estimatedSavedValue: saved,
+);

@@ -9,6 +9,7 @@ import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
 import '../../features/pos/repositories/pos_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
+import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
 
 final GetIt serviceLocator = GetIt.instance;
@@ -58,8 +59,16 @@ void setupServiceLocator({bool useBackend = true}) {
     );
   }
 
+  if (!serviceLocator.isRegistered<DiscountsRepository>()) {
+    serviceLocator.registerLazySingleton<DiscountsRepository>(
+      () => DiscountsApiRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+
   if (!serviceLocator.isRegistered<DiscountsCubit>()) {
-    serviceLocator.registerFactory<DiscountsCubit>(DiscountsCubit.new);
+    serviceLocator.registerFactory<DiscountsCubit>(
+      () => DiscountsCubit(repository: serviceLocator<DiscountsRepository>()),
+    );
   }
 
   if (!serviceLocator.isRegistered<DailyReportCubit>()) {

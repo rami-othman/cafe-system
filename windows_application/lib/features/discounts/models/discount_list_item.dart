@@ -1,13 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-enum DiscountStatus { active, scheduled, expired, draft }
+enum DiscountStatus { active, inactive, scheduled, expired }
 
 extension DiscountStatusLabel on DiscountStatus {
   String get label => switch (this) {
     DiscountStatus.active => 'ACTIVE',
+    DiscountStatus.inactive => 'INACTIVE',
     DiscountStatus.scheduled => 'SCHEDULED',
     DiscountStatus.expired => 'EXPIRED',
-    DiscountStatus.draft => 'DRAFT',
   };
 }
 
@@ -24,6 +24,18 @@ class DiscountListItem extends Equatable {
     required this.status,
     required this.usageCount,
     required this.estimatedSavedValue,
+    this.code,
+    this.description,
+    this.applicationMode = 'code',
+    this.scope = 'order',
+    this.value = 0,
+    this.minimumOrderAmount = 0,
+    this.maximumDiscountAmount,
+    this.startsAt,
+    this.endsAt,
+    this.isActive = true,
+    this.appliesToAllBranches = true,
+    this.branchIds = const <int>[],
   });
 
   final String id;
@@ -37,6 +49,18 @@ class DiscountListItem extends Equatable {
   final DiscountStatus status;
   final int usageCount;
   final String estimatedSavedValue;
+  final String? code;
+  final String? description;
+  final String applicationMode;
+  final String scope;
+  final double value;
+  final double minimumOrderAmount;
+  final double? maximumDiscountAmount;
+  final DateTime? startsAt;
+  final DateTime? endsAt;
+  final bool isActive;
+  final bool appliesToAllBranches;
+  final List<int> branchIds;
 
   @override
   List<Object?> get props => <Object?>[
@@ -51,6 +75,18 @@ class DiscountListItem extends Equatable {
     status,
     usageCount,
     estimatedSavedValue,
+    code,
+    description,
+    applicationMode,
+    scope,
+    value,
+    minimumOrderAmount,
+    maximumDiscountAmount,
+    startsAt,
+    endsAt,
+    isActive,
+    appliesToAllBranches,
+    branchIds,
   ];
 }
 

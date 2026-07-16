@@ -19,6 +19,10 @@ class DiscountsTable extends StatelessWidget {
     required this.totalEntries,
     required this.totalPages,
     required this.onPageChanged,
+    required this.onView,
+    required this.onEdit,
+    required this.onToggleStatus,
+    required this.onDelete,
   });
 
   final List<DiscountListItem> discounts;
@@ -26,6 +30,10 @@ class DiscountsTable extends StatelessWidget {
   final int totalEntries;
   final int totalPages;
   final ValueChanged<int> onPageChanged;
+  final ValueChanged<DiscountListItem> onView;
+  final ValueChanged<DiscountListItem> onEdit;
+  final ValueChanged<DiscountListItem> onToggleStatus;
+  final ValueChanged<DiscountListItem> onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +75,13 @@ class DiscountsTable extends StatelessWidget {
                           children: <Widget>[
                             const _DiscountTableHeader(),
                             for (final DiscountListItem discount in discounts)
-                              _DiscountTableRow(discount: discount),
+                              _DiscountTableRow(
+                                discount: discount,
+                                onView: onView,
+                                onEdit: onEdit,
+                                onToggleStatus: onToggleStatus,
+                                onDelete: onDelete,
+                              ),
                           ],
                         ),
                       ),
@@ -111,9 +125,13 @@ class _DiscountTableHeader extends StatelessWidget {
 }
 
 class _DiscountTableRow extends StatefulWidget {
-  const _DiscountTableRow({required this.discount});
+  const _DiscountTableRow({required this.discount, required this.onView, required this.onEdit, required this.onToggleStatus, required this.onDelete});
 
   final DiscountListItem discount;
+  final ValueChanged<DiscountListItem> onView;
+  final ValueChanged<DiscountListItem> onEdit;
+  final ValueChanged<DiscountListItem> onToggleStatus;
+  final ValueChanged<DiscountListItem> onDelete;
 
   @override
   State<_DiscountTableRow> createState() => _DiscountTableRowState();
@@ -184,10 +202,22 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
                   _RowAction(
                     icon: Icons.visibility_outlined,
                     tooltip: 'View discount',
+                    onPressed: () => widget.onView(discount),
                   ),
                   _RowAction(
                     icon: Icons.edit_outlined,
                     tooltip: 'Edit discount',
+                    onPressed: () => widget.onEdit(discount),
+                  ),
+                  _RowAction(
+                    icon: discount.isActive ? Icons.pause_circle_outline : Icons.play_circle_outline,
+                    tooltip: discount.isActive ? 'Deactivate discount' : 'Activate discount',
+                    onPressed: () => widget.onToggleStatus(discount),
+                  ),
+                  _RowAction(
+                    icon: Icons.delete_outline,
+                    tooltip: 'Delete discount',
+                    onPressed: () => widget.onDelete(discount),
                   ),
                 ],
               ),
@@ -344,10 +374,11 @@ class _ValidPeriodCell extends StatelessWidget {
 }
 
 class _RowAction extends StatelessWidget {
-  const _RowAction({required this.icon, required this.tooltip});
+  const _RowAction({required this.icon, required this.tooltip, required this.onPressed});
 
   final IconData icon;
   final String tooltip;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -356,9 +387,7 @@ class _RowAction extends StatelessWidget {
       child: SizedBox.square(
         dimension: 28,
         child: IconButton(
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$tooltip is not connected yet.')),
-          ),
+          onPressed: onPressed,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.tightFor(width: 28, height: 28),
           visualDensity: VisualDensity.compact,

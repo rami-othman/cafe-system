@@ -26,7 +26,7 @@ class DiscountStatusBadge extends StatelessWidget {
         AppColors.discountExpiredBadge,
         AppColors.discountExpiredText,
       ),
-      DiscountStatus.draft => (
+      DiscountStatus.inactive => (
         AppColors.discountOrangeBadge,
         AppColors.discountOrangeText,
       ),

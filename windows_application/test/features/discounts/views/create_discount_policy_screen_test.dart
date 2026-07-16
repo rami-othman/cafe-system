@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/core/theme/app_theme.dart';
 import 'package:windows_application/features/discounts/views/create_discount_policy_screen.dart';
+import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
+import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
+import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
+import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 
 void main() {
@@ -67,7 +73,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('keeps state local and shows placeholder action feedback', (
+  testWidgets('updates discount value selection without changing the form layout', (
     WidgetTester tester,
   ) async {
     await _pumpScreen(tester, const Size(1280, 900));
@@ -77,9 +83,6 @@ void main() {
     await tester.pump();
     expect(find.text('20%'), findsWidgets);
 
-    await tester.tap(find.text('Save as Draft'));
-    await tester.pump();
-    expect(find.text('Discount draft saved locally.'), findsOneWidget);
   });
 
   testWidgets('remains overflow-free at a compact desktop width', (
@@ -116,10 +119,49 @@ Future<void> _pumpScreen(WidgetTester tester, Size size) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.lightTheme,
-      home: const Scaffold(body: CreateDiscountPolicyScreen()),
+      home: Scaffold(
+        body: BlocProvider<DiscountsCubit>(
+          create: (_) => DiscountsCubit(repository: _DiscountsRepository()),
+          child: const CreateDiscountPolicyScreen(),
+        ),
+      ),
     ),
   );
   await tester.pump();
+}
+
+class _DiscountsRepository implements DiscountsRepository {
+  @override
+  Future<List<Branch>> getBranches() async => const <Branch>[
+    Branch(
+      id: 41,
+      name: 'Downtown',
+      currency: 'SYP',
+      timezone: 'Asia/Damascus',
+      isActive: true,
+    ),
+  ];
+
+  @override
+  Future<List<DiscountListItem>> getDiscounts() async =>
+      const <DiscountListItem>[];
+
+  @override
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteDiscount(String discountId) => throw UnimplementedError();
+
+  @override
+  Future<DiscountListItem> setStatus(String discountId, bool isActive) =>
+      throw UnimplementedError();
+
+  @override
+  Future<DiscountListItem> updateDiscount(
+    String discountId,
+    DiscountUpsertRequest request,
+  ) => throw UnimplementedError();
 }
 
 AppSidebarItem _discountsSidebarItem(WidgetTester tester) {

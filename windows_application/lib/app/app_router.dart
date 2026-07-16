@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
+import '../features/discounts/models/discount_list_item.dart';
 import '../features/discounts/views/discounts_list_screen.dart';
 import '../features/menu/controllers/menu_cubit.dart';
 import '../features/menu/views/categories_management_screen.dart';
@@ -50,7 +51,7 @@ final GoRouter appRouter = GoRouter(
               create: (_) => serviceLocator<MenuCubit>()..loadMenuData(),
             ),
             BlocProvider<DiscountsCubit>(
-              create: (_) => serviceLocator<DiscountsCubit>(),
+              create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
             ),
             BlocProvider<DailyReportCubit>(
               create: (_) => serviceLocator<DailyReportCubit>()..loadReport(),
@@ -83,7 +84,9 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.discountCreate,
           name: AppRouteNames.discountCreate,
-          builder: (context, state) => const CreateDiscountPolicyScreen(),
+          builder: (context, state) => CreateDiscountPolicyScreen(
+            initialDiscount: state.extra as DiscountListItem?,
+          ),
         ),
         GoRoute(
           path: AppRoutes.menu,
@@ -174,6 +177,8 @@ Future<void> Function(BuildContext context)? _refreshActionFor(
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>
       (BuildContext context) => context.read<DailyReportCubit>().loadReport(),
+    AppRoutes.discounts =>
+      (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
     _ => null,
   };
 }
