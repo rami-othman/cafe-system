@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\PaymentController;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('branches', [BranchController::class, 'index']);
+    Route::get('reports/daily', [DailyReportController::class, 'show']);
 
     Route::get('shifts/current', [ShiftController::class, 'current']);
     Route::post('shifts/current', [ShiftController::class, 'open']);

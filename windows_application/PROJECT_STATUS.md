@@ -90,6 +90,15 @@ Phase 1 — Project Foundation
 - Implemented Flutter payment submission guards, payment/receipt separation, uncertain-payment verification, and receipt retry recovery.
 - Implemented safe backend product-detail loading and Flutter order-context persistence for customer and order type.
 - Removed Flutter table selection for the current phase; all new orders use `tableId: null`.
+- Fixed the available POS discounts response so it is always returned as a JSON
+  list after inactive or expired discounts are filtered out.
+- Made POS coupon matching case-insensitive so backend coupon codes work
+  regardless of how they were capitalized when created.
+- Connected the Orders branch selector to backend branch IDs, so order queries
+  no longer use a stale hard-coded branch ID.
+- Connected the Daily Operational Report to the Laravel API, including daily
+  sales KPIs, hourly sales, payment and order breakdowns, products, refunds,
+  discounts, and recent transactions populated by the POS demo seeder.
 
 ## In Progress
 
@@ -231,3 +240,10 @@ Fix Flutter Orders list/detail request races, stale panel state, and API error p
 - 2026-07-15: Added reusable clickable breadcrumbs to Discounts Create and
   Menu child routes so direct navigation no longer requires using the sidebar
   to return to an ancestor screen.
+- 2026-07-18: Fixed the available POS discounts API response to reindex the
+  filtered collection. This lets the Flutter POS dialog display active
+  discounts when earlier records are inactive or expired.
+- 2026-07-18: Made POS coupon matching case-insensitive so lowercase backend
+  codes such as `zaher` apply correctly from the Flutter discount dialog.
+- 2026-07-18: Connected Orders branch selection to backend branch data and
+  passed the selected branch ID to order-list API requests.

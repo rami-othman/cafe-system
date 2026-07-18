@@ -792,7 +792,7 @@ class _CreateDiscountPolicyScreenState
           children: <Widget>[
             DropdownButtonFormField<int?>(
               key: const Key('discount-branch-field'),
-              value: value,
+              initialValue: value,
               isExpanded: true,
               hint: Text(
                 state.isLoadingBranches

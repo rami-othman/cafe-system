@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../models/order_status.dart';
 import '../models/order_summary.dart';
+import '../../pos/models/branch.dart';
 import '../models/order_type.dart';
 import '../models/order_detail.dart';
 
@@ -21,6 +22,8 @@ extension OrdersFilterLabel on OrdersFilter {
 class OrdersState extends Equatable {
   const OrdersState({
     this.orders = const <OrderSummary>[],
+    this.branches = const <Branch>[],
+    this.selectedBranchId,
     this.selectedFilter = OrdersFilter.activeOrders,
     this.isLoading = false,
     this.errorMessage,
@@ -30,6 +33,8 @@ class OrdersState extends Equatable {
   });
 
   final List<OrderSummary> orders;
+  final List<Branch> branches;
+  final int? selectedBranchId;
   final OrdersFilter selectedFilter;
   final bool isLoading;
   final String? errorMessage;
@@ -54,6 +59,8 @@ class OrdersState extends Equatable {
 
   OrdersState copyWith({
     List<OrderSummary>? orders,
+    List<Branch>? branches,
+    int? selectedBranchId,
     OrdersFilter? selectedFilter,
     bool? isLoading,
     String? errorMessage,
@@ -66,6 +73,8 @@ class OrdersState extends Equatable {
   }) {
     return OrdersState(
       orders: orders ?? this.orders,
+      branches: branches ?? this.branches,
+      selectedBranchId: selectedBranchId ?? this.selectedBranchId,
       selectedFilter: selectedFilter ?? this.selectedFilter,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearErrorMessage
@@ -84,6 +93,8 @@ class OrdersState extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     orders,
+    branches,
+    selectedBranchId,
     selectedFilter,
     isLoading,
     errorMessage,

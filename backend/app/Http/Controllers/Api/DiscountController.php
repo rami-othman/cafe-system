@@ -108,7 +108,8 @@ class DiscountController extends Controller
 
         $discounts = $this->discountQuery($tenantId)->where('is_active', true)->get()
             ->filter(fn (object $discount) => $this->status($discount) === 'active')
-            ->map(fn (object $discount) => $this->serializeDiscount($discount, $order));
+            ->map(fn (object $discount) => $this->serializeDiscount($discount, $order))
+            ->values();
 
         return response()->json(['data' => $discounts]);
     }

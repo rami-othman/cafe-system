@@ -8,18 +8,21 @@ class DailyReportState extends Equatable {
     this.status = DailyReportStatus.loading,
     this.branch = 'DOWNTOWN',
     this.dateLabel = 'Today, Oct 24, 2023',
+    this.selectedDate,
     this.data,
     this.errorMessage,
   });
   final DailyReportStatus status;
   final String branch;
   final String dateLabel;
+  final DateTime? selectedDate;
   final DailyReportData? data;
   final String? errorMessage;
   DailyReportState copyWith({
     DailyReportStatus? status,
     String? branch,
     String? dateLabel,
+    DateTime? selectedDate,
     DailyReportData? data,
     String? errorMessage,
     bool clearErrorMessage = false,
@@ -27,6 +30,7 @@ class DailyReportState extends Equatable {
     status: status ?? this.status,
     branch: branch ?? this.branch,
     dateLabel: dateLabel ?? this.dateLabel,
+    selectedDate: selectedDate ?? this.selectedDate,
     data: data ?? this.data,
     errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
   );
@@ -35,6 +39,7 @@ class DailyReportState extends Equatable {
     status,
     branch,
     dateLabel,
+    selectedDate,
     data,
     errorMessage,
   ];

@@ -7,9 +7,8 @@ import '../repositories/discounts_repository.dart';
 import 'discounts_state.dart';
 
 class DiscountsCubit extends Cubit<DiscountsState> {
-  DiscountsCubit({required DiscountsRepository repository})
-    : _repository = repository,
-      super(const DiscountsState());
+  DiscountsCubit({required this._repository})
+    : super(const DiscountsState());
 
   static const int pageSize = 4;
   final DiscountsRepository _repository;

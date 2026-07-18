@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../pos/models/branch.dart';
 import '../models/order_status.dart';
 import '../models/order_summary.dart';
 import '../models/refund_result.dart';
@@ -17,10 +18,34 @@ class OrdersCubit extends Cubit<OrdersState> {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
-      _debugLog('Loading orders for filter ${state.selectedFilter}');
+      final branches = state.branches.isEmpty
+          ? await repository.getBranches()
+          : state.branches;
+      final selectedBranchId = _selectedBranchId(branches);
+      if (selectedBranchId == null) {
+        emit(
+          state.copyWith(
+            branches: branches,
+            orders: const <OrderSummary>[],
+            isLoading: false,
+            errorMessage: 'No active branches are available.',
+          ),
+        );
+        return;
+      }
+
+      _debugLog(
+        'Loading orders for branch $selectedBranchId and filter '
+        '${state.selectedFilter}',
+      );
       emit(
         state.copyWith(
-          orders: await repository.getOrders(filter: state.selectedFilter),
+          branches: branches,
+          selectedBranchId: selectedBranchId,
+          orders: await repository.getOrders(
+            branchId: selectedBranchId,
+            filter: state.selectedFilter,
+          ),
           isLoading: false,
           clearErrorMessage: true,
         ),
@@ -38,6 +63,17 @@ class OrdersCubit extends Cubit<OrdersState> {
   Future<void> selectFilter(OrdersFilter filter) async {
     _debugLog('Selected filter $filter');
     emit(state.copyWith(selectedFilter: filter));
+    await loadOrders();
+  }
+
+  Future<void> selectBranch(int branchId) async {
+    if (state.selectedBranchId == branchId ||
+        !state.branches.any((Branch branch) => branch.id == branchId)) {
+      return;
+    }
+
+    _debugLog('Selected branch $branchId');
+    emit(state.copyWith(selectedBranchId: branchId));
     await loadOrders();
   }
 
@@ -140,5 +176,20 @@ class OrdersCubit extends Cubit<OrdersState> {
     if (kDebugMode) {
       debugPrint('[OrdersCubit] $message');
     }
+  }
+
+  int? _selectedBranchId(List<Branch> branches) {
+    if (state.selectedBranchId != null &&
+        branches.any((Branch branch) => branch.id == state.selectedBranchId)) {
+      return state.selectedBranchId;
+    }
+
+    for (final Branch branch in branches) {
+      if (branch.isActive) {
+        return branch.id;
+      }
+    }
+
+    return branches.isEmpty ? null : branches.first.id;
   }
 }

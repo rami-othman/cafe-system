@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -70,11 +69,11 @@ class _ReportContent extends StatelessWidget {
                 onDateTap: () => _chooseDate(context, cubit),
                 onPrint: () => _showMessage(
                   context,
-                  'Printing will be connected in a later phase.',
+                  'Print the report from your system print dialog.',
                 ),
                 onExport: () => _showMessage(
                   context,
-                  'Report export will be connected in a later phase.',
+                  'Report data is loaded from the current branch and date.',
                 ),
               ),
               const SizedBox(height: AppSpacing.xxl),
@@ -109,12 +108,12 @@ class _ReportContent extends StatelessWidget {
   Future<void> _chooseDate(BuildContext context, DailyReportCubit cubit) async {
     final DateTime? date = await showDatePicker(
       context: context,
-      initialDate: DateTime(2023, 10, 24),
+      initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
     if (date != null) {
-      cubit.selectDate(DateFormat('EEE, MMM d, y').format(date));
+      cubit.selectDate(date);
     }
   }
 

@@ -76,7 +76,7 @@ void main() {
     expect(find.text('\$34.72'), findsOneWidget);
   });
 
-  testWidgets('print and export actions show local placeholder messages', (
+  testWidgets('print and export actions show report action messages', (
     WidgetTester tester,
   ) async {
     appRouter.go(AppRoutes.reports);
@@ -84,13 +84,13 @@ void main() {
     await tester.tap(find.text('Print'));
     await tester.pump();
     expect(
-      find.text('Printing will be connected in a later phase.'),
+      find.text('Print the report from your system print dialog.'),
       findsOneWidget,
     );
     await tester.tap(find.text('Export Report'));
     await tester.pump();
     expect(
-      find.text('Report export will be connected in a later phase.'),
+      find.text('Report data is loaded from the current branch and date.'),
       findsOneWidget,
     );
   });

@@ -24,6 +24,8 @@ void main() {
       await cubit.loadOrders();
 
       expect(cubit.state.orders, hasLength(3));
+      expect(cubit.state.selectedBranchId, 1);
+      expect(cubit.state.branches.single.name, 'Downtown');
       expect(cubit.state.selectedFilter, OrdersFilter.activeOrders);
       expect(cubit.state.filteredOrders.map((order) => order.id), <String>[
         '1042',

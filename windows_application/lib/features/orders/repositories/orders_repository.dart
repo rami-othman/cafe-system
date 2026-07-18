@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../pos/models/branch.dart';
 import '../../pos/models/json_helpers.dart';
 import '../controllers/orders_state.dart';
 import '../models/order_detail.dart';
@@ -18,8 +19,25 @@ class OrdersRepository {
 
   bool get usesBackend => apiClient != null;
 
+  Future<List<Branch>> getBranches() async {
+    if (!usesBackend) {
+      return const <Branch>[
+        Branch(
+          id: 1,
+          name: 'Downtown',
+          currency: 'SYP',
+          timezone: 'Asia/Damascus',
+          isActive: true,
+        ),
+      ];
+    }
+
+    final dynamic response = await apiClient!.get('branches');
+    return readMapList(response).map(Branch.fromJson).toList(growable: false);
+  }
+
   Future<List<OrderSummary>> getOrders({
-    int branchId = 1,
+    required int branchId,
     OrdersFilter? filter,
   }) async {
     if (!usesBackend) {
@@ -358,7 +376,7 @@ class OrdersRepository {
   }
 
   Future<OrderDetail> _fakeOrderDetail(String orderId) async {
-    final OrderSummary summary = (await getOrders()).firstWhere(
+    final OrderSummary summary = (await getOrders(branchId: 1)).firstWhere(
       (OrderSummary order) => order.id == orderId,
       orElse: () => throw StateError('Order not found.'),
     );

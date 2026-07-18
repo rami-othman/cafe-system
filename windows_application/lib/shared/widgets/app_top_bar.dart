@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../features/orders/controllers/orders_cubit.dart';
+import '../../features/orders/controllers/orders_state.dart';
+import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
 
 class AppTopBar extends StatefulWidget {
@@ -22,7 +26,6 @@ class AppTopBar extends StatefulWidget {
 }
 
 class _AppTopBarState extends State<AppTopBar> {
-  String _selectedBranch = 'DOWNTOWN';
   bool _isRefreshing = false;
 
   Future<void> _refresh() async {
@@ -44,6 +47,8 @@ class _AppTopBarState extends State<AppTopBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
+        final OrdersState ordersState = context.watch<OrdersCubit>().state;
+        final OrdersCubit ordersCubit = context.read<OrdersCubit>();
         final bool isVeryCompact =
             constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
         final bool isCompact =
@@ -67,15 +72,11 @@ class _AppTopBarState extends State<AppTopBar> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: <Widget>[
-                    for (final String branch in <String>[
-                      'DOWNTOWN',
-                      'Mall',
-                      'Airport',
-                    ])
+                    for (final Branch branch in ordersState.branches)
                       _BranchTab(
-                        label: branch,
-                        isActive: branch == _selectedBranch,
-                        onTap: () => setState(() => _selectedBranch = branch),
+                        label: branch.name,
+                        isActive: branch.id == ordersState.selectedBranchId,
+                        onTap: () => ordersCubit.selectBranch(branch.id),
                       ),
                   ],
                 ),

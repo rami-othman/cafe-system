@@ -141,7 +141,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
     AvailableDiscount? discount;
     for (final AvailableDiscount availableDiscount in _discounts) {
-      if (availableDiscount.couponCode == code) {
+      if (availableDiscount.couponCode?.toUpperCase() == code) {
         discount = availableDiscount;
         break;
       }

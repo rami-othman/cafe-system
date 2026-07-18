@@ -145,6 +145,8 @@ class RecentTransactionReportItem {
 
 class DailyReportData {
   const DailyReportData({
+    this.isEmpty = false,
+    this.reportDate,
     required this.kpis,
     required this.hourlySales,
     required this.paymentMethods,
@@ -154,6 +156,8 @@ class DailyReportData {
     required this.discounts,
     required this.transactions,
   });
+  final bool isEmpty;
+  final DateTime? reportDate;
   final List<ReportKpiItem> kpis;
   final List<HourlySalesPoint> hourlySales;
   final List<PaymentMethodReportItem> paymentMethods;
