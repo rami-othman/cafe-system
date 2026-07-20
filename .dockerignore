@@ -1,0 +1,6 @@
+.git
+backend/vendor
+super_admin_web/node_modules
+super_admin_web/.next
+**/.env
+npm-debug.log*

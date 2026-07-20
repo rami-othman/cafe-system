@@ -1,0 +1,704 @@
+%PDF-1.4
+%PDF
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 6 /Kids [6 0 R 8 0 R 10 0 R 12 0 R 14 0 R 16 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 4243 >>
+stream
+0.980 0.969 0.949 rg 0.00 0.00 595.28 841.89 re f
+0.231 0.141 0.090 rg 0.00 783.89 595.28 58.00 re f
+BT 1.000 1.000 1.000 rg /F2 8 Tf 1 0 0 1 48.00 806.89 Tm (CAFE 6:18  /  PLATFORM OPERATIONS) Tj ET
+BT 0.940 0.890 0.850 rg /F1 7.5 Tf 1 0 0 1 547.28 806.89 Tm (DASHBOARD PLAN) Tj ET
+0.910 0.890 0.850 RG 0.5 w 48 29 m 547.28 29 l S
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 48.00 16.00 Tm (Cafe 6:18 Platform - Super Admin Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 519.28 16.00 Tm (Page 1) Tj ET
+BT 0.231 0.141 0.090 rg /F2 27 Tf 1 0 0 1 48.00 650.00 Tm (Super Admin) Tj ET
+BT 0.231 0.141 0.090 rg /F2 27 Tf 1 0 0 1 48.00 616.00 Tm (Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 11 Tf 1 0 0 1 48.00 587.00 Tm (Product, operations, and delivery blueprint for the Cafe 6:18 multi-tenant platform.) Tj ET
+1.000 1.000 1.000 rg 48.00 487.00 499.28 60.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 487.00 499.28 60.00 re S
+0.769 0.478 0.227 rg 48.00 487.00 4.00 60.00 re f
+BT 0.769 0.478 0.227 rg /F2 7.6 Tf 1 0 0 1 61.00 533.00 Tm (PURPOSE) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 520.00 Tm (Define the first production-ready dashboard for platform operators. It should answer: Is the platform) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 508.00 Tm (healthy? Are tenants growing and compliant? What requires action now?) Tj ET
+BT 0.231 0.141 0.090 rg /F2 11.5 Tf 1 0 0 1 48.00 475.00 Tm (Document scope) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 455.00 Tm (This plan covers the Super Admin web dashboard, not the cafe POS or an individual tenant back-office) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 442.00 Tm (dashboard. It is designed for staff who operate the Cafe 6:18 SaaS platform.) Tj ET
+0.231 0.141 0.090 rg 48.00 404.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 404.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 411.00 Tm (Audience) Tj ET
+0.910 0.890 0.850 RG 0.35 w 148 404 m 148 423 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 153.00 411.00 Tm (Primary outcome) Tj ET
+0.910 0.890 0.850 RG 0.35 w 418 404 m 418 423 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 423.00 411.00 Tm (Frequency) Tj ET
+1.000 1.000 1.000 rg 48.00 384.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 384.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 393.00 Tm (Platform operator) Tj ET
+0.910 0.890 0.850 RG 0.35 w 148 384.5 m 148 404 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 153.00 393.00 Tm (Detect urgent tenant, revenue, and platform issues.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 418 384.5 m 418 404 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 423.00 393.00 Tm (Daily) Tj ET
+1.000 1.000 1.000 rg 48.00 365.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 365.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 373.50 Tm (Platform manager) Tj ET
+0.910 0.890 0.850 RG 0.35 w 148 365 m 148 384.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 153.00 373.50 Tm (Track adoption, commercial health, and operational trends.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 418 365 m 418 384.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 423.00 373.50 Tm (Weekly) Tj ET
+1.000 1.000 1.000 rg 48.00 345.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 345.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 354.00 Tm (Support / finance) Tj ET
+0.910 0.890 0.850 RG 0.35 w 148 345.5 m 148 365 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 153.00 354.00 Tm (Find tenants needing follow-up or reconciliation.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 418 345.5 m 418 365 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 423.00 354.00 Tm (On demand) Tj ET
+BT 0.231 0.141 0.090 rg /F2 11.5 Tf 1 0 0 1 48.00 333.50 Tm (Recommended delivery order) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 313.50 Tm (First make the dashboard reliable and actionable; then add drill-down analytics. Avoid decorative charts) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 300.50 Tm (before permissions, data freshness, and operational alerts are in place.) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.8 Tf 1 0 0 1 48.00 281.50 Tm (Prepared: 20 July 2026 | Language: English | Version: 1.0) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 6256 >>
+stream
+0.980 0.969 0.949 rg 0.00 0.00 595.28 841.89 re f
+0.231 0.141 0.090 rg 0.00 783.89 595.28 58.00 re f
+BT 1.000 1.000 1.000 rg /F2 8 Tf 1 0 0 1 48.00 806.89 Tm (CAFE 6:18  /  PLATFORM OPERATIONS) Tj ET
+BT 0.940 0.890 0.850 rg /F1 7.5 Tf 1 0 0 1 547.28 806.89 Tm (GOALS & STRUCTURE) Tj ET
+0.910 0.890 0.850 RG 0.5 w 48 29 m 547.28 29 l S
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 48.00 16.00 Tm (Cafe 6:18 Platform - Super Admin Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 519.28 16.00 Tm (Page 2) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 744.00 Tm (1. Product goals and principles) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 714.00 Tm (- Provide a five-second health summary of the SaaS platform.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 699.00 Tm (- Turn important changes into clear, permission-aware actions.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 684.00 Tm (- Make every card traceable to a filtered tenant list, report, or detail page.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 669.00 Tm (- Expose data freshness and calculation context; never show unexplained totals.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 654.00 Tm (- Keep the first version desktop-first, responsive down to tablet width, and ready for Arabic RTL in) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 641.00 Tm (the next localization slice.) Tj ET
+1.000 1.000 1.000 rg 48.00 551.00 499.28 72.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 551.00 499.28 72.00 re S
+0.660 0.360 0.080 rg 48.00 551.00 4.00 72.00 re f
+BT 0.660 0.360 0.080 rg /F2 7.6 Tf 1 0 0 1 61.00 609.00 Tm (NON-GOALS FOR V1) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 596.00 Tm (Do not duplicate POS operational screens, create a full BI warehouse, or replace dedicated tenant,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 584.00 Tm (billing, audit-log, and system-health pages. The dashboard should summarize and route users to those) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 572.00 Tm (modules.) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 539.00 Tm (2. Information architecture) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 509.00 Tm (The dashboard should use one global time range and one global comparison period. A compact filter bar) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 496.00 Tm (should remain visible at the top of the content area.) Tj ET
+0.231 0.141 0.090 rg 48.00 458.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 458.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 465.00 Tm (Zone) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 458 m 140 477 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 145.00 465.00 Tm (Content) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 458 m 382 477 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 387.00 465.00 Tm (Why it exists) Tj ET
+1.000 1.000 1.000 rg 48.00 429.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 429.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 447.00 Tm (Global header) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 429 m 140 458 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 447.00 Tm (Date range, timezone, currency display mode, refresh status,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 437.50 Tm (operator menu.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 429 m 382 458 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 387.00 447.00 Tm (Sets reporting context and confidence.) Tj ET
+1.000 1.000 1.000 rg 48.00 409.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 409.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 418.00 Tm (Attention strip) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 409.5 m 140 429 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 418.00 Tm (Critical alerts and recommended actions.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 409.5 m 382 429 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 387.00 418.00 Tm (Surfaces issues before metrics.) Tj ET
+1.000 1.000 1.000 rg 48.00 390.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 390.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 398.50 Tm (KPI row) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 390 m 140 409.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 398.50 Tm (Tenants, subscriptions, sales, orders, payment health.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 390 m 382 409.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 387.00 398.50 Tm (Fast business pulse.) Tj ET
+1.000 1.000 1.000 rg 48.00 361.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 361.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 379.00 Tm (Trends) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 361 m 140 390 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 379.00 Tm (Sales / orders trend, tenant growth, subscription) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 369.50 Tm (distribution.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 361 m 382 390 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 387.00 379.00 Tm (Shows direction and anomalies.) Tj ET
+1.000 1.000 1.000 rg 48.00 332.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 332.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 350.00 Tm (Operational queues) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 332 m 140 361 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 350.00 Tm (At-risk trials, suspended tenants, failed jobs, support) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 340.50 Tm (follow-ups.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 332 m 382 361 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 387.00 350.00 Tm (Makes the page actionable.) Tj ET
+1.000 1.000 1.000 rg 48.00 312.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 312.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 321.00 Tm (Recent activity) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 312.5 m 140 332 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 321.00 Tm (Tenant events, security events, major platform changes.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 382 312.5 m 382 332 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 387.00 321.00 Tm (Provides accountability and context.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 11319 >>
+stream
+0.980 0.969 0.949 rg 0.00 0.00 595.28 841.89 re f
+0.231 0.141 0.090 rg 0.00 783.89 595.28 58.00 re f
+BT 1.000 1.000 1.000 rg /F2 8 Tf 1 0 0 1 48.00 806.89 Tm (CAFE 6:18  /  PLATFORM OPERATIONS) Tj ET
+BT 0.940 0.890 0.850 rg /F1 7.5 Tf 1 0 0 1 547.28 806.89 Tm (LAYOUT & KPIS) Tj ET
+0.910 0.890 0.850 RG 0.5 w 48 29 m 547.28 29 l S
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 48.00 16.00 Tm (Cafe 6:18 Platform - Super Admin Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 519.28 16.00 Tm (Page 3) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 744.00 Tm (3. Dashboard layout - recommended V1) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 714.00 Tm (Use a responsive twelve-column grid on desktop. At medium widths, stack charts and queues; retain the) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 701.00 Tm (action strip and KPI row. This is a content blueprint, not a visual mockup.) Tj ET
+0.231 0.141 0.090 rg 48.00 663.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 663.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 670.00 Tm (Row) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 663 m 86 682 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 91.00 670.00 Tm (Modules) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 663 m 354 682 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 359.00 670.00 Tm (Interaction) Tj ET
+1.000 1.000 1.000 rg 48.00 643.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 643.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 652.00 Tm (1) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 643.5 m 86 663 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 91.00 652.00 Tm (Context bar: date range, comparison, refresh timestamp.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 643.5 m 354 663 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 652.00 Tm (Changing filters refreshes all modules.) Tj ET
+1.000 1.000 1.000 rg 48.00 614.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 614.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 632.50 Tm (2) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 614.5 m 86 643.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 91.00 632.50 Tm (Attention strip: 0-5 highest-priority alerts.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 614.5 m 354 643.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 632.50 Tm (Each alert opens its relevant detail or filtered) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 623.00 Tm (list.) Tj ET
+1.000 1.000 1.000 rg 48.00 585.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 585.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 603.50 Tm (3) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 585.5 m 86 614.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 91.00 603.50 Tm (Six KPI cards.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 585.5 m 354 614.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 603.50 Tm (Each card links to a drill-down with the same) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 594.00 Tm (filters.) Tj ET
+1.000 1.000 1.000 rg 48.00 556.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 556.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 574.50 Tm (4) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 556.5 m 86 585.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 91.00 574.50 Tm (Sales & orders trend \(8 cols\) | subscription mix \(4 cols\).) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 556.5 m 354 585.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 574.50 Tm (Hover tooltips and accessible data-table) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 565.00 Tm (fallback.) Tj ET
+1.000 1.000 1.000 rg 48.00 537.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 537.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 545.50 Tm (5) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 537 m 86 556.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 91.00 545.50 Tm (Tenant growth \(6 cols\) | platform health summary \(6 cols\).) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 537 m 354 556.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 545.50 Tm (Click a status segment to apply its filter.) Tj ET
+1.000 1.000 1.000 rg 48.00 517.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 517.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 526.00 Tm (6) Tj ET
+0.910 0.890 0.850 RG 0.35 w 86 517.5 m 86 537 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 91.00 526.00 Tm (Action queue \(7 cols\) | recent activity \(5 cols\).) Tj ET
+0.910 0.890 0.850 RG 0.35 w 354 517.5 m 354 537 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 359.00 526.00 Tm (Deep links and acknowledgement where permitted.) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 505.50 Tm (4. Required KPI cards) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 475.50 Tm (Every KPI card must show a current value, delta versus the comparison period, definition tooltip, and) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 462.50 Tm (data freshness. Amounts should be grouped by currency unless the platform has an approved conversion) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 449.50 Tm (policy.) Tj ET
+0.231 0.141 0.090 rg 48.00 411.50 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 411.50 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 418.50 Tm (KPI) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 411.5 m 138 430.5 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 143.00 418.50 Tm (Definition) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 411.5 m 312 430.5 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 317.00 418.50 Tm (Primary drill-down) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 411.5 m 490 430.5 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 495.00 418.50 Tm (Priority) Tj ET
+1.000 1.000 1.000 rg 48.00 382.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 382.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 400.50 Tm (Active tenants) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 382.5 m 138 411.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 400.50 Tm (Tenants active at the end of the selected) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 391.00 Tm (period.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 382.5 m 312 411.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 400.50 Tm (Tenants filtered by status=active.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 382.5 m 490 411.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 400.50 Tm (P0) Tj ET
+1.000 1.000 1.000 rg 48.00 363.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 363.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 371.50 Tm (New tenants) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 363 m 138 382.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 371.50 Tm (Tenants created during the selected period.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 363 m 312 382.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 371.50 Tm (Tenant directory filtered by creation date.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 363 m 490 382.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 371.50 Tm (P0) Tj ET
+1.000 1.000 1.000 rg 48.00 334.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 334.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 352.00 Tm (Trials ending soon) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 334 m 138 363 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 352.00 Tm (Trial subscriptions ending in next 7 / 14) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 342.50 Tm (days.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 334 m 312 363 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 352.00 Tm (Subscriptions filtered by expiry.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 334 m 490 363 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 352.00 Tm (P0) Tj ET
+1.000 1.000 1.000 rg 48.00 314.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 314.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 323.00 Tm (Suspended tenants) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 314.5 m 138 334 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 323.00 Tm (Tenants currently suspended.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 314.5 m 312 334 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 323.00 Tm (Tenants filtered by status=suspended.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 314.5 m 490 334 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 323.00 Tm (P0) Tj ET
+1.000 1.000 1.000 rg 48.00 285.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 285.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 303.50 Tm (Gross sales) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 285.5 m 138 314.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 303.50 Tm (Tenant order gross sales by original) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 294.00 Tm (currency.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 285.5 m 312 314.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 303.50 Tm (Analytics with same date range.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 285.5 m 490 314.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 303.50 Tm (P1) Tj ET
+1.000 1.000 1.000 rg 48.00 256.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 256.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 274.50 Tm (Completed orders) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 256.5 m 138 285.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 274.50 Tm (Paid or completed orders, per agreed status) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 265.00 Tm (contract.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 256.5 m 312 285.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 274.50 Tm (Analytics / orders report.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 256.5 m 490 285.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 274.50 Tm (P1) Tj ET
+1.000 1.000 1.000 rg 48.00 227.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 227.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 245.50 Tm (Subscription health) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 227.5 m 138 256.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 245.50 Tm (Active, trialing, past due, cancelled) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 236.00 Tm (counts.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 227.5 m 312 256.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 245.50 Tm (Subscriptions filtered by status.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 227.5 m 490 256.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 245.50 Tm (P0) Tj ET
+1.000 1.000 1.000 rg 48.00 198.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 198.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 216.50 Tm (Platform health) Tj ET
+0.910 0.890 0.850 RG 0.35 w 138 198.5 m 138 227.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 216.50 Tm (Critical services and failed background) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 143.00 207.00 Tm (jobs.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 312 198.5 m 312 227.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 317.00 216.50 Tm (System Health.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 490 198.5 m 490 227.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 495.00 216.50 Tm (P0) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 9 0 R >>
+endobj
+11 0 obj
+<< /Length 8458 >>
+stream
+0.980 0.969 0.949 rg 0.00 0.00 595.28 841.89 re f
+0.231 0.141 0.090 rg 0.00 783.89 595.28 58.00 re f
+BT 1.000 1.000 1.000 rg /F2 8 Tf 1 0 0 1 48.00 806.89 Tm (CAFE 6:18  /  PLATFORM OPERATIONS) Tj ET
+BT 0.940 0.890 0.850 rg /F1 7.5 Tf 1 0 0 1 547.28 806.89 Tm (OPERATIONS & API) Tj ET
+0.910 0.890 0.850 RG 0.5 w 48 29 m 547.28 29 l S
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 48.00 16.00 Tm (Cafe 6:18 Platform - Super Admin Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 519.28 16.00 Tm (Page 4) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 744.00 Tm (5. Charts, queues, and activity) Tj ET
+0.231 0.141 0.090 rg 48.00 695.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 695.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 702.00 Tm (Module) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 695 m 140 714 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 145.00 702.00 Tm (Minimum content) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 695 m 342 714 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 347.00 702.00 Tm (Rules) Tj ET
+1.000 1.000 1.000 rg 48.00 666.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 666.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 684.00 Tm (Sales and orders trend) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 666 m 140 695 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 684.00 Tm (Daily gross sales and completed orders; selectable) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 674.50 Tm (7, 30, 90 days.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 666 m 342 695 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 684.00 Tm (Separate currencies or label an approved conversion) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 674.50 Tm (policy.) Tj ET
+1.000 1.000 1.000 rg 48.00 637.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 637.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 655.00 Tm (Tenant growth) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 637 m 140 666 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 655.00 Tm (Created, activated, suspended tenants over time.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 637 m 342 666 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 655.00 Tm (Use grouped bars or lines; period comparison) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 645.50 Tm (available.) Tj ET
+1.000 1.000 1.000 rg 48.00 608.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 608.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 626.00 Tm (Subscription mix) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 608 m 140 637 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 626.00 Tm (Counts by plan and status.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 608 m 342 637 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 626.00 Tm (Click a segment to open a filtered subscriptions) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 616.50 Tm (list.) Tj ET
+1.000 1.000 1.000 rg 48.00 579.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 579.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 597.00 Tm (Action queue) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 579 m 140 608 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 597.00 Tm (Trials ending, past due, suspensions, onboarding) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 587.50 Tm (failures, health incidents.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 579 m 342 608 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 597.00 Tm (Rank by urgency; show owner, due date, and direct) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 587.50 Tm (action.) Tj ET
+1.000 1.000 1.000 rg 48.00 550.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 550.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 568.00 Tm (Recent activity) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 550 m 140 579 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 568.00 Tm (Tenant created, status changed, plan changed, admin) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 558.50 Tm (login/security event.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 550 m 342 579 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 568.00 Tm (Show actor, timestamp, target, and audit-log deep) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 558.50 Tm (link.) Tj ET
+1.000 1.000 1.000 rg 48.00 521.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 521.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 539.00 Tm (Platform health) Tj ET
+0.910 0.890 0.850 RG 0.35 w 140 521 m 140 550 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 539.00 Tm (API availability, queue failures, scheduled task) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 145.00 529.50 Tm (health, error rate.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 342 521 m 342 550 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 539.00 Tm (Show state, threshold, last check, and) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 347.00 529.50 Tm (incident-history link.) Tj ET
+1.000 1.000 1.000 rg 48.00 449.00 499.28 60.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 449.00 499.28 60.00 re S
+0.150 0.420 0.280 rg 48.00 449.00 4.00 60.00 re f
+BT 0.150 0.420 0.280 rg /F2 7.6 Tf 1 0 0 1 61.00 495.00 Tm (ACTIONABILITY RULE) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 482.00 Tm (A dashboard item that cannot be investigated or acted on should not be promoted to the main page. Every) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 470.00 Tm (warning needs an owner, a threshold, and a destination.) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 437.00 Tm (6. States, permissions, and trust) Tj ET
+0.231 0.141 0.090 rg 48.00 388.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 388.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 395.00 Tm (Concern) Tj ET
+0.910 0.890 0.850 RG 0.35 w 168 388 m 168 407 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 173.00 395.00 Tm (Required behavior) Tj ET
+1.000 1.000 1.000 rg 48.00 368.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 368.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 377.00 Tm (Authentication) Tj ET
+0.910 0.890 0.850 RG 0.35 w 168 368.5 m 168 388 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 377.00 Tm (Route guard calls /auth/me before rendering secured content. Unauthenticated users go to /login.) Tj ET
+1.000 1.000 1.000 rg 48.00 339.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 339.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 357.50 Tm (Authorization) Tj ET
+0.910 0.890 0.850 RG 0.35 w 168 339.5 m 168 368.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 357.50 Tm (Hide actions without permission, but enforce the same permission on Laravel APIs. Show a clear 403) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 348.00 Tm (state for denied direct URLs.) Tj ET
+1.000 1.000 1.000 rg 48.00 310.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 310.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 328.50 Tm (Loading and errors) Tj ET
+0.910 0.890 0.850 RG 0.35 w 168 310.5 m 168 339.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 328.50 Tm (Use skeletons for metrics/charts. Preserve successful modules and show retry for failed modules;) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 319.00 Tm (never show failed data as zero.) Tj ET
+1.000 1.000 1.000 rg 48.00 281.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 281.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 299.50 Tm (Data freshness) Tj ET
+0.910 0.890 0.850 RG 0.35 w 168 281.5 m 168 310.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 299.50 Tm (Display Last updated and an explicit refresh control; show stale-data warning after an agreed) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 290.00 Tm (threshold.) Tj ET
+1.000 1.000 1.000 rg 48.00 252.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 252.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 270.50 Tm (Accessibility and RTL) Tj ET
+0.910 0.890 0.850 RG 0.35 w 168 252.5 m 168 281.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 270.50 Tm (Keyboard navigation, visible focus, semantic tables, chart text equivalents, translation keys, and) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 173.00 261.00 Tm (RTL-safe layout.) Tj ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 11 0 R >>
+endobj
+13 0 obj
+<< /Length 11746 >>
+stream
+0.980 0.969 0.949 rg 0.00 0.00 595.28 841.89 re f
+0.231 0.141 0.090 rg 0.00 783.89 595.28 58.00 re f
+BT 1.000 1.000 1.000 rg /F2 8 Tf 1 0 0 1 48.00 806.89 Tm (CAFE 6:18  /  PLATFORM OPERATIONS) Tj ET
+BT 0.940 0.890 0.850 rg /F1 7.5 Tf 1 0 0 1 547.28 806.89 Tm (DELIVERY ROADMAP) Tj ET
+0.910 0.890 0.850 RG 0.5 w 48 29 m 547.28 29 l S
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 48.00 16.00 Tm (Cafe 6:18 Platform - Super Admin Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 519.28 16.00 Tm (Page 5) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 744.00 Tm (7. API and data requirements) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 714.00 Tm (The current backend exposes login, current user, dashboard metrics, tenant search/onboarding/detail, and) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 701.00 Tm (tenant status updates. Dashboard V1 needs a stable aggregate contract plus drill-down links. Prefer a) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 48.00 688.00 Tm (single dashboard endpoint for summary data, while preserving module-level failure reporting in the UI.) Tj ET
+0.231 0.141 0.090 rg 48.00 650.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 650.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 657.00 Tm (Endpoint / source) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 650 m 173 669 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 178.00 657.00 Tm (Needed for dashboard) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 650 m 423 669 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 428.00 657.00 Tm (Status) Tj ET
+1.000 1.000 1.000 rg 48.00 630.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 630.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 639.00 Tm (GET /auth/me) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 630.5 m 173 650 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 639.00 Tm (Session bootstrap, user name, permissions.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 630.5 m 423 650 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 639.00 Tm (Existing) Tj ET
+1.000 1.000 1.000 rg 48.00 611.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 611.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 619.50 Tm (GET /dashboard) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 611 m 173 630.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 619.50 Tm (Core metrics, currency sales, recent tenants.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 611 m 423 630.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 619.50 Tm (Existing; needs expansion) Tj ET
+1.000 1.000 1.000 rg 48.00 582.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 582.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 600.00 Tm (GET /tenants) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 582 m 173 611 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 600.00 Tm (Drill-down lists, pagination, filtering.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 582 m 423 611 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 600.00 Tm (Existing; UI integration) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 590.50 Tm (needed) Tj ET
+1.000 1.000 1.000 rg 48.00 562.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 562.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 571.00 Tm (GET /subscriptions) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 562.5 m 173 582 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 571.00 Tm (Trial/past-due queues, plan and status mix.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 562.5 m 423 582 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 571.00 Tm (Required) Tj ET
+1.000 1.000 1.000 rg 48.00 543.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 543.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 551.50 Tm (GET /analytics/overview) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 543 m 173 562.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 551.50 Tm (Trends, growth, and revenue aggregation.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 543 m 423 562.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 551.50 Tm (Required) Tj ET
+1.000 1.000 1.000 rg 48.00 523.50 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 523.50 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 532.00 Tm (GET /system/health) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 523.5 m 173 543 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 532.00 Tm (Service, queue, and status summary.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 523.5 m 423 543 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 532.00 Tm (Required) Tj ET
+1.000 1.000 1.000 rg 48.00 504.00 499.00 19.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 504.00 499.00 19.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 512.50 Tm (GET /audit-logs) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 504 m 173 523.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 512.50 Tm (Recent platform activity.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 504 m 423 523.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 512.50 Tm (Required) Tj ET
+1.000 1.000 1.000 rg 48.00 475.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 475.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 493.00 Tm (POST /auth/logout) Tj ET
+0.910 0.890 0.850 RG 0.35 w 173 475 m 173 504 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 178.00 493.00 Tm (Safe session termination.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 423 475 m 423 504 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 493.00 Tm (Existing; UI integration) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 428.00 483.50 Tm (needed) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.4 Tf 1 0 0 1 48.00 463.00 Tm (Recommended dashboard query parameters: from, to, compareTo, timezone, and currencyMode. Responses should include) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.4 Tf 1 0 0 1 48.00 451.00 Tm (generatedAt, metric definitions/version, and a per-module status when feasible.) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 429.00 Tm (8. Delivery roadmap) Tj ET
+0.231 0.141 0.090 rg 48.00 380.00 499.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 380.00 499.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 387.00 Tm (Phase) Tj ET
+0.910 0.890 0.850 RG 0.35 w 108 380 m 108 399 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 113.00 387.00 Tm (Outcome) Tj ET
+0.910 0.890 0.850 RG 0.35 w 196 380 m 196 399 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 201.00 387.00 Tm (Key deliverables) Tj ET
+0.910 0.890 0.850 RG 0.35 w 400 380 m 400 399 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 405.00 387.00 Tm (Exit criteria) Tj ET
+1.000 1.000 1.000 rg 48.00 351.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 351.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 369.00 Tm (0 -) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 359.50 Tm (Foundation) Tj ET
+0.910 0.890 0.850 RG 0.35 w 108 351 m 108 380 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 369.00 Tm (A buildable, secure) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 359.50 Tm (shell.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 196 351 m 196 380 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 369.00 Tm (Fix Next.js type error; route guard; logout; active) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 359.50 Tm (navigation; shared loading/error components.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 400 351 m 400 380 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 369.00 Tm (Production build passes; protected) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 359.50 Tm (routes redirect correctly.) Tj ET
+1.000 1.000 1.000 rg 48.00 312.50 499.00 38.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 312.50 499.00 38.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 340.00 Tm (1 - Core) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 330.50 Tm (dashboard) Tj ET
+0.910 0.890 0.850 RG 0.35 w 108 312.5 m 108 351 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 340.00 Tm (Reliable daily) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 330.50 Tm (operating view.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 196 312.5 m 196 351 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 340.00 Tm (Context bar, attention strip, six KPI cards,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 330.50 Tm (expanded API, empty/error/freshness states.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 400 312.5 m 400 351 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 340.00 Tm (Operators can identify active) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 330.50 Tm (tenants, trials, suspensions, sales,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 321.00 Tm (and platform status.) Tj ET
+1.000 1.000 1.000 rg 48.00 283.50 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 283.50 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 301.50 Tm (2 - Tenant) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 292.00 Tm (operations) Tj ET
+0.910 0.890 0.850 RG 0.35 w 108 283.5 m 108 312.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 301.50 Tm (Actionable tenant) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 292.00 Tm (lifecycle.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 196 283.5 m 196 312.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 301.50 Tm (Tenant details, status-change UI,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 292.00 Tm (search/filter/pagination, onboarding validation.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 400 283.5 m 400 312.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 301.50 Tm (Operator can find, inspect, onboard,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 292.00 Tm (and change tenant status.) Tj ET
+1.000 1.000 1.000 rg 48.00 245.00 499.00 38.50 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 245.00 499.00 38.50 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 272.50 Tm (3 -) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 263.00 Tm (Commercial &) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 253.50 Tm (health) Tj ET
+0.910 0.890 0.850 RG 0.35 w 108 245 m 108 283.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 272.50 Tm (Trends and) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 263.00 Tm (exceptions.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 196 245 m 196 283.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 272.50 Tm (Subscriptions, analytics trends, system health,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 263.00 Tm (audit logs, alert queue.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 400 245 m 400 283.5 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 272.50 Tm (Every chart and alert has a verified) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 263.00 Tm (drill-down.) Tj ET
+1.000 1.000 1.000 rg 48.00 216.00 499.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 216.00 499.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 234.00 Tm (4 - Hardening) Tj ET
+0.910 0.890 0.850 RG 0.35 w 108 216 m 108 245 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 234.00 Tm (Operational) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 113.00 224.50 Tm (confidence.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 196 216 m 196 245 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 234.00 Tm (RTL/i18n, accessibility audit, tests, performance) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 201.00 224.50 Tm (checks, export jobs.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 400 216 m 400 245 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 234.00 Tm (Acceptance checks pass and Arabic) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 405.00 224.50 Tm (readiness is confirmed.) Tj ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 13 0 R >>
+endobj
+15 0 obj
+<< /Length 6227 >>
+stream
+0.980 0.969 0.949 rg 0.00 0.00 595.28 841.89 re f
+0.231 0.141 0.090 rg 0.00 783.89 595.28 58.00 re f
+BT 1.000 1.000 1.000 rg /F2 8 Tf 1 0 0 1 48.00 806.89 Tm (CAFE 6:18  /  PLATFORM OPERATIONS) Tj ET
+BT 0.940 0.890 0.850 rg /F1 7.5 Tf 1 0 0 1 547.28 806.89 Tm (ACCEPTANCE & DECISIONS) Tj ET
+0.910 0.890 0.850 RG 0.5 w 48 29 m 547.28 29 l S
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 48.00 16.00 Tm (Cafe 6:18 Platform - Super Admin Dashboard Plan) Tj ET
+BT 0.420 0.350 0.310 rg /F1 7.2 Tf 1 0 0 1 519.28 16.00 Tm (Page 6) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 744.00 Tm (9. Acceptance checklist) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 714.00 Tm (- The page builds and type-checks successfully in the production pipeline.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 699.00 Tm (- A signed-out user never sees protected data; a signed-in user only sees actions allowed by platform) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 686.00 Tm (permissions.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 671.00 Tm (- All KPI values have clear definitions, timeframe, comparison, and freshness information.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 656.00 Tm (- The dashboard never treats a failed API call as zero data.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 641.00 Tm (- Each card, chart segment, alert, and activity item reaches a valid filtered detail view.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 626.00 Tm (- Currency presentation follows an approved policy and cannot silently mix currencies.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 611.00 Tm (- Desktop, tablet, keyboard, and screen-reader behavior meet the agreed baseline.) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 596.00 Tm (- Automated tests cover authentication guard, loading/error/empty states, filter propagation, and major) Tj ET
+BT 0.137 0.063 0.020 rg /F1 9.2 Tf 1 0 0 1 53.00 583.00 Tm (drill-down links.) Tj ET
+BT 0.231 0.141 0.090 rg /F2 17 Tf 1 0 0 1 48.00 565.00 Tm (10. Decisions to confirm before implementation) Tj ET
+0.231 0.141 0.090 rg 48.00 516.00 539.00 19.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 516.00 539.00 19.00 re S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 53.00 523.00 Tm (Decision) Tj ET
+0.910 0.890 0.850 RG 0.35 w 178 516 m 178 535 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 183.00 523.00 Tm (Why it matters) Tj ET
+0.910 0.890 0.850 RG 0.35 w 372 516 m 372 535 l S
+BT 1.000 1.000 1.000 rg /F2 7.1 Tf 1 0 0 1 377.00 523.00 Tm (Suggested default) Tj ET
+1.000 1.000 1.000 rg 48.00 487.00 539.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 487.00 539.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 505.00 Tm (Revenue currency policy) Tj ET
+0.910 0.890 0.850 RG 0.35 w 178 487 m 178 516 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 183.00 505.00 Tm (Determines whether totals can be combined.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 372 487 m 372 516 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 505.00 Tm (Show original-currency totals; add conversion only) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 495.50 Tm (with a trusted FX source.) Tj ET
+1.000 1.000 1.000 rg 48.00 458.00 539.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 458.00 539.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 476.00 Tm (Completed order definition) Tj ET
+0.910 0.890 0.850 RG 0.35 w 178 458 m 178 487 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 183.00 476.00 Tm (Affects all sales/order metrics.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 372 458 m 372 487 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 476.00 Tm (Document exact order and payment statuses in the API) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 466.50 Tm (contract.) Tj ET
+1.000 1.000 1.000 rg 48.00 429.00 539.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 429.00 539.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 447.00 Tm (Alert ownership) Tj ET
+0.910 0.890 0.850 RG 0.35 w 178 429 m 178 458 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 183.00 447.00 Tm (Prevents ignored dashboard warnings.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 372 429 m 372 458 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 447.00 Tm (Assign a team/role and escalation path to every alert) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 437.50 Tm (type.) Tj ET
+1.000 1.000 1.000 rg 48.00 400.00 539.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 400.00 539.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 418.00 Tm (Data refresh target) Tj ET
+0.910 0.890 0.850 RG 0.35 w 178 400 m 178 429 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 183.00 418.00 Tm (Sets user expectations and implementation cost.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 372 400 m 372 429 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 418.00 Tm (On-demand refresh plus visible timestamp; optimize) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 408.50 Tm (live updates later.) Tj ET
+1.000 1.000 1.000 rg 48.00 371.00 539.00 29.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 371.00 539.00 29.00 re S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 53.00 389.00 Tm (Initial roles) Tj ET
+0.910 0.890 0.850 RG 0.35 w 178 371 m 178 400 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 183.00 389.00 Tm (Shapes which actions are visible.) Tj ET
+0.910 0.890 0.850 RG 0.35 w 372 371 m 372 400 l S
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 389.00 Tm (Platform Super Admin, Operations, Support, Finance,) Tj ET
+BT 0.137 0.063 0.020 rg /F1 7.25 Tf 1 0 0 1 377.00 379.50 Tm (Read-only Analyst.) Tj ET
+1.000 1.000 1.000 rg 48.00 299.00 499.28 60.00 re f
+0.910 0.890 0.850 RG 0.5 w 48.00 299.00 499.28 60.00 re S
+0.769 0.478 0.227 rg 48.00 299.00 4.00 60.00 re f
+BT 0.769 0.478 0.227 rg /F2 7.6 Tf 1 0 0 1 61.00 345.00 Tm (RECOMMENDED NEXT STEP) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 332.00 Tm (Approve Phase 0 and the V1 KPI definitions, then implement the dashboard API contract and protected web) Tj ET
+BT 0.137 0.063 0.020 rg /F1 8.6 Tf 1 0 0 1 61.00 320.00 Tm (shell together. This prevents visual work from being built on unstable data or unsecured routes.) Tj ET
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 15 0 R >>
+endobj
+17 0 obj
+<< /Title (Super Admin Dashboard Plan) /Author (Cafe 6:18 Platform) /Subject (Product and delivery blueprint) >>
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000000014 00000 n 
+0000000063 00000 n 
+0000000154 00000 n 
+0000000251 00000 n 
+0000000353 00000 n 
+0000004647 00000 n 
+0000004789 00000 n 
+0000011096 00000 n 
+0000011238 00000 n 
+0000022609 00000 n 
+0000022752 00000 n 
+0000031262 00000 n 
+0000031406 00000 n 
+0000043205 00000 n 
+0000043349 00000 n 
+0000049628 00000 n 
+0000049772 00000 n 
+trailer
+<< /Size 18 /Root 1 0 R /Info 17 0 R >>
+startxref
+49901
+%%EOF
