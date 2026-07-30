@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
+import '../../../core/config/tax_config.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -624,7 +625,24 @@ class _CreateDiscountPolicyScreenState
         _combineManualDiscounts;
     return Column(
       children: <Widget>[
-        DiscountPosPreviewCard(discountPercent: _discountPercent),
+        BlocBuilder<DiscountsCubit, DiscountsState>(
+          builder: (BuildContext context, DiscountsState state) {
+            final branches = state.branches
+                .where((branch) => branch.isActive)
+                .toList();
+            final selected = branches
+                .where((branch) => branch.id == _selectedBranchId)
+                .firstOrNull;
+            final taxRate =
+                (selected ?? (branches.isEmpty ? null : branches.first))
+                    ?.taxRate ??
+                TaxConfig.defaultTaxRate;
+            return DiscountPosPreviewCard(
+              discountPercent: _discountPercent,
+              taxRate: taxRate,
+            );
+          },
+        ),
         const SizedBox(height: AppSpacing.lg),
         DiscountSummaryPanel(
           value: '$_discountPercent% $_valueType',
@@ -714,8 +732,12 @@ class _CreateDiscountPolicyScreenState
     }
     final DiscountUpsertRequest request = DiscountUpsertRequest(
       name: name,
-      code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
-      description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+      code: _codeController.text.trim().isEmpty
+          ? null
+          : _codeController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
       applicationMode: _backendMode,
       type: _valueType == 'Fixed Amount' ? 'fixed' : 'percentage',
       scope: _backendScope,
@@ -733,7 +755,9 @@ class _CreateDiscountPolicyScreenState
           ? null
           : _paymentMethod,
       appliesToAllBranches: appliesToAllBranches,
-      branchIds: appliesToAllBranches ? const <int>[] : <int>[_selectedBranchId!],
+      branchIds: appliesToAllBranches
+          ? const <int>[]
+          : <int>[_selectedBranchId!],
       isActive: activate,
     );
     final bool saved = widget.initialDiscount == null
@@ -741,15 +765,20 @@ class _CreateDiscountPolicyScreenState
         : await cubit.updateDiscount(widget.initialDiscount!.id, request);
     if (!mounted) return;
     if (saved) {
-      _showMessage(activate ? 'Discount saved and activated.' : 'Discount saved as inactive.');
+      _showMessage(
+        activate
+            ? 'Discount saved and activated.'
+            : 'Discount saved as inactive.',
+      );
       context.go(AppRoutes.discounts);
       return;
     }
     _showMessage(cubit.state.errorMessage ?? 'Unable to save discount.');
   }
 
-  double? _decimalValue(String value) =>
-      value.trim().isEmpty ? null : double.tryParse(value.trim().replaceAll(',', ''));
+  double? _decimalValue(String value) => value.trim().isEmpty
+      ? null
+      : double.tryParse(value.trim().replaceAll(',', ''));
 
   String get _backendMode => switch (_discountMode) {
     'Auto' => 'auto',
@@ -781,9 +810,8 @@ class _CreateDiscountPolicyScreenState
         final availableBranches = state.branches
             .where((branch) => branch.isActive && branch.id > 0)
             .toList(growable: false);
-        final int? value = availableBranches.any(
-          (branch) => branch.id == _selectedBranchId,
-        )
+        final int? value =
+            availableBranches.any((branch) => branch.id == _selectedBranchId)
             ? _selectedBranchId
             : null;
         final String? branchError = _branchError(state);
@@ -820,7 +848,9 @@ class _CreateDiscountPolicyScreenState
               const SizedBox(height: AppSpacing.xs),
               Text(
                 branchError,
-                style: AppTextStyles.labelSmall.copyWith(color: AppColors.danger),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.danger,
+                ),
               ),
             ],
           ],

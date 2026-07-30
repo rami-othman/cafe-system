@@ -17,7 +17,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cafe System 618'), findsOneWidget);
-    expect(find.text('DOWNTOWN'), findsOneWidget);
+    expect(find.text('Downtown'), findsOneWidget);
     expect(find.text('SHIFT OPEN'), findsOneWidget);
     expect(find.text('Search products...'), findsOneWidget);
     expect(find.text('COFFEE'), findsOneWidget);

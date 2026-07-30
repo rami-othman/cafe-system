@@ -20,7 +20,7 @@ class OnboardTenant
             $tenantId = DB::table('tenants')->insertGetId([
                 'name' => $data['name'], 'slug' => $data['slug'], 'status' => 'trial', 'plan' => $plan->code,
                 'email' => $data['email'], 'phone' => $data['phone'] ?? null, 'timezone' => $data['timezone'],
-                'currency' => $data['currency'], 'logo_url' => $data['logoUrl'] ?? null, 'created_at' => $now, 'updated_at' => $now,
+                'currency' => $data['currency'], 'tax_rate' => '0.080000', 'logo_url' => $data['logoUrl'] ?? null, 'created_at' => $now, 'updated_at' => $now,
             ]);
             $ownerId = DB::table('users')->insertGetId([
                 'tenant_id' => $tenantId, 'name' => $data['ownerName'], 'email' => $data['ownerEmail'],

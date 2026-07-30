@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/config/tax_config.dart';
 import 'json_helpers.dart';
 
 class BackendOrderTotals extends Equatable {
@@ -8,6 +9,7 @@ class BackendOrderTotals extends Equatable {
     required this.discountTotal,
     required this.taxTotal,
     required this.total,
+    this.taxRate = TaxConfig.defaultTaxRate,
   });
 
   factory BackendOrderTotals.fromJson(Map<String, dynamic> json) {
@@ -15,6 +17,7 @@ class BackendOrderTotals extends Equatable {
       subtotal: readDouble(json['subtotal']),
       discountTotal: readDouble(json['discountTotal']),
       taxTotal: readDouble(json['taxTotal']),
+      taxRate: readDouble(json['taxRate'], fallback: TaxConfig.defaultTaxRate),
       total: readDouble(json['total']),
     );
   }
@@ -22,6 +25,7 @@ class BackendOrderTotals extends Equatable {
   final double subtotal;
   final double discountTotal;
   final double taxTotal;
+  final double taxRate;
   final double total;
 
   @override
@@ -29,6 +33,7 @@ class BackendOrderTotals extends Equatable {
     subtotal,
     discountTotal,
     taxTotal,
+    taxRate,
     total,
   ];
 }

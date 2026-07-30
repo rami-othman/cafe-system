@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/config/tax_config.dart';
 import '../models/applied_discount.dart';
 import '../models/cart_item.dart';
 import '../models/customer.dart';
@@ -33,6 +34,7 @@ class PosState extends Equatable {
     this.uncertainPaymentMessage,
     this.orderType = OrderType.dineIn,
     this.branchId = 1,
+    this.taxRate = TaxConfig.defaultTaxRate,
     this.shiftId,
     this.currentOrderId,
     this.isBackendMode = false,
@@ -47,8 +49,6 @@ class PosState extends Equatable {
     this.isLoading = false,
     this.errorMessage,
   });
-
-  static const double taxRate = 0.08;
 
   final List<PosProduct> products;
   final List<String> categories;
@@ -73,6 +73,7 @@ class PosState extends Equatable {
   final String? uncertainPaymentMessage;
   final OrderType orderType;
   final int branchId;
+  final double taxRate;
   final int? shiftId;
   final int? currentOrderId;
   final bool isBackendMode;
@@ -180,6 +181,7 @@ class PosState extends Equatable {
     String? uncertainPaymentMessage,
     OrderType? orderType,
     int? branchId,
+    double? taxRate,
     int? shiftId,
     int? currentOrderId,
     bool? isBackendMode,
@@ -252,6 +254,7 @@ class PosState extends Equatable {
           : uncertainPaymentMessage ?? this.uncertainPaymentMessage,
       orderType: orderType ?? this.orderType,
       branchId: branchId ?? this.branchId,
+      taxRate: taxRate ?? this.taxRate,
       shiftId: clearShiftId ? null : shiftId ?? this.shiftId,
       currentOrderId: clearCurrentOrderId
           ? null
@@ -308,6 +311,7 @@ class PosState extends Equatable {
     uncertainPaymentMessage,
     orderType,
     branchId,
+    taxRate,
     shiftId,
     currentOrderId,
     isBackendMode,

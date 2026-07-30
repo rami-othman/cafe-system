@@ -12,11 +12,7 @@ import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
 
 class AppTopBar extends StatefulWidget {
-  const AppTopBar({
-    super.key,
-    this.showCartButton = false,
-    this.onRefresh,
-  });
+  const AppTopBar({super.key, this.showCartButton = false, this.onRefresh});
 
   final bool showCartButton;
   final Future<void> Function(BuildContext context)? onRefresh;

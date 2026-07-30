@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/config/tax_config.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../../pos/models/branch.dart';
 import '../../pos/models/json_helpers.dart';
@@ -156,6 +157,10 @@ class OrdersRepository {
       items: items,
       subtotal: _totalFromJson(json, 'subtotal'),
       tax: _totalFromJson(json, 'taxTotal'),
+      taxRate: readDouble(
+        _mapFromJson(json['totals'])['taxRate'],
+        fallback: TaxConfig.defaultTaxRate,
+      ),
       tip: _totalFromJson(json, 'serviceTotal'),
       total: _totalFromJson(json, 'total'),
       payment: _paymentFromJson(readMapList(json['payments'])),
@@ -449,7 +454,7 @@ class OrdersRepository {
       0,
       (double total, OrderDetailItem item) => total + item.total,
     );
-    final double tax = _roundCurrency(subtotal * 0.085);
+    final double tax = _roundCurrency(subtotal * TaxConfig.defaultTaxRate);
     final double tip = _roundCurrency(subtotal * 0.15);
     final double total = _roundCurrency(subtotal + tax + tip);
     final DateTime createdAt = DateTime(2023, 10, 24, 10, 42);
@@ -466,6 +471,7 @@ class OrdersRepository {
       items: items,
       subtotal: subtotal,
       tax: tax,
+      taxRate: TaxConfig.defaultTaxRate,
       tip: tip,
       total: total,
       payment: OrderPaymentSummary(

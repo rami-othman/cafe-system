@@ -4,15 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\TenantContext;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ShiftController extends Controller
 {
     public function current(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        $request->validate([
+            'branchId' => ['nullable', 'integer', $this->tenantExists('branches', $tenantId)],
+        ]);
         $branchId = (int) $request->query('branchId');
 
         $shift = DB::table('shifts')
@@ -28,13 +33,13 @@ class ShiftController extends Controller
 
     public function open(Request $request): JsonResponse
     {
+        $tenantId = TenantContext::id($request);
         $data = $request->validate([
-            'branchId' => ['required', 'integer', 'exists:branches,id'],
-            'userId' => ['nullable', 'integer', 'exists:users,id'],
+            'branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)],
+            'userId' => ['nullable', 'integer', $this->tenantExists('users', $tenantId)],
             'openingCash' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $tenantId = TenantContext::id($request);
         $now = now();
 
         $id = DB::table('shifts')->insertGetId([
@@ -102,5 +107,12 @@ class ShiftController extends Controller
             'openedAt' => $shift->opened_at,
             'closedAt' => $shift->closed_at,
         ];
+    }
+
+    private function tenantExists(string $table, int $tenantId)
+    {
+        return Rule::exists($table, 'id')->where(
+            fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'),
+        );
     }
 }

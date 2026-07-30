@@ -6,14 +6,21 @@ Cafe System 618
 
 ## Current Goal
 
-Establish the general project foundation for a Flutter Windows desktop cafe and
-restaurant management system.
+Maintain the working Flutter Windows POS, Orders, Discounts, and Reports flows
+while preparing the foundation for the approved Full Menu Management Flow.
 
 ## Current Phase
 
 Phase 1 — Project Foundation
 
 ## Completed Work
+
+- Retired the old mock-based Flutter Menu Management prototype, including its
+  routes, sidebar destination, dependency registrations, and dedicated tests.
+- Confirmed the approved Full Menu Management Flow as the next major track;
+  it has not been implemented yet.
+- Retained the backend `menu/categories` and `menu/products` endpoints as the
+  temporary POS Catalog API.
 
 - Created the initial Flutter project scaffold.
 - Added foundation dependencies for routing, state management, dependency
@@ -65,20 +72,6 @@ Phase 1 — Project Foundation
   `categoryId` display under the selected category tabs.
 - Connected Orders screen and Order Details side panel to Laravel backend using
   Dio.
-- Added the Menu Management foundation with immutable menu domain models, mock
-  repository data, Menu Cubit/state, dependency injection, placeholder routes,
-  sidebar navigation, and automated repository/routing coverage.
-- Implemented the Figma-based Menu Overview UI with a Menu-specific top bar,
-  action buttons, KPI cards, internal tabs, filters, and recent activity table.
-- Implemented the Figma-based Products List UI with responsive filters, mock
-  product rows, reusable type/status chips, row actions, and pagination.
-- Implemented the Figma-based Create Product General Information UI with local
-  form state, responsive form sections, product summary/progress, channel
-  visibility controls, a fixed action footer, and navigable Menu/Products
-  breadcrumbs.
-- Implemented the Figma-based Modifier Groups UI with Cubit-loaded mock data,
-  local search and selection, responsive master/detail layout, options table,
-  assigned product chips, and placeholder actions.
 - Implemented the Create Discount Policy UI with local form state, responsive
   policy sections, POS preview, configuration summary, sticky actions, sidebar
   routing, and automated route/layout coverage.
@@ -106,7 +99,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Fix Flutter Orders list/detail request races, stale panel state, and API error presentation.
+Implement the approved Full Menu Management Flow, beginning with its domain and
+safe migration strategy rather than restoring the retired prototype.
 
 ## Architecture Decisions
 
@@ -198,27 +192,6 @@ Fix Flutter Orders list/detail request races, stale panel state, and API error p
 - 2026-06-20: Connected Orders screen and Order Details side panel to Laravel
   backend using Dio, including list/detail endpoints, filter mapping, status
   mapping, and safe placeholders for order actions.
-- 2026-07-01: Added the Menu Management foundation with menu catalog models,
-  mock repository data, Cubit/state filtering, eight title-only routes, Menu
-  sidebar activation, service-locator registrations, and automated tests.
-- 2026-07-06: Implemented the desktop-first Menu Overview UI from Figma,
-  including the scoped shell header, action controls, Cubit-backed KPI cards,
-  responsive tabs and filters, exact mock activity rows, status chips, and
-  widget/routing coverage.
-- 2026-07-06: Implemented the desktop-first Products List UI from Figma with a
-  Menu Management top bar, page actions, responsive search/filter controls,
-  five exact mock catalog rows, reusable product chips, icon thumbnails, row
-  actions, pagination, and widget/routing coverage.
-- 2026-07-06: Implemented the desktop-first Create Product General Information
-  UI from Figma with local-only form state, reusable Menu form widgets,
-  responsive two-column layout, locked setup progress, fixed action footer,
-  placeholder save feedback, and widget/routing coverage.
-- 2026-07-06: Made the Create Product Menu and Products breadcrumbs navigate
-  directly to `/menu` and `/menu/products`, with routing test coverage.
-- 2026-07-06: Implemented the desktop-first Modifier Groups UI from Figma with
-  exact mock group counts, local search/selection, reusable group/detail/table
-  widgets, assigned product chips, placeholder actions, responsive stacking,
-  and widget/routing coverage.
 - 2026-07-06: Implemented the desktop-first Create Discount Policy UI from the
   supplied Figma reference and screenshot, including the `/discounts/create`
   route, active Discounts sidebar state, local-only policy controls, responsive
@@ -237,9 +210,8 @@ Fix Flutter Orders list/detail request races, stale panel state, and API error p
 - 2026-07-15: Fixed the Discounts table action-cell overflow at the desktop
   sidebar breakpoint by matching the two Figma row actions, with a shell-level
   regression test at 1200 px.
-- 2026-07-15: Added reusable clickable breadcrumbs to Discounts Create and
-  Menu child routes so direct navigation no longer requires using the sidebar
-  to return to an ancestor screen.
+- 2026-07-29: Retired the old Flutter Menu Management prototype because it
+  represented the wrong flow; the approved replacement remains future work.
 - 2026-07-18: Fixed the available POS discounts API response to reindex the
   filtered collection. This lets the Flutter POS dialog display active
   discounts when earlier records are inactive or expired.

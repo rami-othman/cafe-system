@@ -21,9 +21,9 @@ class PosApiSmokeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.name', 'Downtown');
 
-        $this->getJson("/api/v1/pos/state?branchId={$branchId}")
+        $state = $this->getJson("/api/v1/pos/state?branchId={$branchId}")
             ->assertOk()
-            ->assertJsonPath('data.terminal.status', 'closed');
+            ->assertJsonPath('data.terminal.status', 'open');
 
         $this->getJson('/api/v1/customers?search=Jane')
             ->assertOk()
@@ -33,11 +33,7 @@ class PosApiSmokeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.name', 'Cappuccino');
 
-        $shift = $this->postJson('/api/v1/shifts/current', [
-            'branchId' => $branchId,
-            'openingCash' => 0,
-        ])
-            ->assertCreated();
+        $shiftId = $state->json('data.currentShift.id');
 
         $modifiers = DB::table('product_modifier_group')
             ->join('modifier_groups', 'modifier_groups.id', '=', 'product_modifier_group.modifier_group_id')
@@ -58,7 +54,7 @@ class PosApiSmokeTest extends TestCase
 
         $order = $this->postJson('/api/v1/orders', [
             'branchId' => $branchId,
-            'shiftId' => $shift->json('data.id'),
+            'shiftId' => $shiftId,
             'orderType' => 'dine_in',
             'tableId' => DB::table('cafe_tables')->where('branch_id', $branchId)->value('id'),
             'items' => [
@@ -76,13 +72,13 @@ class PosApiSmokeTest extends TestCase
 
         $this->getJson("/api/v1/discounts/available?orderId={$orderId}")
             ->assertOk()
-            ->assertJsonPath('data.0.code', 'OPEN10');
+            ->assertJsonFragment(['code' => 'LUNCH10']);
 
         $discounted = $this->postJson("/api/v1/orders/{$orderId}/discounts/apply", [
-            'code' => 'OPEN10',
+            'code' => 'LUNCH10',
         ])
             ->assertOk()
-            ->assertJsonPath('data.discount.code', 'OPEN10');
+            ->assertJsonPath('data.discount.code', 'LUNCH10');
 
         $this->getJson("/api/v1/orders/{$orderId}/payment-summary?amountReceived=30")
             ->assertOk()

@@ -94,6 +94,7 @@ class PosCartPanel extends StatelessWidget {
                 subtotal: state.subtotal,
                 discountTotal: state.discountTotal,
                 tax: state.tax,
+                taxRate: state.taxRate,
                 total: state.total,
                 itemCount: state.totalItems,
                 hasCartItems: state.hasCartItems,
@@ -355,6 +356,7 @@ class _CartFooter extends StatelessWidget {
     required this.subtotal,
     required this.discountTotal,
     required this.tax,
+    required this.taxRate,
     required this.total,
     required this.itemCount,
     required this.hasCartItems,
@@ -369,6 +371,7 @@ class _CartFooter extends StatelessWidget {
   final double subtotal;
   final double discountTotal;
   final double tax;
+  final double taxRate;
   final double total;
   final int itemCount;
   final bool hasCartItems;
@@ -394,6 +397,7 @@ class _CartFooter extends StatelessWidget {
               subtotal: subtotal,
               discountTotal: discountTotal,
               tax: tax,
+              taxRate: taxRate,
               total: total,
               appliedDiscount: appliedDiscount,
               onRemoveDiscount: isSyncingOrder ? null : onRemoveDiscount,

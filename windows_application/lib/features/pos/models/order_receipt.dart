@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/config/tax_config.dart';
 import 'payment_result.dart';
 import 'receipt_line_item.dart';
 
@@ -16,6 +17,7 @@ class OrderReceipt extends Equatable {
     required this.tax,
     required this.total,
     required this.payment,
+    this.taxRate = TaxConfig.defaultTaxRate,
     this.customerName,
   });
 
@@ -28,6 +30,7 @@ class OrderReceipt extends Equatable {
   final double discountTotal;
   final String? discountLabel;
   final double tax;
+  final double taxRate;
   final double total;
   final PaymentResult payment;
   final String? customerName;
@@ -50,6 +53,7 @@ class OrderReceipt extends Equatable {
     discountTotal,
     discountLabel,
     tax,
+    taxRate,
     total,
     payment,
     customerName,

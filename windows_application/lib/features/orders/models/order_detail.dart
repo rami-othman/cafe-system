@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/config/tax_config.dart';
 import 'order_payment_summary.dart';
 import 'order_status.dart';
 import 'order_timeline_event.dart';
@@ -17,6 +18,7 @@ class OrderDetail extends Equatable {
     required this.items,
     required this.subtotal,
     required this.tax,
+    this.taxRate = TaxConfig.defaultTaxRate,
     required this.tip,
     required this.total,
     required this.payment,
@@ -37,6 +39,7 @@ class OrderDetail extends Equatable {
   final List<OrderDetailItem> items;
   final double subtotal;
   final double tax;
+  final double taxRate;
   final double tip;
   final double total;
   final OrderPaymentSummary payment;
@@ -67,6 +70,7 @@ class OrderDetail extends Equatable {
       items: items,
       subtotal: subtotal,
       tax: tax,
+      taxRate: taxRate,
       tip: tip,
       total: total,
       payment: payment,
@@ -90,6 +94,7 @@ class OrderDetail extends Equatable {
     items,
     subtotal,
     tax,
+    taxRate,
     tip,
     total,
     payment,

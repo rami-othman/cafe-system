@@ -116,12 +116,16 @@ class DiscountController extends Controller
 
     public function apply(Request $request, int $order): JsonResponse
     {
-        $data = $request->validate(['code' => ['nullable', 'string'], 'discountId' => ['nullable', 'integer'], 'reason' => ['nullable', 'string']]);
+        $tenantId = TenantContext::id($request);
+        $data = $request->validate([
+            'code' => ['nullable', 'string'],
+            'discountId' => ['nullable', 'integer', Rule::exists('discounts', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'))],
+            'reason' => ['nullable', 'string'],
+        ]);
         if (empty($data['code']) && empty($data['discountId'])) {
             throw ValidationException::withMessages(['discount' => 'A coupon code or discountId is required.']);
         }
 
-        $tenantId = TenantContext::id($request);
         $orderRow = $this->findOrder($tenantId, $order);
         $discount = $this->findDiscount($tenantId, $data);
         $this->assertEligible($tenantId, $discount, $orderRow);

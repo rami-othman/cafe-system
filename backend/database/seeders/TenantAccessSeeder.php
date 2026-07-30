@@ -17,6 +17,7 @@ class TenantAccessSeeder extends Seeder
             'status' => 'active',
             'plan' => 'starter',
             'currency' => 'SYP',
+            'tax_rate' => '0.080000',
             'timezone' => 'Asia/Damascus',
             'created_at' => $now,
             'updated_at' => $now,

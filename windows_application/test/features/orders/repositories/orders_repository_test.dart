@@ -134,6 +134,7 @@ void main() {
       expect(detail.payment.methodLabel, 'Cash');
       expect(detail.payment.amount, 15.66);
       expect(detail.refundedAmount, 2.5);
+      expect(detail.taxRate, 0.08);
       expect(detail.timeline.single.title, 'Order created');
     },
   );

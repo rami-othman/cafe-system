@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/tax_formatter.dart';
 import '../models/order_receipt.dart';
 import '../models/payment_method.dart';
 import '../models/receipt_line_item.dart';
@@ -93,7 +94,10 @@ class ReceiptPreviewPaper extends StatelessWidget {
             ],
             const _ReceiptDivider(),
             _AmountRow(label: 'Subtotal', amount: receipt.subtotal),
-            _AmountRow(label: 'Tax (8%)', amount: receipt.tax),
+            _AmountRow(
+              label: TaxFormatter.taxLabel(receipt.taxRate),
+              amount: receipt.tax,
+            ),
             if (receipt.discountTotal > 0)
               _AmountRow(
                 label: receipt.discountLabel ?? 'Discount',

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/tax_config.dart';
 import '../../../core/network/api_exception.dart';
 import '../models/applied_discount.dart';
 import '../models/backend_order.dart';
@@ -37,6 +38,9 @@ class PosCubit extends Cubit<PosState> {
     try {
       final branches = await repository.getBranches();
       final int branchId = branches.isEmpty ? 1 : branches.first.id;
+      final double taxRate = branches.isEmpty
+          ? TaxConfig.defaultTaxRate
+          : branches.first.taxRate;
       final shift = await repository.getCurrentShift(branchId: branchId);
       final List<String> categories = await repository.getCategories(
         branchId: branchId,
@@ -50,6 +54,7 @@ class PosCubit extends Cubit<PosState> {
       emit(
         state.copyWith(
           branchId: branchId,
+          taxRate: taxRate,
           shiftId: shift?.id,
           isBackendMode: repository.usesBackend,
           products: products,
@@ -692,6 +697,7 @@ class PosCubit extends Cubit<PosState> {
         cartItems: cartItems,
         currentOrderId: order.id,
         branchId: order.branchId,
+        taxRate: order.totals.taxRate,
         shiftId: order.shiftId,
         orderType: orderTypeFromApi(order.orderType),
         selectedCustomer: _customerFromBackendOrder(order),
@@ -956,6 +962,7 @@ class PosCubit extends Cubit<PosState> {
       discountTotal: state.discountTotal,
       discountLabel: state.appliedDiscount?.title,
       tax: state.tax,
+      taxRate: state.taxRate,
       total: state.total,
       payment: payment,
       customerName: state.selectedCustomer?.name,

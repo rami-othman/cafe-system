@@ -45,8 +45,11 @@ class PosPricingService
             ->where('order_id', $orderId)
             ->sum('discount_amount');
 
+        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
+        abort_if(! $order, 404, 'Order not found.');
+
         $taxable = max(0, $subtotal - $discountTotal);
-        $taxTotal = round($taxable * 0.08, 2);
+        $taxTotal = round($taxable * (float) $order->tax_rate, 2);
         $total = round($taxable + $taxTotal, 2);
 
         DB::table('orders')

@@ -5,6 +5,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/tax_formatter.dart';
 import '../models/applied_discount.dart';
 
 class OrderTotalsPanel extends StatelessWidget {
@@ -14,6 +15,7 @@ class OrderTotalsPanel extends StatelessWidget {
     required this.discountTotal,
     required this.tax,
     required this.total,
+    required this.taxRate,
     this.appliedDiscount,
     this.onRemoveDiscount,
   });
@@ -22,6 +24,7 @@ class OrderTotalsPanel extends StatelessWidget {
   final double discountTotal;
   final double tax;
   final double total;
+  final double taxRate;
   final AppliedDiscount? appliedDiscount;
   final VoidCallback? onRemoveDiscount;
 
@@ -42,7 +45,10 @@ class OrderTotalsPanel extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.xs),
-        _TotalLine(label: 'Tax (8%)', value: CurrencyFormatter.format(tax)),
+        _TotalLine(
+          label: TaxFormatter.taxLabel(taxRate),
+          value: CurrencyFormatter.format(tax),
+        ),
         const SizedBox(height: AppSpacing.sm),
         DecoratedBox(
           decoration: const BoxDecoration(

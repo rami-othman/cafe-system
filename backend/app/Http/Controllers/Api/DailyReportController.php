@@ -5,20 +5,22 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\TenantContext;
 use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class DailyReportController extends Controller
 {
     public function show(Request $request): JsonResponse
     {
+        $tenantId = TenantContext::id($request);
         $data = $request->validate([
-            'branchId' => ['nullable', 'integer', 'exists:branches,id'],
+            'branchId' => ['nullable', 'integer', Rule::exists('branches', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'))],
             'date' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
-        $tenantId = TenantContext::id($request);
         $branchId = $data['branchId'] ?? DB::table('branches')->where('tenant_id', $tenantId)->orderBy('id')->value('id');
         abort_unless($branchId, 404, 'No branch is available for this tenant.');
 

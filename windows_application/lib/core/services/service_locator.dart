@@ -1,9 +1,6 @@
 import 'package:get_it/get_it.dart';
 
 import '../network/dio_api_client.dart';
-import '../../features/menu/controllers/menu_cubit.dart';
-import '../../features/menu/repositories/menu_repository.dart';
-import '../../features/menu/repositories/mock_menu_repository.dart';
 import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
@@ -45,18 +42,6 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<OrdersCubit>()) {
     serviceLocator.registerFactory<OrdersCubit>(
       () => OrdersCubit(repository: serviceLocator<OrdersRepository>()),
-    );
-  }
-
-  if (!serviceLocator.isRegistered<MenuRepository>()) {
-    serviceLocator.registerLazySingleton<MenuRepository>(
-      MockMenuRepository.new,
-    );
-  }
-
-  if (!serviceLocator.isRegistered<MenuCubit>()) {
-    serviceLocator.registerFactory<MenuCubit>(
-      () => MenuCubit(repository: serviceLocator<MenuRepository>()),
     );
   }
 

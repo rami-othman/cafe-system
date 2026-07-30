@@ -73,17 +73,17 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('updates discount value selection without changing the form layout', (
-    WidgetTester tester,
-  ) async {
-    await _pumpScreen(tester, const Size(1280, 900));
+  testWidgets(
+    'updates discount value selection without changing the form layout',
+    (WidgetTester tester) async {
+      await _pumpScreen(tester, const Size(1280, 900));
 
-    expect(find.text('10%'), findsWidgets);
-    await tester.tap(find.text('20%').first);
-    await tester.pump();
-    expect(find.text('20%'), findsWidgets);
-
-  });
+      expect(find.text('10%'), findsWidgets);
+      await tester.tap(find.text('20%').first);
+      await tester.pump();
+      expect(find.text('20%'), findsWidgets);
+    },
+  );
 
   testWidgets('remains overflow-free at a compact desktop width', (
     WidgetTester tester,
