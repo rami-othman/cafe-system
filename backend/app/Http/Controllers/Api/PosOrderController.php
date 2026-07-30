@@ -18,9 +18,7 @@ class PosOrderController extends Controller
     public function __construct(
         private readonly PosPricingService $pricing,
         private readonly TenantTaxService $taxes,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {

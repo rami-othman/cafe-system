@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Api\SuperAdmin\V1\DashboardController;
 use App\Http\Controllers\Api\SuperAdmin\V1\PlatformAuthController;
-use App\Http\Controllers\Api\SuperAdmin\V1\TenantController;
 use App\Http\Controllers\Api\SuperAdmin\V1\PlatformManagementController;
+use App\Http\Controllers\Api\SuperAdmin\V1\TenantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('auth/csrf', [PlatformAuthController::class, 'csrf']);

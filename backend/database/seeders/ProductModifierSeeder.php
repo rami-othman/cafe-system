@@ -64,10 +64,11 @@ class ProductModifierSeeder extends Seeder
 
         $groupIds = [];
         foreach ($groups as $code => $group) {
-            $groupIds[$code] = DB::table('modifier_groups')->insertGetId([
+            DB::table('modifier_groups')->updateOrInsert([
                 'tenant_id' => $tenantId,
-                'name' => $group['name'],
                 'code' => $code,
+            ], [
+                'name' => $group['name'],
                 'selection_type' => $group['selection_type'],
                 'is_required' => $group['is_required'],
                 'min_selections' => $group['min_selections'],
@@ -76,12 +77,17 @@ class ProductModifierSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+            $groupIds[$code] = (int) DB::table('modifier_groups')
+                ->where('tenant_id', $tenantId)
+                ->where('code', $code)
+                ->value('id');
 
             foreach ($group['options'] as $sortOrder => $option) {
-                DB::table('modifier_options')->insert([
+                DB::table('modifier_options')->updateOrInsert([
                     'tenant_id' => $tenantId,
                     'modifier_group_id' => $groupIds[$code],
                     'name' => $option['name'],
+                ], [
                     'price_delta' => $option['price_delta'],
                     'is_default' => $option['is_default'],
                     'sort_order' => $sortOrder,
@@ -95,10 +101,11 @@ class ProductModifierSeeder extends Seeder
             $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->where('name', $productName)->value('id');
 
             foreach (array_values($groupIds) as $sortOrder => $groupId) {
-                DB::table('product_modifier_group')->insert([
+                DB::table('product_modifier_group')->updateOrInsert([
                     'tenant_id' => $tenantId,
                     'product_id' => $productId,
                     'modifier_group_id' => $groupId,
+                ], [
                     'sort_order' => $sortOrder,
                     'created_at' => $now,
                     'updated_at' => $now,

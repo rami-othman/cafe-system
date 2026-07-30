@@ -10,7 +10,9 @@ class DiscountSeeder extends Seeder
     public function run(): void
     {
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
-        if (! $tenantId) return;
+        if (! $tenantId) {
+            return;
+        }
 
         $now = now();
         $discounts = [

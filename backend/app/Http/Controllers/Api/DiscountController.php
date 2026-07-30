@@ -15,9 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class DiscountController extends Controller
 {
-    public function __construct(private readonly PosPricingService $pricing)
-    {
-    }
+    public function __construct(private readonly PosPricingService $pricing) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -144,6 +142,7 @@ class DiscountController extends Controller
         });
 
         $updated = $this->findOrder($tenantId, $order);
+
         return response()->json(['data' => [
             'orderId' => $order,
             'discount' => ['id' => $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'type' => $discount->type, 'value' => (float) $discount->value, 'amount' => $amount],
@@ -159,6 +158,7 @@ class DiscountController extends Controller
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
         });
+
         return response()->json(['data' => ['orderId' => $order, 'discount' => null]]);
     }
 
@@ -207,6 +207,7 @@ class DiscountController extends Controller
             throw ValidationException::withMessages(['targets' => 'Select at least one target for a product or category discount.']);
         }
         $this->assertTenantTargets($tenantId, $data);
+
         return $data;
     }
 
@@ -223,6 +224,7 @@ class DiscountController extends Controller
             'customer_eligibility' => $data['customerEligibility'] ?? null, 'payment_method' => $data['paymentMethod'] ?? null,
             'is_active' => $data['isActive'], 'updated_at' => now(),
         ];
+
         return $creating ? ['tenant_id' => $tenantId, 'used_count' => 0, 'estimated_saved_value' => 0, 'created_at' => now()] + $payload : $payload;
     }
 
@@ -251,27 +253,57 @@ class DiscountController extends Controller
                 $rows[] = ['tenant_id' => $tenantId, 'discount_id' => $discountId, 'target_type' => 'branch', 'target_id' => $branchId, 'created_at' => $now, 'updated_at' => $now];
             }
         }
-        if ($rows) DB::table('discount_targets')->insert($rows);
+        if ($rows) {
+            DB::table('discount_targets')->insert($rows);
+        }
     }
 
-    private function discountQuery(int $tenantId): Builder { return DB::table('discounts')->where('tenant_id', $tenantId)->whereNull('deleted_at'); }
-    private function findManagedDiscount(int $tenantId, int $id): object { $discount = $this->discountQuery($tenantId)->where('id', $id)->first(); abort_if(! $discount, 404, 'Discount not found.'); return $discount; }
-    private function findOrder(int $tenantId, int $orderId): object { $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first(); abort_if(! $order, 404, 'Order not found.'); return $order; }
+    private function discountQuery(int $tenantId): Builder
+    {
+        return DB::table('discounts')->where('tenant_id', $tenantId)->whereNull('deleted_at');
+    }
+
+    private function findManagedDiscount(int $tenantId, int $id): object
+    {
+        $discount = $this->discountQuery($tenantId)->where('id', $id)->first();
+        abort_if(! $discount, 404, 'Discount not found.');
+
+        return $discount;
+    }
+
+    private function findOrder(int $tenantId, int $orderId): object
+    {
+        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
+        abort_if(! $order, 404, 'Order not found.');
+
+        return $order;
+    }
 
     private function findDiscount(int $tenantId, array $data): object
     {
         $query = $this->discountQuery($tenantId)->where('is_active', true);
         ! empty($data['discountId']) ? $query->where('id', $data['discountId']) : $query->whereRaw('LOWER(code) = ?', [strtolower($data['code'])]);
-        $discount = $query->first(); abort_if(! $discount, 404, 'Discount not found.'); return $discount;
+        $discount = $query->first();
+        abort_if(! $discount, 404, 'Discount not found.');
+
+        return $discount;
     }
 
     private function assertEligible(int $tenantId, object $discount, object $order): void
     {
-        if ($this->status($discount) !== 'active') throw ValidationException::withMessages(['discount' => 'Discount is not currently active.']);
-        if ($discount->usage_limit !== null && $discount->used_count >= $discount->usage_limit) throw ValidationException::withMessages(['discount' => 'Discount usage limit has been reached.']);
-        if ((float) $order->subtotal < (float) $discount->minimum_order_amount) throw ValidationException::withMessages(['discount' => 'Minimum order amount not reached.']);
+        if ($this->status($discount) !== 'active') {
+            throw ValidationException::withMessages(['discount' => 'Discount is not currently active.']);
+        }
+        if ($discount->usage_limit !== null && $discount->used_count >= $discount->usage_limit) {
+            throw ValidationException::withMessages(['discount' => 'Discount usage limit has been reached.']);
+        }
+        if ((float) $order->subtotal < (float) $discount->minimum_order_amount) {
+            throw ValidationException::withMessages(['discount' => 'Minimum order amount not reached.']);
+        }
         $branchTargets = $this->targetIds($tenantId, $discount->id, 'branch');
-        if ($branchTargets && ! in_array((int) $order->branch_id, $branchTargets, true)) throw ValidationException::withMessages(['discount' => 'Discount is not available at this branch.']);
+        if ($branchTargets && ! in_array((int) $order->branch_id, $branchTargets, true)) {
+            throw ValidationException::withMessages(['discount' => 'Discount is not available at this branch.']);
+        }
     }
 
     private function discountAmount(int $tenantId, object $order, object $discount): float
@@ -281,42 +313,76 @@ class DiscountController extends Controller
             'percentage' => $eligibleSubtotal * ((float) $discount->value / 100), 'fixed' => min((float) $discount->value, $eligibleSubtotal),
             'bogo' => $this->bogoAmount($tenantId, (int) $order->id, $discount), default => 0,
         };
-        if ($discount->maximum_discount_amount !== null) $amount = min($amount, (float) $discount->maximum_discount_amount);
+        if ($discount->maximum_discount_amount !== null) {
+            $amount = min($amount, (float) $discount->maximum_discount_amount);
+        }
+
         return round(min($amount, $eligibleSubtotal), 2);
     }
 
     private function eligibleSubtotal(int $tenantId, object $order, object $discount): float
     {
-        if ($discount->scope === 'order') return (float) $order->subtotal;
+        if ($discount->scope === 'order') {
+            return (float) $order->subtotal;
+        }
         $items = DB::table('order_items')->join('products', 'products.id', '=', 'order_items.product_id')
             ->where('order_items.tenant_id', $tenantId)->where('order_items.order_id', $order->id)->whereNull('order_items.deleted_at');
-        $productIds = $this->targetIds($tenantId, $discount->id, 'product'); $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
-        $items->where(function (Builder $query) use ($productIds, $categoryIds): void { if ($productIds) $query->whereIn('products.id', $productIds); if ($categoryIds) $productIds ? $query->orWhereIn('products.category_id', $categoryIds) : $query->whereIn('products.category_id', $categoryIds); });
+        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
+        $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
+        $items->where(function (Builder $query) use ($productIds, $categoryIds): void {
+            if ($productIds) {
+                $query->whereIn('products.id', $productIds);
+            } if ($categoryIds) {
+                $productIds ? $query->orWhereIn('products.category_id', $categoryIds) : $query->whereIn('products.category_id', $categoryIds);
+            }
+        });
+
         return (float) $items->sum('order_items.total');
     }
 
     private function bogoAmount(int $tenantId, int $orderId, object $discount): float
     {
         $items = DB::table('order_items')->join('products', 'products.id', '=', 'order_items.product_id')->where('order_items.tenant_id', $tenantId)->where('order_items.order_id', $orderId)->whereNull('order_items.deleted_at');
-        $productIds = $this->targetIds($tenantId, $discount->id, 'product'); $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
-        if ($productIds || $categoryIds) $items->where(function (Builder $query) use ($productIds, $categoryIds): void { if ($productIds) $query->whereIn('products.id', $productIds); if ($categoryIds) $productIds ? $query->orWhereIn('products.category_id', $categoryIds) : $query->whereIn('products.category_id', $categoryIds); });
+        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
+        $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
+        if ($productIds || $categoryIds) {
+            $items->where(function (Builder $query) use ($productIds, $categoryIds): void {
+                if ($productIds) {
+                    $query->whereIn('products.id', $productIds);
+                } if ($categoryIds) {
+                    $productIds ? $query->orWhereIn('products.category_id', $categoryIds) : $query->whereIn('products.category_id', $categoryIds);
+                }
+            });
+        }
         $item = $items->where('order_items.quantity', '>=', 2)->orderBy('order_items.unit_price')->first();
+
         return $item ? (float) $item->unit_price * floor((float) $item->quantity / max(2, (int) $discount->value + 1)) : 0;
     }
 
-    private function targetIds(int $tenantId, int $discountId, string $type): array { return DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->where('target_type', $type)->pluck('target_id')->map(fn ($id) => (int) $id)->all(); }
+    private function targetIds(int $tenantId, int $discountId, string $type): array
+    {
+        return DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discountId)->where('target_type', $type)->pluck('target_id')->map(fn ($id) => (int) $id)->all();
+    }
 
     private function status(object $discount): string
     {
-        if (! $discount->is_active) return 'inactive';
-        if ($discount->starts_at && now()->lessThan(Carbon::parse($discount->starts_at))) return 'scheduled';
-        if ($discount->ends_at && now()->greaterThan(Carbon::parse($discount->ends_at))) return 'expired';
+        if (! $discount->is_active) {
+            return 'inactive';
+        }
+        if ($discount->starts_at && now()->lessThan(Carbon::parse($discount->starts_at))) {
+            return 'scheduled';
+        }
+        if ($discount->ends_at && now()->greaterThan(Carbon::parse($discount->ends_at))) {
+            return 'expired';
+        }
+
         return 'active';
     }
 
     private function serializeManagementDiscount(int $tenantId, object $discount): array
     {
         $targets = DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->get()->groupBy('target_type');
+
         return [
             'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'description' => $discount->description,
             'applicationMode' => $discount->application_mode, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
@@ -334,8 +400,11 @@ class DiscountController extends Controller
     private function serializeDiscount(object $discount, ?object $order): array
     {
         $eligible = ! $order || (float) $order->subtotal >= (float) $discount->minimum_order_amount;
+
         return ['id' => $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'type' => $discount->type, 'value' => (float) $discount->value,
-            'badge' => match ($discount->type) {'percentage' => ((float) $discount->value).'% OFF', 'fixed' => '-$'.number_format((float) $discount->value, 2), 'bogo' => 'BOGO', default => strtoupper($discount->type)},
+            'badge' => match ($discount->type) {
+                'percentage' => ((float) $discount->value).'% OFF', 'fixed' => '-$'.number_format((float) $discount->value, 2), 'bogo' => 'BOGO', default => strtoupper($discount->type)
+            },
             'minimumOrderAmount' => (float) $discount->minimum_order_amount, 'eligible' => $eligible, 'message' => $eligible ? null : 'Minimum order amount not reached.', 'validUntil' => $discount->ends_at];
     }
 }

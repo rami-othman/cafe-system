@@ -17,6 +17,14 @@ class PosApiSmokeTest extends TestCase
         $branchId = DB::table('branches')->where('name', 'Downtown')->value('id');
         $productId = DB::table('products')->where('name', 'Cappuccino')->value('id');
 
+        $this->getJson('/api/v1/menu/categories')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Coffee');
+
+        $this->getJson('/api/v1/menu/products')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Espresso');
+
         $this->getJson('/api/v1/branches')
             ->assertOk()
             ->assertJsonPath('data.0.name', 'Downtown');
@@ -31,7 +39,8 @@ class PosApiSmokeTest extends TestCase
 
         $this->getJson("/api/v1/menu/products/{$productId}?branchId={$branchId}")
             ->assertOk()
-            ->assertJsonPath('data.name', 'Cappuccino');
+            ->assertJsonPath('data.name', 'Cappuccino')
+            ->assertJsonPath('data.modifierGroups.0.name', 'Temperature');
 
         $shiftId = $state->json('data.currentShift.id');
 

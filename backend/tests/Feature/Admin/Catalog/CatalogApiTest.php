@@ -1,0 +1,73 @@
+<?php
+
+namespace Tests\Feature\Admin\Catalog;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class CatalogApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_products_are_tenant_scoped_and_default_variants_sync_the_legacy_pos_fields(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $categoryId = $this->postJson('/api/v1/admin/catalog/categories', ['name' => 'Coffee'], $this->headers($tenantId))->assertCreated()->json('data.id');
+
+        $created = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Iced Latte', 'categoryId' => $categoryId, 'productType' => 'standard',
+            'variants' => [
+                ['name' => 'Small', 'sku' => 'LATTE-S', 'basePrice' => 2.5, 'costPrice' => 0.9, 'isDefault' => true, 'isActive' => true],
+                ['name' => 'Large', 'sku' => 'LATTE-L', 'basePrice' => 3.5, 'costPrice' => 1.2, 'isDefault' => false, 'isActive' => true],
+            ],
+        ], $this->headers($tenantId))->assertCreated()->assertJsonPath('data.defaultVariant.sku', 'LATTE-S');
+        $productId = $created->json('data.id');
+
+        $this->assertDatabaseHas('products', ['id' => $productId, 'price' => 2.5, 'cost_price' => 0.9, 'sku' => 'LATTE-S']);
+        $largeId = DB::table('product_variants')->where('product_id', $productId)->where('sku', 'LATTE-L')->value('id');
+        $this->postJson("/api/v1/admin/catalog/product-variants/{$largeId}/set-default", [], $this->headers($tenantId))->assertOk();
+        $this->assertDatabaseHas('products', ['id' => $productId, 'price' => 3.5, 'cost_price' => 1.2, 'sku' => 'LATTE-L']);
+        $this->getJson("/api/v1/menu/products/{$productId}", $this->headers($tenantId))->assertOk()->assertJsonPath('data.basePrice', 3.5);
+
+        $otherTenantId = $this->tenant('beta');
+        $this->getJson("/api/v1/admin/catalog/products/{$productId}", $this->headers($otherTenantId))->assertNotFound();
+        $this->assertDatabaseCount('menu_audit_logs', 3);
+    }
+
+    public function test_category_archive_is_blocked_when_active_products_use_it_and_reorder_is_tenant_safe(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $category = $this->postJson('/api/v1/admin/catalog/categories', ['name' => 'Coffee'], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/admin/catalog/products', ['name' => 'Espresso', 'categoryId' => $category, 'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]]], $this->headers($tenantId))->assertCreated();
+        $this->postJson("/api/v1/admin/catalog/categories/{$category}/archive", [], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('category');
+
+        $other = $this->postJson('/api/v1/admin/catalog/categories', ['name' => 'Tea'], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/admin/catalog/categories/reorder', ['items' => [['id' => $category, 'sortOrder' => 2], ['id' => $other, 'sortOrder' => 1]]], $this->headers($tenantId))->assertOk();
+        $this->assertDatabaseHas('categories', ['id' => $other, 'sort_order' => 1]);
+    }
+
+    public function test_modifier_groups_are_reusable_but_cross_tenant_assignments_are_rejected(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $groupId = $this->postJson('/api/v1/admin/catalog/modifier-groups', [
+            'name' => 'Milk', 'groupType' => 'choice', 'selectionType' => 'single', 'isRequired' => true, 'minSelections' => 1, 'maxSelections' => 1,
+            'options' => [['name' => 'Regular', 'priceDelta' => 0, 'costDelta' => 0, 'isDefault' => true, 'isActive' => true]],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $productId = $this->postJson('/api/v1/admin/catalog/products', ['name' => 'Latte', 'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]]], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", ['groups' => [['modifierGroupId' => $groupId, 'sortOrder' => 0, 'isRequiredOverride' => true, 'minSelectionsOverride' => 1, 'maxSelectionsOverride' => 1]]], $this->headers($tenantId))->assertOk()->assertJsonPath('data.0.id', $groupId);
+
+        $foreignGroupId = $this->postJson('/api/v1/admin/catalog/modifier-groups', ['name' => 'Foreign', 'selectionType' => 'single', 'minSelections' => 0, 'maxSelections' => 1, 'options' => [['name' => 'Default', 'isActive' => true]]], $this->headers($this->tenant('beta')))->assertCreated()->json('data.id');
+        $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", ['groups' => [['modifierGroupId' => $foreignGroupId, 'sortOrder' => 0]]], $this->headers($tenantId))->assertUnprocessable();
+    }
+
+    private function tenant(string $slug): int
+    {
+        return DB::table('tenants')->insertGetId(['name' => ucfirst($slug), 'slug' => $slug, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    private function headers(int $tenantId): array
+    {
+        return ['X-Tenant-Id' => (string) $tenantId];
+    }
+}

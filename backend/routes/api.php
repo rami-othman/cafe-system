@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\Catalog\CatalogReferenceController;
+use App\Http\Controllers\Api\Admin\Catalog\ModifierCatalogController;
+use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
@@ -15,6 +18,62 @@ use App\Http\Controllers\Api\TableController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
+    Route::prefix('admin/catalog')->group(function (): void {
+        Route::controller(CatalogReferenceController::class)->group(function (): void {
+            Route::get('categories', 'categories');
+            Route::post('categories', 'storeCategory');
+            Route::get('categories/{category}', 'showCategory');
+            Route::patch('categories/{category}', 'updateCategory');
+            Route::post('categories/{category}/archive', 'archiveCategory');
+            Route::post('categories/{category}/restore', 'restoreCategory');
+            Route::post('categories/reorder', 'reorderCategories');
+            Route::get('reporting-categories', 'reportingCategories');
+            Route::post('reporting-categories', 'storeReportingCategory');
+            Route::get('reporting-categories/{reportingCategory}', 'showReportingCategory');
+            Route::patch('reporting-categories/{reportingCategory}', 'updateReportingCategory');
+            Route::post('reporting-categories/{reportingCategory}/archive', 'archiveReportingCategory');
+            Route::post('reporting-categories/{reportingCategory}/restore', 'restoreReportingCategory');
+            Route::post('reporting-categories/reorder', 'reorderReportingCategories');
+            Route::get('kitchen-stations', 'kitchenStations');
+            Route::post('kitchen-stations', 'storeKitchenStation');
+            Route::get('kitchen-stations/{kitchenStation}', 'showKitchenStation');
+            Route::patch('kitchen-stations/{kitchenStation}', 'updateKitchenStation');
+            Route::post('kitchen-stations/{kitchenStation}/archive', 'archiveKitchenStation');
+            Route::post('kitchen-stations/{kitchenStation}/restore', 'restoreKitchenStation');
+            Route::post('kitchen-stations/reorder', 'reorderKitchenStations');
+        });
+        Route::controller(ProductCatalogController::class)->group(function (): void {
+            Route::get('products', 'index');
+            Route::post('products', 'store');
+            Route::get('products/{product}', 'show');
+            Route::patch('products/{product}', 'update');
+            Route::post('products/{product}/archive', 'archive');
+            Route::post('products/{product}/restore', 'restore');
+            Route::post('products/{product}/variants', 'storeVariant');
+            Route::post('products/{product}/variants/reorder', 'reorderVariants');
+            Route::patch('product-variants/{variant}', 'updateVariant');
+            Route::post('product-variants/{variant}/set-default', 'setDefaultVariant');
+            Route::post('product-variants/{variant}/archive', 'archiveVariant');
+            Route::post('product-variants/{variant}/restore', 'restoreVariant');
+            Route::get('products/{product}/modifier-groups', 'modifierGroups');
+            Route::put('products/{product}/modifier-groups', 'syncModifierGroups');
+        });
+        Route::controller(ModifierCatalogController::class)->group(function (): void {
+            Route::get('modifier-groups', 'index');
+            Route::post('modifier-groups', 'store');
+            Route::get('modifier-groups/{modifierGroup}', 'show');
+            Route::patch('modifier-groups/{modifierGroup}', 'update');
+            Route::post('modifier-groups/{modifierGroup}/archive', 'archive');
+            Route::post('modifier-groups/{modifierGroup}/restore', 'restore');
+            Route::post('modifier-groups/reorder', 'reorder');
+            Route::post('modifier-groups/{modifierGroup}/options', 'storeOption');
+            Route::post('modifier-groups/{modifierGroup}/options/reorder', 'reorderOptions');
+            Route::patch('modifier-options/{modifierOption}', 'updateOption');
+            Route::post('modifier-options/{modifierOption}/archive', 'archiveOption');
+            Route::post('modifier-options/{modifierOption}/restore', 'restoreOption');
+        });
+    });
+
     Route::get('branches', [BranchController::class, 'index']);
     Route::get('reports/daily', [DailyReportController::class, 'show']);
 

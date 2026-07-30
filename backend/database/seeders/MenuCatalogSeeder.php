@@ -14,13 +14,18 @@ class MenuCatalogSeeder extends Seeder
 
         $categoryIds = [];
         foreach (['Coffee', 'Tea', 'Cold Drinks', 'Desserts', 'Sandwiches', 'Add-ons'] as $sortOrder => $name) {
-            $categoryIds[$name] = DB::table('categories')->insertGetId([
+            DB::table('categories')->updateOrInsert([
                 'tenant_id' => $tenantId,
                 'name' => $name,
+            ], [
                 'sort_order' => $sortOrder,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+            $categoryIds[$name] = (int) DB::table('categories')
+                ->where('tenant_id', $tenantId)
+                ->where('name', $name)
+                ->value('id');
         }
 
         foreach ([
@@ -34,14 +39,37 @@ class MenuCatalogSeeder extends Seeder
             ['name' => 'Butter Croissant', 'category' => 'Desserts', 'price' => 3.50, 'description' => 'Classic flaky butter croissant.'],
             ['name' => 'Avocado Toast', 'category' => 'Sandwiches', 'price' => 9.00, 'description' => 'Sourdough toast with avocado and herbs.'],
         ] as $sortOrder => $product) {
-            DB::table('products')->insert([
+            DB::table('products')->updateOrInsert([
+                'tenant_id' => $tenantId,
+                'name' => $product['name'],
+            ], [
                 'tenant_id' => $tenantId,
                 'category_id' => $categoryIds[$product['category']],
-                'name' => $product['name'],
                 'description' => $product['description'],
                 'price' => $product['price'],
                 'is_active' => $product['is_active'] ?? true,
                 'sort_order' => $sortOrder,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            $productRow = DB::table('products')
+                ->where('tenant_id', $tenantId)
+                ->where('name', $product['name'])
+                ->first(['id', 'sku', 'barcode', 'price', 'cost_price', 'is_active']);
+
+            DB::table('product_variants')->updateOrInsert([
+                'tenant_id' => $tenantId,
+                'product_id' => $productRow->id,
+                'is_default' => true,
+            ], [
+                'name' => 'Regular',
+                'sku' => $productRow->sku,
+                'barcode' => $productRow->barcode,
+                'base_price' => $productRow->price,
+                'cost_price' => $productRow->cost_price,
+                'is_active' => $productRow->is_active,
+                'sort_order' => 0,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
