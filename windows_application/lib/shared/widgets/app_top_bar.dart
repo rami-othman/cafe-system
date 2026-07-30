@@ -12,11 +12,7 @@ import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
 
 class AppTopBar extends StatefulWidget {
-  const AppTopBar({
-    super.key,
-    this.showCartButton = false,
-    this.onRefresh,
-  });
+  const AppTopBar({super.key, this.showCartButton = false, this.onRefresh});
 
   final bool showCartButton;
   final Future<void> Function(BuildContext context)? onRefresh;
@@ -74,7 +70,7 @@ class _AppTopBarState extends State<AppTopBar> {
                   children: <Widget>[
                     for (final Branch branch in ordersState.branches)
                       _BranchTab(
-                        label: branch.name,
+                        label: branch.name.toUpperCase(),
                         isActive: branch.id == ordersState.selectedBranchId,
                         onTap: () => ordersCubit.selectBranch(branch.id),
                       ),

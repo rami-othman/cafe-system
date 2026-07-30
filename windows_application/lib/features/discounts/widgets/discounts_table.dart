@@ -125,7 +125,13 @@ class _DiscountTableHeader extends StatelessWidget {
 }
 
 class _DiscountTableRow extends StatefulWidget {
-  const _DiscountTableRow({required this.discount, required this.onView, required this.onEdit, required this.onToggleStatus, required this.onDelete});
+  const _DiscountTableRow({
+    required this.discount,
+    required this.onView,
+    required this.onEdit,
+    required this.onToggleStatus,
+    required this.onDelete,
+  });
 
   final DiscountListItem discount;
   final ValueChanged<DiscountListItem> onView;
@@ -196,8 +202,8 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
             ),
             _BodyCell(
               flex: 14,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                alignment: WrapAlignment.end,
                 children: <Widget>[
                   _RowAction(
                     icon: Icons.visibility_outlined,
@@ -210,8 +216,12 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
                     onPressed: () => widget.onEdit(discount),
                   ),
                   _RowAction(
-                    icon: discount.isActive ? Icons.pause_circle_outline : Icons.play_circle_outline,
-                    tooltip: discount.isActive ? 'Deactivate discount' : 'Activate discount',
+                    icon: discount.isActive
+                        ? Icons.pause_circle_outline
+                        : Icons.play_circle_outline,
+                    tooltip: discount.isActive
+                        ? 'Deactivate discount'
+                        : 'Activate discount',
                     onPressed: () => widget.onToggleStatus(discount),
                   ),
                   _RowAction(
@@ -374,7 +384,11 @@ class _ValidPeriodCell extends StatelessWidget {
 }
 
 class _RowAction extends StatelessWidget {
-  const _RowAction({required this.icon, required this.tooltip, required this.onPressed});
+  const _RowAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   final IconData icon;
   final String tooltip;

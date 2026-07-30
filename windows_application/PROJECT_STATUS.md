@@ -99,6 +99,9 @@ Phase 1 — Project Foundation
 - Connected the Daily Operational Report to the Laravel API, including daily
   sales KPIs, hourly sales, payment and order breakdowns, products, refunds,
   discounts, and recent transactions populated by the POS demo seeder.
+- Fixed the Discounts table action overflow, standardized the desktop branch
+  label casing, and hardened Orders list/detail loading against stale requests
+  while preserving actionable API messages.
 
 ## In Progress
 
@@ -106,7 +109,8 @@ Phase 1 — Project Foundation
 
 ## Next Step
 
-Fix Flutter Orders list/detail request races, stale panel state, and API error presentation.
+Connect Orders actions (payment, resume, cancel, and complete) to their backend
+workflows when those APIs are ready.
 
 ## Architecture Decisions
 
@@ -247,3 +251,7 @@ Fix Flutter Orders list/detail request races, stale panel state, and API error p
   codes such as `zaher` apply correctly from the Flutter discount dialog.
 - 2026-07-18: Connected Orders branch selection to backend branch data and
   passed the selected branch ID to order-list API requests.
+- 2026-07-30: Prevented stale Orders list and detail responses from replacing
+  newer UI state, cleared the detail panel on context changes or close, and
+  surfaced backend API messages. Fixed Discounts table action wrapping and the
+  initial POS branch-label regression; added focused regression coverage.
