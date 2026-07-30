@@ -23,7 +23,7 @@ Safe verification commands are `docker compose exec backend php artisan optimize
 
 ## Phase 2A: Backend Catalog APIs
 
-Status: Complete only when the full backend suite passes. Phase 1 — Backend Menu Domain and Database Schema: Complete. Phase 1.5 — Isolated Testing Database: Complete. Phase 2B — Backend Menu Composition APIs: Not started.
+Status: Complete only when the full backend suite passes. Phase 1 — Backend Menu Domain and Database Schema: Complete. Phase 1.5 — Isolated Testing Database: Complete. Phase 2A — Backend Catalog APIs: Complete. Phase 2B — Backend Menu Composition APIs: Complete. Phase 2C — Pricing and Availability APIs: Not started. Phase 3 — Preview, Validation, and Publishing: Not started.
 
 Tenant Admin Catalog APIs are under `/api/v1/admin/catalog`, separate from the temporary POS `/api/v1/menu` namespace. They use the existing `TenantContext` (`X-Tenant-Id` and development first-tenant fallback); authentication remains deferred. The API manages Categories, Reporting Categories, Kitchen Stations, Products, Product Variants, Modifier Groups, Modifier Options, and reusable Product–Modifier Group assignments.
 
@@ -31,7 +31,47 @@ Product creation is transactional and requires one or more Variants with exactly
 
 Modifier Groups are reusable. Their option counts, selection type, required minimum/maximum values, default options, and product-level overrides are validated before synchronization. Catalog changes are written to `menu_audit_logs` without using global observers.
 
-No Menu Composition, Menu Sections, placements, assignments, schedules, preview, validation, publishing, POS sync, Flutter, authentication, Combo, recipe, inventory, or delivery APIs are implemented in this phase.
+## Phase 2B: Admin Menu Composition APIs
+
+Tenant Admin Menu composition routes live under `/api/v1/admin/menus`; Product usage is available at `/api/v1/admin/catalog/products/{product}/menu-usage`. The controllers use the existing `TenantContext`, so `X-Tenant-Id` and the first-tenant development fallback remain in place and authentication is still deferred.
+
+Menus are editable composition records, not Published snapshots. They support list filters (`search`, `status`, `branchId`, `channel`, `hasAssignments`), pagination, archive/restore, and transactional priority reordering. A restored Menu becomes `draft`; archival preserves all Sections, Placements, Assignments, and Availability Rules without affecting Catalog records.
+
+Catalog Categories organize Products centrally. A Menu Section organizes the display of existing Products inside one Menu. A placement is display composition only: it references a Product and may override display name, description, or image, but never duplicates Product prices, Variants, Modifiers, kitchen routing, or reporting classification. Sections and placements are soft-deleted and can be restored; placements support reorder, move, and complete transactional synchronization.
+
+Assignments are complete Branch/Channel configuration sets, allowing multiple Menus to target the same Branch/Channel and retaining a priority for later precedence work. Menu Availability Rules are complete schedule sets: Branch and Channel are optional, `dayOfWeek` is 0–6, time pairs may cross midnight, and no rules means no Menu-level schedule restriction. Rules are stored only; this phase does not evaluate availability.
+
+Product Menu Usage returns active placement locations by default and accepts `includeArchived=true` for Admin diagnostics. All Menu composition changes write bounded before/after entries to `menu_audit_logs`, with `menu_publication_id = null`. Cross-tenant route resources return 404 and foreign submitted IDs return generic validation errors.
+
+Pricing, Operational Availability, Preview, Publishing, snapshots, POS sync, Flutter, Authentication, Combos, Recipes, and Inventory remain untouched in Phase 2B. The temporary POS routes remain unchanged.
+
+## Phase 2C.1: Variant Price Override APIs
+
+Status: Complete only after the full backend test suite passes. Phase 2C.2 â€” Product Availability APIs: Not started.
+
+Tenant Admin pricing routes are under `/api/v1/admin/catalog/product-variants/{variant}`:
+
+- `GET /price-overrides` lists the non-archived overrides for a Variant.
+- `PUT /price-overrides` transactionally synchronizes the complete set.
+- `GET /effective-price?branchId=&channel=` previews the resolved price without changing the Variant, Product, or Order.
+
+The supported scopes are `branch`, `channel`, and `branch_channel`. The client never submits a scope key; the backend constructs the canonical database key as `branch:{branchId|*}|channel:{channel|*}`. Branches must be active and owned by the current tenant, and channels use the `SalesChannel` enum. Duplicate canonical scopes are rejected.
+
+Synchronization creates, updates, restores a same-scope soft-deleted override, and soft-archives any omitted active override in one transaction. Changes are logged in `menu_audit_logs` with `menu_publication_id = null`, using bounded scope and price data plus a summary.
+
+Effective-price resolution is `branch_channel`, then `branch`, then `channel`, then the Variant `base_price`. Inactive, soft-deleted, foreign, and invalid/archived-branch overrides are ignored. Price Overrides never copy into `products.price` or `product_variants.base_price`; existing Order snapshots remain unchanged, and the temporary POS catalog does not consume overrides yet. Authentication remains deferred.
+
+## Phase 2C.2A: Scheduled Product Availability APIs
+
+Status: Complete only after the full backend test suite passes. Phase 2C.2B â€” Operational Availability: Not started.
+
+`GET` and transactional `PUT /api/v1/admin/catalog/products/{product}/availability-rules` manage a Product's complete scheduled rule set. A rule with no `productVariantId` applies at Product level; a rule with a tenant-owned, non-archived Variant ID applies to that Variant only. Product and Variant rules may each target the global scope, a Branch, a Sales Channel, or an exact Branch + Channel pair. Branches must be active and tenant-owned; channels use `SalesChannel`.
+
+`GET /api/v1/admin/catalog/products/{product}/availability-preview` is a narrow Admin diagnostic endpoint. It evaluates only saved scheduled rules at a supplied date/time. When `branchId` is supplied, evaluation uses that Branch's timezone; otherwise it uses the submitted timezone or application timezone.
+
+Rules are positive availability windows. No applicable configured schedule means unrestricted availability. If a matching Variant-level scope exists it governs before Product-level rules; then Branch + Channel, Branch, Channel, and Global select the governing scope. Within that scope, a matching window with the highest priority wins. If its configured scope has no matching window at the requested time, availability is false with `outside_schedule`. Weekly day rules and date ranges are both conjunctive when present. A `22:00`â€“`02:00` rule is anchored on the starting date/day and correctly remains available after midnight. Rules are soft-deleted on synchronization omissions and audit to `menu_audit_logs` with no publication ID.
+
+Scheduled availability is intentionally separate from Operational Sold Out/remaining quantity tables. The current POS does not consume these rules, and authentication remains deferred.
 
 ## Domain boundaries
 

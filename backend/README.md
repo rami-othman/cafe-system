@@ -55,3 +55,31 @@ The API manages Categories, Reporting Categories, Kitchen Stations, Products, Pr
 Products are created transactionally with one or more Variants and exactly one active Default Variant. The Default Variant mirrors `basePrice`, `costPrice`, `sku`, and `barcode` into the legacy Product fields used by the temporary POS catalog endpoints. Updating or changing the Default Variant repeats that synchronization; non-default Variant changes do not. Products, references, groups, options, and variants are archived with soft deletes rather than hard-deleted.
 
 The existing `/api/v1/menu/categories`, `/api/v1/menu/products`, and `/api/v1/menu/products/{product}` routes remain unchanged temporary POS contracts. Menu Composition, publishing, POS sync, Flutter changes, authentication, Combos, and inventory APIs are not part of Phase 2A.
+
+## Phase 2B Admin Menu Composition APIs
+
+Phase 2B adds tenant-scoped, editable Menu composition records under `/api/v1/admin/menus`. Menus are not Catalog Categories and Menu Sections are not Catalog Categories: Categories organize the central Product catalog, while Sections arrange existing Products for display within one Menu. Menus are editable composition records; they are not Published snapshots.
+
+The API supports Menu list/create/show/update, archive/restore/reorder, Section management and reordering, and Product placements with display-only name, description, and image overrides. A placement always references the existing Product; it never copies prices, Variants, Modifier Groups, kitchen routing, or reporting data. Placements can be archived/restored, reordered, moved between Sections, or fully synchronized.
+
+`GET`/`PUT /api/v1/admin/menus/{menu}/assignments` synchronizes active Branch and Sales Channel configuration. `GET`/`PUT /api/v1/admin/menus/{menu}/availability-rules` synchronizes optional schedule restrictions; no rules means no Menu-level schedule restriction, and overnight time ranges are valid. `GET /api/v1/admin/catalog/products/{product}/menu-usage` shows active placements, with `includeArchived=true` available for Admin diagnostics.
+
+All composition writes are transactional, tenant-scoped through the existing `TenantContext` (`X-Tenant-Id` plus its first-tenant development fallback), and recorded in `menu_audit_logs` with no publication ID. Authentication remains deliberately deferred. Archive/restore never changes referenced Catalog Products; restoring a Menu returns it to `draft` and does not implicitly restore its archived children.
+
+Current status: Phase 1 Complete; Phase 1.5 Complete; Phase 2A Complete; Phase 2B Complete. Phase 2C.1 â€” Variant Price Override APIs: Complete only after the full backend suite passes. Phase 2C.2 â€” Product Availability APIs: Not started. Phase 3 Preview, Validation, and Publishing is not started.
+
+## Phase 2C.1 Variant Price Override APIs
+
+`GET` and transactional `PUT /api/v1/admin/catalog/product-variants/{variant}/price-overrides` manage the complete price-override set for one tenant-owned, non-archived Variant. Overrides use `branch`, `channel`, or `branch_channel` scope. The backend alone creates the internal canonical keys: `branch:{branchId|*}|channel:{channel|*}`. Branches must be active and tenant-owned, channel values come from `SalesChannel`, prices are non-negative, and duplicate scopes are rejected.
+
+`GET /api/v1/admin/catalog/product-variants/{variant}/effective-price?branchId=&channel=` is an Admin-only price preview. It resolves an active eligible override in priority order: Branch + Channel, Branch, Channel, then Variant base price. Inactive and archived overrides, including overrides that point to an archived or invalid Branch, are ignored. The preview does not change any data.
+
+The `PUT` endpoint creates or updates scopes, restores a submitted same-scope archived record, and soft-archives omitted records in a single transaction. Bounded create/update/archive/restore and synchronization audit events are written to `menu_audit_logs` with no publication ID. Overrides are contextual only: they do not mutate `products.price`, `product_variants.base_price`, existing Orders, or the unchanged temporary POS Catalog responses. POS consumption of overrides and authentication remain deferred.
+
+## Phase 2C.2A Scheduled Product Availability APIs
+
+`GET` and transactional `PUT /api/v1/admin/catalog/products/{product}/availability-rules` manage the complete scheduled availability set for a Product. A null `productVariantId` is a Product-level rule; a supplied tenant-owned non-archived Variant ID is Variant-specific. Rules can be global, Branch-only, Channel-only, or Branch + Channel. Duplicate rules are rejected canonically across Variant, scope, weekday, times, and dates; Branches must be active and tenant-owned, and channels use `SalesChannel`.
+
+The optional narrow Admin diagnostic endpoint is `GET /api/v1/admin/catalog/products/{product}/availability-preview`. It evaluates persisted Product/Variant schedules only, using the selected Branch timezone when a Branch is supplied. No applicable scheduled rules means unrestricted availability. Otherwise, Variant rules take precedence over Product rules, then Branch + Channel, Branch, Channel, and Global scope select the governing schedule; matching windows use highest `priority`. Weekly and date-range conditions are conjunctive. Overnight intervals such as `22:00`â€“`02:00` remain associated with their starting day/date after midnight.
+
+Scheduled rules are separate from the untouched Operational Sold Out and remaining-quantity tables. They do not alter the POS, Orders, publishing, sync, Flutter, authentication, combos, or inventory. Current status: Phase 2C.1 Price Overrides Complete; Phase 2C.2A Scheduled Product Availability is complete only after tests pass; Phase 2C.2B Operational Availability is not started.

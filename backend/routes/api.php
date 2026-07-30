@@ -2,7 +2,15 @@
 
 use App\Http\Controllers\Api\Admin\Catalog\CatalogReferenceController;
 use App\Http\Controllers\Api\Admin\Catalog\ModifierCatalogController;
+use App\Http\Controllers\Api\Admin\Catalog\ProductAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
+use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
+use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
+use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
+use App\Http\Controllers\Api\Admin\Menu\MenuController as AdminMenuController;
+use App\Http\Controllers\Api\Admin\Menu\MenuItemPlacementController;
+use App\Http\Controllers\Api\Admin\Menu\MenuSectionController;
+use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
@@ -58,6 +66,16 @@ Route::prefix('v1')->group(function (): void {
             Route::get('products/{product}/modifier-groups', 'modifierGroups');
             Route::put('products/{product}/modifier-groups', 'syncModifierGroups');
         });
+        Route::controller(ProductVariantPriceOverrideController::class)->group(function (): void {
+            Route::get('product-variants/{variant}/price-overrides', 'index');
+            Route::put('product-variants/{variant}/price-overrides', 'sync');
+            Route::get('product-variants/{variant}/effective-price', 'effectivePrice');
+        });
+        Route::controller(ProductAvailabilityRuleController::class)->group(function (): void {
+            Route::get('products/{product}/availability-rules', 'index');
+            Route::put('products/{product}/availability-rules', 'sync');
+            Route::get('products/{product}/availability-preview', 'preview');
+        });
         Route::controller(ModifierCatalogController::class)->group(function (): void {
             Route::get('modifier-groups', 'index');
             Route::post('modifier-groups', 'store');
@@ -71,6 +89,45 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('modifier-options/{modifierOption}', 'updateOption');
             Route::post('modifier-options/{modifierOption}/archive', 'archiveOption');
             Route::post('modifier-options/{modifierOption}/restore', 'restoreOption');
+        });
+        Route::get('products/{product}/menu-usage', [ProductMenuUsageController::class, 'show']);
+    });
+
+    Route::prefix('admin')->group(function (): void {
+        Route::controller(AdminMenuController::class)->prefix('menus')->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::post('reorder', 'reorder');
+            Route::get('{menu}', 'show');
+            Route::patch('{menu}', 'update');
+            Route::post('{menu}/archive', 'archive');
+            Route::post('{menu}/restore', 'restore');
+        });
+        Route::controller(MenuSectionController::class)->group(function (): void {
+            Route::get('menus/{menu}/sections', 'index');
+            Route::post('menus/{menu}/sections', 'store');
+            Route::post('menus/{menu}/sections/reorder', 'reorder');
+            Route::patch('menu-sections/{section}', 'update');
+            Route::post('menu-sections/{section}/archive', 'archive');
+            Route::post('menu-sections/{section}/restore', 'restore');
+        });
+        Route::controller(MenuItemPlacementController::class)->group(function (): void {
+            Route::get('menu-sections/{section}/placements', 'index');
+            Route::post('menu-sections/{section}/placements', 'store');
+            Route::put('menu-sections/{section}/placements', 'sync');
+            Route::post('menu-sections/{section}/placements/reorder', 'reorder');
+            Route::patch('menu-item-placements/{placement}', 'update');
+            Route::post('menu-item-placements/{placement}/archive', 'archive');
+            Route::post('menu-item-placements/{placement}/restore', 'restore');
+            Route::post('menu-item-placements/{placement}/move', 'move');
+        });
+        Route::controller(AdminMenuAssignmentController::class)->group(function (): void {
+            Route::get('menus/{menu}/assignments', 'index');
+            Route::put('menus/{menu}/assignments', 'sync');
+        });
+        Route::controller(MenuAvailabilityRuleController::class)->group(function (): void {
+            Route::get('menus/{menu}/availability-rules', 'index');
+            Route::put('menus/{menu}/availability-rules', 'sync');
         });
     });
 

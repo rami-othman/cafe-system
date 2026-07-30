@@ -14,4 +14,6 @@ enum MenuAuditAction: string
     case Published = 'published';
     case RolledBack = 'rolled_back';
     case AvailabilityChanged = 'availability_changed';
+    case Moved = 'moved';
+    case Synchronized = 'synchronized';
 }
