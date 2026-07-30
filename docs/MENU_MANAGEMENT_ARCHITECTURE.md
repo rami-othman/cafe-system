@@ -63,7 +63,7 @@ Effective-price resolution is `branch_channel`, then `branch`, then `channel`, t
 
 ## Phase 2C.2A: Scheduled Product Availability APIs
 
-Status: Complete only after the full backend test suite passes. Phase 2C.2B â€” Operational Availability: Not started.
+Status: Phase 2C.1 — Price Overrides: Complete. Phase 2C.2A — Scheduled Availability: Complete. Phase 2C.2B — Operational Availability: Complete only after the full backend test suite passes. Phase 3 — Preview, Validation, and Publishing: Not started.
 
 `GET` and transactional `PUT /api/v1/admin/catalog/products/{product}/availability-rules` manage a Product's complete scheduled rule set. A rule with no `productVariantId` applies at Product level; a rule with a tenant-owned, non-archived Variant ID applies to that Variant only. Product and Variant rules may each target the global scope, a Branch, a Sales Channel, or an exact Branch + Channel pair. Branches must be active and tenant-owned; channels use `SalesChannel`.
 
@@ -72,6 +72,24 @@ Status: Complete only after the full backend test suite passes. Phase 2C.2B â�
 Rules are positive availability windows. No applicable configured schedule means unrestricted availability. If a matching Variant-level scope exists it governs before Product-level rules; then Branch + Channel, Branch, Channel, and Global select the governing scope. Within that scope, a matching window with the highest priority wins. If its configured scope has no matching window at the requested time, availability is false with `outside_schedule`. Weekly day rules and date ranges are both conjunctive when present. A `22:00`â€“`02:00` rule is anchored on the starting date/day and correctly remains available after midnight. Rules are soft-deleted on synchronization omissions and audit to `menu_audit_logs` with no publication ID.
 
 Scheduled availability is intentionally separate from Operational Sold Out/remaining quantity tables. The current POS does not consume these rules, and authentication remains deferred.
+
+## Phase 2C.2B: Operational Availability and Sold Out APIs
+
+Operational Availability is an immediate mutable runtime overlay, entirely separate from scheduled availability, structural product status, menu visibility, inventory, and publishing. Admin routes under `/api/v1/admin/catalog` manage Product- and Variant-level overrides for one active tenant Branch and either a `SalesChannel` or the internal `all` channel scope. `all` is not a public `SalesChannel` value; it means every channel in the selected Branch.
+
+For a Variant request, resolution is deterministic: Variant + exact Channel, Variant + all Channels, Product + exact Channel, Product + all Channels, then no override (available). An explicit narrower `available` row therefore overrides a broader `sold_out` row. Expired non-available records (`unavailableUntil <= evaluated time`) are ignored but retained for diagnostics; evaluation uses the Branch timezone. The resolver intentionally does not inspect scheduled rules. A combined resolver belongs to a later preview/publishing phase.
+
+Overrides support `available`, `sold_out`, and `temporarily_unavailable`. Temporary unavailability requires a future expiration. `available` normalizes reason and expiration to null. `remainingQuantity` is returned and audited but informational only: it is not deducted by Orders, does not infer sold-out state, and has no Inventory integration. PUT upserts a unique Product/Variant + Branch + Channel scope transactionally; DELETE clears only that exact runtime row and is idempotent. Changes use bounded audit snapshots in `menu_audit_logs` with no publication ID.
+
+The list and single-product diagnostic preview endpoints are Admin-only. Archived Product/Variant records are hidden from the list by default (with `includeArchived=true` for diagnostics). POS does not consume operational overlays yet, and authentication remains deferred.
+
+## Phase 3A: Menu Publish Validation
+
+`POST /api/v1/admin/menus/{menu}/validate` validates one editable Menu for an active Branch and Sales Channel. `POST /api/v1/admin/menu-management/validate` validates supplied `menuIds`, or every active Menu Assignment for that Branch and Channel when IDs are omitted. Both return stable machine-readable issues grouped as `errors`, `warnings`, and `information`, plus a per-Menu summary. Errors are the only severity that blocks future publishing; warnings and information are diagnostic.
+
+Validation is strictly read-only: it creates no audit logs, publications, versions, snapshots, or repairs. It reuses the price, scheduled availability, and operational availability resolvers using the Branch timezone. Base-price fallback, scheduled outside-window state, active sold-out state, absent Menu schedules, hidden placements, and legacy size-like modifier groups are warnings. Empty active Sections are also warnings when another Section can still provide visible placements. Missing/archived Categories and invalid catalog or modifier configurations are errors; missing reporting categories and kitchen stations are warnings.
+
+The phase validates only editable data readiness. Publishing, snapshots, POS sync, Flutter, authentication, combos, and Inventory remain unimplemented. Status: Phase 3A — Menu Validation: Complete. Phase 3B — Menu Preview: Complete. Phase 3C — Publishing and Snapshots: Not started.
 
 ## Domain boundaries
 
@@ -114,3 +132,27 @@ No Admin Menu APIs, publish service, preview, snapshot generation, POS sync, Flu
 - `GET /api/v1/menu/categories`
 - `GET /api/v1/menu/products`
 - `GET /api/v1/menu/products/{product}`
+
+## Phase 3C.1: Publishing and Immutable Snapshots
+
+Status: Phase 3A — Validation: Complete. Phase 3B — Preview: Complete. Phase 3C.1 — Publishing and Snapshots: Complete. Phase 3C.2 — Version History and Rollback: Not started.
+
+`POST /api/v1/admin/menu-management/publish` publishes active assigned Menus for one tenant Branch and Sales Channel. `GET /api/v1/admin/menu-management/current-version?branchId=&channel=` returns current Version metadata only. Validation errors create a failed Publication and return 422; warnings permit publishing. Each flow records a pending Publication, validates, takes a PostgreSQL advisory transaction lock for its tenant/branch/channel scope, creates a deterministic static snapshot, and hashes canonical JSON with SHA-256. Changed payloads supersede the previous current Version; identical checksums record a no-change Publication without a duplicate Version. Database uniqueness additionally guarantees one current Version per scope.
+
+Snapshots contain static localized Menu composition, active visible catalog records, schedule rules, effective Branch/Channel Variant prices, modifiers, and ordering. They deliberately exclude operational sold-out/temporary availability, remaining quantity, evaluated availability/sellability values, Preview time/context, and validation diagnostics. Authentication remains deferred. Version History, comparison, rollback, POS snapshot consumption/sync, Flutter, Combos, and Inventory remain unimplemented.
+
+## Phase 3B: Resolved Menu Preview
+
+Status: Phase 3A — Menu Validation: Complete. Phase 3B — Menu Preview: Complete. Phase 3C — Publishing and Snapshots: Not started.
+
+`POST /api/v1/admin/menus/{menu}/preview` resolves one tenant-owned Menu and `POST /api/v1/admin/menu-management/preview` resolves supplied `menuIds`, or every actively assigned Menu for the requested Branch and Sales Channel when IDs are omitted. These are Admin diagnostics only; POS does not consume Preview. Requests accept `branchId`, a `SalesChannel` `channel`, optional `at`, `language` (`default`, `ar`, or `en`), `includeUnavailable` (default true), and `includeHidden` (default false). Branches must be active and tenant-owned; a cross-tenant route Menu returns 404 and foreign submitted IDs return 422. Authentication remains deferred.
+
+The response is resolved, not persisted: it contains timezone context, `canPublish`, the existing validation result, and Menus with assignment/schedule state, Sections, Placements, Products, Variants, and active Modifier Groups/Options. It never creates a publication, version, snapshot, audit event, or availability row, and does not update timestamps or order data.
+
+Menu schedules are positive windows. Active non-archived rules select Branch + Channel, Branch, Channel, then Global scope; the highest-priority matching rule within the governing scope applies. A governing scope with no matching window is unavailable, while no applicable active rule is unrestricted. Weekdays and date ranges are conjunctive, including overnight periods anchored to their starting date/day.
+
+Preview reuses the existing effective price, product schedule, and operational availability resolvers. A Variant is sellable only when structurally active, scheduled available, operationally available, and validly priced. A Product also requires a visible Placement and at least one sellable Variant; Inventory is not considered. Hidden placements are omitted by default and retained diagnostically with `hidden` when requested. Unavailable Products remain by default and can be filtered with `includeUnavailable=false`, without hiding validation issues. Placement text overrides localized Product text; otherwise requested language, default, then other localized values are used without writes. Archived Modifier Groups/Options are excluded, active unavailable options retain `isAvailable`, and pivot overrides are applied. Publishing, snapshots, POS sync, Flutter, Combos, and Inventory remain untouched.
+
+## Phase 3D Version History, Comparison, and Rollback
+
+Admin Version history and detail are tenant-scoped; detail returns immutable snapshot payload only with `includePayload=true`. Comparisons are bounded structural summaries. Historical checksums are deliberately non-unique so rollback can create a new immutable Version with an older payload. A rollback never reactivates history: it marks the prior current Version `rolled_back` and creates a new current Version under the advisory lock. The one-current-per-scope constraint remains enforced. Authentication is deferred and POS Sync remains unimplemented.

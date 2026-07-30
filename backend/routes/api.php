@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\Catalog\CatalogReferenceController;
 use App\Http\Controllers\Api\Admin\Catalog\ModifierCatalogController;
+use App\Http\Controllers\Api\Admin\Catalog\OperationalAvailabilityController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
@@ -9,8 +10,12 @@ use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAss
 use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Menu\MenuController as AdminMenuController;
 use App\Http\Controllers\Api\Admin\Menu\MenuItemPlacementController;
+use App\Http\Controllers\Api\Admin\Menu\MenuPreviewController;
+use App\Http\Controllers\Api\Admin\Menu\MenuPublishingController;
 use App\Http\Controllers\Api\Admin\Menu\MenuSectionController;
+use App\Http\Controllers\Api\Admin\Menu\MenuValidationController;
 use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
+use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
@@ -76,6 +81,14 @@ Route::prefix('v1')->group(function (): void {
             Route::put('products/{product}/availability-rules', 'sync');
             Route::get('products/{product}/availability-preview', 'preview');
         });
+        Route::controller(OperationalAvailabilityController::class)->group(function (): void {
+            Route::get('operational-availability', 'index');
+            Route::put('products/{product}/operational-availability', 'updateProduct');
+            Route::delete('products/{product}/operational-availability', 'clearProduct');
+            Route::put('product-variants/{variant}/operational-availability', 'updateVariant');
+            Route::delete('product-variants/{variant}/operational-availability', 'clearVariant');
+            Route::get('products/{product}/operational-availability-preview', 'preview');
+        });
         Route::controller(ModifierCatalogController::class)->group(function (): void {
             Route::get('modifier-groups', 'index');
             Route::post('modifier-groups', 'store');
@@ -102,6 +115,24 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('{menu}', 'update');
             Route::post('{menu}/archive', 'archive');
             Route::post('{menu}/restore', 'restore');
+        });
+        Route::controller(MenuValidationController::class)->group(function (): void {
+            Route::post('menus/{menu}/validate', 'validateMenu');
+            Route::post('menu-management/validate', 'validateCollection');
+        });
+        Route::controller(MenuPreviewController::class)->group(function (): void {
+            Route::post('menus/{menu}/preview', 'previewMenu');
+            Route::post('menu-management/preview', 'previewCollection');
+        });
+        Route::controller(MenuPublishingController::class)->group(function (): void {
+            Route::post('menu-management/publish', 'publish');
+            Route::get('menu-management/current-version', 'current');
+        });
+        Route::controller(PublishedMenuVersionController::class)->group(function (): void {
+            Route::get('menu-management/versions', 'index');
+            Route::get('menu-management/versions/{version}', 'show');
+            Route::get('menu-management/versions/{version}/compare', 'compare');
+            Route::post('menu-management/versions/{version}/rollback', 'rollback');
         });
         Route::controller(MenuSectionController::class)->group(function (): void {
             Route::get('menus/{menu}/sections', 'index');

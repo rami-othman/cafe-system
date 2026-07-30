@@ -16,4 +16,12 @@ enum MenuAuditAction: string
     case AvailabilityChanged = 'availability_changed';
     case Moved = 'moved';
     case Synchronized = 'synchronized';
+    case PublicationStarted = 'publication_started';
+    case PublicationFailed = 'publication_failed';
+    case PublicationNoChanges = 'publication_no_changes';
+    case VersionSuperseded = 'version_superseded';
+    case RollbackStarted = 'rollback_started';
+    case RollbackNoChanges = 'rollback_no_changes';
+    case VersionRolledBack = 'version_rolled_back';
+    case RollbackFailed = 'rollback_failed';
 }
