@@ -2,6 +2,63 @@
 
 ## Phase status
 
+## Phase 4A: Flutter foundation and read-only Product Catalog
+
+Status: Complete after the Flutter analyzer and full test suite pass.
+
+The Windows Flutter application exposes `/menu-management`, which redirects to
+`/menu-management/products`, and `/menu-management/products/:productId` for a
+read-only product detail page. It uses the real tenant-scoped Admin Catalog
+APIs: products, categories, reporting categories, and kitchen stations. List
+filters, search, sorting, and pagination remain server-side; reference-data
+failures do not prevent product-list use.
+
+There is no mock Menu data or Menu repository. Phase 4A contains no create,
+edit, archive, restore, variant, modifier, menu-builder, availability,
+publishing, version-history, rollback, POS-sync, authentication, combo, or
+inventory UI. Product editing, variants, and modifiers begin in Phase 4B.
+POS continues to use the temporary `/api/v1/menu` Catalog API. Publishing UI
+and authentication remain deferred.
+
+## Phase 4B.1: Flutter Product General Editor
+
+Status: Complete after the Flutter analyzer and full test suite pass.
+
+Flutter now supports `/menu-management/products/create` and
+`/menu-management/products/:productId/edit`. Create sends the Product general
+fields plus exactly one required active Default Variant (`isDefault: true`,
+`isActive: true`, `sortOrder: 0`) to `POST /api/v1/admin/catalog/products`.
+The initial Variant name defaults to `Regular` but remains user-editable; a
+standard Product requires its base price while an open-price Product can start
+at zero.
+
+General editing calls `PATCH /api/v1/admin/catalog/products/{product}` with
+product fields only. It neither resends nor mutates Variants, and displays the
+current Default Variant read-only. Full Variant/Pricing management starts in
+Phase 4B.2. Modifier management, Menu Builder, Publishing UI, POS sync,
+authentication, combos, and inventory remain unimplemented.
+
+## Phase 4B.2: Flutter Product Variants and Base Pricing
+
+Status: Complete. Flutter analyzer and full test suite pass.
+
+`/menu-management/products/:productId/variants` manages a Product's active,
+archived, and combined Variant lists. It supports create, edit, dedicated
+Default selection, archive/restore, and complete active-list reordering. Base
+Price and Cost Price are Variant fields; Branch and Channel Price Overrides
+remain a later phase and are intentionally not shown in this UI.
+
+Default selection always uses the dedicated endpoint. The Default Variant must
+be active. Archiving the Default Variant requires choosing another active
+Variant from the same Product; the only active Variant cannot be archived.
+When a Product has no active Default Variant, restoring a Variant requires
+`makeDefault: true` under the backend contract.
+
+Every successful Variant mutation reloads Product Detail data and invalidates
+the Product Catalog because the backend synchronizes the Default Variant's
+base price, cost, SKU, and barcode into legacy Product fields for temporary POS
+compatibility. Modifier Library management remains Phase 4B.3.
+
 **Phase 1: Backend Menu Domain and Database Schema**
 
 Status: Implemented — migrations and the full backend test suite pass in the backend container.

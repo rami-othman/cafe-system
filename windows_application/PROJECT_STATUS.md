@@ -11,9 +11,30 @@ while preparing the foundation for the approved Full Menu Management Flow.
 
 ## Current Phase
 
-Phase 1 — Project Foundation
+Phase 4A — Foundation and Read-only Catalog: Complete
+
+Phase 4B.1 — Product General Editor: Complete
+
+Phase 4B.2 — Variants and Base Pricing: Complete
+Phase 4B.3 — Modifier Library: Not started
 
 ## Completed Work
+
+- Added the Menu Management sidebar destination and routes for the read-only
+  Product Catalog and Product Detail screens.
+- Integrated the real tenant-scoped Laravel Admin Catalog endpoints for
+  products, categories, reporting categories, and kitchen stations.
+- Added typed catalog models, pagination envelope handling, backend repository,
+  Cubits, filter reference loading, and focused route/model/repository/Cubit/UI
+  tests. No mock Menu repository or mutation UI exists.
+- Added Create Product and Edit Product General screens. Create submits the
+  single active Default Variant required by the backend; Edit only sends
+  product-level fields and shows its existing Default Variant read-only.
+- Added Variant and Base Pricing management with active/archived filters,
+  create/edit, dedicated Default selection, archive replacement, restore, and
+  persisted active-Variant ordering. Catalog and Product Detail data refresh
+  after Variant changes; Branch/Channel Price Overrides and Modifier Library
+  UI remain deferred.
 
 - Retired the old mock-based Flutter Menu Management prototype, including its
   routes, sidebar destination, dependency registrations, and dedicated tests.

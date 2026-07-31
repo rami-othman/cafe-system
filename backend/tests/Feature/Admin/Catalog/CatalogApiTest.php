@@ -35,6 +35,58 @@ class CatalogApiTest extends TestCase
         $this->assertDatabaseCount('menu_audit_logs', 3);
     }
 
+    public function test_product_detail_optionally_includes_only_its_tenant_archived_variants(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $otherTenantId = $this->tenant('beta');
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Iced Latte',
+            'variants' => [
+                ['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true],
+                ['name' => 'Large', 'basePrice' => 4, 'isDefault' => false, 'isActive' => true],
+            ],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $largeId = (int) DB::table('product_variants')->where('product_id', $productId)->where('name', 'Large')->value('id');
+
+        $archive = $this->postJson("/api/v1/admin/catalog/product-variants/{$largeId}/archive", [], $this->headers($tenantId))
+            ->assertOk()
+            ->assertJsonPath('data.productId', $productId);
+        $this->assertNotNull($archive->json('data.archivedAt'));
+
+        $default = $this->getJson("/api/v1/admin/catalog/products/{$productId}", $this->headers($tenantId))
+            ->assertOk()
+            ->assertJsonPath('data.id', $productId)
+            ->assertJsonPath('data.name', 'Iced Latte')
+            ->assertJsonPath('data.defaultVariant.productId', $productId);
+        $this->assertSame([$productId], array_values(array_unique(array_column($default->json('data.variants'), 'productId'))));
+        $this->assertSame(['Regular'], array_column($default->json('data.variants'), 'name'));
+        $this->assertNull($default->json('data.variants.0.archivedAt'));
+
+        foreach (['false', '0'] as $value) {
+            $response = $this->getJson("/api/v1/admin/catalog/products/{$productId}?includeArchived={$value}", $this->headers($tenantId))->assertOk();
+            $this->assertSame(['Regular'], array_column($response->json('data.variants'), 'name'));
+        }
+
+        foreach (['true', '1'] as $value) {
+            $response = $this->getJson("/api/v1/admin/catalog/products/{$productId}?includeArchived={$value}", $this->headers($tenantId))->assertOk();
+            $variants = $response->json('data.variants');
+            $this->assertSame(['Regular', 'Large'], array_column($variants, 'name'));
+            $this->assertSame([$productId], array_values(array_unique(array_column($variants, 'productId'))));
+            $archived = collect($variants)->firstWhere('id', $largeId);
+            $this->assertFalse($archived['isActive']);
+            $this->assertNotNull($archived['archivedAt']);
+        }
+
+        $now = now();
+        $foreignArchivedId = DB::table('product_variants')->insertGetId([
+            'tenant_id' => $otherTenantId, 'product_id' => $productId, 'name' => 'Foreign archived',
+            'base_price' => 9, 'cost_price' => 0, 'is_default' => false, 'is_active' => false,
+            'sort_order' => 99, 'created_at' => $now, 'updated_at' => $now, 'deleted_at' => $now,
+        ]);
+        $included = $this->getJson("/api/v1/admin/catalog/products/{$productId}?includeArchived=true", $this->headers($tenantId))->assertOk()->json('data.variants');
+        $this->assertNotContains($foreignArchivedId, array_column($included, 'id'));
+    }
+
     public function test_category_archive_is_blocked_when_active_products_use_it_and_reorder_is_tenant_safe(): void
     {
         $tenantId = $this->tenant('alpha');

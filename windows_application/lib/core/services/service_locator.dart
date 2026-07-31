@@ -9,6 +9,11 @@ import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
 import '../../features/reports/repositories/reports_repository.dart';
+import '../../features/menu_management/controllers/product_catalog_cubit.dart';
+import '../../features/menu_management/controllers/product_detail_cubit.dart';
+import '../../features/menu_management/products/controllers/product_editor_cubit.dart';
+import '../../features/menu_management/variants/controllers/variants_cubit.dart';
+import '../../features/menu_management/repositories/menu_catalog_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -67,6 +72,41 @@ void setupServiceLocator({bool useBackend = true}) {
     }
     serviceLocator.registerFactory<DailyReportCubit>(
       () => DailyReportCubit(repository: serviceLocator<ReportsRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<MenuCatalogRepository>()) {
+    serviceLocator.registerLazySingleton<MenuCatalogRepository>(
+      () => BackendMenuCatalogRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ProductCatalogCubit>()) {
+    serviceLocator.registerFactory<ProductCatalogCubit>(
+      () => ProductCatalogCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ProductDetailCubit>()) {
+    serviceLocator.registerFactory<ProductDetailCubit>(
+      () => ProductDetailCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ProductEditorCubit>()) {
+    serviceLocator.registerFactory<ProductEditorCubit>(
+      () => ProductEditorCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<VariantsCubit>()) {
+    serviceLocator.registerFactory<VariantsCubit>(
+      () => VariantsCubit(repository: serviceLocator<MenuCatalogRepository>()),
     );
   }
 }

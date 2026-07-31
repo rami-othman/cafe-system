@@ -51,6 +51,18 @@ class DioApiClient {
     );
   }
 
+  /// Returns the complete Laravel response body. Most existing endpoints use
+  /// [get], which unwraps the conventional `data` field. Paginated endpoints
+  /// also need their `meta` object, so they opt in to this method.
+  Future<dynamic> getEnvelope(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _sendEnvelope(
+      () => _dio.get<dynamic>(path, queryParameters: queryParameters),
+    );
+  }
+
   Future<dynamic> post(
     String path, {
     Object? data,
@@ -97,6 +109,16 @@ class DioApiClient {
     try {
       final Response<dynamic> response = await request();
       return ApiResponseParser.unwrapData(response.data);
+    } on DioException catch (error) {
+      throw _handleDioException(error);
+    }
+  }
+
+  Future<dynamic> _sendEnvelope(
+    Future<Response<dynamic>> Function() request,
+  ) async {
+    try {
+      return (await request()).data;
     } on DioException catch (error) {
       throw _handleDioException(error);
     }

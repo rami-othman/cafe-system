@@ -152,7 +152,7 @@ class ProductCatalogController extends Controller
 
     private function findProduct(int $tenant, int $id, bool $trashed = false): Product
     {
-        return Product::query()->when($trashed, fn ($q) => $q->withTrashed())->where('tenant_id', $tenant)->with(['category', 'reportingCategory', 'kitchenStation', 'variants' => fn ($q) => $q->orderBy('sort_order')->orderBy('id'), 'variants.product', 'defaultVariant', 'modifierGroups.options'])->findOrFail($id);
+        return Product::query()->when($trashed, fn ($q) => $q->withTrashed())->where('tenant_id', $tenant)->with(['category', 'reportingCategory', 'kitchenStation', 'variants' => fn ($q) => $q->where('tenant_id', $tenant)->when($trashed, fn ($variants) => $variants->withTrashed())->orderBy('sort_order')->orderBy('id'), 'variants.product', 'defaultVariant', 'modifierGroups.options'])->findOrFail($id);
     }
 
     private function findVariant(int $tenant, int $id, bool $trashed = false): ProductVariant

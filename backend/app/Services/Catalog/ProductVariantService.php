@@ -74,7 +74,7 @@ class ProductVariantService
     {
         return DB::transaction(function () use ($variant, $replacementId): ProductVariant {
             $product = Product::query()->lockForUpdate()->findOrFail($variant->product_id);
-            $active = $product->variants()->where('is_active', true)->lockForUpdate();
+            $active = $product->variants()->where('is_active', true)->lockForUpdate()->get();
             if ($product->is_active && $active->count() <= 1) {
                 throw ValidationException::withMessages(['variant' => 'The only active variant cannot be archived.']);
             }
