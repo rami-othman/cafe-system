@@ -97,7 +97,7 @@ void main() {
   );
 }
 
-class _VariantsRepository implements MenuCatalogRepository {
+class _VariantsRepository extends MenuCatalogRepository {
   bool createError = false;
   bool reorderError = false;
   int setDefaultCalls = 0;

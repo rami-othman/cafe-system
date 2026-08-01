@@ -9,6 +9,7 @@ import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/menu_management/controllers/product_catalog_cubit.dart';
 import 'package:windows_application/features/menu_management/controllers/product_detail_cubit.dart';
+import 'package:windows_application/features/menu_management/controllers/product_lifecycle_cubit.dart';
 import 'package:windows_application/features/menu_management/models/catalog_models.dart';
 import 'package:windows_application/features/menu_management/models/product_catalog_filter.dart';
 import 'package:windows_application/features/menu_management/products/models/product_editor_draft.dart';
@@ -152,8 +153,15 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: BlocProvider<ProductCatalogCubit>(
-              create: (_) => ProductCatalogCubit(repository: repository),
+            body: MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<ProductCatalogCubit>(
+                  create: (_) => ProductCatalogCubit(repository: repository),
+                ),
+                BlocProvider<ProductLifecycleCubit>(
+                  create: (_) => ProductLifecycleCubit(repository: repository),
+                ),
+              ],
               child: const ProductCatalogScreen(key: ValueKey<String>('empty')),
             ),
           ),
@@ -166,15 +174,22 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: BlocProvider<ProductCatalogCubit>(
-              create: (_) => ProductCatalogCubit(repository: repository),
+            body: MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<ProductCatalogCubit>(
+                  create: (_) => ProductCatalogCubit(repository: repository),
+                ),
+                BlocProvider<ProductLifecycleCubit>(
+                  create: (_) => ProductLifecycleCubit(repository: repository),
+                ),
+              ],
               child: const ProductCatalogScreen(),
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('No products have been created yet.'), findsOneWidget);
+      expect(find.text('No active products are available.'), findsOneWidget);
       repository.empty = false;
     },
   );
@@ -245,7 +260,7 @@ void main() {
   );
 }
 
-class _FakeRepository implements MenuCatalogRepository {
+class _FakeRepository extends MenuCatalogRepository {
   bool failNextList = false;
   bool empty = false;
   final List<ProductCatalogFilter> filters = <ProductCatalogFilter>[];

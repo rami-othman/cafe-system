@@ -8,9 +8,11 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/product_catalog_cubit.dart';
 import '../controllers/product_catalog_state.dart';
+import '../controllers/product_lifecycle_cubit.dart';
 import '../models/catalog_models.dart';
 import '../models/product_catalog_filter.dart';
 import '../widgets/catalog_formatters.dart';
+import '../widgets/menu_management_tabs.dart';
 
 class ProductCatalogScreen extends StatefulWidget {
   const ProductCatalogScreen({super.key});
@@ -30,136 +32,159 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
   @override
   Widget build(
     BuildContext context,
-  ) => BlocBuilder<ProductCatalogCubit, ProductCatalogState>(
-    builder: (BuildContext context, ProductCatalogState state) {
-      final ProductCatalogCubit cubit = context.read<ProductCatalogCubit>();
-      return DesktopPageLayout(
-        padding: EdgeInsets.zero,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            96,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'Menu Management',
-                          style: AppTextStyles.headlineMedium.copyWith(
-                            fontWeight: FontWeight.w700,
+  ) => BlocListener<ProductLifecycleCubit, ProductLifecycleState>(
+    listenWhen: (previous, current) =>
+        previous.status != current.status &&
+        (current.status == ProductLifecycleStatus.success ||
+            current.status == ProductLifecycleStatus.failure),
+    listener: (context, lifecycle) async {
+      if (lifecycle.status == ProductLifecycleStatus.success) {
+        await context.read<ProductCatalogCubit>().refresh();
+      }
+      if (!context.mounted) return;
+      final String? message =
+          lifecycle.successMessage ?? lifecycle.errorMessage;
+      if (message != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
+    },
+    child: BlocBuilder<ProductCatalogCubit, ProductCatalogState>(
+      builder: (BuildContext context, ProductCatalogState state) {
+        final ProductCatalogCubit cubit = context.read<ProductCatalogCubit>();
+        return DesktopPageLayout(
+          padding: EdgeInsets.zero,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xl,
+              AppSpacing.xl,
+              96,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Menu Management',
+                            style: AppTextStyles.headlineMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Products',
-                          style: AppTextStyles.titleLarge.copyWith(
-                            color: AppColors.textSecondary,
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Products',
+                            style: AppTextStyles.titleLarge.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  FilledButton.icon(
-                    key: const Key('create-product-action'),
-                    onPressed: () =>
-                        context.go('/menu-management/products/create'),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create Product'),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  IconButton(
-                    tooltip: 'Refresh products',
-                    onPressed: state.isLoading || state.isRefreshing
-                        ? null
-                        : cubit.refresh,
-                    icon: const Icon(Icons.refresh),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _Filters(
-                state: state,
-                onSearch: cubit.updateSearch,
-                onChanged: cubit.updateFilter,
-                onClear: cubit.clearFilters,
-              ),
-              if (state.referenceErrors.isNotEmpty) ...<Widget>[
-                const SizedBox(height: AppSpacing.md),
-                _ReferenceWarning(errors: state.referenceErrors),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                '${state.pagination.total} product${state.pagination.total == 1 ? '' : 's'}',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+                    FilledButton.icon(
+                      key: const Key('create-product-action'),
+                      onPressed: () =>
+                          context.go('/menu-management/products/create'),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create Product'),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    IconButton(
+                      tooltip: 'Refresh products',
+                      onPressed: state.isLoading || state.isRefreshing
+                          ? null
+                          : cubit.refresh,
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              if (state.isLoading && state.products.isEmpty)
-                const SizedBox(
-                  height: 280,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (state.status == ProductCatalogLoadStatus.failure &&
-                  state.products.isEmpty)
-                _ErrorPanel(
-                  message: state.errorMessage ?? 'Unable to load products.',
-                  onRetry: cubit.loadProducts,
-                )
-              else if (state.products.isEmpty)
-                _EmptyPanel(
-                  hasFilters: state.filter.hasActiveFilters,
+                const SizedBox(height: AppSpacing.lg),
+                const MenuManagementTabs(selected: 'products'),
+                const SizedBox(height: AppSpacing.lg),
+                _Filters(
+                  state: state,
+                  onSearch: cubit.updateSearch,
+                  onChanged: cubit.updateFilter,
                   onClear: cubit.clearFilters,
-                )
-              else ...<Widget>[
-                _ProductList(products: state.products),
-                if (state.status == ProductCatalogLoadStatus.failure)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.md),
-                    child: _ErrorPanel(
-                      message:
-                          state.errorMessage ?? 'Unable to load more products.',
-                      onRetry: cubit.loadNextPage,
-                    ),
+                ),
+                if (state.referenceErrors.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: AppSpacing.md),
+                  _ReferenceWarning(errors: state.referenceErrors),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  '${state.pagination.total} product${state.pagination.total == 1 ? '' : 's'}',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
                   ),
-                if (state.hasMorePages)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.lg),
-                    child: Center(
-                      child: OutlinedButton.icon(
-                        onPressed: state.isLoadingNextPage
-                            ? null
-                            : cubit.loadNextPage,
-                        icon: state.isLoadingNextPage
-                            ? const SizedBox.square(
-                                dimension: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.expand_more),
-                        label: Text(
-                          state.isLoadingNextPage
-                              ? 'Loading...'
-                              : 'Load more products',
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                if (state.isLoading && state.products.isEmpty)
+                  const SizedBox(
+                    height: 280,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (state.status == ProductCatalogLoadStatus.failure &&
+                    state.products.isEmpty)
+                  _ErrorPanel(
+                    message: state.errorMessage ?? 'Unable to load products.',
+                    onRetry: cubit.loadProducts,
+                  )
+                else if (state.products.isEmpty)
+                  _EmptyPanel(
+                    filter: state.filter,
+                    hasFilters: state.filter.hasActiveFilters,
+                    onClear: cubit.clearFilters,
+                  )
+                else ...<Widget>[
+                  _ProductList(products: state.products),
+                  if (state.status == ProductCatalogLoadStatus.failure)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.md),
+                      child: _ErrorPanel(
+                        message:
+                            state.errorMessage ??
+                            'Unable to load more products.',
+                        onRetry: cubit.loadNextPage,
+                      ),
+                    ),
+                  if (state.hasMorePages)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.lg),
+                      child: Center(
+                        child: OutlinedButton.icon(
+                          onPressed: state.isLoadingNextPage
+                              ? null
+                              : cubit.loadNextPage,
+                          icon: state.isLoadingNextPage
+                              ? const SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.expand_more),
+                          label: Text(
+                            state.isLoadingNextPage
+                                ? 'Loading...'
+                                : 'Load more products',
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      );
-    },
+        );
+      },
+    ),
   );
 }
 
@@ -444,10 +469,8 @@ class _ProductRow extends StatelessWidget {
               value: product.kitchenStation?.name ?? '—',
             ),
           ),
-          SizedBox(
-            width: 92,
-            child: CatalogProductStatus(active: product.isActive),
-          ),
+          SizedBox(width: 92, child: CatalogProductStatus(product: product)),
+          _ProductActions(product: product),
         ],
       ),
     ),
@@ -503,27 +526,42 @@ class CatalogProductImage extends StatelessWidget {
 }
 
 class CatalogProductStatus extends StatelessWidget {
-  const CatalogProductStatus({super.key, required this.active});
-  final bool active;
+  const CatalogProductStatus({super.key, required this.product});
+  final ProductSummary product;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
-      color: active ? AppColors.discountGreenBadge : AppColors.surfaceAlt,
+      color: product.isArchived
+          ? AppColors.discountOrangeBadge
+          : product.isActive
+          ? AppColors.discountGreenBadge
+          : AppColors.surfaceAlt,
       borderRadius: BorderRadius.circular(20),
     ),
     child: Text(
-      active ? 'Active' : 'Archived',
+      product.isArchived
+          ? 'Archived'
+          : product.isActive
+          ? 'Active'
+          : 'Inactive',
       textAlign: TextAlign.center,
       style: AppTextStyles.labelSmall.copyWith(
-        color: active ? AppColors.success : AppColors.textMuted,
+        color: product.isActive && !product.isArchived
+            ? AppColors.success
+            : AppColors.textMuted,
       ),
     ),
   );
 }
 
 class _EmptyPanel extends StatelessWidget {
-  const _EmptyPanel({required this.hasFilters, required this.onClear});
+  const _EmptyPanel({
+    required this.filter,
+    required this.hasFilters,
+    required this.onClear,
+  });
+  final ProductCatalogFilter filter;
   final bool hasFilters;
   final VoidCallback onClear;
   @override
@@ -532,16 +570,156 @@ class _EmptyPanel extends StatelessWidget {
       padding: const EdgeInsets.all(48),
       child: Column(
         children: <Widget>[
-          Text(
-            hasFilters
-                ? 'No products match the current filters.'
-                : 'No products have been created yet.',
-            style: AppTextStyles.titleMedium,
-          ),
+          Text(_message, style: AppTextStyles.titleMedium),
           if (hasFilters)
             TextButton(onPressed: onClear, child: const Text('Clear Filters')),
         ],
       ),
+    ),
+  );
+
+  String get _message {
+    if (filter.status == 'archived' && !filter.hasActiveFiltersExceptStatus) {
+      return 'No archived products are available.';
+    }
+    if (filter.status == 'active' && !filter.hasActiveFilters) {
+      return 'No active products are available.';
+    }
+    return hasFilters
+        ? 'No products match the current filters.'
+        : 'No products have been created yet.';
+  }
+}
+
+class _ProductActions extends StatelessWidget {
+  const _ProductActions({required this.product});
+  final ProductSummary product;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool busy = context.select<ProductLifecycleCubit, bool>(
+      (cubit) => cubit.state.isSubmittingFor(product.id),
+    );
+    return PopupMenuButton<_ProductAction>(
+      key: Key('product-actions-${product.id}'),
+      tooltip: 'Product actions',
+      enabled: !busy,
+      icon: busy
+          ? const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.more_vert),
+      onSelected: (action) => _run(context, action),
+      itemBuilder: (context) => <PopupMenuEntry<_ProductAction>>[
+        const PopupMenuItem(value: _ProductAction.open, child: Text('Open')),
+        if (!product.isArchived) ...const <PopupMenuEntry<_ProductAction>>[
+          PopupMenuItem(value: _ProductAction.edit, child: Text('Edit')),
+          PopupMenuItem(
+            value: _ProductAction.variants,
+            child: Text('Manage Variants'),
+          ),
+          PopupMenuItem(
+            value: _ProductAction.modifiers,
+            child: Text('Manage Modifiers'),
+          ),
+          PopupMenuItem(
+            value: _ProductAction.archive,
+            child: Text('Archive', style: TextStyle(color: Colors.red)),
+          ),
+        ] else
+          const PopupMenuItem(
+            value: _ProductAction.restore,
+            child: Text('Restore'),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _run(BuildContext context, _ProductAction action) async {
+    final String path = '/menu-management/products/${product.id}';
+    switch (action) {
+      case _ProductAction.open:
+        context.go(path);
+        return;
+      case _ProductAction.edit:
+        context.go('$path/edit');
+        return;
+      case _ProductAction.variants:
+        context.go('$path/variants');
+        return;
+      case _ProductAction.modifiers:
+        context.go('$path/modifiers');
+        return;
+      case _ProductAction.archive:
+        await _showLifecycleDialog(context, product, archive: true);
+        return;
+      case _ProductAction.restore:
+        await _showLifecycleDialog(context, product, archive: false);
+        return;
+    }
+  }
+}
+
+enum _ProductAction { open, edit, variants, modifiers, archive, restore }
+
+Future<void> _showLifecycleDialog(
+  BuildContext context,
+  ProductSummary product, {
+  required bool archive,
+}) async {
+  final ProductLifecycleCubit cubit = context.read<ProductLifecycleCubit>();
+  final ProductMenuUsage? usage = archive
+      ? await cubit.menuUsage(product.id)
+      : null;
+  if (!context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text(archive ? 'Archive Product?' : 'Restore Product?'),
+      content: SizedBox(
+        width: 500,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              archive
+                  ? 'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.\n\nThe Product is not permanently deleted. Central Modifier Groups are not deleted, and Variants remain stored according to Backend behavior.'
+                  : 'This restores the Product to the editable Catalog. Its availability in Menus still depends on Menu assignments, schedules, operational status, validation, and publishing.',
+            ),
+            if (usage != null && usage.activePlacementCount > 0) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'This Product is currently used in ${usage.activePlacementCount} Menu placement${usage.activePlacementCount == 1 ? '' : 's'}${usage.menuNames.isEmpty ? '.' : ': ${usage.menuNames.join(', ')}.'}',
+                style: AppTextStyles.bodyMedium,
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(dialog),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: archive
+              ? FilledButton.styleFrom(
+                  backgroundColor: Theme.of(dialog).colorScheme.error,
+                )
+              : null,
+          onPressed: () async {
+            Navigator.pop(dialog);
+            if (archive) {
+              await cubit.archive(product.id);
+            } else {
+              await cubit.restore(product.id);
+            }
+          },
+          child: Text(archive ? 'Archive Product' : 'Restore Product'),
+        ),
+      ],
     ),
   );
 }

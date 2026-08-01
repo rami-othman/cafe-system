@@ -155,7 +155,7 @@ Widget _editorApp(_EditorRepository repository, {int? productId}) =>
       ),
     );
 
-class _EditorRepository implements MenuCatalogRepository {
+class _EditorRepository extends MenuCatalogRepository {
   int createCalls = 0;
   int updateCalls = 0;
   bool validationOnUpdate = false;

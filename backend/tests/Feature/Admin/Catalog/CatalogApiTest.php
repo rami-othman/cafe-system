@@ -87,6 +87,28 @@ class CatalogApiTest extends TestCase
         $this->assertNotContains($foreignArchivedId, array_column($included, 'id'));
     }
 
+    public function test_product_archive_and_restore_return_the_soft_delete_timestamp(): void
+    {
+        $tenantId = $this->tenant('archive-product');
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Seasonal Latte',
+            'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+
+        $archived = $this->postJson("/api/v1/admin/catalog/products/{$productId}/archive", [], $this->headers($tenantId))
+            ->assertOk()
+            ->assertJsonPath('data.isActive', false)
+            ->assertJsonPath('data.id', $productId);
+        $this->assertNotNull($archived->json('data.archivedAt'));
+        $this->assertSoftDeleted('products', ['id' => $productId]);
+
+        $this->postJson("/api/v1/admin/catalog/products/{$productId}/restore", [], $this->headers($tenantId))
+            ->assertOk()
+            ->assertJsonPath('data.isActive', true)
+            ->assertJsonPath('data.archivedAt', null);
+        $this->assertDatabaseHas('products', ['id' => $productId, 'is_active' => true, 'deleted_at' => null]);
+    }
+
     public function test_category_archive_is_blocked_when_active_products_use_it_and_reorder_is_tenant_safe(): void
     {
         $tenantId = $this->tenant('alpha');

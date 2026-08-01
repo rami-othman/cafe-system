@@ -7,6 +7,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/product_detail_cubit.dart';
+import '../controllers/product_lifecycle_cubit.dart';
+import '../controllers/product_catalog_cubit.dart';
 import '../models/catalog_models.dart';
 import '../widgets/catalog_formatters.dart';
 import 'product_catalog_screen.dart'
@@ -31,160 +33,321 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(
     BuildContext context,
-  ) => BlocBuilder<ProductDetailCubit, ProductDetailState>(
-    builder: (context, state) {
-      if (state.isLoading && state.product == null) {
-        return const DesktopPageLayout(
-          child: Center(child: CircularProgressIndicator()),
-        );
+  ) => BlocListener<ProductLifecycleCubit, ProductLifecycleState>(
+    listenWhen: (previous, current) =>
+        previous.status != current.status &&
+        current.productId == widget.productId &&
+        (current.status == ProductLifecycleStatus.success ||
+            current.status == ProductLifecycleStatus.failure),
+    listener: (context, lifecycle) async {
+      if (lifecycle.status == ProductLifecycleStatus.success) {
+        await Future.wait<void>(<Future<void>>[
+          context.read<ProductDetailCubit>().load(widget.productId),
+          context.read<ProductCatalogCubit>().refresh(),
+        ]);
       }
-      if (state.product == null) {
+      if (!context.mounted) return;
+      final String? message =
+          lifecycle.successMessage ?? lifecycle.errorMessage;
+      if (message != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
+    },
+    child: BlocBuilder<ProductDetailCubit, ProductDetailState>(
+      builder: (context, state) {
+        if (state.isLoading && state.product == null) {
+          return const DesktopPageLayout(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (state.product == null) {
+          return DesktopPageLayout(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(state.errorMessage ?? 'Product not found.'),
+                  const SizedBox(height: AppSpacing.md),
+                  OutlinedButton(
+                    onPressed: () => context.read<ProductDetailCubit>().load(
+                      widget.productId,
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final ProductDetail product = state.product!;
         return DesktopPageLayout(
-          child: Center(
+          padding: EdgeInsets.zero,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xl,
+              AppSpacing.xl,
+              96,
+            ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(state.errorMessage ?? 'Product not found.'),
-                const SizedBox(height: AppSpacing.md),
-                OutlinedButton(
-                  onPressed: () =>
-                      context.read<ProductDetailCubit>().load(widget.productId),
-                  child: const Text('Retry'),
+                TextButton.icon(
+                  onPressed: () => context.canPop()
+                      ? context.pop()
+                      : context.go('/menu-management/products'),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Products'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    CatalogProductImage(url: product.imageUrl),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            product.name,
+                            style: AppTextStyles.headlineMedium.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          CatalogProductStatus(product: product),
+                        ],
+                      ),
+                    ),
+                    if (!product.isArchived) ...<Widget>[
+                      IconButton(
+                        key: const Key('edit-product-action'),
+                        tooltip: 'Edit product',
+                        onPressed: () => context.go(
+                          '/menu-management/products/${product.id}/edit',
+                        ),
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      FilledButton.icon(
+                        key: const Key('manage-variants-action'),
+                        onPressed: () => context.go(
+                          '/menu-management/products/${product.id}/variants',
+                        ),
+                        icon: const Icon(Icons.tune_outlined),
+                        label: const Text('Manage Variants'),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      OutlinedButton.icon(
+                        key: const Key('manage-modifiers-action'),
+                        onPressed: () => context.go(
+                          '/menu-management/products/${product.id}/modifiers',
+                        ),
+                        icon: const Icon(Icons.tune_outlined),
+                        label: const Text('Manage Modifiers'),
+                      ),
+                    ],
+                    const SizedBox(width: AppSpacing.sm),
+                    _LifecycleButton(product: product),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _Section(
+                  title: 'General',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Wrap(
+                        spacing: 36,
+                        runSpacing: AppSpacing.md,
+                        children: <Widget>[
+                          _Field('Arabic name', product.nameAr ?? '—'),
+                          _Field('English name', product.nameEn ?? '—'),
+                          _Field('Description', product.description ?? '—'),
+                          _Field(
+                            'Arabic description',
+                            product.descriptionAr ?? '—',
+                          ),
+                          _Field(
+                            'English description',
+                            product.descriptionEn ?? '—',
+                          ),
+                          _Field(
+                            'Product type',
+                            productTypeLabel(product.productType),
+                          ),
+                          _Field(
+                            'Catalog category',
+                            product.category?.name ?? '—',
+                          ),
+                          _Field(
+                            'Reporting category',
+                            product.reportingCategory?.name ?? '—',
+                          ),
+                          _Field(
+                            'Kitchen station',
+                            product.kitchenStation?.name ?? '—',
+                          ),
+                          _Field(
+                            'Preparation time',
+                            product.preparationTimeMinutes == null
+                                ? '—'
+                                : '${product.preparationTimeMinutes} min',
+                          ),
+                          _Field(
+                            'Stock tracking',
+                            booleanLabel(product.isStockTracked),
+                          ),
+                          _Field('Updated', catalogDate(product.updatedAt)),
+                          if (product.isArchived)
+                            _Field('Archived', catalogDate(product.archivedAt)),
+                        ],
+                      ),
+                      if (!product.isArchived) ...<Widget>[
+                        const SizedBox(height: AppSpacing.lg),
+                        OutlinedButton.icon(
+                          key: const Key('manage-availability-action'),
+                          onPressed: () => context.go(
+                            '/menu-management/products/${product.id}/availability',
+                          ),
+                          icon: const Icon(Icons.schedule_outlined),
+                          label: const Text('Manage Availability'),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        OutlinedButton.icon(
+                          key: const Key(
+                            'manage-operational-availability-action',
+                          ),
+                          onPressed: () => context.go(
+                            '/menu-management/products/${product.id}/operational-availability',
+                          ),
+                          icon: const Icon(Icons.do_not_disturb_on_outlined),
+                          label: const Text('Manage Operational Availability'),
+                        ),
+                      ] else ...<Widget>[
+                        const SizedBox(height: AppSpacing.lg),
+                        OutlinedButton.icon(
+                          key: const Key(
+                            'view-operational-availability-action',
+                          ),
+                          onPressed: () => context.go(
+                            '/menu-management/products/${product.id}/operational-availability',
+                          ),
+                          icon: const Icon(Icons.visibility_outlined),
+                          label: const Text('View Operational Availability'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _Section(
+                  title: 'Variants (${product.variants.length})',
+                  child: product.variants.isEmpty
+                      ? const Text('No variants returned for this product.')
+                      : Column(
+                          children: product.variants
+                              .map(_VariantCard.new)
+                              .toList(growable: false),
+                        ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _Section(
+                  title: 'Modifier Groups (${product.modifierGroups.length})',
+                  child: product.modifierGroups.isEmpty
+                      ? const Text(
+                          'No modifier groups are assigned to this product.',
+                        )
+                      : Column(
+                          children: product.modifierGroups
+                              .map(_ModifierCard.new)
+                              .toList(growable: false),
+                        ),
                 ),
               ],
             ),
           ),
         );
-      }
-      final ProductDetail product = state.product!;
-      return DesktopPageLayout(
-        padding: EdgeInsets.zero,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.xl,
-            AppSpacing.xl,
-            96,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              TextButton.icon(
-                onPressed: () => context.canPop()
-                    ? context.pop()
-                    : context.go('/menu-management/products'),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Products'),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  CatalogProductImage(url: product.imageUrl),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          product.name,
-                          style: AppTextStyles.headlineMedium.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        CatalogProductStatus(active: product.isActive),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    key: const Key('edit-product-action'),
-                    tooltip: 'Edit product',
-                    onPressed: () => context.go(
-                      '/menu-management/products/${product.id}/edit',
-                    ),
-                    icon: const Icon(Icons.edit_outlined),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  FilledButton.icon(
-                    key: const Key('manage-variants-action'),
-                    onPressed: () => context.go(
-                      '/menu-management/products/${product.id}/variants',
-                    ),
-                    icon: const Icon(Icons.tune_outlined),
-                    label: const Text('Manage Variants'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _Section(
-                title: 'General',
-                child: Wrap(
-                  spacing: 36,
-                  runSpacing: AppSpacing.md,
-                  children: <Widget>[
-                    _Field('Arabic name', product.nameAr ?? '—'),
-                    _Field('English name', product.nameEn ?? '—'),
-                    _Field('Description', product.description ?? '—'),
-                    _Field('Arabic description', product.descriptionAr ?? '—'),
-                    _Field('English description', product.descriptionEn ?? '—'),
-                    _Field(
-                      'Product type',
-                      productTypeLabel(product.productType),
-                    ),
-                    _Field('Catalog category', product.category?.name ?? '—'),
-                    _Field(
-                      'Reporting category',
-                      product.reportingCategory?.name ?? '—',
-                    ),
-                    _Field(
-                      'Kitchen station',
-                      product.kitchenStation?.name ?? '—',
-                    ),
-                    _Field(
-                      'Preparation time',
-                      product.preparationTimeMinutes == null
-                          ? '—'
-                          : '${product.preparationTimeMinutes} min',
-                    ),
-                    _Field(
-                      'Stock tracking',
-                      booleanLabel(product.isStockTracked),
-                    ),
-                    _Field('Updated', catalogDate(product.updatedAt)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _Section(
-                title: 'Variants (${product.variants.length})',
-                child: product.variants.isEmpty
-                    ? const Text('No variants returned for this product.')
-                    : Column(
-                        children: product.variants
-                            .map(_VariantCard.new)
-                            .toList(growable: false),
-                      ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _Section(
-                title: 'Modifier Groups (${product.modifierGroups.length})',
-                child: product.modifierGroups.isEmpty
-                    ? const Text(
-                        'No modifier groups are assigned to this product.',
-                      )
-                    : Column(
-                        children: product.modifierGroups
-                            .map(_ModifierCard.new)
-                            .toList(growable: false),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
+      },
+    ),
   );
+}
+
+class _LifecycleButton extends StatelessWidget {
+  const _LifecycleButton({required this.product});
+  final ProductDetail product;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool busy = context.select<ProductLifecycleCubit, bool>(
+      (cubit) => cubit.state.isSubmittingFor(product.id),
+    );
+    final bool archive = !product.isArchived;
+    return archive
+        ? OutlinedButton.icon(
+            key: const Key('archive-product-action'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: busy ? null : () => _confirm(context, archive: true),
+            icon: busy
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.archive_outlined),
+            label: const Text('Archive Product'),
+          )
+        : FilledButton.icon(
+            key: const Key('restore-product-action'),
+            onPressed: busy ? null : () => _confirm(context, archive: false),
+            icon: busy
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.restore),
+            label: const Text('Restore Product'),
+          );
+  }
+
+  Future<void> _confirm(BuildContext context, {required bool archive}) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(archive ? 'Archive Product?' : 'Restore Product?'),
+        content: Text(
+          archive
+              ? 'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.\n\nThe Product is not permanently deleted. Central Modifier Groups are not deleted, and Variants remain stored according to Backend behavior.'
+              : 'This restores the Product to the editable Catalog. Its availability in Menus still depends on Menu assignments, schedules, operational status, validation, and publishing.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: archive
+                ? FilledButton.styleFrom(
+                    backgroundColor: Theme.of(dialog).colorScheme.error,
+                  )
+                : null,
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(archive ? 'Archive Product' : 'Restore Product'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    if (archive) {
+      await context.read<ProductLifecycleCubit>().archive(product.id);
+    } else {
+      await context.read<ProductLifecycleCubit>().restore(product.id);
+    }
+  }
 }
 
 class _Section extends StatelessWidget {

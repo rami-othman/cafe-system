@@ -1,6 +1,102 @@
 # Menu Management Architecture
 
+## Flutter Phase 4E.1 and 4E.2: Review & Preview
+
+The read-only Flutter route `/menu-management/review` accepts optional `branchId`, `channel`, and `menuId` query parameters. It sanitizes unsupported channels and unavailable selections, loads real Branches and active assignments, and sends only Branch ID and Sales Channel context to `POST /api/v1/admin/menus/{menu}/validate` or `POST /api/v1/admin/menu-management/validate`. Backend `isValid` is the authoritative publishability result: errors block, warnings do not, and information is diagnostic.
+
+The matching `POST /api/v1/admin/menus/{menu}/preview` and `POST /api/v1/admin/menu-management/preview` endpoints provide the resolved menu tree. Flutter does not reconstruct price or availability locally. It renders returned effective-price scope, scheduled availability, operational availability, final sellability, and reason codes distinctly, plus returned modifier selection constraints and option availability. Preview language (`default`, `ar`, `en`), hidden, and unavailable controls are limited to the Backend contract; evaluation uses the Branch timezone returned by Backend. Preview is diagnostic and is not a Published Snapshot payload. Publishing and Current Version remain Phase 4E.3; Version History, comparison, rollback, and POS sync remain out of scope.
+
 ## Phase status
+
+## Phase 4C.1: Flutter Menus and Sections
+
+Status: Complete after Flutter analyzer and the full test suite pass. Routes:
+`/menu-management/menus`, `/create`, `/:menuId`, and `/:menuId/edit`.
+Menus own Sections; ownership comes from the Menu route and is never submitted
+by the user. Menu and Section archive/restore are soft lifecycle operations.
+Archived Menus are diagnostic/read-only; restoring does not publish, assign a
+Branch/Channel, or restore archived Sections. Active Section ordering submits
+the complete ordered active set. Product Placements are implemented at Flutter
+route `/menu-management/menus/:menuId/placements`; Branch/Channel assignments and
+schedules remain Phase 4C.3. Publishing UI is not implemented.
+
+## Phase 4C.2: Flutter Product Placements and Ordering
+
+A Product remains Catalog-owned. A Placement is a tenant-scoped composition record
+owned by one Section and contains only supported display overrides, `isVisible`,
+`isFeatured`, and sort order. The same Product cannot have two active Placements in
+the same Section but may appear in another Section. The Flutter screen reads the
+Menu's authoritative Sections then lists each section's placements using
+`GET /admin/menu-sections/{section}/placements?includeArchived=true`. It creates,
+updates, moves only to eligible Sections in the same Menu, archives/restores and sends complete active section ordering with
+the existing Menu Composition APIs. Hidden is not archived; Product archival is
+also separate and remains diagnostic. Archived Menus and Sections prevent all
+placement mutations. Assignments and schedules are deliberately not exposed until
+Phase 4C.3; Preview, Publishing, Price Overrides, Availability, POS sync, and
+Version History UI remain unimplemented.
+
+`placementCount` is a diagnostic count of every non-archived Placement owned
+by the same tenant and Section, including hidden Placements. It deliberately
+does not mean visible/active Placement count; visibility is a separate
+placement-level concern for Phase 4C.2.
+
+## Phase 4C.3: Flutter Branch/Channel Assignments and Menu Schedules
+
+Status: Complete. `/menu-management/assignments` requires an active tenant
+Branch and one of the backend `SalesChannel` values. It lists assigned Menus and
+eligible active, non-archived Menus separately. Assignment active state, Menu
+lifecycle state, and schedule diagnostics are deliberately distinct. Scope sync
+uses the complete transactional assignment set, so contiguous ordering, addition,
+activation, and removal reload authoritative server state after success and restore
+the previous visible order after a failed reorder.
+
+The assignment `PUT` is a complete replacement of exactly one Branch + Channel
+scope—not a partial update. Omitted assignments are permanently removed from that
+scope only; their Menus, Sections, Placements, and other assignment scopes remain
+unchanged.
+
+Menu schedule rules remain directly owned by a Menu. The editor creates scoped
+weekly/date/time/priority rules for the selected Branch/Channel, allows overnight
+time periods, and preserves rules in other scopes during the Menu's complete rule
+sync. No active scoped rules is shown as unrestricted. The selected Branch timezone
+is displayed for context; this administration UI does not evaluate schedule status
+in the local machine timezone. Rule omission follows the backend soft-delete sync
+contract; Flutter must load and return all Menu rules so global/inherited and other
+scope rules are preserved while only the exact selected scope is changed. There is
+no individual restore endpoint. Preview, validation, publishing,
+versions, price overrides, product availability, POS sync, authentication, combos,
+and inventory remain out of this phase.
+
+## Phase 4B.5: Flutter Product Archive, Restore and Catalog Finalization
+
+Status: Complete after Flutter analyzer and full test suite pass. Products use
+`POST /api/v1/admin/catalog/products/{product}/archive` and `/restore` with no
+request payload. Archive is a soft delete: existing Orders and immutable
+published snapshots are unchanged, and central Modifier Groups are not
+deleted. Restore makes the Product editable again but does not publish it,
+reassign it to Menus, restore archived Variants/Modifier Groups/Options, or
+set operational availability.
+
+The catalog retains server-side Active, Archived, and All filters across
+lifecycle refreshes. `archivedAt`, not `isActive`, identifies archival; an
+inactive Product is not automatically labelled archived. Archived details
+remain diagnostic and read-only while preserving returned Variants and
+Modifier assignments. The next Flutter increment is Phase 4C.2 Product
+Placements; menu assignments and schedules follow in Phase 4C.3.
+
+## Phase 4B.4: Flutter Product Modifier Assignment
+
+Status: Complete after Flutter analyzer and full test suite pass. Route: `/menu-management/products/:productId/modifiers`. The assignment screen uses the Admin Catalog complete-sync API. Modifier Library owns shared Group and Option definitions; this screen only adds, removes, orders, and configures nullable product overrides. It labels Library Defaults, Product Overrides, and Effective Settings. Removing an assignment never deletes the Group or Options. Menu Builder, Availability, and publishing are still later phases; later publication snapshots use resolved assignments.
+
+## Phase 4B.3: Flutter Modifier Library
+
+Status: Complete after Flutter analyzer and tests pass. Routes are
+`/menu-management/modifiers`, `/create`, `/:modifierGroupId`, and
+`/:modifierGroupId/edit`. The central library owns reusable Modifier Groups and
+their Options, with individual archive/restore and complete active-option
+ordering. Option `priceDelta` is distinct from Variant `basePrice`.
+Product Modifier Assignment and product-level overrides are implemented in
+Phase 4B.4.
 
 ## Phase 4A: Flutter foundation and read-only Product Catalog
 
@@ -96,7 +192,9 @@ Menus are editable composition records, not Published snapshots. They support li
 
 Catalog Categories organize Products centrally. A Menu Section organizes the display of existing Products inside one Menu. A placement is display composition only: it references a Product and may override display name, description, or image, but never duplicates Product prices, Variants, Modifiers, kitchen routing, or reporting classification. Sections and placements are soft-deleted and can be restored; placements support reorder, move, and complete transactional synchronization.
 
-Assignments are complete Branch/Channel configuration sets, allowing multiple Menus to target the same Branch/Channel and retaining a priority for later precedence work. Menu Availability Rules are complete schedule sets: Branch and Channel are optional, `dayOfWeek` is 0–6, time pairs may cross midnight, and no rules means no Menu-level schedule restriction. Rules are stored only; this phase does not evaluate availability.
+Assignments are complete Branch/Channel configuration sets, allowing multiple Menus to target the same Branch/Channel and retaining a contiguous priority order. `GET`/`PUT /api/v1/admin/menu-management/assignments?branchId=&channel=` is the tenant-scoped scope contract used by Flutter: PUT receives the complete desired scope set (`menuId`, `priority`, `isActive`) and applies creation, activation, removal, and ordering atomically. Per-Menu `GET`/`PUT /api/v1/admin/menus/{menu}/assignments` remains available for Menu-scoped administration. Assignment removal does not archive its Menu or alter Sections, Placements, or immutable historical snapshots; assignments have no soft-archive/restore lifecycle in this contract.
+
+Menu Availability Rules are Menu-owned complete schedule sets under `GET`/`PUT /api/v1/admin/menus/{menu}/availability-rules`; they do not belong to a Menu Assignment. Branch and Channel are optional in the backend, `dayOfWeek` is `0`–`6`, time pairs may cross midnight, and date/weekday constraints are conjunctive. The Flutter assignment screen fixes newly edited rules to its selected Branch/Channel and preserves all other Menu rules during sync. Omitted rules are soft-deleted by the backend sync and there is no independent rule restore endpoint. No active matching scoped rules means unrestricted—not unavailable. The UI displays the selected Branch timezone and does not evaluate effective schedule status using the local machine timezone. Preview, validation, publishing, history, pricing/availability overlays, and POS synchronization remain later phases.
 
 Product Menu Usage returns active placement locations by default and accepts `includeArchived=true` for Admin diagnostics. All Menu composition changes write bounded before/after entries to `menu_audit_logs`, with `menu_publication_id = null`. Cross-tenant route resources return 404 and foreign submitted IDs return generic validation errors.
 
@@ -117,6 +215,14 @@ The supported scopes are `branch`, `channel`, and `branch_channel`. The client n
 Synchronization creates, updates, restores a same-scope soft-deleted override, and soft-archives any omitted active override in one transaction. Changes are logged in `menu_audit_logs` with `menu_publication_id = null`, using bounded scope and price data plus a summary.
 
 Effective-price resolution is `branch_channel`, then `branch`, then `channel`, then the Variant `base_price`. Inactive, soft-deleted, foreign, and invalid/archived-branch overrides are ignored. Price Overrides never copy into `products.price` or `product_variants.base_price`; existing Order snapshots remain unchanged, and the temporary POS catalog does not consume overrides yet. Authentication remains deferred.
+
+## Phase 4D.1: Flutter Variant Price Overrides
+
+Status: Complete after Flutter analysis and the full Flutter suite pass. The desktop route is `/menu-management/products/:productId/variants/:variantId/pricing`, entered from active Variant Management rows. It displays Variant Base Price separately from configured overrides and supports exactly three scopes: Branch, Channel, and Branch + Channel. No global override is allowed because Base Price is the fallback.
+
+The Flutter client loads the complete authoritative override list before permitting a draft change. `PUT /api/v1/admin/catalog/product-variants/{variant}/price-overrides` is complete synchronization, so it submits the entire intended set using only `scopeType`, `branchId`, `channel`, and `overridePrice`; it never sends tenant data, identifiers, computed scope keys, timestamps, or effective prices. Failed saves retain the local draft, while successful saves reload authoritative data. Duplicate normalized scopes are prevented locally and the Laravel validation result remains authoritative.
+
+The Effective Price diagnostic calls `GET /api/v1/admin/catalog/product-variants/{variant}/effective-price` for selected active Tenant Branch and actual `SalesChannel` values. It displays backend `matchedScope` and never presents a client-calculated price as authoritative. Product or Variant archival makes the page read-only but keeps returned data diagnostic. Phase 4D.2 Scheduled Product and Variant Availability and Phase 4D.3A Operational Availability Overrides are complete. No Preview, Publishing, Version History, or POS Sync UI belongs to this phase.
 
 ## Phase 2C.2A: Scheduled Product Availability APIs
 
@@ -213,3 +319,21 @@ Preview reuses the existing effective price, product schedule, and operational a
 ## Phase 3D Version History, Comparison, and Rollback
 
 Admin Version history and detail are tenant-scoped; detail returns immutable snapshot payload only with `includePayload=true`. Comparisons are bounded structural summaries. Historical checksums are deliberately non-unique so rollback can create a new immutable Version with an older payload. A rollback never reactivates history: it marks the prior current Version `rolled_back` and creates a new current Version under the advisory lock. The one-current-per-scope constraint remains enforced. Authentication is deferred and POS Sync remains unimplemented.
+
+## Phase 4D.2: Flutter Scheduled Product and Variant Availability
+
+Status: Complete after Flutter analysis and tests pass. Flutter integrates `GET`/`PUT /api/v1/admin/catalog/products/{product}/availability-rules` and `GET /api/v1/admin/catalog/products/{product}/availability-preview`. The real contract intentionally has no separate Variant path: `productVariantId: null` is Product-level and a tenant-owned Variant ID is Variant-level. The PUT endpoint replaces the Product's complete rule set, so the client permits edits only after an authoritative load and always sends every retained Product and Variant rule on save.
+
+Rules support the backend fields `productVariantId`, `branchId`, `channel`, one `dayOfWeek` (`0`–`6`), `startTime`, `endTime`, `startDate`, `endDate`, `priority`, and `isActive`. The screen presents Global, Branch, Channel, and Branch + Channel scopes; it does not invent timestamps, branch names, multiple weekdays, or variant endpoints absent from the resource. Preview remains backend-authoritative, using a supplied Branch timezone when a Branch is selected. Variant scope presence governs before Product rules, then Branch + Channel → Branch → Channel → Global. No governing rules means unrestricted; a governing scope with no matching rule window is `outside_schedule`; overnight windows are anchored to their starting date/day. Product or selected Variant archival makes mutation controls read-only. Operational overrides remain a separate runtime overlay.
+
+## Phase 4D.3A: Flutter Operational Availability Overrides
+
+Status: Complete after Flutter analysis and the full Flutter suite pass. Flutter integrates `GET /api/v1/admin/catalog/operational-availability` with `level`, `includeArchived`, and pagination, then filters returned records by the selected Product or Variant. It uses `PUT` and `DELETE /api/v1/admin/catalog/products/{product}/operational-availability` for Product records and the matching `/product-variants/{variant}/operational-availability` endpoints for Variant records. Clear requests contain only `branchId` and `channel`.
+
+Operational overrides are mutable runtime overlays, not Scheduled Availability rules or immutable Published Snapshot data. The actual API requires an active tenant-owned Branch and either an actual `SalesChannel` or `all`; `all` means all channels in the required Branch and there is no branchless global override. Product and Variant records remain separate. The backend resolver, rather than Flutter, owns precedence: Variant exact Channel, Variant all Channels, Product exact Channel, Product all Channels, then Available. A narrower explicit `available` record can override a broader Sold Out record without removing it.
+
+The Flutter editor supports `available`, `sold_out`, and `temporarily_unavailable`; temporary records submit `unavailableUntil` and the backend evaluates that timestamp in the Branch timezone. Expired records are retained and visibly diagnostic, never auto-cleared. `remainingQuantity` accepts null or zero-or-greater numeric metadata and is explicitly not Inventory synchronization or status automation. Product archive makes every mutation read-only, while Variant archive leaves Product-level overrides editable when the Product remains active.
+
+## Phase 4D.3B: Flutter Operational Resolution Diagnostic
+
+The existing Operational Availability route now includes a Backend-authoritative diagnostic. Product context sends `branchId` and a real `SalesChannel` to `GET /api/v1/admin/catalog/products/{product}/operational-availability-preview`; Variant context additionally sends `productVariantId` to that same actual endpoint. The API returns the resolved status, availability flag, matched level/scope/record, reason, optional quantity, and optional expiration. Flutter does not calculate precedence. It presents exact-channel and `all`-scope matches distinctly, makes an explicit Available override distinct from an Available fallback, and keeps expired temporary records visible but never calls them an active match. `all` remains an override scope rather than a runtime selector. Operational resolution remains independent of Scheduled Availability, publishing state, Inventory, and immutable snapshots; it is not a combined sellability result. Phase 4E — Validation, Preview and Publishing remains not started.

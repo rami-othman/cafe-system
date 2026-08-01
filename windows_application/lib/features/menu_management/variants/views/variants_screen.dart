@@ -63,6 +63,17 @@ class _VariantsScreenState extends State<VariantsScreen> {
       );
     }
     final ProductDetail product = state.product!;
+    if (product.isArchived) {
+      return DesktopPageLayout(
+        child: Center(
+          child: _Retry(
+            message: 'This product is archived and variants are read-only.',
+            onRetry: () =>
+                context.go('/menu-management/products/${product.id}'),
+          ),
+        ),
+      );
+    }
     return DesktopPageLayout(
       padding: EdgeInsets.zero,
       child: SingleChildScrollView(
@@ -408,6 +419,41 @@ class _VariantTable extends StatelessWidget {
                               : () => edit(variant),
                           icon: const Icon(Icons.edit_outlined),
                         ),
+                        if (!variant.isArchived)
+                          IconButton(
+                            key: Key('manage-price-overrides-${variant.id}'),
+                            tooltip: 'Manage Price Overrides',
+                            onPressed: state.isMutating
+                                ? null
+                                : () => context.go(
+                                    '/menu-management/products/${state.product!.id}/variants/${variant.id}/pricing',
+                                  ),
+                            icon: const Icon(Icons.price_change_outlined),
+                          ),
+                        if (!variant.isArchived)
+                          IconButton(
+                            key: Key('manage-availability-${variant.id}'),
+                            tooltip: 'Manage Scheduled Availability',
+                            onPressed: state.isMutating
+                                ? null
+                                : () => context.go(
+                                    '/menu-management/products/${state.product!.id}/availability?variantId=${variant.id}&from=variants',
+                                  ),
+                            icon: const Icon(Icons.schedule_outlined),
+                          ),
+                        if (!variant.isArchived)
+                          IconButton(
+                            key: Key(
+                              'manage-operational-availability-${variant.id}',
+                            ),
+                            tooltip: 'Manage Availability / Sold Out',
+                            onPressed: state.isMutating
+                                ? null
+                                : () => context.go(
+                                    '/menu-management/products/${state.product!.id}/operational-availability?variantId=${variant.id}&from=variants',
+                                  ),
+                            icon: const Icon(Icons.do_not_disturb_on_outlined),
+                          ),
                         if (!variant.isArchived && !variant.isDefault)
                           IconButton(
                             tooltip: 'Set as Default',

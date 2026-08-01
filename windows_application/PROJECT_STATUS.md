@@ -1,5 +1,29 @@
 # Project Status
 
+Current authoritative phase status: Phase 4C — Complete; Phase 4D.1 — Variant Price Overrides: Complete; Phase 4D.2 — Scheduled Product Availability: Complete; Phase 4D.3A — Operational Availability Overrides: Complete; Phase 4D.3B — Operational Resolution Diagnostic: Complete; Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started. Phase 4C.1 — Complete; Phase 4C.2 —
+Product Placements and Ordering: Complete; Phase 4C.3 — Branch/Channel
+Assignments and Menu Schedules: Complete. Phase 4D.1 — Variant Price Overrides:
+Complete; Phase 4D.2 — Scheduled Product Availability: Complete; Phase 4D.3 —
+Operational Availability Overrides: Complete; Phase 4D.3B — Operational Resolution Diagnostic: Complete.
+
+Phase 4B — Product Catalog Administration: Complete
+
+Phase 4C.1 — Menus and Sections: Complete
+
+Phase 4C.2 — Product Placements and Ordering: Complete
+
+Phase 4C.3 — Branch/Channel Assignments and Menu Schedules: Complete
+
+Phase 4D.1 — Variant Price Overrides: Complete
+
+Phase 4D.2 — Scheduled Product Availability: Complete
+
+Phase 4D.3A — Operational Availability Overrides: Complete
+
+Phase 4D.3B — Operational Resolution Diagnostic: Complete
+
+Phase 4B — Product Catalog Administration: Complete. Phase 4C — Complete. Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started.
+
 ## Project Name
 
 Cafe System 618
@@ -16,9 +40,60 @@ Phase 4A — Foundation and Read-only Catalog: Complete
 Phase 4B.1 — Product General Editor: Complete
 
 Phase 4B.2 — Variants and Base Pricing: Complete
-Phase 4B.3 — Modifier Library: Not started
+Phase 4B.3 — Modifier Library: Complete
+Phase 4B.4 — Product–Modifier Assignment: Complete
+Phase 4B.5 — Product Archive, Restore and Catalog Finalization: Complete
+
+Phase 4C.1 — Menus and Sections: Complete
+Phase 4C.2 — Product Placements and Ordering: Complete
+Phase 4C.3 — Branch/Channel Assignments and Menu Schedules: Complete
+
+Phase 4D.1 — Variant Price Overrides: Complete
+Phase 4D.2 — Scheduled Product Availability: Complete
+Phase 4D.3A — Operational Availability Overrides: Complete
+
+Phase 4D.3B — Operational Resolution Diagnostic: Complete
 
 ## Completed Work
+
+- Phase 4C.3: tenant-safe Branch/Channel Menu assignment administration is
+  complete. The Assignments & Schedules route loads active tenant Branches and
+  actual SalesChannel values, presents assigned and eligible active Menus
+  separately, and performs complete-scope transactional assignment syncs for
+  assignment, activation, removal, and contiguous ordering. Menu lifecycle,
+  assignment active state, and schedule state remain distinct. Menu schedule
+  rules remain Menu-owned complete sync sets, are fixed to the selected scope
+  in this UI, support weekly day, date-range, priority, active, and overnight
+  time values, preserve inherited and out-of-scope rules in the complete payload,
+  and treat no active governing rules as unrestricted. The branch
+  timezone is shown but not client-evaluated. Preview, publishing, versions,
+  pricing, product availability, POS sync, authentication, combos, and
+  inventory were not added.
+
+- Phase 4C.2: tenant-scoped Product Placement listing, picker, supported display
+  overrides, move within the same Menu, complete active-placement ordering, and
+  archive/restore are implemented. Hidden placements remain stored but differ from
+  archived placements; Product lifecycle is separate. A Product is unique only among
+  active placements in one Section. Archived Menus and Sections are read-only.
+  Assignments and schedules remain Phase 4C.3; no Pricing, Availability, Preview,
+  Publishing, POS Sync, Authentication, Combos, or Inventory UI was added.
+
+- Phase 4C.1: tenant-scoped Menu list/detail/editor, soft archive/restore,
+  section create/edit/archive/restore, and complete active-section ordering are
+  implemented. Archived Menus are diagnostic/read-only. Product Placements,
+  assignments, schedules, Preview, Publishing, and Version History UI remain
+  out of scope.
+
+- Phase 4B.5: Product archive/restore is complete. Catalog and Product Detail
+  use the real soft-delete endpoints, show status and archive timestamps, keep
+  archived details diagnostic/read-only, and guard stale editor, Variant, and
+  Modifier Assignment routes. Archive/restore refresh catalog and detail data
+  without resetting server-side filters; archive does not change Orders or
+  published historical snapshots. Restore does not publish or reassign a
+  Product. `isActive` is intentionally distinct from archived state.
+
+- Phase 4B.3: Modifier Library complete. It provides typed Group and Option
+  APIs, archive/restore, active-option reordering, and no Product assignment.
 
 - Added the Menu Management sidebar destination and routes for the read-only
   Product Catalog and Product Detail screens.
@@ -120,8 +195,8 @@ Phase 4B.3 — Modifier Library: Not started
 
 ## Next Step
 
-Implement the approved Full Menu Management Flow, beginning with its domain and
-safe migration strategy rather than restoring the retired prototype.
+Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started. Keep Version History,
+Version History, and POS sync UI deferred.
 
 ## Architecture Decisions
 
@@ -240,3 +315,9 @@ safe migration strategy rather than restoring the retired prototype.
   codes such as `zaher` apply correctly from the Flutter discount dialog.
 - 2026-07-18: Connected Orders branch selection to backend branch data and
   passed the selected branch ID to order-list API requests.
+
+- 2026-08-01: Completed Phase 4D.2 Scheduled Product and Variant Availability. Product-owned complete-sync rules support Product/Variant, Global/Branch/Channel/Branch + Channel contexts, weekly/date/overnight windows, priority, active state, immutable drafts, inherited diagnostics, authoritative preview, and archived read-only safeguards. Operational Availability is a separate runtime overlay.
+
+- 2026-08-01: Completed Phase 4D.3A Operational Availability Overrides. Product and Variant runtime records support Branch + all-channels or Branch + exact-channel scope, Available, Sold Out, temporary unavailable-until, reason, informational remaining quantity, clear confirmation, backend validation mapping, expired diagnostics, and archived read-only safeguards.
+
+- 2026-08-01: Completed Phase 4D.3B Operational Resolution Diagnostic and Phase 4D final verification. The existing route uses the backend product operational preview endpoint with an optional Variant query context, real Branch and SalesChannel runtime selection, matched source presentation, explicit Available and no-override fallback distinction, stale response protection, and expired-record fallback diagnostics. Scheduled Availability, publishing, immutable snapshots, Inventory, and POS remain separate.

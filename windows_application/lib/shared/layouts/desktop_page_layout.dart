@@ -15,7 +15,7 @@ class DesktopPageLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
+    return Material(
       color: AppColors.contentBackground,
       child: Padding(padding: padding, child: child),
     );

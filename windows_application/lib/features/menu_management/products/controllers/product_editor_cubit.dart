@@ -25,13 +25,27 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
       ),
     );
     try {
-      final ProductDetail product = await repository.getProduct(productId);
+      final ProductDetail product = await repository.getProduct(
+        productId,
+        includeArchived: true,
+      );
+      if (product.isArchived) {
+        emit(
+          state.copyWith(
+            status: ProductEditorStatus.failure,
+            isReadOnly: true,
+            formError: 'This product has been archived and is read-only.',
+          ),
+        );
+        return;
+      }
       emit(
         state.copyWith(
           draft: _draft(product),
           currentDefaultVariant: product.defaultVariant,
           status: ProductEditorStatus.loading,
           isDirty: false,
+          isReadOnly: false,
         ),
       );
       await _loadReferences();
@@ -57,7 +71,9 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
     ),
   );
   Future<void> submit() async {
-    if (state.status == ProductEditorStatus.submitting) return;
+    if (state.status == ProductEditorStatus.submitting || state.isReadOnly) {
+      return;
+    }
     final Map<String, String> errors = _validate(
       state.draft,
       create: state.isCreate,

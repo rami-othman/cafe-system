@@ -23,7 +23,10 @@ class ModifierCatalogController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $query = ModifierGroup::query()->where('tenant_id', $tenant)->withCount('options');
+        $query = ModifierGroup::query()->where('tenant_id', $tenant)->withCount([
+            'options' => fn ($q) => $q->where('tenant_id', $tenant),
+            'options as active_options_count' => fn ($q) => $q->where('tenant_id', $tenant)->where('is_active', true),
+        ]);
         $status = $request->query('status', 'active');
         if ($status === 'all') {
             $query->withTrashed();
@@ -51,7 +54,13 @@ class ModifierCatalogController extends Controller
 
     public function show(Request $request, int $modifierGroup): JsonResponse
     {
-        return response()->json(['data' => (new ModifierGroupResource($this->findGroup(TenantContext::id($request), $modifierGroup, $request->boolean('includeArchived'))))->resolve($request)]);
+        $data = $request->validate([
+            'includeArchived' => ['nullable', Rule::in(['true', 'false', '1', '0', true, false, 1, 0])],
+        ]);
+        $includeArchived = array_key_exists('includeArchived', $data)
+            && $request->boolean('includeArchived');
+
+        return response()->json(['data' => (new ModifierGroupResource($this->findGroup(TenantContext::id($request), $modifierGroup, $includeArchived)))->resolve($request)]);
     }
 
     public function store(Request $request): JsonResponse
@@ -134,9 +143,21 @@ class ModifierCatalogController extends Controller
         return response()->json(['message' => 'Modifier options reordered successfully.', 'data' => $data['items']]);
     }
 
-    private function findGroup(int $tenant, int $id, bool $trashed = false): ModifierGroup
+    private function findGroup(int $tenant, int $id, bool $includeArchived = false): ModifierGroup
     {
-        return ModifierGroup::query()->when($trashed, fn ($q) => $q->withTrashed())->where('tenant_id', $tenant)->with(['options' => fn ($q) => $q->orderBy('sort_order')->orderBy('id')])->withCount('options')->findOrFail($id);
+        return ModifierGroup::query()
+            ->when($includeArchived, fn ($q) => $q->withTrashed())
+            ->where('tenant_id', $tenant)
+            ->with(['options' => fn ($q) => $q
+                ->where('tenant_id', $tenant)
+                ->when($includeArchived, fn ($options) => $options->withTrashed())
+                ->orderBy('sort_order')
+                ->orderBy('id')])
+            ->withCount([
+                'options' => fn ($q) => $q->where('tenant_id', $tenant),
+                'options as active_options_count' => fn ($q) => $q->where('tenant_id', $tenant)->where('is_active', true),
+            ])
+            ->findOrFail($id);
     }
 
     private function findOption(int $tenant, int $id, bool $trashed = false): ModifierOption
@@ -151,7 +172,7 @@ class ModifierCatalogController extends Controller
             $rules += ['options' => ['required', 'array', 'min:1'], 'options.*.name' => ['required', 'string'], 'options.*.priceDelta' => ['nullable', 'numeric', 'min:0'], 'options.*.costDelta' => ['nullable', 'numeric', 'min:0'], 'options.*.isDefault' => ['nullable', 'boolean'], 'options.*.isActive' => ['nullable', 'boolean'], 'options.*.isAvailable' => ['nullable', 'boolean']];
         }
 
-return $request->validate($rules);
+        return $request->validate($rules);
     }
 
     private function optionData(Request $request, bool $create): array

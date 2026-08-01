@@ -63,7 +63,7 @@ class MenuCompositionService
     public function menu(int $tenantId, int $id, bool $withTrashed = false): Menu
     {
         return Menu::query()->when($withTrashed, fn (Builder $q) => $q->withTrashed())->where('tenant_id', $tenantId)->with([
-            'sections' => fn ($q) => $q->orderBy('sort_order')->orderBy('id')->with(['placements' => fn ($p) => $p->orderBy('sort_order')->orderBy('id')->with('product.defaultVariant')]),
+            'sections' => fn ($sections) => $sections->where('tenant_id', $tenantId)->when($withTrashed, fn ($sections) => $sections->withTrashed())->withCount(['placements' => fn ($placements) => $placements->where('tenant_id', $tenantId)])->orderBy('sort_order')->orderBy('id')->with(['placements' => fn ($placements) => $placements->where('tenant_id', $tenantId)->orderBy('sort_order')->orderBy('id')->with('product.defaultVariant')]),
             'assignments' => fn ($q) => $q->orderBy('priority')->orderBy('id'),
             'availabilityRules' => fn ($q) => $q->orderBy('priority')->orderBy('id'),
         ])->findOrFail($id);
@@ -148,12 +148,19 @@ class MenuCompositionService
 
     public function section(int $tenantId, int $id, bool $withTrashed = false): MenuSection
     {
-        return MenuSection::query()->when($withTrashed, fn (Builder $q) => $q->withTrashed())->where('tenant_id', $tenantId)->with(['menu' => fn ($q) => $q->withTrashed()])->findOrFail($id);
+        $section = MenuSection::query()
+            ->when($withTrashed, fn (Builder $q) => $q->withTrashed())
+            ->where('tenant_id', $tenantId)
+            ->findOrFail($id);
+        $menu = Menu::withTrashed()->where('tenant_id', $tenantId)->findOrFail($section->menu_id);
+        $section->setRelation('menu', $menu);
+
+        return $section;
     }
 
     public function sections(Menu $menu)
     {
-        return $menu->sections()->with(['placements' => fn ($q) => $q->with('product.defaultVariant')->orderBy('sort_order')->orderBy('id')])->orderBy('sort_order')->orderBy('id')->get();
+        return $menu->sections()->where('tenant_id', $menu->tenant_id)->withCount(['placements' => fn ($placements) => $placements->where('tenant_id', $menu->tenant_id)])->with(['placements' => fn ($placements) => $placements->where('tenant_id', $menu->tenant_id)->with('product.defaultVariant')->orderBy('sort_order')->orderBy('id')])->orderBy('sort_order')->orderBy('id')->get();
     }
 
     public function createSection(Menu $menu, array $data): MenuSection
@@ -189,6 +196,8 @@ class MenuCompositionService
 
     public function archiveSection(MenuSection $section): MenuSection
     {
+        $this->assertMenuUsable($section->menu);
+
         return DB::transaction(function () use ($section): MenuSection {
             $locked = MenuSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
@@ -202,7 +211,7 @@ class MenuCompositionService
 
     public function restoreSection(MenuSection $section): MenuSection
     {
-        $menu = Menu::query()->where('tenant_id', $section->tenant_id)->findOrFail($section->menu_id);
+        $menu = $this->menu($section->tenant_id, $section->menu_id, true);
         $this->assertMenuUsable($menu);
 
         return DB::transaction(function () use ($section): MenuSection {
@@ -218,9 +227,10 @@ class MenuCompositionService
 
     public function reorderSections(Menu $menu, array $items): void
     {
+        $this->assertMenuUsable($menu);
         $this->uniqueIds($items);
         DB::transaction(function () use ($menu, $items): void {
-            $sections = $menu->sections()->whereIn('id', collect($items)->pluck('id'))->lockForUpdate()->get()->keyBy('id');
+            $sections = $menu->sections()->where('tenant_id', $menu->tenant_id)->whereIn('id', collect($items)->pluck('id'))->lockForUpdate()->get()->keyBy('id');
             if ($sections->count() !== count($items)) {
                 $this->invalid('items', 'The selected value is invalid.');
             }
@@ -238,9 +248,9 @@ class MenuCompositionService
         return MenuItemPlacement::query()->when($withTrashed, fn (Builder $q) => $q->withTrashed())->where('tenant_id', $tenantId)->with(['menuSection' => fn ($q) => $q->withTrashed()->with(['menu' => fn ($menu) => $menu->withTrashed()]), 'product.defaultVariant'])->findOrFail($id);
     }
 
-    public function placements(MenuSection $section)
+    public function placements(MenuSection $section, bool $includeArchived = false)
     {
-        return $section->placements()->with('product.defaultVariant')->orderBy('sort_order')->orderBy('id')->get();
+        return $section->placements()->where('tenant_id', $section->tenant_id)->when($includeArchived, fn ($query) => $query->withTrashed())->with('product.defaultVariant')->orderBy('sort_order')->orderBy('id')->get();
     }
 
     public function createPlacement(MenuSection $section, array $data): MenuItemPlacement
@@ -283,6 +293,8 @@ class MenuCompositionService
 
     public function archivePlacement(MenuItemPlacement $placement): MenuItemPlacement
     {
+        $this->assertSectionUsable($placement->menuSection);
+
         return DB::transaction(function () use ($placement): MenuItemPlacement {
             $locked = MenuItemPlacement::query()->whereKey($placement->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
@@ -296,7 +308,11 @@ class MenuCompositionService
     public function restorePlacement(MenuItemPlacement $placement): MenuItemPlacement
     {
         $this->assertSectionUsable($this->section($placement->tenant_id, $placement->menu_section_id, true));
-        $this->validProduct($placement->tenant_id, $placement->product_id);
+        // Restoring placement history must never revive or activate its Product.
+        // The Product may legitimately have been archived or deactivated later.
+        if (! Product::withTrashed()->where('tenant_id', $placement->tenant_id)->whereKey($placement->product_id)->exists()) {
+            $this->invalid('productId', 'The selected value is invalid.');
+        }
         if (MenuItemPlacement::query()->where('menu_section_id', $placement->menu_section_id)->where('product_id', $placement->product_id)->exists()) {
             $this->invalid('placement', 'This product is already placed in this section.');
         }
@@ -316,7 +332,10 @@ class MenuCompositionService
         $this->uniqueIds($items);
         DB::transaction(function () use ($section, $items): void {
             $placements = $section->placements()->whereIn('id', collect($items)->pluck('id'))->lockForUpdate()->get()->keyBy('id');
-            if ($placements->count() !== count($items)) {
+            $activeIds = $section->placements()->lockForUpdate()->pluck('id')->sort()->values()->all();
+            $submittedIds = collect($items)->pluck('id')->sort()->values()->all();
+            $sortOrders = collect($items)->pluck('sortOrder')->sort()->values()->all();
+            if ($placements->count() !== count($items) || $submittedIds !== $activeIds || $sortOrders !== range(0, count($items) - 1)) {
                 $this->invalid('items', 'The selected value is invalid.');
             }
             foreach ($items as $item) {
@@ -330,9 +349,12 @@ class MenuCompositionService
 
     public function movePlacement(MenuItemPlacement $placement, int $targetSectionId, ?int $sortOrder): MenuItemPlacement
     {
-        $target = $this->section($placement->tenant_id, $targetSectionId);
+        $target = $this->section($placement->tenant_id, $targetSectionId, true);
         $this->assertSectionUsable($placement->menuSection);
         $this->assertSectionUsable($target);
+        if ($target->menu_id !== $placement->menuSection->menu_id) {
+            $this->invalid('targetSectionId', 'The target section must belong to the same menu.');
+        }
         if ($target->id !== $placement->menu_section_id && $target->placements()->where('product_id', $placement->product_id)->exists()) {
             $this->invalid('targetSectionId', 'This product is already placed in the target section.');
         }
@@ -407,6 +429,64 @@ class MenuCompositionService
     public function assignments(Menu $menu)
     {
         return $menu->assignments()->orderBy('priority')->orderBy('id')->get();
+    }
+
+    /**
+     * Returns the authoritative assignment set for one active Branch/Channel
+     * scope.  The scope endpoint is intentionally separate from per-menu sync
+     * so desktop clients can reorder a whole scope atomically.
+     */
+    public function assignmentsForScope(int $tenantId, int $branchId, string $channel)
+    {
+        $this->branch($tenantId, $branchId);
+
+        return MenuAssignment::query()->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('channel', $channel)
+            ->with(['menu' => fn ($query) => $query->withTrashed()->withCount(['sections', 'assignments', 'availabilityRules'])])
+            ->orderBy('priority')->orderBy('id')->get();
+    }
+
+    public function syncAssignmentsForScope(int $tenantId, int $branchId, string $channel, array $items): array
+    {
+        $this->branch($tenantId, $branchId);
+        $menuIds = collect($items)->pluck('menuId');
+        if ($menuIds->unique()->count() !== $menuIds->count()) {
+            $this->invalid('assignments', 'Menu IDs must be unique.');
+        }
+        $menus = Menu::query()->withTrashed()->where('tenant_id', $tenantId)->whereIn('id', $menuIds)->get()->keyBy('id');
+        if ($menus->count() !== $menuIds->count()) {
+            $this->invalid('assignments', 'One or more menus are invalid.');
+        }
+        foreach ($menus as $menu) {
+            $this->assertMenuUsable($menu);
+        }
+
+        return DB::transaction(function () use ($tenantId, $branchId, $channel, $items): array {
+            $existing = MenuAssignment::query()->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('channel', $channel)->lockForUpdate()->get()->keyBy('menu_id');
+            $kept = [];
+            foreach ($items as $index => $item) {
+                $menuId = $item['menuId'];
+                $kept[] = $menuId;
+                // The submitted complete list is the intended scope order.
+                // Normalize it here so a scope can never retain sparse or
+                // duplicate priorities after a successful sync.
+                $payload = ['priority' => $index, 'is_active' => $item['isActive'] ?? true];
+                $assignment = $existing->get($menuId);
+                if ($assignment) {
+                    $before = $this->snapshot($assignment);
+                    $assignment->update($payload);
+                    $this->audit->log($tenantId, $assignment, MenuAuditAction::Assigned, $before, $this->snapshot($assignment));
+                } else {
+                    $assignment = MenuAssignment::query()->create(['tenant_id' => $tenantId, 'menu_id' => $menuId, 'branch_id' => $branchId, 'channel' => $channel] + $payload);
+                    $this->audit->log($tenantId, $assignment, MenuAuditAction::Assigned, null, $this->snapshot($assignment));
+                }
+            }
+            $existing->filter(fn (MenuAssignment $assignment) => ! in_array((int) $assignment->menu_id, $kept, true))->each(function (MenuAssignment $assignment) use ($tenantId): void {
+                $this->audit->log($tenantId, $assignment, MenuAuditAction::Unassigned, $this->snapshot($assignment));
+                $assignment->delete();
+            });
+
+            return $this->assignmentsForScope($tenantId, $branchId, $channel)->all();
+        });
     }
 
     public function syncAssignments(Menu $menu, array $items): array

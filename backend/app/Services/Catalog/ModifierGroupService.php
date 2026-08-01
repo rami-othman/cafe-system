@@ -160,7 +160,9 @@ class ModifierGroupService
     {
         $payload = ['name' => $data['name'], 'name_ar' => $data['nameAr'] ?? null, 'name_en' => $data['nameEn'] ?? null, 'code' => $data['code'] ?? null, 'group_type' => $data['groupType'] ?? 'choice', 'selection_type' => $data['selectionType'] ?? 'single', 'is_required' => $data['isRequired'] ?? false, 'min_selections' => $data['minSelections'] ?? 0, 'max_selections' => $data['maxSelections'] ?? 1, 'allow_quantity' => $data['allowQuantity'] ?? false, 'sort_order' => $data['sortOrder'] ?? 0];
 
-        return $create ? $payload + ['is_active' => $data['isActive'] ?? true] : $payload;
+        // The controller accepts isActive for both create and patch. Keep the
+        // persisted value in sync rather than silently discarding it on patch.
+        return $payload + ['is_active' => $data['isActive'] ?? true];
     }
 
     private function optionPayload(array $data): array
@@ -175,6 +177,6 @@ class ModifierGroupService
             $result[lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $key))))] = $value;
         }
 
-return $result;
+        return $result;
     }
 }

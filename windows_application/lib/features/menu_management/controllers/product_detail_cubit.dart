@@ -38,7 +38,10 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
       emit(
         state.copyWith(
           isLoading: false,
-          product: await repository.getProduct(productId),
+          product: await repository.getProduct(
+            productId,
+            includeArchived: true,
+          ),
           clearError: true,
         ),
       );

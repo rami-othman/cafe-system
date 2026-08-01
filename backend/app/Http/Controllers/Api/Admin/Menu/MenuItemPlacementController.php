@@ -13,6 +13,7 @@ use App\Services\Menu\MenuCompositionService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MenuItemPlacementController extends Controller
 {
@@ -20,12 +21,14 @@ class MenuItemPlacementController extends Controller
 
     public function index(Request $request, int $section): JsonResponse
     {
-        return response()->json(['data' => MenuItemPlacementResource::collection($this->menus->placements($this->menus->section(TenantContext::id($request), $section)))->resolve($request)]);
+        $request->validate(['includeArchived' => ['nullable', Rule::in(['true', 'false', '1', '0', true, false, 1, 0])]]);
+
+        return response()->json(['data' => MenuItemPlacementResource::collection($this->menus->placements($this->menus->section(TenantContext::id($request), $section, true), $request->boolean('includeArchived')))->resolve($request)]);
     }
 
     public function store(StoreMenuPlacementRequest $request, int $section): JsonResponse
     {
-        $placement = $this->menus->createPlacement($this->menus->section(TenantContext::id($request), $section), $request->validated());
+        $placement = $this->menus->createPlacement($this->menus->section(TenantContext::id($request), $section, true), $request->validated());
 
         return response()->json(['data' => (new MenuItemPlacementResource($placement))->resolve($request)], 201);
     }
@@ -53,7 +56,7 @@ class MenuItemPlacementController extends Controller
 
     public function reorder(ReorderMenuPlacementsRequest $request, int $section): JsonResponse
     {
-        $this->menus->reorderPlacements($this->menus->section(TenantContext::id($request), $section), $request->validated('items'));
+        $this->menus->reorderPlacements($this->menus->section(TenantContext::id($request), $section, true), $request->validated('items'));
 
         return response()->json(['message' => 'Menu placements reordered successfully.']);
     }
@@ -68,7 +71,7 @@ class MenuItemPlacementController extends Controller
 
     public function sync(SyncMenuPlacementsRequest $request, int $section): JsonResponse
     {
-        $items = $this->menus->syncPlacements($this->menus->section(TenantContext::id($request), $section), $request->validated('placements'));
+        $items = $this->menus->syncPlacements($this->menus->section(TenantContext::id($request), $section, true), $request->validated('placements'));
 
         return response()->json(['data' => MenuItemPlacementResource::collection($items)->resolve($request)]);
     }

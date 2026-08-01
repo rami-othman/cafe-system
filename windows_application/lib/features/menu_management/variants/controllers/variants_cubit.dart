@@ -20,10 +20,22 @@ class VariantsCubit extends Cubit<VariantsState> {
       ),
     );
     try {
-      _setProduct(
-        await repository.getProduct(productId, includeArchived: true),
-        status: VariantsStatus.loaded,
+      final ProductDetail product = await repository.getProduct(
+        productId,
+        includeArchived: true,
       );
+      if (product.isArchived) {
+        emit(
+          state.copyWith(
+            status: VariantsStatus.failure,
+            product: product,
+            formError:
+                'This product has been archived and variants are read-only.',
+          ),
+        );
+        return;
+      }
+      _setProduct(product, status: VariantsStatus.loaded);
     } catch (error) {
       emit(
         state.copyWith(
@@ -118,7 +130,11 @@ class VariantsCubit extends Cubit<VariantsState> {
     Future<ProductVariant> Function() request,
     String message,
   ) async {
-    if (state.isMutating || state.product == null) return false;
+    if (state.isMutating ||
+        state.product == null ||
+        state.product!.isArchived) {
+      return false;
+    }
     final Map<String, String> errors = draft == null
         ? const <String, String>{}
         : _validate(draft);

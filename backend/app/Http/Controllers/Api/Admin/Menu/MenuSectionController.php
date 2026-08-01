@@ -23,7 +23,7 @@ class MenuSectionController extends Controller
 
     public function store(StoreMenuSectionRequest $request, int $menu): JsonResponse
     {
-        $section = $this->menus->createSection($this->menus->menu(TenantContext::id($request), $menu), $request->validated());
+        $section = $this->menus->createSection($this->menus->menu(TenantContext::id($request), $menu, true), $request->validated());
 
         return response()->json(['data' => (new MenuSectionResource($section))->resolve($request)], 201);
     }
@@ -51,7 +51,7 @@ class MenuSectionController extends Controller
 
     public function reorder(ReorderMenuSectionsRequest $request, int $menu): JsonResponse
     {
-        $this->menus->reorderSections($this->menus->menu(TenantContext::id($request), $menu), $request->validated('items'));
+        $this->menus->reorderSections($this->menus->menu(TenantContext::id($request), $menu, true), $request->validated('items'));
 
         return response()->json(['message' => 'Menu sections reordered successfully.']);
     }

@@ -13,6 +13,7 @@ use App\Services\Menu\MenuCompositionService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MenuController extends Controller
 {
@@ -27,7 +28,13 @@ class MenuController extends Controller
 
     public function show(Request $request, int $menu): JsonResponse
     {
-        return response()->json(['data' => (new MenuDetailResource($this->menus->menu(TenantContext::id($request), $menu, $request->boolean('includeArchived'))))->resolve($request)]);
+        $data = $request->validate([
+            'includeArchived' => ['nullable', Rule::in(['true', 'false', '1', '0', true, false, 1, 0])],
+        ]);
+        $includeArchived = array_key_exists('includeArchived', $data)
+            && $request->boolean('includeArchived');
+
+        return response()->json(['data' => (new MenuDetailResource($this->menus->menu(TenantContext::id($request), $menu, $includeArchived)))->resolve($request)]);
     }
 
     public function store(StoreMenuRequest $request): JsonResponse

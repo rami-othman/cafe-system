@@ -280,6 +280,7 @@ class ProductSummary {
     required this.modifierGroupCount,
     required this.createdAt,
     required this.updatedAt,
+    this.archivedAt,
   });
 
   factory ProductSummary.fromJson(JsonMap json) => ProductSummary(
@@ -307,6 +308,7 @@ class ProductSummary {
     modifierGroupCount: readInt(json['modifierGroupCount']) ?? 0,
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
+    archivedAt: _date(json['archivedAt']),
   );
 
   final int id;
@@ -325,6 +327,9 @@ class ProductSummary {
   final int modifierGroupCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final DateTime? archivedAt;
+
+  bool get isArchived => archivedAt != null;
 }
 
 class ProductDetail extends ProductSummary {
@@ -345,6 +350,7 @@ class ProductDetail extends ProductSummary {
     required super.modifierGroupCount,
     required super.createdAt,
     required super.updatedAt,
+    super.archivedAt,
     required this.descriptionAr,
     required this.descriptionEn,
     required this.preparationTimeMinutes,
@@ -373,6 +379,7 @@ class ProductDetail extends ProductSummary {
       modifierGroupCount: summary.modifierGroupCount,
       createdAt: summary.createdAt,
       updatedAt: summary.updatedAt,
+      archivedAt: summary.archivedAt,
       descriptionAr: _optional(json['descriptionAr']),
       descriptionEn: _optional(json['descriptionEn']),
       preparationTimeMinutes: readInt(json['preparationTimeMinutes']),
@@ -394,6 +401,32 @@ class ProductDetail extends ProductSummary {
   final int sortOrder;
   final List<ProductVariant> variants;
   final List<ModifierGroup> modifierGroups;
+}
+
+class ProductMenuUsage {
+  const ProductMenuUsage({
+    required this.productId,
+    required this.activePlacementCount,
+    required this.menuNames,
+  });
+
+  factory ProductMenuUsage.fromJson(JsonMap json) {
+    final List<String> names = _maps(json['menus'])
+        .map((JsonMap menu) => readString(menu['menuName']).trim())
+        .where((String name) => name.isNotEmpty)
+        .toSet()
+        .take(3)
+        .toList(growable: false);
+    return ProductMenuUsage(
+      productId: _requiredInt(json, 'productId'),
+      activePlacementCount: readInt(json['activePlacementCount']) ?? 0,
+      menuNames: names,
+    );
+  }
+
+  final int productId;
+  final int activePlacementCount;
+  final List<String> menuNames;
 }
 
 String? _optional(dynamic value) {

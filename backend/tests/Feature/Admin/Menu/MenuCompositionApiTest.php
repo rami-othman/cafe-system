@@ -34,7 +34,8 @@ class MenuCompositionApiTest extends TestCase
         $this->assertDatabaseHas('menu_item_placements', ['id' => $placementId]);
         $this->getJson("/api/v1/admin/catalog/products/{$productId}/menu-usage", $this->headers($tenantId))->assertOk()->assertJsonPath('data.activePlacementCount', 0)->assertJsonCount(0, 'data.menus');
         $this->getJson("/api/v1/admin/catalog/products/{$productId}/menu-usage?includeArchived=true", $this->headers($tenantId))->assertOk()->assertJsonPath('data.activePlacementCount', 0)->assertJsonCount(1, 'data.menus');
-        $this->postJson("/api/v1/admin/menus/{$menuId}/sections", ['name' => 'Blocked'], $this->headers($tenantId))->assertNotFound();
+        $this->postJson("/api/v1/admin/menus/{$menuId}/sections", ['name' => 'Blocked'], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('menu');
+        $this->postJson("/api/v1/admin/menu-sections/{$sectionId}/archive", [], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('menu');
         $this->postJson("/api/v1/admin/menu-sections/{$sectionId}/placements", ['productId' => $productId], $this->headers($tenantId))->assertUnprocessable();
         $this->postJson("/api/v1/admin/menus/{$menuId}/restore", [], $this->headers($tenantId))->assertOk()->assertJsonPath('data.status', 'draft');
         $this->assertDatabaseHas('menu_audit_logs', ['tenant_id' => $tenantId]);
@@ -53,6 +54,19 @@ class MenuCompositionApiTest extends TestCase
         $this->putJson("/api/v1/admin/menu-sections/{$target}/placements", ['placements' => [['id' => $placement, 'productId' => $firstProduct, 'sortOrder' => 0, 'isFeatured' => true], ['productId' => $secondProduct, 'sortOrder' => 1, 'isVisible' => true]]], $this->headers($tenantId))->assertOk()->assertJsonCount(2, 'data');
         $this->postJson("/api/v1/admin/menu-sections/{$target}/placements/reorder", ['items' => [['id' => $placement, 'sortOrder' => 1], ['id' => 999999, 'sortOrder' => 0]]], $this->headers($tenantId))->assertUnprocessable();
         $this->assertDatabaseHas('menu_item_placements', ['id' => $placement, 'sort_order' => 0, 'is_featured' => true]);
+    }
+
+    public function test_section_placement_listing_includes_archived_metadata_only_when_requested(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $productId = $this->product($tenantId, 'Archived listing product');
+        $menuId = $this->postJson('/api/v1/admin/menus', ['name' => 'Placement listing'], $this->headers($tenantId))->json('data.id');
+        $sectionId = $this->postJson("/api/v1/admin/menus/{$menuId}/sections", ['name' => 'Coffee'], $this->headers($tenantId))->json('data.id');
+        $placementId = $this->postJson("/api/v1/admin/menu-sections/{$sectionId}/placements", ['productId' => $productId], $this->headers($tenantId))->json('data.id');
+
+        $this->postJson("/api/v1/admin/menu-item-placements/{$placementId}/archive", [], $this->headers($tenantId))->assertOk();
+        $this->getJson("/api/v1/admin/menu-sections/{$sectionId}/placements", $this->headers($tenantId))->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson("/api/v1/admin/menu-sections/{$sectionId}/placements?includeArchived=true", $this->headers($tenantId))->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $placementId)->assertJsonPath('data.0.archivedAt', fn ($value) => $value !== null);
     }
 
     public function test_foreign_products_inactive_variants_and_invalid_schedule_or_assignment_data_are_rejected(): void
@@ -116,6 +130,57 @@ class MenuCompositionApiTest extends TestCase
             $this->putJson("/api/v1/admin/menus/{$menuId}/assignments", ['assignments' => [['branchId' => $branchId, 'channel' => 'pos']]], $this->headers($tenantId))->assertOk();
         }
         $this->assertDatabaseCount('menu_assignments', 2);
+    }
+
+    public function test_assignment_scope_sync_is_tenant_scoped_and_reorders_atomically(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $branchId = $this->branch($tenantId);
+        $first = $this->postJson('/api/v1/admin/menus', ['name' => 'Breakfast'], $this->headers($tenantId))->json('data.id');
+        $second = $this->postJson('/api/v1/admin/menus', ['name' => 'Evening'], $this->headers($tenantId))->json('data.id');
+
+        $this->putJson('/api/v1/admin/menu-management/assignments', [
+            'branchId' => $branchId,
+            'channel' => 'pos',
+            'assignments' => [
+                ['menuId' => $first, 'priority' => 0, 'isActive' => true],
+                ['menuId' => $second, 'priority' => 1, 'isActive' => false],
+            ],
+        ], $this->headers($tenantId))->assertOk()->assertJsonPath('data.0.menuId', $first)->assertJsonPath('data.0.menu.name', 'Breakfast');
+
+        $this->getJson("/api/v1/admin/menu-management/assignments?branchId={$branchId}&channel=pos", $this->headers($tenantId))
+            ->assertOk()->assertJsonCount(2, 'data')->assertJsonPath('data.1.isActive', false);
+
+        $this->putJson('/api/v1/admin/menu-management/assignments', [
+            'branchId' => $branchId,
+            'channel' => 'pos',
+            'assignments' => [
+                ['menuId' => $second, 'priority' => 0, 'isActive' => true],
+            ],
+        ], $this->headers($tenantId))->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.menuId', $second);
+        $this->assertDatabaseMissing('menu_assignments', ['menu_id' => $first, 'branch_id' => $branchId, 'channel' => 'pos']);
+        $this->assertDatabaseHas('menu_assignments', ['menu_id' => $second, 'branch_id' => $branchId, 'channel' => 'pos', 'priority' => 0, 'is_active' => true]);
+
+        $foreignMenu = $this->postJson('/api/v1/admin/menus', ['name' => 'Foreign'], $this->headers($this->tenant('beta')))->json('data.id');
+        $this->putJson('/api/v1/admin/menu-management/assignments', ['branchId' => $branchId, 'channel' => 'pos', 'assignments' => [['menuId' => $foreignMenu]]], $this->headers($tenantId))
+            ->assertUnprocessable()->assertJsonValidationErrors('assignments');
+        $this->assertDatabaseHas('menu_assignments', ['menu_id' => $second, 'branch_id' => $branchId, 'priority' => 0]);
+    }
+
+    public function test_menu_detail_can_include_archived_sections_for_diagnostics(): void
+    {
+        $tenantId = $this->tenant('alpha');
+        $menuId = $this->postJson('/api/v1/admin/menus', ['name' => 'Main'], $this->headers($tenantId))->json('data.id');
+        $sectionId = $this->postJson("/api/v1/admin/menus/{$menuId}/sections", ['name' => 'Coffee'], $this->headers($tenantId))->json('data.id');
+        $this->postJson("/api/v1/admin/menu-sections/{$sectionId}/archive", [], $this->headers($tenantId))->assertOk();
+
+        $this->getJson("/api/v1/admin/menus/{$menuId}?includeArchived=true", $this->headers($tenantId))
+            ->assertOk()
+            ->assertJsonPath('data.sections.0.id', $sectionId)
+            ->assertJsonPath('data.sections.0.archivedAt', fn ($value) => $value !== null);
+
+        $this->postJson("/api/v1/admin/menus/{$menuId}/archive", [], $this->headers($tenantId))->assertOk()
+            ->assertJsonPath('data.archivedAt', fn ($value) => $value !== null);
     }
 
     private function tenant(string $slug): int

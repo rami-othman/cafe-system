@@ -118,7 +118,9 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                 ),
                 const Spacer(),
                 FilledButton.icon(
-                  onPressed: state.status == ProductEditorStatus.submitting
+                  onPressed:
+                      state.status == ProductEditorStatus.submitting ||
+                          state.isReadOnly
                       ? null
                       : cubit.submit,
                   icon: state.status == ProductEditorStatus.submitting
@@ -142,7 +144,19 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            if (state.formError != null) ...<Widget>[
+            if (state.isReadOnly) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _Banner(
+                message:
+                    'This Product is archived and can no longer be edited.',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton(
+                onPressed: () =>
+                    context.go('/menu-management/products/${widget.productId}'),
+                child: const Text('View Product Detail'),
+              ),
+            ] else if (state.formError != null) ...<Widget>[
               const SizedBox(height: AppSpacing.md),
               _Banner(message: state.formError!),
             ],

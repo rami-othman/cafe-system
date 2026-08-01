@@ -11,9 +11,23 @@ import '../../features/reports/controllers/daily_report_cubit.dart';
 import '../../features/reports/repositories/reports_repository.dart';
 import '../../features/menu_management/controllers/product_catalog_cubit.dart';
 import '../../features/menu_management/controllers/product_detail_cubit.dart';
+import '../../features/menu_management/controllers/product_lifecycle_cubit.dart';
 import '../../features/menu_management/products/controllers/product_editor_cubit.dart';
 import '../../features/menu_management/variants/controllers/variants_cubit.dart';
+import '../../features/menu_management/pricing/controllers/variant_price_overrides_cubit.dart';
+import '../../features/menu_management/availability/controllers/availability_cubit.dart';
+import '../../features/menu_management/operational_availability/controllers/operational_availability_cubit.dart';
 import '../../features/menu_management/repositories/menu_catalog_repository.dart';
+import '../../features/menu_management/modifiers/controllers/modifier_library_cubit.dart';
+import '../../features/menu_management/modifiers/controllers/modifier_group_detail_cubit.dart';
+import '../../features/menu_management/modifiers/controllers/modifier_group_editor_cubit.dart';
+import '../../features/menu_management/products/controllers/product_modifier_assignments_cubit.dart';
+import '../../features/menu_management/menus/controllers/menu_list_cubit.dart';
+import '../../features/menu_management/menus/controllers/menu_detail_cubit.dart';
+import '../../features/menu_management/menus/controllers/menu_editor_cubit.dart';
+import '../../features/menu_management/menus/controllers/product_placements_cubit.dart';
+import '../../features/menu_management/assignments/controllers/menu_assignments_cubit.dart';
+import '../../features/menu_management/review/controllers/menu_review_cubit.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -96,6 +110,13 @@ void setupServiceLocator({bool useBackend = true}) {
       ),
     );
   }
+  if (!serviceLocator.isRegistered<ProductLifecycleCubit>()) {
+    serviceLocator.registerFactory<ProductLifecycleCubit>(
+      () => ProductLifecycleCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
 
   if (!serviceLocator.isRegistered<ProductEditorCubit>()) {
     serviceLocator.registerFactory<ProductEditorCubit>(
@@ -107,6 +128,92 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<VariantsCubit>()) {
     serviceLocator.registerFactory<VariantsCubit>(
       () => VariantsCubit(repository: serviceLocator<MenuCatalogRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<VariantPriceOverridesCubit>()) {
+    serviceLocator.registerFactory<VariantPriceOverridesCubit>(
+      () => VariantPriceOverridesCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<AvailabilityCubit>()) {
+    serviceLocator.registerFactory<AvailabilityCubit>(
+      () => AvailabilityCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<OperationalAvailabilityCubit>()) {
+    serviceLocator.registerFactory<OperationalAvailabilityCubit>(
+      () => OperationalAvailabilityCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ModifierLibraryCubit>()) {
+    serviceLocator.registerFactory<ModifierLibraryCubit>(
+      () => ModifierLibraryCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ModifierGroupDetailCubit>()) {
+    serviceLocator.registerFactory<ModifierGroupDetailCubit>(
+      () => ModifierGroupDetailCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ModifierGroupEditorCubit>()) {
+    serviceLocator.registerFactory<ModifierGroupEditorCubit>(
+      () => ModifierGroupEditorCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ProductModifierAssignmentsCubit>()) {
+    serviceLocator.registerFactory<ProductModifierAssignmentsCubit>(
+      () => ProductModifierAssignmentsCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<MenuListCubit>()) {
+    serviceLocator.registerFactory<MenuListCubit>(
+      () => MenuListCubit(repository: serviceLocator<MenuCatalogRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<MenuAssignmentsCubit>()) {
+    serviceLocator.registerFactory<MenuAssignmentsCubit>(
+      () => MenuAssignmentsCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<MenuReviewCubit>()) {
+    serviceLocator.registerFactory<MenuReviewCubit>(
+      () =>
+          MenuReviewCubit(repository: serviceLocator<MenuCatalogRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<MenuDetailCubit>()) {
+    serviceLocator.registerFactory<MenuDetailCubit>(
+      () =>
+          MenuDetailCubit(repository: serviceLocator<MenuCatalogRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<MenuEditorCubit>()) {
+    serviceLocator.registerFactory<MenuEditorCubit>(
+      () =>
+          MenuEditorCubit(repository: serviceLocator<MenuCatalogRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ProductPlacementsCubit>()) {
+    serviceLocator.registerFactory<ProductPlacementsCubit>(
+      () => ProductPlacementsCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
     );
   }
 }

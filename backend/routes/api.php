@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\Catalog\ProductAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
+use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentScopeController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Menu\MenuController as AdminMenuController;
 use App\Http\Controllers\Api\Admin\Menu\MenuItemPlacementController;
@@ -155,6 +156,10 @@ Route::prefix('v1')->group(function (): void {
         Route::controller(AdminMenuAssignmentController::class)->group(function (): void {
             Route::get('menus/{menu}/assignments', 'index');
             Route::put('menus/{menu}/assignments', 'sync');
+        });
+        Route::controller(MenuAssignmentScopeController::class)->group(function (): void {
+            Route::get('menu-management/assignments', 'index');
+            Route::put('menu-management/assignments', 'sync');
         });
         Route::controller(MenuAvailabilityRuleController::class)->group(function (): void {
             Route::get('menus/{menu}/availability-rules', 'index');

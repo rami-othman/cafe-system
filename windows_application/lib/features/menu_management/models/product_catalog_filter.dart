@@ -35,6 +35,17 @@ class ProductCatalogFilter {
       sort != 'sort_order' ||
       direction != 'asc';
 
+  bool get hasActiveFiltersExceptStatus =>
+      search.isNotEmpty ||
+      categoryId != null ||
+      reportingCategoryId != null ||
+      kitchenStationId != null ||
+      productType != null ||
+      hasVariants != null ||
+      hasModifierGroups != null ||
+      sort != 'sort_order' ||
+      direction != 'asc';
+
   ProductCatalogFilter copyWith({
     String? search,
     int? categoryId,
