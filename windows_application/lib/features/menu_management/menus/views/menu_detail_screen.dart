@@ -158,7 +158,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              menu.localizedName,
+              menu.displayName(Localizations.localeOf(context)),
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
@@ -300,7 +300,9 @@ class _SectionsTable extends StatelessWidget {
           final int index = allActive.indexWhere((s) => s.id == section.id);
           return DataRow(
             cells: <DataCell>[
-              DataCell(Text(section.localizedName)),
+              DataCell(
+                Text(section.displayName(Localizations.localeOf(context))),
+              ),
               DataCell(
                 Text(
                   section.isArchived

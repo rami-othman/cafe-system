@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 import '../constants/app_constants.dart';
@@ -26,4 +27,14 @@ abstract final class CurrencyFormatter {
       name: currencyCode,
     ).format(amount);
   }
+
+  static String formatForContext(
+    BuildContext context,
+    num amount, {
+    String currencyCode = AppConstants.defaultCurrencyCode,
+  }) => format(
+    amount,
+    locale: Localizations.localeOf(context).toLanguageTag(),
+    currencyCode: currencyCode,
+  );
 }

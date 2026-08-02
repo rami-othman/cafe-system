@@ -243,7 +243,7 @@ class _Table extends StatelessWidget {
               (m) => DataRow(
                 cells: <DataCell>[
                   DataCell(
-                    Text(m.localizedName),
+                    Text(m.displayName(Localizations.localeOf(context))),
                     onTap: () => context.go('/menu-management/menus/${m.id}'),
                   ),
                   DataCell(Text(m.isArchived ? 'Archived' : m.status)),

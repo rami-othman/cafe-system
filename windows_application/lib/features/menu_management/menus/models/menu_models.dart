@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:windows_application/core/utils/localized_entity_text.dart';
+
 import '../../../pos/models/json_helpers.dart';
 
 typedef MenuJson = Map<String, dynamic>;
@@ -73,6 +77,12 @@ class MenuRecord {
   final List<MenuSectionRecord> sections;
   bool get isArchived => archivedAt != null || status == 'archived';
   String get localizedName => nameEn.isNotEmpty ? nameEn : name;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class MenuSectionRecord {
@@ -114,6 +124,12 @@ class MenuSectionRecord {
   final DateTime? archivedAt, createdAt, updatedAt;
   bool get isArchived => archivedAt != null;
   String get localizedName => nameEn.isNotEmpty ? nameEn : name;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class MenuSectionReorderItem {

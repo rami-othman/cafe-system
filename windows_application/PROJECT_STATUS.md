@@ -191,7 +191,12 @@ Phase 4D.3B — Operational Resolution Diagnostic: Complete
 
 ## In Progress
 
-- None.
+- Cross-cutting Flutter localization: English and Arabic generated ARB resources,
+  app-level locale Cubit, persisted `app_locale` preference, top-bar selector, RTL
+  shell support, localized backend-display helpers, formatter helpers, and focused
+  tests are in progress. Menu Management remains paused after Phase 4E.1 + 4E.2;
+  no publishing, Version History, comparison, rollback, or POS Sync work is part of
+  this phase.
 
 ## Next Step
 
@@ -224,6 +229,12 @@ Version History, and POS sync UI deferred.
 - Tablet support requirements are not defined yet.
 
 ## Recent Changes Log
+
+- 2026-08-01: Added official Flutter English/Arabic localization infrastructure
+  (`gen_l10n` ARB files), app locale persistence, runtime top-bar language
+  selection, RTL-aware shared shell geometry, localized backend-value/entity-field
+  helpers, and locale-aware formatting utilities. No Laravel Backend behavior or
+  Menu Management functionality changed.
 
 - 2026-06-09: Implemented shared theme/design system foundation with warm
   artisan cafe colors, Manrope typography registration, spacing/radius/size

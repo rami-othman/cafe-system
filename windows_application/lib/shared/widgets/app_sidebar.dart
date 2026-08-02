@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../l10n/app_localizations.dart';
 import 'app_sidebar_item.dart';
 
 class AppSidebar extends StatelessWidget {
@@ -20,18 +21,18 @@ class AppSidebar extends StatelessWidget {
   final bool isCollapsed;
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
-    _SidebarDestination('Dashboard', Icons.dashboard_outlined),
-    _SidebarDestination('POS', Icons.point_of_sale_outlined, '/'),
-    _SidebarDestination('Orders', Icons.receipt_long_outlined, '/orders'),
-    _SidebarDestination('Customers', Icons.groups_outlined),
-    _SidebarDestination('Discounts', Icons.local_offer_outlined, '/discounts'),
+    _SidebarDestination('dashboard', Icons.dashboard_outlined),
+    _SidebarDestination('pos', Icons.point_of_sale_outlined, '/'),
+    _SidebarDestination('orders', Icons.receipt_long_outlined, '/orders'),
+    _SidebarDestination('customers', Icons.groups_outlined),
+    _SidebarDestination('discounts', Icons.local_offer_outlined, '/discounts'),
     _SidebarDestination(
-      'Menu Management',
+      'menuManagement',
       Icons.restaurant_menu_outlined,
       '/menu-management/products',
     ),
-    _SidebarDestination('Inventory', Icons.inventory_2_outlined),
-    _SidebarDestination('Reports', Icons.bar_chart_outlined, '/reports'),
+    _SidebarDestination('inventory', Icons.inventory_2_outlined),
+    _SidebarDestination('reports', Icons.bar_chart_outlined, '/reports'),
   ];
 
   @override
@@ -40,10 +41,12 @@ class AppSidebar extends StatelessWidget {
       width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,
       decoration: const BoxDecoration(
         color: AppColors.sidebarBackground,
-        border: Border(right: BorderSide(color: AppColors.shellBorder)),
+        border: BorderDirectional(
+          end: BorderSide(color: AppColors.shellBorder),
+        ),
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
+        padding: EdgeInsetsDirectional.fromSTEB(
           isCollapsed ? AppSpacing.sm : AppSpacing.lg,
           AppSpacing.xxl,
           isCollapsed ? AppSpacing.sm : AppSpacing.md,
@@ -70,8 +73,10 @@ class AppSidebar extends StatelessWidget {
                           in _destinations)
                         AppSidebarItem(
                           icon: destination.icon,
-                          label: destination.label,
-                          isActive: destination.label == activeLabel,
+                          label: _labelFor(context, destination.id),
+                          isActive:
+                              destination.id == activeLabel ||
+                              _englishLabel(destination.id) == activeLabel,
                           isCollapsed: isCollapsed,
                           onTap: destination.routePath == null
                               ? null
@@ -80,7 +85,7 @@ class AppSidebar extends StatelessWidget {
                       if (!pinSettings)
                         AppSidebarItem(
                           icon: Icons.settings_outlined,
-                          label: 'Settings',
+                          label: _settingsLabel(context),
                           isCollapsed: isCollapsed,
                         ),
                     ],
@@ -89,7 +94,7 @@ class AppSidebar extends StatelessWidget {
                 if (pinSettings)
                   AppSidebarItem(
                     icon: Icons.settings_outlined,
-                    label: 'Settings',
+                    label: _settingsLabel(context),
                     isCollapsed: isCollapsed,
                   ),
               ],
@@ -136,7 +141,7 @@ class _LogoBlock extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                AppConstants.appName,
+                _appName(context),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.bodyLarge.copyWith(
@@ -146,7 +151,7 @@ class _LogoBlock extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'OPERATIONAL HUB',
+                _operationalHub(context),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.labelSmall.copyWith(
@@ -163,10 +168,59 @@ class _LogoBlock extends StatelessWidget {
   }
 }
 
-class _SidebarDestination {
-  const _SidebarDestination(this.label, this.icon, [this.routePath]);
+String _labelFor(BuildContext context, String id) {
+  final AppLocalizations? l10n = Localizations.of<AppLocalizations>(
+    context,
+    AppLocalizations,
+  );
+  if (l10n == null) return _englishLabel(id);
+  return switch (id) {
+    'dashboard' => l10n.navigationDashboard,
+    'pos' => l10n.navigationPos,
+    'orders' => l10n.navigationOrders,
+    'customers' => l10n.navigationCustomers,
+    'discounts' => l10n.navigationDiscounts,
+    'menuManagement' => l10n.navigationMenuManagement,
+    'inventory' => l10n.navigationInventory,
+    'reports' => l10n.navigationReports,
+    _ => l10n.commonUnknown,
+  };
+}
 
-  final String label;
+String _settingsLabel(BuildContext context) =>
+    Localizations.of<AppLocalizations>(
+      context,
+      AppLocalizations,
+    )?.navigationSettings ??
+    'Settings';
+
+String _appName(BuildContext context) =>
+    Localizations.of<AppLocalizations>(context, AppLocalizations)?.appName ??
+    AppConstants.appName;
+
+String _operationalHub(BuildContext context) =>
+    Localizations.of<AppLocalizations>(
+      context,
+      AppLocalizations,
+    )?.operationalHub ??
+    'OPERATIONAL HUB';
+
+String _englishLabel(String id) => switch (id) {
+  'dashboard' => 'Dashboard',
+  'pos' => 'POS',
+  'orders' => 'Orders',
+  'customers' => 'Customers',
+  'discounts' => 'Discounts',
+  'menuManagement' => 'Menu Management',
+  'inventory' => 'Inventory',
+  'reports' => 'Reports',
+  _ => '',
+};
+
+class _SidebarDestination {
+  const _SidebarDestination(this.id, this.icon, [this.routePath]);
+
+  final String id;
   final IconData icon;
   final String? routePath;
 }

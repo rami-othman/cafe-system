@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:windows_application/core/utils/localized_entity_text.dart';
+
 import '../../pos/models/json_helpers.dart';
 
 typedef JsonMap = Map<String, dynamic>;
@@ -181,6 +185,13 @@ class ProductVariant {
   final DateTime? archivedAt;
 
   bool get isArchived => archivedAt != null || !isActive;
+
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class ModifierOption {
@@ -330,6 +341,13 @@ class ProductSummary {
   final DateTime? archivedAt;
 
   bool get isArchived => archivedAt != null;
+
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class ProductDetail extends ProductSummary {

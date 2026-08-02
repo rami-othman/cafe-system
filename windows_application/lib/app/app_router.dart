@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
+
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
@@ -57,7 +59,7 @@ final GoRouter appRouter = GoRouter(
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
         final AppShell shell = AppShell(
-          activeLabel: _activeLabelFor(state),
+          activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
           onRefresh: _refreshActionFor(state),
@@ -402,15 +404,15 @@ Future<void> Function(BuildContext context)? _refreshActionFor(
   };
 }
 
-String _activeLabelFor(GoRouterState state) {
+String _activeDestinationFor(GoRouterState state) {
   if (state.uri.path.startsWith(AppRoutes.menuManagement)) {
-    return 'Menu Management';
+    return 'menuManagement';
   }
   return switch (state.matchedLocation) {
-    AppRoutes.discounts || AppRoutes.discountCreate => 'Discounts',
-    AppRoutes.orders => 'Orders',
-    AppRoutes.reports => 'Reports',
-    _ => 'POS',
+    AppRoutes.discounts || AppRoutes.discountCreate => 'discounts',
+    AppRoutes.orders => 'orders',
+    AppRoutes.reports => 'reports',
+    _ => 'pos',
   };
 }
 
@@ -503,5 +505,5 @@ class _InvalidCatalogRouteScreen extends StatelessWidget {
   const _InvalidCatalogRouteScreen();
   @override
   Widget build(BuildContext context) =>
-      const Center(child: Text('The requested catalog route is invalid.'));
+      Center(child: Text(AppLocalizations.of(context).invalidCatalogRoute));
 }

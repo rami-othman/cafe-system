@@ -1,5 +1,9 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
+import 'dart:ui';
+
+import 'package:windows_application/core/utils/localized_entity_text.dart';
+
 import '../../modifiers/models/modifier_models.dart';
 import '../../models/catalog_models.dart';
 import '../../../pos/models/json_helpers.dart';
@@ -109,6 +113,12 @@ class ProductModifierAssignment {
   bool get effectiveAllowQuantity =>
       allowQuantityOverride ?? libraryAllowQuantity;
   String get localizedName => nameEn ?? nameAr ?? name;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 
   ProductModifierAssignment copyWith({
     int? sortOrder,

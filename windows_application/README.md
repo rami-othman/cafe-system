@@ -42,6 +42,22 @@ flutter run -d windows
 
 Backend tax rates are supplied with each branch and stored on backend orders/receipts. The shared Flutter tax configuration is only a fallback for local/mock data or malformed responses.
 
+## Localization
+
+The desktop application supports English (`en`) and Arabic (`ar`) through Flutter
+`gen_l10n`. Translation sources are `lib/l10n/app_en.arb` and `lib/l10n/app_ar.arb`;
+run `flutter gen-l10n` after changing them. The top-bar language selector changes
+the UI immediately and persists its choice under `app_locale`; a missing preference
+uses a supported operating-system locale and otherwise falls back to English.
+
+Arabic uses RTL layout. New shared UI must use directional layout primitives, retain
+technical values such as SKU and API codes as focused LTR islands, and format dates,
+numbers, and branch currency using the active display locale without changing API
+numeric serialization. See `../docs/FLUTTER_LOCALIZATION_ARCHITECTURE.md` for the
+entity-field fallback and enum/reason-code presentation rules. Menu Management is
+paused after Phase 4E.1 + 4E.2; no publishing, version-history, or POS-sync work was
+added by localization.
+
 Menu Management includes the central Modifier Library routes: `/menu-management/modifiers`, `/create`, `/:modifierGroupId`, and `/:modifierGroupId/edit`. It manages reusable Modifier Groups and their Options, including archive/restore and active-option ordering. Price Delta belongs to an Option; Variant Base Price belongs to its Variant. Product Modifier Assignment is implemented separately at the Product route. POS continues to use the temporary Catalog API.
 
 ## Scheduled Product and Variant Availability

@@ -69,7 +69,7 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      group.localizedName,
+                      group.displayName(Localizations.localeOf(context)),
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -216,7 +216,7 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
           final ModifierOptionRecord o = entry.value;
           return DataRow(
             cells: <DataCell>[
-              DataCell(Text(o.localizedName)),
+              DataCell(Text(o.displayName(Localizations.localeOf(context)))),
               DataCell(Text(catalogMoney(o.priceDelta))),
               DataCell(
                 o.isDefault

@@ -264,7 +264,7 @@ class _GroupTable extends StatelessWidget {
               (g) => DataRow(
                 cells: <DataCell>[
                   DataCell(
-                    Text(g.localizedName),
+                    Text(g.displayName(Localizations.localeOf(context))),
                     onTap: () =>
                         context.go('/menu-management/modifiers/${g.id}'),
                   ),

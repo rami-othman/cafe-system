@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../app/localization/app_locale_cubit.dart';
+import '../../app/localization/app_locale_repository.dart';
 import '../network/dio_api_client.dart';
 import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
@@ -32,6 +34,17 @@ import '../../features/menu_management/review/controllers/menu_review_cubit.dart
 final GetIt serviceLocator = GetIt.instance;
 
 void setupServiceLocator({bool useBackend = true}) {
+  if (!serviceLocator.isRegistered<AppLocaleRepository>()) {
+    serviceLocator.registerLazySingleton<AppLocaleRepository>(
+      SharedPreferencesAppLocaleRepository.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<AppLocaleCubit>()) {
+    serviceLocator.registerFactory<AppLocaleCubit>(
+      () => AppLocaleCubit(repository: serviceLocator<AppLocaleRepository>()),
+    );
+  }
+
   if (!serviceLocator.isRegistered<DioApiClient>()) {
     serviceLocator.registerLazySingleton<DioApiClient>(DioApiClient.new);
   }

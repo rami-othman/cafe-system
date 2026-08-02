@@ -75,7 +75,7 @@ class _ProductPlacementsScreenState extends State<ProductPlacementsScreen> {
                     label: const Text('Back'),
                   ),
                   Text(
-                    menu.localizedName,
+                    menu.displayName(Localizations.localeOf(context)),
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -148,7 +148,7 @@ class _ProductPlacementsScreenState extends State<ProductPlacementsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        section.localizedName,
+                        section.displayName(Localizations.localeOf(context)),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -561,7 +561,9 @@ class _Move extends StatelessWidget {
           children: [
             for (final section in eligible)
               ListTile(
-                title: Text(section.localizedName),
+                title: Text(
+                  section.displayName(Localizations.localeOf(context)),
+                ),
                 onTap: () => Navigator.pop(context, section.id),
               ),
           ],
