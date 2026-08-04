@@ -6,12 +6,10 @@ import 'app_locale_repository.dart';
 import 'app_locale_state.dart';
 
 class AppLocaleCubit extends Cubit<AppLocaleState> {
-  AppLocaleCubit({
-    required this.repository,
-    Locale Function()? systemLocale,
-  }) : _systemLocale =
-           systemLocale ?? (() => PlatformDispatcher.instance.locale),
-       super(const AppLocaleState(locale: Locale('en')));
+  AppLocaleCubit({required this.repository, Locale Function()? systemLocale})
+    : _systemLocale =
+          systemLocale ?? (() => PlatformDispatcher.instance.locale),
+      super(const AppLocaleState(locale: Locale('en')));
 
   static const Locale english = Locale('en');
   static const Locale arabic = Locale('ar');

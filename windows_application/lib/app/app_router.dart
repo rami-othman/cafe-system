@@ -51,6 +51,7 @@ import '../features/menu_management/assignments/controllers/menu_assignments_cub
 import '../features/menu_management/assignments/views/menu_assignments_screen.dart';
 import '../features/menu_management/review/controllers/menu_review_cubit.dart';
 import '../features/menu_management/review/views/menu_review_screen.dart';
+import '../features/menu_management/versions/controllers/published_version_cubit.dart';
 import 'app_shell.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -231,14 +232,25 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementReview,
           name: AppRouteNames.menuManagementReview,
-          builder: (context, state) => BlocProvider<MenuReviewCubit>(
-            create: (_) => serviceLocator<MenuReviewCubit>(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<MenuReviewCubit>(
+                create: (_) => serviceLocator<MenuReviewCubit>(),
+              ),
+              BlocProvider<PublishedVersionCubit>(
+                create: (_) => serviceLocator<PublishedVersionCubit>(),
+              ),
+            ],
             child: MenuReviewScreen(
               branchId: int.tryParse(
                 state.uri.queryParameters['branchId'] ?? '',
               ),
               channel: state.uri.queryParameters['channel'],
               menuId: int.tryParse(state.uri.queryParameters['menuId'] ?? ''),
+              evaluationAt: DateTime.tryParse(
+                state.uri.queryParameters['at'] ?? '',
+              ),
+              showVersions: state.uri.queryParameters['tab'] == 'versions',
             ),
           ),
         ),

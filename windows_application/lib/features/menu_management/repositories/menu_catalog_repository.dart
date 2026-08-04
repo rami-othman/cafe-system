@@ -18,6 +18,7 @@ import '../pricing/models/variant_price_models.dart';
 import '../availability/models/availability_models.dart';
 import '../operational_availability/models/operational_availability_models.dart';
 import '../review/models/review_models.dart';
+import '../versions/models/published_version_models.dart';
 
 abstract class MenuCatalogRepository {
   Future<MenuValidationResult> validateMenu(
@@ -30,6 +31,30 @@ abstract class MenuCatalogRepository {
       throw UnsupportedError('Menu review is not configured.');
   Future<ResolvedPreview> previewMenuCollection(ReviewContext context) =>
       throw UnsupportedError('Menu review is not configured.');
+  Future<MenuPublicationResult> publishMenuScope(ReviewContext context) =>
+      throw UnsupportedError('Menu publishing is not configured.');
+  Future<PublishedMenuVersion?> getCurrentPublishedVersion(
+    ReviewContext context,
+  ) => throw UnsupportedError('Current menu version is not configured.');
+  Future<PublishedVersionPage> listPublishedVersions({
+    required int branchId,
+    required String channel,
+    required int page,
+    int perPage = 20,
+  }) => throw UnsupportedError('Published version history is not configured.');
+  Future<PublishedVersionDetail> getPublishedVersion(
+    int versionId, {
+    bool includePayload = false,
+  }) => throw UnsupportedError('Published version detail is not configured.');
+  Future<VersionComparison> comparePublishedVersions(
+    int versionId,
+    int againstVersionId,
+  ) =>
+      throw UnsupportedError('Published version comparison is not configured.');
+  Future<RollbackResult> rollbackPublishedVersion(
+    int versionId, {
+    String? reason,
+  }) => throw UnsupportedError('Published version rollback is not configured.');
   Future<CatalogPage<ProductSummary>> listProducts({
     required ProductCatalogFilter filter,
     required int page,
@@ -307,6 +332,120 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
           ),
         ),
       );
+
+  @override
+  Future<MenuPublicationResult> publishMenuScope(ReviewContext c) async {
+    final dynamic response = await _apiClient.post(
+      'admin/menu-management/publish',
+      data: <String, dynamic>{
+        'branchId': c.branchId,
+        'channel': c.channel,
+        // Omission means the backend publishes its active assigned collection.
+        if (c.menuId != null) 'menuIds': <int>[c.menuId!],
+      },
+    );
+    if (response is! Map) {
+      throw const FormatException('Invalid menu publication response.');
+    }
+    return MenuPublicationResult.fromJson(Map<String, dynamic>.from(response));
+  }
+
+  @override
+  Future<PublishedMenuVersion?> getCurrentPublishedVersion(
+    ReviewContext c,
+  ) async {
+    final dynamic response = await _apiClient.get(
+      'admin/menu-management/current-version',
+      queryParameters: <String, dynamic>{
+        'branchId': c.branchId,
+        'channel': c.channel,
+      },
+    );
+    if (response == null) return null;
+    if (response is! Map) {
+      throw const FormatException('Invalid current menu version response.');
+    }
+    return PublishedMenuVersion.fromJson(Map<String, dynamic>.from(response));
+  }
+
+  @override
+  Future<PublishedVersionPage> listPublishedVersions({
+    required int branchId,
+    required String channel,
+    required int page,
+    int perPage = 20,
+  }) async {
+    final dynamic response = await _apiClient.getEnvelope(
+      'admin/menu-management/versions',
+      queryParameters: <String, dynamic>{
+        'branchId': branchId,
+        'channel': channel,
+        'page': page,
+        'perPage': perPage,
+      },
+    );
+    if (response is! Map) {
+      throw const FormatException(
+        'Invalid published version history response.',
+      );
+    }
+    return PublishedVersionPage.fromEnvelope(
+      Map<String, dynamic>.from(response),
+    );
+  }
+
+  @override
+  Future<PublishedVersionDetail> getPublishedVersion(
+    int versionId, {
+    bool includePayload = false,
+  }) async {
+    final dynamic response = await _apiClient.get(
+      'admin/menu-management/versions/$versionId',
+      queryParameters: includePayload
+          ? const <String, dynamic>{'includePayload': true}
+          : null,
+    );
+    if (response is! Map) {
+      throw const FormatException('Invalid published version detail response.');
+    }
+    return PublishedVersionDetail.fromJson(Map<String, dynamic>.from(response));
+  }
+
+  @override
+  Future<VersionComparison> comparePublishedVersions(
+    int versionId,
+    int againstVersionId,
+  ) async {
+    final dynamic response = await _apiClient.get(
+      'admin/menu-management/versions/$versionId/compare',
+      queryParameters: <String, dynamic>{'againstVersionId': againstVersionId},
+    );
+    if (response is! Map) {
+      throw const FormatException(
+        'Invalid published version comparison response.',
+      );
+    }
+    return VersionComparison.fromJson(Map<String, dynamic>.from(response));
+  }
+
+  @override
+  Future<RollbackResult> rollbackPublishedVersion(
+    int versionId, {
+    String? reason,
+  }) async {
+    final dynamic response = await _apiClient.post(
+      'admin/menu-management/versions/$versionId/rollback',
+      data: <String, dynamic>{
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
+    );
+    if (response is! Map) {
+      throw const FormatException(
+        'Invalid published version rollback response.',
+      );
+    }
+    return RollbackResult.fromJson(Map<String, dynamic>.from(response));
+  }
 
   @override
   Future<CatalogPage<MenuRecord>> listMenus({

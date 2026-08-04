@@ -254,4 +254,164 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get genericFormError =>
       'We could not save your changes. Review the highlighted fields and try again.';
+
+  @override
+  String get menuPublishTab => 'Publish';
+
+  @override
+  String get menuPublishAction => 'Publish Menu';
+
+  @override
+  String get menuPublishPublishing => 'Publishing…';
+
+  @override
+  String get menuPublishBranch => 'Branch';
+
+  @override
+  String get menuPublishChannel => 'Sales channel';
+
+  @override
+  String get menuPublishScope => 'Scope';
+
+  @override
+  String get menuPublishCollectionScope => 'Complete assigned Menu collection';
+
+  @override
+  String get menuPublishOneMenu => 'One Menu';
+
+  @override
+  String get menuPublishValidation => 'Last validation';
+
+  @override
+  String get menuPublishValidationRequired => 'Validation required';
+
+  @override
+  String get menuPublishCanPublish => 'Can Publish';
+
+  @override
+  String get menuPublishCannotPublish => 'Cannot Publish';
+
+  @override
+  String get menuPublishErrors => 'Errors';
+
+  @override
+  String get menuPublishWarnings => 'Warnings';
+
+  @override
+  String get menuPublishRunValidationFirst =>
+      'Run Validation for this selected scope before publishing.';
+
+  @override
+  String get menuPublishBlockedByValidation =>
+      'Publishing is disabled because the loaded validation contains errors.';
+
+  @override
+  String get menuPublishWarningsAllowed =>
+      'Warnings do not block publishing. Review them and confirm explicitly.';
+
+  @override
+  String get menuPublishConfirmTitle => 'Confirm Menu publication';
+
+  @override
+  String get menuPublishCurrentVersion => 'Current Published Version';
+
+  @override
+  String get menuPublishConfirmationExplanation =>
+      'Publishing creates a new immutable Menu Version for the selected Branch and Channel when the resolved Menu content has changed. Existing Orders are not modified.';
+
+  @override
+  String get menuPublishLoadingCurrentVersion =>
+      'Loading current published Version…';
+
+  @override
+  String get menuPublishNoCurrentVersion =>
+      'No Menu Version has been published for this Branch and Sales Channel.';
+
+  @override
+  String get menuPublishVersionNumber => 'Version';
+
+  @override
+  String get menuPublishStatus => 'Status';
+
+  @override
+  String get menuPublishPublishedAt => 'Published at';
+
+  @override
+  String get menuPublishChecksum => 'Checksum';
+
+  @override
+  String get menuPublishPublicationId => 'Publication ID';
+
+  @override
+  String get menuPublishSuccess => 'Menu publication successful.';
+
+  @override
+  String get menuPublishNoChanges => 'No Menu changes were detected.';
+
+  @override
+  String get menuPublishNoChangesExplanation =>
+      'The current published Version remains unchanged.';
+
+  @override
+  String get menuPublishBackendBlocked =>
+      'Backend validation blocked publication. No Version was created.';
+
+  @override
+  String get versionHistory => 'Version History';
+
+  @override
+  String get versionDetail => 'Version Detail';
+
+  @override
+  String get compareVersions => 'Compare Versions';
+
+  @override
+  String get identicalContent => 'Identical content';
+
+  @override
+  String get versionsAdded => 'Added';
+
+  @override
+  String get versionsRemoved => 'Removed';
+
+  @override
+  String get versionsChanged => 'Changed';
+
+  @override
+  String get versionPriceChanges => 'Price changes';
+
+  @override
+  String get versionModifierChanges => 'Modifier changes';
+
+  @override
+  String get versionScheduleChanges => 'Schedule changes';
+
+  @override
+  String get versionRollback => 'Rollback';
+
+  @override
+  String get versionRollbackReason => 'Rollback reason';
+
+  @override
+  String get versionNewRollback => 'New rollback Version';
+
+  @override
+  String get versionNoChangeRollback => 'No-change rollback';
+
+  @override
+  String get versionTruncatedComparison =>
+      'Only a bounded subset of differences is displayed.';
+
+  @override
+  String get versionImmutableSnapshot =>
+      'This is an immutable historical Snapshot.';
+
+  @override
+  String get versionStatusCurrent => 'Current';
+
+  @override
+  String get versionStatusSuperseded => 'Superseded';
+
+  @override
+  String get versionStatusRolledBack => 'Rolled back';
 }

@@ -1,5 +1,16 @@
 # Cafe System 618 Windows Application
 
+## Published Version History
+
+The Review workflow includes a Versions tab scoped only by Branch and Sales
+Channel. History is paginated and metadata-only; details show bounded Snapshot
+counts, while immutable JSON is fetched only as an explicit read-only LTR
+diagnostic. Backend comparison output is bounded and `truncated` is explicitly
+non-exhaustive. Rollback creates a new immutable Version and never reactivates a
+historical Version; no-change rollback refreshes History and Current Version.
+POS Snapshot Sync remains unimplemented and broader localization migration is
+still paused.
+
 Menus and Sections are administered through `/menu-management/menus`, `/create`,
 `/:menuId`, `/:menuId/edit`, and `/:menuId/placements`. A Catalog Product belongs
 to the Catalog; a Product Placement belongs to one Menu Section. Placements support
@@ -31,7 +42,7 @@ Product Modifier Assignment is available at `/menu-management/products/:productI
 
 The Flutter Windows desktop application supports POS, Orders, Discounts, Reports, and the read-only Menu Management Product Catalog. Menu Management uses the real Laravel Admin Catalog APIs; it contains no mock menu data.
 
-Menu Management also has a read-only Review & Preview workflow at `/menu-management/review`. It selects a tenant Branch and actual Sales Channel, then reviews either one assigned Menu or the complete assigned collection. Validation uses the menu-specific or collection endpoint and displays Backend severity diagnostics; its `isValid` response is the authoritative `canPublish` result. Resolved Preview uses the matching authoritative endpoint, with Backend-supported language, hidden-item, and unavailable-item controls. It presents resolved effective prices, scheduled and operational availability separately, final sellability and returned reason codes. This Preview payload is not a Published Snapshot payload. Publishing remains Phase 4E.3 and Version History remains Phase 4F.
+Menu Management has an integrated Review & Preview & Publish workflow at `/menu-management/review`. It selects a tenant Branch and actual Sales Channel, then reviews either one assigned Menu or the complete assigned collection. Validation is authoritative: errors block, while warnings and information remain diagnostic and warnings can proceed only after explicit confirmation. Publishing calls `POST /api/v1/admin/menu-management/publish`; a selected Menu sends its supported `menuIds` value and collection scope omits `menuIds` so Backend resolves active assignments. Backend reruns validation, creates an immutable Version only when semantic content changes, and records a no-change publication without creating a Version when it does not. Existing Orders are never modified. `GET /api/v1/admin/menu-management/current-version` displays metadata only, never the Snapshot payload. Operational sold-out, temporary overrides, and remaining quantities are excluded from immutable Snapshots. Phase 4F Version History, comparison, rollback, and POS Sync remain unimplemented.
 
 ```bash
 flutter pub get
@@ -55,8 +66,9 @@ technical values such as SKU and API codes as focused LTR islands, and format da
 numbers, and branch currency using the active display locale without changing API
 numeric serialization. See `../docs/FLUTTER_LOCALIZATION_ARCHITECTURE.md` for the
 entity-field fallback and enum/reason-code presentation rules. Menu Management is
-paused after Phase 4E.1 + 4E.2; no publishing, version-history, or POS-sync work was
-added by localization.
+paused after the new Phase 4E.3 publishing strings; no full screen-by-screen
+translation migration was added. Checksum, Version number, Publication ID, and
+diagnostic timestamps remain LTR in Arabic.
 
 Menu Management includes the central Modifier Library routes: `/menu-management/modifiers`, `/create`, `/:modifierGroupId`, and `/:modifierGroupId/edit`. It manages reusable Modifier Groups and their Options, including archive/restore and active-option ordering. Price Delta belongs to an Option; Variant Base Price belongs to its Variant. Product Modifier Assignment is implemented separately at the Product route. POS continues to use the temporary Catalog API.
 

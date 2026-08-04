@@ -8,6 +8,7 @@ class ReviewContext extends Equatable {
     required this.branchId,
     required this.channel,
     this.menuId,
+    this.evaluationAt,
     this.language = 'default',
     this.includeHidden = false,
     this.includeUnavailable = true,
@@ -16,6 +17,7 @@ class ReviewContext extends Equatable {
   final int branchId;
   final String channel;
   final int? menuId;
+  final DateTime? evaluationAt;
   final String language;
   final bool includeHidden;
   final bool includeUnavailable;
@@ -25,6 +27,7 @@ class ReviewContext extends Equatable {
   Map<String, dynamic> validationJson() => <String, dynamic>{
     'branchId': branchId,
     'channel': channel,
+    if (evaluationAt != null) 'at': evaluationAt!.toIso8601String(),
   };
 
   Map<String, dynamic> previewJson() => <String, dynamic>{
@@ -33,6 +36,7 @@ class ReviewContext extends Equatable {
     'language': language,
     'includeHidden': includeHidden,
     'includeUnavailable': includeUnavailable,
+    if (evaluationAt != null) 'at': evaluationAt!.toIso8601String(),
   };
 
   @override
@@ -40,6 +44,7 @@ class ReviewContext extends Equatable {
     branchId,
     channel,
     menuId,
+    evaluationAt,
     language,
     includeHidden,
     includeUnavailable,
@@ -201,6 +206,103 @@ class ResolvedPreview extends Equatable {
     timezone,
     evaluatedAt,
     menus,
+  ];
+}
+
+/// Metadata returned for the immutable version currently published for a
+/// Branch/Channel scope.  The publishing endpoints deliberately do not expose
+/// the snapshot payload to this administration workflow.
+class PublishedMenuVersion extends Equatable {
+  const PublishedMenuVersion({
+    required this.id,
+    required this.versionNumber,
+    required this.checksum,
+    required this.status,
+    required this.branchId,
+    required this.channel,
+    required this.publishedAt,
+    required this.publicationId,
+  });
+
+  factory PublishedMenuVersion.fromJson(Map<String, dynamic> json) =>
+      PublishedMenuVersion(
+        id: readInt(json['id']) ?? 0,
+        versionNumber: readInt(json['versionNumber']) ?? 0,
+        checksum: readString(json['checksum']),
+        // Keep backend additions safe to render instead of assuming an enum.
+        status: readString(json['status'], fallback: 'unknown'),
+        branchId: readInt(json['branchId']) ?? 0,
+        channel: readString(json['channel'], fallback: 'unknown'),
+        publishedAt: readString(json['publishedAt']),
+        publicationId: readInt(json['publicationId']),
+      );
+
+  final int id;
+  final int versionNumber;
+  final String checksum;
+  final String status;
+  final int branchId;
+  final String channel;
+  final String publishedAt;
+  final int? publicationId;
+
+  @override
+  List<Object?> get props => <Object?>[
+    id,
+    versionNumber,
+    checksum,
+    status,
+    branchId,
+    channel,
+    publishedAt,
+    publicationId,
+  ];
+}
+
+/// The result of a publish attempt.  Version values are server produced: the
+/// desktop client never calculates checksums, version numbers, or no-change
+/// state.
+class MenuPublicationResult extends Equatable {
+  const MenuPublicationResult({
+    required this.published,
+    required this.noChanges,
+    required this.publicationId,
+    required this.version,
+    required this.validation,
+  });
+
+  factory MenuPublicationResult.fromJson(Map<String, dynamic> json) {
+    final dynamic version = json['version'];
+    final dynamic validation = json['validation'];
+    if (version is! Map || validation is! Map) {
+      throw const FormatException('Invalid menu publication response.');
+    }
+    return MenuPublicationResult(
+      published: readBool(json['published']),
+      noChanges: readBool(json['noChanges']),
+      publicationId: readInt(json['publicationId']),
+      version: PublishedMenuVersion.fromJson(
+        Map<String, dynamic>.from(version),
+      ),
+      validation: MenuValidationResult.fromJson(
+        Map<String, dynamic>.from(validation),
+      ),
+    );
+  }
+
+  final bool published;
+  final bool noChanges;
+  final int? publicationId;
+  final PublishedMenuVersion version;
+  final MenuValidationResult validation;
+
+  @override
+  List<Object?> get props => <Object?>[
+    published,
+    noChanges,
+    publicationId,
+    version,
+    validation,
   ];
 }
 

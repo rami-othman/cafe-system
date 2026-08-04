@@ -1,10 +1,54 @@
 # Menu Management Architecture
 
+## Phase 4F Flutter Published Version Administration
+
+Flutter exposes a Versions tab in Review scoped only by Branch + Sales Channel.
+It calls the paginated history API for metadata only, fetches immutable Snapshot
+payload only as an explicit read-only LTR diagnostic, and renders backend-bounded
+comparison groups without a client-side recursive diff. `truncated` means the
+comparison is non-exhaustive. Rollback sends only the supported optional reason,
+creates a new immutable Version when content differs, never reactivates history,
+and refreshes Current Version and History for new and no-change results. POS
+Snapshot Sync remains unimplemented and broad localization migration remains
+paused.
+
+## Current Flutter Review & Preview status
+
+Flutter Phase 4E.1 (Menu Validation UI) and Phase 4E.2 (Resolved Menu Preview
+UI) are complete and read-only. Validation calls the Backend-authoritative
+menu-specific or assigned-collection endpoint; only its returned `isValid`
+value controls the displayed Can Publish state. Errors block future publishing;
+warnings and information remain diagnostics and never trigger client-side
+publishability calculations.
+
+Resolved Preview calls the matching Backend endpoint and renders its ordered
+resolved hierarchy, prices, availability layers, sellability, reason codes, and
+modifier constraints. It is diagnostic data, not an immutable Published Snapshot,
+and has no mutation, publish, version, comparison, rollback, or POS-sync control.
+Requests contain only supported context: Branch, Sales Channel, optional evaluated
+time (`at`), and the Backend-supported preview language/visibility controls.
+
+Flutter Phase 4E.3 Publishing and Current Version is **Complete**. The Review
+route's third tab uses `POST /api/v1/admin/menu-management/publish` and
+`GET /api/v1/admin/menu-management/current-version` for the same Branch, Channel,
+and selected Menu/collection context. One selected Menu is submitted through the
+supported `menuIds` field; collection scope omits it and Backend resolves active
+assignments. Current Version is metadata only: payload browsing is deliberately not
+implemented. Backend reruns validation during every publication. Warnings require
+explicit confirmation but allow publication; errors return a blocked state without
+claiming a Version. Changed semantic content creates an immutable current Version;
+identical semantic content records a no-change Publication and preserves the
+Version. Runtime sold-out, temporary override, and remaining-quantity state are
+excluded from immutable snapshots. Request tokens discard stale context, current
+Version, and publish responses. Phase 4F Version History, comparison, and rollback
+is **Not Started**; POS Sync is unimplemented. The localization foundation exists;
+screen-by-screen translation migration remains paused.
+
 ## Flutter Phase 4E.1 and 4E.2: Review & Preview
 
 The read-only Flutter route `/menu-management/review` accepts optional `branchId`, `channel`, and `menuId` query parameters. It sanitizes unsupported channels and unavailable selections, loads real Branches and active assignments, and sends only Branch ID and Sales Channel context to `POST /api/v1/admin/menus/{menu}/validate` or `POST /api/v1/admin/menu-management/validate`. Backend `isValid` is the authoritative publishability result: errors block, warnings do not, and information is diagnostic.
 
-The matching `POST /api/v1/admin/menus/{menu}/preview` and `POST /api/v1/admin/menu-management/preview` endpoints provide the resolved menu tree. Flutter does not reconstruct price or availability locally. It renders returned effective-price scope, scheduled availability, operational availability, final sellability, and reason codes distinctly, plus returned modifier selection constraints and option availability. Preview language (`default`, `ar`, `en`), hidden, and unavailable controls are limited to the Backend contract; evaluation uses the Branch timezone returned by Backend. Preview is diagnostic and is not a Published Snapshot payload. Publishing and Current Version remain Phase 4E.3; Version History, comparison, rollback, and POS sync remain out of scope.
+The matching `POST /api/v1/admin/menus/{menu}/preview` and `POST /api/v1/admin/menu-management/preview` endpoints provide the resolved menu tree. Flutter does not reconstruct price or availability locally. It renders returned effective-price scope, scheduled availability, operational availability, final sellability, and reason codes distinctly, plus returned modifier selection constraints and option availability. Preview language (`default`, `ar`, `en`), hidden, and unavailable controls are limited to the Backend contract; evaluation uses the Branch timezone returned by Backend. Preview is diagnostic and is not a Published Snapshot payload. Publishing and Current Version are Phase 4E.3 complete; Version History, comparison, rollback, and POS sync remain out of scope.
 
 ## Phase status
 

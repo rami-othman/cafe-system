@@ -266,4 +266,162 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get genericFormError =>
       'تعذر حفظ التغييرات. راجع الحقول المميزة وحاول مرة أخرى.';
+
+  @override
+  String get menuPublishTab => 'نشر';
+
+  @override
+  String get menuPublishAction => 'نشر القائمة';
+
+  @override
+  String get menuPublishPublishing => 'جارٍ النشر…';
+
+  @override
+  String get menuPublishBranch => 'الفرع';
+
+  @override
+  String get menuPublishChannel => 'قناة البيع';
+
+  @override
+  String get menuPublishScope => 'النطاق';
+
+  @override
+  String get menuPublishCollectionScope => 'مجموعة القوائم المعينة كاملة';
+
+  @override
+  String get menuPublishOneMenu => 'قائمة واحدة';
+
+  @override
+  String get menuPublishValidation => 'آخر تحقق';
+
+  @override
+  String get menuPublishValidationRequired => 'يلزم إجراء التحقق';
+
+  @override
+  String get menuPublishCanPublish => 'يمكن النشر';
+
+  @override
+  String get menuPublishCannotPublish => 'لا يمكن النشر';
+
+  @override
+  String get menuPublishErrors => 'الأخطاء';
+
+  @override
+  String get menuPublishWarnings => 'التحذيرات';
+
+  @override
+  String get menuPublishRunValidationFirst =>
+      'أجرِ التحقق للنطاق المحدد قبل النشر.';
+
+  @override
+  String get menuPublishBlockedByValidation =>
+      'النشر معطل لأن نتيجة التحقق المحملة تحتوي على أخطاء.';
+
+  @override
+  String get menuPublishWarningsAllowed =>
+      'التحذيرات لا تمنع النشر. راجعها وأكد النشر صراحةً.';
+
+  @override
+  String get menuPublishConfirmTitle => 'تأكيد نشر القائمة';
+
+  @override
+  String get menuPublishCurrentVersion => 'الإصدار المنشور الحالي';
+
+  @override
+  String get menuPublishConfirmationExplanation =>
+      'ينشئ النشر إصدارًا ثابتًا جديدًا للقائمة للفرع وقناة البيع المحددين عند تغير محتوى القائمة المحلول. لا يتم تعديل الطلبات الحالية.';
+
+  @override
+  String get menuPublishLoadingCurrentVersion =>
+      'جارٍ تحميل الإصدار المنشور الحالي…';
+
+  @override
+  String get menuPublishNoCurrentVersion =>
+      'لا يوجد إصدار قائمة منشور لهذا الفرع وقناة البيع.';
+
+  @override
+  String get menuPublishVersionNumber => 'الإصدار';
+
+  @override
+  String get menuPublishStatus => 'الحالة';
+
+  @override
+  String get menuPublishPublishedAt => 'نُشر في';
+
+  @override
+  String get menuPublishChecksum => 'البصمة';
+
+  @override
+  String get menuPublishPublicationId => 'معرف النشر';
+
+  @override
+  String get menuPublishSuccess => 'تم نشر القائمة بنجاح.';
+
+  @override
+  String get menuPublishNoChanges => 'لم يتم اكتشاف أي تغييرات في القائمة.';
+
+  @override
+  String get menuPublishNoChangesExplanation =>
+      'يبقى الإصدار المنشور الحالي دون تغيير.';
+
+  @override
+  String get menuPublishBackendBlocked =>
+      'حظر تحقق الخادم النشر. لم يتم إنشاء إصدار.';
+
+  @override
+  String get versionHistory => 'سجل الإصدارات';
+
+  @override
+  String get versionDetail => 'تفاصيل الإصدار';
+
+  @override
+  String get compareVersions => 'مقارنة الإصدارات';
+
+  @override
+  String get identicalContent => 'محتوى متطابق';
+
+  @override
+  String get versionsAdded => 'مضاف';
+
+  @override
+  String get versionsRemoved => 'محذوف';
+
+  @override
+  String get versionsChanged => 'متغير';
+
+  @override
+  String get versionPriceChanges => 'تغييرات الأسعار';
+
+  @override
+  String get versionModifierChanges => 'تغييرات الخيارات';
+
+  @override
+  String get versionScheduleChanges => 'تغييرات الجداول';
+
+  @override
+  String get versionRollback => 'تراجع';
+
+  @override
+  String get versionRollbackReason => 'سبب التراجع';
+
+  @override
+  String get versionNewRollback => 'إصدار تراجع جديد';
+
+  @override
+  String get versionNoChangeRollback => 'تراجع بدون تغيير';
+
+  @override
+  String get versionTruncatedComparison => 'يعرض جزء محدود من الاختلافات.';
+
+  @override
+  String get versionImmutableSnapshot => 'هذه لقطة تاريخية غير قابلة للتعديل.';
+
+  @override
+  String get versionStatusCurrent => 'حالي';
+
+  @override
+  String get versionStatusSuperseded => 'مستبدل';
+
+  @override
+  String get versionStatusRolledBack => 'تم التراجع عنه';
 }

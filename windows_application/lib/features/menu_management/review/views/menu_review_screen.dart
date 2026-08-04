@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../assignments/controllers/menu_assignments_cubit.dart'
@@ -11,12 +12,22 @@ import '../../assignments/controllers/menu_assignments_cubit.dart'
 import '../../widgets/menu_management_tabs.dart';
 import '../controllers/menu_review_cubit.dart';
 import '../models/review_models.dart';
+import '../../versions/views/published_version_history_panel.dart';
 
 class MenuReviewScreen extends StatefulWidget {
-  const MenuReviewScreen({super.key, this.branchId, this.channel, this.menuId});
+  const MenuReviewScreen({
+    super.key,
+    this.branchId,
+    this.channel,
+    this.menuId,
+    this.evaluationAt,
+    this.showVersions = false,
+  });
   final int? branchId;
   final String? channel;
   final int? menuId;
+  final DateTime? evaluationAt;
+  final bool showVersions;
   @override
   State<MenuReviewScreen> createState() => _MenuReviewScreenState();
 }
@@ -30,6 +41,7 @@ class _MenuReviewScreenState extends State<MenuReviewScreen> {
         branchId: widget.branchId,
         channel: widget.channel,
         menuId: widget.menuId,
+        evaluationAt: widget.evaluationAt,
       ),
     );
   }
@@ -84,13 +96,16 @@ class _MenuReviewScreenState extends State<MenuReviewScreen> {
                   ),
                 const SizedBox(height: 20),
                 DefaultTabController(
-                  length: 2,
+                  length: 4,
+                  initialIndex: widget.showVersions ? 3 : 0,
                   child: Column(
                     children: <Widget>[
-                      const TabBar(
+                      TabBar(
                         tabs: <Widget>[
-                          Tab(text: 'Validation'),
-                          Tab(text: 'Resolved Preview'),
+                          const Tab(text: 'Validation'),
+                          const Tab(text: 'Resolved Preview'),
+                          Tab(text: context.l10n.menuPublishTab),
+                          const Tab(text: 'Versions'),
                         ],
                       ),
                       SizedBox(
@@ -99,6 +114,12 @@ class _MenuReviewScreenState extends State<MenuReviewScreen> {
                           children: <Widget>[
                             _ValidationPanel(state: state, cubit: cubit),
                             _PreviewPanel(state: state, cubit: cubit),
+                            _PublishPanel(state: state, cubit: cubit),
+                            PublishedVersionHistoryPanel(
+                              branchId: state.selectedBranch?.id,
+                              branchName: state.selectedBranch?.name ?? '-',
+                              channel: state.channel,
+                            ),
                           ],
                         ),
                       ),
@@ -129,6 +150,7 @@ class _ContextPanel extends StatelessWidget {
           width: 230,
           child: DropdownButtonFormField<int>(
             initialValue: state.selectedBranch?.id,
+            isExpanded: true,
             decoration: const InputDecoration(labelText: 'Branch'),
             items: state.branches
                 .map((b) => DropdownMenuItem(value: b.id, child: Text(b.name)))
@@ -144,6 +166,7 @@ class _ContextPanel extends StatelessWidget {
           width: 190,
           child: DropdownButtonFormField<String>(
             initialValue: state.channel,
+            isExpanded: true,
             decoration: const InputDecoration(labelText: 'Sales channel'),
             items: salesChannels
                 .map((c) => DropdownMenuItem(value: c, child: Text(_label(c))))
@@ -159,16 +182,25 @@ class _ContextPanel extends StatelessWidget {
           width: 260,
           child: DropdownButtonFormField<int?>(
             initialValue: state.menuId,
+            isExpanded: true,
             decoration: const InputDecoration(labelText: 'Scope'),
             items: <DropdownMenuItem<int?>>[
               const DropdownMenuItem(
                 value: null,
-                child: Text('Complete assigned Menu collection'),
+                child: Text(
+                  'Complete assigned Menu collection',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               ...state.eligibleMenus.map(
                 (a) => DropdownMenuItem(
                   value: a.menuId,
-                  child: Text(a.menu?.localizedName ?? 'Menu #${a.menuId}'),
+                  child: Text(
+                    a.menu?.localizedName ?? 'Menu #${a.menuId}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
@@ -182,6 +214,7 @@ class _ContextPanel extends StatelessWidget {
                   branchId: state.selectedBranch?.id,
                   channel: state.channel,
                   menuId: state.menuId,
+                  evaluationAt: state.evaluationAt,
                 ),
           icon: const Icon(Icons.refresh),
           label: const Text('Refresh context'),
@@ -513,6 +546,350 @@ class _PreviewPanel extends StatelessWidget {
       else
         _PreviewTree(preview: state.preview!),
     ],
+  );
+}
+
+class _PublishPanel extends StatelessWidget {
+  const _PublishPanel({required this.state, required this.cubit});
+
+  final MenuReviewState state;
+  final MenuReviewCubit cubit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final MenuValidationResult? validation = state.validation;
+    final bool validationReady =
+        state.validationStatus == ReviewRequestStatus.loaded &&
+        validation != null;
+    final bool canPublish = validationReady && validation.canPublish;
+    final String scope = state.isCollection
+        ? l10n.menuPublishCollectionScope
+        : '${l10n.menuPublishOneMenu} #${state.menuId}';
+    return ListView(
+      padding: const EdgeInsets.only(top: 20),
+      children: <Widget>[
+        AppCard(
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 10,
+            children: <Widget>[
+              _PublishDetail(
+                label: l10n.menuPublishBranch,
+                value: state.selectedBranch?.name ?? '-',
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishChannel,
+                value: _label(state.channel),
+              ),
+              _PublishDetail(label: l10n.menuPublishScope, value: scope),
+              _PublishDetail(
+                label: l10n.menuPublishValidation,
+                value: !validationReady
+                    ? l10n.menuPublishValidationRequired
+                    : validation.canPublish
+                    ? l10n.menuPublishCanPublish
+                    : l10n.menuPublishCannotPublish,
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishErrors,
+                value: '${validation?.errorCount ?? 0}',
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishWarnings,
+                value: '${validation?.warningCount ?? 0}',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _CurrentVersionPanel(state: state, cubit: cubit),
+        const SizedBox(height: 12),
+        if (!validationReady)
+          _MessageCard(l10n.menuPublishRunValidationFirst)
+        else if (!canPublish)
+          _MessageCard(l10n.menuPublishBlockedByValidation)
+        else if (validation.warningCount > 0)
+          _MessageCard(l10n.menuPublishWarningsAllowed),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed:
+              !canPublish ||
+                  state.publicationStatus == PublicationActionStatus.publishing
+              ? null
+              : () => _confirmPublish(context, scope),
+          icon: state.publicationStatus == PublicationActionStatus.publishing
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.publish_outlined),
+          label: Text(
+            state.publicationStatus == PublicationActionStatus.publishing
+                ? l10n.menuPublishPublishing
+                : l10n.menuPublishAction,
+          ),
+        ),
+        if (state.publicationError != null) ...<Widget>[
+          const SizedBox(height: 12),
+          _MessageCard(state.publicationError!),
+        ],
+        if (state.publicationStatus ==
+            PublicationActionStatus.validationBlocked) ...<Widget>[
+          const SizedBox(height: 12),
+          _MessageCard(l10n.menuPublishBackendBlocked),
+          if (state.validation != null)
+            ..._issueGroups(context, state.validation!.issues),
+        ],
+        if (state.lastPublication != null) ...<Widget>[
+          const SizedBox(height: 12),
+          _PublicationResultCard(result: state.lastPublication!),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _confirmPublish(BuildContext context, String scope) async {
+    final l10n = context.l10n;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(l10n.menuPublishConfirmTitle),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '${l10n.menuPublishBranch}: ${state.selectedBranch?.name ?? '-'}',
+                ),
+                Text('${l10n.menuPublishChannel}: ${_label(state.channel)}'),
+                Text('${l10n.menuPublishScope}: $scope'),
+                Text(
+                  '${l10n.menuPublishWarnings}: ${state.validation?.warningCount ?? 0}',
+                ),
+                if (state.currentVersion != null)
+                  Text(
+                    '${l10n.menuPublishCurrentVersion}: ${state.currentVersion!.versionNumber}',
+                  ),
+                const SizedBox(height: 16),
+                Text(l10n.menuPublishConfirmationExplanation),
+                if ((state.validation?.warningCount ?? 0) > 0) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.menuPublishWarningsAllowed,
+                    style: const TextStyle(color: AppColors.warning),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.menuPublishAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) cubit.publish();
+  }
+}
+
+class _CurrentVersionPanel extends StatelessWidget {
+  const _CurrentVersionPanel({required this.state, required this.cubit});
+
+  final MenuReviewState state;
+  final MenuReviewCubit cubit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    if (state.currentVersionStatus == ReviewRequestStatus.loading) {
+      return AppCard(
+        child: Row(
+          children: <Widget>[
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 10),
+            Text(l10n.menuPublishLoadingCurrentVersion),
+          ],
+        ),
+      );
+    }
+    if (state.currentVersionStatus == ReviewRequestStatus.failure) {
+      return _ErrorCard(
+        message: state.currentVersionError ?? l10n.commonError,
+        onRetry: cubit.loadCurrentVersion,
+      );
+    }
+    final PublishedMenuVersion? version = state.currentVersion;
+    if (version == null) {
+      return AppCard(
+        child: Row(
+          children: <Widget>[
+            Expanded(child: Text(l10n.menuPublishNoCurrentVersion)),
+            TextButton(
+              onPressed: cubit.loadCurrentVersion,
+              child: Text(l10n.commonRefresh),
+            ),
+          ],
+        ),
+      );
+    }
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  l10n.menuPublishCurrentVersion,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              TextButton(
+                onPressed: cubit.loadCurrentVersion,
+                child: Text(l10n.commonRefresh),
+              ),
+              TextButton(
+                onPressed: () => context.go(
+                  '/menu-management/review?branchId=${state.selectedBranch?.id}&channel=${state.channel}&tab=versions',
+                ),
+                child: const Text('View Version History'),
+              ),
+            ],
+          ),
+          Wrap(
+            spacing: 16,
+            runSpacing: 10,
+            children: <Widget>[
+              _PublishDetail(
+                label: l10n.menuPublishVersionNumber,
+                value: '${version.versionNumber}',
+                technical: true,
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishStatus,
+                value: _label(version.status),
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishPublishedAt,
+                value: version.publishedAt.isEmpty ? '-' : version.publishedAt,
+                technical: true,
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishChecksum,
+                value: version.checksum,
+                technical: true,
+              ),
+              if (version.publicationId != null)
+                _PublishDetail(
+                  label: l10n.menuPublishPublicationId,
+                  value: '${version.publicationId}',
+                  technical: true,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PublicationResultCard extends StatelessWidget {
+  const _PublicationResultCard({required this.result});
+  final MenuPublicationResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            result.noChanges
+                ? l10n.menuPublishNoChanges
+                : l10n.menuPublishSuccess,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          if (result.noChanges) Text(l10n.menuPublishNoChangesExplanation),
+          Wrap(
+            spacing: 16,
+            runSpacing: 10,
+            children: <Widget>[
+              _PublishDetail(
+                label: l10n.menuPublishVersionNumber,
+                value: '${result.version.versionNumber}',
+                technical: true,
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishPublishedAt,
+                value: result.version.publishedAt,
+                technical: true,
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishChecksum,
+                value: result.version.checksum,
+                technical: true,
+              ),
+              _PublishDetail(
+                label: l10n.menuPublishWarnings,
+                value: '${result.validation.warningCount}',
+              ),
+              if (result.publicationId != null)
+                _PublishDetail(
+                  label: l10n.menuPublishPublicationId,
+                  value: '${result.publicationId}',
+                  technical: true,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PublishDetail extends StatelessWidget {
+  const _PublishDetail({
+    required this.label,
+    required this.value,
+    this.technical = false,
+  });
+  final String label;
+  final String value;
+  final bool technical;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: technical ? 240 : 180,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+        Directionality(
+          textDirection: technical
+              ? TextDirection.ltr
+              : Directionality.of(context),
+          child: Text(value, overflow: TextOverflow.ellipsis),
+        ),
+      ],
+    ),
   );
 }
 

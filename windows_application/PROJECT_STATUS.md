@@ -1,5 +1,15 @@
 # Project Status
 
+## Phase 4F Version History, Comparison and Rollback
+
+Status: Complete after Flutter analysis and the full Flutter suite pass. The
+Review workflow's Versions tab uses Branch + Channel metadata-only pagination,
+on-demand immutable Snapshot payload diagnostics, backend-bounded comparison,
+and immutable rollback Versions. `truncated` comparisons are non-exhaustive;
+no-change rollback still refreshes Current Version and History. Final Menu
+Management Regression and POS Snapshot Sync are not started. Broader
+localization migration remains paused.
+
 Current authoritative phase status: Phase 4C — Complete; Phase 4D.1 — Variant Price Overrides: Complete; Phase 4D.2 — Scheduled Product Availability: Complete; Phase 4D.3A — Operational Availability Overrides: Complete; Phase 4D.3B — Operational Resolution Diagnostic: Complete; Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started. Phase 4C.1 — Complete; Phase 4C.2 —
 Product Placements and Ordering: Complete; Phase 4C.3 — Branch/Channel
 Assignments and Menu Schedules: Complete. Phase 4D.1 — Variant Price Overrides:
@@ -23,6 +33,17 @@ Phase 4D.3A — Operational Availability Overrides: Complete
 Phase 4D.3B — Operational Resolution Diagnostic: Complete
 
 Phase 4B — Product Catalog Administration: Complete. Phase 4C — Complete. Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started.
+
+## Phase 4E publishing status
+
+Phase 4E.1 — Menu Validation UI: Complete.
+Phase 4E.2 — Resolved Menu Preview UI: Complete.
+Phase 4E.3 — Publishing and Current Version: Complete after the Flutter analyzer
+and full suite pass. Publishing is integrated into `/menu-management/review` and
+uses the Backend-authoritative validation and immutable-version APIs. Current
+Version displays metadata only; no snapshot browsing was added. Phase 4F — Version
+History, Comparison and Rollback: Not started. POS Sync remains unimplemented, and
+the screen-by-screen localization migration remains paused.
 
 ## Project Name
 
@@ -191,12 +212,11 @@ Phase 4D.3B — Operational Resolution Diagnostic: Complete
 
 ## In Progress
 
-- Cross-cutting Flutter localization: English and Arabic generated ARB resources,
-  app-level locale Cubit, persisted `app_locale` preference, top-bar selector, RTL
-  shell support, localized backend-display helpers, formatter helpers, and focused
-  tests are in progress. Menu Management remains paused after Phase 4E.1 + 4E.2;
-  no publishing, Version History, comparison, rollback, or POS Sync work is part of
-  this phase.
+- None. The English/Arabic localization foundation exists, while the
+  screen-by-screen translation migration is paused. Menu Validation UI (4E.1),
+  Resolved Menu Preview UI (4E.2), and Publishing and Current Version (4E.3) are
+  complete and verified; Version History/Comparison/Rollback (4F) and POS Sync
+  remain not started.
 
 ## Next Step
 
@@ -229,6 +249,13 @@ Version History, and POS sync UI deferred.
 - Tablet support requirements are not defined yet.
 
 ## Recent Changes Log
+
+- 2026-08-02: Verified Flutter Phase 4E.1 Menu Validation and Phase 4E.2
+  Resolved Menu Preview. Review requests now forward a sanitized optional Backend
+  evaluation timestamp (`at`) to both validation and preview endpoints. Added
+  focused contract, stale-response, duplicate-request, filtering, independent
+  error-state, and no-assigned-menu coverage. No Laravel behavior, publishing,
+  version workflow, POS Sync, or translation migration was added.
 
 - 2026-08-01: Added official Flutter English/Arabic localization infrastructure
   (`gen_l10n` ARB files), app locale persistence, runtime top-bar language

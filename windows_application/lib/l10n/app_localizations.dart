@@ -517,6 +517,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We could not save your changes. Review the highlighted fields and try again.'**
   String get genericFormError;
+
+  /// No description provided for @menuPublishTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish'**
+  String get menuPublishTab;
+
+  /// No description provided for @menuPublishAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish Menu'**
+  String get menuPublishAction;
+
+  /// No description provided for @menuPublishPublishing.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishing…'**
+  String get menuPublishPublishing;
+
+  /// No description provided for @menuPublishBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get menuPublishBranch;
+
+  /// No description provided for @menuPublishChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales channel'**
+  String get menuPublishChannel;
+
+  /// No description provided for @menuPublishScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get menuPublishScope;
+
+  /// No description provided for @menuPublishCollectionScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete assigned Menu collection'**
+  String get menuPublishCollectionScope;
+
+  /// No description provided for @menuPublishOneMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'One Menu'**
+  String get menuPublishOneMenu;
+
+  /// No description provided for @menuPublishValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Last validation'**
+  String get menuPublishValidation;
+
+  /// No description provided for @menuPublishValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Validation required'**
+  String get menuPublishValidationRequired;
+
+  /// No description provided for @menuPublishCanPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Can Publish'**
+  String get menuPublishCanPublish;
+
+  /// No description provided for @menuPublishCannotPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot Publish'**
+  String get menuPublishCannotPublish;
+
+  /// No description provided for @menuPublishErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors'**
+  String get menuPublishErrors;
+
+  /// No description provided for @menuPublishWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get menuPublishWarnings;
+
+  /// No description provided for @menuPublishRunValidationFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Run Validation for this selected scope before publishing.'**
+  String get menuPublishRunValidationFirst;
+
+  /// No description provided for @menuPublishBlockedByValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishing is disabled because the loaded validation contains errors.'**
+  String get menuPublishBlockedByValidation;
+
+  /// No description provided for @menuPublishWarningsAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings do not block publishing. Review them and confirm explicitly.'**
+  String get menuPublishWarningsAllowed;
+
+  /// No description provided for @menuPublishConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Menu publication'**
+  String get menuPublishConfirmTitle;
+
+  /// No description provided for @menuPublishCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Published Version'**
+  String get menuPublishCurrentVersion;
+
+  /// No description provided for @menuPublishConfirmationExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishing creates a new immutable Menu Version for the selected Branch and Channel when the resolved Menu content has changed. Existing Orders are not modified.'**
+  String get menuPublishConfirmationExplanation;
+
+  /// No description provided for @menuPublishLoadingCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading current published Version…'**
+  String get menuPublishLoadingCurrentVersion;
+
+  /// No description provided for @menuPublishNoCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menu Version has been published for this Branch and Sales Channel.'**
+  String get menuPublishNoCurrentVersion;
+
+  /// No description provided for @menuPublishVersionNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get menuPublishVersionNumber;
+
+  /// No description provided for @menuPublishStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get menuPublishStatus;
+
+  /// No description provided for @menuPublishPublishedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Published at'**
+  String get menuPublishPublishedAt;
+
+  /// No description provided for @menuPublishChecksum.
+  ///
+  /// In en, this message translates to:
+  /// **'Checksum'**
+  String get menuPublishChecksum;
+
+  /// No description provided for @menuPublishPublicationId.
+  ///
+  /// In en, this message translates to:
+  /// **'Publication ID'**
+  String get menuPublishPublicationId;
+
+  /// No description provided for @menuPublishSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu publication successful.'**
+  String get menuPublishSuccess;
+
+  /// No description provided for @menuPublishNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menu changes were detected.'**
+  String get menuPublishNoChanges;
+
+  /// No description provided for @menuPublishNoChangesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The current published Version remains unchanged.'**
+  String get menuPublishNoChangesExplanation;
+
+  /// No description provided for @menuPublishBackendBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend validation blocked publication. No Version was created.'**
+  String get menuPublishBackendBlocked;
+
+  /// No description provided for @versionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Version History'**
+  String get versionHistory;
+
+  /// No description provided for @versionDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Version Detail'**
+  String get versionDetail;
+
+  /// No description provided for @compareVersions.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Versions'**
+  String get compareVersions;
+
+  /// No description provided for @identicalContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Identical content'**
+  String get identicalContent;
+
+  /// No description provided for @versionsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get versionsAdded;
+
+  /// No description provided for @versionsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get versionsRemoved;
+
+  /// No description provided for @versionsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get versionsChanged;
+
+  /// No description provided for @versionPriceChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Price changes'**
+  String get versionPriceChanges;
+
+  /// No description provided for @versionModifierChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier changes'**
+  String get versionModifierChanges;
+
+  /// No description provided for @versionScheduleChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule changes'**
+  String get versionScheduleChanges;
+
+  /// No description provided for @versionRollback.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback'**
+  String get versionRollback;
+
+  /// No description provided for @versionRollbackReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback reason'**
+  String get versionRollbackReason;
+
+  /// No description provided for @versionNewRollback.
+  ///
+  /// In en, this message translates to:
+  /// **'New rollback Version'**
+  String get versionNewRollback;
+
+  /// No description provided for @versionNoChangeRollback.
+  ///
+  /// In en, this message translates to:
+  /// **'No-change rollback'**
+  String get versionNoChangeRollback;
+
+  /// No description provided for @versionTruncatedComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a bounded subset of differences is displayed.'**
+  String get versionTruncatedComparison;
+
+  /// No description provided for @versionImmutableSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'This is an immutable historical Snapshot.'**
+  String get versionImmutableSnapshot;
+
+  /// No description provided for @versionStatusCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get versionStatusCurrent;
+
+  /// No description provided for @versionStatusSuperseded.
+  ///
+  /// In en, this message translates to:
+  /// **'Superseded'**
+  String get versionStatusSuperseded;
+
+  /// No description provided for @versionStatusRolledBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Rolled back'**
+  String get versionStatusRolledBack;
 }
 
 class _AppLocalizationsDelegate

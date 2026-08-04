@@ -110,10 +110,11 @@ void main() {
         );
       }),
     );
-    const context = ReviewContext(
+    final context = ReviewContext(
       branchId: 1,
       channel: 'pos',
       menuId: 10,
+      evaluationAt: DateTime.parse('2026-08-01T10:00:00+03:00'),
       language: 'ar',
       includeHidden: true,
       includeUnavailable: false,
@@ -131,10 +132,12 @@ void main() {
     expect(requests[0].data, <String, dynamic>{
       'branchId': 1,
       'channel': 'pos',
+      'at': '2026-08-01T07:00:00.000Z',
     });
     expect(requests[1].data, <String, dynamic>{
       'branchId': 1,
       'channel': 'pos',
+      'at': '2026-08-01T07:00:00.000Z',
     });
     expect(requests[2].data, <String, dynamic>{
       'branchId': 1,
@@ -142,15 +145,26 @@ void main() {
       'language': 'ar',
       'includeHidden': true,
       'includeUnavailable': false,
+      'at': '2026-08-01T07:00:00.000Z',
     });
     expect(
       (requests[2].data as Map<String, dynamic>).containsKey('tenantId'),
       isFalse,
     );
-    expect(
-      (requests[2].data as Map<String, dynamic>).containsKey('at'),
-      isFalse,
-    );
+    for (final String forbidden in <String>[
+      'tenantId',
+      'menuPublicationId',
+      'publishedVersionId',
+      'version',
+      'checksum',
+      'canPublish',
+      'isSellable',
+    ]) {
+      expect(
+        (requests[2].data as Map<String, dynamic>).containsKey(forbidden),
+        isFalse,
+      );
+    }
   });
 }
 

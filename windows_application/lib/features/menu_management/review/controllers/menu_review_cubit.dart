@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -13,24 +15,40 @@ enum ReviewLoadStatus { initial, loading, ready, failure }
 
 enum ReviewRequestStatus { idle, loading, loaded, failure }
 
+enum PublicationActionStatus {
+  idle,
+  publishing,
+  success,
+  noChanges,
+  validationBlocked,
+  failure,
+}
+
 class MenuReviewState extends Equatable {
   const MenuReviewState({
     this.contextStatus = ReviewLoadStatus.initial,
     this.validationStatus = ReviewRequestStatus.idle,
     this.previewStatus = ReviewRequestStatus.idle,
+    this.currentVersionStatus = ReviewRequestStatus.idle,
+    this.publicationStatus = PublicationActionStatus.idle,
     this.branches = const <Branch>[],
     this.selectedBranch,
     this.channel = 'pos',
     this.eligibleMenus = const <MenuAssignment>[],
     this.menuId,
+    this.evaluationAt,
     this.language = 'default',
     this.includeHidden = false,
     this.includeUnavailable = true,
     this.validation,
     this.preview,
+    this.currentVersion,
+    this.lastPublication,
     this.contextError,
     this.validationError,
     this.previewError,
+    this.currentVersionError,
+    this.publicationError,
     this.severityFilter,
     this.entityTypeFilter,
     this.search = '',
@@ -39,19 +57,26 @@ class MenuReviewState extends Equatable {
   final ReviewLoadStatus contextStatus;
   final ReviewRequestStatus validationStatus;
   final ReviewRequestStatus previewStatus;
+  final ReviewRequestStatus currentVersionStatus;
+  final PublicationActionStatus publicationStatus;
   final List<Branch> branches;
   final Branch? selectedBranch;
   final String channel;
   final List<MenuAssignment> eligibleMenus;
   final int? menuId;
+  final DateTime? evaluationAt;
   final String language;
   final bool includeHidden;
   final bool includeUnavailable;
   final MenuValidationResult? validation;
   final ResolvedPreview? preview;
+  final PublishedMenuVersion? currentVersion;
+  final MenuPublicationResult? lastPublication;
   final String? contextError;
   final String? validationError;
   final String? previewError;
+  final String? currentVersionError;
+  final String? publicationError;
   final ValidationSeverity? severityFilter;
   final String? entityTypeFilter;
   final String search;
@@ -59,12 +84,19 @@ class MenuReviewState extends Equatable {
   bool get hasContext => selectedBranch != null;
   bool get isCollection => menuId == null;
   bool get isBusy => contextStatus == ReviewLoadStatus.loading;
+
+  /// Publishing is affected only by the selected Branch, Channel, and Menu
+  /// scope. Preview controls must not discard an in-flight publication result.
+  String? get publishingScopeKey => selectedBranch == null
+      ? null
+      : '${selectedBranch!.id}|$channel|${menuId ?? 'collection'}';
   ReviewContext? get context => selectedBranch == null
       ? null
       : ReviewContext(
           branchId: selectedBranch!.id,
           channel: channel,
           menuId: menuId,
+          evaluationAt: evaluationAt,
           language: language,
           includeHidden: includeHidden,
           includeUnavailable: includeUnavailable,
@@ -90,6 +122,8 @@ class MenuReviewState extends Equatable {
     ReviewLoadStatus? contextStatus,
     ReviewRequestStatus? validationStatus,
     ReviewRequestStatus? previewStatus,
+    ReviewRequestStatus? currentVersionStatus,
+    PublicationActionStatus? publicationStatus,
     List<Branch>? branches,
     Branch? selectedBranch,
     bool clearBranch = false,
@@ -97,14 +131,19 @@ class MenuReviewState extends Equatable {
     List<MenuAssignment>? eligibleMenus,
     int? menuId,
     bool clearMenu = false,
+    DateTime? evaluationAt,
     String? language,
     bool? includeHidden,
     bool? includeUnavailable,
     MenuValidationResult? validation,
     ResolvedPreview? preview,
+    PublishedMenuVersion? currentVersion,
+    MenuPublicationResult? lastPublication,
     String? contextError,
     String? validationError,
     String? previewError,
+    String? currentVersionError,
+    String? publicationError,
     ValidationSeverity? severityFilter,
     bool clearSeverity = false,
     String? entityTypeFilter,
@@ -115,25 +154,44 @@ class MenuReviewState extends Equatable {
     bool clearPreview = false,
     bool clearValidationError = false,
     bool clearPreviewError = false,
+    bool clearCurrentVersion = false,
+    bool clearLastPublication = false,
+    bool clearCurrentVersionError = false,
+    bool clearPublicationError = false,
   }) => MenuReviewState(
     contextStatus: contextStatus ?? this.contextStatus,
     validationStatus: validationStatus ?? this.validationStatus,
     previewStatus: previewStatus ?? this.previewStatus,
+    currentVersionStatus: currentVersionStatus ?? this.currentVersionStatus,
+    publicationStatus: publicationStatus ?? this.publicationStatus,
     branches: branches ?? this.branches,
     selectedBranch: clearBranch ? null : selectedBranch ?? this.selectedBranch,
     channel: channel ?? this.channel,
     eligibleMenus: eligibleMenus ?? this.eligibleMenus,
     menuId: clearMenu ? null : menuId ?? this.menuId,
+    evaluationAt: evaluationAt ?? this.evaluationAt,
     language: language ?? this.language,
     includeHidden: includeHidden ?? this.includeHidden,
     includeUnavailable: includeUnavailable ?? this.includeUnavailable,
     validation: clearValidation ? null : validation ?? this.validation,
     preview: clearPreview ? null : preview ?? this.preview,
+    currentVersion: clearCurrentVersion
+        ? null
+        : currentVersion ?? this.currentVersion,
+    lastPublication: clearLastPublication
+        ? null
+        : lastPublication ?? this.lastPublication,
     contextError: clearContextError ? null : contextError ?? this.contextError,
     validationError: clearValidationError
         ? null
         : validationError ?? this.validationError,
     previewError: clearPreviewError ? null : previewError ?? this.previewError,
+    currentVersionError: clearCurrentVersionError
+        ? null
+        : currentVersionError ?? this.currentVersionError,
+    publicationError: clearPublicationError
+        ? null
+        : publicationError ?? this.publicationError,
     severityFilter: clearSeverity
         ? null
         : severityFilter ?? this.severityFilter,
@@ -148,19 +206,26 @@ class MenuReviewState extends Equatable {
     contextStatus,
     validationStatus,
     previewStatus,
+    currentVersionStatus,
+    publicationStatus,
     branches,
     selectedBranch,
     channel,
     eligibleMenus,
     menuId,
+    evaluationAt,
     language,
     includeHidden,
     includeUnavailable,
     validation,
     preview,
+    currentVersion,
+    lastPublication,
     contextError,
     validationError,
     previewError,
+    currentVersionError,
+    publicationError,
     severityFilter,
     entityTypeFilter,
     search,
@@ -173,9 +238,19 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
   int _contextTicket = 0;
   int _validationTicket = 0;
   int _previewTicket = 0;
+  int _currentVersionTicket = 0;
+  int _publicationTicket = 0;
 
-  Future<void> load({int? branchId, String? channel, int? menuId}) async {
+  Future<void> load({
+    int? branchId,
+    String? channel,
+    int? menuId,
+    DateTime? evaluationAt,
+  }) async {
     final int ticket = ++_contextTicket;
+    // Context starts changing before asynchronous assignment loading completes;
+    // invalidate publication data immediately so old scope responses cannot win.
+    _invalidateResults();
     final String selectedChannel = salesChannels.contains(channel)
         ? channel!
         : state.channel;
@@ -183,6 +258,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
       state.copyWith(
         contextStatus: ReviewLoadStatus.loading,
         channel: selectedChannel,
+        evaluationAt: evaluationAt,
         clearContextError: true,
       ),
     );
@@ -238,13 +314,21 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
           channel: selectedChannel,
           eligibleMenus: eligible,
           menuId: selectedMenu,
+          evaluationAt: evaluationAt,
           clearMenu: selectedMenu == null,
           clearValidation: true,
           clearPreview: true,
           clearValidationError: true,
           clearPreviewError: true,
+          currentVersionStatus: ReviewRequestStatus.idle,
+          publicationStatus: PublicationActionStatus.idle,
+          clearCurrentVersion: true,
+          clearLastPublication: true,
+          clearCurrentVersionError: true,
+          clearPublicationError: true,
         ),
       );
+      await loadCurrentVersion();
     } catch (error) {
       if (isClosed || ticket != _contextTicket) return;
       emit(
@@ -264,6 +348,10 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
     menuId: state.menuId,
   );
   void selectScope(int? value) {
+    if (value != null &&
+        !state.eligibleMenus.any((assignment) => assignment.menuId == value)) {
+      return;
+    }
     if (state.menuId == value) return;
     _invalidateResults();
     emit(
@@ -272,12 +360,19 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
         clearMenu: value == null,
         validationStatus: ReviewRequestStatus.idle,
         previewStatus: ReviewRequestStatus.idle,
+        currentVersionStatus: ReviewRequestStatus.idle,
+        publicationStatus: PublicationActionStatus.idle,
         clearValidation: true,
         clearPreview: true,
+        clearCurrentVersion: true,
+        clearLastPublication: true,
         clearValidationError: true,
         clearPreviewError: true,
+        clearCurrentVersionError: true,
+        clearPublicationError: true,
       ),
     );
+    unawaited(loadCurrentVersion());
   }
 
   void setLanguage(String value) => _setPreviewControl(language: value);
@@ -373,6 +468,114 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
     }
   }
 
+  Future<void> loadCurrentVersion() async {
+    final ReviewContext? context = state.context;
+    final String? scopeKey = state.publishingScopeKey;
+    if (context == null ||
+        state.currentVersionStatus == ReviewRequestStatus.loading) {
+      return;
+    }
+    final int ticket = ++_currentVersionTicket;
+    emit(
+      state.copyWith(
+        currentVersionStatus: ReviewRequestStatus.loading,
+        clearCurrentVersionError: true,
+      ),
+    );
+    try {
+      final PublishedMenuVersion? version = await repository
+          .getCurrentPublishedVersion(context);
+      if (isClosed ||
+          ticket != _currentVersionTicket ||
+          scopeKey != state.publishingScopeKey) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          currentVersionStatus: ReviewRequestStatus.loaded,
+          currentVersion: version,
+          clearCurrentVersion: version == null,
+        ),
+      );
+    } catch (error) {
+      if (isClosed ||
+          ticket != _currentVersionTicket ||
+          scopeKey != state.publishingScopeKey) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          currentVersionStatus: ReviewRequestStatus.failure,
+          currentVersionError: _message(error),
+        ),
+      );
+    }
+  }
+
+  Future<void> publish() async {
+    final ReviewContext? context = state.context;
+    final String? scopeKey = state.publishingScopeKey;
+    if (context == null ||
+        state.publicationStatus == PublicationActionStatus.publishing ||
+        state.validationStatus != ReviewRequestStatus.loaded ||
+        state.validation?.canPublish != true) {
+      return;
+    }
+    final int ticket = ++_publicationTicket;
+    emit(
+      state.copyWith(
+        publicationStatus: PublicationActionStatus.publishing,
+        clearPublicationError: true,
+      ),
+    );
+    try {
+      final MenuPublicationResult result = await repository.publishMenuScope(
+        context,
+      );
+      if (isClosed ||
+          ticket != _publicationTicket ||
+          scopeKey != state.publishingScopeKey) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          publicationStatus: result.noChanges
+              ? PublicationActionStatus.noChanges
+              : PublicationActionStatus.success,
+          lastPublication: result,
+          clearPublicationError: true,
+        ),
+      );
+      await loadCurrentVersion();
+    } catch (error) {
+      if (isClosed ||
+          ticket != _publicationTicket ||
+          scopeKey != state.publishingScopeKey) {
+        return;
+      }
+      final bool validationBlocked =
+          error is ApiException &&
+          error.statusCode == 422 &&
+          (error.validationErrors?.containsKey('publish') ?? false);
+      emit(
+        state.copyWith(
+          publicationStatus: validationBlocked
+              ? PublicationActionStatus.validationBlocked
+              : PublicationActionStatus.failure,
+          publicationError: validationBlocked
+              ? 'Backend validation blocked publication. Review the refreshed diagnostics.'
+              : _message(error),
+        ),
+      );
+      if (validationBlocked) {
+        // Laravel returns a safe 422 message rather than a full validation
+        // payload. Reload diagnostics; publishing itself is never retried.
+        await validate();
+        await loadCurrentVersion();
+      }
+    }
+  }
+
   void _setPreviewControl({
     String? language,
     bool? includeHidden,
@@ -394,6 +597,8 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
   void _invalidateResults() {
     _validationTicket++;
     _previewTicket++;
+    _currentVersionTicket++;
+    _publicationTicket++;
   }
 
   String _message(Object error) => error is ApiException
