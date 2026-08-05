@@ -343,18 +343,26 @@ class PublishedVersionCubit extends Cubit<PublishedVersionState> {
     }
   }
 
-  void beginRollback(PublishedVersion version) => emit(
-    state.copyWith(
-      selectedVersion: version,
-      rollbackStatus: RollbackStatus.confirming,
-      clearRollbackResult: true,
-      clearRollbackError: true,
-    ),
-  );
+  void beginRollback(PublishedVersion version) {
+    // The row action is disabled for the current Version, but retain the same
+    // invariant at the state boundary so another caller cannot submit it.
+    if (version.isCurrent || version.status == 'current') return;
+    emit(
+      state.copyWith(
+        selectedVersion: version,
+        rollbackStatus: RollbackStatus.confirming,
+        clearRollbackResult: true,
+        clearRollbackError: true,
+      ),
+    );
+  }
 
   Future<void> rollback(String reason) async {
     final PublishedVersion? target = state.selectedVersion;
-    if (target == null || state.rollbackStatus == RollbackStatus.submitting)
+    if (target == null ||
+        target.isCurrent ||
+        target.status == 'current' ||
+        state.rollbackStatus == RollbackStatus.submitting)
       return;
     final int request = ++_rollbackTicket;
     final String? scope = state.scopeKey;

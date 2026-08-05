@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/menu_management/controllers/product_catalog_cubit.dart';
+import 'package:windows_application/features/menu_management/catalog_setup/models/catalog_setup_models.dart';
 import 'package:windows_application/features/menu_management/models/catalog_models.dart';
 import 'package:windows_application/features/menu_management/models/product_catalog_filter.dart';
 import 'package:windows_application/features/menu_management/products/controllers/product_editor_cubit.dart';
@@ -99,6 +100,25 @@ void main() {
     await cubit.close();
   });
 
+  test(
+    'refresh keeps an archived assigned reference selected in edit mode',
+    () async {
+      final _EditorRepository repository = _EditorRepository();
+      final ProductEditorCubit cubit = ProductEditorCubit(
+        repository: repository,
+      );
+      await cubit.loadForEdit(11);
+      repository.omitCategories = true;
+      await cubit.refreshReferences();
+
+      expect(cubit.state.draft.categoryId, 4);
+      expect(cubit.state.categories, hasLength(1));
+      expect(cubit.state.categories.single.isActive, isFalse);
+      expect(cubit.state.isDirty, isFalse);
+      await cubit.close();
+    },
+  );
+
   testWidgets(
     'create editor has initial variant and protects unsaved changes',
     (tester) async {
@@ -160,6 +180,7 @@ class _EditorRepository extends MenuCatalogRepository {
   int updateCalls = 0;
   bool validationOnUpdate = false;
   Completer<ProductDetail>? createCompleter;
+  bool omitCategories = false;
   @override
   Future<ProductDetail> createProduct(ProductEditorDraft draft) {
     createCalls++;
@@ -221,15 +242,35 @@ class _EditorRepository extends MenuCatalogRepository {
   Future<CatalogPage<CatalogCategory>> listCategories({
     int perPage = 100,
   }) async => CatalogPage<CatalogCategory>(
-    items: <CatalogCategory>[
-      CatalogCategory.fromJson(<String, dynamic>{
-        'id': 4,
-        'name': 'Coffee',
-        'isActive': true,
-        'sortOrder': 0,
-      }),
-    ],
+    items: omitCategories
+        ? const <CatalogCategory>[]
+        : <CatalogCategory>[
+            CatalogCategory.fromJson(<String, dynamic>{
+              'id': 4,
+              'name': 'Coffee',
+              'isActive': true,
+              'sortOrder': 0,
+            }),
+          ],
     meta: _meta(),
+  );
+  @override
+  Future<CatalogSetupRecord> getCatalogSetupRecord(
+    CatalogSetupKind kind,
+    int id, {
+    bool includeArchived = false,
+  }) async => const CatalogSetupRecord(
+    id: 4,
+    name: 'Coffee',
+    nameAr: '',
+    nameEn: '',
+    description: '',
+    code: '',
+    printerName: '',
+    branchId: null,
+    isActive: false,
+    sortOrder: 0,
+    productCount: 1,
   );
   @override
   Future<CatalogPage<ReportingCategory>> listReportingCategories({

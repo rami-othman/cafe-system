@@ -414,4 +414,116 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionStatusRolledBack => 'Rolled back';
+
+  @override
+  String get catalogSetupTitle => 'Catalog Setup';
+
+  @override
+  String get catalogSetupCategoriesTitle => 'Catalog Categories';
+
+  @override
+  String get catalogSetupReportingCategoriesTitle => 'Reporting Categories';
+
+  @override
+  String get catalogSetupKitchenStationsTitle => 'Kitchen Stations';
+
+  @override
+  String get catalogSetupCategory => 'Category';
+
+  @override
+  String get catalogSetupReportingCategory => 'Reporting Category';
+
+  @override
+  String get catalogSetupKitchenStation => 'Kitchen Station';
+
+  @override
+  String get catalogSetupCategoriesExplanation =>
+      'Categories classify Products for the Catalog.';
+
+  @override
+  String get catalogSetupReportingCategoriesExplanation =>
+      'Reporting Categories group Products for sales and performance reports. They do not control where Products appear in the customer Menu.';
+
+  @override
+  String get catalogSetupKitchenStationsExplanation =>
+      'Kitchen Stations identify the preparation area for Products; this does not configure printer communication.';
+
+  @override
+  String get catalogSetupAll => 'All';
+
+  @override
+  String get catalogSetupProducts => 'Products';
+
+  @override
+  String get catalogSetupOrder => 'Order';
+
+  @override
+  String get catalogSetupActions => 'Actions';
+
+  @override
+  String get catalogSetupCodePrinter => 'Code / Printer';
+
+  @override
+  String get catalogSetupNoMatchingRecords => 'No matching records.';
+
+  @override
+  String get catalogSetupUnableToLoad => 'Unable to load Catalog Setup.';
+
+  @override
+  String catalogSetupCreate(String type) {
+    return 'Create $type';
+  }
+
+  @override
+  String catalogSetupEdit(String type) {
+    return 'Edit $type';
+  }
+
+  @override
+  String catalogSetupArchive(String type) {
+    return 'Archive $type';
+  }
+
+  @override
+  String get catalogSetupRestore => 'Restore';
+
+  @override
+  String get catalogSetupMoveUp => 'Move up';
+
+  @override
+  String get catalogSetupMoveDown => 'Move down';
+
+  @override
+  String get catalogSetupName => 'Name';
+
+  @override
+  String get catalogSetupNameArabic => 'Arabic name';
+
+  @override
+  String get catalogSetupNameEnglish => 'English name';
+
+  @override
+  String get catalogSetupCode => 'Code';
+
+  @override
+  String get catalogSetupDescription => 'Description';
+
+  @override
+  String get catalogSetupPrinterName => 'Printer name';
+
+  @override
+  String catalogSetupPage(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String get catalogSetupPrevious => 'Previous';
+
+  @override
+  String get catalogSetupNext => 'Next';
+
+  @override
+  String catalogSetupArchiveConfirmation(String name, int count) {
+    return '$name is used by $count Products. Existing Product assignments remain governed by Backend rules.';
+  }
 }

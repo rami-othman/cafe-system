@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../controllers/published_version_cubit.dart';
 import '../models/published_version_models.dart';
@@ -67,7 +68,7 @@ class _PublishedVersionHistoryPanelState
               crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
                 Text(
-                  'Version History',
+                  context.l10n.versionHistory,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 _detail('Branch', widget.branchName),
@@ -83,7 +84,7 @@ class _PublishedVersionHistoryPanelState
                       ? null
                       : cubit.refresh,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh'),
+                  label: Text(context.l10n.commonRefresh),
                 ),
               ],
             ),
@@ -226,7 +227,7 @@ class _VersionRow extends StatelessWidget {
             ),
             _status(version.status),
             if (version.isCurrent || version.status == 'current')
-              const Chip(label: Text('Current')),
+              Chip(label: Text(context.l10n.versionStatusCurrent)),
             if (version.publicationStatus != null)
               Text('Publication: ${_label(version.publicationStatus!)}'),
           ],
@@ -267,10 +268,19 @@ class _VersionRow extends StatelessWidget {
         Wrap(
           spacing: 6,
           children: <Widget>[
-            TextButton(onPressed: onDetails, child: const Text('View Details')),
-            TextButton(onPressed: onCompare, child: const Text('Compare')),
+            TextButton(
+              onPressed: onDetails,
+              child: Text(context.l10n.versionDetail),
+            ),
+            TextButton(
+              onPressed: onCompare,
+              child: Text(context.l10n.compareVersions),
+            ),
             if (onRollback != null)
-              TextButton(onPressed: onRollback, child: const Text('Roll Back')),
+              TextButton(
+                onPressed: onRollback,
+                child: Text(context.l10n.versionRollback),
+              ),
           ],
         ),
       ],
@@ -282,7 +292,7 @@ class _DetailDialog extends StatelessWidget {
   const _DetailDialog();
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Version Detail'),
+    title: Text(context.l10n.versionDetail),
     content: SizedBox(
       width: 650,
       child: BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
@@ -412,7 +422,7 @@ class _DetailDialog extends StatelessWidget {
     actions: <Widget>[
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Close'),
+        child: Text(context.l10n.commonClose),
       ),
     ],
   );
@@ -423,7 +433,7 @@ class _ComparisonDialog extends StatelessWidget {
   final PublishedVersion source;
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text('Compare Version v${source.versionNumber}'),
+    title: Text('${context.l10n.compareVersions} v${source.versionNumber}'),
     content: SizedBox(
       width: 680,
       child: BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
@@ -439,7 +449,7 @@ class _ComparisonDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 DropdownButtonFormField<PublishedVersion>(
-          initialValue: state.comparisonTarget,
+                  initialValue: state.comparisonTarget,
                   decoration: const InputDecoration(
                     labelText: 'Comparison Version',
                   ),
@@ -460,7 +470,7 @@ class _ComparisonDialog extends StatelessWidget {
                           state.comparisonStatus == VersionRequestStatus.loading
                       ? null
                       : () => cubit.compare(source),
-                  child: const Text('Compare Versions'),
+                  child: Text(context.l10n.compareVersions),
                 ),
                 if (state.comparisonStatus == VersionRequestStatus.loading)
                   const Padding(
@@ -486,7 +496,7 @@ class _ComparisonDialog extends StatelessWidget {
     actions: <Widget>[
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Close'),
+        child: Text(context.l10n.commonClose),
       ),
     ],
   );
@@ -515,7 +525,7 @@ class _RollbackDialogState extends State<_RollbackDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Create Rollback Version'),
+    title: Text(context.l10n.versionNewRollback),
     content: SizedBox(
       width: 520,
       child: BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
@@ -544,8 +554,8 @@ class _RollbackDialogState extends State<_RollbackDialog> {
               TextField(
                 controller: controller,
                 maxLength: 1000,
-                decoration: const InputDecoration(
-                  labelText: 'Rollback reason (optional)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.versionRollbackReason,
                 ),
               ),
               if (state.rollbackError != null)
@@ -567,7 +577,7 @@ class _RollbackDialogState extends State<_RollbackDialog> {
               onPressed: state.rollbackStatus == RollbackStatus.submitting
                   ? null
                   : () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
             FilledButton(
               onPressed: state.rollbackStatus == RollbackStatus.submitting
@@ -588,7 +598,7 @@ class _RollbackDialogState extends State<_RollbackDialog> {
               child: Text(
                 state.rollbackStatus == RollbackStatus.submitting
                     ? 'Creating…'
-                    : 'Create Rollback Version',
+                    : context.l10n.versionNewRollback,
               ),
             ),
           ],

@@ -264,6 +264,35 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
               title: 'Classification',
               child: Column(
                 children: <Widget>[
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: <Widget>[
+                      TextButton(
+                        onPressed: () => context
+                            .push(
+                              '/menu-management/catalog-setup?tab=categories',
+                            )
+                            .then((_) => cubit.refreshReferences()),
+                        child: const Text('Manage Categories'),
+                      ),
+                      TextButton(
+                        onPressed: () => context
+                            .push(
+                              '/menu-management/catalog-setup?tab=reporting-categories',
+                            )
+                            .then((_) => cubit.refreshReferences()),
+                        child: const Text('Manage Reporting Categories'),
+                      ),
+                      TextButton(
+                        onPressed: () => context
+                            .push(
+                              '/menu-management/catalog-setup?tab=kitchen-stations',
+                            )
+                            .then((_) => cubit.refreshReferences()),
+                        child: const Text('Manage Kitchen Stations'),
+                      ),
+                    ],
+                  ),
                   _select<int>(
                     'Catalog category',
                     d.categoryId,
@@ -271,7 +300,9 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         .map(
                           (e) => DropdownMenuItem<int>(
                             value: e.id,
-                            child: Text(e.name),
+                            child: Text(
+                              '${e.name}${e.isActive ? '' : ' (Archived)'}',
+                            ),
                           ),
                         )
                         .toList(),
@@ -288,7 +319,9 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         .map(
                           (e) => DropdownMenuItem<int>(
                             value: e.id,
-                            child: Text(e.name),
+                            child: Text(
+                              '${e.name}${e.isActive ? '' : ' (Archived)'}',
+                            ),
                           ),
                         )
                         .toList(),
@@ -307,7 +340,9 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         .map(
                           (e) => DropdownMenuItem<int>(
                             value: e.id,
-                            child: Text(e.name),
+                            child: Text(
+                              '${e.name}${e.isActive ? '' : ' (Archived)'}',
+                            ),
                           ),
                         )
                         .toList(),

@@ -39,6 +39,9 @@ import '../features/menu_management/modifiers/views/modifier_group_editor_screen
 import '../features/menu_management/modifiers/views/modifier_library_screen.dart';
 import '../features/menu_management/products/controllers/product_modifier_assignments_cubit.dart';
 import '../features/menu_management/products/views/product_modifier_assignments_screen.dart';
+import '../features/menu_management/catalog_setup/controllers/catalog_setup_cubit.dart';
+import '../features/menu_management/catalog_setup/models/catalog_setup_models.dart';
+import '../features/menu_management/catalog_setup/views/catalog_setup_screen.dart';
 import '../features/menu_management/menus/controllers/menu_list_cubit.dart';
 import '../features/menu_management/menus/controllers/menu_detail_cubit.dart';
 import '../features/menu_management/menus/controllers/menu_editor_cubit.dart';
@@ -92,6 +95,18 @@ final GoRouter appRouter = GoRouter(
         );
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: AppRoutes.menuManagementCatalogSetup,
+          name: AppRouteNames.menuManagementCatalogSetup,
+          builder: (context, state) => BlocProvider<CatalogSetupCubit>(
+            create: (_) => serviceLocator<CatalogSetupCubit>(),
+            child: CatalogSetupScreen(
+              initialKind: CatalogSetupKindPath.fromQuery(
+                state.uri.queryParameters['tab'],
+              ),
+            ),
+          ),
+        ),
         GoRoute(
           path: AppRoutes.menuManagement,
           redirect: (_, _) => AppRoutes.menuManagementProducts,
@@ -441,6 +456,8 @@ abstract final class AppRoutes {
   static const String menuManagementAssignments =
       '/menu-management/assignments';
   static const String menuManagementReview = '/menu-management/review';
+  static const String menuManagementCatalogSetup =
+      '/menu-management/catalog-setup';
   static const String menuManagementMenuCreate =
       '/menu-management/menus/create';
   static const String menuManagementMenuDetail =
@@ -484,6 +501,8 @@ abstract final class AppRouteNames {
   static const String menuManagementMenus = 'menu-management-menus';
   static const String menuManagementAssignments = 'menu-management-assignments';
   static const String menuManagementReview = 'menu-management-review';
+  static const String menuManagementCatalogSetup =
+      'menu-management-catalog-setup';
   static const String menuManagementMenuCreate = 'menu-management-menu-create';
   static const String menuManagementMenuDetail = 'menu-management-menu-detail';
   static const String menuManagementMenuEdit = 'menu-management-menu-edit';

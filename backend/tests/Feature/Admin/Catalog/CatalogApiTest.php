@@ -121,6 +121,32 @@ class CatalogApiTest extends TestCase
         $this->assertDatabaseHas('categories', ['id' => $other, 'sort_order' => 1]);
     }
 
+    public function test_kitchen_station_contract_excludes_reporting_only_description_field(): void
+    {
+        $tenantId = $this->tenant('station-contract');
+        $station = $this->postJson('/api/v1/admin/catalog/kitchen-stations', [
+            'name' => 'Coffee Bar',
+            'nameAr' => 'قهوة',
+            'nameEn' => 'Coffee Bar',
+            'code' => 'BAR',
+            'printerName' => 'bar-printer',
+            'description' => 'This is not a kitchen station field',
+        ], $this->headers($tenantId))->assertCreated()
+            ->assertJsonPath('data.code', 'BAR')
+            ->assertJsonPath('data.printerName', 'bar-printer');
+
+        $stationId = $station->json('data.id');
+        $this->patchJson("/api/v1/admin/catalog/kitchen-stations/{$stationId}", [
+            'code' => 'ESPRESSO',
+            'printerName' => null,
+        ], $this->headers($tenantId))->assertOk()
+            ->assertJsonPath('data.code', 'ESPRESSO')
+            ->assertJsonPath('data.printerName', null);
+        $this->postJson("/api/v1/admin/catalog/kitchen-stations/{$stationId}/archive", [], $this->headers($tenantId))->assertOk();
+        $this->postJson("/api/v1/admin/catalog/kitchen-stations/{$stationId}/restore", [], $this->headers($tenantId))->assertOk()
+            ->assertJsonPath('data.isActive', true);
+    }
+
     public function test_modifier_groups_are_reusable_but_cross_tenant_assignments_are_rejected(): void
     {
         $tenantId = $this->tenant('alpha');

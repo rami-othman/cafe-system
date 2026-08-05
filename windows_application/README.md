@@ -1,6 +1,6 @@
 # Cafe System 618 Windows Application
 
-## Published Version History
+## Current Authoritative Status
 
 The Review workflow includes a Versions tab scoped only by Branch and Sales
 Channel. History is paginated and metadata-only; details show bounded Snapshot
@@ -8,8 +8,30 @@ counts, while immutable JSON is fetched only as an explicit read-only LTR
 diagnostic. Backend comparison output is bounded and `truncated` is explicitly
 non-exhaustive. Rollback creates a new immutable Version and never reactivates a
 historical Version; no-change rollback refreshes History and Current Version.
-POS Snapshot Sync remains unimplemented and broader localization migration is
-still paused.
+Phase 4E and Phase 4F are complete. Version History is Branch + Channel scoped,
+metadata-only and paginated. Snapshot payload is explicit, diagnostic, read-only,
+and opt-in. Comparison is Backend-generated and may be bounded; `truncated=true`
+means only part of the difference set was returned. Rollback creates a new
+immutable Version; historical Versions are never reactivated, and a no-change
+rollback creates no Version. Phase 4G Catalog Setup is complete only after its
+Flutter verification passes: Categories, Reporting Categories, and Kitchen
+Stations are manageable through the desktop client. POS Published Snapshot Sync,
+Inventory, Recipes, Authentication, and Combos are not implemented. Broader
+localization migration remains paused.
+
+## Menu Management
+
+### Catalog Setup
+
+`/menu-management/catalog-setup` manages tenant-scoped Catalog Categories,
+Reporting Categories, and Kitchen Stations. It uses the Laravel list, create,
+update, archive, restore, and reorder APIs only; no permanent delete is exposed.
+Archive/restore is non-destructive. Reporting Categories affect reporting rather
+than customer-facing Menu placement. Product Editor links open the matching setup
+tab and retain the draft while reference lists refresh on return, including an
+archived assigned reference in Edit mode. POS Published Snapshot Sync, Inventory,
+Recipes, Authentication, and Combos remain unimplemented; broader localization
+migration remains paused.
 
 Menus and Sections are administered through `/menu-management/menus`, `/create`,
 `/:menuId`, `/:menuId/edit`, and `/:menuId/placements`. A Catalog Product belongs

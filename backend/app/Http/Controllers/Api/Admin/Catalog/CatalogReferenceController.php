@@ -231,7 +231,23 @@ class CatalogReferenceController extends Controller
 
     private function validate(Request $request, string $kind, bool $create = true): array
     {
-        $rules = ['name' => [$create ? 'required' : 'sometimes', 'string', 'max:255'], 'nameAr' => ['nullable', 'string', 'max:255'], 'nameEn' => ['nullable', 'string', 'max:255'], 'description' => ['nullable', 'string'], 'code' => ['nullable', 'string', 'max:255'], 'sortOrder' => ['nullable', 'integer'], 'isActive' => ['nullable', 'boolean']];
+        $rules = [
+            'name' => [$create ? 'required' : 'sometimes', 'string', 'max:255'],
+            'sortOrder' => ['nullable', 'integer'],
+            'isActive' => ['nullable', 'boolean'],
+        ];
+        if ($kind === 'category') {
+            $rules += ['description' => ['nullable', 'string']];
+        } else {
+            $rules += [
+                'nameAr' => ['nullable', 'string', 'max:255'],
+                'nameEn' => ['nullable', 'string', 'max:255'],
+                'code' => ['nullable', 'string', 'max:255'],
+            ];
+        }
+        if ($kind === 'reporting') {
+            $rules += ['description' => ['nullable', 'string']];
+        }
         if ($kind === 'station') {
             $rules += ['branchId' => ['nullable', 'integer', Rule::exists('branches', 'id')->where(fn ($q) => $q->where('tenant_id', TenantContext::id($request))->whereNull('deleted_at'))], 'printerName' => ['nullable', 'string', 'max:255']];
         }
@@ -250,13 +266,17 @@ class CatalogReferenceController extends Controller
 
     private function payload(string $kind, array $data, ?object $current = null): array
     {
-        $payload = ['name' => $data['name'] ?? $current?->name, 'sort_order' => $data['sortOrder'] ?? $current?->sort_order ?? 0, 'is_active' => $data['isActive'] ?? $current?->is_active ?? true];
+        $value = fn (string $field, string $column, mixed $fallback = null): mixed => array_key_exists($field, $data) ? $data[$field] : ($current?->{$column} ?? $fallback);
+        $payload = ['name' => $value('name', 'name'), 'sort_order' => $value('sortOrder', 'sort_order', 0), 'is_active' => $value('isActive', 'is_active', true)];
         if ($kind !== 'category') {
-            $payload += ['name_ar' => $data['nameAr'] ?? $current?->name_ar, 'name_en' => $data['nameEn'] ?? $current?->name_en, 'code' => $data['code'] ?? $current?->code, 'description' => $data['description'] ?? $current?->description];
+            $payload += ['name_ar' => $value('nameAr', 'name_ar'), 'name_en' => $value('nameEn', 'name_en'), 'code' => $value('code', 'code')];
+            if ($kind === 'reporting') {
+                $payload['description'] = $value('description', 'description');
+            }
         } else {
-            $payload['description'] = $data['description'] ?? $current?->description;
+            $payload['description'] = $value('description', 'description');
         } if ($kind === 'station') {
-            $payload += ['branch_id' => $data['branchId'] ?? $current?->branch_id, 'printer_name' => $data['printerName'] ?? $current?->printer_name];
+            $payload += ['branch_id' => $value('branchId', 'branch_id'), 'printer_name' => $value('printerName', 'printer_name')];
         }
 
         return $payload;

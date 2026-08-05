@@ -1,14 +1,28 @@
 # Project Status
 
-## Phase 4F Version History, Comparison and Rollback
+## Current Authoritative Status
 
-Status: Complete after Flutter analysis and the full Flutter suite pass. The
-Review workflow's Versions tab uses Branch + Channel metadata-only pagination,
-on-demand immutable Snapshot payload diagnostics, backend-bounded comparison,
-and immutable rollback Versions. `truncated` comparisons are non-exhaustive;
-no-change rollback still refreshes Current Version and History. Final Menu
-Management Regression and POS Snapshot Sync are not started. Broader
-localization migration remains paused.
+Phase 4E and Phase 4F are complete. The Review workflow's Versions tab is scoped
+by Branch + Channel and renders a metadata-only paginated History. Snapshot payload
+is explicit, diagnostic, read-only, and opt-in. Backend generates comparison and it
+may be bounded; `truncated=true` means only part of the difference set is returned.
+Rollback creates a new immutable Version; historical Versions are never reactivated.
+No-change rollback creates no Version and refreshes History and Current Version.
+Phase 4G Catalog Setup is complete only after its Flutter verification passes:
+Categories, Reporting Categories, and Kitchen Stations are manageable through the
+desktop client, with non-destructive archive/restore and Product Editor integration.
+POS Published Snapshot Sync, Inventory, Recipes, Authentication, and Combos are not
+implemented. Broader localization migration remains paused.
+
+## Historical Phase Log
+
+Phase 4G — Flutter Catalog Setup: Complete after Flutter verification. Catalog
+Categories, Reporting Categories, and Kitchen Stations are managed at
+`/menu-management/catalog-setup`; archive/restore is non-destructive and persisted
+reorder remains Backend-authoritative. Product Editor integration preserves its draft
+and refreshes reference values. Final Menu Management Regression and POS Published
+Snapshot Sync are not started. Inventory, Recipes, Authentication, and Combos are
+not started.
 
 Current authoritative phase status: Phase 4C — Complete; Phase 4D.1 — Variant Price Overrides: Complete; Phase 4D.2 — Scheduled Product Availability: Complete; Phase 4D.3A — Operational Availability Overrides: Complete; Phase 4D.3B — Operational Resolution Diagnostic: Complete; Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started. Phase 4C.1 — Complete; Phase 4C.2 —
 Product Placements and Ordering: Complete; Phase 4C.3 — Branch/Channel

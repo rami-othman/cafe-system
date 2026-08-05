@@ -1,16 +1,35 @@
 # Menu Management Architecture
 
-## Phase 4F Flutter Published Version Administration
+## Current Authoritative Status
 
-Flutter exposes a Versions tab in Review scoped only by Branch + Sales Channel.
+Phase 4E and Phase 4F are complete. Flutter exposes a Versions tab in Review scoped
+only by Branch + Sales Channel.
 It calls the paginated history API for metadata only, fetches immutable Snapshot
 payload only as an explicit read-only LTR diagnostic, and renders backend-bounded
 comparison groups without a client-side recursive diff. `truncated` means the
 comparison is non-exhaustive. Rollback sends only the supported optional reason,
 creates a new immutable Version when content differs, never reactivates history,
-and refreshes Current Version and History for new and no-change results. POS
-Snapshot Sync remains unimplemented and broad localization migration remains
-paused.
+and refreshes Current Version and History for new and no-change results. Phase 4G
+Catalog Setup is complete only after its Flutter verification passes: Categories,
+Reporting Categories, and Kitchen Stations are manageable through the desktop
+client, with non-destructive archive/restore and Product Editor integration. POS
+Snapshot Sync, Inventory, Recipes, Authentication, and Combos remain unimplemented;
+broad localization migration remains paused.
+
+## Historical Phase Log
+
+## Phase 4G Flutter Catalog Setup
+
+Flutter administers Catalog Categories, Reporting Categories, and Kitchen Stations
+at `/menu-management/catalog-setup`, with an optional `tab` query. The UI uses the
+tenant-safe Laravel reference APIs for list/search/status pagination, create/update,
+soft archive/restore, and persisted ordering. No tenant ID, Product relationship,
+usage count, or local identifier is submitted. Reporting Categories are analytics
+classifications and do not control customer Menu placement. Product Editor opens the
+matching manager without discarding its draft and refreshes reference values on
+return, retaining an archived assigned reference in Edit mode. POS Sync, Inventory,
+Recipes, Authentication, and Combos remain unimplemented; broader localization
+migration remains paused.
 
 ## Current Flutter Review & Preview status
 

@@ -33,6 +33,11 @@ class MenuManagementTabs extends StatelessWidget {
         selected: selected == 'review',
         onSelected: (_) => context.go('/menu-management/review'),
       ),
+      ChoiceChip(
+        label: const Text('Catalog Setup'),
+        selected: selected == 'catalog-setup',
+        onSelected: (_) => context.go('/menu-management/catalog-setup'),
+      ),
     ],
   );
 }

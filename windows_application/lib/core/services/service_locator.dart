@@ -31,6 +31,7 @@ import '../../features/menu_management/menus/controllers/product_placements_cubi
 import '../../features/menu_management/assignments/controllers/menu_assignments_cubit.dart';
 import '../../features/menu_management/review/controllers/menu_review_cubit.dart';
 import '../../features/menu_management/versions/controllers/published_version_cubit.dart';
+import '../../features/menu_management/catalog_setup/controllers/catalog_setup_cubit.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -214,6 +215,13 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<PublishedVersionCubit>()) {
     serviceLocator.registerFactory<PublishedVersionCubit>(
       () => PublishedVersionCubit(
+        repository: serviceLocator<MenuCatalogRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<CatalogSetupCubit>()) {
+    serviceLocator.registerFactory<CatalogSetupCubit>(
+      () => CatalogSetupCubit(
         repository: serviceLocator<MenuCatalogRepository>(),
       ),
     );

@@ -817,6 +817,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rolled back'**
   String get versionStatusRolledBack;
+
+  /// No description provided for @catalogSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Catalog Setup'**
+  String get catalogSetupTitle;
+
+  /// No description provided for @catalogSetupCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Catalog Categories'**
+  String get catalogSetupCategoriesTitle;
+
+  /// No description provided for @catalogSetupReportingCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting Categories'**
+  String get catalogSetupReportingCategoriesTitle;
+
+  /// No description provided for @catalogSetupKitchenStationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Stations'**
+  String get catalogSetupKitchenStationsTitle;
+
+  /// No description provided for @catalogSetupCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get catalogSetupCategory;
+
+  /// No description provided for @catalogSetupReportingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting Category'**
+  String get catalogSetupReportingCategory;
+
+  /// No description provided for @catalogSetupKitchenStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Station'**
+  String get catalogSetupKitchenStation;
+
+  /// No description provided for @catalogSetupCategoriesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories classify Products for the Catalog.'**
+  String get catalogSetupCategoriesExplanation;
+
+  /// No description provided for @catalogSetupReportingCategoriesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting Categories group Products for sales and performance reports. They do not control where Products appear in the customer Menu.'**
+  String get catalogSetupReportingCategoriesExplanation;
+
+  /// No description provided for @catalogSetupKitchenStationsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Stations identify the preparation area for Products; this does not configure printer communication.'**
+  String get catalogSetupKitchenStationsExplanation;
+
+  /// No description provided for @catalogSetupAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get catalogSetupAll;
+
+  /// No description provided for @catalogSetupProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get catalogSetupProducts;
+
+  /// No description provided for @catalogSetupOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get catalogSetupOrder;
+
+  /// No description provided for @catalogSetupActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get catalogSetupActions;
+
+  /// No description provided for @catalogSetupCodePrinter.
+  ///
+  /// In en, this message translates to:
+  /// **'Code / Printer'**
+  String get catalogSetupCodePrinter;
+
+  /// No description provided for @catalogSetupNoMatchingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching records.'**
+  String get catalogSetupNoMatchingRecords;
+
+  /// No description provided for @catalogSetupUnableToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load Catalog Setup.'**
+  String get catalogSetupUnableToLoad;
+
+  /// No description provided for @catalogSetupCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create {type}'**
+  String catalogSetupCreate(String type);
+
+  /// No description provided for @catalogSetupEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {type}'**
+  String catalogSetupEdit(String type);
+
+  /// No description provided for @catalogSetupArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive {type}'**
+  String catalogSetupArchive(String type);
+
+  /// No description provided for @catalogSetupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get catalogSetupRestore;
+
+  /// No description provided for @catalogSetupMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get catalogSetupMoveUp;
+
+  /// No description provided for @catalogSetupMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get catalogSetupMoveDown;
+
+  /// No description provided for @catalogSetupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get catalogSetupName;
+
+  /// No description provided for @catalogSetupNameArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic name'**
+  String get catalogSetupNameArabic;
+
+  /// No description provided for @catalogSetupNameEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English name'**
+  String get catalogSetupNameEnglish;
+
+  /// No description provided for @catalogSetupCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get catalogSetupCode;
+
+  /// No description provided for @catalogSetupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get catalogSetupDescription;
+
+  /// No description provided for @catalogSetupPrinterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer name'**
+  String get catalogSetupPrinterName;
+
+  /// No description provided for @catalogSetupPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page}'**
+  String catalogSetupPage(int page);
+
+  /// No description provided for @catalogSetupPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get catalogSetupPrevious;
+
+  /// No description provided for @catalogSetupNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get catalogSetupNext;
+
+  /// No description provided for @catalogSetupArchiveConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is used by {count} Products. Existing Product assignments remain governed by Backend rules.'**
+  String catalogSetupArchiveConfirmation(String name, int count);
 }
 
 class _AppLocalizationsDelegate

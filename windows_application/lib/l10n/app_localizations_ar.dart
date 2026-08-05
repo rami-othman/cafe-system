@@ -424,4 +424,116 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get versionStatusRolledBack => 'تم التراجع عنه';
+
+  @override
+  String get catalogSetupTitle => 'إعداد الكتالوج';
+
+  @override
+  String get catalogSetupCategoriesTitle => 'فئات الكتالوج';
+
+  @override
+  String get catalogSetupReportingCategoriesTitle => 'فئات التقارير';
+
+  @override
+  String get catalogSetupKitchenStationsTitle => 'محطات المطبخ';
+
+  @override
+  String get catalogSetupCategory => 'فئة';
+
+  @override
+  String get catalogSetupReportingCategory => 'فئة تقارير';
+
+  @override
+  String get catalogSetupKitchenStation => 'محطة مطبخ';
+
+  @override
+  String get catalogSetupCategoriesExplanation =>
+      'تصنف الفئات المنتجات في الكتالوج.';
+
+  @override
+  String get catalogSetupReportingCategoriesExplanation =>
+      'تجمع فئات التقارير المنتجات للمبيعات وتقارير الأداء. لا تتحكم في موضع المنتجات في قائمة العملاء.';
+
+  @override
+  String get catalogSetupKitchenStationsExplanation =>
+      'تحدد محطات المطبخ منطقة تحضير المنتجات؛ ولا تعد إعدادًا لاتصال الطابعة.';
+
+  @override
+  String get catalogSetupAll => 'الكل';
+
+  @override
+  String get catalogSetupProducts => 'المنتجات';
+
+  @override
+  String get catalogSetupOrder => 'الترتيب';
+
+  @override
+  String get catalogSetupActions => 'الإجراءات';
+
+  @override
+  String get catalogSetupCodePrinter => 'الرمز / الطابعة';
+
+  @override
+  String get catalogSetupNoMatchingRecords => 'لا توجد سجلات مطابقة.';
+
+  @override
+  String get catalogSetupUnableToLoad => 'تعذر تحميل إعداد الكتالوج.';
+
+  @override
+  String catalogSetupCreate(String type) {
+    return 'إنشاء $type';
+  }
+
+  @override
+  String catalogSetupEdit(String type) {
+    return 'تعديل $type';
+  }
+
+  @override
+  String catalogSetupArchive(String type) {
+    return 'أرشفة $type';
+  }
+
+  @override
+  String get catalogSetupRestore => 'استعادة';
+
+  @override
+  String get catalogSetupMoveUp => 'نقل لأعلى';
+
+  @override
+  String get catalogSetupMoveDown => 'نقل لأسفل';
+
+  @override
+  String get catalogSetupName => 'الاسم';
+
+  @override
+  String get catalogSetupNameArabic => 'الاسم بالعربية';
+
+  @override
+  String get catalogSetupNameEnglish => 'الاسم بالإنجليزية';
+
+  @override
+  String get catalogSetupCode => 'الرمز';
+
+  @override
+  String get catalogSetupDescription => 'الوصف';
+
+  @override
+  String get catalogSetupPrinterName => 'اسم الطابعة';
+
+  @override
+  String catalogSetupPage(int page) {
+    return 'الصفحة $page';
+  }
+
+  @override
+  String get catalogSetupPrevious => 'السابق';
+
+  @override
+  String get catalogSetupNext => 'التالي';
+
+  @override
+  String catalogSetupArchiveConfirmation(String name, int count) {
+    return '$name مستخدم في $count من المنتجات. تبقى تعيينات المنتجات الحالية خاضعة لقواعد الخادم.';
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../catalog_setup/models/catalog_setup_models.dart';
 import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../models/product_editor_draft.dart';
@@ -49,6 +50,7 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
         ),
       );
       await _loadReferences();
+      _retainSelectedReferences(product);
       emit(state.copyWith(status: ProductEditorStatus.ready, isDirty: false));
     } catch (error) {
       emit(
@@ -70,6 +72,28 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
       clearFormError: true,
     ),
   );
+  Future<void> refreshReferences() async {
+    final CatalogCategory? previousCategory = _categoryForId(
+      state.categories,
+      state.draft.categoryId,
+    );
+    final ReportingCategory? previousReportingCategory =
+        _reportingCategoryForId(
+          state.reportingCategories,
+          state.draft.reportingCategoryId,
+        );
+    final KitchenStation? previousKitchenStation = _kitchenStationForId(
+      state.kitchenStations,
+      state.draft.kitchenStationId,
+    );
+    await _loadReferences();
+    await _restoreArchivedSelections(
+      previousCategory: previousCategory,
+      previousReportingCategory: previousReportingCategory,
+      previousKitchenStation: previousKitchenStation,
+    );
+  }
+
   Future<void> submit() async {
     if (state.status == ProductEditorStatus.submitting || state.isReadOnly) {
       return;
@@ -158,6 +182,191 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
       errors['Kitchen stations'] = _message(error);
     }
     emit(state.copyWith(referenceErrors: errors));
+  }
+
+  void _retainSelectedReferences(ProductDetail product) {
+    final CatalogCategory? category = product.category;
+    final ReportingCategory? reporting = product.reportingCategory;
+    final KitchenStation? station = product.kitchenStation;
+    emit(
+      state.copyWith(
+        categories:
+            category != null &&
+                !state.categories.any((item) => item.id == category.id)
+            ? <CatalogCategory>[...state.categories, category]
+            : state.categories,
+        reportingCategories:
+            reporting != null &&
+                !state.reportingCategories.any(
+                  (item) => item.id == reporting.id,
+                )
+            ? <ReportingCategory>[...state.reportingCategories, reporting]
+            : state.reportingCategories,
+        kitchenStations:
+            station != null &&
+                !state.kitchenStations.any((item) => item.id == station.id)
+            ? <KitchenStation>[...state.kitchenStations, station]
+            : state.kitchenStations,
+      ),
+    );
+  }
+
+  Future<void> _restoreArchivedSelections({
+    CatalogCategory? previousCategory,
+    ReportingCategory? previousReportingCategory,
+    KitchenStation? previousKitchenStation,
+  }) async {
+    final List<String> errors = <String>[];
+    final int? categoryId = state.draft.categoryId;
+    final int? reportingCategoryId = state.draft.reportingCategoryId;
+    final int? kitchenStationId = state.draft.kitchenStationId;
+
+    if (categoryId != null &&
+        !state.categories.any((item) => item.id == categoryId)) {
+      try {
+        final record = await repository.getCatalogSetupRecord(
+          CatalogSetupKind.categories,
+          categoryId,
+          includeArchived: true,
+        );
+        emit(
+          state.copyWith(
+            categories: <CatalogCategory>[
+              ...state.categories,
+              CatalogCategory(
+                id: record.id,
+                name: record.name,
+                isActive: record.isActive,
+                sortOrder: record.sortOrder,
+              ),
+            ],
+          ),
+        );
+      } catch (_) {
+        if (previousCategory != null) {
+          emit(
+            state.copyWith(
+              categories: <CatalogCategory>[
+                ...state.categories,
+                previousCategory,
+              ],
+            ),
+          );
+        }
+        errors.add('Categories');
+      }
+    }
+    if (reportingCategoryId != null &&
+        !state.reportingCategories.any(
+          (item) => item.id == reportingCategoryId,
+        )) {
+      try {
+        final record = await repository.getCatalogSetupRecord(
+          CatalogSetupKind.reportingCategories,
+          reportingCategoryId,
+          includeArchived: true,
+        );
+        emit(
+          state.copyWith(
+            reportingCategories: <ReportingCategory>[
+              ...state.reportingCategories,
+              ReportingCategory(
+                id: record.id,
+                name: record.name,
+                code: record.code,
+                isActive: record.isActive,
+                sortOrder: record.sortOrder,
+              ),
+            ],
+          ),
+        );
+      } catch (_) {
+        if (previousReportingCategory != null) {
+          emit(
+            state.copyWith(
+              reportingCategories: <ReportingCategory>[
+                ...state.reportingCategories,
+                previousReportingCategory,
+              ],
+            ),
+          );
+        }
+        errors.add('Reporting categories');
+      }
+    }
+    if (kitchenStationId != null &&
+        !state.kitchenStations.any((item) => item.id == kitchenStationId)) {
+      try {
+        final record = await repository.getCatalogSetupRecord(
+          CatalogSetupKind.kitchenStations,
+          kitchenStationId,
+          includeArchived: true,
+        );
+        emit(
+          state.copyWith(
+            kitchenStations: <KitchenStation>[
+              ...state.kitchenStations,
+              KitchenStation(
+                id: record.id,
+                name: record.name,
+                code: record.code,
+                branchId: record.branchId,
+                branchName: '',
+                isActive: record.isActive,
+                sortOrder: record.sortOrder,
+              ),
+            ],
+          ),
+        );
+      } catch (_) {
+        if (previousKitchenStation != null) {
+          emit(
+            state.copyWith(
+              kitchenStations: <KitchenStation>[
+                ...state.kitchenStations,
+                previousKitchenStation,
+              ],
+            ),
+          );
+        }
+        errors.add('Kitchen stations');
+      }
+    }
+    if (errors.isNotEmpty) {
+      emit(
+        state.copyWith(
+          referenceErrors: <String, String>{
+            ...state.referenceErrors,
+            for (final String key in errors)
+              key: 'The selected archived reference could not be refreshed.',
+          },
+        ),
+      );
+    }
+  }
+
+  CatalogCategory? _categoryForId(List<CatalogCategory> records, int? id) {
+    for (final CatalogCategory record in records) {
+      if (record.id == id) return record;
+    }
+    return null;
+  }
+
+  ReportingCategory? _reportingCategoryForId(
+    List<ReportingCategory> records,
+    int? id,
+  ) {
+    for (final ReportingCategory record in records) {
+      if (record.id == id) return record;
+    }
+    return null;
+  }
+
+  KitchenStation? _kitchenStationForId(List<KitchenStation> records, int? id) {
+    for (final KitchenStation record in records) {
+      if (record.id == id) return record;
+    }
+    return null;
   }
 
   ProductEditorDraft _draft(ProductDetail p) => ProductEditorDraft(

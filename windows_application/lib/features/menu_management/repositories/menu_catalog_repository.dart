@@ -19,6 +19,7 @@ import '../availability/models/availability_models.dart';
 import '../operational_availability/models/operational_availability_models.dart';
 import '../review/models/review_models.dart';
 import '../versions/models/published_version_models.dart';
+import '../catalog_setup/models/catalog_setup_models.dart';
 
 abstract class MenuCatalogRepository {
   Future<MenuValidationResult> validateMenu(
@@ -78,6 +79,39 @@ abstract class MenuCatalogRepository {
     int perPage = 100,
   });
   Future<CatalogPage<KitchenStation>> listKitchenStations({int perPage = 100});
+  Future<CatalogSetupPage> listCatalogSetup({
+    required CatalogSetupKind kind,
+    required CatalogSetupStatus status,
+    required String search,
+    required int page,
+    int perPage = 20,
+  }) => throw UnsupportedError('Catalog Setup is not configured.');
+  Future<CatalogSetupRecord> getCatalogSetupRecord(
+    CatalogSetupKind kind,
+    int id, {
+    bool includeArchived = false,
+  }) => throw UnsupportedError('Catalog Setup is not configured.');
+  Future<CatalogSetupRecord> createCatalogSetup(
+    CatalogSetupKind kind,
+    CatalogSetupDraft draft,
+  ) => throw UnsupportedError('Catalog Setup is not configured.');
+  Future<CatalogSetupRecord> updateCatalogSetup(
+    CatalogSetupKind kind,
+    int id,
+    CatalogSetupDraft draft,
+  ) => throw UnsupportedError('Catalog Setup is not configured.');
+  Future<CatalogSetupRecord> archiveCatalogSetup(
+    CatalogSetupKind kind,
+    int id,
+  ) => throw UnsupportedError('Catalog Setup is not configured.');
+  Future<CatalogSetupRecord> restoreCatalogSetup(
+    CatalogSetupKind kind,
+    int id,
+  ) => throw UnsupportedError('Catalog Setup is not configured.');
+  Future<void> reorderCatalogSetup(
+    CatalogSetupKind kind,
+    List<CatalogSetupRecord> items,
+  ) => throw UnsupportedError('Catalog Setup is not configured.');
   Future<ProductVariant> createVariant(
     int productId,
     VariantEditorDraft draft, {
@@ -349,6 +383,20 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     }
     return MenuPublicationResult.fromJson(Map<String, dynamic>.from(response));
   }
+
+  @override
+  Future<CatalogSetupRecord> getCatalogSetupRecord(
+    CatalogSetupKind kind,
+    int id, {
+    bool includeArchived = false,
+  }) => _catalogSetupRecord(
+    _apiClient.get(
+      'admin/catalog/${kind.path}/$id',
+      queryParameters: <String, dynamic>{
+        if (includeArchived) 'includeArchived': true,
+      },
+    ),
+  );
 
   @override
   Future<PublishedMenuVersion?> getCurrentPublishedVersion(
@@ -1319,6 +1367,99 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   Future<CatalogPage<KitchenStation>> listKitchenStations({
     int perPage = 100,
   }) => _references('kitchen-stations', perPage, KitchenStation.fromJson);
+
+  @override
+  Future<CatalogSetupPage> listCatalogSetup({
+    required CatalogSetupKind kind,
+    required CatalogSetupStatus status,
+    required String search,
+    required int page,
+    int perPage = 20,
+  }) async {
+    final dynamic response = await _apiClient.getEnvelope(
+      'admin/catalog/${kind.path}',
+      queryParameters: <String, dynamic>{
+        'status': status.value,
+        'page': page,
+        'perPage': perPage,
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    if (response is! Map)
+      throw const FormatException('Invalid Catalog Setup response.');
+    final CatalogPage<CatalogSetupRecord> pageResult = _page(
+      response,
+      CatalogSetupRecord.fromJson,
+    );
+    return CatalogSetupPage(items: pageResult.items, meta: pageResult.meta);
+  }
+
+  @override
+  Future<CatalogSetupRecord> createCatalogSetup(
+    CatalogSetupKind kind,
+    CatalogSetupDraft draft,
+  ) => _catalogSetupRecord(
+    _apiClient.post('admin/catalog/${kind.path}', data: draft.toJson(kind)),
+  );
+
+  @override
+  Future<CatalogSetupRecord> updateCatalogSetup(
+    CatalogSetupKind kind,
+    int id,
+    CatalogSetupDraft draft,
+  ) => _catalogSetupRecord(
+    _apiClient.patch(
+      'admin/catalog/${kind.path}/$id',
+      data: draft.toJson(kind),
+    ),
+  );
+
+  @override
+  Future<CatalogSetupRecord> archiveCatalogSetup(
+    CatalogSetupKind kind,
+    int id,
+  ) => _catalogSetupRecord(
+    _apiClient.post('admin/catalog/${kind.path}/$id/archive'),
+  );
+
+  @override
+  Future<CatalogSetupRecord> restoreCatalogSetup(
+    CatalogSetupKind kind,
+    int id,
+  ) => _catalogSetupRecord(
+    _apiClient.post('admin/catalog/${kind.path}/$id/restore'),
+  );
+
+  @override
+  Future<void> reorderCatalogSetup(
+    CatalogSetupKind kind,
+    List<CatalogSetupRecord> items,
+  ) async {
+    await _apiClient.post(
+      'admin/catalog/${kind.path}/reorder',
+      data: <String, dynamic>{
+        'items': items
+            .asMap()
+            .entries
+            .map(
+              (entry) => <String, dynamic>{
+                'id': entry.value.id,
+                'sortOrder': entry.key,
+              },
+            )
+            .toList(growable: false),
+      },
+    );
+  }
+
+  Future<CatalogSetupRecord> _catalogSetupRecord(
+    Future<dynamic> response,
+  ) async {
+    final dynamic body = await response;
+    if (body is! Map)
+      throw const FormatException('Invalid Catalog Setup response.');
+    return CatalogSetupRecord.fromJson(Map<String, dynamic>.from(body));
+  }
 
   Future<CatalogPage<T>> _references<T>(
     String path,
