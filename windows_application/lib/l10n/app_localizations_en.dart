@@ -620,4 +620,121 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recipeRemoveOverrideBody =>
       'Removing it restores the nearest inherited material effects.';
+
+  @override
+  String get menuManagementWorkflow => 'Menu management workflow';
+
+  @override
+  String get menuManagementBuild => 'Build';
+
+  @override
+  String get menuManagementConfigure => 'Configure';
+
+  @override
+  String get menuManagementRelease => 'Review & release';
+
+  @override
+  String get menuManagementProducts => 'Products';
+
+  @override
+  String get menuManagementModifiers => 'Modifiers';
+
+  @override
+  String get menuManagementMenus => 'Menus';
+
+  @override
+  String get menuManagementAssignments => 'Assignments & schedules';
+
+  @override
+  String get menuManagementReview => 'Review & preview';
+
+  @override
+  String get menuManagementCatalogSetup => 'Catalog setup';
+
+  @override
+  String get recipeConsumptionHelp =>
+      'Define the materials consumed when one unit of this Variant is prepared.';
+
+  @override
+  String get recipeNoComponentsHelp =>
+      'No materials are configured yet. Add each material used to prepare one unit of this Variant.';
+
+  @override
+  String get recipeOverrideGlobal => 'Global default';
+
+  @override
+  String get recipeOverrideProduct => 'Override for this Product';
+
+  @override
+  String get recipeOverrideVariant => 'Override for this Variant';
+
+  @override
+  String get recipeInheritedFromGlobal => 'Inherited from Global';
+
+  @override
+  String get recipeInheritedFromProduct => 'Inherited from this Product';
+
+  @override
+  String get recipeSimulationHelp =>
+      'Select modifiers, resolve the recipe, then review the materials consumed.';
+
+  @override
+  String get recipeSimulationResultHelp => 'Consumed materials';
+
+  @override
+  String get recipeSimulationStartHelp =>
+      'Select modifiers, then resolve the recipe to see the consumed materials.';
+
+  @override
+  String get reviewWorkflowHelp =>
+      'Check the selected Menu, preview what the Branch and Channel receive, then publish and review its Version history.';
+
+  @override
+  String get reviewCheckMenu => '1. Check Menu';
+
+  @override
+  String get reviewPreviewStep => '2. Preview';
+
+  @override
+  String get reviewPublishStep => '3. Publish';
+
+  @override
+  String get reviewVersionsStep => '4. Version History';
+
+  @override
+  String get validationNoBlockingErrors =>
+      'No blocking validation errors were found.';
+
+  @override
+  String get validationResolveErrors =>
+      'Resolve the errors below before this Menu can be published.';
+
+  @override
+  String validationIssueCode(String code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String modifierSelectionExactly(num count) {
+    return 'Customer must choose exactly $count option(s).';
+  }
+
+  @override
+  String modifierSelectionRange(num min, num max) {
+    return 'Customer may choose from $min to $max options.';
+  }
+
+  @override
+  String get reviewAdvancedOptions => 'Advanced preview options';
+
+  @override
+  String get technicalDetails => 'Technical details';
+
+  @override
+  String get managerAvailabilityScheduledHelp =>
+      'When should this item normally be available?';
+
+  @override
+  String get managerAvailabilityOperationalHelp =>
+      'Is it temporarily unavailable right now?';
 }

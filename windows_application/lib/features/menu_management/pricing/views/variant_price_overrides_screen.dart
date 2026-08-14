@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -602,27 +603,45 @@ class _EffectivePricePanel extends StatelessWidget {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               )
             else if (state.effectivePrice != null)
-              Wrap(
-                spacing: 40,
-                runSpacing: AppSpacing.sm,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  _Fact(
-                    label: 'Base Price',
-                    value: _money(state.effectivePrice!.basePrice),
+                  Wrap(
+                    spacing: 40,
+                    runSpacing: AppSpacing.sm,
+                    children: <Widget>[
+                      _Fact(
+                        label: 'Base Price',
+                        value: _money(state.effectivePrice!.basePrice),
+                      ),
+                      _Fact(
+                        label: 'Effective Price',
+                        value: _money(state.effectivePrice!.effectivePrice),
+                      ),
+                      _Fact(
+                        label: 'Resolution source',
+                        value: state.effectivePrice!.sourceLabel,
+                      ),
+                    ],
                   ),
-                  _Fact(
-                    label: 'Effective Price',
-                    value: _money(state.effectivePrice!.effectivePrice),
-                  ),
-                  _Fact(
-                    label: 'Resolution source',
-                    value: state.effectivePrice!.sourceLabel,
-                  ),
-                  _Fact(
-                    label: 'Matched Override',
-                    value:
-                        state.effectivePrice!.matchedOverrideId?.toString() ??
-                        'Base Price',
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      context.maybeL10n?.technicalDetails ??
+                          'Technical details',
+                    ),
+                    children: <Widget>[
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: _Fact(
+                          label: 'Matched Override ID',
+                          value:
+                              state.effectivePrice!.matchedOverrideId
+                                  ?.toString() ??
+                              'Base Price',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

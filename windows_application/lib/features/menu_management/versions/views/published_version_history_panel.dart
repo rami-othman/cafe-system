@@ -240,20 +240,7 @@ class _VersionRow extends StatelessWidget {
             _detail(
               'Published',
               version.publishedAt.isEmpty ? '-' : version.publishedAt,
-              technical: true,
             ),
-            _detail(
-              'Checksum',
-              _shortChecksum(version.checksum),
-              technical: true,
-              tooltip: version.checksum,
-            ),
-            if (version.publicationId != null)
-              _detail(
-                'Publication ID',
-                '${version.publicationId}',
-                technical: true,
-              ),
             if (version.changeSummary != null &&
                 version.changeSummary!.isNotEmpty)
               _detail(
@@ -262,6 +249,30 @@ class _VersionRow extends StatelessWidget {
                     .map((entry) => '${entry.key}: ${entry.value}')
                     .join(' · '),
               ),
+          ],
+        ),
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: Text(context.l10n.technicalDetails),
+          children: <Widget>[
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: <Widget>[
+                _detail(
+                  'Checksum',
+                  _shortChecksum(version.checksum),
+                  technical: true,
+                  tooltip: version.checksum,
+                ),
+                if (version.publicationId != null)
+                  _detail(
+                    'Publication ID',
+                    '${version.publicationId}',
+                    technical: true,
+                  ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 6),

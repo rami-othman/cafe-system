@@ -24,6 +24,24 @@ Simulation are complete. No runtime stock behavior or automatic Inventory
 availability exists; POS Published Snapshot Sync remains later work. Authentication,
 Combos, and broader localization migration remain unimplemented.
 
+## Phase 4J — Menu Management UI/UX Final Polish
+
+Status: **COMPLETE** after Flutter formatting, analysis, tests, and diff checks.
+
+Phase 4J is presentation and usability only. The existing Menu Management routes,
+backend contracts, validation, pricing and availability precedence, Recipe resolver,
+publication lifecycle, snapshots, and rollback semantics are unchanged. The shared
+Menu Management navigation now groups the established lifecycle as Build,
+Configure, and Review & release without creating a new sidebar or wizard. Recipe
+screens explain consumed materials and override inheritance in manager-facing
+language. Review follows Check Menu, Preview, Publish, and Version History, while
+checksums, publication identifiers, and similar support data are secondary
+technical details. English and Arabic strings were added only for the polished
+Menu Management surfaces; broader translation migration remains deferred.
+
+The next phase remains Phase 4K — Architecture Cleanup. Menu Management is not
+finally closed.
+
 ## Phase 4I — Full Menu Management Regression
 
 Status: **COMPLETE** after the Backend and Flutter final verification gates pass.

@@ -96,12 +96,10 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              Text(product.name, style: Theme.of(context).textTheme.titleLarge),
               Text(
-                'Variant #${widget.variantId} — ${product.name}',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const Text(
-                'Selections are submitted to the backend resolver; this screen never calculates recipe quantities.',
+                AppLocalizations.of(context).recipeSimulationHelp,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
               Text(
@@ -163,16 +161,14 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                AppLocalizations.of(context).resolvedRecipe,
+                AppLocalizations.of(context).recipeSimulationResultHelp,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               if (state.result == null)
-                const Text(
-                  'Run a simulation to view backend-authoritative consumed materials.',
-                )
+                Text(AppLocalizations.of(context).recipeSimulationStartHelp)
               else if (state.result!.components.isEmpty)
                 const Text('No resolved components.')
               else

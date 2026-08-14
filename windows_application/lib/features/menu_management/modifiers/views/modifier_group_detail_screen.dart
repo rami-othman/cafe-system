@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../widgets/catalog_formatters.dart';
 import '../../widgets/menu_management_tabs.dart';
@@ -96,7 +97,7 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
               const SizedBox(height: 12),
               const MenuManagementTabs(selected: 'modifiers'),
               const SizedBox(height: 20),
-              _configuration(group),
+              _configuration(context, group),
               const SizedBox(height: 24),
               Row(
                 children: <Widget>[
@@ -159,27 +160,46 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
     },
   );
 
-  Widget _configuration(ModifierGroupRecord g) => Card(
+  Widget _configuration(BuildContext context, ModifierGroupRecord g) => Card(
     child: Padding(
       padding: const EdgeInsets.all(16),
-      child: Wrap(
-        spacing: 40,
-        runSpacing: 16,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _item('Arabic name', g.nameAr ?? '—'),
-          _item('English name', g.nameEn ?? '—'),
-          _item('Group type', g.groupType.replaceAll('_', ' ')),
-          _item('Selection type', g.selectionType),
-          _item('Required', g.isRequired ? 'Yes' : 'No'),
-          _item('Selections', '${g.minSelections} to ${g.maxSelections}'),
-          _item('Allow quantity', g.allowQuantity ? 'Yes' : 'No'),
-          _item(
-            'Status',
-            g.isArchived
-                ? 'Archived'
-                : g.isActive
-                ? 'Active'
-                : 'Inactive',
+          Text(
+            g.minSelections == g.maxSelections
+                ? context.maybeL10n?.modifierSelectionExactly(
+                        g.minSelections,
+                      ) ??
+                      'Customer must choose exactly ${g.minSelections} option(s).'
+                : context.maybeL10n?.modifierSelectionRange(
+                        g.minSelections,
+                        g.maxSelections,
+                      ) ??
+                      'Customer may choose from ${g.minSelections} to ${g.maxSelections} options.',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 40,
+            runSpacing: 16,
+            children: <Widget>[
+              _item('Arabic name', g.nameAr ?? '—'),
+              _item('English name', g.nameEn ?? '—'),
+              _item('Group type', g.groupType.replaceAll('_', ' ')),
+              _item('Selection type', g.selectionType),
+              _item('Required', g.isRequired ? 'Yes' : 'No'),
+              _item('Selections', '${g.minSelections} to ${g.maxSelections}'),
+              _item('Allow quantity', g.allowQuantity ? 'Yes' : 'No'),
+              _item(
+                'Status',
+                g.isArchived
+                    ? 'Archived'
+                    : g.isActive
+                    ? 'Active'
+                    : 'Inactive',
+              ),
+            ],
           ),
         ],
       ),

@@ -62,7 +62,7 @@ void main() {
     final AppLocalizations l10n = AppLocalizations.of(
       tester.element(find.byType(CatalogSetupScreen)),
     );
-    expect(find.text(l10n.catalogSetupTitle), findsOneWidget);
+    expect(find.text(l10n.catalogSetupTitle), findsWidgets);
     expect(find.text(l10n.catalogSetupKitchenStationsTitle), findsNWidgets(2));
     final Finder value = find.text('BAR · bar-printer');
     expect(value, findsOneWidget);

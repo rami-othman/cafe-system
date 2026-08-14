@@ -70,6 +70,8 @@ class _MenuReviewScreenState extends State<MenuReviewScreen> {
               const SizedBox(height: 16),
               const MenuManagementTabs(selected: 'review'),
               const SizedBox(height: 20),
+              AppCard(child: Text(context.l10n.reviewWorkflowHelp)),
+              const SizedBox(height: 12),
               _ContextPanel(state: state, cubit: cubit),
               if (state.contextError != null)
                 _ErrorCard(
@@ -102,10 +104,10 @@ class _MenuReviewScreenState extends State<MenuReviewScreen> {
                     children: <Widget>[
                       TabBar(
                         tabs: <Widget>[
-                          const Tab(text: 'Validation'),
-                          const Tab(text: 'Resolved Preview'),
-                          Tab(text: context.l10n.menuPublishTab),
-                          const Tab(text: 'Versions'),
+                          Tab(text: context.l10n.reviewCheckMenu),
+                          Tab(text: context.l10n.reviewPreviewStep),
+                          Tab(text: context.l10n.reviewPublishStep),
+                          Tab(text: context.l10n.reviewVersionsStep),
                         ],
                       ),
                       SizedBox(
@@ -291,32 +293,45 @@ class _ValidationSummary extends StatelessWidget {
   final MenuValidationResult result;
   @override
   Widget build(BuildContext context) => AppCard(
-    child: Wrap(
-      spacing: 16,
-      runSpacing: 10,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Chip(
-          label: Text(result.canPublish ? 'Can Publish' : 'Cannot Publish'),
-          backgroundColor: result.canPublish
-              ? AppColors.discountGreenBadge
-              : const Color(0xFFFFE5E3),
+        Text(
+          result.canPublish ? 'Can Publish' : 'Cannot Publish',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: result.canPublish ? AppColors.success : AppColors.danger,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        _Count(
-          label: 'Errors',
-          count: result.errorCount,
-          color: AppColors.danger,
+        const SizedBox(height: 4),
+        Text(
+          result.canPublish
+              ? context.l10n.validationNoBlockingErrors
+              : context.l10n.validationResolveErrors,
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
-        _Count(
-          label: 'Warnings',
-          count: result.warningCount,
-          color: AppColors.warning,
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 16,
+          runSpacing: 10,
+          children: <Widget>[
+            _Count(
+              label: 'Errors',
+              count: result.errorCount,
+              color: AppColors.danger,
+            ),
+            _Count(
+              label: 'Warnings',
+              count: result.warningCount,
+              color: AppColors.warning,
+            ),
+            _Count(
+              label: 'Information',
+              count: result.informationCount,
+              color: AppColors.info,
+            ),
+          ],
         ),
-        _Count(
-          label: 'Information',
-          count: result.informationCount,
-          color: AppColors.info,
-        ),
-        const Text('Publishability is authoritative from Backend validation.'),
       ],
     ),
   );
@@ -445,10 +460,16 @@ class _IssueCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                issue.code,
+                issue.message,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              Text(issue.message),
+              Text(
+                context.l10n.validationIssueCode(issue.code),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 'Entity: ${_label(issue.entityType)}${issue.entityId == null ? '' : ' #${issue.entityId}'} · Menu #${issue.menuId}${issue.sectionId == null ? '' : ' · Section #${issue.sectionId}'}',
@@ -484,6 +505,19 @@ class _PreviewPanel extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.only(top: 20),
     children: <Widget>[
+      FilledButton.icon(
+        onPressed: state.previewStatus == ReviewRequestStatus.loading
+            ? null
+            : cubit.preview,
+        icon: const Icon(Icons.visibility_outlined),
+        label: Text(state.preview == null ? 'Load Preview' : 'Refresh Preview'),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        context.l10n.reviewAdvancedOptions,
+        style: const TextStyle(color: AppColors.textSecondary),
+      ),
+      const SizedBox(height: 6),
       Wrap(
         spacing: 12,
         runSpacing: 8,
@@ -513,15 +547,6 @@ class _PreviewPanel extends StatelessWidget {
             label: const Text('Include unavailable'),
             selected: state.includeUnavailable,
             onSelected: cubit.setIncludeUnavailable,
-          ),
-          FilledButton.icon(
-            onPressed: state.previewStatus == ReviewRequestStatus.loading
-                ? null
-                : cubit.preview,
-            icon: const Icon(Icons.visibility_outlined),
-            label: Text(
-              state.preview == null ? 'Load Preview' : 'Refresh Preview',
-            ),
           ),
         ],
       ),
@@ -779,28 +804,41 @@ class _CurrentVersionPanel extends StatelessWidget {
               _PublishDetail(
                 label: l10n.menuPublishVersionNumber,
                 value: '${version.versionNumber}',
-                technical: true,
               ),
               _PublishDetail(
                 label: l10n.menuPublishStatus,
                 value: _label(version.status),
               ),
-              _PublishDetail(
-                label: l10n.menuPublishPublishedAt,
-                value: version.publishedAt.isEmpty ? '-' : version.publishedAt,
-                technical: true,
+            ],
+          ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text(l10n.technicalDetails),
+            children: <Widget>[
+              Wrap(
+                spacing: 16,
+                runSpacing: 10,
+                children: <Widget>[
+                  _PublishDetail(
+                    label: l10n.menuPublishPublishedAt,
+                    value: version.publishedAt.isEmpty
+                        ? '-'
+                        : version.publishedAt,
+                    technical: true,
+                  ),
+                  _PublishDetail(
+                    label: l10n.menuPublishChecksum,
+                    value: version.checksum,
+                    technical: true,
+                  ),
+                  if (version.publicationId != null)
+                    _PublishDetail(
+                      label: l10n.menuPublishPublicationId,
+                      value: '${version.publicationId}',
+                      technical: true,
+                    ),
+                ],
               ),
-              _PublishDetail(
-                label: l10n.menuPublishChecksum,
-                value: version.checksum,
-                technical: true,
-              ),
-              if (version.publicationId != null)
-                _PublishDetail(
-                  label: l10n.menuPublishPublicationId,
-                  value: '${version.publicationId}',
-                  technical: true,
-                ),
             ],
           ),
         ],
@@ -835,28 +873,39 @@ class _PublicationResultCard extends StatelessWidget {
               _PublishDetail(
                 label: l10n.menuPublishVersionNumber,
                 value: '${result.version.versionNumber}',
-                technical: true,
-              ),
-              _PublishDetail(
-                label: l10n.menuPublishPublishedAt,
-                value: result.version.publishedAt,
-                technical: true,
-              ),
-              _PublishDetail(
-                label: l10n.menuPublishChecksum,
-                value: result.version.checksum,
-                technical: true,
               ),
               _PublishDetail(
                 label: l10n.menuPublishWarnings,
                 value: '${result.validation.warningCount}',
               ),
-              if (result.publicationId != null)
-                _PublishDetail(
-                  label: l10n.menuPublishPublicationId,
-                  value: '${result.publicationId}',
-                  technical: true,
-                ),
+            ],
+          ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text(l10n.technicalDetails),
+            children: <Widget>[
+              Wrap(
+                spacing: 16,
+                runSpacing: 10,
+                children: <Widget>[
+                  _PublishDetail(
+                    label: l10n.menuPublishPublishedAt,
+                    value: result.version.publishedAt,
+                    technical: true,
+                  ),
+                  _PublishDetail(
+                    label: l10n.menuPublishChecksum,
+                    value: result.version.checksum,
+                    technical: true,
+                  ),
+                  if (result.publicationId != null)
+                    _PublishDetail(
+                      label: l10n.menuPublishPublicationId,
+                      value: '${result.publicationId}',
+                      technical: true,
+                    ),
+                ],
+              ),
             ],
           ),
         ],

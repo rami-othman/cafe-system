@@ -58,7 +58,7 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Effective from: Global'), findsOneWidget);
+      expect(find.text('Inherited from Global'), findsOneWidget);
       expect(
         find.textContaining('cloned from the inherited profile'),
         findsOneWidget,

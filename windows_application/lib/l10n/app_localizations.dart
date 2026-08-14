@@ -1189,6 +1189,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Removing it restores the nearest inherited material effects.'**
   String get recipeRemoveOverrideBody;
+
+  /// No description provided for @menuManagementWorkflow.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu management workflow'**
+  String get menuManagementWorkflow;
+
+  /// No description provided for @menuManagementBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Build'**
+  String get menuManagementBuild;
+
+  /// No description provided for @menuManagementConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure'**
+  String get menuManagementConfigure;
+
+  /// No description provided for @menuManagementRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & release'**
+  String get menuManagementRelease;
+
+  /// No description provided for @menuManagementProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get menuManagementProducts;
+
+  /// No description provided for @menuManagementModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get menuManagementModifiers;
+
+  /// No description provided for @menuManagementMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get menuManagementMenus;
+
+  /// No description provided for @menuManagementAssignments.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments & schedules'**
+  String get menuManagementAssignments;
+
+  /// No description provided for @menuManagementReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & preview'**
+  String get menuManagementReview;
+
+  /// No description provided for @menuManagementCatalogSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Catalog setup'**
+  String get menuManagementCatalogSetup;
+
+  /// No description provided for @recipeConsumptionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Define the materials consumed when one unit of this Variant is prepared.'**
+  String get recipeConsumptionHelp;
+
+  /// No description provided for @recipeNoComponentsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'No materials are configured yet. Add each material used to prepare one unit of this Variant.'**
+  String get recipeNoComponentsHelp;
+
+  /// No description provided for @recipeOverrideGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global default'**
+  String get recipeOverrideGlobal;
+
+  /// No description provided for @recipeOverrideProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Override for this Product'**
+  String get recipeOverrideProduct;
+
+  /// No description provided for @recipeOverrideVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Override for this Variant'**
+  String get recipeOverrideVariant;
+
+  /// No description provided for @recipeInheritedFromGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited from Global'**
+  String get recipeInheritedFromGlobal;
+
+  /// No description provided for @recipeInheritedFromProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited from this Product'**
+  String get recipeInheritedFromProduct;
+
+  /// No description provided for @recipeSimulationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select modifiers, resolve the recipe, then review the materials consumed.'**
+  String get recipeSimulationHelp;
+
+  /// No description provided for @recipeSimulationResultHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Consumed materials'**
+  String get recipeSimulationResultHelp;
+
+  /// No description provided for @recipeSimulationStartHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select modifiers, then resolve the recipe to see the consumed materials.'**
+  String get recipeSimulationStartHelp;
+
+  /// No description provided for @reviewWorkflowHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the selected Menu, preview what the Branch and Channel receive, then publish and review its Version history.'**
+  String get reviewWorkflowHelp;
+
+  /// No description provided for @reviewCheckMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Check Menu'**
+  String get reviewCheckMenu;
+
+  /// No description provided for @reviewPreviewStep.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Preview'**
+  String get reviewPreviewStep;
+
+  /// No description provided for @reviewPublishStep.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Publish'**
+  String get reviewPublishStep;
+
+  /// No description provided for @reviewVersionsStep.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Version History'**
+  String get reviewVersionsStep;
+
+  /// No description provided for @validationNoBlockingErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'No blocking validation errors were found.'**
+  String get validationNoBlockingErrors;
+
+  /// No description provided for @validationResolveErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve the errors below before this Menu can be published.'**
+  String get validationResolveErrors;
+
+  /// No description provided for @validationIssueCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code: {code}'**
+  String validationIssueCode(String code);
+
+  /// No description provided for @modifierSelectionExactly.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer must choose exactly {count} option(s).'**
+  String modifierSelectionExactly(num count);
+
+  /// No description provided for @modifierSelectionRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer may choose from {min} to {max} options.'**
+  String modifierSelectionRange(num min, num max);
+
+  /// No description provided for @reviewAdvancedOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced preview options'**
+  String get reviewAdvancedOptions;
+
+  /// No description provided for @technicalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical details'**
+  String get technicalDetails;
+
+  /// No description provided for @managerAvailabilityScheduledHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'When should this item normally be available?'**
+  String get managerAvailabilityScheduledHelp;
+
+  /// No description provided for @managerAvailabilityOperationalHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Is it temporarily unavailable right now?'**
+  String get managerAvailabilityOperationalHelp;
 }
 
 class _AppLocalizationsDelegate

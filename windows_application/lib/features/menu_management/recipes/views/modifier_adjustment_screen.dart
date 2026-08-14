@@ -150,11 +150,7 @@ class _AdjustmentEditorState extends State<_AdjustmentEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Chip(
-            label: Text(
-              '${AppLocalizations.of(context).effectiveFrom}: ${profile.effectiveSource}',
-            ),
-          ),
+          Chip(label: Text(_scopeStatus(context, profile))),
           if (canOverride && !profile.hasOverride)
             Padding(
               padding: EdgeInsets.only(top: 8),
@@ -487,6 +483,23 @@ class _AdjustmentEditorState extends State<_AdjustmentEditor> {
       ),
     );
   }
+}
+
+String _scopeStatus(BuildContext context, ModifierRecipeProfile profile) {
+  final l10n = AppLocalizations.of(context);
+  if (profile.hasOverride) {
+    return switch (profile.scope) {
+      'global' => l10n.recipeOverrideGlobal,
+      'product' => l10n.recipeOverrideProduct,
+      'variant' => l10n.recipeOverrideVariant,
+      _ => '${l10n.effectiveFrom}: ${profile.effectiveSource}',
+    };
+  }
+  return switch (profile.inheritedFrom) {
+    'global' => l10n.recipeInheritedFromGlobal,
+    'product' => l10n.recipeInheritedFromProduct,
+    _ => '${l10n.effectiveFrom}: ${profile.effectiveSource}',
+  };
 }
 
 Future<bool> _confirm(BuildContext context, String title, String body) async =>

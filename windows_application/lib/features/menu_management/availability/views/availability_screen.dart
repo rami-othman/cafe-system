@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -175,6 +176,14 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           Text(
             'Scheduled Availability',
             style: AppTextStyles.titleMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            context.maybeL10n?.managerAvailabilityScheduledHelp ??
+                'When should this item normally be available?',
+            style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textSecondary,
             ),
           ),

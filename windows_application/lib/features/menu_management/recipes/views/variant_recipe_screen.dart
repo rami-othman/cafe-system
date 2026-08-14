@@ -144,9 +144,20 @@ class _RecipeEditorState extends State<_RecipeEditor> {
           const SizedBox(height: 8),
           Text(
             widget.readOnly
-                ? 'This Variant is archived. Recipe configuration is read-only.'
-                : 'Quantities are exact decimal text values. Stock is not shown or calculated here.',
+                ? AppLocalizations.of(context).recipeReadOnly
+                : AppLocalizations.of(context).recipeConsumptionHelp,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
           ),
+          if (_draft.isEmpty && !widget.readOnly)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                AppLocalizations.of(context).recipeNoComponentsHelp,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           if (widget.productId != null &&
               widget.state.product != null) ...<Widget>[
             const SizedBox(height: 8),

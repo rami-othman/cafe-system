@@ -18,6 +18,21 @@ behavior or automatic Inventory availability exists, and POS Published Snapshot 
 remains later work. Authentication, Combos, and broader localization migration remain
 unimplemented.
 
+## Phase 4J — Menu Management UI/UX Final Polish
+
+Status: **COMPLETE** after Flutter verification.
+
+- Kept all Menu Management domain behavior and routes intact while tightening
+  desktop hierarchy, navigation grouping, review progression, and technical-detail
+  disclosure.
+- Added manager-facing Recipe consumption, inheritance, Modifier selection, and
+  scheduled/operational availability guidance, with EN/AR strings for new copy.
+- Made validation outcome and issue message primary; kept stable issue codes,
+  checksums, publication IDs, and matched override IDs secondary.
+- No Backend files were changed. No architecture cleanup was performed.
+
+Next: **Phase 4K — Architecture Cleanup**. Menu Management is not finally closed.
+
 ## Phase 4I — Full Menu Management Regression
 
 Status: **COMPLETE** after all requested Backend and Flutter regression gates.

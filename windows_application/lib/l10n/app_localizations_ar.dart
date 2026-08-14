@@ -628,4 +628,120 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get recipeRemoveOverrideBody =>
       'إزالته تستعيد أقرب تأثيرات المواد الموروثة.';
+
+  @override
+  String get menuManagementWorkflow => 'مسار إدارة القائمة';
+
+  @override
+  String get menuManagementBuild => 'بناء';
+
+  @override
+  String get menuManagementConfigure => 'إعداد';
+
+  @override
+  String get menuManagementRelease => 'مراجعة ونشر';
+
+  @override
+  String get menuManagementProducts => 'المنتجات';
+
+  @override
+  String get menuManagementModifiers => 'المعدلات';
+
+  @override
+  String get menuManagementMenus => 'القوائم';
+
+  @override
+  String get menuManagementAssignments => 'التعيينات والجداول';
+
+  @override
+  String get menuManagementReview => 'مراجعة ومعاينة';
+
+  @override
+  String get menuManagementCatalogSetup => 'إعداد الكتالوج';
+
+  @override
+  String get recipeConsumptionHelp =>
+      'حدد المواد المستهلكة عند تحضير وحدة واحدة من هذا الخيار.';
+
+  @override
+  String get recipeNoComponentsHelp =>
+      'لم تُعد أي مواد بعد. أضف كل مادة تُستخدم لتحضير وحدة واحدة من هذا الخيار.';
+
+  @override
+  String get recipeOverrideGlobal => 'الإعداد العام';
+
+  @override
+  String get recipeOverrideProduct => 'تجاوز لهذا المنتج';
+
+  @override
+  String get recipeOverrideVariant => 'تجاوز لهذا الخيار';
+
+  @override
+  String get recipeInheritedFromGlobal => 'موروث من الإعداد العام';
+
+  @override
+  String get recipeInheritedFromProduct => 'موروث من هذا المنتج';
+
+  @override
+  String get recipeSimulationHelp =>
+      'حدد المعدلات، ثم احسب الوصفة وراجع المواد المستهلكة.';
+
+  @override
+  String get recipeSimulationResultHelp => 'المواد المستهلكة';
+
+  @override
+  String get recipeSimulationStartHelp =>
+      'حدد المعدلات، ثم احسب الوصفة لترى المواد المستهلكة.';
+
+  @override
+  String get reviewWorkflowHelp =>
+      'تحقق من القائمة المحددة، وعاين ما يصل إلى الفرع وقناة البيع، ثم انرها وراجع سجل الإصدارات.';
+
+  @override
+  String get reviewCheckMenu => '1. تحقق من القائمة';
+
+  @override
+  String get reviewPreviewStep => '2. معاينة';
+
+  @override
+  String get reviewPublishStep => '3. نشر';
+
+  @override
+  String get reviewVersionsStep => '4. سجل الإصدارات';
+
+  @override
+  String get validationNoBlockingErrors => 'لم يُعثر على أخطاء تحقق مانعة.';
+
+  @override
+  String get validationResolveErrors =>
+      'اعالج الأخطاء أدناه قبل أن يمكن نشر هذه القائمة.';
+
+  @override
+  String validationIssueCode(String code) {
+    return 'الرمز: $code';
+  }
+
+  @override
+  String modifierSelectionExactly(num count) {
+    return 'يجب أن يختار العميل $count خيار(ات) بالضبط.';
+  }
+
+  @override
+  String modifierSelectionRange(num min, num max) {
+    return 'يمكن للعميل اختيار من $min إلى $max خيارات.';
+  }
+
+  @override
+  String get reviewAdvancedOptions => 'خيارات معاينة متقدمة';
+
+  @override
+  String get technicalDetails => 'التفاصيل التقنية';
+
+  @override
+  String get managerAvailabilityScheduledHelp =>
+      'متى ينبغي أن يكون هذا العنصر متاحًا بشكل عاد؟';
+
+  @override
+  String get managerAvailabilityOperationalHelp =>
+      'هل العنصر غير متاح مؤقتًا الآن؟';
 }
