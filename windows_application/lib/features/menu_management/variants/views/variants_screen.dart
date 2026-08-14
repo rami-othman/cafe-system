@@ -421,6 +421,17 @@ class _VariantTable extends StatelessWidget {
                         ),
                         if (!variant.isArchived)
                           IconButton(
+                            key: Key('manage-recipe-${variant.id}'),
+                            tooltip: 'Manage Recipe / Materials',
+                            onPressed: state.isMutating
+                                ? null
+                                : () => context.go(
+                                    '/menu-management/product-variants/${variant.id}/recipe?productId=${state.product!.id}',
+                                  ),
+                            icon: const Icon(Icons.receipt_long_outlined),
+                          ),
+                        if (!variant.isArchived)
+                          IconButton(
                             key: Key('manage-price-overrides-${variant.id}'),
                             tooltip: 'Manage Price Overrides',
                             onPressed: state.isMutating

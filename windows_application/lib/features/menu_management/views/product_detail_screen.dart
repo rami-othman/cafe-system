@@ -263,7 +263,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         )
                       : Column(
                           children: product.modifierGroups
-                              .map(_ModifierCard.new)
+                              .map((group) => _ModifierCard(group, product.id))
                               .toList(growable: false),
                         ),
                 ),
@@ -422,8 +422,9 @@ class _VariantCard extends StatelessWidget {
 }
 
 class _ModifierCard extends StatelessWidget {
-  const _ModifierCard(this.group);
+  const _ModifierCard(this.group, this.productId);
   final ModifierGroup group;
+  final int productId;
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
@@ -460,6 +461,14 @@ class _ModifierCard extends StatelessWidget {
                 subtitle: Text(
                   'Price delta: ${catalogMoney(option.priceDelta)} · Available: ${booleanLabel(option.isAvailable)} · Active: ${booleanLabel(option.isActive)}',
                 ),
+                trailing: option.isActive
+                    ? OutlinedButton(
+                        onPressed: () => context.go(
+                          '/menu-management/products/$productId/modifier-options/${option.id}/recipe-adjustments',
+                        ),
+                        child: const Text('Material Adjustments'),
+                      )
+                    : null,
               ),
             ),
         ],

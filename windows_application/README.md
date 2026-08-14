@@ -13,11 +13,16 @@ metadata-only and paginated. Snapshot payload is explicit, diagnostic, read-only
 and opt-in. Comparison is Backend-generated and may be bounded; `truncated=true`
 means only part of the difference set was returned. Rollback creates a new
 immutable Version; historical Versions are never reactivated, and a no-change
-rollback creates no Version. Phase 4G Catalog Setup is complete only after its
-Flutter verification passes: Categories, Reporting Categories, and Kitchen
-Stations are manageable through the desktop client. POS Published Snapshot Sync,
-Inventory, Recipes, Authentication, and Combos are not implemented. Broader
-localization migration remains paused.
+rollback creates no Version. Phase 4G — Catalog Setup is complete: Categories,
+Reporting Categories, and Kitchen Stations are manageable through the desktop
+client and have passed focused contract, lifecycle, Product Editor integration,
+route, and RTL verification. Phase 4H — COMPLETE: Recipe configuration belongs to
+Product Variants; material identity uses stable `inventory_items` identities with
+exact decimal quantity strings and canonical mapped units. Variant Base Recipes,
+Global/Product/Variant Material Adjustments, and Backend-authoritative Recipe
+Simulation are complete. No runtime stock behavior or automatic Inventory
+availability exists; POS Published Snapshot Sync remains later work. Authentication,
+Combos, and broader localization migration remain unimplemented.
 
 ## Menu Management
 
@@ -29,9 +34,11 @@ update, archive, restore, and reorder APIs only; no permanent delete is exposed.
 Archive/restore is non-destructive. Reporting Categories affect reporting rather
 than customer-facing Menu placement. Product Editor links open the matching setup
 tab and retain the draft while reference lists refresh on return, including an
-archived assigned reference in Edit mode. POS Published Snapshot Sync, Inventory,
-Recipes, Authentication, and Combos remain unimplemented; broader localization
-migration remains paused.
+archived assigned reference in Edit mode. Phase 4H — Recipes / Consumed Materials
+Configuration is complete. Materials retain stable `inventory_items` identity;
+there is no runtime stock behavior or automatic Inventory availability, and POS
+Published Snapshot Sync remains later work. Authentication, Combos, and broader
+localization migration remain unimplemented.
 
 Menus and Sections are administered through `/menu-management/menus`, `/create`,
 `/:menuId`, `/:menuId/edit`, and `/:menuId/placements`. A Catalog Product belongs
@@ -64,7 +71,7 @@ Product Modifier Assignment is available at `/menu-management/products/:productI
 
 The Flutter Windows desktop application supports POS, Orders, Discounts, Reports, and the read-only Menu Management Product Catalog. Menu Management uses the real Laravel Admin Catalog APIs; it contains no mock menu data.
 
-Menu Management has an integrated Review & Preview & Publish workflow at `/menu-management/review`. It selects a tenant Branch and actual Sales Channel, then reviews either one assigned Menu or the complete assigned collection. Validation is authoritative: errors block, while warnings and information remain diagnostic and warnings can proceed only after explicit confirmation. Publishing calls `POST /api/v1/admin/menu-management/publish`; a selected Menu sends its supported `menuIds` value and collection scope omits `menuIds` so Backend resolves active assignments. Backend reruns validation, creates an immutable Version only when semantic content changes, and records a no-change publication without creating a Version when it does not. Existing Orders are never modified. `GET /api/v1/admin/menu-management/current-version` displays metadata only, never the Snapshot payload. Operational sold-out, temporary overrides, and remaining quantities are excluded from immutable Snapshots. Phase 4F Version History, comparison, rollback, and POS Sync remain unimplemented.
+Menu Management has an integrated Review & Preview & Publish workflow at `/menu-management/review`. It selects a tenant Branch and actual Sales Channel, then reviews either one assigned Menu or the complete assigned collection. Validation is authoritative: errors block, while warnings and information remain diagnostic and warnings can proceed only after explicit confirmation. Publishing calls `POST /api/v1/admin/menu-management/publish`; a selected Menu sends its supported `menuIds` value and collection scope omits `menuIds` so Backend resolves active assignments. Backend reruns validation, creates an immutable Version only when semantic content changes, and records a no-change publication without creating a Version when it does not. Existing Orders are never modified. `GET /api/v1/admin/menu-management/current-version` displays metadata only, never the Snapshot payload. Operational sold-out, temporary overrides, and remaining quantities are excluded from immutable Snapshots. Phase 4F Version History, comparison, and rollback are complete. POS Sync remains unimplemented.
 
 ```bash
 flutter pub get

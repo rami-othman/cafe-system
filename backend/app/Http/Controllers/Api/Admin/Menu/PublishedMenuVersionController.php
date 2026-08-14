@@ -30,7 +30,7 @@ class PublishedMenuVersionController extends Controller
             $d['payload'] = $v->payload_json;
         }
 
-return response()->json(['data' => $d]);
+        return response()->json(['data' => $d]);
     }
 
     public function compare(ComparePublishedMenuVersionsRequest $r, int $version): JsonResponse
@@ -63,7 +63,7 @@ return response()->json(['data' => $d]);
             }
         }
 
-return ['menuCount' => $m, 'sectionCount' => $s, 'productCount' => $x, 'variantCount' => $v, 'modifierGroupCount' => $g];
+        return ['menuCount' => $m, 'sectionCount' => $s, 'productCount' => $x, 'variantCount' => $v, 'modifierGroupCount' => $g];
     }
 
     private function value(mixed $v): mixed

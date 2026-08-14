@@ -8,11 +8,15 @@ is explicit, diagnostic, read-only, and opt-in. Backend generates comparison and
 may be bounded; `truncated=true` means only part of the difference set is returned.
 Rollback creates a new immutable Version; historical Versions are never reactivated.
 No-change rollback creates no Version and refreshes History and Current Version.
-Phase 4G Catalog Setup is complete only after its Flutter verification passes:
-Categories, Reporting Categories, and Kitchen Stations are manageable through the
-desktop client, with non-destructive archive/restore and Product Editor integration.
-POS Published Snapshot Sync, Inventory, Recipes, Authentication, and Combos are not
-implemented. Broader localization migration remains paused.
+Phase 4G — Catalog Setup is complete: Categories, Reporting Categories, and Kitchen
+Stations are manageable through the desktop client, with non-destructive
+archive/restore and Product Editor integration verified. Phase 4H — COMPLETE:
+Recipes / Consumed Materials Configuration provides Variant Recipe editing,
+Global/Product/Variant Modifier Adjustment routes, and Backend-authoritative
+Simulation. Materials use stable `inventory_items` identity; no runtime stock
+behavior or automatic Inventory availability exists, and POS Published Snapshot Sync
+remains later work. Authentication, Combos, and broader localization migration remain
+unimplemented.
 
 ## Historical Phase Log
 
@@ -24,11 +28,9 @@ and refreshes reference values. Final Menu Management Regression and POS Publish
 Snapshot Sync are not started. Inventory, Recipes, Authentication, and Combos are
 not started.
 
-Current authoritative phase status: Phase 4C — Complete; Phase 4D.1 — Variant Price Overrides: Complete; Phase 4D.2 — Scheduled Product Availability: Complete; Phase 4D.3A — Operational Availability Overrides: Complete; Phase 4D.3B — Operational Resolution Diagnostic: Complete; Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started. Phase 4C.1 — Complete; Phase 4C.2 —
-Product Placements and Ordering: Complete; Phase 4C.3 — Branch/Channel
-Assignments and Menu Schedules: Complete. Phase 4D.1 — Variant Price Overrides:
-Complete; Phase 4D.2 — Scheduled Product Availability: Complete; Phase 4D.3 —
-Operational Availability Overrides: Complete; Phase 4D.3B — Operational Resolution Diagnostic: Complete.
+Current authoritative phase status: Phase 4E — Complete; Phase 4F — Complete;
+Phase 4G — Complete; Phase 4H — Recipes / Consumed Materials Configuration —
+Complete.
 
 Phase 4B — Product Catalog Administration: Complete
 
@@ -46,7 +48,7 @@ Phase 4D.3A — Operational Availability Overrides: Complete
 
 Phase 4D.3B — Operational Resolution Diagnostic: Complete
 
-Phase 4B — Product Catalog Administration: Complete. Phase 4C — Complete. Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started.
+Phase 4B — Product Catalog Administration: Complete. Phase 4C — Complete. Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Complete.
 
 ## Phase 4E publishing status
 
@@ -56,7 +58,7 @@ Phase 4E.3 — Publishing and Current Version: Complete after the Flutter analyz
 and full suite pass. Publishing is integrated into `/menu-management/review` and
 uses the Backend-authoritative validation and immutable-version APIs. Current
 Version displays metadata only; no snapshot browsing was added. Phase 4F — Version
-History, Comparison and Rollback: Not started. POS Sync remains unimplemented, and
+History, Comparison and Rollback: Complete. POS Sync remains unimplemented, and
 the screen-by-screen localization migration remains paused.
 
 ## Project Name
@@ -229,13 +231,15 @@ Phase 4D.3B — Operational Resolution Diagnostic: Complete
 - None. The English/Arabic localization foundation exists, while the
   screen-by-screen translation migration is paused. Menu Validation UI (4E.1),
   Resolved Menu Preview UI (4E.2), and Publishing and Current Version (4E.3) are
-  complete and verified; Version History/Comparison/Rollback (4F) and POS Sync
-  remain not started.
+  complete and verified; Version History/Comparison/Rollback (4F) is complete.
+  POS Sync remains not started.
 
 ## Next Step
 
-Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Not started. Keep Version History,
-Version History, and POS sync UI deferred.
+Phase 4D.1 — Variant Price Overrides: Complete. Phase 4D.2 — Scheduled Product Availability: Complete. Phase 4D.3A — Operational Availability Overrides: Complete. Phase 4D.3B — Operational Resolution Diagnostic: Complete. Phase 4D — Pricing and Availability: Complete. Phase 4E.1 — Menu Validation UI: Complete. Phase 4E.2 — Resolved Menu Preview UI: Complete. Phase 4E.3 — Publishing and Current Version: Complete. Keep Version History,
+Phase 4H — Recipes / Consumed Materials Configuration: Complete. Materials use
+stable `inventory_items` identity; no runtime stock behavior or automatic Inventory
+availability exists. POS sync UI remains deferred.
 
 ## Architecture Decisions
 

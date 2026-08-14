@@ -6,12 +6,14 @@ use App\Models\Branch;
 use App\Models\Menu;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\Catalog\MaterialCatalogService;
 use App\Services\Catalog\ProductVariantPriceResolver;
+use App\Services\Catalog\RecipeConfigurationService;
 
 /** Builds the static source of truth for a published menu version. */
 class PublishedMenuSnapshotBuilder
 {
-    public function __construct(private readonly ProductVariantPriceResolver $prices) {}
+    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials) {}
 
     public function build(int $tenantId, Branch $branch, string $channel, array $menuIds): array
     {
@@ -21,14 +23,14 @@ class PublishedMenuSnapshotBuilder
                 'placements' => fn ($p) => $p->where('is_visible', true)->orderBy('sort_order')->orderBy('id')->with([
                     'product' => fn ($products) => $products->where('is_active', true)->with([
                         'availabilityRules' => fn ($r) => $r->where('is_active', true)->orderBy('id'),
-                        'variants' => fn ($variants) => $variants->where('is_active', true)->orderBy('sort_order')->orderBy('id'),
-                        'modifierGroups' => fn ($groups) => $groups->where('is_active', true)->with(['options' => fn ($options) => $options->where('is_active', true)->orderBy('sort_order')->orderBy('id')]),
+                        'variants' => fn ($variants) => $variants->where('is_active', true)->with('recipe.components')->orderBy('sort_order')->orderBy('id'),
+                        'modifierGroups' => fn ($groups) => $groups->where('is_active', true)->with(['options' => fn ($options) => $options->where('is_active', true)->with('recipeProfiles.components')->orderBy('sort_order')->orderBy('id')]),
                     ]),
                 ]),
             ]),
         ])->orderBy('priority')->orderBy('id')->get();
 
-        return ['context' => ['tenantId' => $tenantId, 'branchId' => $branch->id, 'channel' => $channel, 'schemaVersion' => 1, 'generatedAt' => null], 'menus' => $menus->map(fn (Menu $menu) => $this->menu($tenantId, $menu, $branch, $channel))->values()->all()];
+        return ['context' => ['tenantId' => $tenantId, 'branchId' => $branch->id, 'channel' => $channel, 'schemaVersion' => 2, 'generatedAt' => null], 'menus' => $menus->map(fn (Menu $menu) => $this->menu($tenantId, $menu, $branch, $channel))->values()->all()];
     }
 
     private function menu(int $tenantId, Menu $menu, Branch $branch, string $channel): array
@@ -48,16 +50,22 @@ class PublishedMenuSnapshotBuilder
             'isFeatured' => (bool) $placement->is_featured, 'sortOrder' => $placement->sort_order, 'productType' => $this->value($product->product_type), 'preparationTimeMinutes' => $product->preparation_time_minutes,
             'categoryId' => $product->category_id, 'reportingCategoryId' => $product->reporting_category_id, 'kitchenStationId' => $product->kitchen_station_id,
             'productAvailabilityRules' => $product->availabilityRules->map(fn ($rule) => $this->rule($rule))->values()->all(),
-            'variants' => $product->variants->map(fn (ProductVariant $variant) => $this->variant($tenantId, $variant, $branch, $channel))->values()->all(),
+            'variants' => $product->variants->map(fn (ProductVariant $variant) => $this->variant($tenantId, $variant, $branch, $channel, $product))->values()->all(),
             'modifierGroups' => $this->modifiers($product)];
     }
 
-    private function variant(int $tenantId, ProductVariant $variant, Branch $branch, string $channel): array
+    private function variant(int $tenantId, ProductVariant $variant, Branch $branch, string $channel, Product $product): array
     {
         $price = $this->prices->resolve($tenantId, $variant->id, $branch->id, $channel);
 
         return ['id' => $variant->id, 'name' => $this->localized($variant, 'name'), 'sku' => $variant->sku, 'barcode' => $variant->barcode, 'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default,
-            'basePrice' => $this->decimal($price['basePrice']), 'effectivePrice' => $this->decimal($price['effectivePrice']), 'matchedPriceScope' => $price['matchedScope']];
+            'basePrice' => $this->decimal($price['basePrice']), 'effectivePrice' => $this->decimal($price['effectivePrice']), 'matchedPriceScope' => $price['matchedScope'],
+            'baseRecipe' => ($variant->recipe?->components ?? collect())->sortBy('sort_order')->map(fn ($c) => $this->recipeComponent($tenantId, $c))->values()->all(),
+            'modifierRecipeAdjustments' => $product->modifierGroups->flatMap->options->map(function ($option) use ($product, $variant, $tenantId): array {
+                $profile = $this->recipes->effective($option, $product->id, $variant->id);
+
+                return ['optionId' => $option->id, 'components' => ($profile?->components ?? collect())->sortBy('sort_order')->map(fn ($c) => $this->recipeComponent($tenantId, $c, true))->values()->all()];
+            })->values()->all()];
     }
 
     private function modifiers(Product $product): array
@@ -73,6 +81,13 @@ class PublishedMenuSnapshotBuilder
     private function rule(object $rule): array
     {
         return ['id' => $rule->id, 'branchId' => $rule->branch_id, 'channel' => $this->value($rule->channel), 'productVariantId' => $rule->product_variant_id ?? null, 'dayOfWeek' => $rule->day_of_week, 'startTime' => $this->time($rule->start_time), 'endTime' => $this->time($rule->end_time), 'startDate' => $rule->start_date?->toDateString(), 'endDate' => $rule->end_date?->toDateString(), 'priority' => $rule->priority];
+    }
+
+    private function recipeComponent(int $tenantId, object $component, bool $hasOperation = false): array
+    {
+        $material = $this->materials->material($tenantId, $component->inventory_item_id);
+
+        return ['materialId' => $component->inventory_item_id, 'materialName' => $material?->name, 'materialSku' => $material?->sku, 'quantity' => rtrim(rtrim((string) $component->quantity, '0'), '.'), 'unitCode' => $component->unit_code, 'sortOrder' => $component->sort_order] + ($hasOperation ? ['operation' => $component->operation] : []);
     }
 
     private function localized(object $entity, string $field): array

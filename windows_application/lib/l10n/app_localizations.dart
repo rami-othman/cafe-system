@@ -1015,6 +1015,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} is used by {count} Products. Existing Product assignments remain governed by Backend rules.'**
   String catalogSetupArchiveConfirmation(String name, int count);
+
+  /// No description provided for @recipeMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe / Materials'**
+  String get recipeMaterials;
+
+  /// No description provided for @manageRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Recipe'**
+  String get manageRecipe;
+
+  /// No description provided for @baseRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Recipe'**
+  String get baseRecipe;
+
+  /// No description provided for @material.
+  ///
+  /// In en, this message translates to:
+  /// **'Material'**
+  String get material;
+
+  /// No description provided for @quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantity;
+
+  /// No description provided for @unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get unit;
+
+  /// No description provided for @addMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Material'**
+  String get addMaterial;
+
+  /// No description provided for @removeMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeMaterial;
+
+  /// No description provided for @materialAdjustments.
+  ///
+  /// In en, this message translates to:
+  /// **'Material Adjustments'**
+  String get materialAdjustments;
+
+  /// No description provided for @effectiveFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective from'**
+  String get effectiveFrom;
+
+  /// No description provided for @global.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get global;
+
+  /// No description provided for @productOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Override'**
+  String get productOverride;
+
+  /// No description provided for @variantOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant Override'**
+  String get variantOverride;
+
+  /// No description provided for @inherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited'**
+  String get inherited;
+
+  /// No description provided for @createOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Override'**
+  String get createOverride;
+
+  /// No description provided for @suppressInheritedEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppress Inherited Effects'**
+  String get suppressInheritedEffects;
+
+  /// No description provided for @restoreInheritance.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Inheritance'**
+  String get restoreInheritance;
+
+  /// No description provided for @recipeSimulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe Simulation'**
+  String get recipeSimulation;
+
+  /// No description provided for @selectedModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Modifiers'**
+  String get selectedModifiers;
+
+  /// No description provided for @resolvedRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved Recipe'**
+  String get resolvedRecipe;
+
+  /// No description provided for @recipeUnavailableMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'Materials with an unmapped unit are disabled and cannot be saved.'**
+  String get recipeUnavailableMaterial;
+
+  /// No description provided for @recipeReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This Variant is archived. Recipe configuration is read-only.'**
+  String get recipeReadOnly;
+
+  /// No description provided for @recipeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipe components are configured.'**
+  String get recipeEmpty;
+
+  /// No description provided for @recipeInheritedDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'This draft is cloned from the inherited profile. Saving creates a full replacement override.'**
+  String get recipeInheritedDraft;
+
+  /// No description provided for @recipeEmptyOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'This override deliberately has no material effects.'**
+  String get recipeEmptyOverride;
+
+  /// No description provided for @recipeSuppressConfirmationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppress inherited material effects?'**
+  String get recipeSuppressConfirmationTitle;
+
+  /// No description provided for @recipeSuppressConfirmationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving an empty scoped profile removes every inherited ADD and REMOVE effect for this scope.'**
+  String get recipeSuppressConfirmationBody;
+
+  /// No description provided for @recipeRemoveOverrideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this override?'**
+  String get recipeRemoveOverrideTitle;
+
+  /// No description provided for @recipeRemoveOverrideBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing it restores the nearest inherited material effects.'**
+  String get recipeRemoveOverrideBody;
 }
 
 class _AppLocalizationsDelegate

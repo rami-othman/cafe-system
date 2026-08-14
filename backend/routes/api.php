@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Admin\Catalog\OperationalAvailabilityController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
+use App\Http\Controllers\Api\Admin\Catalog\RecipeConfigurationController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentScopeController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
@@ -76,6 +77,20 @@ Route::prefix('v1')->group(function (): void {
             Route::get('product-variants/{variant}/price-overrides', 'index');
             Route::put('product-variants/{variant}/price-overrides', 'sync');
             Route::get('product-variants/{variant}/effective-price', 'effectivePrice');
+        });
+        Route::controller(RecipeConfigurationController::class)->group(function (): void {
+            Route::get('materials', 'materials');
+            Route::get('product-variants/{variant}/recipe', 'recipe');
+            Route::put('product-variants/{variant}/recipe', 'putRecipe');
+            Route::post('product-variants/{variant}/recipe/resolve', 'resolve');
+            Route::get('modifier-options/{option}/recipe-adjustments', 'profile');
+            Route::put('modifier-options/{option}/recipe-adjustments', 'putProfile');
+            Route::get('products/{product}/modifier-options/{option}/recipe-adjustments', 'profile');
+            Route::put('products/{product}/modifier-options/{option}/recipe-adjustments', 'putProfile');
+            Route::delete('products/{product}/modifier-options/{option}/recipe-adjustments', 'deleteProfile');
+            Route::get('product-variants/{variant}/modifier-options/{option}/recipe-adjustments', 'profile');
+            Route::put('product-variants/{variant}/modifier-options/{option}/recipe-adjustments', 'putProfile');
+            Route::delete('product-variants/{variant}/modifier-options/{option}/recipe-adjustments', 'deleteProfile');
         });
         Route::controller(ProductAvailabilityRuleController::class)->group(function (): void {
             Route::get('products/{product}/availability-rules', 'index');

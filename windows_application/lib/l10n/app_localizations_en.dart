@@ -526,4 +526,98 @@ class AppLocalizationsEn extends AppLocalizations {
   String catalogSetupArchiveConfirmation(String name, int count) {
     return '$name is used by $count Products. Existing Product assignments remain governed by Backend rules.';
   }
+
+  @override
+  String get recipeMaterials => 'Recipe / Materials';
+
+  @override
+  String get manageRecipe => 'Manage Recipe';
+
+  @override
+  String get baseRecipe => 'Base Recipe';
+
+  @override
+  String get material => 'Material';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String get unit => 'Unit';
+
+  @override
+  String get addMaterial => 'Add Material';
+
+  @override
+  String get removeMaterial => 'Remove';
+
+  @override
+  String get materialAdjustments => 'Material Adjustments';
+
+  @override
+  String get effectiveFrom => 'Effective from';
+
+  @override
+  String get global => 'Global';
+
+  @override
+  String get productOverride => 'Product Override';
+
+  @override
+  String get variantOverride => 'Variant Override';
+
+  @override
+  String get inherited => 'Inherited';
+
+  @override
+  String get createOverride => 'Create Override';
+
+  @override
+  String get suppressInheritedEffects => 'Suppress Inherited Effects';
+
+  @override
+  String get restoreInheritance => 'Restore Inheritance';
+
+  @override
+  String get recipeSimulation => 'Recipe Simulation';
+
+  @override
+  String get selectedModifiers => 'Selected Modifiers';
+
+  @override
+  String get resolvedRecipe => 'Resolved Recipe';
+
+  @override
+  String get recipeUnavailableMaterial =>
+      'Materials with an unmapped unit are disabled and cannot be saved.';
+
+  @override
+  String get recipeReadOnly =>
+      'This Variant is archived. Recipe configuration is read-only.';
+
+  @override
+  String get recipeEmpty => 'No recipe components are configured.';
+
+  @override
+  String get recipeInheritedDraft =>
+      'This draft is cloned from the inherited profile. Saving creates a full replacement override.';
+
+  @override
+  String get recipeEmptyOverride =>
+      'This override deliberately has no material effects.';
+
+  @override
+  String get recipeSuppressConfirmationTitle =>
+      'Suppress inherited material effects?';
+
+  @override
+  String get recipeSuppressConfirmationBody =>
+      'Saving an empty scoped profile removes every inherited ADD and REMOVE effect for this scope.';
+
+  @override
+  String get recipeRemoveOverrideTitle => 'Remove this override?';
+
+  @override
+  String get recipeRemoveOverrideBody =>
+      'Removing it restores the nearest inherited material effects.';
 }

@@ -29,6 +29,17 @@ class _CatalogSetupScreenState extends State<CatalogSetupScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant CatalogSetupScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialKind == widget.initialKind) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<CatalogSetupCubit>().selectKind(widget.initialKind);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _search.dispose();
     super.dispose();
@@ -39,6 +50,12 @@ class _CatalogSetupScreenState extends State<CatalogSetupScreen> {
     BuildContext context,
   ) => BlocConsumer<CatalogSetupCubit, CatalogSetupState>(
     listener: (context, state) {
+      if (_search.text != state.search) {
+        _search.value = TextEditingValue(
+          text: state.search,
+          selection: TextSelection.collapsed(offset: state.search.length),
+        );
+      }
       if (state.message != null)
         ScaffoldMessenger.of(
           context,

@@ -6,9 +6,13 @@ use App\Models\Branch;
 use App\Models\Menu;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\Catalog\MaterialCatalogService;
 use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\ProductAvailabilityResolver;
 use App\Services\Catalog\ProductVariantPriceResolver;
+use App\Services\Catalog\RecipeConfigurationService;
+use App\Services\Catalog\RecipeUnitRegistry;
+use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -19,7 +23,7 @@ class MenuValidationService
 
     private array $duplicateBarcodes = [];
 
-    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly ProductAvailabilityResolver $scheduled, private readonly OperationalAvailabilityResolver $operational) {}
+    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly ProductAvailabilityResolver $scheduled, private readonly OperationalAvailabilityResolver $operational, private readonly RecipeConfigurationService $recipes, private readonly RecipeUnitRegistry $units, private readonly MaterialCatalogService $materials) {}
 
     public function menu(int $tenantId, int $menuId): Menu
     {
@@ -78,8 +82,8 @@ class MenuValidationService
                 'placements' => fn ($placements) => $placements->withTrashed()->with([
                     'product' => fn ($products) => $products->withTrashed()->with([
                         'category' => fn ($categories) => $categories->withTrashed(), 'reportingCategory' => fn ($categories) => $categories->withTrashed(), 'kitchenStation' => fn ($stations) => $stations->withTrashed(),
-                        'variants' => fn ($variants) => $variants->withTrashed(),
-                        'modifierGroups' => fn ($groups) => $groups->withTrashed()->with(['options' => fn ($options) => $options->withTrashed()]),
+                        'variants' => fn ($variants) => $variants->withTrashed()->with('recipe.components'),
+                        'modifierGroups' => fn ($groups) => $groups->withTrashed()->with(['options' => fn ($options) => $options->withTrashed()->with('recipeProfiles.components')]),
                     ]),
                 ]),
             ]),
@@ -191,7 +195,12 @@ class MenuValidationService
         foreach ($active as $variant) {
             $this->validateVariant($result, $menu, $section, $placement, $product, $variant, $tenantId, $branch, $channel, $at);
         }
-        $this->validateModifiers($result, $menu, $section, $placement, $product, $tenantId);
+        $this->validateModifiers($result, $menu, $section, $placement, $product, $active, $tenantId);
+        foreach ($active as $variant) {
+            if ($product->is_stock_tracked && $variant->recipe?->components->isNotEmpty()) {
+                $this->validateCombinedRecipeRemoves($result, $menu, $section, $placement, $product, $variant);
+            }
+        }
     }
 
     private function validateVariant(MenuValidationResult $result, Menu $menu, object $section, object $placement, Product $product, ProductVariant $variant, int $tenantId, Branch $branch, string $channel, CarbonImmutable $at): void
@@ -215,6 +224,14 @@ class MenuValidationService
         if ($price['matchedScope'] === 'base') {
             $this->issue($result, 'VARIANT_BASE_PRICE_FALLBACK', 'warning', 'The variant is using its base price.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
         }
+        if ($product->is_stock_tracked) {
+            if (! $variant->recipe) {
+                $this->issue($result, 'VARIANT_RECIPE_MISSING', 'error', 'A stock-tracked variant requires a recipe.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
+            } elseif ($variant->recipe->components->isEmpty()) {
+                $this->issue($result, 'VARIANT_RECIPE_EMPTY', 'error', 'A stock-tracked variant recipe cannot be empty.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
+            }
+        }
+        $this->validateRecipeComponents($result, $menu, $section, $placement, $variant, $tenantId);
         $scheduled = $this->scheduled->resolve($tenantId, $product->id, $variant->id, $branch->id, $channel, $at, $branch->timezone ?: config('app.timezone'));
         if (! $scheduled['isScheduledAvailable']) {
             $this->issue($result, 'PRODUCT_OUTSIDE_SCHEDULE', 'warning', 'The product is outside scheduled availability at the requested time.', 'product', $product->id, $menu->id, $section->id, $placement->id);
@@ -225,7 +242,38 @@ class MenuValidationService
         }
     }
 
-    private function validateModifiers(MenuValidationResult $result, Menu $menu, object $section, object $placement, Product $product, int $tenantId): void
+    private function validateRecipeComponents(MenuValidationResult $result, Menu $menu, object $section, object $placement, ProductVariant $variant, int $tenantId): void
+    {
+        foreach ($variant->recipe?->components ?? [] as $component) {
+            $material = $this->materials->material($tenantId, $component->inventory_item_id);
+            if (! $material || ! $material->is_active || $material->deleted_at) {
+                $this->issue($result, 'RECIPE_COMPONENT_MATERIAL_UNAVAILABLE', 'error', 'A recipe component material is archived, inactive, or unavailable.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+
+                continue;
+            }
+            $materialUnit = $this->units->inventoryUnit($material->unit);
+            if (! $materialUnit) {
+                $this->issue($result, 'RECIPE_COMPONENT_MATERIAL_UNIT_UNMAPPED', 'error', 'A recipe component material has no mapped canonical unit.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+
+                continue;
+            }
+            try {
+                $quantity = BigDecimal::of((string) $component->quantity);
+                if ($quantity->isLessThanOrEqualTo(BigDecimal::zero())) {
+                    throw new \InvalidArgumentException('non-positive');
+                }
+            } catch (\Throwable) {
+                $this->issue($result, 'RECIPE_COMPONENT_QUANTITY_INVALID', 'error', 'A recipe component quantity must be positive.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+
+                continue;
+            }
+            if (! $this->units->compatible($materialUnit, $component->unit_code)) {
+                $this->issue($result, 'RECIPE_COMPONENT_UNIT_INVALID', 'error', 'A recipe component unit is not compatible with its material.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+            }
+        }
+    }
+
+    private function validateModifiers(MenuValidationResult $result, Menu $menu, object $section, object $placement, Product $product, Collection $variants, int $tenantId): void
     {
         foreach ($product->modifierGroups as $group) {
             if ($group->tenant_id !== $tenantId || $group->pivot->tenant_id !== $tenantId) {
@@ -260,8 +308,105 @@ class MenuValidationService
             if ($active->where('is_default', true)->count() > $max) {
                 $this->issue($result, 'MODIFIER_DEFAULTS_EXCEED_MAXIMUM', 'error', 'Default active options exceed the effective maximum.', 'modifier_group', $group->id, $menu->id, $section->id, $placement->id);
             }
+            foreach ($active as $option) {
+                foreach ($variants as $variant) {
+                    $this->validateEffectiveModifierProfile($result, $menu, $section, $placement, $product, $variant, $group, $option, $tenantId);
+                }
+            }
             if (in_array($this->normalized($group->name), ['size', 'sizes', 'cup size', 'الحجم', 'الأحجام'], true)) {
                 $this->issue($result, 'LEGACY_SIZE_MODIFIER_GROUP', 'warning', 'A legacy size-like modifier group remains assigned.', 'modifier_group', $group->id, $menu->id, $section->id, $placement->id);
+            }
+        }
+    }
+
+    private function validateEffectiveModifierProfile(MenuValidationResult $result, Menu $menu, object $section, object $placement, Product $product, ProductVariant $variant, object $group, object $option, int $tenantId): void
+    {
+        $profile = $this->recipes->effective($option, $product->id, $variant->id);
+        if (! $profile) {
+            return;
+        }
+        $base = [];
+        foreach ($variant->recipe?->components ?? [] as $component) {
+            try {
+                $normalized = $this->units->normalize((string) $component->quantity, $component->unit_code);
+                $base[$component->inventory_item_id] = BigDecimal::of($normalized['quantity']);
+            } catch (\Throwable) {
+                // The base-component validator reports the underlying configuration issue.
+            }
+        }
+        foreach ($profile->components as $component) {
+            $material = $this->materials->material($tenantId, $component->inventory_item_id);
+            $materialUnit = $material ? $this->units->inventoryUnit($material->unit) : null;
+            try {
+                $quantity = BigDecimal::of((string) $component->quantity);
+                $valid = $material && $material->is_active && ! $material->deleted_at && $materialUnit && $quantity->isGreaterThan(BigDecimal::zero()) && $this->units->compatible($materialUnit, $component->unit_code) && in_array($component->operation, ['add', 'remove'], true);
+            } catch (\Throwable) {
+                $valid = false;
+            }
+            if (! $valid) {
+                $this->issue($result, 'MODIFIER_RECIPE_PROFILE_INVALID', 'error', 'An effective modifier recipe profile has an invalid component.', 'modifier_option', $option->id, $menu->id, $section->id, $placement->id, ['variantId' => $variant->id, 'materialId' => $component->inventory_item_id]);
+
+                continue;
+            }
+            if ($component->operation !== 'remove') {
+                continue;
+            }
+            if ((bool) ($group->pivot->allow_quantity_override ?? $group->allow_quantity)) {
+                $this->issue($result, 'MODIFIER_RECIPE_QUANTITY_REMOVE_INVALID', 'error', 'Quantity-enabled modifier groups cannot use REMOVE recipe effects.', 'modifier_option', $option->id, $menu->id, $section->id, $placement->id, ['variantId' => $variant->id]);
+
+                continue;
+            }
+            $normalized = $this->units->normalize((string) $component->quantity, $component->unit_code);
+            $remove = BigDecimal::of($normalized['quantity']);
+            if (! isset($base[$component->inventory_item_id]) || $remove->isGreaterThan($base[$component->inventory_item_id])) {
+                $this->issue($result, 'MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE', 'error', 'A modifier REMOVE adjustment exceeds the variant base recipe.', 'modifier_option', $option->id, $menu->id, $section->id, $placement->id, ['variantId' => $variant->id, 'materialId' => $component->inventory_item_id]);
+            }
+        }
+    }
+
+    /** Conservative bounded maximum: per group choose the greatest legal remove set, then sum groups. */
+    private function validateCombinedRecipeRemoves(MenuValidationResult $result, Menu $menu, object $section, object $placement, Product $product, ProductVariant $variant): void
+    {
+        $base = [];
+        foreach ($variant->recipe->components as $component) {
+            try {
+                $n = $this->units->normalize($component->quantity, $component->unit_code);
+                $base[$component->inventory_item_id] = BigDecimal::of($n['quantity']);
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+        $max = [];
+        foreach ($product->modifierGroups as $group) {
+            if ($group->trashed() || ! $group->is_active) {
+                continue;
+            }
+            $allowQuantity = $group->pivot->allow_quantity_override ?? $group->allow_quantity;
+            if ($allowQuantity) {
+                continue;
+            }
+            $perMaterial = [];
+            foreach ($group->options->filter(fn ($o) => ! $o->trashed() && $o->is_active) as $option) {
+                $profile = $this->recipes->effective($option, $product->id, $variant->id);
+                foreach ($profile?->components ?? [] as $component) {
+                    if ($component->operation === 'remove') {
+                        $n = $this->units->normalize($component->quantity, $component->unit_code);
+                        $perMaterial[$component->inventory_item_id][] = BigDecimal::of($n['quantity']);
+                    }
+                }
+            }
+            $take = $group->selection_type === 'single' ? 1 : (int) ($group->pivot->max_selections_override ?? $group->max_selections);
+            foreach ($perMaterial as $materialId => $values) {
+                usort($values, fn ($a, $b) => $b->compareTo($a));
+                $sum = BigDecimal::zero();
+                foreach (array_slice($values, 0, $take) as $value) {
+                    $sum = $sum->plus($value);
+                } $max[$materialId] = ($max[$materialId] ?? BigDecimal::zero())->plus($sum);
+            }
+        }
+        foreach ($max as $materialId => $remove) {
+            if (isset($base[$materialId]) && $remove->isGreaterThan($base[$materialId])) {
+                $this->issue($result, 'MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE', 'error', 'Simultaneously selectable modifier removes can exceed the variant base recipe.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $materialId, 'baseQuantity' => $base[$materialId]->__toString(), 'maximumRemove' => $remove->__toString()]);
             }
         }
     }

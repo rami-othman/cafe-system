@@ -76,7 +76,7 @@ class MenuPreviewService
             'sections' => fn ($sections) => $sections->withTrashed()->orderBy('sort_order')->orderBy('id')->with([
                 'placements' => fn ($placements) => $placements->withTrashed()->orderBy('sort_order')->orderBy('id')->with([
                     'product' => fn ($products) => $products->withTrashed()->with([
-                        'variants' => fn ($variants) => $variants->withTrashed()->orderBy('sort_order')->orderBy('id'),
+                        'variants' => fn ($variants) => $variants->withTrashed()->with('recipe.components')->orderBy('sort_order')->orderBy('id'),
                         'modifierGroups' => fn ($groups) => $groups->withTrashed()->with(['options' => fn ($options) => $options->withTrashed()->orderBy('sort_order')->orderBy('id')]),
                     ]),
                 ]),
@@ -163,7 +163,8 @@ class MenuPreviewService
             'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default, 'basePrice' => (float) $price['basePrice'],
             'effectivePrice' => (float) $price['effectivePrice'], 'matchedPriceScope' => $price['matchedScope'],
             'isScheduledAvailable' => $scheduled['isScheduledAvailable'], 'isOperationallyAvailable' => $operational['isOperationallyAvailable'],
-            'isSellable' => $sellable, 'unavailabilityReasons' => $reasons];
+            'isSellable' => $sellable, 'unavailabilityReasons' => $reasons,
+            'recipeConfigured' => $variant->recipe !== null && $variant->recipe->components->isNotEmpty(), 'recipeComponentCount' => $variant->recipe?->components->count() ?? 0];
     }
 
     private function modifiers(Product $product, string $language): array

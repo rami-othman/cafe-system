@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/menu_management/controllers/product_catalog_cubit.dart';
 import 'package:windows_application/features/menu_management/catalog_setup/models/catalog_setup_models.dart';
@@ -156,6 +157,74 @@ void main() {
       expect(find.text('Initial Default Variant'), findsNothing);
     },
   );
+
+  testWidgets(
+    'all catalog manage links preserve the draft and refresh references on return',
+    (tester) async {
+      final _EditorRepository repository = _EditorRepository();
+      final ProductEditorCubit editor = ProductEditorCubit(
+        repository: repository,
+      );
+      addTearDown(editor.close);
+      tester.view.physicalSize = const Size(1440, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final GoRouter router = GoRouter(
+        initialLocation: '/products/create',
+        routes: <RouteBase>[
+          GoRoute(
+            path: '/products/create',
+            builder: (_, _) => Scaffold(
+              body: MultiBlocProvider(
+                providers: <BlocProvider<dynamic>>[
+                  BlocProvider<ProductCatalogCubit>(
+                    create: (_) => ProductCatalogCubit(repository: repository),
+                  ),
+                  BlocProvider<ProductEditorCubit>.value(value: editor),
+                ],
+                child: const ProductEditorScreen(),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/menu-management/catalog-setup',
+            builder: (context, state) => Scaffold(
+              body: Column(
+                children: <Widget>[
+                  Text('Catalog tab: ${state.uri.queryParameters['tab']}'),
+                  TextButton(
+                    onPressed: context.pop,
+                    child: const Text('Return to product'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, 'Draft Latte');
+      await tester.pump();
+
+      for (final (String label, String tab) in <(String, String)>[
+        ('Manage Categories', 'categories'),
+        ('Manage Reporting Categories', 'reporting-categories'),
+        ('Manage Kitchen Stations', 'kitchen-stations'),
+      ]) {
+        final int referencesBefore = repository.categoryListCalls;
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+        expect(find.text('Catalog tab: $tab'), findsOneWidget);
+        await tester.tap(find.text('Return to product'));
+        await tester.pumpAndSettle();
+        expect(editor.state.draft.name, 'Draft Latte');
+        expect(repository.categoryListCalls, greaterThan(referencesBefore));
+      }
+    },
+  );
 }
 
 Widget _editorApp(_EditorRepository repository, {int? productId}) =>
@@ -178,6 +247,7 @@ Widget _editorApp(_EditorRepository repository, {int? productId}) =>
 class _EditorRepository extends MenuCatalogRepository {
   int createCalls = 0;
   int updateCalls = 0;
+  int categoryListCalls = 0;
   bool validationOnUpdate = false;
   Completer<ProductDetail>? createCompleter;
   bool omitCategories = false;
@@ -241,19 +311,23 @@ class _EditorRepository extends MenuCatalogRepository {
   @override
   Future<CatalogPage<CatalogCategory>> listCategories({
     int perPage = 100,
-  }) async => CatalogPage<CatalogCategory>(
-    items: omitCategories
-        ? const <CatalogCategory>[]
-        : <CatalogCategory>[
-            CatalogCategory.fromJson(<String, dynamic>{
-              'id': 4,
-              'name': 'Coffee',
-              'isActive': true,
-              'sortOrder': 0,
-            }),
-          ],
-    meta: _meta(),
-  );
+  }) async {
+    categoryListCalls++;
+    return CatalogPage<CatalogCategory>(
+      items: omitCategories
+          ? const <CatalogCategory>[]
+          : <CatalogCategory>[
+              CatalogCategory.fromJson(<String, dynamic>{
+                'id': 4,
+                'name': 'Coffee',
+                'isActive': true,
+                'sortOrder': 0,
+              }),
+            ],
+      meta: _meta(),
+    );
+  }
+
   @override
   Future<CatalogSetupRecord> getCatalogSetupRecord(
     CatalogSetupKind kind,

@@ -6,6 +6,7 @@ use App\Models\Concerns\HasTenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductVariant extends Model
@@ -42,5 +43,10 @@ class ProductVariant extends Model
     public function operationalAvailabilities(): HasMany
     {
         return $this->hasMany(ProductVariantOperationalAvailability::class);
+    }
+
+    public function recipe(): HasOne
+    {
+        return $this->hasOne(VariantRecipe::class);
     }
 }

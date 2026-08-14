@@ -536,4 +536,96 @@ class AppLocalizationsAr extends AppLocalizations {
   String catalogSetupArchiveConfirmation(String name, int count) {
     return '$name مستخدم في $count من المنتجات. تبقى تعيينات المنتجات الحالية خاضعة لقواعد الخادم.';
   }
+
+  @override
+  String get recipeMaterials => 'الوصفة / المواد';
+
+  @override
+  String get manageRecipe => 'إدارة الوصفة';
+
+  @override
+  String get baseRecipe => 'الوصفة الأساسية';
+
+  @override
+  String get material => 'المادة';
+
+  @override
+  String get quantity => 'الكمية';
+
+  @override
+  String get unit => 'الوحدة';
+
+  @override
+  String get addMaterial => 'إضافة مادة';
+
+  @override
+  String get removeMaterial => 'إزالة';
+
+  @override
+  String get materialAdjustments => 'تعديلات المواد';
+
+  @override
+  String get effectiveFrom => 'فعال من';
+
+  @override
+  String get global => 'عام';
+
+  @override
+  String get productOverride => 'تجاوز المنتج';
+
+  @override
+  String get variantOverride => 'تجاوز الخيار';
+
+  @override
+  String get inherited => 'موروث';
+
+  @override
+  String get createOverride => 'إنشاء تجاوز';
+
+  @override
+  String get suppressInheritedEffects => 'إلغاء التأثيرات الموروثة';
+
+  @override
+  String get restoreInheritance => 'استعادة التوريث';
+
+  @override
+  String get recipeSimulation => 'محاكاة الوصفة';
+
+  @override
+  String get selectedModifiers => 'المعدلات المحددة';
+
+  @override
+  String get resolvedRecipe => 'الوصفة النهائية';
+
+  @override
+  String get recipeUnavailableMaterial =>
+      'المواد ذات الوحدة غير المعرفة معطلة ولا يمكن حفظها.';
+
+  @override
+  String get recipeReadOnly => 'هذا الخيار مؤرشف. تكوين الوصفة للعرض فقط.';
+
+  @override
+  String get recipeEmpty => 'لا توجد مكونات وصفة معدة.';
+
+  @override
+  String get recipeInheritedDraft =>
+      'هذه المسودة منسوخة من الملف الموروث. الحفظ ينشئ تجاوزاً كاملاً.';
+
+  @override
+  String get recipeEmptyOverride =>
+      'هذا التجاوز لا يحتوي على أي تأثيرات للمواد.';
+
+  @override
+  String get recipeSuppressConfirmationTitle => 'إلغاء التأثيرات الموروثة؟';
+
+  @override
+  String get recipeSuppressConfirmationBody =>
+      'حفظ ملف فارغ محدد النطاق يزيل كل تأثيرات ADD وREMOVE الموروثة من هذا النطاق.';
+
+  @override
+  String get recipeRemoveOverrideTitle => 'إزالة هذا التجاوز؟';
+
+  @override
+  String get recipeRemoveOverrideBody =>
+      'إزالته تستعيد أقرب تأثيرات المواد الموروثة.';
 }

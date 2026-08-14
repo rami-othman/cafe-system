@@ -25,6 +25,11 @@ import '../features/menu_management/products/controllers/product_editor_cubit.da
 import '../features/menu_management/products/views/product_editor_screen.dart';
 import '../features/menu_management/variants/controllers/variants_cubit.dart';
 import '../features/menu_management/variants/views/variants_screen.dart';
+import '../features/menu_management/recipes/views/variant_recipe_screen.dart';
+import '../features/menu_management/recipes/views/modifier_adjustment_screen.dart';
+import '../features/menu_management/recipes/views/recipe_simulation_screen.dart';
+import '../features/menu_management/recipes/controllers/recipe_cubits.dart';
+import '../features/menu_management/repositories/menu_catalog_repository.dart';
 import '../features/menu_management/pricing/controllers/variant_price_overrides_cubit.dart';
 import '../features/menu_management/pricing/views/variant_price_overrides_screen.dart';
 import '../features/menu_management/availability/controllers/availability_cubit.dart';
@@ -95,6 +100,131 @@ final GoRouter appRouter = GoRouter(
         );
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: AppRoutes.menuManagementModifierRecipeAdjustments,
+          name: AppRouteNames.menuManagementModifierRecipeAdjustments,
+          builder: (context, state) {
+            final optionId = int.tryParse(
+              state.pathParameters['optionId'] ?? '',
+            );
+            if (optionId == null || optionId < 1) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<ModifierAdjustmentCubit>(
+              create: (_) => ModifierAdjustmentCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: ModifierAdjustmentScreen(optionId: optionId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementVariantRecipe,
+          name: AppRouteNames.menuManagementVariantRecipe,
+          builder: (context, state) {
+            final variantId = int.tryParse(
+              state.pathParameters['variantId'] ?? '',
+            );
+            final productId = int.tryParse(
+              state.uri.queryParameters['productId'] ?? '',
+            );
+            if (variantId == null ||
+                variantId < 1 ||
+                (state.uri.queryParameters.containsKey('productId') &&
+                    (productId == null || productId < 1))) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<VariantRecipeCubit>(
+              create: (_) =>
+                  VariantRecipeCubit(serviceLocator<MenuCatalogRepository>()),
+              child: VariantRecipeScreen(
+                variantId: variantId,
+                productId: productId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementProductModifierRecipeAdjustments,
+          name: AppRouteNames.menuManagementProductModifierRecipeAdjustments,
+          builder: (context, state) {
+            final optionId = int.tryParse(
+              state.pathParameters['optionId'] ?? '',
+            );
+            final productId = int.tryParse(
+              state.pathParameters['productId'] ?? '',
+            );
+            if (optionId == null ||
+                optionId < 1 ||
+                productId == null ||
+                productId < 1) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<ModifierAdjustmentCubit>(
+              create: (_) => ModifierAdjustmentCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: ModifierAdjustmentScreen(
+                optionId: optionId,
+                productId: productId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementVariantModifierRecipeAdjustments,
+          name: AppRouteNames.menuManagementVariantModifierRecipeAdjustments,
+          builder: (context, state) {
+            final optionId = int.tryParse(
+              state.pathParameters['optionId'] ?? '',
+            );
+            final variantId = int.tryParse(
+              state.pathParameters['variantId'] ?? '',
+            );
+            if (optionId == null ||
+                optionId < 1 ||
+                variantId == null ||
+                variantId < 1) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<ModifierAdjustmentCubit>(
+              create: (_) => ModifierAdjustmentCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: ModifierAdjustmentScreen(
+                optionId: optionId,
+                variantId: variantId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementRecipeSimulation,
+          name: AppRouteNames.menuManagementRecipeSimulation,
+          builder: (context, state) {
+            final productId = int.tryParse(
+              state.pathParameters['productId'] ?? '',
+            );
+            final variantId = int.tryParse(
+              state.pathParameters['variantId'] ?? '',
+            );
+            if (productId == null ||
+                productId < 1 ||
+                variantId == null ||
+                variantId < 1) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<RecipeSimulationCubit>(
+              create: (_) => RecipeSimulationCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: RecipeSimulationScreen(
+                productId: productId,
+                variantId: variantId,
+              ),
+            );
+          },
+        ),
         GoRoute(
           path: AppRoutes.menuManagementCatalogSetup,
           name: AppRouteNames.menuManagementCatalogSetup,
@@ -470,6 +600,12 @@ abstract final class AppRoutes {
       '/menu-management/modifiers/create';
   static const String menuManagementModifierDetail =
       '/menu-management/modifiers/:modifierGroupId';
+  static const String menuManagementModifierRecipeAdjustments =
+      '/menu-management/modifier-options/:optionId/recipe-adjustments';
+  static const String menuManagementProductModifierRecipeAdjustments =
+      '/menu-management/products/:productId/modifier-options/:optionId/recipe-adjustments';
+  static const String menuManagementVariantModifierRecipeAdjustments =
+      '/menu-management/product-variants/:variantId/modifier-options/:optionId/recipe-adjustments';
   static const String menuManagementModifierEdit =
       '/menu-management/modifiers/:modifierGroupId/edit';
   static const String menuManagementProductDetail =
@@ -482,6 +618,10 @@ abstract final class AppRoutes {
       '/menu-management/products/:productId/variants';
   static const String menuManagementVariantPricing =
       '/menu-management/products/:productId/variants/:variantId/pricing';
+  static const String menuManagementVariantRecipe =
+      '/menu-management/product-variants/:variantId/recipe';
+  static const String menuManagementRecipeSimulation =
+      '/menu-management/products/:productId/variants/:variantId/recipe-simulation';
   static const String menuManagementProductModifiers =
       '/menu-management/products/:productId/modifiers';
   static const String menuManagementProductAvailability =
@@ -512,6 +652,12 @@ abstract final class AppRouteNames {
       'menu-management-modifier-create';
   static const String menuManagementModifierDetail =
       'menu-management-modifier-detail';
+  static const String menuManagementModifierRecipeAdjustments =
+      'menu-management-modifier-recipe-adjustments';
+  static const String menuManagementProductModifierRecipeAdjustments =
+      'menu-management-product-modifier-recipe-adjustments';
+  static const String menuManagementVariantModifierRecipeAdjustments =
+      'menu-management-variant-modifier-recipe-adjustments';
   static const String menuManagementModifierEdit =
       'menu-management-modifier-edit';
   static const String menuManagementProductDetail =
@@ -524,6 +670,10 @@ abstract final class AppRouteNames {
       'menu-management-product-variants';
   static const String menuManagementVariantPricing =
       'menu-management-variant-pricing';
+  static const String menuManagementVariantRecipe =
+      'menu-management-variant-recipe';
+  static const String menuManagementRecipeSimulation =
+      'menu-management-recipe-simulation';
   static const String menuManagementProductModifiers =
       'menu-management-product-modifiers';
   static const String menuManagementProductAvailability =

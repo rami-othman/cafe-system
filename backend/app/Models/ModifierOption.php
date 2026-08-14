@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasTenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ModifierOption extends Model
@@ -26,5 +27,10 @@ class ModifierOption extends Model
     public function modifierGroup(): BelongsTo
     {
         return $this->belongsTo(ModifierGroup::class);
+    }
+
+    public function recipeProfiles(): HasMany
+    {
+        return $this->hasMany(ModifierOptionRecipeProfile::class);
     }
 }

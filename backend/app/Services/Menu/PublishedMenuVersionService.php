@@ -35,7 +35,7 @@ class PublishedMenuVersionService
             throw ValidationException::withMessages(['againstVersionId' => 'Versions must share a branch and channel.']);
         }
 
-return $this->comparison->compare($from, $to);
+        return $this->comparison->compare($from, $to);
     }
 
     public function rollback(int $tenant, int $id, array $input): array

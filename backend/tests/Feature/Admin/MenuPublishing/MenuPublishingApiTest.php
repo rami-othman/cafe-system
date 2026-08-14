@@ -52,6 +52,39 @@ class MenuPublishingApiTest extends TestCase
         $this->getJson('/api/v1/admin/menu-management/current-version?branchId='.$branch.'&channel=pos', $this->headers($foreign))->assertUnprocessable()->assertJsonValidationErrors('branchId');
     }
 
+    public function test_schema_v2_recipe_snapshot_is_immutable_ordered_and_recipe_only_change_versions_it(): void
+    {
+        [$tenant, $branch, , $product, $variant] = $this->graph();
+        $beans = $this->material($tenant, 'BEANS', 'kilogram');
+        $milk = $this->material($tenant, 'MILK', 'liter');
+        $recipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert([
+            ['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $milk, 'quantity' => '250', 'unit_code' => 'ml', 'sort_order' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $beans, 'quantity' => '18', 'unit_code' => 'g', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $group = DB::table('modifier_groups')->insertGetId(['tenant_id' => $tenant, 'name' => 'Extras', 'selection_type' => 'single', 'max_selections' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $option = DB::table('modifier_options')->insertGetId(['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Shot', 'is_active' => true, 'is_available' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_modifier_group')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'modifier_group_id' => $group, 'created_at' => now(), 'updated_at' => now()]);
+        $profile = DB::table('modifier_option_recipe_profiles')->insertGetId(['tenant_id' => $tenant, 'modifier_option_id' => $option, 'scope_type' => 'global', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('modifier_option_recipe_profile_components')->insert(['tenant_id' => $tenant, 'modifier_option_recipe_profile_id' => $profile, 'inventory_item_id' => $beans, 'operation' => 'add', 'quantity' => '18', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+
+        $one = $this->publish($tenant, $branch)->assertOk()->json('data.version');
+        $payload = json_decode((string) DB::table('published_menu_versions')->where('id', $one['id'])->value('payload_json'), true);
+        $node = $payload['menus'][0]['sections'][0]['products'][0]['variants'][0];
+        $this->assertSame(2, $payload['context']['schemaVersion']);
+        $this->assertSame([$beans, $milk], array_column($node['baseRecipe'], 'materialId'));
+        $this->assertSame('18', $node['baseRecipe'][0]['quantity']);
+        $this->assertSame('g', $node['baseRecipe'][0]['unitCode']);
+        $this->assertSame($option, $node['modifierRecipeAdjustments'][0]['optionId']);
+        $text = json_encode($payload);
+        foreach (['current_stock', 'minimum_stock', 'cost', 'warehouse', 'balance', 'movement', 'reservation', 'inventoryAvailability'] as $excluded) {
+            $this->assertStringNotContainsString($excluded, $text);
+        }
+        DB::table('variant_recipe_components')->where('variant_recipe_id', $recipe)->where('inventory_item_id', $beans)->update(['quantity' => '20']);
+        $two = $this->publish($tenant, $branch)->assertOk()->assertJsonPath('data.version.versionNumber', 2)->json('data.version');
+        $this->assertNotSame($one['checksum'], $two['checksum']);
+    }
+
     private function publish(int $tenant, int $branch)
     {
         return $this->postJson('/api/v1/admin/menu-management/publish', ['branchId' => $branch, 'channel' => 'pos'], $this->headers($tenant));
@@ -85,5 +118,10 @@ class MenuPublishingApiTest extends TestCase
     private function headers(int $tenant): array
     {
         return ['X-Tenant-Id' => (string) $tenant];
+    }
+
+    private function material(int $tenant, string $sku, string $unit): int
+    {
+        return DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => $sku, 'sku' => $sku, 'unit' => $unit, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
     }
 }

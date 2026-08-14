@@ -263,6 +263,15 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                       icon: const Icon(Icons.edit),
                     ),
                     IconButton(
+                      tooltip: 'Material Adjustments',
+                      onPressed: o.isArchived
+                          ? null
+                          : () => context.go(
+                              '/menu-management/modifier-options/${o.id}/recipe-adjustments',
+                            ),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                    ),
+                    IconButton(
                       tooltip: o.isArchived ? 'Restore' : 'Archive',
                       onPressed: state.currentActionId == null
                           ? () => o.isArchived

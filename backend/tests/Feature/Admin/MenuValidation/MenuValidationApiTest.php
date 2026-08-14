@@ -59,6 +59,53 @@ class MenuValidationApiTest extends TestCase
         $this->postJson('/api/v1/admin/menus/'.$foreignMenu.'/validate', ['branchId' => $branch, 'channel' => 'pos'], $this->headers($tenant))->assertNotFound();
     }
 
+    public function test_combined_remove_validation_uses_bounded_group_maxima_and_runtime_resolver_remains_authoritative(): void
+    {
+        $cases = [
+            // Single selection: below, equal to, and above the Base quantity.
+            ['single-under', [['single', 1, [4]]], false],
+            ['single-equal', [['single', 1, [10]]], false],
+            ['single-over', [['single', 1, [11]]], true],
+            // Independently selectable groups combine their bounded contributions.
+            ['cross-equal', [['single', 1, [5]], ['single', 1, [5]]], false],
+            ['cross-over', [['single', 1, [5]], ['single', 1, [6]]], true],
+            // Multiple options in one group use only its maximum legal selection count.
+            ['multi-under', [['multiple', 2, [4, 5]]], false],
+            ['multi-over', [['multiple', 2, [5, 6]]], true],
+            ['multi-capped', [['multiple', 1, [8, 8]]], false],
+        ];
+
+        foreach ($cases as [$slug, $groups, $expectsIssue]) {
+            $caseTenant = $this->tenant('combined-'.$slug);
+            [$tenant, $branch, $menu, $product, $variant] = $this->menuGraph($caseTenant);
+            DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+            $material = DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => "Beans $slug", 'sku' => "BEANS-$slug", 'unit' => 'kilogram', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            $headers = $this->headers($tenant);
+            $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $material, 'quantity' => '10', 'unitCode' => 'g']]], $headers)->assertOk();
+            $selected = [];
+            foreach ($groups as $groupIndex => [$selectionType, $maximum, $removes]) {
+                $group = DB::table('modifier_groups')->insertGetId(['tenant_id' => $tenant, 'name' => "$slug-$groupIndex", 'selection_type' => $selectionType, 'max_selections' => $maximum, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+                DB::table('product_modifier_group')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'modifier_group_id' => $group, 'max_selections_override' => $maximum, 'created_at' => now(), 'updated_at' => now()]);
+                foreach ($removes as $optionIndex => $remove) {
+                    $option = DB::table('modifier_options')->insertGetId(['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => "$slug-$groupIndex-$optionIndex", 'is_active' => true, 'is_available' => true, 'created_at' => now(), 'updated_at' => now()]);
+                    $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", ['components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => (string) $remove, 'unitCode' => 'g']]], $headers)->assertOk();
+                    $selected[] = ['optionId' => $option];
+                }
+            }
+            $codes = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+            $this->assertSame($expectsIssue, $codes->contains('MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE'), $slug);
+
+            // The resolver is the final authority for the actual submitted set:
+            // equal removes remove the material; over-removes are rejected.
+            $resolution = $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => $selected], $headers);
+            if ($expectsIssue) {
+                $resolution->assertUnprocessable();
+            } elseif (array_sum(array_merge(...array_map(fn ($group) => $group[2], $groups))) === 10) {
+                $resolution->assertOk()->assertJsonCount(0, 'data.components');
+            }
+        }
+    }
+
     private function validateMenu(int $tenant, int $menu, int $branch)
     {
         return $this->postJson('/api/v1/admin/menus/'.$menu.'/validate', ['branchId' => $branch, 'channel' => 'pos', 'at' => '2026-08-01T10:00:00+03:00'], $this->headers($tenant));

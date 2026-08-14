@@ -20,8 +20,37 @@ import '../operational_availability/models/operational_availability_models.dart'
 import '../review/models/review_models.dart';
 import '../versions/models/published_version_models.dart';
 import '../catalog_setup/models/catalog_setup_models.dart';
+import '../recipes/models/recipe_models.dart';
 
 abstract class MenuCatalogRepository {
+  Future<List<RecipeMaterial>> listRecipeMaterials({String search = ''}) =>
+      throw UnsupportedError('Recipes are not configured.');
+  Future<VariantRecipe> getVariantRecipe(int variantId) =>
+      throw UnsupportedError('Recipes are not configured.');
+  Future<VariantRecipe> saveVariantRecipe(
+    int variantId,
+    List<RecipeComponent> components,
+  ) => throw UnsupportedError('Recipes are not configured.');
+  Future<ResolvedRecipe> resolveVariantRecipe(
+    int variantId,
+    List<Map<String, dynamic>> selectedOptions,
+  ) => throw UnsupportedError('Recipes are not configured.');
+  Future<ModifierRecipeProfile> getModifierRecipeProfile(
+    int optionId, {
+    int? productId,
+    int? variantId,
+  }) => throw UnsupportedError('Modifier recipe profiles are not configured.');
+  Future<ModifierRecipeProfile> saveModifierRecipeProfile(
+    int optionId,
+    List<RecipeComponent> components, {
+    int? productId,
+    int? variantId,
+  }) => throw UnsupportedError('Modifier recipe profiles are not configured.');
+  Future<void> deleteModifierRecipeProfile(
+    int optionId, {
+    required int productId,
+    int? variantId,
+  }) => throw UnsupportedError('Modifier recipe profiles are not configured.');
   Future<MenuValidationResult> validateMenu(
     int menuId,
     ReviewContext context,
@@ -326,6 +355,106 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   const BackendMenuCatalogRepository(this._apiClient);
 
   final DioApiClient _apiClient;
+  @override
+  Future<List<RecipeMaterial>> listRecipeMaterials({String search = ''}) async {
+    final dynamic body = await _apiClient.get(
+      'admin/catalog/materials',
+      queryParameters: search.trim().isEmpty
+          ? null
+          : <String, dynamic>{'search': search.trim()},
+    );
+    if (body is! List)
+      throw const FormatException('Invalid materials response.');
+    return body
+        .whereType<Map>()
+        .map((item) => RecipeMaterial.fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<VariantRecipe> getVariantRecipe(int variantId) async {
+    final dynamic body = await _apiClient.get(
+      'admin/catalog/product-variants/$variantId/recipe',
+    );
+    if (body is! Map) throw const FormatException('Invalid recipe response.');
+    return VariantRecipe.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<VariantRecipe> saveVariantRecipe(
+    int variantId,
+    List<RecipeComponent> components,
+  ) async {
+    final dynamic body = await _apiClient.put(
+      'admin/catalog/product-variants/$variantId/recipe',
+      data: <String, dynamic>{
+        'components': components.map((c) => c.toJson()).toList(),
+      },
+    );
+    if (body is! Map) throw const FormatException('Invalid recipe response.');
+    return VariantRecipe.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<ResolvedRecipe> resolveVariantRecipe(
+    int variantId,
+    List<Map<String, dynamic>> selectedOptions,
+  ) async {
+    final dynamic body = await _apiClient.post(
+      'admin/catalog/product-variants/$variantId/recipe/resolve',
+      data: <String, dynamic>{'selectedOptions': selectedOptions},
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid resolved recipe response.');
+    return ResolvedRecipe.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  String _profilePath(int optionId, int? productId, int? variantId) =>
+      variantId != null
+      ? 'admin/catalog/product-variants/$variantId/modifier-options/$optionId/recipe-adjustments'
+      : productId != null
+      ? 'admin/catalog/products/$productId/modifier-options/$optionId/recipe-adjustments'
+      : 'admin/catalog/modifier-options/$optionId/recipe-adjustments';
+  @override
+  Future<ModifierRecipeProfile> getModifierRecipeProfile(
+    int optionId, {
+    int? productId,
+    int? variantId,
+  }) async {
+    final dynamic body = await _apiClient.get(
+      _profilePath(optionId, productId, variantId),
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid modifier recipe profile response.');
+    return ModifierRecipeProfile.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<ModifierRecipeProfile> saveModifierRecipeProfile(
+    int optionId,
+    List<RecipeComponent> components, {
+    int? productId,
+    int? variantId,
+  }) async {
+    final dynamic body = await _apiClient.put(
+      _profilePath(optionId, productId, variantId),
+      data: <String, dynamic>{
+        'components': components
+            .map((c) => c.toJson(includeOperation: true))
+            .toList(),
+      },
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid modifier recipe profile response.');
+    return ModifierRecipeProfile.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<void> deleteModifierRecipeProfile(
+    int optionId, {
+    required int productId,
+    int? variantId,
+  }) => _apiClient.delete(_profilePath(optionId, productId, variantId));
   @override
   Future<MenuValidationResult> validateMenu(int id, ReviewContext c) async =>
       MenuValidationResult.fromJson(

@@ -9,12 +9,16 @@ payload only as an explicit read-only LTR diagnostic, and renders backend-bounde
 comparison groups without a client-side recursive diff. `truncated` means the
 comparison is non-exhaustive. Rollback sends only the supported optional reason,
 creates a new immutable Version when content differs, never reactivates history,
-and refreshes Current Version and History for new and no-change results. Phase 4G
-Catalog Setup is complete only after its Flutter verification passes: Categories,
-Reporting Categories, and Kitchen Stations are manageable through the desktop
-client, with non-destructive archive/restore and Product Editor integration. POS
-Snapshot Sync, Inventory, Recipes, Authentication, and Combos remain unimplemented;
-broad localization migration remains paused.
+and refreshes Current Version and History for new and no-change results. Phase 4G —
+Catalog Setup is complete: Categories, Reporting Categories, and Kitchen Stations
+are manageable through the desktop client, with non-destructive archive/restore and
+Product Editor integration verified. Phase 4H — COMPLETE: Recipe configuration
+belongs to a Variant; materials use stable `inventory_items` identities, exact
+decimal strings, and canonical mapped units. Base Recipe, Global/Product/Variant
+adjustment, and Backend-authoritative simulation routes are complete. No runtime
+stock behavior or automatic Inventory availability exists; POS Snapshot Sync remains
+later work. Authentication, Combos, and broad localization migration remain
+unimplemented.
 
 ## Historical Phase Log
 
@@ -27,9 +31,11 @@ soft archive/restore, and persisted ordering. No tenant ID, Product relationship
 usage count, or local identifier is submitted. Reporting Categories are analytics
 classifications and do not control customer Menu placement. Product Editor opens the
 matching manager without discarding its draft and refreshes reference values on
-return, retaining an archived assigned reference in Edit mode. POS Sync, Inventory,
-Recipes, Authentication, and Combos remain unimplemented; broader localization
-migration remains paused.
+return, retaining an archived assigned reference in Edit mode. Phase 4H Recipes /
+Consumed Materials Configuration is complete. Materials retain stable
+`inventory_items` identity; runtime stock behavior and automatic Inventory
+availability do not exist, and POS Sync remains later work. Authentication, Combos,
+and broader localization migration remain unimplemented.
 
 ## Current Flutter Review & Preview status
 
@@ -60,7 +66,7 @@ identical semantic content records a no-change Publication and preserves the
 Version. Runtime sold-out, temporary override, and remaining-quantity state are
 excluded from immutable snapshots. Request tokens discard stale context, current
 Version, and publish responses. Phase 4F Version History, comparison, and rollback
-is **Not Started**; POS Sync is unimplemented. The localization foundation exists;
+is **Complete**; POS Sync is unimplemented. The localization foundation exists;
 screen-by-screen translation migration remains paused.
 
 ## Flutter Phase 4E.1 and 4E.2: Review & Preview
