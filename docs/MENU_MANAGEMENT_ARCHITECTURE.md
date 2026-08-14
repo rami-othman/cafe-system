@@ -20,6 +20,112 @@ stock behavior or automatic Inventory availability exists; POS Snapshot Sync rem
 later work. Authentication, Combos, and broad localization migration remain
 unimplemented.
 
+## Phase 4I — Full Menu Management Regression
+
+Status: **COMPLETE** after all Backend and Flutter verification gates.
+
+Baseline was 96 Backend tests / 1,344 assertions and 270 Flutter tests. Final
+verification is 98 Backend tests / 1,476 assertions and 270 Flutter tests. Pint,
+Dart formatting, Flutter analysis, and `git diff --check` pass.
+
+Phase 4I is verification and regression only. The integrated Backend regression
+uses real HTTP controllers and the real Catalog, Recipe, validation, preview,
+publishing, comparison, and rollback services. It creates one tenant and a
+realistic Latte graph with Catalog/Reporting categories, Kitchen Station, Small,
+Medium, and Large Variants, Base Recipes, required Milk Type and optional
+quantity-enabled Extra Shots, Variant Oat Milk adjustments, Menu Sections and
+Placement, Branch + POS assignment, Menu and Product schedules, a Variant price
+override, and an operational Available overlay. Product assignment necessarily
+precedes Product/Variant modifier adjustment configuration because the existing
+authoritative Recipe contract rejects overrides for an unassigned Group.
+
+The test then exercises Backend-authoritative validation and resolved preview,
+Recipe Simulation, schema-v2 Version 1 publication, price/Recipe/modifier material
+changes, Version 2 publication, typed `priceChanges` and `recipeChanges`, and
+rollback to a new Version 3. It verifies checksum and payload determinism,
+historical immutability, exact Recipe decimal strings, and the absence of runtime
+operational/remaining-quantity data from Published Snapshots. Archived Recipe
+materials remain visible by stable ID in editable Recipes and old Snapshots, while
+new writes are rejected until the material is restored.
+
+Tenant isolation remains enforced throughout Categories, Reporting Categories,
+Kitchen Stations, Products, Variants, Modifiers, Recipes, Menus, Sections,
+Placements, Assignments, Pricing, Availability, Validation, Preview, Publishing,
+Versions, comparison, and rollback. The existing focused suites cover foreign
+route resources, submitted foreign IDs, atomic sync failures, and scope-specific
+history. No permanent delete flow was added. Archive/restore remains
+non-destructive, and historical Published Versions are never reconstructed.
+
+One regression was confirmed and fixed: soft-deleted Category, Reporting Category,
+and Kitchen Station relationships disappeared from Product Detail. Product
+relationships now include their soft-deleted reference rows for diagnostics.
+CatalogProductService still accepts only active, same-tenant references for new
+writes and blocks Product restoration while required references remain archived.
+
+### Windows manual smoke checklist
+
+This checklist is practical guidance and **was not manually executed during Phase
+4I**; automated tests cover the underlying contracts.
+
+1. Start the Backend and Windows app, select the intended tenant context, then open
+   Menu Management > Catalog Setup and confirm the Branch timezone.
+2. Create a Product named Latte with localized English/Arabic names, stock tracking,
+   Catalog/Reporting categories, Kitchen Station, cost, and Small/Medium/Large
+   Variants with one Default Variant.
+3. Open each Variant Recipe, add compatible consumed materials with exact decimal
+   quantities, save, leave, and reopen to confirm persistence.
+4. Create Milk Type and Extra Shots Modifier Groups and their Options; assign the
+   Groups to Latte, configure Global and Variant adjustments, and run Recipe
+   Simulation with Oat Milk plus two Extra Shots.
+5. Create a Menu with at least two Sections, place Latte, reorder it, move it between
+   Sections and back, and confirm hidden versus archived states remain distinct.
+6. Assign the Menu to one Branch + Channel scope, add weekly/date and overnight
+   schedules, and confirm displayed effective/inherited schedule diagnostics use
+   the Branch timezone.
+7. Configure Medium Variant price overrides and verify Branch + Channel, Branch,
+   Channel, then Base Price precedence as context changes.
+8. Configure Product/Variant Scheduled Availability separately from Operational
+   Availability; verify Available, Sold Out, temporary expiration, and informational
+   Remaining Quantity without expecting Inventory automation.
+9. Open Review, run Validation, and confirm Backend errors block while warnings do
+   not. Run Preview and inspect Menu > Section > Product > Variant > Modifier order,
+   effective price, availability layers, sellability, reason codes, and Recipe
+   summary counts.
+10. Publish Version 1, change one effective Variant price, one Base Recipe component,
+    and one Modifier material adjustment, validate again, and publish Version 2.
+11. Open Versions, confirm the Current badge and opt-in Snapshot behavior, compare
+    Version 1 to Version 2, and verify price and Recipe change groups.
+12. Roll back to Version 1, confirm a new current Version is created, reopen Versions
+    1 and 2 to confirm they are unchanged, then repeat representative Review/Version
+    views in English and Arabic/RTL.
+
+### Phase 4K architecture findings only
+
+- `windows_application/lib/features/menu_management/repositories/menu_catalog_repository.dart`
+  is approximately 55 KB and couples most Menu Management subdomains through one
+  repository surface.
+- `backend/app/Services/Menu/MenuCompositionService.php` and
+  `MenuValidationService.php` are approximately 36 KB and 29 KB respectively and
+  carry broad responsibilities that merit decomposition review.
+- Several Flutter screens exceed 20 KB, led by `menu_review_screen.dart`,
+  `availability_screen.dart`, and `menu_assignments_screen.dart`; view/controller
+  extraction should be assessed without changing feature boundaries.
+- Published Version concepts are represented by both `PublishedMenuVersion` in
+  Review models and `PublishedVersion` in Version models. Modifier and Recipe
+  record/draft models also overlap. These may be purposeful transport/view splits,
+  but should be audited before consolidation.
+- `recipe_cubits.dart` contains three Cubits and their States, and several Recipe
+  screens use broad file-level lint suppressions. These are maintainability findings,
+  not Phase 4I functional defects.
+- The temporary POS Catalog continues to consume legacy routes rather than Published
+  Snapshots. This coupling is known and must be handled only by the future POS Sync
+  phase.
+
+No files were moved and no architecture was redesigned in Phase 4I. POS Published
+Snapshot Sync remains not implemented. Runtime Inventory integration remains not
+implemented. Authentication remains deferred. Combos remain deferred. Broader
+localization remains deferred.
+
 ## Historical Phase Log
 
 ## Phase 4G Flutter Catalog Setup

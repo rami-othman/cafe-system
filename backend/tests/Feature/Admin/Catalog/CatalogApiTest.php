@@ -147,6 +147,78 @@ class CatalogApiTest extends TestCase
             ->assertJsonPath('data.isActive', true);
     }
 
+    public function test_archived_catalog_references_remain_diagnostic_and_restore_reenables_product_management(): void
+    {
+        $tenantId = $this->tenant('reference-lifecycle');
+        $headers = $this->headers($tenantId);
+        $category = $this->postJson('/api/v1/admin/catalog/categories', ['name' => 'Coffee'], $headers)
+            ->assertCreated()->json('data.id');
+        $reportingCategory = $this->postJson('/api/v1/admin/catalog/reporting-categories', [
+            'name' => 'Beverages', 'code' => 'BEVERAGES',
+        ], $headers)->assertCreated()->json('data.id');
+        $station = $this->postJson('/api/v1/admin/catalog/kitchen-stations', [
+            'name' => 'Coffee Bar', 'code' => 'BAR',
+        ], $headers)->assertCreated()->json('data.id');
+        $product = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Latte',
+            'categoryId' => $category,
+            'reportingCategoryId' => $reportingCategory,
+            'kitchenStationId' => $station,
+            'variants' => [['name' => 'Regular', 'basePrice' => 4, 'isDefault' => true, 'isActive' => true]],
+        ], $headers)->assertCreated()->json('data.id');
+
+        // Category and Kitchen Station archives are protected while an active
+        // Product uses them. Once the Product is archived, every reference may
+        // be archived without destructively clearing its foreign keys.
+        $this->postJson("/api/v1/admin/catalog/products/{$product}/archive", [], $headers)->assertOk();
+        foreach ([
+            "categories/{$category}",
+            "reporting-categories/{$reportingCategory}",
+            "kitchen-stations/{$station}",
+        ] as $path) {
+            $this->postJson("/api/v1/admin/catalog/{$path}/archive", [], $headers)
+                ->assertOk()
+                ->assertJsonPath('data.isActive', false);
+        }
+
+        $detail = $this->getJson("/api/v1/admin/catalog/products/{$product}?includeArchived=true", $headers)
+            ->assertOk()
+            ->assertJsonPath('data.category.id', $category)
+            ->assertJsonPath('data.reportingCategory.id', $reportingCategory)
+            ->assertJsonPath('data.kitchenStation.id', $station);
+        foreach (['category', 'reportingCategory', 'kitchenStation'] as $key) {
+            $this->assertFalse($detail->json("data.{$key}.isActive"));
+        }
+        $this->assertDatabaseHas('products', [
+            'id' => $product,
+            'category_id' => $category,
+            'reporting_category_id' => $reportingCategory,
+            'kitchen_station_id' => $station,
+        ]);
+        $this->postJson("/api/v1/admin/catalog/products/{$product}/restore", [], $headers)
+            ->assertUnprocessable();
+
+        foreach ([
+            "categories/{$category}",
+            "reporting-categories/{$reportingCategory}",
+            "kitchen-stations/{$station}",
+        ] as $path) {
+            $this->postJson("/api/v1/admin/catalog/{$path}/restore", [], $headers)
+                ->assertOk()
+                ->assertJsonPath('data.isActive', true)
+                ->assertJsonPath('data.archivedAt', null);
+        }
+        $this->postJson("/api/v1/admin/catalog/products/{$product}/restore", [], $headers)
+            ->assertOk()
+            ->assertJsonPath('data.isActive', true);
+
+        $foreignHeaders = $this->headers($this->tenant('reference-lifecycle-foreign'));
+        $this->getJson("/api/v1/admin/catalog/reporting-categories/{$reportingCategory}?includeArchived=true", $foreignHeaders)
+            ->assertNotFound();
+        $this->postJson("/api/v1/admin/catalog/reporting-categories/{$reportingCategory}/archive", [], $foreignHeaders)
+            ->assertNotFound();
+    }
+
     public function test_modifier_groups_are_reusable_but_cross_tenant_assignments_are_rejected(): void
     {
         $tenantId = $this->tenant('alpha');

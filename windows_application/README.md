@@ -24,6 +24,31 @@ Simulation are complete. No runtime stock behavior or automatic Inventory
 availability exists; POS Published Snapshot Sync remains later work. Authentication,
 Combos, and broader localization migration remain unimplemented.
 
+## Phase 4I — Full Menu Management Regression
+
+Status: **COMPLETE** after the Backend and Flutter final verification gates pass.
+Baseline was 96 Backend tests / 1,344 assertions and 270 Flutter tests. Final
+verification is 98 Backend tests / 1,476 assertions and 270 Flutter tests, with
+Pint, `dart format .`, `flutter analyze`, and `git diff --check` passing.
+Phase 4I adds a real-stack Backend lifecycle regression that creates realistic
+Latte catalog data, configures Variants, Recipes, Modifier adjustments, Menu
+composition, Branch/Channel assignment, schedules, effective pricing and
+availability, then validates, previews, publishes two semantic Versions,
+compares price and Recipe changes, and rolls back without mutating history.
+
+The regression also verifies tenant boundaries and non-destructive archive/
+restore behavior. Product Detail now retains archived Category, Reporting
+Category, and Kitchen Station references as diagnostics; active-reference
+validation still blocks new invalid management writes and Product restoration
+until required references are restored. The existing Flutter route, Cubit, and
+representative English/Arabic suites remain green. The Windows manual smoke
+checklist is documented in `docs/MENU_MANAGEMENT_ARCHITECTURE.md`; it was not
+executed as part of this automated regression pass.
+
+POS Published Snapshot Sync remains not implemented. Runtime Inventory
+integration remains not implemented. Authentication remains deferred. Combos
+remain deferred. Broader localization remains deferred.
+
 ## Menu Management
 
 ### Catalog Setup

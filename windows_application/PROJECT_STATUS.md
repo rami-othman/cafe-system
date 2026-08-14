@@ -18,6 +18,37 @@ behavior or automatic Inventory availability exists, and POS Published Snapshot 
 remains later work. Authentication, Combos, and broader localization migration remain
 unimplemented.
 
+## Phase 4I — Full Menu Management Regression
+
+Status: **COMPLETE** after all requested Backend and Flutter regression gates.
+
+Baseline: 96 Backend tests / 1,344 assertions and 270 Flutter tests. Final:
+98 Backend tests / 1,476 assertions and 270 Flutter tests. Pint, Dart formatting,
+Flutter analysis, and `git diff --check` pass.
+
+- Added one integrated real-service Backend test for the complete Latte Menu
+  lifecycle: catalog setup, three Variants and Base Recipes, Modifier inheritance,
+  Menu composition, assignment, schedules, pricing, both availability layers,
+  validation, resolved preview, Recipe Simulation, two schema-v2 publications,
+  typed comparison, rollback, and immutable historical payloads.
+- Added focused archive/restore coverage for Category, Reporting Category, and
+  Kitchen Station references, including tenant isolation and Product restore
+  validation.
+- Fixed one confirmed regression: Product Detail dropped soft-deleted catalog
+  references, preventing the existing Flutter editor from retaining an archived
+  assigned reference diagnostically. Product relationships now include those
+  soft-deleted references; create/update/restore validation remains active-only.
+- Re-ran the full Flutter route/state suite and representative English/Arabic RTL
+  coverage. No Flutter regression was confirmed and no Flutter production change
+  was required.
+- Recorded only architecture findings for Phase 4K; no architecture move or
+  refactor was performed in Phase 4I.
+
+The practical Windows smoke checklist is documented but was not manually
+executed. POS Published Snapshot Sync remains not implemented. Runtime Inventory
+integration remains not implemented. Authentication remains deferred. Combos
+remain deferred. Broader localization remains deferred.
+
 ## Historical Phase Log
 
 Phase 4G — Flutter Catalog Setup: Complete after Flutter verification. Catalog
@@ -30,7 +61,7 @@ not started.
 
 Current authoritative phase status: Phase 4E — Complete; Phase 4F — Complete;
 Phase 4G — Complete; Phase 4H — Recipes / Consumed Materials Configuration —
-Complete.
+Complete; Phase 4I — Full Menu Management Regression — Complete.
 
 Phase 4B — Product Catalog Administration: Complete
 

@@ -29,17 +29,17 @@ class Product extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class)->withTrashed();
     }
 
     public function reportingCategory(): BelongsTo
     {
-        return $this->belongsTo(ReportingCategory::class);
+        return $this->belongsTo(ReportingCategory::class)->withTrashed();
     }
 
     public function kitchenStation(): BelongsTo
     {
-        return $this->belongsTo(KitchenStation::class);
+        return $this->belongsTo(KitchenStation::class)->withTrashed();
     }
 
     public function variants(): HasMany
