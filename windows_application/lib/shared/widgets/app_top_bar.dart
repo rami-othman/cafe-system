@@ -14,10 +14,18 @@ import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
 
 class AppTopBar extends StatefulWidget {
-  const AppTopBar({super.key, this.showCartButton = false, this.onRefresh});
+  const AppTopBar({
+    super.key,
+    this.showCartButton = false,
+    this.onRefresh,
+    this.showOperationalBranchTabs = true,
+    this.contextTitle,
+  });
 
   final bool showCartButton;
   final Future<void> Function(BuildContext context)? onRefresh;
+  final bool showOperationalBranchTabs;
+  final String? contextTitle;
 
   @override
   State<AppTopBar> createState() => _AppTopBarState();
@@ -45,8 +53,12 @@ class _AppTopBarState extends State<AppTopBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final OrdersState ordersState = context.watch<OrdersCubit>().state;
-        final OrdersCubit ordersCubit = context.read<OrdersCubit>();
+        final OrdersState? ordersState = widget.showOperationalBranchTabs
+            ? context.watch<OrdersCubit>().state
+            : null;
+        final OrdersCubit? ordersCubit = widget.showOperationalBranchTabs
+            ? context.read<OrdersCubit>()
+            : null;
         final bool isVeryCompact =
             constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
         final bool isCompact =
@@ -67,17 +79,30 @@ class _AppTopBarState extends State<AppTopBar> {
           child: Row(
             children: <Widget>[
               Expanded(
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: <Widget>[
-                    for (final Branch branch in ordersState.branches)
-                      _BranchTab(
-                        label: branch.name,
-                        isActive: branch.id == ordersState.selectedBranchId,
-                        onTap: () => ordersCubit.selectBranch(branch.id),
+                child: widget.showOperationalBranchTabs
+                    ? ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: <Widget>[
+                          for (final Branch branch in ordersState!.branches)
+                            _BranchTab(
+                              label: branch.name,
+                              isActive:
+                                  branch.id == ordersState.selectedBranchId,
+                              onTap: () => ordersCubit!.selectBranch(branch.id),
+                            ),
+                        ],
+                      )
+                    : Semantics(
+                        header: true,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            widget.contextTitle ??
+                                context.l10n.navigationMenuManagement,
+                            style: AppTextStyles.titleMedium,
+                          ),
+                        ),
                       ),
-                  ],
-                ),
               ),
               if (showShiftBadge) ...const <Widget>[
                 SizedBox(width: AppSpacing.lg),

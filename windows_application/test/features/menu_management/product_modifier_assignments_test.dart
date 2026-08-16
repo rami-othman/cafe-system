@@ -1,5 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/features/menu_management/models/catalog_models.dart';
+import 'package:windows_application/features/menu_management/modifiers/models/modifier_models.dart';
+import 'package:windows_application/features/menu_management/products/controllers/product_modifier_assignments_cubit.dart';
 import 'package:windows_application/features/menu_management/products/models/product_modifier_assignment.dart';
+import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 
 void main() {
   final json = <String, dynamic>{
@@ -53,4 +59,81 @@ void main() {
     expect(assignment.effectiveMaxSelections, 3);
     expect(assignment.effectiveAllowQuantity, isFalse);
   });
+
+  test('manager rule summary hides persistence fields', () {
+    final assignment = ProductModifierAssignment.fromJson(json);
+    expect(
+      assignment.managerRuleSummary,
+      'Customer must choose at least 1 and up to 3 options.',
+    );
+  });
+
+  test(
+    'load does not emit after the Cubit is closed during navigation',
+    () async {
+      final _ClosedLoadRepository repository = _ClosedLoadRepository();
+      final ProductModifierAssignmentsCubit cubit =
+          ProductModifierAssignmentsCubit(repository: repository);
+      final Future<void> load = cubit.load(11);
+
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+      repository.productCompleter.complete(_product());
+
+      await load;
+    },
+  );
 }
+
+class _ClosedLoadRepository extends MenuCatalogRepository {
+  final Completer<ProductDetail> productCompleter = Completer<ProductDetail>();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError(invocation.memberName.toString());
+
+  @override
+  Future<ProductDetail> getProduct(
+    int productId, {
+    bool includeArchived = false,
+  }) => productCompleter.future;
+
+  @override
+  Future<List<ProductModifierAssignment>> getProductModifierAssignments(
+    int productId,
+  ) async => <ProductModifierAssignment>[];
+
+  @override
+  Future<CatalogPage<ModifierGroupRecord>> listModifierGroups({
+    required ModifierGroupFilter filter,
+    required int page,
+    int perPage = 20,
+  }) async => const CatalogPage<ModifierGroupRecord>(
+    items: <ModifierGroupRecord>[],
+    meta: CatalogPagination(
+      currentPage: 1,
+      lastPage: 1,
+      perPage: 100,
+      total: 0,
+    ),
+  );
+}
+
+ProductDetail _product() => ProductDetail.fromJson(<String, dynamic>{
+  'id': 11,
+  'name': 'Latte',
+  'productType': 'standard',
+  'isActive': true,
+  'category': null,
+  'reportingCategory': null,
+  'kitchenStation': null,
+  'defaultVariant': null,
+  'variantCount': 0,
+  'modifierGroupCount': 0,
+  'descriptionAr': null,
+  'descriptionEn': null,
+  'isStockTracked': false,
+  'sortOrder': 0,
+  'variants': <Map<String, dynamic>>[],
+  'modifierGroups': <Map<String, dynamic>>[],
+});

@@ -242,6 +242,8 @@ abstract class MenuCatalogRepository {
       throw UnsupportedError('Modifier management is not configured.');
   Future<ModifierGroupRecord> restoreModifierGroup(int groupId) =>
       throw UnsupportedError('Modifier management is not configured.');
+  Future<void> reorderModifierGroups(List<ModifierReorderItem> items) =>
+      throw UnsupportedError('Modifier management is not configured.');
   Future<ModifierOptionRecord> createModifierOption(
     int groupId,
     ModifierOptionDraft draft,
@@ -1190,6 +1192,14 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   Future<ModifierGroupRecord> restoreModifierGroup(int groupId) =>
       _modifierGroup(
         _apiClient.post('admin/catalog/modifier-groups/$groupId/restore'),
+      );
+  @override
+  Future<void> reorderModifierGroups(List<ModifierReorderItem> items) =>
+      _apiClient.post(
+        'admin/catalog/modifier-groups/reorder',
+        data: <String, dynamic>{
+          'items': items.map((item) => item.toJson()).toList(growable: false),
+        },
       );
   @override
   Future<ModifierOptionRecord> createModifierOption(

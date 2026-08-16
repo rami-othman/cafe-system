@@ -744,4 +744,713 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get managerAvailabilityOperationalHelp =>
       'هل العنصر غير متاح مؤقتًا الآن؟';
+
+  @override
+  String get menuManagementNavigation => 'التنقل في إدارة القوائم';
+
+  @override
+  String get menuManagementCatalog => 'الكتالوج';
+
+  @override
+  String get menuManagementMenusGroup => 'القوائم';
+
+  @override
+  String get menuManagementReleaseGroup => 'الإصدار';
+
+  @override
+  String get menuManagementReviewPublish => 'مراجعة ونشر';
+
+  @override
+  String get menuBreadcrumbProduct => 'المنتج';
+
+  @override
+  String get menuBreadcrumbVariant => 'الخيار';
+
+  @override
+  String get menuBreadcrumbCreateProduct => 'إنشاء منتج';
+
+  @override
+  String get menuBreadcrumbEditProduct => 'تعديل المنتج';
+
+  @override
+  String get menuBreadcrumbVariants => 'الخيارات';
+
+  @override
+  String get menuBreadcrumbModifiers => 'المعدلات';
+
+  @override
+  String get menuBreadcrumbPricing => 'التسعير';
+
+  @override
+  String get menuBreadcrumbRecipe => 'الوصفة';
+
+  @override
+  String get menuBreadcrumbRecipeSimulation => 'محاكاة الوصفة';
+
+  @override
+  String get menuBreadcrumbAvailability => 'التوفر';
+
+  @override
+  String get menuBreadcrumbOperationalAvailability => 'التوفر التشغيلي';
+
+  @override
+  String get menuBreadcrumbMaterialAdjustments => 'تعديلات المواد';
+
+  @override
+  String get menuBreadcrumbModifierGroup => 'مجموعة المعدلات';
+
+  @override
+  String get menuBreadcrumbCreateModifierGroup => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get menuBreadcrumbEditModifierGroup => 'تعديل مجموعة المعدلات';
+
+  @override
+  String get menuBreadcrumbMenu => 'القائمة';
+
+  @override
+  String get menuBreadcrumbCreateMenu => 'إنشاء قائمة';
+
+  @override
+  String get menuBreadcrumbEditMenu => 'تعديل القائمة';
+
+  @override
+  String get menuBreadcrumbComposition => 'التكوين';
+
+  @override
+  String get menuBreadcrumbVersionHistory => 'سجل الإصدارات';
+
+  @override
+  String get productCatalogTitle => 'المنتجات';
+
+  @override
+  String get productCatalogSubtitle => 'أدر المنتجات المتاحة عبر قوائمك.';
+
+  @override
+  String get productCatalogCreateProduct => 'إنشاء منتج';
+
+  @override
+  String get productCatalogRefresh => 'تحديث المنتجات';
+
+  @override
+  String get productCatalogSearch => 'ابحث عن المنتجات أو SKU أو الباركود';
+
+  @override
+  String get productCatalogLifecycle => 'الحالة';
+
+  @override
+  String get productCatalogAllProducts => 'كل المنتجات';
+
+  @override
+  String get productCatalogMoreFilters => 'مزيد من الفلاتر';
+
+  @override
+  String productCatalogMoreFiltersSemantic(int count) {
+    return 'مزيد من الفلاتر، $count نشط';
+  }
+
+  @override
+  String get productCatalogClearAll => 'مسح الكل';
+
+  @override
+  String get productCatalogClear => 'مسح';
+
+  @override
+  String get productCatalogApply => 'تطبيق';
+
+  @override
+  String get productCatalogSort => 'فرز';
+
+  @override
+  String get productCatalogSortOrder => 'ترتيب العرض';
+
+  @override
+  String get productCatalogNameAscending => 'الاسم أ–ي';
+
+  @override
+  String get productCatalogNameDescending => 'الاسم ي–أ';
+
+  @override
+  String get productCatalogNewest => 'الأحدث أولاً';
+
+  @override
+  String get productCatalogProductType => 'نوع المنتج';
+
+  @override
+  String get productCatalogHasVariants => 'لديه خيارات';
+
+  @override
+  String get productCatalogNoVariants => 'بدون خيارات';
+
+  @override
+  String get productCatalogHasModifiers => 'لديه معدلات';
+
+  @override
+  String get productCatalogNoModifiers => 'بدون معدلات';
+
+  @override
+  String get productCatalogStandard => 'عادي';
+
+  @override
+  String get productCatalogOpenPrice => 'سعر مفتوح';
+
+  @override
+  String get productCatalogCombo => 'وجبة مجمعة';
+
+  @override
+  String get productCatalogSetup => 'الإعداد';
+
+  @override
+  String get productCatalogDefaultVariant => 'الافتراضي';
+
+  @override
+  String get productCatalogStatus => 'الحالة';
+
+  @override
+  String get productCatalogOpen => 'فتح';
+
+  @override
+  String get productCatalogManageVariants => 'إدارة الخيارات';
+
+  @override
+  String get productCatalogManageModifiers => 'إدارة المعدلات';
+
+  @override
+  String get productCatalogArchive => 'أرشفة';
+
+  @override
+  String get productCatalogRestore => 'استعادة';
+
+  @override
+  String productCatalogActionsFor(String name) {
+    return 'إجراءات المنتج $name';
+  }
+
+  @override
+  String productCatalogSetupSummary(int variants, int modifiers) {
+    return '$variants خيارات · $modifiers معدلات';
+  }
+
+  @override
+  String get productCatalogLoadMore => 'تحميل مزيد من المنتجات';
+
+  @override
+  String get productCatalogUnableToLoad => 'تعذر تحميل المنتجات.';
+
+  @override
+  String get productCatalogNoArchived => 'لا توجد منتجات مؤرشفة.';
+
+  @override
+  String get productCatalogNoActive => 'لا توجد منتجات نشطة.';
+
+  @override
+  String get productCatalogNoMatches => 'لا تطابق أي منتجات هذه الفلاتر.';
+
+  @override
+  String get productCatalogNoProductsYet => 'لم يتم إنشاء أي منتجات بعد.';
+
+  @override
+  String get productCatalogMoreFiltersHelper =>
+      'ضيّق قائمة المنتجات بمعايير إضافية.';
+
+  @override
+  String get productCatalogFilterClassification => 'التصنيف';
+
+  @override
+  String get productCatalogFilterPreparation => 'التحضير';
+
+  @override
+  String get productCatalogFilterProductSetup => 'إعداد المنتج';
+
+  @override
+  String get productCatalogClearFilters => 'مسح الفلاتر';
+
+  @override
+  String get productCatalogApplyFilters => 'تطبيق الفلاتر';
+
+  @override
+  String get productUxGeneral => 'عام';
+
+  @override
+  String get productUxClassification => 'التصنيف';
+
+  @override
+  String get productUxSellingPreparation => 'البيع والتحضير';
+
+  @override
+  String get productUxInitialSellingOption => 'خيار البيع الأولي';
+
+  @override
+  String get productUxTranslations => 'الترجمات';
+
+  @override
+  String get productUxAdvanced => 'متقدم';
+
+  @override
+  String get productUxOverview => 'نظرة عامة';
+
+  @override
+  String get productUxUsage => 'الاستخدام';
+
+  @override
+  String get productUxVariants => 'الأنواع';
+
+  @override
+  String get productUxModifiers => 'الإضافات';
+
+  @override
+  String get productUxRecipeMaterials => 'الوصفة والمواد';
+
+  @override
+  String get productUxAvailability => 'التوفر';
+
+  @override
+  String get productUxCreateProduct => 'إنشاء منتج';
+
+  @override
+  String get productUxSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get productUxCancel => 'إلغاء';
+
+  @override
+  String get productUxManageCatalogSetup => 'إدارة إعدادات الكتالوج';
+
+  @override
+  String get productUxEditProduct => 'تعديل المنتج';
+
+  @override
+  String get productUxArchived => 'مؤرشف';
+
+  @override
+  String get productOverviewBasePrice => 'السعر الأساسي';
+
+  @override
+  String get productOverviewVariants => 'الأنواع';
+
+  @override
+  String get productOverviewModifierGroups => 'مجموعات الإضافات';
+
+  @override
+  String get productOverviewStockTracking => 'تتبع المخزون';
+
+  @override
+  String get productOverviewEnabled => 'مفعّل';
+
+  @override
+  String get productOverviewDisabled => 'غير مفعّل';
+
+  @override
+  String get productOverviewNotConfigured => 'غير مهيأ';
+
+  @override
+  String get productOverviewProductSetup => 'إعداد المنتج';
+
+  @override
+  String get productOverviewCategory => 'الفئة';
+
+  @override
+  String get productOverviewDefaultVariant => 'النوع الافتراضي';
+
+  @override
+  String get productOverviewKitchenStation => 'محطة التحضير';
+
+  @override
+  String get productOverviewProductType => 'نوع المنتج';
+
+  @override
+  String get productOverviewReportingCategory => 'فئة التقارير';
+
+  @override
+  String get productOverviewPreparationTime => 'وقت التحضير';
+
+  @override
+  String get productOverviewMinutes => 'دقائق';
+
+  @override
+  String get modifierLibraryTitle => 'مكتبة المعدلات';
+
+  @override
+  String get modifierLibrarySubtitle =>
+      'أنشئ خيارات عميل قابلة لإعادة الاستخدام ويمكن إسنادها إلى المنتجات.';
+
+  @override
+  String get modifierCreateGroup => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get modifierSearch => 'البحث في المعدلات';
+
+  @override
+  String get modifierActive => 'نشط';
+
+  @override
+  String get modifierArchived => 'مؤرشف';
+
+  @override
+  String get modifierAll => 'الكل';
+
+  @override
+  String get modifierReorder => 'إعادة الترتيب';
+
+  @override
+  String get modifierDone => 'تم';
+
+  @override
+  String modifierOptionsCount(int count) {
+    return '$count خيارات';
+  }
+
+  @override
+  String modifierOptionPreviewMore(int count) {
+    return '+ $count المزيد';
+  }
+
+  @override
+  String modifierRuleExactly(int count) {
+    return 'يجب على العميل اختيار $count خيار(ات) بالضبط.';
+  }
+
+  @override
+  String modifierRuleOptionalExactly(int count) {
+    return 'اختياري — يمكن للعميل اختيار $count خيار(ات).';
+  }
+
+  @override
+  String modifierRuleAtLeastUpTo(int min, int max) {
+    return 'يجب على العميل اختيار $min على الأقل وحتى $max خيارات.';
+  }
+
+  @override
+  String modifierRuleOptionalUpTo(int max) {
+    return 'اختياري — يمكن للعميل اختيار ما يصل إلى $max خيارات.';
+  }
+
+  @override
+  String get modifierRuleQuantity => 'يمكن إضافة الخيار نفسه أكثر من مرة.';
+
+  @override
+  String get modifierViewGroup => 'عرض المجموعة';
+
+  @override
+  String get modifierEditGroup => 'تعديل المجموعة';
+
+  @override
+  String get modifierSetDefault => 'تعيين كافتراضي';
+
+  @override
+  String get modifierMaterialAdjustments => 'تعديلات المواد';
+
+  @override
+  String get modifierArchive => 'أرشفة';
+
+  @override
+  String get modifierRestore => 'استعادة';
+
+  @override
+  String get modifierNoGroups => 'لم يتم إنشاء مجموعات معدلات بعد.';
+
+  @override
+  String get modifierNoGroupMatches =>
+      'لا توجد مجموعات معدلات تطابق عوامل التصفية الحالية.';
+
+  @override
+  String get modifierUnableToLoad => 'تعذر تحميل مجموعات المعدلات.';
+
+  @override
+  String get modifierRetry => 'إعادة المحاولة';
+
+  @override
+  String get modifierLoadMore => 'تحميل المزيد';
+
+  @override
+  String get modifierRefresh => 'تحديث مجموعات المعدلات';
+
+  @override
+  String get modifierGroupDetailNotFound =>
+      'لم يتم العثور على مجموعة المعدلات.';
+
+  @override
+  String get modifierOptions => 'الخيارات';
+
+  @override
+  String get modifierAddOption => 'إضافة خيار';
+
+  @override
+  String get modifierOptionFilter => 'حالة الخيار';
+
+  @override
+  String get modifierNoArchivedOptions => 'لا توجد خيارات معدلات مؤرشفة.';
+
+  @override
+  String get modifierNoOptions => 'لم يتم إنشاء خيارات معدلات بعد.';
+
+  @override
+  String get modifierReorderOptions => 'إعادة ترتيب الخيارات';
+
+  @override
+  String get modifierMoveUp => 'نقل لأعلى';
+
+  @override
+  String get modifierMoveDown => 'نقل لأسفل';
+
+  @override
+  String get modifierDefault => 'افتراضي';
+
+  @override
+  String get modifierNoExtraCharge => 'بدون تكلفة إضافية';
+
+  @override
+  String get modifierPriceAdjustment => 'تعديل السعر';
+
+  @override
+  String get modifierMaterialUsageConfigured => 'تم إعداد استخدام المواد';
+
+  @override
+  String get modifierStatusActive => 'نشط';
+
+  @override
+  String get modifierStatusArchived => 'مؤرشف';
+
+  @override
+  String get modifierStatusInactive => 'غير نشط';
+
+  @override
+  String get modifierAdvancedDetails => 'التفاصيل المتقدمة';
+
+  @override
+  String get modifierSelectionMode => 'طريقة الاختيار';
+
+  @override
+  String get modifierMinimum => 'الحد الأدنى';
+
+  @override
+  String get modifierMaximum => 'الحد الأقصى';
+
+  @override
+  String get modifierAllowQuantity => 'السماح بالكمية';
+
+  @override
+  String get modifierGroupType => 'نوع المجموعة';
+
+  @override
+  String get modifierSortOrder => 'ترتيب العرض';
+
+  @override
+  String get modifierCreateTitle => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get modifierEditTitle => 'تعديل مجموعة معدلات';
+
+  @override
+  String get modifierBasicInformation => 'المعلومات الأساسية';
+
+  @override
+  String get modifierBasicInformationHelper =>
+      'سمِّ مجموعة خيارات العميل القابلة لإعادة الاستخدام.';
+
+  @override
+  String get modifierGroupName => 'اسم مجموعة المعدلات';
+
+  @override
+  String get modifierGroupNameHint => 'مثال: نوع الحليب';
+
+  @override
+  String get modifierInternalCode => 'الرمز الداخلي';
+
+  @override
+  String get modifierGroupTypeChoice => 'اختيار';
+
+  @override
+  String get modifierGroupTypeAddOn => 'إضافة';
+
+  @override
+  String get modifierGroupTypePreparation => 'تعليمات التحضير';
+
+  @override
+  String get modifierYes => 'نعم';
+
+  @override
+  String get modifierNo => 'لا';
+
+  @override
+  String get modifierTranslations => 'الترجمات';
+
+  @override
+  String get modifierArabic => 'العربية';
+
+  @override
+  String get modifierEnglish => 'الإنجليزية';
+
+  @override
+  String get modifierClose => 'إغلاق';
+
+  @override
+  String get modifierSelectionRules => 'قواعد الاختيار';
+
+  @override
+  String get modifierSelectionRulesHelper =>
+      'حدد طريقة تفاعل العملاء مع هذه الخيارات.';
+
+  @override
+  String get modifierHowChoose => 'كيف ينبغي للعملاء الاختيار؟';
+
+  @override
+  String get modifierChooseOne => 'اختيار واحد';
+
+  @override
+  String get modifierChooseMultiple => 'اختيارات متعددة';
+
+  @override
+  String get modifierChoiceRequired => 'هل الاختيار مطلوب؟';
+
+  @override
+  String get modifierOptional => 'اختياري';
+
+  @override
+  String get modifierRequired => 'مطلوب';
+
+  @override
+  String get modifierMinimumChoices => 'الحد الأدنى للاختيارات';
+
+  @override
+  String get modifierMaximumChoices => 'الحد الأقصى للاختيارات';
+
+  @override
+  String get modifierSameOptionQuantity =>
+      'هل يمكن إضافة الخيار نفسه أكثر من مرة؟';
+
+  @override
+  String get modifierQuantityHelper => 'مثال: 2 من الإضافات.';
+
+  @override
+  String get modifierCurrentRuleSummary => 'ملخص القاعدة الحالية';
+
+  @override
+  String get modifierInitialOption => 'الخيار الأولي';
+
+  @override
+  String get modifierInitialOptionHelper =>
+      'يمكنك إضافة خيارات أخرى بعد إنشاء مجموعة المعدلات.';
+
+  @override
+  String get modifierOptionName => 'اسم الخيار';
+
+  @override
+  String get modifierOptionNameHint => 'مثال: حليب كامل الدسم';
+
+  @override
+  String get modifierAdvanced => 'متقدم';
+
+  @override
+  String get modifierActiveStatus => 'الحالة النشطة';
+
+  @override
+  String get modifierAvailableForUse => 'متاح للاستخدام في القوائم.';
+
+  @override
+  String get modifierCancel => 'إلغاء';
+
+  @override
+  String get modifierSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get modifierCreateAction => 'إنشاء مجموعة معدلات';
+
+  @override
+  String get modifierSaving => 'جارٍ الحفظ...';
+
+  @override
+  String get modifierUnsavedChanges =>
+      'لديك تغييرات غير محفوظة. هل تريد المغادرة دون حفظ؟';
+
+  @override
+  String get modifierStay => 'البقاء';
+
+  @override
+  String get modifierLeave => 'مغادرة';
+
+  @override
+  String get modifierOptionCreateTitle => 'إضافة خيار';
+
+  @override
+  String get modifierOptionEditTitle => 'تعديل الخيار';
+
+  @override
+  String get modifierOptionBasicInformation => 'المعلومات الأساسية';
+
+  @override
+  String get modifierOptionDefault => 'خيار افتراضي';
+
+  @override
+  String get modifierOptionActive => 'نشط';
+
+  @override
+  String get modifierOptionAvailable => 'متاح';
+
+  @override
+  String get modifierOptionAdvanced => 'متقدم';
+
+  @override
+  String get modifierOptionSave => 'حفظ';
+
+  @override
+  String get modifierOptionSaving => 'جارٍ الحفظ...';
+
+  @override
+  String get modifierOptionNameRequired => 'اسم الخيار مطلوب.';
+
+  @override
+  String get modifierOptionPriceInvalid =>
+      'يجب أن يكون تعديل السعر صفراً أو قيمة موجبة.';
+
+  @override
+  String get modifierOptionSortInvalid => 'أدخل رقماً صحيحاً لترتيب العرض.';
+
+  @override
+  String get modifierArchiveGroupTitle => 'أرشفة مجموعة المعدلات؟';
+
+  @override
+  String get modifierArchiveOptionTitle => 'أرشفة خيار المعدلات؟';
+
+  @override
+  String get modifierArchiveMessage =>
+      'يبقى العنصر محفوظاً ويمكن استعادته لاحقاً.';
+
+  @override
+  String get modifierConfirmArchive => 'أرشفة';
+
+  @override
+  String get modifierOptionSaveError =>
+      'تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى.';
+
+  @override
+  String get modifierGroupSaveError => 'تعذر حفظ مجموعة المعدلات.';
+
+  @override
+  String get modifierGroupRequired => 'اسم مجموعة المعدلات مطلوب.';
+
+  @override
+  String get modifierNumberInvalid => 'أدخل صفراً أو رقماً صحيحاً موجباً.';
+
+  @override
+  String get modifierMaximumMinimumError =>
+      'يجب أن يكون الحد الأقصى أكبر من أو مساوياً للحد الأدنى.';
+
+  @override
+  String get modifierSingleMaximumError =>
+      'لا يمكن أن يتجاوز الحد الأقصى لمجموعة الاختيار الواحد 1.';
+
+  @override
+  String get modifierRequiredMinimumError =>
+      'تحتاج المجموعات المطلوبة إلى حد أدنى لا يقل عن 1.';
+
+  @override
+  String get modifierInitialOptionRequired => 'الخيار النشط الأولي مطلوب.';
+
+  @override
+  String get modifierPriceInvalid => 'أدخل صفراً أو سعراً موجباً.';
+
+  @override
+  String get modifierInitialMaximumError =>
+      'تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1.';
 }

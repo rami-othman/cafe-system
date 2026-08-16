@@ -112,6 +112,29 @@ class ProductModifierAssignment {
       maxSelectionsOverride ?? libraryMaxSelections;
   bool get effectiveAllowQuantity =>
       allowQuantityOverride ?? libraryAllowQuantity;
+  bool get hasCustomSettings =>
+      isRequiredOverride != null ||
+      minSelectionsOverride != null ||
+      maxSelectionsOverride != null ||
+      allowQuantityOverride != null;
+  String get managerRuleSummary {
+    if (selectionType == 'single') {
+      return effectiveIsRequired
+          ? 'Customer must choose exactly 1 option.'
+          : 'Optional — customer may choose 1 option.';
+    }
+    if (effectiveIsRequired &&
+        effectiveMinSelections == effectiveMaxSelections) {
+      return 'Customer must choose exactly $effectiveMinSelections option${effectiveMinSelections == 1 ? '' : 's'}.';
+    }
+    if (effectiveIsRequired) {
+      return 'Customer must choose at least $effectiveMinSelections and up to $effectiveMaxSelections options.';
+    }
+    return effectiveMaxSelections <= 1
+        ? 'Optional — customer may choose 1 option.'
+        : 'Optional — customer may add up to $effectiveMaxSelections.';
+  }
+
   String get localizedName => nameEn ?? nameAr ?? name;
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,

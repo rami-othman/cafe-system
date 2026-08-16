@@ -126,8 +126,8 @@ void main() {
       final _EditorRepository repository = _EditorRepository();
       await tester.pumpWidget(_editorApp(repository));
       await tester.pumpAndSettle();
-      expect(find.text('Initial Default Variant'), findsOneWidget);
-      expect(find.text('Current Default Variant'), findsNothing);
+      expect(find.text('Initial selling option'), findsOneWidget);
+      expect(find.text('Default Variant'), findsNothing);
       expect(find.text('Modifier Groups'), findsNothing);
       await tester.enterText(find.byType(TextFormField).first, 'Latte');
       await tester.pump();
@@ -147,19 +147,45 @@ void main() {
       final _EditorRepository repository = _EditorRepository();
       await tester.pumpWidget(_editorApp(repository, productId: 11));
       await tester.pumpAndSettle();
-      expect(find.text('Current Default Variant'), findsOneWidget);
+      expect(find.text('Default Variant'), findsOneWidget);
       expect(
         find.text(
-          'Advanced Variant editing is managed separately from Product General information.',
+          'Selling options are managed separately so product details stay focused.',
         ),
         findsOneWidget,
       );
-      expect(find.text('Initial Default Variant'), findsNothing);
+      expect(find.text('Initial selling option'), findsNothing);
     },
   );
 
+  testWidgets('editor opens translations and advanced fields contextually', (
+    tester,
+  ) async {
+    final _EditorRepository repository = _EditorRepository();
+    await tester.pumpWidget(_editorApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const Key('product-translations-action')),
+    );
+    await tester.tap(find.byKey(const Key('product-translations-action')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('arabic-translation-fields')), findsOneWidget);
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('english-translation-fields')), findsOneWidget);
+    await tester.tap(find.byTooltip('Close translations'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Advanced'));
+    await tester.tap(find.text('Advanced'));
+    await tester.pumpAndSettle();
+    expect(find.text('SKU'), findsOneWidget);
+    expect(find.text('Barcode'), findsOneWidget);
+  });
+
   testWidgets(
-    'all catalog manage links preserve the draft and refresh references on return',
+    'catalog setup link preserves the draft and refreshes references on return',
     (tester) async {
       final _EditorRepository repository = _EditorRepository();
       final ProductEditorCubit editor = ProductEditorCubit(
@@ -209,20 +235,14 @@ void main() {
       await tester.enterText(find.byType(TextFormField).first, 'Draft Latte');
       await tester.pump();
 
-      for (final (String label, String tab) in <(String, String)>[
-        ('Manage Categories', 'categories'),
-        ('Manage Reporting Categories', 'reporting-categories'),
-        ('Manage Kitchen Stations', 'kitchen-stations'),
-      ]) {
-        final int referencesBefore = repository.categoryListCalls;
-        await tester.tap(find.text(label));
-        await tester.pumpAndSettle();
-        expect(find.text('Catalog tab: $tab'), findsOneWidget);
-        await tester.tap(find.text('Return to product'));
-        await tester.pumpAndSettle();
-        expect(editor.state.draft.name, 'Draft Latte');
-        expect(repository.categoryListCalls, greaterThan(referencesBefore));
-      }
+      final int referencesBefore = repository.categoryListCalls;
+      await tester.tap(find.text('Manage catalog setup'));
+      await tester.pumpAndSettle();
+      expect(find.text('Catalog tab: null'), findsOneWidget);
+      await tester.tap(find.text('Return to product'));
+      await tester.pumpAndSettle();
+      expect(editor.state.draft.name, 'Draft Latte');
+      expect(repository.categoryListCalls, greaterThan(referencesBefore));
     },
   );
 }

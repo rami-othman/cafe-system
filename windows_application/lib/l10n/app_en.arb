@@ -228,5 +228,239 @@
   "technicalDetails": "Technical details",
   "managerAvailabilityScheduledHelp": "When should this item normally be available?",
   "managerAvailabilityOperationalHelp": "Is it temporarily unavailable right now?",
-  "@catalogSetupArchiveConfirmation": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}}
+  "@catalogSetupArchiveConfirmation": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}},
+  "menuManagementNavigation": "Menu Management navigation",
+  "menuManagementCatalog": "Catalog",
+  "menuManagementMenusGroup": "Menus",
+  "menuManagementReleaseGroup": "Release",
+  "menuManagementReviewPublish": "Review & Publish",
+  "menuBreadcrumbProduct": "Product",
+  "menuBreadcrumbVariant": "Variant",
+  "menuBreadcrumbCreateProduct": "Create product",
+  "menuBreadcrumbEditProduct": "Edit product",
+  "menuBreadcrumbVariants": "Variants",
+  "menuBreadcrumbModifiers": "Modifiers",
+  "menuBreadcrumbPricing": "Pricing",
+  "menuBreadcrumbRecipe": "Recipe",
+  "menuBreadcrumbRecipeSimulation": "Recipe simulation",
+  "menuBreadcrumbAvailability": "Availability",
+  "menuBreadcrumbOperationalAvailability": "Operational availability",
+  "menuBreadcrumbMaterialAdjustments": "Material adjustments",
+  "menuBreadcrumbModifierGroup": "Modifier group",
+  "menuBreadcrumbCreateModifierGroup": "Create modifier group",
+  "menuBreadcrumbEditModifierGroup": "Edit modifier group",
+  "menuBreadcrumbMenu": "Menu",
+  "menuBreadcrumbCreateMenu": "Create menu",
+  "menuBreadcrumbEditMenu": "Edit menu",
+  "menuBreadcrumbComposition": "Composition",
+  "menuBreadcrumbVersionHistory": "Version history",
+  "productCatalogTitle": "Products",
+  "productCatalogSubtitle": "Manage the products available across your menus.",
+  "productCatalogCreateProduct": "Create Product",
+  "productCatalogRefresh": "Refresh products",
+  "productCatalogSearch": "Search products, SKU, or barcode",
+  "productCatalogLifecycle": "Lifecycle",
+  "productCatalogAllProducts": "All products",
+  "productCatalogMoreFilters": "More Filters",
+  "productCatalogMoreFiltersSemantic": "More Filters, {count} active",
+  "@productCatalogMoreFiltersSemantic": {"placeholders": {"count": {"type": "int"}}},
+  "productCatalogClearAll": "Clear All",
+  "productCatalogClear": "Clear",
+  "productCatalogApply": "Apply",
+  "productCatalogSort": "Sort",
+  "productCatalogSortOrder": "Sort order",
+  "productCatalogNameAscending": "Name A–Z",
+  "productCatalogNameDescending": "Name Z–A",
+  "productCatalogNewest": "Newest first",
+  "productCatalogProductType": "Product type",
+  "productCatalogHasVariants": "Has variants",
+  "productCatalogNoVariants": "No variants",
+  "productCatalogHasModifiers": "Has modifiers",
+  "productCatalogNoModifiers": "No modifiers",
+  "productCatalogStandard": "Standard",
+  "productCatalogOpenPrice": "Open price",
+  "productCatalogCombo": "Combo",
+  "productCatalogSetup": "Setup",
+  "productCatalogDefaultVariant": "Default",
+  "productCatalogStatus": "Status",
+  "productCatalogOpen": "Open",
+  "productCatalogManageVariants": "Manage Variants",
+  "productCatalogManageModifiers": "Manage Modifiers",
+  "productCatalogArchive": "Archive",
+  "productCatalogRestore": "Restore",
+  "productCatalogActionsFor": "Actions for {name}",
+  "@productCatalogActionsFor": {"placeholders": {"name": {"type": "String"}}},
+  "productCatalogSetupSummary": "{variants} variants · {modifiers} modifiers",
+  "@productCatalogSetupSummary": {"placeholders": {"variants": {"type": "int"}, "modifiers": {"type": "int"}}},
+  "productCatalogLoadMore": "Load more products",
+  "productCatalogUnableToLoad": "Unable to load products.",
+  "productCatalogNoArchived": "No archived products are available.",
+  "productCatalogNoActive": "No active products are available.",
+  "productCatalogNoMatches": "No products match these filters.",
+  "productCatalogNoProductsYet": "No products have been created yet.",
+  "productCatalogMoreFiltersHelper": "Refine the product list with additional criteria.",
+  "productCatalogFilterClassification": "Classification",
+  "productCatalogFilterPreparation": "Preparation",
+  "productCatalogFilterProductSetup": "Product setup",
+  "productCatalogClearFilters": "Clear filters",
+  "productCatalogApplyFilters": "Apply filters",
+  "productUxGeneral": "General",
+  "productUxClassification": "Classification",
+  "productUxSellingPreparation": "Selling & Preparation",
+  "productUxInitialSellingOption": "Initial selling option",
+  "productUxTranslations": "Translations",
+  "productUxAdvanced": "Advanced",
+  "productUxOverview": "Overview",
+  "productUxUsage": "Usage",
+  "productUxVariants": "Variants",
+  "productUxModifiers": "Modifiers",
+  "productUxRecipeMaterials": "Recipe & Materials",
+  "productUxAvailability": "Availability",
+  "productUxCreateProduct": "Create Product",
+  "productUxSaveChanges": "Save Changes",
+  "productUxCancel": "Cancel",
+  "productUxManageCatalogSetup": "Manage catalog setup",
+  "productUxEditProduct": "Edit Product",
+  "productUxArchived": "Archived"
+  ,"productOverviewBasePrice": "Base Price"
+  ,"productOverviewVariants": "Variants"
+  ,"productOverviewModifierGroups": "Modifier Groups"
+  ,"productOverviewStockTracking": "Stock Tracking"
+  ,"productOverviewEnabled": "Enabled"
+  ,"productOverviewDisabled": "Disabled"
+  ,"productOverviewNotConfigured": "Not configured"
+  ,"productOverviewProductSetup": "Product Setup"
+  ,"productOverviewCategory": "Category"
+  ,"productOverviewDefaultVariant": "Default Variant"
+  ,"productOverviewKitchenStation": "Kitchen Station"
+  ,"productOverviewProductType": "Product Type"
+  ,"productOverviewReportingCategory": "Reporting Category"
+  ,"productOverviewPreparationTime": "Preparation Time"
+  ,"productOverviewMinutes": "minutes"
+  ,"modifierLibraryTitle": "Modifier Library"
+  ,"modifierLibrarySubtitle": "Create reusable customer choices that can be assigned to Products."
+  ,"modifierCreateGroup": "Create Modifier Group"
+  ,"modifierSearch": "Search modifiers"
+  ,"modifierActive": "Active"
+  ,"modifierArchived": "Archived"
+  ,"modifierAll": "All"
+  ,"modifierReorder": "Reorder"
+  ,"modifierDone": "Done"
+  ,"modifierOptionsCount": "{count} options"
+  ,"@modifierOptionsCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierOptionPreviewMore": "+ {count} more"
+  ,"@modifierOptionPreviewMore": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleExactly": "Customer must choose exactly {count} option(s)."
+  ,"@modifierRuleExactly": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleOptionalExactly": "Optional — customer may choose {count} option(s)."
+  ,"@modifierRuleOptionalExactly": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleAtLeastUpTo": "Customer must choose at least {min} and up to {max} options."
+  ,"@modifierRuleAtLeastUpTo": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}}
+  ,"modifierRuleOptionalUpTo": "Optional — customer may choose up to {max} options."
+  ,"@modifierRuleOptionalUpTo": {"placeholders": {"max": {"type": "int"}}}
+  ,"modifierRuleQuantity": "The same Option may be added more than once."
+  ,"modifierViewGroup": "View Group"
+  ,"modifierEditGroup": "Edit Group"
+  ,"modifierSetDefault": "Set as Default"
+  ,"modifierMaterialAdjustments": "Material Adjustments"
+  ,"modifierArchive": "Archive"
+  ,"modifierRestore": "Restore"
+  ,"modifierNoGroups": "No modifier groups have been created yet."
+  ,"modifierNoGroupMatches": "No modifier groups match the current filters."
+  ,"modifierUnableToLoad": "Unable to load modifier groups."
+  ,"modifierRetry": "Retry"
+  ,"modifierLoadMore": "Load more"
+  ,"modifierRefresh": "Refresh modifier groups"
+  ,"modifierGroupDetailNotFound": "Modifier group not found."
+  ,"modifierOptions": "Options"
+  ,"modifierAddOption": "Add Option"
+  ,"modifierOptionFilter": "Option status"
+  ,"modifierNoArchivedOptions": "No archived modifier options."
+  ,"modifierNoOptions": "No modifier options have been created yet."
+  ,"modifierReorderOptions": "Reorder Options"
+  ,"modifierMoveUp": "Move Up"
+  ,"modifierMoveDown": "Move Down"
+  ,"modifierDefault": "DEFAULT"
+  ,"modifierNoExtraCharge": "No extra charge"
+  ,"modifierPriceAdjustment": "Price adjustment"
+  ,"modifierMaterialUsageConfigured": "Material usage configured"
+  ,"modifierStatusActive": "Active"
+  ,"modifierStatusArchived": "Archived"
+  ,"modifierStatusInactive": "Inactive"
+  ,"modifierAdvancedDetails": "Advanced Details"
+  ,"modifierSelectionMode": "Selection mode"
+  ,"modifierMinimum": "Minimum"
+  ,"modifierMaximum": "Maximum"
+  ,"modifierAllowQuantity": "Allow quantity"
+  ,"modifierGroupType": "Group type"
+  ,"modifierSortOrder": "Sort order"
+  ,"modifierCreateTitle": "Create Modifier Group"
+  ,"modifierEditTitle": "Edit Modifier Group"
+  ,"modifierBasicInformation": "Basic Information"
+  ,"modifierBasicInformationHelper": "Name this reusable customer-choice group."
+  ,"modifierGroupName": "Modifier Group Name"
+  ,"modifierGroupNameHint": "e.g. Milk Type"
+  ,"modifierInternalCode": "Internal code"
+  ,"modifierGroupTypeChoice": "Choice"
+  ,"modifierGroupTypeAddOn": "Add-on"
+  ,"modifierGroupTypePreparation": "Preparation instruction"
+  ,"modifierYes": "Yes"
+  ,"modifierNo": "No"
+  ,"modifierTranslations": "Translations"
+  ,"modifierArabic": "Arabic"
+  ,"modifierEnglish": "English"
+  ,"modifierClose": "Close"
+  ,"modifierSelectionRules": "Selection Rules"
+  ,"modifierSelectionRulesHelper": "Determine how customers interact with these options."
+  ,"modifierHowChoose": "How should customers choose?"
+  ,"modifierChooseOne": "Choose one"
+  ,"modifierChooseMultiple": "Choose multiple"
+  ,"modifierChoiceRequired": "Is a choice required?"
+  ,"modifierOptional": "Optional"
+  ,"modifierRequired": "Required"
+  ,"modifierMinimumChoices": "Minimum choices"
+  ,"modifierMaximumChoices": "Maximum choices"
+  ,"modifierSameOptionQuantity": "Can the same Option be added more than once?"
+  ,"modifierQuantityHelper": "For example: 2 Extra Shots."
+  ,"modifierCurrentRuleSummary": "Current Rule Summary"
+  ,"modifierInitialOption": "Initial Option"
+  ,"modifierInitialOptionHelper": "You can add more Options after creating the Modifier Group."
+  ,"modifierOptionName": "Option name"
+  ,"modifierOptionNameHint": "e.g. Whole Milk"
+  ,"modifierAdvanced": "Advanced"
+  ,"modifierActiveStatus": "Active status"
+  ,"modifierAvailableForUse": "Available for use in menus."
+  ,"modifierCancel": "Cancel"
+  ,"modifierSaveChanges": "Save Changes"
+  ,"modifierCreateAction": "Create Modifier Group"
+  ,"modifierSaving": "Saving..."
+  ,"modifierUnsavedChanges": "You have unsaved changes. Leave without saving?"
+  ,"modifierStay": "Stay"
+  ,"modifierLeave": "Leave"
+  ,"modifierOptionCreateTitle": "Add Option"
+  ,"modifierOptionEditTitle": "Edit Option"
+  ,"modifierOptionBasicInformation": "Basic Information"
+  ,"modifierOptionDefault": "Default option"
+  ,"modifierOptionActive": "Active"
+  ,"modifierOptionAvailable": "Available"
+  ,"modifierOptionAdvanced": "Advanced"
+  ,"modifierOptionSave": "Save"
+  ,"modifierOptionSaving": "Saving..."
+  ,"modifierOptionNameRequired": "Option name is required."
+  ,"modifierOptionPriceInvalid": "Price adjustment must be zero or positive."
+  ,"modifierOptionSortInvalid": "Sort order must be a whole number."
+  ,"modifierArchiveGroupTitle": "Archive modifier group?"
+  ,"modifierArchiveOptionTitle": "Archive modifier option?"
+  ,"modifierArchiveMessage": "The item remains stored and can be restored later."
+  ,"modifierConfirmArchive": "Archive"
+  ,"modifierOptionSaveError": "Unable to save this modifier option. Check the option rules and try again."
+  ,"modifierGroupSaveError": "Unable to save this modifier group."
+  ,"modifierGroupRequired": "Modifier group name is required."
+  ,"modifierNumberInvalid": "Enter zero or a positive whole number."
+  ,"modifierMaximumMinimumError": "Maximum must be at least the minimum."
+  ,"modifierSingleMaximumError": "Single selection groups cannot have a maximum above 1."
+  ,"modifierRequiredMinimumError": "Required groups need a minimum of at least 1."
+  ,"modifierInitialOptionRequired": "An initial active option is required."
+  ,"modifierPriceInvalid": "Enter zero or a positive price."
+  ,"modifierInitialMaximumError": "A new group has one initial option; maximum cannot exceed 1."
 }

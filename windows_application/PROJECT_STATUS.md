@@ -2,6 +2,49 @@
 
 ## Current Authoritative Status
 
+Approved Menu Management UX Redesign Batch 6 is **COMPLETE pending manual Windows
+review**. Modifiers now use the real Menu Management shell with a compact Modifier
+Library, reusable manager-facing rule summaries, embedded option previews when
+the existing response contains options, Group Detail option rows, guided Group
+Create/Edit sections, localized translation side sheets, progressive selection
+controls, live rule summaries, sticky form actions, and active-only reorder modes.
+Existing Modifier Group/Option payloads, validation, archive/restore, material
+adjustment routes, and Backend contracts remain unchanged. Batch 7 Recipes has
+not started.
+
+Approved Menu Management UX Redesign Batch 4 is complete pending manual
+Windows review: Product Create/Edit now presents grouped manager-facing form
+sections, URL-based image preview/editing, contextual translations, advanced
+disclosure, and one sticky action area. Product Detail is a read-focused
+workspace with local navigation, lifecycle overflow, and lazy Product Usage
+loading. Existing product APIs, draft guards, payloads, routes, and backend
+behavior remain unchanged. Batch 5 and later redesign work has not started.
+
+Approved Menu Management UX Redesign Batch 0 and Batch 1 are complete: a
+responsive English/Arabic widget-test harness, baseline route/guard/key
+characterization, and isolated reusable presentation foundations were added.
+No existing Menu Management screens, routes, backend behavior, or later UX
+batches were migrated.
+
+Approved Menu Management UX Redesign Batch 2 is complete: all Menu Management
+routes now use a responsive grouped module rail, deep-route parent highlighting,
+route-context breadcrumbs, and a neutral module top bar. Existing feature
+contents, route semantics, Branch/Channel controls, and backend behavior remain
+unchanged. The old MenuManagementTabs widget is retained only as a non-rendering
+Phase 4K compatibility shim.
+
+Menu Management UX Redesign Batch 3 is complete pending manual Windows review:
+the Product Catalog now uses a search-first compact filter bar, lifecycle quick
+filters, an apply/clear advanced-filter dialog, removable active-filter chips,
+and responsive manager-scannable Product rows. Product repository, API,
+pagination, lifecycle, and routing behavior remain unchanged. Batch 4 and later
+redesign work have not been started.
+
+Batch 3.1 is complete pending the same manual Windows review: Product rows were
+visually refined into compact selling-summary groups, Sort now has a text
+affordance, and More Filters uses responsive grouped field pairs. No Product
+Catalog behavior changed and Batch 4 remains unstarted.
+
 Phase 4E and Phase 4F are complete. The Review workflow's Versions tab is scoped
 by Branch + Channel and renders a metadata-only paginated History. Snapshot payload
 is explicit, diagnostic, read-only, and opt-in. Backend generates comparison and it
@@ -313,6 +356,18 @@ availability exists. POS sync UI remains deferred.
 - Tablet support requirements are not defined yet.
 
 ## Recent Changes Log
+
+- 2026-08-16: Completed approved Menu Management UX Redesign Batch 6. Replaced
+  the technical Modifier DataTable with compact responsive Group rows and
+  localized lifecycle/action states; added Group Detail option rows with
+  overflow actions, default/price indicators, and active-only reorder controls;
+  added guided Group Create/Edit sections for Basic Information, Selection Rules,
+  Initial Option, and collapsed Advanced fields; added localized Arabic/English
+  translation side sheets and live manager-facing rule summaries. The existing
+  Backend modifier contracts and material-adjustment workflow were preserved;
+  only Flutter repository plumbing for the existing modifier-group reorder route
+  was added. Final Flutter verification: 292 tests passed, analyzer clean, and
+  git diff --check clean. Batch 7+ work was not started.
 
 - 2026-08-02: Verified Flutter Phase 4E.1 Menu Validation and Phase 4E.2
   Resolved Menu Preview. Review requests now forward a sanitized optional Backend

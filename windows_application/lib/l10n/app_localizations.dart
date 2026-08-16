@@ -1393,6 +1393,1356 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Is it temporarily unavailable right now?'**
   String get managerAvailabilityOperationalHelp;
+
+  /// No description provided for @menuManagementNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu Management navigation'**
+  String get menuManagementNavigation;
+
+  /// No description provided for @menuManagementCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Catalog'**
+  String get menuManagementCatalog;
+
+  /// No description provided for @menuManagementMenusGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get menuManagementMenusGroup;
+
+  /// No description provided for @menuManagementReleaseGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Release'**
+  String get menuManagementReleaseGroup;
+
+  /// No description provided for @menuManagementReviewPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & Publish'**
+  String get menuManagementReviewPublish;
+
+  /// No description provided for @menuBreadcrumbProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get menuBreadcrumbProduct;
+
+  /// No description provided for @menuBreadcrumbVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant'**
+  String get menuBreadcrumbVariant;
+
+  /// No description provided for @menuBreadcrumbCreateProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Create product'**
+  String get menuBreadcrumbCreateProduct;
+
+  /// No description provided for @menuBreadcrumbEditProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit product'**
+  String get menuBreadcrumbEditProduct;
+
+  /// No description provided for @menuBreadcrumbVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants'**
+  String get menuBreadcrumbVariants;
+
+  /// No description provided for @menuBreadcrumbModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get menuBreadcrumbModifiers;
+
+  /// No description provided for @menuBreadcrumbPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get menuBreadcrumbPricing;
+
+  /// No description provided for @menuBreadcrumbRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe'**
+  String get menuBreadcrumbRecipe;
+
+  /// No description provided for @menuBreadcrumbRecipeSimulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe simulation'**
+  String get menuBreadcrumbRecipeSimulation;
+
+  /// No description provided for @menuBreadcrumbAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get menuBreadcrumbAvailability;
+
+  /// No description provided for @menuBreadcrumbOperationalAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational availability'**
+  String get menuBreadcrumbOperationalAvailability;
+
+  /// No description provided for @menuBreadcrumbMaterialAdjustments.
+  ///
+  /// In en, this message translates to:
+  /// **'Material adjustments'**
+  String get menuBreadcrumbMaterialAdjustments;
+
+  /// No description provided for @menuBreadcrumbModifierGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier group'**
+  String get menuBreadcrumbModifierGroup;
+
+  /// No description provided for @menuBreadcrumbCreateModifierGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create modifier group'**
+  String get menuBreadcrumbCreateModifierGroup;
+
+  /// No description provided for @menuBreadcrumbEditModifierGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit modifier group'**
+  String get menuBreadcrumbEditModifierGroup;
+
+  /// No description provided for @menuBreadcrumbMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get menuBreadcrumbMenu;
+
+  /// No description provided for @menuBreadcrumbCreateMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Create menu'**
+  String get menuBreadcrumbCreateMenu;
+
+  /// No description provided for @menuBreadcrumbEditMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit menu'**
+  String get menuBreadcrumbEditMenu;
+
+  /// No description provided for @menuBreadcrumbComposition.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition'**
+  String get menuBreadcrumbComposition;
+
+  /// No description provided for @menuBreadcrumbVersionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get menuBreadcrumbVersionHistory;
+
+  /// No description provided for @productCatalogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get productCatalogTitle;
+
+  /// No description provided for @productCatalogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage the products available across your menus.'**
+  String get productCatalogSubtitle;
+
+  /// No description provided for @productCatalogCreateProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Product'**
+  String get productCatalogCreateProduct;
+
+  /// No description provided for @productCatalogRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh products'**
+  String get productCatalogRefresh;
+
+  /// No description provided for @productCatalogSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search products, SKU, or barcode'**
+  String get productCatalogSearch;
+
+  /// No description provided for @productCatalogLifecycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifecycle'**
+  String get productCatalogLifecycle;
+
+  /// No description provided for @productCatalogAllProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'All products'**
+  String get productCatalogAllProducts;
+
+  /// No description provided for @productCatalogMoreFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'More Filters'**
+  String get productCatalogMoreFilters;
+
+  /// No description provided for @productCatalogMoreFiltersSemantic.
+  ///
+  /// In en, this message translates to:
+  /// **'More Filters, {count} active'**
+  String productCatalogMoreFiltersSemantic(int count);
+
+  /// No description provided for @productCatalogClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get productCatalogClearAll;
+
+  /// No description provided for @productCatalogClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get productCatalogClear;
+
+  /// No description provided for @productCatalogApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get productCatalogApply;
+
+  /// No description provided for @productCatalogSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get productCatalogSort;
+
+  /// No description provided for @productCatalogSortOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort order'**
+  String get productCatalogSortOrder;
+
+  /// No description provided for @productCatalogNameAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Name A–Z'**
+  String get productCatalogNameAscending;
+
+  /// No description provided for @productCatalogNameDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Name Z–A'**
+  String get productCatalogNameDescending;
+
+  /// No description provided for @productCatalogNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get productCatalogNewest;
+
+  /// No description provided for @productCatalogProductType.
+  ///
+  /// In en, this message translates to:
+  /// **'Product type'**
+  String get productCatalogProductType;
+
+  /// No description provided for @productCatalogHasVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Has variants'**
+  String get productCatalogHasVariants;
+
+  /// No description provided for @productCatalogNoVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'No variants'**
+  String get productCatalogNoVariants;
+
+  /// No description provided for @productCatalogHasModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Has modifiers'**
+  String get productCatalogHasModifiers;
+
+  /// No description provided for @productCatalogNoModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'No modifiers'**
+  String get productCatalogNoModifiers;
+
+  /// No description provided for @productCatalogStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get productCatalogStandard;
+
+  /// No description provided for @productCatalogOpenPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Open price'**
+  String get productCatalogOpenPrice;
+
+  /// No description provided for @productCatalogCombo.
+  ///
+  /// In en, this message translates to:
+  /// **'Combo'**
+  String get productCatalogCombo;
+
+  /// No description provided for @productCatalogSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup'**
+  String get productCatalogSetup;
+
+  /// No description provided for @productCatalogDefaultVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get productCatalogDefaultVariant;
+
+  /// No description provided for @productCatalogStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get productCatalogStatus;
+
+  /// No description provided for @productCatalogOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get productCatalogOpen;
+
+  /// No description provided for @productCatalogManageVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Variants'**
+  String get productCatalogManageVariants;
+
+  /// No description provided for @productCatalogManageModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Modifiers'**
+  String get productCatalogManageModifiers;
+
+  /// No description provided for @productCatalogArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get productCatalogArchive;
+
+  /// No description provided for @productCatalogRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get productCatalogRestore;
+
+  /// No description provided for @productCatalogActionsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {name}'**
+  String productCatalogActionsFor(String name);
+
+  /// No description provided for @productCatalogSetupSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{variants} variants · {modifiers} modifiers'**
+  String productCatalogSetupSummary(int variants, int modifiers);
+
+  /// No description provided for @productCatalogLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more products'**
+  String get productCatalogLoadMore;
+
+  /// No description provided for @productCatalogUnableToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load products.'**
+  String get productCatalogUnableToLoad;
+
+  /// No description provided for @productCatalogNoArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived products are available.'**
+  String get productCatalogNoArchived;
+
+  /// No description provided for @productCatalogNoActive.
+  ///
+  /// In en, this message translates to:
+  /// **'No active products are available.'**
+  String get productCatalogNoActive;
+
+  /// No description provided for @productCatalogNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No products match these filters.'**
+  String get productCatalogNoMatches;
+
+  /// No description provided for @productCatalogNoProductsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No products have been created yet.'**
+  String get productCatalogNoProductsYet;
+
+  /// No description provided for @productCatalogMoreFiltersHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine the product list with additional criteria.'**
+  String get productCatalogMoreFiltersHelper;
+
+  /// No description provided for @productCatalogFilterClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Classification'**
+  String get productCatalogFilterClassification;
+
+  /// No description provided for @productCatalogFilterPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get productCatalogFilterPreparation;
+
+  /// No description provided for @productCatalogFilterProductSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Product setup'**
+  String get productCatalogFilterProductSetup;
+
+  /// No description provided for @productCatalogClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get productCatalogClearFilters;
+
+  /// No description provided for @productCatalogApplyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get productCatalogApplyFilters;
+
+  /// No description provided for @productUxGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get productUxGeneral;
+
+  /// No description provided for @productUxClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Classification'**
+  String get productUxClassification;
+
+  /// No description provided for @productUxSellingPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling & Preparation'**
+  String get productUxSellingPreparation;
+
+  /// No description provided for @productUxInitialSellingOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial selling option'**
+  String get productUxInitialSellingOption;
+
+  /// No description provided for @productUxTranslations.
+  ///
+  /// In en, this message translates to:
+  /// **'Translations'**
+  String get productUxTranslations;
+
+  /// No description provided for @productUxAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get productUxAdvanced;
+
+  /// No description provided for @productUxOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get productUxOverview;
+
+  /// No description provided for @productUxUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get productUxUsage;
+
+  /// No description provided for @productUxVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants'**
+  String get productUxVariants;
+
+  /// No description provided for @productUxModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get productUxModifiers;
+
+  /// No description provided for @productUxRecipeMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe & Materials'**
+  String get productUxRecipeMaterials;
+
+  /// No description provided for @productUxAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get productUxAvailability;
+
+  /// No description provided for @productUxCreateProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Product'**
+  String get productUxCreateProduct;
+
+  /// No description provided for @productUxSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get productUxSaveChanges;
+
+  /// No description provided for @productUxCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get productUxCancel;
+
+  /// No description provided for @productUxManageCatalogSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage catalog setup'**
+  String get productUxManageCatalogSetup;
+
+  /// No description provided for @productUxEditProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Product'**
+  String get productUxEditProduct;
+
+  /// No description provided for @productUxArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get productUxArchived;
+
+  /// No description provided for @productOverviewBasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Price'**
+  String get productOverviewBasePrice;
+
+  /// No description provided for @productOverviewVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants'**
+  String get productOverviewVariants;
+
+  /// No description provided for @productOverviewModifierGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier Groups'**
+  String get productOverviewModifierGroups;
+
+  /// No description provided for @productOverviewStockTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock Tracking'**
+  String get productOverviewStockTracking;
+
+  /// No description provided for @productOverviewEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get productOverviewEnabled;
+
+  /// No description provided for @productOverviewDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get productOverviewDisabled;
+
+  /// No description provided for @productOverviewNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get productOverviewNotConfigured;
+
+  /// No description provided for @productOverviewProductSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Setup'**
+  String get productOverviewProductSetup;
+
+  /// No description provided for @productOverviewCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get productOverviewCategory;
+
+  /// No description provided for @productOverviewDefaultVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Variant'**
+  String get productOverviewDefaultVariant;
+
+  /// No description provided for @productOverviewKitchenStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Station'**
+  String get productOverviewKitchenStation;
+
+  /// No description provided for @productOverviewProductType.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Type'**
+  String get productOverviewProductType;
+
+  /// No description provided for @productOverviewReportingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting Category'**
+  String get productOverviewReportingCategory;
+
+  /// No description provided for @productOverviewPreparationTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation Time'**
+  String get productOverviewPreparationTime;
+
+  /// No description provided for @productOverviewMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get productOverviewMinutes;
+
+  /// No description provided for @modifierLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier Library'**
+  String get modifierLibraryTitle;
+
+  /// No description provided for @modifierLibrarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create reusable customer choices that can be assigned to Products.'**
+  String get modifierLibrarySubtitle;
+
+  /// No description provided for @modifierCreateGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Modifier Group'**
+  String get modifierCreateGroup;
+
+  /// No description provided for @modifierSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search modifiers'**
+  String get modifierSearch;
+
+  /// No description provided for @modifierActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get modifierActive;
+
+  /// No description provided for @modifierArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get modifierArchived;
+
+  /// No description provided for @modifierAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get modifierAll;
+
+  /// No description provided for @modifierReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get modifierReorder;
+
+  /// No description provided for @modifierDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get modifierDone;
+
+  /// No description provided for @modifierOptionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} options'**
+  String modifierOptionsCount(int count);
+
+  /// No description provided for @modifierOptionPreviewMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count} more'**
+  String modifierOptionPreviewMore(int count);
+
+  /// No description provided for @modifierRuleExactly.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer must choose exactly {count} option(s).'**
+  String modifierRuleExactly(int count);
+
+  /// No description provided for @modifierRuleOptionalExactly.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — customer may choose {count} option(s).'**
+  String modifierRuleOptionalExactly(int count);
+
+  /// No description provided for @modifierRuleAtLeastUpTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer must choose at least {min} and up to {max} options.'**
+  String modifierRuleAtLeastUpTo(int min, int max);
+
+  /// No description provided for @modifierRuleOptionalUpTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — customer may choose up to {max} options.'**
+  String modifierRuleOptionalUpTo(int max);
+
+  /// No description provided for @modifierRuleQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'The same Option may be added more than once.'**
+  String get modifierRuleQuantity;
+
+  /// No description provided for @modifierViewGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'View Group'**
+  String get modifierViewGroup;
+
+  /// No description provided for @modifierEditGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Group'**
+  String get modifierEditGroup;
+
+  /// No description provided for @modifierSetDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as Default'**
+  String get modifierSetDefault;
+
+  /// No description provided for @modifierMaterialAdjustments.
+  ///
+  /// In en, this message translates to:
+  /// **'Material Adjustments'**
+  String get modifierMaterialAdjustments;
+
+  /// No description provided for @modifierArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get modifierArchive;
+
+  /// No description provided for @modifierRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get modifierRestore;
+
+  /// No description provided for @modifierNoGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'No modifier groups have been created yet.'**
+  String get modifierNoGroups;
+
+  /// No description provided for @modifierNoGroupMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No modifier groups match the current filters.'**
+  String get modifierNoGroupMatches;
+
+  /// No description provided for @modifierUnableToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load modifier groups.'**
+  String get modifierUnableToLoad;
+
+  /// No description provided for @modifierRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get modifierRetry;
+
+  /// No description provided for @modifierLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get modifierLoadMore;
+
+  /// No description provided for @modifierRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh modifier groups'**
+  String get modifierRefresh;
+
+  /// No description provided for @modifierGroupDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier group not found.'**
+  String get modifierGroupDetailNotFound;
+
+  /// No description provided for @modifierOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get modifierOptions;
+
+  /// No description provided for @modifierAddOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Option'**
+  String get modifierAddOption;
+
+  /// No description provided for @modifierOptionFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Option status'**
+  String get modifierOptionFilter;
+
+  /// No description provided for @modifierNoArchivedOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived modifier options.'**
+  String get modifierNoArchivedOptions;
+
+  /// No description provided for @modifierNoOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No modifier options have been created yet.'**
+  String get modifierNoOptions;
+
+  /// No description provided for @modifierReorderOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Options'**
+  String get modifierReorderOptions;
+
+  /// No description provided for @modifierMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Up'**
+  String get modifierMoveUp;
+
+  /// No description provided for @modifierMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Down'**
+  String get modifierMoveDown;
+
+  /// No description provided for @modifierDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'DEFAULT'**
+  String get modifierDefault;
+
+  /// No description provided for @modifierNoExtraCharge.
+  ///
+  /// In en, this message translates to:
+  /// **'No extra charge'**
+  String get modifierNoExtraCharge;
+
+  /// No description provided for @modifierPriceAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Price adjustment'**
+  String get modifierPriceAdjustment;
+
+  /// No description provided for @modifierMaterialUsageConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Material usage configured'**
+  String get modifierMaterialUsageConfigured;
+
+  /// No description provided for @modifierStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get modifierStatusActive;
+
+  /// No description provided for @modifierStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get modifierStatusArchived;
+
+  /// No description provided for @modifierStatusInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get modifierStatusInactive;
+
+  /// No description provided for @modifierAdvancedDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Details'**
+  String get modifierAdvancedDetails;
+
+  /// No description provided for @modifierSelectionMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection mode'**
+  String get modifierSelectionMode;
+
+  /// No description provided for @modifierMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum'**
+  String get modifierMinimum;
+
+  /// No description provided for @modifierMaximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum'**
+  String get modifierMaximum;
+
+  /// No description provided for @modifierAllowQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow quantity'**
+  String get modifierAllowQuantity;
+
+  /// No description provided for @modifierGroupType.
+  ///
+  /// In en, this message translates to:
+  /// **'Group type'**
+  String get modifierGroupType;
+
+  /// No description provided for @modifierSortOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort order'**
+  String get modifierSortOrder;
+
+  /// No description provided for @modifierCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Modifier Group'**
+  String get modifierCreateTitle;
+
+  /// No description provided for @modifierEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Modifier Group'**
+  String get modifierEditTitle;
+
+  /// No description provided for @modifierBasicInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get modifierBasicInformation;
+
+  /// No description provided for @modifierBasicInformationHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Name this reusable customer-choice group.'**
+  String get modifierBasicInformationHelper;
+
+  /// No description provided for @modifierGroupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier Group Name'**
+  String get modifierGroupName;
+
+  /// No description provided for @modifierGroupNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Milk Type'**
+  String get modifierGroupNameHint;
+
+  /// No description provided for @modifierInternalCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal code'**
+  String get modifierInternalCode;
+
+  /// No description provided for @modifierGroupTypeChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Choice'**
+  String get modifierGroupTypeChoice;
+
+  /// No description provided for @modifierGroupTypeAddOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add-on'**
+  String get modifierGroupTypeAddOn;
+
+  /// No description provided for @modifierGroupTypePreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation instruction'**
+  String get modifierGroupTypePreparation;
+
+  /// No description provided for @modifierYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get modifierYes;
+
+  /// No description provided for @modifierNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get modifierNo;
+
+  /// No description provided for @modifierTranslations.
+  ///
+  /// In en, this message translates to:
+  /// **'Translations'**
+  String get modifierTranslations;
+
+  /// No description provided for @modifierArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get modifierArabic;
+
+  /// No description provided for @modifierEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get modifierEnglish;
+
+  /// No description provided for @modifierClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get modifierClose;
+
+  /// No description provided for @modifierSelectionRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection Rules'**
+  String get modifierSelectionRules;
+
+  /// No description provided for @modifierSelectionRulesHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Determine how customers interact with these options.'**
+  String get modifierSelectionRulesHelper;
+
+  /// No description provided for @modifierHowChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'How should customers choose?'**
+  String get modifierHowChoose;
+
+  /// No description provided for @modifierChooseOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one'**
+  String get modifierChooseOne;
+
+  /// No description provided for @modifierChooseMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose multiple'**
+  String get modifierChooseMultiple;
+
+  /// No description provided for @modifierChoiceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Is a choice required?'**
+  String get modifierChoiceRequired;
+
+  /// No description provided for @modifierOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get modifierOptional;
+
+  /// No description provided for @modifierRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get modifierRequired;
+
+  /// No description provided for @modifierMinimumChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum choices'**
+  String get modifierMinimumChoices;
+
+  /// No description provided for @modifierMaximumChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum choices'**
+  String get modifierMaximumChoices;
+
+  /// No description provided for @modifierSameOptionQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Can the same Option be added more than once?'**
+  String get modifierSameOptionQuantity;
+
+  /// No description provided for @modifierQuantityHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: 2 Extra Shots.'**
+  String get modifierQuantityHelper;
+
+  /// No description provided for @modifierCurrentRuleSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Rule Summary'**
+  String get modifierCurrentRuleSummary;
+
+  /// No description provided for @modifierInitialOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial Option'**
+  String get modifierInitialOption;
+
+  /// No description provided for @modifierInitialOptionHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add more Options after creating the Modifier Group.'**
+  String get modifierInitialOptionHelper;
+
+  /// No description provided for @modifierOptionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Option name'**
+  String get modifierOptionName;
+
+  /// No description provided for @modifierOptionNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Whole Milk'**
+  String get modifierOptionNameHint;
+
+  /// No description provided for @modifierAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get modifierAdvanced;
+
+  /// No description provided for @modifierActiveStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Active status'**
+  String get modifierActiveStatus;
+
+  /// No description provided for @modifierAvailableForUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Available for use in menus.'**
+  String get modifierAvailableForUse;
+
+  /// No description provided for @modifierCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get modifierCancel;
+
+  /// No description provided for @modifierSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get modifierSaveChanges;
+
+  /// No description provided for @modifierCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Modifier Group'**
+  String get modifierCreateAction;
+
+  /// No description provided for @modifierSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get modifierSaving;
+
+  /// No description provided for @modifierUnsavedChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Leave without saving?'**
+  String get modifierUnsavedChanges;
+
+  /// No description provided for @modifierStay.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay'**
+  String get modifierStay;
+
+  /// No description provided for @modifierLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get modifierLeave;
+
+  /// No description provided for @modifierOptionCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Option'**
+  String get modifierOptionCreateTitle;
+
+  /// No description provided for @modifierOptionEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Option'**
+  String get modifierOptionEditTitle;
+
+  /// No description provided for @modifierOptionBasicInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get modifierOptionBasicInformation;
+
+  /// No description provided for @modifierOptionDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default option'**
+  String get modifierOptionDefault;
+
+  /// No description provided for @modifierOptionActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get modifierOptionActive;
+
+  /// No description provided for @modifierOptionAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get modifierOptionAvailable;
+
+  /// No description provided for @modifierOptionAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get modifierOptionAdvanced;
+
+  /// No description provided for @modifierOptionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get modifierOptionSave;
+
+  /// No description provided for @modifierOptionSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get modifierOptionSaving;
+
+  /// No description provided for @modifierOptionNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Option name is required.'**
+  String get modifierOptionNameRequired;
+
+  /// No description provided for @modifierOptionPriceInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Price adjustment must be zero or positive.'**
+  String get modifierOptionPriceInvalid;
+
+  /// No description provided for @modifierOptionSortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort order must be a whole number.'**
+  String get modifierOptionSortInvalid;
+
+  /// No description provided for @modifierArchiveGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive modifier group?'**
+  String get modifierArchiveGroupTitle;
+
+  /// No description provided for @modifierArchiveOptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive modifier option?'**
+  String get modifierArchiveOptionTitle;
+
+  /// No description provided for @modifierArchiveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The item remains stored and can be restored later.'**
+  String get modifierArchiveMessage;
+
+  /// No description provided for @modifierConfirmArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get modifierConfirmArchive;
+
+  /// No description provided for @modifierOptionSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save this modifier option. Check the option rules and try again.'**
+  String get modifierOptionSaveError;
+
+  /// No description provided for @modifierGroupSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save this modifier group.'**
+  String get modifierGroupSaveError;
+
+  /// No description provided for @modifierGroupRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier group name is required.'**
+  String get modifierGroupRequired;
+
+  /// No description provided for @modifierNumberInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter zero or a positive whole number.'**
+  String get modifierNumberInvalid;
+
+  /// No description provided for @modifierMaximumMinimumError.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum must be at least the minimum.'**
+  String get modifierMaximumMinimumError;
+
+  /// No description provided for @modifierSingleMaximumError.
+  ///
+  /// In en, this message translates to:
+  /// **'Single selection groups cannot have a maximum above 1.'**
+  String get modifierSingleMaximumError;
+
+  /// No description provided for @modifierRequiredMinimumError.
+  ///
+  /// In en, this message translates to:
+  /// **'Required groups need a minimum of at least 1.'**
+  String get modifierRequiredMinimumError;
+
+  /// No description provided for @modifierInitialOptionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'An initial active option is required.'**
+  String get modifierInitialOptionRequired;
+
+  /// No description provided for @modifierPriceInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter zero or a positive price.'**
+  String get modifierPriceInvalid;
+
+  /// No description provided for @modifierInitialMaximumError.
+  ///
+  /// In en, this message translates to:
+  /// **'A new group has one initial option; maximum cannot exceed 1.'**
+  String get modifierInitialMaximumError;
 }
 
 class _AppLocalizationsDelegate

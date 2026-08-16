@@ -116,6 +116,30 @@ class ModifierLibraryCubit extends Cubit<ModifierLibraryState> {
       _mutate(id, () => repository.archiveModifierGroup(id));
   Future<void> restore(int id) =>
       _mutate(id, () => repository.restoreModifierGroup(id));
+  Future<void> move(ModifierGroupRecord group, int direction) async {
+    if (state.currentActionId != null) return;
+    final List<ModifierGroupRecord> active = state.groups
+        .where((item) => !item.isArchived)
+        .toList();
+    final int index = active.indexWhere((item) => item.id == group.id);
+    final int target = index + direction;
+    if (index < 0 || target < 0 || target >= active.length) return;
+
+    final ModifierGroupRecord swapped = active[target];
+    final List<ModifierReorderItem> items = <ModifierReorderItem>[
+      ModifierReorderItem(group.id, swapped.sortOrder),
+      ModifierReorderItem(swapped.id, group.sortOrder),
+    ];
+    emit(state.copyWith(currentActionId: group.id, clearError: true));
+    try {
+      await repository.reorderModifierGroups(items);
+      emit(state.copyWith(clearAction: true));
+      await load(refresh: true);
+    } catch (error) {
+      emit(state.copyWith(clearAction: true, errorMessage: _message(error)));
+    }
+  }
+
   Future<void> _mutate(
     int id,
     Future<ModifierGroupRecord> Function() action,

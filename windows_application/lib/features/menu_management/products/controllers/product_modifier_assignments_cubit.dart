@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../models/catalog_models.dart';
 import '../../modifiers/models/modifier_models.dart';
+import '../../recipes/models/recipe_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../models/product_modifier_assignment.dart';
 import 'product_modifier_assignments_state.dart';
@@ -16,7 +17,7 @@ class ProductModifierAssignmentsCubit
   final MenuCatalogRepository repository;
 
   Future<void> load(int productId, {bool refresh = false}) async {
-    if (state.isSaving) return;
+    if (isClosed || state.isSaving) return;
     emit(
       state.copyWith(
         status: refresh
@@ -37,6 +38,7 @@ class ProductModifierAssignmentsCubit
         ),
       ]);
       final ProductDetail product = results[0] as ProductDetail;
+      if (isClosed) return;
       if (product.isArchived) {
         emit(
           state.copyWith(
@@ -50,6 +52,9 @@ class ProductModifierAssignmentsCubit
       }
       final assignments = (results[1] as List<ProductModifierAssignment>)
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      final Set<int> materialImpactConfiguredGroupIds =
+          await _materialImpactGroups(product.id, assignments);
+      if (isClosed) return;
       emit(
         state.copyWith(
           status: ProductModifierAssignmentsStatus.loaded,
@@ -57,10 +62,12 @@ class ProductModifierAssignmentsCubit
           assignments: List.unmodifiable(assignments),
           loadedAssignments: List.unmodifiable(assignments),
           availableGroups: (results[2] as dynamic).items,
+          materialImpactConfiguredGroupIds: materialImpactConfiguredGroupIds,
           clearErrors: true,
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           status: ProductModifierAssignmentsStatus.failure,
@@ -70,9 +77,44 @@ class ProductModifierAssignmentsCubit
     }
   }
 
-  Future<void> refresh() => load(state.product!.id, refresh: true);
+  Future<Set<int>> _materialImpactGroups(
+    int productId,
+    List<ProductModifierAssignment> assignments,
+  ) async {
+    final Set<int> groups = <int>{};
+    for (final ProductModifierAssignment assignment in assignments) {
+      final ModifierGroupRecord group;
+      try {
+        group = await repository.getModifierGroup(assignment.modifierGroupId);
+      } catch (_) {
+        continue;
+      }
+      final Iterable<ModifierOptionRecord> options = group.options;
+      for (final ModifierOptionRecord option in options) {
+        try {
+          final ModifierRecipeProfile profile = await repository
+              .getModifierRecipeProfile(option.id, productId: productId);
+          if (profile.components.isNotEmpty) {
+            groups.add(assignment.modifierGroupId);
+            break;
+          }
+        } catch (_) {
+          // This is purely an informational indicator. Do not fail the
+          // assignment screen if an optional recipe profile cannot be read.
+        }
+      }
+    }
+    return groups;
+  }
+
+  Future<void> refresh() {
+    if (isClosed || state.product == null) return Future<void>.value();
+    return load(state.product!.id, refresh: true);
+  }
+
   void add(ModifierGroupRecord group) {
-    if (state.isSaving ||
+    if (isClosed ||
+        state.isSaving ||
         state.product?.isArchived == true ||
         !group.isActive ||
         group.isArchived ||
@@ -96,7 +138,7 @@ class ProductModifierAssignmentsCubit
   }
 
   void update(ProductModifierAssignment assignment) {
-    if (state.product?.isArchived == true) return;
+    if (isClosed || state.product?.isArchived == true) return;
     final errors = _validate(assignment);
     final next = state.assignments
         .map(
@@ -121,7 +163,7 @@ class ProductModifierAssignmentsCubit
   }
 
   void remove(int groupId) {
-    if (state.product?.isArchived == true) return;
+    if (isClosed || state.product?.isArchived == true) return;
     emit(
       state.copyWith(
         assignments: _normalise(
@@ -137,6 +179,7 @@ class ProductModifierAssignmentsCubit
   }
 
   void move(int groupId, int direction) {
+    if (isClosed) return;
     final index = state.assignments.indexWhere(
       (item) => item.modifierGroupId == groupId,
     );
@@ -161,7 +204,10 @@ class ProductModifierAssignmentsCubit
   }
 
   Future<bool> save() async {
-    if (state.isSaving || state.product == null || state.product!.isArchived) {
+    if (isClosed ||
+        state.isSaving ||
+        state.product == null ||
+        state.product!.isArchived) {
       return false;
     }
     final errors = <String, String>{};
@@ -189,8 +235,10 @@ class ProductModifierAssignmentsCubit
         state.product!.id,
         state.assignments,
       );
+      if (isClosed) return false;
       emit(state.copyWith(isSaving: false));
       await load(state.product!.id, refresh: true);
+      if (isClosed) return false;
       emit(
         state.copyWith(
           successMessage: 'Product modifiers updated successfully.',
@@ -198,6 +246,7 @@ class ProductModifierAssignmentsCubit
       );
       return true;
     } catch (error) {
+      if (isClosed) return false;
       final Map<String, String> mapped =
           error is ApiException && error.validationErrors != null
           ? error.validationErrors!.map(

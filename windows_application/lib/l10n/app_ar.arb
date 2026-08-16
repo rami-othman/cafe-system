@@ -224,5 +224,239 @@
   "technicalDetails": "\u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u062a\u0642\u0646\u064a\u0629",
   "managerAvailabilityScheduledHelp": "\u0645\u062a\u0649 \u064a\u0646\u0628\u063a\u064a \u0623\u0646 \u064a\u0643\u0648\u0646 \u0647\u0630\u0627 \u0627\u0644\u0639\u0646\u0635\u0631 \u0645\u062a\u0627\u062d\u064b\u0627 \u0628\u0634\u0643\u0644 \u0639\u0627\u062f\u061f",
   "managerAvailabilityOperationalHelp": "\u0647\u0644 \u0627\u0644\u0639\u0646\u0635\u0631 \u063a\u064a\u0631 \u0645\u062a\u0627\u062d \u0645\u0624\u0642\u062a\u064b\u0627 \u0627\u0644\u0622\u0646\u061f",
-  "@catalogSetupArchiveConfirmation": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}}
+  "@catalogSetupArchiveConfirmation": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}},
+  "menuManagementNavigation": "التنقل في إدارة القوائم",
+  "menuManagementCatalog": "الكتالوج",
+  "menuManagementMenusGroup": "القوائم",
+  "menuManagementReleaseGroup": "الإصدار",
+  "menuManagementReviewPublish": "مراجعة ونشر",
+  "menuBreadcrumbProduct": "المنتج",
+  "menuBreadcrumbVariant": "الخيار",
+  "menuBreadcrumbCreateProduct": "إنشاء منتج",
+  "menuBreadcrumbEditProduct": "تعديل المنتج",
+  "menuBreadcrumbVariants": "الخيارات",
+  "menuBreadcrumbModifiers": "المعدلات",
+  "menuBreadcrumbPricing": "التسعير",
+  "menuBreadcrumbRecipe": "الوصفة",
+  "menuBreadcrumbRecipeSimulation": "محاكاة الوصفة",
+  "menuBreadcrumbAvailability": "التوفر",
+  "menuBreadcrumbOperationalAvailability": "التوفر التشغيلي",
+  "menuBreadcrumbMaterialAdjustments": "تعديلات المواد",
+  "menuBreadcrumbModifierGroup": "مجموعة المعدلات",
+  "menuBreadcrumbCreateModifierGroup": "إنشاء مجموعة معدلات",
+  "menuBreadcrumbEditModifierGroup": "تعديل مجموعة المعدلات",
+  "menuBreadcrumbMenu": "القائمة",
+  "menuBreadcrumbCreateMenu": "إنشاء قائمة",
+  "menuBreadcrumbEditMenu": "تعديل القائمة",
+  "menuBreadcrumbComposition": "التكوين",
+  "menuBreadcrumbVersionHistory": "سجل الإصدارات",
+  "productCatalogTitle": "المنتجات",
+  "productCatalogSubtitle": "أدر المنتجات المتاحة عبر قوائمك.",
+  "productCatalogCreateProduct": "إنشاء منتج",
+  "productCatalogRefresh": "تحديث المنتجات",
+  "productCatalogSearch": "ابحث عن المنتجات أو SKU أو الباركود",
+  "productCatalogLifecycle": "الحالة",
+  "productCatalogAllProducts": "كل المنتجات",
+  "productCatalogMoreFilters": "مزيد من الفلاتر",
+  "productCatalogMoreFiltersSemantic": "مزيد من الفلاتر، {count} نشط",
+  "@productCatalogMoreFiltersSemantic": {"placeholders": {"count": {"type": "int"}}},
+  "productCatalogClearAll": "مسح الكل",
+  "productCatalogClear": "مسح",
+  "productCatalogApply": "تطبيق",
+  "productCatalogSort": "فرز",
+  "productCatalogSortOrder": "ترتيب العرض",
+  "productCatalogNameAscending": "الاسم أ–ي",
+  "productCatalogNameDescending": "الاسم ي–أ",
+  "productCatalogNewest": "الأحدث أولاً",
+  "productCatalogProductType": "نوع المنتج",
+  "productCatalogHasVariants": "لديه خيارات",
+  "productCatalogNoVariants": "بدون خيارات",
+  "productCatalogHasModifiers": "لديه معدلات",
+  "productCatalogNoModifiers": "بدون معدلات",
+  "productCatalogStandard": "عادي",
+  "productCatalogOpenPrice": "سعر مفتوح",
+  "productCatalogCombo": "وجبة مجمعة",
+  "productCatalogSetup": "الإعداد",
+  "productCatalogDefaultVariant": "الافتراضي",
+  "productCatalogStatus": "الحالة",
+  "productCatalogOpen": "فتح",
+  "productCatalogManageVariants": "إدارة الخيارات",
+  "productCatalogManageModifiers": "إدارة المعدلات",
+  "productCatalogArchive": "أرشفة",
+  "productCatalogRestore": "استعادة",
+  "productCatalogActionsFor": "إجراءات المنتج {name}",
+  "@productCatalogActionsFor": {"placeholders": {"name": {"type": "String"}}},
+  "productCatalogSetupSummary": "{variants} خيارات · {modifiers} معدلات",
+  "@productCatalogSetupSummary": {"placeholders": {"variants": {"type": "int"}, "modifiers": {"type": "int"}}},
+  "productCatalogLoadMore": "تحميل مزيد من المنتجات",
+  "productCatalogUnableToLoad": "تعذر تحميل المنتجات.",
+  "productCatalogNoArchived": "لا توجد منتجات مؤرشفة.",
+  "productCatalogNoActive": "لا توجد منتجات نشطة.",
+  "productCatalogNoMatches": "لا تطابق أي منتجات هذه الفلاتر.",
+  "productCatalogNoProductsYet": "لم يتم إنشاء أي منتجات بعد.",
+  "productCatalogMoreFiltersHelper": "ضيّق قائمة المنتجات بمعايير إضافية.",
+  "productCatalogFilterClassification": "التصنيف",
+  "productCatalogFilterPreparation": "التحضير",
+  "productCatalogFilterProductSetup": "إعداد المنتج",
+  "productCatalogClearFilters": "مسح الفلاتر",
+  "productCatalogApplyFilters": "تطبيق الفلاتر",
+  "productUxGeneral": "عام",
+  "productUxClassification": "التصنيف",
+  "productUxSellingPreparation": "البيع والتحضير",
+  "productUxInitialSellingOption": "خيار البيع الأولي",
+  "productUxTranslations": "الترجمات",
+  "productUxAdvanced": "متقدم",
+  "productUxOverview": "نظرة عامة",
+  "productUxUsage": "الاستخدام",
+  "productUxVariants": "الأنواع",
+  "productUxModifiers": "الإضافات",
+  "productUxRecipeMaterials": "الوصفة والمواد",
+  "productUxAvailability": "التوفر",
+  "productUxCreateProduct": "إنشاء منتج",
+  "productUxSaveChanges": "حفظ التغييرات",
+  "productUxCancel": "إلغاء",
+  "productUxManageCatalogSetup": "إدارة إعدادات الكتالوج",
+  "productUxEditProduct": "تعديل المنتج",
+  "productUxArchived": "مؤرشف"
+  ,"productOverviewBasePrice": "السعر الأساسي"
+  ,"productOverviewVariants": "الأنواع"
+  ,"productOverviewModifierGroups": "مجموعات الإضافات"
+  ,"productOverviewStockTracking": "تتبع المخزون"
+  ,"productOverviewEnabled": "مفعّل"
+  ,"productOverviewDisabled": "غير مفعّل"
+  ,"productOverviewNotConfigured": "غير مهيأ"
+  ,"productOverviewProductSetup": "إعداد المنتج"
+  ,"productOverviewCategory": "الفئة"
+  ,"productOverviewDefaultVariant": "النوع الافتراضي"
+  ,"productOverviewKitchenStation": "محطة التحضير"
+  ,"productOverviewProductType": "نوع المنتج"
+  ,"productOverviewReportingCategory": "فئة التقارير"
+  ,"productOverviewPreparationTime": "وقت التحضير"
+  ,"productOverviewMinutes": "دقائق"
+  ,"modifierLibraryTitle": "مكتبة المعدلات"
+  ,"modifierLibrarySubtitle": "أنشئ خيارات عميل قابلة لإعادة الاستخدام ويمكن إسنادها إلى المنتجات."
+  ,"modifierCreateGroup": "إنشاء مجموعة معدلات"
+  ,"modifierSearch": "البحث في المعدلات"
+  ,"modifierActive": "نشط"
+  ,"modifierArchived": "مؤرشف"
+  ,"modifierAll": "الكل"
+  ,"modifierReorder": "إعادة الترتيب"
+  ,"modifierDone": "تم"
+  ,"modifierOptionsCount": "{count} خيارات"
+  ,"@modifierOptionsCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierOptionPreviewMore": "+ {count} المزيد"
+  ,"@modifierOptionPreviewMore": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleExactly": "يجب على العميل اختيار {count} خيار(ات) بالضبط."
+  ,"@modifierRuleExactly": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleOptionalExactly": "اختياري — يمكن للعميل اختيار {count} خيار(ات)."
+  ,"@modifierRuleOptionalExactly": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleAtLeastUpTo": "يجب على العميل اختيار {min} على الأقل وحتى {max} خيارات."
+  ,"@modifierRuleAtLeastUpTo": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}}
+  ,"modifierRuleOptionalUpTo": "اختياري — يمكن للعميل اختيار ما يصل إلى {max} خيارات."
+  ,"@modifierRuleOptionalUpTo": {"placeholders": {"max": {"type": "int"}}}
+  ,"modifierRuleQuantity": "يمكن إضافة الخيار نفسه أكثر من مرة."
+  ,"modifierViewGroup": "عرض المجموعة"
+  ,"modifierEditGroup": "تعديل المجموعة"
+  ,"modifierSetDefault": "تعيين كافتراضي"
+  ,"modifierMaterialAdjustments": "تعديلات المواد"
+  ,"modifierArchive": "أرشفة"
+  ,"modifierRestore": "استعادة"
+  ,"modifierNoGroups": "لم يتم إنشاء مجموعات معدلات بعد."
+  ,"modifierNoGroupMatches": "لا توجد مجموعات معدلات تطابق عوامل التصفية الحالية."
+  ,"modifierUnableToLoad": "تعذر تحميل مجموعات المعدلات."
+  ,"modifierRetry": "إعادة المحاولة"
+  ,"modifierLoadMore": "تحميل المزيد"
+  ,"modifierRefresh": "تحديث مجموعات المعدلات"
+  ,"modifierGroupDetailNotFound": "لم يتم العثور على مجموعة المعدلات."
+  ,"modifierOptions": "الخيارات"
+  ,"modifierAddOption": "إضافة خيار"
+  ,"modifierOptionFilter": "حالة الخيار"
+  ,"modifierNoArchivedOptions": "لا توجد خيارات معدلات مؤرشفة."
+  ,"modifierNoOptions": "لم يتم إنشاء خيارات معدلات بعد."
+  ,"modifierReorderOptions": "إعادة ترتيب الخيارات"
+  ,"modifierMoveUp": "نقل لأعلى"
+  ,"modifierMoveDown": "نقل لأسفل"
+  ,"modifierDefault": "افتراضي"
+  ,"modifierNoExtraCharge": "بدون تكلفة إضافية"
+  ,"modifierPriceAdjustment": "تعديل السعر"
+  ,"modifierMaterialUsageConfigured": "تم إعداد استخدام المواد"
+  ,"modifierStatusActive": "نشط"
+  ,"modifierStatusArchived": "مؤرشف"
+  ,"modifierStatusInactive": "غير نشط"
+  ,"modifierAdvancedDetails": "التفاصيل المتقدمة"
+  ,"modifierSelectionMode": "طريقة الاختيار"
+  ,"modifierMinimum": "الحد الأدنى"
+  ,"modifierMaximum": "الحد الأقصى"
+  ,"modifierAllowQuantity": "السماح بالكمية"
+  ,"modifierGroupType": "نوع المجموعة"
+  ,"modifierSortOrder": "ترتيب العرض"
+  ,"modifierCreateTitle": "إنشاء مجموعة معدلات"
+  ,"modifierEditTitle": "تعديل مجموعة معدلات"
+  ,"modifierBasicInformation": "المعلومات الأساسية"
+  ,"modifierBasicInformationHelper": "سمِّ مجموعة خيارات العميل القابلة لإعادة الاستخدام."
+  ,"modifierGroupName": "اسم مجموعة المعدلات"
+  ,"modifierGroupNameHint": "مثال: نوع الحليب"
+  ,"modifierInternalCode": "الرمز الداخلي"
+  ,"modifierGroupTypeChoice": "اختيار"
+  ,"modifierGroupTypeAddOn": "إضافة"
+  ,"modifierGroupTypePreparation": "تعليمات التحضير"
+  ,"modifierYes": "نعم"
+  ,"modifierNo": "لا"
+  ,"modifierTranslations": "الترجمات"
+  ,"modifierArabic": "العربية"
+  ,"modifierEnglish": "الإنجليزية"
+  ,"modifierClose": "إغلاق"
+  ,"modifierSelectionRules": "قواعد الاختيار"
+  ,"modifierSelectionRulesHelper": "حدد طريقة تفاعل العملاء مع هذه الخيارات."
+  ,"modifierHowChoose": "كيف ينبغي للعملاء الاختيار؟"
+  ,"modifierChooseOne": "اختيار واحد"
+  ,"modifierChooseMultiple": "اختيارات متعددة"
+  ,"modifierChoiceRequired": "هل الاختيار مطلوب؟"
+  ,"modifierOptional": "اختياري"
+  ,"modifierRequired": "مطلوب"
+  ,"modifierMinimumChoices": "الحد الأدنى للاختيارات"
+  ,"modifierMaximumChoices": "الحد الأقصى للاختيارات"
+  ,"modifierSameOptionQuantity": "هل يمكن إضافة الخيار نفسه أكثر من مرة؟"
+  ,"modifierQuantityHelper": "مثال: 2 من الإضافات."
+  ,"modifierCurrentRuleSummary": "ملخص القاعدة الحالية"
+  ,"modifierInitialOption": "الخيار الأولي"
+  ,"modifierInitialOptionHelper": "يمكنك إضافة خيارات أخرى بعد إنشاء مجموعة المعدلات."
+  ,"modifierOptionName": "اسم الخيار"
+  ,"modifierOptionNameHint": "مثال: حليب كامل الدسم"
+  ,"modifierAdvanced": "متقدم"
+  ,"modifierActiveStatus": "الحالة النشطة"
+  ,"modifierAvailableForUse": "متاح للاستخدام في القوائم."
+  ,"modifierCancel": "إلغاء"
+  ,"modifierSaveChanges": "حفظ التغييرات"
+  ,"modifierCreateAction": "إنشاء مجموعة معدلات"
+  ,"modifierSaving": "جارٍ الحفظ..."
+  ,"modifierUnsavedChanges": "لديك تغييرات غير محفوظة. هل تريد المغادرة دون حفظ؟"
+  ,"modifierStay": "البقاء"
+  ,"modifierLeave": "مغادرة"
+  ,"modifierOptionCreateTitle": "إضافة خيار"
+  ,"modifierOptionEditTitle": "تعديل الخيار"
+  ,"modifierOptionBasicInformation": "المعلومات الأساسية"
+  ,"modifierOptionDefault": "خيار افتراضي"
+  ,"modifierOptionActive": "نشط"
+  ,"modifierOptionAvailable": "متاح"
+  ,"modifierOptionAdvanced": "متقدم"
+  ,"modifierOptionSave": "حفظ"
+  ,"modifierOptionSaving": "جارٍ الحفظ..."
+  ,"modifierOptionNameRequired": "اسم الخيار مطلوب."
+  ,"modifierOptionPriceInvalid": "يجب أن يكون تعديل السعر صفراً أو قيمة موجبة."
+  ,"modifierOptionSortInvalid": "أدخل رقماً صحيحاً لترتيب العرض."
+  ,"modifierArchiveGroupTitle": "أرشفة مجموعة المعدلات؟"
+  ,"modifierArchiveOptionTitle": "أرشفة خيار المعدلات؟"
+  ,"modifierArchiveMessage": "يبقى العنصر محفوظاً ويمكن استعادته لاحقاً."
+  ,"modifierConfirmArchive": "أرشفة"
+  ,"modifierOptionSaveError": "تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى."
+  ,"modifierGroupSaveError": "تعذر حفظ مجموعة المعدلات."
+  ,"modifierGroupRequired": "اسم مجموعة المعدلات مطلوب."
+  ,"modifierNumberInvalid": "أدخل صفراً أو رقماً صحيحاً موجباً."
+  ,"modifierMaximumMinimumError": "يجب أن يكون الحد الأقصى أكبر من أو مساوياً للحد الأدنى."
+  ,"modifierSingleMaximumError": "لا يمكن أن يتجاوز الحد الأقصى لمجموعة الاختيار الواحد 1."
+  ,"modifierRequiredMinimumError": "تحتاج المجموعات المطلوبة إلى حد أدنى لا يقل عن 1."
+  ,"modifierInitialOptionRequired": "الخيار النشط الأولي مطلوب."
+  ,"modifierPriceInvalid": "أدخل صفراً أو سعراً موجباً."
+  ,"modifierInitialMaximumError": "تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1."
 }

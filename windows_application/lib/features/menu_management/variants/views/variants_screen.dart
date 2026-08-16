@@ -4,8 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../controllers/product_catalog_cubit.dart';
 import '../../models/catalog_models.dart';
@@ -15,13 +15,19 @@ import '../controllers/variants_state.dart';
 import '../models/variant_editor_draft.dart';
 
 class VariantsScreen extends StatefulWidget {
-  const VariantsScreen({super.key, required this.productId});
+  const VariantsScreen({
+    super.key,
+    required this.productId,
+    this.embedded = false,
+  });
   final int productId;
+  final bool embedded;
   @override
   State<VariantsScreen> createState() => _VariantsScreenState();
 }
 
 class _VariantsScreenState extends State<VariantsScreen> {
+  bool _reorderMode = false;
   @override
   void initState() {
     super.initState();
@@ -77,81 +83,110 @@ class _VariantsScreenState extends State<VariantsScreen> {
     return DesktopPageLayout(
       padding: EdgeInsets.zero,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.xl,
+          AppSpacing.md,
+          AppSpacing.xl,
+          AppSpacing.xxxl,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 980),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                TextButton.icon(
-                  onPressed: () =>
-                      context.go('/menu-management/products/${product.id}'),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back'),
+                if (!widget.embedded) ...<Widget>[
+                  TextButton.icon(
+                    onPressed: () =>
+                        context.go('/menu-management/products/${product.id}'),
+                    icon: const Icon(Icons.arrow_back),
+                    label: Text(product.name),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Expanded(
+                      child: _ScreenIntroduction(
+                        title: 'Variants',
+                        helper:
+                            'Manage the selling options available for this Product.',
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    FilledButton.icon(
+                      key: const Key('add-variant-action'),
+                      onPressed: state.isMutating ? null : () => _edit(),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Variant'),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                OutlinedButton.icon(
-                  onPressed: state.isMutating
-                      ? null
-                      : () => context.read<VariantsCubit>().refresh(),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh'),
+                const SizedBox(height: AppSpacing.lg),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: <Widget>[
+                    SegmentedButton<VariantFilter>(
+                      segments: const <ButtonSegment<VariantFilter>>[
+                        ButtonSegment(
+                          value: VariantFilter.active,
+                          label: Text('Active'),
+                        ),
+                        ButtonSegment(
+                          value: VariantFilter.archived,
+                          label: Text('Archived'),
+                        ),
+                        ButtonSegment(
+                          value: VariantFilter.all,
+                          label: Text('All'),
+                        ),
+                      ],
+                      selected: <VariantFilter>{state.filter},
+                      onSelectionChanged: state.isMutating || _reorderMode
+                          ? null
+                          : (value) => context
+                                .read<VariantsCubit>()
+                                .selectFilter(value.first),
+                    ),
+                    OutlinedButton.icon(
+                      key: const Key('variant-reorder-action'),
+                      onPressed:
+                          state.isMutating ||
+                              (state.filter != VariantFilter.active &&
+                                  !_reorderMode)
+                          ? null
+                          : () => setState(() => _reorderMode = !_reorderMode),
+                      icon: Icon(_reorderMode ? Icons.check : Icons.reorder),
+                      label: Text(_reorderMode ? 'Done' : 'Reorder'),
+                    ),
+                    IconButton(
+                      tooltip: 'Refresh Variants',
+                      onPressed: state.isMutating
+                          ? null
+                          : () => context.read<VariantsCubit>().refresh(),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                FilledButton.icon(
-                  key: const Key('add-variant-action'),
-                  onPressed: state.isMutating ? null : () => _edit(),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Variant'),
+                if (state.formError != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.md),
+                  _ErrorBanner(state.formError!),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                _VariantTable(
+                  state: state,
+                  reorderMode: _reorderMode,
+                  edit: _edit,
+                  setDefault: _setDefault,
+                  archive: _archive,
+                  restore: _restore,
+                  move: _move,
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              product.name,
-              style: AppTextStyles.headlineMedium.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              'Variants & Base Pricing',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            if (state.formError != null) ...<Widget>[
-              const SizedBox(height: AppSpacing.md),
-              _ErrorBanner(state.formError!),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            SegmentedButton<VariantFilter>(
-              segments: const <ButtonSegment<VariantFilter>>[
-                ButtonSegment(
-                  value: VariantFilter.active,
-                  label: Text('Active'),
-                ),
-                ButtonSegment(
-                  value: VariantFilter.archived,
-                  label: Text('Archived'),
-                ),
-                ButtonSegment(value: VariantFilter.all, label: Text('All')),
-              ],
-              selected: <VariantFilter>{state.filter},
-              onSelectionChanged: state.isMutating
-                  ? null
-                  : (value) =>
-                        context.read<VariantsCubit>().selectFilter(value.first),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            _VariantTable(
-              state: state,
-              edit: _edit,
-              setDefault: _setDefault,
-              archive: _archive,
-              restore: _restore,
-              move: _move,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -325,6 +360,7 @@ class _VariantsScreenState extends State<VariantsScreen> {
 class _VariantTable extends StatelessWidget {
   const _VariantTable({
     required this.state,
+    required this.reorderMode,
     required this.edit,
     required this.setDefault,
     required this.archive,
@@ -332,6 +368,7 @@ class _VariantTable extends StatelessWidget {
     required this.move,
   });
   final VariantsState state;
+  final bool reorderMode;
   final ValueChanged<ProductVariant> edit;
   final ValueChanged<ProductVariant> setDefault;
   final ValueChanged<ProductVariant> archive;
@@ -341,6 +378,18 @@ class _VariantTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<ProductVariant> items = state.visibleVariants;
     if (items.isEmpty) return _Empty(filter: state.filter);
+    return _VariantCompactRows(
+      items: items,
+      state: state,
+      recipeRequired: state.product!.isStockTracked,
+      reorderMode: reorderMode,
+      edit: edit,
+      setDefault: setDefault,
+      archive: archive,
+      restore: restore,
+      move: move,
+    );
+    /*
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -496,6 +545,344 @@ class _VariantTable extends StatelessWidget {
       ),
     );
   }
+}
+*/
+  }
+}
+
+class _VariantCompactRows extends StatelessWidget {
+  const _VariantCompactRows({
+    required this.items,
+    required this.state,
+    required this.recipeRequired,
+    required this.reorderMode,
+    required this.edit,
+    required this.setDefault,
+    required this.archive,
+    required this.restore,
+    required this.move,
+  });
+  final List<ProductVariant> items;
+  final VariantsState state;
+  final bool recipeRequired;
+  final bool reorderMode;
+  final ValueChanged<ProductVariant> edit;
+  final ValueChanged<ProductVariant> setDefault;
+  final ValueChanged<ProductVariant> archive;
+  final ValueChanged<ProductVariant> restore;
+  final void Function(ProductVariant, int) move;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: items
+        .map((ProductVariant variant) {
+          final int order = state.activeVariants.indexWhere(
+            (item) => item.id == variant.id,
+          );
+          return Container(
+            key: Key('variant-row-${variant.id}'),
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: AppSpacing.allLg,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.border),
+              borderRadius: AppRadius.card,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (reorderMode && !variant.isArchived) ...<Widget>[
+                  Column(
+                    children: <Widget>[
+                      const Icon(
+                        Icons.drag_indicator,
+                        semanticLabel: 'Reorder',
+                      ),
+                      IconButton(
+                        tooltip: 'Move up',
+                        onPressed: state.isMutating || order == 0
+                            ? null
+                            : () => move(variant, -1),
+                        icon: const Icon(Icons.keyboard_arrow_up),
+                      ),
+                      IconButton(
+                        tooltip: 'Move down',
+                        onPressed:
+                            state.isMutating ||
+                                order == state.activeVariants.length - 1
+                            ? null
+                            : () => move(variant, 1),
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            variant.displayName(
+                              Localizations.localeOf(context),
+                            ),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          if (variant.isDefault) const _VariantBadge('Default'),
+                        ],
+                      ),
+                      if (variant.sku?.isNotEmpty == true)
+                        Text(
+                          'SKU: ${variant.sku}',
+                          textDirection: TextDirection.ltr,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: _VariantFact(
+                    catalogMoney(variant.basePrice),
+                    'Base price',
+                    ltr: true,
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _VariantStatus(
+                    state.recipeConfigured[variant.id] == true
+                        ? 'Recipe configured'
+                        : recipeRequired
+                        ? 'Recipe missing'
+                        : 'Recipe not configured',
+                    state.recipeConfigured[variant.id] == true
+                        ? Icons.check_circle_outline
+                        : recipeRequired
+                        ? Icons.warning_amber_outlined
+                        : Icons.info_outline,
+                    state.recipeConfigured[variant.id] == true
+                        ? AppColors.success
+                        : recipeRequired
+                        ? AppColors.warning
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                Expanded(
+                  child: _VariantStatus(
+                    variant.isArchived ? 'Archived' : 'Active',
+                    variant.isArchived
+                        ? Icons.archive_outlined
+                        : Icons.check_circle_outline,
+                    variant.isArchived
+                        ? AppColors.textSecondary
+                        : AppColors.success,
+                  ),
+                ),
+                PopupMenuButton<_VariantAction>(
+                  key: Key('variant-overflow-${variant.id}'),
+                  tooltip: 'Actions for ${variant.name}',
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (action) =>
+                      _variantAction(context, action, variant),
+                  itemBuilder: (context) => _items(variant),
+                ),
+              ],
+            ),
+          );
+        })
+        .toList(growable: false),
+  );
+
+  List<PopupMenuEntry<_VariantAction>> _items(ProductVariant variant) =>
+      variant.isArchived
+      ? <PopupMenuEntry<_VariantAction>>[
+          _item(_VariantAction.restore, 'Restore', Icons.restore),
+        ]
+      : <PopupMenuEntry<_VariantAction>>[
+          _item(_VariantAction.edit, 'Edit Variant', Icons.edit_outlined),
+          _item(
+            _VariantAction.recipe,
+            'Manage Recipe',
+            Icons.receipt_long_outlined,
+          ),
+          _item(_VariantAction.pricing, 'Pricing', Icons.price_change_outlined),
+          _item(
+            _VariantAction.sellingHours,
+            'Selling Hours',
+            Icons.schedule_outlined,
+          ),
+          _item(
+            _VariantAction.currentAvailability,
+            'Current Availability',
+            Icons.do_not_disturb_on_outlined,
+          ),
+          if (!variant.isDefault)
+            _item(
+              _VariantAction.setDefault,
+              'Set as Default',
+              Icons.star_outline,
+            ),
+          const PopupMenuDivider(),
+          _item(_VariantAction.archive, 'Archive', Icons.archive_outlined),
+        ];
+
+  PopupMenuItem<_VariantAction> _item(
+    _VariantAction action,
+    String label,
+    IconData icon,
+  ) => PopupMenuItem<_VariantAction>(
+    value: action,
+    child: Row(
+      children: <Widget>[
+        Icon(icon, size: 18),
+        const SizedBox(width: AppSpacing.sm),
+        Text(label),
+      ],
+    ),
+  );
+
+  void _variantAction(
+    BuildContext context,
+    _VariantAction action,
+    ProductVariant variant,
+  ) {
+    if (state.isMutating) return;
+    switch (action) {
+      case _VariantAction.edit:
+        edit(variant);
+      case _VariantAction.recipe:
+        context.go(
+          '/menu-management/product-variants/${variant.id}/recipe?productId=${state.product!.id}',
+        );
+      case _VariantAction.pricing:
+        context.go(
+          '/menu-management/products/${state.product!.id}/variants/${variant.id}/pricing',
+        );
+      case _VariantAction.sellingHours:
+        context.go(
+          '/menu-management/products/${state.product!.id}/availability?variantId=${variant.id}&from=variants',
+        );
+      case _VariantAction.currentAvailability:
+        context.go(
+          '/menu-management/products/${state.product!.id}/operational-availability?variantId=${variant.id}&from=variants',
+        );
+      case _VariantAction.setDefault:
+        setDefault(variant);
+      case _VariantAction.archive:
+        archive(variant);
+      case _VariantAction.restore:
+        restore(variant);
+    }
+  }
+}
+
+enum _VariantAction {
+  edit,
+  recipe,
+  pricing,
+  sellingHours,
+  currentAvailability,
+  setDefault,
+  archive,
+  restore,
+}
+
+class _VariantBadge extends StatelessWidget {
+  const _VariantBadge(this.label);
+  final String label;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsetsDirectional.symmetric(
+      horizontal: AppSpacing.sm,
+      vertical: 2,
+    ),
+    decoration: BoxDecoration(
+      color: AppColors.primarySoft,
+      borderRadius: AppRadius.pillRadius,
+    ),
+    child: Text(
+      label.toUpperCase(),
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
+class _VariantFact extends StatelessWidget {
+  const _VariantFact(this.value, this.label, {this.ltr = false});
+  final String value;
+  final String label;
+  final bool ltr;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(
+        value,
+        textDirection: ltr ? TextDirection.ltr : null,
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
+      Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+      ),
+    ],
+  );
+}
+
+class _VariantStatus extends StatelessWidget {
+  const _VariantStatus(this.label, this.icon, this.color);
+  final String label;
+  final IconData icon;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: label,
+    child: Row(
+      children: <Widget>[
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: AppSpacing.xs),
+        Flexible(
+          child: Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: color),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ScreenIntroduction extends StatelessWidget {
+  const _ScreenIntroduction({required this.title, required this.helper});
+  final String title;
+  final String helper;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(title, style: Theme.of(context).textTheme.headlineSmall),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        helper,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+      ),
+    ],
+  );
 }
 
 class _VariantEditorDialog extends StatefulWidget {

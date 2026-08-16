@@ -19,6 +19,7 @@ class ProductModifierAssignmentsState extends Equatable {
     this.assignments = const <ProductModifierAssignment>[],
     this.loadedAssignments = const <ProductModifierAssignment>[],
     this.availableGroups = const <ModifierGroupRecord>[],
+    this.materialImpactConfiguredGroupIds = const <int>{},
     this.fieldErrors = const <String, String>{},
     this.errorMessage,
     this.successMessage,
@@ -29,6 +30,7 @@ class ProductModifierAssignmentsState extends Equatable {
   final List<ProductModifierAssignment> assignments;
   final List<ProductModifierAssignment> loadedAssignments;
   final List<ModifierGroupRecord> availableGroups;
+  final Set<int> materialImpactConfiguredGroupIds;
   final Map<String, String> fieldErrors;
   final String? errorMessage;
   final String? successMessage;
@@ -48,6 +50,7 @@ class ProductModifierAssignmentsState extends Equatable {
     List<ProductModifierAssignment>? assignments,
     List<ProductModifierAssignment>? loadedAssignments,
     List<ModifierGroupRecord>? availableGroups,
+    Set<int>? materialImpactConfiguredGroupIds,
     Map<String, String>? fieldErrors,
     String? errorMessage,
     String? successMessage,
@@ -61,6 +64,9 @@ class ProductModifierAssignmentsState extends Equatable {
     assignments: assignments ?? this.assignments,
     loadedAssignments: loadedAssignments ?? this.loadedAssignments,
     availableGroups: availableGroups ?? this.availableGroups,
+    materialImpactConfiguredGroupIds:
+        materialImpactConfiguredGroupIds ??
+        this.materialImpactConfiguredGroupIds,
     fieldErrors: clearErrors
         ? const <String, String>{}
         : fieldErrors ?? this.fieldErrors,
@@ -75,6 +81,7 @@ class ProductModifierAssignmentsState extends Equatable {
     assignments,
     loadedAssignments,
     availableGroups,
+    materialImpactConfiguredGroupIds,
     fieldErrors,
     errorMessage,
     successMessage,

@@ -1,26 +1,33 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/localization/localization_extensions.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
-import '../../widgets/catalog_formatters.dart';
-import '../../widgets/menu_management_tabs.dart';
+import '../../widgets/menu_content_components.dart';
+import '../../widgets/menu_page_header.dart';
 import '../controllers/modifier_group_detail_cubit.dart';
 import '../models/modifier_editor_drafts.dart';
 import '../models/modifier_models.dart';
+import '../widgets/modifier_presentation.dart';
+import '../../../menu_management/widgets/catalog_formatters.dart';
 
 class ModifierGroupDetailScreen extends StatefulWidget {
   const ModifierGroupDetailScreen({super.key, required this.groupId});
+
   final int groupId;
+
   @override
   State<ModifierGroupDetailScreen> createState() =>
       _ModifierGroupDetailScreenState();
 }
 
 class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
+  bool _reordering = false;
+
   @override
   void initState() {
     super.initState();
@@ -36,329 +43,587 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
     builder: (context, state) {
       final ModifierGroupDetailCubit cubit = context
           .read<ModifierGroupDetailCubit>();
-      if (state.status == ModifierDetailStatus.loading && state.group == null)
+      final l10n = context.l10n;
+      if (state.status == ModifierDetailStatus.loading && state.group == null) {
         return const DesktopPageLayout(
           child: Center(child: CircularProgressIndicator()),
         );
-      if (state.group == null)
+      }
+      if (state.group == null) {
         return DesktopPageLayout(
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(state.errorMessage ?? 'Modifier group not found.'),
-                FilledButton(
-                  onPressed: () => cubit.load(widget.groupId),
-                  child: const Text('Retry'),
-                ),
-              ],
+          child: EmptyState(
+            title: l10n.modifierGroupDetailNotFound,
+            message: state.errorMessage ?? l10n.modifierGroupDetailNotFound,
+            recoveryAction: EmptyStateAction(
+              label: l10n.modifierRetry,
+              onPressed: () => cubit.load(widget.groupId),
             ),
           ),
         );
+      }
+
       final ModifierGroupRecord group = state.group!;
       return DesktopPageLayout(
+        padding: EdgeInsets.zero,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            120,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  IconButton(
-                    onPressed: () => context.go('/menu-management/modifiers'),
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  Expanded(
-                    child: Text(
-                      group.displayName(Localizations.localeOf(context)),
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  if (!group.isArchived)
-                    OutlinedButton.icon(
-                      onPressed: () => context.go(
-                        '/menu-management/modifiers/${group.id}/edit',
-                      ),
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'),
-                    ),
-                  IconButton(
-                    tooltip: 'Refresh',
-                    onPressed: state.currentActionId == null
-                        ? cubit.refresh
-                        : null,
-                    icon: const Icon(Icons.refresh),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const MenuManagementTabs(selected: 'modifiers'),
-              const SizedBox(height: 20),
-              _configuration(context, group),
-              const SizedBox(height: 24),
-              Row(
-                children: <Widget>[
-                  const Expanded(
-                    child: Text(
-                      'Options',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  DropdownButton<String>(
-                    value: state.optionFilter,
-                    items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem(value: 'active', child: Text('Active')),
-                      DropdownMenuItem(
-                        value: 'archived',
-                        child: Text('Archived'),
-                      ),
-                      DropdownMenuItem(value: 'all', child: Text('All')),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) cubit.setOptionFilter(v);
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: group.isArchived || state.currentActionId != null
+                  MenuPageHeader(
+                    title: group.displayName(Localizations.localeOf(context)),
+                    subtitle: modifierRuleSummary(context, group),
+                    primaryAction: group.isArchived
                         ? null
-                        : () => _optionDialog(context, cubit),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Option'),
+                        : FilledButton.icon(
+                            key: const Key('add-modifier-option-action'),
+                            onPressed: state.currentActionId != null
+                                ? null
+                                : () => _optionDialog(context, cubit),
+                            icon: const Icon(Icons.add),
+                            label: Text(l10n.modifierAddOption),
+                          ),
+                    secondaryActions: <Widget>[
+                      if (!group.isArchived)
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(
+                            '/menu-management/modifiers/${group.id}/edit',
+                          ),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: Text(l10n.modifierEditGroup),
+                        ),
+                    ],
+                    overflowActions: <MenuOverflowAction>[
+                      MenuOverflowAction(
+                        label: group.isArchived
+                            ? l10n.modifierRestore
+                            : l10n.modifierArchive,
+                        icon: group.isArchived
+                            ? Icons.restore
+                            : Icons.archive_outlined,
+                        onSelected: group.isArchived
+                            ? () => cubit.restoreGroup()
+                            : () => _archiveGroup(context, cubit),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.sm,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: <Widget>[
+                      modifierStatusBadge(context, group),
+                      _Metric(
+                        label: l10n.modifierOptions,
+                        value: modifierOptionCountLabel(
+                          context,
+                          group.optionCount,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  ContentSection(
+                    title: l10n.modifierCurrentRuleSummary,
+                    child: Semantics(
+                      liveRegion: true,
+                      label: modifierRuleSummary(context, group),
+                      child: Text(
+                        modifierRuleSummary(context, group),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  DetailsDisclosure(
+                    title: l10n.modifierAdvancedDetails,
+                    child: Wrap(
+                      spacing: AppSpacing.xxxl,
+                      runSpacing: AppSpacing.lg,
+                      children: <Widget>[
+                        _DetailValue(
+                          label: l10n.modifierSelectionMode,
+                          value: group.selectionType,
+                        ),
+                        _DetailValue(
+                          label: l10n.modifierMinimum,
+                          value: '${group.minSelections}',
+                        ),
+                        _DetailValue(
+                          label: l10n.modifierMaximum,
+                          value: '${group.maxSelections}',
+                        ),
+                        _DetailValue(
+                          label: l10n.modifierAllowQuantity,
+                          value: group.allowQuantity
+                              ? l10n.modifierYes
+                              : l10n.modifierNo,
+                        ),
+                        _DetailValue(
+                          label: l10n.modifierGroupType,
+                          value: group.groupType,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxxl),
+                  _OptionsSection(
+                    state: state,
+                    group: group,
+                    reordering: _reordering,
+                    onReorder: () => setState(() => _reordering = true),
+                    onDone: () => setState(() => _reordering = false),
+                    onMove: cubit.move,
+                    onOption: (option) =>
+                        _optionDialog(context, cubit, option: option),
+                    onArchive: (option) =>
+                        _archiveOption(context, cubit, option),
+                    onRestore: cubit.restoreOption,
+                    onDefault: (option) => _optionDialog(
+                      context,
+                      cubit,
+                      option: option,
+                      setDefault: true,
+                    ),
+                  ),
+                  if (state.errorMessage != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    _ErrorPanel(message: state.errorMessage!),
+                  ],
                 ],
               ),
-              if (state.errorMessage != null)
-                _error(context, state.errorMessage!),
-              const SizedBox(height: 8),
-              if (state.visibleOptions.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Text(
-                    state.optionFilter == 'archived'
-                        ? 'No archived modifier options.'
-                        : 'No modifier options have been created yet.',
-                  ),
-                )
-              else
-                _options(context, state, cubit),
-              const SizedBox(height: 20),
-              const Text(
-                'Product assignments will be managed separately.',
-                style: TextStyle(fontStyle: FontStyle.italic),
-              ),
-            ],
+            ),
           ),
         ),
       );
     },
   );
+}
 
-  Widget _configuration(BuildContext context, ModifierGroupRecord g) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+class _OptionsSection extends StatelessWidget {
+  const _OptionsSection({
+    required this.state,
+    required this.group,
+    required this.reordering,
+    required this.onReorder,
+    required this.onDone,
+    required this.onMove,
+    required this.onOption,
+    required this.onArchive,
+    required this.onRestore,
+    required this.onDefault,
+  });
+
+  final ModifierGroupDetailState state;
+  final ModifierGroupRecord group;
+  final bool reordering;
+  final VoidCallback onReorder;
+  final VoidCallback onDone;
+  final void Function(ModifierOptionRecord, int) onMove;
+  final ValueChanged<ModifierOptionRecord> onOption;
+  final ValueChanged<ModifierOptionRecord> onArchive;
+  final ValueChanged<int> onRestore;
+  final ValueChanged<ModifierOptionRecord> onDefault;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final List<ModifierOptionRecord> options = state.visibleOptions;
+    return ContentSection(
+      title: l10n.modifierOptions,
+      trailingAction: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
         children: <Widget>[
-          Text(
-            g.minSelections == g.maxSelections
-                ? context.maybeL10n?.modifierSelectionExactly(
-                        g.minSelections,
-                      ) ??
-                      'Customer must choose exactly ${g.minSelections} option(s).'
-                : context.maybeL10n?.modifierSelectionRange(
-                        g.minSelections,
-                        g.maxSelections,
-                      ) ??
-                      'Customer may choose from ${g.minSelections} to ${g.maxSelections} options.',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 40,
-            runSpacing: 16,
-            children: <Widget>[
-              _item('Arabic name', g.nameAr ?? '—'),
-              _item('English name', g.nameEn ?? '—'),
-              _item('Group type', g.groupType.replaceAll('_', ' ')),
-              _item('Selection type', g.selectionType),
-              _item('Required', g.isRequired ? 'Yes' : 'No'),
-              _item('Selections', '${g.minSelections} to ${g.maxSelections}'),
-              _item('Allow quantity', g.allowQuantity ? 'Yes' : 'No'),
-              _item(
-                'Status',
-                g.isArchived
-                    ? 'Archived'
-                    : g.isActive
-                    ? 'Active'
-                    : 'Inactive',
+          SegmentedButton<String>(
+            segments: <ButtonSegment<String>>[
+              ButtonSegment(value: 'active', label: Text(l10n.modifierActive)),
+              ButtonSegment(
+                value: 'archived',
+                label: Text(l10n.modifierArchived),
               ),
+              ButtonSegment(value: 'all', label: Text(l10n.modifierAll)),
             ],
+            selected: <String>{state.optionFilter},
+            onSelectionChanged: (values) => context
+                .read<ModifierGroupDetailCubit>()
+                .setOptionFilter(values.first),
           ),
+          if (reordering)
+            OutlinedButton.icon(
+              onPressed: onDone,
+              icon: const Icon(Icons.check),
+              label: Text(l10n.modifierDone),
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: group.isArchived || state.optionFilter != 'active'
+                  ? null
+                  : onReorder,
+              icon: const Icon(Icons.swap_vert),
+              label: Text(l10n.modifierReorderOptions),
+            ),
         ],
       ),
-    ),
-  );
-  Widget _item(String label, String value) => SizedBox(
-    width: 150,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        Text(value),
-      ],
-    ),
-  );
-  Widget _options(
-    BuildContext context,
-    ModifierGroupDetailState state,
-    ModifierGroupDetailCubit cubit,
-  ) => Card(
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: const <DataColumn>[
-          DataColumn(label: Text('Name')),
-          DataColumn(label: Text('Price delta')),
-          DataColumn(label: Text('Default')),
-          DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Sort order')),
-          DataColumn(label: Text('Actions')),
-        ],
-        rows: state.visibleOptions.asMap().entries.map((entry) {
-          final int index = entry.key;
-          final ModifierOptionRecord o = entry.value;
-          return DataRow(
-            cells: <DataCell>[
-              DataCell(Text(o.displayName(Localizations.localeOf(context)))),
-              DataCell(Text(catalogMoney(o.priceDelta))),
-              DataCell(
-                o.isDefault
-                    ? const Chip(label: Text('Default'))
-                    : const Text('—'),
+      child: options.isEmpty
+          ? Padding(
+              padding: AppSpacing.allXl,
+              child: Text(
+                state.optionFilter == 'archived'
+                    ? l10n.modifierNoArchivedOptions
+                    : l10n.modifierNoOptions,
               ),
-              DataCell(
-                Text(
-                  o.isArchived
-                      ? 'Archived'
-                      : o.isActive
-                      ? 'Active'
-                      : 'Inactive',
-                ),
+            )
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                borderRadius: AppRadius.control,
               ),
-              DataCell(Text('${o.sortOrder}')),
-              DataCell(
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+              child: Column(
+                children: <Widget>[
+                  for (
+                    int index = 0;
+                    index < options.length;
+                    index++
+                  ) ...<Widget>[
+                    _OptionRow(
+                      option: options[index],
+                      index: index,
+                      total: options.length,
+                      reordering: reordering,
+                      busy: state.currentActionId == options[index].id,
+                      onMove: onMove,
+                      onEdit: onOption,
+                      onArchive: onArchive,
+                      onRestore: onRestore,
+                      onDefault: onDefault,
+                    ),
+                    if (index < options.length - 1)
+                      const Divider(height: 1, indent: 56, endIndent: 12),
+                  ],
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class _OptionRow extends StatelessWidget {
+  const _OptionRow({
+    required this.option,
+    required this.index,
+    required this.total,
+    required this.reordering,
+    required this.busy,
+    required this.onMove,
+    required this.onEdit,
+    required this.onArchive,
+    required this.onRestore,
+    required this.onDefault,
+  });
+
+  final ModifierOptionRecord option;
+  final int index;
+  final int total;
+  final bool reordering;
+  final bool busy;
+  final void Function(ModifierOptionRecord, int) onMove;
+  final ValueChanged<ModifierOptionRecord> onEdit;
+  final ValueChanged<ModifierOptionRecord> onArchive;
+  final ValueChanged<int> onRestore;
+  final ValueChanged<ModifierOptionRecord> onDefault;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final Locale locale = Localizations.localeOf(context);
+    final List<PopupMenuEntry<String>> menu = <PopupMenuEntry<String>>[
+      if (!option.isArchived)
+        PopupMenuItem(value: 'edit', child: Text(l10n.modifierOptionEditTitle)),
+      if (!option.isArchived)
+        PopupMenuItem(
+          value: 'adjustments',
+          child: Text(l10n.modifierMaterialAdjustments),
+        ),
+      if (!option.isArchived && !option.isDefault)
+        PopupMenuItem(value: 'default', child: Text(l10n.modifierSetDefault)),
+      PopupMenuItem(
+        value: option.isArchived ? 'restore' : 'archive',
+        child: Text(
+          option.isArchived ? l10n.modifierRestore : l10n.modifierArchive,
+        ),
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) => Semantics(
+        container: true,
+        label:
+            '${option.displayName(locale)}, ${option.isDefault ? l10n.modifierDefault : ''}',
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              if (reordering)
+                const Padding(
+                  padding: EdgeInsetsDirectional.only(top: 8),
+                  child: Icon(Icons.drag_indicator, color: AppColors.textMuted),
+                )
+              else
+                const SizedBox(width: 24),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    IconButton(
-                      tooltip: 'Move up',
-                      onPressed:
-                          o.isArchived || index == 0 || state.isReordering
-                          ? null
-                          : () => cubit.move(o, -1),
-                      icon: const Icon(Icons.arrow_upward),
-                    ),
-                    IconButton(
-                      tooltip: 'Move down',
-                      onPressed:
-                          o.isArchived ||
-                              index == state.visibleOptions.length - 1 ||
-                              state.isReordering
-                          ? null
-                          : () => cubit.move(o, 1),
-                      icon: const Icon(Icons.arrow_downward),
-                    ),
-                    IconButton(
-                      tooltip: 'Edit',
-                      onPressed: o.isArchived || state.currentActionId != null
-                          ? null
-                          : () => _optionDialog(context, cubit, option: o),
-                      icon: const Icon(Icons.edit),
-                    ),
-                    IconButton(
-                      tooltip: 'Material Adjustments',
-                      onPressed: o.isArchived
-                          ? null
-                          : () => context.go(
-                              '/menu-management/modifier-options/${o.id}/recipe-adjustments',
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          option.displayName(locale),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        if (option.isDefault)
+                          Container(
+                            padding: const EdgeInsetsDirectional.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
                             ),
-                      icon: const Icon(Icons.receipt_long_outlined),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: AppRadius.pillRadius,
+                            ),
+                            child: Text(
+                              l10n.modifierDefault,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ),
+                      ],
                     ),
-                    IconButton(
-                      tooltip: o.isArchived ? 'Restore' : 'Archive',
-                      onPressed: state.currentActionId == null
-                          ? () => o.isArchived
-                                ? cubit.restoreOption(o.id)
-                                : _archiveOption(context, cubit, o.id)
-                          : null,
-                      icon: Icon(
-                        o.isArchived ? Icons.unarchive : Icons.archive,
-                      ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      option.priceDelta == 0
+                          ? l10n.modifierNoExtraCharge
+                          : '+${catalogMoney(option.priceDelta)}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
               ),
+              if (constraints.maxWidth >= 760)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 4),
+                  child: modifierOptionStatusBadge(context, option),
+                ),
+              if (reordering)
+                _OptionMoveButtons(
+                  canMoveUp: index > 0,
+                  canMoveDown: index < total - 1,
+                  disabled: busy || option.isArchived,
+                  onUp: () => onMove(option, -1),
+                  onDown: () => onMove(option, 1),
+                ),
+              PopupMenuButton<String>(
+                tooltip:
+                    '${l10n.modifierOptions}: ${option.displayName(locale)}',
+                enabled: !busy,
+                onSelected: (value) {
+                  switch (value) {
+                    case 'edit':
+                      onEdit(option);
+                    case 'adjustments':
+                      context.go(
+                        '/menu-management/modifier-options/${option.id}/recipe-adjustments',
+                      );
+                    case 'default':
+                      onDefault(option);
+                    case 'archive':
+                      onArchive(option);
+                    case 'restore':
+                      onRestore(option.id);
+                  }
+                },
+                itemBuilder: (_) => menu,
+                icon: const Icon(Icons.more_vert),
+              ),
             ],
-          );
-        }).toList(),
+          ),
+        ),
       ),
+    );
+  }
+}
+
+class _OptionMoveButtons extends StatelessWidget {
+  const _OptionMoveButtons({
+    required this.canMoveUp,
+    required this.canMoveDown,
+    required this.disabled,
+    required this.onUp,
+    required this.onDown,
+  });
+
+  final bool canMoveUp;
+  final bool canMoveDown;
+  final bool disabled;
+  final VoidCallback onUp;
+  final VoidCallback onDown;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      IconButton(
+        tooltip: context.l10n.modifierMoveUp,
+        onPressed: disabled || !canMoveUp ? null : onUp,
+        icon: const Icon(Icons.keyboard_arrow_up),
+      ),
+      IconButton(
+        tooltip: context.l10n.modifierMoveDown,
+        onPressed: disabled || !canMoveDown ? null : onDown,
+        icon: const Icon(Icons.keyboard_arrow_down),
+      ),
+    ],
+  );
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(label, style: Theme.of(context).textTheme.labelSmall),
+      Text(value, style: Theme.of(context).textTheme.labelLarge),
+    ],
+  );
+}
+
+class _DetailValue extends StatelessWidget {
+  const _DetailValue({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 150,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+        const SizedBox(height: AppSpacing.xs),
+        Text(value, style: Theme.of(context).textTheme.bodyMedium),
+      ],
     ),
   );
 }
 
-Widget _error(BuildContext context, String text) => Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(12),
-  color: Theme.of(context).colorScheme.errorContainer,
-  child: Text(text),
-);
-Future<void> _archiveOption(
+class _ErrorPanel extends StatelessWidget {
+  const _ErrorPanel({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    message,
+    style: TextStyle(color: Theme.of(context).colorScheme.error),
+  );
+}
+
+Future<void> _archiveGroup(
   BuildContext context,
   ModifierGroupDetailCubit cubit,
-  int id,
 ) async {
-  final bool? yes = await showDialog<bool>(
+  final l10n = context.l10n;
+  final bool? accepted = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Archive modifier option?'),
-      content: const Text(
-        'The option remains stored and can be restored later.',
-      ),
+      title: Text(l10n.modifierArchiveGroupTitle),
+      content: Text(l10n.modifierArchiveMessage),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(l10n.modifierCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Archive'),
+          child: Text(l10n.modifierConfirmArchive),
         ),
       ],
     ),
   );
-  if (yes == true) await cubit.archiveOption(id);
+  if (accepted == true) await cubit.archiveGroup();
+}
+
+Future<void> _archiveOption(
+  BuildContext context,
+  ModifierGroupDetailCubit cubit,
+  ModifierOptionRecord option,
+) async {
+  final l10n = context.l10n;
+  final bool? accepted = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.modifierArchiveOptionTitle),
+      content: Text(l10n.modifierArchiveMessage),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n.modifierCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(l10n.modifierConfirmArchive),
+        ),
+      ],
+    ),
+  );
+  if (accepted == true) await cubit.archiveOption(option.id);
 }
 
 Future<void> _optionDialog(
   BuildContext context,
   ModifierGroupDetailCubit cubit, {
   ModifierOptionRecord? option,
+  bool setDefault = false,
 }) => showDialog<void>(
   context: context,
-  builder: (_) => _OptionDialog(cubit: cubit, option: option),
+  builder: (_) =>
+      _OptionDialog(cubit: cubit, option: option, setDefault: setDefault),
 );
 
 class _OptionDialog extends StatefulWidget {
-  const _OptionDialog({required this.cubit, this.option});
+  const _OptionDialog({
+    required this.cubit,
+    this.option,
+    this.setDefault = false,
+  });
+
   final ModifierGroupDetailCubit cubit;
   final ModifierOptionRecord? option;
+  final bool setDefault;
+
   @override
   State<_OptionDialog> createState() => _OptionDialogState();
 }
@@ -369,107 +634,152 @@ class _OptionDialogState extends State<_OptionDialog> {
     nameAr: widget.option?.nameAr ?? '',
     nameEn: widget.option?.nameEn ?? '',
     priceDelta: widget.option?.priceDelta.toString() ?? '0',
-    isDefault: widget.option?.isDefault ?? false,
+    isDefault: widget.setDefault || (widget.option?.isDefault ?? false),
     isActive: widget.option?.isActive ?? true,
     isAvailable: widget.option?.isAvailable ?? true,
     sortOrder: widget.option?.sortOrder.toString() ?? '0',
   );
   bool saving = false;
   String? error;
+
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(
-      widget.option == null ? 'Add Modifier Option' : 'Edit Modifier Option',
-    ),
-    content: SizedBox(
-      width: 480,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (error != null) _error(context, error!),
-            _field(
-              'Default name',
-              draft.name,
-              (v) => setState(() => draft = draft.copyWith(name: v)),
-            ),
-            _field(
-              'Arabic name',
-              draft.nameAr,
-              (v) => setState(() => draft = draft.copyWith(nameAr: v)),
-            ),
-            _field(
-              'English name',
-              draft.nameEn,
-              (v) => setState(() => draft = draft.copyWith(nameEn: v)),
-            ),
-            _field(
-              'Price delta',
-              draft.priceDelta,
-              (v) => setState(() => draft = draft.copyWith(priceDelta: v)),
-            ),
-            _field(
-              'Sort order',
-              draft.sortOrder,
-              (v) => setState(() => draft = draft.copyWith(sortOrder: v)),
-            ),
-            SwitchListTile(
-              title: const Text('Default option'),
-              value: draft.isDefault,
-              onChanged: (v) =>
-                  setState(() => draft = draft.copyWith(isDefault: v)),
-            ),
-            SwitchListTile(
-              title: const Text('Active'),
-              value: draft.isActive,
-              onChanged: (v) =>
-                  setState(() => draft = draft.copyWith(isActive: v)),
-            ),
-            SwitchListTile(
-              title: const Text('Available'),
-              value: draft.isAvailable,
-              onChanged: (v) =>
-                  setState(() => draft = draft.copyWith(isAvailable: v)),
-            ),
-          ],
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(
+        widget.option == null
+            ? l10n.modifierOptionCreateTitle
+            : l10n.modifierOptionEditTitle,
+      ),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              if (error != null) _ErrorPanel(message: error!),
+              ContentSection(
+                title: l10n.modifierOptionBasicInformation,
+                child: Column(
+                  children: <Widget>[
+                    _field(
+                      l10n.modifierOptionName,
+                      draft.name,
+                      (value) =>
+                          setState(() => draft = draft.copyWith(name: value)),
+                    ),
+                    _field(
+                      l10n.modifierPriceAdjustment,
+                      draft.priceDelta,
+                      (value) => setState(
+                        () => draft = draft.copyWith(priceDelta: value),
+                      ),
+                    ),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: saving ? null : _translations,
+                        icon: const Icon(Icons.translate),
+                        label: Text(l10n.modifierTranslations),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              DetailsDisclosure(
+                title: l10n.modifierOptionAdvanced,
+                child: Column(
+                  children: <Widget>[
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.modifierOptionDefault),
+                      value: draft.isDefault,
+                      onChanged: (value) => setState(
+                        () => draft = draft.copyWith(isDefault: value),
+                      ),
+                    ),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.modifierOptionActive),
+                      value: draft.isActive,
+                      onChanged: (value) => setState(
+                        () => draft = draft.copyWith(isActive: value),
+                      ),
+                    ),
+                    SwitchListTile.adaptive(
+                      title: Text(l10n.modifierOptionAvailable),
+                      value: draft.isAvailable,
+                      onChanged: (value) => setState(
+                        () => draft = draft.copyWith(isAvailable: value),
+                      ),
+                    ),
+                    _field(
+                      l10n.modifierSortOrder,
+                      draft.sortOrder,
+                      (value) => setState(
+                        () => draft = draft.copyWith(sortOrder: value),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: saving ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        onPressed: saving ? null : _save,
-        child: Text(saving ? 'Saving...' : 'Save'),
-      ),
-    ],
-  );
+      actions: <Widget>[
+        TextButton(
+          onPressed: saving ? null : () => Navigator.pop(context),
+          child: Text(l10n.modifierCancel),
+        ),
+        FilledButton(
+          onPressed: saving ? null : _save,
+          child: Text(
+            saving ? l10n.modifierOptionSaving : l10n.modifierOptionSave,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _field(String label, String value, ValueChanged<String> onChanged) =>
       Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
         child: TextFormField(
           initialValue: value,
           onChanged: onChanged,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
+          decoration: InputDecoration(labelText: label),
         ),
       );
+
+  Future<void> _translations() async {
+    final Map<String, String>? result = await showModifierTranslationsSheet(
+      context,
+      arabic: draft.nameAr,
+      english: draft.nameEn,
+    );
+    if (!mounted || result == null) return;
+    setState(
+      () => draft = draft.copyWith(
+        nameAr: result['nameAr'],
+        nameEn: result['nameEn'],
+      ),
+    );
+  }
+
   Future<void> _save() async {
+    final l10n = context.l10n;
     if (draft.name.trim().isEmpty) {
-      setState(() => error = 'Modifier option name is required.');
+      setState(() => error = l10n.modifierOptionNameRequired);
       return;
     }
-    if (num.tryParse(draft.priceDelta) == null ||
-        num.parse(draft.priceDelta) < 0) {
-      setState(() => error = 'Price delta must be zero or positive.');
+    final num? price = num.tryParse(draft.priceDelta);
+    if (price == null || price < 0) {
+      setState(() => error = l10n.modifierOptionPriceInvalid);
       return;
     }
     if (int.tryParse(draft.sortOrder) == null) {
-      setState(() => error = 'Sort order must be a whole number.');
+      setState(() => error = l10n.modifierOptionSortInvalid);
       return;
     }
     setState(() {
@@ -480,12 +790,12 @@ class _OptionDialogState extends State<_OptionDialog> {
       await widget.cubit.saveOption(draft, optionId: widget.option?.id);
       if (mounted) Navigator.pop(context);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           saving = false;
-          error =
-              'Unable to save this modifier option. Check the option rules and try again.';
+          error = l10n.modifierOptionSaveError;
         });
+      }
     }
   }
 }

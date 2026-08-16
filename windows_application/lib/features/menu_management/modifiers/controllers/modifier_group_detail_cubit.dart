@@ -113,6 +113,26 @@ class ModifierGroupDetailCubit extends Cubit<ModifierGroupDetailState> {
     }
   }
 
+  Future<void> archiveGroup() =>
+      _groupAction(() => repository.archiveModifierGroup(_id!));
+
+  Future<void> restoreGroup() =>
+      _groupAction(() => repository.restoreModifierGroup(_id!));
+
+  Future<void> _groupAction(
+    Future<ModifierGroupRecord> Function() action,
+  ) async {
+    if (state.currentActionId != null || _id == null) return;
+    emit(state.copyWith(currentActionId: _id, clearError: true));
+    try {
+      await action();
+      emit(state.copyWith(clearAction: true));
+      await refresh();
+    } catch (error) {
+      emit(state.copyWith(clearAction: true, errorMessage: _message(error)));
+    }
+  }
+
   Future<void> archiveOption(int id) =>
       _optionAction(id, () => repository.archiveModifierOption(id));
   Future<void> restoreOption(int id) =>

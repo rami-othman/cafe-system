@@ -380,6 +380,12 @@ class ProductDetail extends ProductSummary {
 
   factory ProductDetail.fromJson(JsonMap json) {
     final ProductSummary summary = ProductSummary.fromJson(json);
+    final List<ProductVariant> variants = _maps(
+      json['variants'],
+    ).map(ProductVariant.fromJson).toList(growable: false);
+    final List<ModifierGroup> modifierGroups = _maps(
+      json['modifierGroups'],
+    ).map(ModifierGroup.fromJson).toList(growable: false);
     return ProductDetail(
       id: summary.id,
       name: summary.name,
@@ -393,8 +399,15 @@ class ProductDetail extends ProductSummary {
       reportingCategory: summary.reportingCategory,
       kitchenStation: summary.kitchenStation,
       defaultVariant: summary.defaultVariant,
-      variantCount: summary.variantCount,
-      modifierGroupCount: summary.modifierGroupCount,
+      // Detail responses load the actual collections but do not always include
+      // Laravel's `withCount` fields. Respect a supplied count (including 0),
+      // otherwise derive the presentation count from that already-loaded data.
+      variantCount: json.containsKey('variantCount')
+          ? summary.variantCount
+          : variants.length,
+      modifierGroupCount: json.containsKey('modifierGroupCount')
+          ? summary.modifierGroupCount
+          : modifierGroups.length,
       createdAt: summary.createdAt,
       updatedAt: summary.updatedAt,
       archivedAt: summary.archivedAt,
@@ -403,12 +416,8 @@ class ProductDetail extends ProductSummary {
       preparationTimeMinutes: readInt(json['preparationTimeMinutes']),
       isStockTracked: readBool(json['isStockTracked']),
       sortOrder: readInt(json['sortOrder']) ?? 0,
-      variants: _maps(
-        json['variants'],
-      ).map(ProductVariant.fromJson).toList(growable: false),
-      modifierGroups: _maps(
-        json['modifierGroups'],
-      ).map(ModifierGroup.fromJson).toList(growable: false),
+      variants: variants,
+      modifierGroups: modifierGroups,
     );
   }
 

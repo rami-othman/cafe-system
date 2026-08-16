@@ -60,6 +60,10 @@ import '../features/menu_management/assignments/views/menu_assignments_screen.da
 import '../features/menu_management/review/controllers/menu_review_cubit.dart';
 import '../features/menu_management/review/views/menu_review_screen.dart';
 import '../features/menu_management/versions/controllers/published_version_cubit.dart';
+import '../features/menu_management/widgets/menu_module_navigation.dart';
+import '../features/menu_management/widgets/menu_module_scaffold.dart';
+import '../core/theme/app_spacing.dart';
+import '../shared/widgets/app_top_bar.dart';
 import 'app_shell.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -67,12 +71,31 @@ final GoRouter appRouter = GoRouter(
   routes: <RouteBase>[
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
+        final bool isMenuManagement = state.uri.path.startsWith(
+          AppRoutes.menuManagement,
+        );
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
           onRefresh: _refreshActionFor(state),
-          child: child,
+          prioritizeContentWidth: isMenuManagement,
+          child: isMenuManagement
+              ? MenuModuleScaffold(
+                  navigationSlot: MenuModuleNavigation(
+                    selected: MenuModuleDestination.forPath(state.uri.path),
+                  ),
+                  breadcrumbs: menuModuleBreadcrumbsFor(context, state.uri),
+                  padding: EdgeInsets.zero,
+                  breadcrumbPadding: const EdgeInsetsDirectional.fromSTEB(
+                    AppSpacing.xl,
+                    AppSpacing.lg,
+                    AppSpacing.xl,
+                    0,
+                  ),
+                  child: child,
+                )
+              : child,
         );
 
         return MultiBlocProvider(
@@ -537,7 +560,13 @@ Widget? _rightPanelFor(GoRouterState state) {
   };
 }
 
-Widget? _topBarFor(GoRouterState state) => null;
+Widget? _topBarFor(GoRouterState state) {
+  if (!state.uri.path.startsWith(AppRoutes.menuManagement)) return null;
+  return AppTopBar(
+    showOperationalBranchTabs: false,
+    onRefresh: _refreshActionFor(state),
+  );
+}
 
 Future<void> Function(BuildContext context)? _refreshActionFor(
   GoRouterState state,

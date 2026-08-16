@@ -737,4 +737,717 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get managerAvailabilityOperationalHelp =>
       'Is it temporarily unavailable right now?';
+
+  @override
+  String get menuManagementNavigation => 'Menu Management navigation';
+
+  @override
+  String get menuManagementCatalog => 'Catalog';
+
+  @override
+  String get menuManagementMenusGroup => 'Menus';
+
+  @override
+  String get menuManagementReleaseGroup => 'Release';
+
+  @override
+  String get menuManagementReviewPublish => 'Review & Publish';
+
+  @override
+  String get menuBreadcrumbProduct => 'Product';
+
+  @override
+  String get menuBreadcrumbVariant => 'Variant';
+
+  @override
+  String get menuBreadcrumbCreateProduct => 'Create product';
+
+  @override
+  String get menuBreadcrumbEditProduct => 'Edit product';
+
+  @override
+  String get menuBreadcrumbVariants => 'Variants';
+
+  @override
+  String get menuBreadcrumbModifiers => 'Modifiers';
+
+  @override
+  String get menuBreadcrumbPricing => 'Pricing';
+
+  @override
+  String get menuBreadcrumbRecipe => 'Recipe';
+
+  @override
+  String get menuBreadcrumbRecipeSimulation => 'Recipe simulation';
+
+  @override
+  String get menuBreadcrumbAvailability => 'Availability';
+
+  @override
+  String get menuBreadcrumbOperationalAvailability =>
+      'Operational availability';
+
+  @override
+  String get menuBreadcrumbMaterialAdjustments => 'Material adjustments';
+
+  @override
+  String get menuBreadcrumbModifierGroup => 'Modifier group';
+
+  @override
+  String get menuBreadcrumbCreateModifierGroup => 'Create modifier group';
+
+  @override
+  String get menuBreadcrumbEditModifierGroup => 'Edit modifier group';
+
+  @override
+  String get menuBreadcrumbMenu => 'Menu';
+
+  @override
+  String get menuBreadcrumbCreateMenu => 'Create menu';
+
+  @override
+  String get menuBreadcrumbEditMenu => 'Edit menu';
+
+  @override
+  String get menuBreadcrumbComposition => 'Composition';
+
+  @override
+  String get menuBreadcrumbVersionHistory => 'Version history';
+
+  @override
+  String get productCatalogTitle => 'Products';
+
+  @override
+  String get productCatalogSubtitle =>
+      'Manage the products available across your menus.';
+
+  @override
+  String get productCatalogCreateProduct => 'Create Product';
+
+  @override
+  String get productCatalogRefresh => 'Refresh products';
+
+  @override
+  String get productCatalogSearch => 'Search products, SKU, or barcode';
+
+  @override
+  String get productCatalogLifecycle => 'Lifecycle';
+
+  @override
+  String get productCatalogAllProducts => 'All products';
+
+  @override
+  String get productCatalogMoreFilters => 'More Filters';
+
+  @override
+  String productCatalogMoreFiltersSemantic(int count) {
+    return 'More Filters, $count active';
+  }
+
+  @override
+  String get productCatalogClearAll => 'Clear All';
+
+  @override
+  String get productCatalogClear => 'Clear';
+
+  @override
+  String get productCatalogApply => 'Apply';
+
+  @override
+  String get productCatalogSort => 'Sort';
+
+  @override
+  String get productCatalogSortOrder => 'Sort order';
+
+  @override
+  String get productCatalogNameAscending => 'Name A–Z';
+
+  @override
+  String get productCatalogNameDescending => 'Name Z–A';
+
+  @override
+  String get productCatalogNewest => 'Newest first';
+
+  @override
+  String get productCatalogProductType => 'Product type';
+
+  @override
+  String get productCatalogHasVariants => 'Has variants';
+
+  @override
+  String get productCatalogNoVariants => 'No variants';
+
+  @override
+  String get productCatalogHasModifiers => 'Has modifiers';
+
+  @override
+  String get productCatalogNoModifiers => 'No modifiers';
+
+  @override
+  String get productCatalogStandard => 'Standard';
+
+  @override
+  String get productCatalogOpenPrice => 'Open price';
+
+  @override
+  String get productCatalogCombo => 'Combo';
+
+  @override
+  String get productCatalogSetup => 'Setup';
+
+  @override
+  String get productCatalogDefaultVariant => 'Default';
+
+  @override
+  String get productCatalogStatus => 'Status';
+
+  @override
+  String get productCatalogOpen => 'Open';
+
+  @override
+  String get productCatalogManageVariants => 'Manage Variants';
+
+  @override
+  String get productCatalogManageModifiers => 'Manage Modifiers';
+
+  @override
+  String get productCatalogArchive => 'Archive';
+
+  @override
+  String get productCatalogRestore => 'Restore';
+
+  @override
+  String productCatalogActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String productCatalogSetupSummary(int variants, int modifiers) {
+    return '$variants variants · $modifiers modifiers';
+  }
+
+  @override
+  String get productCatalogLoadMore => 'Load more products';
+
+  @override
+  String get productCatalogUnableToLoad => 'Unable to load products.';
+
+  @override
+  String get productCatalogNoArchived => 'No archived products are available.';
+
+  @override
+  String get productCatalogNoActive => 'No active products are available.';
+
+  @override
+  String get productCatalogNoMatches => 'No products match these filters.';
+
+  @override
+  String get productCatalogNoProductsYet =>
+      'No products have been created yet.';
+
+  @override
+  String get productCatalogMoreFiltersHelper =>
+      'Refine the product list with additional criteria.';
+
+  @override
+  String get productCatalogFilterClassification => 'Classification';
+
+  @override
+  String get productCatalogFilterPreparation => 'Preparation';
+
+  @override
+  String get productCatalogFilterProductSetup => 'Product setup';
+
+  @override
+  String get productCatalogClearFilters => 'Clear filters';
+
+  @override
+  String get productCatalogApplyFilters => 'Apply filters';
+
+  @override
+  String get productUxGeneral => 'General';
+
+  @override
+  String get productUxClassification => 'Classification';
+
+  @override
+  String get productUxSellingPreparation => 'Selling & Preparation';
+
+  @override
+  String get productUxInitialSellingOption => 'Initial selling option';
+
+  @override
+  String get productUxTranslations => 'Translations';
+
+  @override
+  String get productUxAdvanced => 'Advanced';
+
+  @override
+  String get productUxOverview => 'Overview';
+
+  @override
+  String get productUxUsage => 'Usage';
+
+  @override
+  String get productUxVariants => 'Variants';
+
+  @override
+  String get productUxModifiers => 'Modifiers';
+
+  @override
+  String get productUxRecipeMaterials => 'Recipe & Materials';
+
+  @override
+  String get productUxAvailability => 'Availability';
+
+  @override
+  String get productUxCreateProduct => 'Create Product';
+
+  @override
+  String get productUxSaveChanges => 'Save Changes';
+
+  @override
+  String get productUxCancel => 'Cancel';
+
+  @override
+  String get productUxManageCatalogSetup => 'Manage catalog setup';
+
+  @override
+  String get productUxEditProduct => 'Edit Product';
+
+  @override
+  String get productUxArchived => 'Archived';
+
+  @override
+  String get productOverviewBasePrice => 'Base Price';
+
+  @override
+  String get productOverviewVariants => 'Variants';
+
+  @override
+  String get productOverviewModifierGroups => 'Modifier Groups';
+
+  @override
+  String get productOverviewStockTracking => 'Stock Tracking';
+
+  @override
+  String get productOverviewEnabled => 'Enabled';
+
+  @override
+  String get productOverviewDisabled => 'Disabled';
+
+  @override
+  String get productOverviewNotConfigured => 'Not configured';
+
+  @override
+  String get productOverviewProductSetup => 'Product Setup';
+
+  @override
+  String get productOverviewCategory => 'Category';
+
+  @override
+  String get productOverviewDefaultVariant => 'Default Variant';
+
+  @override
+  String get productOverviewKitchenStation => 'Kitchen Station';
+
+  @override
+  String get productOverviewProductType => 'Product Type';
+
+  @override
+  String get productOverviewReportingCategory => 'Reporting Category';
+
+  @override
+  String get productOverviewPreparationTime => 'Preparation Time';
+
+  @override
+  String get productOverviewMinutes => 'minutes';
+
+  @override
+  String get modifierLibraryTitle => 'Modifier Library';
+
+  @override
+  String get modifierLibrarySubtitle =>
+      'Create reusable customer choices that can be assigned to Products.';
+
+  @override
+  String get modifierCreateGroup => 'Create Modifier Group';
+
+  @override
+  String get modifierSearch => 'Search modifiers';
+
+  @override
+  String get modifierActive => 'Active';
+
+  @override
+  String get modifierArchived => 'Archived';
+
+  @override
+  String get modifierAll => 'All';
+
+  @override
+  String get modifierReorder => 'Reorder';
+
+  @override
+  String get modifierDone => 'Done';
+
+  @override
+  String modifierOptionsCount(int count) {
+    return '$count options';
+  }
+
+  @override
+  String modifierOptionPreviewMore(int count) {
+    return '+ $count more';
+  }
+
+  @override
+  String modifierRuleExactly(int count) {
+    return 'Customer must choose exactly $count option(s).';
+  }
+
+  @override
+  String modifierRuleOptionalExactly(int count) {
+    return 'Optional — customer may choose $count option(s).';
+  }
+
+  @override
+  String modifierRuleAtLeastUpTo(int min, int max) {
+    return 'Customer must choose at least $min and up to $max options.';
+  }
+
+  @override
+  String modifierRuleOptionalUpTo(int max) {
+    return 'Optional — customer may choose up to $max options.';
+  }
+
+  @override
+  String get modifierRuleQuantity =>
+      'The same Option may be added more than once.';
+
+  @override
+  String get modifierViewGroup => 'View Group';
+
+  @override
+  String get modifierEditGroup => 'Edit Group';
+
+  @override
+  String get modifierSetDefault => 'Set as Default';
+
+  @override
+  String get modifierMaterialAdjustments => 'Material Adjustments';
+
+  @override
+  String get modifierArchive => 'Archive';
+
+  @override
+  String get modifierRestore => 'Restore';
+
+  @override
+  String get modifierNoGroups => 'No modifier groups have been created yet.';
+
+  @override
+  String get modifierNoGroupMatches =>
+      'No modifier groups match the current filters.';
+
+  @override
+  String get modifierUnableToLoad => 'Unable to load modifier groups.';
+
+  @override
+  String get modifierRetry => 'Retry';
+
+  @override
+  String get modifierLoadMore => 'Load more';
+
+  @override
+  String get modifierRefresh => 'Refresh modifier groups';
+
+  @override
+  String get modifierGroupDetailNotFound => 'Modifier group not found.';
+
+  @override
+  String get modifierOptions => 'Options';
+
+  @override
+  String get modifierAddOption => 'Add Option';
+
+  @override
+  String get modifierOptionFilter => 'Option status';
+
+  @override
+  String get modifierNoArchivedOptions => 'No archived modifier options.';
+
+  @override
+  String get modifierNoOptions => 'No modifier options have been created yet.';
+
+  @override
+  String get modifierReorderOptions => 'Reorder Options';
+
+  @override
+  String get modifierMoveUp => 'Move Up';
+
+  @override
+  String get modifierMoveDown => 'Move Down';
+
+  @override
+  String get modifierDefault => 'DEFAULT';
+
+  @override
+  String get modifierNoExtraCharge => 'No extra charge';
+
+  @override
+  String get modifierPriceAdjustment => 'Price adjustment';
+
+  @override
+  String get modifierMaterialUsageConfigured => 'Material usage configured';
+
+  @override
+  String get modifierStatusActive => 'Active';
+
+  @override
+  String get modifierStatusArchived => 'Archived';
+
+  @override
+  String get modifierStatusInactive => 'Inactive';
+
+  @override
+  String get modifierAdvancedDetails => 'Advanced Details';
+
+  @override
+  String get modifierSelectionMode => 'Selection mode';
+
+  @override
+  String get modifierMinimum => 'Minimum';
+
+  @override
+  String get modifierMaximum => 'Maximum';
+
+  @override
+  String get modifierAllowQuantity => 'Allow quantity';
+
+  @override
+  String get modifierGroupType => 'Group type';
+
+  @override
+  String get modifierSortOrder => 'Sort order';
+
+  @override
+  String get modifierCreateTitle => 'Create Modifier Group';
+
+  @override
+  String get modifierEditTitle => 'Edit Modifier Group';
+
+  @override
+  String get modifierBasicInformation => 'Basic Information';
+
+  @override
+  String get modifierBasicInformationHelper =>
+      'Name this reusable customer-choice group.';
+
+  @override
+  String get modifierGroupName => 'Modifier Group Name';
+
+  @override
+  String get modifierGroupNameHint => 'e.g. Milk Type';
+
+  @override
+  String get modifierInternalCode => 'Internal code';
+
+  @override
+  String get modifierGroupTypeChoice => 'Choice';
+
+  @override
+  String get modifierGroupTypeAddOn => 'Add-on';
+
+  @override
+  String get modifierGroupTypePreparation => 'Preparation instruction';
+
+  @override
+  String get modifierYes => 'Yes';
+
+  @override
+  String get modifierNo => 'No';
+
+  @override
+  String get modifierTranslations => 'Translations';
+
+  @override
+  String get modifierArabic => 'Arabic';
+
+  @override
+  String get modifierEnglish => 'English';
+
+  @override
+  String get modifierClose => 'Close';
+
+  @override
+  String get modifierSelectionRules => 'Selection Rules';
+
+  @override
+  String get modifierSelectionRulesHelper =>
+      'Determine how customers interact with these options.';
+
+  @override
+  String get modifierHowChoose => 'How should customers choose?';
+
+  @override
+  String get modifierChooseOne => 'Choose one';
+
+  @override
+  String get modifierChooseMultiple => 'Choose multiple';
+
+  @override
+  String get modifierChoiceRequired => 'Is a choice required?';
+
+  @override
+  String get modifierOptional => 'Optional';
+
+  @override
+  String get modifierRequired => 'Required';
+
+  @override
+  String get modifierMinimumChoices => 'Minimum choices';
+
+  @override
+  String get modifierMaximumChoices => 'Maximum choices';
+
+  @override
+  String get modifierSameOptionQuantity =>
+      'Can the same Option be added more than once?';
+
+  @override
+  String get modifierQuantityHelper => 'For example: 2 Extra Shots.';
+
+  @override
+  String get modifierCurrentRuleSummary => 'Current Rule Summary';
+
+  @override
+  String get modifierInitialOption => 'Initial Option';
+
+  @override
+  String get modifierInitialOptionHelper =>
+      'You can add more Options after creating the Modifier Group.';
+
+  @override
+  String get modifierOptionName => 'Option name';
+
+  @override
+  String get modifierOptionNameHint => 'e.g. Whole Milk';
+
+  @override
+  String get modifierAdvanced => 'Advanced';
+
+  @override
+  String get modifierActiveStatus => 'Active status';
+
+  @override
+  String get modifierAvailableForUse => 'Available for use in menus.';
+
+  @override
+  String get modifierCancel => 'Cancel';
+
+  @override
+  String get modifierSaveChanges => 'Save Changes';
+
+  @override
+  String get modifierCreateAction => 'Create Modifier Group';
+
+  @override
+  String get modifierSaving => 'Saving...';
+
+  @override
+  String get modifierUnsavedChanges =>
+      'You have unsaved changes. Leave without saving?';
+
+  @override
+  String get modifierStay => 'Stay';
+
+  @override
+  String get modifierLeave => 'Leave';
+
+  @override
+  String get modifierOptionCreateTitle => 'Add Option';
+
+  @override
+  String get modifierOptionEditTitle => 'Edit Option';
+
+  @override
+  String get modifierOptionBasicInformation => 'Basic Information';
+
+  @override
+  String get modifierOptionDefault => 'Default option';
+
+  @override
+  String get modifierOptionActive => 'Active';
+
+  @override
+  String get modifierOptionAvailable => 'Available';
+
+  @override
+  String get modifierOptionAdvanced => 'Advanced';
+
+  @override
+  String get modifierOptionSave => 'Save';
+
+  @override
+  String get modifierOptionSaving => 'Saving...';
+
+  @override
+  String get modifierOptionNameRequired => 'Option name is required.';
+
+  @override
+  String get modifierOptionPriceInvalid =>
+      'Price adjustment must be zero or positive.';
+
+  @override
+  String get modifierOptionSortInvalid => 'Sort order must be a whole number.';
+
+  @override
+  String get modifierArchiveGroupTitle => 'Archive modifier group?';
+
+  @override
+  String get modifierArchiveOptionTitle => 'Archive modifier option?';
+
+  @override
+  String get modifierArchiveMessage =>
+      'The item remains stored and can be restored later.';
+
+  @override
+  String get modifierConfirmArchive => 'Archive';
+
+  @override
+  String get modifierOptionSaveError =>
+      'Unable to save this modifier option. Check the option rules and try again.';
+
+  @override
+  String get modifierGroupSaveError => 'Unable to save this modifier group.';
+
+  @override
+  String get modifierGroupRequired => 'Modifier group name is required.';
+
+  @override
+  String get modifierNumberInvalid => 'Enter zero or a positive whole number.';
+
+  @override
+  String get modifierMaximumMinimumError =>
+      'Maximum must be at least the minimum.';
+
+  @override
+  String get modifierSingleMaximumError =>
+      'Single selection groups cannot have a maximum above 1.';
+
+  @override
+  String get modifierRequiredMinimumError =>
+      'Required groups need a minimum of at least 1.';
+
+  @override
+  String get modifierInitialOptionRequired =>
+      'An initial active option is required.';
+
+  @override
+  String get modifierPriceInvalid => 'Enter zero or a positive price.';
+
+  @override
+  String get modifierInitialMaximumError =>
+      'A new group has one initial option; maximum cannot exceed 1.';
 }

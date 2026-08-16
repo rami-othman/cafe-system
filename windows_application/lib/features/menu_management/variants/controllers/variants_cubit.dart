@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
+import '../../recipes/models/recipe_models.dart';
 import '../models/variant_editor_draft.dart';
 import 'variants_state.dart';
 
@@ -35,7 +36,7 @@ class VariantsCubit extends Cubit<VariantsState> {
         );
         return;
       }
-      _setProduct(product, status: VariantsStatus.loaded);
+      await _setProduct(product, status: VariantsStatus.loaded);
     } catch (error) {
       emit(
         state.copyWith(
@@ -177,26 +178,44 @@ class VariantsCubit extends Cubit<VariantsState> {
       state.product!.id,
       includeArchived: true,
     );
-    _setProduct(product, status: VariantsStatus.loaded, message: message);
+    await _setProduct(product, status: VariantsStatus.loaded, message: message);
   }
 
-  void _setProduct(
+  Future<void> _setProduct(
     ProductDetail product, {
     required VariantsStatus status,
     String? message,
-  }) {
+  }) async {
     final List<ProductVariant> active = product.variants
         .where((item) => !item.isArchived)
         .toList(growable: false);
     final List<ProductVariant> archived = product.variants
         .where((item) => item.isArchived)
         .toList(growable: false);
+    final Map<int, bool> recipeConfigured = Map<int, bool>.fromEntries(
+      await Future.wait<MapEntry<int, bool>>(
+        active.map((variant) async {
+          try {
+            final VariantRecipe recipe = await repository.getVariantRecipe(
+              variant.id,
+            );
+            return MapEntry<int, bool>(
+              variant.id,
+              recipe.components.isNotEmpty,
+            );
+          } catch (_) {
+            return MapEntry<int, bool>(variant.id, false);
+          }
+        }),
+      ),
+    );
     emit(
       state.copyWith(
         status: status,
         product: product,
         activeVariants: active,
         archivedVariants: archived,
+        recipeConfigured: recipeConfigured,
         clearAction: true,
         clearErrors: true,
         successMessage: message,

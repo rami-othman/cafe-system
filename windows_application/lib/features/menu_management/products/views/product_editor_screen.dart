@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -11,6 +12,9 @@ import '../../controllers/product_catalog_cubit.dart';
 import '../../models/catalog_models.dart';
 import '../../views/product_catalog_screen.dart' show CatalogProductImage;
 import '../../widgets/catalog_formatters.dart';
+import '../../widgets/menu_content_components.dart';
+import '../../widgets/menu_page_header.dart';
+import '../../widgets/sticky_form_actions.dart';
 import '../controllers/product_editor_cubit.dart';
 import '../controllers/product_editor_state.dart';
 import '../models/product_editor_draft.dart';
@@ -24,6 +28,7 @@ class ProductEditorScreen extends StatefulWidget {
 
 class _ProductEditorScreenState extends State<ProductEditorScreen> {
   bool get _isCreate => widget.productId == null;
+
   @override
   void initState() {
     super.initState();
@@ -96,408 +101,457 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
       );
     }
     final ProductEditorCubit cubit = context.read<ProductEditorCubit>();
-    final ProductEditorDraft d = state.draft;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.xl,
-        AppSpacing.xl,
-        96,
+    final ProductEditorDraft draft = state.draft;
+    final l10n = context.maybeL10n;
+    final List<String> validation = <String>[
+      if (state.formError != null) state.formError!,
+      ...state.fieldErrors.values.take(1),
+    ];
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xl,
+              AppSpacing.xl,
+              AppSpacing.xxl,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    TextButton.icon(
+                      onPressed: _confirmLeave,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Back'),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    MenuPageHeader(
+                      title: _isCreate
+                          ? l10n?.productUxCreateProduct ?? 'Create Product'
+                          : l10n?.productUxEditProduct ?? 'Edit Product',
+                      subtitle: _isCreate
+                          ? 'Define what this product is, where it belongs, and how it is sold.'
+                          : 'Update the product information managers use every day.',
+                    ),
+                    if (state.isReadOnly) ...<Widget>[
+                      const SizedBox(height: AppSpacing.lg),
+                      const _Notice(
+                        message:
+                            'Archived products are available for reference only. Restore this product to edit it.',
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      OutlinedButton(
+                        onPressed: () => context.go(
+                          '/menu-management/products/${widget.productId}',
+                        ),
+                        child: const Text('View Product Workspace'),
+                      ),
+                    ] else ...<Widget>[
+                      if (state.referenceErrors.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: AppSpacing.lg),
+                        _Notice(
+                          message:
+                              'Some catalog setup data could not be loaded: ${state.referenceErrors.keys.join(', ')}.',
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.xl),
+                      ContentSection(
+                        title: l10n?.productUxGeneral ?? 'General',
+                        description: 'What is this product?',
+                        child: _FormGrid(
+                          children: <Widget>[
+                            _text(
+                              'Default Product Name',
+                              draft.name,
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(name: value),
+                              ),
+                              error: state.fieldErrors['name'],
+                              required: true,
+                              key: const Key('product-name-field'),
+                            ),
+                            _ImageEditor(
+                              imageUrl: draft.imageUrl,
+                              error: state.fieldErrors['imageUrl'],
+                              onSet: () => _showImageEditor(draft),
+                              onRemove: draft.imageUrl.trim().isEmpty
+                                  ? null
+                                  : () => cubit.updateDraft(
+                                      draft.copyWith(imageUrl: ''),
+                                    ),
+                            ),
+                            _text(
+                              'Default Description',
+                              draft.description,
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(description: value),
+                              ),
+                              error: state.fieldErrors['description'],
+                              lines: 4,
+                              span: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      ContentSection(
+                        title:
+                            l10n?.productUxClassification ?? 'Classification',
+                        description:
+                            'Choose where this product belongs in the catalog and preparation flow.',
+                        trailingAction: TextButton.icon(
+                          onPressed: () => context
+                              .push('/menu-management/catalog-setup')
+                              .then((_) => cubit.refreshReferences()),
+                          icon: const Icon(Icons.settings_outlined, size: 18),
+                          label: Text(
+                            l10n?.productUxManageCatalogSetup ??
+                                'Manage catalog setup',
+                          ),
+                        ),
+                        child: _FormGrid(
+                          children: <Widget>[
+                            _select<int>(
+                              'Category',
+                              draft.categoryId,
+                              state.categories
+                                  .map(
+                                    (item) => DropdownMenuItem<int>(
+                                      value: item.id,
+                                      child: Text(
+                                        '${item.name}${item.isActive ? '' : ' (Archived)'}',
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(
+                                  categoryId: value,
+                                  clearCategory: value == null,
+                                ),
+                              ),
+                              state.fieldErrors['categoryId'],
+                              required: true,
+                            ),
+                            _select<int>(
+                              'Kitchen Station',
+                              draft.kitchenStationId,
+                              state.kitchenStations
+                                  .map(
+                                    (item) => DropdownMenuItem<int>(
+                                      value: item.id,
+                                      child: Text(
+                                        '${item.name}${item.isActive ? '' : ' (Archived)'}',
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(
+                                  kitchenStationId: value,
+                                  clearKitchenStation: value == null,
+                                ),
+                              ),
+                              state.fieldErrors['kitchenStationId'],
+                              helper:
+                                  'Where this product is generally prepared.',
+                            ),
+                            _select<int>(
+                              'Reporting Category',
+                              draft.reportingCategoryId,
+                              state.reportingCategories
+                                  .map(
+                                    (item) => DropdownMenuItem<int>(
+                                      value: item.id,
+                                      child: Text(
+                                        '${item.name}${item.isActive ? '' : ' (Archived)'}',
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(
+                                  reportingCategoryId: value,
+                                  clearReportingCategory: value == null,
+                                ),
+                              ),
+                              state.fieldErrors['reportingCategoryId'],
+                              helper: 'Used for sales and performance reports.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      ContentSection(
+                        title:
+                            l10n?.productUxSellingPreparation ??
+                            'Selling & Preparation',
+                        description:
+                            'Set how this product is sold and what preparation information the team needs.',
+                        child: _FormGrid(
+                          children: <Widget>[
+                            _select<String>(
+                              'Product Type',
+                              draft.productType,
+                              const <DropdownMenuItem<String>>[
+                                DropdownMenuItem(
+                                  value: 'standard',
+                                  child: Text('Standard'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'open_price',
+                                  child: Text('Open price'),
+                                ),
+                              ],
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(
+                                  productType: value ?? 'standard',
+                                ),
+                              ),
+                              state.fieldErrors['productType'],
+                            ),
+                            _text(
+                              'Preparation Time',
+                              draft.preparationTimeMinutes,
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(preparationTimeMinutes: value),
+                              ),
+                              error:
+                                  state.fieldErrors['preparationTimeMinutes'],
+                              digits: true,
+                              suffix: 'minutes',
+                            ),
+                            _StockTracking(
+                              value: draft.isStockTracked,
+                              onChanged: (value) => cubit.updateDraft(
+                                draft.copyWith(isStockTracked: value),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      if (_isCreate)
+                        ContentSection(
+                          title:
+                              l10n?.productUxInitialSellingOption ??
+                              'Initial selling option',
+                          description:
+                              'Every product starts with one selling option. You can add more variants later.',
+                          child: _FormGrid(
+                            children: <Widget>[
+                              _text(
+                                'Variant Name',
+                                draft.variantName,
+                                (value) => cubit.updateDraft(
+                                  draft.copyWith(variantName: value),
+                                ),
+                                error: state.fieldErrors['variants.0.name'],
+                                required: true,
+                              ),
+                              _text(
+                                'Base Price',
+                                draft.variantBasePrice,
+                                (value) => cubit.updateDraft(
+                                  draft.copyWith(variantBasePrice: value),
+                                ),
+                                error:
+                                    state.fieldErrors['variants.0.basePrice'],
+                                price: true,
+                                required: draft.productType == 'standard',
+                                prefix: '\$',
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ContentSection(
+                          title: 'Default Variant',
+                          description:
+                              'Selling options are managed separately so product details stay focused.',
+                          child: _DefaultVariantSummary(
+                            variant: state.currentDefaultVariant,
+                            onManage: () => context.go(
+                              '/menu-management/products/${widget.productId}/variants',
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: AppSpacing.lg),
+                      ContentSection(
+                        title: l10n?.productUxTranslations ?? 'Translations',
+                        description:
+                            'Add localized content without crowding the main product form.',
+                        trailingAction: FilledButton.tonal(
+                          key: const Key('product-translations-action'),
+                          onPressed: () => _showTranslations(draft),
+                          child: Text(_translationSummary(draft)),
+                        ),
+                        child: const Text(
+                          'Use the translation panel to provide Arabic and English names and descriptions.',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      DetailsDisclosure(
+                        title: l10n?.productUxAdvanced ?? 'Advanced',
+                        child: _FormGrid(
+                          children: <Widget>[
+                            _text(
+                              'Sort Order',
+                              draft.sortOrder,
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(sortOrder: value),
+                              ),
+                              error: state.fieldErrors['sortOrder'],
+                              digits: true,
+                            ),
+                            if (_isCreate) ...<Widget>[
+                              _text(
+                                'Variant Cost',
+                                draft.variantCostPrice,
+                                (value) => cubit.updateDraft(
+                                  draft.copyWith(variantCostPrice: value),
+                                ),
+                                error:
+                                    state.fieldErrors['variants.0.costPrice'],
+                                price: true,
+                                prefix: '\$',
+                              ),
+                              _text(
+                                'SKU',
+                                draft.variantSku,
+                                (value) => cubit.updateDraft(
+                                  draft.copyWith(variantSku: value),
+                                ),
+                                error: state.fieldErrors['variants.0.sku'],
+                                technical: true,
+                              ),
+                              _text(
+                                'Barcode',
+                                draft.variantBarcode,
+                                (value) => cubit.updateDraft(
+                                  draft.copyWith(variantBarcode: value),
+                                ),
+                                error: state.fieldErrors['variants.0.barcode'],
+                                technical: true,
+                              ),
+                            ],
+                            _text(
+                              'Image URL',
+                              draft.imageUrl,
+                              (value) => cubit.updateDraft(
+                                draft.copyWith(imageUrl: value),
+                              ),
+                              error: state.fieldErrors['imageUrl'],
+                              keyboard: TextInputType.url,
+                              span: true,
+                              technical: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        StickyFormActions(
+          cancelLabel: l10n?.productUxCancel ?? 'Cancel',
+          onCancel: _confirmLeave,
+          primaryLabel: _isCreate
+              ? l10n?.productUxCreateProduct ?? 'Create Product'
+              : l10n?.productUxSaveChanges ?? 'Save Changes',
+          onSave: state.isReadOnly ? null : cubit.submit,
+          isDirty: state.isDirty,
+          isSaving: state.status == ProductEditorStatus.submitting,
+          validationSummary: validation,
+          primaryActionKey: const Key('product-editor-save'),
+        ),
+      ],
+    );
+  }
+
+  String _translationSummary(ProductEditorDraft draft) {
+    final List<String> configured = <String>[
+      if (draft.nameAr.trim().isNotEmpty ||
+          draft.descriptionAr.trim().isNotEmpty)
+        'Arabic configured',
+      if (draft.nameEn.trim().isNotEmpty ||
+          draft.descriptionEn.trim().isNotEmpty)
+        'English configured',
+    ];
+    return configured.isEmpty ? 'Translations' : configured.join(' · ');
+  }
+
+  Future<void> _showImageEditor(ProductEditorDraft draft) async {
+    final TextEditingController controller = TextEditingController(
+      text: draft.imageUrl,
+    );
+    final String? value = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          draft.imageUrl.trim().isEmpty ? 'Set Image' : 'Change Image',
+        ),
+        content: SizedBox(
+          width: 520,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.url,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Image URL',
+              helperText: 'Paste a public HTTP(S) image URL.',
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Save image'),
+          ),
+        ],
       ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1040),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                TextButton.icon(
-                  onPressed: _confirmLeave,
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back'),
-                ),
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed:
-                      state.status == ProductEditorStatus.submitting ||
-                          state.isReadOnly
-                      ? null
-                      : cubit.submit,
-                  icon: state.status == ProductEditorStatus.submitting
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(
-                    state.status == ProductEditorStatus.submitting
-                        ? 'Saving...'
-                        : 'Save Product',
-                  ),
-                ),
-              ],
+    );
+    controller.dispose();
+    if (value != null && mounted) {
+      context.read<ProductEditorCubit>().updateDraft(
+        draft.copyWith(imageUrl: value),
+      );
+    }
+  }
+
+  Future<void> _showTranslations(ProductEditorDraft draft) {
+    final ValueChanged<ProductEditorDraft> onChanged = context
+        .read<ProductEditorCubit>()
+        .updateDraft;
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close translations',
+      pageBuilder: (context, _, _) => Align(
+        alignment: AlignmentDirectional.centerEnd,
+        child: Material(
+          child: SafeArea(
+            child: SizedBox(
+              width: 520,
+              child: _TranslationSheet(draft: draft, onChanged: onChanged),
             ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              _isCreate ? 'Create Product' : 'Edit Product',
-              style: AppTextStyles.headlineMedium.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            if (state.isReadOnly) ...<Widget>[
-              const SizedBox(height: AppSpacing.md),
-              _Banner(
-                message:
-                    'This Product is archived and can no longer be edited.',
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              OutlinedButton(
-                onPressed: () =>
-                    context.go('/menu-management/products/${widget.productId}'),
-                child: const Text('View Product Detail'),
-              ),
-            ] else if (state.formError != null) ...<Widget>[
-              const SizedBox(height: AppSpacing.md),
-              _Banner(message: state.formError!),
-            ],
-            if (state.referenceErrors.isNotEmpty) ...<Widget>[
-              const SizedBox(height: AppSpacing.md),
-              _Banner(
-                message:
-                    'Some reference data could not be loaded: ${state.referenceErrors.keys.join(', ')}.',
-              ),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            _Section(
-              title: 'Basic Information',
-              child: Column(
-                children: <Widget>[
-                  _text(
-                    'Default name',
-                    d.name,
-                    (v) => cubit.updateDraft(d.copyWith(name: v)),
-                    error: state.fieldErrors['name'],
-                    required: true,
-                  ),
-                  _text(
-                    'Arabic name',
-                    d.nameAr,
-                    (v) => cubit.updateDraft(d.copyWith(nameAr: v)),
-                    error: state.fieldErrors['nameAr'],
-                  ),
-                  _text(
-                    'English name',
-                    d.nameEn,
-                    (v) => cubit.updateDraft(d.copyWith(nameEn: v)),
-                    error: state.fieldErrors['nameEn'],
-                  ),
-                  _text(
-                    'Default description',
-                    d.description,
-                    (v) => cubit.updateDraft(d.copyWith(description: v)),
-                    error: state.fieldErrors['description'],
-                    lines: 3,
-                  ),
-                  _text(
-                    'Arabic description',
-                    d.descriptionAr,
-                    (v) => cubit.updateDraft(d.copyWith(descriptionAr: v)),
-                    error: state.fieldErrors['descriptionAr'],
-                    lines: 3,
-                  ),
-                  _text(
-                    'English description',
-                    d.descriptionEn,
-                    (v) => cubit.updateDraft(d.copyWith(descriptionEn: v)),
-                    error: state.fieldErrors['descriptionEn'],
-                    lines: 3,
-                  ),
-                  _text(
-                    'Image URL',
-                    d.imageUrl,
-                    (v) => cubit.updateDraft(d.copyWith(imageUrl: v)),
-                    error: state.fieldErrors['imageUrl'],
-                    keyboard: TextInputType.url,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    children: <Widget>[
-                      CatalogProductImage(
-                        url: d.imageUrl.trim().isEmpty
-                            ? null
-                            : d.imageUrl.trim(),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text('Image preview', style: AppTextStyles.bodySmall),
-                    ],
-                  ),
-                  _select<String>(
-                    'Product type',
-                    d.productType,
-                    const <DropdownMenuItem<String>>[
-                      DropdownMenuItem(
-                        value: 'standard',
-                        child: Text('Standard'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'open_price',
-                        child: Text('Open price'),
-                      ),
-                    ],
-                    (v) => cubit.updateDraft(
-                      d.copyWith(productType: v ?? 'standard'),
-                    ),
-                    state.fieldErrors['productType'],
-                  ),
-                  if (d.productType == 'open_price')
-                    const Padding(
-                      padding: EdgeInsets.only(top: AppSpacing.sm),
-                      child: Text(
-                        'The final price will be entered during sale in a future supported flow.',
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            _Section(
-              title: 'Classification',
-              child: Column(
-                children: <Widget>[
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: <Widget>[
-                      TextButton(
-                        onPressed: () => context
-                            .push(
-                              '/menu-management/catalog-setup?tab=categories',
-                            )
-                            .then((_) => cubit.refreshReferences()),
-                        child: const Text('Manage Categories'),
-                      ),
-                      TextButton(
-                        onPressed: () => context
-                            .push(
-                              '/menu-management/catalog-setup?tab=reporting-categories',
-                            )
-                            .then((_) => cubit.refreshReferences()),
-                        child: const Text('Manage Reporting Categories'),
-                      ),
-                      TextButton(
-                        onPressed: () => context
-                            .push(
-                              '/menu-management/catalog-setup?tab=kitchen-stations',
-                            )
-                            .then((_) => cubit.refreshReferences()),
-                        child: const Text('Manage Kitchen Stations'),
-                      ),
-                    ],
-                  ),
-                  _select<int>(
-                    'Catalog category',
-                    d.categoryId,
-                    state.categories
-                        .map(
-                          (e) => DropdownMenuItem<int>(
-                            value: e.id,
-                            child: Text(
-                              '${e.name}${e.isActive ? '' : ' (Archived)'}',
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    (v) => cubit.updateDraft(
-                      d.copyWith(categoryId: v, clearCategory: v == null),
-                    ),
-                    state.fieldErrors['categoryId'],
-                    required: true,
-                  ),
-                  _select<int>(
-                    'Reporting category',
-                    d.reportingCategoryId,
-                    state.reportingCategories
-                        .map(
-                          (e) => DropdownMenuItem<int>(
-                            value: e.id,
-                            child: Text(
-                              '${e.name}${e.isActive ? '' : ' (Archived)'}',
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    (v) => cubit.updateDraft(
-                      d.copyWith(
-                        reportingCategoryId: v,
-                        clearReportingCategory: v == null,
-                      ),
-                    ),
-                    state.fieldErrors['reportingCategoryId'],
-                  ),
-                  _select<int>(
-                    'Kitchen station',
-                    d.kitchenStationId,
-                    state.kitchenStations
-                        .map(
-                          (e) => DropdownMenuItem<int>(
-                            value: e.id,
-                            child: Text(
-                              '${e.name}${e.isActive ? '' : ' (Archived)'}',
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    (v) => cubit.updateDraft(
-                      d.copyWith(
-                        kitchenStationId: v,
-                        clearKitchenStation: v == null,
-                      ),
-                    ),
-                    state.fieldErrors['kitchenStationId'],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            _Section(
-              title: 'Operations',
-              child: Column(
-                children: <Widget>[
-                  _text(
-                    'Preparation time (minutes)',
-                    d.preparationTimeMinutes,
-                    (v) => cubit.updateDraft(
-                      d.copyWith(preparationTimeMinutes: v),
-                    ),
-                    error: state.fieldErrors['preparationTimeMinutes'],
-                    digits: true,
-                  ),
-                  Material(
-                    color: AppColors.transparent,
-                    child: SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Stock tracked'),
-                      value: d.isStockTracked,
-                      onChanged: (v) =>
-                          cubit.updateDraft(d.copyWith(isStockTracked: v)),
-                    ),
-                  ),
-                  _text(
-                    'Sort order',
-                    d.sortOrder,
-                    (v) => cubit.updateDraft(d.copyWith(sortOrder: v)),
-                    error: state.fieldErrors['sortOrder'],
-                    digits: true,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            if (_isCreate)
-              _Section(
-                title: 'Initial Default Variant',
-                child: _variantFields(d, state, cubit),
-              )
-            else
-              _Section(
-                title: 'Current Default Variant',
-                child: _variantSummary(state.currentDefaultVariant),
-              ),
-            const SizedBox(height: AppSpacing.xl),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton(
-                onPressed: state.status == ProductEditorStatus.submitting
-                    ? null
-                    : cubit.submit,
-                child: Text(
-                  state.status == ProductEditorStatus.submitting
-                      ? 'Saving...'
-                      : 'Save Product',
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _variantFields(
-    ProductEditorDraft d,
-    ProductEditorState state,
-    ProductEditorCubit cubit,
-  ) => Column(
-    children: <Widget>[
-      _text(
-        'Variant name',
-        d.variantName,
-        (v) => cubit.updateDraft(d.copyWith(variantName: v)),
-        error: state.fieldErrors['variants.0.name'],
-        required: true,
-      ),
-      _text(
-        'Arabic name',
-        d.variantNameAr,
-        (v) => cubit.updateDraft(d.copyWith(variantNameAr: v)),
-        error: state.fieldErrors['variants.0.nameAr'],
-      ),
-      _text(
-        'English name',
-        d.variantNameEn,
-        (v) => cubit.updateDraft(d.copyWith(variantNameEn: v)),
-        error: state.fieldErrors['variants.0.nameEn'],
-      ),
-      _text(
-        'Base price',
-        d.variantBasePrice,
-        (v) => cubit.updateDraft(d.copyWith(variantBasePrice: v)),
-        error: state.fieldErrors['variants.0.basePrice'],
-        price: true,
-        required: d.productType == 'standard',
-      ),
-      _text(
-        'Cost price',
-        d.variantCostPrice,
-        (v) => cubit.updateDraft(d.copyWith(variantCostPrice: v)),
-        error: state.fieldErrors['variants.0.costPrice'],
-        price: true,
-      ),
-      _text(
-        'SKU',
-        d.variantSku,
-        (v) => cubit.updateDraft(d.copyWith(variantSku: v)),
-        error: state.fieldErrors['variants.0.sku'],
-      ),
-      _text(
-        'Barcode',
-        d.variantBarcode,
-        (v) => cubit.updateDraft(d.copyWith(variantBarcode: v)),
-        error: state.fieldErrors['variants.0.barcode'],
-      ),
-    ],
-  );
-  Widget _variantSummary(ProductVariant? v) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text(v?.name ?? 'No default variant returned.'),
-      if (v != null)
-        Text('${catalogMoney(v.basePrice)} · SKU: ${v.sku ?? '—'}'),
-      const SizedBox(height: AppSpacing.sm),
-      const Text(
-        'Advanced Variant editing is managed separately from Product General information.',
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      OutlinedButton.icon(
-        onPressed: widget.productId == null
-            ? null
-            : () => context.go(
-                '/menu-management/products/${widget.productId}/variants',
-              ),
-        icon: const Icon(Icons.tune_outlined),
-        label: const Text('Manage Variants'),
-      ),
-    ],
-  );
   Widget _text(
     String label,
     String value,
@@ -508,11 +562,18 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
     bool digits = false,
     bool price = false,
     TextInputType? keyboard,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    String? prefix,
+    String? suffix,
+    bool span = false,
+    bool technical = false,
+    Key? key,
+  }) => _GridField(
+    span: span,
     child: TextFormField(
+      key: key,
       initialValue: value,
       maxLines: lines,
+      textDirection: technical || price ? TextDirection.ltr : null,
       keyboardType:
           keyboard ??
           (price
@@ -531,9 +592,12 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         errorText: error,
+        prefixText: prefix,
+        suffixText: suffix,
       ),
     ),
   );
+
   Widget _select<T>(
     String label,
     T? value,
@@ -541,8 +605,8 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
     ValueChanged<T?> onChanged,
     String? error, {
     bool required = false,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    String? helper,
+  }) => _GridField(
     child: DropdownButtonFormField<T>(
       key: ValueKey<T?>(value),
       initialValue: value,
@@ -551,11 +615,13 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         errorText: error,
+        helperText: helper,
       ),
       items: items,
       onChanged: onChanged,
     ),
   );
+
   Future<void> _confirmLeave() async {
     final ProductEditorState state = context.read<ProductEditorCubit>().state;
     if (!state.isDirty) {
@@ -583,32 +649,286 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
-  final String title;
-  final Widget child;
+class _FormGrid extends StatelessWidget {
+  const _FormGrid({required this.children});
+  final List<Widget> children;
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: AppSpacing.allLg,
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      border: Border.all(color: AppColors.border),
-      borderRadius: BorderRadius.circular(12),
-    ),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final bool twoColumns = constraints.maxWidth >= 760;
+      return Wrap(
+        spacing: AppSpacing.lg,
+        runSpacing: AppSpacing.md,
+        children: children.map((child) {
+          final bool span = child is _GridField && child.span;
+          return SizedBox(
+            width: twoColumns && !span
+                ? (constraints.maxWidth - AppSpacing.lg) / 2
+                : constraints.maxWidth,
+            child: child,
+          );
+        }).toList(),
+      );
+    },
+  );
+}
+
+class _GridField extends StatelessWidget {
+  const _GridField({required this.child, this.span = false});
+  final Widget child;
+  final bool span;
+  @override
+  Widget build(BuildContext context) => child;
+}
+
+class _ImageEditor extends StatelessWidget {
+  const _ImageEditor({
+    required this.imageUrl,
+    required this.error,
+    required this.onSet,
+    this.onRemove,
+  });
+  final String imageUrl;
+  final String? error;
+  final VoidCallback onSet;
+  final VoidCallback? onRemove;
+  @override
+  Widget build(BuildContext context) => _GridField(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(title, style: AppTextStyles.titleMedium),
-        const SizedBox(height: AppSpacing.md),
-        child,
+        Text('Product Image', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.sm),
+        Container(
+          height: 152,
+          width: double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: imageUrl.trim().isEmpty
+              ? const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(Icons.image_outlined, size: 36),
+                    SizedBox(height: AppSpacing.xs),
+                    Text('No image set'),
+                  ],
+                )
+              : CatalogProductImage(url: imageUrl.trim()),
+        ),
+        if (error != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          Text(error!, style: const TextStyle(color: AppColors.danger)),
+        ],
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.sm,
+          children: <Widget>[
+            OutlinedButton(
+              key: const Key('product-image-action'),
+              onPressed: onSet,
+              child: Text(
+                imageUrl.trim().isEmpty ? 'Set Image' : 'Change Image',
+              ),
+            ),
+            if (onRemove != null)
+              TextButton(
+                onPressed: onRemove,
+                child: const Text('Remove Image'),
+              ),
+          ],
+        ),
       ],
     ),
   );
 }
 
-class _Banner extends StatelessWidget {
-  const _Banner({required this.message});
+class _StockTracking extends StatelessWidget {
+  const _StockTracking({required this.value, required this.onChanged});
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  @override
+  Widget build(BuildContext context) => _GridField(
+    span: true,
+    child: Material(
+      color: Colors.transparent,
+      child: SwitchListTile.adaptive(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Stock Tracking'),
+        subtitle: const Text(
+          'Track the materials consumed when this Product is prepared.',
+        ),
+        value: value,
+        onChanged: onChanged,
+      ),
+    ),
+  );
+}
+
+class _DefaultVariantSummary extends StatelessWidget {
+  const _DefaultVariantSummary({required this.variant, required this.onManage});
+  final ProductVariant? variant;
+  final VoidCallback onManage;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(variant?.name ?? 'No default variant returned.'),
+            if (variant != null)
+              Text(
+                'Base price ${catalogMoney(variant!.basePrice)}',
+                textDirection: TextDirection.ltr,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+          ],
+        ),
+      ),
+      OutlinedButton.icon(
+        onPressed: onManage,
+        icon: const Icon(Icons.tune_outlined),
+        label: const Text('Manage Variants'),
+      ),
+    ],
+  );
+}
+
+class _TranslationSheet extends StatefulWidget {
+  const _TranslationSheet({required this.draft, required this.onChanged});
+  final ProductEditorDraft draft;
+  final ValueChanged<ProductEditorDraft> onChanged;
+  @override
+  State<_TranslationSheet> createState() => _TranslationSheetState();
+}
+
+class _TranslationSheetState extends State<_TranslationSheet>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(length: 2, vsync: this);
+  late ProductEditorDraft _draft = widget.draft;
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  void _update(ProductEditorDraft draft) {
+    setState(() => _draft = draft);
+    widget.onChanged(draft);
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: <Widget>[
+      Padding(
+        padding: AppSpacing.allLg,
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Translations',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Close translations',
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+      ),
+      TabBar(
+        controller: _tabs,
+        tabs: const <Widget>[
+          Tab(text: 'Arabic'),
+          Tab(text: 'English'),
+        ],
+      ),
+      Expanded(
+        child: TabBarView(
+          controller: _tabs,
+          children: <Widget>[
+            _TranslationFields(
+              key: const Key('arabic-translation-fields'),
+              defaultName: _draft.name,
+              defaultDescription: _draft.description,
+              name: _draft.nameAr,
+              description: _draft.descriptionAr,
+              onNameChanged: (value) => _update(_draft.copyWith(nameAr: value)),
+              onDescriptionChanged: (value) =>
+                  _update(_draft.copyWith(descriptionAr: value)),
+            ),
+            _TranslationFields(
+              key: const Key('english-translation-fields'),
+              defaultName: _draft.name,
+              defaultDescription: _draft.description,
+              name: _draft.nameEn,
+              description: _draft.descriptionEn,
+              onNameChanged: (value) => _update(_draft.copyWith(nameEn: value)),
+              onDescriptionChanged: (value) =>
+                  _update(_draft.copyWith(descriptionEn: value)),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _TranslationFields extends StatelessWidget {
+  const _TranslationFields({
+    super.key,
+    required this.defaultName,
+    required this.defaultDescription,
+    required this.name,
+    required this.description,
+    required this.onNameChanged,
+    required this.onDescriptionChanged,
+  });
+  final String defaultName;
+  final String defaultDescription;
+  final String name;
+  final String description;
+  final ValueChanged<String> onNameChanged;
+  final ValueChanged<String> onDescriptionChanged;
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    padding: AppSpacing.allLg,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('Default content', style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Text(defaultName.isEmpty ? '—' : defaultName),
+        if (defaultDescription.isNotEmpty) Text(defaultDescription),
+        const SizedBox(height: AppSpacing.xl),
+        TextFormField(
+          initialValue: name,
+          onChanged: onNameChanged,
+          decoration: const InputDecoration(labelText: 'Localized Name'),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        TextFormField(
+          initialValue: description,
+          maxLines: 5,
+          onChanged: onDescriptionChanged,
+          decoration: const InputDecoration(labelText: 'Localized Description'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _Notice extends StatelessWidget {
+  const _Notice({required this.message});
   final String message;
   @override
   Widget build(BuildContext context) => Container(

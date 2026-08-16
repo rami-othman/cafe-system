@@ -14,6 +14,7 @@ class VariantsState extends Equatable {
     this.product,
     this.activeVariants = const <ProductVariant>[],
     this.archivedVariants = const <ProductVariant>[],
+    this.recipeConfigured = const <int, bool>{},
     this.filter = VariantFilter.active,
     this.action,
     this.fieldErrors = const <String, String>{},
@@ -24,6 +25,11 @@ class VariantsState extends Equatable {
   final ProductDetail? product;
   final List<ProductVariant> activeVariants;
   final List<ProductVariant> archivedVariants;
+
+  /// Resolved from the existing recipe endpoint. An absent entry means the
+  /// endpoint was unavailable; the UI deliberately treats that as not
+  /// configured rather than inventing a recipe state.
+  final Map<int, bool> recipeConfigured;
   final VariantFilter filter;
   final VariantAction? action;
   final Map<String, String> fieldErrors;
@@ -43,6 +49,7 @@ class VariantsState extends Equatable {
     ProductDetail? product,
     List<ProductVariant>? activeVariants,
     List<ProductVariant>? archivedVariants,
+    Map<int, bool>? recipeConfigured,
     VariantFilter? filter,
     VariantAction? action,
     Map<String, String>? fieldErrors,
@@ -56,6 +63,7 @@ class VariantsState extends Equatable {
     product: product ?? this.product,
     activeVariants: activeVariants ?? this.activeVariants,
     archivedVariants: archivedVariants ?? this.archivedVariants,
+    recipeConfigured: recipeConfigured ?? this.recipeConfigured,
     filter: filter ?? this.filter,
     action: clearAction ? null : action ?? this.action,
     fieldErrors: clearErrors
@@ -70,6 +78,7 @@ class VariantsState extends Equatable {
     product,
     activeVariants,
     archivedVariants,
+    recipeConfigured,
     filter,
     action,
     fieldErrors,
