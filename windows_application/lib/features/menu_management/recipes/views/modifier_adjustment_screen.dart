@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../controllers/recipe_cubits.dart';
 import '../models/recipe_models.dart';
+import 'variant_recipe_screen.dart' show RecipeMaterialSearchDialog;
 
 class ModifierAdjustmentScreen extends StatefulWidget {
   const ModifierAdjustmentScreen({
@@ -17,14 +19,13 @@ class ModifierAdjustmentScreen extends StatefulWidget {
     required this.optionId,
     this.productId,
     this.variantId,
-    this.optionName,
-    this.contextName,
+    this.groupId,
   });
   final int optionId;
   final int? productId;
   final int? variantId;
-  final String? optionName;
-  final String? contextName;
+  final int? groupId;
+
   @override
   State<ModifierAdjustmentScreen> createState() =>
       _ModifierAdjustmentScreenState();
@@ -47,9 +48,10 @@ class _ModifierAdjustmentScreenState extends State<ModifierAdjustmentScreen> {
   Widget build(BuildContext context) =>
       BlocConsumer<ModifierAdjustmentCubit, ModifierAdjustmentState>(
         listenWhen: (a, b) => a.error != b.error && b.error != null,
-        listener: (context, state) => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(state.error!))),
+        listener: (context, state) =>
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context).commonError)),
+            ),
         builder: (context, state) {
           if (state.loading && state.profile == null)
             return const Center(child: CircularProgressIndicator());
@@ -65,10 +67,7 @@ class _ModifierAdjustmentScreenState extends State<ModifierAdjustmentScreen> {
             optionId: widget.optionId,
             productId: widget.productId,
             variantId: widget.variantId,
-            optionName: widget.optionName ?? 'Option ${widget.optionId}',
-            contextName:
-                widget.contextName ??
-                (widget.variantId != null ? 'Variant' : 'Product'),
+            groupId: widget.groupId,
           );
         },
       );
@@ -80,15 +79,19 @@ class _EffectEditor extends StatefulWidget {
     required this.optionId,
     required this.productId,
     required this.variantId,
-    required this.optionName,
-    required this.contextName,
+    required this.groupId,
   });
   final ModifierAdjustmentState state;
   final int optionId;
   final int? productId;
   final int? variantId;
-  final String optionName;
-  final String contextName;
+  final int? groupId;
+  String get optionName => 'Modifier option';
+  String get contextName => variantId != null
+      ? 'Variant'
+      : productId != null
+      ? 'Product'
+      : 'Modifier';
   @override
   State<_EffectEditor> createState() => _EffectEditorState();
 }
@@ -118,6 +121,13 @@ class _EffectEditorState extends State<_EffectEditor> {
   ModifierRecipeProfile get profile => widget.state.profile!;
   bool get canCustomize => widget.productId != null || widget.variantId != null;
   bool get noEffect => profile.hasOverride && _draft.isEmpty;
+  String _localizedContext(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (widget.variantId != null) return l10n.recipeVariant;
+    if (widget.productId != null) return l10n.menuBreadcrumbProduct;
+    return l10n.modifierOptions;
+  }
+
   List<RecipeComponent> get removes =>
       _draft.where((c) => c.operation == 'remove').toList(growable: false);
   List<RecipeComponent> get adds =>
@@ -145,20 +155,39 @@ class _EffectEditorState extends State<_EffectEditor> {
                       _behavior(context),
                       const SizedBox(height: AppSpacing.lg),
                       Text(
-                        'When this Option is selected',
+                        AppLocalizations.of(
+                          context,
+                        ).recipeModifierMaterialEffects,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Define how this Option changes the materials consumed by the Recipe.',
+                        AppLocalizations.of(
+                          context,
+                        ).recipeModifierMaterialEffectsHelp,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       if (noEffect) _noEffectState(context),
+                      if (canCustomize && !noEffect)
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
+                          child: TextButton.icon(
+                            onPressed: busy ? null : _setNoMaterialEffect,
+                            icon: const Icon(Icons.block_outlined, size: 17),
+                            label: Text(
+                              AppLocalizations.of(
+                                context,
+                              ).recipeNoMaterialEffectFor(
+                                _localizedContext(context),
+                              ),
+                            ),
+                          ),
+                        ),
                       if (!noEffect) ...<Widget>[
                         _materialSection(
                           context,
-                          title: 'Removes',
+                          title: AppLocalizations.of(context).recipeRemoves,
                           operation: 'remove',
                           components: removes,
                           busy: busy,
@@ -166,7 +195,7 @@ class _EffectEditorState extends State<_EffectEditor> {
                         const SizedBox(height: AppSpacing.lg),
                         _materialSection(
                           context,
-                          title: 'Adds',
+                          title: AppLocalizations.of(context).recipeAdds,
                           operation: 'add',
                           components: adds,
                           busy: busy,
@@ -202,20 +231,20 @@ class _EffectEditorState extends State<_EffectEditor> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                '${widget.contextName}  ›  Material Effect',
+                AppLocalizations.of(context).recipeModifierMaterialEffects,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                '${widget.optionName} | Material Effect',
+                AppLocalizations.of(context).recipeModifierMaterialEffects,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ],
           ),
         ),
         IconButton(
-          tooltip: 'Close',
-          onPressed: () => context.pop(),
+          tooltip: AppLocalizations.of(context).commonClose,
+          onPressed: _returnToParent,
           icon: const Icon(Icons.close),
         ),
       ],
@@ -225,20 +254,25 @@ class _EffectEditorState extends State<_EffectEditor> {
   Widget _behavior(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: <Widget>[
-      Text('Current Behavior', style: Theme.of(context).textTheme.titleMedium),
+      Text(
+        AppLocalizations.of(context).recipeCurrentBehavior,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       const SizedBox(height: AppSpacing.sm),
       Row(
         children: <Widget>[
           Expanded(
             child: _BehaviorCard(
               selected: !_customizing && !profile.hasOverride,
-              title: 'Use inherited settings',
+              title: AppLocalizations.of(context).recipeUseInherited,
               subtitle: profile.inheritedFrom == 'product'
-                  ? 'From this Product'
-                  : 'From Global settings',
-              onTap: canCustomize
-                  ? () => setState(() => _customizing = false)
-                  : null,
+                  ? AppLocalizations.of(context).recipeInheritedFromProduct
+                  : AppLocalizations.of(context).recipeInheritedFromGlobal,
+              onTap: !canCustomize
+                  ? null
+                  : profile.hasOverride
+                  ? _restoreInheritance
+                  : () => setState(() => _customizing = false),
             ),
           ),
           if (canCustomize) ...<Widget>[
@@ -246,8 +280,12 @@ class _EffectEditorState extends State<_EffectEditor> {
             Expanded(
               child: _BehaviorCard(
                 selected: _customizing || profile.hasOverride,
-                title: 'Customize for ${widget.contextName}',
-                subtitle: 'Set a material effect for this context',
+                title: AppLocalizations.of(
+                  context,
+                ).recipeCustomizeFor(_localizedContext(context)),
+                subtitle: AppLocalizations.of(
+                  context,
+                ).recipeModifierMaterialEffectsHelp,
                 onTap: () => setState(() => _customizing = true),
               ),
             ),
@@ -268,18 +306,18 @@ class _EffectEditorState extends State<_EffectEditor> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'No material effect for this Product/Variant',
+          AppLocalizations.of(
+            context,
+          ).recipeNoMaterialEffectFor(_localizedContext(context)),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: AppSpacing.xs),
-        const Text(
-          'This Product intentionally ignores the inherited material settings for this Option.',
-        ),
+        Text(AppLocalizations.of(context).recipeEmptyOverride),
         const SizedBox(height: AppSpacing.sm),
         TextButton.icon(
           onPressed: widget.productId == null ? null : _restoreInheritance,
           icon: const Icon(Icons.undo, size: 17),
-          label: const Text('Use inherited settings again'),
+          label: Text(AppLocalizations.of(context).recipeUseInheritedAgain),
         ),
       ],
     ),
@@ -313,7 +351,9 @@ class _EffectEditorState extends State<_EffectEditor> {
         onPressed: busy ? null : () => _customizeAndAdd(operation),
         icon: const Icon(Icons.add, size: 17),
         label: Text(
-          'Add Material to ${operation == 'remove' ? 'Remove' : 'Add'}',
+          operation == 'remove'
+              ? AppLocalizations.of(context).recipeAddMaterialToRemove
+              : AppLocalizations.of(context).recipeAddMaterialToAdd,
         ),
       ),
     ],
@@ -345,8 +385,8 @@ class _EffectEditorState extends State<_EffectEditor> {
             child: DropdownButtonFormField<int>(
               value: component.materialId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Material',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).material,
                 isDense: true,
               ),
               items: widget.state.materials
@@ -382,8 +422,8 @@ class _EffectEditorState extends State<_EffectEditor> {
               key: Key('adjustment-quantity-$operation-$index'),
               initialValue: component.quantity,
               enabled: !busy && (_customizing || profile.hasOverride),
-              decoration: const InputDecoration(
-                labelText: 'Quantity',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).quantity,
                 isDense: true,
               ),
               keyboardType: const TextInputType.numberWithOptions(
@@ -406,7 +446,7 @@ class _EffectEditorState extends State<_EffectEditor> {
             child: Text(component.unitCode),
           ),
           IconButton(
-            tooltip: 'Remove material',
+            tooltip: AppLocalizations.of(context).removeMaterial,
             onPressed: busy
                 ? null
                 : () => setState(() => _draft.removeAt(index)),
@@ -426,8 +466,8 @@ class _EffectEditorState extends State<_EffectEditor> {
       mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
         TextButton(
-          onPressed: busy ? null : () => context.pop(),
-          child: const Text('Cancel'),
+          onPressed: busy ? null : _returnToParent,
+          child: Text(AppLocalizations.of(context).recipeCancel),
         ),
         const SizedBox(width: AppSpacing.sm),
         FilledButton(
@@ -439,7 +479,7 @@ class _EffectEditorState extends State<_EffectEditor> {
                   dimension: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save Changes'),
+              : Text(AppLocalizations.of(context).recipeSaveChanges),
         ),
       ],
     ),
@@ -448,14 +488,19 @@ class _EffectEditorState extends State<_EffectEditor> {
   void _replace(int index, RecipeComponent value) =>
       setState(() => _draft[index] = value);
 
-  void _add(String operation) {
-    final material = widget.state.materials.firstWhereOrNull(
-      (m) =>
-          m.configurationAvailable &&
-          m.unitCode != null &&
-          !_draft.any((c) => c.materialId == m.id && c.operation == operation),
+  Future<void> _add(String operation) async {
+    final cubit = context.read<ModifierAdjustmentCubit>();
+    final material = await showDialog<RecipeMaterial>(
+      context: context,
+      builder: (context) => RecipeMaterialSearchDialog(
+        excludedIds: _draft
+            .where((component) => component.operation == operation)
+            .map((component) => component.materialId)
+            .toSet(),
+        search: cubit.searchMaterials,
+      ),
     );
-    if (material == null) return;
+    if (!mounted || material == null || material.unitCode == null) return;
     setState(
       () => _draft.add(
         RecipeComponent(
@@ -469,11 +514,11 @@ class _EffectEditorState extends State<_EffectEditor> {
     );
   }
 
-  void _customizeAndAdd(String operation) {
+  Future<void> _customizeAndAdd(String operation) async {
     if (!_customizing && !profile.hasOverride) {
       setState(() => _customizing = true);
     }
-    _add(operation);
+    await _add(operation);
   }
 
   Future<void> _save() async {
@@ -483,7 +528,7 @@ class _EffectEditorState extends State<_EffectEditor> {
       productId: widget.productId,
       variantId: widget.variantId,
     );
-    if (saved && mounted) context.pop();
+    if (saved && mounted) _returnToParent();
   }
 
   Future<void> _restoreInheritance() async {
@@ -496,6 +541,40 @@ class _EffectEditorState extends State<_EffectEditor> {
           variantId: widget.variantId,
         );
     if (restored && mounted) setState(() => _customizing = false);
+  }
+
+  Future<void> _setNoMaterialEffect() async {
+    if (!canCustomize) return;
+    final saved = await context
+        .read<ModifierAdjustmentCubit>()
+        .suppressInherited(
+          widget.optionId,
+          productId: widget.productId,
+          variantId: widget.variantId,
+        );
+    if (saved && mounted) setState(() => _customizing = true);
+  }
+
+  void _returnToParent() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    if (widget.productId != null) {
+      context.go(
+        MenuManagementRouteLocations.productWorkspace(
+          widget.productId!,
+          tab: ProductWorkspaceTab.recipe,
+          variantId: widget.variantId,
+        ),
+      );
+      return;
+    }
+    if (widget.groupId != null) {
+      context.go('/menu-management/modifiers/${widget.groupId}');
+      return;
+    }
+    context.go('/menu-management/modifiers');
   }
 }
 

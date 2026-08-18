@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/menu_management_route_locations.dart';
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
@@ -23,38 +24,48 @@ import '../recipes/views/variant_recipe_screen.dart';
 import 'product_catalog_screen.dart'
     show CatalogProductImage, CatalogProductStatus;
 
-enum _WorkspaceTab {
-  overview,
-  variants,
-  modifiers,
-  recipe,
-  availability,
-  usage,
-}
-
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.productId});
+  const ProductDetailScreen({
+    super.key,
+    required this.productId,
+    this.tab = ProductWorkspaceTab.overview,
+    this.variantId,
+  });
   final int productId;
+  final ProductWorkspaceTab tab;
+  final int? variantId;
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  _WorkspaceTab _tab = _WorkspaceTab.overview;
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<ProductDetailCubit>().load(widget.productId),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductDetailCubit>().load(widget.productId);
+      if (widget.tab == ProductWorkspaceTab.usage) {
+        context.read<ProductDetailCubit>().loadUsage(widget.productId);
+      }
+    });
   }
 
-  void _selectTab(_WorkspaceTab tab) {
-    setState(() => _tab = tab);
-    if (tab == _WorkspaceTab.usage) {
+  @override
+  void didUpdateWidget(covariant ProductDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tab == ProductWorkspaceTab.usage &&
+        oldWidget.tab != ProductWorkspaceTab.usage) {
       context.read<ProductDetailCubit>().loadUsage(widget.productId);
     }
+  }
+
+  void _selectTab(ProductWorkspaceTab tab) {
+    if (tab == ProductWorkspaceTab.usage) {
+      context.read<ProductDetailCubit>().loadUsage(widget.productId);
+    }
+    context.go(
+      MenuManagementRouteLocations.productWorkspace(widget.productId, tab: tab),
+    );
   }
 
   @override
@@ -128,7 +139,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         _WorkspaceHeader(product: product),
                         const SizedBox(height: AppSpacing.xl),
                         _WorkspaceNavigation(
-                          selected: _tab,
+                          selected: widget.tab,
                           onSelected: _selectTab,
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -146,9 +157,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _workspaceBody(
     ProductDetail product,
     ProductDetailState state,
-  ) => switch (_tab) {
-    _WorkspaceTab.overview => _Overview(product: product),
-    _WorkspaceTab.variants =>
+  ) => switch (widget.tab) {
+    ProductWorkspaceTab.overview => _Overview(product: product),
+    ProductWorkspaceTab.variants =>
       product.isArchived
           ? _DestinationPanel(
               title: 'Variants',
@@ -166,7 +177,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     .replaceProduct,
               ),
             ),
-    _WorkspaceTab.modifiers =>
+    ProductWorkspaceTab.modifiers =>
       product.isArchived
           ? _DestinationPanel(
               title: 'Modifiers',
@@ -185,24 +196,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     .replaceProduct,
               ),
             ),
-    _WorkspaceTab.recipe => BlocProvider<VariantRecipeCubit>(
+    ProductWorkspaceTab.recipe => BlocProvider<VariantRecipeCubit>(
       create: (_) =>
           VariantRecipeCubit(context.read<ProductDetailCubit>().repository),
       child: RecipeMaterialsWorkspace(
         product: product,
         readOnly: product.isArchived,
+        selectedVariantId: widget.variantId,
+        onVariantChanged: (variantId) => context.go(
+          MenuManagementRouteLocations.productWorkspace(
+            product.id,
+            tab: ProductWorkspaceTab.recipe,
+            variantId: variantId,
+          ),
+        ),
       ),
     ),
-    _WorkspaceTab.availability => _DestinationPanel(
+    ProductWorkspaceTab.availability => _DestinationPanel(
       title: 'Availability',
       message: 'Manage the times and contexts where this product is available.',
       actionLabel: product.isArchived
           ? 'View Availability'
           : 'Open Availability',
-      onPressed: () =>
-          context.go('/menu-management/products/${product.id}/availability'),
+      onPressed: () => context.push(
+        MenuManagementRouteLocations.scheduledAvailability(product.id),
+      ),
     ),
-    _WorkspaceTab.usage => _UsagePanel(
+    ProductWorkspaceTab.usage => _UsagePanel(
       state: state,
       onRetry: () => context.read<ProductDetailCubit>().loadUsage(product.id),
     ),
@@ -309,46 +329,46 @@ class _WorkspaceNavigation extends StatelessWidget {
     required this.selected,
     required this.onSelected,
   });
-  final _WorkspaceTab selected;
-  final ValueChanged<_WorkspaceTab> onSelected;
+  final ProductWorkspaceTab selected;
+  final ValueChanged<ProductWorkspaceTab> onSelected;
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
     label: 'Product workspace navigation',
     child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: SegmentedButton<_WorkspaceTab>(
+      child: SegmentedButton<ProductWorkspaceTab>(
         showSelectedIcon: false,
-        selected: <_WorkspaceTab>{selected},
+        selected: <ProductWorkspaceTab>{selected},
         onSelectionChanged: (tabs) => onSelected(tabs.single),
-        segments: <ButtonSegment<_WorkspaceTab>>[
+        segments: <ButtonSegment<ProductWorkspaceTab>>[
           ButtonSegment(
-            value: _WorkspaceTab.overview,
+            value: ProductWorkspaceTab.overview,
             label: Text(context.maybeL10n?.productUxOverview ?? 'Overview'),
           ),
           ButtonSegment(
-            value: _WorkspaceTab.variants,
+            value: ProductWorkspaceTab.variants,
             label: Text(context.maybeL10n?.productUxVariants ?? 'Variants'),
           ),
           ButtonSegment(
-            value: _WorkspaceTab.modifiers,
+            value: ProductWorkspaceTab.modifiers,
             label: Text(context.maybeL10n?.productUxModifiers ?? 'Modifiers'),
           ),
           ButtonSegment(
-            value: _WorkspaceTab.recipe,
+            value: ProductWorkspaceTab.recipe,
             label: Text(
               context.maybeL10n?.productUxRecipeMaterials ??
                   'Recipe & Materials',
             ),
           ),
           ButtonSegment(
-            value: _WorkspaceTab.availability,
+            value: ProductWorkspaceTab.availability,
             label: Text(
               context.maybeL10n?.productUxAvailability ?? 'Availability',
             ),
           ),
           ButtonSegment(
-            value: _WorkspaceTab.usage,
+            value: ProductWorkspaceTab.usage,
             label: Text(context.maybeL10n?.productUxUsage ?? 'Usage'),
           ),
         ],

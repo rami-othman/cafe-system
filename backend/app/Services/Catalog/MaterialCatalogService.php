@@ -27,6 +27,17 @@ class MaterialCatalogService
         return DB::table('inventory_items')->where('tenant_id', $tenant)->where('id', $id)->first();
     }
 
+    /** @return array<int, object> */
+    public function materials(int $tenant, array $ids): array
+    {
+        return DB::table('inventory_items')
+            ->where('tenant_id', $tenant)
+            ->whereIn('id', array_values(array_unique(array_map('intval', $ids))))
+            ->get()
+            ->keyBy('id')
+            ->all();
+    }
+
     public function resource(object $m): array
     {
         $unit = $this->units->inventoryUnit($m->unit);

@@ -1,5 +1,7 @@
 // ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -748,25 +750,35 @@ class _AvailableGroupsSheetState extends State<_AvailableGroupsSheet> {
 Future<ProductModifierAssignment?> _showCustomizationSheet(
   BuildContext context,
   ProductModifierAssignment assignment,
-) => showDialog<ProductModifierAssignment>(
-  context: context,
-  builder: (context) =>
-      _SideSheet(child: _CustomizationSheet(assignment: assignment)),
-);
+) {
+  final cubit = context.read<ProductModifierAssignmentsCubit>();
+  return showDialog<ProductModifierAssignment>(
+    context: context,
+    builder: (_) => BlocProvider.value(
+      value: cubit,
+      child: _SideSheet(child: _CustomizationSheet(assignment: assignment)),
+    ),
+  );
+}
 
 class _SideSheet extends StatelessWidget {
   const _SideSheet({required this.child});
   final Widget child;
   @override
-  Widget build(BuildContext context) => Dialog(
-    alignment: AlignmentDirectional.centerEnd,
-    insetPadding: EdgeInsets.zero,
-    child: SizedBox(
-      width: 520,
-      height: double.infinity,
-      child: Padding(padding: AppSpacing.allXl, child: child),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final Size window = MediaQuery.sizeOf(context);
+    return Dialog(
+      alignment: AlignmentDirectional.centerEnd,
+      insetPadding: EdgeInsets.zero,
+      child: SafeArea(
+        child: SizedBox(
+          width: math.min(520, window.width),
+          height: window.height,
+          child: Padding(padding: AppSpacing.allXl, child: child),
+        ),
+      ),
+    );
+  }
 }
 
 class _CustomizationSheet extends StatefulWidget {
@@ -807,144 +819,182 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'Customize for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        const Text('Current behavior'),
-        Text(
-          a.hasCustomSettings
-              ? 'Customized for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}'
-              : 'Using library settings',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.secondary),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        RadioListTile<bool>(
-          value: false,
-          groupValue: customized,
-          onChanged: (v) => setState(() => customized = false),
-          title: const Text('Use library settings'),
-        ),
-        RadioListTile<bool>(
-          value: true,
-          groupValue: customized,
-          onChanged: (v) => setState(() => customized = true),
-          title: Text(
-            'Customize for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}',
-          ),
-        ),
-        if (customized) ...<Widget>[
-          const Divider(),
-          Text(
-            'How should customers choose?',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          RadioListTile<String>(
-            value: 'single',
-            groupValue: a.selectionType,
-            onChanged: null,
-            title: const Text('Choose one'),
-          ),
-          RadioListTile<String>(
-            value: 'multiple',
-            groupValue: a.selectionType,
-            onChanged: null,
-            title: const Text('Choose multiple'),
-          ),
-          Text(
-            multiple
-                ? 'This group uses multiple choices from the Modifier Library.'
-                : 'This group uses one choice from the Modifier Library.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
-          ),
-          SegmentedButton<bool>(
-            segments: const <ButtonSegment<bool>>[
-              ButtonSegment(value: false, label: Text('Optional')),
-              ButtonSegment(value: true, label: Text('Required')),
-            ],
-            selected: <bool>{required},
-            onSelectionChanged: (v) => setState(() => required = v.first),
-          ),
-          if (multiple) ...<Widget>[
-            TextField(
-              controller: min,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Minimum choices'),
-            ),
-            TextField(
-              controller: max,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Maximum choices'),
-            ),
-          ],
-          SwitchListTile(
-            value: quantity,
-            onChanged: (v) => setState(() => quantity = v),
-            title: const Text('Can the same option be added more than once?'),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            modifierRuleSummaryForFields(
-              context,
-              selectionType: a.selectionType,
-              isRequired: required,
-              minSelections: int.tryParse(min.text) ?? 0,
-              maxSelections: int.tryParse(max.text) ?? 0,
-              allowQuantity: quantity,
-            ),
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-        ],
-        const Spacer(),
-        Wrap(
-          spacing: AppSpacing.sm,
-          children: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            if (customized)
-              TextButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  a.copyWith(
-                    clearRequired: true,
-                    clearMinimum: true,
-                    clearMaximum: true,
-                    clearAllowQuantity: true,
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Customize for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const Text('Current behavior'),
+                Text(
+                  a.hasCustomSettings
+                      ? 'Customized for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}'
+                      : 'Using library settings',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.secondary),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                RadioListTile<bool>(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: false,
+                  groupValue: customized,
+                  onChanged: (v) => setState(() => customized = false),
+                  title: const Text('Use library settings'),
+                ),
+                RadioListTile<bool>(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: true,
+                  groupValue: customized,
+                  onChanged: (v) => setState(() => customized = true),
+                  title: Text(
+                    'Customize for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}',
                   ),
                 ),
-                child: const Text('Use library settings again'),
-              ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                context,
-                customized
-                    ? a.copyWith(
-                        isRequiredOverride: required,
-                        minSelectionsOverride: multiple
-                            ? int.tryParse(min.text)
-                            : a.libraryMinSelections,
-                        maxSelectionsOverride: multiple
-                            ? int.tryParse(max.text)
-                            : a.libraryMaxSelections,
-                        allowQuantityOverride: quantity,
-                      )
-                    : a.copyWith(
-                        clearRequired: true,
-                        clearMinimum: true,
-                        clearMaximum: true,
-                        clearAllowQuantity: true,
+                if (customized) ...<Widget>[
+                  const Divider(height: AppSpacing.xl),
+                  Text(
+                    'How should customers choose?',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    value: 'single',
+                    groupValue: a.selectionType,
+                    onChanged: null,
+                    title: const Text('Choose one'),
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    value: 'multiple',
+                    groupValue: a.selectionType,
+                    onChanged: null,
+                    title: const Text('Choose multiple'),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    multiple
+                        ? 'This group uses multiple choices from the Modifier Library.'
+                        : 'This group uses one choice from the Modifier Library.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<bool>(
+                      segments: const <ButtonSegment<bool>>[
+                        ButtonSegment(value: false, label: Text('Optional')),
+                        ButtonSegment(value: true, label: Text('Required')),
+                      ],
+                      selected: <bool>{required},
+                      onSelectionChanged: (v) =>
+                          setState(() => required = v.first),
+                    ),
+                  ),
+                  if (multiple) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: min,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Minimum choices',
                       ),
-              ),
-              child: const Text('Apply'),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: max,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Maximum choices',
+                      ),
+                    ),
+                  ],
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: quantity,
+                    onChanged: (v) => setState(() => quantity = v),
+                    title: const Text(
+                      'Can the same option be added more than once?',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    modifierRuleSummaryForFields(
+                      context,
+                      selectionType: a.selectionType,
+                      isRequired: required,
+                      minSelections: int.tryParse(min.text) ?? 0,
+                      maxSelections: int.tryParse(max.text) ?? 0,
+                      allowQuantity: quantity,
+                    ),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
+        ),
+        const Divider(height: AppSpacing.xl),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            alignment: WrapAlignment.end,
+            children: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              if (customized)
+                TextButton(
+                  onPressed: () => Navigator.pop(
+                    context,
+                    a.copyWith(
+                      clearRequired: true,
+                      clearMinimum: true,
+                      clearMaximum: true,
+                      clearAllowQuantity: true,
+                    ),
+                  ),
+                  child: const Text('Use library settings again'),
+                ),
+              FilledButton(
+                onPressed: () => Navigator.pop(
+                  context,
+                  customized
+                      ? a.copyWith(
+                          isRequiredOverride: required,
+                          minSelectionsOverride: multiple
+                              ? int.tryParse(min.text)
+                              : a.libraryMinSelections,
+                          maxSelectionsOverride: multiple
+                              ? int.tryParse(max.text)
+                              : a.libraryMaxSelections,
+                          allowQuantityOverride: quantity,
+                        )
+                      : a.copyWith(
+                          clearRequired: true,
+                          clearMinimum: true,
+                          clearMaximum: true,
+                          clearAllowQuantity: true,
+                        ),
+                ),
+                child: const Text('Apply'),
+              ),
+            ],
+          ),
         ),
       ],
     );

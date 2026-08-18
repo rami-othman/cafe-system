@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -29,6 +30,10 @@ class ProductEditorScreen extends StatefulWidget {
 
 class _ProductEditorScreenState extends State<ProductEditorScreen> {
   bool get _isCreate => widget.productId == null;
+
+  String get _returnLocation => _isCreate
+      ? '/menu-management/products'
+      : MenuManagementRouteLocations.productWorkspace(widget.productId!);
 
   @override
   void initState() {
@@ -379,7 +384,10 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                           child: _DefaultVariantSummary(
                             variant: state.currentDefaultVariant,
                             onManage: () => context.go(
-                              '/menu-management/products/${widget.productId}/variants',
+                              MenuManagementRouteLocations.productWorkspace(
+                                widget.productId!,
+                                tab: ProductWorkspaceTab.variants,
+                              ),
                             ),
                           ),
                         ),
@@ -628,7 +636,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
   Future<void> _confirmLeave() async {
     final ProductEditorState state = context.read<ProductEditorCubit>().state;
     if (!state.isDirty) {
-      if (mounted) context.pop();
+      if (mounted) context.go(_returnLocation);
       return;
     }
     final bool? leave = await showDialog<bool>(
@@ -648,7 +656,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
         ],
       ),
     );
-    if (leave == true && mounted) context.pop();
+    if (leave == true && mounted) context.go(_returnLocation);
   }
 }
 

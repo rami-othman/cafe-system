@@ -84,6 +84,27 @@ class RecipeConfigurationApiTest extends TestCase
             ->assertJsonPath('data.0.materialImpactConfigured', false);
     }
 
+    public function test_variant_recipe_material_effect_summary_is_bounded_and_tenant_scoped(): void
+    {
+        [$tenant, $product, $variant, $group, $option] = $this->recipeContext('effect-summary');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'add', 'quantity' => '1', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $inactive = DB::table('modifier_options')->insertGetId(['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Inactive', 'is_active' => false, 'is_available' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe-material-effects", $headers)
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.optionId', $option)
+            ->assertJsonPath('data.0.inheritedFrom', 'global')
+            ->assertJsonPath('data.0.components.0.materialId', $material);
+        $foreign = $this->tenant('effect-summary-foreign');
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe-material-effects", $this->headers($foreign))->assertNotFound();
+        $this->assertNotSame($option, $inactive);
+    }
+
     public function test_variant_list_summary_reports_recipe_configuration_and_component_count(): void
     {
         [$tenant, $product, $variant] = $this->recipeContext('variant-summary');
@@ -198,7 +219,12 @@ class RecipeConfigurationApiTest extends TestCase
         $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $beans, 'quantity' => '18.125', 'unitCode' => 'g']]], $headers)->assertOk();
         $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", ['components' => [['materialId' => $beans, 'operation' => 'add', 'quantity' => '0.125', 'unitCode' => 'g']]], $headers)->assertOk();
         $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 1]]], $headers)->assertOk()->assertJsonPath('data.components.0.quantity', '18.25');
-        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 3]]], $headers)->assertOk()->assertJsonPath('data.components.0.quantity', '18.5');
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 2]]], $headers)->assertOk()->assertJsonPath('data.components.0.quantity', '18.375');
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 3]]], $headers)->assertUnprocessable();
+        $second = DB::table('modifier_options')->insertGetId(['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Second Shot', 'is_active' => true, 'is_available' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$second/recipe-adjustments", ['components' => [['materialId' => $beans, 'operation' => 'add', 'quantity' => '0.125', 'unitCode' => 'g']]], $headers)->assertOk();
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 1], ['optionId' => $second, 'quantity' => 1]]], $headers)->assertOk()->assertJsonPath('data.components.0.quantity', '18.375');
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 2], ['optionId' => $second, 'quantity' => 1]]], $headers)->assertUnprocessable();
         $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", ['components' => [['materialId' => $beans, 'operation' => 'remove', 'quantity' => '1', 'unitCode' => 'g']]], $headers)->assertUnprocessable();
         $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => 0]]], $headers)->assertUnprocessable();
         $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option, 'quantity' => -1]]], $headers)->assertUnprocessable();

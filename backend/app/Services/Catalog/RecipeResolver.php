@@ -2,7 +2,6 @@
 
 namespace App\Services\Catalog;
 
-use App\Models\ModifierOption;
 use App\Models\ProductVariant;
 use Brick\Math\BigDecimal;
 use Illuminate\Validation\ValidationException;
@@ -22,10 +21,12 @@ class RecipeResolver
             ->get()
             ->keyBy('id');
         $base = $this->configuration->recipe($variant)['components'];
+        $baseMaterialIds = array_column($base, 'materialId');
+        $materials = $this->materials->materials($variant->tenant_id, $baseMaterialIds);
         $amounts = [];
         $meta = [];
         foreach ($base as $c) {
-            $material = $this->materials->material($variant->tenant_id, $c['materialId']);
+            $material = $materials[$c['materialId']] ?? null;
             if (! $material || ! $material->is_active || $material->deleted_at || ! $this->units->inventoryUnit($material->unit)) {
                 throw ValidationException::withMessages(['recipe' => 'Base recipe material is unavailable or has an unmapped unit.']);
             }
@@ -36,27 +37,43 @@ class RecipeResolver
             $amounts[$c['materialId']] = BigDecimal::of($n['quantity']);
             $meta[$c['materialId']] = [$n['unitCode'], $n['family']];
         }
+        $options = $groups->flatMap(fn ($group) => $group->options)->keyBy('id');
         $seen = [];
         $selectedByGroup = [];
-        $effects = [];
+        $picks = [];
         foreach ($selected as $pick) {
             $id = (int) ($pick['optionId'] ?? 0);
             if (isset($seen[$id])) {
                 throw ValidationException::withMessages(['selectedOptions' => 'Duplicate modifier option.']);
             }$seen[$id] = true;
-            $o = ModifierOption::query()->with('modifierGroup')->where('tenant_id', $variant->tenant_id)->find($id);
+            $o = $options->get($id);
             $group = $o ? $groups->get($o->modifier_group_id) : null;
-            if (! $o || ! $o->is_active || ! $o->is_available || $o->trashed() || ! $group || ! $group->is_active || $group->trashed()) {
+            if (! $o || ! $group) {
                 throw ValidationException::withMessages(['selectedOptions' => 'Selected modifier option is invalid.']);
             }
-            $selectedByGroup[$group->id] = ($selectedByGroup[$group->id] ?? 0) + 1;
             $q = (int) ($pick['quantity'] ?? 1);
             $allow = (bool) ($group->pivot->allow_quantity_override ?? $group->allow_quantity);
             if ($q < 1 || (! $allow && $q !== 1)) {
                 throw ValidationException::withMessages(['selectedOptions' => 'Modifier quantity is invalid.']);
-            }$profile = $this->configuration->effective($o, $variant->product_id, $variant->id);
+            }
+            $selectedByGroup[$group->id] = ($selectedByGroup[$group->id] ?? 0) + ($allow ? $q : 1);
+            $picks[] = ['option' => $o, 'group' => $group, 'quantity' => $q];
+        }
+        $profiles = $this->configuration->effectiveProfilesFor(
+            $variant->tenant_id,
+            array_map(fn (array $pick) => $pick['option']->id, $picks),
+            $variant->product_id,
+            $variant->id,
+        );
+        $profileMaterialIds = collect($profiles)->flatMap(fn ($profile) => $profile->components->pluck('inventory_item_id'))->all();
+        $materials += $this->materials->materials($variant->tenant_id, $profileMaterialIds);
+        $effects = [];
+        foreach ($picks as $pick) {
+            $o = $pick['option'];
+            $q = $pick['quantity'];
+            $profile = $profiles[$o->id] ?? null;
             foreach ($profile?->components ?? [] as $c) {
-                $material = $this->materials->material($variant->tenant_id, $c->inventory_item_id);
+                $material = $materials[$c->inventory_item_id] ?? null;
                 if (! $material || ! $material->is_active || $material->deleted_at || ! $this->units->inventoryUnit($material->unit)) {
                     throw ValidationException::withMessages(['recipe' => 'Modifier recipe material is unavailable or has an unmapped unit.']);
                 }
@@ -66,7 +83,8 @@ class RecipeResolver
                 }
                 if ($c->operation === 'remove' && $q !== 1) {
                     throw ValidationException::withMessages(['selectedOptions' => 'REMOVE cannot be repeated.']);
-                }$value = BigDecimal::of($n['quantity'])->multipliedBy($q);
+                }
+                $value = BigDecimal::of($n['quantity'])->multipliedBy($q);
                 $effects[] = ['materialId' => $c->inventory_item_id, 'operation' => $c->operation, 'value' => $value];
                 $meta[$c->inventory_item_id] = [$n['unitCode'], $n['family']];
             }
@@ -103,7 +121,7 @@ class RecipeResolver
         $rows = [];
         foreach ($amounts as $id => $amount) {
             if (! $amount->isZero()) {
-                $m = $this->materials->material($variant->tenant_id, $id);
+                $m = $materials[$id] ?? null;
                 if (! $m || ! $m->is_active || $m->deleted_at) {
                     throw ValidationException::withMessages(['recipe' => 'Recipe material is unavailable.']);
                 }$rows[] = ['materialId' => $id, 'name' => $m->name, 'sku' => $m->sku, 'quantity' => $this->units->quantityString($amount), 'unitCode' => $meta[$id][0]];

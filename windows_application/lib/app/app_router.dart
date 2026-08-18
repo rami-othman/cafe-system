@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
+import 'menu_management_route_locations.dart';
 
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
@@ -23,8 +24,6 @@ import '../features/menu_management/views/product_catalog_screen.dart';
 import '../features/menu_management/views/product_detail_screen.dart';
 import '../features/menu_management/products/controllers/product_editor_cubit.dart';
 import '../features/menu_management/products/views/product_editor_screen.dart';
-import '../features/menu_management/variants/controllers/variants_cubit.dart';
-import '../features/menu_management/variants/views/variants_screen.dart';
 import '../features/menu_management/recipes/views/variant_recipe_screen.dart';
 import '../features/menu_management/recipes/views/modifier_adjustment_screen.dart';
 import '../features/menu_management/recipes/views/recipe_simulation_screen.dart';
@@ -42,8 +41,6 @@ import '../features/menu_management/modifiers/controllers/modifier_library_cubit
 import '../features/menu_management/modifiers/views/modifier_group_detail_screen.dart';
 import '../features/menu_management/modifiers/views/modifier_group_editor_screen.dart';
 import '../features/menu_management/modifiers/views/modifier_library_screen.dart';
-import '../features/menu_management/products/controllers/product_modifier_assignments_cubit.dart';
-import '../features/menu_management/products/views/product_modifier_assignments_screen.dart';
 import '../features/menu_management/catalog_setup/controllers/catalog_setup_cubit.dart';
 import '../features/menu_management/catalog_setup/models/catalog_setup_models.dart';
 import '../features/menu_management/catalog_setup/views/catalog_setup_screen.dart';
@@ -177,6 +174,19 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductModifierRecipeAdjustments,
           name: AppRouteNames.menuManagementProductModifierRecipeAdjustments,
+          redirect: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.pathParameters['productId'],
+            );
+            final optionId = parsePositiveRouteId(
+              state.pathParameters['optionId'],
+            );
+            if (productId == null || optionId == null) return null;
+            return MenuManagementRouteLocations.productMaterialEffect(
+              productId,
+              optionId,
+            );
+          },
           builder: (context, state) {
             final optionId = int.tryParse(
               state.pathParameters['optionId'] ?? '',
@@ -197,8 +207,6 @@ final GoRouter appRouter = GoRouter(
               child: ModifierAdjustmentScreen(
                 optionId: optionId,
                 productId: productId,
-                optionName: state.uri.queryParameters['optionName'],
-                contextName: state.uri.queryParameters['contextName'],
               ),
             );
           },
@@ -206,6 +214,25 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementVariantModifierRecipeAdjustments,
           name: AppRouteNames.menuManagementVariantModifierRecipeAdjustments,
+          redirect: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.uri.queryParameters['productId'],
+            );
+            final variantId = parsePositiveRouteId(
+              state.pathParameters['variantId'],
+            );
+            final optionId = parsePositiveRouteId(
+              state.pathParameters['optionId'],
+            );
+            if (productId == null || variantId == null || optionId == null) {
+              return null;
+            }
+            return MenuManagementRouteLocations.variantMaterialEffect(
+              productId,
+              variantId,
+              optionId,
+            );
+          },
           builder: (context, state) {
             final optionId = int.tryParse(
               state.pathParameters['optionId'] ?? '',
@@ -230,8 +257,6 @@ final GoRouter appRouter = GoRouter(
                 optionId: optionId,
                 productId: productId,
                 variantId: variantId,
-                optionName: state.uri.queryParameters['optionName'],
-                contextName: state.uri.queryParameters['contextName'],
               ),
             );
           },
@@ -239,6 +264,19 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementRecipeSimulation,
           name: AppRouteNames.menuManagementRecipeSimulation,
+          redirect: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.pathParameters['productId'],
+            );
+            final variantId = parsePositiveRouteId(
+              state.pathParameters['variantId'],
+            );
+            if (productId == null || variantId == null) return null;
+            return MenuManagementRouteLocations.recipeTest(
+              productId,
+              variantId,
+            );
+          },
           builder: (context, state) {
             final productId = int.tryParse(
               state.pathParameters['productId'] ?? '',
@@ -259,6 +297,133 @@ final GoRouter appRouter = GoRouter(
               child: RecipeSimulationScreen(
                 productId: productId,
                 variantId: variantId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementProductRecipeEditor,
+          name: AppRouteNames.menuManagementProductRecipeEditor,
+          builder: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.pathParameters['productId'],
+            );
+            final variantId = parsePositiveRouteId(
+              state.pathParameters['variantId'],
+            );
+            if (productId == null || variantId == null) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<VariantRecipeCubit>(
+              create: (_) =>
+                  VariantRecipeCubit(serviceLocator<MenuCatalogRepository>()),
+              child: VariantRecipeScreen(
+                productId: productId,
+                variantId: variantId,
+                editMode: true,
+                returnToRecipeWorkspace: true,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementProductRecipeTest,
+          name: AppRouteNames.menuManagementProductRecipeTest,
+          builder: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.pathParameters['productId'],
+            );
+            final variantId = parsePositiveRouteId(
+              state.pathParameters['variantId'],
+            );
+            if (productId == null || variantId == null) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<RecipeSimulationCubit>(
+              create: (_) => RecipeSimulationCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: RecipeSimulationScreen(
+                productId: productId,
+                variantId: variantId,
+                onClose: () =>
+                    _returnToRecipeWorkspace(context, productId, variantId),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementProductMaterialEffect,
+          name: AppRouteNames.menuManagementProductMaterialEffect,
+          builder: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.pathParameters['productId'],
+            );
+            final optionId = parsePositiveRouteId(
+              state.pathParameters['optionId'],
+            );
+            if (productId == null || optionId == null) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<ModifierAdjustmentCubit>(
+              create: (_) => ModifierAdjustmentCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: ModifierAdjustmentScreen(
+                optionId: optionId,
+                productId: productId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementVariantMaterialEffect,
+          name: AppRouteNames.menuManagementVariantMaterialEffect,
+          builder: (context, state) {
+            final productId = parsePositiveRouteId(
+              state.pathParameters['productId'],
+            );
+            final variantId = parsePositiveRouteId(
+              state.pathParameters['variantId'],
+            );
+            final optionId = parsePositiveRouteId(
+              state.pathParameters['optionId'],
+            );
+            if (productId == null || variantId == null || optionId == null) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<ModifierAdjustmentCubit>(
+              create: (_) => ModifierAdjustmentCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: ModifierAdjustmentScreen(
+                optionId: optionId,
+                productId: productId,
+                variantId: variantId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementGlobalMaterialEffect,
+          name: AppRouteNames.menuManagementGlobalMaterialEffect,
+          builder: (context, state) {
+            final groupId = parsePositiveRouteId(
+              state.pathParameters['modifierGroupId'],
+            );
+            final optionId = parsePositiveRouteId(
+              state.pathParameters['optionId'],
+            );
+            if (groupId == null || optionId == null) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<ModifierAdjustmentCubit>(
+              create: (_) => ModifierAdjustmentCubit(
+                serviceLocator<MenuCatalogRepository>(),
+              ),
+              child: ModifierAdjustmentScreen(
+                optionId: optionId,
+                groupId: groupId,
               ),
             );
           },
@@ -413,13 +578,14 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductModifiers,
           name: AppRouteNames.menuManagementProductModifiers,
-          builder: (context, state) {
+          redirect: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['productId']);
-            if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<ProductModifierAssignmentsCubit>(
-              create: (_) => serviceLocator<ProductModifierAssignmentsCubit>(),
-              child: ProductModifierAssignmentsScreen(productId: id),
-            );
+            return id == null
+                ? null
+                : MenuManagementRouteLocations.productWorkspace(
+                    id,
+                    tab: ProductWorkspaceTab.modifiers,
+                  );
           },
         ),
         GoRoute(
@@ -450,13 +616,14 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductVariants,
           name: AppRouteNames.menuManagementProductVariants,
-          builder: (context, state) {
+          redirect: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['productId']);
-            if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<VariantsCubit>(
-              create: (_) => serviceLocator<VariantsCubit>(),
-              child: VariantsScreen(productId: id),
-            );
+            return id == null
+                ? null
+                : MenuManagementRouteLocations.productWorkspace(
+                    id,
+                    tab: ProductWorkspaceTab.variants,
+                  );
           },
         ),
         GoRoute(
@@ -546,7 +713,15 @@ final GoRouter appRouter = GoRouter(
             if (id == null) return const _InvalidCatalogRouteScreen();
             return BlocProvider<ProductDetailCubit>(
               create: (_) => serviceLocator<ProductDetailCubit>(),
-              child: ProductDetailScreen(productId: id),
+              child: ProductDetailScreen(
+                productId: id,
+                tab: ProductWorkspaceTab.fromQuery(
+                  state.uri.queryParameters['tab'],
+                ),
+                variantId: parsePositiveRouteId(
+                  state.uri.queryParameters['variantId'],
+                ),
+              ),
             );
           },
         ),
@@ -680,6 +855,16 @@ abstract final class AppRoutes {
       '/menu-management/product-variants/:variantId/recipe';
   static const String menuManagementRecipeSimulation =
       '/menu-management/products/:productId/variants/:variantId/recipe-simulation';
+  static const String menuManagementProductRecipeEditor =
+      '/menu-management/products/:productId/variants/:variantId/recipe/edit';
+  static const String menuManagementProductRecipeTest =
+      '/menu-management/products/:productId/variants/:variantId/recipe/test';
+  static const String menuManagementProductMaterialEffect =
+      '/menu-management/products/:productId/modifier-options/:optionId/material-effect';
+  static const String menuManagementVariantMaterialEffect =
+      '/menu-management/products/:productId/variants/:variantId/modifier-options/:optionId/material-effect';
+  static const String menuManagementGlobalMaterialEffect =
+      '/menu-management/modifiers/:modifierGroupId/options/:optionId/material-effect';
   static const String menuManagementProductModifiers =
       '/menu-management/products/:productId/modifiers';
   static const String menuManagementProductAvailability =
@@ -732,6 +917,16 @@ abstract final class AppRouteNames {
       'menu-management-variant-recipe';
   static const String menuManagementRecipeSimulation =
       'menu-management-recipe-simulation';
+  static const String menuManagementProductRecipeEditor =
+      'menu-management-product-recipe-editor';
+  static const String menuManagementProductRecipeTest =
+      'menu-management-product-recipe-test';
+  static const String menuManagementProductMaterialEffect =
+      'menu-management-product-material-effect';
+  static const String menuManagementVariantMaterialEffect =
+      'menu-management-variant-material-effect';
+  static const String menuManagementGlobalMaterialEffect =
+      'menu-management-global-material-effect';
   static const String menuManagementProductModifiers =
       'menu-management-product-modifiers';
   static const String menuManagementProductAvailability =
@@ -750,4 +945,22 @@ class _InvalidCatalogRouteScreen extends StatelessWidget {
 int? parsePositiveRouteId(String? value) {
   final int? parsed = int.tryParse(value ?? '');
   return parsed != null && parsed > 0 ? parsed : null;
+}
+
+void _returnToRecipeWorkspace(
+  BuildContext context,
+  int productId,
+  int variantId,
+) {
+  if (context.canPop()) {
+    context.pop();
+    return;
+  }
+  context.go(
+    MenuManagementRouteLocations.productWorkspace(
+      productId,
+      tab: ProductWorkspaceTab.recipe,
+      variantId: variantId,
+    ),
+  );
 }

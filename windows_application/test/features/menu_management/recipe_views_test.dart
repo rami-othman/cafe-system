@@ -59,7 +59,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('Remove material'));
+      await tester.tap(find.byTooltip('Remove'));
       await tester.pump();
       expect(find.text('Beans'), findsNothing);
       await tester.tap(find.text('Save recipe'));
@@ -94,7 +94,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Use inherited settings'), findsOneWidget);
-      expect(find.text('From Global settings'), findsOneWidget);
+      expect(find.text('Inherited from Global'), findsOneWidget);
       expect(
         find.byKey(const Key('adjustment-quantity-add-0')),
         findsOneWidget,
@@ -102,7 +102,11 @@ void main() {
       expect(find.text('Add Material to Add'), findsOneWidget);
       await tester.ensureVisible(find.text('Add Material to Add'));
       await tester.tap(find.text('Add Material to Add'));
-      await tester.pump();
+      await tester.enterText(find.byType(TextField), 'Milk');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Milk').last);
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('adjustment-quantity-add-1')),
         findsOneWidget,
@@ -278,13 +282,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(Checkbox));
     await tester.pump();
-    await tester.ensureVisible(find.text('Preview Materials'));
-    await tester.tap(find.text('Preview Materials'));
+    await tester.ensureVisible(find.byIcon(Icons.science_outlined));
+    await tester.tap(find.byIcon(Icons.science_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.text('Test Recipe'), findsOneWidget);
+    expect(find.text('اختبار الوصفة'), findsOneWidget);
     expect(
-      Directionality.of(tester.element(find.text('Test Recipe'))),
+      Directionality.of(tester.element(find.text('اختبار الوصفة'))),
       TextDirection.rtl,
     );
     expect(find.text(repository.materialName), findsOneWidget);
@@ -315,9 +319,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Use inherited settings'), findsOneWidget);
+      expect(find.text('استخدام الإعدادات الموروثة'), findsOneWidget);
       expect(
-        Directionality.of(tester.element(find.text('Current Behavior'))),
+        Directionality.of(tester.element(find.text('السلوك الحالي'))),
         TextDirection.rtl,
       );
     },
@@ -400,6 +404,13 @@ class _RecipeViewRepository extends MenuCatalogRepository {
       ),
     ],
   );
+
+  @override
+  Future<List<ModifierRecipeProfile>> getVariantRecipeMaterialEffects(
+    int variantId,
+  ) async => <ModifierRecipeProfile>[
+    await getModifierRecipeProfile(3, variantId: variantId),
+  ];
 
   @override
   Future<ModifierRecipeProfile> saveModifierRecipeProfile(

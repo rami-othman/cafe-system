@@ -1530,4 +1530,124 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get configuredSellPriceMustBePositive =>
       'Selling price must be greater than zero.';
+
+  @override
+  String get recipeVariant => 'Variant';
+
+  @override
+  String recipeConfigured(int count) {
+    return 'Recipe configured · $count materials';
+  }
+
+  @override
+  String get recipeMissing => 'Recipe missing';
+
+  @override
+  String get recipeNotConfigured => 'Recipe not configured';
+
+  @override
+  String get recipeModifierMaterialEffects => 'Modifier Material Effects';
+
+  @override
+  String get recipeModifierMaterialEffectsHelp =>
+      'See how customer choices change the materials consumed.';
+
+  @override
+  String get recipeNoMaterialChange => 'No material change';
+
+  @override
+  String get recipeUsingGlobalSettings => 'Using Global settings';
+
+  @override
+  String get recipeCustomizedForProduct => 'Customized for Product';
+
+  @override
+  String get recipeCustomizedForVariant => 'Customized for Variant';
+
+  @override
+  String get recipeTest => 'Test Recipe';
+
+  @override
+  String get recipeBackToWorkspace => 'Back to Recipe & Materials';
+
+  @override
+  String get recipeSave => 'Save recipe';
+
+  @override
+  String get recipeSaved => 'Recipe saved.';
+
+  @override
+  String get recipeCurrentBehavior => 'Current Behavior';
+
+  @override
+  String get recipeUseInherited => 'Use inherited settings';
+
+  @override
+  String get recipeUseInheritedAgain => 'Use inherited settings again';
+
+  @override
+  String recipeCustomizeFor(String context) {
+    return 'Customize for $context';
+  }
+
+  @override
+  String recipeNoMaterialEffectFor(String context) {
+    return 'No material effect for $context';
+  }
+
+  @override
+  String get recipeRemoves => 'Removes';
+
+  @override
+  String get recipeAdds => 'Adds';
+
+  @override
+  String get recipeAddMaterialToRemove => 'Add Material to Remove';
+
+  @override
+  String get recipeAddMaterialToAdd => 'Add Material to Add';
+
+  @override
+  String get recipeSaveChanges => 'Save Changes';
+
+  @override
+  String get recipeCancel => 'Cancel';
+
+  @override
+  String get recipeQuantityRequired => 'Quantity is required.';
+
+  @override
+  String get recipeQuantityInvalid =>
+      'Enter a positive number with up to 6 decimal places.';
+
+  @override
+  String get recipeDuplicateMaterial => 'This material is already used.';
+
+  @override
+  String get recipeMaterialSearch => 'Search materials';
+
+  @override
+  String get recipeNoMaterialResults => 'No materials found.';
+
+  @override
+  String get recipeFinalMaterials => 'Final Materials';
+
+  @override
+  String get recipePreviewMaterials => 'Preview Materials';
+
+  @override
+  String get recipeHowCalculated => 'How this was calculated';
+
+  @override
+  String get recipeChoicesChanged => 'Choices changed';
+
+  @override
+  String get recipeStaleResult =>
+      'Preview the materials again to update this result.';
+
+  @override
+  String get recipeDecreaseQuantity => 'Decrease quantity';
+
+  @override
+  String get recipeIncreaseQuantity => 'Increase quantity';
 }

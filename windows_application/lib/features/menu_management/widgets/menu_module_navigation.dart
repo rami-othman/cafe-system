@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/menu_management_route_locations.dart';
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -302,18 +303,40 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
       detail = l10n?.menuBreadcrumbCreateProduct ?? 'Create product';
     } else if (path.contains('/variants/') && path.endsWith('/pricing')) {
       breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
-      breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
+      breadcrumbs.add(
+        _workspaceTabBreadcrumb(
+          context,
+          l10n?.menuBreadcrumbVariants ?? 'Variants',
+          uri,
+          ProductWorkspaceTab.variants,
+        ),
+      );
       detail = l10n?.menuBreadcrumbPricing ?? 'Pricing';
-    } else if (path.contains('/recipe-simulation')) {
+    } else if (path.endsWith('/recipe/test') ||
+        path.contains('/recipe-simulation')) {
       breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
-      breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
-      detail = l10n?.menuBreadcrumbRecipeSimulation ?? 'Recipe simulation';
-    } else if (path.endsWith('/recipe')) {
+      breadcrumbs.add(
+        _workspaceTabBreadcrumb(
+          context,
+          l10n?.productUxRecipeMaterials ?? 'Recipe & Materials',
+          uri,
+          ProductWorkspaceTab.recipe,
+        ),
+      );
+      detail = 'Test Recipe';
+    } else if (path.endsWith('/recipe/edit') || path.endsWith('/recipe')) {
       breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
-      if (_variantIdFor(uri) != null) {
-        breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
-      }
-      detail = l10n?.menuBreadcrumbRecipe ?? 'Recipe';
+      breadcrumbs.add(
+        _workspaceTabBreadcrumb(
+          context,
+          l10n?.productUxRecipeMaterials ?? 'Recipe & Materials',
+          uri,
+          ProductWorkspaceTab.recipe,
+        ),
+      );
+      detail = path.endsWith('/recipe/edit')
+          ? l10n?.menuBreadcrumbRecipe ?? 'Base recipe'
+          : l10n?.menuBreadcrumbRecipe ?? 'Recipe';
     } else if (path.endsWith('/variants')) {
       breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbVariants ?? 'Variants';
@@ -330,16 +353,40 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
           'Operational availability';
     } else if (path.contains('/modifier-options/')) {
       breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
-      if (_variantIdFor(uri) != null) {
-        breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
-      }
-      detail =
-          l10n?.menuBreadcrumbMaterialAdjustments ?? 'Material adjustments';
+      breadcrumbs.add(
+        _workspaceTabBreadcrumb(
+          context,
+          l10n?.productUxRecipeMaterials ?? 'Recipe & Materials',
+          uri,
+          ProductWorkspaceTab.recipe,
+        ),
+      );
+      detail = 'Material Effect';
     } else if (path.contains('/products/') && path.endsWith('/edit')) {
       breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbEditProduct ?? 'Edit product';
     } else if (path.startsWith('/menu-management/products/')) {
-      detail = l10n?.menuBreadcrumbProduct ?? 'Product';
+      final ProductWorkspaceTab tab = ProductWorkspaceTab.fromQuery(
+        uri.queryParameters['tab'],
+      );
+      if (tab == ProductWorkspaceTab.overview) {
+        detail = l10n?.menuBreadcrumbProduct ?? 'Product';
+      } else {
+        breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
+        detail = switch (tab) {
+          ProductWorkspaceTab.variants =>
+            l10n?.menuBreadcrumbVariants ?? 'Variants',
+          ProductWorkspaceTab.modifiers =>
+            l10n?.menuBreadcrumbModifiers ?? 'Modifiers',
+          ProductWorkspaceTab.recipe =>
+            l10n?.productUxRecipeMaterials ?? 'Recipe & Materials',
+          ProductWorkspaceTab.availability =>
+            l10n?.menuBreadcrumbAvailability ?? 'Availability',
+          ProductWorkspaceTab.usage => 'Usage',
+          ProductWorkspaceTab.overview =>
+            l10n?.menuBreadcrumbProduct ?? 'Product',
+        };
+      }
     }
   } else if (destination == MenuModuleDestination.modifiers) {
     if (path.endsWith('/create')) {
@@ -349,13 +396,12 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
       breadcrumbs.add(_modifierGroupBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbEditModifierGroup ?? 'Edit modifier group';
     } else if (path.contains('/recipe-adjustments')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(
-          label: l10n?.menuBreadcrumbModifierGroup ?? 'Modifier group',
-        ),
-      );
       detail =
           l10n?.menuBreadcrumbMaterialAdjustments ?? 'Material adjustments';
+    } else if (path.contains('/options/') &&
+        path.endsWith('/material-effect')) {
+      breadcrumbs.add(_modifierGroupBreadcrumb(context, l10n, uri));
+      detail = 'Material Effect';
     } else if (path.startsWith('/menu-management/modifiers/')) {
       detail = l10n?.menuBreadcrumbModifierGroup ?? 'Modifier group';
     }
@@ -416,18 +462,23 @@ MenuBreadcrumb _productBreadcrumb(
   );
 }
 
-MenuBreadcrumb _variantBreadcrumb(
+MenuBreadcrumb _workspaceTabBreadcrumb(
   BuildContext context,
-  AppLocalizations? l10n,
+  String label,
   Uri uri,
+  ProductWorkspaceTab tab,
 ) {
   final int? productId = _productIdFor(uri);
   return MenuBreadcrumb(
-    label: l10n?.menuBreadcrumbVariant ?? 'Variant',
+    label: label,
     onTap: () => context.go(
       productId == null
           ? MenuModuleDestination.products.path
-          : '/menu-management/products/$productId/variants',
+          : MenuManagementRouteLocations.productWorkspace(
+              productId,
+              tab: tab,
+              variantId: _variantIdFor(uri),
+            ),
     ),
   );
 }

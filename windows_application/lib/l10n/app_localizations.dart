@@ -2821,6 +2821,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Selling price must be greater than zero.'**
   String get configuredSellPriceMustBePositive;
+
+  /// No description provided for @recipeVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant'**
+  String get recipeVariant;
+
+  /// No description provided for @recipeConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe configured · {count} materials'**
+  String recipeConfigured(int count);
+
+  /// No description provided for @recipeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe missing'**
+  String get recipeMissing;
+
+  /// No description provided for @recipeNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe not configured'**
+  String get recipeNotConfigured;
+
+  /// No description provided for @recipeModifierMaterialEffects.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier Material Effects'**
+  String get recipeModifierMaterialEffects;
+
+  /// No description provided for @recipeModifierMaterialEffectsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'See how customer choices change the materials consumed.'**
+  String get recipeModifierMaterialEffectsHelp;
+
+  /// No description provided for @recipeNoMaterialChange.
+  ///
+  /// In en, this message translates to:
+  /// **'No material change'**
+  String get recipeNoMaterialChange;
+
+  /// No description provided for @recipeUsingGlobalSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Global settings'**
+  String get recipeUsingGlobalSettings;
+
+  /// No description provided for @recipeCustomizedForProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Customized for Product'**
+  String get recipeCustomizedForProduct;
+
+  /// No description provided for @recipeCustomizedForVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Customized for Variant'**
+  String get recipeCustomizedForVariant;
+
+  /// No description provided for @recipeTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Recipe'**
+  String get recipeTest;
+
+  /// No description provided for @recipeBackToWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Recipe & Materials'**
+  String get recipeBackToWorkspace;
+
+  /// No description provided for @recipeSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save recipe'**
+  String get recipeSave;
+
+  /// No description provided for @recipeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe saved.'**
+  String get recipeSaved;
+
+  /// No description provided for @recipeCurrentBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Behavior'**
+  String get recipeCurrentBehavior;
+
+  /// No description provided for @recipeUseInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Use inherited settings'**
+  String get recipeUseInherited;
+
+  /// No description provided for @recipeUseInheritedAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Use inherited settings again'**
+  String get recipeUseInheritedAgain;
+
+  /// No description provided for @recipeCustomizeFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize for {context}'**
+  String recipeCustomizeFor(String context);
+
+  /// No description provided for @recipeNoMaterialEffectFor.
+  ///
+  /// In en, this message translates to:
+  /// **'No material effect for {context}'**
+  String recipeNoMaterialEffectFor(String context);
+
+  /// No description provided for @recipeRemoves.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes'**
+  String get recipeRemoves;
+
+  /// No description provided for @recipeAdds.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds'**
+  String get recipeAdds;
+
+  /// No description provided for @recipeAddMaterialToRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Material to Remove'**
+  String get recipeAddMaterialToRemove;
+
+  /// No description provided for @recipeAddMaterialToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Material to Add'**
+  String get recipeAddMaterialToAdd;
+
+  /// No description provided for @recipeSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get recipeSaveChanges;
+
+  /// No description provided for @recipeCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get recipeCancel;
+
+  /// No description provided for @recipeQuantityRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity is required.'**
+  String get recipeQuantityRequired;
+
+  /// No description provided for @recipeQuantityInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive number with up to 6 decimal places.'**
+  String get recipeQuantityInvalid;
+
+  /// No description provided for @recipeDuplicateMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'This material is already used.'**
+  String get recipeDuplicateMaterial;
+
+  /// No description provided for @recipeMaterialSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search materials'**
+  String get recipeMaterialSearch;
+
+  /// No description provided for @recipeNoMaterialResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No materials found.'**
+  String get recipeNoMaterialResults;
+
+  /// No description provided for @recipeFinalMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Final Materials'**
+  String get recipeFinalMaterials;
+
+  /// No description provided for @recipePreviewMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview Materials'**
+  String get recipePreviewMaterials;
+
+  /// No description provided for @recipeHowCalculated.
+  ///
+  /// In en, this message translates to:
+  /// **'How this was calculated'**
+  String get recipeHowCalculated;
+
+  /// No description provided for @recipeChoicesChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Choices changed'**
+  String get recipeChoicesChanged;
+
+  /// No description provided for @recipeStaleResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview the materials again to update this result.'**
+  String get recipeStaleResult;
+
+  /// No description provided for @recipeDecreaseQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease quantity'**
+  String get recipeDecreaseQuantity;
+
+  /// No description provided for @recipeIncreaseQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase quantity'**
+  String get recipeIncreaseQuantity;
 }
 
 class _AppLocalizationsDelegate

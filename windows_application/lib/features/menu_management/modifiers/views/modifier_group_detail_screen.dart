@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -93,7 +94,7 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                     secondaryActions: <Widget>[
                       if (!group.isArchived)
                         OutlinedButton.icon(
-                          onPressed: () => context.go(
+                          onPressed: () => context.push(
                             '/menu-management/modifiers/${group.id}/edit',
                           ),
                           icon: const Icon(Icons.edit_outlined),
@@ -317,6 +318,7 @@ class _OptionsSection extends StatelessWidget {
                     index++
                   ) ...<Widget>[
                     _OptionRow(
+                      groupId: group.id,
                       option: options[index],
                       index: index,
                       total: options.length,
@@ -342,6 +344,7 @@ class _OptionsSection extends StatelessWidget {
 
 class _OptionRow extends StatelessWidget {
   const _OptionRow({
+    required this.groupId,
     required this.option,
     required this.index,
     required this.total,
@@ -356,6 +359,7 @@ class _OptionRow extends StatelessWidget {
     required this.onDefault,
   });
 
+  final int groupId;
   final ModifierOptionRecord option;
   final int index;
   final int total;
@@ -480,8 +484,11 @@ class _OptionRow extends StatelessWidget {
                     case 'edit':
                       onEdit(option);
                     case 'adjustments':
-                      context.go(
-                        '/menu-management/modifier-options/${option.id}/recipe-adjustments',
+                      context.push(
+                        MenuManagementRouteLocations.globalMaterialEffect(
+                          groupId,
+                          option.id,
+                        ),
                       );
                     case 'default':
                       onDefault(option);

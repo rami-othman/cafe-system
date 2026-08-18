@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -91,10 +92,15 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   Future<void> _back() async {
     if (!await _mayLeave() || !mounted) return;
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
     context.go(
-      widget.returnToVariants
-          ? '/menu-management/products/${widget.productId}/variants'
-          : '/menu-management/products/${widget.productId}',
+      MenuManagementRouteLocations.productWorkspace(
+        widget.productId,
+        tab: ProductWorkspaceTab.variants,
+      ),
     );
   }
 

@@ -257,6 +257,8 @@ class ModifierOption {
   const ModifierOption({
     required this.id,
     required this.name,
+    this.nameAr,
+    this.nameEn,
     required this.priceDelta,
     required this.isActive,
     required this.isAvailable,
@@ -266,6 +268,8 @@ class ModifierOption {
   factory ModifierOption.fromJson(JsonMap json) => ModifierOption(
     id: _requiredInt(json, 'id'),
     name: _requiredString(json, 'name'),
+    nameAr: _optional(json['nameAr']),
+    nameEn: _optional(json['nameEn']),
     priceDelta: readDouble(json['priceDelta']),
     isActive: readBool(json['isActive'], fallback: true),
     isAvailable: readBool(json['isAvailable'], fallback: true),
@@ -274,17 +278,27 @@ class ModifierOption {
 
   final int id;
   final String name;
+  final String? nameAr;
+  final String? nameEn;
   final double priceDelta;
   final bool isActive;
   final bool isAvailable;
   final DateTime? archivedAt;
   bool get isArchived => archivedAt != null;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class ModifierGroup {
   const ModifierGroup({
     required this.id,
     required this.name,
+    this.nameAr,
+    this.nameEn,
     required this.groupType,
     required this.selectionType,
     required this.isRequired,
@@ -303,6 +317,8 @@ class ModifierGroup {
   factory ModifierGroup.fromJson(JsonMap json) => ModifierGroup(
     id: _requiredInt(json, 'id'),
     name: _requiredString(json, 'name'),
+    nameAr: _optional(json['nameAr']),
+    nameEn: _optional(json['nameEn']),
     groupType: readString(json['groupType'], fallback: 'choice'),
     selectionType: readString(json['selectionType'], fallback: 'single'),
     isRequired: readBool(json['isRequired']),
@@ -322,6 +338,8 @@ class ModifierGroup {
 
   final int id;
   final String name;
+  final String? nameAr;
+  final String? nameEn;
   final String groupType;
   final String selectionType;
   final bool isRequired;
@@ -341,6 +359,12 @@ class ModifierGroup {
   int get effectiveMaximum => maxSelectionsOverride ?? maxSelections;
   bool get effectiveAllowQuantity => allowQuantityOverride ?? allowQuantity;
   bool get isArchived => archivedAt != null;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class ProductSummary {

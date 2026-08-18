@@ -1551,4 +1551,123 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get configuredSellPriceMustBePositive =>
       'يجب أن يكون سعر البيع أكبر من صفر.';
+
+  @override
+  String get recipeVariant => 'النوع';
+
+  @override
+  String recipeConfigured(int count) {
+    return 'تم إعداد الوصفة · $count مواد';
+  }
+
+  @override
+  String get recipeMissing => 'الوصفة مفقودة';
+
+  @override
+  String get recipeNotConfigured => 'الوصفة غير معدّة';
+
+  @override
+  String get recipeModifierMaterialEffects => 'تأثيرات مواد المعدلات';
+
+  @override
+  String get recipeModifierMaterialEffectsHelp =>
+      'اطلع على كيفية تغيير اختيارات العميل للمواد المستهلكة.';
+
+  @override
+  String get recipeNoMaterialChange => 'لا تغيير في المواد';
+
+  @override
+  String get recipeUsingGlobalSettings => 'باستخدام الإعدادات العامة';
+
+  @override
+  String get recipeCustomizedForProduct => 'مخصص للمنتج';
+
+  @override
+  String get recipeCustomizedForVariant => 'مخصص للنوع';
+
+  @override
+  String get recipeTest => 'اختبار الوصفة';
+
+  @override
+  String get recipeBackToWorkspace => 'العودة إلى الوصفة والمواد';
+
+  @override
+  String get recipeSave => 'حفظ الوصفة';
+
+  @override
+  String get recipeSaved => 'تم حفظ الوصفة.';
+
+  @override
+  String get recipeCurrentBehavior => 'السلوك الحالي';
+
+  @override
+  String get recipeUseInherited => 'استخدام الإعدادات الموروثة';
+
+  @override
+  String get recipeUseInheritedAgain => 'استخدم الإعدادات الموروثة مجدداً';
+
+  @override
+  String recipeCustomizeFor(String context) {
+    return 'تخصيص لـ $context';
+  }
+
+  @override
+  String recipeNoMaterialEffectFor(String context) {
+    return 'لا تأثير مادي لـ $context';
+  }
+
+  @override
+  String get recipeRemoves => 'يزيل';
+
+  @override
+  String get recipeAdds => 'يضيف';
+
+  @override
+  String get recipeAddMaterialToRemove => 'إضافة مادة لإزالتها';
+
+  @override
+  String get recipeAddMaterialToAdd => 'إضافة مادة لإضافتها';
+
+  @override
+  String get recipeSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get recipeCancel => 'إلغاء';
+
+  @override
+  String get recipeQuantityRequired => 'الكمية مطلوبة.';
+
+  @override
+  String get recipeQuantityInvalid =>
+      'أدخل رقماً موجباً بحد أقصى 6 منازل عشرية.';
+
+  @override
+  String get recipeDuplicateMaterial => 'هذه المادة مستخدمة بالفعل.';
+
+  @override
+  String get recipeMaterialSearch => 'ابحث عن المواد';
+
+  @override
+  String get recipeNoMaterialResults => 'لا توجد مواد مطابقة.';
+
+  @override
+  String get recipeFinalMaterials => 'المواد النهائية';
+
+  @override
+  String get recipePreviewMaterials => 'معاينة المواد';
+
+  @override
+  String get recipeHowCalculated => 'كيف تم احتساب هذا';
+
+  @override
+  String get recipeChoicesChanged => 'تغيرت الاختيارات';
+
+  @override
+  String get recipeStaleResult => 'عاين المواد مجدداً لتحديث النتيجة.';
+
+  @override
+  String get recipeDecreaseQuantity => 'تقليل الكمية';
+
+  @override
+  String get recipeIncreaseQuantity => 'زيادة الكمية';
 }

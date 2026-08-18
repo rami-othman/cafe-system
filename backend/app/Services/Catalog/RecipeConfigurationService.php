@@ -81,6 +81,82 @@ class RecipeConfigurationService
         return ModifierOptionRecipeProfile::query()->where('tenant_id', $option->tenant_id)->where('modifier_option_id', $option->id)->where(fn ($q) => $q->where('scope_type', 'global')->orWhere(fn ($x) => $x->where('scope_type', 'product')->where('product_id', $productId))->orWhere(fn ($x) => $x->where('scope_type', 'variant')->where('product_variant_id', $variantId)))->with('components')->orderByRaw("CASE scope_type WHEN 'variant' THEN 1 WHEN 'product' THEN 2 ELSE 3 END")->first();
     }
 
+    /**
+     * Returns the effective profile for every supplied option in a bounded
+     * query set. An explicit empty scoped profile remains a real result.
+     *
+     * @return array<int, ModifierOptionRecipeProfile>
+     */
+    public function effectiveProfilesFor(int $tenantId, array $optionIds, ?int $productId, ?int $variantId): array
+    {
+        $optionIds = array_values(array_unique(array_map('intval', $optionIds)));
+        if ($optionIds === []) {
+            return [];
+        }
+
+        $profiles = ModifierOptionRecipeProfile::query()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('modifier_option_id', $optionIds)
+            ->where(function ($query) use ($productId, $variantId): void {
+                $query->where('scope_type', 'global')
+                    ->orWhere(function ($nested) use ($productId): void {
+                        $nested->where('scope_type', 'product')->where('product_id', $productId);
+                    })
+                    ->orWhere(function ($nested) use ($variantId): void {
+                        $nested->where('scope_type', 'variant')->where('product_variant_id', $variantId);
+                    });
+            })
+            ->with('components')
+            ->get();
+
+        $rank = ['global' => 1, 'product' => 2, 'variant' => 3];
+        $effective = [];
+        foreach ($profiles as $profile) {
+            $id = (int) $profile->modifier_option_id;
+            if (! isset($effective[$id]) || $rank[$profile->scope_type] > $rank[$effective[$id]->scope_type]) {
+                $effective[$id] = $profile;
+            }
+        }
+
+        return $effective;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function profileSummary(ProductVariant $variant): array
+    {
+        $this->activeVariant($variant);
+        $options = $variant->product->modifierGroups()
+            ->where('modifier_groups.is_active', true)
+            ->with(['options' => fn ($query) => $query->where('is_active', true)->where('is_available', true)])
+            ->get()
+            ->flatMap(fn ($group) => $group->options)
+            ->filter(fn ($option) => ! $option->trashed())
+            ->values();
+        $optionIds = $options->pluck('id')->all();
+        $effective = $this->effectiveProfilesFor($variant->tenant_id, $optionIds, $variant->product_id, $variant->id);
+        $own = ModifierOptionRecipeProfile::query()
+            ->where('tenant_id', $variant->tenant_id)
+            ->whereIn('modifier_option_id', $optionIds)
+            ->where('scope_type', 'variant')
+            ->where('product_variant_id', $variant->id)
+            ->with('components')
+            ->get()
+            ->keyBy('modifier_option_id');
+
+        return $options->map(function (ModifierOption $option) use ($effective, $own): array {
+            $profile = $own->get($option->id);
+            $resolved = $profile ?? $effective[$option->id] ?? null;
+
+            return [
+                'optionId' => $option->id,
+                'scope' => 'variant',
+                'hasOverride' => $profile !== null,
+                'inheritedFrom' => $profile ? null : ($resolved?->scope_type ?? null),
+                'components' => $resolved?->components->sortBy('sort_order')->map(fn ($component) => $this->component($component))->values()->all() ?? [],
+            ];
+        })->all();
+    }
+
     private function own(ModifierOption $option, ?int $productId, ?int $variantId): ?ModifierOptionRecipeProfile
     {
         return ModifierOptionRecipeProfile::query()->where('tenant_id', $option->tenant_id)->where('modifier_option_id', $option->id)->when($variantId, fn ($q) => $q->where('scope_type', 'variant')->where('product_variant_id', $variantId), fn ($q) => ($productId ? $q->where('scope_type', 'product')->where('product_id', $productId) : $q->where('scope_type', 'global')))->with('components')->first();

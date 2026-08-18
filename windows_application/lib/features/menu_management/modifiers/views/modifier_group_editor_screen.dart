@@ -41,6 +41,18 @@ class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
     );
   }
 
+  void _returnToParent(BuildContext context, int? groupId) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go(
+      groupId == null
+          ? '/menu-management/modifiers'
+          : '/menu-management/modifiers/$groupId',
+    );
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -48,7 +60,7 @@ class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
     listener: (context, state) {
       if (state.status == ModifierEditorStatus.success &&
           state.savedGroup != null) {
-        context.go('/menu-management/modifiers/${state.savedGroup!.id}');
+        _returnToParent(context, state.savedGroup!.id);
       }
     },
     builder: (context, state) {
@@ -60,7 +72,7 @@ class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
         onPopInvokedWithResult: (didPop, result) async {
           if (didPop) return;
           if (await _canLeave(context, state.isDirty) && context.mounted) {
-            context.go('/menu-management/modifiers');
+            _returnToParent(context, widget.groupId);
           }
         },
         child: DesktopPageLayout(
@@ -114,7 +126,7 @@ class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
                       onCancel: () async {
                         if (await _canLeave(context, state.isDirty) &&
                             context.mounted) {
-                          context.go('/menu-management/modifiers');
+                          _returnToParent(context, widget.groupId);
                         }
                       },
                       primaryLabel: state.isCreate

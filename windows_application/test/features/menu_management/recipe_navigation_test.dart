@@ -49,8 +49,8 @@ void main() {
     await tester.tap(find.text('Manage Recipe'));
     await tester.pumpAndSettle();
     expect(
-      appRouter.routerDelegate.currentConfiguration.uri.queryParameters['edit'],
-      '1',
+      appRouter.routerDelegate.currentConfiguration.uri.path,
+      '/menu-management/product-variants/7/recipe',
     );
     expect(find.byKey(const Key('standalone-recipe-editor')), findsOneWidget);
 
@@ -64,7 +64,7 @@ void main() {
     appRouter.go('/menu-management/products/1/variants/7/recipe-simulation');
     await tester.pumpAndSettle();
     expect(repository.productCalls.last, 1);
-    expect(find.text('Test Recipe'), findsOneWidget);
+    expect(find.text('Test Recipe'), findsWidgets);
 
     await tester.tap(find.text('Product'));
     await tester.pumpAndSettle();
@@ -82,6 +82,23 @@ void main() {
     expect(
       find.text('The requested catalog route is invalid.'),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('legacy product setup routes redirect to Workspace tabs', (
+    tester,
+  ) async {
+    await _pump(tester, '/menu-management/products/1/variants');
+    expect(
+      appRouter.routerDelegate.currentConfiguration.uri.toString(),
+      '/menu-management/products/1?tab=variants',
+    );
+
+    appRouter.go('/menu-management/products/1/modifiers');
+    await tester.pumpAndSettle();
+    expect(
+      appRouter.routerDelegate.currentConfiguration.uri.toString(),
+      '/menu-management/products/1?tab=modifiers',
     );
   });
 }
@@ -136,6 +153,11 @@ class _RecipeNavigationRepository extends MenuCatalogRepository {
       components: <RecipeComponent>[],
     );
   }
+
+  @override
+  Future<List<ModifierRecipeProfile>> getVariantRecipeMaterialEffects(
+    int variantId,
+  ) async => const <ModifierRecipeProfile>[];
 
   @override
   Future<VariantRecipe> getVariantRecipe(int variantId) async {

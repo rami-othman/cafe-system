@@ -175,36 +175,37 @@ void main() {
     expectNoMenuLayoutOverflow(tester);
   });
 
-  testWidgets('deep breadcrumbs provide navigation for every known parent', (
-    WidgetTester tester,
-  ) async {
-    late List<MenuBreadcrumb> breadcrumbs;
-    await pumpMenuManagementHarness(
-      tester,
-      child: Builder(
-        builder: (BuildContext context) {
-          breadcrumbs = menuModuleBreadcrumbsFor(
-            context,
-            Uri.parse(
-              '/menu-management/products/7/variants/9/recipe-simulation',
-            ),
-          );
-          return const SizedBox.shrink();
-        },
-      ),
-    );
+  testWidgets(
+    'recipe child breadcrumbs retain their canonical workspace parent',
+    (WidgetTester tester) async {
+      late List<MenuBreadcrumb> breadcrumbs;
+      await pumpMenuManagementHarness(
+        tester,
+        child: Builder(
+          builder: (BuildContext context) {
+            breadcrumbs = menuModuleBreadcrumbsFor(
+              context,
+              Uri.parse(
+                '/menu-management/products/7/variants/9/recipe-simulation',
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      );
 
-    expect(breadcrumbs.map((MenuBreadcrumb item) => item.label), <String>[
-      'Products',
-      'Product',
-      'Variant',
-      'Recipe simulation',
-    ]);
-    expect(breadcrumbs[0].onTap, isNotNull);
-    expect(breadcrumbs[1].onTap, isNotNull);
-    expect(breadcrumbs[2].onTap, isNotNull);
-    expect(breadcrumbs[3].onTap, isNull);
-  });
+      expect(breadcrumbs.map((MenuBreadcrumb item) => item.label), <String>[
+        'Products',
+        'Product',
+        'Recipe & Materials',
+        'Test Recipe',
+      ]);
+      expect(breadcrumbs[0].onTap, isNotNull);
+      expect(breadcrumbs[1].onTap, isNotNull);
+      expect(breadcrumbs[2].onTap, isNotNull);
+      expect(breadcrumbs[3].onTap, isNull);
+    },
+  );
 
   testWidgets(
     'Arabic navigation mirrors safely and localizes labels/tooltips',

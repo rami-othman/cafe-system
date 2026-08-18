@@ -1,9 +1,12 @@
 // ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -13,6 +16,24 @@ import '../../models/catalog_models.dart';
 import '../controllers/recipe_cubits.dart';
 import '../models/recipe_models.dart';
 
+void _returnToRecipeWorkspace(
+  BuildContext context,
+  int productId,
+  int variantId,
+) {
+  if (context.canPop()) {
+    context.pop();
+    return;
+  }
+  context.go(
+    MenuManagementRouteLocations.productWorkspace(
+      productId,
+      tab: ProductWorkspaceTab.recipe,
+      variantId: variantId,
+    ),
+  );
+}
+
 class VariantRecipeScreen extends StatefulWidget {
   const VariantRecipeScreen({
     super.key,
@@ -20,11 +41,13 @@ class VariantRecipeScreen extends StatefulWidget {
     this.productId,
     this.editMode = false,
     this.readOnly = false,
+    this.returnToRecipeWorkspace = false,
   });
   final int variantId;
   final int? productId;
   final bool editMode;
   final bool readOnly;
+  final bool returnToRecipeWorkspace;
   @override
   State<VariantRecipeScreen> createState() => _VariantRecipeScreenState();
 }
@@ -45,9 +68,10 @@ class _VariantRecipeScreenState extends State<VariantRecipeScreen> {
   Widget build(BuildContext context) =>
       BlocConsumer<VariantRecipeCubit, VariantRecipeState>(
         listenWhen: (a, b) => a.error != b.error && b.error != null,
-        listener: (context, state) => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(state.error!))),
+        listener: (context, state) =>
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context).commonError)),
+            ),
         builder: (context, state) {
           if (state.loading && state.recipe == null)
             return const Center(child: CircularProgressIndicator());
@@ -68,6 +92,13 @@ class _VariantRecipeScreenState extends State<VariantRecipeScreen> {
               state: state,
               variantId: widget.variantId,
               readOnly: widget.readOnly,
+              onComplete: widget.returnToRecipeWorkspace
+                  ? () => _returnToRecipeWorkspace(
+                      context,
+                      widget.productId!,
+                      widget.variantId,
+                    )
+                  : null,
             );
           }
           return _RecipeWorkspaceBody(
@@ -87,31 +118,74 @@ class RecipeMaterialsWorkspace extends StatefulWidget {
     super.key,
     required this.product,
     this.readOnly = false,
+    this.selectedVariantId,
+    this.onVariantChanged,
   });
   final ProductDetail product;
   final bool readOnly;
+  final int? selectedVariantId;
+  final ValueChanged<int>? onVariantChanged;
   @override
   State<RecipeMaterialsWorkspace> createState() =>
       _RecipeMaterialsWorkspaceState();
 }
 
 class _RecipeMaterialsWorkspaceState extends State<RecipeMaterialsWorkspace> {
-  late int _variantId;
+  int? _loadedVariantId;
+  bool _correctingInvalidRoute = false;
 
   @override
   void initState() {
     super.initState();
-    _variantId =
-        widget.product.defaultVariant?.id ??
-        (widget.product.variants.isEmpty
-            ? 0
-            : widget.product.variants.first.id);
+    _loadSelectedVariant();
+  }
+
+  @override
+  void didUpdateWidget(covariant RecipeMaterialsWorkspace oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedVariantId != widget.selectedVariantId ||
+        oldWidget.product.id != widget.product.id) {
+      _loadSelectedVariant();
+    }
+  }
+
+  List<ProductVariant> get _recipeVariants => widget.product.variants
+      .where((variant) => !variant.isArchived)
+      .toList(growable: false);
+
+  int get _fallbackVariantId {
+    final defaultVariant = widget.product.defaultVariant;
+    if (defaultVariant != null && !defaultVariant.isArchived) {
+      return defaultVariant.id;
+    }
+    return _recipeVariants.isEmpty ? 0 : _recipeVariants.first.id;
+  }
+
+  int get _selectedVariantId {
+    final requested = widget.selectedVariantId;
+    if (requested != null &&
+        _recipeVariants.any((variant) => variant.id == requested)) {
+      return requested;
+    }
+    return _fallbackVariantId;
+  }
+
+  void _loadSelectedVariant() {
+    final selected = _selectedVariantId;
+    if (selected <= 0 || _loadedVariantId == selected) return;
+    _loadedVariantId = selected;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_variantId > 0)
-        context.read<VariantRecipeCubit>().load(
-          _variantId,
-          productId: widget.product.id,
-        );
+      if (!mounted) return;
+      context.read<VariantRecipeCubit>().load(
+        selected,
+        productId: widget.product.id,
+      );
+      if (widget.selectedVariantId != selected &&
+          widget.onVariantChanged != null &&
+          !_correctingInvalidRoute) {
+        _correctingInvalidRoute = true;
+        widget.onVariantChanged!(selected);
+      }
     });
   }
 
@@ -119,21 +193,16 @@ class _RecipeMaterialsWorkspaceState extends State<RecipeMaterialsWorkspace> {
   Widget build(BuildContext context) =>
       BlocBuilder<VariantRecipeCubit, VariantRecipeState>(
         builder: (context, state) {
-          if (_variantId == 0 || widget.product.variants.isEmpty)
+          final selectedVariantId = _selectedVariantId;
+          if (selectedVariantId == 0 || _recipeVariants.isEmpty)
             return const _EmptyRecipeWorkspace();
           return _RecipeWorkspaceBody(
             state: state,
             product: widget.product,
-            initialVariantId: _variantId,
+            initialVariantId: selectedVariantId,
             readOnly: widget.readOnly || widget.product.isArchived,
             embedded: true,
-            onVariantChanged: (id) {
-              setState(() => _variantId = id);
-              context.read<VariantRecipeCubit>().load(
-                id,
-                productId: widget.product.id,
-              );
-            },
+            onVariantChanged: widget.onVariantChanged,
           );
         },
       );
@@ -196,6 +265,7 @@ class _RecipeWorkspaceBody extends StatelessWidget {
                   _RecipeStatus(
                     configured: recipe != null && recipe.components.isNotEmpty,
                     count: recipe?.components.length ?? 0,
+                    recipeRequired: product?.isStockTracked ?? false,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   _BaseRecipeCard(
@@ -219,8 +289,11 @@ class _RecipeWorkspaceBody extends StatelessWidget {
               final testPanel = _TestRecipePanel(
                 onPressed: product == null
                     ? null
-                    : () => context.go(
-                        '/menu-management/products/${product!.id}/variants/$initialVariantId/recipe-simulation',
+                    : () => context.push(
+                        MenuManagementRouteLocations.recipeTest(
+                          product!.id,
+                          initialVariantId,
+                        ),
                       ),
               );
               if (constraints.maxWidth < 900)
@@ -264,7 +337,10 @@ class _VariantPicker extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: <Widget>[
-          Text('Variant', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            AppLocalizations.of(context).recipeVariant,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(width: AppSpacing.md),
           SizedBox(
             width: 220,
@@ -273,6 +349,7 @@ class _VariantPicker extends StatelessWidget {
               isExpanded: true,
               decoration: const InputDecoration(isDense: true),
               items: product.variants
+                  .where((variant) => !variant.isArchived)
                   .map(
                     (v) => DropdownMenuItem<int>(
                       value: v.id,
@@ -296,24 +373,39 @@ class _VariantPicker extends StatelessWidget {
 }
 
 class _RecipeStatus extends StatelessWidget {
-  const _RecipeStatus({required this.configured, required this.count});
+  const _RecipeStatus({
+    required this.configured,
+    required this.count,
+    required this.recipeRequired,
+  });
   final bool configured;
   final int count;
+  final bool recipeRequired;
   @override
   Widget build(BuildContext context) => Align(
     alignment: AlignmentDirectional.centerStart,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: configured ? const Color(0xFFE6F3E8) : const Color(0xFFFFF1E5),
+        color: configured
+            ? const Color(0xFFE6F3E8)
+            : recipeRequired
+            ? const Color(0xFFFFF1E5)
+            : AppColors.contentBackground,
         borderRadius: AppRadius.control,
       ),
       child: Text(
         configured
             ? 'Recipe configured · $count materials'
-            : 'No recipe configured',
+            : recipeRequired
+            ? AppLocalizations.of(context).recipeMissing
+            : AppLocalizations.of(context).recipeNotConfigured,
         style: TextStyle(
-          color: configured ? AppColors.success : AppColors.warning,
+          color: configured
+              ? AppColors.success
+              : recipeRequired
+              ? AppColors.warning
+              : AppColors.textSecondary,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -339,7 +431,7 @@ class _BaseRecipeCard extends StatelessWidget {
     final components = recipe?.components ?? const <RecipeComponent>[];
     final String editorRoute = productId == null
         ? '/menu-management/product-variants/$variantId/recipe'
-        : '/menu-management/product-variants/$variantId/recipe?productId=$productId&edit=1';
+        : MenuManagementRouteLocations.recipeEditor(productId!, variantId);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -358,7 +450,7 @@ class _BaseRecipeCard extends StatelessWidget {
                 ),
                 if (!readOnly)
                   OutlinedButton.icon(
-                    onPressed: () => context.go(editorRoute),
+                    onPressed: () => context.push(editorRoute),
                     icon: const Icon(Icons.edit_outlined, size: 17),
                     label: Text(AppLocalizations.of(context).manageRecipe),
                   ),
@@ -413,10 +505,13 @@ class _EmptyRecipeState extends StatelessWidget {
         ),
         if (!readOnly)
           TextButton(
-            onPressed: () => context.go(
+            onPressed: () => context.push(
               productId == null
                   ? '/menu-management/product-variants/$variantId/recipe'
-                  : '/menu-management/product-variants/$variantId/recipe?productId=$productId&edit=1',
+                  : MenuManagementRouteLocations.recipeEditor(
+                      productId!,
+                      variantId,
+                    ),
             ),
             child: Text(AppLocalizations.of(context).addMaterial),
           ),
@@ -503,9 +598,11 @@ class _ModifierEffectsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const _SectionHeading(
-            title: 'Modifier Material Effects',
-            subtitle: 'See how customer choices change the materials consumed.',
+          _SectionHeading(
+            title: AppLocalizations.of(context).recipeModifierMaterialEffects,
+            subtitle: AppLocalizations.of(
+              context,
+            ).recipeModifierMaterialEffectsHelp,
           ),
           const SizedBox(height: AppSpacing.md),
           for (final group in product.modifierGroups.where(
@@ -514,7 +611,9 @@ class _ModifierEffectsCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.xs),
               child: Text(
-                group.name.toUpperCase(),
+                group
+                    .displayName(Localizations.localeOf(context))
+                    .toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.secondary,
                   letterSpacing: .5,
@@ -532,11 +631,17 @@ class _ModifierEffectsCard extends StatelessWidget {
                     .map((option) {
                       final profile = profiles[option.id];
                       return _EffectRow(
-                        optionName: option.name,
+                        optionName: option.displayName(
+                          Localizations.localeOf(context),
+                        ),
                         summary: _effectSummary(profile, materials),
                         source: _effectSource(profile, variantId, product),
-                        onEdit: () => context.go(
-                          '/menu-management/product-variants/$variantId/modifier-options/${option.id}/recipe-adjustments?productId=${product.id}&optionName=${Uri.encodeQueryComponent(option.name)}&contextName=${Uri.encodeQueryComponent(product.variants.firstWhereOrNull((v) => v.id == variantId)?.name ?? "Variant")}',
+                        onEdit: () => context.push(
+                          MenuManagementRouteLocations.variantMaterialEffect(
+                            product.id,
+                            variantId,
+                            option.id,
+                          ),
                         ),
                       );
                     })
@@ -596,7 +701,7 @@ class _EffectRow extends StatelessWidget {
         TextButton.icon(
           onPressed: onEdit,
           icon: const Icon(Icons.edit_outlined, size: 16),
-          label: const Text('Edit'),
+          label: Text(AppLocalizations.of(context).commonEdit),
         ),
       ],
     ),
@@ -614,17 +719,20 @@ class _TestRecipePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text('Test Recipe', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).recipeTest,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Choose customer options and preview the final materials consumed.',
+            AppLocalizations.of(context).recipeSimulationHelp,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton.icon(
             onPressed: onPressed,
             icon: const Icon(Icons.science_outlined, size: 17),
-            label: const Text('Test Recipe'),
+            label: Text(AppLocalizations.of(context).recipeTest),
           ),
         ],
       ),
@@ -711,7 +819,7 @@ class _EmptyRecipeWorkspace extends StatelessWidget {
   Widget build(BuildContext context) => Card(
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Text('No variants are available for this Product.'),
+      child: Text(AppLocalizations.of(context).commonNoData),
     ),
   );
 }
@@ -731,10 +839,12 @@ class _StandaloneRecipeEditor extends StatefulWidget {
     required this.state,
     required this.variantId,
     required this.readOnly,
+    this.onComplete,
   });
   final VariantRecipeState state;
   final int variantId;
   final bool readOnly;
+  final VoidCallback? onComplete;
   @override
   State<_StandaloneRecipeEditor> createState() =>
       _StandaloneRecipeEditorState();
@@ -770,6 +880,10 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
       ) &&
       _draft.map((c) => c.materialId).toSet().length == _draft.length;
 
+  bool get _hasDuplicate =>
+      _draft.map((component) => component.materialId).toSet().length !=
+      _draft.length;
+
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
     padding: const EdgeInsets.all(AppSpacing.xl),
@@ -781,6 +895,19 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              if (widget.onComplete != null) ...<Widget>[
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: widget.state.saving ? null : widget.onComplete,
+                    icon: const Icon(Icons.arrow_back),
+                    label: Text(
+                      AppLocalizations.of(context).recipeBackToWorkspace,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               _SectionHeading(
                 title: AppLocalizations.of(context).baseRecipe,
                 subtitle: AppLocalizations.of(context).recipeConsumptionHelp,
@@ -793,6 +920,12 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
                   index: entry.key,
                   component: entry.value,
                   materials: widget.state.materials,
+                  unavailableMaterialIds: _draft
+                      .asMap()
+                      .entries
+                      .where((other) => other.key != entry.key)
+                      .map((other) => other.value.materialId)
+                      .toSet(),
                   readOnly: widget.readOnly,
                   onChanged: (value) => _update(entry.key, value),
                   onRemove: () {
@@ -802,11 +935,13 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
                 ),
               ),
               if (!_valid && !widget.readOnly)
-                const Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.sm),
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(
-                    'Use a unique material and a positive decimal quantity (up to 6 places).',
-                    style: TextStyle(color: AppColors.danger),
+                    _hasDuplicate
+                        ? AppLocalizations.of(context).recipeDuplicateMaterial
+                        : AppLocalizations.of(context).recipeQuantityInvalid,
+                    style: const TextStyle(color: AppColors.danger),
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
@@ -829,7 +964,7 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.save_outlined),
-                    label: const Text('Save recipe'),
+                    label: Text(AppLocalizations.of(context).recipeSave),
                   ),
                 ],
               ),
@@ -840,12 +975,16 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
     ),
   );
 
-  void _addMaterial() {
-    final material = widget.state.materials.firstWhereOrNull(
-      (m) =>
-          m.configurationAvailable && !_draft.any((c) => c.materialId == m.id),
+  Future<void> _addMaterial() async {
+    final cubit = context.read<VariantRecipeCubit>();
+    final material = await showDialog<RecipeMaterial>(
+      context: context,
+      builder: (context) => RecipeMaterialSearchDialog(
+        excludedIds: _draft.map((component) => component.materialId).toSet(),
+        search: cubit.searchMaterials,
+      ),
     );
-    if (material == null || material.unitCode == null) return;
+    if (!mounted || material == null || material.unitCode == null) return;
     setState(
       () => _draft.add(
         RecipeComponent(
@@ -864,9 +1003,140 @@ class _StandaloneRecipeEditorState extends State<_StandaloneRecipeEditor> {
       widget.variantId,
     );
     if (saved && mounted && Scaffold.maybeOf(context) != null)
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Recipe saved.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).recipeSaved)),
+      );
+    if (saved && mounted) widget.onComplete?.call();
+  }
+}
+
+class RecipeMaterialSearchDialog extends StatefulWidget {
+  const RecipeMaterialSearchDialog({
+    super.key,
+    required this.excludedIds,
+    required this.search,
+  });
+  final Set<int> excludedIds;
+  final Future<List<RecipeMaterial>> Function(String query) search;
+
+  @override
+  State<RecipeMaterialSearchDialog> createState() =>
+      _RecipeMaterialSearchDialogState();
+}
+
+class _RecipeMaterialSearchDialogState
+    extends State<RecipeMaterialSearchDialog> {
+  Timer? _debounce;
+  int _request = 0;
+  bool _loading = false;
+  Object? _error;
+  String _query = '';
+  List<RecipeMaterial> _materials = const <RecipeMaterial>[];
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onQuery(String value) {
+    _query = value;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () => _search(value));
+  }
+
+  Future<void> _search(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      setState(() {
+        _materials = const <RecipeMaterial>[];
+        _error = null;
+        _loading = false;
+      });
+      return;
+    }
+    final request = ++_request;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final materials = await widget.search(trimmed);
+      if (!mounted || request != _request) return;
+      setState(() {
+        _loading = false;
+        _materials = materials
+            .where(
+              (material) =>
+                  material.configurationAvailable &&
+                  !widget.excludedIds.contains(material.id),
+            )
+            .toList(growable: false);
+      });
+    } catch (error) {
+      if (!mounted || request != _request) return;
+      setState(() {
+        _loading = false;
+        _error = error;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.recipeMaterialSearch),
+      content: SizedBox(
+        width: 480,
+        height: 360,
+        child: Column(
+          children: <Widget>[
+            TextField(
+              autofocus: true,
+              onChanged: _onQuery,
+              decoration: InputDecoration(
+                labelText: l10n.recipeMaterialSearch,
+                prefixIcon: const Icon(Icons.search),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? Center(
+                      child: FilledButton(
+                        onPressed: () => _search(_query),
+                        child: Text(l10n.modifierRetry),
+                      ),
+                    )
+                  : _materials.isEmpty
+                  ? Center(child: Text(l10n.recipeNoMaterialResults))
+                  : ListView.builder(
+                      itemCount: _materials.length,
+                      itemBuilder: (context, index) {
+                        final material = _materials[index];
+                        return ListTile(
+                          title: Text(material.name),
+                          subtitle: Text(
+                            material.sku ?? material.unitCode ?? '',
+                          ),
+                          onTap: () => Navigator.of(context).pop(material),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.recipeCancel),
+        ),
+      ],
+    );
   }
 }
 
@@ -875,6 +1145,7 @@ class _EditableRecipeRow extends StatelessWidget {
     required this.index,
     required this.component,
     required this.materials,
+    required this.unavailableMaterialIds,
     required this.readOnly,
     required this.onChanged,
     required this.onRemove,
@@ -882,6 +1153,7 @@ class _EditableRecipeRow extends StatelessWidget {
   final int index;
   final RecipeComponent component;
   final List<RecipeMaterial> materials;
+  final Set<int> unavailableMaterialIds;
   final bool readOnly;
   final ValueChanged<RecipeComponent> onChanged;
   final VoidCallback onRemove;
@@ -910,8 +1182,8 @@ class _EditableRecipeRow extends StatelessWidget {
             child: DropdownButtonFormField<int>(
               value: component.materialId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Material',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).material,
                 isDense: true,
               ),
               items: materials
@@ -949,8 +1221,8 @@ class _EditableRecipeRow extends StatelessWidget {
               key: Key('recipe-quantity-$index'),
               initialValue: component.quantity,
               enabled: !readOnly,
-              decoration: const InputDecoration(
-                labelText: 'Quantity',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).quantity,
                 isDense: true,
               ),
               keyboardType: const TextInputType.numberWithOptions(
@@ -974,8 +1246,8 @@ class _EditableRecipeRow extends StatelessWidget {
                 value: units.contains(component.unitCode)
                     ? component.unitCode
                     : null,
-                decoration: const InputDecoration(
-                  labelText: 'Unit',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).unit,
                   isDense: true,
                 ),
                 items: units
@@ -1003,7 +1275,7 @@ class _EditableRecipeRow extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Remove material',
+            tooltip: AppLocalizations.of(context).removeMaterial,
             onPressed: readOnly ? null : onRemove,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -1012,5 +1284,6 @@ class _EditableRecipeRow extends StatelessWidget {
     );
   }
 
-  bool _duplicate(int materialId) => materials.isEmpty ? false : false;
+  bool _duplicate(int materialId) =>
+      unavailableMaterialIds.contains(materialId);
 }

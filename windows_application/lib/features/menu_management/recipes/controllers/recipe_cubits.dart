@@ -78,31 +78,19 @@ class VariantRecipeCubit extends Cubit<VariantRecipeState> {
         _repository.listRecipeMaterials(),
         if (productId != null)
           _repository.getProduct(productId, includeArchived: true),
+        if (productId != null)
+          _repository.getVariantRecipeMaterialEffects(variantId),
       ]);
       final recipe = result[0] as VariantRecipe;
       final ProductDetail? product = productId == null
           ? null
           : result[2] as ProductDetail;
-      final Map<int, ModifierRecipeProfile> profiles =
-          <int, ModifierRecipeProfile>{};
-      if (product != null) {
-        final options = product.modifierGroups
-            .where((group) => group.isActive && !group.isArchived)
-            .expand((group) => group.options)
-            .where((option) => option.isActive && !option.isArchived)
-            .toList(growable: false);
-        final loaded = await Future.wait<ModifierRecipeProfile>(
-          options.map(
-            (option) => _repository.getModifierRecipeProfile(
-              option.id,
-              variantId: variantId,
-            ),
-          ),
-        );
-        for (final profile in loaded) {
-          profiles[profile.optionId] = profile;
-        }
-      }
+      final Map<int, ModifierRecipeProfile> profiles = product == null
+          ? <int, ModifierRecipeProfile>{}
+          : <int, ModifierRecipeProfile>{
+              for (final profile in result[3] as List<ModifierRecipeProfile>)
+                profile.optionId: profile,
+            };
       if (request != _request) return;
       emit(
         state.copyWith(
@@ -129,6 +117,8 @@ class VariantRecipeCubit extends Cubit<VariantRecipeState> {
   void updateDraft(List<RecipeComponent> components) => emit(
     state.copyWith(draft: List<RecipeComponent>.unmodifiable(components)),
   );
+  Future<List<RecipeMaterial>> searchMaterials(String query) =>
+      _repository.listRecipeMaterials(search: query);
   Future<bool> save(int variantId) async {
     if (state.saving) return false;
     emit(state.copyWith(saving: true, clearError: true));
@@ -247,6 +237,8 @@ class ModifierAdjustmentCubit extends Cubit<ModifierAdjustmentState> {
   void updateDraft(List<RecipeComponent> components) => emit(
     state.copyWith(draft: List<RecipeComponent>.unmodifiable(components)),
   );
+  Future<List<RecipeMaterial>> searchMaterials(String query) =>
+      _repository.listRecipeMaterials(search: query);
   Future<bool> save(int optionId, {int? productId, int? variantId}) async {
     if (state.saving) return false;
     emit(state.copyWith(saving: true, clearError: true));

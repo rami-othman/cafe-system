@@ -42,6 +42,11 @@ class RecipeConfigurationController extends Controller
         return response()->json(['data' => $this->resolver->resolve($this->variant($r, $variant), $d['selectedOptions'])]);
     }
 
+    public function profileSummary(Request $r, int $variant)
+    {
+        return response()->json(['data' => $this->recipes->profileSummary($this->variant($r, $variant))]);
+    }
+
     public function profile(Request $r)
     {
         return response()->json(['data' => $this->recipes->profile($this->option($r, (int) $r->route('option')), $r->route('product') ? $this->product($r, (int) $r->route('product')) : null, $r->route('variant') ? $this->variant($r, (int) $r->route('variant')) : null)]);

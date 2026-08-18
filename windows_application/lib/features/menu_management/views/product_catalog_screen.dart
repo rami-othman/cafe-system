@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/menu_management_route_locations.dart';
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -1071,10 +1072,20 @@ class _ProductActions extends StatelessWidget {
         context.go('$path/edit');
         return;
       case _ProductAction.variants:
-        context.go('$path/variants');
+        context.go(
+          MenuManagementRouteLocations.productWorkspace(
+            product.id,
+            tab: ProductWorkspaceTab.variants,
+          ),
+        );
         return;
       case _ProductAction.modifiers:
-        context.go('$path/modifiers');
+        context.go(
+          MenuManagementRouteLocations.productWorkspace(
+            product.id,
+            tab: ProductWorkspaceTab.modifiers,
+          ),
+        );
         return;
       case _ProductAction.archive:
         await _showLifecycleDialog(context, product, archive: true);

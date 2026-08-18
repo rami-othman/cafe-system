@@ -83,6 +83,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('product-variants/{variant}/recipe', 'recipe');
             Route::put('product-variants/{variant}/recipe', 'putRecipe');
             Route::post('product-variants/{variant}/recipe/resolve', 'resolve');
+            Route::get('product-variants/{variant}/recipe-material-effects', 'profileSummary');
             Route::get('modifier-options/{option}/recipe-adjustments', 'profile');
             Route::put('modifier-options/{option}/recipe-adjustments', 'putProfile');
             Route::get('products/{product}/modifier-options/{option}/recipe-adjustments', 'profile');

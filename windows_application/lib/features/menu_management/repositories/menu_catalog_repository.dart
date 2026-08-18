@@ -40,6 +40,9 @@ abstract class MenuCatalogRepository {
     int? productId,
     int? variantId,
   }) => throw UnsupportedError('Modifier recipe profiles are not configured.');
+  Future<List<ModifierRecipeProfile>> getVariantRecipeMaterialEffects(
+    int variantId,
+  ) => throw UnsupportedError('Modifier recipe profiles are not configured.');
   Future<ModifierRecipeProfile> saveModifierRecipeProfile(
     int optionId,
     List<RecipeComponent> components, {
@@ -431,6 +434,25 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     if (body is! Map)
       throw const FormatException('Invalid modifier recipe profile response.');
     return ModifierRecipeProfile.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<List<ModifierRecipeProfile>> getVariantRecipeMaterialEffects(
+    int variantId,
+  ) async {
+    final dynamic body = await _apiClient.get(
+      'admin/catalog/product-variants/$variantId/recipe-material-effects',
+    );
+    if (body is! List) {
+      throw const FormatException('Invalid modifier recipe effects response.');
+    }
+    return body
+        .whereType<Map>()
+        .map(
+          (item) =>
+              ModifierRecipeProfile.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList(growable: false);
   }
 
   @override

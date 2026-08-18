@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -16,9 +18,11 @@ class RecipeSimulationScreen extends StatefulWidget {
     super.key,
     required this.productId,
     required this.variantId,
+    this.onClose,
   });
   final int productId;
   final int variantId;
+  final VoidCallback? onClose;
   @override
   State<RecipeSimulationScreen> createState() => _RecipeSimulationScreenState();
 }
@@ -52,7 +56,21 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
       _groupSelectionCount(group) < group.effectiveMaximum;
   int _groupSelectionCount(ModifierGroup group) => _selected
       .where((id) => group.options.any((option) => option.id == id))
-      .length;
+      .fold(
+        0,
+        (total, id) =>
+            total + (group.effectiveAllowQuantity ? (_quantities[id] ?? 1) : 1),
+      );
+
+  int _quantityMaximum(ModifierGroup group, ModifierOption option) =>
+      group.effectiveMaximum -
+      _selected
+          .where(
+            (id) =>
+                id != option.id &&
+                group.options.any((candidate) => candidate.id == id),
+          )
+          .fold(0, (total, id) => total + (_quantities[id] ?? 1));
 
   void _toggle(ModifierGroup group, ModifierOption option, bool value) {
     setState(() {
@@ -104,14 +122,14 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
     BuildContext context,
   ) => BlocConsumer<RecipeSimulationCubit, RecipeSimulationState>(
     listenWhen: (a, b) => a.error != b.error && b.error != null,
-    listener: (context, state) => ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(state.error!))),
+    listener: (context, state) => ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).commonError)),
+    ),
     builder: (context, state) {
       if (state.loading && state.product == null)
         return const Center(child: CircularProgressIndicator());
       if (state.product == null)
-        return const Center(child: Text('Unable to load recipe choices.'));
+        return Center(child: Text(AppLocalizations.of(context).commonError));
       final product = state.product!;
       final valid = _valid(product);
       return SingleChildScrollView(
@@ -137,11 +155,13 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
                             )
                             .map((group) => _group(context, group)),
                         if (!valid)
-                          const Padding(
-                            padding: EdgeInsets.only(top: AppSpacing.sm),
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.sm),
                             child: Text(
-                              'Select the required number of options in each group.',
-                              style: TextStyle(color: AppColors.warning),
+                              AppLocalizations.of(
+                                context,
+                              ).recipeSimulationStartHelp,
+                              style: const TextStyle(color: AppColors.warning),
                             ),
                           ),
                       ],
@@ -177,10 +197,19 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
   Widget _pageIntro(BuildContext context, ProductDetail product) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      Text('Test Recipe', style: Theme.of(context).textTheme.headlineMedium),
+      TextButton.icon(
+        onPressed: widget.onClose ?? () => _returnToRecipeWorkspace(context),
+        icon: const Icon(Icons.arrow_back),
+        label: Text(AppLocalizations.of(context).recipeBackToWorkspace),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Text(
+        AppLocalizations.of(context).recipeTest,
+        style: Theme.of(context).textTheme.headlineMedium,
+      ),
       const SizedBox(height: AppSpacing.xs),
       Text(
-        'Choose customer options and preview the final materials consumed.',
+        AppLocalizations.of(context).recipeSimulationHelp,
         style: Theme.of(
           context,
         ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
@@ -190,18 +219,36 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
     ],
   );
 
+  void _returnToRecipeWorkspace(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go(
+      MenuManagementRouteLocations.productWorkspace(
+        widget.productId,
+        tab: ProductWorkspaceTab.recipe,
+        variantId: widget.variantId,
+      ),
+    );
+  }
+
   Widget _variantPicker(BuildContext context, ProductDetail product) => Card(
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Variant', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            AppLocalizations.of(context).recipeVariant,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: AppSpacing.xs),
           DropdownButtonFormField<int>(
             value: _variantId,
             isExpanded: true,
             items: product.variants
+                .where((variant) => !variant.isArchived)
                 .map(
                   (variant) => DropdownMenuItem<int>(
                     value: variant.id,
@@ -229,7 +276,10 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(group.name, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              group.displayName(Localizations.localeOf(context)),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               _ruleSentence(l10n, group),
@@ -288,17 +338,24 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
                   ? null
                   : (value) => _toggle(group, option, value ?? false),
             ),
-          Expanded(child: Text(option.name)),
+          Expanded(
+            child: Text(option.displayName(Localizations.localeOf(context))),
+          ),
           if (checked && group.effectiveAllowQuantity)
-            _stepper(context, option),
+            _stepper(context, group, option),
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
     );
   }
 
-  Widget _stepper(BuildContext context, ModifierOption option) {
+  Widget _stepper(
+    BuildContext context,
+    ModifierGroup group,
+    ModifierOption option,
+  ) {
     final value = _quantities[option.id] ?? 1;
+    final maximum = _quantityMaximum(group, option);
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.border),
@@ -308,7 +365,7 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           IconButton(
-            tooltip: 'Decrease quantity',
+            tooltip: AppLocalizations.of(context).recipeDecreaseQuantity,
             constraints: const BoxConstraints.tightFor(width: 32, height: 32),
             padding: EdgeInsets.zero,
             onPressed: value <= 1
@@ -327,13 +384,15 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Increase quantity',
+            tooltip: AppLocalizations.of(context).recipeIncreaseQuantity,
             constraints: const BoxConstraints.tightFor(width: 32, height: 32),
             padding: EdgeInsets.zero,
-            onPressed: () {
-              setState(() => _quantities[option.id] = value + 1);
-              context.read<RecipeSimulationCubit>().invalidateResult();
-            },
+            onPressed: value >= maximum
+                ? null
+                : () {
+                    setState(() => _quantities[option.id] = value + 1);
+                    context.read<RecipeSimulationCubit>().invalidateResult();
+                  },
             icon: const Icon(Icons.add, size: 15),
           ),
         ],
@@ -355,7 +414,7 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Final Materials',
+                    AppLocalizations.of(context).recipeFinalMaterials,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -370,14 +429,14 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
             if (state.resultStale) _staleState(context),
             if (!state.resultStale && state.result == null)
               Text(
-                'Choose options, then preview the materials consumed.',
+                AppLocalizations.of(context).recipeSimulationStartHelp,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             if (!state.resultStale &&
                 state.result != null &&
                 components.isEmpty)
               Text(
-                'No materials are consumed for these choices.',
+                AppLocalizations.of(context).recipeNoMaterialChange,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             if (!state.resultStale && state.result != null)
@@ -393,7 +452,7 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
                       _request,
                     ),
               icon: const Icon(Icons.science_outlined, size: 18),
-              label: const Text('Preview Materials'),
+              label: Text(AppLocalizations.of(context).recipePreviewMaterials),
             ),
             const Divider(height: AppSpacing.xl),
             _calculationDisclosure(context, state),
@@ -419,11 +478,11 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'Choices changed',
+                AppLocalizations.of(context).recipeChoicesChanged,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 3),
-              const Text('Preview the materials again to update this result.'),
+              Text(AppLocalizations.of(context).recipeStaleResult),
             ],
           ),
         ),
@@ -458,12 +517,12 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
   ) => ExpansionTile(
     tilePadding: EdgeInsets.zero,
     childrenPadding: EdgeInsets.zero,
-    title: const Text('How this was calculated'),
+    title: Text(AppLocalizations.of(context).recipeHowCalculated),
     children: <Widget>[
       Align(
         alignment: AlignmentDirectional.centerStart,
         child: Text(
-          'Variant: ${state.result?.variantId == null ? _variantId : state.result!.variantId}',
+          '${AppLocalizations.of(context).recipeVariant}: ${state.result?.variantId == null ? _variantId : state.result!.variantId}',
         ),
       ),
       const SizedBox(height: AppSpacing.xs),
@@ -476,15 +535,15 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
 
   String _selectedNames(ProductDetail? product) {
     if (product == null || _selected.isEmpty)
-      return 'No customer options selected.';
+      return AppLocalizations.of(context).recipeSimulationStartHelp;
     final names = product.modifierGroups
         .expand((group) => group.options)
         .where((option) => _selected.contains(option.id))
-        .map((option) => option.name)
+        .map((option) => option.displayName(Localizations.localeOf(context)))
         .toList(growable: false);
     return names.isEmpty
-        ? 'No customer options selected.'
-        : 'Selected choices: ${names.join(', ')}';
+        ? AppLocalizations.of(context).recipeSimulationStartHelp
+        : '${AppLocalizations.of(context).selectedModifiers}: ${names.join(', ')}';
   }
 
   String _ruleSentence(AppLocalizations l10n, ModifierGroup group) {

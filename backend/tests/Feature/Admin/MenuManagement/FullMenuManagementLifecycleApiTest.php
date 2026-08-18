@@ -97,7 +97,7 @@ class FullMenuManagementLifecycleApiTest extends TestCase
             'selectionType' => 'multiple',
             'isRequired' => false,
             'minSelections' => 0,
-            'maxSelections' => 1,
+            'maxSelections' => 2,
             'allowQuantity' => true,
             'options' => [
                 ['name' => 'Extra Shot', 'priceDelta' => '0.80', 'isDefault' => false, 'isActive' => true, 'isAvailable' => true],

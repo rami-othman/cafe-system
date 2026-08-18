@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -497,7 +498,11 @@ class _VariantTable extends StatelessWidget {
                             onPressed: state.isMutating
                                 ? null
                                 : () => context.go(
-                                    '/menu-management/product-variants/${variant.id}/recipe?productId=${state.product!.id}',
+                                    MenuManagementRouteLocations.productWorkspace(
+                                      state.product!.id,
+                                      tab: ProductWorkspaceTab.recipe,
+                                      variantId: variant.id,
+                                    ),
                                   ),
                             icon: const Icon(Icons.receipt_long_outlined),
                           ),
@@ -507,8 +512,11 @@ class _VariantTable extends StatelessWidget {
                             tooltip: 'Manage Price Overrides',
                             onPressed: state.isMutating
                                 ? null
-                                : () => context.go(
-                                    '/menu-management/products/${state.product!.id}/variants/${variant.id}/pricing',
+                                : () => context.push(
+                                    MenuManagementRouteLocations.variantPricing(
+                                      state.product!.id,
+                                      variant.id,
+                                    ),
                                   ),
                             icon: const Icon(Icons.price_change_outlined),
                           ),
@@ -518,8 +526,11 @@ class _VariantTable extends StatelessWidget {
                             tooltip: 'Manage Scheduled Availability',
                             onPressed: state.isMutating
                                 ? null
-                                : () => context.go(
-                                    '/menu-management/products/${state.product!.id}/availability?variantId=${variant.id}&from=variants',
+                                : () => context.push(
+                                    MenuManagementRouteLocations.scheduledAvailability(
+                                      state.product!.id,
+                                      variantId: variant.id,
+                                    ),
                                   ),
                             icon: const Icon(Icons.schedule_outlined),
                           ),
@@ -531,8 +542,11 @@ class _VariantTable extends StatelessWidget {
                             tooltip: 'Manage Availability / Sold Out',
                             onPressed: state.isMutating
                                 ? null
-                                : () => context.go(
-                                    '/menu-management/products/${state.product!.id}/operational-availability?variantId=${variant.id}&from=variants',
+                                : () => context.push(
+                                    MenuManagementRouteLocations.operationalAvailability(
+                                      state.product!.id,
+                                      variantId: variant.id,
+                                    ),
                                   ),
                             icon: const Icon(Icons.do_not_disturb_on_outlined),
                           ),
@@ -813,19 +827,32 @@ class _VariantCompactRows extends StatelessWidget {
         edit(variant);
       case _VariantAction.recipe:
         context.go(
-          '/menu-management/product-variants/${variant.id}/recipe?productId=${state.product!.id}',
+          MenuManagementRouteLocations.productWorkspace(
+            state.product!.id,
+            tab: ProductWorkspaceTab.recipe,
+            variantId: variant.id,
+          ),
         );
       case _VariantAction.pricing:
-        context.go(
-          '/menu-management/products/${state.product!.id}/variants/${variant.id}/pricing',
+        context.push(
+          MenuManagementRouteLocations.variantPricing(
+            state.product!.id,
+            variant.id,
+          ),
         );
       case _VariantAction.sellingHours:
-        context.go(
-          '/menu-management/products/${state.product!.id}/availability?variantId=${variant.id}&from=variants',
+        context.push(
+          MenuManagementRouteLocations.scheduledAvailability(
+            state.product!.id,
+            variantId: variant.id,
+          ),
         );
       case _VariantAction.currentAvailability:
-        context.go(
-          '/menu-management/products/${state.product!.id}/operational-availability?variantId=${variant.id}&from=variants',
+        context.push(
+          MenuManagementRouteLocations.operationalAvailability(
+            state.product!.id,
+            variantId: variant.id,
+          ),
         );
       case _VariantAction.setDefault:
         setDefault(variant);

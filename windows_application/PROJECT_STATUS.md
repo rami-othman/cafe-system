@@ -17,14 +17,18 @@ error; every UX-G0-E gate below is green:
 
 Current verification status (2026-08-18):
 
-- Backend: **117 tests, 1,707 assertions; Pint passed**.
-- Flutter: **328 tests, zero failures; `flutter pub get`, `flutter gen-l10n`,
-  `dart format .`, and `flutter analyze` passed**.
+- Backend: **118 tests, 1,720 assertions; Pint passed** (verified baseline;
+  unchanged by the Batch 7.1 closure pass).
+- Flutter: **337 tests, zero failures; `flutter pub get`, `dart format .`, and
+  `flutter analyze` passed**. `flutter gen-l10n` is pending final local Windows
+  verification: it exceeds the known Codex-shell timeout without output.
 - Repository: final `git diff --check` passed.
 
 The Menu Management UX redesign is complete through Batches 0–6. **Batch 7-P —
-Recipe Correctness Preflight** is **COMPLETE**. The next approved work is **UX
-Batch 7 — Recipes & Materials** visual redesign; it has not started.
+Recipe Correctness Preflight** is **COMPLETE**. **Batch 7.1 — Recipe UX
+Hardening & Completion** is **VERIFICATION-GATED** pending the final local
+Windows `flutter gen-l10n` check; this is focused hardening of the approved
+Batch 7 direction, not a redesign.
 
 ## IMPLEMENTED FUNCTIONAL CAPABILITIES
 
@@ -51,10 +55,17 @@ Batch 7 — Recipes & Materials** visual redesign; it has not started.
 - Batch 6: Modifier Library — **COMPLETE**
 - UX-G0-A through UX-G0-E — **COMPLETE**
 - Batch 7-P — Recipe Correctness Preflight — **COMPLETE**
-- UX Batch 7 — Recipes & Materials visual redesign — **NOT STARTED**
+- Batch 7.1 — Recipe UX Hardening & Completion — **VERIFICATION-GATED**
+  (pending local Windows `flutter gen-l10n`)
 
-NEXT APPROVED WORK: **UX Batch 7 — Recipes & Materials**. Do not begin it
-without its separate approved workflow.
+Navigation & Flow Stabilization: **COMPLETE**. The Product Workspace is the
+canonical Product parent; Workspace tabs and Recipe Variant selection are URL
+state, legacy Variants/Modifiers routes redirect to Workspace tabs, and
+Recipe/Variant children retain Product and Variant identities for returns.
+Batch 8 and Phase 4K remain **NOT STARTED**.
+
+CURRENT APPROVED WORK: **Batch 7.1 — Recipe UX Hardening & Completion** only.
+Do not begin Batch 8 or Phase 4K.
 
 ## AUTHORITATIVE DOMAIN RULES
 
