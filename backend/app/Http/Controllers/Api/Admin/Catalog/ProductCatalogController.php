@@ -9,6 +9,7 @@ use App\Http\Resources\Catalog\ProductSummaryResource;
 use App\Http\Resources\Catalog\ProductVariantResource;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Rules\StrictlyPositiveMoney;
 use App\Services\Catalog\CatalogProductService;
 use App\Services\Catalog\ProductModifierAssignmentService;
 use App\Services\Catalog\ProductVariantService;
@@ -31,6 +32,8 @@ class ProductCatalogController extends Controller
             $query->withTrashed();
         } elseif ($status === 'archived') {
             $query->onlyTrashed();
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
         } else {
             $query->where('is_active', true);
         }
@@ -137,8 +140,33 @@ class ProductCatalogController extends Controller
     public function modifierGroups(Request $request, int $product): JsonResponse
     {
         $model = $this->findProduct(TenantContext::id($request), $product);
+        $tenant = TenantContext::id($request);
+        $productId = $model->id;
+        $hasEffectiveMaterialImpact = function ($optionQuery) use ($tenant, $productId): void {
+            $optionQuery
+                ->where('modifier_options.tenant_id', $tenant)
+                ->where('modifier_options.is_active', true)
+                ->where(function ($query) use ($tenant, $productId): void {
+                    $query->whereHas('recipeProfiles', function ($profile) use ($tenant, $productId): void {
+                        $profile->where('tenant_id', $tenant)
+                            ->where('scope_type', 'product')
+                            ->where('product_id', $productId)
+                            ->whereHas('components');
+                    })->orWhere(function ($fallback) use ($tenant, $productId): void {
+                        $fallback->whereDoesntHave('recipeProfiles', function ($profile) use ($tenant, $productId): void {
+                            $profile->where('tenant_id', $tenant)
+                                ->where('scope_type', 'product')
+                                ->where('product_id', $productId);
+                        })->whereHas('recipeProfiles', function ($profile) use ($tenant): void {
+                            $profile->where('tenant_id', $tenant)
+                                ->where('scope_type', 'global')
+                                ->whereHas('components');
+                        });
+                    });
+                });
+        };
 
-        return response()->json(['data' => ProductModifierGroupResource::collection($model->modifierGroups()->with('options')->orderByPivot('sort_order')->get())->resolve($request)]);
+        return response()->json(['data' => ProductModifierGroupResource::collection($model->modifierGroups()->with('options')->withExists(['options as material_impact_configured' => $hasEffectiveMaterialImpact])->orderByPivot('sort_order')->get())->resolve($request)]);
     }
 
     public function syncModifierGroups(Request $request, int $product): JsonResponse
@@ -152,7 +180,7 @@ class ProductCatalogController extends Controller
 
     private function findProduct(int $tenant, int $id, bool $trashed = false): Product
     {
-        return Product::query()->when($trashed, fn ($q) => $q->withTrashed())->where('tenant_id', $tenant)->with(['category', 'reportingCategory', 'kitchenStation', 'variants' => fn ($q) => $q->where('tenant_id', $tenant)->when($trashed, fn ($variants) => $variants->withTrashed())->orderBy('sort_order')->orderBy('id'), 'variants.product', 'defaultVariant', 'modifierGroups.options'])->findOrFail($id);
+        return Product::query()->when($trashed, fn ($q) => $q->withTrashed())->where('tenant_id', $tenant)->withCount(['variants as variants_count' => fn ($q) => $q->where('is_active', true), 'modifierGroups'])->with(['category', 'reportingCategory', 'kitchenStation', 'variants' => fn ($q) => $q->where('tenant_id', $tenant)->when($trashed, fn ($variants) => $variants->withTrashed())->with(['recipe' => fn ($recipe) => $recipe->withCount('components')])->orderBy('sort_order')->orderBy('id'), 'variants.product', 'defaultVariant', 'modifierGroups.options'])->findOrFail($id);
     }
 
     private function findVariant(int $tenant, int $id, bool $trashed = false): ProductVariant
@@ -164,10 +192,10 @@ class ProductCatalogController extends Controller
     {
         $rules = ['name' => [$create ? 'required' : 'sometimes', 'string', 'max:255'], 'nameAr' => ['nullable', 'string'], 'nameEn' => ['nullable', 'string'], 'description' => ['nullable', 'string'], 'descriptionAr' => ['nullable', 'string'], 'descriptionEn' => ['nullable', 'string'], 'imageUrl' => ['nullable', 'string', 'max:255'], 'categoryId' => ['nullable', 'integer'], 'reportingCategoryId' => ['nullable', 'integer'], 'kitchenStationId' => ['nullable', 'integer'], 'productType' => ['nullable', Rule::in(['standard', 'open_price', 'combo'])], 'preparationTimeMinutes' => ['nullable', 'integer', 'min:0', 'max:1440'], 'isStockTracked' => ['nullable', 'boolean'], 'isActive' => ['nullable', 'boolean'], 'sortOrder' => ['nullable', 'integer']];
         if ($create) {
-            $rules += ['variants' => ['required', 'array', 'min:1'], 'variants.*.name' => ['required', 'string'], 'variants.*.sku' => ['nullable', 'string'], 'variants.*.barcode' => ['nullable', 'string'], 'variants.*.basePrice' => ['required', 'numeric', 'min:0'], 'variants.*.costPrice' => ['nullable', 'numeric', 'min:0'], 'variants.*.isDefault' => ['required', 'boolean'], 'variants.*.isActive' => ['required', 'boolean'], 'variants.*.sortOrder' => ['nullable', 'integer']];
+            $rules += ['variants' => ['required', 'array', 'min:1'], 'variants.*.name' => ['required', 'string'], 'variants.*.sku' => ['nullable', 'string'], 'variants.*.barcode' => ['nullable', 'string'], 'variants.*.basePrice' => ['bail', 'required', 'decimal:0,2', new StrictlyPositiveMoney('Base price')], 'variants.*.costPrice' => ['nullable', 'numeric', 'min:0'], 'variants.*.isDefault' => ['required', 'boolean'], 'variants.*.isActive' => ['required', 'boolean'], 'variants.*.sortOrder' => ['nullable', 'integer']];
         } $data = $request->validate($rules);
         if (! $create) {
-            $data = array_replace(['name' => $current->name, 'nameAr' => $current->name_ar, 'nameEn' => $current->name_en, 'description' => $current->description, 'descriptionAr' => $current->description_ar, 'descriptionEn' => $current->description_en, 'imageUrl' => $current->image_url, 'productType' => $current->product_type->value, 'preparationTimeMinutes' => $current->preparation_time_minutes, 'isStockTracked' => $current->is_stock_tracked, 'sortOrder' => $current->sort_order, 'categoryId' => $current->category_id, 'reportingCategoryId' => $current->reporting_category_id, 'kitchenStationId' => $current->kitchen_station_id], $data);
+            $data = array_replace(['name' => $current->name, 'nameAr' => $current->name_ar, 'nameEn' => $current->name_en, 'description' => $current->description, 'descriptionAr' => $current->description_ar, 'descriptionEn' => $current->description_en, 'imageUrl' => $current->image_url, 'productType' => $current->product_type->value, 'preparationTimeMinutes' => $current->preparation_time_minutes, 'isStockTracked' => $current->is_stock_tracked, 'isActive' => $current->is_active, 'sortOrder' => $current->sort_order, 'categoryId' => $current->category_id, 'reportingCategoryId' => $current->reporting_category_id, 'kitchenStationId' => $current->kitchen_station_id], $data);
         }
 
         return $data;
@@ -175,7 +203,7 @@ class ProductCatalogController extends Controller
 
     private function variantData(Request $request, bool $create): array
     {
-        return $request->validate(['name' => [$create ? 'required' : 'sometimes', 'string'], 'nameAr' => ['nullable', 'string'], 'nameEn' => ['nullable', 'string'], 'sku' => ['nullable', 'string'], 'barcode' => ['nullable', 'string'], 'basePrice' => [$create ? 'required' : 'sometimes', 'numeric', 'min:0'], 'costPrice' => ['nullable', 'numeric', 'min:0'], 'isDefault' => ['nullable', 'boolean'], 'isActive' => ['nullable', 'boolean'], 'sortOrder' => ['nullable', 'integer']]);
+        return $request->validate(['name' => [$create ? 'required' : 'sometimes', 'string'], 'nameAr' => ['nullable', 'string'], 'nameEn' => ['nullable', 'string'], 'sku' => ['nullable', 'string'], 'barcode' => ['nullable', 'string'], 'basePrice' => ['bail', $create ? 'required' : 'sometimes', 'decimal:0,2', new StrictlyPositiveMoney('Base price')], 'costPrice' => ['nullable', 'numeric', 'min:0'], 'isDefault' => ['nullable', 'boolean'], 'isActive' => ['nullable', 'boolean'], 'sortOrder' => ['nullable', 'integer']]);
     }
 
     private function variantCurrent(ProductVariant $v): array

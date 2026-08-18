@@ -68,6 +68,8 @@ class ModifierOptionRecord {
   final int sortOrder;
   final DateTime? archivedAt;
   bool get isArchived => archivedAt != null;
+  bool get isInactive => archivedAt == null && !isActive;
+  bool get isActiveLifecycle => archivedAt == null && isActive;
   String get localizedName => nameEn ?? nameAr ?? name;
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,
@@ -95,12 +97,35 @@ class ModifierGroupRecord {
     required this.optionCount,
     this.activeOptionCount,
     required this.options,
+    this.optionPreview = const <ModifierOptionRecord>[],
+    this.remainingOptionCount = 0,
+    this.materialImpactConfigured = false,
     this.archivedAt,
     this.createdAt,
     this.updatedAt,
   });
   factory ModifierGroupRecord.fromJson(JsonMap json) {
     final dynamic rawOptions = json['options'];
+    final dynamic rawPreview = json['optionPreview'];
+    final List<ModifierOptionRecord> options = rawOptions is List
+        ? rawOptions
+              .whereType<Map>()
+              .map(
+                (e) =>
+                    ModifierOptionRecord.fromJson(Map<String, dynamic>.from(e)),
+              )
+              .toList(growable: false)
+        : const <ModifierOptionRecord>[];
+    final List<ModifierOptionRecord> preview = rawPreview is List
+        ? rawPreview
+              .whereType<Map>()
+              .map(
+                (e) =>
+                    ModifierOptionRecord.fromJson(Map<String, dynamic>.from(e)),
+              )
+              .toList(growable: false)
+        : options.take(3).toList(growable: false);
+    final int optionCount = readInt(json['optionCount']) ?? 0;
     return ModifierGroupRecord(
       id: _id(json, 'id'),
       name: _name(json),
@@ -115,18 +140,14 @@ class ModifierGroupRecord {
       allowQuantity: readBool(json['allowQuantity']),
       isActive: readBool(json['isActive'], fallback: true),
       sortOrder: readInt(json['sortOrder']) ?? 0,
-      optionCount: readInt(json['optionCount']) ?? 0,
+      optionCount: optionCount,
       activeOptionCount: readInt(json['activeOptionCount']),
-      options: rawOptions is List
-          ? rawOptions
-                .whereType<Map>()
-                .map(
-                  (e) => ModifierOptionRecord.fromJson(
-                    Map<String, dynamic>.from(e),
-                  ),
-                )
-                .toList(growable: false)
-          : const <ModifierOptionRecord>[],
+      options: options,
+      optionPreview: preview,
+      remainingOptionCount:
+          readInt(json['remainingOptionCount']) ??
+          (optionCount - preview.length).clamp(0, optionCount),
+      materialImpactConfigured: readBool(json['materialImpactConfigured']),
       archivedAt: _date(json['archivedAt']),
       createdAt: _date(json['createdAt']),
       updatedAt: _date(json['updatedAt']),
@@ -148,10 +169,15 @@ class ModifierGroupRecord {
   final int optionCount;
   final int? activeOptionCount;
   final List<ModifierOptionRecord> options;
+  final List<ModifierOptionRecord> optionPreview;
+  final int remainingOptionCount;
+  final bool materialImpactConfigured;
   final DateTime? archivedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   bool get isArchived => archivedAt != null;
+  bool get isInactive => archivedAt == null && !isActive;
+  bool get isActiveLifecycle => archivedAt == null && isActive;
   String get localizedName => nameEn ?? nameAr ?? name;
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,

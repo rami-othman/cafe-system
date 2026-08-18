@@ -9,6 +9,7 @@ import 'package:windows_application/features/menu_management/repositories/menu_c
 import 'package:windows_application/features/menu_management/variants/controllers/variants_cubit.dart';
 import 'package:windows_application/features/menu_management/variants/controllers/variants_state.dart';
 import 'package:windows_application/features/menu_management/variants/models/variant_editor_draft.dart';
+import 'package:windows_application/features/menu_management/pricing/configured_price_validation.dart';
 
 void main() {
   test('variant drafts use dedicated create and update contracts', () {
@@ -92,6 +93,57 @@ void main() {
       expect(await cubit.setDefault(2), isFalse);
       repository.createCompleter!.complete(cubit.state.activeVariants.first);
       await create;
+      await cubit.close();
+    },
+  );
+
+  test(
+    'variant create and update require a strictly positive configured base price',
+    () async {
+      final _VariantsRepository repository = _VariantsRepository();
+      final VariantsCubit cubit = VariantsCubit(repository: repository);
+      await cubit.load(11);
+      for (final String price in <String>[
+        '0',
+        '0.00',
+        '-0.01',
+        '-5',
+        'invalid',
+      ]) {
+        expect(
+          await cubit.create(
+            VariantEditorDraft(name: 'New', basePrice: price, sortOrder: '0'),
+            makeDefault: false,
+          ),
+          isFalse,
+        );
+        expect(
+          cubit.state.fieldErrors['basePrice'],
+          configuredSellPriceMustBePositive,
+        );
+      }
+      expect(
+        await cubit.create(
+          const VariantEditorDraft(
+            name: 'New',
+            basePrice: '5.50',
+            sortOrder: '0',
+          ),
+          makeDefault: false,
+        ),
+        isTrue,
+      );
+      expect(
+        await cubit.update(
+          1,
+          const VariantEditorDraft(
+            name: 'Regular',
+            basePrice: '0.01',
+            sortOrder: '0',
+          ),
+        ),
+        isTrue,
+      );
       await cubit.close();
     },
   );

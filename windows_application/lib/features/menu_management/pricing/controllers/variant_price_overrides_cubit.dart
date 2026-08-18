@@ -5,6 +5,7 @@ import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../../../pos/models/branch.dart';
 import '../models/variant_price_models.dart';
+import '../configured_price_validation.dart';
 import 'variant_price_overrides_state.dart';
 
 class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
@@ -267,8 +268,8 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
       PriceOverrideScope.branchChannel => branch && channel,
     };
     if (!valid) return 'Complete the required scope fields.';
-    if (item.price.minorUnits < 0) {
-      return 'Override price must be zero or greater.';
+    if (item.price.minorUnits <= 0) {
+      return configuredSellPriceMustBePositive;
     }
     return null;
   }

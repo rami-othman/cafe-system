@@ -10,6 +10,45 @@ class CatalogApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_configured_variant_selling_prices_must_be_strictly_positive_at_product_and_variant_boundaries(): void
+    {
+        $tenantId = $this->tenant('configured-prices');
+        $headers = $this->headers($tenantId);
+
+        foreach ([0, -1] as $price) {
+            $this->postJson('/api/v1/admin/catalog/products', [
+                'name' => "Invalid {$price}",
+                'variants' => [['name' => 'Regular', 'basePrice' => $price, 'isDefault' => true, 'isActive' => true]],
+            ], $headers)->assertUnprocessable()->assertJsonValidationErrors('variants.0.basePrice');
+        }
+        $this->assertDatabaseCount('products', 0);
+
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Valid Product',
+            'variants' => [['name' => 'Regular', 'basePrice' => '0.01', 'isDefault' => true, 'isActive' => true]],
+        ], $headers)->assertCreated()->json('data.id');
+        $variantId = (int) DB::table('product_variants')->where('product_id', $productId)->value('id');
+
+        foreach ([0, -1] as $price) {
+            $this->postJson("/api/v1/admin/catalog/products/{$productId}/variants", [
+                'name' => "Invalid {$price}", 'basePrice' => $price, 'isActive' => true,
+            ], $headers)->assertUnprocessable()->assertJsonValidationErrors('basePrice');
+        }
+        $created = $this->postJson("/api/v1/admin/catalog/products/{$productId}/variants", [
+            'name' => 'Large', 'basePrice' => '5.50', 'isActive' => true,
+        ], $headers)->assertCreated();
+        $largeId = $created->json('data.id');
+
+        foreach ([0, -1] as $price) {
+            $this->patchJson("/api/v1/admin/catalog/product-variants/{$variantId}", ['basePrice' => $price], $headers)
+                ->assertUnprocessable()->assertJsonValidationErrors('basePrice');
+            $this->assertDatabaseHas('product_variants', ['id' => $variantId, 'base_price' => 0.01]);
+        }
+        $this->patchJson("/api/v1/admin/catalog/product-variants/{$variantId}", ['basePrice' => '1.00'], $headers)
+            ->assertOk()->assertJsonPath('data.basePrice', 1);
+        $this->assertDatabaseHas('product_variants', ['id' => $largeId, 'base_price' => 5.5]);
+    }
+
     public function test_products_are_tenant_scoped_and_default_variants_sync_the_legacy_pos_fields(): void
     {
         $tenantId = $this->tenant('alpha');
@@ -87,6 +126,54 @@ class CatalogApiTest extends TestCase
         $this->assertNotContains($foreignArchivedId, array_column($included, 'id'));
     }
 
+    public function test_product_detail_returns_authoritative_variant_and_modifier_counts_and_recipe_summary(): void
+    {
+        $tenantId = $this->tenant('summary-counts');
+        $groupId = $this->postJson('/api/v1/admin/catalog/modifier-groups', [
+            'name' => 'Extras',
+            'options' => [['name' => 'Shot']],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Latte',
+            'variants' => [
+                ['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true],
+                ['name' => 'Large', 'basePrice' => 4, 'isDefault' => false, 'isActive' => true],
+            ],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $this->putJson("/api/v1/admin/catalog/products/$productId/modifier-groups", [
+            'groups' => [['modifierGroupId' => $groupId, 'sortOrder' => 0]],
+        ], $this->headers($tenantId))->assertOk();
+
+        $detail = $this->getJson("/api/v1/admin/catalog/products/$productId", $this->headers($tenantId))
+            ->assertOk()
+            ->json('data');
+
+        $this->assertSame(2, $detail['variantCount']);
+        $this->assertSame(1, $detail['modifierGroupCount']);
+        $this->assertFalse($detail['variants'][0]['recipeConfigured']);
+        $this->assertSame(0, $detail['variants'][0]['recipeComponentCount']);
+        $this->assertArrayNotHasKey('components', $detail['variants'][0]);
+
+        $largeId = (int) DB::table('product_variants')->where('product_id', $productId)->where('name', 'Large')->value('id');
+        $this->postJson("/api/v1/admin/catalog/product-variants/$largeId/archive", [], $this->headers($tenantId))->assertOk();
+        $this->assertSame(1, $this->getJson("/api/v1/admin/catalog/products/$productId", $this->headers($tenantId))->json('data.variantCount'));
+        $this->postJson("/api/v1/admin/catalog/product-variants/$largeId/restore", [], $this->headers($tenantId))->assertOk();
+        $this->assertSame(2, $this->getJson("/api/v1/admin/catalog/products/$productId", $this->headers($tenantId))->json('data.variantCount'));
+
+        $secondGroupId = $this->postJson('/api/v1/admin/catalog/modifier-groups', [
+            'name' => 'Sauces',
+            'options' => [['name' => 'Vanilla']],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+        $this->putJson("/api/v1/admin/catalog/products/$productId/modifier-groups", ['groups' => [
+            ['modifierGroupId' => $groupId, 'sortOrder' => 0],
+            ['modifierGroupId' => $secondGroupId, 'sortOrder' => 1],
+        ]], $this->headers($tenantId))->assertOk();
+        $this->putJson("/api/v1/admin/catalog/products/$productId/modifier-groups", ['groups' => [
+            ['modifierGroupId' => $secondGroupId, 'sortOrder' => 0],
+        ]], $this->headers($tenantId))->assertOk();
+        $this->assertSame(1, $this->getJson("/api/v1/admin/catalog/products/$productId", $this->headers($tenantId))->json('data.modifierGroupCount'));
+    }
+
     public function test_product_archive_and_restore_return_the_soft_delete_timestamp(): void
     {
         $tenantId = $this->tenant('archive-product');
@@ -107,6 +194,34 @@ class CatalogApiTest extends TestCase
             ->assertJsonPath('data.isActive', true)
             ->assertJsonPath('data.archivedAt', null);
         $this->assertDatabaseHas('products', ['id' => $productId, 'is_active' => true, 'deleted_at' => null]);
+    }
+
+    public function test_product_lifecycle_filters_keep_active_inactive_and_archived_distinct(): void
+    {
+        $tenant = $this->tenant('product-lifecycle');
+        $headers = $this->headers($tenant);
+        $active = $this->postJson('/api/v1/admin/catalog/products', ['name' => 'Active', 'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]]], $headers)->assertCreated()->json('data.id');
+        $inactive = $this->postJson('/api/v1/admin/catalog/products', ['name' => 'Inactive', 'isActive' => false, 'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]]], $headers)->assertCreated()->json('data.id');
+        $archived = $this->postJson('/api/v1/admin/catalog/products', ['name' => 'Archived', 'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]]], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/admin/catalog/products/{$archived}/archive", [], $headers)->assertOk();
+        foreach (['active' => [$active], 'inactive' => [$inactive], 'archived' => [$archived], 'all' => [$active, $inactive, $archived]] as $status => $expected) {
+            $ids = array_column($this->getJson("/api/v1/admin/catalog/products?status={$status}", $headers)->assertOk()->json('data'), 'id');
+            sort($ids);
+            sort($expected);
+            $this->assertSame($expected, $ids);
+        }
+    }
+
+    public function test_variant_restore_cannot_bypass_an_inactive_product(): void
+    {
+        $tenant = $this->tenant('variant-parent-lifecycle');
+        $headers = $this->headers($tenant);
+        $product = $this->postJson('/api/v1/admin/catalog/products', ['name' => 'Latte', 'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true], ['name' => 'Large', 'basePrice' => 4, 'isDefault' => false, 'isActive' => true]]], $headers)->assertCreated()->json('data.id');
+        $variant = (int) DB::table('product_variants')->where('product_id', $product)->where('name', 'Large')->value('id');
+        $this->postJson("/api/v1/admin/catalog/product-variants/{$variant}/archive", [], $headers)->assertOk();
+        $this->patchJson("/api/v1/admin/catalog/products/{$product}", ['isActive' => false], $headers)->assertOk();
+        $this->postJson("/api/v1/admin/catalog/product-variants/{$variant}/restore", [], $headers)->assertUnprocessable()->assertJsonValidationErrors('product');
+        $this->assertSoftDeleted('product_variants', ['id' => $variant]);
     }
 
     public function test_category_archive_is_blocked_when_active_products_use_it_and_reorder_is_tenant_safe(): void

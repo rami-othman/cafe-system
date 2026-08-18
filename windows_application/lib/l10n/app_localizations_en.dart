@@ -66,6 +66,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonActive => 'Active';
 
   @override
+  String get commonDeactivate => 'Deactivate';
+
+  @override
+  String get commonActivate => 'Activate';
+
+  @override
+  String get commonArchive => 'Archive';
+
+  @override
+  String get commonRestore => 'Restore';
+
+  @override
+  String get commonArchived => 'Archived';
+
+  @override
+  String get commonAll => 'All';
+
+  @override
   String get commonInactive => 'Inactive';
 
   @override
@@ -716,7 +734,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String modifierSelectionExactly(num count) {
-    return 'Customer must choose exactly $count option(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+    );
+    return 'Customer must choose exactly $_temp0.';
   }
 
   @override
@@ -1092,8 +1116,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modifierDone => 'Done';
 
   @override
+  String get modifierClearFiltersBeforeReorder =>
+      'Clear search and filters before reordering Modifier Groups.';
+
+  @override
   String modifierOptionsCount(int count) {
-    return '$count options';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+      zero: '0 options',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1103,27 +1138,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String modifierRuleExactly(int count) {
-    return 'Customer must choose exactly $count option(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+    );
+    return 'Customer must choose exactly $_temp0.';
   }
 
   @override
   String modifierRuleOptionalExactly(int count) {
-    return 'Optional — customer may choose $count option(s).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count options',
+      one: '1 option',
+    );
+    return 'Optional — customer may choose $_temp0.';
   }
 
   @override
   String modifierRuleAtLeastUpTo(int min, int max) {
-    return 'Customer must choose at least $min and up to $max options.';
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '$max options',
+      one: '1 option',
+    );
+    return 'Customer must choose at least $min and up to $_temp0.';
   }
 
   @override
   String modifierRuleOptionalUpTo(int max) {
-    return 'Optional — customer may choose up to $max options.';
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '$max options',
+      one: '1 option',
+    );
+    return 'Optional — customer may choose up to $_temp0.';
   }
 
   @override
   String get modifierRuleQuantity =>
-      'The same Option may be added more than once.';
+      'The same option may be added more than once.';
 
   @override
   String get modifierViewGroup => 'View Group';
@@ -1325,8 +1384,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modifierInitialOption => 'Initial Option';
 
   @override
+  String get modifierInitialOptions => 'Initial Options';
+
+  @override
   String get modifierInitialOptionHelper =>
-      'You can add more Options after creating the Modifier Group.';
+      'Add enough active Options for the Maximum choices before creating the Modifier Group.';
+
+  @override
+  String get modifierAddAnotherOption => 'Add another Option';
+
+  @override
+  String get modifierRemoveOption => 'Remove Option';
+
+  @override
+  String modifierAtLeastActiveOptions(int count) {
+    return 'Add at least $count active Options or reduce Maximum choices.';
+  }
 
   @override
   String get modifierOptionName => 'Option name';
@@ -1396,8 +1469,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modifierOptionNameRequired => 'Option name is required.';
 
   @override
-  String get modifierOptionPriceInvalid =>
-      'Price adjustment must be zero or positive.';
+  String get modifierOptionPriceInvalid => 'Enter a valid price adjustment.';
 
   @override
   String get modifierOptionSortInvalid => 'Sort order must be a whole number.';
@@ -1418,6 +1490,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get modifierOptionSaveError =>
       'Unable to save this modifier option. Check the option rules and try again.';
+
+  @override
+  String get modifierOptionGroupInvalid =>
+      'This Option cannot be changed because it would make the Modifier Group invalid.';
 
   @override
   String get modifierGroupSaveError => 'Unable to save this modifier group.';
@@ -1450,4 +1526,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get modifierInitialMaximumError =>
       'A new group has one initial option; maximum cannot exceed 1.';
+
+  @override
+  String get configuredSellPriceMustBePositive =>
+      'Selling price must be greater than zero.';
 }

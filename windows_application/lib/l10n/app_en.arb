@@ -20,6 +20,12 @@
   "commonNoData": "No data available.",
   "commonUnknown": "Unknown",
   "commonActive": "Active",
+  "commonDeactivate": "Deactivate",
+  "commonActivate": "Activate",
+  "commonArchive": "Archive",
+  "commonRestore": "Restore",
+  "commonArchived": "Archived",
+  "commonAll": "All",
   "commonInactive": "Inactive",
   "commonAvailable": "Available",
   "commonSoldOut": "Sold out",
@@ -220,7 +226,7 @@
   "validationResolveErrors": "Resolve the errors below before this Menu can be published.",
   "validationIssueCode": "Code: {code}",
   "@validationIssueCode": {"placeholders": {"code": {"type": "String"}}},
-  "modifierSelectionExactly": "Customer must choose exactly {count} option(s).",
+  "modifierSelectionExactly": "Customer must choose exactly {count, plural, =1 {1 option} other {{count} options}}.",
   "@modifierSelectionExactly": {"placeholders": {"count": {"type": "num"}}},
   "modifierSelectionRange": "Customer may choose from {min} to {max} options.",
   "@modifierSelectionRange": {"placeholders": {"min": {"type": "num"}, "max": {"type": "num"}}},
@@ -346,19 +352,20 @@
   ,"modifierAll": "All"
   ,"modifierReorder": "Reorder"
   ,"modifierDone": "Done"
-  ,"modifierOptionsCount": "{count} options"
+  ,"modifierClearFiltersBeforeReorder": "Clear search and filters before reordering Modifier Groups."
+  ,"modifierOptionsCount": "{count, plural, =0 {0 options} =1 {1 option} other {{count} options}}"
   ,"@modifierOptionsCount": {"placeholders": {"count": {"type": "int"}}}
   ,"modifierOptionPreviewMore": "+ {count} more"
   ,"@modifierOptionPreviewMore": {"placeholders": {"count": {"type": "int"}}}
-  ,"modifierRuleExactly": "Customer must choose exactly {count} option(s)."
+  ,"modifierRuleExactly": "Customer must choose exactly {count, plural, =1 {1 option} other {{count} options}}."
   ,"@modifierRuleExactly": {"placeholders": {"count": {"type": "int"}}}
-  ,"modifierRuleOptionalExactly": "Optional — customer may choose {count} option(s)."
+  ,"modifierRuleOptionalExactly": "Optional — customer may choose {count, plural, =1 {1 option} other {{count} options}}."
   ,"@modifierRuleOptionalExactly": {"placeholders": {"count": {"type": "int"}}}
-  ,"modifierRuleAtLeastUpTo": "Customer must choose at least {min} and up to {max} options."
+  ,"modifierRuleAtLeastUpTo": "Customer must choose at least {min} and up to {max, plural, =1 {1 option} other {{max} options}}."
   ,"@modifierRuleAtLeastUpTo": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}}
-  ,"modifierRuleOptionalUpTo": "Optional — customer may choose up to {max} options."
+  ,"modifierRuleOptionalUpTo": "Optional — customer may choose up to {max, plural, =1 {1 option} other {{max} options}}."
   ,"@modifierRuleOptionalUpTo": {"placeholders": {"max": {"type": "int"}}}
-  ,"modifierRuleQuantity": "The same Option may be added more than once."
+  ,"modifierRuleQuantity": "The same option may be added more than once."
   ,"modifierViewGroup": "View Group"
   ,"modifierEditGroup": "Edit Group"
   ,"modifierSetDefault": "Set as Default"
@@ -424,7 +431,12 @@
   ,"modifierQuantityHelper": "For example: 2 Extra Shots."
   ,"modifierCurrentRuleSummary": "Current Rule Summary"
   ,"modifierInitialOption": "Initial Option"
-  ,"modifierInitialOptionHelper": "You can add more Options after creating the Modifier Group."
+  ,"modifierInitialOptions": "Initial Options"
+  ,"modifierInitialOptionHelper": "Add enough active Options for the Maximum choices before creating the Modifier Group."
+  ,"modifierAddAnotherOption": "Add another Option"
+  ,"modifierRemoveOption": "Remove Option"
+  ,"modifierAtLeastActiveOptions": "Add at least {count} active Options or reduce Maximum choices."
+  ,"@modifierAtLeastActiveOptions": {"placeholders": {"count": {"type": "int"}}}
   ,"modifierOptionName": "Option name"
   ,"modifierOptionNameHint": "e.g. Whole Milk"
   ,"modifierAdvanced": "Advanced"
@@ -447,13 +459,14 @@
   ,"modifierOptionSave": "Save"
   ,"modifierOptionSaving": "Saving..."
   ,"modifierOptionNameRequired": "Option name is required."
-  ,"modifierOptionPriceInvalid": "Price adjustment must be zero or positive."
+  ,"modifierOptionPriceInvalid": "Enter a valid price adjustment."
   ,"modifierOptionSortInvalid": "Sort order must be a whole number."
   ,"modifierArchiveGroupTitle": "Archive modifier group?"
   ,"modifierArchiveOptionTitle": "Archive modifier option?"
   ,"modifierArchiveMessage": "The item remains stored and can be restored later."
   ,"modifierConfirmArchive": "Archive"
   ,"modifierOptionSaveError": "Unable to save this modifier option. Check the option rules and try again."
+  ,"modifierOptionGroupInvalid": "This Option cannot be changed because it would make the Modifier Group invalid."
   ,"modifierGroupSaveError": "Unable to save this modifier group."
   ,"modifierGroupRequired": "Modifier group name is required."
   ,"modifierNumberInvalid": "Enter zero or a positive whole number."
@@ -463,4 +476,5 @@
   ,"modifierInitialOptionRequired": "An initial active option is required."
   ,"modifierPriceInvalid": "Enter zero or a positive price."
   ,"modifierInitialMaximumError": "A new group has one initial option; maximum cannot exceed 1."
+  ,"configuredSellPriceMustBePositive": "Selling price must be greater than zero."
 }

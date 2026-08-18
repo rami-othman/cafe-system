@@ -60,14 +60,6 @@ void main() {
     expect(assignment.effectiveAllowQuantity, isFalse);
   });
 
-  test('manager rule summary hides persistence fields', () {
-    final assignment = ProductModifierAssignment.fromJson(json);
-    expect(
-      assignment.managerRuleSummary,
-      'Customer must choose at least 1 and up to 3 options.',
-    );
-  });
-
   test(
     'load does not emit after the Cubit is closed during navigation',
     () async {

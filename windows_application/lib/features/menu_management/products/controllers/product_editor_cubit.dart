@@ -4,6 +4,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../catalog_setup/models/catalog_setup_models.dart';
 import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
+import '../../pricing/configured_price_validation.dart';
 import '../models/product_editor_draft.dart';
 import 'product_editor_state.dart';
 
@@ -424,8 +425,8 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
         errors['variants.0.basePrice'] = 'Base price is required.';
       } else if (draft.variantBasePrice.trim().isNotEmpty &&
           (!decimal.hasMatch(draft.variantBasePrice.trim()) ||
-              double.parse(draft.variantBasePrice) < 0)) {
-        errors['variants.0.basePrice'] = 'Enter zero or a positive price.';
+              double.parse(draft.variantBasePrice) <= 0)) {
+        errors['variants.0.basePrice'] = configuredSellPriceMustBePositive;
       }
       if (draft.variantCostPrice.trim().isNotEmpty &&
           (!decimal.hasMatch(draft.variantCostPrice.trim()) ||

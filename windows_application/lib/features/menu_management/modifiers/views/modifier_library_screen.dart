@@ -25,6 +25,20 @@ class ModifierLibraryScreen extends StatefulWidget {
 class _ModifierLibraryScreenState extends State<ModifierLibraryScreen> {
   bool _reordering = false;
 
+  Future<void> _beginReorder() async {
+    final ModifierLibraryCubit cubit = context.read<ModifierLibraryCubit>();
+    cubit.cancelPendingSearch();
+    if (cubit.state.filter.hasActiveFilters) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.modifierClearFiltersBeforeReorder)),
+      );
+      return;
+    }
+    if (await cubit.prepareReorder() && mounted) {
+      setState(() => _reordering = true);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -74,7 +88,7 @@ class _ModifierLibraryScreenState extends State<ModifierLibraryScreen> {
                     onStatus: (status) => cubit.updateFilter(
                       state.filter.copyWith(status: status),
                     ),
-                    onReorder: () => setState(() => _reordering = true),
+                    onReorder: _beginReorder,
                     onDone: () => setState(() => _reordering = false),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -123,6 +137,8 @@ class _ModifierLibraryScreenState extends State<ModifierLibraryScreen> {
                         () => cubit.archive(group.id),
                       ),
                       onRestore: cubit.restore,
+                      onActivate: cubit.activate,
+                      onDeactivate: cubit.deactivate,
                     ),
                     if (state.status == ModifierLibraryStatus.failure)
                       Padding(
@@ -193,6 +209,7 @@ class _Toolbar extends StatelessWidget {
               SizedBox(
                 width: constraints.maxWidth < 700 ? 260 : 320,
                 child: TextField(
+                  enabled: !reordering,
                   onChanged: onSearch,
                   decoration: InputDecoration(
                     hintText: l10n.modifierSearch,
@@ -208,13 +225,19 @@ class _Toolbar extends StatelessWidget {
                     label: Text(l10n.modifierActive),
                   ),
                   ButtonSegment(
+                    value: 'inactive',
+                    label: Text(l10n.modifierStatusInactive),
+                  ),
+                  ButtonSegment(
                     value: 'archived',
                     label: Text(l10n.modifierArchived),
                   ),
                   ButtonSegment(value: 'all', label: Text(l10n.modifierAll)),
                 ],
                 selected: <String>{state.filter.status},
-                onSelectionChanged: (values) => onStatus(values.first),
+                onSelectionChanged: reordering
+                    ? null
+                    : (values) => onStatus(values.first),
               ),
               if (reordering)
                 OutlinedButton.icon(
@@ -224,7 +247,7 @@ class _Toolbar extends StatelessWidget {
                 )
               else
                 OutlinedButton.icon(
-                  onPressed: state.filter.status == 'active' ? onReorder : null,
+                  onPressed: onReorder,
                   icon: const Icon(Icons.swap_vert),
                   label: Text(l10n.modifierReorder),
                 ),
@@ -244,6 +267,8 @@ class _GroupList extends StatelessWidget {
     required this.onMove,
     required this.onArchive,
     required this.onRestore,
+    required this.onActivate,
+    required this.onDeactivate,
   });
 
   final List<ModifierGroupRecord> groups;
@@ -252,6 +277,8 @@ class _GroupList extends StatelessWidget {
   final void Function(ModifierGroupRecord, int) onMove;
   final ValueChanged<ModifierGroupRecord> onArchive;
   final ValueChanged<int> onRestore;
+  final ValueChanged<ModifierGroupRecord> onActivate;
+  final ValueChanged<ModifierGroupRecord> onDeactivate;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -272,6 +299,8 @@ class _GroupList extends StatelessWidget {
             onMove: onMove,
             onArchive: onArchive,
             onRestore: onRestore,
+            onActivate: onActivate,
+            onDeactivate: onDeactivate,
           ),
           if (index < groups.length - 1)
             const Divider(height: 1, indent: 68, endIndent: 16),
@@ -291,6 +320,8 @@ class _GroupRow extends StatelessWidget {
     required this.onMove,
     required this.onArchive,
     required this.onRestore,
+    required this.onActivate,
+    required this.onDeactivate,
   });
 
   final ModifierGroupRecord group;
@@ -301,13 +332,15 @@ class _GroupRow extends StatelessWidget {
   final void Function(ModifierGroupRecord, int) onMove;
   final ValueChanged<ModifierGroupRecord> onArchive;
   final ValueChanged<int> onRestore;
+  final ValueChanged<ModifierGroupRecord> onActivate;
+  final ValueChanged<ModifierGroupRecord> onDeactivate;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final Locale locale = Localizations.localeOf(context);
-    final List<ModifierOptionRecord> preview = group.options.take(3).toList();
-    final int more = math.max(0, group.optionCount - preview.length);
+    final List<ModifierOptionRecord> preview = group.optionPreview;
+    final int more = math.max(0, group.remainingOptionCount);
     final List<PopupMenuEntry<String>> menu = <PopupMenuEntry<String>>[
       PopupMenuItem(value: 'view', child: Text(l10n.modifierViewGroup)),
       if (!group.isArchived)
@@ -316,6 +349,13 @@ class _GroupRow extends StatelessWidget {
         PopupMenuItem(
           value: 'adjustments',
           child: Text(l10n.modifierMaterialAdjustments),
+        ),
+      if (!group.isArchived)
+        PopupMenuItem(
+          value: group.isActive ? 'deactivate' : 'activate',
+          child: Text(
+            group.isActive ? l10n.commonDeactivate : l10n.commonActivate,
+          ),
         ),
       PopupMenuItem(
         value: group.isArchived ? 'restore' : 'archive',
@@ -430,6 +470,10 @@ class _GroupRow extends StatelessWidget {
                           onArchive(group);
                         case 'restore':
                           onRestore(group.id);
+                        case 'activate':
+                          onActivate(group);
+                        case 'deactivate':
+                          onDeactivate(group);
                       }
                     },
                     itemBuilder: (_) => menu,

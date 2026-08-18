@@ -9,18 +9,22 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../controllers/product_catalog_cubit.dart';
+import '../../models/catalog_models.dart';
 import '../controllers/product_modifier_assignments_cubit.dart';
 import '../controllers/product_modifier_assignments_state.dart';
 import '../models/product_modifier_assignment.dart';
+import '../../modifiers/widgets/modifier_presentation.dart';
 
 class ProductModifierAssignmentsScreen extends StatefulWidget {
   const ProductModifierAssignmentsScreen({
     super.key,
     required this.productId,
     this.embedded = false,
+    this.onSummaryChanged,
   });
   final int productId;
   final bool embedded;
+  final ValueChanged<ProductDetail>? onSummaryChanged;
   @override
   State<ProductModifierAssignmentsScreen> createState() =>
       _ProductModifierAssignmentsScreenState();
@@ -83,6 +87,8 @@ class _ProductModifierAssignmentsScreenState
               ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
             if (state.successMessage != null)
               context.read<ProductCatalogCubit>().refresh();
+            if (state.summaryChanged && state.product != null)
+              widget.onSummaryChanged?.call(state.product!);
           },
           builder: (context, state) {
             if (state.status == ProductModifierAssignmentsStatus.loading &&
@@ -495,7 +501,7 @@ class _AssignedModifierRow extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                modifierRuleSummary(assignment),
+                modifierRuleSummaryForAssignment(context, assignment),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
@@ -717,11 +723,13 @@ class _AvailableGroupsSheetState extends State<_AvailableGroupsSheet> {
                     return ListTile(
                       title: Text(group.localizedName),
                       subtitle: Text(
-                        modifierRuleSummaryValues(
+                        modifierRuleSummaryForFields(
+                          context,
                           selectionType: group.selectionType,
-                          required: group.isRequired,
-                          min: group.minSelections,
-                          max: group.maxSelections,
+                          isRequired: group.isRequired,
+                          minSelections: group.minSelections,
+                          maxSelections: group.maxSelections,
+                          allowQuantity: group.allowQuantity,
                         ),
                       ),
                       trailing: FilledButton(
@@ -881,11 +889,13 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            modifierRuleSummaryValues(
+            modifierRuleSummaryForFields(
+              context,
               selectionType: a.selectionType,
-              required: required,
-              min: int.tryParse(min.text) ?? 0,
-              max: int.tryParse(max.text) ?? 0,
+              isRequired: required,
+              minSelections: int.tryParse(min.text) ?? 0,
+              maxSelections: int.tryParse(max.text) ?? 0,
+              allowQuantity: quantity,
             ),
             style: Theme.of(context).textTheme.titleSmall,
           ),
@@ -939,27 +949,6 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
       ],
     );
   }
-}
-
-String modifierRuleSummary(ProductModifierAssignment assignment) =>
-    assignment.managerRuleSummary;
-String modifierRuleSummaryValues({
-  required String selectionType,
-  required bool required,
-  required int min,
-  required int max,
-}) {
-  if (selectionType == 'single')
-    return required
-        ? 'Customer must choose exactly 1 option.'
-        : 'Optional — customer may choose 1 option.';
-  if (required && min == max)
-    return 'Customer must choose exactly $min option${min == 1 ? '' : 's'}.';
-  if (required)
-    return 'Customer must choose at least $min and up to $max options.';
-  return max <= 1
-      ? 'Optional — customer may choose 1 option.'
-      : 'Optional — customer may add up to $max.';
 }
 
 Future<bool?> _removeDialog(BuildContext context) => showDialog<bool>(

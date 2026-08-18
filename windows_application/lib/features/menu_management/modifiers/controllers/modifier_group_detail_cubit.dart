@@ -31,7 +31,9 @@ class ModifierGroupDetailState extends Equatable {
                 ? true
                 : optionFilter == 'archived'
                 ? option.isArchived
-                : !option.isArchived,
+                : optionFilter == 'inactive'
+                ? option.isInactive
+                : option.isActiveLifecycle,
           )
           .toList() ??
       const <ModifierOptionRecord>[];
@@ -118,6 +120,32 @@ class ModifierGroupDetailCubit extends Cubit<ModifierGroupDetailState> {
 
   Future<void> restoreGroup() =>
       _groupAction(() => repository.restoreModifierGroup(_id!));
+  Future<void> activateGroup() => _groupLifecycle(true);
+  Future<void> deactivateGroup() => _groupLifecycle(false);
+
+  Future<void> _groupLifecycle(bool isActive) {
+    final ModifierGroupRecord? group = state.group;
+    if (group == null) return Future<void>.value();
+    return _groupAction(
+      () => repository.updateModifierGroup(
+        group.id,
+        ModifierGroupDraft(
+          name: group.name,
+          nameAr: group.nameAr ?? '',
+          nameEn: group.nameEn ?? '',
+          code: group.code ?? '',
+          groupType: group.groupType,
+          selectionType: group.selectionType,
+          isRequired: group.isRequired,
+          minSelections: group.minSelections.toString(),
+          maxSelections: group.maxSelections.toString(),
+          allowQuantity: group.allowQuantity,
+          isActive: isActive,
+          sortOrder: group.sortOrder.toString(),
+        ),
+      ),
+    );
+  }
 
   Future<void> _groupAction(
     Future<ModifierGroupRecord> Function() action,
@@ -137,6 +165,27 @@ class ModifierGroupDetailCubit extends Cubit<ModifierGroupDetailState> {
       _optionAction(id, () => repository.archiveModifierOption(id));
   Future<void> restoreOption(int id) =>
       _optionAction(id, () => repository.restoreModifierOption(id));
+  Future<void> activateOption(ModifierOptionRecord option) =>
+      _optionLifecycle(option, true);
+  Future<void> deactivateOption(ModifierOptionRecord option) =>
+      _optionLifecycle(option, false);
+  Future<void> _optionLifecycle(ModifierOptionRecord option, bool isActive) =>
+      _optionAction(
+        option.id,
+        () => repository.updateModifierOption(
+          option.id,
+          ModifierOptionDraft(
+            name: option.name,
+            nameAr: option.nameAr ?? '',
+            nameEn: option.nameEn ?? '',
+            priceDelta: option.priceDelta.toString(),
+            isDefault: option.isDefault,
+            isActive: isActive,
+            isAvailable: option.isAvailable,
+            sortOrder: option.sortOrder.toString(),
+          ),
+        ),
+      );
   Future<void> _optionAction(
     int id,
     Future<ModifierOptionRecord> Function() action,
@@ -243,6 +292,9 @@ class ModifierGroupDetailCubit extends Cubit<ModifierGroupDetailState> {
     optionCount: g.optionCount,
     activeOptionCount: g.activeOptionCount,
     options: options,
+    optionPreview: g.optionPreview,
+    remainingOptionCount: g.remainingOptionCount,
+    materialImpactConfigured: g.materialImpactConfigured,
     archivedAt: g.archivedAt,
     createdAt: g.createdAt,
     updatedAt: g.updatedAt,

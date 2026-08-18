@@ -2,9 +2,18 @@ import 'package:equatable/equatable.dart';
 
 import '../../models/catalog_models.dart';
 
-enum VariantFilter { active, archived, all }
+enum VariantFilter { active, inactive, archived, all }
 
-enum VariantAction { create, update, setDefault, archive, restore, reorder }
+enum VariantAction {
+  create,
+  update,
+  setDefault,
+  activate,
+  deactivate,
+  archive,
+  restore,
+  reorder,
+}
 
 enum VariantsStatus { initial, loading, loaded, refreshing, failure }
 
@@ -13,6 +22,7 @@ class VariantsState extends Equatable {
     this.status = VariantsStatus.initial,
     this.product,
     this.activeVariants = const <ProductVariant>[],
+    this.inactiveVariants = const <ProductVariant>[],
     this.archivedVariants = const <ProductVariant>[],
     this.recipeConfigured = const <int, bool>{},
     this.filter = VariantFilter.active,
@@ -20,10 +30,12 @@ class VariantsState extends Equatable {
     this.fieldErrors = const <String, String>{},
     this.formError,
     this.successMessage,
+    this.summaryChanged = false,
   });
   final VariantsStatus status;
   final ProductDetail? product;
   final List<ProductVariant> activeVariants;
+  final List<ProductVariant> inactiveVariants;
   final List<ProductVariant> archivedVariants;
 
   /// Resolved from the existing recipe endpoint. An absent entry means the
@@ -35,12 +47,15 @@ class VariantsState extends Equatable {
   final Map<String, String> fieldErrors;
   final String? formError;
   final String? successMessage;
+  final bool summaryChanged;
   bool get isMutating => action != null;
   List<ProductVariant> get visibleVariants => switch (filter) {
     VariantFilter.active => activeVariants,
+    VariantFilter.inactive => inactiveVariants,
     VariantFilter.archived => archivedVariants,
     VariantFilter.all => <ProductVariant>[
       ...activeVariants,
+      ...inactiveVariants,
       ...archivedVariants,
     ],
   };
@@ -48,6 +63,7 @@ class VariantsState extends Equatable {
     VariantsStatus? status,
     ProductDetail? product,
     List<ProductVariant>? activeVariants,
+    List<ProductVariant>? inactiveVariants,
     List<ProductVariant>? archivedVariants,
     Map<int, bool>? recipeConfigured,
     VariantFilter? filter,
@@ -55,6 +71,7 @@ class VariantsState extends Equatable {
     Map<String, String>? fieldErrors,
     String? formError,
     String? successMessage,
+    bool? summaryChanged,
     bool clearAction = false,
     bool clearErrors = false,
     bool clearSuccess = false,
@@ -62,6 +79,7 @@ class VariantsState extends Equatable {
     status: status ?? this.status,
     product: product ?? this.product,
     activeVariants: activeVariants ?? this.activeVariants,
+    inactiveVariants: inactiveVariants ?? this.inactiveVariants,
     archivedVariants: archivedVariants ?? this.archivedVariants,
     recipeConfigured: recipeConfigured ?? this.recipeConfigured,
     filter: filter ?? this.filter,
@@ -71,12 +89,14 @@ class VariantsState extends Equatable {
         : fieldErrors ?? this.fieldErrors,
     formError: clearErrors ? null : formError ?? this.formError,
     successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+    summaryChanged: summaryChanged ?? false,
   );
   @override
   List<Object?> get props => <Object?>[
     status,
     product,
     activeVariants,
+    inactiveVariants,
     archivedVariants,
     recipeConfigured,
     filter,
@@ -84,5 +104,6 @@ class VariantsState extends Equatable {
     fieldErrors,
     formError,
     successMessage,
+    summaryChanged,
   ];
 }

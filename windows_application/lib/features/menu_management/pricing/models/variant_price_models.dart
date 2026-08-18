@@ -103,6 +103,7 @@ class VariantPriceOverrideDraft extends Equatable {
     required this.branchId,
     required this.channel,
     required this.price,
+    this.isActive = true,
   });
 
   factory VariantPriceOverrideDraft.fromOverride(VariantPriceOverride item) =>
@@ -111,20 +112,31 @@ class VariantPriceOverrideDraft extends Equatable {
         branchId: item.branchId,
         channel: item.channel,
         price: item.price,
+        isActive: item.isActive,
       );
   final PriceOverrideScope scope;
   final int? branchId;
   final String? channel;
   final PriceAmount price;
+
+  /// New overrides default active; edits carry the persisted lifecycle state.
+  final bool isActive;
   String get scopeKey => 'branch:${branchId ?? '*'}|channel:${channel ?? '*'}';
   Map<String, dynamic> toJson() => <String, dynamic>{
     'scopeType': scopeToWire(scope),
     'branchId': branchId,
     'channel': channel,
     'overridePrice': price.wireValue,
+    'isActive': isActive,
   };
   @override
-  List<Object?> get props => <Object?>[scope, branchId, channel, price];
+  List<Object?> get props => <Object?>[
+    scope,
+    branchId,
+    channel,
+    price,
+    isActive,
+  ];
 }
 
 class VariantPriceOverridesSnapshot extends Equatable {

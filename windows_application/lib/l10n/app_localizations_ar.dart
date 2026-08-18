@@ -66,6 +66,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get commonActive => 'نشط';
 
   @override
+  String get commonDeactivate => 'إلغاء التنشيط';
+
+  @override
+  String get commonActivate => 'تنشيط';
+
+  @override
+  String get commonArchive => 'أرشفة';
+
+  @override
+  String get commonRestore => 'استعادة';
+
+  @override
+  String get commonArchived => 'مؤرشف';
+
+  @override
+  String get commonAll => 'الكل';
+
+  @override
   String get commonInactive => 'غير نشط';
 
   @override
@@ -723,7 +741,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String modifierSelectionExactly(num count) {
-    return 'يجب أن يختار العميل $count خيار(ات) بالضبط.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'يجب أن يختار العميل $_temp0 بالضبط.';
   }
 
   @override
@@ -1096,8 +1123,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get modifierDone => 'تم';
 
   @override
+  String get modifierClearFiltersBeforeReorder =>
+      'امسح البحث وعوامل التصفية قبل إعادة ترتيب مجموعات المعدلات.';
+
+  @override
   String modifierOptionsCount(int count) {
-    return '$count خيارات';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خياران',
+      one: 'خيار واحد',
+      zero: '0 خيارات',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1107,22 +1148,58 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String modifierRuleExactly(int count) {
-    return 'يجب على العميل اختيار $count خيار(ات) بالضبط.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'يجب على العميل اختيار $_temp0 بالضبط.';
   }
 
   @override
   String modifierRuleOptionalExactly(int count) {
-    return 'اختياري — يمكن للعميل اختيار $count خيار(ات).';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'اختياري — يمكن للعميل اختيار $_temp0.';
   }
 
   @override
   String modifierRuleAtLeastUpTo(int min, int max) {
-    return 'يجب على العميل اختيار $min على الأقل وحتى $max خيارات.';
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'يجب على العميل اختيار $min على الأقل وحتى $_temp0.';
   }
 
   @override
   String modifierRuleOptionalUpTo(int max) {
-    return 'اختياري — يمكن للعميل اختيار ما يصل إلى $max خيارات.';
+    String _temp0 = intl.Intl.pluralLogic(
+      max,
+      locale: localeName,
+      other: '# خيار',
+      many: '# خيارًا',
+      few: '# خيارات',
+      two: 'خيارين',
+      one: 'خيار واحد',
+    );
+    return 'اختياري — يمكن للعميل اختيار ما يصل إلى $_temp0.';
   }
 
   @override
@@ -1329,8 +1406,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get modifierInitialOption => 'الخيار الأولي';
 
   @override
+  String get modifierInitialOptions => 'الخيارات الأولية';
+
+  @override
   String get modifierInitialOptionHelper =>
-      'يمكنك إضافة خيارات أخرى بعد إنشاء مجموعة المعدلات.';
+      'أضف ما يكفي من الخيارات النشطة ليتوافق مع الحد الأقصى قبل إنشاء مجموعة المعدلات.';
+
+  @override
+  String get modifierAddAnotherOption => 'إضافة خيار آخر';
+
+  @override
+  String get modifierRemoveOption => 'إزالة الخيار';
+
+  @override
+  String modifierAtLeastActiveOptions(int count) {
+    return 'أضف $count خيارات نشطة على الأقل أو خفّض الحد الأقصى للاختيارات.';
+  }
 
   @override
   String get modifierOptionName => 'اسم الخيار';
@@ -1400,8 +1491,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get modifierOptionNameRequired => 'اسم الخيار مطلوب.';
 
   @override
-  String get modifierOptionPriceInvalid =>
-      'يجب أن يكون تعديل السعر صفراً أو قيمة موجبة.';
+  String get modifierOptionPriceInvalid => 'أدخل تعديلاً صالحاً للسعر.';
 
   @override
   String get modifierOptionSortInvalid => 'أدخل رقماً صحيحاً لترتيب العرض.';
@@ -1422,6 +1512,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get modifierOptionSaveError =>
       'تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى.';
+
+  @override
+  String get modifierOptionGroupInvalid =>
+      'لا يمكن تغيير هذا الخيار لأنه سيجعل مجموعة المعدلات غير صالحة.';
 
   @override
   String get modifierGroupSaveError => 'تعذر حفظ مجموعة المعدلات.';
@@ -1453,4 +1547,8 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get modifierInitialMaximumError =>
       'تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1.';
+
+  @override
+  String get configuredSellPriceMustBePositive =>
+      'يجب أن يكون سعر البيع أكبر من صفر.';
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -71,8 +73,15 @@ class MenuListState extends Equatable {
 class MenuListCubit extends Cubit<MenuListState> {
   MenuListCubit({required this.repository}) : super(const MenuListState());
   final MenuCatalogRepository repository;
+  Timer? _searchTimer;
+  int _requestTicket = 0;
   Future<void> load({bool refresh = false, bool next = false}) async {
-    if (state.isBusy || (next && !state.hasMore)) return;
+    if (isClosed ||
+        state.currentActionId != null ||
+        (next && (!state.hasMore || state.status == MenuListStatus.loading))) {
+      return;
+    }
+    final int ticket = ++_requestTicket;
     final int page = next ? state.pagination.currentPage + 1 : 1;
     emit(
       state.copyWith(
@@ -85,6 +94,7 @@ class MenuListCubit extends Cubit<MenuListState> {
         filter: state.filter,
         page: page,
       );
+      if (isClosed || ticket != _requestTicket) return;
       emit(
         state.copyWith(
           status: MenuListStatus.loaded,
@@ -95,6 +105,7 @@ class MenuListCubit extends Cubit<MenuListState> {
         ),
       );
     } catch (error) {
+      if (isClosed || ticket != _requestTicket) return;
       emit(
         state.copyWith(
           status: MenuListStatus.failure,
@@ -105,12 +116,19 @@ class MenuListCubit extends Cubit<MenuListState> {
   }
 
   Future<void> updateFilter(MenuFilter filter) async {
+    _searchTimer?.cancel();
+    ++_requestTicket;
     emit(state.copyWith(filter: filter));
     await load();
   }
 
-  Future<void> updateSearch(String search) =>
-      updateFilter(state.filter.copyWith(search: search));
+  Future<void> updateSearch(String search) async {
+    _searchTimer?.cancel();
+    ++_requestTicket;
+    emit(state.copyWith(filter: state.filter.copyWith(search: search)));
+    _searchTimer = Timer(const Duration(milliseconds: 350), load);
+  }
+
   Future<void> refresh() => load(refresh: true);
   Future<void> archive(int id) =>
       _lifecycle(id, () => repository.archiveMenu(id));
@@ -130,4 +148,10 @@ class MenuListCubit extends Cubit<MenuListState> {
 
   String _message(Object error) =>
       error is ApiException ? error.message : 'Unable to update this menu.';
+
+  @override
+  Future<void> close() {
+    _searchTimer?.cancel();
+    return super.close();
+  }
 }

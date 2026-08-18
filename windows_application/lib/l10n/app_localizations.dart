@@ -212,6 +212,42 @@ abstract class AppLocalizations {
   /// **'Active'**
   String get commonActive;
 
+  /// No description provided for @commonDeactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get commonDeactivate;
+
+  /// No description provided for @commonActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get commonActivate;
+
+  /// No description provided for @commonArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get commonArchive;
+
+  /// No description provided for @commonRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get commonRestore;
+
+  /// No description provided for @commonArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get commonArchived;
+
+  /// No description provided for @commonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get commonAll;
+
   /// No description provided for @commonInactive.
   ///
   /// In en, this message translates to:
@@ -1361,7 +1397,7 @@ abstract class AppLocalizations {
   /// No description provided for @modifierSelectionExactly.
   ///
   /// In en, this message translates to:
-  /// **'Customer must choose exactly {count} option(s).'**
+  /// **'Customer must choose exactly {count, plural, =1 {1 option} other {{count} options}}.'**
   String modifierSelectionExactly(num count);
 
   /// No description provided for @modifierSelectionRange.
@@ -2078,10 +2114,16 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get modifierDone;
 
+  /// No description provided for @modifierClearFiltersBeforeReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search and filters before reordering Modifier Groups.'**
+  String get modifierClearFiltersBeforeReorder;
+
   /// No description provided for @modifierOptionsCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} options'**
+  /// **'{count, plural, =0 {0 options} =1 {1 option} other {{count} options}}'**
   String modifierOptionsCount(int count);
 
   /// No description provided for @modifierOptionPreviewMore.
@@ -2093,31 +2135,31 @@ abstract class AppLocalizations {
   /// No description provided for @modifierRuleExactly.
   ///
   /// In en, this message translates to:
-  /// **'Customer must choose exactly {count} option(s).'**
+  /// **'Customer must choose exactly {count, plural, =1 {1 option} other {{count} options}}.'**
   String modifierRuleExactly(int count);
 
   /// No description provided for @modifierRuleOptionalExactly.
   ///
   /// In en, this message translates to:
-  /// **'Optional — customer may choose {count} option(s).'**
+  /// **'Optional — customer may choose {count, plural, =1 {1 option} other {{count} options}}.'**
   String modifierRuleOptionalExactly(int count);
 
   /// No description provided for @modifierRuleAtLeastUpTo.
   ///
   /// In en, this message translates to:
-  /// **'Customer must choose at least {min} and up to {max} options.'**
+  /// **'Customer must choose at least {min} and up to {max, plural, =1 {1 option} other {{max} options}}.'**
   String modifierRuleAtLeastUpTo(int min, int max);
 
   /// No description provided for @modifierRuleOptionalUpTo.
   ///
   /// In en, this message translates to:
-  /// **'Optional — customer may choose up to {max} options.'**
+  /// **'Optional — customer may choose up to {max, plural, =1 {1 option} other {{max} options}}.'**
   String modifierRuleOptionalUpTo(int max);
 
   /// No description provided for @modifierRuleQuantity.
   ///
   /// In en, this message translates to:
-  /// **'The same Option may be added more than once.'**
+  /// **'The same option may be added more than once.'**
   String get modifierRuleQuantity;
 
   /// No description provided for @modifierViewGroup.
@@ -2510,11 +2552,35 @@ abstract class AppLocalizations {
   /// **'Initial Option'**
   String get modifierInitialOption;
 
+  /// No description provided for @modifierInitialOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial Options'**
+  String get modifierInitialOptions;
+
   /// No description provided for @modifierInitialOptionHelper.
   ///
   /// In en, this message translates to:
-  /// **'You can add more Options after creating the Modifier Group.'**
+  /// **'Add enough active Options for the Maximum choices before creating the Modifier Group.'**
   String get modifierInitialOptionHelper;
+
+  /// No description provided for @modifierAddAnotherOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another Option'**
+  String get modifierAddAnotherOption;
+
+  /// No description provided for @modifierRemoveOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Option'**
+  String get modifierRemoveOption;
+
+  /// No description provided for @modifierAtLeastActiveOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least {count} active Options or reduce Maximum choices.'**
+  String modifierAtLeastActiveOptions(int count);
 
   /// No description provided for @modifierOptionName.
   ///
@@ -2651,7 +2717,7 @@ abstract class AppLocalizations {
   /// No description provided for @modifierOptionPriceInvalid.
   ///
   /// In en, this message translates to:
-  /// **'Price adjustment must be zero or positive.'**
+  /// **'Enter a valid price adjustment.'**
   String get modifierOptionPriceInvalid;
 
   /// No description provided for @modifierOptionSortInvalid.
@@ -2689,6 +2755,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to save this modifier option. Check the option rules and try again.'**
   String get modifierOptionSaveError;
+
+  /// No description provided for @modifierOptionGroupInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This Option cannot be changed because it would make the Modifier Group invalid.'**
+  String get modifierOptionGroupInvalid;
 
   /// No description provided for @modifierGroupSaveError.
   ///
@@ -2743,6 +2815,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A new group has one initial option; maximum cannot exceed 1.'**
   String get modifierInitialMaximumError;
+
+  /// No description provided for @configuredSellPriceMustBePositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling price must be greater than zero.'**
+  String get configuredSellPriceMustBePositive;
 }
 
 class _AppLocalizationsDelegate

@@ -41,7 +41,8 @@ class ProductModifierAssignmentService
         $min = $data['minSelectionsOverride'] ?? $model->min_selections;
         $max = $data['maxSelectionsOverride'] ?? $model->max_selections;
         $required = $data['isRequiredOverride'] ?? $model->is_required;
-        if ($min < 0 || $max < $min || $max > $model->active_options_count || ($model->selection_type === 'single' && $max > 1) || ($required && $min < 1)) {
+        $allowQuantity = $data['allowQuantityOverride'] ?? $model->allow_quantity;
+        if ($min < 0 || $max < $min || ($max > $model->active_options_count && ! $allowQuantity) || ($model->selection_type === 'single' && $max > 1) || ($required && $min < 1)) {
             throw ValidationException::withMessages(['groups' => 'A modifier group override is invalid.']);
         }
     }

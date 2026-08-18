@@ -52,6 +52,12 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
   ProductDetailCubit({required this.repository})
     : super(const ProductDetailState());
   final MenuCatalogRepository repository;
+
+  void replaceProduct(ProductDetail product) {
+    if (isClosed || state.product?.id != product.id) return;
+    emit(state.copyWith(product: product, clearError: true));
+  }
+
   Future<void> load(int productId) async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {

@@ -23,6 +23,7 @@ class ModifierGroupEditorState extends Equatable {
     this.groupId,
     this.fieldErrors = const <String, String>{},
     this.formError,
+    this.formErrorCode,
     this.savedGroup,
     this.isDirty = false,
   });
@@ -31,6 +32,7 @@ class ModifierGroupEditorState extends Equatable {
   final int? groupId;
   final Map<String, String> fieldErrors;
   final String? formError;
+  final String? formErrorCode;
   final ModifierGroupRecord? savedGroup;
   final bool isDirty;
   bool get isCreate => groupId == null;
@@ -40,6 +42,7 @@ class ModifierGroupEditorState extends Equatable {
     int? groupId,
     Map<String, String>? fieldErrors,
     String? formError,
+    String? formErrorCode,
     ModifierGroupRecord? savedGroup,
     bool? isDirty,
     bool clearErrors = false,
@@ -52,6 +55,8 @@ class ModifierGroupEditorState extends Equatable {
         ? const <String, String>{}
         : fieldErrors ?? this.fieldErrors,
     formError: clearFormError ? null : formError ?? this.formError,
+    formErrorCode:
+        formErrorCode ?? (clearFormError ? null : this.formErrorCode),
     savedGroup: savedGroup ?? this.savedGroup,
     isDirty: isDirty ?? this.isDirty,
   );
@@ -72,9 +77,11 @@ class ModifierGroupEditorState extends Equatable {
     draft.sortOrder,
     draft.initialOptionName,
     draft.initialOptionPriceDelta,
+    draft.initialOptions,
     groupId,
     fieldErrors,
     formError,
+    formErrorCode,
     savedGroup,
     isDirty,
   ];
@@ -146,6 +153,9 @@ class ModifierGroupEditorCubit extends Cubit<ModifierGroupEditorState> {
           status: ModifierEditorStatus.failure,
           fieldErrors: errors,
           clearFormError: true,
+          formErrorCode: errors.containsValue(_initialOptionsCountError)
+              ? 'initialOptionsCount'
+              : null,
         ),
       );
       return;
@@ -178,6 +188,7 @@ class ModifierGroupEditorCubit extends Cubit<ModifierGroupEditorState> {
             status: ModifierEditorStatus.failure,
             fieldErrors: fields,
             formError: _formError(fields, error.message),
+            formErrorCode: _formErrorCode(fields),
           ),
         );
       } else {
@@ -211,38 +222,55 @@ class ModifierGroupEditorCubit extends Cubit<ModifierGroupEditorState> {
     if (int.tryParse(draft.sortOrder.trim()) == null)
       errors['sortOrder'] = 'Enter a whole number.';
     if (create) {
-      if (draft.initialOptionName.trim().isEmpty)
+      final List<ModifierOptionDraft> options = draft.createOptions;
+      if (options.isEmpty) {
         errors['options.0.name'] =
             'An initial active option is required by the backend.';
-      if (!_decimal.hasMatch(draft.initialOptionPriceDelta.trim()) ||
-          num.tryParse(draft.initialOptionPriceDelta.trim())! < 0)
-        errors['options.0.priceDelta'] = 'Enter zero or a positive price.';
-      if (max != null && max > 1)
-        errors['maxSelections'] =
-            'A new group has one initial option; maximum cannot exceed 1.';
+      }
+      for (int index = 0; index < options.length; index++) {
+        final ModifierOptionDraft option = options[index];
+        if (option.name.trim().isEmpty)
+          errors['options.$index.name'] =
+              'An initial active option is required by the backend.';
+        if (!isValidModifierPriceAdjustment(option.priceDelta))
+          errors['options.$index.priceDelta'] =
+              modifierPriceAdjustmentInvalidCode;
+      }
+      final int activeOptionCount = options
+          .where((option) => option.isActive)
+          .length;
+      if (max != null && max > activeOptionCount && !draft.allowQuantity)
+        errors['maxSelections'] = _initialOptionsCountError;
     }
     return errors;
   }
 
-  static final RegExp _decimal = RegExp(r'^\d+(\.\d{1,2})?$');
+  static const String _initialOptionsCountError = '__initial_options_count__';
+
+  String? _formErrorCode(Map<String, String> fields) {
+    if (fields.containsKey('modifierGroup') || fields.containsKey('options')) {
+      return 'groupSave';
+    }
+    return null;
+  }
+
   String _formError(Map<String, String> fields, String fallback) {
     for (final String key in fields.keys) {
       if (!<String>{
-        'name',
-        'nameAr',
-        'nameEn',
-        'code',
-        'groupType',
-        'selectionType',
-        'isRequired',
-        'minSelections',
-        'maxSelections',
-        'allowQuantity',
-        'isActive',
-        'sortOrder',
-        'options.0.name',
-        'options.0.priceDelta',
-      }.contains(key))
+            'name',
+            'nameAr',
+            'nameEn',
+            'code',
+            'groupType',
+            'selectionType',
+            'isRequired',
+            'minSelections',
+            'maxSelections',
+            'allowQuantity',
+            'isActive',
+            'sortOrder',
+          }.contains(key) &&
+          !key.startsWith('options.'))
         return fields[key]!;
     }
     return fallback;

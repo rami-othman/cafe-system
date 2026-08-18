@@ -12,6 +12,7 @@ import 'package:windows_application/features/menu_management/models/product_cata
 import 'package:windows_application/features/menu_management/products/controllers/product_editor_cubit.dart';
 import 'package:windows_application/features/menu_management/products/controllers/product_editor_state.dart';
 import 'package:windows_application/features/menu_management/products/models/product_editor_draft.dart';
+import 'package:windows_application/features/menu_management/pricing/configured_price_validation.dart';
 import 'package:windows_application/features/menu_management/products/views/product_editor_screen.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/menu_management/variants/models/variant_editor_draft.dart';
@@ -77,6 +78,41 @@ void main() {
       expect(repository.updateCalls, 1);
       expect(cubit.state.fieldErrors['variants.0.sku'], 'SKU already exists.');
       expect(cubit.state.draft.variantSku, isEmpty);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'product create blocks zero, negative, and malformed base prices before the API',
+    () async {
+      final _EditorRepository repository = _EditorRepository();
+      final ProductEditorCubit cubit = ProductEditorCubit(
+        repository: repository,
+      );
+      await cubit.initializeCreate();
+      for (final String price in <String>['0', '0.00', '-0.01', '-5', 'oops']) {
+        await cubit.updateDraft(
+          cubit.state.draft.copyWith(
+            name: 'Latte',
+            categoryId: 4,
+            variantBasePrice: price,
+          ),
+        );
+        await cubit.submit();
+        expect(
+          cubit.state.fieldErrors['variants.0.basePrice'],
+          configuredSellPriceMustBePositive,
+        );
+      }
+      await cubit.updateDraft(
+        cubit.state.draft.copyWith(
+          name: 'Latte',
+          categoryId: 4,
+          variantBasePrice: '0.01',
+        ),
+      );
+      await cubit.submit();
+      expect(repository.createCalls, 1);
       await cubit.close();
     },
   );

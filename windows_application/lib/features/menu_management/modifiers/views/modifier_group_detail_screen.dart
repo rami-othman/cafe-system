@@ -13,7 +13,6 @@ import '../controllers/modifier_group_detail_cubit.dart';
 import '../models/modifier_editor_drafts.dart';
 import '../models/modifier_models.dart';
 import '../widgets/modifier_presentation.dart';
-import '../../../menu_management/widgets/catalog_formatters.dart';
 
 class ModifierGroupDetailScreen extends StatefulWidget {
   const ModifierGroupDetailScreen({super.key, required this.groupId});
@@ -113,6 +112,18 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                             ? () => cubit.restoreGroup()
                             : () => _archiveGroup(context, cubit),
                       ),
+                      if (!group.isArchived)
+                        MenuOverflowAction(
+                          label: group.isActive
+                              ? l10n.commonDeactivate
+                              : l10n.commonActivate,
+                          icon: group.isActive
+                              ? Icons.pause_circle_outline
+                              : Icons.play_circle_outline,
+                          onSelected: group.isActive
+                              ? cubit.deactivateGroup
+                              : cubit.activateGroup,
+                        ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -188,6 +199,8 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                     onArchive: (option) =>
                         _archiveOption(context, cubit, option),
                     onRestore: cubit.restoreOption,
+                    onActivate: cubit.activateOption,
+                    onDeactivate: cubit.deactivateOption,
                     onDefault: (option) => _optionDialog(
                       context,
                       cubit,
@@ -197,7 +210,7 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                   ),
                   if (state.errorMessage != null) ...<Widget>[
                     const SizedBox(height: AppSpacing.md),
-                    _ErrorPanel(message: state.errorMessage!),
+                    _ErrorPanel(message: _localizedDetailError(context, state)),
                   ],
                 ],
               ),
@@ -220,6 +233,8 @@ class _OptionsSection extends StatelessWidget {
     required this.onOption,
     required this.onArchive,
     required this.onRestore,
+    required this.onActivate,
+    required this.onDeactivate,
     required this.onDefault,
   });
 
@@ -232,6 +247,8 @@ class _OptionsSection extends StatelessWidget {
   final ValueChanged<ModifierOptionRecord> onOption;
   final ValueChanged<ModifierOptionRecord> onArchive;
   final ValueChanged<int> onRestore;
+  final ValueChanged<ModifierOptionRecord> onActivate;
+  final ValueChanged<ModifierOptionRecord> onDeactivate;
   final ValueChanged<ModifierOptionRecord> onDefault;
 
   @override
@@ -247,6 +264,10 @@ class _OptionsSection extends StatelessWidget {
           SegmentedButton<String>(
             segments: <ButtonSegment<String>>[
               ButtonSegment(value: 'active', label: Text(l10n.modifierActive)),
+              ButtonSegment(
+                value: 'inactive',
+                label: Text(l10n.modifierStatusInactive),
+              ),
               ButtonSegment(
                 value: 'archived',
                 label: Text(l10n.modifierArchived),
@@ -305,6 +326,8 @@ class _OptionsSection extends StatelessWidget {
                       onEdit: onOption,
                       onArchive: onArchive,
                       onRestore: onRestore,
+                      onActivate: onActivate,
+                      onDeactivate: onDeactivate,
                       onDefault: onDefault,
                     ),
                     if (index < options.length - 1)
@@ -328,6 +351,8 @@ class _OptionRow extends StatelessWidget {
     required this.onEdit,
     required this.onArchive,
     required this.onRestore,
+    required this.onActivate,
+    required this.onDeactivate,
     required this.onDefault,
   });
 
@@ -340,6 +365,8 @@ class _OptionRow extends StatelessWidget {
   final ValueChanged<ModifierOptionRecord> onEdit;
   final ValueChanged<ModifierOptionRecord> onArchive;
   final ValueChanged<int> onRestore;
+  final ValueChanged<ModifierOptionRecord> onActivate;
+  final ValueChanged<ModifierOptionRecord> onDeactivate;
   final ValueChanged<ModifierOptionRecord> onDefault;
 
   @override
@@ -354,8 +381,15 @@ class _OptionRow extends StatelessWidget {
           value: 'adjustments',
           child: Text(l10n.modifierMaterialAdjustments),
         ),
-      if (!option.isArchived && !option.isDefault)
+      if (!option.isArchived && option.isActive && !option.isDefault)
         PopupMenuItem(value: 'default', child: Text(l10n.modifierSetDefault)),
+      if (!option.isArchived)
+        PopupMenuItem(
+          value: option.isActive ? 'deactivate' : 'activate',
+          child: Text(
+            option.isActive ? l10n.commonDeactivate : l10n.commonActivate,
+          ),
+        ),
       PopupMenuItem(
         value: option.isArchived ? 'restore' : 'archive',
         child: Text(
@@ -418,9 +452,7 @@ class _OptionRow extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      option.priceDelta == 0
-                          ? l10n.modifierNoExtraCharge
-                          : '+${catalogMoney(option.priceDelta)}',
+                      modifierPriceAdjustmentLabel(context, option.priceDelta),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -457,6 +489,10 @@ class _OptionRow extends StatelessWidget {
                       onArchive(option);
                     case 'restore':
                       onRestore(option.id);
+                    case 'activate':
+                      onActivate(option);
+                    case 'deactivate':
+                      onDeactivate(option);
                   }
                 },
                 itemBuilder: (_) => menu,
@@ -773,8 +809,7 @@ class _OptionDialogState extends State<_OptionDialog> {
       setState(() => error = l10n.modifierOptionNameRequired);
       return;
     }
-    final num? price = num.tryParse(draft.priceDelta);
-    if (price == null || price < 0) {
+    if (!isValidModifierPriceAdjustment(draft.priceDelta)) {
       setState(() => error = l10n.modifierOptionPriceInvalid);
       return;
     }
@@ -798,4 +833,16 @@ class _OptionDialogState extends State<_OptionDialog> {
       }
     }
   }
+}
+
+String _localizedDetailError(
+  BuildContext context,
+  ModifierGroupDetailState state,
+) {
+  final String message = state.errorMessage ?? '';
+  if (message.contains('invalidating') ||
+      message.contains('selection rules are invalid')) {
+    return context.l10n.modifierOptionGroupInvalid;
+  }
+  return message;
 }

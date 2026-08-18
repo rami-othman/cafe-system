@@ -19,6 +19,12 @@
   "commonNoData": "لا توجد بيانات متاحة.",
   "commonUnknown": "غير معروف",
   "commonActive": "نشط",
+  "commonDeactivate": "إلغاء التنشيط",
+  "commonActivate": "تنشيط",
+  "commonArchive": "أرشفة",
+  "commonRestore": "استعادة",
+  "commonArchived": "مؤرشف",
+  "commonAll": "الكل",
   "commonInactive": "غير نشط",
   "commonAvailable": "متاح",
   "commonSoldOut": "نفد",
@@ -216,7 +222,7 @@
   "validationResolveErrors": "\u0627\u0639\u0627\u0644\u062c \u0627\u0644\u0623\u062e\u0637\u0627\u0621 \u0623\u062f\u0646\u0627\u0647 \u0642\u0628\u0644 \u0623\u0646 \u064a\u0645\u0643\u0646 \u0646\u0634\u0631 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629.",
   "validationIssueCode": "\u0627\u0644\u0631\u0645\u0632: {code}",
   "@validationIssueCode": {"placeholders": {"code": {"type": "String"}}},
-  "modifierSelectionExactly": "\u064a\u062c\u0628 \u0623\u0646 \u064a\u062e\u062a\u0627\u0631 \u0627\u0644\u0639\u0645\u064a\u0644 {count} \u062e\u064a\u0627\u0631(\u0627\u062a) \u0628\u0627\u0644\u0636\u0628\u0637.",
+  "modifierSelectionExactly": "\u064a\u062c\u0628 \u0623\u0646 \u064a\u062e\u062a\u0627\u0631 \u0627\u0644\u0639\u0645\u064a\u0644 {count, plural, =1 {\u062e\u064a\u0627\u0631 \u0648\u0627\u062d\u062f} =2 {\u062e\u064a\u0627\u0631\u064a\u0646} few {# \u062e\u064a\u0627\u0631\u0627\u062a} many {# \u062e\u064a\u0627\u0631\u064b\u0627} other {# \u062e\u064a\u0627\u0631}} \u0628\u0627\u0644\u0636\u0628\u0637.",
   "@modifierSelectionExactly": {"placeholders": {"count": {"type": "num"}}},
   "modifierSelectionRange": "\u064a\u0645\u0643\u0646 \u0644\u0644\u0639\u0645\u064a\u0644 \u0627\u062e\u062a\u064a\u0627\u0631 \u0645\u0646 {min} \u0625\u0644\u0649 {max} \u062e\u064a\u0627\u0631\u0627\u062a.",
   "@modifierSelectionRange": {"placeholders": {"min": {"type": "num"}, "max": {"type": "num"}}},
@@ -342,17 +348,18 @@
   ,"modifierAll": "الكل"
   ,"modifierReorder": "إعادة الترتيب"
   ,"modifierDone": "تم"
-  ,"modifierOptionsCount": "{count} خيارات"
+  ,"modifierClearFiltersBeforeReorder": "امسح البحث وعوامل التصفية قبل إعادة ترتيب مجموعات المعدلات."
+  ,"modifierOptionsCount": "{count, plural, =0 {0 خيارات} =1 {خيار واحد} =2 {خياران} few {# خيارات} many {# خيارًا} other {# خيار}}"
   ,"@modifierOptionsCount": {"placeholders": {"count": {"type": "int"}}}
   ,"modifierOptionPreviewMore": "+ {count} المزيد"
   ,"@modifierOptionPreviewMore": {"placeholders": {"count": {"type": "int"}}}
-  ,"modifierRuleExactly": "يجب على العميل اختيار {count} خيار(ات) بالضبط."
+  ,"modifierRuleExactly": "يجب على العميل اختيار {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}} بالضبط."
   ,"@modifierRuleExactly": {"placeholders": {"count": {"type": "int"}}}
-  ,"modifierRuleOptionalExactly": "اختياري — يمكن للعميل اختيار {count} خيار(ات)."
+  ,"modifierRuleOptionalExactly": "اختياري — يمكن للعميل اختيار {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}."
   ,"@modifierRuleOptionalExactly": {"placeholders": {"count": {"type": "int"}}}
-  ,"modifierRuleAtLeastUpTo": "يجب على العميل اختيار {min} على الأقل وحتى {max} خيارات."
+  ,"modifierRuleAtLeastUpTo": "يجب على العميل اختيار {min} على الأقل وحتى {max, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}."
   ,"@modifierRuleAtLeastUpTo": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}}
-  ,"modifierRuleOptionalUpTo": "اختياري — يمكن للعميل اختيار ما يصل إلى {max} خيارات."
+  ,"modifierRuleOptionalUpTo": "اختياري — يمكن للعميل اختيار ما يصل إلى {max, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}."
   ,"@modifierRuleOptionalUpTo": {"placeholders": {"max": {"type": "int"}}}
   ,"modifierRuleQuantity": "يمكن إضافة الخيار نفسه أكثر من مرة."
   ,"modifierViewGroup": "عرض المجموعة"
@@ -420,7 +427,12 @@
   ,"modifierQuantityHelper": "مثال: 2 من الإضافات."
   ,"modifierCurrentRuleSummary": "ملخص القاعدة الحالية"
   ,"modifierInitialOption": "الخيار الأولي"
-  ,"modifierInitialOptionHelper": "يمكنك إضافة خيارات أخرى بعد إنشاء مجموعة المعدلات."
+  ,"modifierInitialOptions": "الخيارات الأولية"
+  ,"modifierInitialOptionHelper": "أضف ما يكفي من الخيارات النشطة ليتوافق مع الحد الأقصى قبل إنشاء مجموعة المعدلات."
+  ,"modifierAddAnotherOption": "إضافة خيار آخر"
+  ,"modifierRemoveOption": "إزالة الخيار"
+  ,"modifierAtLeastActiveOptions": "أضف {count} خيارات نشطة على الأقل أو خفّض الحد الأقصى للاختيارات."
+  ,"@modifierAtLeastActiveOptions": {"placeholders": {"count": {"type": "int"}}}
   ,"modifierOptionName": "اسم الخيار"
   ,"modifierOptionNameHint": "مثال: حليب كامل الدسم"
   ,"modifierAdvanced": "متقدم"
@@ -443,13 +455,14 @@
   ,"modifierOptionSave": "حفظ"
   ,"modifierOptionSaving": "جارٍ الحفظ..."
   ,"modifierOptionNameRequired": "اسم الخيار مطلوب."
-  ,"modifierOptionPriceInvalid": "يجب أن يكون تعديل السعر صفراً أو قيمة موجبة."
+  ,"modifierOptionPriceInvalid": "أدخل تعديلاً صالحاً للسعر."
   ,"modifierOptionSortInvalid": "أدخل رقماً صحيحاً لترتيب العرض."
   ,"modifierArchiveGroupTitle": "أرشفة مجموعة المعدلات؟"
   ,"modifierArchiveOptionTitle": "أرشفة خيار المعدلات؟"
   ,"modifierArchiveMessage": "يبقى العنصر محفوظاً ويمكن استعادته لاحقاً."
   ,"modifierConfirmArchive": "أرشفة"
   ,"modifierOptionSaveError": "تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى."
+  ,"modifierOptionGroupInvalid": "لا يمكن تغيير هذا الخيار لأنه سيجعل مجموعة المعدلات غير صالحة."
   ,"modifierGroupSaveError": "تعذر حفظ مجموعة المعدلات."
   ,"modifierGroupRequired": "اسم مجموعة المعدلات مطلوب."
   ,"modifierNumberInvalid": "أدخل صفراً أو رقماً صحيحاً موجباً."
@@ -459,4 +472,5 @@
   ,"modifierInitialOptionRequired": "الخيار النشط الأولي مطلوب."
   ,"modifierPriceInvalid": "أدخل صفراً أو سعراً موجباً."
   ,"modifierInitialMaximumError": "تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1."
+  ,"configuredSellPriceMustBePositive": "يجب أن يكون سعر البيع أكبر من صفر."
 }

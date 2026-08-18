@@ -7,7 +7,7 @@ import '../models/menu_models.dart';
 
 enum MenuDetailStatus { loading, loaded, failure }
 
-enum MenuSectionFilter { active, archived, all }
+enum MenuSectionFilter { active, inactive, archived, all }
 
 class MenuDetailState extends Equatable {
   const MenuDetailState({
@@ -32,7 +32,9 @@ class MenuDetailState extends Equatable {
     final List<MenuSectionRecord> all =
         menu?.sections ?? const <MenuSectionRecord>[];
     return switch (sectionFilter) {
-      MenuSectionFilter.active => all.where((s) => !s.isArchived).toList(),
+      MenuSectionFilter.active =>
+        all.where((s) => s.isActiveLifecycle).toList(),
+      MenuSectionFilter.inactive => all.where((s) => s.isInactive).toList(),
       MenuSectionFilter.archived => all.where((s) => s.isArchived).toList(),
       MenuSectionFilter.all => all,
     };
@@ -126,6 +128,26 @@ class MenuDetailCubit extends Cubit<MenuDetailState> {
       _sectionMutation(id, () => repository.archiveMenuSection(id));
   Future<void> restoreSection(int id) =>
       _sectionMutation(id, () => repository.restoreMenuSection(id));
+  Future<void> activateSection(MenuSectionRecord section) =>
+      _sectionLifecycle(section, true);
+  Future<void> deactivateSection(MenuSectionRecord section) =>
+      _sectionLifecycle(section, false);
+  Future<void> _sectionLifecycle(MenuSectionRecord section, bool isActive) =>
+      _sectionMutation(
+        section.id,
+        () => repository.updateMenuSection(
+          section.id,
+          MenuSectionDraft(
+            name: section.name,
+            nameAr: section.nameAr,
+            nameEn: section.nameEn,
+            description: section.description,
+            imageUrl: section.imageUrl,
+            isActive: isActive,
+            sortOrder: section.sortOrder.toString(),
+          ),
+        ),
+      );
   Future<void> _sectionMutation(
     int? id,
     Future<MenuSectionRecord> Function() action,

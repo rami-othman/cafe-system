@@ -53,8 +53,10 @@ class ProductVariantPriceOverrideService
             foreach ($items as $item) {
                 $scopeKey = $this->scopeKey($item['branchId'] ?? null, $item['channel'] ?? null);
                 $submittedKeys[] = $scopeKey;
-                $payload = $this->payload($item, $scopeKey);
                 $override = $existing->get($scopeKey);
+                // A complete-sync item may originate from an older client.
+                // Preserve lifecycle on an existing override when it is omitted.
+                $payload = $this->payload($item, $scopeKey, $override?->is_active);
                 if (! $override) {
                     $override = ProductVariantPriceOverride::query()->create([
                         'tenant_id' => $lockedVariant->tenant_id,
@@ -113,7 +115,7 @@ class ProductVariantPriceOverrideService
         }
     }
 
-    private function payload(array $item, string $scopeKey): array
+    private function payload(array $item, string $scopeKey, ?bool $existingIsActive = null): array
     {
         return [
             'scope_type' => $item['scopeType'],
@@ -121,7 +123,7 @@ class ProductVariantPriceOverrideService
             'branch_id' => $item['branchId'] ?? null,
             'channel' => $item['channel'] ?? null,
             'override_price' => $item['overridePrice'],
-            'is_active' => $item['isActive'] ?? true,
+            'is_active' => $item['isActive'] ?? $existingIsActive ?? true,
         ];
     }
 

@@ -5,7 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../models/catalog_models.dart';
 import '../repositories/menu_catalog_repository.dart';
 
-enum ProductLifecycleAction { archive, restore }
+enum ProductLifecycleAction { activate, deactivate, archive, restore }
 
 enum ProductLifecycleStatus { idle, submitting, success, failure }
 
@@ -75,6 +75,12 @@ class ProductLifecycleCubit extends Cubit<ProductLifecycleState> {
   Future<bool> archive(int productId) =>
       _run(productId, ProductLifecycleAction.archive);
 
+  Future<bool> activate(int productId) =>
+      _run(productId, ProductLifecycleAction.activate);
+
+  Future<bool> deactivate(int productId) =>
+      _run(productId, ProductLifecycleAction.deactivate);
+
   Future<bool> restore(int productId) =>
       _run(productId, ProductLifecycleAction.restore);
 
@@ -88,17 +94,35 @@ class ProductLifecycleCubit extends Cubit<ProductLifecycleState> {
       ),
     );
     try {
-      final ProductDetail product = action == ProductLifecycleAction.archive
-          ? await repository.archiveProduct(productId)
-          : await repository.restoreProduct(productId);
+      final ProductDetail product = switch (action) {
+        ProductLifecycleAction.activate => await repository.setProductActive(
+          productId,
+          true,
+        ),
+        ProductLifecycleAction.deactivate => await repository.setProductActive(
+          productId,
+          false,
+        ),
+        ProductLifecycleAction.archive => await repository.archiveProduct(
+          productId,
+        ),
+        ProductLifecycleAction.restore => await repository.restoreProduct(
+          productId,
+        ),
+      };
       if (isClosed) return false;
       emit(
         state.copyWith(
           status: ProductLifecycleStatus.success,
           product: product,
-          successMessage: action == ProductLifecycleAction.archive
-              ? 'Product archived successfully.'
-              : 'Product restored successfully.',
+          successMessage: switch (action) {
+            ProductLifecycleAction.activate =>
+              'Product activated successfully.',
+            ProductLifecycleAction.deactivate =>
+              'Product deactivated successfully.',
+            ProductLifecycleAction.archive => 'Product archived successfully.',
+            ProductLifecycleAction.restore => 'Product restored successfully.',
+          },
           clearError: true,
         ),
       );

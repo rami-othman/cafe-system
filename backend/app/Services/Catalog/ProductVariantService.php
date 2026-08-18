@@ -36,6 +36,9 @@ class ProductVariantService
 
     public function update(ProductVariant $variant, array $data): ProductVariant
     {
+        if (($data['isActive'] ?? $variant->is_active) && (! $variant->product || $variant->product->trashed() || ! $variant->product->is_active)) {
+            throw ValidationException::withMessages(['product' => 'An active variant requires an active product.']);
+        }
         $this->uniqueCodes($variant->tenant_id, $data, $variant->id);
 
         return DB::transaction(function () use ($variant, $data): ProductVariant {
@@ -100,7 +103,10 @@ class ProductVariantService
     public function restore(ProductVariant $variant, bool $makeDefault): ProductVariant
     {
         return DB::transaction(function () use ($variant, $makeDefault): ProductVariant {
-            $product = Product::query()->findOrFail($variant->product_id);
+            $product = Product::query()->find($variant->product_id);
+            if (! $product || ! $product->is_active) {
+                throw ValidationException::withMessages(['product' => 'An archived variant can only be restored to an active product.']);
+            }
             $hasDefault = $product->variants()->where('is_active', true)->where('is_default', true)->exists();
             if (! $hasDefault && ! $makeDefault) {
                 throw ValidationException::withMessages(['makeDefault' => 'Set makeDefault=true because this product has no active default variant.']);

@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Api\Admin\Catalog;
 
-use App\Domain\Menu\Enums\MenuAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Catalog\ModifierGroupResource;
 use App\Http\Resources\Catalog\ModifierOptionResource;
 use App\Models\ModifierGroup;
 use App\Models\ModifierOption;
-use App\Services\Catalog\CatalogAuditService;
 use App\Services\Catalog\ModifierGroupService;
 use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,12 +16,18 @@ use Illuminate\Validation\Rule;
 
 class ModifierCatalogController extends Controller
 {
-    public function __construct(private readonly ModifierGroupService $groups, private readonly CatalogAuditService $audit) {}
+    public function __construct(private readonly ModifierGroupService $groups) {}
 
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $query = ModifierGroup::query()->where('tenant_id', $tenant)->withCount([
+        $query = ModifierGroup::query()->where('tenant_id', $tenant)->with([
+            'optionPreview' => fn ($q) => $q
+                ->where('tenant_id', $tenant)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->limit(3),
+        ])->withCount([
             'options' => fn ($q) => $q->where('tenant_id', $tenant),
             'options as active_options_count' => fn ($q) => $q->where('tenant_id', $tenant)->where('is_active', true),
         ]);
@@ -32,6 +36,8 @@ class ModifierCatalogController extends Controller
             $query->withTrashed();
         } elseif ($status === 'archived') {
             $query->onlyTrashed();
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
         } else {
             $query->where('is_active', true);
         }
@@ -94,14 +100,8 @@ class ModifierCatalogController extends Controller
 
     public function reorder(Request $request): JsonResponse
     {
-        $data = $request->validate(['items' => ['required', 'array'], 'items.*.id' => ['required', 'integer'], 'items.*.sortOrder' => ['required', 'integer']]);
-        $tenant = TenantContext::id($request);
-        $ids = collect($data['items'])->pluck('id');
-        if ($ids->unique()->count() !== $ids->count() || ModifierGroup::query()->where('tenant_id', $tenant)->whereIn('id', $ids)->count() !== $ids->count()) {
-            abort(422, 'One or more IDs are invalid.');
-        } foreach ($data['items'] as $item) {
-            ModifierGroup::query()->where('tenant_id', $tenant)->whereKey($item['id'])->update(['sort_order' => $item['sortOrder']]);
-        } $this->audit->log($tenant, ModifierGroup::class, MenuAuditAction::Reordered, null, ['items' => $data['items']]);
+        $data = $request->validate(['items' => ['required', 'array', 'min:1'], 'items.*.id' => ['required', 'integer'], 'items.*.sortOrder' => ['required', 'integer', 'min:0']]);
+        $this->groups->reorderGroups(TenantContext::id($request), $data['items']);
 
         return response()->json(['message' => 'Modifier groups reordered successfully.', 'data' => $data['items']]);
     }
@@ -169,7 +169,7 @@ class ModifierCatalogController extends Controller
     {
         $rules = ['name' => [$create ? 'required' : 'sometimes', 'string'], 'nameAr' => ['nullable', 'string'], 'nameEn' => ['nullable', 'string'], 'code' => ['nullable', 'string'], 'groupType' => ['nullable', Rule::in(['choice', 'add_on', 'preparation_instruction'])], 'selectionType' => ['nullable', Rule::in(['single', 'multiple'])], 'isRequired' => ['nullable', 'boolean'], 'minSelections' => ['nullable', 'integer', 'min:0'], 'maxSelections' => ['nullable', 'integer', 'min:0'], 'allowQuantity' => ['nullable', 'boolean'], 'sortOrder' => ['nullable', 'integer'], 'isActive' => ['nullable', 'boolean']];
         if ($create) {
-            $rules += ['options' => ['required', 'array', 'min:1'], 'options.*.name' => ['required', 'string'], 'options.*.priceDelta' => ['nullable', 'numeric', 'min:0'], 'options.*.costDelta' => ['nullable', 'numeric', 'min:0'], 'options.*.isDefault' => ['nullable', 'boolean'], 'options.*.isActive' => ['nullable', 'boolean'], 'options.*.isAvailable' => ['nullable', 'boolean']];
+            $rules += ['options' => ['required', 'array', 'min:1'], 'options.*.name' => ['required', 'string'], 'options.*.nameAr' => ['nullable', 'string'], 'options.*.nameEn' => ['nullable', 'string'], 'options.*.priceDelta' => ['nullable', 'decimal:0,2'], 'options.*.costDelta' => ['nullable', 'numeric', 'min:0'], 'options.*.isDefault' => ['nullable', 'boolean'], 'options.*.isActive' => ['nullable', 'boolean'], 'options.*.isAvailable' => ['nullable', 'boolean'], 'options.*.sortOrder' => ['nullable', 'integer']];
         }
 
         return $request->validate($rules);
@@ -177,7 +177,7 @@ class ModifierCatalogController extends Controller
 
     private function optionData(Request $request, bool $create): array
     {
-        return $request->validate(['name' => [$create ? 'required' : 'sometimes', 'string'], 'nameAr' => ['nullable', 'string'], 'nameEn' => ['nullable', 'string'], 'priceDelta' => ['nullable', 'numeric', 'min:0'], 'costDelta' => ['nullable', 'numeric', 'min:0'], 'isDefault' => ['nullable', 'boolean'], 'isActive' => ['nullable', 'boolean'], 'isAvailable' => ['nullable', 'boolean'], 'sortOrder' => ['nullable', 'integer']]);
+        return $request->validate(['name' => [$create ? 'required' : 'sometimes', 'string'], 'nameAr' => ['nullable', 'string'], 'nameEn' => ['nullable', 'string'], 'priceDelta' => ['nullable', 'decimal:0,2'], 'costDelta' => ['nullable', 'numeric', 'min:0'], 'isDefault' => ['nullable', 'boolean'], 'isActive' => ['nullable', 'boolean'], 'isAvailable' => ['nullable', 'boolean'], 'sortOrder' => ['nullable', 'integer']]);
     }
 
     private function groupCurrent(ModifierGroup $g): array

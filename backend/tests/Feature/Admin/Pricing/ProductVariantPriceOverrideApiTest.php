@@ -53,6 +53,9 @@ class ProductVariantPriceOverrideApiTest extends TestCase
             'scopeType' => 'channel', 'channel' => 'delivery', 'overridePrice' => -1,
         ]]], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('overrides.0.overridePrice');
         $this->putJson($this->overridesUrl($variantId), ['overrides' => [[
+            'scopeType' => 'channel', 'channel' => 'delivery', 'overridePrice' => 0,
+        ]]], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('overrides.0.overridePrice');
+        $this->putJson($this->overridesUrl($variantId), ['overrides' => [[
             'scopeType' => 'channel', 'channel' => 'delivery', 'overridePrice' => 3, 'scopeKey' => 'forbidden',
         ]]], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('overrides.0.scopeKey');
         $this->putJson($this->overridesUrl($variantId), ['overrides' => [
@@ -92,6 +95,27 @@ class ProductVariantPriceOverrideApiTest extends TestCase
             'scope_key' => "branch:{$branchId}|channel:*", 'branch_id' => $branchId, 'override_price' => 5,
             'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
         ]);
+    }
+
+    public function test_sync_preserves_existing_inactive_lifecycle_when_legacy_payload_omits_it(): void
+    {
+        $tenantId = $this->tenant('lifecycle');
+        $variantId = $this->variant($tenantId, 'Mocha', 4);
+        $branchId = $this->branch($tenantId);
+        $payload = ['scopeType' => 'branch', 'branchId' => $branchId, 'overridePrice' => 4.5, 'isActive' => false];
+        $this->putJson($this->overridesUrl($variantId), ['overrides' => [$payload]], $this->headers($tenantId))->assertOk();
+        $legacyPayload = $payload;
+        unset($legacyPayload['isActive']);
+        $legacyPayload['overridePrice'] = 4.75;
+        $this->putJson($this->overridesUrl($variantId), ['overrides' => [$legacyPayload]], $this->headers($tenantId))->assertOk();
+        $this->assertDatabaseHas('product_variant_price_overrides', ['product_variant_id' => $variantId, 'override_price' => 4.75, 'is_active' => false]);
+        foreach ([0, -1] as $price) {
+            $this->putJson($this->overridesUrl($variantId), ['overrides' => [array_replace($legacyPayload, ['overridePrice' => $price])]], $this->headers($tenantId))
+                ->assertUnprocessable()->assertJsonValidationErrors('overrides.0.overridePrice');
+            $this->assertDatabaseHas('product_variant_price_overrides', ['product_variant_id' => $variantId, 'override_price' => 4.75, 'is_active' => false]);
+        }
+        $this->putJson($this->overridesUrl($variantId), ['overrides' => [array_replace($payload, ['isActive' => true])]], $this->headers($tenantId))->assertOk();
+        $this->assertDatabaseHas('product_variant_price_overrides', ['product_variant_id' => $variantId, 'is_active' => true]);
     }
 
     public function test_effective_price_uses_approved_priority_and_ignores_inactive_or_other_branch_scopes(): void

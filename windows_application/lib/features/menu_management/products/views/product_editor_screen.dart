@@ -15,6 +15,7 @@ import '../../widgets/catalog_formatters.dart';
 import '../../widgets/menu_content_components.dart';
 import '../../widgets/menu_page_header.dart';
 import '../../widgets/sticky_form_actions.dart';
+import '../../pricing/configured_price_validation.dart';
 import '../controllers/product_editor_cubit.dart';
 import '../controllers/product_editor_state.dart';
 import '../models/product_editor_draft.dart';
@@ -359,8 +360,10 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                 (value) => cubit.updateDraft(
                                   draft.copyWith(variantBasePrice: value),
                                 ),
-                                error:
-                                    state.fieldErrors['variants.0.basePrice'],
+                                error: localizedConfiguredPriceError(
+                                  context,
+                                  state.fieldErrors['variants.0.basePrice'],
+                                ),
                                 price: true,
                                 required: draft.productType == 'standard',
                                 prefix: '\$',

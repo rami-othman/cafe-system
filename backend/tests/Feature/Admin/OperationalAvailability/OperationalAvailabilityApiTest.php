@@ -10,6 +10,34 @@ class OperationalAvailabilityApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_temporary_unavailability_interprets_offsetless_time_in_branch_timezone(): void
+    {
+        $tenant = $this->tenant('timezone');
+        [$product] = $this->product($tenant, 'Timezone Latte');
+        $branch = $this->branch($tenant, 'Dubai', 'Asia/Dubai');
+        $this->putJson($this->productUrl($product), [
+            'branchId' => $branch, 'channel' => 'pos', 'status' => 'temporarily_unavailable',
+            'unavailableUntil' => '2030-01-15T18:00:00',
+        ], $this->headers($tenant))->assertOk();
+        $this->assertDatabaseHas('product_operational_availabilities', ['product_id' => $product, 'unavailable_until' => '2030-01-15 14:00:00+00']);
+        $this->putJson($this->productUrl($product), [
+            'branchId' => $branch, 'channel' => 'pos', 'status' => 'temporarily_unavailable',
+            'unavailableUntil' => '2030-01-15T18:00:00+04:00',
+        ], $this->headers($tenant))->assertUnprocessable()->assertJsonValidationErrors('unavailableUntil');
+    }
+
+    public function test_paris_standard_and_daylight_times_round_trip_as_branch_local_wall_clock(): void
+    {
+        $tenant = $this->tenant('paris');
+        [$product] = $this->product($tenant, 'Paris Latte');
+        $branch = $this->branch($tenant, 'Paris', 'Europe/Paris');
+        foreach ([['2030-01-15T18:00:00', '2030-01-15 17:00:00+00', '+01:00'], ['2030-07-15T18:00:00', '2030-07-15 16:00:00+00', '+02:00']] as [$local, $utc, $offset]) {
+            $this->putJson($this->productUrl($product), ['branchId' => $branch, 'channel' => 'pos', 'status' => 'temporarily_unavailable', 'unavailableUntil' => $local], $this->headers($tenant))->assertOk();
+            $this->assertDatabaseHas('product_operational_availabilities', ['product_id' => $product, 'unavailable_until' => $utc]);
+            $this->getJson('/api/v1/admin/catalog/operational-availability?branchId='.$branch, $this->headers($tenant))->assertOk()->assertJsonPath('data.0.unavailableUntil', $local.$offset);
+        }
+    }
+
     public function test_product_scopes_upsert_clear_and_validation_are_tenant_safe(): void
     {
         $tenant = $this->tenant('alpha');
@@ -39,13 +67,13 @@ class OperationalAvailabilityApiTest extends TestCase
         $putVariant = fn (array $data) => $this->putJson($this->variantUrl($variant), ['branchId' => $branch] + $data, $this->headers($tenant))->assertOk();
         $putProduct(['channel' => 'all', 'status' => 'sold_out']);
         $this->preview($tenant, $product, $branch, 'delivery', $variant)->assertJsonPath('data.matchedLevel', 'product')->assertJsonPath('data.matchedScope', 'all_channels');
-        $putProduct(['channel' => 'delivery', 'status' => 'temporarily_unavailable', 'unavailableUntil' => now()->addHour()->toIso8601String()]);
+        $putProduct(['channel' => 'delivery', 'status' => 'temporarily_unavailable', 'unavailableUntil' => now('Asia/Damascus')->addHour()->format('Y-m-d\\TH:i:s')]);
         $putVariant(['channel' => 'all', 'status' => 'sold_out']);
         $putVariant(['channel' => 'delivery', 'status' => 'available']);
         $this->preview($tenant, $product, $branch, 'delivery', $variant)->assertJsonPath('data.status', 'available')->assertJsonPath('data.matchedLevel', 'variant')->assertJsonPath('data.matchedScope', 'exact_channel');
         $this->deleteJson($this->variantUrl($variant).'?branchId='.$branch.'&channel=delivery', [], $this->headers($tenant))->assertOk();
         $this->preview($tenant, $product, $branch, 'delivery', $variant)->assertJsonPath('data.status', 'sold_out')->assertJsonPath('data.matchedScope', 'all_channels');
-        $putVariant(['channel' => 'pos', 'status' => 'temporarily_unavailable', 'unavailableUntil' => now()->addMinute()->toIso8601String()]);
+        $putVariant(['channel' => 'pos', 'status' => 'temporarily_unavailable', 'unavailableUntil' => now('Asia/Damascus')->addMinute()->format('Y-m-d\\TH:i:s')]);
         DB::table('product_variant_operational_availabilities')->where('product_variant_id', $variant)->where('channel', 'pos')->update(['unavailable_until' => now()->subSecond()]);
         $this->preview($tenant, $product, $branch, 'pos', $variant)->assertJsonPath('data.status', 'sold_out')->assertJsonPath('data.matchedScope', 'all_channels');
     }
@@ -74,7 +102,7 @@ class OperationalAvailabilityApiTest extends TestCase
         [$product, $variant] = $this->product($tenant, 'Americano');
         $branch = $this->branch($tenant);
         $this->putJson($this->productUrl($product), ['branchId' => $branch, 'channel' => 'all', 'status' => 'sold_out'], $this->headers($tenant))->assertOk();
-        $this->putJson($this->variantUrl($variant), ['branchId' => $branch, 'channel' => 'delivery', 'status' => 'temporarily_unavailable', 'unavailableUntil' => now()->addHour()->toIso8601String()], $this->headers($tenant))->assertOk();
+        $this->putJson($this->variantUrl($variant), ['branchId' => $branch, 'channel' => 'delivery', 'status' => 'temporarily_unavailable', 'unavailableUntil' => now('UTC')->addHour()->format('Y-m-d\\TH:i:s')], $this->headers($tenant))->assertOk();
         $response = $this->getJson('/api/v1/admin/catalog/operational-availability?branchId='.$branch.'&level=variant&status=temporarily_unavailable&perPage=1', $this->headers($tenant))->assertOk()->assertJsonCount(1, 'data');
         $this->assertArrayNotHasKey('tenant_id', $response->json('data.0'));
         $this->assertArrayNotHasKey('updated_by', $response->json('data.0'));

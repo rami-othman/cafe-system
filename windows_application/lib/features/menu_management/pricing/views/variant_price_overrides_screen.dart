@@ -12,6 +12,7 @@ import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../../pos/models/branch.dart';
 import '../controllers/variant_price_overrides_cubit.dart';
 import '../controllers/variant_price_overrides_state.dart';
+import '../configured_price_validation.dart';
 import '../models/variant_price_models.dart';
 
 const List<String> salesChannels = <String>[
@@ -469,11 +470,13 @@ class _OverrideEditorDialogState extends State<_OverrideEditorDialog> {
               ],
               decoration: InputDecoration(
                 labelText: 'Override Price *',
-                errorText:
-                    state.fieldErrors['price'] ??
-                    state.fieldErrors['overridePrice'] ??
-                    state.fieldErrors['editor'] ??
-                    state.fieldErrors['scopeType'],
+                errorText: localizedConfiguredPriceError(
+                  context,
+                  state.fieldErrors['price'] ??
+                      state.fieldErrors['overridePrice'] ??
+                      state.fieldErrors['editor'] ??
+                      state.fieldErrors['scopeType'],
+                ),
               ),
             ),
           ],
@@ -498,6 +501,7 @@ class _OverrideEditorDialogState extends State<_OverrideEditorDialog> {
         branchId: _scope == PriceOverrideScope.channel ? null : _branchId,
         channel: _scope == PriceOverrideScope.branch ? null : _channel,
         price: PriceAmount.parse(_price.text),
+        isActive: widget.existing?.isActive ?? true,
       );
       final bool saved = context.read<VariantPriceOverridesCubit>().addOrUpdate(
         draft,

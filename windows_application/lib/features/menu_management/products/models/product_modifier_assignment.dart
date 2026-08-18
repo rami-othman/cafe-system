@@ -28,6 +28,7 @@ class ProductModifierAssignment {
     required this.isActive,
     this.archivedAt,
     required this.activeOptionCount,
+    this.materialImpactConfigured = false,
     required this.libraryIsRequired,
     required this.libraryMinSelections,
     required this.libraryMaxSelections,
@@ -52,6 +53,7 @@ class ProductModifierAssignment {
         activeOptionCount:
             readInt(json['activeOptionCount']) ??
             _activeOptions(json['options']),
+        materialImpactConfigured: readBool(json['materialImpactConfigured']),
         libraryIsRequired: readBool(json['isRequired']),
         libraryMinSelections: readInt(json['minSelections']) ?? 0,
         libraryMaxSelections: readInt(json['maxSelections']) ?? 0,
@@ -78,6 +80,7 @@ class ProductModifierAssignment {
     activeOptionCount:
         group.activeOptionCount ??
         group.options.where((item) => item.isActive && !item.isArchived).length,
+    materialImpactConfigured: group.materialImpactConfigured,
     libraryIsRequired: group.isRequired,
     libraryMinSelections: group.minSelections,
     libraryMaxSelections: group.maxSelections,
@@ -94,6 +97,7 @@ class ProductModifierAssignment {
   final bool isActive;
   final DateTime? archivedAt;
   final int activeOptionCount;
+  final bool materialImpactConfigured;
   final bool libraryIsRequired;
   final int libraryMinSelections;
   final int libraryMaxSelections;
@@ -117,24 +121,6 @@ class ProductModifierAssignment {
       minSelectionsOverride != null ||
       maxSelectionsOverride != null ||
       allowQuantityOverride != null;
-  String get managerRuleSummary {
-    if (selectionType == 'single') {
-      return effectiveIsRequired
-          ? 'Customer must choose exactly 1 option.'
-          : 'Optional — customer may choose 1 option.';
-    }
-    if (effectiveIsRequired &&
-        effectiveMinSelections == effectiveMaxSelections) {
-      return 'Customer must choose exactly $effectiveMinSelections option${effectiveMinSelections == 1 ? '' : 's'}.';
-    }
-    if (effectiveIsRequired) {
-      return 'Customer must choose at least $effectiveMinSelections and up to $effectiveMaxSelections options.';
-    }
-    return effectiveMaxSelections <= 1
-        ? 'Optional — customer may choose 1 option.'
-        : 'Optional — customer may add up to $effectiveMaxSelections.';
-  }
-
   String get localizedName => nameEn ?? nameAr ?? name;
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,
@@ -163,6 +149,7 @@ class ProductModifierAssignment {
     isActive: isActive,
     archivedAt: archivedAt,
     activeOptionCount: activeOptionCount,
+    materialImpactConfigured: materialImpactConfigured,
     libraryIsRequired: libraryIsRequired,
     libraryMinSelections: libraryMinSelections,
     libraryMaxSelections: libraryMaxSelections,

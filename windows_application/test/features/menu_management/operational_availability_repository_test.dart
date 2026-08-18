@@ -72,7 +72,7 @@ void main() {
           'channel': 'all',
           'status': 'temporarily_unavailable',
           'remainingQuantity': 0,
-          'unavailableUntil': '2030-08-04T10:30:00.000',
+          'unavailableUntil': '2030-08-04T10:30:00',
           'reason': 'Machine service',
         });
         expect(backend.requests[1].query, <String, dynamic>{

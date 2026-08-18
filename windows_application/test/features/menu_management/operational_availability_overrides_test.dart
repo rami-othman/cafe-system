@@ -47,6 +47,9 @@ void main() {
         expect(item.isTemporary, isTrue);
         expect(item.isExpired, isTrue);
         expect(item.remainingQuantity, 0);
+        // API returns a Branch-local offset, which must not be converted to
+        // the workstation wall clock before an edit/save round-trip.
+        expect(item.unavailableUntil, DateTime(2026, 1, 1, 10));
       },
     );
 
@@ -75,6 +78,7 @@ void main() {
           unavailableUntil: DateTime.parse('2026-08-04T10:30:00'),
         ).toJson();
         expect(temporary['unavailableUntil'], isNotNull);
+        expect(temporary['unavailableUntil'], '2026-08-04T10:30:00');
         expect(temporary.containsKey('tenantId'), isFalse);
         expect(temporary.containsKey('isExpired'), isFalse);
         expect(temporary.containsKey('productVariantId'), isFalse);

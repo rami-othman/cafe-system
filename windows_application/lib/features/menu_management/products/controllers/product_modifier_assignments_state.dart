@@ -24,6 +24,7 @@ class ProductModifierAssignmentsState extends Equatable {
     this.errorMessage,
     this.successMessage,
     this.isSaving = false,
+    this.summaryChanged = false,
   });
   final ProductModifierAssignmentsStatus status;
   final ProductDetail? product;
@@ -35,6 +36,7 @@ class ProductModifierAssignmentsState extends Equatable {
   final String? errorMessage;
   final String? successMessage;
   final bool isSaving;
+  final bool summaryChanged;
   bool get isDirty => _payload(assignments) != _payload(loadedAssignments);
   List<ModifierGroupRecord> get assignableGroups => availableGroups
       .where(
@@ -55,6 +57,7 @@ class ProductModifierAssignmentsState extends Equatable {
     String? errorMessage,
     String? successMessage,
     bool? isSaving,
+    bool? summaryChanged,
     bool clearErrors = false,
     bool clearError = false,
     bool clearSuccess = false,
@@ -73,6 +76,7 @@ class ProductModifierAssignmentsState extends Equatable {
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
     isSaving: isSaving ?? this.isSaving,
+    summaryChanged: summaryChanged ?? false,
   );
   @override
   List<Object?> get props => <Object?>[
@@ -86,6 +90,7 @@ class ProductModifierAssignmentsState extends Equatable {
     errorMessage,
     successMessage,
     isSaving,
+    summaryChanged,
   ];
 }
 

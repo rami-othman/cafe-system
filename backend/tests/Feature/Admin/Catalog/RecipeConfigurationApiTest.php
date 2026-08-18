@@ -58,6 +58,63 @@ class RecipeConfigurationApiTest extends TestCase
             ->assertJsonPath('data.inheritedFrom', 'global')->assertJsonPath('data.components.0.materialId', $beans);
     }
 
+    public function test_product_modifier_assignment_summary_uses_effective_profile_without_exposing_profiles(): void
+    {
+        [$tenant, $product, $variant, $group, $option] = $this->recipeContext('assignment-summary');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+
+        $this->getJson("/api/v1/admin/catalog/products/$product/modifier-groups", $headers)
+            ->assertOk()
+            ->assertJsonPath('data.0.materialImpactConfigured', false)
+            ->assertJsonMissingPath('data.0.recipeProfiles');
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'add', 'quantity' => '1', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+
+        $this->getJson("/api/v1/admin/catalog/products/$product/modifier-groups", $headers)
+            ->assertOk()
+            ->assertJsonPath('data.0.materialImpactConfigured', true);
+
+        $this->putJson("/api/v1/admin/catalog/products/$product/modifier-options/$option/recipe-adjustments", ['components' => []], $headers)
+            ->assertOk();
+        $this->getJson("/api/v1/admin/catalog/products/$product/modifier-groups", $headers)
+            ->assertOk()
+            ->assertJsonPath('data.0.materialImpactConfigured', false);
+    }
+
+    public function test_variant_list_summary_reports_recipe_configuration_and_component_count(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('variant-summary');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+
+        $before = $this->getJson("/api/v1/admin/catalog/products/$product", $headers)
+            ->assertOk()
+            ->json('data.variants.0');
+        $this->assertFalse($before['recipeConfigured']);
+        $this->assertSame(0, $before['recipeComponentCount']);
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [
+                ['materialId' => $material, 'quantity' => '1', 'unitCode' => 'g'],
+                ['materialId' => $material + 1, 'quantity' => '2', 'unitCode' => 'g'],
+            ],
+        ], $headers)->assertUnprocessable();
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '1', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $after = $this->getJson("/api/v1/admin/catalog/products/$product", $headers)
+            ->assertOk()
+            ->json('data.variants.0');
+
+        $this->assertTrue($after['recipeConfigured']);
+        $this->assertSame(1, $after['recipeComponentCount']);
+        $this->assertArrayNotHasKey('components', $after);
+    }
+
     public function test_resolver_uses_exact_add_remove_quantity_and_group_constraints(): void
     {
         [$tenant, $product, $variant, $group, $shot] = $this->recipeContext('resolver');

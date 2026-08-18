@@ -156,7 +156,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             )
           : BlocProvider<VariantsCubit>(
               create: (_) => serviceLocator<VariantsCubit>(),
-              child: VariantsScreen(productId: product.id, embedded: true),
+              child: VariantsScreen(
+                productId: product.id,
+                embedded: true,
+                onSummaryChanged: context
+                    .read<ProductDetailCubit>()
+                    .replaceProduct,
+              ),
             ),
     _WorkspaceTab.modifiers =>
       product.isArchived
@@ -172,6 +178,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: ProductModifierAssignmentsScreen(
                 productId: product.id,
                 embedded: true,
+                onSummaryChanged: context
+                    .read<ProductDetailCubit>()
+                    .replaceProduct,
               ),
             ),
     _WorkspaceTab.recipe => _DestinationPanel(
@@ -214,8 +223,12 @@ class _WorkspaceHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             MenuPageHeader(
-              title: product.name,
-              subtitle: product.category?.name ?? 'Uncategorized product',
+              title: product.displayName(Localizations.localeOf(context)),
+              subtitle:
+                  product.category?.displayName(
+                    Localizations.localeOf(context),
+                  ) ??
+                  'Uncategorized product',
               primaryAction: product.isArchived
                   ? null
                   : FilledButton.icon(
@@ -255,7 +268,9 @@ class _WorkspaceHeader extends StatelessWidget {
                 if (product.kitchenStation != null)
                   _HeaderMetric(
                     'Kitchen Station',
-                    product.kitchenStation!.name,
+                    product.kitchenStation!.displayName(
+                      Localizations.localeOf(context),
+                    ),
                   ),
               ],
             ),
@@ -524,15 +539,18 @@ class _BusinessDetails extends StatelessWidget {
     final List<_Fact> facts = <_Fact>[
       _Fact(
         l10n?.productOverviewCategory ?? 'Category',
-        product.category?.name ?? notConfigured,
+        product.category?.displayName(Localizations.localeOf(context)) ??
+            notConfigured,
       ),
       _Fact(
         l10n?.productOverviewDefaultVariant ?? 'Default Variant',
-        product.defaultVariant?.name ?? notConfigured,
+        product.defaultVariant?.displayName(Localizations.localeOf(context)) ??
+            notConfigured,
       ),
       _Fact(
         l10n?.productOverviewKitchenStation ?? 'Kitchen Station',
-        product.kitchenStation?.name ?? notConfigured,
+        product.kitchenStation?.displayName(Localizations.localeOf(context)) ??
+            notConfigured,
       ),
       _Fact(
         l10n?.productOverviewProductType ?? 'Product Type',
@@ -540,7 +558,10 @@ class _BusinessDetails extends StatelessWidget {
       ),
       _Fact(
         l10n?.productOverviewReportingCategory ?? 'Reporting Category',
-        product.reportingCategory?.name ?? notConfigured,
+        product.reportingCategory?.displayName(
+              Localizations.localeOf(context),
+            ) ??
+            notConfigured,
       ),
       _Fact(
         l10n?.productOverviewPreparationTime ?? 'Preparation Time',

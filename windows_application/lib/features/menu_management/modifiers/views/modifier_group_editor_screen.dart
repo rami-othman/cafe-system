@@ -91,9 +91,12 @@ class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
                                       ? l10n.modifierBasicInformationHelper
                                       : null,
                                 ),
-                                if (state.formError != null) ...<Widget>[
+                                if (state.formError != null ||
+                                    state.formErrorCode != null) ...<Widget>[
                                   const SizedBox(height: AppSpacing.lg),
-                                  _Message(text: state.formError!),
+                                  _Message(
+                                    text: _localizedFormError(context, state),
+                                  ),
                                 ],
                                 const SizedBox(height: AppSpacing.xl),
                                 _GroupForm(
@@ -120,7 +123,16 @@ class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
                       onSave: cubit.submit,
                       isDirty: state.isDirty,
                       isSaving: state.status == ModifierEditorStatus.submitting,
-                      validationSummary: state.fieldErrors.values.toList(),
+                      validationSummary: state.fieldErrors.entries
+                          .map(
+                            (entry) => _localizedEditorError(
+                              context,
+                              entry.value,
+                              state.draft,
+                            ),
+                          )
+                          .whereType<String>()
+                          .toList(growable: false),
                       primaryActionKey: const Key('modifier-group-submit'),
                     ),
                   ],
@@ -157,7 +169,11 @@ class _GroupForm extends StatelessWidget {
             label: l10n.modifierGroupName,
             hint: l10n.modifierGroupNameHint,
             value: draft.name,
-            error: state.fieldErrors['name'],
+            error: _localizedEditorError(
+              context,
+              state.fieldErrors['name'],
+              draft,
+            ),
             onChanged: (value) => update(draft.copyWith(name: value)),
           ),
         ),
@@ -197,15 +213,22 @@ class _GroupForm extends StatelessWidget {
                   'required': l10n.modifierRequired,
                   'optional': l10n.modifierOptional,
                 },
-                onChanged: (value) => update(
-                  draft.copyWith(
-                    isRequired: value == 'required',
-                    minSelections:
-                        value == 'required' && draft.minSelections == '0'
-                        ? '1'
-                        : draft.minSelections,
-                  ),
-                ),
+                onChanged: (value) {
+                  final bool required = value == 'required';
+                  update(
+                    draft.copyWith(
+                      isRequired: required,
+                      // A positive minimum makes the group effectively
+                      // required, so clear the minimum when Optional is
+                      // selected to keep the rule and summary in sync.
+                      minSelections: required
+                          ? (draft.minSelections == '0'
+                                ? '1'
+                                : draft.minSelections)
+                          : '0',
+                    ),
+                  );
+                },
               ),
               if (multiple) ...<Widget>[
                 const SizedBox(height: AppSpacing.xl),
@@ -215,7 +238,11 @@ class _GroupForm extends StatelessWidget {
                       child: _numberField(
                         label: l10n.modifierMinimumChoices,
                         value: draft.minSelections,
-                        error: state.fieldErrors['minSelections'],
+                        error: _localizedEditorError(
+                          context,
+                          state.fieldErrors['minSelections'],
+                          draft,
+                        ),
                         onChanged: (value) =>
                             update(draft.copyWith(minSelections: value)),
                       ),
@@ -225,7 +252,11 @@ class _GroupForm extends StatelessWidget {
                       child: _numberField(
                         label: l10n.modifierMaximumChoices,
                         value: draft.maxSelections,
-                        error: state.fieldErrors['maxSelections'],
+                        error: _localizedEditorError(
+                          context,
+                          state.fieldErrors['maxSelections'],
+                          draft,
+                        ),
                         onChanged: (value) =>
                             update(draft.copyWith(maxSelections: value)),
                       ),
@@ -249,28 +280,48 @@ class _GroupForm extends StatelessWidget {
         if (state.isCreate) ...<Widget>[
           const SizedBox(height: AppSpacing.lg),
           ContentSection(
-            title: l10n.modifierInitialOption,
+            title: l10n.modifierInitialOptions,
             description: l10n.modifierInitialOptionHelper,
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Expanded(
-                  child: _textField(
-                    label: l10n.modifierOptionName,
-                    hint: l10n.modifierOptionNameHint,
-                    value: draft.initialOptionName,
-                    error: state.fieldErrors['options.0.name'],
-                    onChanged: (value) =>
-                        update(draft.copyWith(initialOptionName: value)),
+                for (int index = 0; index < draft.createOptions.length; index++)
+                  _InitialOptionRow(
+                    key: ValueKey<String>('initial-option-$index'),
+                    index: index,
+                    option: draft.createOptions[index],
+                    canRemove: draft.createOptions.length > 1,
+                    state: state,
+                    update: (option) {
+                      final List<ModifierOptionDraft> options =
+                          List<ModifierOptionDraft>.from(draft.createOptions);
+                      options[index] = option;
+                      update(draft.copyWith(initialOptions: options));
+                    },
+                    remove: () {
+                      final List<ModifierOptionDraft> options =
+                          List<ModifierOptionDraft>.from(draft.createOptions)
+                            ..removeAt(index);
+                      update(draft.copyWith(initialOptions: options));
+                    },
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _textField(
-                    label: l10n.modifierPriceAdjustment,
-                    value: draft.initialOptionPriceDelta,
-                    error: state.fieldErrors['options.0.priceDelta'],
-                    onChanged: (value) =>
-                        update(draft.copyWith(initialOptionPriceDelta: value)),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    key: const Key('add-initial-modifier-option'),
+                    onPressed: () {
+                      final List<ModifierOptionDraft> options =
+                          List<ModifierOptionDraft>.from(
+                            draft.createOptions,
+                          )..add(
+                            ModifierOptionDraft(
+                              sortOrder: draft.createOptions.length.toString(),
+                            ),
+                          );
+                      update(draft.copyWith(initialOptions: options));
+                    },
+                    icon: const Icon(Icons.add),
+                    label: Text(l10n.modifierAddAnotherOption),
                   ),
                 ),
               ],
@@ -286,7 +337,11 @@ class _GroupForm extends StatelessWidget {
               _textField(
                 label: l10n.modifierInternalCode,
                 value: draft.code,
-                error: state.fieldErrors['code'],
+                error: _localizedEditorError(
+                  context,
+                  state.fieldErrors['code'],
+                  draft,
+                ),
                 onChanged: (value) => update(draft.copyWith(code: value)),
               ),
               Row(
@@ -315,7 +370,11 @@ class _GroupForm extends StatelessWidget {
                     child: _numberField(
                       label: l10n.modifierSortOrder,
                       value: draft.sortOrder,
-                      error: state.fieldErrors['sortOrder'],
+                      error: _localizedEditorError(
+                        context,
+                        state.fieldErrors['sortOrder'],
+                        draft,
+                      ),
                       onChanged: (value) =>
                           update(draft.copyWith(sortOrder: value)),
                     ),
@@ -330,6 +389,76 @@ class _GroupForm extends StatelessWidget {
                 onChanged: (value) => update(draft.copyWith(isActive: value)),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InitialOptionRow extends StatelessWidget {
+  const _InitialOptionRow({
+    super.key,
+    required this.index,
+    required this.option,
+    required this.canRemove,
+    required this.state,
+    required this.update,
+    required this.remove,
+  });
+
+  final int index;
+  final ModifierOptionDraft option;
+  final bool canRemove;
+  final ModifierGroupEditorState state;
+  final ValueChanged<ModifierOptionDraft> update;
+  final VoidCallback remove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          flex: 3,
+          child: _textField(
+            key: ValueKey<String>('initial-option-name-$index'),
+            label: l10n.modifierOptionName,
+            hint: l10n.modifierOptionNameHint,
+            value: option.name,
+            error: _localizedEditorError(
+              context,
+              state.fieldErrors['options.$index.name'],
+              state.draft,
+            ),
+            onChanged: (value) => update(option.copyWith(name: value)),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          flex: 2,
+          child: _textField(
+            key: ValueKey<String>('initial-option-price-$index'),
+            label: l10n.modifierPriceAdjustment,
+            value: option.priceDelta,
+            error: _localizedEditorError(
+              context,
+              state.fieldErrors['options.$index.priceDelta'],
+              state.draft,
+            ),
+            textDirection: TextDirection.ltr,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (value) => update(option.copyWith(priceDelta: value)),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: IconButton(
+            tooltip: l10n.modifierRemoveOption,
+            onPressed: canRemove ? remove : null,
+            icon: const Icon(Icons.remove_circle_outline),
           ),
         ),
       ],
@@ -463,15 +592,21 @@ class _RuleSummary extends StatelessWidget {
 }
 
 Widget _textField({
+  Key? key,
   required String label,
   String? hint,
   required String value,
   String? error,
+  TextDirection? textDirection,
+  TextInputType? keyboardType,
   required ValueChanged<String> onChanged,
 }) => Padding(
   padding: const EdgeInsets.only(bottom: AppSpacing.md),
   child: TextFormField(
+    key: key,
     initialValue: value,
+    textDirection: textDirection,
+    keyboardType: keyboardType,
     onChanged: onChanged,
     decoration: InputDecoration(
       labelText: label,
@@ -562,4 +697,37 @@ class _Message extends StatelessWidget {
     ),
     child: Text(text),
   );
+}
+
+String? _localizedEditorError(
+  BuildContext context,
+  String? error,
+  ModifierGroupDraft draft,
+) {
+  if (error == null) return null;
+  if (error == modifierPriceAdjustmentInvalidCode) {
+    return context.l10n.modifierOptionPriceInvalid;
+  }
+  if (error == '__initial_options_count__') {
+    final int count = int.tryParse(draft.maxSelections.trim()) ?? 1;
+    return context.l10n.modifierAtLeastActiveOptions(count);
+  }
+  return error;
+}
+
+String _localizedFormError(
+  BuildContext context,
+  ModifierGroupEditorState state,
+) {
+  if (state.formErrorCode == 'initialOptionsCount') {
+    return _localizedEditorError(
+      context,
+      '__initial_options_count__',
+      state.draft,
+    )!;
+  }
+  if (state.formErrorCode == 'groupSave') {
+    return context.l10n.modifierGroupSaveError;
+  }
+  return state.formError ?? context.l10n.modifierGroupSaveError;
 }

@@ -27,7 +27,10 @@ class UpdateProductOperationalAvailabilityRequest extends FormRequest
             'channel' => ['required', 'string', Rule::in([...array_map(fn (SalesChannel $channel) => $channel->value, SalesChannel::cases()), 'all'])],
             'status' => ['required', Rule::enum(OperationalAvailabilityStatus::class)],
             'remainingQuantity' => ['nullable', 'numeric', 'min:0'],
-            'unavailableUntil' => ['nullable', 'date'],
+            // Manager-entered temporary availability is a Branch-local wall
+            // clock time. Offsets are rejected so it cannot become an
+            // ambiguous mixture of device instants and local times.
+            'unavailableUntil' => ['nullable', 'date_format:Y-m-d\\TH:i:s'],
             'reason' => ['nullable', 'string', 'max:1000'],
         ];
     }

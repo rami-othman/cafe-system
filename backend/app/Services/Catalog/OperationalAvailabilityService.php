@@ -140,7 +140,7 @@ class OperationalAvailabilityService
         $available = $data['status'] === OperationalAvailabilityStatus::Available->value;
 
         return ['branch_id' => $data['branchId'], 'channel' => $data['channel'], 'status' => $data['status'], 'remaining_quantity' => $data['remainingQuantity'] ?? null,
-            'unavailable_until' => $available || empty($data['unavailableUntil']) ? null : CarbonImmutable::parse($data['unavailableUntil'], $branch->timezone ?: config('app.timezone'))->utc(), 'reason' => $available ? null : ($data['reason'] ?? null)];
+            'unavailable_until' => $available || empty($data['unavailableUntil']) ? null : CarbonImmutable::createFromFormat('Y-m-d\\TH:i:s', $data['unavailableUntil'], $branch->timezone ?: config('app.timezone'))->utc(), 'reason' => $available ? null : ($data['reason'] ?? null)];
     }
 
     private function validateTemporaryExpiration(array $data, Branch $branch): void
@@ -149,7 +149,7 @@ class OperationalAvailabilityService
             return;
         }
         $timezone = $branch->timezone ?: config('app.timezone');
-        if (CarbonImmutable::parse($data['unavailableUntil'], $timezone)->lessThanOrEqualTo(now($timezone))) {
+        if (CarbonImmutable::createFromFormat('Y-m-d\\TH:i:s', $data['unavailableUntil'], $timezone)->lessThanOrEqualTo(now($timezone))) {
             throw ValidationException::withMessages(['unavailableUntil' => 'A future unavailable-until time is required for temporarily unavailable status.']);
         }
     }

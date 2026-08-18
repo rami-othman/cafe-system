@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin\Catalog;
 
 use App\Domain\Menu\Enums\SalesChannel;
+use App\Rules\StrictlyPositiveMoney;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,7 @@ class SyncProductVariantPriceOverridesRequest extends FormRequest
             'overrides.*.scopeType' => ['required', Rule::in(['branch', 'channel', 'branch_channel'])],
             'overrides.*.branchId' => ['nullable', 'integer'],
             'overrides.*.channel' => ['nullable', Rule::enum(SalesChannel::class)],
-            'overrides.*.overridePrice' => ['required', 'numeric', 'min:0'],
+            'overrides.*.overridePrice' => ['bail', 'required', 'decimal:0,2', new StrictlyPositiveMoney('Override price')],
             'overrides.*.isActive' => ['nullable', 'boolean'],
         ];
     }

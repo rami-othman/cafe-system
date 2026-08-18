@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -10,6 +12,7 @@ import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../controllers/product_catalog_cubit.dart';
 import '../../models/catalog_models.dart';
 import '../../widgets/catalog_formatters.dart';
+import '../../pricing/configured_price_validation.dart';
 import '../controllers/variants_cubit.dart';
 import '../controllers/variants_state.dart';
 import '../models/variant_editor_draft.dart';
@@ -19,9 +22,11 @@ class VariantsScreen extends StatefulWidget {
     super.key,
     required this.productId,
     this.embedded = false,
+    this.onSummaryChanged,
   });
   final int productId;
   final bool embedded;
+  final ValueChanged<ProductDetail>? onSummaryChanged;
   @override
   State<VariantsScreen> createState() => _VariantsScreenState();
 }
@@ -44,6 +49,9 @@ class _VariantsScreenState extends State<VariantsScreen> {
             after.successMessage != null,
         listener: (context, state) {
           context.read<ProductCatalogCubit>().refresh();
+          if (state.summaryChanged && state.product != null) {
+            widget.onSummaryChanged?.call(state.product!);
+          }
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
@@ -135,6 +143,10 @@ class _VariantsScreenState extends State<VariantsScreen> {
                           label: Text('Active'),
                         ),
                         ButtonSegment(
+                          value: VariantFilter.inactive,
+                          label: Text('Inactive'),
+                        ),
+                        ButtonSegment(
                           value: VariantFilter.archived,
                           label: Text('Archived'),
                         ),
@@ -180,6 +192,10 @@ class _VariantsScreenState extends State<VariantsScreen> {
                   reorderMode: _reorderMode,
                   edit: _edit,
                   setDefault: _setDefault,
+                  activate: (variant) =>
+                      context.read<VariantsCubit>().activate(variant),
+                  deactivate: (variant) =>
+                      context.read<VariantsCubit>().deactivate(variant),
                   archive: _archive,
                   restore: _restore,
                   move: _move,
@@ -363,6 +379,8 @@ class _VariantTable extends StatelessWidget {
     required this.reorderMode,
     required this.edit,
     required this.setDefault,
+    required this.activate,
+    required this.deactivate,
     required this.archive,
     required this.restore,
     required this.move,
@@ -371,6 +389,8 @@ class _VariantTable extends StatelessWidget {
   final bool reorderMode;
   final ValueChanged<ProductVariant> edit;
   final ValueChanged<ProductVariant> setDefault;
+  final ValueChanged<ProductVariant> activate;
+  final ValueChanged<ProductVariant> deactivate;
   final ValueChanged<ProductVariant> archive;
   final ValueChanged<ProductVariant> restore;
   final void Function(ProductVariant, int) move;
@@ -385,6 +405,8 @@ class _VariantTable extends StatelessWidget {
       reorderMode: reorderMode,
       edit: edit,
       setDefault: setDefault,
+      activate: activate,
+      deactivate: deactivate,
       archive: archive,
       restore: restore,
       move: move,
@@ -558,6 +580,8 @@ class _VariantCompactRows extends StatelessWidget {
     required this.reorderMode,
     required this.edit,
     required this.setDefault,
+    required this.activate,
+    required this.deactivate,
     required this.archive,
     required this.restore,
     required this.move,
@@ -568,6 +592,8 @@ class _VariantCompactRows extends StatelessWidget {
   final bool reorderMode;
   final ValueChanged<ProductVariant> edit;
   final ValueChanged<ProductVariant> setDefault;
+  final ValueChanged<ProductVariant> activate;
+  final ValueChanged<ProductVariant> deactivate;
   final ValueChanged<ProductVariant> archive;
   final ValueChanged<ProductVariant> restore;
   final void Function(ProductVariant, int) move;
@@ -675,12 +701,20 @@ class _VariantCompactRows extends StatelessWidget {
                 ),
                 Expanded(
                   child: _VariantStatus(
-                    variant.isArchived ? 'Archived' : 'Active',
+                    variant.isArchived
+                        ? 'Archived'
+                        : variant.isInactive
+                        ? 'Inactive'
+                        : 'Active',
                     variant.isArchived
                         ? Icons.archive_outlined
+                        : variant.isInactive
+                        ? Icons.pause_circle_outline
                         : Icons.check_circle_outline,
                     variant.isArchived
                         ? AppColors.textSecondary
+                        : variant.isInactive
+                        ? AppColors.textMuted
                         : AppColors.success,
                   ),
                 ),
@@ -690,7 +724,7 @@ class _VariantCompactRows extends StatelessWidget {
                   icon: const Icon(Icons.more_vert),
                   onSelected: (action) =>
                       _variantAction(context, action, variant),
-                  itemBuilder: (context) => _items(variant),
+                  itemBuilder: (context) => _items(context, variant),
                 ),
               ],
             ),
@@ -699,10 +733,16 @@ class _VariantCompactRows extends StatelessWidget {
         .toList(growable: false),
   );
 
-  List<PopupMenuEntry<_VariantAction>> _items(ProductVariant variant) =>
-      variant.isArchived
+  List<PopupMenuEntry<_VariantAction>> _items(
+    BuildContext context,
+    ProductVariant variant,
+  ) => variant.isArchived
       ? <PopupMenuEntry<_VariantAction>>[
-          _item(_VariantAction.restore, 'Restore', Icons.restore),
+          _item(
+            _VariantAction.restore,
+            context.l10n.commonRestore,
+            Icons.restore,
+          ),
         ]
       : <PopupMenuEntry<_VariantAction>>[
           _item(_VariantAction.edit, 'Edit Variant', Icons.edit_outlined),
@@ -729,7 +769,22 @@ class _VariantCompactRows extends StatelessWidget {
               Icons.star_outline,
             ),
           const PopupMenuDivider(),
-          _item(_VariantAction.archive, 'Archive', Icons.archive_outlined),
+          _item(
+            variant.isActive
+                ? _VariantAction.deactivate
+                : _VariantAction.activate,
+            variant.isActive
+                ? context.l10n.commonDeactivate
+                : context.l10n.commonActivate,
+            variant.isActive
+                ? Icons.pause_circle_outline
+                : Icons.play_circle_outline,
+          ),
+          _item(
+            _VariantAction.archive,
+            context.l10n.commonArchive,
+            Icons.archive_outlined,
+          ),
         ];
 
   PopupMenuItem<_VariantAction> _item(
@@ -774,6 +829,10 @@ class _VariantCompactRows extends StatelessWidget {
         );
       case _VariantAction.setDefault:
         setDefault(variant);
+      case _VariantAction.activate:
+        activate(variant);
+      case _VariantAction.deactivate:
+        deactivate(variant);
       case _VariantAction.archive:
         archive(variant);
       case _VariantAction.restore:
@@ -789,6 +848,8 @@ enum _VariantAction {
   sellingHours,
   currentAvailability,
   setDefault,
+  activate,
+  deactivate,
   archive,
   restore,
 }
@@ -960,7 +1021,10 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
                     'Base Price',
                     _draft.basePrice,
                     (v) => _set(_draft.copyWith(basePrice: v)),
-                    state.fieldErrors['basePrice'],
+                    localizedConfiguredPriceError(
+                      context,
+                      state.fieldErrors['basePrice'],
+                    ),
                     required: true,
                     decimal: true,
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../widgets/catalog_formatters.dart';
@@ -104,6 +105,10 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
                   label: Text('Active'),
                 ),
                 ButtonSegment(
+                  value: MenuSectionFilter.inactive,
+                  label: Text('Inactive'),
+                ),
+                ButtonSegment(
                   value: MenuSectionFilter.archived,
                   label: Text('Archived'),
                 ),
@@ -138,6 +143,8 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
                   false,
                   () => cubit.restoreSection(id),
                 ),
+                onActivate: cubit.activateSection,
+                onDeactivate: cubit.deactivateSection,
                 onMove: cubit.moveSection,
               ),
           ],
@@ -277,12 +284,16 @@ class _SectionsTable extends StatelessWidget {
     required this.onEdit,
     required this.onArchive,
     required this.onRestore,
+    required this.onActivate,
+    required this.onDeactivate,
     required this.onMove,
   });
   final List<MenuSectionRecord> sections, allActive;
   final bool disabled;
   final ValueChanged<MenuSectionRecord> onEdit;
   final ValueChanged<int> onArchive, onRestore;
+  final ValueChanged<MenuSectionRecord> onActivate;
+  final ValueChanged<MenuSectionRecord> onDeactivate;
   final Future<void> Function(int, int) onMove;
   @override
   Widget build(BuildContext context) => Card(
@@ -343,6 +354,22 @@ class _SectionsTable extends StatelessWidget {
                           : () => onEdit(section),
                       icon: const Icon(Icons.edit),
                     ),
+                    if (!section.isArchived)
+                      IconButton(
+                        tooltip: section.isActive
+                            ? context.l10n.commonDeactivate
+                            : context.l10n.commonActivate,
+                        onPressed: disabled
+                            ? null
+                            : () => section.isActive
+                                  ? onDeactivate(section)
+                                  : onActivate(section),
+                        icon: Icon(
+                          section.isActive
+                              ? Icons.pause_circle_outline
+                              : Icons.play_circle_outline,
+                        ),
+                      ),
                     IconButton(
                       tooltip: section.isArchived ? 'Restore' : 'Archive',
                       onPressed: disabled

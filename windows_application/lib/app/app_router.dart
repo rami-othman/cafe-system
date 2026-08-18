@@ -118,6 +118,12 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<ProductLifecycleCubit>(
               create: (_) => serviceLocator<ProductLifecycleCubit>(),
             ),
+            BlocProvider<ModifierLibraryCubit>(
+              create: (_) => serviceLocator<ModifierLibraryCubit>(),
+            ),
+            BlocProvider<MenuListCubit>(
+              create: (_) => serviceLocator<MenuListCubit>(),
+            ),
           ],
           child: shell,
         );
@@ -272,18 +278,12 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementModifiers,
           name: AppRouteNames.menuManagementModifiers,
-          builder: (context, state) => BlocProvider<ModifierLibraryCubit>(
-            create: (_) => serviceLocator<ModifierLibraryCubit>(),
-            child: const ModifierLibraryScreen(),
-          ),
+          builder: (context, state) => const ModifierLibraryScreen(),
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenus,
           name: AppRouteNames.menuManagementMenus,
-          builder: (context, state) => BlocProvider<MenuListCubit>(
-            create: (_) => serviceLocator<MenuListCubit>(),
-            child: const MenuListScreen(),
-          ),
+          builder: (context, state) => const MenuListScreen(),
         ),
         GoRoute(
           path: AppRoutes.menuManagementAssignments,
@@ -312,32 +312,38 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementMenuDetail,
           name: AppRouteNames.menuManagementMenuDetail,
-          builder: (context, state) => BlocProvider<MenuDetailCubit>(
-            create: (_) => serviceLocator<MenuDetailCubit>(),
-            child: MenuDetailScreen(
-              menuId: int.parse(state.pathParameters['menuId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['menuId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<MenuDetailCubit>(
+              create: (_) => serviceLocator<MenuDetailCubit>(),
+              child: MenuDetailScreen(menuId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenuPlacements,
           name: AppRouteNames.menuManagementMenuPlacements,
-          builder: (context, state) => BlocProvider<ProductPlacementsCubit>(
-            create: (_) => serviceLocator<ProductPlacementsCubit>(),
-            child: ProductPlacementsScreen(
-              menuId: int.parse(state.pathParameters['menuId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['menuId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ProductPlacementsCubit>(
+              create: (_) => serviceLocator<ProductPlacementsCubit>(),
+              child: ProductPlacementsScreen(menuId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenuEdit,
           name: AppRouteNames.menuManagementMenuEdit,
-          builder: (context, state) => BlocProvider<MenuEditorCubit>(
-            create: (_) => serviceLocator<MenuEditorCubit>(),
-            child: MenuEditorScreen(
-              menuId: int.parse(state.pathParameters['menuId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['menuId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<MenuEditorCubit>(
+              create: (_) => serviceLocator<MenuEditorCubit>(),
+              child: MenuEditorScreen(menuId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementModifierCreate,
@@ -350,22 +356,30 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementModifierDetail,
           name: AppRouteNames.menuManagementModifierDetail,
-          builder: (context, state) => BlocProvider<ModifierGroupDetailCubit>(
-            create: (_) => serviceLocator<ModifierGroupDetailCubit>(),
-            child: ModifierGroupDetailScreen(
-              groupId: int.parse(state.pathParameters['modifierGroupId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(
+              state.pathParameters['modifierGroupId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ModifierGroupDetailCubit>(
+              create: (_) => serviceLocator<ModifierGroupDetailCubit>(),
+              child: ModifierGroupDetailScreen(groupId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementModifierEdit,
           name: AppRouteNames.menuManagementModifierEdit,
-          builder: (context, state) => BlocProvider<ModifierGroupEditorCubit>(
-            create: (_) => serviceLocator<ModifierGroupEditorCubit>(),
-            child: ModifierGroupEditorScreen(
-              groupId: int.parse(state.pathParameters['modifierGroupId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(
+              state.pathParameters['modifierGroupId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ModifierGroupEditorCubit>(
+              create: (_) => serviceLocator<ModifierGroupEditorCubit>(),
+              child: ModifierGroupEditorScreen(groupId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementProductCreate,
@@ -378,24 +392,26 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductEdit,
           name: AppRouteNames.menuManagementProductEdit,
-          builder: (context, state) => BlocProvider<ProductEditorCubit>(
-            create: (_) => serviceLocator<ProductEditorCubit>(),
-            child: ProductEditorScreen(
-              productId: int.parse(state.pathParameters['productId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['productId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ProductEditorCubit>(
+              create: (_) => serviceLocator<ProductEditorCubit>(),
+              child: ProductEditorScreen(productId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementProductModifiers,
           name: AppRouteNames.menuManagementProductModifiers,
-          builder: (context, state) =>
-              BlocProvider<ProductModifierAssignmentsCubit>(
-                create: (_) =>
-                    serviceLocator<ProductModifierAssignmentsCubit>(),
-                child: ProductModifierAssignmentsScreen(
-                  productId: int.parse(state.pathParameters['productId']!),
-                ),
-              ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['productId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ProductModifierAssignmentsCubit>(
+              create: (_) => serviceLocator<ProductModifierAssignmentsCubit>(),
+              child: ProductModifierAssignmentsScreen(productId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementReview,
@@ -425,12 +441,14 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductVariants,
           name: AppRouteNames.menuManagementProductVariants,
-          builder: (context, state) => BlocProvider<VariantsCubit>(
-            create: (_) => serviceLocator<VariantsCubit>(),
-            child: VariantsScreen(
-              productId: int.parse(state.pathParameters['productId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['productId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<VariantsCubit>(
+              create: (_) => serviceLocator<VariantsCubit>(),
+              child: VariantsScreen(productId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.menuManagementVariantPricing,
@@ -514,12 +532,14 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductDetail,
           name: AppRouteNames.menuManagementProductDetail,
-          builder: (context, state) => BlocProvider<ProductDetailCubit>(
-            create: (_) => serviceLocator<ProductDetailCubit>(),
-            child: ProductDetailScreen(
-              productId: int.parse(state.pathParameters['productId']!),
-            ),
-          ),
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['productId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ProductDetailCubit>(
+              create: (_) => serviceLocator<ProductDetailCubit>(),
+              child: ProductDetailScreen(productId: id),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.reports,
@@ -716,4 +736,9 @@ class _InvalidCatalogRouteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Center(child: Text(AppLocalizations.of(context).invalidCatalogRoute));
+}
+
+int? parsePositiveRouteId(String? value) {
+  final int? parsed = int.tryParse(value ?? '');
+  return parsed != null && parsed > 0 ? parsed : null;
 }

@@ -7,8 +7,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../widgets/catalog_formatters.dart';
 import '../models/modifier_editor_drafts.dart';
 import '../models/modifier_models.dart';
+import '../../products/models/product_modifier_assignment.dart';
 
 String modifierRuleSummary(BuildContext context, ModifierGroupRecord group) {
   return modifierRuleSummaryForFields(
@@ -31,6 +33,18 @@ String modifierRuleSummaryForDraft(
   minSelections: int.tryParse(draft.minSelections) ?? 0,
   maxSelections: int.tryParse(draft.maxSelections) ?? 1,
   allowQuantity: draft.allowQuantity,
+);
+
+String modifierRuleSummaryForAssignment(
+  BuildContext context,
+  ProductModifierAssignment assignment,
+) => modifierRuleSummaryForFields(
+  context,
+  selectionType: assignment.selectionType,
+  isRequired: assignment.effectiveIsRequired,
+  minSelections: assignment.effectiveMinSelections,
+  maxSelections: assignment.effectiveMaxSelections,
+  allowQuantity: assignment.effectiveAllowQuantity,
 );
 
 String modifierRuleSummaryForFields(
@@ -56,6 +70,8 @@ String modifierRuleSummaryForFields(
     rule = l10n.modifierRuleExactly(min);
   } else if (required) {
     rule = l10n.modifierRuleAtLeastUpTo(min, max);
+  } else if (max == 1) {
+    rule = l10n.modifierRuleOptionalExactly(1);
   } else if (min == max && min > 0) {
     rule = l10n.modifierRuleOptionalExactly(min);
   } else {
@@ -68,6 +84,12 @@ String modifierRuleSummaryForFields(
 
 String modifierOptionCountLabel(BuildContext context, int count) =>
     context.l10n.modifierOptionsCount(count);
+
+String modifierPriceAdjustmentLabel(BuildContext context, num value) {
+  if (value == 0) return context.l10n.modifierNoExtraCharge;
+  final String formatted = catalogMoney(value);
+  return value > 0 ? '+$formatted' : formatted;
+}
 
 Widget modifierStatusBadge(BuildContext context, ModifierGroupRecord group) {
   final AppLocalizations l10n = context.l10n;

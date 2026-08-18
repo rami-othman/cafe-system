@@ -6,6 +6,17 @@ import '../../pos/models/json_helpers.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 
+enum LifecycleStatus { active, inactive, archived }
+
+LifecycleStatus lifecycleStatus({
+  required bool isActive,
+  required DateTime? archivedAt,
+}) => archivedAt != null
+    ? LifecycleStatus.archived
+    : isActive
+    ? LifecycleStatus.active
+    : LifecycleStatus.inactive;
+
 int _requiredInt(JsonMap json, String key) {
   final int? value = readInt(json[key]);
   if (value == null) throw FormatException('Catalog response is missing $key.');
@@ -60,6 +71,8 @@ class CatalogCategory {
   const CatalogCategory({
     required this.id,
     required this.name,
+    this.nameAr,
+    this.nameEn,
     required this.isActive,
     required this.sortOrder,
   });
@@ -67,20 +80,32 @@ class CatalogCategory {
   factory CatalogCategory.fromJson(JsonMap json) => CatalogCategory(
     id: _requiredInt(json, 'id'),
     name: _requiredString(json, 'name'),
+    nameAr: _optional(json['nameAr']),
+    nameEn: _optional(json['nameEn']),
     isActive: readBool(json['isActive'], fallback: true),
     sortOrder: readInt(json['sortOrder']) ?? 0,
   );
 
   final int id;
   final String name;
+  final String? nameAr;
+  final String? nameEn;
   final bool isActive;
   final int sortOrder;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class ReportingCategory {
   const ReportingCategory({
     required this.id,
     required this.name,
+    this.nameAr,
+    this.nameEn,
     required this.code,
     required this.isActive,
     required this.sortOrder,
@@ -89,6 +114,8 @@ class ReportingCategory {
   factory ReportingCategory.fromJson(JsonMap json) => ReportingCategory(
     id: _requiredInt(json, 'id'),
     name: _requiredString(json, 'name'),
+    nameAr: _optional(json['nameAr']),
+    nameEn: _optional(json['nameEn']),
     code: readString(json['code']),
     isActive: readBool(json['isActive'], fallback: true),
     sortOrder: readInt(json['sortOrder']) ?? 0,
@@ -96,15 +123,25 @@ class ReportingCategory {
 
   final int id;
   final String name;
+  final String? nameAr;
+  final String? nameEn;
   final String code;
   final bool isActive;
   final int sortOrder;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class KitchenStation {
   const KitchenStation({
     required this.id,
     required this.name,
+    this.nameAr,
+    this.nameEn,
     required this.code,
     required this.branchId,
     required this.branchName,
@@ -117,6 +154,8 @@ class KitchenStation {
     return KitchenStation(
       id: _requiredInt(json, 'id'),
       name: _requiredString(json, 'name'),
+      nameAr: _optional(json['nameAr']),
+      nameEn: _optional(json['nameEn']),
       code: readString(json['code']),
       branchId: readInt(json['branchId']),
       branchName: readString(
@@ -130,11 +169,19 @@ class KitchenStation {
 
   final int id;
   final String name;
+  final String? nameAr;
+  final String? nameEn;
   final String code;
   final int? branchId;
   final String branchName;
   final bool isActive;
   final int sortOrder;
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 }
 
 class ProductVariant {
@@ -152,6 +199,8 @@ class ProductVariant {
     required this.isActive,
     required this.sortOrder,
     this.archivedAt,
+    this.recipeConfigured,
+    this.recipeComponentCount = 0,
   });
 
   factory ProductVariant.fromJson(JsonMap json) => ProductVariant(
@@ -168,6 +217,10 @@ class ProductVariant {
     isActive: readBool(json['isActive'], fallback: true),
     sortOrder: readInt(json['sortOrder']) ?? 0,
     archivedAt: _date(json['archivedAt']),
+    recipeConfigured: json.containsKey('recipeConfigured')
+        ? readBool(json['recipeConfigured'])
+        : null,
+    recipeComponentCount: readInt(json['recipeComponentCount']) ?? 0,
   );
 
   final int id;
@@ -183,8 +236,14 @@ class ProductVariant {
   final bool isActive;
   final int sortOrder;
   final DateTime? archivedAt;
+  final bool? recipeConfigured;
+  final int recipeComponentCount;
 
-  bool get isArchived => archivedAt != null || !isActive;
+  LifecycleStatus get lifecycle =>
+      lifecycleStatus(isActive: isActive, archivedAt: archivedAt);
+  bool get isArchived => lifecycle == LifecycleStatus.archived;
+  bool get isInactive => lifecycle == LifecycleStatus.inactive;
+  bool get isActiveLifecycle => lifecycle == LifecycleStatus.active;
 
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,
@@ -341,6 +400,8 @@ class ProductSummary {
   final DateTime? archivedAt;
 
   bool get isArchived => archivedAt != null;
+  bool get isInactive => archivedAt == null && !isActive;
+  bool get isActiveLifecycle => archivedAt == null && isActive;
 
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,

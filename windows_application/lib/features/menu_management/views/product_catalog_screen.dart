@@ -206,6 +206,7 @@ class _Filters extends StatelessWidget {
           child: SegmentedButton<String>(
             segments: <ButtonSegment<String>>[
               ButtonSegment(value: 'active', label: Text(copy.active)),
+              ButtonSegment(value: 'inactive', label: Text(copy.inactive)),
               ButtonSegment(value: 'archived', label: Text(copy.archived)),
               ButtonSegment(value: 'all', label: Text(copy.all)),
             ],
@@ -737,7 +738,12 @@ class _ProductRow extends StatelessWidget {
         );
         return Semantics(
           button: true,
-          label: '$name, ${product.isArchived ? copy.archived : copy.active}',
+          label:
+              '$name, ${product.isArchived
+                  ? copy.archived
+                  : product.isInactive
+                  ? copy.inactive
+                  : copy.active}',
           child: Material(
             color: AppColors.surface,
             child: InkWell(
@@ -1034,6 +1040,12 @@ class _ProductActions extends StatelessWidget {
             child: Text(copy.manageModifiers),
           ),
           PopupMenuItem(
+            value: product.isActive
+                ? _ProductAction.deactivate
+                : _ProductAction.activate,
+            child: Text(product.isActive ? 'Deactivate' : 'Activate'),
+          ),
+          PopupMenuItem(
             value: _ProductAction.archive,
             child: Text(
               copy.archive,
@@ -1067,6 +1079,12 @@ class _ProductActions extends StatelessWidget {
       case _ProductAction.archive:
         await _showLifecycleDialog(context, product, archive: true);
         return;
+      case _ProductAction.activate:
+        await context.read<ProductLifecycleCubit>().activate(product.id);
+        return;
+      case _ProductAction.deactivate:
+        await context.read<ProductLifecycleCubit>().deactivate(product.id);
+        return;
       case _ProductAction.restore:
         await _showLifecycleDialog(context, product, archive: false);
         return;
@@ -1074,7 +1092,16 @@ class _ProductActions extends StatelessWidget {
   }
 }
 
-enum _ProductAction { open, edit, variants, modifiers, archive, restore }
+enum _ProductAction {
+  open,
+  edit,
+  variants,
+  modifiers,
+  activate,
+  deactivate,
+  archive,
+  restore,
+}
 
 Future<void> _showLifecycleDialog(
   BuildContext context,

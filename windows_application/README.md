@@ -1,157 +1,29 @@
 # Cafe System 618 Windows Application
 
-## Current Authoritative Status
+Flutter desktop client for Cafe System 618. The authoritative Menu Management
+status and contracts are in [PROJECT_STATUS.md](PROJECT_STATUS.md); the companion
+backend/domain record is [Menu Management Architecture](../docs/MENU_MANAGEMENT_ARCHITECTURE.md).
 
-The Review workflow includes a Versions tab scoped only by Branch and Sales
-Channel. History is paginated and metadata-only; details show bounded Snapshot
-counts, while immutable JSON is fetched only as an explicit read-only LTR
-diagnostic. Backend comparison output is bounded and `truncated` is explicitly
-non-exhaustive. Rollback creates a new immutable Version and never reactivates a
-historical Version; no-change rollback refreshes History and Current Version.
-Phase 4E and Phase 4F are complete. Version History is Branch + Channel scoped,
-metadata-only and paginated. Snapshot payload is explicit, diagnostic, read-only,
-and opt-in. Comparison is Backend-generated and may be bounded; `truncated=true`
-means only part of the difference set was returned. Rollback creates a new
-immutable Version; historical Versions are never reactivated, and a no-change
-rollback creates no Version. Phase 4G — Catalog Setup is complete: Categories,
-Reporting Categories, and Kitchen Stations are manageable through the desktop
-client and have passed focused contract, lifecycle, Product Editor integration,
-route, and RTL verification. Phase 4H — COMPLETE: Recipe configuration belongs to
-Product Variants; material identity uses stable `inventory_items` identities with
-exact decimal quantity strings and canonical mapped units. Variant Base Recipes,
-Global/Product/Variant Material Adjustments, and Backend-authoritative Recipe
-Simulation are complete. No runtime stock behavior or automatic Inventory
-availability exists; POS Published Snapshot Sync remains later work. Authentication,
-Combos, and broader localization migration remain unimplemented.
+Menu Management currently covers catalog and variants, Modifier Library and product
+assignments, recipes/material adjustments, menu composition, assignments/schedules,
+review/publish, and version history. It keeps lifecycle, scheduled availability,
+operational availability, and menu publication as separate concerns.
 
-## Phase 4J — Menu Management UI/UX Final Polish
+Operational temporary-unavailability mutations submit an offset-less Branch-local
+timestamp. Flutter must not send `DateTime.toIso8601String()` for that field; the
+backend Branch timezone is authoritative.
 
-Status: **COMPLETE** after Flutter formatting, analysis, tests, and diff checks.
+UX-G0-A through UX-G0-D are complete; UX-G0-E awaits only a locally rerun
+`flutter gen-l10n` after the Codex environment timed out. The next approved work
+is UX Batch 7 — Recipes & Materials; it has not started. Phase 4K cleanup, POS
+Published Snapshot Sync, and Inventory runtime are deferred.
 
-Phase 4J is presentation and usability only. The existing Menu Management routes,
-backend contracts, validation, pricing and availability precedence, Recipe resolver,
-publication lifecycle, snapshots, and rollback semantics are unchanged. The shared
-Menu Management navigation now groups the established lifecycle as Build,
-Configure, and Review & release without creating a new sidebar or wizard. Recipe
-screens explain consumed materials and override inheritance in manager-facing
-language. Review follows Check Menu, Preview, Publish, and Version History, while
-checksums, publication identifiers, and similar support data are secondary
-technical details. English and Arabic strings were added only for the polished
-Menu Management surfaces; broader translation migration remains deferred.
+Verification gate (run each command independently):
 
-The next phase remains Phase 4K — Architecture Cleanup. Menu Management is not
-finally closed.
-
-## Phase 4I — Full Menu Management Regression
-
-Status: **COMPLETE** after the Backend and Flutter final verification gates pass.
-Baseline was 96 Backend tests / 1,344 assertions and 270 Flutter tests. Final
-verification is 98 Backend tests / 1,476 assertions and 270 Flutter tests, with
-Pint, `dart format .`, `flutter analyze`, and `git diff --check` passing.
-Phase 4I adds a real-stack Backend lifecycle regression that creates realistic
-Latte catalog data, configures Variants, Recipes, Modifier adjustments, Menu
-composition, Branch/Channel assignment, schedules, effective pricing and
-availability, then validates, previews, publishes two semantic Versions,
-compares price and Recipe changes, and rolls back without mutating history.
-
-The regression also verifies tenant boundaries and non-destructive archive/
-restore behavior. Product Detail now retains archived Category, Reporting
-Category, and Kitchen Station references as diagnostics; active-reference
-validation still blocks new invalid management writes and Product restoration
-until required references are restored. The existing Flutter route, Cubit, and
-representative English/Arabic suites remain green. The Windows manual smoke
-checklist is documented in `docs/MENU_MANAGEMENT_ARCHITECTURE.md`; it was not
-executed as part of this automated regression pass.
-
-POS Published Snapshot Sync remains not implemented. Runtime Inventory
-integration remains not implemented. Authentication remains deferred. Combos
-remain deferred. Broader localization remains deferred.
-
-## Menu Management
-
-### Catalog Setup
-
-`/menu-management/catalog-setup` manages tenant-scoped Catalog Categories,
-Reporting Categories, and Kitchen Stations. It uses the Laravel list, create,
-update, archive, restore, and reorder APIs only; no permanent delete is exposed.
-Archive/restore is non-destructive. Reporting Categories affect reporting rather
-than customer-facing Menu placement. Product Editor links open the matching setup
-tab and retain the draft while reference lists refresh on return, including an
-archived assigned reference in Edit mode. Phase 4H — Recipes / Consumed Materials
-Configuration is complete. Materials retain stable `inventory_items` identity;
-there is no runtime stock behavior or automatic Inventory availability, and POS
-Published Snapshot Sync remains later work. Authentication, Combos, and broader
-localization migration remain unimplemented.
-
-Menus and Sections are administered through `/menu-management/menus`, `/create`,
-`/:menuId`, `/:menuId/edit`, and `/:menuId/placements`. A Catalog Product belongs
-to the Catalog; a Product Placement belongs to one Menu Section. Placements support
-server-side product search, display overrides, visible/hidden state, move, ordered
-reorder, and soft archive/restore. A Product may be placed in different Sections but
-not twice in the same active Section; moves are limited to eligible Sections in that
-same Menu. Archived Menus and Sections are read-only.
-Hidden and archived placements are different states; Product lifecycle is shown
-separately. Branch/Channel assignments and schedules are administered through
-`/menu-management/assignments`. The screen uses tenant-scoped active Branches and
-the backend SalesChannel values, supports complete-scope ordering and assignment
-activation, and never exposes Tenant IDs. Removing an assignment leaves the Menu,
-Sections, Placements, and published history untouched.
-
-Menu schedules are Menu-owned rules scoped to the selected Branch and Channel.
-No scoped active rules means the Menu is unrestricted. Weekly days (`0`–`6`), date
-ranges, priorities, active state, and overnight windows such as `22:00–02:00` are
-supported. The branch timezone is displayed as context; the desktop client does not
-evaluate current availability in its machine timezone. Rule synchronization follows
-the backend's complete-set contract: omission removes that editable rule and there is
-no independent rule restore action. The client first loads every rule for the Menu,
-then preserves global and other Branch/Channel scopes while editing only the selected
-exact scope; inherited rules are diagnostics, not copied or editable there. Preview, Validation, Publishing, Version History,
-Variant Price Overrides are available at `/menu-management/products/:productId/variants/:variantId/pricing`. Variant Base Price remains owned by Variant Management; this diagnostic/administration screen manages only Branch, Channel, and Branch + Channel overrides. The complete-sync endpoint is loaded authoritatively before edits, submits the complete draft set, preserves untouched scopes, and reloads after success. Effective Price is resolved by the backend using Branch + Channel → Branch → Channel → Variant Base Price. Archived Products and Variants remain diagnostic/read-only. Scheduled Product and Variant Availability is Phase 4D.2; POS Sync remains a later phase.
-
-Product archive and restore are available from Product Catalog actions and Product Detail. Archive is a soft-delete lifecycle operation: it does not permanently delete the Product, change existing Orders, or modify published historical snapshots. Restore returns the Product to the editable Catalog but does not publish it, assign it to a Menu, restore archived Variants/Modifier data, or make it operationally available. `isActive` and archived state are distinct; archived status is identified by `archivedAt`.
-
-Product Modifier Assignment is available at `/menu-management/products/:productId/modifiers`. It manages only product-to-library assignment: shared Groups and Options remain owned by Modifier Library. The screen distinguishes Library Defaults, nullable Product Overrides, and resolved Effective Settings. Removing an assignment never deletes a Group or Option; Menu Builder, Availability, and publishing remain later phases.
-
-The Flutter Windows desktop application supports POS, Orders, Discounts, Reports, and the read-only Menu Management Product Catalog. Menu Management uses the real Laravel Admin Catalog APIs; it contains no mock menu data.
-
-Menu Management has an integrated Review & Preview & Publish workflow at `/menu-management/review`. It selects a tenant Branch and actual Sales Channel, then reviews either one assigned Menu or the complete assigned collection. Validation is authoritative: errors block, while warnings and information remain diagnostic and warnings can proceed only after explicit confirmation. Publishing calls `POST /api/v1/admin/menu-management/publish`; a selected Menu sends its supported `menuIds` value and collection scope omits `menuIds` so Backend resolves active assignments. Backend reruns validation, creates an immutable Version only when semantic content changes, and records a no-change publication without creating a Version when it does not. Existing Orders are never modified. `GET /api/v1/admin/menu-management/current-version` displays metadata only, never the Snapshot payload. Operational sold-out, temporary overrides, and remaining quantities are excluded from immutable Snapshots. Phase 4F Version History, comparison, and rollback are complete. POS Sync remains unimplemented.
-
-```bash
+```sh
 flutter pub get
+flutter gen-l10n
+dart format .
 flutter analyze
-flutter test
-flutter run -d windows
+flutter test --reporter compact
 ```
-
-Backend tax rates are supplied with each branch and stored on backend orders/receipts. The shared Flutter tax configuration is only a fallback for local/mock data or malformed responses.
-
-## Localization
-
-The desktop application supports English (`en`) and Arabic (`ar`) through Flutter
-`gen_l10n`. Translation sources are `lib/l10n/app_en.arb` and `lib/l10n/app_ar.arb`;
-run `flutter gen-l10n` after changing them. The top-bar language selector changes
-the UI immediately and persists its choice under `app_locale`; a missing preference
-uses a supported operating-system locale and otherwise falls back to English.
-
-Arabic uses RTL layout. New shared UI must use directional layout primitives, retain
-technical values such as SKU and API codes as focused LTR islands, and format dates,
-numbers, and branch currency using the active display locale without changing API
-numeric serialization. See `../docs/FLUTTER_LOCALIZATION_ARCHITECTURE.md` for the
-entity-field fallback and enum/reason-code presentation rules. Menu Management is
-paused after the new Phase 4E.3 publishing strings; no full screen-by-screen
-translation migration was added. Checksum, Version number, Publication ID, and
-diagnostic timestamps remain LTR in Arabic.
-
-Menu Management includes the central Modifier Library routes: `/menu-management/modifiers`, `/create`, `/:modifierGroupId`, and `/:modifierGroupId/edit`. It manages reusable Modifier Groups and their Options, including archive/restore and active-option ordering. Price Delta belongs to an Option; Variant Base Price belongs to its Variant. Product Modifier Assignment is implemented separately at the Product route. POS continues to use the temporary Catalog API.
-
-## Scheduled Product and Variant Availability
-
-Phase 4D.2 is administered at `/menu-management/products/:productId/availability`, with optional `variantId`, `branchId`, and `channel` query parameters. The backend owns one complete Product rule set: a null `productVariantId` identifies a Product rule and a Variant ID identifies a Variant rule. Each rule has one nullable `dayOfWeek` (`0`–`6`), not a multi-day `daysOfWeek` array. Flutter loads and saves the full authoritative set, preserving scopes not being edited. The backend preview is authoritative and evaluates in the selected Branch timezone: Variant rules take precedence over Product rules, followed by Branch + Channel, Branch, Channel, and Global. No governing rule is unrestricted; a governing scope outside every window is `outside_schedule`; overnight rules are supported. Operational overrides remain a separate runtime feature.
-
-## Operational Availability Overrides
-
-Phase 4D.3A is administered at `/menu-management/products/:productId/operational-availability`, with optional `variantId`, `branchId`, and `channel` query parameters. It manages immediate Product and Variant runtime override records only, through the real Product and Variant operational-availability endpoints. A record always has an active Tenant Branch plus either an actual Sales Channel or `all` for every channel in that Branch; branchless global records are not part of this API.
-
-`available`, `sold_out`, and `temporarily_unavailable` are stored override statuses. An explicit narrower Available record may override a broader Sold Out record without deleting it. Temporary records use `unavailableUntil`, interpreted by the backend in the selected Branch timezone; expired records remain stored and visible diagnostically but the resolver ignores them. Remaining quantity is operational metadata only and is never synchronized to Inventory or used to automatically change status. Operational overrides are separate from Scheduled Availability and are excluded from immutable Published Snapshots. Product archival makes all override mutations read-only; Variant archival makes only that Variant's overrides read-only.
-
-Phase 4D.3B adds the authoritative Operational Resolution section to that same screen. It calls `GET /api/v1/admin/catalog/products/{product}/operational-availability-preview` with an active Branch and a real runtime Sales Channel; Variant context uses `productVariantId` on that endpoint. The Backend response, not Flutter, resolves Variant exact Channel → Variant `all` → Product exact Channel → Product `all` → Available fallback. The diagnostic distinguishes an explicit Available match from the `no_operational_override` fallback, shows the matched level/scope/record, and leaves expired records visible in the override list while reporting the next active backend match. `all` is only an override scope, never a requested runtime channel. Operational resolution is not a complete sellability result and remains separate from scheduled rules, publishing, inventory, and immutable snapshots.

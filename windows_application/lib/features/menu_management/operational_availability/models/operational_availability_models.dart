@@ -100,7 +100,7 @@ class OperationalAvailabilityPreview extends Equatable {
       remainingQuantity: json['remainingQuantity'] == null
           ? null
           : readDouble(json['remainingQuantity']),
-      unavailableUntil: DateTime.tryParse(readString(json['unavailableUntil'])),
+      unavailableUntil: _branchLocalDateTime(json['unavailableUntil']),
       reason: _nullable(json['reason']),
     );
   }
@@ -181,7 +181,7 @@ class OperationalAvailabilityOverride extends Equatable {
       remainingQuantity: json['remainingQuantity'] == null
           ? null
           : readDouble(json['remainingQuantity']),
-      unavailableUntil: DateTime.tryParse(readString(json['unavailableUntil'])),
+      unavailableUntil: _branchLocalDateTime(json['unavailableUntil']),
       reason: _nullable(json['reason']),
       isExpired: readBool(json['isExpired']),
       createdAt: DateTime.tryParse(readString(json['createdAt'])),
@@ -277,7 +277,10 @@ class OperationalAvailabilityDraft extends Equatable {
       'status': operationalStatusWire(status),
       if (remainingQuantity != null) 'remainingQuantity': remainingQuantity,
       if (isTemporary && unavailableUntil != null)
-        'unavailableUntil': unavailableUntil!.toIso8601String(),
+        // This is deliberately a branch-local wall-clock timestamp, not the
+        // workstation instant. The API interprets offset-less values in the
+        // authoritative Branch timezone.
+        'unavailableUntil': _branchLocalTimestamp(unavailableUntil!),
       if (status != OperationalAvailabilityStatus.available &&
           reason != null &&
           reason!.trim().isNotEmpty)
@@ -294,6 +297,17 @@ class OperationalAvailabilityDraft extends Equatable {
     unavailableUntil,
     reason,
   ];
+}
+
+String _branchLocalTimestamp(DateTime value) =>
+    '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}T${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}:${value.second.toString().padLeft(2, '0')}';
+
+/// API responses are serialized in the Branch timezone. Keep their wall-clock
+/// fields rather than converting them to the workstation timezone.
+DateTime? _branchLocalDateTime(dynamic value) {
+  final String wire = readString(value);
+  if (wire.length < 19) return DateTime.tryParse(wire);
+  return DateTime.tryParse(wire.substring(0, 19));
 }
 
 String? _nullable(dynamic value) {

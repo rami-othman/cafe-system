@@ -31,6 +31,11 @@ class ModifierGroup extends Model
         return $this->hasMany(ModifierOption::class);
     }
 
+    public function optionPreview(): HasMany
+    {
+        return $this->hasMany(ModifierOption::class);
+    }
+
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'product_modifier_group')->withPivot(['tenant_id', 'sort_order', 'is_required_override', 'min_selections_override', 'max_selections_override', 'allow_quantity_override'])->withTimestamps();

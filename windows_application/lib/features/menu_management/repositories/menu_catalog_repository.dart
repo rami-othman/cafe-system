@@ -99,6 +99,8 @@ abstract class MenuCatalogRepository {
     int productId,
     ProductEditorDraft draft,
   );
+  Future<ProductDetail> setProductActive(int productId, bool isActive) =>
+      throw UnsupportedError('Product activation is not configured.');
   Future<ProductDetail> archiveProduct(int productId) =>
       throw UnsupportedError('Product lifecycle is not configured.');
   Future<ProductDetail> restoreProduct(int productId) =>
@@ -1284,6 +1286,15 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     );
     return _detail(response);
   }
+
+  @override
+  Future<ProductDetail> setProductActive(int productId, bool isActive) async =>
+      _detail(
+        await _apiClient.patch(
+          'admin/catalog/products/$productId',
+          data: <String, dynamic>{'isActive': isActive},
+        ),
+      );
 
   @override
   Future<ProductDetail> archiveProduct(int productId) async => _detail(

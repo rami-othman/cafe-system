@@ -110,7 +110,9 @@ class CatalogProductService
         }
         $payload = ['name' => $data['name'], 'name_ar' => $data['nameAr'] ?? null, 'name_en' => $data['nameEn'] ?? null, 'description' => $data['description'] ?? null, 'description_ar' => $data['descriptionAr'] ?? null, 'description_en' => $data['descriptionEn'] ?? null, 'image_url' => $data['imageUrl'] ?? null, 'category_id' => $data['categoryId'] ?? null, 'reporting_category_id' => $data['reportingCategoryId'] ?? null, 'kitchen_station_id' => $data['kitchenStationId'] ?? null, 'product_type' => $type, 'preparation_time_minutes' => $data['preparationTimeMinutes'] ?? null, 'is_stock_tracked' => $data['isStockTracked'] ?? false, 'sort_order' => $data['sortOrder'] ?? 0];
 
-        return $create ? $payload + ['is_active' => $data['isActive'] ?? true] : $payload;
+        return $create
+            ? $payload + ['is_active' => $data['isActive'] ?? true]
+            : $payload + ['is_active' => $data['isActive']];
     }
 
     public function variantPayload(array $data): array

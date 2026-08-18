@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,6 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../models/modifier_models.dart';
+import '../models/modifier_editor_drafts.dart';
 
 enum ModifierLibraryStatus { initial, loading, loaded, refreshing, failure }
 
@@ -71,8 +74,17 @@ class ModifierLibraryCubit extends Cubit<ModifierLibraryState> {
   ModifierLibraryCubit({required this.repository})
     : super(const ModifierLibraryState());
   final MenuCatalogRepository repository;
+  Timer? _searchTimer;
+  int _requestTicket = 0;
   Future<void> load({bool refresh = false, bool next = false}) async {
-    if (state.isBusy || (next && !state.hasMore)) return;
+    if (isClosed ||
+        state.currentActionId != null ||
+        (next &&
+            (!state.hasMore ||
+                state.status == ModifierLibraryStatus.loading))) {
+      return;
+    }
+    final int ticket = ++_requestTicket;
     final int page = next ? state.pagination.currentPage + 1 : 1;
     emit(
       state.copyWith(
@@ -85,6 +97,7 @@ class ModifierLibraryCubit extends Cubit<ModifierLibraryState> {
     try {
       final CatalogPage<ModifierGroupRecord> result = await repository
           .listModifierGroups(filter: state.filter, page: page);
+      if (isClosed || ticket != _requestTicket) return;
       emit(
         state.copyWith(
           status: ModifierLibraryStatus.loaded,
@@ -95,6 +108,7 @@ class ModifierLibraryCubit extends Cubit<ModifierLibraryState> {
         ),
       );
     } catch (error) {
+      if (isClosed || ticket != _requestTicket) return;
       emit(
         state.copyWith(
           status: ModifierLibraryStatus.failure,
@@ -105,36 +119,120 @@ class ModifierLibraryCubit extends Cubit<ModifierLibraryState> {
   }
 
   Future<void> updateFilter(ModifierGroupFilter filter) async {
+    _searchTimer?.cancel();
+    ++_requestTicket;
     emit(state.copyWith(filter: filter));
     await load();
   }
 
-  Future<void> updateSearch(String value) =>
-      updateFilter(state.filter.copyWith(search: value));
+  Future<void> updateSearch(String value) async {
+    _searchTimer?.cancel();
+    ++_requestTicket;
+    emit(state.copyWith(filter: state.filter.copyWith(search: value)));
+    _searchTimer = Timer(const Duration(milliseconds: 350), load);
+  }
+
   Future<void> refresh() => load(refresh: true);
+  void cancelPendingSearch() => _searchTimer?.cancel();
+
+  Future<bool> prepareReorder() async {
+    _searchTimer?.cancel();
+    if (isClosed ||
+        state.currentActionId != null ||
+        state.filter.hasActiveFilters) {
+      return false;
+    }
+    final int ticket = ++_requestTicket;
+    emit(
+      state.copyWith(
+        status: ModifierLibraryStatus.refreshing,
+        clearError: true,
+      ),
+    );
+    try {
+      final List<ModifierGroupRecord> groups = <ModifierGroupRecord>[];
+      int page = 1;
+      CatalogPage<ModifierGroupRecord> result;
+      do {
+        result = await repository.listModifierGroups(
+          filter: const ModifierGroupFilter(),
+          page: page,
+          perPage: 100,
+        );
+        if (isClosed || ticket != _requestTicket) return false;
+        groups.addAll(result.items);
+        page++;
+      } while (page <= result.meta.lastPage);
+      emit(
+        state.copyWith(
+          status: ModifierLibraryStatus.loaded,
+          groups: groups,
+          pagination: result.meta,
+        ),
+      );
+      return true;
+    } catch (error) {
+      if (isClosed || ticket != _requestTicket) return false;
+      emit(
+        state.copyWith(
+          status: ModifierLibraryStatus.failure,
+          errorMessage: _message(error),
+        ),
+      );
+      return false;
+    }
+  }
+
   Future<void> archive(int id) =>
       _mutate(id, () => repository.archiveModifierGroup(id));
   Future<void> restore(int id) =>
       _mutate(id, () => repository.restoreModifierGroup(id));
+  Future<void> activate(ModifierGroupRecord group) => _mutate(
+    group.id,
+    () => repository.updateModifierGroup(group.id, _draft(group, true)),
+  );
+  Future<void> deactivate(ModifierGroupRecord group) => _mutate(
+    group.id,
+    () => repository.updateModifierGroup(group.id, _draft(group, false)),
+  );
+
+  ModifierGroupDraft _draft(ModifierGroupRecord group, bool isActive) =>
+      ModifierGroupDraft(
+        name: group.name,
+        nameAr: group.nameAr ?? '',
+        nameEn: group.nameEn ?? '',
+        code: group.code ?? '',
+        groupType: group.groupType,
+        selectionType: group.selectionType,
+        isRequired: group.isRequired,
+        minSelections: group.minSelections.toString(),
+        maxSelections: group.maxSelections.toString(),
+        allowQuantity: group.allowQuantity,
+        isActive: isActive,
+        sortOrder: group.sortOrder.toString(),
+      );
   Future<void> move(ModifierGroupRecord group, int direction) async {
     if (state.currentActionId != null) return;
     final List<ModifierGroupRecord> active = state.groups
-        .where((item) => !item.isArchived)
+        .where((item) => item.isActive && !item.isArchived)
         .toList();
     final int index = active.indexWhere((item) => item.id == group.id);
     final int target = index + direction;
     if (index < 0 || target < 0 || target >= active.length) return;
 
     final ModifierGroupRecord swapped = active[target];
-    final List<ModifierReorderItem> items = <ModifierReorderItem>[
-      ModifierReorderItem(group.id, swapped.sortOrder),
-      ModifierReorderItem(swapped.id, group.sortOrder),
-    ];
+    active[index] = swapped;
+    active[target] = group;
+    final List<ModifierReorderItem> items = active
+        .asMap()
+        .entries
+        .map((entry) => ModifierReorderItem(entry.value.id, entry.key))
+        .toList(growable: false);
     emit(state.copyWith(currentActionId: group.id, clearError: true));
     try {
       await repository.reorderModifierGroups(items);
       emit(state.copyWith(clearAction: true));
-      await load(refresh: true);
+      await prepareReorder();
     } catch (error) {
       emit(state.copyWith(clearAction: true, errorMessage: _message(error)));
     }
@@ -158,4 +256,10 @@ class ModifierLibraryCubit extends Cubit<ModifierLibraryState> {
   String _message(Object error) => error is ApiException
       ? error.message
       : 'Unable to update this modifier group.';
+
+  @override
+  Future<void> close() {
+    _searchTimer?.cancel();
+    return super.close();
+  }
 }

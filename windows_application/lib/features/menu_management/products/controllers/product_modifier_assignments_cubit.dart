@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../models/catalog_models.dart';
 import '../../modifiers/models/modifier_models.dart';
-import '../../recipes/models/recipe_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../models/product_modifier_assignment.dart';
 import 'product_modifier_assignments_state.dart';
@@ -52,9 +51,10 @@ class ProductModifierAssignmentsCubit
       }
       final assignments = (results[1] as List<ProductModifierAssignment>)
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-      final Set<int> materialImpactConfiguredGroupIds =
-          await _materialImpactGroups(product.id, assignments);
-      if (isClosed) return;
+      final Set<int> materialImpactConfiguredGroupIds = assignments
+          .where((assignment) => assignment.materialImpactConfigured)
+          .map((assignment) => assignment.modifierGroupId)
+          .toSet();
       emit(
         state.copyWith(
           status: ProductModifierAssignmentsStatus.loaded,
@@ -75,36 +75,6 @@ class ProductModifierAssignmentsCubit
         ),
       );
     }
-  }
-
-  Future<Set<int>> _materialImpactGroups(
-    int productId,
-    List<ProductModifierAssignment> assignments,
-  ) async {
-    final Set<int> groups = <int>{};
-    for (final ProductModifierAssignment assignment in assignments) {
-      final ModifierGroupRecord group;
-      try {
-        group = await repository.getModifierGroup(assignment.modifierGroupId);
-      } catch (_) {
-        continue;
-      }
-      final Iterable<ModifierOptionRecord> options = group.options;
-      for (final ModifierOptionRecord option in options) {
-        try {
-          final ModifierRecipeProfile profile = await repository
-              .getModifierRecipeProfile(option.id, productId: productId);
-          if (profile.components.isNotEmpty) {
-            groups.add(assignment.modifierGroupId);
-            break;
-          }
-        } catch (_) {
-          // This is purely an informational indicator. Do not fail the
-          // assignment screen if an optional recipe profile cannot be read.
-        }
-      }
-    }
-    return groups;
   }
 
   Future<void> refresh() {
@@ -222,6 +192,8 @@ class ProductModifierAssignmentsCubit
       emit(state.copyWith(fieldErrors: errors, clearError: true));
       return false;
     }
+    final bool summaryChanged =
+        state.assignments.length != state.loadedAssignments.length;
     emit(
       state.copyWith(
         isSaving: true,
@@ -242,6 +214,7 @@ class ProductModifierAssignmentsCubit
       emit(
         state.copyWith(
           successMessage: 'Product modifiers updated successfully.',
+          summaryChanged: summaryChanged,
         ),
       );
       return true;

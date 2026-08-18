@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
-import '../../recipes/models/recipe_models.dart';
+import '../../pricing/configured_price_validation.dart';
 import '../models/variant_editor_draft.dart';
 import 'variants_state.dart';
 
@@ -74,6 +74,18 @@ class VariantsCubit extends Cubit<VariantsState> {
     () => repository.setDefaultVariant(id),
     'Default Variant updated successfully.',
   );
+  Future<bool> activate(ProductVariant variant) => _lifecycle(
+    VariantAction.activate,
+    variant,
+    true,
+    'Variant activated successfully.',
+  );
+  Future<bool> deactivate(ProductVariant variant) => _lifecycle(
+    VariantAction.deactivate,
+    variant,
+    false,
+    'Variant deactivated successfully.',
+  );
   Future<bool> archive(int id, {int? replacementDefaultVariantId}) => _run(
     VariantAction.archive,
     null,
@@ -89,6 +101,34 @@ class VariantsCubit extends Cubit<VariantsState> {
     () => repository.restoreVariant(id, makeDefault: makeDefault),
     'Variant restored successfully.',
   );
+
+  Future<bool> _lifecycle(
+    VariantAction action,
+    ProductVariant variant,
+    bool isActive,
+    String message,
+  ) => _run(
+    action,
+    _draft(variant, isActive: isActive),
+    () => repository.updateVariant(
+      variant.id,
+      _draft(variant, isActive: isActive),
+    ),
+    message,
+  );
+
+  VariantEditorDraft _draft(ProductVariant variant, {required bool isActive}) =>
+      VariantEditorDraft(
+        name: variant.name,
+        nameAr: variant.nameAr ?? '',
+        nameEn: variant.nameEn ?? '',
+        sku: variant.sku ?? '',
+        barcode: variant.barcode ?? '',
+        basePrice: variant.basePrice.toString(),
+        costPrice: variant.costPrice?.toString() ?? '',
+        isActive: isActive,
+        sortOrder: variant.sortOrder.toString(),
+      );
 
   Future<bool> reorder(List<ProductVariant> next) async {
     if (state.isMutating || state.product == null || !_unique(next)) {
@@ -152,7 +192,13 @@ class VariantsCubit extends Cubit<VariantsState> {
     emit(state.copyWith(action: action, clearErrors: true, clearSuccess: true));
     try {
       await request();
-      await _reloadAfterMutation(message);
+      await _reloadAfterMutation(
+        message,
+        summaryChanged:
+            action == VariantAction.create ||
+            action == VariantAction.archive ||
+            action == VariantAction.restore,
+      );
       return true;
     } catch (error) {
       if (error is ApiException && error.validationErrors != null) {
@@ -173,40 +219,41 @@ class VariantsCubit extends Cubit<VariantsState> {
     }
   }
 
-  Future<void> _reloadAfterMutation(String message) async {
+  Future<void> _reloadAfterMutation(
+    String message, {
+    bool summaryChanged = false,
+  }) async {
     final ProductDetail product = await repository.getProduct(
       state.product!.id,
       includeArchived: true,
     );
-    await _setProduct(product, status: VariantsStatus.loaded, message: message);
+    await _setProduct(
+      product,
+      status: VariantsStatus.loaded,
+      message: message,
+      summaryChanged: summaryChanged,
+    );
   }
 
   Future<void> _setProduct(
     ProductDetail product, {
     required VariantsStatus status,
     String? message,
+    bool summaryChanged = false,
   }) async {
     final List<ProductVariant> active = product.variants
-        .where((item) => !item.isArchived)
+        .where((item) => item.isActiveLifecycle)
+        .toList(growable: false);
+    final List<ProductVariant> inactive = product.variants
+        .where((item) => item.isInactive)
         .toList(growable: false);
     final List<ProductVariant> archived = product.variants
         .where((item) => item.isArchived)
         .toList(growable: false);
     final Map<int, bool> recipeConfigured = Map<int, bool>.fromEntries(
-      await Future.wait<MapEntry<int, bool>>(
-        active.map((variant) async {
-          try {
-            final VariantRecipe recipe = await repository.getVariantRecipe(
-              variant.id,
-            );
-            return MapEntry<int, bool>(
-              variant.id,
-              recipe.components.isNotEmpty,
-            );
-          } catch (_) {
-            return MapEntry<int, bool>(variant.id, false);
-          }
-        }),
+      active.map(
+        (variant) =>
+            MapEntry<int, bool>(variant.id, variant.recipeConfigured ?? false),
       ),
     );
     emit(
@@ -214,11 +261,13 @@ class VariantsCubit extends Cubit<VariantsState> {
         status: status,
         product: product,
         activeVariants: active,
+        inactiveVariants: inactive,
         archivedVariants: archived,
         recipeConfigured: recipeConfigured,
         clearAction: true,
         clearErrors: true,
         successMessage: message,
+        summaryChanged: summaryChanged,
       ),
     );
   }
@@ -229,8 +278,9 @@ class VariantsCubit extends Cubit<VariantsState> {
     if (draft.name.trim().isEmpty) {
       errors['name'] = 'Variant name is required.';
     }
-    if (!decimal.hasMatch(draft.basePrice.trim())) {
-      errors['basePrice'] = 'Enter zero or a positive price.';
+    if (!decimal.hasMatch(draft.basePrice.trim()) ||
+        double.parse(draft.basePrice.trim()) <= 0) {
+      errors['basePrice'] = configuredSellPriceMustBePositive;
     }
     if (draft.costPrice.trim().isNotEmpty &&
         !decimal.hasMatch(draft.costPrice.trim())) {

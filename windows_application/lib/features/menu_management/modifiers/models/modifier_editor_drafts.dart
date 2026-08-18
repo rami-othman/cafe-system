@@ -14,6 +14,7 @@ class ModifierGroupDraft {
     this.sortOrder = '0',
     this.initialOptionName = '',
     this.initialOptionPriceDelta = '0',
+    this.initialOptions = const <ModifierOptionDraft>[],
   });
   final String name,
       nameAr,
@@ -26,7 +27,16 @@ class ModifierGroupDraft {
       sortOrder,
       initialOptionName,
       initialOptionPriceDelta;
+  final List<ModifierOptionDraft> initialOptions;
   final bool isRequired, allowQuantity, isActive;
+  List<ModifierOptionDraft> get createOptions => initialOptions.isEmpty
+      ? <ModifierOptionDraft>[
+          ModifierOptionDraft(
+            name: initialOptionName,
+            priceDelta: initialOptionPriceDelta,
+          ),
+        ]
+      : initialOptions;
   ModifierGroupDraft copyWith({
     String? name,
     String? nameAr,
@@ -42,6 +52,7 @@ class ModifierGroupDraft {
     String? sortOrder,
     String? initialOptionName,
     String? initialOptionPriceDelta,
+    List<ModifierOptionDraft>? initialOptions,
   }) => ModifierGroupDraft(
     name: name ?? this.name,
     nameAr: nameAr ?? this.nameAr,
@@ -58,21 +69,12 @@ class ModifierGroupDraft {
     initialOptionName: initialOptionName ?? this.initialOptionName,
     initialOptionPriceDelta:
         initialOptionPriceDelta ?? this.initialOptionPriceDelta,
+    initialOptions: initialOptions ?? this.initialOptions,
   );
-  Map<String, dynamic> toCreateJson() =>
-      _json()
-        ..['options'] = <Map<String, dynamic>>[
-          <String, dynamic>{
-            'name': initialOptionName.trim(),
-            'priceDelta': initialOptionPriceDelta.trim().isEmpty
-                ? '0'
-                : initialOptionPriceDelta.trim(),
-            'isDefault': false,
-            'isActive': true,
-            'isAvailable': true,
-            'sortOrder': 0,
-          },
-        ];
+  Map<String, dynamic> toCreateJson() => _json()
+    ..['options'] = createOptions
+        .map((option) => option.toJson())
+        .toList(growable: false);
   Map<String, dynamic> toUpdateJson() => _json();
   Map<String, dynamic> _json() => <String, dynamic>{
     'name': name.trim(),
@@ -133,6 +135,12 @@ class ModifierOptionDraft {
     'sortOrder': int.tryParse(sortOrder.trim()) ?? 0,
   };
 }
+
+const String modifierPriceAdjustmentInvalidCode =
+    '__price_adjustment_invalid__';
+
+bool isValidModifierPriceAdjustment(String value) =>
+    RegExp(r'^-?\d+(\.\d{1,2})?$').hasMatch(value.trim());
 
 String? _nullable(String value) {
   final String text = value.trim();

@@ -123,6 +123,8 @@ class MenuSectionRecord {
   final bool isActive;
   final DateTime? archivedAt, createdAt, updatedAt;
   bool get isArchived => archivedAt != null;
+  bool get isInactive => archivedAt == null && !isActive;
+  bool get isActiveLifecycle => archivedAt == null && isActive;
   String get localizedName => nameEn.isNotEmpty ? nameEn : name;
   String displayName(Locale locale) => LocalizedEntityText.resolve(
     locale: locale,

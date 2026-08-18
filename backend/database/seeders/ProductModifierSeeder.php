@@ -19,6 +19,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => true,
                 'min_selections' => 1,
                 'max_selections' => 1,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Hot', 'price_delta' => 0, 'is_default' => true],
                     ['name' => 'Iced', 'price_delta' => 0, 'is_default' => false],
@@ -30,6 +31,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => true,
                 'min_selections' => 1,
                 'max_selections' => 1,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Small (8oz)', 'price_delta' => -0.50, 'is_default' => false],
                     ['name' => 'Medium (12oz)', 'price_delta' => 0, 'is_default' => true],
@@ -42,6 +44,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => false,
                 'min_selections' => 0,
                 'max_selections' => 1,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Whole Milk', 'price_delta' => 0, 'is_default' => true],
                     ['name' => 'Oat Milk', 'price_delta' => 0.75, 'is_default' => false],
@@ -53,7 +56,8 @@ class ProductModifierSeeder extends Seeder
                 'selection_type' => 'multiple',
                 'is_required' => false,
                 'min_selections' => 0,
-                'max_selections' => 5,
+                'max_selections' => 3,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Extra Espresso Shot', 'price_delta' => 1.00, 'is_default' => false],
                     ['name' => 'Vanilla Syrup', 'price_delta' => 0.50, 'is_default' => false],
@@ -73,6 +77,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => $group['is_required'],
                 'min_selections' => $group['min_selections'],
                 'max_selections' => $group['max_selections'],
+                'allow_quantity' => $group['allow_quantity'],
                 'sort_order' => count($groupIds),
                 'created_at' => $now,
                 'updated_at' => $now,

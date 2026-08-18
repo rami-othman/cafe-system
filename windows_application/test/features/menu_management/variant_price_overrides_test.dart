@@ -9,6 +9,7 @@ import 'package:windows_application/features/menu_management/models/product_cata
 import 'package:windows_application/features/menu_management/pricing/controllers/variant_price_overrides_cubit.dart';
 import 'package:windows_application/features/menu_management/pricing/controllers/variant_price_overrides_state.dart';
 import 'package:windows_application/features/menu_management/pricing/models/variant_price_models.dart';
+import 'package:windows_application/features/menu_management/pricing/configured_price_validation.dart';
 import 'package:windows_application/features/menu_management/pricing/views/variant_price_overrides_screen.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/menu_management/products/models/product_editor_draft.dart';
@@ -35,6 +36,7 @@ void main() {
         'branchId': 7,
         'channel': 'delivery',
         'overridePrice': '4.50',
+        'isActive': true,
       });
       expect(json.containsKey('id'), isFalse);
       expect(json.containsKey('scopeKey'), isFalse);
@@ -47,13 +49,14 @@ void main() {
           scope: PriceOverrideScope.branch,
           branchId: 2,
           channel: null,
-          price: PriceAmount.parse('0'),
+          price: PriceAmount.parse('0.01'),
         ).toJson(),
         <String, dynamic>{
           'scopeType': 'branch',
           'branchId': 2,
           'channel': null,
-          'overridePrice': '0.00',
+          'overridePrice': '0.01',
+          'isActive': true,
         },
       );
       expect(
@@ -82,6 +85,38 @@ void main() {
       expect(value.effectivePrice.wireValue, '5.00');
     });
   });
+
+  test('editing preserves an inactive override lifecycle state', () {
+    final VariantPriceOverride inactive =
+        VariantPriceOverride.fromJson(<String, dynamic>{
+          'id': 5,
+          'scopeType': 'branch',
+          'branchId': 7,
+          'overridePrice': '4.50',
+          'isActive': false,
+        });
+    expect(
+      VariantPriceOverrideDraft.fromOverride(inactive).toJson()['isActive'],
+      isFalse,
+    );
+  });
+
+  test(
+    'override editor rejects zero and negative configured replacement prices',
+    () async {
+      final VariantPriceOverridesCubit cubit = VariantPriceOverridesCubit(
+        repository: _PricingRepository(),
+      );
+      await cubit.load(11, 1);
+      expect(cubit.addOrUpdate(_channelDraft('0.00')), isFalse);
+      expect(
+        cubit.state.fieldErrors['editor'],
+        configuredSellPriceMustBePositive,
+      );
+      expect(() => PriceAmount.parse('-1.00'), throwsFormatException);
+      await cubit.close();
+    },
+  );
 
   group('VariantPriceOverridesCubit', () {
     test(
