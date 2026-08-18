@@ -169,6 +169,7 @@ final GoRouter appRouter = GoRouter(
               child: VariantRecipeScreen(
                 variantId: variantId,
                 productId: productId,
+                editMode: state.uri.queryParameters['edit'] == '1',
               ),
             );
           },
@@ -196,6 +197,8 @@ final GoRouter appRouter = GoRouter(
               child: ModifierAdjustmentScreen(
                 optionId: optionId,
                 productId: productId,
+                optionName: state.uri.queryParameters['optionName'],
+                contextName: state.uri.queryParameters['contextName'],
               ),
             );
           },
@@ -210,6 +213,9 @@ final GoRouter appRouter = GoRouter(
             final variantId = int.tryParse(
               state.pathParameters['variantId'] ?? '',
             );
+            final productId = int.tryParse(
+              state.uri.queryParameters['productId'] ?? '',
+            );
             if (optionId == null ||
                 optionId < 1 ||
                 variantId == null ||
@@ -222,7 +228,10 @@ final GoRouter appRouter = GoRouter(
               ),
               child: ModifierAdjustmentScreen(
                 optionId: optionId,
+                productId: productId,
                 variantId: variantId,
+                optionName: state.uri.queryParameters['optionName'],
+                contextName: state.uri.queryParameters['contextName'],
               ),
             );
           },

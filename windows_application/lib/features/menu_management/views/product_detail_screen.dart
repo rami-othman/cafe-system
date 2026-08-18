@@ -18,6 +18,8 @@ import '../models/catalog_models.dart';
 import '../widgets/catalog_formatters.dart';
 import '../widgets/menu_content_components.dart';
 import '../widgets/menu_page_header.dart';
+import '../recipes/controllers/recipe_cubits.dart';
+import '../recipes/views/variant_recipe_screen.dart';
 import 'product_catalog_screen.dart'
     show CatalogProductImage, CatalogProductStatus;
 
@@ -183,15 +185,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     .replaceProduct,
               ),
             ),
-    _WorkspaceTab.recipe => _DestinationPanel(
-      title: 'Recipe & Materials',
-      message:
-          'Recipes and material consumption are managed from each selling option.',
-      actionLabel: 'Open Variants',
-      onPressed: product.isArchived
-          ? null
-          : () =>
-                context.go('/menu-management/products/${product.id}/variants'),
+    _WorkspaceTab.recipe => BlocProvider<VariantRecipeCubit>(
+      create: (_) =>
+          VariantRecipeCubit(context.read<ProductDetailCubit>().repository),
+      child: RecipeMaterialsWorkspace(
+        product: product,
+        readOnly: product.isArchived,
+      ),
     ),
     _WorkspaceTab.availability => _DestinationPanel(
       title: 'Availability',

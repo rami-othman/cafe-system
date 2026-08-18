@@ -88,12 +88,12 @@ class RecipeConfigurationService
 
     private function scope(ModifierOption $option, ?Product $product, ?ProductVariant $variant): string
     {
-        if (! $option->is_active || $option->trashed() || ! $option->modifierGroup || ! $option->modifierGroup->is_active || $option->modifierGroup->trashed()) {
+        if ($option->trashed() || ! $option->modifierGroup || $option->modifierGroup->trashed()) {
             throw ValidationException::withMessages(['option' => 'Archived modifier options and groups are read-only.']);
         }
         if ($variant) {
             $product = $variant->product;
-            if (! $variant->is_active || $variant->trashed() || ! $product || ! $product->is_active || $product->trashed()) {
+            if ($variant->trashed() || ! $product || $product->trashed()) {
                 throw ValidationException::withMessages(['variant' => 'Archived variants and products are read-only.']);
             }
             if (! $product || ! $product->modifierGroups()->whereKey($option->modifier_group_id)->exists()) {
@@ -102,7 +102,7 @@ class RecipeConfigurationService
 
             return 'variant';
         } if ($product) {
-            if (! $product->is_active || $product->trashed()) {
+            if ($product->trashed()) {
                 throw ValidationException::withMessages(['product' => 'Archived products are read-only.']);
             }
             if (! $product->modifierGroups()->whereKey($option->modifier_group_id)->exists()) {
@@ -152,7 +152,7 @@ class RecipeConfigurationService
 
     private function activeVariant(ProductVariant $v): void
     {
-        if (! $v->is_active || $v->trashed() || ! $v->product?->is_active) {
+        if ($v->trashed() || ! $v->product || $v->product->trashed()) {
             throw ValidationException::withMessages(['variant' => 'Archived variants are read-only.']);
         }
     }

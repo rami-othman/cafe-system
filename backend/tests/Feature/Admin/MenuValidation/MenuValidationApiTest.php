@@ -47,6 +47,40 @@ class MenuValidationApiTest extends TestCase
         $this->validateMenu($tenant, $menu, $branch)->assertJsonPath('data.isValid', false)->assertJsonPath('data.errors.0.menuId', $menu);
     }
 
+    public function test_quantity_enabled_modifier_maximum_is_not_limited_by_distinct_active_options(): void
+    {
+        [$tenant, $branch, $menu, $product] = $this->menuGraph();
+        $group = DB::table('modifier_groups')->insertGetId([
+            'tenant_id' => $tenant,
+            'name' => 'Milk Type',
+            'selection_type' => 'multiple',
+            'max_selections' => 2,
+            'allow_quantity' => false,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('product_modifier_group')->insert([
+            'tenant_id' => $tenant,
+            'product_id' => $product,
+            'modifier_group_id' => $group,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('modifier_options')->insert([
+            ['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Oat', 'is_active' => true, 'is_available' => true, 'deleted_at' => null, 'created_at' => now(), 'updated_at' => now()],
+            ['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Soy', 'is_active' => false, 'is_available' => true, 'deleted_at' => null, 'created_at' => now(), 'updated_at' => now()],
+            ['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Almond', 'is_active' => true, 'is_available' => true, 'deleted_at' => now(), 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $errors = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertTrue($errors->contains('MODIFIER_MAXIMUM_EXCEEDS_OPTIONS'));
+
+        DB::table('modifier_groups')->where('id', $group)->update(['allow_quantity' => true]);
+        $errors = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertFalse($errors->contains('MODIFIER_MAXIMUM_EXCEEDS_OPTIONS'));
+    }
+
     public function test_collection_validation_is_tenant_safe_and_uses_requested_or_assigned_menus(): void
     {
         [$tenant, $branch, $menu] = $this->menuGraph();

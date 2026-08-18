@@ -2,13 +2,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../l10n/app_localizations.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../models/catalog_models.dart';
 import '../controllers/recipe_cubits.dart';
+import '../models/recipe_models.dart';
 
-/// Sends selections to the backend resolver. It intentionally performs no
-/// material arithmetic in Flutter.
 class RecipeSimulationScreen extends StatefulWidget {
   const RecipeSimulationScreen({
     super.key,
@@ -24,9 +26,12 @@ class RecipeSimulationScreen extends StatefulWidget {
 class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
   final Map<int, int> _quantities = <int, int>{};
   final Set<int> _selected = <int>{};
+  late int _variantId;
+
   @override
   void initState() {
     super.initState();
+    _variantId = widget.variantId;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) =>
           context.read<RecipeSimulationCubit>().loadContext(widget.productId),
@@ -41,15 +46,21 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
         },
       )
       .toList(growable: false);
+
   bool _canSelect(ModifierGroup group, ModifierOption option) =>
       _selected.contains(option.id) ||
-      _selected.where((id) => group.options.any((o) => o.id == id)).length <
-          group.effectiveMaximum;
+      _groupSelectionCount(group) < group.effectiveMaximum;
+  int _groupSelectionCount(ModifierGroup group) => _selected
+      .where((id) => group.options.any((option) => option.id == id))
+      .length;
+
   void _toggle(ModifierGroup group, ModifierOption option, bool value) {
     setState(() {
       if (value) {
         if (group.selectionType == 'single')
-          _selected.removeWhere((id) => group.options.any((o) => o.id == id));
+          _selected.removeWhere(
+            (id) => group.options.any((candidate) => candidate.id == id),
+          );
         _selected.add(option.id);
         _quantities.putIfAbsent(option.id, () => 1);
       } else {
@@ -57,223 +68,446 @@ class _RecipeSimulationScreenState extends State<RecipeSimulationScreen> {
         _quantities.remove(option.id);
       }
     });
+    context.read<RecipeSimulationCubit>().invalidateResult();
   }
 
-  bool get _valid {
-    final product = context.read<RecipeSimulationCubit>().state.product;
-    if (product == null) return false;
-    return product.modifierGroups.every((group) {
-      final count = _selected
-          .where((id) => group.options.any((o) => o.id == id))
-          .length;
-      return count >= group.effectiveMinimum && count <= group.effectiveMaximum;
+  void _changeVariant(int id) {
+    setState(() {
+      _variantId = id;
+      _selected.clear();
+      _quantities.clear();
     });
+    context.read<RecipeSimulationCubit>().invalidateResult();
   }
+
+  bool _valid(ProductDetail product) => product.modifierGroups
+      .where((group) => group.isActive && !group.isArchived)
+      .every((group) {
+        final count = _groupSelectionCount(group);
+        return count >= group.effectiveMinimum &&
+            count <= group.effectiveMaximum &&
+            group.options
+                .where((option) => _selected.contains(option.id))
+                .every(
+                  (option) =>
+                      option.isActive &&
+                      !option.isArchived &&
+                      option.isAvailable &&
+                      (_quantities[option.id] ?? 1) > 0 &&
+                      (group.effectiveAllowQuantity ||
+                          (_quantities[option.id] ?? 1) == 1),
+                );
+      });
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(AppLocalizations.of(context).recipeSimulation)),
-    body: BlocConsumer<RecipeSimulationCubit, RecipeSimulationState>(
-      listenWhen: (a, b) => a.error != b.error && b.error != null,
-      listener: (context, state) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(state.error!))),
-      builder: (context, state) {
-        if (state.loading && state.product == null)
-          return const Center(child: CircularProgressIndicator());
-        if (state.product == null)
-          return Center(
-            child: FilledButton(
-              onPressed: () => context
-                  .read<RecipeSimulationCubit>()
-                  .loadContext(widget.productId),
-              child: const Text('Retry'),
-            ),
-          );
-        final product = state.product!;
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(product.name, style: Theme.of(context).textTheme.titleLarge),
-              Text(
-                AppLocalizations.of(context).recipeSimulationHelp,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context).selectedModifiers,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  children: product.modifierGroups
-                      .map((group) => _group(group))
-                      .toList(growable: false),
-                ),
-              ),
-              if (!_valid)
-                const Text(
-                  'Select the required number of options in each modifier group.',
-                  style: TextStyle(color: Colors.deepOrange),
-                ),
-              if (state.error != null)
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        state.error!,
-                        style: const TextStyle(color: Colors.deepOrange),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: state.resolving
-                          ? null
-                          : () => context.read<RecipeSimulationCubit>().resolve(
-                              widget.variantId,
-                              _request,
+  Widget build(
+    BuildContext context,
+  ) => BlocConsumer<RecipeSimulationCubit, RecipeSimulationState>(
+    listenWhen: (a, b) => a.error != b.error && b.error != null,
+    listener: (context, state) => ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(state.error!))),
+    builder: (context, state) {
+      if (state.loading && state.product == null)
+        return const Center(child: CircularProgressIndicator());
+      if (state.product == null)
+        return const Center(child: Text('Unable to load recipe choices.'));
+      final product = state.product!;
+      final valid = _valid(product);
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _pageIntro(context, product),
+                const SizedBox(height: AppSpacing.lg),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final choices = Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        _variantPicker(context, product),
+                        const SizedBox(height: AppSpacing.md),
+                        ...product.modifierGroups
+                            .where(
+                              (group) => group.isActive && !group.isArchived,
+                            )
+                            .map((group) => _group(context, group)),
+                        if (!valid)
+                          const Padding(
+                            padding: EdgeInsets.only(top: AppSpacing.sm),
+                            child: Text(
+                              'Select the required number of options in each group.',
+                              style: TextStyle(color: AppColors.warning),
                             ),
-                      child: const Text('Retry'),
-                    ),
-                  ],
+                          ),
+                      ],
+                    );
+                    final result = _finalMaterials(context, state);
+                    if (constraints.maxWidth < 900)
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          choices,
+                          const SizedBox(height: AppSpacing.lg),
+                          result,
+                        ],
+                      );
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(child: choices),
+                        const SizedBox(width: AppSpacing.lg),
+                        SizedBox(width: 370, child: result),
+                      ],
+                    );
+                  },
                 ),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: FilledButton.icon(
-                  onPressed: state.resolving || !_valid
-                      ? null
-                      : () => context.read<RecipeSimulationCubit>().resolve(
-                          widget.variantId,
-                          _request,
-                        ),
-                  icon: state.resolving
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.play_arrow),
-                  label: const Text('Resolve Recipe'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                AppLocalizations.of(context).recipeSimulationResultHelp,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (state.result == null)
-                Text(AppLocalizations.of(context).recipeSimulationStartHelp)
-              else if (state.result!.components.isEmpty)
-                const Text('No resolved components.')
-              else
-                _result(state),
-            ],
+              ],
+            ),
           ),
-        );
-      },
-    ),
+        ),
+      );
+    },
   );
-  Widget _group(ModifierGroup group) => Card(
+
+  Widget _pageIntro(BuildContext context, ProductDetail product) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text('Test Recipe', style: Theme.of(context).textTheme.headlineMedium),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        'Choose customer options and preview the final materials consumed.',
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text(product.name, style: Theme.of(context).textTheme.labelLarge),
+    ],
+  );
+
+  Widget _variantPicker(BuildContext context, ProductDetail product) => Card(
     child: Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            '${group.name} (${group.effectiveMinimum}–${group.effectiveMaximum})',
-            style: const TextStyle(fontWeight: FontWeight.w700),
+          Text('Variant', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: AppSpacing.xs),
+          DropdownButtonFormField<int>(
+            value: _variantId,
+            isExpanded: true,
+            items: product.variants
+                .map(
+                  (variant) => DropdownMenuItem<int>(
+                    value: variant.id,
+                    child: Text(
+                      variant.displayName(Localizations.localeOf(context)),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: (id) {
+              if (id != null) _changeVariant(id);
+            },
           ),
-          ...group.options.where((o) => o.isActive && o.isAvailable).map((
-            option,
-          ) {
-            final checked = _selected.contains(option.id);
-            return Row(
-              children: <Widget>[
-                if (group.selectionType == 'single')
-                  Radio<int>(
-                    value: option.id,
-                    groupValue: _selected.firstWhere(
-                      (id) =>
-                          group.options.any((candidate) => candidate.id == id),
-                      orElse: () => -1,
-                    ),
-                    onChanged: !_canSelect(group, option) && !checked
-                        ? null
-                        : (_) => _toggle(group, option, true),
-                  )
-                else
-                  Checkbox(
-                    value: checked,
-                    onChanged: !_canSelect(group, option) && !checked
-                        ? null
-                        : (value) => _toggle(group, option, value ?? false),
-                  ),
-                Expanded(child: Text(option.name)),
-                if (checked && group.effectiveAllowQuantity)
-                  SizedBox(
-                    width: 96,
-                    child: DropdownButton<int>(
-                      value: _quantities[option.id] ?? 1,
-                      items: List<DropdownMenuItem<int>>.generate(
-                        10,
-                        (i) => DropdownMenuItem(
-                          value: i + 1,
-                          child: Text('${i + 1}'),
-                        ),
-                        growable: false,
-                      ),
-                      onChanged: (value) =>
-                          setState(() => _quantities[option.id] = value ?? 1),
-                    ),
-                  ),
-              ],
-            );
-          }),
         ],
       ),
     ),
   );
-  Widget _result(RecipeSimulationState state) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: DataTable(
-      columns: <DataColumn>[
-        DataColumn(label: Text(AppLocalizations.of(context).material)),
-        DataColumn(label: Text(AppLocalizations.of(context).quantity)),
-        DataColumn(label: Text(AppLocalizations.of(context).unit)),
-      ],
-      rows: state.result!.components
-          .map(
-            (c) => DataRow(
-              cells: <DataCell>[
-                DataCell(
-                  Text(
-                    c.materialName?.isNotEmpty == true
-                        ? c.materialName!
-                        : 'Material #${c.materialId}',
+
+  Widget _group(BuildContext context, ModifierGroup group) {
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(group.name, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              _ruleSentence(l10n, group),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            ...group.options
+                .where(
+                  (option) =>
+                      option.isActive &&
+                      !option.isArchived &&
+                      option.isAvailable,
+                )
+                .map((option) => _optionRow(context, group, option)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _optionRow(
+    BuildContext context,
+    ModifierGroup group,
+    ModifierOption option,
+  ) {
+    final checked = _selected.contains(option.id);
+    final bool enabled = checked || _canSelect(group, option);
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: checked ? const Color(0xFFFFF8F1) : AppColors.surface,
+        border: Border.all(
+          color: checked ? AppColors.tertiary : AppColors.border,
+        ),
+        borderRadius: AppRadius.control,
+      ),
+      child: Row(
+        children: <Widget>[
+          if (group.selectionType == 'single')
+            Radio<int>(
+              value: option.id,
+              groupValue:
+                  _selected.firstWhereOrNull(
+                    (id) =>
+                        group.options.any((candidate) => candidate.id == id),
+                  ) ??
+                  -1,
+              onChanged: !enabled ? null : (_) => _toggle(group, option, true),
+            )
+          else
+            Checkbox(
+              value: checked,
+              onChanged: !enabled
+                  ? null
+                  : (value) => _toggle(group, option, value ?? false),
+            ),
+          Expanded(child: Text(option.name)),
+          if (checked && group.effectiveAllowQuantity)
+            _stepper(context, option),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepper(BuildContext context, ModifierOption option) {
+    final value = _quantities[option.id] ?? 1;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadius.control,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          IconButton(
+            tooltip: 'Decrease quantity',
+            constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+            padding: EdgeInsets.zero,
+            onPressed: value <= 1
+                ? null
+                : () {
+                    setState(() => _quantities[option.id] = value - 1);
+                    context.read<RecipeSimulationCubit>().invalidateResult();
+                  },
+            icon: const Icon(Icons.remove, size: 15),
+          ),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: SizedBox(
+              width: 24,
+              child: Text('$value', textAlign: TextAlign.center),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Increase quantity',
+            constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+            padding: EdgeInsets.zero,
+            onPressed: () {
+              setState(() => _quantities[option.id] = value + 1);
+              context.read<RecipeSimulationCubit>().invalidateResult();
+            },
+            icon: const Icon(Icons.add, size: 15),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _finalMaterials(BuildContext context, RecipeSimulationState state) {
+    final List<RecipeComponent> components = state.result == null
+        ? const <RecipeComponent>[]
+        : aggregateRecipeComponents(state.result!.components);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Final Materials',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                DataCell(
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(c.quantity),
+                if (state.resolving)
+                  const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                ),
-                DataCell(
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(c.unitCode),
-                  ),
-                ),
               ],
             ),
-          )
-          .toList(growable: false),
+            const SizedBox(height: AppSpacing.md),
+            if (state.resultStale) _staleState(context),
+            if (!state.resultStale && state.result == null)
+              Text(
+                'Choose options, then preview the materials consumed.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            if (!state.resultStale &&
+                state.result != null &&
+                components.isEmpty)
+              Text(
+                'No materials are consumed for these choices.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            if (!state.resultStale && state.result != null)
+              ...components.map(
+                (component) => _finalMaterialRow(context, component),
+              ),
+            const SizedBox(height: AppSpacing.md),
+            FilledButton.icon(
+              onPressed: state.resolving || !_valid(state.product!)
+                  ? null
+                  : () => context.read<RecipeSimulationCubit>().resolve(
+                      _variantId,
+                      _request,
+                    ),
+              icon: const Icon(Icons.science_outlined, size: 18),
+              label: const Text('Preview Materials'),
+            ),
+            const Divider(height: AppSpacing.xl),
+            _calculationDisclosure(context, state),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _staleState(BuildContext context) => Container(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF7EA),
+      borderRadius: AppRadius.control,
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const Icon(Icons.refresh, size: 18, color: AppColors.warning),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Choices changed',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 3),
+              const Text('Preview the materials again to update this result.'),
+            ],
+          ),
+        ),
+      ],
     ),
   );
+
+  Widget _finalMaterialRow(BuildContext context, RecipeComponent component) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                component.materialName ?? 'Material #${component.materialId}',
+              ),
+            ),
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                '${component.quantity} ${component.unitCode}',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _calculationDisclosure(
+    BuildContext context,
+    RecipeSimulationState state,
+  ) => ExpansionTile(
+    tilePadding: EdgeInsets.zero,
+    childrenPadding: EdgeInsets.zero,
+    title: const Text('How this was calculated'),
+    children: <Widget>[
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Text(
+          'Variant: ${state.result?.variantId == null ? _variantId : state.result!.variantId}',
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Text(_selectedNames(state.product)),
+      ),
+    ],
+  );
+
+  String _selectedNames(ProductDetail? product) {
+    if (product == null || _selected.isEmpty)
+      return 'No customer options selected.';
+    final names = product.modifierGroups
+        .expand((group) => group.options)
+        .where((option) => _selected.contains(option.id))
+        .map((option) => option.name)
+        .toList(growable: false);
+    return names.isEmpty
+        ? 'No customer options selected.'
+        : 'Selected choices: ${names.join(', ')}';
+  }
+
+  String _ruleSentence(AppLocalizations l10n, ModifierGroup group) {
+    final int min = group.effectiveMinimum;
+    final int max = group.effectiveMaximum;
+    final String rule = min == max && min > 0
+        ? (group.effectiveRequired
+              ? l10n.modifierRuleExactly(min)
+              : l10n.modifierRuleOptionalExactly(min))
+        : group.effectiveRequired
+        ? l10n.modifierRuleAtLeastUpTo(min, max)
+        : l10n.modifierRuleOptionalUpTo(max);
+    return group.effectiveAllowQuantity
+        ? '$rule ${l10n.modifierRuleQuantity}'
+        : rule;
+  }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? firstWhereOrNull(bool Function(T) test) {
+    for (final value in this) {
+      if (test(value)) return value;
+    }
+    return null;
+  }
 }

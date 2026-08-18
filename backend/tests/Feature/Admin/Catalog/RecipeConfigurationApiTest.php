@@ -115,6 +115,24 @@ class RecipeConfigurationApiTest extends TestCase
         $this->assertArrayNotHasKey('components', $after);
     }
 
+    public function test_empty_base_recipe_can_be_saved_and_clears_the_configuration_summary(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('clear-base');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)
+            ->assertOk()
+            ->assertJsonCount(0, 'data.components');
+
+        $summary = $this->getJson("/api/v1/admin/catalog/products/$product", $headers)->assertOk()->json('data.variants.0');
+        $this->assertFalse($summary['recipeConfigured']);
+        $this->assertSame(0, $summary['recipeComponentCount']);
+    }
+
     public function test_resolver_uses_exact_add_remove_quantity_and_group_constraints(): void
     {
         [$tenant, $product, $variant, $group, $shot] = $this->recipeContext('resolver');
@@ -134,6 +152,22 @@ class RecipeConfigurationApiTest extends TestCase
         $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $shot], ['optionId' => $oat]]], $headers)->assertOk()
             ->assertJsonPath('data.components.0.quantity', '36')->assertJsonPath('data.components.1.materialId', $oatMilk)->assertJsonCount(2, 'data.components');
         $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $shot], ['optionId' => $oat], ['optionId' => $shot]]], $headers)->assertUnprocessable();
+    }
+
+    public function test_inactive_groups_are_excluded_and_inactive_or_archived_options_cannot_be_selected(): void
+    {
+        [$tenant, $product, $variant, $group, $option] = $this->recipeContext('lifecycle-resolution');
+        $headers = $this->headers($tenant);
+
+        DB::table('modifier_groups')->where('id', $group)->update(['is_required' => true, 'min_selections' => 1, 'is_active' => false]);
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => []], $headers)->assertOk();
+
+        DB::table('modifier_groups')->where('id', $group)->update(['is_required' => false, 'min_selections' => 0, 'is_active' => true]);
+        DB::table('modifier_options')->where('id', $option)->update(['is_active' => false]);
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option]]], $headers)->assertUnprocessable();
+
+        DB::table('modifier_options')->where('id', $option)->update(['is_active' => true, 'deleted_at' => now()]);
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option]]], $headers)->assertUnprocessable();
     }
 
     public function test_resolver_aggregates_removes_and_is_deterministic_for_selection_order(): void
@@ -193,7 +227,7 @@ class RecipeConfigurationApiTest extends TestCase
         $this->assertSame('250.125', $forward['components'][1]['quantity']);
     }
 
-    public function test_recipe_writes_are_tenant_scoped_and_archived_resources_are_read_only(): void
+    public function test_recipe_writes_are_tenant_scoped_and_inactive_resources_remain_editable(): void
     {
         [$tenant, $product, $variant, $group, $option] = $this->recipeContext('ownership');
         $foreignTenant = $this->tenant('ownership-foreign');
@@ -202,13 +236,24 @@ class RecipeConfigurationApiTest extends TestCase
         $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $foreignMaterial, 'quantity' => '1', 'unitCode' => 'g']]], $headers)->assertUnprocessable();
         $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $this->headers($foreignTenant))->assertNotFound();
         DB::table('product_variants')->where('id', $variant)->update(['is_active' => false]);
-        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)->assertUnprocessable();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)->assertOk();
+        $this->assertFalse((bool) DB::table('product_variants')->where('id', $variant)->value('is_active'));
         DB::table('product_variants')->where('id', $variant)->update(['is_active' => true]);
+        DB::table('products')->where('id', $product)->update(['is_active' => false]);
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)->assertOk();
+        $this->assertFalse((bool) DB::table('products')->where('id', $product)->value('is_active'));
+        DB::table('products')->where('id', $product)->update(['is_active' => true]);
         DB::table('modifier_options')->where('id', $option)->update(['is_active' => false]);
-        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", ['components' => []], $headers)->assertUnprocessable();
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", ['components' => []], $headers)->assertOk();
+        $this->assertFalse((bool) DB::table('modifier_options')->where('id', $option)->value('is_active'));
         DB::table('modifier_options')->where('id', $option)->update(['is_active' => true]);
         DB::table('modifier_groups')->where('id', $group)->update(['is_active' => false]);
+        $this->getJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $headers)->assertOk();
+        $this->assertFalse((bool) DB::table('modifier_groups')->where('id', $group)->value('is_active'));
+        DB::table('modifier_groups')->where('id', $group)->update(['deleted_at' => now()]);
         $this->getJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $headers)->assertUnprocessable();
+        DB::table('product_variants')->where('id', $variant)->update(['deleted_at' => now()]);
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)->assertNotFound();
     }
 
     public function test_profile_scope_rejects_foreign_materials_unassigned_products_and_archived_variants(): void
@@ -230,7 +275,8 @@ class RecipeConfigurationApiTest extends TestCase
         $this->putJson("/api/v1/admin/catalog/product-variants/$otherVariant/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertUnprocessable();
 
         DB::table('product_variants')->where('id', $variant)->update(['is_active' => false]);
-        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertUnprocessable();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertOk();
+        $this->assertFalse((bool) DB::table('product_variants')->where('id', $variant)->value('is_active'));
         $this->putJson("/api/v1/admin/catalog/products/$product/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertOk();
         DB::table('inventory_items')->where('id', $localMaterial)->update(['is_active' => false]);
         $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertUnprocessable();

@@ -260,6 +260,7 @@ class ModifierOption {
     required this.priceDelta,
     required this.isActive,
     required this.isAvailable,
+    this.archivedAt,
   });
 
   factory ModifierOption.fromJson(JsonMap json) => ModifierOption(
@@ -268,6 +269,7 @@ class ModifierOption {
     priceDelta: readDouble(json['priceDelta']),
     isActive: readBool(json['isActive'], fallback: true),
     isAvailable: readBool(json['isAvailable'], fallback: true),
+    archivedAt: _date(json['archivedAt']),
   );
 
   final int id;
@@ -275,6 +277,8 @@ class ModifierOption {
   final double priceDelta;
   final bool isActive;
   final bool isAvailable;
+  final DateTime? archivedAt;
+  bool get isArchived => archivedAt != null;
 }
 
 class ModifierGroup {
@@ -292,6 +296,8 @@ class ModifierGroup {
     required this.maxSelectionsOverride,
     required this.allowQuantityOverride,
     required this.options,
+    this.isActive = true,
+    this.archivedAt,
   });
 
   factory ModifierGroup.fromJson(JsonMap json) => ModifierGroup(
@@ -310,6 +316,8 @@ class ModifierGroup {
     options: _maps(
       json['options'],
     ).map(ModifierOption.fromJson).toList(growable: false),
+    isActive: readBool(json['isActive'], fallback: true),
+    archivedAt: _date(json['archivedAt']),
   );
 
   final int id;
@@ -325,11 +333,14 @@ class ModifierGroup {
   final int? maxSelectionsOverride;
   final bool? allowQuantityOverride;
   final List<ModifierOption> options;
+  final bool isActive;
+  final DateTime? archivedAt;
 
   bool get effectiveRequired => isRequiredOverride ?? isRequired;
   int get effectiveMinimum => minSelectionsOverride ?? minSelections;
   int get effectiveMaximum => maxSelectionsOverride ?? maxSelections;
   bool get effectiveAllowQuantity => allowQuantityOverride ?? allowQuantity;
+  bool get isArchived => archivedAt != null;
 }
 
 class ProductSummary {

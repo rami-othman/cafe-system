@@ -15,6 +15,7 @@ class VariantRecipeState extends Equatable {
     this.materials = const <RecipeMaterial>[],
     this.product,
     this.draft = const <RecipeComponent>[],
+    this.profiles = const <int, ModifierRecipeProfile>{},
     this.error,
   });
   final bool loading;
@@ -23,6 +24,7 @@ class VariantRecipeState extends Equatable {
   final List<RecipeMaterial> materials;
   final ProductDetail? product;
   final List<RecipeComponent> draft;
+  final Map<int, ModifierRecipeProfile> profiles;
   final String? error;
   VariantRecipeState copyWith({
     bool? loading,
@@ -31,6 +33,7 @@ class VariantRecipeState extends Equatable {
     List<RecipeMaterial>? materials,
     ProductDetail? product,
     List<RecipeComponent>? draft,
+    Map<int, ModifierRecipeProfile>? profiles,
     String? error,
     bool clearError = false,
   }) => VariantRecipeState(
@@ -40,6 +43,7 @@ class VariantRecipeState extends Equatable {
     materials: materials ?? this.materials,
     product: product ?? this.product,
     draft: draft ?? this.draft,
+    profiles: profiles ?? this.profiles,
     error: clearError ? null : error ?? this.error,
   );
   @override
@@ -50,6 +54,7 @@ class VariantRecipeState extends Equatable {
     materials,
     product,
     draft,
+    profiles,
     error,
   ];
 }
@@ -60,7 +65,13 @@ class VariantRecipeCubit extends Cubit<VariantRecipeState> {
   int _request = 0;
   Future<void> load(int variantId, {int? productId}) async {
     final int request = ++_request;
-    emit(state.copyWith(loading: true, clearError: true));
+    emit(
+      state.copyWith(
+        loading: true,
+        profiles: const <int, ModifierRecipeProfile>{},
+        clearError: true,
+      ),
+    );
     try {
       final List<dynamic> result = await Future.wait<dynamic>(<Future<dynamic>>[
         _repository.getVariantRecipe(variantId),
@@ -68,14 +79,38 @@ class VariantRecipeCubit extends Cubit<VariantRecipeState> {
         if (productId != null)
           _repository.getProduct(productId, includeArchived: true),
       ]);
-      if (request != _request) return;
       final recipe = result[0] as VariantRecipe;
+      final ProductDetail? product = productId == null
+          ? null
+          : result[2] as ProductDetail;
+      final Map<int, ModifierRecipeProfile> profiles =
+          <int, ModifierRecipeProfile>{};
+      if (product != null) {
+        final options = product.modifierGroups
+            .where((group) => group.isActive && !group.isArchived)
+            .expand((group) => group.options)
+            .where((option) => option.isActive && !option.isArchived)
+            .toList(growable: false);
+        final loaded = await Future.wait<ModifierRecipeProfile>(
+          options.map(
+            (option) => _repository.getModifierRecipeProfile(
+              option.id,
+              variantId: variantId,
+            ),
+          ),
+        );
+        for (final profile in loaded) {
+          profiles[profile.optionId] = profile;
+        }
+      }
+      if (request != _request) return;
       emit(
         state.copyWith(
           loading: false,
           recipe: recipe,
           materials: result[1] as List<RecipeMaterial>,
-          product: productId == null ? null : result[2] as ProductDetail,
+          product: product,
+          profiles: profiles,
           draft: List<RecipeComponent>.from(recipe.components),
           clearError: true,
         ),
@@ -285,12 +320,14 @@ class RecipeSimulationState extends Equatable {
     this.resolving = false,
     this.product,
     this.result,
+    this.resultStale = false,
     this.error,
   });
   final bool loading;
   final bool resolving;
   final ProductDetail? product;
   final ResolvedRecipe? result;
+  final bool resultStale;
   final String? error;
   RecipeSimulationState copyWith({
     bool? loading,
@@ -299,11 +336,14 @@ class RecipeSimulationState extends Equatable {
     ResolvedRecipe? result,
     String? error,
     bool clearError = false,
+    bool clearResult = false,
+    bool? resultStale,
   }) => RecipeSimulationState(
     loading: loading ?? this.loading,
     resolving: resolving ?? this.resolving,
     product: product ?? this.product,
-    result: result ?? this.result,
+    result: clearResult ? null : result ?? this.result,
+    resultStale: resultStale ?? this.resultStale,
     error: clearError ? null : error ?? this.error,
   );
   @override
@@ -312,6 +352,7 @@ class RecipeSimulationState extends Equatable {
     resolving,
     product,
     result,
+    resultStale,
     error,
   ];
 }
@@ -331,7 +372,13 @@ class RecipeSimulationCubit extends Cubit<RecipeSimulationState> {
       );
       if (request == _request) {
         emit(
-          state.copyWith(loading: false, product: product, clearError: true),
+          state.copyWith(
+            loading: false,
+            product: product,
+            clearError: true,
+            clearResult: true,
+            resultStale: false,
+          ),
         );
       }
     } catch (_) {
@@ -351,8 +398,24 @@ class RecipeSimulationCubit extends Cubit<RecipeSimulationState> {
     List<Map<String, dynamic>> selections,
   ) async {
     if (state.resolving) return;
+    if (!_validSelections(selections)) {
+      invalidateResult();
+      emit(
+        state.copyWith(
+          error: 'Modifier quantities must be positive whole numbers.',
+        ),
+      );
+      return;
+    }
     final int request = ++_request;
-    emit(state.copyWith(resolving: true, clearError: true));
+    emit(
+      state.copyWith(
+        resolving: true,
+        clearError: true,
+        clearResult: true,
+        resultStale: false,
+      ),
+    );
     try {
       final result = await _repository.resolveVariantRecipe(
         variantId,
@@ -373,4 +436,21 @@ class RecipeSimulationCubit extends Cubit<RecipeSimulationState> {
         );
     }
   }
+
+  void invalidateResult() {
+    _request++;
+    emit(
+      state.copyWith(
+        clearResult: true,
+        clearError: true,
+        resultStale: state.result != null || state.resultStale,
+      ),
+    );
+  }
+
+  bool _validSelections(List<Map<String, dynamic>> selections) =>
+      selections.every((selection) {
+        final quantity = selection['quantity'];
+        return quantity == null || (quantity is int && quantity > 0);
+      });
 }

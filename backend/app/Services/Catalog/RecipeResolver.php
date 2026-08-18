@@ -16,7 +16,11 @@ class RecipeResolver
         if (! $variant->is_active || $variant->trashed() || ! $variant->product || ! $variant->product->is_active || $variant->product->trashed()) {
             throw ValidationException::withMessages(['variant' => 'Variant is unavailable.']);
         }
-        $groups = $variant->product->modifierGroups()->with('options')->get()->keyBy('id');
+        $groups = $variant->product->modifierGroups()
+            ->where('modifier_groups.is_active', true)
+            ->with(['options' => fn ($query) => $query->where('is_active', true)->where('is_available', true)])
+            ->get()
+            ->keyBy('id');
         $base = $this->configuration->recipe($variant)['components'];
         $amounts = [];
         $meta = [];

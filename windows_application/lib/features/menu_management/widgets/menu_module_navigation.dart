@@ -301,58 +301,42 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
     if (path.endsWith('/create')) {
       detail = l10n?.menuBreadcrumbCreateProduct ?? 'Create product';
     } else if (path.contains('/variants/') && path.endsWith('/pricing')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbVariant ?? 'Variant'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
+      breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbPricing ?? 'Pricing';
     } else if (path.contains('/recipe-simulation')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbVariant ?? 'Variant'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
+      breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbRecipeSimulation ?? 'Recipe simulation';
     } else if (path.endsWith('/recipe')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
+      if (_variantIdFor(uri) != null) {
+        breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
+      }
       detail = l10n?.menuBreadcrumbRecipe ?? 'Recipe';
     } else if (path.endsWith('/variants')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbVariants ?? 'Variants';
     } else if (path.endsWith('/modifiers')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbModifiers ?? 'Modifiers';
     } else if (path.endsWith('/availability')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbAvailability ?? 'Availability';
     } else if (path.endsWith('/operational-availability')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail =
           l10n?.menuBreadcrumbOperationalAvailability ??
           'Operational availability';
     } else if (path.contains('/modifier-options/')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
+      if (_variantIdFor(uri) != null) {
+        breadcrumbs.add(_variantBreadcrumb(context, l10n, uri));
+      }
       detail =
           l10n?.menuBreadcrumbMaterialAdjustments ?? 'Material adjustments';
     } else if (path.contains('/products/') && path.endsWith('/edit')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbProduct ?? 'Product'),
-      );
+      breadcrumbs.add(_productBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbEditProduct ?? 'Edit product';
     } else if (path.startsWith('/menu-management/products/')) {
       detail = l10n?.menuBreadcrumbProduct ?? 'Product';
@@ -362,11 +346,7 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
       detail =
           l10n?.menuBreadcrumbCreateModifierGroup ?? 'Create modifier group';
     } else if (path.endsWith('/edit')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(
-          label: l10n?.menuBreadcrumbModifierGroup ?? 'Modifier group',
-        ),
-      );
+      breadcrumbs.add(_modifierGroupBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbEditModifierGroup ?? 'Edit modifier group';
     } else if (path.contains('/recipe-adjustments')) {
       breadcrumbs.add(
@@ -383,14 +363,10 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
     if (path.endsWith('/create')) {
       detail = l10n?.menuBreadcrumbCreateMenu ?? 'Create menu';
     } else if (path.endsWith('/edit')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbMenu ?? 'Menu'),
-      );
+      breadcrumbs.add(_menuBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbEditMenu ?? 'Edit menu';
     } else if (path.endsWith('/placements')) {
-      breadcrumbs.add(
-        MenuBreadcrumb(label: l10n?.menuBreadcrumbMenu ?? 'Menu'),
-      );
+      breadcrumbs.add(_menuBreadcrumb(context, l10n, uri));
       detail = l10n?.menuBreadcrumbComposition ?? 'Composition';
     } else if (path.startsWith('/menu-management/menus/')) {
       detail = l10n?.menuBreadcrumbMenu ?? 'Menu';
@@ -408,4 +384,82 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
 
   if (detail != null) breadcrumbs.add(MenuBreadcrumb(label: detail));
   return breadcrumbs.length == 1 ? const <MenuBreadcrumb>[] : breadcrumbs;
+}
+
+int? _routeId(Uri uri, String segment) {
+  final List<String> segments = uri.pathSegments;
+  final int index = segments.indexOf(segment);
+  if (index < 0 || index + 1 >= segments.length) return null;
+  return int.tryParse(segments[index + 1]);
+}
+
+int? _productIdFor(Uri uri) =>
+    _routeId(uri, 'products') ??
+    int.tryParse(uri.queryParameters['productId'] ?? '');
+
+int? _variantIdFor(Uri uri) =>
+    _routeId(uri, 'variants') ?? _routeId(uri, 'product-variants');
+
+MenuBreadcrumb _productBreadcrumb(
+  BuildContext context,
+  AppLocalizations? l10n,
+  Uri uri,
+) {
+  final int? productId = _productIdFor(uri);
+  return MenuBreadcrumb(
+    label: l10n?.menuBreadcrumbProduct ?? 'Product',
+    onTap: () => context.go(
+      productId == null
+          ? MenuModuleDestination.products.path
+          : '/menu-management/products/$productId',
+    ),
+  );
+}
+
+MenuBreadcrumb _variantBreadcrumb(
+  BuildContext context,
+  AppLocalizations? l10n,
+  Uri uri,
+) {
+  final int? productId = _productIdFor(uri);
+  return MenuBreadcrumb(
+    label: l10n?.menuBreadcrumbVariant ?? 'Variant',
+    onTap: () => context.go(
+      productId == null
+          ? MenuModuleDestination.products.path
+          : '/menu-management/products/$productId/variants',
+    ),
+  );
+}
+
+MenuBreadcrumb _modifierGroupBreadcrumb(
+  BuildContext context,
+  AppLocalizations? l10n,
+  Uri uri,
+) {
+  final int? modifierGroupId = _routeId(uri, 'modifiers');
+  return MenuBreadcrumb(
+    label: l10n?.menuBreadcrumbModifierGroup ?? 'Modifier group',
+    onTap: () => context.go(
+      modifierGroupId == null
+          ? MenuModuleDestination.modifiers.path
+          : '/menu-management/modifiers/$modifierGroupId',
+    ),
+  );
+}
+
+MenuBreadcrumb _menuBreadcrumb(
+  BuildContext context,
+  AppLocalizations? l10n,
+  Uri uri,
+) {
+  final int? menuId = _routeId(uri, 'menus');
+  return MenuBreadcrumb(
+    label: l10n?.menuBreadcrumbMenu ?? 'Menu',
+    onTap: () => context.go(
+      menuId == null
+          ? MenuModuleDestination.menus.path
+          : '/menu-management/menus/$menuId',
+    ),
+  );
 }

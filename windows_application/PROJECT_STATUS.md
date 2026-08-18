@@ -5,27 +5,26 @@ in `windows_application`. Menu Management is implemented across Catalog,
 Modifiers, Recipes, Menus, Assignments & Schedules, Review/Publish, and Version
 History. The temporary POS catalog remains separate from published menu snapshots.
 
-Phase UX-G0 — Menu Correctness & Performance Gate is **IN PROGRESS** only because
-the final `flutter gen-l10n` command timed out in this Codex environment; every
-other UX-G0-E gate below is green:
+Phase UX-G0 — Menu Correctness & Performance Gate is **COMPLETE**. Local Windows
+verification confirmed that `flutter gen-l10n` completed successfully with no
+error; every UX-G0-E gate below is green:
 
 - UX-G0-A — Modifier Domain Correctness: **COMPLETE**
 - UX-G0-B — API Performance & Flutter State Consistency: **COMPLETE**
 - UX-G0-C — Lifecycle Semantics: **COMPLETE**
 - UX-G0-D — Contract & Edge-Case Correctness: **COMPLETE**
-- UX-G0-E — Documentation + Final Regression Gate: **IN PROGRESS** (`flutter
-  gen-l10n` environment timeout; do not treat it as passed)
+- UX-G0-E — Documentation + Final Regression Gate: **COMPLETE**
 
 Current verification status (2026-08-18):
 
-- Backend: **114 tests, 1,685 assertions; Pint passed**.
-- Flutter: **325 tests, zero failures; `flutter pub get`, `dart format .`, and
-  `flutter analyze` passed**. `flutter gen-l10n` timed out after 120 seconds with
-  no result and remains unverified in this environment.
+- Backend: **117 tests, 1,707 assertions; Pint passed**.
+- Flutter: **328 tests, zero failures; `flutter pub get`, `flutter gen-l10n`,
+  `dart format .`, and `flutter analyze` passed**.
 - Repository: final `git diff --check` passed.
 
-The Menu Management UX redesign is complete through Batches 0–6. The next
-approved work is **UX Batch 7 — Recipes & Materials**. It has not started.
+The Menu Management UX redesign is complete through Batches 0–6. **Batch 7-P —
+Recipe Correctness Preflight** is **COMPLETE**. The next approved work is **UX
+Batch 7 — Recipes & Materials** visual redesign; it has not started.
 
 ## IMPLEMENTED FUNCTIONAL CAPABILITIES
 
@@ -50,7 +49,9 @@ approved work is **UX Batch 7 — Recipes & Materials**. It has not started.
 - Batch 4 / 4.1: Product workspace — **COMPLETE**
 - Batch 5: Menus and composition — **COMPLETE**
 - Batch 6: Modifier Library — **COMPLETE**
-- UX-G0-A through UX-G0-D — **COMPLETE**; UX-G0-E — **IN PROGRESS**
+- UX-G0-A through UX-G0-E — **COMPLETE**
+- Batch 7-P — Recipe Correctness Preflight — **COMPLETE**
+- UX Batch 7 — Recipes & Materials visual redesign — **NOT STARTED**
 
 NEXT APPROVED WORK: **UX Batch 7 — Recipes & Materials**. Do not begin it
 without its separate approved workflow.
@@ -114,7 +115,7 @@ instant, and returns the corresponding Branch-local wall-clock time consistently
 - Authentication remains intentionally deferred.
 - Combos and broader localization migration.
 - Phase 4K architecture cleanup.
-- UX Batch 7 and all later UX batches.
+- UX Batch 7 visual redesign and all later UX batches.
 
 ## KNOWN ARCHITECTURE DEBT
 

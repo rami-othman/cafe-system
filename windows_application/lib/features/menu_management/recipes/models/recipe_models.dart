@@ -110,6 +110,61 @@ class ResolvedRecipe {
   final List<RecipeComponent> components;
 }
 
+/// Groups resolver rows by material before they are presented to a manager.
+/// The backend already resolves recipe arithmetic; this only keeps the UI from
+/// rendering the same material as multiple final rows.
+List<RecipeComponent> aggregateRecipeComponents(
+  Iterable<RecipeComponent> components,
+) {
+  final Map<String, RecipeComponent> grouped = <String, RecipeComponent>{};
+  for (final component in components) {
+    final String key = '${component.materialId}:${component.unitCode}';
+    final RecipeComponent? previous = grouped[key];
+    grouped[key] = previous == null
+        ? component
+        : RecipeComponent(
+            materialId: component.materialId,
+            materialName: component.materialName ?? previous.materialName,
+            materialSku: component.materialSku ?? previous.materialSku,
+            quantity: _addRecipeQuantities(
+              previous.quantity,
+              component.quantity,
+            ),
+            unitCode: component.unitCode,
+            sortOrder: previous.sortOrder,
+          );
+  }
+  return grouped.values.toList(growable: false)
+    ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+}
+
+String _addRecipeQuantities(String left, String right) {
+  final List<String> leftParts = left.split('.');
+  final List<String> rightParts = right.split('.');
+  final int scale = <int>[
+    leftParts.length == 2 ? leftParts[1].length : 0,
+    rightParts.length == 2 ? rightParts[1].length : 0,
+  ].reduce((a, b) => a > b ? a : b);
+  BigInt scaled(String value) {
+    final List<String> parts = value.split('.');
+    final String decimals = parts.length == 2
+        ? parts[1].padRight(scale, '0')
+        : '';
+    return BigInt.parse(
+      '${parts[0]}${decimals.isEmpty ? List<String>.filled(scale, '0').join() : decimals}',
+    );
+  }
+
+  final BigInt sum = scaled(left) + scaled(right);
+  if (scale == 0) return sum.toString();
+  final String digits = sum.toString().padLeft(scale + 1, '0');
+  final String whole = digits.substring(0, digits.length - scale);
+  final String fraction = digits
+      .substring(digits.length - scale)
+      .replaceFirst(RegExp(r'0+$'), '');
+  return fraction.isEmpty ? whole : '$whole.$fraction';
+}
+
 class ModifierRecipeProfile {
   const ModifierRecipeProfile({
     required this.optionId,

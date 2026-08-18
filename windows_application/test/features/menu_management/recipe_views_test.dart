@@ -40,8 +40,43 @@ void main() {
   });
 
   testWidgets(
+    'base recipe can remove every component and save an empty recipe',
+    (tester) async {
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final repository = _RecipeViewRepository();
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<VariantRecipeCubit>(
+            create: (_) => VariantRecipeCubit(repository),
+            child: const VariantRecipeScreen(variantId: 7),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Remove material'));
+      await tester.pump();
+      expect(find.text('Beans'), findsNothing);
+      await tester.tap(find.text('Save recipe'));
+      await tester.pumpAndSettle();
+      expect(repository.lastSavedComponents, isEmpty);
+    },
+  );
+
+  testWidgets(
     'modifier editor exposes editable component controls and inheritance',
     (tester) async {
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
       final repository = _RecipeViewRepository();
       final probe = RecipeSimulationCubit(repository);
       await probe.loadContext(1);
@@ -58,16 +93,20 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(find.text('Inherited from Global'), findsOneWidget);
+      expect(find.text('Use inherited settings'), findsOneWidget);
+      expect(find.text('From Global settings'), findsOneWidget);
       expect(
-        find.textContaining('cloned from the inherited profile'),
+        find.byKey(const Key('adjustment-quantity-add-0')),
         findsOneWidget,
       );
-      expect(find.byKey(const Key('adjustment-quantity-0')), findsOneWidget);
-      expect(find.text('Suppress Inherited Effects'), findsOneWidget);
-      await tester.tap(find.text('Add Material'));
+      expect(find.text('Add Material to Add'), findsOneWidget);
+      await tester.ensureVisible(find.text('Add Material to Add'));
+      await tester.tap(find.text('Add Material to Add'));
       await tester.pump();
-      expect(find.byKey(const Key('adjustment-quantity-1')), findsOneWidget);
+      expect(
+        find.byKey(const Key('adjustment-quantity-add-1')),
+        findsOneWidget,
+      );
     },
   );
 
@@ -108,13 +147,110 @@ void main() {
       expect(find.textContaining('Extras'), findsOneWidget);
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
-      await tester.tap(find.text('Resolve Recipe'));
+      await tester.ensureVisible(find.text('Preview Materials'));
+      await tester.tap(find.text('Preview Materials'));
       await tester.pumpAndSettle();
       expect(find.text('Resolved beans'), findsOneWidget);
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      expect(find.text('Resolved beans'), findsNothing);
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Preview Materials'));
+      await tester.tap(find.text('Preview Materials'));
+      await tester.pumpAndSettle();
+      expect(find.text('Resolved beans'), findsOneWidget);
+      final dropdown = tester.widget<DropdownButton<int>>(
+        find.byType(DropdownButton<int>),
+      );
+      expect(dropdown.items, hasLength(1));
+      await tester.tap(find.byTooltip('Increase quantity'));
+      await tester.pump();
+      expect(find.text('Resolved beans'), findsNothing);
       await cubit.close();
     },
   );
 
+  testWidgets(
+    'recipe workspace renders configured materials and grouped effects',
+    (tester) async {
+      final repository = _RecipeViewRepository();
+      final product = await repository.getProduct(1);
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<VariantRecipeCubit>(
+            create: (_) => VariantRecipeCubit(repository),
+            child: RecipeMaterialsWorkspace(product: product),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Recipe configured'), findsOneWidget);
+      expect(find.text('Beans'), findsOneWidget);
+      expect(find.text('Modifier Material Effects'), findsOneWidget);
+      expect(find.text('Using Global settings'), findsOneWidget);
+      expect(find.text('Test Recipe'), findsNWidgets(2));
+    },
+  );
+
+  testWidgets(
+    'simulation marks a resolved result stale after a choice changes',
+    (tester) async {
+      final repository = _RecipeViewRepository();
+      final cubit = RecipeSimulationCubit(repository);
+      await cubit.loadContext(1);
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<RecipeSimulationCubit>.value(
+            value: cubit,
+            child: const RecipeSimulationScreen(productId: 1, variantId: 7),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Checkbox));
+      await tester.ensureVisible(find.text('Preview Materials'));
+      await tester.tap(find.text('Preview Materials'));
+      await tester.pumpAndSettle();
+      expect(find.text('Resolved beans'), findsOneWidget);
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+      expect(find.text('Choices changed'), findsOneWidget);
+      expect(
+        find.text('Preview the materials again to update this result.'),
+        findsOneWidget,
+      );
+      expect(find.text('Resolved beans'), findsNothing);
+      await cubit.close();
+    },
+  );
+
+  testWidgets('simulation stays overflow-free at desktop widths', (
+    tester,
+  ) async {
+    for (final size in <Size>[
+      const Size(1280, 900),
+      const Size(1440, 900),
+      const Size(1920, 1080),
+    ]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      final repository = _RecipeViewRepository();
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<RecipeSimulationCubit>(
+            create: (_) => RecipeSimulationCubit(repository),
+            child: const RecipeSimulationScreen(productId: 1, variantId: 7),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
   testWidgets('Arabic recipe screens remain RTL and keep technical values LTR', (
     tester,
   ) async {
@@ -126,7 +262,7 @@ void main() {
     });
     final repository = _RecipeViewRepository(
       materialName:
-          'حبوب قهوة عربية طويلة جداً لا ينبغي أن تسبب تجاوزاً في تخطيط جدول الوصفة',
+          'Ã˜Â­Ã˜Â¨Ã™Ë†Ã˜Â¨ Ã™â€šÃ™â€¡Ã™Ë†Ã˜Â© Ã˜Â¹Ã˜Â±Ã˜Â¨Ã™Å Ã˜Â© Ã˜Â·Ã™Ë†Ã™Å Ã™â€žÃ˜Â© Ã˜Â¬Ã˜Â¯Ã˜Â§Ã™â€¹ Ã™â€žÃ˜Â§ Ã™Å Ã™â€ Ã˜Â¨Ã˜ÂºÃ™Å  Ã˜Â£Ã™â€  Ã˜ÂªÃ˜Â³Ã˜Â¨Ã˜Â¨ Ã˜ÂªÃ˜Â¬Ã˜Â§Ã™Ë†Ã˜Â²Ã˜Â§Ã™â€¹ Ã™ÂÃ™Å  Ã˜ÂªÃ˜Â®Ã˜Â·Ã™Å Ã˜Â· Ã˜Â¬Ã˜Â¯Ã™Ë†Ã™â€ž Ã˜Â§Ã™â€žÃ™Ë†Ã˜ÂµÃ™ÂÃ˜Â©',
     );
     final cubit = RecipeSimulationCubit(repository);
     await cubit.loadContext(1);
@@ -142,19 +278,20 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(Checkbox));
     await tester.pump();
-    await tester.tap(find.text('Resolve Recipe'));
+    await tester.ensureVisible(find.text('Preview Materials'));
+    await tester.tap(find.text('Preview Materials'));
     await tester.pumpAndSettle();
 
-    expect(find.text('محاكاة الوصفة'), findsOneWidget);
+    expect(find.text('Test Recipe'), findsOneWidget);
     expect(
-      Directionality.of(tester.element(find.text('محاكاة الوصفة'))),
+      Directionality.of(tester.element(find.text('Test Recipe'))),
       TextDirection.rtl,
     );
     expect(find.text(repository.materialName), findsOneWidget);
     final quantityDirection = tester.widget<Directionality>(
       find
           .ancestor(
-            of: find.text('18.125'),
+            of: find.text('18.125 g'),
             matching: find.byType(Directionality),
           )
           .first,
@@ -164,7 +301,7 @@ void main() {
   });
 
   testWidgets(
-    'Arabic adjustment inheritance and empty-override confirmation are localized',
+    'Arabic adjustment editor keeps RTL layout and manager-facing behavior',
     (tester) async {
       final repository = _RecipeViewRepository();
       await tester.pumpWidget(
@@ -178,10 +315,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('هذه المسودة منسوخة'), findsOneWidget);
-      await tester.tap(find.text('إلغاء التأثيرات الموروثة'));
-      await tester.pumpAndSettle();
-      expect(find.text('إلغاء التأثيرات الموروثة؟'), findsOneWidget);
+      expect(find.text('Use inherited settings'), findsOneWidget);
+      expect(
+        Directionality.of(tester.element(find.text('Current Behavior'))),
+        TextDirection.rtl,
+      );
     },
   );
 }
@@ -196,6 +334,7 @@ Widget _app(Widget child, {Locale? locale}) => MaterialApp(
 class _RecipeViewRepository extends MenuCatalogRepository {
   _RecipeViewRepository({this.materialName = 'Beans'});
   final String materialName;
+  List<RecipeComponent>? lastSavedComponents;
   final VariantRecipe _recipe = const VariantRecipe(
     variantId: 7,
     components: <RecipeComponent>[
@@ -237,7 +376,10 @@ class _RecipeViewRepository extends MenuCatalogRepository {
   Future<VariantRecipe> saveVariantRecipe(
     int variantId,
     List<RecipeComponent> components,
-  ) async => VariantRecipe(variantId: variantId, components: components);
+  ) async {
+    lastSavedComponents = components;
+    return VariantRecipe(variantId: variantId, components: components);
+  }
 
   @override
   Future<ModifierRecipeProfile> getModifierRecipeProfile(
@@ -295,7 +437,19 @@ class _RecipeViewRepository extends MenuCatalogRepository {
     'category': null,
     'reportingCategory': null,
     'kitchenStation': null,
-    'defaultVariant': null,
+    'defaultVariant': <String, dynamic>{
+      'id': 7,
+      'name': 'Regular',
+      'nameAr': null,
+      'nameEn': 'Regular',
+      'sku': null,
+      'barcode': null,
+      'basePrice': 5,
+      'costPrice': null,
+      'isDefault': true,
+      'isActive': true,
+      'sortOrder': 0,
+    },
     'variantCount': 1,
     'modifierGroupCount': 1,
     'createdAt': null,
@@ -305,7 +459,21 @@ class _RecipeViewRepository extends MenuCatalogRepository {
     'preparationTimeMinutes': null,
     'sortOrder': 0,
     'isStockTracked': true,
-    'variants': <Object>[],
+    'variants': <Object>[
+      <String, dynamic>{
+        'id': 7,
+        'name': 'Regular',
+        'nameAr': null,
+        'nameEn': 'Regular',
+        'sku': null,
+        'barcode': null,
+        'basePrice': 5,
+        'costPrice': null,
+        'isDefault': true,
+        'isActive': true,
+        'sortOrder': 0,
+      },
+    ],
     'modifierGroups': <Object>[
       <String, dynamic>{
         'id': 11,

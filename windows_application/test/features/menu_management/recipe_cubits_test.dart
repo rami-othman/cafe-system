@@ -33,6 +33,18 @@ void main() {
     },
   );
 
+  test('recipe presentation aggregation combines identical materials', () {
+    final aggregated = aggregateRecipeComponents(const <RecipeComponent>[
+      RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+      RecipeComponent(materialId: 1, quantity: '18.125', unitCode: 'g'),
+      RecipeComponent(materialId: 2, quantity: '30', unitCode: 'ml'),
+    ]);
+
+    expect(aggregated, hasLength(2));
+    expect(aggregated.first.quantity, '36.125');
+    expect(aggregated.last.quantity, '30');
+  });
+
   test(
     'modifier adjustment cubit clones inherited components and suppresses explicitly',
     () async {
@@ -83,6 +95,47 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
       expect(cubit.state.result!.components.single.quantity, '18');
+    },
+  );
+
+  test(
+    'simulation rejects non-positive or malformed quantities locally',
+    () async {
+      final repository = _RecipeRepository(recipe: recipe);
+      final cubit = RecipeSimulationCubit(repository);
+
+      await cubit.resolve(7, const <Map<String, dynamic>>[
+        <String, dynamic>{'optionId': 9, 'quantity': 0},
+      ]);
+      expect(repository.resolveCalls, 0);
+      expect(cubit.state.result, isNull);
+      expect(cubit.state.error, contains('positive whole numbers'));
+
+      await cubit.resolve(7, const <Map<String, dynamic>>[
+        <String, dynamic>{'optionId': 9, 'quantity': '1'},
+      ]);
+      expect(repository.resolveCalls, 0);
+    },
+  );
+
+  test(
+    'simulation result is invalidated before a different variant resolves',
+    () async {
+      final repository = _RecipeRepository(recipe: recipe);
+      final cubit = RecipeSimulationCubit(repository);
+      await cubit.resolve(7, const <Map<String, dynamic>>[]);
+      expect(cubit.state.result, isNotNull);
+
+      final pending = Completer<ResolvedRecipe>();
+      repository.resolveFuture = pending.future;
+      unawaited(cubit.resolve(8, const <Map<String, dynamic>>[]));
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.result, isNull);
+      pending.complete(
+        const ResolvedRecipe(variantId: 8, components: <RecipeComponent>[]),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.result!.variantId, 8);
     },
   );
 }

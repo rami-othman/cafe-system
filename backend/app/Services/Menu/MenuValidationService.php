@@ -299,7 +299,8 @@ class MenuValidationService
             if ($min > $max) {
                 $this->issue($result, 'MODIFIER_MINIMUM_EXCEEDS_MAXIMUM', 'error', 'Modifier minimum exceeds maximum.', 'modifier_group', $group->id, $menu->id, $section->id, $placement->id);
             }
-            if ($max > $active->count()) {
+            $allowQuantity = (bool) ($group->pivot->allow_quantity_override ?? $group->allow_quantity);
+            if (! $allowQuantity && $max > $active->count()) {
                 $this->issue($result, 'MODIFIER_MAXIMUM_EXCEEDS_OPTIONS', 'error', 'Modifier maximum exceeds the active option count.', 'modifier_group', $group->id, $menu->id, $section->id, $placement->id);
             }
             if ($group->selection_type === 'single' && $max > 1) {

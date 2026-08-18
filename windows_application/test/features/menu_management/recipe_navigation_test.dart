@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
@@ -44,11 +45,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.recipeCalls.last, 7);
     expect(repository.productCalls.last, 1);
+    expect(find.text('Manage Recipe'), findsOneWidget);
+    await tester.tap(find.text('Manage Recipe'));
+    await tester.pumpAndSettle();
+    expect(
+      appRouter.routerDelegate.currentConfiguration.uri.queryParameters['edit'],
+      '1',
+    );
+    expect(find.byKey(const Key('standalone-recipe-editor')), findsOneWidget);
+
+    appRouter.go('/menu-management/product-variants/7/recipe?productId=1');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Add Material'));
+    await tester.tap(find.text('Add Material'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('standalone-recipe-editor')), findsOneWidget);
 
     appRouter.go('/menu-management/products/1/variants/7/recipe-simulation');
     await tester.pumpAndSettle();
     expect(repository.productCalls.last, 1);
-    expect(find.text('Recipe Simulation'), findsOneWidget);
+    expect(find.text('Test Recipe'), findsOneWidget);
+
+    await tester.tap(find.text('Product'));
+    await tester.pumpAndSettle();
+    expect(find.text('Latte'), findsWidgets);
   });
 
   testWidgets('malformed recipe route context fails safely', (tester) async {
