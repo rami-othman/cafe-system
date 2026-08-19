@@ -10,6 +10,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../widgets/menu_content_components.dart';
 import '../../widgets/menu_page_header.dart';
+import '../../recipes/models/recipe_models.dart';
 import '../controllers/modifier_group_detail_cubit.dart';
 import '../models/modifier_editor_drafts.dart';
 import '../models/modifier_models.dart';
@@ -27,6 +28,23 @@ class ModifierGroupDetailScreen extends StatefulWidget {
 
 class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
   bool _reordering = false;
+
+  Future<void> _openMaterialEffect(
+    BuildContext context,
+    ModifierOptionRecord option,
+  ) async {
+    final ModifierGroupDetailCubit cubit = context
+        .read<ModifierGroupDetailCubit>();
+    final bool? changed = await context.push<bool>(
+      MenuManagementRouteLocations.globalMaterialEffect(
+        widget.groupId,
+        option.id,
+      ),
+    );
+    if (changed == true && mounted) {
+      await cubit.loadMaterialEffects();
+    }
+  }
 
   @override
   void initState() {
@@ -202,6 +220,8 @@ class _ModifierGroupDetailScreenState extends State<ModifierGroupDetailScreen> {
                     onRestore: cubit.restoreOption,
                     onActivate: cubit.activateOption,
                     onDeactivate: cubit.deactivateOption,
+                    onMaterialEffect: (option) =>
+                        _openMaterialEffect(context, option),
                     onDefault: (option) => _optionDialog(
                       context,
                       cubit,
@@ -236,6 +256,7 @@ class _OptionsSection extends StatelessWidget {
     required this.onRestore,
     required this.onActivate,
     required this.onDeactivate,
+    required this.onMaterialEffect,
     required this.onDefault,
   });
 
@@ -250,6 +271,7 @@ class _OptionsSection extends StatelessWidget {
   final ValueChanged<int> onRestore;
   final ValueChanged<ModifierOptionRecord> onActivate;
   final ValueChanged<ModifierOptionRecord> onDeactivate;
+  final ValueChanged<ModifierOptionRecord> onMaterialEffect;
   final ValueChanged<ModifierOptionRecord> onDefault;
 
   @override
@@ -330,7 +352,10 @@ class _OptionsSection extends StatelessWidget {
                       onRestore: onRestore,
                       onActivate: onActivate,
                       onDeactivate: onDeactivate,
+                      onMaterialEffect: onMaterialEffect,
                       onDefault: onDefault,
+                      materialEffect: state.materialEffects[options[index].id],
+                      recipeMaterials: state.recipeMaterials,
                     ),
                     if (index < options.length - 1)
                       const Divider(height: 1, indent: 56, endIndent: 12),
@@ -356,7 +381,10 @@ class _OptionRow extends StatelessWidget {
     required this.onRestore,
     required this.onActivate,
     required this.onDeactivate,
+    required this.onMaterialEffect,
     required this.onDefault,
+    this.materialEffect,
+    this.recipeMaterials = const <RecipeMaterial>[],
   });
 
   final int groupId;
@@ -371,11 +399,16 @@ class _OptionRow extends StatelessWidget {
   final ValueChanged<int> onRestore;
   final ValueChanged<ModifierOptionRecord> onActivate;
   final ValueChanged<ModifierOptionRecord> onDeactivate;
+  final ValueChanged<ModifierOptionRecord> onMaterialEffect;
   final ValueChanged<ModifierOptionRecord> onDefault;
+  final ModifierRecipeProfile? materialEffect;
+  final List<RecipeMaterial> recipeMaterials;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final bool hasMaterialEffect =
+        materialEffect != null && materialEffect!.components.isNotEmpty;
     final Locale locale = Localizations.localeOf(context);
     final List<PopupMenuEntry<String>> menu = <PopupMenuEntry<String>>[
       if (!option.isArchived)
@@ -455,10 +488,19 @@ class _OptionRow extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      modifierPriceAdjustmentLabel(context, option.priceDelta),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    if (!hasMaterialEffect || option.priceDelta != 0)
+                      Text(
+                        modifierPriceAdjustmentLabel(
+                          context,
+                          option.priceDelta,
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (hasMaterialEffect)
+                      _MaterialEffectSummary(
+                        profile: materialEffect!,
+                        materials: recipeMaterials,
+                      ),
                   ],
                 ),
               ),
@@ -484,12 +526,7 @@ class _OptionRow extends StatelessWidget {
                     case 'edit':
                       onEdit(option);
                     case 'adjustments':
-                      context.push(
-                        MenuManagementRouteLocations.globalMaterialEffect(
-                          groupId,
-                          option.id,
-                        ),
-                      );
+                      onMaterialEffect(option);
                     case 'default':
                       onDefault(option);
                     case 'archive':
@@ -510,6 +547,60 @@ class _OptionRow extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _MaterialEffectSummary extends StatelessWidget {
+  const _MaterialEffectSummary({
+    required this.profile,
+    required this.materials,
+  });
+
+  final ModifierRecipeProfile profile;
+  final List<RecipeMaterial> materials;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final List<RecipeComponent> removes = profile.components
+        .where((component) => component.operation == 'remove')
+        .toList(growable: false);
+    final List<RecipeComponent> adds = profile.components
+        .where((component) => component.operation != 'remove')
+        .toList(growable: false);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (removes.isNotEmpty) _line(context, l10n.recipeRemoves, removes),
+          if (adds.isNotEmpty) _line(context, l10n.recipeAdds, adds),
+        ],
+      ),
+    );
+  }
+
+  Widget _line(
+    BuildContext context,
+    String label,
+    List<RecipeComponent> components,
+  ) => Text(
+    '$label: ${components.map(_componentLabel).join(', ')}',
+    style: Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+  );
+
+  String _componentLabel(RecipeComponent component) {
+    String name = 'Material #${component.materialId}';
+    for (final material in materials) {
+      if (material.id == component.materialId) {
+        name = material.name;
+        break;
+      }
+    }
+    return '$name ${component.quantity} ${component.unitCode}';
   }
 }
 

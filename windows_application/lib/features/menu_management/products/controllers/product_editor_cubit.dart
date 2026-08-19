@@ -71,8 +71,39 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
       isDirty: true,
       clearFieldErrors: true,
       clearFormError: true,
+      clearImageUploadError: true,
     ),
   );
+
+  Future<void> uploadImage(String filePath) async {
+    if (state.isUploadingImage || state.isReadOnly) return;
+    emit(
+      state.copyWith(
+        isUploadingImage: true,
+        clearImageUploadError: true,
+        clearFormError: true,
+      ),
+    );
+    try {
+      final String imageUrl = await repository.uploadProductImage(filePath);
+      emit(
+        state.copyWith(
+          draft: state.draft.copyWith(imageUrl: imageUrl),
+          isDirty: true,
+          isUploadingImage: false,
+          clearImageUploadError: true,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          isUploadingImage: false,
+          imageUploadError: _message(error),
+        ),
+      );
+    }
+  }
+
   Future<void> refreshReferences() async {
     final CatalogCategory? previousCategory = _categoryForId(
       state.categories,

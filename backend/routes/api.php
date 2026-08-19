@@ -33,6 +33,9 @@ use App\Http\Controllers\Api\TableController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
+    Route::get('product-images/{tenant}/{filename}', [ProductCatalogController::class, 'showProductImage'])
+        ->whereNumber('tenant');
+
     Route::prefix('admin/catalog')->group(function (): void {
         Route::controller(CatalogReferenceController::class)->group(function (): void {
             Route::get('categories', 'categories');
@@ -60,6 +63,7 @@ Route::prefix('v1')->group(function (): void {
         Route::controller(ProductCatalogController::class)->group(function (): void {
             Route::get('products', 'index');
             Route::post('products', 'store');
+            Route::post('product-images', 'uploadProductImage');
             Route::get('products/{product}', 'show');
             Route::patch('products/{product}', 'update');
             Route::post('products/{product}/archive', 'archive');
@@ -84,6 +88,7 @@ Route::prefix('v1')->group(function (): void {
             Route::put('product-variants/{variant}/recipe', 'putRecipe');
             Route::post('product-variants/{variant}/recipe/resolve', 'resolve');
             Route::get('product-variants/{variant}/recipe-material-effects', 'profileSummary');
+            Route::get('modifier-groups/{modifierGroup}/recipe-material-effects', 'modifierGroupProfileSummary');
             Route::get('modifier-options/{option}/recipe-adjustments', 'profile');
             Route::put('modifier-options/{option}/recipe-adjustments', 'putProfile');
             Route::get('products/{product}/modifier-options/{option}/recipe-adjustments', 'profile');

@@ -267,23 +267,27 @@ class DetailsDisclosure extends StatelessWidget {
   final bool initiallyExpanded;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      border: Border.all(color: AppColors.border),
+  Widget build(BuildContext context) => ExpansionTile(
+    initiallyExpanded: initiallyExpanded,
+    minTileHeight: 48,
+    shape: const RoundedRectangleBorder(
       borderRadius: AppRadius.control,
+      side: BorderSide(color: AppColors.border),
     ),
-    child: ExpansionTile(
-      initiallyExpanded: initiallyExpanded,
-      minTileHeight: 48,
-      title: Text(title, style: Theme.of(context).textTheme.titleSmall),
-      childrenPadding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      children: <Widget>[child],
+    collapsedShape: const RoundedRectangleBorder(
+      borderRadius: AppRadius.control,
+      side: BorderSide(color: AppColors.border),
     ),
+    backgroundColor: AppColors.surface,
+    collapsedBackgroundColor: AppColors.surface,
+    title: Text(title, style: Theme.of(context).textTheme.titleSmall),
+    childrenPadding: const EdgeInsetsDirectional.fromSTEB(
+      AppSpacing.lg,
+      0,
+      AppSpacing.lg,
+      AppSpacing.lg,
+    ),
+    children: <Widget>[child],
   );
 }
 

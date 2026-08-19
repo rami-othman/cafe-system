@@ -53,6 +53,11 @@ void main() {
       '/menu-management/product-variants/7/recipe',
     );
     expect(find.byKey(const Key('standalone-recipe-editor')), findsOneWidget);
+    final int recipeCallsBeforeSave = repository.recipeCalls.length;
+    await tester.tap(find.text('Save recipe'));
+    await tester.pumpAndSettle();
+    expect(repository.saveCalls, 1);
+    expect(repository.recipeCalls.length, greaterThan(recipeCallsBeforeSave));
 
     appRouter.go('/menu-management/product-variants/7/recipe?productId=1');
     await tester.pumpAndSettle();
@@ -83,6 +88,24 @@ void main() {
       find.text('The requested catalog route is invalid.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('material effect route keeps its parent workspace underneath', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      '/menu-management/product-variants/7/recipe?productId=1',
+    );
+    expect(find.text('Manage Recipe'), findsOneWidget);
+
+    appRouter.push(
+      '/menu-management/products/1/variants/7/modifier-options/3/material-effect',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Manage Recipe'), findsOneWidget);
+    expect(find.text('Modifier Material Effects'), findsWidgets);
   });
 
   testWidgets('legacy product setup routes redirect to Workspace tabs', (
@@ -128,6 +151,7 @@ class _RecipeNavigationRepository extends MenuCatalogRepository {
   final List<_ProfileCall> profileCalls = <_ProfileCall>[];
   final List<int> recipeCalls = <int>[];
   final List<int> productCalls = <int>[];
+  int saveCalls = 0;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -166,6 +190,15 @@ class _RecipeNavigationRepository extends MenuCatalogRepository {
       variantId: variantId,
       components: const <RecipeComponent>[],
     );
+  }
+
+  @override
+  Future<VariantRecipe> saveVariantRecipe(
+    int variantId,
+    List<RecipeComponent> components,
+  ) async {
+    saveCalls++;
+    return VariantRecipe(variantId: variantId, components: components);
   }
 
   @override

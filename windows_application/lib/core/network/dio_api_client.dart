@@ -25,7 +25,11 @@ class DioApiClient {
       InterceptorsWrapper(
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
-          options.headers[Headers.contentTypeHeader] = 'application/json';
+          if (options.data is FormData) {
+            options.headers.remove(Headers.contentTypeHeader);
+          } else {
+            options.headers[Headers.contentTypeHeader] = 'application/json';
+          }
           if (ApiConfig.defaultTenantId > 0) {
             options.headers['X-Tenant-Id'] = ApiConfig.defaultTenantId;
           } else {
@@ -73,6 +77,16 @@ class DioApiClient {
         path,
         data: data,
         queryParameters: queryParameters,
+      ),
+    );
+  }
+
+  Future<dynamic> postMultipart(String path, {required FormData data}) {
+    return _send(
+      () => _dio.post<dynamic>(
+        path,
+        data: data,
+        options: Options(contentType: Headers.multipartFormDataContentType),
       ),
     );
   }

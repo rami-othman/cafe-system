@@ -88,6 +88,7 @@ abstract final class AppSizes {
   static const double orderFilterTabHeight = 40;
   static const double orderActionButtonHeight = 40;
   static const double orderDetailsPanelWidth = 460;
+  static const double materialEffectPanelWidth = 620;
   static const double orderDetailsCompactGutter = 72;
   static const double orderDetailsHeaderIconSize = 36;
   static const double orderDetailsAvatarSize = 44;

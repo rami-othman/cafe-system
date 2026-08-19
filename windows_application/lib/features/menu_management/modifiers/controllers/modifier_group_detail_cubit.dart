@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../repositories/menu_catalog_repository.dart';
+import '../../recipes/models/recipe_models.dart';
 import '../models/modifier_editor_drafts.dart';
 import '../models/modifier_models.dart';
 
@@ -17,6 +18,8 @@ class ModifierGroupDetailState extends Equatable {
     this.currentActionId,
     this.isReordering = false,
     this.optionFilter = 'active',
+    this.materialEffects = const <int, ModifierRecipeProfile>{},
+    this.recipeMaterials = const <RecipeMaterial>[],
   });
   final ModifierDetailStatus status;
   final ModifierGroupRecord? group;
@@ -24,6 +27,8 @@ class ModifierGroupDetailState extends Equatable {
   final int? currentActionId;
   final bool isReordering;
   final String optionFilter;
+  final Map<int, ModifierRecipeProfile> materialEffects;
+  final List<RecipeMaterial> recipeMaterials;
   List<ModifierOptionRecord> get visibleOptions =>
       group?.options
           .where(
@@ -44,6 +49,8 @@ class ModifierGroupDetailState extends Equatable {
     int? currentActionId,
     bool? isReordering,
     String? optionFilter,
+    Map<int, ModifierRecipeProfile>? materialEffects,
+    List<RecipeMaterial>? recipeMaterials,
     bool clearGroup = false,
     bool clearError = false,
     bool clearAction = false,
@@ -56,6 +63,8 @@ class ModifierGroupDetailState extends Equatable {
         : currentActionId ?? this.currentActionId,
     isReordering: isReordering ?? this.isReordering,
     optionFilter: optionFilter ?? this.optionFilter,
+    materialEffects: materialEffects ?? this.materialEffects,
+    recipeMaterials: recipeMaterials ?? this.recipeMaterials,
   );
   @override
   List<Object?> get props => <Object?>[
@@ -65,6 +74,8 @@ class ModifierGroupDetailState extends Equatable {
     currentActionId,
     isReordering,
     optionFilter,
+    materialEffects,
+    recipeMaterials,
   ];
 }
 
@@ -76,15 +87,20 @@ class ModifierGroupDetailCubit extends Cubit<ModifierGroupDetailState> {
   Future<void> load(int id) async {
     _id = id;
     emit(
-      state.copyWith(status: ModifierDetailStatus.loading, clearError: true),
+      state.copyWith(
+        status: ModifierDetailStatus.loading,
+        clearError: true,
+        materialEffects: const <int, ModifierRecipeProfile>{},
+        recipeMaterials: const <RecipeMaterial>[],
+      ),
     );
     try {
-      emit(
-        state.copyWith(
-          status: ModifierDetailStatus.loaded,
-          group: await repository.getModifierGroup(id, includeArchived: true),
-        ),
+      final ModifierGroupRecord group = await repository.getModifierGroup(
+        id,
+        includeArchived: true,
       );
+      emit(state.copyWith(status: ModifierDetailStatus.loaded, group: group));
+      await loadMaterialEffects();
     } catch (error) {
       emit(
         state.copyWith(
@@ -96,6 +112,30 @@ class ModifierGroupDetailCubit extends Cubit<ModifierGroupDetailState> {
   }
 
   Future<void> refresh() => _id == null ? Future<void>.value() : load(_id!);
+
+  Future<void> loadMaterialEffects() async {
+    final ModifierGroupRecord? group = state.group;
+    if (group == null) return;
+    try {
+      final List<ModifierRecipeProfile> profiles = await repository
+          .getModifierGroupMaterialEffects(group.id);
+      final List<RecipeMaterial> materials = profiles.isEmpty
+          ? const <RecipeMaterial>[]
+          : await repository.listRecipeMaterials();
+      emit(
+        state.copyWith(
+          materialEffects: <int, ModifierRecipeProfile>{
+            for (final profile in profiles) profile.optionId: profile,
+          },
+          recipeMaterials: materials,
+          clearError: true,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(errorMessage: _message(error)));
+    }
+  }
+
   void setOptionFilter(String value) =>
       emit(state.copyWith(optionFilter: value));
   Future<void> saveOption(ModifierOptionDraft draft, {int? optionId}) async {

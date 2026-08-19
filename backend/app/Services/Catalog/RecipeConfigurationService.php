@@ -157,6 +157,34 @@ class RecipeConfigurationService
         })->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
+    public function globalProfileSummary(int $tenantId, array $optionIds): array
+    {
+        if ($optionIds === []) {
+            return [];
+        }
+
+        return ModifierOptionRecipeProfile::query()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('modifier_option_id', $optionIds)
+            ->where('scope_type', 'global')
+            ->with('components')
+            ->get()
+            ->map(fn (ModifierOptionRecipeProfile $profile): array => [
+                'optionId' => (int) $profile->modifier_option_id,
+                'scope' => 'global',
+                'hasOverride' => true,
+                'inheritedFrom' => null,
+                'components' => $profile->components
+                    ->sortBy('sort_order')
+                    ->map(fn ($component) => $this->component($component))
+                    ->values()
+                    ->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
     private function own(ModifierOption $option, ?int $productId, ?int $variantId): ?ModifierOptionRecipeProfile
     {
         return ModifierOptionRecipeProfile::query()->where('tenant_id', $option->tenant_id)->where('modifier_option_id', $option->id)->when($variantId, fn ($q) => $q->where('scope_type', 'variant')->where('product_variant_id', $variantId), fn ($q) => ($productId ? $q->where('scope_type', 'product')->where('product_id', $productId) : $q->where('scope_type', 'global')))->with('components')->first();

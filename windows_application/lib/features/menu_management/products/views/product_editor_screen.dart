@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:desktop_drop/desktop_drop.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +15,6 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../controllers/product_catalog_cubit.dart';
 import '../../models/catalog_models.dart';
-import '../../views/product_catalog_screen.dart' show CatalogProductImage;
 import '../../widgets/catalog_formatters.dart';
 import '../../widgets/menu_content_components.dart';
 import '../../widgets/menu_page_header.dart';
@@ -29,6 +32,8 @@ class ProductEditorScreen extends StatefulWidget {
 }
 
 class _ProductEditorScreenState extends State<ProductEditorScreen> {
+  String? _localImagePath;
+
   bool get _isCreate => widget.productId == null;
 
   String get _returnLocation => _isCreate
@@ -183,12 +188,16 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                             _ImageEditor(
                               imageUrl: draft.imageUrl,
                               error: state.fieldErrors['imageUrl'],
-                              onSet: () => _showImageEditor(draft),
-                              onRemove: draft.imageUrl.trim().isEmpty
+                              uploadError: state.imageUploadError,
+                              localImagePath: _localImagePath,
+                              isUploading: state.isUploadingImage,
+                              onPick: _pickImage,
+                              onDrop: _uploadImage,
+                              onRemove:
+                                  draft.imageUrl.trim().isEmpty &&
+                                      _localImagePath == null
                                   ? null
-                                  : () => cubit.updateDraft(
-                                      draft.copyWith(imageUrl: ''),
-                                    ),
+                                  : _removeImage,
                             ),
                             _text(
                               'Default Description',
@@ -450,17 +459,6 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                 technical: true,
                               ),
                             ],
-                            _text(
-                              'Image URL',
-                              draft.imageUrl,
-                              (value) => cubit.updateDraft(
-                                draft.copyWith(imageUrl: value),
-                              ),
-                              error: state.fieldErrors['imageUrl'],
-                              keyboard: TextInputType.url,
-                              span: true,
-                              technical: true,
-                            ),
                           ],
                         ),
                       ),
@@ -499,46 +497,31 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
     return configured.isEmpty ? 'Translations' : configured.join(' · ');
   }
 
-  Future<void> _showImageEditor(ProductEditorDraft draft) async {
-    final TextEditingController controller = TextEditingController(
-      text: draft.imageUrl,
+  Future<void> _pickImage() async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: false,
     );
-    final String? value = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          draft.imageUrl.trim().isEmpty ? 'Set Image' : 'Change Image',
-        ),
-        content: SizedBox(
-          width: 520,
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.url,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Image URL',
-              helperText: 'Paste a public HTTP(S) image URL.',
-            ),
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save image'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (value != null && mounted) {
-      context.read<ProductEditorCubit>().updateDraft(
-        draft.copyWith(imageUrl: value),
-      );
+    final String? path = result?.files.single.path;
+    if (path != null) await _uploadImage(path);
+  }
+
+  Future<void> _uploadImage(String path) async {
+    if (!mounted) return;
+    setState(() => _localImagePath = path);
+    await context.read<ProductEditorCubit>().uploadImage(path);
+    if (!mounted) return;
+    if (context.read<ProductEditorCubit>().state.imageUploadError == null) {
+      setState(() => _localImagePath = null);
     }
+  }
+
+  void _removeImage() {
+    setState(() => _localImagePath = null);
+    context.read<ProductEditorCubit>().updateDraft(
+      context.read<ProductEditorCubit>().state.draft.copyWith(imageUrl: ''),
+    );
   }
 
   Future<void> _showTranslations(ProductEditorDraft draft) {
@@ -696,12 +679,20 @@ class _ImageEditor extends StatelessWidget {
   const _ImageEditor({
     required this.imageUrl,
     required this.error,
-    required this.onSet,
+    required this.onPick,
+    required this.onDrop,
+    this.localImagePath,
+    this.uploadError,
+    this.isUploading = false,
     this.onRemove,
   });
   final String imageUrl;
   final String? error;
-  final VoidCallback onSet;
+  final String? localImagePath;
+  final String? uploadError;
+  final bool isUploading;
+  final VoidCallback onPick;
+  final ValueChanged<String> onDrop;
   final VoidCallback? onRemove;
   @override
   Widget build(BuildContext context) => _GridField(
@@ -710,29 +701,65 @@ class _ImageEditor extends StatelessWidget {
       children: <Widget>[
         Text('Product Image', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: AppSpacing.sm),
-        Container(
-          height: 152,
-          width: double.infinity,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.border),
+        DropTarget(
+          onDragDone: (detail) {
+            if (detail.files.isNotEmpty) onDrop(detail.files.first.path);
+          },
+          child: InkWell(
+            onTap: isUploading ? null : onPick,
             borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: 152,
+              width: double.infinity,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border.all(
+                  color: isUploading ? AppColors.primary : AppColors.border,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: isUploading
+                  ? const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(height: AppSpacing.sm),
+                        Text('Uploading image…'),
+                      ],
+                    )
+                  : localImagePath != null
+                  ? Image.file(
+                      File(localImagePath!),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const _ImagePlaceholder(
+                        message: 'Preview unavailable',
+                      ),
+                    )
+                  : imageUrl.trim().isEmpty
+                  ? const _ImagePlaceholder(
+                      message: 'Drop an image here or click to browse',
+                    )
+                  : Image.network(
+                      imageUrl.trim(),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const _ImagePlaceholder(
+                        message: 'Image could not be loaded',
+                      ),
+                    ),
+            ),
           ),
-          child: imageUrl.trim().isEmpty
-              ? const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(Icons.image_outlined, size: 36),
-                    SizedBox(height: AppSpacing.xs),
-                    Text('No image set'),
-                  ],
-                )
-              : CatalogProductImage(url: imageUrl.trim()),
         ),
-        if (error != null) ...<Widget>[
+        if (error != null || uploadError != null) ...<Widget>[
           const SizedBox(height: AppSpacing.xs),
-          Text(error!, style: const TextStyle(color: AppColors.danger)),
+          Text(
+            error ?? uploadError!,
+            style: const TextStyle(color: AppColors.danger),
+          ),
         ],
         const SizedBox(height: AppSpacing.sm),
         Wrap(
@@ -740,20 +767,36 @@ class _ImageEditor extends StatelessWidget {
           children: <Widget>[
             OutlinedButton(
               key: const Key('product-image-action'),
-              onPressed: onSet,
+              onPressed: isUploading ? null : onPick,
               child: Text(
-                imageUrl.trim().isEmpty ? 'Set Image' : 'Change Image',
+                imageUrl.trim().isEmpty ? 'Choose Image' : 'Change Image',
               ),
             ),
             if (onRemove != null)
               TextButton(
-                onPressed: onRemove,
+                onPressed: isUploading ? null : onRemove,
                 child: const Text('Remove Image'),
               ),
           ],
         ),
       ],
     ),
+  );
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder({required this.message});
+  final String message;
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+      const Icon(Icons.image_outlined, size: 36),
+      const SizedBox(height: AppSpacing.xs),
+      Text(message),
+      const SizedBox(height: AppSpacing.xs),
+      const Text('PNG, JPG, WEBP, or GIF up to 5 MB'),
+    ],
   );
 }
 

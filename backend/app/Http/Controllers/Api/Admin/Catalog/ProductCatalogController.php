@@ -17,6 +17,7 @@ use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProductCatalogController extends Controller
@@ -69,6 +70,35 @@ class ProductCatalogController extends Controller
         $product = $this->products->create(TenantContext::id($request), $this->productData($request, true));
 
         return response()->json(['data' => (new ProductDetailResource($product))->resolve($request)], 201);
+    }
+
+    public function uploadProductImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => ['required', 'file', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:5120'],
+        ]);
+        $tenant = TenantContext::id($request);
+        $path = $request->file('image')->store("product-images/{$tenant}", 'public');
+
+        return response()->json([
+            'data' => [
+                'url' => $request->getSchemeAndHttpHost().'/api/v1/product-images/'.$tenant.'/'.basename($path),
+            ],
+        ], 201);
+    }
+
+    public function showProductImage(int $tenant, string $filename)
+    {
+        if ($filename !== basename($filename) || ! preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
+            abort(404);
+        }
+        $path = "product-images/{$tenant}/{$filename}";
+        $disk = Storage::disk('public');
+        if (! $disk->exists($path)) {
+            abort(404);
+        }
+
+        return $disk->response($path);
     }
 
     public function update(Request $request, int $product): JsonResponse

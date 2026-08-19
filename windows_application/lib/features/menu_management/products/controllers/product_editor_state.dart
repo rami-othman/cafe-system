@@ -27,6 +27,8 @@ class ProductEditorState extends Equatable {
     this.isDirty = false,
     this.savedProduct,
     this.isReadOnly = false,
+    this.isUploadingImage = false,
+    this.imageUploadError,
   });
   final ProductEditorStatus status;
   final ProductEditorDraft draft;
@@ -41,6 +43,8 @@ class ProductEditorState extends Equatable {
   final bool isDirty;
   final ProductDetail? savedProduct;
   final bool isReadOnly;
+  final bool isUploadingImage;
+  final String? imageUploadError;
   bool get isCreate => productId == null;
   ProductEditorState copyWith({
     ProductEditorStatus? status,
@@ -61,6 +65,9 @@ class ProductEditorState extends Equatable {
     bool clearFieldErrors = false,
     bool clearFormError = false,
     bool clearSavedProduct = false,
+    bool? isUploadingImage,
+    String? imageUploadError,
+    bool clearImageUploadError = false,
   }) => ProductEditorState(
     status: status ?? this.status,
     draft: draft ?? this.draft,
@@ -79,6 +86,10 @@ class ProductEditorState extends Equatable {
     isDirty: isDirty ?? this.isDirty,
     savedProduct: clearSavedProduct ? null : savedProduct ?? this.savedProduct,
     isReadOnly: isReadOnly ?? this.isReadOnly,
+    isUploadingImage: isUploadingImage ?? this.isUploadingImage,
+    imageUploadError: clearImageUploadError
+        ? null
+        : imageUploadError ?? this.imageUploadError,
   );
   @override
   List<Object?> get props => <Object?>[
@@ -95,5 +106,7 @@ class ProductEditorState extends Equatable {
     isDirty,
     savedProduct,
     isReadOnly,
+    isUploadingImage,
+    imageUploadError,
   ];
 }

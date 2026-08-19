@@ -24,6 +24,41 @@ Current verification status (2026-08-18):
   verification: it exceeds the known Codex-shell timeout without output.
 - Repository: final `git diff --check` passed.
 
+Recent product editor update (2026-08-19): Product images can now be selected
+from the Windows file picker or dropped directly into the image box. Selected
+files upload through the Laravel media endpoint and the saved product keeps the
+returned hosted image URL; the old Image URL form field was removed.
+
+Advanced disclosure border fix (2026-08-19): DetailsDisclosure now uses one
+explicit light rounded ExpansionTile border, preventing the dark duplicate
+top/bottom lines in the product editor Advanced section.
+
+Material picker fix (2026-08-19): Recipe material search dialogs now load the
+full available material list on open and when the search field is cleared.
+
+Recipe refresh fix (2026-08-19): Returning from Manage Recipe after a
+successful save now refreshes the parent Recipe & Materials workspace so the
+new recipe is visible immediately.
+
+Material effects drawer fix (2026-08-19): Material-effect routes now open as
+transparent, keyed side panels with the parent catalog screen preserved
+underneath, including a slide-in transition and constrained loading/error
+states.
+
+Material effects drawer refinement (2026-08-19): Reduced the panel elevation
+and shadow opacity for a lighter, less visually dominant drawer edge.
+
+Material effects backdrop refinement (2026-08-19): Lightened the modal scrim
+so the underlying catalog page remains easier to read while the drawer is open.
+
+Modifier material unit editing fix (2026-08-19): Material-effect rows now use
+compatible unit selectors, allowing supported conversions such as kg/g and
+ml/l before saving.
+
+Modifier material summary fix (2026-08-19): The modifier-group detail view now
+loads saved global material profiles and shows each option's add/remove
+material, quantity, and unit beneath its price.
+
 The Menu Management UX redesign is complete through Batches 0–6. **Batch 7-P —
 Recipe Correctness Preflight** is **COMPLETE**. **Batch 7.1 — Recipe UX
 Hardening & Completion** is **VERIFICATION-GATED** pending the final local

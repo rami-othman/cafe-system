@@ -11,6 +11,32 @@ import 'package:windows_application/features/menu_management/repositories/menu_c
 import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
+  testWidgets('material picker loads materials when opened', (tester) async {
+    final queries = <String>[];
+    await tester.pumpWidget(
+      _app(
+        RecipeMaterialSearchDialog(
+          excludedIds: const <int>{},
+          search: (query) async {
+            queries.add(query);
+            return const <RecipeMaterial>[
+              RecipeMaterial(
+                id: 1,
+                name: 'Beans',
+                unitCode: 'g',
+                configurationAvailable: true,
+              ),
+            ];
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(queries, contains(''));
+    expect(find.text('Beans'), findsOneWidget);
+  });
+
   testWidgets('base recipe renders material names and keeps exact draft text', (
     tester,
   ) async {
@@ -111,6 +137,11 @@ void main() {
         find.byKey(const Key('adjustment-quantity-add-1')),
         findsOneWidget,
       );
+      await tester.tap(find.byKey(const Key('adjustment-unit-add-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('l').last);
+      await tester.pumpAndSettle();
+      expect(find.text('l'), findsOneWidget);
     },
   );
 

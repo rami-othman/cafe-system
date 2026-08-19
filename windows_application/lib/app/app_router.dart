@@ -59,9 +59,38 @@ import '../features/menu_management/review/views/menu_review_screen.dart';
 import '../features/menu_management/versions/controllers/published_version_cubit.dart';
 import '../features/menu_management/widgets/menu_module_navigation.dart';
 import '../features/menu_management/widgets/menu_module_scaffold.dart';
+import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../shared/widgets/app_top_bar.dart';
 import 'app_shell.dart';
+
+Page<void> _materialEffectPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) => CustomTransitionPage<void>(
+  child: child,
+  key: state.pageKey,
+  name: state.name,
+  opaque: false,
+  barrierDismissible: true,
+      barrierColor: AppColors.materialEffectBackdrop,
+  barrierLabel: AppLocalizations.of(context).recipeModifierMaterialEffects,
+  transitionDuration: const Duration(milliseconds: 220),
+  reverseTransitionDuration: const Duration(milliseconds: 180),
+  transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+      SlideTransition(
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
+              ),
+            ),
+        child: child,
+      ),
+);
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.pos,
@@ -129,18 +158,24 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementModifierRecipeAdjustments,
           name: AppRouteNames.menuManagementModifierRecipeAdjustments,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final optionId = int.tryParse(
               state.pathParameters['optionId'] ?? '',
             );
             if (optionId == null || optionId < 1) {
-              return const _InvalidCatalogRouteScreen();
+              return const NoTransitionPage<void>(
+                child: _InvalidCatalogRouteScreen(),
+              );
             }
-            return BlocProvider<ModifierAdjustmentCubit>(
-              create: (_) => ModifierAdjustmentCubit(
-                serviceLocator<MenuCatalogRepository>(),
+            return _materialEffectPage(
+              context,
+              state,
+              BlocProvider<ModifierAdjustmentCubit>(
+                create: (_) => ModifierAdjustmentCubit(
+                  serviceLocator<MenuCatalogRepository>(),
+                ),
+                child: ModifierAdjustmentScreen(optionId: optionId),
               ),
-              child: ModifierAdjustmentScreen(optionId: optionId),
             );
           },
         ),
@@ -355,7 +390,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProductMaterialEffect,
           name: AppRouteNames.menuManagementProductMaterialEffect,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final productId = parsePositiveRouteId(
               state.pathParameters['productId'],
             );
@@ -363,15 +398,21 @@ final GoRouter appRouter = GoRouter(
               state.pathParameters['optionId'],
             );
             if (productId == null || optionId == null) {
-              return const _InvalidCatalogRouteScreen();
+              return const NoTransitionPage<void>(
+                child: _InvalidCatalogRouteScreen(),
+              );
             }
-            return BlocProvider<ModifierAdjustmentCubit>(
-              create: (_) => ModifierAdjustmentCubit(
-                serviceLocator<MenuCatalogRepository>(),
-              ),
-              child: ModifierAdjustmentScreen(
-                optionId: optionId,
-                productId: productId,
+            return _materialEffectPage(
+              context,
+              state,
+              BlocProvider<ModifierAdjustmentCubit>(
+                create: (_) => ModifierAdjustmentCubit(
+                  serviceLocator<MenuCatalogRepository>(),
+                ),
+                child: ModifierAdjustmentScreen(
+                  optionId: optionId,
+                  productId: productId,
+                ),
               ),
             );
           },
@@ -379,7 +420,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementVariantMaterialEffect,
           name: AppRouteNames.menuManagementVariantMaterialEffect,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final productId = parsePositiveRouteId(
               state.pathParameters['productId'],
             );
@@ -390,16 +431,22 @@ final GoRouter appRouter = GoRouter(
               state.pathParameters['optionId'],
             );
             if (productId == null || variantId == null || optionId == null) {
-              return const _InvalidCatalogRouteScreen();
+              return const NoTransitionPage<void>(
+                child: _InvalidCatalogRouteScreen(),
+              );
             }
-            return BlocProvider<ModifierAdjustmentCubit>(
-              create: (_) => ModifierAdjustmentCubit(
-                serviceLocator<MenuCatalogRepository>(),
-              ),
-              child: ModifierAdjustmentScreen(
-                optionId: optionId,
-                productId: productId,
-                variantId: variantId,
+            return _materialEffectPage(
+              context,
+              state,
+              BlocProvider<ModifierAdjustmentCubit>(
+                create: (_) => ModifierAdjustmentCubit(
+                  serviceLocator<MenuCatalogRepository>(),
+                ),
+                child: ModifierAdjustmentScreen(
+                  optionId: optionId,
+                  productId: productId,
+                  variantId: variantId,
+                ),
               ),
             );
           },
@@ -407,7 +454,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementGlobalMaterialEffect,
           name: AppRouteNames.menuManagementGlobalMaterialEffect,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final groupId = parsePositiveRouteId(
               state.pathParameters['modifierGroupId'],
             );
@@ -415,15 +462,21 @@ final GoRouter appRouter = GoRouter(
               state.pathParameters['optionId'],
             );
             if (groupId == null || optionId == null) {
-              return const _InvalidCatalogRouteScreen();
+              return const NoTransitionPage<void>(
+                child: _InvalidCatalogRouteScreen(),
+              );
             }
-            return BlocProvider<ModifierAdjustmentCubit>(
-              create: (_) => ModifierAdjustmentCubit(
-                serviceLocator<MenuCatalogRepository>(),
-              ),
-              child: ModifierAdjustmentScreen(
-                optionId: optionId,
-                groupId: groupId,
+            return _materialEffectPage(
+              context,
+              state,
+              BlocProvider<ModifierAdjustmentCubit>(
+                create: (_) => ModifierAdjustmentCubit(
+                  serviceLocator<MenuCatalogRepository>(),
+                ),
+                child: ModifierAdjustmentScreen(
+                  optionId: optionId,
+                  groupId: groupId,
+                ),
               ),
             );
           },

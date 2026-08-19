@@ -8,10 +8,26 @@ import '../../../../app/menu_management_route_locations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../controllers/recipe_cubits.dart';
 import '../models/recipe_models.dart';
 import 'variant_recipe_screen.dart' show RecipeMaterialSearchDialog;
+
+Widget _materialEffectPanel(Widget child) => Align(
+  alignment: AlignmentDirectional.topEnd,
+  child: ConstrainedBox(
+    constraints: const BoxConstraints(
+      maxWidth: AppSizes.materialEffectPanelWidth,
+    ),
+    child: Material(
+      color: AppColors.surface,
+      elevation: 2,
+      shadowColor: AppColors.black.withValues(alpha: 0.08),
+      child: SizedBox(height: double.infinity, child: child),
+    ),
+  ),
+);
 
 class ModifierAdjustmentScreen extends StatefulWidget {
   const ModifierAdjustmentScreen({
@@ -54,12 +70,16 @@ class _ModifierAdjustmentScreenState extends State<ModifierAdjustmentScreen> {
             ),
         builder: (context, state) {
           if (state.loading && state.profile == null)
-            return const Center(child: CircularProgressIndicator());
+            return _materialEffectPanel(
+              const Center(child: CircularProgressIndicator()),
+            );
           if (state.profile == null)
-            return Center(
-              child: FilledButton(
-                onPressed: _load,
-                child: Text(AppLocalizations.of(context).modifierRetry),
+            return _materialEffectPanel(
+              Center(
+                child: FilledButton(
+                  onPressed: _load,
+                  child: Text(AppLocalizations.of(context).modifierRetry),
+                ),
               ),
             );
           return _EffectEditor(
@@ -136,79 +156,65 @@ class _EffectEditorState extends State<_EffectEditor> {
   @override
   Widget build(BuildContext context) {
     final bool busy = widget.state.saving || widget.state.deleting;
-    return Align(
-      alignment: AlignmentDirectional.topEnd,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620),
-        child: Material(
-          color: AppColors.surface,
-          child: SizedBox(
-            height: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return _materialEffectPanel(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _header(context),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
               children: <Widget>[
-                _header(context),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    children: <Widget>[
-                      _behavior(context),
-                      const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        AppLocalizations.of(
-                          context,
-                        ).recipeModifierMaterialEffects,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        AppLocalizations.of(
-                          context,
-                        ).recipeModifierMaterialEffectsHelp,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      if (noEffect) _noEffectState(context),
-                      if (canCustomize && !noEffect)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.sm),
-                          child: TextButton.icon(
-                            onPressed: busy ? null : _setNoMaterialEffect,
-                            icon: const Icon(Icons.block_outlined, size: 17),
-                            label: Text(
-                              AppLocalizations.of(
-                                context,
-                              ).recipeNoMaterialEffectFor(
-                                _localizedContext(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (!noEffect) ...<Widget>[
-                        _materialSection(
-                          context,
-                          title: AppLocalizations.of(context).recipeRemoves,
-                          operation: 'remove',
-                          components: removes,
-                          busy: busy,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        _materialSection(
-                          context,
-                          title: AppLocalizations.of(context).recipeAdds,
-                          operation: 'add',
-                          components: adds,
-                          busy: busy,
-                        ),
-                      ],
-                    ],
-                  ),
+                _behavior(context),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  AppLocalizations.of(context).recipeModifierMaterialEffects,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                _footer(context, busy),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  AppLocalizations.of(
+                    context,
+                  ).recipeModifierMaterialEffectsHelp,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                if (noEffect) _noEffectState(context),
+                if (canCustomize && !noEffect)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: TextButton.icon(
+                      onPressed: busy ? null : _setNoMaterialEffect,
+                      icon: const Icon(Icons.block_outlined, size: 17),
+                      label: Text(
+                        AppLocalizations.of(
+                          context,
+                        ).recipeNoMaterialEffectFor(_localizedContext(context)),
+                      ),
+                    ),
+                  ),
+                if (!noEffect) ...<Widget>[
+                  _materialSection(
+                    context,
+                    title: AppLocalizations.of(context).recipeRemoves,
+                    operation: 'remove',
+                    components: removes,
+                    busy: busy,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _materialSection(
+                    context,
+                    title: AppLocalizations.of(context).recipeAdds,
+                    operation: 'add',
+                    components: adds,
+                    busy: busy,
+                  ),
+                ],
               ],
             ),
           ),
-        ),
+          _footer(context, busy),
+        ],
       ),
     );
   }
@@ -366,6 +372,10 @@ class _EffectEditorState extends State<_EffectEditor> {
     bool busy,
   ) {
     final int index = _draft.indexOf(component);
+    final RecipeMaterial? material = widget.state.materials.firstWhereOrNull(
+      (m) => m.id == component.materialId,
+    );
+    final List<String> units = compatibleRecipeUnits(material?.unitCode);
     return Container(
       key: Key('effect-row-${operation}-${component.materialId}'),
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -441,9 +451,44 @@ class _EffectEditorState extends State<_EffectEditor> {
               ),
             ),
           ),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(component.unitCode),
+          SizedBox(
+            width: 90,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: DropdownButtonFormField<String>(
+                key: Key('adjustment-unit-$operation-$index'),
+                value: units.contains(component.unitCode)
+                    ? component.unitCode
+                    : null,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).unit,
+                  isDense: true,
+                ),
+                items: units
+                    .map(
+                      (unit) => DropdownMenuItem<String>(
+                        value: unit,
+                        child: Text(unit),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: busy || (!_customizing && !profile.hasOverride)
+                    ? null
+                    : (unit) {
+                        if (unit == null) return;
+                        _replace(
+                          index,
+                          RecipeComponent(
+                            materialId: component.materialId,
+                            quantity: component.quantity,
+                            unitCode: unit,
+                            operation: operation,
+                            sortOrder: index,
+                          ),
+                        );
+                      },
+              ),
+            ),
           ),
           IconButton(
             tooltip: AppLocalizations.of(context).removeMaterial,
@@ -528,7 +573,7 @@ class _EffectEditorState extends State<_EffectEditor> {
       productId: widget.productId,
       variantId: widget.variantId,
     );
-    if (saved && mounted) _returnToParent();
+    if (saved && mounted) _returnToParent(changed: true);
   }
 
   Future<void> _restoreInheritance() async {
@@ -555,9 +600,9 @@ class _EffectEditorState extends State<_EffectEditor> {
     if (saved && mounted) setState(() => _customizing = true);
   }
 
-  void _returnToParent() {
+  void _returnToParent({bool changed = false}) {
     if (context.canPop()) {
-      context.pop();
+      context.pop(changed);
       return;
     }
     if (widget.productId != null) {

@@ -10,6 +10,7 @@ import 'package:windows_application/features/menu_management/modifiers/models/mo
 import 'package:windows_application/features/menu_management/modifiers/views/modifier_group_detail_screen.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/menu_management/products/models/product_editor_draft.dart';
+import 'package:windows_application/features/menu_management/recipes/models/recipe_models.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
@@ -20,6 +21,8 @@ void main() {
     await tester.pumpWidget(_app(repository));
     await tester.pumpAndSettle();
 
+    expect(find.text('Adds: Beans 18 g'), findsOneWidget);
+    expect(find.text('No extra charge'), findsNothing);
     final Finder addOption = find.byKey(
       const Key('add-modifier-option-action'),
     );
@@ -94,7 +97,7 @@ class _OptionRepository extends MenuCatalogRepository {
             'id': 11,
             'modifierGroupId': 1,
             'name': 'Existing',
-            'priceDelta': 0.75,
+            'priceDelta': 0.0,
             'isDefault': false,
             'isActive': true,
             'isAvailable': true,
@@ -149,6 +152,37 @@ class _OptionRepository extends MenuCatalogRepository {
     int groupId, {
     bool includeArchived = false,
   }) async => group;
+
+  @override
+  Future<List<ModifierRecipeProfile>> getModifierGroupMaterialEffects(
+    int groupId,
+  ) async => const <ModifierRecipeProfile>[
+    ModifierRecipeProfile(
+      optionId: 11,
+      scope: 'global',
+      hasOverride: true,
+      components: <RecipeComponent>[
+        RecipeComponent(
+          materialId: 1,
+          quantity: '18',
+          unitCode: 'g',
+          operation: 'add',
+        ),
+      ],
+    ),
+  ];
+
+  @override
+  Future<List<RecipeMaterial>> listRecipeMaterials({
+    String search = '',
+  }) async => const <RecipeMaterial>[
+    RecipeMaterial(
+      id: 1,
+      name: 'Beans',
+      unitCode: 'g',
+      configurationAvailable: true,
+    ),
+  ];
 
   @override
   Future<ModifierOptionRecord> createModifierOption(

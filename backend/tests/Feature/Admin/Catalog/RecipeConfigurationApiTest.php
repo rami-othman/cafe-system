@@ -105,6 +105,30 @@ class RecipeConfigurationApiTest extends TestCase
         $this->assertNotSame($option, $inactive);
     }
 
+    public function test_modifier_group_material_effect_summary_returns_global_option_components(): void
+    {
+        [$tenant, $product, $variant, $group, $option] = $this->recipeContext('global-effect-summary');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'add', 'quantity' => '20', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+
+        $this->getJson("/api/v1/admin/catalog/modifier-groups/$group/recipe-material-effects", $headers)
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.optionId', $option)
+            ->assertJsonPath('data.0.components.0.materialId', $material)
+            ->assertJsonPath('data.0.components.0.quantity', '20')
+            ->assertJsonPath('data.0.components.0.unitCode', 'g')
+            ->assertJsonPath('data.0.components.0.operation', 'add');
+
+        $foreign = $this->tenant('global-effect-summary-foreign');
+        $this->getJson("/api/v1/admin/catalog/modifier-groups/$group/recipe-material-effects", $this->headers($foreign))
+            ->assertNotFound();
+    }
+
     public function test_variant_list_summary_reports_recipe_configuration_and_component_count(): void
     {
         [$tenant, $product, $variant] = $this->recipeContext('variant-summary');

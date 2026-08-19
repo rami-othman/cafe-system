@@ -1,5 +1,9 @@
 // ignore_for_file: curly_braces_in_flow_control_structures, use_null_aware_elements
 
+import 'package:dio/dio.dart';
+
+import 'dart:io';
+
 import '../../../core/network/dio_api_client.dart';
 import '../models/catalog_models.dart';
 import '../models/product_catalog_filter.dart';
@@ -43,6 +47,9 @@ abstract class MenuCatalogRepository {
   Future<List<ModifierRecipeProfile>> getVariantRecipeMaterialEffects(
     int variantId,
   ) => throw UnsupportedError('Modifier recipe profiles are not configured.');
+  Future<List<ModifierRecipeProfile>> getModifierGroupMaterialEffects(
+    int groupId,
+  ) async => const <ModifierRecipeProfile>[];
   Future<ModifierRecipeProfile> saveModifierRecipeProfile(
     int optionId,
     List<RecipeComponent> components, {
@@ -102,6 +109,8 @@ abstract class MenuCatalogRepository {
     int productId,
     ProductEditorDraft draft,
   );
+  Future<String> uploadProductImage(String filePath) =>
+      throw UnsupportedError('Product image uploads are not configured.');
   Future<ProductDetail> setProductActive(int productId, bool isActive) =>
       throw UnsupportedError('Product activation is not configured.');
   Future<ProductDetail> archiveProduct(int productId) =>
@@ -445,6 +454,25 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     );
     if (body is! List) {
       throw const FormatException('Invalid modifier recipe effects response.');
+    }
+    return body
+        .whereType<Map>()
+        .map(
+          (item) =>
+              ModifierRecipeProfile.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<ModifierRecipeProfile>> getModifierGroupMaterialEffects(
+    int groupId,
+  ) async {
+    final dynamic body = await _apiClient.get(
+      'admin/catalog/modifier-groups/$groupId/recipe-material-effects',
+    );
+    if (body is! List) {
+      throw const FormatException('Invalid modifier group effects response.');
     }
     return body
         .whereType<Map>()
@@ -1307,6 +1335,24 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
       data: draft.toUpdateJson(),
     );
     return _detail(response);
+  }
+
+  @override
+  Future<String> uploadProductImage(String filePath) async {
+    final dynamic response = await _apiClient.postMultipart(
+      'admin/catalog/product-images',
+      data: FormData.fromMap(<String, dynamic>{
+        'image': await MultipartFile.fromFile(
+          filePath,
+          filename: File(filePath).uri.pathSegments.last,
+        ),
+      }),
+    );
+    final dynamic url = (response as Map<String, dynamic>)['url'];
+    if (url is! String || url.trim().isEmpty) {
+      throw const FormatException('The uploaded image URL was missing.');
+    }
+    return url;
   }
 
   @override

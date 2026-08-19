@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin\Catalog;
 
 use App\Http\Controllers\Controller;
+use App\Models\ModifierGroup;
 use App\Models\ModifierOption;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -45,6 +46,27 @@ class RecipeConfigurationController extends Controller
     public function profileSummary(Request $r, int $variant)
     {
         return response()->json(['data' => $this->recipes->profileSummary($this->variant($r, $variant))]);
+    }
+
+    public function modifierGroupProfileSummary(Request $r, int $modifierGroup)
+    {
+        $group = ModifierGroup::query()
+            ->where('tenant_id', TenantContext::id($r))
+            ->findOrFail($modifierGroup);
+
+        $optionIds = $group->options()
+            ->where('tenant_id', TenantContext::id($r))
+            ->where('is_active', true)
+            ->where('is_available', true)
+            ->pluck('id')
+            ->all();
+
+        return response()->json([
+            'data' => $this->recipes->globalProfileSummary(
+                TenantContext::id($r),
+                $optionIds,
+            ),
+        ]);
     }
 
     public function profile(Request $r)

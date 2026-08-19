@@ -22,7 +22,7 @@ void _returnToRecipeWorkspace(
   int variantId,
 ) {
   if (context.canPop()) {
-    context.pop();
+    context.pop(true);
     return;
   }
   context.go(
@@ -426,6 +426,17 @@ class _BaseRecipeCard extends StatelessWidget {
   final bool readOnly;
   final int variantId;
   final int? productId;
+
+  Future<void> _openEditor(BuildContext context, String route) async {
+    final bool? saved = await context.push<bool>(route);
+    if (saved == true && context.mounted) {
+      await context.read<VariantRecipeCubit>().load(
+        variantId,
+        productId: productId,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final components = recipe?.components ?? const <RecipeComponent>[];
@@ -450,7 +461,7 @@ class _BaseRecipeCard extends StatelessWidget {
                 ),
                 if (!readOnly)
                   OutlinedButton.icon(
-                    onPressed: () => context.push(editorRoute),
+                    onPressed: () => _openEditor(context, editorRoute),
                     icon: const Icon(Icons.edit_outlined, size: 17),
                     label: Text(AppLocalizations.of(context).manageRecipe),
                   ),
@@ -460,8 +471,7 @@ class _BaseRecipeCard extends StatelessWidget {
             if (components.isEmpty)
               _EmptyRecipeState(
                 readOnly: readOnly,
-                variantId: variantId,
-                productId: productId,
+                onOpenEditor: () => _openEditor(context, editorRoute),
               )
             else
               ...components.map(
@@ -480,14 +490,9 @@ class _BaseRecipeCard extends StatelessWidget {
 }
 
 class _EmptyRecipeState extends StatelessWidget {
-  const _EmptyRecipeState({
-    required this.readOnly,
-    required this.variantId,
-    this.productId,
-  });
+  const _EmptyRecipeState({required this.readOnly, required this.onOpenEditor});
   final bool readOnly;
-  final int variantId;
-  final int? productId;
+  final VoidCallback onOpenEditor;
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(AppSpacing.lg),
@@ -505,14 +510,7 @@ class _EmptyRecipeState extends StatelessWidget {
         ),
         if (!readOnly)
           TextButton(
-            onPressed: () => context.push(
-              productId == null
-                  ? '/menu-management/product-variants/$variantId/recipe'
-                  : MenuManagementRouteLocations.recipeEditor(
-                      productId!,
-                      variantId,
-                    ),
-            ),
+            onPressed: onOpenEditor,
             child: Text(AppLocalizations.of(context).addMaterial),
           ),
       ],
@@ -1034,6 +1032,14 @@ class _RecipeMaterialSearchDialogState
   List<RecipeMaterial> _materials = const <RecipeMaterial>[];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _search('');
+    });
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     super.dispose();
@@ -1047,14 +1053,6 @@ class _RecipeMaterialSearchDialogState
 
   Future<void> _search(String query) async {
     final trimmed = query.trim();
-    if (trimmed.isEmpty) {
-      setState(() {
-        _materials = const <RecipeMaterial>[];
-        _error = null;
-        _loading = false;
-      });
-      return;
-    }
     final request = ++_request;
     setState(() {
       _loading = true;
