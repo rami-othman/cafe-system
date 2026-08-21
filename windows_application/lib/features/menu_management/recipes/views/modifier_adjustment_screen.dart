@@ -58,6 +58,7 @@ class _ModifierAdjustmentScreenState extends State<ModifierAdjustmentScreen> {
     widget.optionId,
     productId: widget.productId,
     variantId: widget.variantId,
+    groupId: widget.groupId,
   );
 
   @override
@@ -88,6 +89,7 @@ class _ModifierAdjustmentScreenState extends State<ModifierAdjustmentScreen> {
             productId: widget.productId,
             variantId: widget.variantId,
             groupId: widget.groupId,
+            onRetry: _load,
           );
         },
       );
@@ -100,18 +102,14 @@ class _EffectEditor extends StatefulWidget {
     required this.productId,
     required this.variantId,
     required this.groupId,
+    required this.onRetry,
   });
   final ModifierAdjustmentState state;
   final int optionId;
   final int? productId;
   final int? variantId;
   final int? groupId;
-  String get optionName => 'Modifier option';
-  String get contextName => variantId != null
-      ? 'Variant'
-      : productId != null
-      ? 'Product'
-      : 'Modifier';
+  final VoidCallback onRetry;
   @override
   State<_EffectEditor> createState() => _EffectEditorState();
 }
@@ -245,6 +243,8 @@ class _EffectEditorState extends State<_EffectEditor> {
                 AppLocalizations.of(context).recipeModifierMaterialEffects,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
+              const SizedBox(height: AppSpacing.sm),
+              _contextHeader(context),
             ],
           ),
         ),
@@ -256,6 +256,72 @@ class _EffectEditorState extends State<_EffectEditor> {
       ],
     ),
   );
+
+  Widget _contextHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context);
+    if (widget.state.contextUnavailable) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.info_outline, size: 18),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              l10n.commonError,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRetry,
+            child: Text(l10n.modifierRetry),
+          ),
+        ],
+      );
+    }
+
+    final List<String> names = <String>[
+      if (widget.productId == null) l10n.global,
+      if (widget.state.product != null)
+        widget.state.product!.displayName(locale),
+      if (widget.state.variant != null)
+        widget.state.variant!.displayName(locale),
+      if (widget.state.productGroup != null)
+        widget.state.productGroup!.displayName(locale),
+      if (widget.state.globalGroup != null)
+        widget.state.globalGroup!.displayName(locale),
+      if (widget.state.productOption != null)
+        widget.state.productOption!.displayName(locale),
+      if (widget.state.globalOption != null)
+        widget.state.globalOption!.displayName(locale),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          widget.variantId != null
+              ? l10n.variantOverride
+              : widget.productId != null
+              ? l10n.productOverride
+              : l10n.global,
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            for (int index = 0; index < names.length; index++) ...<Widget>[
+              if (index > 0)
+                const Text('›', style: TextStyle(color: AppColors.textMuted)),
+              Text(names[index], style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
 
   Widget _behavior(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,

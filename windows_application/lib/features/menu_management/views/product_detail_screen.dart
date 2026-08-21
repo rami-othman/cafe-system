@@ -11,6 +11,7 @@ import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/product_catalog_cubit.dart';
 import '../controllers/product_detail_cubit.dart';
 import '../controllers/product_lifecycle_cubit.dart';
+import '../availability/widgets/product_availability_workspace.dart';
 import '../products/controllers/product_modifier_assignments_cubit.dart';
 import '../products/views/product_modifier_assignments_screen.dart';
 import '../variants/controllers/variants_cubit.dart';
@@ -212,15 +213,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       ),
     ),
-    ProductWorkspaceTab.availability => _DestinationPanel(
-      title: 'Availability',
-      message: 'Manage the times and contexts where this product is available.',
-      actionLabel: product.isArchived
-          ? 'View Availability'
-          : 'Open Availability',
-      onPressed: () => context.push(
-        MenuManagementRouteLocations.scheduledAvailability(product.id),
-      ),
+    ProductWorkspaceTab.availability => ProductAvailabilityWorkspace(
+      product: product,
     ),
     ProductWorkspaceTab.usage => _UsagePanel(
       state: state,

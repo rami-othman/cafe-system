@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/menu_management_route_locations.dart';
-import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -152,7 +151,7 @@ class _VariantPriceOverridesScreenState
                 ),
               ),
               Text(
-                '${state.variant!.name} · Price Overrides',
+                '${state.variant!.name} · Selling price',
                 style: AppTextStyles.titleMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -172,15 +171,8 @@ class _VariantPriceOverridesScreenState
                 _SuccessBanner(state.successMessage!),
               ],
               const SizedBox(height: AppSpacing.lg),
-              _Summary(state: state),
+              _EffectivePricePanel(),
               const SizedBox(height: AppSpacing.lg),
-              _OverridesTable(
-                onEdit: _edit,
-                onRemove: (item) => context
-                    .read<VariantPriceOverridesCubit>()
-                    .remove(item.scopeKey),
-              ),
-              const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
@@ -224,6 +216,13 @@ class _VariantPriceOverridesScreenState
                     ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.md),
+              _MorePriceRules(
+                onEdit: _edit,
+                onRemove: (item) => context
+                    .read<VariantPriceOverridesCubit>()
+                    .remove(item.scopeKey),
+              ),
               if (state.branchError != null) ...<Widget>[
                 const SizedBox(height: AppSpacing.sm),
                 Text(
@@ -231,8 +230,6 @@ class _VariantPriceOverridesScreenState
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
-              const SizedBox(height: AppSpacing.xl),
-              const _EffectivePricePanel(),
             ],
           ),
         );
@@ -252,6 +249,7 @@ class _VariantPriceOverridesScreenState
   );
 }
 
+// ignore: unused_element
 class _Summary extends StatelessWidget {
   const _Summary({required this.state});
   final VariantPriceOverridesState state;
@@ -296,95 +294,113 @@ class _Fact extends StatelessWidget {
   );
 }
 
-class _OverridesTable extends StatelessWidget {
-  const _OverridesTable({required this.onEdit, required this.onRemove});
+class _MorePriceRules extends StatelessWidget {
+  const _MorePriceRules({required this.onEdit, required this.onRemove});
   final ValueChanged<VariantPriceOverrideDraft> onEdit;
   final ValueChanged<VariantPriceOverrideDraft> onRemove;
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
-    builder: (context, state) {
-      if (state.saved.isEmpty && !state.isDirty) {
-        return const Card(
-          child: Padding(
-            padding: AppSpacing.allLg,
-            child: Text(
-              'No price overrides are configured. This Variant uses its Base Price in every scope.',
+  Widget build(BuildContext context) =>
+      BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
+        builder: (context, state) {
+          if (state.saved.isEmpty && !state.isDirty) {
+            return const Card(
+              child: ExpansionTile(
+                key: Key('more-price-rules'),
+                title: Text('More price rules'),
+                subtitle: Text(
+                  'No price adjustments. Base price applies everywhere.',
+                ),
+                children: <Widget>[SizedBox.shrink()],
+              ),
+            );
+          }
+          final Map<String, VariantPriceOverride> persisted =
+              <String, VariantPriceOverride>{
+                for (final item in state.saved) item.scopeKey: item,
+              };
+          return Card(
+            child: ExpansionTile(
+              key: const Key('more-price-rules'),
+              title: const Text('More price rules'),
+              subtitle: Text('${state.draft.length} configured'),
+              childrenPadding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
+              children: <Widget>[
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const <DataColumn>[
+                      DataColumn(label: Text('Scope')),
+                      DataColumn(label: Text('Branch')),
+                      DataColumn(label: Text('Channel')),
+                      DataColumn(label: Text('Override Price')),
+                      DataColumn(label: Text('Difference from Base Price')),
+                      DataColumn(label: Text('Actions')),
+                    ],
+                    rows: state.draft
+                        .map((draft) {
+                          final VariantPriceOverride? source =
+                              persisted[draft.scopeKey];
+                          final Branch? branch = state.branches
+                              .where((item) => item.id == draft.branchId)
+                              .firstOrNull;
+                          final PriceAmount difference =
+                              draft.price - state.basePrice!;
+                          return DataRow(
+                            cells: <DataCell>[
+                              DataCell(Text(scopeLabel(draft.scope))),
+                              DataCell(
+                                Text(
+                                  branch?.name ??
+                                      source?.branchName ??
+                                      (draft.branchId?.toString() ?? '—'),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  draft.channel == null
+                                      ? '—'
+                                      : salesChannelLabel(draft.channel!),
+                                ),
+                              ),
+                              DataCell(Text(_money(draft.price))),
+                              DataCell(Text(_difference(difference))),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    IconButton(
+                                      tooltip: 'Edit',
+                                      onPressed: state.canEdit
+                                          ? () => onEdit(draft)
+                                          : null,
+                                      icon: const Icon(Icons.edit_outlined),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Remove',
+                                      onPressed: state.canEdit
+                                          ? () => onRemove(draft)
+                                          : null,
+                                      icon: const Icon(Icons.delete_outline),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        })
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
             ),
-          ),
-        );
-      }
-      final Map<String, VariantPriceOverride> persisted =
-          <String, VariantPriceOverride>{
-            for (final item in state.saved) item.scopeKey: item,
-          };
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: const <DataColumn>[
-            DataColumn(label: Text('Scope')),
-            DataColumn(label: Text('Branch')),
-            DataColumn(label: Text('Channel')),
-            DataColumn(label: Text('Override Price')),
-            DataColumn(label: Text('Difference from Base Price')),
-            DataColumn(label: Text('Actions')),
-          ],
-          rows: state.draft
-              .map((draft) {
-                final VariantPriceOverride? source = persisted[draft.scopeKey];
-                final Branch? branch = state.branches
-                    .where((item) => item.id == draft.branchId)
-                    .firstOrNull;
-                final PriceAmount difference = draft.price - state.basePrice!;
-                return DataRow(
-                  cells: <DataCell>[
-                    DataCell(Text(scopeLabel(draft.scope))),
-                    DataCell(
-                      Text(
-                        branch?.name ??
-                            source?.branchName ??
-                            (draft.branchId?.toString() ?? '—'),
-                      ),
-                    ),
-                    DataCell(
-                      Text(
-                        draft.channel == null
-                            ? '—'
-                            : salesChannelLabel(draft.channel!),
-                      ),
-                    ),
-                    DataCell(Text(_money(draft.price))),
-                    DataCell(Text(_difference(difference))),
-                    DataCell(
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          IconButton(
-                            tooltip: 'Edit',
-                            onPressed: state.canEdit
-                                ? () => onEdit(draft)
-                                : null,
-                            icon: const Icon(Icons.edit_outlined),
-                          ),
-                          IconButton(
-                            tooltip: 'Remove',
-                            onPressed: state.canEdit
-                                ? () => onRemove(draft)
-                                : null,
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              })
-              .toList(growable: false),
-        ),
+          );
+        },
       );
-    },
-  );
 }
 
 class _OverrideEditorDialog extends StatefulWidget {
@@ -540,10 +556,10 @@ class _EffectivePricePanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Effective Price Diagnostic', style: AppTextStyles.titleLarge),
+            Text('Effective selling price', style: AppTextStyles.titleLarge),
             const SizedBox(height: AppSpacing.sm),
             const Text(
-              'The displayed result is resolved by the backend for the selected context.',
+              'The selling price for the selected Variant, Branch, and channel.',
             ),
             const SizedBox(height: AppSpacing.md),
             Wrap(
@@ -620,40 +636,30 @@ class _EffectivePricePanel extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  Text(
+                    _money(state.effectivePrice!.effectivePrice),
+                    textDirection: TextDirection.ltr,
+                    style: AppTextStyles.displayMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: 40,
                     runSpacing: AppSpacing.sm,
                     children: <Widget>[
                       _Fact(
-                        label: 'Base Price',
+                        label: 'Base price',
                         value: _money(state.effectivePrice!.basePrice),
                       ),
                       _Fact(
-                        label: 'Effective Price',
-                        value: _money(state.effectivePrice!.effectivePrice),
+                        label: 'Difference',
+                        value: _difference(
+                          state.effectivePrice!.effectivePrice -
+                              state.effectivePrice!.basePrice,
+                        ),
                       ),
                       _Fact(
-                        label: 'Resolution source',
+                        label: 'Using',
                         value: state.effectivePrice!.sourceLabel,
-                      ),
-                    ],
-                  ),
-                  ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    title: Text(
-                      context.maybeL10n?.technicalDetails ??
-                          'Technical details',
-                    ),
-                    children: <Widget>[
-                      Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: _Fact(
-                          label: 'Matched Override ID',
-                          value:
-                              state.effectivePrice!.matchedOverrideId
-                                  ?.toString() ??
-                              'Base Price',
-                        ),
                       ),
                     ],
                   ),

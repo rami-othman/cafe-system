@@ -1670,4 +1670,131 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get recipeIncreaseQuantity => 'زيادة الكمية';
+
+  @override
+  String get batch8AvailabilityTitle => 'إتاحة البيع';
+
+  @override
+  String get batch8AvailabilityHelp =>
+      'راجع السعر وساعات البيع المعتادة والحالة التشغيلية الحالية لهذا السياق.';
+
+  @override
+  String get batch8Variant => 'النوع';
+
+  @override
+  String get batch8Branch => 'الفرع';
+
+  @override
+  String get batch8Channel => 'قناة البيع';
+
+  @override
+  String get batch8AvailabilityLoadError => 'تعذر تحميل بيانات الإتاحة.';
+
+  @override
+  String get batch8Retry => 'إعادة المحاولة';
+
+  @override
+  String get batch8Loading => 'جارٍ التحميل…';
+
+  @override
+  String get batch8Checking => 'جارٍ التحقق…';
+
+  @override
+  String get batch8SellingPrice => 'سعر البيع';
+
+  @override
+  String get batch8BasePrice => 'السعر الأساسي';
+
+  @override
+  String get batch8EffectiveSellingPrice => 'سعر البيع الفعلي';
+
+  @override
+  String get batch8Using => 'المصدر';
+
+  @override
+  String get batch8ManagePricing => 'إدارة الأسعار';
+
+  @override
+  String get batch8PriceLoadingHelp => 'جارٍ تحديد سعر البيع لهذا السياق.';
+
+  @override
+  String get batch8PriceFromBase => 'السعر الأساسي للنوع';
+
+  @override
+  String get batch8PriceFromBranch => 'سعر الفرع';
+
+  @override
+  String get batch8PriceFromChannel => 'سعر قناة البيع';
+
+  @override
+  String get batch8PriceFromBranchAndChannel => 'سعر الفرع وقناة البيع';
+
+  @override
+  String get batch8RegularAvailability => 'الإتاحة المعتادة';
+
+  @override
+  String get batch8NoScheduleRestrictions => 'لا توجد قيود على الجدول';
+
+  @override
+  String get batch8NoScheduleRestrictionsHelp =>
+      'متاح عادةً ما دامت نقطة البيع مفتوحة في هذا السياق.';
+
+  @override
+  String get batch8ScheduleLoadingHelp =>
+      'جارٍ التحقق من ساعات البيع المعتادة لهذا السياق.';
+
+  @override
+  String get batch8AvailableNow => 'متاح الآن';
+
+  @override
+  String get batch8UnavailableNow => 'غير متاح الآن';
+
+  @override
+  String get batch8Unavailable => 'غير متاح';
+
+  @override
+  String get batch8AvailableAccordingSchedule =>
+      'متاح وفق ساعات البيع المعتادة.';
+
+  @override
+  String get batch8UnavailableAccordingSchedule => 'خارج ساعات البيع المعتادة.';
+
+  @override
+  String get batch8ScheduleRules => 'ساعات البيع المُعدّة';
+
+  @override
+  String get batch8ManageSchedule => 'إدارة الجدول';
+
+  @override
+  String get batch8CurrentAvailability => 'الإتاحة الحالية';
+
+  @override
+  String get batch8CurrentLoadingHelp =>
+      'جارٍ التحقق من الحالة التشغيلية المؤقتة لهذا السياق.';
+
+  @override
+  String get batch8SoldOut => 'نفدت الكمية';
+
+  @override
+  String get batch8TemporarilyUnavailable => 'غير متاح مؤقتًا';
+
+  @override
+  String get batch8NoTemporaryRestriction => 'لا يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String get batch8TemporaryRestrictionActive => 'يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String batch8TemporaryUntil(String time) {
+    return 'القيد المؤقت ساري حتى $time.';
+  }
+
+  @override
+  String get batch8ManageAvailability => 'إدارة الإتاحة';
+
+  @override
+  String get batch8EffectiveSellingResult => 'نتيجة البيع الفعلية';
+
+  @override
+  String get batch8Availability => 'الإتاحة';
 }

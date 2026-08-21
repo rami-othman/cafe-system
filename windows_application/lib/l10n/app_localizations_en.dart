@@ -1650,4 +1650,135 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recipeIncreaseQuantity => 'Increase quantity';
+
+  @override
+  String get batch8AvailabilityTitle => 'Selling availability';
+
+  @override
+  String get batch8AvailabilityHelp =>
+      'Review the price, regular selling hours, and current operational status for this selling context.';
+
+  @override
+  String get batch8Variant => 'Variant';
+
+  @override
+  String get batch8Branch => 'Branch';
+
+  @override
+  String get batch8Channel => 'Channel';
+
+  @override
+  String get batch8AvailabilityLoadError => 'Availability could not be loaded.';
+
+  @override
+  String get batch8Retry => 'Retry';
+
+  @override
+  String get batch8Loading => 'Loading…';
+
+  @override
+  String get batch8Checking => 'Checking…';
+
+  @override
+  String get batch8SellingPrice => 'Selling price';
+
+  @override
+  String get batch8BasePrice => 'Base price';
+
+  @override
+  String get batch8EffectiveSellingPrice => 'Effective selling price';
+
+  @override
+  String get batch8Using => 'Using';
+
+  @override
+  String get batch8ManagePricing => 'Manage pricing';
+
+  @override
+  String get batch8PriceLoadingHelp =>
+      'Resolving the selling price for this context.';
+
+  @override
+  String get batch8PriceFromBase => 'Variant base price';
+
+  @override
+  String get batch8PriceFromBranch => 'Branch price';
+
+  @override
+  String get batch8PriceFromChannel => 'Channel price';
+
+  @override
+  String get batch8PriceFromBranchAndChannel => 'Branch and channel price';
+
+  @override
+  String get batch8RegularAvailability => 'Regular availability';
+
+  @override
+  String get batch8NoScheduleRestrictions => 'No schedule restrictions';
+
+  @override
+  String get batch8NoScheduleRestrictionsHelp =>
+      'Normally available whenever this selling context is open.';
+
+  @override
+  String get batch8ScheduleLoadingHelp =>
+      'Checking regular selling hours for this context.';
+
+  @override
+  String get batch8AvailableNow => 'Available now';
+
+  @override
+  String get batch8UnavailableNow => 'Unavailable now';
+
+  @override
+  String get batch8Unavailable => 'Unavailable';
+
+  @override
+  String get batch8AvailableAccordingSchedule =>
+      'Available according to regular selling hours.';
+
+  @override
+  String get batch8UnavailableAccordingSchedule =>
+      'Outside the regular selling hours.';
+
+  @override
+  String get batch8ScheduleRules => 'Configured selling hours';
+
+  @override
+  String get batch8ManageSchedule => 'Manage schedule';
+
+  @override
+  String get batch8CurrentAvailability => 'Current availability';
+
+  @override
+  String get batch8CurrentLoadingHelp =>
+      'Checking temporary operational status for this context.';
+
+  @override
+  String get batch8SoldOut => 'Sold out';
+
+  @override
+  String get batch8TemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
+  String get batch8NoTemporaryRestriction =>
+      'No temporary restriction is active.';
+
+  @override
+  String get batch8TemporaryRestrictionActive =>
+      'A temporary operational restriction is active.';
+
+  @override
+  String batch8TemporaryUntil(String time) {
+    return 'Temporary restriction active until $time.';
+  }
+
+  @override
+  String get batch8ManageAvailability => 'Manage availability';
+
+  @override
+  String get batch8EffectiveSellingResult => 'Effective selling result';
+
+  @override
+  String get batch8Availability => 'Availability';
 }

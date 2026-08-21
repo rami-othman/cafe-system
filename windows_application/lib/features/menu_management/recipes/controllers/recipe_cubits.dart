@@ -3,6 +3,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../modifiers/models/modifier_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../../models/catalog_models.dart';
 import '../models/recipe_models.dart';
@@ -156,6 +157,13 @@ class ModifierAdjustmentState extends Equatable {
     this.profile,
     this.materials = const <RecipeMaterial>[],
     this.draft = const <RecipeComponent>[],
+    this.product,
+    this.variant,
+    this.productGroup,
+    this.productOption,
+    this.globalGroup,
+    this.globalOption,
+    this.contextUnavailable = false,
     this.error,
   });
   final bool loading;
@@ -164,6 +172,13 @@ class ModifierAdjustmentState extends Equatable {
   final ModifierRecipeProfile? profile;
   final List<RecipeMaterial> materials;
   final List<RecipeComponent> draft;
+  final ProductDetail? product;
+  final ProductVariant? variant;
+  final ModifierGroup? productGroup;
+  final ModifierOption? productOption;
+  final ModifierGroupRecord? globalGroup;
+  final ModifierOptionRecord? globalOption;
+  final bool contextUnavailable;
   final String? error;
   ModifierAdjustmentState copyWith({
     bool? loading,
@@ -172,6 +187,13 @@ class ModifierAdjustmentState extends Equatable {
     ModifierRecipeProfile? profile,
     List<RecipeMaterial>? materials,
     List<RecipeComponent>? draft,
+    ProductDetail? product,
+    ProductVariant? variant,
+    ModifierGroup? productGroup,
+    ModifierOption? productOption,
+    ModifierGroupRecord? globalGroup,
+    ModifierOptionRecord? globalOption,
+    bool? contextUnavailable,
     String? error,
     bool clearError = false,
   }) => ModifierAdjustmentState(
@@ -181,6 +203,13 @@ class ModifierAdjustmentState extends Equatable {
     profile: profile ?? this.profile,
     materials: materials ?? this.materials,
     draft: draft ?? this.draft,
+    product: product ?? this.product,
+    variant: variant ?? this.variant,
+    productGroup: productGroup ?? this.productGroup,
+    productOption: productOption ?? this.productOption,
+    globalGroup: globalGroup ?? this.globalGroup,
+    globalOption: globalOption ?? this.globalOption,
+    contextUnavailable: contextUnavailable ?? this.contextUnavailable,
     error: clearError ? null : error ?? this.error,
   );
   @override
@@ -191,6 +220,13 @@ class ModifierAdjustmentState extends Equatable {
     profile,
     materials,
     draft,
+    product,
+    variant,
+    productGroup,
+    productOption,
+    globalGroup,
+    globalOption,
+    contextUnavailable,
     error,
   ];
 }
@@ -200,7 +236,12 @@ class ModifierAdjustmentCubit extends Cubit<ModifierAdjustmentState> {
     : super(const ModifierAdjustmentState());
   final MenuCatalogRepository _repository;
   int _request = 0;
-  Future<void> load(int optionId, {int? productId, int? variantId}) async {
+  Future<void> load(
+    int optionId, {
+    int? productId,
+    int? variantId,
+    int? groupId,
+  }) async {
     final int request = ++_request;
     emit(state.copyWith(loading: true, clearError: true));
     try {
@@ -211,8 +252,16 @@ class ModifierAdjustmentCubit extends Cubit<ModifierAdjustmentState> {
           variantId: variantId,
         ),
         _repository.listRecipeMaterials(),
+        _loadModifierAdjustmentContext(
+          _repository,
+          optionId,
+          productId: productId,
+          variantId: variantId,
+          groupId: groupId,
+        ),
       ]);
       final profile = values[0] as ModifierRecipeProfile;
+      final context = values[2] as _ModifierAdjustmentContextResult;
       if (request == _request)
         emit(
           state.copyWith(
@@ -220,6 +269,13 @@ class ModifierAdjustmentCubit extends Cubit<ModifierAdjustmentState> {
             profile: profile,
             materials: values[1] as List<RecipeMaterial>,
             draft: List<RecipeComponent>.from(profile.components),
+            product: context.product,
+            variant: context.variant,
+            productGroup: context.productGroup,
+            productOption: context.productOption,
+            globalGroup: context.globalGroup,
+            globalOption: context.globalOption,
+            contextUnavailable: context.error,
             clearError: true,
           ),
         );
@@ -304,6 +360,109 @@ class ModifierAdjustmentCubit extends Cubit<ModifierAdjustmentState> {
       return false;
     }
   }
+}
+
+Future<_ModifierAdjustmentContextResult> _loadModifierAdjustmentContext(
+  MenuCatalogRepository repository,
+  int optionId, {
+  int? productId,
+  int? variantId,
+  int? groupId,
+}) async {
+  try {
+    if (productId != null) {
+      final product = await repository.getProduct(
+        productId,
+        includeArchived: true,
+      );
+      final group = product.modifierGroups
+          .where((item) => item.options.any((option) => option.id == optionId))
+          .firstOrNull;
+      final option = group?.options
+          .where((item) => item.id == optionId)
+          .firstOrNull;
+      final variant = variantId == null
+          ? null
+          : product.variants.where((item) => item.id == variantId).firstOrNull;
+      if (group == null ||
+          option == null ||
+          (variantId != null && variant == null)) {
+        return const _ModifierAdjustmentContextResult.error();
+      }
+      return _ModifierAdjustmentContextResult.product(
+        product: product,
+        variant: variant,
+        group: group,
+        option: option,
+      );
+    }
+
+    if (groupId != null) {
+      final group = await repository.getModifierGroup(
+        groupId,
+        includeArchived: true,
+      );
+      final option = <ModifierOptionRecord>[
+        ...group.options,
+        ...group.optionPreview,
+      ].where((item) => item.id == optionId).firstOrNull;
+      if (option == null) {
+        return const _ModifierAdjustmentContextResult.error();
+      }
+      return _ModifierAdjustmentContextResult.global(
+        group: group,
+        option: option,
+      );
+    }
+  } catch (_) {
+    return const _ModifierAdjustmentContextResult.error();
+  }
+  return const _ModifierAdjustmentContextResult.error();
+}
+
+class _ModifierAdjustmentContextResult {
+  const _ModifierAdjustmentContextResult({
+    this.product,
+    this.variant,
+    this.productGroup,
+    this.productOption,
+    this.globalGroup,
+    this.globalOption,
+  }) : error = false;
+
+  const _ModifierAdjustmentContextResult.error()
+    : product = null,
+      variant = null,
+      productGroup = null,
+      productOption = null,
+      globalGroup = null,
+      globalOption = null,
+      error = true;
+
+  _ModifierAdjustmentContextResult.product({
+    required ProductDetail product,
+    required ProductVariant? variant,
+    required ModifierGroup group,
+    required ModifierOption option,
+  }) : this(
+         product: product,
+         variant: variant,
+         productGroup: group,
+         productOption: option,
+       );
+
+  _ModifierAdjustmentContextResult.global({
+    required ModifierGroupRecord group,
+    required ModifierOptionRecord option,
+  }) : this(globalGroup: group, globalOption: option);
+
+  final ProductDetail? product;
+  final ProductVariant? variant;
+  final ModifierGroup? productGroup;
+  final ModifierOption? productOption;
+  final ModifierGroupRecord? globalGroup;
+  final ModifierOptionRecord? globalOption;
+  final bool error;
 }
 
 class RecipeSimulationState extends Equatable {

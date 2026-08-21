@@ -3043,6 +3043,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Increase quantity'**
   String get recipeIncreaseQuantity;
+
+  /// No description provided for @batch8AvailabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling availability'**
+  String get batch8AvailabilityTitle;
+
+  /// No description provided for @batch8AvailabilityHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the price, regular selling hours, and current operational status for this selling context.'**
+  String get batch8AvailabilityHelp;
+
+  /// No description provided for @batch8Variant.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant'**
+  String get batch8Variant;
+
+  /// No description provided for @batch8Branch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get batch8Branch;
+
+  /// No description provided for @batch8Channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get batch8Channel;
+
+  /// No description provided for @batch8AvailabilityLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability could not be loaded.'**
+  String get batch8AvailabilityLoadError;
+
+  /// No description provided for @batch8Retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get batch8Retry;
+
+  /// No description provided for @batch8Loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get batch8Loading;
+
+  /// No description provided for @batch8Checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get batch8Checking;
+
+  /// No description provided for @batch8SellingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling price'**
+  String get batch8SellingPrice;
+
+  /// No description provided for @batch8BasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Base price'**
+  String get batch8BasePrice;
+
+  /// No description provided for @batch8EffectiveSellingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective selling price'**
+  String get batch8EffectiveSellingPrice;
+
+  /// No description provided for @batch8Using.
+  ///
+  /// In en, this message translates to:
+  /// **'Using'**
+  String get batch8Using;
+
+  /// No description provided for @batch8ManagePricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage pricing'**
+  String get batch8ManagePricing;
+
+  /// No description provided for @batch8PriceLoadingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolving the selling price for this context.'**
+  String get batch8PriceLoadingHelp;
+
+  /// No description provided for @batch8PriceFromBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant base price'**
+  String get batch8PriceFromBase;
+
+  /// No description provided for @batch8PriceFromBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch price'**
+  String get batch8PriceFromBranch;
+
+  /// No description provided for @batch8PriceFromChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel price'**
+  String get batch8PriceFromChannel;
+
+  /// No description provided for @batch8PriceFromBranchAndChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch and channel price'**
+  String get batch8PriceFromBranchAndChannel;
+
+  /// No description provided for @batch8RegularAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular availability'**
+  String get batch8RegularAvailability;
+
+  /// No description provided for @batch8NoScheduleRestrictions.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedule restrictions'**
+  String get batch8NoScheduleRestrictions;
+
+  /// No description provided for @batch8NoScheduleRestrictionsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Normally available whenever this selling context is open.'**
+  String get batch8NoScheduleRestrictionsHelp;
+
+  /// No description provided for @batch8ScheduleLoadingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking regular selling hours for this context.'**
+  String get batch8ScheduleLoadingHelp;
+
+  /// No description provided for @batch8AvailableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Available now'**
+  String get batch8AvailableNow;
+
+  /// No description provided for @batch8UnavailableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable now'**
+  String get batch8UnavailableNow;
+
+  /// No description provided for @batch8Unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get batch8Unavailable;
+
+  /// No description provided for @batch8AvailableAccordingSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Available according to regular selling hours.'**
+  String get batch8AvailableAccordingSchedule;
+
+  /// No description provided for @batch8UnavailableAccordingSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside the regular selling hours.'**
+  String get batch8UnavailableAccordingSchedule;
+
+  /// No description provided for @batch8ScheduleRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured selling hours'**
+  String get batch8ScheduleRules;
+
+  /// No description provided for @batch8ManageSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage schedule'**
+  String get batch8ManageSchedule;
+
+  /// No description provided for @batch8CurrentAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Current availability'**
+  String get batch8CurrentAvailability;
+
+  /// No description provided for @batch8CurrentLoadingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking temporary operational status for this context.'**
+  String get batch8CurrentLoadingHelp;
+
+  /// No description provided for @batch8SoldOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold out'**
+  String get batch8SoldOut;
+
+  /// No description provided for @batch8TemporarilyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporarily unavailable'**
+  String get batch8TemporarilyUnavailable;
+
+  /// No description provided for @batch8NoTemporaryRestriction.
+  ///
+  /// In en, this message translates to:
+  /// **'No temporary restriction is active.'**
+  String get batch8NoTemporaryRestriction;
+
+  /// No description provided for @batch8TemporaryRestrictionActive.
+  ///
+  /// In en, this message translates to:
+  /// **'A temporary operational restriction is active.'**
+  String get batch8TemporaryRestrictionActive;
+
+  /// No description provided for @batch8TemporaryUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary restriction active until {time}.'**
+  String batch8TemporaryUntil(String time);
+
+  /// No description provided for @batch8ManageAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage availability'**
+  String get batch8ManageAvailability;
+
+  /// No description provided for @batch8EffectiveSellingResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective selling result'**
+  String get batch8EffectiveSellingResult;
+
+  /// No description provided for @batch8Availability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get batch8Availability;
 }
 
 class _AppLocalizationsDelegate

@@ -21,7 +21,9 @@ class ListOperationalAvailabilityRequest extends FormRequest
             'channel' => ['nullable', 'string', Rule::in([...array_map(fn (SalesChannel $channel) => $channel->value, SalesChannel::cases()), 'all'])],
             'status' => ['nullable', Rule::enum(OperationalAvailabilityStatus::class)],
             'level' => ['nullable', Rule::in(['product', 'variant', 'all'])],
-            'includeArchived' => ['nullable', 'boolean'], 'page' => ['nullable', 'integer', 'min:1'], 'perPage' => ['nullable', 'integer', 'between:1,100'],
+            // Query parameters arrive as strings. Accept standard HTTP boolean
+            // spellings as well as the numeric forms Laravel accepts natively.
+            'includeArchived' => ['nullable', Rule::in(['true', 'false', '1', '0', true, false, 1, 0])], 'page' => ['nullable', 'integer', 'min:1'], 'perPage' => ['nullable', 'integer', 'between:1,100'],
         ];
     }
 }

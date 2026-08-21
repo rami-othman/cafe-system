@@ -211,11 +211,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           _ContextCard(onSwitch: _confirmSwitch),
           const SizedBox(height: AppSpacing.lg),
           _RulesCard(
-            title: 'Exact Scope Rules',
+            title: 'Weekly selling hours',
             rules: state.exactRules,
             editable: state.canEdit,
             empty:
-                'No scheduled availability rules are configured for this exact scope.',
+                'No schedule restrictions. Normally available whenever this selling context is open.',
             onEdit: _edit,
             onRemove: (item) =>
                 context.read<AvailabilityCubit>().remove(item.identity),
@@ -225,7 +225,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             key: const Key('add-availability-rule'),
             onPressed: state.canEdit ? () => _edit(null) : null,
             icon: const Icon(Icons.add),
-            label: const Text('Add Rule'),
+            label: const Text('Edit Selling Hours'),
           ),
           const SizedBox(height: AppSpacing.lg),
           _InheritedCard(rules: state.inheritedRules),
@@ -702,7 +702,7 @@ class _RuleEditorState extends State<_RuleEditor> {
   ) => BlocBuilder<AvailabilityCubit, AvailabilityState>(
     builder: (context, state) => AlertDialog(
       title: Text(
-        widget.existing == null ? 'Add Schedule Rule' : 'Edit Schedule Rule',
+        widget.existing == null ? 'Set Selling Hours' : 'Edit Selling Hours',
       ),
       content: SizedBox(
         width: 500,
@@ -775,46 +775,88 @@ class _RuleEditorState extends State<_RuleEditor> {
                 onChanged: (v) => setState(() => _day = v),
               ),
               const SizedBox(height: 8),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                      controller: _start,
-                      decoration: const InputDecoration(
-                        labelText: 'Start time (HH:mm)',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _end,
-                      decoration: const InputDecoration(
-                        labelText: 'End time (HH:mm)',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 8),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                      controller: _startDate,
-                      decoration: const InputDecoration(
-                        labelText: 'Start date (YYYY-MM-DD)',
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Available all day'),
+                subtitle: const Text('Turn off to set custom selling hours.'),
+                value: _start.text.isEmpty && _end.text.isEmpty,
+                onChanged: (value) => setState(() {
+                  if (value) {
+                    _start.clear();
+                    _end.clear();
+                  } else {
+                    _start.text = '09:00';
+                    _end.text = '17:00';
+                  }
+                }),
+              ),
+              if (_start.text.isNotEmpty || _end.text.isNotEmpty)
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickTime(_start),
+                        icon: const Icon(Icons.schedule_outlined),
+                        label: Text(
+                          _start.text.isEmpty ? 'Start time' : _start.text,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickTime(_end),
+                        icon: const Icon(Icons.schedule_outlined),
+                        label: Text(_end.text.isEmpty ? 'End time' : _end.text),
+                      ),
+                    ),
+                  ],
+                ),
+              if (_start.text.isNotEmpty &&
+                  _end.text.isNotEmpty &&
+                  _end.text.compareTo(_start.text) < 0)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Available overnight until the selected end time the next day.',
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _endDate,
-                      decoration: const InputDecoration(
-                        labelText: 'End date (YYYY-MM-DD)',
+                ),
+              const SizedBox(height: 8),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: const Text('Date limits'),
+                subtitle: const Text('Optional'),
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _pickDate(_startDate),
+                          child: Text(
+                            _startDate.text.isEmpty
+                                ? 'Start date'
+                                : _startDate.text,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _pickDate(_endDate),
+                          child: Text(
+                            _endDate.text.isEmpty ? 'End date' : _endDate.text,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _startDate.clear();
+                      _endDate.clear();
+                    }),
+                    child: const Text('Clear date limits'),
                   ),
                 ],
               ),
@@ -898,6 +940,39 @@ class _RuleEditorState extends State<_RuleEditor> {
   String? _empty(String value) {
     final text = value.trim();
     return text.isEmpty ? null : text;
+  }
+
+  Future<void> _pickTime(TextEditingController controller) async {
+    final List<String> parts = controller.text.split(':');
+    final TimeOfDay initial = parts.length == 2
+        ? TimeOfDay(
+            hour: int.tryParse(parts[0]) ?? 9,
+            minute: int.tryParse(parts[1]) ?? 0,
+          )
+        : const TimeOfDay(hour: 9, minute: 0);
+    final TimeOfDay? value = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (value == null || !mounted) return;
+    setState(
+      () => controller.text =
+          '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}',
+    );
+  }
+
+  Future<void> _pickDate(TextEditingController controller) async {
+    final DateTime? value = await showDatePicker(
+      context: context,
+      initialDate: DateTime.tryParse(controller.text) ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (value == null || !mounted) return;
+    setState(
+      () => controller.text =
+          '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}',
+    );
   }
 }
 

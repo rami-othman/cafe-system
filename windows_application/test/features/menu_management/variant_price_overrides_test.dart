@@ -231,16 +231,16 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('Price Overrides'), findsOneWidget);
+      expect(find.textContaining('Selling price'), findsOneWidget);
       expect(find.text('USD 4.00'), findsWidgets);
       expect(find.text('Branch'), findsWidgets);
       expect(find.byKey(const Key('add-channel-override')), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Effective Price Diagnostic'),
+        find.text('Effective selling price'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Effective Price Diagnostic'), findsOneWidget);
+      expect(find.text('Effective selling price'), findsOneWidget);
     },
   );
 }

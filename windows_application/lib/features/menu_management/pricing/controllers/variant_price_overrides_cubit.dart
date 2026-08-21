@@ -13,14 +13,19 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
     : super(const VariantPriceOverridesState());
 
   final MenuCatalogRepository repository;
+  int _loadRequest = 0;
   int _effectiveRequest = 0;
 
   Future<void> load(
     int productId,
     int variantId, {
+    int? branchId,
+    String? channel,
     bool refresh = false,
   }) async {
     if (state.isSaving) return;
+    final int request = ++_loadRequest;
+    _effectiveRequest++;
     emit(
       state.copyWith(
         status: refresh
@@ -36,6 +41,7 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
         productId,
         includeArchived: true,
       );
+      if (request != _loadRequest || isClosed) return;
       final ProductVariant? variant = product.variants
           .where((item) => item.id == variantId)
           .firstOrNull;
@@ -56,6 +62,7 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
       try {
         snapshot = await overrides;
       } catch (error) {
+        if (request != _loadRequest || isClosed) return;
         emit(
           state.copyWith(
             status: VariantPriceOverridesStatus.failure,
@@ -75,6 +82,7 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
         branchError =
             'Branches could not be loaded. Branch-scoped overrides are unavailable.';
       }
+      if (request != _loadRequest || isClosed) return;
       emit(
         state.copyWith(
           status: VariantPriceOverridesStatus.loaded,
@@ -93,11 +101,9 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
           clearBranchError: branchError == null,
         ),
       );
-      await selectEffectiveContext(
-        branchId: state.effectiveBranchId,
-        channel: state.effectiveChannel,
-      );
+      await selectEffectiveContext(branchId: branchId, channel: channel);
     } catch (error) {
+      if (request != _loadRequest || isClosed) return;
       emit(
         state.copyWith(
           status: VariantPriceOverridesStatus.failure,

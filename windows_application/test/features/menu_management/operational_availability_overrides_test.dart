@@ -328,6 +328,49 @@ void main() {
     );
 
     test(
+      'using the default status clears only the exact override and re-resolves the broader status',
+      () async {
+        final _OperationalRepository repository = _OperationalRepository();
+        final OperationalAvailabilityCubit cubit = OperationalAvailabilityCubit(
+          repository: repository,
+        );
+        await cubit.load(11, variantId: 12);
+        repository.previewLoader = (_, branchId, channel) =>
+            Future<OperationalAvailabilityPreview>.value(
+              OperationalAvailabilityPreview.fromJson(<String, dynamic>{
+                'productId': 11,
+                'productVariantId': 12,
+                'branchId': branchId,
+                'channel': channel,
+                'isOperationallyAvailable': false,
+                'status': 'sold_out',
+                'matchedLevel': 'product',
+                'matchedScope': 'all_channels',
+                'matchedRecordId': 1,
+                'remainingQuantity': null,
+                'unavailableUntil': null,
+                'reason': 'Product status',
+              }),
+            );
+
+        expect(
+          await cubit.clearVariant(cubit.state.variantOverrides.single),
+          isTrue,
+        );
+        expect(repository.clearedVariant, <Object?>[12, 1, 'pos']);
+        expect(
+          cubit.state.preview!.status,
+          OperationalAvailabilityStatus.soldOut,
+        );
+        expect(
+          cubit.state.preview!.matchedLevel,
+          OperationalAvailabilityLevel.product,
+        );
+        await cubit.close();
+      },
+    );
+
+    test(
       'clear failure preserves the returned row and stale archive reloads safely',
       () async {
         final _OperationalRepository repository = _OperationalRepository()
@@ -505,8 +548,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Operational Availability'), findsOneWidget);
-      expect(find.text('Product Overrides'), findsOneWidget);
-      expect(find.text('Variant Overrides'), findsOneWidget);
+      expect(find.text('Product status settings'), findsOneWidget);
+      expect(find.text('Variant status settings'), findsOneWidget);
       expect(
         find.textContaining('Remaining quantity is operational metadata'),
         findsNothing,

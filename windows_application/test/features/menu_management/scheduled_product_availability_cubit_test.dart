@@ -250,7 +250,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Exact Scope Rules'), findsOneWidget);
+        expect(find.text('Weekly selling hours'), findsOneWidget);
         await tester.scrollUntilVisible(
           find.text('Inherited Rules'),
           400,

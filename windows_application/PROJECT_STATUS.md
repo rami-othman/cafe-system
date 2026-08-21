@@ -15,13 +15,18 @@ error; every UX-G0-E gate below is green:
 - UX-G0-D — Contract & Edge-Case Correctness: **COMPLETE**
 - UX-G0-E — Documentation + Final Regression Gate: **COMPLETE**
 
-Current verification status (2026-08-18):
+Current verification status (2026-08-20):
+
+- Operational availability API: the list endpoint accepts standard HTTP
+  `includeArchived=true` / `false` query values, matching the Flutter client.
 
 - Backend: **118 tests, 1,720 assertions; Pint passed** (verified baseline;
   unchanged by the Batch 7.1 closure pass).
-- Flutter: **337 tests, zero failures; `flutter pub get`, `dart format .`, and
-  `flutter analyze` passed**. `flutter gen-l10n` is pending final local Windows
-  verification: it exceeds the known Codex-shell timeout without output.
+- Flutter: **343 tests, zero failures; `flutter pub get`, `dart format .`, and
+  `flutter analyze` passed** in the final closure verification (the supplied
+  pre-closure baseline was 337 tests). The current Codex-shell
+  `flutter gen-l10n` invocation again timed out after 120 seconds without output;
+  the previously completed local Windows generation remains authoritative.
 - Repository: final `git diff --check` passed.
 
 Recent product editor update (2026-08-19): Product images can now be selected
@@ -51,6 +56,12 @@ and shadow opacity for a lighter, less visually dominant drawer edge.
 Material effects backdrop refinement (2026-08-19): Lightened the modal scrim
 so the underlying catalog page remains easier to read while the drawer is open.
 
+Material Effect context closure (2026-08-20): The ID-based editor routes remain
+unchanged. The editor now resolves and displays localized Product, Variant,
+Modifier Group, and Modifier Option names from loaded catalog data, with
+scope-specific breadcrumbs and an explicit retry state when related context is
+missing or unavailable.
+
 Modifier material unit editing fix (2026-08-19): Material-effect rows now use
 compatible unit selectors, allowing supported conversions such as kg/g and
 ml/l before saving.
@@ -59,11 +70,11 @@ Modifier material summary fix (2026-08-19): The modifier-group detail view now
 loads saved global material profiles and shows each option's add/remove
 material, quantity, and unit beneath its price.
 
-The Menu Management UX redesign is complete through Batches 0–6. **Batch 7-P —
-Recipe Correctness Preflight** is **COMPLETE**. **Batch 7.1 — Recipe UX
-Hardening & Completion** is **VERIFICATION-GATED** pending the final local
-Windows `flutter gen-l10n` check; this is focused hardening of the approved
-Batch 7 direction, not a redesign.
+The Menu Management UX redesign is complete through Batch 7. **Batch 7-P —
+Recipe Correctness Preflight** is **COMPLETE**. **Navigation & Flow
+Stabilization** is **COMPLETE**. **Batch 7.1 — Recipe UX Hardening & Completion**
+is **COMPLETE**. **Batch 7 — Recipes & Materials** is **COMPLETE after closure
+verification**.
 
 ## IMPLEMENTED FUNCTIONAL CAPABILITIES
 
@@ -90,8 +101,8 @@ Batch 7 direction, not a redesign.
 - Batch 6: Modifier Library — **COMPLETE**
 - UX-G0-A through UX-G0-E — **COMPLETE**
 - Batch 7-P — Recipe Correctness Preflight — **COMPLETE**
-- Batch 7.1 — Recipe UX Hardening & Completion — **VERIFICATION-GATED**
-  (pending local Windows `flutter gen-l10n`)
+- Batch 7.1 — Recipe UX Hardening & Completion — **COMPLETE**
+- Batch 7 — Recipes & Materials — **COMPLETE after closure verification**
 
 Navigation & Flow Stabilization: **COMPLETE**. The Product Workspace is the
 canonical Product parent; Workspace tabs and Recipe Variant selection are URL
@@ -99,8 +110,8 @@ state, legacy Variants/Modifiers routes redirect to Workspace tabs, and
 Recipe/Variant children retain Product and Variant identities for returns.
 Batch 8 and Phase 4K remain **NOT STARTED**.
 
-CURRENT APPROVED WORK: **Batch 7.1 — Recipe UX Hardening & Completion** only.
-Do not begin Batch 8 or Phase 4K.
+CURRENT APPROVED WORK: **Batch 7 final closure verification** is complete. Batch
+8 and Phase 4K remain **NOT STARTED**.
 
 ## AUTHORITATIVE DOMAIN RULES
 
@@ -161,7 +172,7 @@ instant, and returns the corresponding Branch-local wall-clock time consistently
 - Authentication remains intentionally deferred.
 - Combos and broader localization migration.
 - Phase 4K architecture cleanup.
-- UX Batch 7 visual redesign and all later UX batches.
+- Batch 8 and later UX batches.
 
 ## KNOWN ARCHITECTURE DEBT
 

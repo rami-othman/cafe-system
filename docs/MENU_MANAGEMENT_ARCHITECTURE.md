@@ -4,14 +4,16 @@
 
 Menu Management is implemented end-to-end for catalog administration, Modifier
 Library, recipes/material configuration, menu composition, assignments/schedules,
-validation/preview/publishing, and version history. UX-G0-A through UX-G0-D are
-complete; UX-G0-E is awaiting only a locally rerun `flutter gen-l10n` after the
-Codex environment timed out.
+validation/preview/publishing, and version history. UX-G0, Batch 7-P, Navigation
+& Flow Stabilization, and Batch 7.1 are **COMPLETE**. Batch 7 — Recipes &
+Materials is **COMPLETE after closure verification**.
 The authoritative project-status record is
 [`windows_application/PROJECT_STATUS.md`](../windows_application/PROJECT_STATUS.md).
 
-UX Batch 7 — Recipes & Materials is the next approved UX work. It has not
-started. Phase 4K architecture cleanup is deferred.
+The Product Workspace is the canonical Product parent. Recipe and Material
+Effect child routes remain ID-based and preserve Product, Variant, Modifier Group,
+and Modifier Option identity without display-name query parameters. Batch 8 and
+Phase 4K architecture cleanup are **NOT STARTED**.
 
 ## Core domain contracts
 

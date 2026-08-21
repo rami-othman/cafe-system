@@ -13,10 +13,18 @@ Operational temporary-unavailability mutations submit an offset-less Branch-loca
 timestamp. Flutter must not send `DateTime.toIso8601String()` for that field; the
 backend Branch timezone is authoritative.
 
-UX-G0-A through UX-G0-D are complete; UX-G0-E awaits only a locally rerun
-`flutter gen-l10n` after the Codex environment timed out. The next approved work
-is UX Batch 7 — Recipes & Materials; it has not started. Phase 4K cleanup, POS
-Published Snapshot Sync, and Inventory runtime are deferred.
+UX-G0 is **COMPLETE**. Batch 7-P, Navigation & Flow Stabilization, and Batch 7.1
+are **COMPLETE**. Batch 7 — Recipes & Materials is **COMPLETE after closure
+verification**. The Product Workspace remains the canonical Product parent;
+Recipe and Material Effect child routes retain Product/Variant/Option IDs and do
+not use display-name URL parameters. Batch 8 and Phase 4K are **NOT STARTED**.
+POS Published Snapshot Sync and Inventory runtime remain deferred.
+
+The supplied pre-closure baseline was 337 Flutter tests with zero failures. The
+final closure verification is 343 Flutter tests with zero failures, alongside
+118 backend tests with 1,720 assertions. The current Codex-shell
+`flutter gen-l10n` command timed out without output; prior local Windows
+generation passed.
 
 Verification gate (run each command independently):
 

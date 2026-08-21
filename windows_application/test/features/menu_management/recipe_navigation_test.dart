@@ -106,6 +106,12 @@ void main() {
 
     expect(find.text('Manage Recipe'), findsOneWidget);
     expect(find.text('Modifier Material Effects'), findsWidgets);
+    final query =
+        appRouter.routerDelegate.currentConfiguration.uri.queryParameters;
+    expect(query['productName'], isNull);
+    expect(query['variantName'], isNull);
+    expect(query['groupName'], isNull);
+    expect(query['optionName'], isNull);
   });
 
   testWidgets('legacy product setup routes redirect to Workspace tabs', (

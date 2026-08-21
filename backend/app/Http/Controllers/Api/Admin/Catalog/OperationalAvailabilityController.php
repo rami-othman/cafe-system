@@ -21,7 +21,10 @@ class OperationalAvailabilityController extends Controller
 
     public function index(ListOperationalAvailabilityRequest $request): JsonResponse
     {
-        return OperationalAvailabilityResource::collection($this->availability->list(TenantContext::id($request), $request->validated()))->response();
+        $filters = $request->validated();
+        $filters['includeArchived'] = $request->boolean('includeArchived');
+
+        return OperationalAvailabilityResource::collection($this->availability->list(TenantContext::id($request), $filters))->response();
     }
 
     public function updateProduct(UpdateProductOperationalAvailabilityRequest $request, int $product): JsonResponse

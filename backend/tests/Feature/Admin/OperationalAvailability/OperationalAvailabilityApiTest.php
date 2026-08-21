@@ -108,6 +108,23 @@ class OperationalAvailabilityApiTest extends TestCase
         $this->assertArrayNotHasKey('updated_by', $response->json('data.0'));
     }
 
+    public function test_list_accepts_a_standard_http_boolean_include_archived_query(): void
+    {
+        $tenant = $this->tenant('archive-query');
+        [$product] = $this->product($tenant, 'Archived Latte');
+        $branch = $this->branch($tenant);
+        $this->putJson($this->productUrl($product), ['branchId' => $branch, 'channel' => 'pos', 'status' => 'sold_out'], $this->headers($tenant))
+            ->assertOk();
+        DB::table('products')->where('id', $product)->update(['deleted_at' => now(), 'is_active' => false]);
+
+        $this->getJson('/api/v1/admin/catalog/operational-availability?includeArchived=false', $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/admin/catalog/operational-availability?includeArchived=true', $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
     private function preview(int $tenant, int $product, int $branch, string $channel, ?int $variant = null)
     {
         return $this->getJson('/api/v1/admin/catalog/products/'.$product.'/operational-availability-preview?'.http_build_query(['branchId' => $branch, 'channel' => $channel, 'productVariantId' => $variant]), $this->headers($tenant))->assertOk();

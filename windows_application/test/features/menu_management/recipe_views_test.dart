@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/menu_management/models/catalog_models.dart';
+import 'package:windows_application/features/menu_management/modifiers/models/modifier_models.dart';
 import 'package:windows_application/features/menu_management/recipes/controllers/recipe_cubits.dart';
 import 'package:windows_application/features/menu_management/recipes/models/recipe_models.dart';
 import 'package:windows_application/features/menu_management/recipes/views/modifier_adjustment_screen.dart';
@@ -144,6 +145,88 @@ void main() {
       expect(find.text('l'), findsOneWidget);
     },
   );
+
+  testWidgets('global material effect shows group and option context', (
+    tester,
+  ) async {
+    final repository = _RecipeViewRepository();
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<ModifierAdjustmentCubit>(
+          create: (_) => ModifierAdjustmentCubit(repository),
+          child: const ModifierAdjustmentScreen(optionId: 3, groupId: 11),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Global'), findsNWidgets(2));
+    expect(find.text('Extras'), findsOneWidget);
+    expect(find.text('Shot'), findsOneWidget);
+  });
+
+  testWidgets('variant material effect shows product, variant, group, option', (
+    tester,
+  ) async {
+    final repository = _RecipeViewRepository();
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<ModifierAdjustmentCubit>(
+          create: (_) => ModifierAdjustmentCubit(repository),
+          child: const ModifierAdjustmentScreen(
+            optionId: 3,
+            productId: 1,
+            variantId: 7,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Latte'), findsOneWidget);
+    expect(find.text('Regular'), findsOneWidget);
+    expect(find.text('Extras'), findsOneWidget);
+    expect(find.text('Shot'), findsOneWidget);
+  });
+
+  testWidgets('localized context names are used', (tester) async {
+    final repository = _RecipeViewRepository(arabicContext: true);
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<ModifierAdjustmentCubit>(
+          create: (_) => ModifierAdjustmentCubit(repository),
+          child: const ModifierAdjustmentScreen(optionId: 3, productId: 1),
+        ),
+        locale: const Locale('ar'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('قهوة'), findsOneWidget);
+    expect(find.text('إضافات'), findsOneWidget);
+    expect(find.text('جرعة'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('context failures render safely with retry', (tester) async {
+    final repository = _RecipeViewRepository(failContext: true);
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<ModifierAdjustmentCubit>(
+          create: (_) => ModifierAdjustmentCubit(repository),
+          child: const ModifierAdjustmentScreen(optionId: 3, productId: 1),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   test(
     'resolved recipe retains the backend material display name and decimal',
@@ -367,8 +450,14 @@ Widget _app(Widget child, {Locale? locale}) => MaterialApp(
 );
 
 class _RecipeViewRepository extends MenuCatalogRepository {
-  _RecipeViewRepository({this.materialName = 'Beans'});
+  _RecipeViewRepository({
+    this.materialName = 'Beans',
+    this.arabicContext = false,
+    this.failContext = false,
+  });
   final String materialName;
+  final bool arabicContext;
+  final bool failContext;
   List<RecipeComponent>? lastSavedComponents;
   final VariantRecipe _recipe = const VariantRecipe(
     variantId: 7,
@@ -467,42 +556,21 @@ class _RecipeViewRepository extends MenuCatalogRepository {
   Future<ProductDetail> getProduct(
     int productId, {
     bool includeArchived = false,
-  }) async => ProductDetail.fromJson(<String, dynamic>{
-    'id': 1,
-    'name': 'Latte',
-    'nameAr': null,
-    'nameEn': 'Latte',
-    'description': null,
-    'imageUrl': null,
-    'productType': 'standard',
-    'isActive': true,
-    'category': null,
-    'reportingCategory': null,
-    'kitchenStation': null,
-    'defaultVariant': <String, dynamic>{
-      'id': 7,
-      'name': 'Regular',
-      'nameAr': null,
-      'nameEn': 'Regular',
-      'sku': null,
-      'barcode': null,
-      'basePrice': 5,
-      'costPrice': null,
-      'isDefault': true,
+  }) async {
+    if (failContext) throw StateError('context unavailable');
+    return ProductDetail.fromJson(<String, dynamic>{
+      'id': 1,
+      'name': 'Latte',
+      'nameAr': arabicContext ? 'قهوة' : null,
+      'nameEn': 'Latte',
+      'description': null,
+      'imageUrl': null,
+      'productType': 'standard',
       'isActive': true,
-      'sortOrder': 0,
-    },
-    'variantCount': 1,
-    'modifierGroupCount': 1,
-    'createdAt': null,
-    'updatedAt': null,
-    'descriptionAr': null,
-    'descriptionEn': null,
-    'preparationTimeMinutes': null,
-    'sortOrder': 0,
-    'isStockTracked': true,
-    'variants': <Object>[
-      <String, dynamic>{
+      'category': null,
+      'reportingCategory': null,
+      'kitchenStation': null,
+      'defaultVariant': <String, dynamic>{
         'id': 7,
         'name': 'Regular',
         'nameAr': null,
@@ -515,26 +583,85 @@ class _RecipeViewRepository extends MenuCatalogRepository {
         'isActive': true,
         'sortOrder': 0,
       },
-    ],
-    'modifierGroups': <Object>[
+      'variantCount': 1,
+      'modifierGroupCount': 1,
+      'createdAt': null,
+      'updatedAt': null,
+      'descriptionAr': null,
+      'descriptionEn': null,
+      'preparationTimeMinutes': null,
+      'sortOrder': 0,
+      'isStockTracked': true,
+      'variants': <Object>[
+        <String, dynamic>{
+          'id': 7,
+          'name': 'Regular',
+          'nameAr': null,
+          'nameEn': 'Regular',
+          'sku': null,
+          'barcode': null,
+          'basePrice': 5,
+          'costPrice': null,
+          'isDefault': true,
+          'isActive': true,
+          'sortOrder': 0,
+        },
+      ],
+      'modifierGroups': <Object>[
+        <String, dynamic>{
+          'id': 11,
+          'name': 'Extras',
+          'nameAr': arabicContext ? 'إضافات' : null,
+          'nameEn': 'Extras',
+          'groupType': 'choice',
+          'selectionType': 'multiple',
+          'isRequired': false,
+          'minSelections': 0,
+          'maxSelections': 2,
+          'allowQuantity': true,
+          'options': <Object>[
+            <String, dynamic>{
+              'id': 3,
+              'name': 'Shot',
+              'nameAr': arabicContext ? 'جرعة' : null,
+              'nameEn': 'Shot',
+              'priceDelta': 0,
+              'isActive': true,
+              'isAvailable': true,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  @override
+  Future<ModifierGroupRecord> getModifierGroup(
+    int groupId, {
+    bool includeArchived = false,
+  }) async => ModifierGroupRecord.fromJson(<String, dynamic>{
+    'id': 11,
+    'name': 'Extras',
+    'nameEn': 'Extras',
+    'groupType': 'choice',
+    'selectionType': 'multiple',
+    'isRequired': false,
+    'minSelections': 0,
+    'maxSelections': 2,
+    'allowQuantity': true,
+    'isActive': true,
+    'sortOrder': 0,
+    'optionCount': 1,
+    'options': <Object>[
       <String, dynamic>{
-        'id': 11,
-        'name': 'Extras',
-        'groupType': 'choice',
-        'selectionType': 'multiple',
-        'isRequired': false,
-        'minSelections': 0,
-        'maxSelections': 2,
-        'allowQuantity': true,
-        'options': <Object>[
-          <String, dynamic>{
-            'id': 3,
-            'name': 'Shot',
-            'priceDelta': 0,
-            'isActive': true,
-            'isAvailable': true,
-          },
-        ],
+        'id': 3,
+        'name': 'Shot',
+        'nameEn': 'Shot',
+        'priceDelta': 0,
+        'isDefault': false,
+        'isActive': true,
+        'isAvailable': true,
+        'sortOrder': 0,
       },
     ],
   });

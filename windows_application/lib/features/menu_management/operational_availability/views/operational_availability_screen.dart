@@ -243,7 +243,7 @@ class _Loaded extends StatelessWidget {
             _ResolutionDiagnostic(state: state, retry: retryPreview),
             const SizedBox(height: AppSpacing.lg),
             _OverrideSection(
-              title: 'Product Overrides',
+              title: 'Product status settings',
               rows: state.visibleProductOverrides,
               canMutate: state.canMutateProduct,
               isVariant: false,
@@ -254,7 +254,7 @@ class _Loaded extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             _OverrideSection(
-              title: 'Variant Overrides',
+              title: 'Variant status settings',
               rows: state.visibleVariantOverrides,
               canMutate: state.canMutateVariant,
               isVariant: true,
@@ -392,10 +392,10 @@ class _ResolutionDiagnostic extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Operational Resolution', style: AppTextStyles.titleLarge),
+            Text('Current availability', style: AppTextStyles.titleLarge),
             const SizedBox(height: AppSpacing.xs),
             const Text(
-              'Operational availability is evaluated separately from Scheduled Availability and publishing state.',
+              'Temporary operational exceptions are separate from regular selling hours.',
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
@@ -409,7 +409,7 @@ class _ResolutionDiagnostic extends StatelessWidget {
             if (state.previewStatus ==
                 OperationalAvailabilityPreviewStatus.initial)
               const Text(
-                'Select an active Branch and sales channel to evaluate operational availability.',
+                'Select an active Branch and sales channel to check the current status.',
               )
             else if (state.previewStatus ==
                 OperationalAvailabilityPreviewStatus.loading)
@@ -421,7 +421,7 @@ class _ResolutionDiagnostic extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: AppSpacing.sm),
-                  Text('Evaluating authoritative operational resolution…'),
+                  Text('Checking current availability…'),
                 ],
               )
             else if (state.previewStatus ==
@@ -431,7 +431,7 @@ class _ResolutionDiagnostic extends StatelessWidget {
                   Expanded(
                     child: Text(
                       state.previewError ??
-                          'Unable to load operational resolution.',
+                          'Unable to load current availability.',
                     ),
                   ),
                   OutlinedButton(onPressed: retry, child: const Text('Retry')),
@@ -453,24 +453,29 @@ class _PreviewDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String source = preview.isFallback
-        ? 'No Operational Override'
-        : '${operationalLevelLabel(preview.matchedLevel!)} · ${preview.matchedScope == 'exact_channel' ? 'Selected Channel' : 'All Channels'}';
+        ? 'No temporary restriction'
+        : '${operationalLevelLabel(preview.matchedLevel!)} · ${preview.matchedScope == 'exact_channel' ? 'selected channel' : 'all channels'}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Chip(label: Text(operationalStatusLabel(preview.status))),
-        Text('Resolved status: ${operationalStatusLabel(preview.status)}'),
-        Text('Reason: ${preview.reason ?? '—'}'),
-        Text('Source: $source'),
+        Text(
+          operationalStatusLabel(preview.status).toUpperCase(),
+          style: AppTextStyles.titleLarge,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          preview.reason ??
+              (preview.isFallback
+                  ? 'No temporary restriction is active.'
+                  : 'A temporary operational setting is active.'),
+        ),
+        Text('Using: $source'),
         if (preview.isFallback)
-          const Text(
-            'Available fallback: no governing operational override exists.',
-          )
+          const Text('Available according to its regular schedule.')
         else ...<Widget>[
-          Text('Matched override ID: ${preview.matchedRecordId}'),
           if (preview.isExplicitAvailable)
             const Text(
-              'An explicit Available override won; broader overrides remain stored.',
+              'An explicit Available status is active for this context.',
             ),
         ],
         if (preview.remainingQuantity != null)
@@ -479,7 +484,7 @@ class _PreviewDetails extends StatelessWidget {
           ),
         if (preview.unavailableUntil != null)
           Text(
-            'Temporary expiration: ${operationalDate(preview.unavailableUntil)}',
+            'Temporary restriction active until ${operationalDate(preview.unavailableUntil)}',
           ),
       ],
     );
@@ -515,10 +520,12 @@ class _OverrideSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
               Text(title, style: AppTextStyles.titleLarge),
-              const Spacer(),
               FilledButton.icon(
                 key: Key(
                   isVariant
