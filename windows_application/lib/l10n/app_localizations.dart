@@ -3283,6 +3283,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Availability'**
   String get batch8Availability;
+
+  /// No description provided for @batch8PricingBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get batch8PricingBack;
+
+  /// No description provided for @batch8PricingRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get batch8PricingRefresh;
+
+  /// No description provided for @batch8PricingLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing could not be loaded.'**
+  String get batch8PricingLoadError;
+
+  /// No description provided for @batch8PricingArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product or Variant is archived. Prices are shown for reference and cannot be changed.'**
+  String get batch8PricingArchived;
+
+  /// No description provided for @batch8PricingContext.
+  ///
+  /// In en, this message translates to:
+  /// **'{variant} · Selling price'**
+  String batch8PricingContext(String variant);
+
+  /// No description provided for @batch8PricingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The selling price for the selected Variant, Branch, and sales channel.'**
+  String get batch8PricingHelp;
+
+  /// No description provided for @batch8SalesChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales channel'**
+  String get batch8SalesChannel;
+
+  /// No description provided for @batch8NoBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'No Branch'**
+  String get batch8NoBranch;
+
+  /// No description provided for @batch8NoChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'No Channel'**
+  String get batch8NoChannel;
+
+  /// No description provided for @batch8ChangePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Price'**
+  String get batch8ChangePrice;
+
+  /// No description provided for @batch8MorePriceRules.
+  ///
+  /// In en, this message translates to:
+  /// **'More Price Rules'**
+  String get batch8MorePriceRules;
+
+  /// No description provided for @batch8RulesConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} configured'**
+  String batch8RulesConfigured(int count);
+
+  /// No description provided for @batch8Show.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get batch8Show;
+
+  /// No description provided for @batch8Hide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get batch8Hide;
+
+  /// No description provided for @batch8NoPriceAdjustments.
+  ///
+  /// In en, this message translates to:
+  /// **'No price adjustments.'**
+  String get batch8NoPriceAdjustments;
+
+  /// No description provided for @batch8BasePriceEverywhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Price applies everywhere.'**
+  String get batch8BasePriceEverywhere;
+
+  /// No description provided for @batch8Difference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get batch8Difference;
+
+  /// No description provided for @batch8AddPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Price'**
+  String get batch8AddPrice;
+
+  /// No description provided for @batch8SetSellingPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Selling Price'**
+  String get batch8SetSellingPrice;
+
+  /// No description provided for @batch8Product.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get batch8Product;
+
+  /// No description provided for @batch8AppliesTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to'**
+  String get batch8AppliesTo;
+
+  /// No description provided for @batch8ScopeBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get batch8ScopeBranch;
+
+  /// No description provided for @batch8ScopeChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get batch8ScopeChannel;
+
+  /// No description provided for @batch8ScopeBranchChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch + Channel'**
+  String get batch8ScopeBranchChannel;
+
+  /// No description provided for @batch8Price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get batch8Price;
+
+  /// No description provided for @batch8PriceAboveBase.
+  ///
+  /// In en, this message translates to:
+  /// **'{difference} above Base Price'**
+  String batch8PriceAboveBase(String difference);
+
+  /// No description provided for @batch8PriceBelowBase.
+  ///
+  /// In en, this message translates to:
+  /// **'{difference} below Base Price'**
+  String batch8PriceBelowBase(String difference);
+
+  /// No description provided for @batch8PriceSameAsBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as Base Price'**
+  String get batch8PriceSameAsBase;
+
+  /// No description provided for @batch8Cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get batch8Cancel;
+
+  /// No description provided for @batch8SavePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Price'**
+  String get batch8SavePrice;
+
+  /// No description provided for @batch8Edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get batch8Edit;
+
+  /// No description provided for @batch8Remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get batch8Remove;
+
+  /// No description provided for @batch8RemovePriceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove price rule?'**
+  String get batch8RemovePriceTitle;
+
+  /// No description provided for @batch8RemovePriceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This price adjustment will be removed for this Variant.'**
+  String get batch8RemovePriceMessage;
+
+  /// No description provided for @batch8Keep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get batch8Keep;
+
+  /// No description provided for @batch8BranchPriceFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{branch} Branch price'**
+  String batch8BranchPriceFor(String branch);
+
+  /// No description provided for @batch8ChannelPriceFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{channel} channel price'**
+  String batch8ChannelPriceFor(String channel);
+
+  /// No description provided for @batch8BranchChannelPriceFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{branch} · {channel} price'**
+  String batch8BranchChannelPriceFor(String branch, String channel);
+
+  /// No description provided for @batch8RuleBranchPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch price'**
+  String get batch8RuleBranchPrice;
+
+  /// No description provided for @batch8RuleChannelPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel price'**
+  String get batch8RuleChannelPrice;
+
+  /// No description provided for @batch8RuleBranchChannelPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch + Channel price'**
+  String get batch8RuleBranchChannelPrice;
+
+  /// No description provided for @batch8ChannelPos.
+  ///
+  /// In en, this message translates to:
+  /// **'POS'**
+  String get batch8ChannelPos;
+
+  /// No description provided for @batch8ChannelWaiterApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiter App'**
+  String get batch8ChannelWaiterApp;
+
+  /// No description provided for @batch8ChannelKiosk.
+  ///
+  /// In en, this message translates to:
+  /// **'Kiosk'**
+  String get batch8ChannelKiosk;
+
+  /// No description provided for @batch8ChannelQrOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Ordering'**
+  String get batch8ChannelQrOrdering;
+
+  /// No description provided for @batch8ChannelDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get batch8ChannelDelivery;
+
+  /// No description provided for @batch8ChannelOnlineOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'Online Ordering'**
+  String get batch8ChannelOnlineOrdering;
+
+  /// No description provided for @batch8UnsavedPriceChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved price changes'**
+  String get batch8UnsavedPriceChanges;
+
+  /// No description provided for @batch8UnsavedPriceChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved price changes. Leave without saving?'**
+  String get batch8UnsavedPriceChangesMessage;
+
+  /// No description provided for @batch8Leave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get batch8Leave;
 }
 
 class _AppLocalizationsDelegate

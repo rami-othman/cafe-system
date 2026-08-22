@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/menu_management/models/catalog_models.dart';
 import 'package:windows_application/features/menu_management/models/product_catalog_filter.dart';
@@ -161,6 +162,42 @@ void main() {
     );
 
     test(
+      'successful saves release editing and retain independent scoped rules',
+      () async {
+        final _PricingRepository repository = _PricingRepository(
+          overrides: const <VariantPriceOverride>[],
+        );
+        final VariantPriceOverridesCubit cubit = VariantPriceOverridesCubit(
+          repository: repository,
+        );
+        await cubit.load(11, 1);
+
+        expect(
+          cubit.addOrUpdate(_branchChannelDraft(2, 'pos', '2.50')),
+          isTrue,
+        );
+        expect(await cubit.save(), isTrue);
+        expect(cubit.state.canEdit, isTrue);
+        expect(cubit.state.isSaving, isFalse);
+
+        expect(
+          cubit.addOrUpdate(_branchChannelDraft(3, 'waiter_app', '3.25')),
+          isTrue,
+        );
+        expect(await cubit.save(), isTrue);
+        expect(repository.lastSync, hasLength(2));
+        expect(
+          repository.lastSync.map((rule) => rule.scopeKey),
+          containsAll(<String>[
+            'branch:2|channel:pos',
+            'branch:3|channel:waiter_app',
+          ]),
+        );
+        await cubit.close();
+      },
+    );
+
+    test(
       'archived variants are read-only and override-load failure blocks sync',
       () async {
         final _PricingRepository archived = _PricingRepository()
@@ -221,6 +258,8 @@ void main() {
       final _PricingRepository repository = _PricingRepository();
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: BlocProvider<VariantPriceOverridesCubit>(
             create: (_) => VariantPriceOverridesCubit(repository: repository),
             child: const VariantPriceOverridesScreen(
@@ -234,7 +273,21 @@ void main() {
       expect(find.textContaining('Selling price'), findsOneWidget);
       expect(find.text('USD 4.00'), findsWidgets);
       expect(find.text('Branch'), findsWidgets);
-      expect(find.byKey(const Key('add-channel-override')), findsOneWidget);
+      expect(find.byKey(const Key('change-price')), findsOneWidget);
+      expect(find.byKey(const Key('more-price-rules')), findsOneWidget);
+      expect(find.byKey(const Key('add-price')), findsNothing);
+      await tester.ensureVisible(find.byKey(const Key('toggle-price-rules')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('toggle-price-rules')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('add-price')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('add-price')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('add-price')));
+      await tester.pumpAndSettle();
+      expect(find.text('Set Selling Price'), findsOneWidget);
+      expect(find.text('Applies to'), findsOneWidget);
+      expect(find.text('Branch + Channel'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('Effective selling price'),
         300,
@@ -243,6 +296,118 @@ void main() {
       expect(find.text('Effective selling price'), findsOneWidget);
     },
   );
+
+  testWidgets('Change Price opens a new scoped rule when no rules exist', (
+    WidgetTester tester,
+  ) async {
+    final VariantPriceOverridesCubit cubit = VariantPriceOverridesCubit(
+      repository: _PricingRepository(overrides: const <VariantPriceOverride>[]),
+    );
+    await _pumpPricingScreen(tester, cubit);
+    await _selectContext(tester, cubit, branchId: 3, channel: 'waiter_app');
+
+    final FilledButton button = tester.widget<FilledButton>(
+      find.byKey(const Key('change-price')),
+    );
+    expect(button.onPressed, isNotNull);
+    await tester.tap(find.byKey(const Key('change-price')));
+    await tester.pumpAndSettle();
+    expect(find.text('Set Selling Price'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('override-price')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+    await cubit.close();
+  });
+
+  testWidgets(
+    'an existing Downtown POS rule does not prevent adding Mall Waiter App',
+    (WidgetTester tester) async {
+      final VariantPriceOverridesCubit cubit = VariantPriceOverridesCubit(
+        repository: _PricingRepository(
+          overrides: <VariantPriceOverride>[
+            _branchChannelOverride(2, 'pos', '2.50'),
+          ],
+        ),
+      );
+      await _pumpPricingScreen(tester, cubit);
+      await _selectContext(tester, cubit, branchId: 3, channel: 'waiter_app');
+
+      await tester.tap(find.byKey(const Key('toggle-price-rules')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('add-price')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('add-price')));
+      await tester.tap(find.byKey(const Key('add-price')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('override-price')))
+            .controller!
+            .text,
+        isEmpty,
+      );
+      await tester.enterText(find.byKey(const Key('override-price')), '3.25');
+      final savePrice = find.widgetWithText(FilledButton, 'Save Price');
+      await tester.ensureVisible(savePrice);
+      await tester.tap(savePrice);
+      await tester.pumpAndSettle();
+
+      expect(cubit.state.draft, hasLength(2));
+      expect(
+        cubit.state.draft.map((rule) => rule.scopeKey),
+        containsAll(<String>[
+          'branch:2|channel:pos',
+          'branch:3|channel:waiter_app',
+        ]),
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('change-price')))
+            .onPressed,
+        isNotNull,
+      );
+      expect(find.byKey(const Key('add-price')), findsOneWidget);
+      await cubit.close();
+    },
+  );
+
+  testWidgets('Change Price edits an exact current-context rule', (
+    WidgetTester tester,
+  ) async {
+    final _PricingRepository repository = _PricingRepository(
+      overrides: <VariantPriceOverride>[
+        _branchChannelOverride(2, 'pos', '2.50'),
+      ],
+    );
+    final VariantPriceOverridesCubit cubit = VariantPriceOverridesCubit(
+      repository: repository,
+    );
+    await _pumpPricingScreen(tester, cubit);
+    await _selectContext(tester, cubit, branchId: 2, channel: 'pos');
+
+    await tester.tap(find.byKey(const Key('change-price')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('override-price')))
+          .controller!
+          .text,
+      '2.50',
+    );
+    await tester.enterText(find.byKey(const Key('override-price')), '2.75');
+    final savePrice = find.widgetWithText(FilledButton, 'Save Price');
+    await tester.ensureVisible(savePrice);
+    await tester.tap(savePrice);
+    await tester.pumpAndSettle();
+
+    expect(repository.lastSync, hasLength(1));
+    expect(repository.lastSync.single.price.wireValue, '2.75');
+    expect(repository.lastSync.single.scopeKey, 'branch:2|channel:pos');
+    await cubit.close();
+  });
 }
 
 VariantPriceOverrideDraft _branchDraft(String price) =>
@@ -259,6 +424,16 @@ VariantPriceOverrideDraft _channelDraft(String price) =>
       channel: 'delivery',
       price: PriceAmount.parse(price),
     );
+VariantPriceOverrideDraft _branchChannelDraft(
+  int branchId,
+  String channel,
+  String price,
+) => VariantPriceOverrideDraft(
+  scope: PriceOverrideScope.branchChannel,
+  branchId: branchId,
+  channel: channel,
+  price: PriceAmount.parse(price),
+);
 EffectiveVariantPrice _effective(String scope, int cents) =>
     EffectiveVariantPrice(
       variantId: 1,
@@ -272,10 +447,49 @@ EffectiveVariantPrice _effective(String scope, int cents) =>
       channel: 'delivery',
     );
 
+Future<void> _pumpPricingScreen(
+  WidgetTester tester,
+  VariantPriceOverridesCubit cubit,
+) async {
+  tester.view.physicalSize = const Size(1440, 1000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: BlocProvider<VariantPriceOverridesCubit>.value(
+        value: cubit,
+        child: const VariantPriceOverridesScreen(productId: 11, variantId: 1),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _selectContext(
+  WidgetTester tester,
+  VariantPriceOverridesCubit cubit, {
+  required int branchId,
+  required String channel,
+}) async {
+  await cubit.selectEffectiveContext(branchId: branchId, channel: channel);
+  await tester.pumpAndSettle();
+}
+
 class _PricingRepository extends MenuCatalogRepository {
+  _PricingRepository({List<VariantPriceOverride>? overrides})
+    : _overrides = List<VariantPriceOverride>.from(
+        overrides ?? <VariantPriceOverride>[_downtownBranchRule()],
+      );
+
   bool archived = false;
   bool loadError = false;
   bool syncError = false;
+  List<VariantPriceOverride> _overrides;
   List<VariantPriceOverrideDraft> lastSync =
       const <VariantPriceOverrideDraft>[];
   List<Future<EffectiveVariantPrice>> effectiveResponses =
@@ -295,16 +509,7 @@ class _PricingRepository extends MenuCatalogRepository {
     return VariantPriceOverridesSnapshot(
       variantId: 1,
       basePrice: PriceAmount.parse('4'),
-      overrides: <VariantPriceOverride>[
-        VariantPriceOverride(
-          id: 1,
-          scope: PriceOverrideScope.branch,
-          branchId: 2,
-          channel: null,
-          price: PriceAmount.parse('4.50'),
-          isActive: true,
-        ),
-      ],
+      overrides: _overrides,
     );
   }
 
@@ -313,6 +518,13 @@ class _PricingRepository extends MenuCatalogRepository {
     const Branch(
       id: 2,
       name: 'Downtown',
+      currency: 'SYP',
+      timezone: 'Asia/Damascus',
+      isActive: true,
+    ),
+    const Branch(
+      id: 3,
+      name: 'Mall',
       currency: 'SYP',
       timezone: 'Asia/Damascus',
       isActive: true,
@@ -334,6 +546,17 @@ class _PricingRepository extends MenuCatalogRepository {
         },
       );
     }
+    _overrides = <VariantPriceOverride>[
+      for (var index = 0; index < overrides.length; index++)
+        VariantPriceOverride(
+          id: index + 1,
+          scope: overrides[index].scope,
+          branchId: overrides[index].branchId,
+          channel: overrides[index].channel,
+          price: overrides[index].price,
+          isActive: overrides[index].isActive,
+        ),
+    ];
     return await listVariantPriceOverrides(variantId);
   }
 
@@ -400,3 +623,25 @@ Map<String, dynamic> _variant(int id, bool archived) => <String, dynamic>{
   'sortOrder': 0,
   if (archived) 'archivedAt': '2026-08-01T00:00:00Z',
 };
+
+VariantPriceOverride _downtownBranchRule() => VariantPriceOverride(
+  id: 1,
+  scope: PriceOverrideScope.branch,
+  branchId: 2,
+  channel: null,
+  price: PriceAmount.parse('4.50'),
+  isActive: true,
+);
+
+VariantPriceOverride _branchChannelOverride(
+  int branchId,
+  String channel,
+  String price,
+) => VariantPriceOverride(
+  id: 1,
+  scope: PriceOverrideScope.branchChannel,
+  branchId: branchId,
+  channel: channel,
+  price: PriceAmount.parse(price),
+  isActive: true,
+);

@@ -1781,4 +1781,172 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get batch8Availability => 'Availability';
+
+  @override
+  String get batch8PricingBack => 'Back';
+
+  @override
+  String get batch8PricingRefresh => 'Refresh';
+
+  @override
+  String get batch8PricingLoadError => 'Pricing could not be loaded.';
+
+  @override
+  String get batch8PricingArchived =>
+      'This Product or Variant is archived. Prices are shown for reference and cannot be changed.';
+
+  @override
+  String batch8PricingContext(String variant) {
+    return '$variant · Selling price';
+  }
+
+  @override
+  String get batch8PricingHelp =>
+      'The selling price for the selected Variant, Branch, and sales channel.';
+
+  @override
+  String get batch8SalesChannel => 'Sales channel';
+
+  @override
+  String get batch8NoBranch => 'No Branch';
+
+  @override
+  String get batch8NoChannel => 'No Channel';
+
+  @override
+  String get batch8ChangePrice => 'Change Price';
+
+  @override
+  String get batch8MorePriceRules => 'More Price Rules';
+
+  @override
+  String batch8RulesConfigured(int count) {
+    return '$count configured';
+  }
+
+  @override
+  String get batch8Show => 'Show';
+
+  @override
+  String get batch8Hide => 'Hide';
+
+  @override
+  String get batch8NoPriceAdjustments => 'No price adjustments.';
+
+  @override
+  String get batch8BasePriceEverywhere => 'Base Price applies everywhere.';
+
+  @override
+  String get batch8Difference => 'Difference';
+
+  @override
+  String get batch8AddPrice => 'Add Price';
+
+  @override
+  String get batch8SetSellingPrice => 'Set Selling Price';
+
+  @override
+  String get batch8Product => 'Product';
+
+  @override
+  String get batch8AppliesTo => 'Applies to';
+
+  @override
+  String get batch8ScopeBranch => 'Branch';
+
+  @override
+  String get batch8ScopeChannel => 'Channel';
+
+  @override
+  String get batch8ScopeBranchChannel => 'Branch + Channel';
+
+  @override
+  String get batch8Price => 'Price';
+
+  @override
+  String batch8PriceAboveBase(String difference) {
+    return '$difference above Base Price';
+  }
+
+  @override
+  String batch8PriceBelowBase(String difference) {
+    return '$difference below Base Price';
+  }
+
+  @override
+  String get batch8PriceSameAsBase => 'Same as Base Price';
+
+  @override
+  String get batch8Cancel => 'Cancel';
+
+  @override
+  String get batch8SavePrice => 'Save Price';
+
+  @override
+  String get batch8Edit => 'Edit';
+
+  @override
+  String get batch8Remove => 'Remove';
+
+  @override
+  String get batch8RemovePriceTitle => 'Remove price rule?';
+
+  @override
+  String get batch8RemovePriceMessage =>
+      'This price adjustment will be removed for this Variant.';
+
+  @override
+  String get batch8Keep => 'Keep';
+
+  @override
+  String batch8BranchPriceFor(String branch) {
+    return '$branch Branch price';
+  }
+
+  @override
+  String batch8ChannelPriceFor(String channel) {
+    return '$channel channel price';
+  }
+
+  @override
+  String batch8BranchChannelPriceFor(String branch, String channel) {
+    return '$branch · $channel price';
+  }
+
+  @override
+  String get batch8RuleBranchPrice => 'Branch price';
+
+  @override
+  String get batch8RuleChannelPrice => 'Channel price';
+
+  @override
+  String get batch8RuleBranchChannelPrice => 'Branch + Channel price';
+
+  @override
+  String get batch8ChannelPos => 'POS';
+
+  @override
+  String get batch8ChannelWaiterApp => 'Waiter App';
+
+  @override
+  String get batch8ChannelKiosk => 'Kiosk';
+
+  @override
+  String get batch8ChannelQrOrdering => 'QR Ordering';
+
+  @override
+  String get batch8ChannelDelivery => 'Delivery';
+
+  @override
+  String get batch8ChannelOnlineOrdering => 'Online Ordering';
+
+  @override
+  String get batch8UnsavedPriceChanges => 'Unsaved price changes';
+
+  @override
+  String get batch8UnsavedPriceChangesMessage =>
+      'You have unsaved price changes. Leave without saving?';
+
+  @override
+  String get batch8Leave => 'Leave';
 }

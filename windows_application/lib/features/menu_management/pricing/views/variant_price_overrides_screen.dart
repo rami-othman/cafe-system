@@ -1,8 +1,13 @@
+// ignore_for_file: deprecated_member_use
+
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../app/menu_management_route_locations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -10,9 +15,9 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../../../pos/models/branch.dart';
+import '../configured_price_validation.dart';
 import '../controllers/variant_price_overrides_cubit.dart';
 import '../controllers/variant_price_overrides_state.dart';
-import '../configured_price_validation.dart';
 import '../models/variant_price_models.dart';
 
 const List<String> salesChannels = <String>[
@@ -23,16 +28,6 @@ const List<String> salesChannels = <String>[
   'delivery',
   'online_ordering',
 ];
-
-String salesChannelLabel(String value) => switch (value) {
-  'pos' => 'POS',
-  'waiter_app' => 'Waiter App',
-  'kiosk' => 'Kiosk',
-  'qr_ordering' => 'QR Ordering',
-  'delivery' => 'Delivery',
-  'online_ordering' => 'Online Ordering',
-  _ => value,
-};
 
 class VariantPriceOverridesScreen extends StatefulWidget {
   const VariantPriceOverridesScreen({
@@ -61,43 +56,75 @@ class _VariantPriceOverridesScreenState
   }
 
   Future<void> _back() async {
-    final VariantPriceOverridesState state = context
-        .read<VariantPriceOverridesCubit>()
-        .state;
+    final state = context.read<VariantPriceOverridesCubit>().state;
     if (state.isDirty && await _confirmLeave() != true) return;
-    if (mounted) {
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go(
-          MenuManagementRouteLocations.productWorkspace(
-            widget.productId,
-            tab: ProductWorkspaceTab.variants,
-          ),
-        );
-      }
-    }
+    if (!mounted) return;
+    context.canPop()
+        ? context.pop()
+        : context.go(
+            MenuManagementRouteLocations.productWorkspace(
+              widget.productId,
+              tab: ProductWorkspaceTab.variants,
+            ),
+          );
   }
 
   Future<bool?> _confirmLeave() => showDialog<bool>(
     context: context,
     builder: (dialog) => AlertDialog(
-      title: const Text('Unsaved price override changes'),
-      content: const Text(
-        'You have unsaved price override changes. Leave without saving?',
-      ),
+      title: Text(dialog.l10n.batch8UnsavedPriceChanges),
+      content: Text(dialog.l10n.batch8UnsavedPriceChangesMessage),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(dialog, false),
-          child: const Text('Stay'),
+          child: Text(dialog.l10n.batch8Keep),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(dialog, true),
-          child: const Text('Leave'),
+          child: Text(dialog.l10n.batch8Leave),
         ),
       ],
     ),
   );
+
+  Future<void> _openEditor([VariantPriceOverrideDraft? existing]) =>
+      showDialog<void>(
+        context: context,
+        builder: (_) => BlocProvider.value(
+          value: context.read<VariantPriceOverridesCubit>(),
+          child: _PriceSideSheet(existing: existing),
+        ),
+      );
+
+  Future<void> _openCurrentContextEditor() {
+    final state = context.read<VariantPriceOverridesCubit>().state;
+    return _openEditor(_exactRuleForCurrentContext(state));
+  }
+
+  Future<void> _remove(VariantPriceOverrideDraft item) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(l10n.batch8RemovePriceTitle),
+        content: Text(l10n.batch8RemovePriceMessage),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: Text(l10n.batch8Keep),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(l10n.batch8Remove),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final cubit = context.read<VariantPriceOverridesCubit>();
+    cubit.remove(item.scopeKey);
+    await cubit.save();
+  }
 
   @override
   Widget build(BuildContext context) => PopScope<Object?>(
@@ -107,13 +134,19 @@ class _VariantPriceOverridesScreenState
     },
     child: BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
       builder: (context, state) {
-        if (state.status == VariantPriceOverridesStatus.loading ||
-            state.status == VariantPriceOverridesStatus.initial) {
-          return const Center(child: CircularProgressIndicator());
+        final l10n = context.l10n;
+        if (state.status == VariantPriceOverridesStatus.initial ||
+            state.status == VariantPriceOverridesStatus.loading) {
+          return const Center(
+            child: Padding(
+              padding: AppSpacing.allLg,
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
         if (state.status == VariantPriceOverridesStatus.failure) {
           return _Failure(
-            message: state.errorMessage ?? 'Unable to load price overrides.',
+            message: l10n.batch8PricingLoadError,
             retry: () => context.read<VariantPriceOverridesCubit>().load(
               widget.productId,
               widget.variantId,
@@ -124,277 +157,161 @@ class _VariantPriceOverridesScreenState
           child: ListView(
             padding: AppSpacing.allLg,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  OutlinedButton.icon(
-                    onPressed: state.isSaving ? null : _back,
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Back'),
-                  ),
-                  const Spacer(),
-                  OutlinedButton.icon(
-                    onPressed: state.isSaving
-                        ? null
-                        : () => context
-                              .read<VariantPriceOverridesCubit>()
-                              .refresh(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                state.product!.name,
-                style: AppTextStyles.headlineMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                '${state.variant!.name} · Selling price',
-                style: AppTextStyles.titleMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              if (state.isReadOnly) ...<Widget>[
-                const SizedBox(height: AppSpacing.md),
-                const _Banner(
-                  'This Product or Variant is archived. Overrides are shown for diagnosis and cannot be changed.',
-                ),
-              ],
-              if (state.errorMessage != null) ...<Widget>[
-                const SizedBox(height: AppSpacing.md),
-                _Banner(state.errorMessage!),
-              ],
-              if (state.successMessage != null) ...<Widget>[
-                const SizedBox(height: AppSpacing.md),
-                _SuccessBanner(state.successMessage!),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              _EffectivePricePanel(),
-              const SizedBox(height: AppSpacing.lg),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: <Widget>[
-                  FilledButton.icon(
-                    key: const Key('add-branch-override'),
-                    onPressed: state.canEdit && state.branches.isNotEmpty
-                        ? () => _edit(null, PriceOverrideScope.branch)
-                        : null,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Branch Override'),
-                  ),
-                  FilledButton.icon(
-                    key: const Key('add-channel-override'),
-                    onPressed: state.canEdit
-                        ? () => _edit(null, PriceOverrideScope.channel)
-                        : null,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Channel Override'),
-                  ),
-                  FilledButton.icon(
-                    key: const Key('add-branch-channel-override'),
-                    onPressed: state.canEdit && state.branches.isNotEmpty
-                        ? () => _edit(null, PriceOverrideScope.branchChannel)
-                        : null,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Branch + Channel Override'),
-                  ),
-                  if (state.isDirty)
-                    FilledButton.icon(
-                      key: const Key('save-price-overrides'),
-                      onPressed: state.isSaving
-                          ? null
-                          : () => context
-                                .read<VariantPriceOverridesCubit>()
-                                .save(),
-                      icon: const Icon(Icons.save_outlined),
-                      label: Text(
-                        state.isSaving ? 'Saving...' : 'Save changes',
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 920),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        state.product!.displayName(
+                          Localizations.localeOf(context),
+                        ),
+                        style: AppTextStyles.headlineMedium,
                       ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _MorePriceRules(
-                onEdit: _edit,
-                onRemove: (item) => context
-                    .read<VariantPriceOverridesCubit>()
-                    .remove(item.scopeKey),
-              ),
-              if (state.branchError != null) ...<Widget>[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  state.branchError!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        l10n.batch8PricingContext(
+                          state.variant!.displayName(
+                            Localizations.localeOf(context),
+                          ),
+                        ),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (state.isReadOnly) ...<Widget>[
+                        const SizedBox(height: AppSpacing.md),
+                        _Notice(
+                          message: l10n.batch8PricingArchived,
+                          color: AppColors.discountOrangeBadge,
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.lg),
+                      _EffectivePricePanel(
+                        onChangePrice: _openCurrentContextEditor,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _MorePriceRules(
+                        onAdd: _openEditor,
+                        onEdit: _openEditor,
+                        onRemove: _remove,
+                      ),
+                      if (state.branchError != null) ...<Widget>[
+                        const SizedBox(height: AppSpacing.sm),
+                        _Notice(
+                          message: l10n.batch8PricingLoadError,
+                          color: AppColors.discountOrangeBadge,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ],
           ),
         );
       },
     ),
   );
-
-  Future<void> _edit([
-    VariantPriceOverrideDraft? item,
-    PriceOverrideScope? scope,
-  ]) => showDialog<void>(
-    context: context,
-    builder: (_) => BlocProvider.value(
-      value: context.read<VariantPriceOverridesCubit>(),
-      child: _OverrideEditorDialog(existing: item, scope: scope),
-    ),
-  );
 }
 
-// ignore: unused_element
-class _Summary extends StatelessWidget {
-  const _Summary({required this.state});
-  final VariantPriceOverridesState state;
-  @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: AppSpacing.allLg,
-      child: Wrap(
-        spacing: 48,
-        runSpacing: AppSpacing.md,
-        children: <Widget>[
-          _Fact(label: 'Base Price', value: _money(state.basePrice!)),
-          _Fact(label: 'Overrides', value: state.saved.length.toString()),
-          const _Fact(
-            label: 'Resolution precedence',
-            value: 'Branch + Channel → Branch → Channel → Variant Base Price',
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _Fact extends StatelessWidget {
-  const _Fact({required this.label, required this.value});
-  final String label;
-  final String value;
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: <Widget>[
-      Text(
-        label,
-        style: AppTextStyles.labelMedium.copyWith(
-          color: AppColors.textSecondary,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(value, style: AppTextStyles.titleMedium),
-    ],
-  );
-}
-
-class _MorePriceRules extends StatelessWidget {
-  const _MorePriceRules({required this.onEdit, required this.onRemove});
-  final ValueChanged<VariantPriceOverrideDraft> onEdit;
-  final ValueChanged<VariantPriceOverrideDraft> onRemove;
+class _EffectivePricePanel extends StatelessWidget {
+  const _EffectivePricePanel({required this.onChangePrice});
+  final VoidCallback onChangePrice;
   @override
   Widget build(BuildContext context) =>
       BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
         builder: (context, state) {
-          if (state.saved.isEmpty && !state.isDirty) {
-            return const Card(
-              child: ExpansionTile(
-                key: Key('more-price-rules'),
-                title: Text('More price rules'),
-                subtitle: Text(
-                  'No price adjustments. Base price applies everywhere.',
-                ),
-                children: <Widget>[SizedBox.shrink()],
-              ),
-            );
-          }
-          final Map<String, VariantPriceOverride> persisted =
-              <String, VariantPriceOverride>{
-                for (final item in state.saved) item.scopeKey: item,
-              };
-          return Card(
-            child: ExpansionTile(
-              key: const Key('more-price-rules'),
-              title: const Text('More price rules'),
-              subtitle: Text('${state.draft.length} configured'),
-              childrenPadding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                0,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
+          final l10n = context.l10n;
+          final result = state.effectivePrice;
+          final loading = state.isEffectiveLoading || result == null;
+          return Container(
+            key: const Key('effective-price-panel'),
+            padding: AppSpacing.allXl,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.primary, width: 1.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const <DataColumn>[
-                      DataColumn(label: Text('Scope')),
-                      DataColumn(label: Text('Branch')),
-                      DataColumn(label: Text('Channel')),
-                      DataColumn(label: Text('Override Price')),
-                      DataColumn(label: Text('Difference from Base Price')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: state.draft
-                        .map((draft) {
-                          final VariantPriceOverride? source =
-                              persisted[draft.scopeKey];
-                          final Branch? branch = state.branches
-                              .where((item) => item.id == draft.branchId)
-                              .firstOrNull;
-                          final PriceAmount difference =
-                              draft.price - state.basePrice!;
-                          return DataRow(
-                            cells: <DataCell>[
-                              DataCell(Text(scopeLabel(draft.scope))),
-                              DataCell(
-                                Text(
-                                  branch?.name ??
-                                      source?.branchName ??
-                                      (draft.branchId?.toString() ?? '—'),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  draft.channel == null
-                                      ? '—'
-                                      : salesChannelLabel(draft.channel!),
-                                ),
-                              ),
-                              DataCell(Text(_money(draft.price))),
-                              DataCell(Text(_difference(difference))),
-                              DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    IconButton(
-                                      tooltip: 'Edit',
-                                      onPressed: state.canEdit
-                                          ? () => onEdit(draft)
-                                          : null,
-                                      icon: const Icon(Icons.edit_outlined),
-                                    ),
-                                    IconButton(
-                                      tooltip: 'Remove',
-                                      onPressed: state.canEdit
-                                          ? () => onRemove(draft)
-                                          : null,
-                                      icon: const Icon(Icons.delete_outline),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        })
-                        .toList(growable: false),
+                Text(
+                  l10n.batch8EffectiveSellingPrice,
+                  style: AppTextStyles.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(l10n.batch8PricingHelp, style: AppTextStyles.bodySmall),
+                const SizedBox(height: AppSpacing.lg),
+                _ContextSelectors(state: state),
+                const SizedBox(height: AppSpacing.xl),
+                if (state.effectiveError != null)
+                  _EffectiveError(
+                    onRetry: () => context
+                        .read<VariantPriceOverridesCubit>()
+                        .selectEffectiveContext(
+                          branchId: state.effectiveBranchId,
+                          channel: state.effectiveChannel,
+                        ),
+                  )
+                else if (loading)
+                  const _EffectiveLoading()
+                else ...<Widget>[
+                  Text(
+                    _money(result.effectivePrice),
+                    textDirection: TextDirection.ltr,
+                    style: AppTextStyles.displayMedium.copyWith(fontSize: 40),
                   ),
+                  const SizedBox(height: AppSpacing.lg),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final difference =
+                          result.effectivePrice - result.basePrice;
+                      final facts = <Widget>[
+                        _PriceFact(
+                          label: l10n.batch8BasePrice,
+                          value: _money(result.basePrice),
+                        ),
+                        _PriceFact(
+                          label: l10n.batch8Difference,
+                          value: _difference(difference),
+                          valueColor: _differenceColor(difference),
+                        ),
+                        _PriceFact(
+                          label: l10n.batch8Using,
+                          value: _effectiveSource(context, state, result),
+                        ),
+                      ];
+                      return constraints.maxWidth < 560
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                facts[0],
+                                const SizedBox(height: AppSpacing.md),
+                                facts[1],
+                                const SizedBox(height: AppSpacing.md),
+                                facts[2],
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Expanded(child: facts[0]),
+                                Expanded(child: facts[1]),
+                                Expanded(flex: 2, child: facts[2]),
+                              ],
+                            );
+                    },
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                FilledButton(
+                  key: const Key('change-price'),
+                  onPressed: _canChangeSelectedContextPrice(state)
+                      ? onChangePrice
+                      : null,
+                  child: Text(l10n.batch8ChangePrice),
                 ),
               ],
             ),
@@ -403,32 +320,360 @@ class _MorePriceRules extends StatelessWidget {
       );
 }
 
-class _OverrideEditorDialog extends StatefulWidget {
-  const _OverrideEditorDialog({this.existing, this.scope});
-  final VariantPriceOverrideDraft? existing;
-  final PriceOverrideScope? scope;
+class _ContextSelectors extends StatelessWidget {
+  const _ContextSelectors({required this.state});
+  final VariantPriceOverridesState state;
   @override
-  State<_OverrideEditorDialog> createState() => _OverrideEditorDialogState();
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final cubit = context.read<VariantPriceOverridesCubit>();
+    final branch = _SelectorField<int>(
+      label: l10n.batch8Branch,
+      child: DropdownButtonFormField<int>(
+        key: const Key('effective-branch'),
+        initialValue: state.effectiveBranchId,
+        isExpanded: true,
+        decoration: _selectorDecoration(),
+        items: <DropdownMenuItem<int>>[
+          DropdownMenuItem(value: null, child: Text(l10n.batch8NoBranch)),
+          ...state.branches
+              .where((item) => item.isActive)
+              .map(
+                (item) =>
+                    DropdownMenuItem(value: item.id, child: Text(item.name)),
+              ),
+        ],
+        onChanged: (value) => cubit.selectEffectiveContext(
+          branchId: value,
+          channel: state.effectiveChannel,
+        ),
+      ),
+    );
+    final channel = _SelectorField<String>(
+      label: l10n.batch8SalesChannel,
+      child: DropdownButtonFormField<String>(
+        key: const Key('effective-channel'),
+        initialValue: state.effectiveChannel,
+        isExpanded: true,
+        decoration: _selectorDecoration(),
+        items: <DropdownMenuItem<String>>[
+          DropdownMenuItem(value: null, child: Text(l10n.batch8NoChannel)),
+          ...salesChannels.map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(_channelLabel(context, item)),
+            ),
+          ),
+        ],
+        onChanged: (value) => cubit.selectEffectiveContext(
+          branchId: state.effectiveBranchId,
+          channel: value,
+        ),
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.maxWidth < 520
+          ? Column(
+              children: <Widget>[
+                branch,
+                const SizedBox(height: AppSpacing.md),
+                channel,
+              ],
+            )
+          : Row(
+              children: <Widget>[
+                Expanded(child: branch),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(child: channel),
+              ],
+            ),
+    );
+  }
 }
 
-class _OverrideEditorDialogState extends State<_OverrideEditorDialog> {
-  late PriceOverrideScope _scope;
-  int? _branchId;
-  String? _channel;
-  late TextEditingController _price;
+InputDecoration _selectorDecoration() => InputDecoration(
+  isDense: true,
+  filled: true,
+  fillColor: AppColors.background,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(8),
+    borderSide: const BorderSide(color: AppColors.border),
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(8),
+    borderSide: const BorderSide(color: AppColors.border),
+  ),
+);
+
+class _SelectorField<T> extends StatelessWidget {
+  const _SelectorField({required this.label, required this.child});
+  final String label;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(label, style: AppTextStyles.labelSmall),
+      const SizedBox(height: AppSpacing.xs),
+      child,
+    ],
+  );
+}
+
+class _EffectiveLoading extends StatelessWidget {
+  const _EffectiveLoading();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    height: 108,
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: CircularProgressIndicator(),
+    ),
+  );
+}
+
+class _EffectiveError extends StatelessWidget {
+  const _EffectiveError({required this.onRetry});
+  final VoidCallback onRetry;
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 108,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(context.l10n.batch8PricingLoadError),
+        const SizedBox(height: AppSpacing.sm),
+        TextButton(onPressed: onRetry, child: Text(context.l10n.batch8Retry)),
+      ],
+    ),
+  );
+}
+
+class _PriceFact extends StatelessWidget {
+  const _PriceFact({required this.label, required this.value, this.valueColor});
+  final String label;
+  final String value;
+  final Color? valueColor;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(label, style: AppTextStyles.labelSmall),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        value,
+        textDirection:
+            value.startsWith('USD') ||
+                value.startsWith('+') ||
+                value.startsWith('-')
+            ? TextDirection.ltr
+            : null,
+        style: AppTextStyles.titleMedium.copyWith(color: valueColor),
+      ),
+    ],
+  );
+}
+
+class _MorePriceRules extends StatefulWidget {
+  const _MorePriceRules({
+    required this.onAdd,
+    required this.onEdit,
+    required this.onRemove,
+  });
+  final VoidCallback onAdd;
+  final ValueChanged<VariantPriceOverrideDraft> onEdit;
+  final ValueChanged<VariantPriceOverrideDraft> onRemove;
+  @override
+  State<_MorePriceRules> createState() => _MorePriceRulesState();
+}
+
+class _MorePriceRulesState extends State<_MorePriceRules> {
+  bool expanded = false;
+  @override
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
+    builder: (context, state) {
+      final l10n = context.l10n;
+      final hasRules = state.draft.isNotEmpty;
+      return Container(
+        key: const Key('more-price-rules'),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: AppSpacing.allLg,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          l10n.batch8MorePriceRules,
+                          style: AppTextStyles.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          hasRules
+                              ? l10n.batch8RulesConfigured(state.draft.length)
+                              : l10n.batch8NoPriceAdjustments,
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    key: const Key('toggle-price-rules'),
+                    onPressed: () => setState(() => expanded = !expanded),
+                    child: Text(expanded ? l10n.batch8Hide : l10n.batch8Show),
+                  ),
+                ],
+              ),
+            ),
+            if (expanded) ...<Widget>[
+              const Divider(height: 1, color: AppColors.border),
+              if (!hasRules)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.xl,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      l10n.batch8BasePriceEverywhere,
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ),
+                )
+              else
+                ...state.draft.map(
+                  (draft) => _RuleRow(
+                    draft: draft,
+                    branches: state.branches,
+                    canEdit: state.canEdit,
+                    onEdit: () => widget.onEdit(draft),
+                    onRemove: () => widget.onRemove(draft),
+                  ),
+                ),
+              if (state.canEdit)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Padding(
+                    padding: AppSpacing.allLg,
+                    child: OutlinedButton.icon(
+                      key: const Key('add-price'),
+                      onPressed: widget.onAdd,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(l10n.batch8AddPrice),
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class _RuleRow extends StatelessWidget {
+  const _RuleRow({
+    required this.draft,
+    required this.branches,
+    required this.canEdit,
+    required this.onEdit,
+    required this.onRemove,
+  });
+  final VariantPriceOverrideDraft draft;
+  final List<Branch> branches;
+  final bool canEdit;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final branch = branches
+        .where((item) => item.id == draft.branchId)
+        .firstOrNull;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(_ruleContext(context, draft, branch)),
+        subtitle: Text(_scopeLabel(l10n, draft.scope)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              _money(draft.price),
+              textDirection: TextDirection.ltr,
+              style: AppTextStyles.titleMedium,
+            ),
+            PopupMenuButton<_RuleAction>(
+              enabled: canEdit,
+              icon: const Icon(Icons.more_horiz),
+              itemBuilder: (context) => <PopupMenuEntry<_RuleAction>>[
+                PopupMenuItem(
+                  value: _RuleAction.edit,
+                  child: Text(l10n.batch8Edit),
+                ),
+                PopupMenuItem(
+                  value: _RuleAction.remove,
+                  child: Text(l10n.batch8Remove),
+                ),
+              ],
+              onSelected: (action) {
+                if (action == _RuleAction.edit) onEdit();
+                if (action == _RuleAction.remove) onRemove();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _RuleAction { edit, remove }
+
+class _PriceSideSheet extends StatefulWidget {
+  const _PriceSideSheet({this.existing});
+  final VariantPriceOverrideDraft? existing;
+  @override
+  State<_PriceSideSheet> createState() => _PriceSideSheetState();
+}
+
+class _PriceSideSheetState extends State<_PriceSideSheet> {
+  late PriceOverrideScope scope;
+  int? branchId;
+  String? channel;
+  late final TextEditingController price;
   @override
   void initState() {
     super.initState();
-    final item = widget.existing;
-    _scope = item?.scope ?? widget.scope!;
-    _branchId = item?.branchId;
-    _channel = item?.channel;
-    _price = TextEditingController(text: item?.price.wireValue ?? '');
+    final state = context.read<VariantPriceOverridesCubit>().state;
+    scope = widget.existing?.scope ?? _contextScope(state);
+    branchId = widget.existing?.branchId ?? state.effectiveBranchId;
+    channel = widget.existing?.channel ?? state.effectiveChannel;
+    price = TextEditingController(text: widget.existing?.price.wireValue ?? '');
   }
 
   @override
   void dispose() {
-    _price.dispose();
+    price.dispose();
     super.dispose();
   }
 
@@ -436,239 +681,312 @@ class _OverrideEditorDialogState extends State<_OverrideEditorDialog> {
   Widget build(
     BuildContext context,
   ) => BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
-    builder: (context, state) => AlertDialog(
-      title: Text(
-        widget.existing == null
-            ? 'Add ${scopeLabel(_scope)} Override'
-            : 'Edit Price Override',
-      ),
-      content: SizedBox(
-        width: 440,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (_scope != PriceOverrideScope.channel)
-              DropdownButtonFormField<int>(
-                key: const Key('override-branch'),
-                initialValue: _branchId,
-                decoration: const InputDecoration(labelText: 'Branch *'),
-                items: state.branches
-                    .where((item) => item.isActive)
-                    .map(
-                      (item) => DropdownMenuItem(
-                        value: item.id,
-                        child: Text(item.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: state.isSaving
-                    ? null
-                    : (value) => setState(() => _branchId = value),
-              ),
-            if (_scope != PriceOverrideScope.branch) ...<Widget>[
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<String>(
-                key: const Key('override-channel'),
-                initialValue: _channel,
-                decoration: const InputDecoration(labelText: 'Sales channel *'),
-                items: salesChannels
-                    .map(
-                      (item) => DropdownMenuItem(
-                        value: item,
-                        child: Text(salesChannelLabel(item)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: state.isSaving
-                    ? null
-                    : (value) => setState(() => _channel = value),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.sm),
-            TextField(
-              key: const Key('override-price'),
-              controller: _price,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-              ],
-              decoration: InputDecoration(
-                labelText: 'Override Price *',
-                errorText: localizedConfiguredPriceError(
-                  context,
-                  state.fieldErrors['price'] ??
-                      state.fieldErrors['overridePrice'] ??
-                      state.fieldErrors['editor'] ??
-                      state.fieldErrors['scopeType'],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: state.isSaving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: state.isSaving ? null : _submit,
-          child: const Text('Apply'),
-        ),
-      ],
-    ),
-  );
-  void _submit() {
-    try {
-      final draft = VariantPriceOverrideDraft(
-        scope: _scope,
-        branchId: _scope == PriceOverrideScope.channel ? null : _branchId,
-        channel: _scope == PriceOverrideScope.branch ? null : _channel,
-        price: PriceAmount.parse(_price.text),
-        isActive: widget.existing?.isActive ?? true,
-      );
-      final bool saved = context.read<VariantPriceOverridesCubit>().addOrUpdate(
-        draft,
-        replacingScopeKey: widget.existing?.scopeKey,
-      );
-      if (saved) {
-        Navigator.pop(context);
-      }
-    } on FormatException {
-      context.read<VariantPriceOverridesCubit>().setEditorError(
-        'Enter zero or a positive price with up to two decimal places.',
-      );
-    }
-  }
-}
-
-class _EffectivePricePanel extends StatelessWidget {
-  const _EffectivePricePanel();
-  @override
-  Widget build(
-    BuildContext context,
-  ) => BlocBuilder<VariantPriceOverridesCubit, VariantPriceOverridesState>(
-    builder: (context, state) => Card(
-      child: Padding(
-        padding: AppSpacing.allLg,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Effective selling price', style: AppTextStyles.titleLarge),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'The selling price for the selected Variant, Branch, and channel.',
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Wrap(
-              spacing: AppSpacing.md,
-              runSpacing: AppSpacing.sm,
-              children: <Widget>[
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<int>(
-                    isExpanded: true,
-                    initialValue: state.effectiveBranchId,
-                    decoration: const InputDecoration(labelText: 'Branch'),
-                    items: <DropdownMenuItem<int>>[
-                      const DropdownMenuItem(
-                        value: null,
-                        child: Text('No Branch'),
-                      ),
-                      ...state.branches
+    builder: (context, state) {
+      final l10n = context.l10n;
+      final enteredPrice = _tryParsePrice(price.text);
+      return Dialog(
+        alignment: AlignmentDirectional.centerEnd,
+        insetPadding: EdgeInsets.zero,
+        child: SafeArea(
+          child: SizedBox(
+            width: math.min(480, MediaQuery.sizeOf(context).width),
+            height: MediaQuery.sizeOf(context).height,
+            child: Padding(
+              padding: AppSpacing.allLg,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.batch8SetSellingPrice,
+                    style: AppTextStyles.headlineMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _SheetContext(
+                    product: state.product!.displayName(
+                      Localizations.localeOf(context),
+                    ),
+                    variant: state.variant!.displayName(
+                      Localizations.localeOf(context),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Text(l10n.batch8AppliesTo, style: AppTextStyles.labelLarge),
+                  _ScopeChoice(
+                    value: PriceOverrideScope.branch,
+                    groupValue: scope,
+                    label: l10n.batch8ScopeBranch,
+                    onChanged: state.isSaving ? null : _setScope,
+                  ),
+                  _ScopeChoice(
+                    value: PriceOverrideScope.channel,
+                    groupValue: scope,
+                    label: l10n.batch8ScopeChannel,
+                    onChanged: state.isSaving ? null : _setScope,
+                  ),
+                  _ScopeChoice(
+                    value: PriceOverrideScope.branchChannel,
+                    groupValue: scope,
+                    label: l10n.batch8ScopeBranchChannel,
+                    onChanged: state.isSaving ? null : _setScope,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  if (scope != PriceOverrideScope.channel)
+                    _SheetDropdown<int>(
+                      label: l10n.batch8Branch,
+                      fieldKey: const Key('override-branch'),
+                      value: branchId,
+                      items: state.branches
                           .where((item) => item.isActive)
                           .map(
                             (item) => DropdownMenuItem(
                               value: item.id,
                               child: Text(item.name),
                             ),
-                          ),
-                    ],
-                    onChanged: (value) => context
-                        .read<VariantPriceOverridesCubit>()
-                        .selectEffectiveContext(
-                          branchId: value,
-                          channel: state.effectiveChannel,
-                        ),
-                  ),
-                ),
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    initialValue: state.effectiveChannel,
-                    decoration: const InputDecoration(
-                      labelText: 'Sales channel',
+                          )
+                          .toList(growable: false),
+                      onChanged: state.isSaving
+                          ? null
+                          : (value) => setState(() => branchId = value),
                     ),
-                    items: <DropdownMenuItem<String>>[
-                      const DropdownMenuItem(
-                        value: null,
-                        child: Text('No Channel'),
-                      ),
-                      ...salesChannels.map(
-                        (item) => DropdownMenuItem(
-                          value: item,
-                          child: Text(salesChannelLabel(item)),
-                        ),
+                  if (scope == PriceOverrideScope.branchChannel)
+                    const SizedBox(height: AppSpacing.md),
+                  if (scope != PriceOverrideScope.branch)
+                    _SheetDropdown<String>(
+                      label: l10n.batch8SalesChannel,
+                      fieldKey: const Key('override-channel'),
+                      value: channel,
+                      items: salesChannels
+                          .map(
+                            (item) => DropdownMenuItem(
+                              value: item,
+                              child: Text(_channelLabel(context, item)),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: state.isSaving
+                          ? null
+                          : (value) => setState(() => channel = value),
+                    ),
+                  const SizedBox(height: AppSpacing.lg),
+                  TextField(
+                    key: const Key('override-price'),
+                    controller: price,
+                    onChanged: (_) => setState(() {}),
+                    textDirection: TextDirection.ltr,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
                       ),
                     ],
-                    onChanged: (value) => context
-                        .read<VariantPriceOverridesCubit>()
-                        .selectEffectiveContext(
-                          branchId: state.effectiveBranchId,
-                          channel: value,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (state.isEffectiveLoading)
-              const CircularProgressIndicator()
-            else if (state.effectiveError != null)
-              Text(
-                state.effectiveError!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              )
-            else if (state.effectivePrice != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _money(state.effectivePrice!.effectivePrice),
-                    textDirection: TextDirection.ltr,
-                    style: AppTextStyles.displayMedium,
+                    decoration: InputDecoration(
+                      labelText: l10n.batch8Price,
+                      errorText: localizedConfiguredPriceError(
+                        context,
+                        state.fieldErrors['price'] ??
+                            state.fieldErrors['overridePrice'] ??
+                            state.fieldErrors['editor'] ??
+                            state.fieldErrors['scopeType'],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: 40,
-                    runSpacing: AppSpacing.sm,
+                  _PriceComparison(base: state.basePrice!, price: enteredPrice),
+                  const Spacer(),
+                  Row(
                     children: <Widget>[
-                      _Fact(
-                        label: 'Base price',
-                        value: _money(state.effectivePrice!.basePrice),
-                      ),
-                      _Fact(
-                        label: 'Difference',
-                        value: _difference(
-                          state.effectivePrice!.effectivePrice -
-                              state.effectivePrice!.basePrice,
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: state.isSaving
+                              ? null
+                              : () => Navigator.pop(context),
+                          child: Text(l10n.batch8Cancel),
                         ),
                       ),
-                      _Fact(
-                        label: 'Using',
-                        value: state.effectivePrice!.sourceLabel,
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: state.isSaving ? null : _submit,
+                          child: Text(l10n.batch8SavePrice),
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
-          ],
+            ),
+          ),
         ),
-      ),
+      );
+    },
+  );
+  void _setScope(PriceOverrideScope? value) {
+    if (value != null) setState(() => scope = value);
+  }
+
+  Future<void> _submit() async {
+    try {
+      final draft = VariantPriceOverrideDraft(
+        scope: scope,
+        branchId: scope == PriceOverrideScope.channel ? null : branchId,
+        channel: scope == PriceOverrideScope.branch ? null : channel,
+        price: PriceAmount.parse(price.text),
+        isActive: widget.existing?.isActive ?? true,
+      );
+      final cubit = context.read<VariantPriceOverridesCubit>();
+      if (!cubit.addOrUpdate(
+        draft,
+        replacingScopeKey: widget.existing?.scopeKey,
+      )) {
+        return;
+      }
+      if (await cubit.save() && mounted) {
+        Navigator.pop(context);
+      }
+    } on FormatException {
+      context.read<VariantPriceOverridesCubit>().setEditorError(
+        configuredSellPriceMustBePositive,
+      );
+    }
+  }
+}
+
+class _SheetContext extends StatelessWidget {
+  const _SheetContext({required this.product, required this.variant});
+  final String product;
+  final String variant;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: AppSpacing.allMd,
+    decoration: BoxDecoration(
+      color: AppColors.background,
+      border: Border.all(color: AppColors.border),
+      borderRadius: BorderRadius.circular(10),
     ),
+    child: Row(
+      children: <Widget>[
+        Expanded(
+          child: _PriceFact(label: context.l10n.batch8Product, value: product),
+        ),
+        Expanded(
+          child: _PriceFact(label: context.l10n.batch8Variant, value: variant),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ScopeChoice extends StatelessWidget {
+  const _ScopeChoice({
+    required this.value,
+    required this.groupValue,
+    required this.label,
+    required this.onChanged,
+  });
+  final PriceOverrideScope value;
+  final PriceOverrideScope groupValue;
+  final String label;
+  final ValueChanged<PriceOverrideScope?>? onChanged;
+  @override
+  // RadioGroup is unavailable in the app's supported Flutter baseline.
+  Widget build(BuildContext context) => RadioListTile<PriceOverrideScope>(
+    dense: true,
+    contentPadding: EdgeInsets.zero,
+    value: value,
+    groupValue: groupValue,
+    onChanged: onChanged,
+    title: Text(label, style: AppTextStyles.bodyMedium),
+  );
+}
+
+class _SheetDropdown<T> extends StatelessWidget {
+  const _SheetDropdown({
+    required this.label,
+    required this.fieldKey,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+  final String label;
+  final Key fieldKey;
+  final T? value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?>? onChanged;
+  @override
+  Widget build(BuildContext context) => DropdownButtonFormField<T>(
+    key: fieldKey,
+    initialValue: value,
+    isExpanded: true,
+    decoration: InputDecoration(labelText: label),
+    items: items,
+    onChanged: onChanged,
+  );
+}
+
+class _PriceComparison extends StatelessWidget {
+  const _PriceComparison({required this.base, required this.price});
+  final PriceAmount base;
+  final PriceAmount? price;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final difference = price == null ? null : price! - base;
+    final comparison = difference == null
+        ? ''
+        : difference.minorUnits > 0
+        ? l10n.batch8PriceAboveBase(
+            _money(
+              PriceAmount.parse(
+                (difference.minorUnits.abs() / 100).toStringAsFixed(2),
+              ),
+            ),
+          )
+        : difference.minorUnits < 0
+        ? l10n.batch8PriceBelowBase(
+            _money(
+              PriceAmount.parse(
+                (difference.minorUnits.abs() / 100).toStringAsFixed(2),
+              ),
+            ),
+          )
+        : l10n.batch8PriceSameAsBase;
+    return Container(
+      width: double.infinity,
+      padding: AppSpacing.allMd,
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _PriceFact(label: l10n.batch8BasePrice, value: _money(base)),
+          if (comparison.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(comparison, style: AppTextStyles.bodySmall),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Notice extends StatelessWidget {
+  const _Notice({required this.message, required this.color});
+  final String message;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: AppSpacing.allMd,
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Text(message, style: AppTextStyles.bodySmall),
   );
 }
 
@@ -683,35 +1001,121 @@ class _Failure extends StatelessWidget {
       children: <Widget>[
         Text(message),
         const SizedBox(height: AppSpacing.md),
-        OutlinedButton(onPressed: retry, child: const Text('Retry')),
+        OutlinedButton(onPressed: retry, child: Text(context.l10n.batch8Retry)),
       ],
     ),
   );
 }
 
-class _Banner extends StatelessWidget {
-  const _Banner(this.message);
-  final String message;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: AppSpacing.allMd,
-    color: AppColors.discountOrangeBadge,
-    child: Text(message),
-  );
+PriceOverrideScope _contextScope(VariantPriceOverridesState state) =>
+    state.effectiveBranchId != null && state.effectiveChannel != null
+    ? PriceOverrideScope.branchChannel
+    : state.effectiveChannel != null
+    ? PriceOverrideScope.channel
+    : PriceOverrideScope.branch;
+
+bool _canChangeSelectedContextPrice(VariantPriceOverridesState state) {
+  if (!state.canEdit || state.isEffectiveLoading) return false;
+  final branchId = state.effectiveBranchId;
+  if (branchId == null && state.effectiveChannel == null) return false;
+  return branchId == null ||
+      state.branches.any((branch) => branch.id == branchId && branch.isActive);
 }
 
-class _SuccessBanner extends StatelessWidget {
-  const _SuccessBanner(this.message);
-  final String message;
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: AppSpacing.allMd,
-    color: Colors.green.shade100,
-    child: Text(message),
-  );
+VariantPriceOverrideDraft? _exactRuleForCurrentContext(
+  VariantPriceOverridesState state,
+) {
+  final branchId = state.effectiveBranchId;
+  final channel = state.effectiveChannel;
+  if (branchId == null && channel == null) return null;
+  final scope = _contextScope(state);
+  return state.draft
+      .where(
+        (rule) =>
+            rule.scope == scope &&
+            rule.branchId == branchId &&
+            rule.channel == channel,
+      )
+      .firstOrNull;
+}
+
+PriceAmount? _tryParsePrice(String value) {
+  try {
+    return value.trim().isEmpty ? null : PriceAmount.parse(value);
+  } on FormatException {
+    return null;
+  }
 }
 
 String _money(PriceAmount value) =>
     CurrencyFormatter.formatMinorUnits(value.minorUnits);
-String _difference(PriceAmount value) =>
-    '${value.minorUnits > 0 ? '+' : ''}${CurrencyFormatter.formatMinorUnits(value.minorUnits)}';
+String _difference(PriceAmount value) {
+  final absolute = CurrencyFormatter.formatMinorUnits(value.minorUnits.abs());
+  return value.minorUnits > 0
+      ? '+$absolute'
+      : value.minorUnits < 0
+      ? '-$absolute'
+      : absolute;
+}
+
+Color? _differenceColor(PriceAmount value) => value.minorUnits > 0
+    ? AppColors.success
+    : value.minorUnits < 0
+    ? AppColors.danger
+    : null;
+String _channelLabel(BuildContext context, String value) {
+  final l10n = context.l10n;
+  return switch (value) {
+    'pos' => l10n.batch8ChannelPos,
+    'waiter_app' => l10n.batch8ChannelWaiterApp,
+    'kiosk' => l10n.batch8ChannelKiosk,
+    'qr_ordering' => l10n.batch8ChannelQrOrdering,
+    'delivery' => l10n.batch8ChannelDelivery,
+    'online_ordering' => l10n.batch8ChannelOnlineOrdering,
+    _ => value,
+  };
+}
+
+String _scopeLabel(dynamic l10n, PriceOverrideScope scope) => switch (scope) {
+  PriceOverrideScope.branch => l10n.batch8RuleBranchPrice,
+  PriceOverrideScope.channel => l10n.batch8RuleChannelPrice,
+  PriceOverrideScope.branchChannel => l10n.batch8RuleBranchChannelPrice,
+};
+String _ruleContext(
+  BuildContext context,
+  VariantPriceOverrideDraft draft,
+  Branch? branch,
+) {
+  final branchName = branch?.name ?? draft.branchId?.toString() ?? '';
+  final channel = draft.channel == null
+      ? ''
+      : _channelLabel(context, draft.channel!);
+  return switch (draft.scope) {
+    PriceOverrideScope.branch => branchName,
+    PriceOverrideScope.channel => channel,
+    PriceOverrideScope.branchChannel => '$branchName · $channel',
+  };
+}
+
+String _effectiveSource(
+  BuildContext context,
+  VariantPriceOverridesState state,
+  EffectiveVariantPrice result,
+) {
+  final l10n = context.l10n;
+  final branch =
+      state.branches
+          .where((item) => item.id == result.branchId)
+          .firstOrNull
+          ?.name ??
+      '';
+  final channel = result.channel == null
+      ? ''
+      : _channelLabel(context, result.channel!);
+  return switch (result.matchedScope) {
+    'branch' => l10n.batch8BranchPriceFor(branch),
+    'channel' => l10n.batch8ChannelPriceFor(channel),
+    'branch_channel' => l10n.batch8BranchChannelPriceFor(branch, channel),
+    _ => l10n.batch8PriceFromBase,
+  };
+}

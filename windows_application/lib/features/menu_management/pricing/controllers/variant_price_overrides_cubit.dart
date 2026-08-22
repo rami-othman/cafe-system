@@ -202,7 +202,21 @@ class VariantPriceOverridesCubit extends Cubit<VariantPriceOverridesState> {
         state.variant!.id,
         state.draft,
       );
-      await load(state.product!.id, state.variant!.id, refresh: true);
+      if (isClosed) return false;
+      final int? branchId = state.effectiveBranchId;
+      final String? channel = state.effectiveChannel;
+      // Release the mutation lock before reloading the authoritative snapshot.
+      // Otherwise load() returns early and the screen remains permanently
+      // disabled after its first successful save.
+      emit(state.copyWith(isSaving: false));
+      await load(
+        state.product!.id,
+        state.variant!.id,
+        branchId: branchId,
+        channel: channel,
+        refresh: true,
+      );
+      if (isClosed) return false;
       emit(
         state.copyWith(successMessage: 'Price overrides saved successfully.'),
       );

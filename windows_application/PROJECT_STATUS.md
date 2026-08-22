@@ -17,6 +17,14 @@ error; every UX-G0-E gate below is green:
 
 Current verification status (2026-08-20):
 
+- Pricing UI refinement (2026-08-22): removed the non-functional Back and
+  Refresh buttons from the Variant Price Overrides screen. Native system back
+  handling remains in place.
+
+- Variant Pricing fix (2026-08-22): a successful scoped-rule save now releases
+  the edit lock and preserves the selected context. Change Price edits an exact
+  selected-context rule or starts a new one; independent rules remain addable.
+
 - Operational availability API: the list endpoint accepts standard HTTP
   `includeArchived=true` / `false` query values, matching the Flutter client.
 

@@ -1797,4 +1797,170 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get batch8Availability => 'الإتاحة';
+
+  @override
+  String get batch8PricingBack => 'رجوع';
+
+  @override
+  String get batch8PricingRefresh => 'تحديث';
+
+  @override
+  String get batch8PricingLoadError => 'تعذر تحميل بيانات التسعير.';
+
+  @override
+  String get batch8PricingArchived =>
+      'هذا المنتج أو النوع مؤرشف. الأسعار معروضة للمرجعية ولا يمكن تعديلها.';
+
+  @override
+  String batch8PricingContext(String variant) {
+    return '$variant · سعر البيع';
+  }
+
+  @override
+  String get batch8PricingHelp => 'سعر البيع للنوع والفرع وقناة البيع المحددة.';
+
+  @override
+  String get batch8SalesChannel => 'قناة البيع';
+
+  @override
+  String get batch8NoBranch => 'بدون فرع';
+
+  @override
+  String get batch8NoChannel => 'بدون قناة';
+
+  @override
+  String get batch8ChangePrice => 'تغيير السعر';
+
+  @override
+  String get batch8MorePriceRules => 'قواعد أسعار إضافية';
+
+  @override
+  String batch8RulesConfigured(int count) {
+    return '$count قاعدة مُعدّة';
+  }
+
+  @override
+  String get batch8Show => 'عرض';
+
+  @override
+  String get batch8Hide => 'إخفاء';
+
+  @override
+  String get batch8NoPriceAdjustments => 'لا توجد تعديلات على السعر.';
+
+  @override
+  String get batch8BasePriceEverywhere => 'السعر الأساسي مطبق في كل مكان.';
+
+  @override
+  String get batch8Difference => 'الفرق';
+
+  @override
+  String get batch8AddPrice => 'إضافة سعر';
+
+  @override
+  String get batch8SetSellingPrice => 'تعيين سعر البيع';
+
+  @override
+  String get batch8Product => 'المنتج';
+
+  @override
+  String get batch8AppliesTo => 'يُطبّق على';
+
+  @override
+  String get batch8ScopeBranch => 'الفرع';
+
+  @override
+  String get batch8ScopeChannel => 'القناة';
+
+  @override
+  String get batch8ScopeBranchChannel => 'الفرع + القناة';
+
+  @override
+  String get batch8Price => 'السعر';
+
+  @override
+  String batch8PriceAboveBase(String difference) {
+    return 'أعلى من السعر الأساسي بمقدار $difference';
+  }
+
+  @override
+  String batch8PriceBelowBase(String difference) {
+    return 'أقل من السعر الأساسي بمقدار $difference';
+  }
+
+  @override
+  String get batch8PriceSameAsBase => 'مطابق للسعر الأساسي';
+
+  @override
+  String get batch8Cancel => 'إلغاء';
+
+  @override
+  String get batch8SavePrice => 'حفظ السعر';
+
+  @override
+  String get batch8Edit => 'تعديل';
+
+  @override
+  String get batch8Remove => 'إزالة';
+
+  @override
+  String get batch8RemovePriceTitle => 'إزالة قاعدة السعر؟';
+
+  @override
+  String get batch8RemovePriceMessage => 'سيُزال تعديل السعر لهذا النوع.';
+
+  @override
+  String get batch8Keep => 'إبقاء';
+
+  @override
+  String batch8BranchPriceFor(String branch) {
+    return 'سعر فرع $branch';
+  }
+
+  @override
+  String batch8ChannelPriceFor(String channel) {
+    return 'سعر قناة $channel';
+  }
+
+  @override
+  String batch8BranchChannelPriceFor(String branch, String channel) {
+    return 'سعر $branch · $channel';
+  }
+
+  @override
+  String get batch8RuleBranchPrice => 'سعر الفرع';
+
+  @override
+  String get batch8RuleChannelPrice => 'سعر القناة';
+
+  @override
+  String get batch8RuleBranchChannelPrice => 'سعر الفرع + القناة';
+
+  @override
+  String get batch8ChannelPos => 'نقطة البيع';
+
+  @override
+  String get batch8ChannelWaiterApp => 'تطبيق النادل';
+
+  @override
+  String get batch8ChannelKiosk => 'الكشك';
+
+  @override
+  String get batch8ChannelQrOrdering => 'الطلب عبر رمز QR';
+
+  @override
+  String get batch8ChannelDelivery => 'التوصيل';
+
+  @override
+  String get batch8ChannelOnlineOrdering => 'الطلب عبر الإنترنت';
+
+  @override
+  String get batch8UnsavedPriceChanges => 'تغييرات سعر غير محفوظة';
+
+  @override
+  String get batch8UnsavedPriceChangesMessage =>
+      'لديك تغييرات سعر غير محفوظة. هل تريد المغادرة بدون حفظ؟';
+
+  @override
+  String get batch8Leave => 'مغادرة';
 }
