@@ -16,6 +16,46 @@ import 'package:windows_application/features/pos/models/branch.dart';
 import '../../support/menu_management_test_harness.dart';
 
 void main() {
+  testWidgets('keeps the three selling summaries aligned at desktop width', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _WorkspaceRepository();
+    final schedule = AvailabilityCubit(repository: repository);
+    final prices = VariantPriceOverridesCubit(repository: repository);
+    final operational = OperationalAvailabilityCubit(repository: repository);
+    await Future.wait<void>(<Future<void>>[
+      schedule.load(11, variantId: 12),
+      prices.load(11, 12, branchId: 1, channel: 'pos'),
+      operational.load(11, variantId: 12, branchId: 1, channel: 'pos'),
+    ]);
+    addTearDown(() async {
+      await schedule.close();
+      await prices.close();
+      await operational.close();
+    });
+
+    await pumpMenuManagementHarness(
+      tester,
+      child: ProductAvailabilityWorkspace(
+        product: repository.product,
+        availabilityCubit: schedule,
+        priceCubit: prices,
+        operationalCubit: operational,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final pricing = tester.getCenter(find.text('Manage pricing'));
+    final scheduleAction = tester.getCenter(find.text('Manage schedule'));
+    final availability = tester.getCenter(find.text('Manage availability'));
+    expect(pricing.dy, closeTo(scheduleAction.dy, 1));
+    expect(pricing.dy, closeTo(availability.dy, 1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'renders live price, schedule, and operational summaries inline',
     (tester) async {
@@ -56,6 +96,43 @@ void main() {
       expect(repository.operationalRequests, isNotEmpty);
     },
   );
+
+  testWidgets('uses manager-facing summary errors and offers retry', (
+    tester,
+  ) async {
+    final repository = _PriceErrorWorkspaceRepository();
+    final schedule = AvailabilityCubit(repository: repository);
+    final prices = VariantPriceOverridesCubit(repository: repository);
+    final operational = OperationalAvailabilityCubit(repository: repository);
+    await Future.wait<void>(<Future<void>>[
+      schedule.load(11, variantId: 12),
+      prices.load(11, 12, branchId: 1, channel: 'pos'),
+      operational.load(11, variantId: 12, branchId: 1, channel: 'pos'),
+    ]);
+    addTearDown(() async {
+      await schedule.close();
+      await prices.close();
+      await operational.close();
+    });
+
+    await pumpMenuManagementHarness(
+      tester,
+      child: ProductAvailabilityWorkspace(
+        product: repository.product,
+        availabilityCubit: schedule,
+        priceCubit: prices,
+        operationalCubit: operational,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Availability could not be loaded.'), findsWidgets);
+    expect(find.textContaining('price resolver failed'), findsNothing);
+    final attemptsBeforeRetry = repository.effectiveAttempts;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(repository.effectiveAttempts, greaterThan(attemptsBeforeRetry));
+  });
 
   testWidgets('uses Arabic manager-facing labels in the inline workspace', (
     tester,
@@ -298,6 +375,20 @@ class _WorkspaceRepository extends MenuCatalogRepository {
   Future<CatalogPage<KitchenStation>> listKitchenStations({
     int perPage = 100,
   }) async => throw UnimplementedError();
+}
+
+class _PriceErrorWorkspaceRepository extends _WorkspaceRepository {
+  int effectiveAttempts = 0;
+
+  @override
+  Future<EffectiveVariantPrice> getEffectiveVariantPrice(
+    int variantId, {
+    int? branchId,
+    String? channel,
+  }) async {
+    effectiveAttempts++;
+    throw StateError('price resolver failed');
+  }
 }
 
 Map<String, dynamic> _variant([int id = 12, String name = 'Regular']) =>

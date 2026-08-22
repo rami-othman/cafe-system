@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../../app/localization/localization_extensions.dart';
 import '../../../../../app/menu_management_route_locations.dart';
@@ -18,6 +19,7 @@ import '../../pricing/controllers/variant_price_overrides_state.dart';
 import '../../pricing/models/variant_price_models.dart';
 import '../controllers/availability_cubit.dart';
 import '../controllers/availability_state.dart';
+import '../models/availability_models.dart';
 import '../schedule_summary.dart';
 
 class ProductAvailabilityWorkspace extends StatelessWidget {
@@ -179,8 +181,7 @@ class _AvailabilityWorkspaceBodyState
             }
             if (schedule.product == null) {
               return _WorkspaceMessage(
-                message:
-                    schedule.errorMessage ?? l10n.batch8AvailabilityLoadError,
+                message: l10n.batch8AvailabilityLoadError,
                 onRetry: () =>
                     context.read<AvailabilityCubit>().load(widget.product.id),
               );
@@ -253,19 +254,22 @@ class _AvailabilityWorkspaceBodyState
                                       .toList(growable: false),
                                 );
                               }
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  for (
-                                    var index = 0;
-                                    index < cards.length;
-                                    index++
-                                  ) ...<Widget>[
-                                    Expanded(child: cards[index]),
-                                    if (index < cards.length - 1)
-                                      const SizedBox(width: AppSpacing.md),
+                              return IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: <Widget>[
+                                    for (
+                                      var index = 0;
+                                      index < cards.length;
+                                      index++
+                                    ) ...<Widget>[
+                                      Expanded(child: cards[index]),
+                                      if (index < cards.length - 1)
+                                        const SizedBox(width: AppSpacing.md),
+                                    ],
                                   ],
-                                ],
+                                ),
                               );
                             },
                           ),
@@ -294,89 +298,146 @@ class _ContextBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Container(
-      padding: AppSpacing.allMd,
+      width: double.infinity,
+      padding: AppSpacing.allLg,
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Wrap(
-        spacing: AppSpacing.md,
-        runSpacing: AppSpacing.sm,
-        children: <Widget>[
-          SizedBox(
-            width: 250,
-            child: DropdownButtonFormField<int>(
-              key: const Key('availability-workspace-variant'),
-              isExpanded: true,
-              initialValue: state.selectedVariantId,
-              decoration: InputDecoration(labelText: l10n.batch8Variant),
-              items: state.product!.variants
-                  .map(
-                    (item) => DropdownMenuItem(
-                      value: item.id,
-                      child: Text(
-                        item.displayName(Localizations.localeOf(context)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final fields = <Widget>[
+            _ContextField(
+              label: l10n.batch8Variant,
+              child: DropdownButtonFormField<int>(
+                key: const Key('availability-workspace-variant'),
+                isExpanded: true,
+                initialValue: state.selectedVariantId,
+                decoration: _contextInputDecoration(),
+                items: state.product!.variants
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: item.id,
+                        child: Text(
+                          item.displayName(Localizations.localeOf(context)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  )
-                  .toList(growable: false),
-              onChanged: (value) => onChanged(
-                value,
-                state.selectedBranchId,
-                state.selectedChannel,
+                    )
+                    .toList(growable: false),
+                onChanged: (value) => onChanged(
+                  value,
+                  state.selectedBranchId,
+                  state.selectedChannel,
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            width: 230,
-            child: DropdownButtonFormField<int>(
-              key: const Key('availability-workspace-branch'),
-              isExpanded: true,
-              initialValue: state.selectedBranchId,
-              decoration: InputDecoration(labelText: l10n.batch8Branch),
-              items: state.branches
-                  .where((item) => item.isActive)
+            _ContextField(
+              label: l10n.batch8Branch,
+              child: DropdownButtonFormField<int>(
+                key: const Key('availability-workspace-branch'),
+                isExpanded: true,
+                initialValue: state.selectedBranchId,
+                decoration: _contextInputDecoration(),
+                items: state.branches
+                    .where((item) => item.isActive)
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: item.id,
+                        child: Text(item.name, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) => onChanged(
+                  state.selectedVariantId,
+                  value,
+                  state.selectedChannel,
+                ),
+              ),
+            ),
+            _ContextField(
+              label: l10n.batch8Channel,
+              child: DropdownButtonFormField<String>(
+                key: const Key('availability-workspace-channel'),
+                isExpanded: true,
+                initialValue: state.selectedChannel,
+                decoration: _contextInputDecoration(),
+                items: availabilityChannels
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: item,
+                        child: Text(
+                          availabilityChannelLabel(item),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) => onChanged(
+                  state.selectedVariantId,
+                  state.selectedBranchId,
+                  value,
+                ),
+              ),
+            ),
+          ];
+          if (constraints.maxWidth < 680) {
+            return Column(
+              children: fields
                   .map(
-                    (item) => DropdownMenuItem(
-                      value: item.id,
-                      child: Text(item.name),
+                    (field) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: field,
                     ),
                   )
                   .toList(growable: false),
-              onChanged: (value) => onChanged(
-                state.selectedVariantId,
-                value,
-                state.selectedChannel,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 220,
-            child: DropdownButtonFormField<String>(
-              key: const Key('availability-workspace-channel'),
-              isExpanded: true,
-              initialValue: state.selectedChannel,
-              decoration: InputDecoration(labelText: l10n.batch8Channel),
-              items: availabilityChannels
-                  .map(
-                    (item) => DropdownMenuItem(
-                      value: item,
-                      child: Text(availabilityChannelLabel(item)),
-                    ),
-                  )
-                  .toList(growable: false),
-              onChanged: (value) => onChanged(
-                state.selectedVariantId,
-                state.selectedBranchId,
-                value,
-              ),
-            ),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: <Widget>[
+              for (var index = 0; index < fields.length; index++) ...<Widget>[
+                Expanded(child: fields[index]),
+                if (index < fields.length - 1)
+                  const SizedBox(width: AppSpacing.md),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
+}
+
+InputDecoration _contextInputDecoration() => InputDecoration(
+  isDense: true,
+  filled: true,
+  fillColor: AppColors.background,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(8),
+    borderSide: const BorderSide(color: AppColors.border),
+  ),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(8),
+    borderSide: const BorderSide(color: AppColors.border),
+  ),
+);
+
+class _ContextField extends StatelessWidget {
+  const _ContextField({required this.label, required this.child});
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(label, style: AppTextStyles.labelSmall),
+      const SizedBox(height: AppSpacing.xs),
+      child,
+    ],
+  );
 }
 
 class _PriceCard extends StatelessWidget {
@@ -403,6 +464,7 @@ class _PriceCard extends StatelessWidget {
           : price == null
           ? _catalogMoney(variant?.basePrice)
           : _money(price.effectivePrice),
+      valueLabel: l10n.batch8EffectiveSellingPrice,
       facts: <Widget>[
         _Fact(
           l10n.batch8BasePrice,
@@ -412,7 +474,9 @@ class _PriceCard extends StatelessWidget {
         ),
         _Fact(
           l10n.batch8Using,
-          state.effectiveError ?? _priceSource(context, price),
+          state.effectiveError == null
+              ? _priceSource(context, price)
+              : l10n.batch8AvailabilityLoadError,
         ),
       ],
       action: l10n.batch8ManagePricing,
@@ -455,25 +519,31 @@ class _ScheduleCard extends StatelessWidget {
         : state.preview!.isScheduledAvailable
         ? l10n.batch8AvailableNow
         : l10n.batch8UnavailableNow;
-    final detail =
-        state.previewError ??
-        (noRestriction
-            ? l10n.batch8NoScheduleRestrictionsHelp
-            : state.preview == null
-            ? l10n.batch8ScheduleLoadingHelp
-            : state.preview!.isScheduledAvailable
-            ? l10n.batch8AvailableAccordingSchedule
-            : l10n.batch8UnavailableAccordingSchedule);
+    final detail = state.previewError == null
+        ? (noRestriction
+              ? l10n.batch8NoScheduleRestrictionsHelp
+              : state.preview == null
+              ? l10n.batch8ScheduleLoadingHelp
+              : state.preview!.isScheduledAvailable
+              ? l10n.batch8AvailableAccordingSchedule
+              : l10n.batch8UnavailableAccordingSchedule)
+        : l10n.batch8AvailabilityLoadError;
     return _SummaryCard(
       icon: Icons.schedule_outlined,
       title: l10n.batch8RegularAvailability,
       value: value,
+      status:
+          state.previewError == null &&
+              !state.isPreviewLoading &&
+              !noRestriction
+          ? state.preview?.isScheduledAvailable
+          : null,
       facts: <Widget>[
         _Fact(l10n.batch8Using, detail),
         if (state.exactRules.isNotEmpty)
           _Fact(
             l10n.batch8ScheduleRules,
-            state.exactRules.map(scheduleSummary).join('\n'),
+            _scheduleSummary(context, state.exactRules),
           ),
       ],
       action: l10n.batch8ManageSchedule,
@@ -509,19 +579,24 @@ class _OperationalCard extends StatelessWidget {
         : state.previewError != null
         ? l10n.batch8Unavailable
         : _operationalLabel(l10n, preview?.status);
-    final detail =
-        state.previewError ??
-        (preview == null
-            ? l10n.batch8CurrentLoadingHelp
-            : preview.unavailableUntil == null
-            ? preview.isFallback
-                  ? l10n.batch8NoTemporaryRestriction
-                  : l10n.batch8TemporaryRestrictionActive
-            : l10n.batch8TemporaryUntil(_time(preview.unavailableUntil!)));
+    final detail = state.previewError == null
+        ? (preview == null
+              ? l10n.batch8CurrentLoadingHelp
+              : preview.unavailableUntil == null
+              ? preview.isFallback
+                    ? l10n.batch8NoTemporaryRestriction
+                    : l10n.batch8TemporaryRestrictionActive
+              : l10n.batch8TemporaryUntil(_time(preview.unavailableUntil!)))
+        : l10n.batch8AvailabilityLoadError;
     return _SummaryCard(
       icon: Icons.bolt_outlined,
       title: l10n.batch8CurrentAvailability,
       value: value,
+      status:
+          state.previewError == null &&
+              state.previewStatus == OperationalAvailabilityPreviewStatus.loaded
+          ? preview?.isOperationallyAvailable
+          : null,
       facts: <Widget>[_Fact(l10n.batch8Using, detail)],
       action: l10n.batch8ManageAvailability,
       onPressed: () => context.push(
@@ -561,25 +636,64 @@ class _EffectiveResult extends StatelessWidget {
       width: double.infinity,
       padding: AppSpacing.allLg,
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Wrap(
-        spacing: 48,
-        runSpacing: AppSpacing.md,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             l10n.batch8EffectiveSellingResult,
             style: AppTextStyles.titleMedium,
           ),
-          _Fact(
-            l10n.batch8EffectiveSellingPrice,
-            prices.effectivePrice == null
-                ? l10n.batch8Loading
-                : _money(prices.effectivePrice!.effectivePrice),
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            width: double.infinity,
+            padding: AppSpacing.allMd,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final metrics = <Widget>[
+                  _ResultMetric(
+                    label: l10n.batch8EffectiveSellingPrice,
+                    value: prices.effectiveError != null
+                        ? l10n.batch8AvailabilityLoadError
+                        : prices.effectivePrice == null
+                        ? l10n.batch8Loading
+                        : _money(prices.effectivePrice!.effectivePrice),
+                  ),
+                  _ResultMetric(
+                    label: l10n.batch8Availability,
+                    value: availability,
+                    valueColor: _availabilityColor(operational, schedule),
+                  ),
+                ];
+                if (constraints.maxWidth < 480) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      metrics.first,
+                      const SizedBox(height: AppSpacing.md),
+                      metrics.last,
+                    ],
+                  );
+                }
+                return Row(
+                  children: <Widget>[
+                    Expanded(child: metrics.first),
+                    Container(width: 1, height: 36, color: AppColors.border),
+                    const SizedBox(width: AppSpacing.lg),
+                    Expanded(child: metrics.last),
+                  ],
+                );
+              },
+            ),
           ),
-          _Fact(l10n.batch8Availability, availability),
         ],
       ),
     );
@@ -595,33 +709,68 @@ class _SummaryCard extends StatelessWidget {
     required this.action,
     required this.onPressed,
     this.retry,
+    this.valueLabel,
+    this.status,
   });
   final IconData icon;
   final String title, value, action;
   final List<Widget> facts;
   final VoidCallback? onPressed;
   final VoidCallback? retry;
+  final String? valueLabel;
+  final bool? status;
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 266),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      border: Border.all(color: AppColors.border),
+      borderRadius: BorderRadius.circular(12),
+    ),
     child: Padding(
       padding: AppSpacing.allLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, color: AppColors.primary),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            title,
-            style: AppTextStyles.labelLarge.copyWith(
-              color: AppColors.textSecondary,
-            ),
+          Row(
+            children: <Widget>[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, size: 18, color: AppColors.secondary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(title, style: AppTextStyles.titleMedium)),
+            ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(value, style: AppTextStyles.titleLarge),
-          const SizedBox(height: AppSpacing.sm),
-          ...facts,
+          const SizedBox(height: AppSpacing.lg),
+          if (valueLabel != null) ...<Widget>[
+            Text(valueLabel!, style: AppTextStyles.labelSmall),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          if (status != null)
+            _StatusPill(label: value, available: status!)
+          else
+            Text(value, style: AppTextStyles.titleLarge),
           const SizedBox(height: AppSpacing.md),
-          OutlinedButton(onPressed: onPressed, child: Text(action)),
+          const Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: AppSpacing.md),
+          ...facts,
+          const Spacer(),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            child: Text(action),
+          ),
           if (retry != null)
             TextButton(onPressed: retry, child: Text(context.l10n.batch8Retry)),
         ],
@@ -640,9 +789,60 @@ class _Fact extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(label, style: AppTextStyles.labelSmall),
-        Text(value, style: AppTextStyles.bodySmall),
+        Text(
+          value,
+          style: AppTextStyles.bodySmall,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     ),
+  );
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.available});
+  final String label;
+  final bool available;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color background = available
+        ? const Color(0xFFE3F5E8)
+        : const Color(0xFFFFE6E3);
+    final Color foreground = available ? AppColors.success : AppColors.danger;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.labelMedium.copyWith(color: foreground),
+      ),
+    );
+  }
+}
+
+class _ResultMetric extends StatelessWidget {
+  const _ResultMetric({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(label, style: AppTextStyles.labelSmall),
+      const SizedBox(height: AppSpacing.xs),
+      Text(value, style: AppTextStyles.titleMedium.copyWith(color: valueColor)),
+    ],
   );
 }
 
@@ -689,4 +889,40 @@ String _priceSource(BuildContext context, EffectiveVariantPrice? price) {
     'channel' => l10n.batch8PriceFromChannel,
     _ => l10n.batch8PriceFromBase,
   };
+}
+
+String _scheduleSummary(
+  BuildContext context,
+  List<AvailabilityRuleDraft> rules,
+) {
+  return rules
+      .take(2)
+      .map((rule) {
+        final day = DateFormat.E(
+          Localizations.localeOf(context).toString(),
+        ).format(DateTime(2024, 1, 7).add(Duration(days: rule.dayOfWeek ?? 0)));
+        if (rule.startTime == null || rule.endTime == null) return day;
+        return '$day ${_timeRange(rule.startTime!, rule.endTime!)}';
+      })
+      .join('\n');
+}
+
+String _timeRange(String start, String end) => '\u2066$start–$end\u2069';
+
+Color? _availabilityColor(
+  OperationalAvailabilityState operational,
+  AvailabilityState schedule,
+) {
+  if (operational.previewStatus ==
+      OperationalAvailabilityPreviewStatus.loaded) {
+    return operational.preview?.isOperationallyAvailable == true
+        ? AppColors.success
+        : AppColors.danger;
+  }
+  if (schedule.preview != null) {
+    return schedule.preview!.isScheduledAvailable
+        ? AppColors.success
+        : AppColors.danger;
+  }
+  return null;
 }
