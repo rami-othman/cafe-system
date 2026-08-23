@@ -15,6 +15,7 @@ import 'package:windows_application/features/menu_management/models/product_cata
 import 'package:windows_application/features/menu_management/products/models/product_editor_draft.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   group('scheduled availability cubit', () {
@@ -238,11 +239,75 @@ void main() {
         expect(cubit.state.draft, before);
       },
     );
+    test('customizing an inherited Variant adds a Variant rule, not a Product rule', () async {
+      final repository = _AvailabilityRepository();
+      final cubit = AvailabilityCubit(repository: repository);
+      await cubit.load(11, variantId: 12);
+      cubit.selectContext(clearBranch: true, clearChannel: true);
+
+      expect(cubit.state.exactRules, isEmpty);
+      expect(cubit.state.inheritedRules, isNotEmpty);
+      const customized = AvailabilityRuleDraft(
+        productVariantId: 12,
+        branchId: null,
+        channel: null,
+        dayOfWeek: 1,
+        startTime: '07:00',
+        endTime: '22:00',
+        startDate: null,
+        endDate: null,
+        priority: 0,
+        isActive: true,
+      );
+
+      expect(cubit.addOrUpdate(customized), isTrue);
+      expect(await cubit.save(), isTrue);
+      expect(
+        repository.lastSync.where((rule) => rule.productVariantId == null),
+        hasLength(2),
+      );
+      expect(repository.lastSync, contains(customized));
+    });
+
+    test('accepts and persists a 22:00 to 02:00 overnight Variant rule', () async {
+      final repository = _AvailabilityRepository();
+      final cubit = AvailabilityCubit(repository: repository);
+      await cubit.load(11, variantId: 12);
+      cubit.selectContext(clearBranch: true, clearChannel: true);
+      const overnight = AvailabilityRuleDraft(
+        productVariantId: 12,
+        branchId: null,
+        channel: null,
+        dayOfWeek: 1,
+        startTime: '22:00',
+        endTime: '02:00',
+        startDate: null,
+        endDate: null,
+        priority: 0,
+        isActive: true,
+      );
+
+      expect(overnight.isOvernight, isTrue);
+      expect(cubit.addOrUpdate(overnight), isTrue);
+      expect(await cubit.save(), isTrue);
+      expect(repository.lastSync, contains(overnight));
+    });
+
+    test('global preview is forwarded without a Branch id', () async {
+      final repository = _AvailabilityRepository();
+      final cubit = AvailabilityCubit(repository: repository);
+      await cubit.load(11);
+
+      await cubit.preview(DateTime(2026, 8, 4, 10));
+
+      expect(repository.previewBranchId, isNull);
+      expect(repository.previewDateTime, '2026-08-04T10:00:00');
+    });
   });
 
   group('scheduled availability screen', () {
     testWidgets(
-      'renders exact and inherited rules separately without inherited actions',
+      'renders the regular availability hierarchy',
       (tester) async {
         final repository = _AvailabilityRepository();
         await tester.pumpWidget(
@@ -250,16 +315,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Weekly selling hours'), findsOneWidget);
-        await tester.scrollUntilVisible(
-          find.text('Inherited Rules'),
-          400,
-          scrollable: find.byType(Scrollable).first,
-        );
-        expect(find.text('Inherited Rules'), findsOneWidget);
-        expect(find.textContaining('Inherited from Product'), findsNWidgets(2));
-        expect(find.byTooltip('Edit'), findsOneWidget);
-        expect(find.byTooltip('Remove'), findsOneWidget);
+        expect(find.text('Regular availability'), findsOneWidget);
+        expect(find.text('Advanced Schedule Rules'), findsOneWidget);
+        expect(find.text('Check Availability'), findsOneWidget);
+        expect(find.byKey(const Key('edit-selling-hours')), findsOneWidget);
       },
     );
 
@@ -274,19 +333,19 @@ void main() {
 
       expect(find.textContaining('archived'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.byKey(const Key('add-availability-rule')),
+        find.byKey(const Key('edit-selling-hours')),
         400,
         scrollable: find.byType(Scrollable).first,
       );
       expect(
         tester
             .widget<FilledButton>(
-              find.byKey(const Key('add-availability-rule')),
+              find.byKey(const Key('edit-selling-hours')),
             )
             .onPressed,
         isNull,
       );
-      expect(find.text('All branches / Global'), findsOneWidget);
+      expect(find.text('All branches'), findsOneWidget);
     });
   });
 }
@@ -297,6 +356,8 @@ Widget _screen(
   int? branchId,
   String? channel,
 }) => MaterialApp(
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   home: BlocProvider<AvailabilityCubit>(
     create: (_) => AvailabilityCubit(repository: repository),
     child: AvailabilityScreen(

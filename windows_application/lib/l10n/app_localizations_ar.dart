@@ -1963,4 +1963,350 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get batch8Leave => 'مغادرة';
+
+  @override
+  String get scheduledUnsavedChanges => 'ساعات بيع غير محفوظة';
+
+  @override
+  String get scheduledUnsavedChangesHelp =>
+      'لديك تغييرات غير محفوظة على ساعات البيع. هل تريد المغادرة دون حفظ؟';
+
+  @override
+  String get scheduledStay => 'البقاء';
+
+  @override
+  String get scheduledLeave => 'مغادرة';
+
+  @override
+  String get scheduledLoadError => 'تعذر تحميل إتاحة البيع المعتادة.';
+
+  @override
+  String get scheduledSaveError =>
+      'تعذر حفظ ساعات البيع. راجع القيم المدخلة وحاول مرة أخرى.';
+
+  @override
+  String get scheduledSaved => 'تم حفظ ساعات البيع.';
+
+  @override
+  String get scheduledArchived =>
+      'هذا المنتج أو النوع مؤرشف. تُعرض ساعات البيع للمرجعية ولا يمكن تعديلها.';
+
+  @override
+  String get scheduledRegularForProduct => 'المنتج · الإتاحة المعتادة';
+
+  @override
+  String scheduledRegularForVariant(String variant) {
+    return '$variant · الإتاحة المعتادة';
+  }
+
+  @override
+  String get scheduledProduct => 'المنتج';
+
+  @override
+  String get scheduledAllBranches => 'كل الفروع';
+
+  @override
+  String get scheduledAllChannels => 'كل القنوات';
+
+  @override
+  String get scheduledUsingProduct => 'باستخدام جدول المنتج';
+
+  @override
+  String get scheduledProductSchedule => 'جدول المنتج';
+
+  @override
+  String scheduledCustomizedFor(String variant) {
+    return 'مخصص لـ $variant';
+  }
+
+  @override
+  String scheduledCustomizeFor(String variant) {
+    return 'تخصيص لـ $variant';
+  }
+
+  @override
+  String get scheduledUseProductAgain => 'استخدام جدول المنتج مجددًا';
+
+  @override
+  String get scheduledWeeklyInAdvanced =>
+      'تظهر ساعات الأسبوع ضمن قواعد الجدول المتقدمة.';
+
+  @override
+  String get scheduledNoSpecificRestriction => 'لا يوجد قيد محدد';
+
+  @override
+  String get scheduledAvailableAllDay => 'متاح طوال اليوم';
+
+  @override
+  String get scheduledEditSellingHours => 'تعديل ساعات البيع';
+
+  @override
+  String get scheduledAdvancedRules => 'قواعد الجدول المتقدمة';
+
+  @override
+  String get scheduledNoAdvancedRules => 'لا توجد قواعد جدول متقدمة';
+
+  @override
+  String get scheduledViewRules => 'عرض القواعد';
+
+  @override
+  String get scheduledInactiveRule => 'قاعدة جدول غير نشطة';
+
+  @override
+  String get scheduledPriorityRule => 'قاعدة جدول ذات أولوية';
+
+  @override
+  String get scheduledDateBoundRule => 'قاعدة جدول محددة بالتاريخ';
+
+  @override
+  String get scheduledCheckAvailability => 'فحص الإتاحة';
+
+  @override
+  String get scheduledCheckHelp => 'افحص التاريخ والوقت ضمن سياق البيع المحدد.';
+
+  @override
+  String get scheduledDate => 'التاريخ';
+
+  @override
+  String get scheduledTime => 'الوقت';
+
+  @override
+  String get scheduledCheck => 'فحص';
+
+  @override
+  String get scheduledCheckError => 'تعذر فحص الإتاحة. حاول مرة أخرى.';
+
+  @override
+  String get scheduledAvailableUsingProduct => 'متاح وفق جدول المنتج.';
+
+  @override
+  String get scheduledDay => 'اليوم';
+
+  @override
+  String get scheduledEveryDay => 'كل يوم';
+
+  @override
+  String get scheduledAvailability => 'الإتاحة';
+
+  @override
+  String get scheduledAvailableAllDayHelp => 'لا يوجد قيد زمني لهذا اليوم.';
+
+  @override
+  String get scheduledCustomHours => 'ساعات مخصصة';
+
+  @override
+  String get scheduledCustomHoursHelp => 'حدد وقت البدء والانتهاء المعتادين.';
+
+  @override
+  String get scheduledStartTime => 'وقت البدء';
+
+  @override
+  String get scheduledEndTime => 'وقت الانتهاء';
+
+  @override
+  String scheduledOvernightUntil(String time) {
+    return 'متاح ليلًا حتى $time في اليوم التالي.';
+  }
+
+  @override
+  String get scheduledDateLimits => 'حدود التاريخ';
+
+  @override
+  String get scheduledOptional => 'اختياري';
+
+  @override
+  String get scheduledStartDate => 'تاريخ البدء';
+
+  @override
+  String get scheduledEndDate => 'تاريخ الانتهاء';
+
+  @override
+  String get scheduledSelectDate => 'اختر التاريخ';
+
+  @override
+  String get scheduledAdvanced => 'متقدم';
+
+  @override
+  String get scheduledPriority => 'الأولوية';
+
+  @override
+  String get scheduledActive => 'نشط';
+
+  @override
+  String get scheduledSaveSellingHours => 'حفظ ساعات البيع';
+
+  @override
+  String get scheduledFrom => 'من';
+
+  @override
+  String get scheduledUntil => 'حتى';
+
+  @override
+  String get scheduledSunday => 'الأحد';
+
+  @override
+  String get scheduledMonday => 'الإثنين';
+
+  @override
+  String get scheduledTuesday => 'الثلاثاء';
+
+  @override
+  String get scheduledWednesday => 'الأربعاء';
+
+  @override
+  String get scheduledThursday => 'الخميس';
+
+  @override
+  String get scheduledFriday => 'الجمعة';
+
+  @override
+  String get scheduledSaturday => 'السبت';
+
+  @override
+  String get operationalAvailabilityTitle => 'الإتاحة التشغيلية';
+
+  @override
+  String get operationalAvailabilityPurpose =>
+      'هل يمكن للعملاء طلب هذا الصنف الآن؟ للاستثناءات التشغيلية المؤقتة فقط.';
+
+  @override
+  String get operationalAvailabilityContext => 'السياق الحالي';
+
+  @override
+  String get operationalAvailabilityProductVariant => 'المنتج / النوع';
+
+  @override
+  String get operationalAvailabilityProductOnly => 'المنتج';
+
+  @override
+  String get operationalAvailabilityBranch => 'الفرع';
+
+  @override
+  String get operationalAvailabilityChannel => 'قناة البيع';
+
+  @override
+  String get operationalAvailabilitySelectBranch => 'اختر فرعًا نشطًا';
+
+  @override
+  String get operationalAvailabilitySelectChannel => 'اختر قناة بيع';
+
+  @override
+  String get operationalAvailabilityAvailableNow => 'متوفر الآن';
+
+  @override
+  String get operationalAvailabilitySoldOut => 'نفدت الكمية';
+
+  @override
+  String get operationalAvailabilityTemporarilyUnavailable =>
+      'غير متوفر مؤقتًا';
+
+  @override
+  String get operationalAvailabilityNoRestriction =>
+      'لا يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String get operationalAvailabilityActiveRestriction =>
+      'يوجد قيد تشغيلي مؤقت نشط.';
+
+  @override
+  String operationalAvailabilityUntil(String time) {
+    return 'حتى: $time';
+  }
+
+  @override
+  String get operationalAvailabilityReason => 'السبب';
+
+  @override
+  String get operationalAvailabilityMarkUnavailable => 'جعله غير متوفر مؤقتًا';
+
+  @override
+  String get operationalAvailabilityMakeAvailable => 'إعادة التوفر الآن';
+
+  @override
+  String get operationalAvailabilityEditStatus => 'تعديل الحالة';
+
+  @override
+  String get operationalAvailabilityEditTemporary => 'تعديل القيد المؤقت';
+
+  @override
+  String get operationalAvailabilityUseDefault => 'استخدام الحالة الافتراضية';
+
+  @override
+  String get operationalAvailabilityUseDefaultTitle =>
+      'استخدام الحالة الافتراضية؟';
+
+  @override
+  String get operationalAvailabilityUseDefaultMessage =>
+      'سيؤدي ذلك إلى إزالة الحالة المضبوطة لهذا السياق المحدد فقط، ثم التحقق من الإتاحة الناتجة مرة أخرى.';
+
+  @override
+  String get operationalAvailabilityDefaultAction => 'استخدام الافتراضي';
+
+  @override
+  String get operationalAvailabilityAllVariants =>
+      'تنطبق هذه الحالة على جميع أنواع هذا المنتج.';
+
+  @override
+  String operationalAvailabilityOnlyVariant(String variant) {
+    return 'تؤثر هذه الحالة في $variant فقط.';
+  }
+
+  @override
+  String get operationalAvailabilityLoadingCurrent =>
+      'جارٍ تحديث الإتاحة الحالية…';
+
+  @override
+  String get operationalAvailabilityNoContext =>
+      'اختر فرعًا نشطًا وقناة بيع لعرض الإتاحة الحالية.';
+
+  @override
+  String get operationalAvailabilityLoadError =>
+      'تعذر تحميل الإتاحة الحالية. حاول مرة أخرى.';
+
+  @override
+  String get operationalAvailabilityArchived =>
+      'هذا الصنف مؤرشف. تُعرض الإتاحة الحالية للرجوع إليها ولا يمكن تعديلها.';
+
+  @override
+  String get operationalAvailabilitySetStatus => 'تعيين حالة الإتاحة';
+
+  @override
+  String get operationalAvailabilityEditStatusTitle => 'تعديل حالة الإتاحة';
+
+  @override
+  String get operationalAvailabilityStatus => 'الحالة';
+
+  @override
+  String get operationalAvailabilityDuration => 'المدة';
+
+  @override
+  String get operationalAvailabilitySpecificTime => 'حتى وقت محدد';
+
+  @override
+  String get operationalAvailabilityEndTimeRequired =>
+      'اختر وقت انتهاء هذا القيد المؤقت.';
+
+  @override
+  String get operationalAvailabilitySelectEndTime => 'اختر تاريخ ووقت الانتهاء';
+
+  @override
+  String get operationalAvailabilityBranchTime =>
+      'يُعرض الوقت بالتوقيت المحلي للفرع المحدد.';
+
+  @override
+  String get operationalAvailabilitySave => 'حفظ الحالة';
+
+  @override
+  String get operationalAvailabilitySaving => 'جارٍ الحفظ…';
+
+  @override
+  String get operationalAvailabilityCancel => 'إلغاء';
+
+  @override
+  String get operationalAvailabilityExplicitAvailable =>
+      'متوفر في سياق البيع هذا.';
+
+  @override
+  String get operationalAvailabilitySaveError =>
+      'تعذر حفظ حالة الإتاحة. راجع التفاصيل وحاول مرة أخرى.';
 }

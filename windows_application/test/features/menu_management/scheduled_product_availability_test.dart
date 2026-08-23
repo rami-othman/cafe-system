@@ -155,6 +155,45 @@ void main() {
       );
     });
 
+    test('Every Day is persisted as the backend null weekday representation', () {
+      const everyDay = AvailabilityRuleDraft(
+        productVariantId: 12,
+        branchId: 1,
+        channel: 'pos',
+        dayOfWeek: null,
+        startTime: '07:00',
+        endTime: '22:00',
+        startDate: null,
+        endDate: null,
+        priority: 0,
+        isActive: true,
+      );
+
+      expect(everyDay.toJson()['dayOfWeek'], isNull);
+      expect(everyDay.toJson(), isNot(contains('everyDay')));
+      expect(everyDay.toJson(), isNot(contains('daily')));
+    });
+
+    test('all-day availability remains a no-time rule, never an unavailable state', () {
+      const rule = AvailabilityRuleDraft(
+        productVariantId: 12,
+        branchId: 1,
+        channel: 'pos',
+        dayOfWeek: 1,
+        startTime: null,
+        endTime: null,
+        startDate: null,
+        endDate: null,
+        priority: 0,
+        isActive: true,
+      );
+
+      expect(rule.toJson()['startTime'], isNull);
+      expect(rule.toJson()['endTime'], isNull);
+      expect(rule.toJson(), isNot(contains('unavailableAllDay')));
+      expect(rule.toJson(), isNot(contains('availabilityState')));
+    });
+
     test(
       'parses the authoritative preview response and preserves reason code',
       () {

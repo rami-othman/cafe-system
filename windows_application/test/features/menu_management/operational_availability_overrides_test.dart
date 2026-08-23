@@ -10,7 +10,6 @@ import 'package:windows_application/features/menu_management/operational_availab
 import 'package:windows_application/features/menu_management/operational_availability/controllers/operational_availability_state.dart';
 import 'package:windows_application/features/menu_management/operational_availability/models/operational_availability_models.dart';
 import 'package:windows_application/features/menu_management/operational_availability/views/operational_availability_screen.dart';
-import 'package:windows_application/features/menu_management/operational_availability/widgets/clear_operational_override_dialog.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/menu_management/products/models/product_editor_draft.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
@@ -288,6 +287,53 @@ void main() {
     );
 
     test(
+      'requires expiry only for temporary status before calling its mutation',
+      () async {
+        final _OperationalRepository repository = _OperationalRepository();
+        final OperationalAvailabilityCubit cubit = OperationalAvailabilityCubit(
+          repository: repository,
+        );
+        await cubit.load(11);
+
+        expect(
+          await cubit.upsertProduct(
+            const OperationalAvailabilityDraft(
+              branchId: 1,
+              channel: 'pos',
+              status: OperationalAvailabilityStatus.temporarilyUnavailable,
+            ),
+          ),
+          isFalse,
+        );
+        expect(repository.productUpsertCount, 0);
+        expect(
+          await cubit.upsertProduct(
+            const OperationalAvailabilityDraft(
+              branchId: 1,
+              channel: 'delivery',
+              status: OperationalAvailabilityStatus.soldOut,
+            ),
+          ),
+          isTrue,
+        );
+        expect(repository.productUpsertCount, 1);
+        expect(
+          await cubit.upsertProduct(
+            OperationalAvailabilityDraft(
+              branchId: 1,
+              channel: 'kiosk',
+              status: OperationalAvailabilityStatus.temporarilyUnavailable,
+              unavailableUntil: DateTime(2030, 1, 1),
+            ),
+          ),
+          isTrue,
+        );
+        expect(repository.productUpsertCount, 2);
+        await cubit.close();
+      },
+    );
+
+    test(
       'edits and clears Variant records without affecting Product scope',
       () async {
         final _OperationalRepository repository = _OperationalRepository();
@@ -530,7 +576,7 @@ void main() {
   });
 
   testWidgets(
-    'screen renders product and Variant sections plus operational metadata',
+    'Available is shown as the manager-facing current state without record administration',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -547,24 +593,24 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Operational Availability'), findsOneWidget);
-      expect(find.text('Product status settings'), findsOneWidget);
-      expect(find.text('Variant status settings'), findsOneWidget);
+      expect(find.text('Operational availability'), findsOneWidget);
+      expect(find.text('AVAILABLE NOW'), findsOneWidget);
+      expect(find.text('Available for this selling context.'), findsOneWidget);
+      expect(
+        find.text('A temporary operational restriction is active.'),
+        findsNothing,
+      );
+      expect(find.text('no_operational_override'), findsNothing);
+      expect(find.text('Product status settings'), findsNothing);
+      expect(find.text('Variant status settings'), findsNothing);
+      expect(find.text('Add Override'), findsNothing);
       expect(
         find.textContaining('Remaining quantity is operational metadata'),
         findsNothing,
       );
-      await tester.ensureVisible(
-        find.byKey(const Key('add-product-operational-override')),
-      );
-      await tester.tap(
-        find.byKey(const Key('add-product-operational-override')),
-      );
+      await tester.tap(find.byKey(const Key('operational-mark-temporary')));
       await tester.pumpAndSettle();
-      expect(
-        find.textContaining('Remaining quantity is operational metadata'),
-        findsOneWidget,
-      );
+      expect(find.text('Duration'), findsOneWidget);
       expect(
         find.byKey(const Key('operational-override-status')),
         findsOneWidget,
@@ -573,52 +619,13 @@ void main() {
   );
 
   testWidgets(
-    'expired diagnostics, exact clear scope, and archived controls render safely',
+    'editor validates missing temporary expiry locally and its footer closes with the sheet',
     (WidgetTester tester) async {
-      final _OperationalRepository repository = _OperationalRepository()
-        ..productRows = <OperationalAvailabilityOverride>[
-          _row(
-            OperationalAvailabilityDraft(
-              branchId: 1,
-              channel: 'all',
-              status: OperationalAvailabilityStatus.temporarilyUnavailable,
-              unavailableUntil: DateTime(2020),
-            ),
-            OperationalAvailabilityLevel.product,
-            isExpired: true,
-          ),
-        ];
+      final _OperationalRepository repository = _OperationalRepository();
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider<OperationalAvailabilityCubit>(
             create: (_) => OperationalAvailabilityCubit(repository: repository),
-            child: const OperationalAvailabilityScreen(productId: 11),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Expired'), findsOneWidget);
-      expect(find.text('Temporary'), findsOneWidget);
-      final Future<bool?> confirmation = showClearOperationalOverrideDialog(
-        tester.element(find.byType(OperationalAvailabilityScreen)),
-        override: repository.productRows.single,
-      );
-      await tester.pumpAndSettle();
-      expect(
-        find.textContaining('product override for Main · All channels'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      await confirmation;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          key: const ValueKey<String>('archived-operational-state'),
-          home: BlocProvider<OperationalAvailabilityCubit>(
-            create: (_) => OperationalAvailabilityCubit(
-              repository: _OperationalRepository()..productArchived = true,
-            ),
             child: const OperationalAvailabilityScreen(
               productId: 11,
               variantId: 12,
@@ -627,9 +634,177 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('This Product is archived'), findsOneWidget);
-      expect(find.textContaining('Inventory'), findsNothing);
-      expect(find.textContaining('Published Versions'), findsNothing);
+      await tester.tap(find.byKey(const Key('operational-mark-temporary')));
+      await tester.pumpAndSettle();
+
+      final Finder editor = find.byKey(
+        const Key('operational-override-editor'),
+      );
+      final Finder footer = find.byKey(const Key('operational-editor-footer'));
+      expect(editor, findsOneWidget);
+      expect(find.descendant(of: editor, matching: footer), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('operational-save-status')));
+      await tester.pump();
+      expect(
+        find.text('Select when this temporary restriction should end.'),
+        findsOneWidget,
+      );
+      expect(repository.variantUpsertCount, 0);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(editor, findsNothing);
+      expect(footer, findsNothing);
+      expect(find.byKey(const Key('operational-save-status')), findsNothing);
+    },
+  );
+
+  testWidgets('status selector uses consistent manager-facing label casing', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider<OperationalAvailabilityCubit>(
+          create: (_) => OperationalAvailabilityCubit(
+            repository: _OperationalRepository(),
+          ),
+          child: const OperationalAvailabilityScreen(
+            productId: 11,
+            variantId: 12,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('operational-mark-temporary')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('operational-override-status')));
+    await tester.pumpAndSettle();
+    expect(find.text('Available'), findsWidgets);
+    expect(find.text('Sold out'), findsWidgets);
+    expect(find.text('Temporarily unavailable'), findsWidgets);
+  });
+
+  testWidgets('Product and Variant are both available operational targets', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider<OperationalAvailabilityCubit>(
+          create: (_) => OperationalAvailabilityCubit(
+            repository: _OperationalRepository(),
+          ),
+          child: const OperationalAvailabilityScreen(
+            productId: 11,
+            variantId: 12,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('operational-variant-selector')));
+    await tester.pumpAndSettle();
+    expect(find.text('Product'), findsWidgets);
+    expect(find.text('Regular'), findsWidgets);
+    await tester.tap(find.text('Product').last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('operational-mark-temporary')), findsNothing);
+    expect(find.byKey(const Key('operational-make-available')), findsOneWidget);
+  });
+
+  testWidgets('state-first screen and archived controls render safely', (
+    WidgetTester tester,
+  ) async {
+    final _OperationalRepository repository = _OperationalRepository()
+      ..productRows = <OperationalAvailabilityOverride>[
+        _row(
+          OperationalAvailabilityDraft(
+            branchId: 1,
+            channel: 'all',
+            status: OperationalAvailabilityStatus.temporarilyUnavailable,
+            unavailableUntil: DateTime(2020),
+          ),
+          OperationalAvailabilityLevel.product,
+          isExpired: true,
+        ),
+      ];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider<OperationalAvailabilityCubit>(
+          create: (_) => OperationalAvailabilityCubit(repository: repository),
+          child: const OperationalAvailabilityScreen(productId: 11),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('SOLD OUT'), findsOneWidget);
+    expect(find.text('Product status settings'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        key: const ValueKey<String>('archived-operational-state'),
+        home: BlocProvider<OperationalAvailabilityCubit>(
+          create: (_) => OperationalAvailabilityCubit(
+            repository: _OperationalRepository()..productArchived = true,
+          ),
+          child: const OperationalAvailabilityScreen(
+            productId: 11,
+            variantId: 12,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('This item is archived'), findsOneWidget);
+    expect(find.textContaining('Inventory'), findsNothing);
+    expect(find.textContaining('Published Versions'), findsNothing);
+  });
+
+  testWidgets(
+    'Temporarily Unavailable shows its expiry, reason, and focused actions',
+    (WidgetTester tester) async {
+      final _OperationalRepository repository = _OperationalRepository()
+        ..previewLoader = (_, branchId, channel) =>
+            Future<OperationalAvailabilityPreview>.value(
+              OperationalAvailabilityPreview.fromJson(<String, dynamic>{
+                'productId': 11,
+                'productVariantId': 12,
+                'branchId': branchId,
+                'channel': channel,
+                'isOperationallyAvailable': false,
+                'status': 'temporarily_unavailable',
+                'matchedLevel': 'variant',
+                'matchedScope': 'exact_channel',
+                'matchedRecordId': 2,
+                'remainingQuantity': null,
+                'unavailableUntil': '2030-08-04T18:30:00+03:00',
+                'reason': 'Machine service',
+              }),
+            );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<OperationalAvailabilityCubit>(
+            create: (_) => OperationalAvailabilityCubit(repository: repository),
+            child: const OperationalAvailabilityScreen(
+              productId: 11,
+              variantId: 12,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('TEMPORARILY UNAVAILABLE'), findsOneWidget);
+      expect(find.text('Machine service'), findsOneWidget);
+      expect(find.textContaining('Until:'), findsOneWidget);
+      expect(
+        find.byKey(const Key('operational-make-available')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('operational-edit-temporary')),
+        findsOneWidget,
+      );
     },
   );
 }
@@ -650,6 +825,8 @@ class _OperationalRepository extends MenuCatalogRepository {
   )?
   previewLoader;
   OperationalAvailabilityDraft? productUpsert;
+  int productUpsertCount = 0;
+  int variantUpsertCount = 0;
   List<Object?>? clearedProduct;
   List<Object?>? clearedVariant;
   List<OperationalAvailabilityOverride> productRows =
@@ -736,6 +913,7 @@ class _OperationalRepository extends MenuCatalogRepository {
     int productId,
     OperationalAvailabilityDraft draft,
   ) async {
+    productUpsertCount++;
     if (upsertGate != null) await upsertGate!.future;
     if (failUpsertNotFound) {
       productArchived = true;
@@ -761,6 +939,7 @@ class _OperationalRepository extends MenuCatalogRepository {
     int variantId,
     OperationalAvailabilityDraft draft,
   ) async {
+    variantUpsertCount++;
     variantRows = <OperationalAvailabilityOverride>[
       _row(draft, OperationalAvailabilityLevel.variant),
     ];

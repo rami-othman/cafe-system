@@ -180,6 +180,28 @@ class AvailabilityCubit extends Cubit<AvailabilityState> {
     );
   }
 
+  /// Restores the selected Variant to the broader Product schedule for the
+  /// current Branch/Channel context.  Inheritance is represented by the
+  /// absence of exact Variant rules; no Product records are copied.
+  Future<bool> useProductScheduleAgain() async {
+    if (state.selectedVariantId == null || !state.canEdit) return false;
+    final identities = state.exactRules
+        .map((rule) => rule.identity)
+        .toSet();
+    if (identities.isEmpty) return true;
+    emit(
+      state.copyWith(
+        draft: List.unmodifiable(
+          state.draft.where((rule) => !identities.contains(rule.identity)),
+        ),
+        clearFields: true,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
+    return save();
+  }
+
   Future<bool> save() async {
     final p = state.product;
     if (!state.canEdit || !state.isDirty || p == null) return false;

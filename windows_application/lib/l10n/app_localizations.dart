@@ -3583,6 +3583,636 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leave'**
   String get batch8Leave;
+
+  /// No description provided for @scheduledUnsavedChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved selling hours'**
+  String get scheduledUnsavedChanges;
+
+  /// No description provided for @scheduledUnsavedChangesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved selling-hours changes. Leave without saving?'**
+  String get scheduledUnsavedChangesHelp;
+
+  /// No description provided for @scheduledStay.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay'**
+  String get scheduledStay;
+
+  /// No description provided for @scheduledLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get scheduledLeave;
+
+  /// No description provided for @scheduledLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled availability could not be loaded.'**
+  String get scheduledLoadError;
+
+  /// No description provided for @scheduledSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling hours could not be saved. Please review the entered values and try again.'**
+  String get scheduledSaveError;
+
+  /// No description provided for @scheduledSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling hours saved.'**
+  String get scheduledSaved;
+
+  /// No description provided for @scheduledArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product or Variant is archived. Selling hours are shown for reference and cannot be changed.'**
+  String get scheduledArchived;
+
+  /// No description provided for @scheduledRegularForProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product · Regular availability'**
+  String get scheduledRegularForProduct;
+
+  /// No description provided for @scheduledRegularForVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'{variant} · Regular availability'**
+  String scheduledRegularForVariant(String variant);
+
+  /// No description provided for @scheduledProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get scheduledProduct;
+
+  /// No description provided for @scheduledAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All branches'**
+  String get scheduledAllBranches;
+
+  /// No description provided for @scheduledAllChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'All channels'**
+  String get scheduledAllChannels;
+
+  /// No description provided for @scheduledUsingProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Product schedule'**
+  String get scheduledUsingProduct;
+
+  /// No description provided for @scheduledProductSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Product schedule'**
+  String get scheduledProductSchedule;
+
+  /// No description provided for @scheduledCustomizedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customized for {variant}'**
+  String scheduledCustomizedFor(String variant);
+
+  /// No description provided for @scheduledCustomizeFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize for {variant}'**
+  String scheduledCustomizeFor(String variant);
+
+  /// No description provided for @scheduledUseProductAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Product schedule again'**
+  String get scheduledUseProductAgain;
+
+  /// No description provided for @scheduledWeeklyInAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly hours are shown in Advanced Schedule Rules.'**
+  String get scheduledWeeklyInAdvanced;
+
+  /// No description provided for @scheduledNoSpecificRestriction.
+  ///
+  /// In en, this message translates to:
+  /// **'No specific restriction'**
+  String get scheduledNoSpecificRestriction;
+
+  /// No description provided for @scheduledAvailableAllDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Available all day'**
+  String get scheduledAvailableAllDay;
+
+  /// No description provided for @scheduledEditSellingHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Selling Hours'**
+  String get scheduledEditSellingHours;
+
+  /// No description provided for @scheduledAdvancedRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Schedule Rules'**
+  String get scheduledAdvancedRules;
+
+  /// No description provided for @scheduledNoAdvancedRules.
+  ///
+  /// In en, this message translates to:
+  /// **'No advanced schedule rules'**
+  String get scheduledNoAdvancedRules;
+
+  /// No description provided for @scheduledViewRules.
+  ///
+  /// In en, this message translates to:
+  /// **'View Rules'**
+  String get scheduledViewRules;
+
+  /// No description provided for @scheduledInactiveRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive schedule rule'**
+  String get scheduledInactiveRule;
+
+  /// No description provided for @scheduledPriorityRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority schedule rule'**
+  String get scheduledPriorityRule;
+
+  /// No description provided for @scheduledDateBoundRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Date-limited schedule rule'**
+  String get scheduledDateBoundRule;
+
+  /// No description provided for @scheduledCheckAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Availability'**
+  String get scheduledCheckAvailability;
+
+  /// No description provided for @scheduledCheckHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Check a date and time in the selected selling context.'**
+  String get scheduledCheckHelp;
+
+  /// No description provided for @scheduledDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get scheduledDate;
+
+  /// No description provided for @scheduledTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get scheduledTime;
+
+  /// No description provided for @scheduledCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get scheduledCheck;
+
+  /// No description provided for @scheduledCheckError.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability could not be checked. Please try again.'**
+  String get scheduledCheckError;
+
+  /// No description provided for @scheduledAvailableUsingProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Available according to the Product schedule.'**
+  String get scheduledAvailableUsingProduct;
+
+  /// No description provided for @scheduledDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get scheduledDay;
+
+  /// No description provided for @scheduledEveryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get scheduledEveryDay;
+
+  /// No description provided for @scheduledAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get scheduledAvailability;
+
+  /// No description provided for @scheduledAvailableAllDayHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'No time restriction for this day.'**
+  String get scheduledAvailableAllDayHelp;
+
+  /// No description provided for @scheduledCustomHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom hours'**
+  String get scheduledCustomHours;
+
+  /// No description provided for @scheduledCustomHoursHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the normal start and end time.'**
+  String get scheduledCustomHoursHelp;
+
+  /// No description provided for @scheduledStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get scheduledStartTime;
+
+  /// No description provided for @scheduledEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End time'**
+  String get scheduledEndTime;
+
+  /// No description provided for @scheduledOvernightUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Available overnight until {time} the next day.'**
+  String scheduledOvernightUntil(String time);
+
+  /// No description provided for @scheduledDateLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Limits'**
+  String get scheduledDateLimits;
+
+  /// No description provided for @scheduledOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get scheduledOptional;
+
+  /// No description provided for @scheduledStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get scheduledStartDate;
+
+  /// No description provided for @scheduledEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get scheduledEndDate;
+
+  /// No description provided for @scheduledSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get scheduledSelectDate;
+
+  /// No description provided for @scheduledAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get scheduledAdvanced;
+
+  /// No description provided for @scheduledPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get scheduledPriority;
+
+  /// No description provided for @scheduledActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get scheduledActive;
+
+  /// No description provided for @scheduledSaveSellingHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Selling Hours'**
+  String get scheduledSaveSellingHours;
+
+  /// No description provided for @scheduledFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get scheduledFrom;
+
+  /// No description provided for @scheduledUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until'**
+  String get scheduledUntil;
+
+  /// No description provided for @scheduledSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get scheduledSunday;
+
+  /// No description provided for @scheduledMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get scheduledMonday;
+
+  /// No description provided for @scheduledTuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get scheduledTuesday;
+
+  /// No description provided for @scheduledWednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get scheduledWednesday;
+
+  /// No description provided for @scheduledThursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get scheduledThursday;
+
+  /// No description provided for @scheduledFriday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get scheduledFriday;
+
+  /// No description provided for @scheduledSaturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get scheduledSaturday;
+
+  /// No description provided for @operationalAvailabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational availability'**
+  String get operationalAvailabilityTitle;
+
+  /// No description provided for @operationalAvailabilityPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Can customers order this item right now? Temporary operational exceptions only.'**
+  String get operationalAvailabilityPurpose;
+
+  /// No description provided for @operationalAvailabilityContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Current context'**
+  String get operationalAvailabilityContext;
+
+  /// No description provided for @operationalAvailabilityProductVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Product / Variant'**
+  String get operationalAvailabilityProductVariant;
+
+  /// No description provided for @operationalAvailabilityProductOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get operationalAvailabilityProductOnly;
+
+  /// No description provided for @operationalAvailabilityBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get operationalAvailabilityBranch;
+
+  /// No description provided for @operationalAvailabilityChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales channel'**
+  String get operationalAvailabilityChannel;
+
+  /// No description provided for @operationalAvailabilitySelectBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an active branch'**
+  String get operationalAvailabilitySelectBranch;
+
+  /// No description provided for @operationalAvailabilitySelectChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a sales channel'**
+  String get operationalAvailabilitySelectChannel;
+
+  /// No description provided for @operationalAvailabilityAvailableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'AVAILABLE NOW'**
+  String get operationalAvailabilityAvailableNow;
+
+  /// No description provided for @operationalAvailabilitySoldOut.
+  ///
+  /// In en, this message translates to:
+  /// **'SOLD OUT'**
+  String get operationalAvailabilitySoldOut;
+
+  /// No description provided for @operationalAvailabilityTemporarilyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'TEMPORARILY UNAVAILABLE'**
+  String get operationalAvailabilityTemporarilyUnavailable;
+
+  /// No description provided for @operationalAvailabilityNoRestriction.
+  ///
+  /// In en, this message translates to:
+  /// **'No temporary restriction is active.'**
+  String get operationalAvailabilityNoRestriction;
+
+  /// No description provided for @operationalAvailabilityActiveRestriction.
+  ///
+  /// In en, this message translates to:
+  /// **'A temporary operational restriction is active.'**
+  String get operationalAvailabilityActiveRestriction;
+
+  /// No description provided for @operationalAvailabilityUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until: {time}'**
+  String operationalAvailabilityUntil(String time);
+
+  /// No description provided for @operationalAvailabilityReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get operationalAvailabilityReason;
+
+  /// No description provided for @operationalAvailabilityMarkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark temporarily unavailable'**
+  String get operationalAvailabilityMarkUnavailable;
+
+  /// No description provided for @operationalAvailabilityMakeAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Make available now'**
+  String get operationalAvailabilityMakeAvailable;
+
+  /// No description provided for @operationalAvailabilityEditStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit status'**
+  String get operationalAvailabilityEditStatus;
+
+  /// No description provided for @operationalAvailabilityEditTemporary.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit temporary restriction'**
+  String get operationalAvailabilityEditTemporary;
+
+  /// No description provided for @operationalAvailabilityUseDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default status'**
+  String get operationalAvailabilityUseDefault;
+
+  /// No description provided for @operationalAvailabilityUseDefaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default status?'**
+  String get operationalAvailabilityUseDefaultTitle;
+
+  /// No description provided for @operationalAvailabilityUseDefaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes only the status set for this exact product context. The resulting availability will be checked again.'**
+  String get operationalAvailabilityUseDefaultMessage;
+
+  /// No description provided for @operationalAvailabilityDefaultAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default'**
+  String get operationalAvailabilityDefaultAction;
+
+  /// No description provided for @operationalAvailabilityAllVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'This status applies to all variants of this product.'**
+  String get operationalAvailabilityAllVariants;
+
+  /// No description provided for @operationalAvailabilityOnlyVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'This status affects only {variant}.'**
+  String operationalAvailabilityOnlyVariant(String variant);
+
+  /// No description provided for @operationalAvailabilityLoadingCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating current availability…'**
+  String get operationalAvailabilityLoadingCurrent;
+
+  /// No description provided for @operationalAvailabilityNoContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an active branch and sales channel to view current availability.'**
+  String get operationalAvailabilityNoContext;
+
+  /// No description provided for @operationalAvailabilityLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t load current availability. Try again.'**
+  String get operationalAvailabilityLoadError;
+
+  /// No description provided for @operationalAvailabilityArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'This item is archived. Current availability is shown for reference and cannot be changed.'**
+  String get operationalAvailabilityArchived;
+
+  /// No description provided for @operationalAvailabilitySetStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Set availability status'**
+  String get operationalAvailabilitySetStatus;
+
+  /// No description provided for @operationalAvailabilityEditStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit availability status'**
+  String get operationalAvailabilityEditStatusTitle;
+
+  /// No description provided for @operationalAvailabilityStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get operationalAvailabilityStatus;
+
+  /// No description provided for @operationalAvailabilityDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get operationalAvailabilityDuration;
+
+  /// No description provided for @operationalAvailabilitySpecificTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Until a specific time'**
+  String get operationalAvailabilitySpecificTime;
+
+  /// No description provided for @operationalAvailabilityEndTimeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select when this temporary restriction should end.'**
+  String get operationalAvailabilityEndTimeRequired;
+
+  /// No description provided for @operationalAvailabilitySelectEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Select end date and time'**
+  String get operationalAvailabilitySelectEndTime;
+
+  /// No description provided for @operationalAvailabilityBranchTime.
+  ///
+  /// In en, this message translates to:
+  /// **'The time is shown in the selected branch’s local time.'**
+  String get operationalAvailabilityBranchTime;
+
+  /// No description provided for @operationalAvailabilitySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save status'**
+  String get operationalAvailabilitySave;
+
+  /// No description provided for @operationalAvailabilitySaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get operationalAvailabilitySaving;
+
+  /// No description provided for @operationalAvailabilityCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get operationalAvailabilityCancel;
+
+  /// No description provided for @operationalAvailabilityExplicitAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available for this selling context.'**
+  String get operationalAvailabilityExplicitAvailable;
+
+  /// No description provided for @operationalAvailabilitySaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t save this availability status. Review the details and try again.'**
+  String get operationalAvailabilitySaveError;
 }
 
 class _AppLocalizationsDelegate

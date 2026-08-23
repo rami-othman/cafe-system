@@ -69,6 +69,21 @@ class OperationalAvailabilityState extends Equatable {
   List<OperationalAvailabilityOverride> get visibleVariantOverrides =>
       _filter(variantOverrides);
 
+  /// The one record that is scoped to the manager's selected entity, Branch,
+  /// and sales channel. An all-channels record may affect the preview, but it
+  /// is not the exact context record that "Use default status" is allowed to
+  /// remove from this workflow.
+  OperationalAvailabilityOverride? get exactOverride {
+    final int? branchId = selectedBranchId;
+    final String? channel = selectedChannel;
+    if (branchId == null || channel == null) return null;
+    final List<OperationalAvailabilityOverride> values =
+        selectedVariantId == null ? productOverrides : variantOverrides;
+    return values
+        .where((item) => item.branchId == branchId && item.channel == channel)
+        .firstOrNull;
+  }
+
   List<OperationalAvailabilityOverride> _filter(
     List<OperationalAvailabilityOverride> values,
   ) => values

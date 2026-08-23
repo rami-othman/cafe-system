@@ -1949,4 +1949,357 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get batch8Leave => 'Leave';
+
+  @override
+  String get scheduledUnsavedChanges => 'Unsaved selling hours';
+
+  @override
+  String get scheduledUnsavedChangesHelp =>
+      'You have unsaved selling-hours changes. Leave without saving?';
+
+  @override
+  String get scheduledStay => 'Stay';
+
+  @override
+  String get scheduledLeave => 'Leave';
+
+  @override
+  String get scheduledLoadError =>
+      'Scheduled availability could not be loaded.';
+
+  @override
+  String get scheduledSaveError =>
+      'Selling hours could not be saved. Please review the entered values and try again.';
+
+  @override
+  String get scheduledSaved => 'Selling hours saved.';
+
+  @override
+  String get scheduledArchived =>
+      'This Product or Variant is archived. Selling hours are shown for reference and cannot be changed.';
+
+  @override
+  String get scheduledRegularForProduct => 'Product · Regular availability';
+
+  @override
+  String scheduledRegularForVariant(String variant) {
+    return '$variant · Regular availability';
+  }
+
+  @override
+  String get scheduledProduct => 'Product';
+
+  @override
+  String get scheduledAllBranches => 'All branches';
+
+  @override
+  String get scheduledAllChannels => 'All channels';
+
+  @override
+  String get scheduledUsingProduct => 'Using Product schedule';
+
+  @override
+  String get scheduledProductSchedule => 'Product schedule';
+
+  @override
+  String scheduledCustomizedFor(String variant) {
+    return 'Customized for $variant';
+  }
+
+  @override
+  String scheduledCustomizeFor(String variant) {
+    return 'Customize for $variant';
+  }
+
+  @override
+  String get scheduledUseProductAgain => 'Use Product schedule again';
+
+  @override
+  String get scheduledWeeklyInAdvanced =>
+      'Weekly hours are shown in Advanced Schedule Rules.';
+
+  @override
+  String get scheduledNoSpecificRestriction => 'No specific restriction';
+
+  @override
+  String get scheduledAvailableAllDay => 'Available all day';
+
+  @override
+  String get scheduledEditSellingHours => 'Edit Selling Hours';
+
+  @override
+  String get scheduledAdvancedRules => 'Advanced Schedule Rules';
+
+  @override
+  String get scheduledNoAdvancedRules => 'No advanced schedule rules';
+
+  @override
+  String get scheduledViewRules => 'View Rules';
+
+  @override
+  String get scheduledInactiveRule => 'Inactive schedule rule';
+
+  @override
+  String get scheduledPriorityRule => 'Priority schedule rule';
+
+  @override
+  String get scheduledDateBoundRule => 'Date-limited schedule rule';
+
+  @override
+  String get scheduledCheckAvailability => 'Check Availability';
+
+  @override
+  String get scheduledCheckHelp =>
+      'Check a date and time in the selected selling context.';
+
+  @override
+  String get scheduledDate => 'Date';
+
+  @override
+  String get scheduledTime => 'Time';
+
+  @override
+  String get scheduledCheck => 'Check';
+
+  @override
+  String get scheduledCheckError =>
+      'Availability could not be checked. Please try again.';
+
+  @override
+  String get scheduledAvailableUsingProduct =>
+      'Available according to the Product schedule.';
+
+  @override
+  String get scheduledDay => 'Day';
+
+  @override
+  String get scheduledEveryDay => 'Every day';
+
+  @override
+  String get scheduledAvailability => 'Availability';
+
+  @override
+  String get scheduledAvailableAllDayHelp =>
+      'No time restriction for this day.';
+
+  @override
+  String get scheduledCustomHours => 'Custom hours';
+
+  @override
+  String get scheduledCustomHoursHelp => 'Set the normal start and end time.';
+
+  @override
+  String get scheduledStartTime => 'Start time';
+
+  @override
+  String get scheduledEndTime => 'End time';
+
+  @override
+  String scheduledOvernightUntil(String time) {
+    return 'Available overnight until $time the next day.';
+  }
+
+  @override
+  String get scheduledDateLimits => 'Date Limits';
+
+  @override
+  String get scheduledOptional => 'Optional';
+
+  @override
+  String get scheduledStartDate => 'Start date';
+
+  @override
+  String get scheduledEndDate => 'End date';
+
+  @override
+  String get scheduledSelectDate => 'Select date';
+
+  @override
+  String get scheduledAdvanced => 'Advanced';
+
+  @override
+  String get scheduledPriority => 'Priority';
+
+  @override
+  String get scheduledActive => 'Active';
+
+  @override
+  String get scheduledSaveSellingHours => 'Save Selling Hours';
+
+  @override
+  String get scheduledFrom => 'From';
+
+  @override
+  String get scheduledUntil => 'Until';
+
+  @override
+  String get scheduledSunday => 'Sunday';
+
+  @override
+  String get scheduledMonday => 'Monday';
+
+  @override
+  String get scheduledTuesday => 'Tuesday';
+
+  @override
+  String get scheduledWednesday => 'Wednesday';
+
+  @override
+  String get scheduledThursday => 'Thursday';
+
+  @override
+  String get scheduledFriday => 'Friday';
+
+  @override
+  String get scheduledSaturday => 'Saturday';
+
+  @override
+  String get operationalAvailabilityTitle => 'Operational availability';
+
+  @override
+  String get operationalAvailabilityPurpose =>
+      'Can customers order this item right now? Temporary operational exceptions only.';
+
+  @override
+  String get operationalAvailabilityContext => 'Current context';
+
+  @override
+  String get operationalAvailabilityProductVariant => 'Product / Variant';
+
+  @override
+  String get operationalAvailabilityProductOnly => 'Product';
+
+  @override
+  String get operationalAvailabilityBranch => 'Branch';
+
+  @override
+  String get operationalAvailabilityChannel => 'Sales channel';
+
+  @override
+  String get operationalAvailabilitySelectBranch => 'Select an active branch';
+
+  @override
+  String get operationalAvailabilitySelectChannel => 'Select a sales channel';
+
+  @override
+  String get operationalAvailabilityAvailableNow => 'AVAILABLE NOW';
+
+  @override
+  String get operationalAvailabilitySoldOut => 'SOLD OUT';
+
+  @override
+  String get operationalAvailabilityTemporarilyUnavailable =>
+      'TEMPORARILY UNAVAILABLE';
+
+  @override
+  String get operationalAvailabilityNoRestriction =>
+      'No temporary restriction is active.';
+
+  @override
+  String get operationalAvailabilityActiveRestriction =>
+      'A temporary operational restriction is active.';
+
+  @override
+  String operationalAvailabilityUntil(String time) {
+    return 'Until: $time';
+  }
+
+  @override
+  String get operationalAvailabilityReason => 'Reason';
+
+  @override
+  String get operationalAvailabilityMarkUnavailable =>
+      'Mark temporarily unavailable';
+
+  @override
+  String get operationalAvailabilityMakeAvailable => 'Make available now';
+
+  @override
+  String get operationalAvailabilityEditStatus => 'Edit status';
+
+  @override
+  String get operationalAvailabilityEditTemporary =>
+      'Edit temporary restriction';
+
+  @override
+  String get operationalAvailabilityUseDefault => 'Use default status';
+
+  @override
+  String get operationalAvailabilityUseDefaultTitle => 'Use default status?';
+
+  @override
+  String get operationalAvailabilityUseDefaultMessage =>
+      'This removes only the status set for this exact product context. The resulting availability will be checked again.';
+
+  @override
+  String get operationalAvailabilityDefaultAction => 'Use default';
+
+  @override
+  String get operationalAvailabilityAllVariants =>
+      'This status applies to all variants of this product.';
+
+  @override
+  String operationalAvailabilityOnlyVariant(String variant) {
+    return 'This status affects only $variant.';
+  }
+
+  @override
+  String get operationalAvailabilityLoadingCurrent =>
+      'Updating current availability…';
+
+  @override
+  String get operationalAvailabilityNoContext =>
+      'Choose an active branch and sales channel to view current availability.';
+
+  @override
+  String get operationalAvailabilityLoadError =>
+      'We couldn’t load current availability. Try again.';
+
+  @override
+  String get operationalAvailabilityArchived =>
+      'This item is archived. Current availability is shown for reference and cannot be changed.';
+
+  @override
+  String get operationalAvailabilitySetStatus => 'Set availability status';
+
+  @override
+  String get operationalAvailabilityEditStatusTitle =>
+      'Edit availability status';
+
+  @override
+  String get operationalAvailabilityStatus => 'Status';
+
+  @override
+  String get operationalAvailabilityDuration => 'Duration';
+
+  @override
+  String get operationalAvailabilitySpecificTime => 'Until a specific time';
+
+  @override
+  String get operationalAvailabilityEndTimeRequired =>
+      'Select when this temporary restriction should end.';
+
+  @override
+  String get operationalAvailabilitySelectEndTime => 'Select end date and time';
+
+  @override
+  String get operationalAvailabilityBranchTime =>
+      'The time is shown in the selected branch’s local time.';
+
+  @override
+  String get operationalAvailabilitySave => 'Save status';
+
+  @override
+  String get operationalAvailabilitySaving => 'Saving…';
+
+  @override
+  String get operationalAvailabilityCancel => 'Cancel';
+
+  @override
+  String get operationalAvailabilityExplicitAvailable =>
+      'Available for this selling context.';
+
+  @override
+  String get operationalAvailabilitySaveError =>
+      'We couldn’t save this availability status. Review the details and try again.';
 }
