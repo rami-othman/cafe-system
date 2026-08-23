@@ -7,7 +7,9 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 
 class ShiftStatusBadge extends StatelessWidget {
-  const ShiftStatusBadge({super.key});
+  const ShiftStatusBadge({super.key, this.label = 'SHIFT OPEN'});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +36,12 @@ class ShiftStatusBadge extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            'SHIFT OPEN',
+            label,
             style: AppTextStyles.labelSmall.copyWith(
               color: AppColors.success,
+              fontFamily: Directionality.of(context) == TextDirection.rtl
+                  ? 'IBMPlexSansArabic'
+                  : null,
               fontWeight: FontWeight.w800,
               letterSpacing: 0,
             ),

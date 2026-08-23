@@ -79,6 +79,17 @@ class DioApiClient {
     );
   }
 
+  Future<dynamic> put(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _send(
+      () =>
+          _dio.put<dynamic>(path, data: data, queryParameters: queryParameters),
+    );
+  }
+
   Future<dynamic> delete(
     String path, {
     Object? data,

@@ -4,11 +4,34 @@ import 'package:intl/intl.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/daily_report_data.dart';
+import '../models/reports_overview.dart';
 
 class ReportsRepository {
   const ReportsRepository({this.apiClient});
 
   final DioApiClient? apiClient;
+
+  Future<ReportsOverview> getOverview({
+    required DateTime from,
+    required DateTime to,
+    int? branchId,
+    required bool comparePrevious,
+  }) async {
+    if (apiClient == null) {
+      throw StateError('Reports Overview requires a connected backend.');
+    }
+
+    final dynamic response = await apiClient!.get(
+      'reports/overview',
+      queryParameters: <String, dynamic>{
+        'from': DateFormat('yyyy-MM-dd').format(from),
+        'to': DateFormat('yyyy-MM-dd').format(to),
+        if (branchId != null) 'branch_id': branchId,
+        'compare_previous': comparePrevious,
+      },
+    );
+    return ReportsOverview.fromJson(Map<String, dynamic>.from(response as Map));
+  }
 
   Future<DailyReportData> getDailyReport({DateTime? date}) async {
     if (apiClient == null) {

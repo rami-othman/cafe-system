@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\TenantAccessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -18,7 +19,7 @@ class DiscountManagementApiTest extends TestCase
         $headers = ['X-Tenant-Id' => $tenantId];
 
         $this->getJson('/api/v1/discounts', $headers)
-            ->assertOk()->assertJsonCount(24, 'data')->assertJsonPath('data.0.status', 'active');
+            ->assertOk()->assertJsonCount(25, 'data')->assertJsonPath('data.0.status', 'active');
 
         $created = $this->postJson('/api/v1/discounts', $this->payload(['name' => 'Targeted Test', 'scope' => 'product', 'targetProductIds' => [$productId]]), $headers)
             ->assertCreated()->assertJsonPath('data.type', 'percentage')->assertJsonPath('data.targetProductIds.0', $productId);
@@ -74,8 +75,8 @@ class DiscountManagementApiTest extends TestCase
 
     public function test_tenant_and_branch_seed_data_is_idempotent(): void
     {
-        $this->seed(\Database\Seeders\TenantAccessSeeder::class);
-        $this->seed(\Database\Seeders\TenantAccessSeeder::class);
+        $this->seed(TenantAccessSeeder::class);
+        $this->seed(TenantAccessSeeder::class);
 
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
         $this->assertSame(1, DB::table('tenants')->where('slug', 'cafe-618')->count());

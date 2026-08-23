@@ -14,6 +14,9 @@ class AppShell extends StatelessWidget {
     this.rightPanel,
     this.topBar,
     this.onRefresh,
+    this.textDirection = TextDirection.ltr,
+    this.sidebarWidth,
+    this.topBarHeight,
   });
 
   final Widget child;
@@ -21,6 +24,9 @@ class AppShell extends StatelessWidget {
   final Widget? rightPanel;
   final Widget? topBar;
   final Future<void> Function(BuildContext context)? onRefresh;
+  final TextDirection textDirection;
+  final double? sidebarWidth;
+  final double? topBarHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -35,24 +41,36 @@ class AppShell extends StatelessWidget {
               ? AppSizes.rightPanelWidth
               : AppSizes.mediumRightPanelWidth;
 
-          return Row(
-            children: <Widget>[
-              AppSidebar(activeLabel: activeLabel, isCollapsed: !isLarge),
-              Expanded(
-                child: Column(
-                  children: <Widget>[
-                    topBar ??
-                        AppTopBar(
-                          showCartButton: isCompact && rightPanel != null,
-                          onRefresh: onRefresh,
-                        ),
-                    Expanded(child: child),
-                  ],
-                ),
-              ),
-              if (!isCompact && rightPanel != null)
-                SizedBox(width: rightPanelWidth, child: rightPanel),
-            ],
+          final Widget content = Expanded(
+            child: Column(
+              children: <Widget>[
+                topBar ??
+                    AppTopBar(
+                      showCartButton: isCompact && rightPanel != null,
+                      onRefresh: onRefresh,
+                      height: topBarHeight ?? AppSizes.topBarHeight,
+                    ),
+                Expanded(child: child),
+              ],
+            ),
+          );
+          final Widget sidebar = AppSidebar(
+            activeLabel: activeLabel,
+            isCollapsed: !isLarge,
+            textDirection: textDirection,
+            expandedWidth: sidebarWidth ?? AppSizes.sidebarWidth,
+          );
+          final Widget? panel = !isCompact && rightPanel != null
+              ? SizedBox(width: rightPanelWidth, child: rightPanel)
+              : null;
+
+          return Directionality(
+            textDirection: textDirection,
+            child: Row(
+              children: textDirection == TextDirection.rtl
+                  ? <Widget>[content, sidebar, ?panel]
+                  : <Widget>[sidebar, content, ?panel],
+            ),
           );
         },
       ),

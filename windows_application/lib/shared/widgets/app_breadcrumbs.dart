@@ -26,8 +26,10 @@ class AppBreadcrumbs extends StatelessWidget {
       children: <Widget>[
         for (int index = 0; index < items.length; index++) ...<Widget>[
           if (index > 0)
-            const Icon(
-              Icons.chevron_right,
+            Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.chevron_left
+                  : Icons.chevron_right,
               size: 14,
               color: AppColors.textMuted,
             ),

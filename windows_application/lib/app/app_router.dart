@@ -22,8 +22,17 @@ import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
 import '../features/pos/views/pos_screen.dart';
 import '../features/pos/widgets/pos_cart_panel.dart';
-import '../features/reports/controllers/daily_report_cubit.dart';
-import '../features/reports/views/daily_operational_report_screen.dart';
+import '../features/reports/controllers/reports_overview_cubit.dart';
+import '../features/reports/views/reports_overview_screen.dart';
+import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
+import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen.dart';
+import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
+import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
+import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
+import '../features/inventory/controllers/inventory_cubit.dart';
+import '../features/inventory/views/inventory_screens.dart';
+import '../features/operational_context/controllers/operational_branch_cubit.dart';
+import '../features/operational_context/models/operational_branch_state.dart';
 import 'app_shell.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -36,6 +45,15 @@ final GoRouter appRouter = GoRouter(
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
           onRefresh: _refreshActionFor(state),
+          textDirection: state.matchedLocation.startsWith(AppRoutes.inventory)
+              ? TextDirection.rtl
+              : TextDirection.ltr,
+          sidebarWidth: state.matchedLocation.startsWith(AppRoutes.inventory)
+              ? 236
+              : null,
+          topBarHeight: state.matchedLocation.startsWith(AppRoutes.inventory)
+              ? 64
+              : null,
           child: child,
         );
 
@@ -53,18 +71,119 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<DiscountsCubit>(
               create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
             ),
-            BlocProvider<DailyReportCubit>(
-              create: (_) => serviceLocator<DailyReportCubit>()..loadReport(),
+            BlocProvider<ReportsOverviewCubit>(
+              create: (_) => serviceLocator<ReportsOverviewCubit>()..load(),
+            ),
+            BlocProvider<FinanceSetupCubit>(
+              create: (_) => serviceLocator<FinanceSetupCubit>(),
+            ),
+            BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+            ),
+            BlocProvider<OperationalBranchCubit>(
+              create: (_) =>
+                  serviceLocator<OperationalBranchCubit>()..loadBranches(),
             ),
           ],
-          child: shell,
+          child: BlocListener<OperationalBranchCubit, OperationalBranchState>(
+            listener: (BuildContext context, OperationalBranchState state) {
+              final int? branchId = state.selectedBranchId;
+              if (branchId == null) return;
+
+              final OrdersCubit ordersCubit = context.read<OrdersCubit>();
+              if (ordersCubit.state.selectedBranchId != branchId) {
+                ordersCubit.loadOrders(branchId: branchId);
+              }
+
+              final PosCubit posCubit = context.read<PosCubit>();
+              if (posCubit.state.branchId != branchId) {
+                posCubit.loadInitialData(preferredBranchId: branchId);
+              }
+
+              context.read<InventoryCubit>().loadDashboard(branchId: branchId);
+            },
+            child: shell,
+          ),
         );
       },
       routes: <RouteBase>[
         GoRoute(
+          path: AppRoutes.inventory,
+          name: AppRouteNames.inventory,
+          builder: (context, state) => const InventoryDashboardScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryItems,
+          name: AppRouteNames.inventoryItems,
+          builder: (context, state) => const InventoryItemsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryUnitConversions,
+          name: AppRouteNames.inventoryUnitConversions,
+          builder: (context, state) => const InventoryUnitConversionsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryItemDetails,
+          name: AppRouteNames.inventoryItemDetails,
+          builder: (context, state) => InventoryItemDetailsScreen(
+            itemId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryBalances,
+          name: AppRouteNames.inventoryBalances,
+          builder: (context, state) => const InventoryBalancesScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryMovements,
+          name: AppRouteNames.inventoryMovements,
+          builder: (context, state) => const InventoryMovementsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryMovementCreate,
+          name: AppRouteNames.inventoryMovementCreate,
+          builder: (context, state) => const InventoryMovementCreateScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryMovementLegacyCreate,
+          redirect: (context, state) => AppRoutes.inventoryMovementCreate,
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryCounts,
+          name: AppRouteNames.inventoryCounts,
+          builder: (context, state) => const InventoryCountsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryCountDetails,
+          name: AppRouteNames.inventoryCountDetails,
+          builder: (context, state) => InventoryCountDetailsScreen(
+            countId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSetup,
+          name: AppRouteNames.financeSetup,
+          builder: (context, state) => const FinanceSetupDashboardScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeWarehouses,
+          name: AppRouteNames.financeWarehouses,
+          builder: (context, state) => const WarehousesSetupScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccounts,
+          name: AppRouteNames.financeAccounts,
+          builder: (context, state) => const FinancialAccountsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeJournalEntries,
+          name: AppRouteNames.financeJournalEntries,
+          builder: (context, state) => const JournalEntriesScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
-          builder: (context, state) => const DailyOperationalReportScreen(),
+          builder: (context, state) => const ReportsOverviewScreen(),
         ),
         GoRoute(
           path: AppRoutes.discounts,
@@ -176,9 +295,33 @@ Future<void> Function(BuildContext context)? _refreshActionFor(
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>
-      (BuildContext context) => context.read<DailyReportCubit>().loadReport(),
+      (BuildContext context) => context.read<ReportsOverviewCubit>().load(),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
+    AppRoutes.financeSetup =>
+      (BuildContext context) =>
+          context.read<FinanceSetupCubit>().loadDashboard(),
+    AppRoutes.financeWarehouses =>
+      (BuildContext context) =>
+          context.read<FinanceSetupCubit>().loadWarehouses(),
+    AppRoutes.financeAccounts =>
+      (BuildContext context) =>
+          context.read<FinanceSetupCubit>().loadAccounts(),
+    AppRoutes.financeJournalEntries =>
+      (BuildContext context) => context.read<FinanceSetupCubit>().loadEntries(),
+    AppRoutes.inventory =>
+      (BuildContext context) => context.read<InventoryCubit>().loadDashboard(),
+    AppRoutes.inventoryItems =>
+      (BuildContext context) => context.read<InventoryCubit>().loadItems(),
+    AppRoutes.inventoryUnitConversions =>
+      (BuildContext context) =>
+          context.read<InventoryCubit>().loadUnitConversions(),
+    AppRoutes.inventoryBalances =>
+      (BuildContext context) => context.read<InventoryCubit>().loadBalances(),
+    AppRoutes.inventoryMovements =>
+      (BuildContext context) => context.read<InventoryCubit>().loadMovements(),
+    AppRoutes.inventoryCounts =>
+      (BuildContext context) => context.read<InventoryCubit>().loadCounts(),
     _ => null,
   };
 }
@@ -187,8 +330,15 @@ String _activeLabelFor(GoRouterState state) {
   if (state.matchedLocation.startsWith(AppRoutes.menu)) {
     return 'Menu';
   }
+  if (state.matchedLocation.startsWith(AppRoutes.inventory)) {
+    return 'Inventory Management';
+  }
 
   return switch (state.matchedLocation) {
+    AppRoutes.financeSetup ||
+    AppRoutes.financeWarehouses ||
+    AppRoutes.financeAccounts ||
+    AppRoutes.financeJournalEntries => 'تهيئة المالية والمخازن',
     AppRoutes.discounts || AppRoutes.discountCreate => 'Discounts',
     AppRoutes.orders => 'Orders',
     AppRoutes.reports => 'Reports',
@@ -211,6 +361,24 @@ abstract final class AppRoutes {
   static const String menuProductVariants = '/menu/products/:id/variants';
   static const String menuProductAvailability =
       '/menu/products/:id/availability';
+  static const String financeSetup = '/finance-inventory-setup';
+  static const String financeWarehouses = '/finance-inventory-setup/warehouses';
+  static const String financeAccounts = '/finance-inventory-setup/accounts';
+  static const String financeJournalEntries =
+      '/finance-inventory-setup/journal-entries';
+  static const String inventory = '/inventory';
+  static const String inventoryItems = '/inventory/items';
+  static const String inventoryUnitConversions = '/inventory/units-conversions';
+  static const String inventoryItemDetails = '/inventory/items/:id';
+  static String inventoryItemDetailPath(int id) => '/inventory/items/$id';
+  static const String inventoryBalances = '/inventory/balances';
+  static const String inventoryMovements = '/inventory/movements';
+  static const String inventoryMovementCreate = '/inventory/movements/new';
+  static const String inventoryMovementLegacyCreate =
+      '/inventory/movements/create';
+  static const String inventoryCounts = '/inventory/counts';
+  static const String inventoryCountDetails = '/inventory/counts/:id';
+  static String inventoryCountDetailPath(int id) => '/inventory/counts/$id';
 }
 
 abstract final class AppRouteNames {
@@ -227,4 +395,17 @@ abstract final class AppRouteNames {
   static const String menuCombos = 'menu-combos';
   static const String menuProductVariants = 'menu-product-variants';
   static const String menuProductAvailability = 'menu-product-availability';
+  static const String financeSetup = 'finance-setup';
+  static const String financeWarehouses = 'finance-warehouses';
+  static const String financeAccounts = 'finance-accounts';
+  static const String financeJournalEntries = 'finance-journal-entries';
+  static const String inventory = 'inventory';
+  static const String inventoryItems = 'inventory-items';
+  static const String inventoryUnitConversions = 'inventory-unit-conversions';
+  static const String inventoryItemDetails = 'inventory-item-details';
+  static const String inventoryBalances = 'inventory-balances';
+  static const String inventoryMovements = 'inventory-movements';
+  static const String inventoryMovementCreate = 'inventory-movement-create';
+  static const String inventoryCounts = 'inventory-counts';
+  static const String inventoryCountDetails = 'inventory-count-details';
 }

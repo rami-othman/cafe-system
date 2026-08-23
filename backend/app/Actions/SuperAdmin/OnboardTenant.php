@@ -2,6 +2,7 @@
 
 namespace App\Actions\SuperAdmin;
 
+use App\Services\FinancialSetupService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -9,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class OnboardTenant
 {
+    public function __construct(private readonly FinancialSetupService $financialSetup) {}
+
     public function handle(array $data, int $actorId): int
     {
         return DB::transaction(function () use ($data, $actorId): int {
@@ -33,7 +36,7 @@ class OnboardTenant
                 'is_active' => true, 'created_at' => $now, 'updated_at' => $now,
             ]);
             DB::table('user_branches')->insert(['tenant_id' => $tenantId, 'user_id' => $ownerId, 'branch_id' => $branchId, 'created_at' => $now, 'updated_at' => $now]);
-            DB::table('warehouses')->insert(['tenant_id' => $tenantId, 'branch_id' => $branchId, 'name' => 'Main Warehouse', 'type' => 'main', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+            $this->financialSetup->ensureForTenant($tenantId, $branchId, $ownerId);
             DB::table('tenant_settings')->insert(['tenant_id' => $tenantId, 'settings' => json_encode([]), 'created_at' => $now, 'updated_at' => $now]);
             $trialEnds = $now->copy()->addDays($data['trialDays']);
             $subscriptionId = DB::table('subscriptions')->insertGetId(['tenant_id' => $tenantId, 'plan_id' => $plan->id, 'status' => 'trialing', 'billing_cycle' => 'monthly', 'trial_starts_at' => $now, 'trial_ends_at' => $trialEnds, 'current_period_starts_at' => $now, 'current_period_ends_at' => $trialEnds, 'provider' => 'manual', 'created_at' => $now, 'updated_at' => $now]);

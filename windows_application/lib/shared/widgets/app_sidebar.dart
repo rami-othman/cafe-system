@@ -14,10 +14,16 @@ class AppSidebar extends StatelessWidget {
     super.key,
     required this.activeLabel,
     this.isCollapsed = false,
+    this.textDirection = TextDirection.ltr,
+    this.expandedWidth = AppSizes.sidebarWidth,
   });
 
   final String activeLabel;
   final bool isCollapsed;
+  final TextDirection textDirection;
+  final double expandedWidth;
+
+  bool get _isArabic => textDirection == TextDirection.rtl;
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
     _SidebarDestination('Dashboard', Icons.dashboard_outlined),
@@ -26,18 +32,29 @@ class AppSidebar extends StatelessWidget {
     _SidebarDestination('Customers', Icons.groups_outlined),
     _SidebarDestination('Discounts', Icons.local_offer_outlined, '/discounts'),
     _SidebarDestination('Menu', Icons.restaurant_menu_outlined, '/menu'),
-    _SidebarDestination('Inventory', Icons.inventory_2_outlined),
+    _SidebarDestination(
+      'Inventory Management',
+      Icons.inventory_2_outlined,
+      '/inventory',
+    ),
+    _SidebarDestination(
+      'تهيئة المالية والمخازن',
+      Icons.account_balance_wallet_outlined,
+      '/finance-inventory-setup',
+    ),
     _SidebarDestination('Reports', Icons.bar_chart_outlined, '/reports'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,
-      decoration: const BoxDecoration(
-        color: AppColors.sidebarBackground,
-        border: Border(right: BorderSide(color: AppColors.shellBorder)),
-      ),
+      width: isCollapsed ? AppSizes.sidebarRailWidth : expandedWidth,
+      decoration: const BoxDecoration(color: AppColors.sidebarBackground)
+          .copyWith(
+            border: textDirection == TextDirection.rtl
+                ? const Border(left: BorderSide(color: AppColors.shellBorder))
+                : const Border(right: BorderSide(color: AppColors.shellBorder)),
+          ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           isCollapsed ? AppSpacing.sm : AppSpacing.lg,
@@ -56,7 +73,7 @@ class AppSidebar extends StatelessWidget {
                   ? CrossAxisAlignment.center
                   : CrossAxisAlignment.start,
               children: <Widget>[
-                _LogoBlock(isCollapsed: isCollapsed),
+                _LogoBlock(isCollapsed: isCollapsed, isArabic: _isArabic),
                 const SizedBox(height: AppSpacing.xxxl),
                 Expanded(
                   child: ListView(
@@ -66,7 +83,7 @@ class AppSidebar extends StatelessWidget {
                           in _destinations)
                         AppSidebarItem(
                           icon: destination.icon,
-                          label: destination.label,
+                          label: _labelFor(destination.label),
                           isActive: destination.label == activeLabel,
                           isCollapsed: isCollapsed,
                           onTap: destination.routePath == null
@@ -76,7 +93,7 @@ class AppSidebar extends StatelessWidget {
                       if (!pinSettings)
                         AppSidebarItem(
                           icon: Icons.settings_outlined,
-                          label: 'Settings',
+                          label: _isArabic ? 'الإعدادات' : 'Settings',
                           isCollapsed: isCollapsed,
                         ),
                     ],
@@ -85,7 +102,7 @@ class AppSidebar extends StatelessWidget {
                 if (pinSettings)
                   AppSidebarItem(
                     icon: Icons.settings_outlined,
-                    label: 'Settings',
+                    label: _isArabic ? 'الإعدادات' : 'Settings',
                     isCollapsed: isCollapsed,
                   ),
               ],
@@ -95,12 +112,28 @@ class AppSidebar extends StatelessWidget {
       ),
     );
   }
+
+  String _labelFor(String label) {
+    if (!_isArabic) return label;
+    return switch (label) {
+      'Dashboard' => 'لوحة التحكم',
+      'POS' => 'نقطة البيع',
+      'Orders' => 'الطلبات',
+      'Customers' => 'العملاء',
+      'Discounts' => 'الخصومات',
+      'Menu' => 'القائمة',
+      'Inventory Management' => 'إدارة المخزون',
+      'Reports' => 'التقارير',
+      _ => label,
+    };
+  }
 }
 
 class _LogoBlock extends StatelessWidget {
-  const _LogoBlock({required this.isCollapsed});
+  const _LogoBlock({required this.isCollapsed, required this.isArabic});
 
   final bool isCollapsed;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +175,7 @@ class _LogoBlock extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'OPERATIONAL HUB',
+                isArabic ? 'المركز التشغيلي' : 'OPERATIONAL HUB',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.labelSmall.copyWith(

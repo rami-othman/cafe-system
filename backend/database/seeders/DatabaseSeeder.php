@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SuperAdminSeeder::class,
             TenantAccessSeeder::class,
+            FinancialInventoryFoundationSeeder::class,
             MenuCatalogSeeder::class,
             ProductModifierSeeder::class,
             CustomerAndTableSeeder::class,

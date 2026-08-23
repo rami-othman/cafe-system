@@ -102,10 +102,30 @@ Phase 1 — Project Foundation
 - Fixed the Discounts table action overflow, standardized the desktop branch
   label casing, and hardened Orders list/detail loading against stale requests
   while preserving actionable API messages.
+- Implemented the Finance & Inventory Setup foundation with live Laravel API
+  repositories, Cubit state, RTL Windows screens for setup readiness,
+  warehouses, chart of accounts, and journal entries, plus sidebar routing.
+- Implemented the Phase 2 Inventory Center feature with live tenant-scoped
+  APIs, inventory dashboard, items, warehouse balances, immutable movement
+  ledger entry, and stock-count workflow screens in the RTL Windows app.
 
 ## In Progress
 
-- None.
+- Phase 2.5 UI/UX unification for the inventory and finance/setup workspace.
+- Inventory Management UI has been rebuilt as an English LTR desktop module,
+  including live dashboard, item list/details, balances, movement ledger,
+  movement posting, and stock-count entry points.
+- Consolidated inventory demo seeding around one tenant-level catalog,
+  deactivated obsolete generic demo items safely, and added tenant-scoped
+  catalog-identity protection for SKU and no-SKU items. Inventory selectors
+  now show searchable `Item Name — SKU — Unit` labels from active items only.
+- Added the Inventory Management horizontal navigation for Overview, Inventory
+  Items, Warehouse Balances, Inventory Movements, and Stock Counts. Added
+  connected stock-count detail routes and kept action/detail pages outside the
+  tab strip.
+- Inventory Items now uses tenant-scoped server filtering and pagination, real
+  available stock, and a complete add/edit form with category, stock-control,
+  notes, and safe deactivation handling.
 
 ## Next Step
 
@@ -255,3 +275,58 @@ workflows when those APIs are ready.
   newer UI state, cleared the detail panel on context changes or close, and
   surfaced backend API messages. Fixed Discounts table action wrapping and the
   initial POS branch-label regression; added focused regression coverage.
+- 2026-08-16: Added the RTL Finance & Inventory Setup module backed by Laravel:
+  readiness checklist, warehouse setup, chart of accounts, and journal draft/
+  posting screens. The module uses the existing Dio, GetIt, Cubit, go_router,
+  shell, and desktop UI primitives.
+- 2026-08-17: Added the Inventory Center frontend and Laravel domain layer:
+  weighted-average warehouse balances, immutable stock movements, controlled
+  stock counts, demo inventory data, and tenant-isolation feature tests.
+- 2026-08-17: Unified the Inventory Center and Finance & Inventory Setup
+  presentation with reusable RTL desktop page headers, KPI cards, filter bars,
+  status badges, data-table shells, and loading/empty/error states while
+  preserving the existing Cubit, repository, route, and API integrations.
+- 2026-08-20: Replaced the Reports sidebar destination with the English LTR
+  Reports Overview vertical slice. It uses a tenant-scoped Laravel overview
+  endpoint, typed Flutter repository/Cubit models, real filters, availability
+  states, chart, branch comparison, products, and operational exceptions.
+- 2026-08-20: Refined only the Inventory Dashboard with live scoped KPIs,
+  branch/warehouse/date/search filters, warehouse value bars, low-stock alerts,
+  and immutable movement history from the inventory dashboard API.
+- 2026-08-20: Completed the Inventory Items vertical slice with paginated,
+  server-filtered catalog results; real available quantity and stock state; and
+  an add/edit form that supports barcode, category, cost, thresholds, notes,
+  and deactivation confirmation without creating opening stock automatically.
+- 2026-08-20: Fixed the Inventory Dashboard query contract so
+  `compare_previous` is serialized as Laravel-compatible `1` or `0`.
+- 2026-08-20: Refined the Inventory Item Details vertical slice with a
+  tenant-scoped summary response, active warehouse balances, the newest five
+  immutable movements, and item-specific KPI, balance, and history layouts.
+- 2026-08-20: Applied the pending inventory catalog-identity migration to the
+  running PostgreSQL backend, restoring item save/edit operations; connected
+  Inventory Items dropdown filters to live refreshes and tightened their
+  desktop control/table layout.
+- 2026-08-20: Enforced a controlled inventory-unit catalog end to end. Item
+  create/edit now uses a searchable English-label selector, the API rejects
+  arbitrary units, existing units were normalized to canonical codes, and all
+  inventory displays use friendly labels while movements and stock counts
+  inherit the selected item's unit.
+- 2026-08-20: Completed Phase 1 inventory master data with a tenant-scoped
+  Units & Conversions screen and Laravel API. Conversions are stored per item,
+  use controlled source and target units only, preserve inactive records, and
+  protect an item's base unit after a conversion or stock history exists.
+- 2026-08-23: Began the source-audited Inventory expansion: added a shared
+  operational branch context for the top bar, POS, Orders and Inventory;
+  introduced a backwards-compatible RTL shell configuration for Inventory;
+  bundled IBM Plex Sans Arabic; and applied Claude-reference sidebar/top-bar
+  dimensions without changing the default LTR shell.
+- 2026-08-23: Applied the first visual-correction pass to the existing
+  Inventory screens: Arabic RTL headers, controls, filter labels, tables,
+  dialogs, statuses and feedback now retain their current live Inventory APIs
+  while using the source-matched Inventory typeface in shared management
+  primitives.
+- 2026-08-23: Started the Stock Counts refactor by exposing the existing
+  tenant-safe count-line and lifecycle APIs in the Flutter workspace. Users can
+  add counted item lines and move a count through start, submit, approve and
+  an explicitly confirmed variance-posting step without duplicating the count
+  workflow.

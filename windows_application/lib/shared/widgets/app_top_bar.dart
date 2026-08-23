@@ -6,16 +6,22 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../features/orders/controllers/orders_cubit.dart';
-import '../../features/orders/controllers/orders_state.dart';
+import '../../features/operational_context/controllers/operational_branch_cubit.dart';
+import '../../features/operational_context/models/operational_branch_state.dart';
 import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
 
 class AppTopBar extends StatefulWidget {
-  const AppTopBar({super.key, this.showCartButton = false, this.onRefresh});
+  const AppTopBar({
+    super.key,
+    this.showCartButton = false,
+    this.onRefresh,
+    this.height = AppSizes.topBarHeight,
+  });
 
   final bool showCartButton;
   final Future<void> Function(BuildContext context)? onRefresh;
+  final double height;
 
   @override
   State<AppTopBar> createState() => _AppTopBarState();
@@ -43,8 +49,11 @@ class _AppTopBarState extends State<AppTopBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final OrdersState ordersState = context.watch<OrdersCubit>().state;
-        final OrdersCubit ordersCubit = context.read<OrdersCubit>();
+        final OperationalBranchState branchState = context
+            .watch<OperationalBranchCubit>()
+            .state;
+        final OperationalBranchCubit branchCubit = context
+            .read<OperationalBranchCubit>();
         final bool isVeryCompact =
             constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
         final bool isCompact =
@@ -56,7 +65,7 @@ class _AppTopBarState extends State<AppTopBar> {
         final bool showOptionalIcons = !isCompact;
 
         return Container(
-          height: AppSizes.topBarHeight,
+          height: widget.height,
           decoration: const BoxDecoration(
             color: AppColors.shellBackground,
             border: Border(bottom: BorderSide(color: AppColors.shellBorder)),
@@ -68,18 +77,23 @@ class _AppTopBarState extends State<AppTopBar> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: <Widget>[
-                    for (final Branch branch in ordersState.branches)
+                    for (final Branch branch in branchState.branches)
                       _BranchTab(
                         label: branch.name.toUpperCase(),
-                        isActive: branch.id == ordersState.selectedBranchId,
-                        onTap: () => ordersCubit.selectBranch(branch.id),
+                        isActive: branch.id == branchState.selectedBranchId,
+                        onTap: () => branchCubit.selectBranch(branch.id),
+                        height: widget.height,
                       ),
                   ],
                 ),
               ),
-              if (showShiftBadge) ...const <Widget>[
-                SizedBox(width: AppSpacing.lg),
-                ShiftStatusBadge(),
+              if (showShiftBadge) ...<Widget>[
+                const SizedBox(width: AppSpacing.lg),
+                ShiftStatusBadge(
+                  label: Directionality.of(context) == TextDirection.rtl
+                      ? 'الوردية مفتوحة'
+                      : 'SHIFT OPEN',
+                ),
               ],
               if (widget.showCartButton) ...<Widget>[
                 const SizedBox(width: AppSpacing.sm),
@@ -124,12 +138,14 @@ class _BranchTab extends StatelessWidget {
   const _BranchTab({
     required this.label,
     required this.onTap,
+    required this.height,
     this.isActive = false,
   });
 
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +156,7 @@ class _BranchTab extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: SizedBox(
-        height: AppSizes.topBarHeight,
+        height: height,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Column(
@@ -152,6 +168,10 @@ class _BranchTab extends StatelessWidget {
                     label,
                     style: AppTextStyles.bodyLarge.copyWith(
                       color: foreground,
+                      fontFamily:
+                          Directionality.of(context) == TextDirection.rtl
+                          ? 'IBMPlexSansArabic'
+                          : null,
                       fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
                     ),
                   ),

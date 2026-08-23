@@ -31,12 +31,15 @@ class PosCubit extends Cubit<PosState> {
   int _receiptRequestGeneration = 0;
   int _productDetailRequestVersion = 0;
 
-  Future<void> loadInitialData() async {
+  Future<void> loadInitialData({int? preferredBranchId}) async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
       final branches = await repository.getBranches();
-      final int branchId = branches.isEmpty ? 1 : branches.first.id;
+      final int branchId =
+          branches.any((branch) => branch.id == preferredBranchId)
+          ? preferredBranchId!
+          : (branches.isEmpty ? 1 : branches.first.id);
       final shift = await repository.getCurrentShift(branchId: branchId);
       final List<String> categories = await repository.getCategories(
         branchId: branchId,
