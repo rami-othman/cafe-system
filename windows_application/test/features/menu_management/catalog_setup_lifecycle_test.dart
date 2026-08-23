@@ -224,6 +224,7 @@ CatalogSetupRecord _record({
   printerName: id == 1 ? 'bar-printer' : '',
   branchId: null,
   isActive: active,
+  isArchived: false,
   sortOrder: id - 1,
   productCount: 7,
 );

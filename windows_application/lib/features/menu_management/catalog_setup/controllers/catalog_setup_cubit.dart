@@ -12,11 +12,12 @@ enum CatalogSetupRequestStatus { idle, loading, loaded, failure, mutating }
 class CatalogSetupState extends Equatable {
   const CatalogSetupState({
     this.kind = CatalogSetupKind.categories,
-    this.status = CatalogSetupStatus.active,
+    this.status = CatalogSetupStatus.all,
     this.search = '',
     this.requestStatus = CatalogSetupRequestStatus.idle,
     this.page,
     this.error,
+    this.fieldErrors = const <String, List<String>>{},
     this.message,
   });
   final CatalogSetupKind kind;
@@ -25,6 +26,7 @@ class CatalogSetupState extends Equatable {
   final CatalogSetupRequestStatus requestStatus;
   final CatalogSetupPage? page;
   final String? error;
+  final Map<String, List<String>> fieldErrors;
   final String? message;
   bool get isBusy =>
       requestStatus == CatalogSetupRequestStatus.loading ||
@@ -36,9 +38,11 @@ class CatalogSetupState extends Equatable {
     CatalogSetupRequestStatus? requestStatus,
     CatalogSetupPage? page,
     String? error,
+    Map<String, List<String>>? fieldErrors,
     String? message,
     bool clearPage = false,
     bool clearError = false,
+    bool clearFieldErrors = false,
     bool clearMessage = false,
   }) => CatalogSetupState(
     kind: kind ?? this.kind,
@@ -47,6 +51,9 @@ class CatalogSetupState extends Equatable {
     requestStatus: requestStatus ?? this.requestStatus,
     page: clearPage ? null : page ?? this.page,
     error: clearError ? null : error ?? this.error,
+    fieldErrors: clearFieldErrors
+        ? const <String, List<String>>{}
+        : fieldErrors ?? this.fieldErrors,
     message: clearMessage ? null : message ?? this.message,
   );
   @override
@@ -57,6 +64,7 @@ class CatalogSetupState extends Equatable {
     requestStatus,
     page,
     error,
+    fieldErrors,
     message,
   ];
 }
@@ -117,6 +125,7 @@ class CatalogSetupCubit extends Cubit<CatalogSetupState> {
       state.copyWith(
         requestStatus: CatalogSetupRequestStatus.loading,
         clearError: true,
+        clearFieldErrors: true,
         clearMessage: true,
       ),
     );
@@ -126,6 +135,7 @@ class CatalogSetupCubit extends Cubit<CatalogSetupState> {
         status: status,
         search: search,
         page: requestedPage,
+        perPage: catalogSetupPageSize,
       );
       if (isClosed || request != _ticket || kind != state.kind) return;
       _emit(
@@ -140,6 +150,7 @@ class CatalogSetupCubit extends Cubit<CatalogSetupState> {
         state.copyWith(
           requestStatus: CatalogSetupRequestStatus.failure,
           error: _message(error),
+          fieldErrors: _fieldErrors(error),
         ),
       );
     } finally {
@@ -212,6 +223,7 @@ class CatalogSetupCubit extends Cubit<CatalogSetupState> {
       state.copyWith(
         requestStatus: CatalogSetupRequestStatus.mutating,
         clearError: true,
+        clearFieldErrors: true,
         clearMessage: true,
       ),
     );
@@ -231,6 +243,7 @@ class CatalogSetupCubit extends Cubit<CatalogSetupState> {
         state.copyWith(
           requestStatus: CatalogSetupRequestStatus.failure,
           error: _message(error),
+          fieldErrors: _fieldErrors(error),
         ),
       );
     }
@@ -239,4 +252,8 @@ class CatalogSetupCubit extends Cubit<CatalogSetupState> {
   String _message(Object error) => error is ApiException
       ? error.message
       : 'The Catalog Setup request could not be completed.';
+
+  Map<String, List<String>> _fieldErrors(Object error) => error is ApiException
+      ? error.validationErrors ?? const <String, List<String>>{}
+      : const <String, List<String>>{};
 }

@@ -236,6 +236,32 @@ class CatalogApiTest extends TestCase
         $this->assertDatabaseHas('categories', ['id' => $other, 'sort_order' => 1]);
     }
 
+    public function test_categories_persist_and_return_localized_names(): void
+    {
+        $tenantId = $this->tenant('localized-categories');
+        $headers = $this->headers($tenantId);
+        $category = $this->postJson('/api/v1/admin/catalog/categories', [
+            'name' => 'Coffee',
+            'nameAr' => 'قهوة',
+            'nameEn' => 'Coffee',
+        ], $headers)->assertCreated()
+            ->assertJsonPath('data.nameAr', 'قهوة')
+            ->assertJsonPath('data.nameEn', 'Coffee')
+            ->json('data.id');
+
+        $this->patchJson("/api/v1/admin/catalog/categories/{$category}", [
+            'nameAr' => 'قهوة مختصة',
+            'nameEn' => 'Specialty Coffee',
+        ], $headers)->assertOk()
+            ->assertJsonPath('data.nameAr', 'قهوة مختصة')
+            ->assertJsonPath('data.nameEn', 'Specialty Coffee');
+        $this->assertDatabaseHas('categories', [
+            'id' => $category,
+            'name_ar' => 'قهوة مختصة',
+            'name_en' => 'Specialty Coffee',
+        ]);
+    }
+
     public function test_kitchen_station_contract_excludes_reporting_only_description_field(): void
     {
         $tenantId = $this->tenant('station-contract');

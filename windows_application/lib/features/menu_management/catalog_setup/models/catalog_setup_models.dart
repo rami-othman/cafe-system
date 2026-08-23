@@ -1,11 +1,16 @@
+import 'dart:ui';
+
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/localized_entity_text.dart';
 import '../../models/catalog_models.dart';
 import '../../../pos/models/json_helpers.dart';
 
 enum CatalogSetupKind { categories, reportingCategories, kitchenStations }
 
 enum CatalogSetupStatus { active, archived, all }
+
+const int catalogSetupPageSize = 5;
 
 extension CatalogSetupKindPath on CatalogSetupKind {
   String get path => switch (this) {
@@ -42,6 +47,7 @@ class CatalogSetupRecord extends Equatable {
     required this.printerName,
     required this.branchId,
     required this.isActive,
+    required this.isArchived,
     required this.sortOrder,
     required this.productCount,
   });
@@ -57,6 +63,7 @@ class CatalogSetupRecord extends Equatable {
         printerName: readString(json['printerName']),
         branchId: readInt(json['branchId']),
         isActive: readBool(json['isActive'], fallback: true),
+        isArchived: readBool(json['isArchived']),
         sortOrder: readInt(json['sortOrder']) ?? 0,
         productCount: readInt(json['productCount']) ?? 0,
       );
@@ -70,8 +77,16 @@ class CatalogSetupRecord extends Equatable {
   final String printerName;
   final int? branchId;
   final bool isActive;
+  final bool isArchived;
   final int sortOrder;
   final int productCount;
+
+  String displayName(Locale locale) => LocalizedEntityText.resolve(
+    locale: locale,
+    defaultValue: name,
+    arabicValue: nameAr,
+    englishValue: nameEn,
+  );
 
   @override
   List<Object?> get props => <Object?>[
@@ -84,6 +99,7 @@ class CatalogSetupRecord extends Equatable {
     printerName,
     branchId,
     isActive,
+    isArchived,
     sortOrder,
     productCount,
   ];
@@ -124,9 +140,9 @@ class CatalogSetupDraft extends Equatable {
 
   Map<String, dynamic> toJson(CatalogSetupKind kind) => <String, dynamic>{
     'name': name.trim(),
+    'nameAr': nameAr.trim().isEmpty ? null : nameAr.trim(),
+    'nameEn': nameEn.trim().isEmpty ? null : nameEn.trim(),
     if (kind != CatalogSetupKind.categories) ...<String, dynamic>{
-      'nameAr': nameAr.trim().isEmpty ? null : nameAr.trim(),
-      'nameEn': nameEn.trim().isEmpty ? null : nameEn.trim(),
       'code': code.trim().isEmpty ? null : code.trim(),
     } else
       'description': description.trim().isEmpty ? null : description.trim(),

@@ -4213,6 +4213,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn’t save this availability status. Review the details and try again.'**
   String get operationalAvailabilitySaveError;
+
+  /// No description provided for @catalogSetupWorkspaceHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure the classifications and preparation destinations used by Products.'**
+  String get catalogSetupWorkspaceHelp;
+
+  /// No description provided for @catalogSetupCategoriesPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize Products into clear catalog and menu groups.'**
+  String get catalogSetupCategoriesPurpose;
+
+  /// No description provided for @catalogSetupReportingPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Products for sales and performance reporting.'**
+  String get catalogSetupReportingPurpose;
+
+  /// No description provided for @catalogSetupReportingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting Categories do not control where Products appear in the menu.'**
+  String get catalogSetupReportingNote;
+
+  /// No description provided for @catalogSetupStationsPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Define where Products and items are prepared.'**
+  String get catalogSetupStationsPurpose;
+
+  /// No description provided for @catalogSetupSearchCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Search categories...'**
+  String get catalogSetupSearchCategories;
+
+  /// No description provided for @catalogSetupSearchReporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Search reporting categories...'**
+  String get catalogSetupSearchReporting;
+
+  /// No description provided for @catalogSetupSearchStations.
+  ///
+  /// In en, this message translates to:
+  /// **'Search kitchen stations...'**
+  String get catalogSetupSearchStations;
+
+  /// No description provided for @catalogSetupAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {type}'**
+  String catalogSetupAdd(String type);
+
+  /// No description provided for @catalogSetupSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {type}'**
+  String catalogSetupSave(String type);
+
+  /// No description provided for @catalogSetupNoCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet'**
+  String get catalogSetupNoCategories;
+
+  /// No description provided for @catalogSetupNoReportingCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No reporting categories yet'**
+  String get catalogSetupNoReportingCategories;
+
+  /// No description provided for @catalogSetupNoKitchenStations.
+  ///
+  /// In en, this message translates to:
+  /// **'No kitchen stations yet'**
+  String get catalogSetupNoKitchenStations;
+
+  /// No description provided for @catalogSetupEmptyCategoriesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories help organize Products into clear groups.'**
+  String get catalogSetupEmptyCategoriesHelp;
+
+  /// No description provided for @catalogSetupEmptyReportingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting Categories help group Products for useful sales reporting.'**
+  String get catalogSetupEmptyReportingHelp;
+
+  /// No description provided for @catalogSetupEmptyStationsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Stations help define where each Product is prepared.'**
+  String get catalogSetupEmptyStationsHelp;
+
+  /// No description provided for @catalogSetupCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load data'**
+  String get catalogSetupCouldNotLoad;
+
+  /// No description provided for @catalogSetupLoadHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your connection and try again.'**
+  String get catalogSetupLoadHelp;
+
+  /// No description provided for @catalogSetupShowing.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {shown} of {total}'**
+  String catalogSetupShowing(int shown, int total);
+
+  /// No description provided for @catalogSetupActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get catalogSetupActive;
+
+  /// No description provided for @catalogSetupArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get catalogSetupArchived;
+
+  /// No description provided for @catalogSetupInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get catalogSetupInactive;
+
+  /// No description provided for @catalogSetupEditorHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the names that staff and customers should recognize.'**
+  String get catalogSetupEditorHelp;
+
+  /// No description provided for @catalogSetupPrimaryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get catalogSetupPrimaryName;
+
+  /// No description provided for @catalogSetupArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive {name}?'**
+  String catalogSetupArchiveTitle(String name);
+
+  /// No description provided for @catalogSetupArchiveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived records can be restored later. Existing Product assignments follow the system’s current rules.'**
+  String get catalogSetupArchiveHelp;
+
+  /// No description provided for @catalogSetupValidationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name to continue.'**
+  String get catalogSetupValidationRequired;
+
+  /// No description provided for @catalogSetupRefreshInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing catalog setup'**
+  String get catalogSetupRefreshInProgress;
 }
 
 class _AppLocalizationsDelegate

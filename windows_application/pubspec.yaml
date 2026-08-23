@@ -45,6 +45,7 @@ dependencies:
   shared_preferences: ^2.5.4
   file_picker: ^10.3.2
   desktop_drop: ^0.7.0
+  skeletonizer: ^2.1.0
 
 dev_dependencies:
   flutter_test:

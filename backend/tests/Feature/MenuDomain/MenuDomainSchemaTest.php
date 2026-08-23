@@ -18,6 +18,7 @@ class MenuDomainSchemaTest extends TestCase
             $this->assertTrue(Schema::hasTable($table), "Missing {$table} table.");
         }
         $this->assertTrue(Schema::hasColumns('products', ['name', 'description', 'sku', 'barcode', 'price', 'cost_price', 'image_url', 'is_active', 'is_stock_tracked', 'sort_order', 'name_ar', 'name_en', 'description_ar', 'description_en', 'product_type', 'reporting_category_id', 'kitchen_station_id', 'preparation_time_minutes']));
+        $this->assertTrue(Schema::hasColumns('categories', ['name', 'name_ar', 'name_en']));
         $this->assertTrue(Schema::hasColumns('modifier_groups', ['selection_type', 'is_required', 'min_selections', 'max_selections', 'group_type', 'allow_quantity']));
         $this->assertTrue(Schema::hasColumns('modifier_options', ['price_delta', 'is_available', 'cost_delta', 'is_active']));
         $this->assertTrue(Schema::hasColumns('order_items', ['product_name', 'unit_price', 'total', 'product_variant_id', 'variant_name']));

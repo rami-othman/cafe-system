@@ -2302,4 +2302,107 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get operationalAvailabilitySaveError =>
       'We couldn’t save this availability status. Review the details and try again.';
+
+  @override
+  String get catalogSetupWorkspaceHelp =>
+      'Configure the classifications and preparation destinations used by Products.';
+
+  @override
+  String get catalogSetupCategoriesPurpose =>
+      'Organize Products into clear catalog and menu groups.';
+
+  @override
+  String get catalogSetupReportingPurpose =>
+      'Group Products for sales and performance reporting.';
+
+  @override
+  String get catalogSetupReportingNote =>
+      'Reporting Categories do not control where Products appear in the menu.';
+
+  @override
+  String get catalogSetupStationsPurpose =>
+      'Define where Products and items are prepared.';
+
+  @override
+  String get catalogSetupSearchCategories => 'Search categories...';
+
+  @override
+  String get catalogSetupSearchReporting => 'Search reporting categories...';
+
+  @override
+  String get catalogSetupSearchStations => 'Search kitchen stations...';
+
+  @override
+  String catalogSetupAdd(String type) {
+    return 'Add $type';
+  }
+
+  @override
+  String catalogSetupSave(String type) {
+    return 'Save $type';
+  }
+
+  @override
+  String get catalogSetupNoCategories => 'No categories yet';
+
+  @override
+  String get catalogSetupNoReportingCategories => 'No reporting categories yet';
+
+  @override
+  String get catalogSetupNoKitchenStations => 'No kitchen stations yet';
+
+  @override
+  String get catalogSetupEmptyCategoriesHelp =>
+      'Categories help organize Products into clear groups.';
+
+  @override
+  String get catalogSetupEmptyReportingHelp =>
+      'Reporting Categories help group Products for useful sales reporting.';
+
+  @override
+  String get catalogSetupEmptyStationsHelp =>
+      'Kitchen Stations help define where each Product is prepared.';
+
+  @override
+  String get catalogSetupCouldNotLoad => 'Couldn’t load data';
+
+  @override
+  String get catalogSetupLoadHelp =>
+      'Please check your connection and try again.';
+
+  @override
+  String catalogSetupShowing(int shown, int total) {
+    return 'Showing $shown of $total';
+  }
+
+  @override
+  String get catalogSetupActive => 'Active';
+
+  @override
+  String get catalogSetupArchived => 'Archived';
+
+  @override
+  String get catalogSetupInactive => 'Inactive';
+
+  @override
+  String get catalogSetupEditorHelp =>
+      'Use the names that staff and customers should recognize.';
+
+  @override
+  String get catalogSetupPrimaryName => 'Name';
+
+  @override
+  String catalogSetupArchiveTitle(String name) {
+    return 'Archive $name?';
+  }
+
+  @override
+  String get catalogSetupArchiveHelp =>
+      'Archived records can be restored later. Existing Product assignments follow the system’s current rules.';
+
+  @override
+  String get catalogSetupValidationRequired => 'Enter a name to continue.';
+
+  @override
+  String get catalogSetupRefreshInProgress => 'Refreshing catalog setup';
 }

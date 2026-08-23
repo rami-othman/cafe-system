@@ -399,6 +399,7 @@ class _EditorRepository extends MenuCatalogRepository {
     printerName: '',
     branchId: null,
     isActive: false,
+    isArchived: false,
     sortOrder: 0,
     productCount: 1,
   );

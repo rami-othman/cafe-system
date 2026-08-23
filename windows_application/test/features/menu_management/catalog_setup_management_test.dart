@@ -142,6 +142,8 @@ void main() {
         if (kind == CatalogSetupKind.categories) {
           expect(payload, <String, dynamic>{
             'name': 'Coffee Bar',
+            'nameAr': 'قهوة',
+            'nameEn': 'Coffee Bar',
             'description': 'Hot drinks',
             'isActive': true,
           });
@@ -205,6 +207,7 @@ void main() {
       await cubit.setSearch('cold');
       expect(repository.calls.last.status, CatalogSetupStatus.archived);
       expect(repository.calls.last.search, 'cold');
+      expect(repository.calls.last.perPage, catalogSetupPageSize);
     },
   );
 
@@ -299,7 +302,7 @@ class _CatalogSetupRepository extends BackendMenuCatalogRepository {
     required int page,
     int perPage = 20,
   }) {
-    calls.add(_Call(kind, status, search, page));
+    calls.add(_Call(kind, status, search, page, perPage));
     return loader?.call(kind, status, search, page) ??
         Future<CatalogSetupPage>.value(_page(page, 'Category'));
   }
@@ -350,14 +353,16 @@ CatalogSetupRecord _record(String name, {int id = 1}) => CatalogSetupRecord(
   printerName: '',
   branchId: null,
   isActive: true,
+  isArchived: false,
   sortOrder: id,
   productCount: 0,
 );
 
 class _Call {
-  const _Call(this.kind, this.status, this.search, this.page);
+  const _Call(this.kind, this.status, this.search, this.page, this.perPage);
   final CatalogSetupKind kind;
   final CatalogSetupStatus status;
   final String search;
   final int page;
+  final int perPage;
 }

@@ -136,7 +136,14 @@ class CatalogReferenceController extends Controller
         $this->status($query, $request->query('status', 'active'));
         if ($request->filled('search')) {
             $search = '%'.strtolower($request->query('search')).'%';
-            $query->where(fn (Builder $q) => $q->whereRaw('LOWER(name) LIKE ?', [$search])->orWhereRaw('LOWER(COALESCE(code, \'\')) LIKE ?', [$search]));
+            $query->where(function (Builder $q) use ($search, $kind): void {
+                $q->whereRaw('LOWER(name) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(COALESCE(name_ar, \'\')) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(COALESCE(name_en, \'\')) LIKE ?', [$search]);
+                if ($kind !== 'category') {
+                    $q->orWhereRaw('LOWER(COALESCE(code, \'\')) LIKE ?', [$search]);
+                }
+            });
         }
         $sort = in_array($request->query('sort'), ['name', 'sort_order', 'created_at'], true) ? $request->query('sort') : 'sort_order';
         $query->orderBy($sort, $request->query('direction') === 'desc' ? 'desc' : 'asc')->orderBy('id');
@@ -236,12 +243,14 @@ class CatalogReferenceController extends Controller
             'sortOrder' => ['nullable', 'integer'],
             'isActive' => ['nullable', 'boolean'],
         ];
+        $rules += [
+            'nameAr' => ['nullable', 'string', 'max:255'],
+            'nameEn' => ['nullable', 'string', 'max:255'],
+        ];
         if ($kind === 'category') {
             $rules += ['description' => ['nullable', 'string']];
         } else {
             $rules += [
-                'nameAr' => ['nullable', 'string', 'max:255'],
-                'nameEn' => ['nullable', 'string', 'max:255'],
                 'code' => ['nullable', 'string', 'max:255'],
             ];
         }
@@ -268,8 +277,9 @@ class CatalogReferenceController extends Controller
     {
         $value = fn (string $field, string $column, mixed $fallback = null): mixed => array_key_exists($field, $data) ? $data[$field] : ($current?->{$column} ?? $fallback);
         $payload = ['name' => $value('name', 'name'), 'sort_order' => $value('sortOrder', 'sort_order', 0), 'is_active' => $value('isActive', 'is_active', true)];
+        $payload += ['name_ar' => $value('nameAr', 'name_ar'), 'name_en' => $value('nameEn', 'name_en')];
         if ($kind !== 'category') {
-            $payload += ['name_ar' => $value('nameAr', 'name_ar'), 'name_en' => $value('nameEn', 'name_en'), 'code' => $value('code', 'code')];
+            $payload += ['code' => $value('code', 'code')];
             if ($kind === 'reporting') {
                 $payload['description'] = $value('description', 'description');
             }

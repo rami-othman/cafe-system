@@ -127,7 +127,7 @@ abstract class MenuCatalogRepository {
     required CatalogSetupStatus status,
     required String search,
     required int page,
-    int perPage = 20,
+    int perPage = catalogSetupPageSize,
   }) => throw UnsupportedError('Catalog Setup is not configured.');
   Future<CatalogSetupRecord> getCatalogSetupRecord(
     CatalogSetupKind kind,
@@ -1592,7 +1592,7 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     required CatalogSetupStatus status,
     required String search,
     required int page,
-    int perPage = 20,
+    int perPage = catalogSetupPageSize,
   }) async {
     final dynamic response = await _apiClient.getEnvelope(
       'admin/catalog/${kind.path}',

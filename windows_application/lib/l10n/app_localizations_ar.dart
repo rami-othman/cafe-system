@@ -2309,4 +2309,106 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get operationalAvailabilitySaveError =>
       'تعذر حفظ حالة الإتاحة. راجع التفاصيل وحاول مرة أخرى.';
+
+  @override
+  String get catalogSetupWorkspaceHelp =>
+      'اضبط التصنيفات ووجهات التحضير المستخدمة للمنتجات.';
+
+  @override
+  String get catalogSetupCategoriesPurpose =>
+      'نظّم المنتجات ضمن مجموعات واضحة في الكتالوج والقائمة.';
+
+  @override
+  String get catalogSetupReportingPurpose =>
+      'جمّع المنتجات لأغراض تقارير المبيعات والأداء.';
+
+  @override
+  String get catalogSetupReportingNote =>
+      'لا تحدد فئات التقارير مكان ظهور المنتجات في القائمة.';
+
+  @override
+  String get catalogSetupStationsPurpose =>
+      'حدد المكان الذي تُحضَّر فيه المنتجات والأصناف.';
+
+  @override
+  String get catalogSetupSearchCategories => 'ابحث في الفئات...';
+
+  @override
+  String get catalogSetupSearchReporting => 'ابحث في فئات التقارير...';
+
+  @override
+  String get catalogSetupSearchStations => 'ابحث في محطات التحضير...';
+
+  @override
+  String catalogSetupAdd(String type) {
+    return 'إضافة $type';
+  }
+
+  @override
+  String catalogSetupSave(String type) {
+    return 'حفظ $type';
+  }
+
+  @override
+  String get catalogSetupNoCategories => 'لا توجد فئات بعد';
+
+  @override
+  String get catalogSetupNoReportingCategories => 'لا توجد فئات تقارير بعد';
+
+  @override
+  String get catalogSetupNoKitchenStations => 'لا توجد محطات تحضير بعد';
+
+  @override
+  String get catalogSetupEmptyCategoriesHelp =>
+      'تساعد الفئات في تنظيم المنتجات ضمن مجموعات واضحة.';
+
+  @override
+  String get catalogSetupEmptyReportingHelp =>
+      'تساعد فئات التقارير في تجميع المنتجات لتقارير مبيعات مفيدة.';
+
+  @override
+  String get catalogSetupEmptyStationsHelp =>
+      'تساعد محطات التحضير في تحديد مكان تحضير كل منتج.';
+
+  @override
+  String get catalogSetupCouldNotLoad => 'تعذر تحميل البيانات';
+
+  @override
+  String get catalogSetupLoadHelp => 'تحقق من الاتصال ثم حاول مرة أخرى.';
+
+  @override
+  String catalogSetupShowing(int shown, int total) {
+    return 'عرض $shown من $total';
+  }
+
+  @override
+  String get catalogSetupActive => 'نشط';
+
+  @override
+  String get catalogSetupArchived => 'مؤرشف';
+
+  @override
+  String get catalogSetupInactive => 'غير نشط';
+
+  @override
+  String get catalogSetupEditorHelp =>
+      'استخدم الأسماء التي يتعرف إليها الموظفون والعملاء.';
+
+  @override
+  String get catalogSetupPrimaryName => 'الاسم';
+
+  @override
+  String catalogSetupArchiveTitle(String name) {
+    return 'أرشفة $name؟';
+  }
+
+  @override
+  String get catalogSetupArchiveHelp =>
+      'يمكن استعادة السجلات المؤرشفة لاحقًا. تظل إسنادات المنتجات الحالية محكومة بقواعد النظام.';
+
+  @override
+  String get catalogSetupValidationRequired => 'أدخل اسمًا للمتابعة.';
+
+  @override
+  String get catalogSetupRefreshInProgress => 'جارٍ تحديث إعداد الكتالوج';
 }
