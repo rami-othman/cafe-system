@@ -4381,6 +4381,1011 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refreshing catalog setup'**
   String get catalogSetupRefreshInProgress;
+
+  /// No description provided for @menuListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get menuListTitle;
+
+  /// No description provided for @menuListSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and organize the menus customers can order from.'**
+  String get menuListSubtitle;
+
+  /// No description provided for @menuListAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Menu'**
+  String get menuListAdd;
+
+  /// No description provided for @menuListSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search menus...'**
+  String get menuListSearch;
+
+  /// No description provided for @menuListStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get menuListStatus;
+
+  /// No description provided for @menuListSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get menuListSort;
+
+  /// No description provided for @menuListDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Direction'**
+  String get menuListDirection;
+
+  /// No description provided for @menuListRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh menus'**
+  String get menuListRefresh;
+
+  /// No description provided for @menuListMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get menuListMenu;
+
+  /// No description provided for @menuListSections.
+  ///
+  /// In en, this message translates to:
+  /// **'Sections'**
+  String get menuListSections;
+
+  /// No description provided for @menuListVisibleProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible Products'**
+  String get menuListVisibleProducts;
+
+  /// No description provided for @menuListLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Updated'**
+  String get menuListLastUpdated;
+
+  /// No description provided for @menuListActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get menuListActions;
+
+  /// No description provided for @menuListOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get menuListOpen;
+
+  /// No description provided for @menuListClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get menuListClearFilters;
+
+  /// No description provided for @menuListNoMenusYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No menus yet'**
+  String get menuListNoMenusYet;
+
+  /// No description provided for @menuListNoMenusHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first Menu and start organizing Products into Sections.'**
+  String get menuListNoMenusHelp;
+
+  /// No description provided for @menuListNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No menus match these filters.'**
+  String get menuListNoMatches;
+
+  /// No description provided for @menuListNoMatchesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Try changing the search or status filter.'**
+  String get menuListNoMatchesHelp;
+
+  /// No description provided for @menuListCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load menus'**
+  String get menuListCouldNotLoad;
+
+  /// No description provided for @menuListCouldNotLoadHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get menuListCouldNotLoadHelp;
+
+  /// No description provided for @menuListLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get menuListLoadMore;
+
+  /// No description provided for @menuListArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive menu?'**
+  String get menuListArchiveTitle;
+
+  /// No description provided for @menuListArchiveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The menu can be restored later. Existing orders and published versions are unchanged.'**
+  String get menuListArchiveHelp;
+
+  /// No description provided for @menuListRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore menu?'**
+  String get menuListRestoreTitle;
+
+  /// No description provided for @menuListRestoreHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring makes the menu editable again. It does not publish the menu.'**
+  String get menuListRestoreHelp;
+
+  /// No description provided for @menuListActionsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {name}'**
+  String menuListActionsFor(String name);
+
+  /// No description provided for @menuListPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get menuListPaused;
+
+  /// No description provided for @menuListPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get menuListPriority;
+
+  /// No description provided for @menuListName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get menuListName;
+
+  /// No description provided for @menuListCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get menuListCreated;
+
+  /// No description provided for @menuListUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
+  String get menuListUpdated;
+
+  /// No description provided for @menuListAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get menuListAscending;
+
+  /// No description provided for @menuListDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get menuListDescending;
+
+  /// No description provided for @menuListAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get menuListAll;
+
+  /// No description provided for @menuListDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get menuListDraft;
+
+  /// No description provided for @menuListActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get menuListActive;
+
+  /// No description provided for @menuListArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get menuListArchived;
+
+  /// No description provided for @menuListEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get menuListEdit;
+
+  /// No description provided for @menuListArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get menuListArchive;
+
+  /// No description provided for @menuListRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get menuListRestore;
+
+  /// No description provided for @menuListCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get menuListCancel;
+
+  /// No description provided for @menuListRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get menuListRetry;
+
+  /// No description provided for @menuEditorAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Menu'**
+  String get menuEditorAddTitle;
+
+  /// No description provided for @menuEditorEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Menu'**
+  String get menuEditorEditTitle;
+
+  /// No description provided for @menuEditorAddHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with the names your staff and customers recognize.'**
+  String get menuEditorAddHelp;
+
+  /// No description provided for @menuEditorEditHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the menu identity without leaving this workspace.'**
+  String get menuEditorEditHelp;
+
+  /// No description provided for @menuEditorClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close menu editor'**
+  String get menuEditorClose;
+
+  /// No description provided for @menuEditorEnglishName.
+  ///
+  /// In en, this message translates to:
+  /// **'English Name'**
+  String get menuEditorEnglishName;
+
+  /// No description provided for @menuEditorArabicName.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic Name'**
+  String get menuEditorArabicName;
+
+  /// No description provided for @menuEditorMoreDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'More details'**
+  String get menuEditorMoreDetails;
+
+  /// No description provided for @menuEditorHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get menuEditorHideDetails;
+
+  /// No description provided for @menuEditorEnglishDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'English Description'**
+  String get menuEditorEnglishDescription;
+
+  /// No description provided for @menuEditorArabicDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic Description'**
+  String get menuEditorArabicDescription;
+
+  /// No description provided for @menuEditorCoverImageUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover image URL'**
+  String get menuEditorCoverImageUrl;
+
+  /// No description provided for @menuEditorPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get menuEditorPriority;
+
+  /// No description provided for @menuEditorPriorityHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Controls the ordering when menus are shown together.'**
+  String get menuEditorPriorityHelp;
+
+  /// No description provided for @menuEditorStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu status'**
+  String get menuEditorStatus;
+
+  /// No description provided for @menuEditorCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Menu'**
+  String get menuEditorCreate;
+
+  /// No description provided for @menuEditorSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get menuEditorSaveChanges;
+
+  /// No description provided for @menuEditorDraftHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'New menus start as Draft. You can activate them later.'**
+  String get menuEditorDraftHelp;
+
+  /// No description provided for @menuEditorNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an English or Arabic name to continue.'**
+  String get menuEditorNameRequired;
+
+  /// No description provided for @menuEditorPriorityInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number for priority.'**
+  String get menuEditorPriorityInvalid;
+
+  /// No description provided for @menuEditorSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t save this menu. Please try again.'**
+  String get menuEditorSaveFailed;
+
+  /// No description provided for @menuEditorArchivedReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived menus are read-only. Restore this menu before editing it.'**
+  String get menuEditorArchivedReadOnly;
+
+  /// No description provided for @menuEditorStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get menuEditorStatusDraft;
+
+  /// No description provided for @menuEditorStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get menuEditorStatusActive;
+
+  /// No description provided for @menuEditorStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get menuEditorStatusPaused;
+
+  /// No description provided for @menuEditorStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get menuEditorStatusArchived;
+
+  /// No description provided for @menuOverviewEditMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Menu'**
+  String get menuOverviewEditMenu;
+
+  /// No description provided for @menuOverviewActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu actions'**
+  String get menuOverviewActions;
+
+  /// No description provided for @menuOverviewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get menuOverviewTab;
+
+  /// No description provided for @menuOverviewSectionsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Sections'**
+  String get menuOverviewSectionsTab;
+
+  /// No description provided for @menuOverviewProductsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get menuOverviewProductsTab;
+
+  /// No description provided for @menuOverviewWorkspaceTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu workspace tabs'**
+  String get menuOverviewWorkspaceTabs;
+
+  /// No description provided for @menuOverviewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu details'**
+  String get menuOverviewDetails;
+
+  /// No description provided for @menuOverviewName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get menuOverviewName;
+
+  /// No description provided for @menuOverviewStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get menuOverviewStatus;
+
+  /// No description provided for @menuOverviewComposition.
+  ///
+  /// In en, this message translates to:
+  /// **'Composition'**
+  String get menuOverviewComposition;
+
+  /// No description provided for @menuOverviewManageSections.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Sections'**
+  String get menuOverviewManageSections;
+
+  /// No description provided for @menuOverviewManageProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Products'**
+  String get menuOverviewManageProducts;
+
+  /// No description provided for @menuOverviewCompositionValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{sectionCount} Sections · {visibleProductCount} visible Products'**
+  String menuOverviewCompositionValue(
+    int sectionCount,
+    int visibleProductCount,
+  );
+
+  /// No description provided for @menuOverviewDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get menuOverviewDraft;
+
+  /// No description provided for @menuOverviewActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get menuOverviewActive;
+
+  /// No description provided for @menuOverviewPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get menuOverviewPaused;
+
+  /// No description provided for @menuOverviewArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get menuOverviewArchived;
+
+  /// No description provided for @menuOverviewArchivedReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This menu is archived and read-only. Restore it before changing its composition.'**
+  String get menuOverviewArchivedReadOnly;
+
+  /// No description provided for @menuOverviewLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading menu workspace'**
+  String get menuOverviewLoading;
+
+  /// No description provided for @menuOverviewCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load this menu'**
+  String get menuOverviewCouldNotLoad;
+
+  /// No description provided for @menuOverviewArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get menuOverviewArchive;
+
+  /// No description provided for @menuOverviewRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get menuOverviewRestore;
+
+  /// No description provided for @menuSectionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sections'**
+  String get menuSectionsTitle;
+
+  /// No description provided for @menuSectionsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize this menu into customer-friendly groups.'**
+  String get menuSectionsHelp;
+
+  /// No description provided for @menuSectionsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Section'**
+  String get menuSectionsAdd;
+
+  /// No description provided for @menuSectionsReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Sections'**
+  String get menuSectionsReorder;
+
+  /// No description provided for @menuSectionsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get menuSectionsDone;
+
+  /// No description provided for @menuSectionsReorderHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the arrows to change the order customers see.'**
+  String get menuSectionsReorderHelp;
+
+  /// No description provided for @menuSectionsProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Products'**
+  String menuSectionsProducts(int count);
+
+  /// No description provided for @menuSectionsArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get menuSectionsArchived;
+
+  /// No description provided for @menuSectionsInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get menuSectionsInactive;
+
+  /// No description provided for @menuSectionsActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {name}'**
+  String menuSectionsActions(String name);
+
+  /// No description provided for @menuSectionsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get menuSectionsEdit;
+
+  /// No description provided for @menuSectionsArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get menuSectionsArchive;
+
+  /// No description provided for @menuSectionsRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get menuSectionsRestore;
+
+  /// No description provided for @menuSectionsMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Up'**
+  String get menuSectionsMoveUp;
+
+  /// No description provided for @menuSectionsMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Down'**
+  String get menuSectionsMoveDown;
+
+  /// No description provided for @menuSectionsNoSections.
+  ///
+  /// In en, this message translates to:
+  /// **'No Sections yet'**
+  String get menuSectionsNoSections;
+
+  /// No description provided for @menuSectionsEmptyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a Section before adding Products.'**
+  String get menuSectionsEmptyHelp;
+
+  /// No description provided for @menuSectionsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load Sections'**
+  String get menuSectionsLoadError;
+
+  /// No description provided for @menuSectionEditorAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Section'**
+  String get menuSectionEditorAddTitle;
+
+  /// No description provided for @menuSectionEditorEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Section'**
+  String get menuSectionEditorEditTitle;
+
+  /// No description provided for @menuSectionEditorAddHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a clear group customers can browse.'**
+  String get menuSectionEditorAddHelp;
+
+  /// No description provided for @menuSectionEditorEditHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Update this group without leaving the menu workspace.'**
+  String get menuSectionEditorEditHelp;
+
+  /// No description provided for @menuSectionEditorClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Section editor'**
+  String get menuSectionEditorClose;
+
+  /// No description provided for @menuSectionEditorEnglishName.
+  ///
+  /// In en, this message translates to:
+  /// **'English Name'**
+  String get menuSectionEditorEnglishName;
+
+  /// No description provided for @menuSectionEditorArabicName.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic Name'**
+  String get menuSectionEditorArabicName;
+
+  /// No description provided for @menuSectionEditorMoreDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'More details'**
+  String get menuSectionEditorMoreDetails;
+
+  /// No description provided for @menuSectionEditorHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get menuSectionEditorHideDetails;
+
+  /// No description provided for @menuSectionEditorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get menuSectionEditorDescription;
+
+  /// No description provided for @menuSectionEditorImageUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Image URL'**
+  String get menuSectionEditorImageUrl;
+
+  /// No description provided for @menuSectionEditorActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Section'**
+  String get menuSectionEditorActive;
+
+  /// No description provided for @menuSectionEditorNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an English or Arabic name to continue.'**
+  String get menuSectionEditorNameRequired;
+
+  /// No description provided for @menuSectionEditorSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save this Section. Check the fields and try again.'**
+  String get menuSectionEditorSaveFailed;
+
+  /// No description provided for @menuSectionEditorSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get menuSectionEditorSave;
+
+  /// No description provided for @menuProductsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get menuProductsTitle;
+
+  /// No description provided for @menuProductsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize the Products customers see inside each Section.'**
+  String get menuProductsHelp;
+
+  /// No description provided for @menuProductsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Products'**
+  String get menuProductsAdd;
+
+  /// No description provided for @menuProductsReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Products'**
+  String get menuProductsReorder;
+
+  /// No description provided for @menuProductsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get menuProductsDone;
+
+  /// No description provided for @menuProductsReorderHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the arrows to set the order customers see within each Section.'**
+  String get menuProductsReorderHelp;
+
+  /// No description provided for @menuProductsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Products in this Menu'**
+  String get menuProductsSearchHint;
+
+  /// No description provided for @menuProductsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Products'**
+  String menuProductsCount(int count);
+
+  /// No description provided for @menuProductsPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Products'**
+  String get menuProductsPickerTitle;
+
+  /// No description provided for @menuProductsPickerTargetSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Section'**
+  String get menuProductsPickerTargetSection;
+
+  /// No description provided for @menuProductsPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Products...'**
+  String get menuProductsPickerSearchHint;
+
+  /// No description provided for @menuProductsPickerAlreadyInSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in {section}'**
+  String menuProductsPickerAlreadyInSection(String section);
+
+  /// No description provided for @menuProductsPickerSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {count}'**
+  String menuProductsPickerSelected(int count);
+
+  /// No description provided for @menuProductsPickerNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No Products match your search.'**
+  String get menuProductsPickerNoMatches;
+
+  /// No description provided for @menuProductsPickerNoEligible.
+  ///
+  /// In en, this message translates to:
+  /// **'All available Products are already in this Section.'**
+  String get menuProductsPickerNoEligible;
+
+  /// No description provided for @menuProductsPickerLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load Products.'**
+  String get menuProductsPickerLoadError;
+
+  /// No description provided for @menuProductsPickerPartialAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{added} Products were added. {failed} could not be added.'**
+  String menuProductsPickerPartialAdded(int added, int failed);
+
+  /// No description provided for @menuProductsPickerConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product is already in {section}.'**
+  String menuProductsPickerConflict(String section);
+
+  /// No description provided for @menuProductsBasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Base {price}'**
+  String menuProductsBasePrice(String price);
+
+  /// No description provided for @menuProductsFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get menuProductsFeatured;
+
+  /// No description provided for @menuProductsHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get menuProductsHidden;
+
+  /// No description provided for @menuProductsArchivedPlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from Menu'**
+  String get menuProductsArchivedPlacement;
+
+  /// No description provided for @menuProductsArchivedProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived Product'**
+  String get menuProductsArchivedProduct;
+
+  /// No description provided for @menuProductsInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get menuProductsInactive;
+
+  /// No description provided for @menuProductsActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Product actions'**
+  String get menuProductsActions;
+
+  /// No description provided for @menuProductsMarkFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Featured'**
+  String get menuProductsMarkFeatured;
+
+  /// No description provided for @menuProductsRemoveFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Featured'**
+  String get menuProductsRemoveFeatured;
+
+  /// No description provided for @menuProductsHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide from Menu'**
+  String get menuProductsHide;
+
+  /// No description provided for @menuProductsShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on Menu'**
+  String get menuProductsShow;
+
+  /// No description provided for @menuProductsMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Section'**
+  String get menuProductsMove;
+
+  /// No description provided for @menuProductsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Menu'**
+  String get menuProductsRemove;
+
+  /// No description provided for @menuProductsRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Placement'**
+  String get menuProductsRestore;
+
+  /// No description provided for @menuProductsMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Up'**
+  String get menuProductsMoveUp;
+
+  /// No description provided for @menuProductsMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Down'**
+  String get menuProductsMoveDown;
+
+  /// No description provided for @menuProductsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Products in this Section yet.'**
+  String get menuProductsEmpty;
+
+  /// No description provided for @menuProductsNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching Products in this Section.'**
+  String get menuProductsNoMatches;
+
+  /// No description provided for @menuProductsNoSections.
+  ///
+  /// In en, this message translates to:
+  /// **'No Sections yet'**
+  String get menuProductsNoSections;
+
+  /// No description provided for @menuProductsNoSectionsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a Section before adding Products.'**
+  String get menuProductsNoSectionsHelp;
+
+  /// No description provided for @menuProductsArchivedMenuReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This menu is archived and read-only. Its composition remains available to review.'**
+  String get menuProductsArchivedMenuReadOnly;
+
+  /// No description provided for @menuProductsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load Products'**
+  String get menuProductsLoadError;
+
+  /// No description provided for @menuProductsRemoveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the Product from this Section and Menu only. The Product remains in the Catalog.'**
+  String get menuProductsRemoveHelp;
+
+  /// No description provided for @menuProductsRestoreHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This restores this Placement only. It does not restore or reactivate the Product.'**
+  String get menuProductsRestoreHelp;
+
+  /// No description provided for @menuListNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get menuListNotAvailable;
 }
 
 class _AppLocalizationsDelegate

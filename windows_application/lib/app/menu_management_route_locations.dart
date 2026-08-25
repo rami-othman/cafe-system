@@ -15,11 +15,32 @@ enum ProductWorkspaceTab {
       );
 }
 
+enum MenuWorkspaceTab {
+  overview,
+  sections,
+  products;
+
+  String get queryValue => name;
+
+  static MenuWorkspaceTab fromQuery(String? value) =>
+      MenuWorkspaceTab.values.firstWhere(
+        (tab) => tab.queryValue == value,
+        orElse: () => MenuWorkspaceTab.overview,
+      );
+}
+
 /// Canonical Menu Management locations shared by route callers.
 ///
 /// Product Workspace state lives in the URL so it survives navigation history
 /// and a browser refresh. Child routes carry only domain identities.
 abstract final class MenuManagementRouteLocations {
+  static String menuWorkspace(
+    int menuId, {
+    MenuWorkspaceTab tab = MenuWorkspaceTab.overview,
+  }) => Uri(
+    path: '/menu-management/menus/$menuId',
+    queryParameters: <String, String>{'tab': tab.queryValue},
+  ).toString();
   static String productWorkspace(
     int productId, {
     ProductWorkspaceTab tab = ProductWorkspaceTab.overview,

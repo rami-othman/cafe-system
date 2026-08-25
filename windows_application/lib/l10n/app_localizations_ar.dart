@@ -2411,4 +2411,550 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get catalogSetupRefreshInProgress => 'جارٍ تحديث إعداد الكتالوج';
+
+  @override
+  String get menuListTitle => 'القوائم';
+
+  @override
+  String get menuListSubtitle =>
+      'أنشئ ونظّم القوائم التي يمكن للعملاء الطلب منها.';
+
+  @override
+  String get menuListAdd => 'إضافة قائمة';
+
+  @override
+  String get menuListSearch => 'ابحث في القوائم...';
+
+  @override
+  String get menuListStatus => 'الحالة';
+
+  @override
+  String get menuListSort => 'فرز';
+
+  @override
+  String get menuListDirection => 'الاتجاه';
+
+  @override
+  String get menuListRefresh => 'تحديث القوائم';
+
+  @override
+  String get menuListMenu => 'القائمة';
+
+  @override
+  String get menuListSections => 'الأقسام';
+
+  @override
+  String get menuListVisibleProducts => 'المنتجات الظاهرة';
+
+  @override
+  String get menuListLastUpdated => 'آخر تحديث';
+
+  @override
+  String get menuListActions => 'الإجراءات';
+
+  @override
+  String get menuListOpen => 'فتح';
+
+  @override
+  String get menuListClearFilters => 'مسح التصفيات';
+
+  @override
+  String get menuListNoMenusYet => 'لا توجد قوائم بعد';
+
+  @override
+  String get menuListNoMenusHelp =>
+      'أنشئ أول قائمة وابدأ بتنظيم المنتجات ضمن الأقسام.';
+
+  @override
+  String get menuListNoMatches => 'لا توجد قوائم تطابق التصفيات.';
+
+  @override
+  String get menuListNoMatchesHelp => 'جرّب تغيير البحث أو تصفية الحالة.';
+
+  @override
+  String get menuListCouldNotLoad => 'تعذّر تحميل القوائم';
+
+  @override
+  String get menuListCouldNotLoadHelp => 'تحقق من اتصالك ثم حاول مرة أخرى.';
+
+  @override
+  String get menuListLoadMore => 'عرض المزيد';
+
+  @override
+  String get menuListArchiveTitle => 'أرشفة القائمة؟';
+
+  @override
+  String get menuListArchiveHelp =>
+      'يمكن استعادة القائمة لاحقًا. لا تتغير الطلبات والإصدارات المنشورة.';
+
+  @override
+  String get menuListRestoreTitle => 'استعادة القائمة؟';
+
+  @override
+  String get menuListRestoreHelp =>
+      'تجعل الاستعادة القائمة قابلة للتعديل مرة أخرى. لا يؤدّي ذلك إلى نشرها.';
+
+  @override
+  String menuListActionsFor(String name) {
+    return 'إجراءات القائمة $name';
+  }
+
+  @override
+  String get menuListPaused => 'موقفة مؤقتًا';
+
+  @override
+  String get menuListPriority => 'الأولوية';
+
+  @override
+  String get menuListName => 'الاسم';
+
+  @override
+  String get menuListCreated => 'تاريخ الإنشاء';
+
+  @override
+  String get menuListUpdated => 'آخر تحديث';
+
+  @override
+  String get menuListAscending => 'تصاعدي';
+
+  @override
+  String get menuListDescending => 'تنازلي';
+
+  @override
+  String get menuListAll => 'الكل';
+
+  @override
+  String get menuListDraft => 'مسودة';
+
+  @override
+  String get menuListActive => 'نشطة';
+
+  @override
+  String get menuListArchived => 'مؤرشفة';
+
+  @override
+  String get menuListEdit => 'تعديل';
+
+  @override
+  String get menuListArchive => 'أرشفة';
+
+  @override
+  String get menuListRestore => 'استعادة';
+
+  @override
+  String get menuListCancel => 'إلغاء';
+
+  @override
+  String get menuListRetry => 'إعادة المحاولة';
+
+  @override
+  String get menuEditorAddTitle => 'إضافة قائمة';
+
+  @override
+  String get menuEditorEditTitle => 'تعديل القائمة';
+
+  @override
+  String get menuEditorAddHelp =>
+      'ابدأ بالأسماء التي يتعرّف عليها الموظفون والعملاء.';
+
+  @override
+  String get menuEditorEditHelp =>
+      'حدّث هوية القائمة من دون مغادرة مساحة العمل.';
+
+  @override
+  String get menuEditorClose => 'إغلاق محرر القائمة';
+
+  @override
+  String get menuEditorEnglishName => 'الاسم بالإنجليزية';
+
+  @override
+  String get menuEditorArabicName => 'الاسم بالعربية';
+
+  @override
+  String get menuEditorMoreDetails => 'تفاصيل أكثر';
+
+  @override
+  String get menuEditorHideDetails => 'إخفاء التفاصيل';
+
+  @override
+  String get menuEditorEnglishDescription => 'الوصف بالإنجليزية';
+
+  @override
+  String get menuEditorArabicDescription => 'الوصف بالعربية';
+
+  @override
+  String get menuEditorCoverImageUrl => 'رابط صورة الغلاف';
+
+  @override
+  String get menuEditorPriority => 'الأولوية';
+
+  @override
+  String get menuEditorPriorityHelp => 'تحدد ترتيب عرض القوائم معًا.';
+
+  @override
+  String get menuEditorStatus => 'حالة القائمة';
+
+  @override
+  String get menuEditorCreate => 'إنشاء قائمة';
+
+  @override
+  String get menuEditorSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get menuEditorDraftHelp =>
+      'تبدأ القوائم الجديدة كمسودة. يمكنك تفعيلها لاحقًا.';
+
+  @override
+  String get menuEditorNameRequired =>
+      'أدخل اسمًا بالإنجليزية أو العربية للمتابعة.';
+
+  @override
+  String get menuEditorPriorityInvalid => 'أدخل رقمًا صحيحًا للأولوية.';
+
+  @override
+  String get menuEditorSaveFailed => 'تعذّر حفظ هذه القائمة. حاول مرة أخرى.';
+
+  @override
+  String get menuEditorArchivedReadOnly =>
+      'القوائم المؤرشفة للعرض فقط. استعد القائمة قبل تعديلها.';
+
+  @override
+  String get menuEditorStatusDraft => 'مسودة';
+
+  @override
+  String get menuEditorStatusActive => 'نشطة';
+
+  @override
+  String get menuEditorStatusPaused => 'موقفة مؤقتًا';
+
+  @override
+  String get menuEditorStatusArchived => 'مؤرشفة';
+
+  @override
+  String get menuOverviewEditMenu => 'تعديل القائمة';
+
+  @override
+  String get menuOverviewActions => 'إجراءات القائمة';
+
+  @override
+  String get menuOverviewTab => 'نظرة عامة';
+
+  @override
+  String get menuOverviewSectionsTab => 'الأقسام';
+
+  @override
+  String get menuOverviewProductsTab => 'المنتجات';
+
+  @override
+  String get menuOverviewWorkspaceTabs => 'علامات تبويب مساحة عمل القائمة';
+
+  @override
+  String get menuOverviewDetails => 'تفاصيل القائمة';
+
+  @override
+  String get menuOverviewName => 'الاسم';
+
+  @override
+  String get menuOverviewStatus => 'الحالة';
+
+  @override
+  String get menuOverviewComposition => 'التكوين';
+
+  @override
+  String get menuOverviewManageSections => 'إدارة الأقسام';
+
+  @override
+  String get menuOverviewManageProducts => 'إدارة المنتجات';
+
+  @override
+  String menuOverviewCompositionValue(
+    int sectionCount,
+    int visibleProductCount,
+  ) {
+    return '$sectionCount أقسام · $visibleProductCount منتج ظاهر';
+  }
+
+  @override
+  String get menuOverviewDraft => 'مسودة';
+
+  @override
+  String get menuOverviewActive => 'نشطة';
+
+  @override
+  String get menuOverviewPaused => 'موقفة مؤقتًا';
+
+  @override
+  String get menuOverviewArchived => 'مؤرشفة';
+
+  @override
+  String get menuOverviewArchivedReadOnly =>
+      'هذه القائمة مؤرشفة وللعرض فقط. استعد القائمة قبل تعديل تكوينها.';
+
+  @override
+  String get menuOverviewLoading => 'جارٍ تحميل مساحة عمل القائمة';
+
+  @override
+  String get menuOverviewCouldNotLoad => 'تعذّر تحميل هذه القائمة';
+
+  @override
+  String get menuOverviewArchive => 'أرشفة';
+
+  @override
+  String get menuOverviewRestore => 'استعادة';
+
+  @override
+  String get menuSectionsTitle => 'الأقسام';
+
+  @override
+  String get menuSectionsHelp =>
+      'نظّم هذه القائمة ضمن مجموعات يسهل على العميل تصفحها.';
+
+  @override
+  String get menuSectionsAdd => 'إضافة قسم';
+
+  @override
+  String get menuSectionsReorder => 'ترتيب الأقسام';
+
+  @override
+  String get menuSectionsDone => 'تم';
+
+  @override
+  String get menuSectionsReorderHelp =>
+      'استخدم الأسهم لتغيير الترتيب الذي يراه العملاء.';
+
+  @override
+  String menuSectionsProducts(int count) {
+    return '$count منتجات';
+  }
+
+  @override
+  String get menuSectionsArchived => 'مؤرشف';
+
+  @override
+  String get menuSectionsInactive => 'غير نشط';
+
+  @override
+  String menuSectionsActions(String name) {
+    return 'إجراءات $name';
+  }
+
+  @override
+  String get menuSectionsEdit => 'تعديل';
+
+  @override
+  String get menuSectionsArchive => 'أرشفة';
+
+  @override
+  String get menuSectionsRestore => 'استعادة';
+
+  @override
+  String get menuSectionsMoveUp => 'نقل للأعلى';
+
+  @override
+  String get menuSectionsMoveDown => 'نقل للأسفل';
+
+  @override
+  String get menuSectionsNoSections => 'لا توجد أقسام بعد';
+
+  @override
+  String get menuSectionsEmptyHelp => 'أنشئ قسمًا قبل إضافة المنتجات.';
+
+  @override
+  String get menuSectionsLoadError => 'تعذر تحميل الأقسام';
+
+  @override
+  String get menuSectionEditorAddTitle => 'إضافة قسم';
+
+  @override
+  String get menuSectionEditorEditTitle => 'تعديل القسم';
+
+  @override
+  String get menuSectionEditorAddHelp =>
+      'أنشئ مجموعة واضحة يمكن للعملاء تصفحها.';
+
+  @override
+  String get menuSectionEditorEditHelp =>
+      'حدّث هذه المجموعة دون مغادرة مساحة عمل القائمة.';
+
+  @override
+  String get menuSectionEditorClose => 'إغلاق محرر القسم';
+
+  @override
+  String get menuSectionEditorEnglishName => 'الاسم بالإنجليزية';
+
+  @override
+  String get menuSectionEditorArabicName => 'الاسم بالعربية';
+
+  @override
+  String get menuSectionEditorMoreDetails => 'تفاصيل أكثر';
+
+  @override
+  String get menuSectionEditorHideDetails => 'إخفاء التفاصيل';
+
+  @override
+  String get menuSectionEditorDescription => 'الوصف';
+
+  @override
+  String get menuSectionEditorImageUrl => 'رابط الصورة';
+
+  @override
+  String get menuSectionEditorActive => 'قسم نشط';
+
+  @override
+  String get menuSectionEditorNameRequired =>
+      'أدخل اسمًا بالإنجليزية أو العربية للمتابعة.';
+
+  @override
+  String get menuSectionEditorSaveFailed =>
+      'تعذر حفظ هذا القسم. راجع الحقول وحاول مرة أخرى.';
+
+  @override
+  String get menuSectionEditorSave => 'حفظ التغييرات';
+
+  @override
+  String get menuProductsTitle => 'المنتجات';
+
+  @override
+  String get menuProductsHelp =>
+      'نظّم المنتجات التي يراها العملاء داخل كل قسم.';
+
+  @override
+  String get menuProductsAdd => 'إضافة منتجات';
+
+  @override
+  String get menuProductsReorder => 'ترتيب المنتجات';
+
+  @override
+  String get menuProductsDone => 'تم';
+
+  @override
+  String get menuProductsReorderHelp =>
+      'استخدم الأسهم لتغيير ترتيب المنتجات داخل كل قسم.';
+
+  @override
+  String get menuProductsSearchHint => 'ابحث عن منتج في هذه القائمة';
+
+  @override
+  String menuProductsCount(int count) {
+    return '$count منتجات';
+  }
+
+  @override
+  String get menuProductsPickerTitle => 'إضافة منتجات';
+
+  @override
+  String get menuProductsPickerTargetSection => 'إضافة إلى قسم';
+
+  @override
+  String get menuProductsPickerSearchHint => 'البحث عن منتجات...';
+
+  @override
+  String menuProductsPickerAlreadyInSection(String section) {
+    return 'مضاف مسبقًا في $section';
+  }
+
+  @override
+  String menuProductsPickerSelected(int count) {
+    return 'المحدد: $count';
+  }
+
+  @override
+  String get menuProductsPickerNoMatches => 'لا توجد منتجات مطابقة لبحثك.';
+
+  @override
+  String get menuProductsPickerNoEligible =>
+      'جميع المنتجات المتاحة مضافة بالفعل إلى هذا القسم.';
+
+  @override
+  String get menuProductsPickerLoadError => 'تعذر تحميل المنتجات.';
+
+  @override
+  String menuProductsPickerPartialAdded(int added, int failed) {
+    return 'تمت إضافة $added منتجات. تعذر إضافة $failed.';
+  }
+
+  @override
+  String menuProductsPickerConflict(String section) {
+    return 'هذا المنتج موجود بالفعل في $section.';
+  }
+
+  @override
+  String menuProductsBasePrice(String price) {
+    return 'السعر الأساسي $price';
+  }
+
+  @override
+  String get menuProductsFeatured => 'مميز';
+
+  @override
+  String get menuProductsHidden => 'مخفي';
+
+  @override
+  String get menuProductsArchivedPlacement => 'تمت إزالته من القائمة';
+
+  @override
+  String get menuProductsArchivedProduct => 'منتج مؤرشف';
+
+  @override
+  String get menuProductsInactive => 'غير نشط';
+
+  @override
+  String get menuProductsActions => 'إجراءات المنتج';
+
+  @override
+  String get menuProductsMarkFeatured => 'تعيين كمميز';
+
+  @override
+  String get menuProductsRemoveFeatured => 'إزالة التمييز';
+
+  @override
+  String get menuProductsHide => 'إخفاء من القائمة';
+
+  @override
+  String get menuProductsShow => 'إظهار في القائمة';
+
+  @override
+  String get menuProductsMove => 'نقل إلى قسم';
+
+  @override
+  String get menuProductsRemove => 'إزالة من القائمة';
+
+  @override
+  String get menuProductsRestore => 'استعادة الموضع';
+
+  @override
+  String get menuProductsMoveUp => 'نقل للأعلى';
+
+  @override
+  String get menuProductsMoveDown => 'نقل للأسفل';
+
+  @override
+  String get menuProductsEmpty => 'لا توجد منتجات في هذا القسم بعد.';
+
+  @override
+  String get menuProductsNoMatches => 'لا توجد منتجات مطابقة في هذا القسم.';
+
+  @override
+  String get menuProductsNoSections => 'لا توجد أقسام بعد';
+
+  @override
+  String get menuProductsNoSectionsHelp => 'أنشئ قسمًا قبل إضافة المنتجات.';
+
+  @override
+  String get menuProductsArchivedMenuReadOnly =>
+      'هذه القائمة مؤرشفة وللعرض فقط. لا يزال تكوينها متاحًا للمراجعة.';
+
+  @override
+  String get menuProductsLoadError => 'تعذر تحميل المنتجات';
+
+  @override
+  String get menuProductsRemoveHelp =>
+      'يؤدي هذا إلى إزالة المنتج من هذا القسم والقائمة فقط. يبقى المنتج في الكتالوج.';
+
+  @override
+  String get menuProductsRestoreHelp =>
+      'يؤدي هذا إلى استعادة هذا الموضع فقط. ولا يستعيد المنتج أو يعيد تنشيطه.';
+
+  @override
+  String get menuListNotAvailable => '—';
 }

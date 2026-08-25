@@ -1,14 +1,14 @@
 class MenuFilter {
   const MenuFilter({
     this.search = '',
-    this.status = 'draft',
+    this.status = 'all',
     this.sort = 'priority',
     this.direction = 'asc',
   });
   final String search, status, sort, direction;
   bool get hasActiveFilters =>
       search.isNotEmpty ||
-      status != 'draft' ||
+      status != 'all' ||
       sort != 'priority' ||
       direction != 'asc';
   MenuFilter copyWith({

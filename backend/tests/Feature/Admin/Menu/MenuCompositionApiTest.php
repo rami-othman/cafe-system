@@ -21,6 +21,9 @@ class MenuCompositionApiTest extends TestCase
 
         $sectionId = $this->postJson("/api/v1/admin/menus/{$menuId}/sections", ['name' => 'Cold Coffee'], $this->headers($tenantId))->assertCreated()->json('data.id');
         $placementId = $this->postJson("/api/v1/admin/menu-sections/{$sectionId}/placements", ['productId' => $productId, 'isFeatured' => true], $this->headers($tenantId))->assertCreated()->assertJsonPath('data.productId', $productId)->json('data.id');
+        $this->getJson("/api/v1/admin/menus/{$menuId}", $this->headers($tenantId))->assertOk()
+            ->assertJsonPath('data.sectionCount', 1)
+            ->assertJsonPath('data.visibleProductCount', 1);
         $this->postJson("/api/v1/admin/menu-sections/{$sectionId}/placements", ['productId' => $productId], $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('productId');
         $this->patchJson("/api/v1/admin/menu-item-placements/{$placementId}", ['displayNameOverride' => 'Cold Latte'], $this->headers($tenantId))->assertOk()->assertJsonPath('data.displayNameOverride', 'Cold Latte');
 

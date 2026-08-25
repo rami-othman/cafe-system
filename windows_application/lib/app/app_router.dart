@@ -46,12 +46,9 @@ import '../features/menu_management/catalog_setup/models/catalog_setup_models.da
 import '../features/menu_management/catalog_setup/views/catalog_setup_screen.dart';
 import '../features/menu_management/menus/controllers/menu_list_cubit.dart';
 import '../features/menu_management/menus/controllers/menu_detail_cubit.dart';
-import '../features/menu_management/menus/controllers/menu_editor_cubit.dart';
 import '../features/menu_management/menus/controllers/product_placements_cubit.dart';
 import '../features/menu_management/menus/views/menu_list_screen.dart';
 import '../features/menu_management/menus/views/menu_detail_screen.dart';
-import '../features/menu_management/menus/views/menu_editor_screen.dart';
-import '../features/menu_management/menus/views/product_placements_screen.dart';
 import '../features/menu_management/assignments/controllers/menu_assignments_cubit.dart';
 import '../features/menu_management/assignments/views/menu_assignments_screen.dart';
 import '../features/menu_management/review/controllers/menu_review_cubit.dart';
@@ -74,7 +71,7 @@ Page<void> _materialEffectPage(
   name: state.name,
   opaque: false,
   barrierDismissible: true,
-      barrierColor: AppColors.materialEffectBackdrop,
+  barrierColor: AppColors.materialEffectBackdrop,
   barrierLabel: AppLocalizations.of(context).recipeModifierMaterialEffects,
   transitionDuration: const Duration(milliseconds: 220),
   reverseTransitionDuration: const Duration(milliseconds: 180),
@@ -531,10 +528,9 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementMenuCreate,
           name: AppRouteNames.menuManagementMenuCreate,
-          builder: (context, state) => BlocProvider<MenuEditorCubit>(
-            create: (_) => serviceLocator<MenuEditorCubit>(),
-            child: const MenuEditorScreen(),
-          ),
+          // The primary interaction is a right-side sheet from the list.
+          // Preserve legacy bookmarks without reviving the old full-page form.
+          redirect: (_, _) => AppRoutes.menuManagementMenus,
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenuDetail,
@@ -542,34 +538,44 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['menuId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<MenuDetailCubit>(
-              create: (_) => serviceLocator<MenuDetailCubit>(),
-              child: MenuDetailScreen(menuId: id),
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<MenuDetailCubit>(
+                  create: (_) => serviceLocator<MenuDetailCubit>(),
+                ),
+                BlocProvider<ProductPlacementsCubit>(
+                  create: (_) => serviceLocator<ProductPlacementsCubit>(),
+                ),
+              ],
+              child: MenuDetailScreen(
+                menuId: id,
+                initialTab: MenuWorkspaceTab.fromQuery(
+                  state.uri.queryParameters['tab'],
+                ),
+              ),
             );
           },
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenuPlacements,
           name: AppRouteNames.menuManagementMenuPlacements,
-          builder: (context, state) {
+          redirect: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['menuId']);
-            if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<ProductPlacementsCubit>(
-              create: (_) => serviceLocator<ProductPlacementsCubit>(),
-              child: ProductPlacementsScreen(menuId: id),
+            if (id == null) return AppRoutes.menuManagementMenus;
+            return MenuManagementRouteLocations.menuWorkspace(
+              id,
+              tab: MenuWorkspaceTab.products,
             );
           },
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenuEdit,
           name: AppRouteNames.menuManagementMenuEdit,
-          builder: (context, state) {
+          redirect: (_, state) {
             final id = parsePositiveRouteId(state.pathParameters['menuId']);
-            if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<MenuEditorCubit>(
-              create: (_) => serviceLocator<MenuEditorCubit>(),
-              child: MenuEditorScreen(menuId: id),
-            );
+            return id == null
+                ? AppRoutes.menuManagementMenus
+                : MenuManagementRouteLocations.menuWorkspace(id);
           },
         ),
         GoRoute(

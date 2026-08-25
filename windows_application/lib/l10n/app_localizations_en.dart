@@ -2405,4 +2405,555 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get catalogSetupRefreshInProgress => 'Refreshing catalog setup';
+
+  @override
+  String get menuListTitle => 'Menus';
+
+  @override
+  String get menuListSubtitle =>
+      'Create and organize the menus customers can order from.';
+
+  @override
+  String get menuListAdd => 'Add Menu';
+
+  @override
+  String get menuListSearch => 'Search menus...';
+
+  @override
+  String get menuListStatus => 'Status';
+
+  @override
+  String get menuListSort => 'Sort';
+
+  @override
+  String get menuListDirection => 'Direction';
+
+  @override
+  String get menuListRefresh => 'Refresh menus';
+
+  @override
+  String get menuListMenu => 'Menu';
+
+  @override
+  String get menuListSections => 'Sections';
+
+  @override
+  String get menuListVisibleProducts => 'Visible Products';
+
+  @override
+  String get menuListLastUpdated => 'Last Updated';
+
+  @override
+  String get menuListActions => 'Actions';
+
+  @override
+  String get menuListOpen => 'Open';
+
+  @override
+  String get menuListClearFilters => 'Clear filters';
+
+  @override
+  String get menuListNoMenusYet => 'No menus yet';
+
+  @override
+  String get menuListNoMenusHelp =>
+      'Create your first Menu and start organizing Products into Sections.';
+
+  @override
+  String get menuListNoMatches => 'No menus match these filters.';
+
+  @override
+  String get menuListNoMatchesHelp =>
+      'Try changing the search or status filter.';
+
+  @override
+  String get menuListCouldNotLoad => 'Couldn’t load menus';
+
+  @override
+  String get menuListCouldNotLoadHelp => 'Check your connection and try again.';
+
+  @override
+  String get menuListLoadMore => 'Load more';
+
+  @override
+  String get menuListArchiveTitle => 'Archive menu?';
+
+  @override
+  String get menuListArchiveHelp =>
+      'The menu can be restored later. Existing orders and published versions are unchanged.';
+
+  @override
+  String get menuListRestoreTitle => 'Restore menu?';
+
+  @override
+  String get menuListRestoreHelp =>
+      'Restoring makes the menu editable again. It does not publish the menu.';
+
+  @override
+  String menuListActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get menuListPaused => 'Paused';
+
+  @override
+  String get menuListPriority => 'Priority';
+
+  @override
+  String get menuListName => 'Name';
+
+  @override
+  String get menuListCreated => 'Created';
+
+  @override
+  String get menuListUpdated => 'Last updated';
+
+  @override
+  String get menuListAscending => 'Ascending';
+
+  @override
+  String get menuListDescending => 'Descending';
+
+  @override
+  String get menuListAll => 'All';
+
+  @override
+  String get menuListDraft => 'Draft';
+
+  @override
+  String get menuListActive => 'Active';
+
+  @override
+  String get menuListArchived => 'Archived';
+
+  @override
+  String get menuListEdit => 'Edit';
+
+  @override
+  String get menuListArchive => 'Archive';
+
+  @override
+  String get menuListRestore => 'Restore';
+
+  @override
+  String get menuListCancel => 'Cancel';
+
+  @override
+  String get menuListRetry => 'Retry';
+
+  @override
+  String get menuEditorAddTitle => 'Add Menu';
+
+  @override
+  String get menuEditorEditTitle => 'Edit Menu';
+
+  @override
+  String get menuEditorAddHelp =>
+      'Start with the names your staff and customers recognize.';
+
+  @override
+  String get menuEditorEditHelp =>
+      'Update the menu identity without leaving this workspace.';
+
+  @override
+  String get menuEditorClose => 'Close menu editor';
+
+  @override
+  String get menuEditorEnglishName => 'English Name';
+
+  @override
+  String get menuEditorArabicName => 'Arabic Name';
+
+  @override
+  String get menuEditorMoreDetails => 'More details';
+
+  @override
+  String get menuEditorHideDetails => 'Hide details';
+
+  @override
+  String get menuEditorEnglishDescription => 'English Description';
+
+  @override
+  String get menuEditorArabicDescription => 'Arabic Description';
+
+  @override
+  String get menuEditorCoverImageUrl => 'Cover image URL';
+
+  @override
+  String get menuEditorPriority => 'Priority';
+
+  @override
+  String get menuEditorPriorityHelp =>
+      'Controls the ordering when menus are shown together.';
+
+  @override
+  String get menuEditorStatus => 'Menu status';
+
+  @override
+  String get menuEditorCreate => 'Create Menu';
+
+  @override
+  String get menuEditorSaveChanges => 'Save Changes';
+
+  @override
+  String get menuEditorDraftHelp =>
+      'New menus start as Draft. You can activate them later.';
+
+  @override
+  String get menuEditorNameRequired =>
+      'Enter an English or Arabic name to continue.';
+
+  @override
+  String get menuEditorPriorityInvalid => 'Enter a whole number for priority.';
+
+  @override
+  String get menuEditorSaveFailed =>
+      'We couldn’t save this menu. Please try again.';
+
+  @override
+  String get menuEditorArchivedReadOnly =>
+      'Archived menus are read-only. Restore this menu before editing it.';
+
+  @override
+  String get menuEditorStatusDraft => 'Draft';
+
+  @override
+  String get menuEditorStatusActive => 'Active';
+
+  @override
+  String get menuEditorStatusPaused => 'Paused';
+
+  @override
+  String get menuEditorStatusArchived => 'Archived';
+
+  @override
+  String get menuOverviewEditMenu => 'Edit Menu';
+
+  @override
+  String get menuOverviewActions => 'Menu actions';
+
+  @override
+  String get menuOverviewTab => 'Overview';
+
+  @override
+  String get menuOverviewSectionsTab => 'Sections';
+
+  @override
+  String get menuOverviewProductsTab => 'Products';
+
+  @override
+  String get menuOverviewWorkspaceTabs => 'Menu workspace tabs';
+
+  @override
+  String get menuOverviewDetails => 'Menu details';
+
+  @override
+  String get menuOverviewName => 'Name';
+
+  @override
+  String get menuOverviewStatus => 'Status';
+
+  @override
+  String get menuOverviewComposition => 'Composition';
+
+  @override
+  String get menuOverviewManageSections => 'Manage Sections';
+
+  @override
+  String get menuOverviewManageProducts => 'Manage Products';
+
+  @override
+  String menuOverviewCompositionValue(
+    int sectionCount,
+    int visibleProductCount,
+  ) {
+    return '$sectionCount Sections · $visibleProductCount visible Products';
+  }
+
+  @override
+  String get menuOverviewDraft => 'Draft';
+
+  @override
+  String get menuOverviewActive => 'Active';
+
+  @override
+  String get menuOverviewPaused => 'Paused';
+
+  @override
+  String get menuOverviewArchived => 'Archived';
+
+  @override
+  String get menuOverviewArchivedReadOnly =>
+      'This menu is archived and read-only. Restore it before changing its composition.';
+
+  @override
+  String get menuOverviewLoading => 'Loading menu workspace';
+
+  @override
+  String get menuOverviewCouldNotLoad => 'Couldn’t load this menu';
+
+  @override
+  String get menuOverviewArchive => 'Archive';
+
+  @override
+  String get menuOverviewRestore => 'Restore';
+
+  @override
+  String get menuSectionsTitle => 'Sections';
+
+  @override
+  String get menuSectionsHelp =>
+      'Organize this menu into customer-friendly groups.';
+
+  @override
+  String get menuSectionsAdd => 'Add Section';
+
+  @override
+  String get menuSectionsReorder => 'Reorder Sections';
+
+  @override
+  String get menuSectionsDone => 'Done';
+
+  @override
+  String get menuSectionsReorderHelp =>
+      'Use the arrows to change the order customers see.';
+
+  @override
+  String menuSectionsProducts(int count) {
+    return '$count Products';
+  }
+
+  @override
+  String get menuSectionsArchived => 'Archived';
+
+  @override
+  String get menuSectionsInactive => 'Inactive';
+
+  @override
+  String menuSectionsActions(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get menuSectionsEdit => 'Edit';
+
+  @override
+  String get menuSectionsArchive => 'Archive';
+
+  @override
+  String get menuSectionsRestore => 'Restore';
+
+  @override
+  String get menuSectionsMoveUp => 'Move Up';
+
+  @override
+  String get menuSectionsMoveDown => 'Move Down';
+
+  @override
+  String get menuSectionsNoSections => 'No Sections yet';
+
+  @override
+  String get menuSectionsEmptyHelp =>
+      'Create a Section before adding Products.';
+
+  @override
+  String get menuSectionsLoadError => 'Couldn’t load Sections';
+
+  @override
+  String get menuSectionEditorAddTitle => 'Add Section';
+
+  @override
+  String get menuSectionEditorEditTitle => 'Edit Section';
+
+  @override
+  String get menuSectionEditorAddHelp =>
+      'Create a clear group customers can browse.';
+
+  @override
+  String get menuSectionEditorEditHelp =>
+      'Update this group without leaving the menu workspace.';
+
+  @override
+  String get menuSectionEditorClose => 'Close Section editor';
+
+  @override
+  String get menuSectionEditorEnglishName => 'English Name';
+
+  @override
+  String get menuSectionEditorArabicName => 'Arabic Name';
+
+  @override
+  String get menuSectionEditorMoreDetails => 'More details';
+
+  @override
+  String get menuSectionEditorHideDetails => 'Hide details';
+
+  @override
+  String get menuSectionEditorDescription => 'Description';
+
+  @override
+  String get menuSectionEditorImageUrl => 'Image URL';
+
+  @override
+  String get menuSectionEditorActive => 'Active Section';
+
+  @override
+  String get menuSectionEditorNameRequired =>
+      'Enter an English or Arabic name to continue.';
+
+  @override
+  String get menuSectionEditorSaveFailed =>
+      'Couldn’t save this Section. Check the fields and try again.';
+
+  @override
+  String get menuSectionEditorSave => 'Save Changes';
+
+  @override
+  String get menuProductsTitle => 'Products';
+
+  @override
+  String get menuProductsHelp =>
+      'Organize the Products customers see inside each Section.';
+
+  @override
+  String get menuProductsAdd => 'Add Products';
+
+  @override
+  String get menuProductsReorder => 'Reorder Products';
+
+  @override
+  String get menuProductsDone => 'Done';
+
+  @override
+  String get menuProductsReorderHelp =>
+      'Use the arrows to set the order customers see within each Section.';
+
+  @override
+  String get menuProductsSearchHint => 'Search Products in this Menu';
+
+  @override
+  String menuProductsCount(int count) {
+    return '$count Products';
+  }
+
+  @override
+  String get menuProductsPickerTitle => 'Add Products';
+
+  @override
+  String get menuProductsPickerTargetSection => 'Add to Section';
+
+  @override
+  String get menuProductsPickerSearchHint => 'Search Products...';
+
+  @override
+  String menuProductsPickerAlreadyInSection(String section) {
+    return 'Already in $section';
+  }
+
+  @override
+  String menuProductsPickerSelected(int count) {
+    return 'Selected: $count';
+  }
+
+  @override
+  String get menuProductsPickerNoMatches => 'No Products match your search.';
+
+  @override
+  String get menuProductsPickerNoEligible =>
+      'All available Products are already in this Section.';
+
+  @override
+  String get menuProductsPickerLoadError => 'Could not load Products.';
+
+  @override
+  String menuProductsPickerPartialAdded(int added, int failed) {
+    return '$added Products were added. $failed could not be added.';
+  }
+
+  @override
+  String menuProductsPickerConflict(String section) {
+    return 'This Product is already in $section.';
+  }
+
+  @override
+  String menuProductsBasePrice(String price) {
+    return 'Base $price';
+  }
+
+  @override
+  String get menuProductsFeatured => 'Featured';
+
+  @override
+  String get menuProductsHidden => 'Hidden';
+
+  @override
+  String get menuProductsArchivedPlacement => 'Removed from Menu';
+
+  @override
+  String get menuProductsArchivedProduct => 'Archived Product';
+
+  @override
+  String get menuProductsInactive => 'Inactive';
+
+  @override
+  String get menuProductsActions => 'Product actions';
+
+  @override
+  String get menuProductsMarkFeatured => 'Mark Featured';
+
+  @override
+  String get menuProductsRemoveFeatured => 'Remove Featured';
+
+  @override
+  String get menuProductsHide => 'Hide from Menu';
+
+  @override
+  String get menuProductsShow => 'Show on Menu';
+
+  @override
+  String get menuProductsMove => 'Move to Section';
+
+  @override
+  String get menuProductsRemove => 'Remove from Menu';
+
+  @override
+  String get menuProductsRestore => 'Restore Placement';
+
+  @override
+  String get menuProductsMoveUp => 'Move Up';
+
+  @override
+  String get menuProductsMoveDown => 'Move Down';
+
+  @override
+  String get menuProductsEmpty => 'No Products in this Section yet.';
+
+  @override
+  String get menuProductsNoMatches => 'No matching Products in this Section.';
+
+  @override
+  String get menuProductsNoSections => 'No Sections yet';
+
+  @override
+  String get menuProductsNoSectionsHelp =>
+      'Create a Section before adding Products.';
+
+  @override
+  String get menuProductsArchivedMenuReadOnly =>
+      'This menu is archived and read-only. Its composition remains available to review.';
+
+  @override
+  String get menuProductsLoadError => 'Couldn’t load Products';
+
+  @override
+  String get menuProductsRemoveHelp =>
+      'This removes the Product from this Section and Menu only. The Product remains in the Catalog.';
+
+  @override
+  String get menuProductsRestoreHelp =>
+      'This restores this Placement only. It does not restore or reactivate the Product.';
+
+  @override
+  String get menuListNotAvailable => '—';
 }

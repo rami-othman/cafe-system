@@ -12,6 +12,25 @@ enum PlacementFilter { active, archived, all }
 
 enum PlacementStatus { initial, loading, loaded, refreshing, failure }
 
+class PlacementBatchResult {
+  const PlacementBatchResult({
+    required this.successfulProductIds,
+    required this.failedProductIds,
+    required this.conflictedProductIds,
+    this.refreshFailed = false,
+  });
+
+  final List<int> successfulProductIds;
+  final List<int> failedProductIds;
+  final List<int> conflictedProductIds;
+  final bool refreshFailed;
+
+  bool get fullySucceeded =>
+      !refreshFailed &&
+      failedProductIds.isEmpty &&
+      successfulProductIds.isNotEmpty;
+}
+
 class ProductPlacementsState {
   const ProductPlacementsState({
     this.status = PlacementStatus.initial,
@@ -22,6 +41,7 @@ class ProductPlacementsState {
     this.pickerLoading = false,
     this.pickerPage = 1,
     this.pickerHasMore = false,
+    this.pickerSearch = '',
     this.pickerErrorMessage,
     this.actionId,
     this.errorMessage,
@@ -35,6 +55,7 @@ class ProductPlacementsState {
   final List<ProductSummary> pickerProducts;
   final bool pickerLoading, pickerHasMore;
   final int pickerPage;
+  final String pickerSearch;
   final String? pickerErrorMessage;
   final int? actionId;
   final String? errorMessage, successMessage;
@@ -64,6 +85,7 @@ class ProductPlacementsState {
     bool? pickerLoading,
     bool? pickerHasMore,
     int? pickerPage,
+    String? pickerSearch,
     String? pickerErrorMessage,
     bool clearPickerError = false,
     int? actionId,
@@ -82,6 +104,7 @@ class ProductPlacementsState {
     pickerLoading: pickerLoading ?? this.pickerLoading,
     pickerHasMore: pickerHasMore ?? this.pickerHasMore,
     pickerPage: pickerPage ?? this.pickerPage,
+    pickerSearch: pickerSearch ?? this.pickerSearch,
     pickerErrorMessage: clearPickerError
         ? null
         : pickerErrorMessage ?? this.pickerErrorMessage,
@@ -96,6 +119,29 @@ class ProductPlacementsCubit extends Cubit<ProductPlacementsState> {
   ProductPlacementsCubit({required this.repository})
     : super(const ProductPlacementsState());
   final MenuCatalogRepository repository;
+  int _pickerRequest = 0;
+
+  /// Reuse the canonical Menu Detail snapshot when Products is embedded in
+  /// Menu Workspace. Mutations still reconcile via [load].
+  void hydrate(MenuRecord value) {
+    final entries = <int, List<ProductPlacement>>{};
+    for (final placement in value.placements) {
+      (entries[placement.sectionId] ??= <ProductPlacement>[]).add(placement);
+    }
+    for (final section in value.sections) {
+      entries.putIfAbsent(section.id, () => <ProductPlacement>[]);
+    }
+    emit(
+      state.copyWith(
+        status: PlacementStatus.loaded,
+        menu: value,
+        placements: entries,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
+  }
+
   Future<void> load(int menuId, {bool refresh = false}) async {
     emit(
       state.copyWith(
@@ -106,19 +152,21 @@ class ProductPlacementsCubit extends Cubit<ProductPlacementsState> {
     );
     try {
       final menu = await repository.getMenu(menuId, includeArchived: true);
-      final entries = await Future.wait(
-        menu.sections.map(
-          (s) async => MapEntry(
-            s.id,
-            await repository.getMenuPlacements(s.id, includeArchived: true),
-          ),
-        ),
-      );
+      // GET /admin/menus/:id is the authoritative bounded composition
+      // snapshot: sections + placements + embedded products/variants.
+      // Do not regress to the former section-by-section request fan-out.
+      final entries = <int, List<ProductPlacement>>{};
+      for (final placement in menu.placements) {
+        (entries[placement.sectionId] ??= <ProductPlacement>[]).add(placement);
+      }
+      for (final section in menu.sections) {
+        entries.putIfAbsent(section.id, () => <ProductPlacement>[]);
+      }
       emit(
         state.copyWith(
           status: PlacementStatus.loaded,
           menu: menu,
-          placements: Map<int, List<ProductPlacement>>.fromEntries(entries),
+          placements: entries,
           clearError: true,
         ),
       );
@@ -140,21 +188,25 @@ class ProductPlacementsCubit extends Cubit<ProductPlacementsState> {
     int? categoryId,
     bool next = false,
   }) async {
-    if (state.pickerLoading) return;
+    final int request = ++_pickerRequest;
     final page = next ? state.pickerPage + 1 : 1;
-    emit(state.copyWith(pickerLoading: true, clearPickerError: true));
+    emit(
+      state.copyWith(
+        pickerLoading: true,
+        pickerSearch: search,
+        clearPickerError: true,
+      ),
+    );
     try {
       final result = await repository.listProducts(
         filter: ProductCatalogFilter(search: search, categoryId: categoryId),
         page: page,
       );
-      final placed = (state.placements[sectionId] ?? const <ProductPlacement>[])
-          .where((p) => !p.isArchived)
-          .map((p) => p.productId)
-          .toSet();
-      final products = result.items
-          .where((p) => p.isActive && !p.isArchived && !placed.contains(p.id))
-          .toList();
+      if (request != _pickerRequest) return;
+      // Inactive (but unarchived) products are valid according to the API.
+      // Keep target-section duplicates in the result so the picker can explain
+      // why they are unavailable; the sheet owns their disabled state.
+      final products = result.items.where((p) => !p.isArchived).toList();
       emit(
         state.copyWith(
           pickerLoading: false,
@@ -166,6 +218,7 @@ class ProductPlacementsCubit extends Cubit<ProductPlacementsState> {
         ),
       );
     } catch (e) {
+      if (request != _pickerRequest) return;
       emit(
         state.copyWith(pickerLoading: false, pickerErrorMessage: _message(e)),
       );
@@ -183,6 +236,89 @@ class ProductPlacementsCubit extends Cubit<ProductPlacementsState> {
           );
         await repository.createProductPlacement(sectionId, draft);
       }, 'Product added to section successfully.');
+
+  Future<PlacementBatchResult> createMany(
+    int sectionId,
+    List<int> productIds,
+  ) async {
+    if (state.isBusy || state.readOnly || productIds.isEmpty) {
+      return const PlacementBatchResult(
+        successfulProductIds: [],
+        failedProductIds: [],
+        conflictedProductIds: [],
+      );
+    }
+    final menuId = state.menu?.id;
+    if (menuId == null) {
+      return const PlacementBatchResult(
+        successfulProductIds: [],
+        failedProductIds: [],
+        conflictedProductIds: [],
+      );
+    }
+    final existing = (state.placements[sectionId] ?? const <ProductPlacement>[])
+        .where((placement) => !placement.isArchived)
+        .map((placement) => placement.productId)
+        .toSet();
+    final ids = productIds.where(existing.add).toList(growable: false);
+    if (ids.isEmpty) {
+      emit(
+        state.copyWith(
+          errorMessage: 'Selected products are already in this section.',
+        ),
+      );
+      return PlacementBatchResult(
+        successfulProductIds: const [],
+        failedProductIds: productIds,
+        conflictedProductIds: productIds,
+      );
+    }
+    emit(
+      state.copyWith(actionId: sectionId, clearError: true, clearSuccess: true),
+    );
+    final successful = <int>[];
+    final failed = <int>[];
+    final conflicted = <int>[];
+    try {
+      _assertSectionMutable(sectionId);
+      for (final id in ids) {
+        try {
+          await repository.createProductPlacement(
+            sectionId,
+            ProductPlacementDraft(productId: id),
+          );
+          successful.add(id);
+        } catch (e) {
+          failed.add(id);
+          if (_isDuplicateError(e)) conflicted.add(id);
+        }
+      }
+      await load(menuId, refresh: true);
+      if (state.status == PlacementStatus.failure) {
+        emit(state.copyWith(clearAction: true));
+        return PlacementBatchResult(
+          successfulProductIds: successful,
+          failedProductIds: failed,
+          conflictedProductIds: conflicted,
+          refreshFailed: true,
+        );
+      }
+      emit(state.copyWith(clearAction: true));
+      return PlacementBatchResult(
+        successfulProductIds: successful,
+        failedProductIds: failed,
+        conflictedProductIds: conflicted,
+      );
+    } catch (e) {
+      emit(state.copyWith(clearAction: true, errorMessage: _message(e)));
+      return PlacementBatchResult(
+        successfulProductIds: successful,
+        failedProductIds: ids.where((id) => !successful.contains(id)).toList(),
+        conflictedProductIds: conflicted,
+      );
+    }
+  }
+
   Future<void> update(int placementId, ProductPlacementDraft draft) =>
       _mutate(placementId, () {
         _assertPlacementMutable(placementId);
@@ -302,6 +438,9 @@ class ProductPlacementsCubit extends Cubit<ProductPlacementsState> {
       : 'Unable to update product placements.';
   Map<String, List<String>> _fields(Object e) =>
       e is ApiException ? e.validationErrors ?? const {} : const {};
+
+  bool _isDuplicateError(Object e) =>
+      _message(e).toLowerCase().contains('already placed');
 }
 
 class _PlacementError implements Exception {

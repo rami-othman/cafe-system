@@ -15,6 +15,7 @@ class MenuDetailState extends Equatable {
     this.menu,
     this.sectionFilter = MenuSectionFilter.active,
     this.errorMessage,
+    this.sectionFieldErrors = const <String, String>{},
     this.currentSectionId,
     this.menuLifecycleInProgress = false,
     this.reorderInProgress = false,
@@ -23,6 +24,7 @@ class MenuDetailState extends Equatable {
   final MenuRecord? menu;
   final MenuSectionFilter sectionFilter;
   final String? errorMessage;
+  final Map<String, String> sectionFieldErrors;
   final int? currentSectionId;
   final bool menuLifecycleInProgress, reorderInProgress;
   bool get isBusy =>
@@ -45,16 +47,21 @@ class MenuDetailState extends Equatable {
     MenuRecord? menu,
     MenuSectionFilter? sectionFilter,
     String? errorMessage,
+    Map<String, String>? sectionFieldErrors,
     int? currentSectionId,
     bool? menuLifecycleInProgress,
     bool? reorderInProgress,
     bool clearError = false,
+    bool clearSectionFieldErrors = false,
     bool clearSection = false,
   }) => MenuDetailState(
     status: status ?? this.status,
     menu: menu ?? this.menu,
     sectionFilter: sectionFilter ?? this.sectionFilter,
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+    sectionFieldErrors: clearSectionFieldErrors
+        ? const <String, String>{}
+        : sectionFieldErrors ?? this.sectionFieldErrors,
     currentSectionId: clearSection
         ? null
         : currentSectionId ?? this.currentSectionId,
@@ -68,6 +75,7 @@ class MenuDetailState extends Equatable {
     menu,
     sectionFilter,
     errorMessage,
+    sectionFieldErrors,
     currentSectionId,
     menuLifecycleInProgress,
     reorderInProgress,
@@ -153,14 +161,26 @@ class MenuDetailCubit extends Cubit<MenuDetailState> {
     Future<MenuSectionRecord> Function() action,
   ) async {
     if (state.menu == null || state.isReadOnly || state.isBusy) return;
-    emit(state.copyWith(currentSectionId: id ?? -1, clearError: true));
+    emit(
+      state.copyWith(
+        currentSectionId: id ?? -1,
+        clearError: true,
+        clearSectionFieldErrors: true,
+      ),
+    );
     try {
       await action();
       final int menuId = state.menu!.id;
-      emit(state.copyWith(clearSection: true));
+      emit(state.copyWith(clearSection: true, clearSectionFieldErrors: true));
       await load(menuId);
     } catch (e) {
-      emit(state.copyWith(clearSection: true, errorMessage: _message(e)));
+      emit(
+        state.copyWith(
+          clearSection: true,
+          errorMessage: _message(e),
+          sectionFieldErrors: _sectionValidationErrors(e),
+        ),
+      );
     }
   }
 
@@ -199,4 +219,14 @@ class MenuDetailCubit extends Cubit<MenuDetailState> {
 
   String _message(Object e) =>
       e is ApiException ? e.message : 'Unable to update this menu.';
+
+  Map<String, String> _sectionValidationErrors(Object error) {
+    if (error is! ApiException) return const <String, String>{};
+    return (error.validationErrors ?? const <String, List<String>>{}).map(
+      (String field, List<String> messages) => MapEntry<String, String>(
+        field,
+        messages.isEmpty ? '' : messages.first,
+      ),
+    );
+  }
 }

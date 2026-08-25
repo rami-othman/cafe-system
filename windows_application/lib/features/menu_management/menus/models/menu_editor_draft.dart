@@ -40,6 +40,30 @@ class MenuEditorDraft {
     status: status ?? this.status,
     priority: priority ?? this.priority,
   );
+
+  /// The API has one canonical value as well as optional translations.  The
+  /// editor deliberately derives that canonical value from the manager-facing
+  /// localized inputs so it never asks for the same name or description twice.
+  MenuEditorDraft withLocalizedNames({
+    required String english,
+    required String arabic,
+  }) {
+    final String canonical = english.trim().isNotEmpty ? english : arabic;
+    return copyWith(name: canonical, nameEn: english, nameAr: arabic);
+  }
+
+  MenuEditorDraft withLocalizedDescriptions({
+    required String english,
+    required String arabic,
+  }) {
+    final String canonical = english.trim().isNotEmpty ? english : arabic;
+    return copyWith(
+      description: canonical,
+      descriptionEn: english,
+      descriptionAr: arabic,
+    );
+  }
+
   Map<String, dynamic> toJson({required bool isCreate}) => <String, dynamic>{
     'name': name.trim(),
     'nameAr': _null(nameAr),
@@ -84,6 +108,17 @@ class MenuSectionDraft {
     isActive: isActive ?? this.isActive,
     sortOrder: sortOrder ?? this.sortOrder,
   );
+
+  /// Sections use the same canonical-name convention as menus: managers
+  /// enter localized names while the API receives one derived canonical name.
+  MenuSectionDraft withLocalizedNames({
+    required String english,
+    required String arabic,
+  }) {
+    final String canonical = english.trim().isNotEmpty ? english : arabic;
+    return copyWith(name: canonical, nameEn: english, nameAr: arabic);
+  }
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'name': name.trim(),
     'nameAr': MenuEditorDraft._null(nameAr),

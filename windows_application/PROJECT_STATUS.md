@@ -180,7 +180,8 @@ instant, and returns the corresponding Branch-local wall-clock time consistently
 - Authentication remains intentionally deferred.
 - Combos and broader localization migration.
 - Phase 4K architecture cleanup.
-- Batch 8 and later UX batches.
+- UX batches after Batch 9 (Assignments & Schedules, Review / Preview / Publish,
+  and Versions / Compare / Rollback).
 
 ## KNOWN ARCHITECTURE DEBT
 

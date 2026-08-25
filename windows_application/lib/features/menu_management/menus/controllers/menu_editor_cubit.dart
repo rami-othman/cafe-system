@@ -19,6 +19,7 @@ class MenuEditorState extends Equatable {
     this.status = MenuEditorStatus.initializing,
     this.draft = const MenuEditorDraft(),
     this.menuId,
+    this.isArchived = false,
     this.result,
     this.fieldErrors = const <String, String>{},
     this.errorMessage,
@@ -27,6 +28,7 @@ class MenuEditorState extends Equatable {
   final MenuEditorStatus status;
   final MenuEditorDraft draft;
   final int? menuId;
+  final bool isArchived;
   final MenuRecord? result;
   final Map<String, String> fieldErrors;
   final String? errorMessage;
@@ -36,6 +38,7 @@ class MenuEditorState extends Equatable {
     MenuEditorStatus? status,
     MenuEditorDraft? draft,
     int? menuId,
+    bool? isArchived,
     MenuRecord? result,
     Map<String, String>? fieldErrors,
     String? errorMessage,
@@ -45,6 +48,7 @@ class MenuEditorState extends Equatable {
     status: status ?? this.status,
     draft: draft ?? this.draft,
     menuId: menuId ?? this.menuId,
+    isArchived: isArchived ?? this.isArchived,
     result: result ?? this.result,
     fieldErrors: clearErrors
         ? const <String, String>{}
@@ -65,6 +69,7 @@ class MenuEditorState extends Equatable {
     draft.status,
     draft.priority,
     menuId,
+    isArchived,
     result?.id,
     fieldErrors,
     errorMessage,
@@ -85,6 +90,7 @@ class MenuEditorCubit extends Cubit<MenuEditorState> {
         MenuEditorState(
           status: MenuEditorStatus.ready,
           menuId: id,
+          isArchived: m.isArchived,
           draft: MenuEditorDraft(
             name: m.name,
             nameAr: m.nameAr,
@@ -112,6 +118,7 @@ class MenuEditorCubit extends Cubit<MenuEditorState> {
       emit(state.copyWith(draft: draft, isDirty: true, clearErrors: true));
   Future<void> submit() async {
     if (state.status == MenuEditorStatus.submitting) return;
+    if (state.isArchived) return;
     final Map<String, String> errors = _validate(state.draft);
     if (errors.isNotEmpty) {
       emit(
@@ -146,10 +153,10 @@ class MenuEditorCubit extends Cubit<MenuEditorState> {
 
   Map<String, String> _validate(MenuEditorDraft draft) {
     final Map<String, String> out = <String, String>{};
-    if (draft.name.trim().isEmpty) out['name'] = 'Default name is required.';
+    if (draft.name.trim().isEmpty) out['name'] = 'required';
     if (draft.priority.trim().isEmpty ||
         int.tryParse(draft.priority.trim()) == null)
-      out['priority'] = 'Priority must be an integer.';
+      out['priority'] = 'invalidInteger';
     return out;
   }
 
@@ -160,8 +167,7 @@ class MenuEditorCubit extends Cubit<MenuEditorState> {
             x.key: x.value.first,
         }
       : const <String, String>{};
-  String _message(Object e) =>
-      e is ApiException ? e.message : 'Unable to save this menu.';
+  String _message(Object _) => 'saveFailed';
 }
 
 // ignore_for_file: curly_braces_in_flow_control_structures
