@@ -181,11 +181,15 @@ class ResolvedPreview extends Equatable {
 
   factory ResolvedPreview.fromJson(Map<String, dynamic> json) {
     final Map? context = json['context'] as Map?;
+    final dynamic menus = json['menus'];
+    if (context == null || menus is! List) {
+      throw const FormatException('Invalid menu collection preview response.');
+    }
     return ResolvedPreview(
       canPublish: readBool(json['canPublish']),
-      timezone: readString(context?['timezone']),
-      evaluatedAt: readString(context?['evaluatedAt']),
-      menus: (json['menus'] as List? ?? const [])
+      timezone: readString(context['timezone']),
+      evaluatedAt: readString(context['evaluatedAt']),
+      menus: menus
           .whereType<Map>()
           .map(
             (Map item) =>
@@ -207,6 +211,22 @@ class ResolvedPreview extends Equatable {
     evaluatedAt,
     menus,
   ];
+}
+
+/// A deliberately small projection of the single-menu preview contract used
+/// by the Menu Schedule drawer. Product, variant, and modifier diagnostics do
+/// not participate in this manager-facing schedule check.
+class MenuScheduleCheck extends Equatable {
+  const MenuScheduleCheck({
+    required this.isScheduledAvailable,
+    required this.scheduleReason,
+  });
+
+  final bool isScheduledAvailable;
+  final String scheduleReason;
+
+  @override
+  List<Object?> get props => <Object?>[isScheduledAvailable, scheduleReason];
 }
 
 /// Metadata returned for the immutable version currently published for a
@@ -318,12 +338,12 @@ class ResolvedMenu extends Equatable {
   });
 
   factory ResolvedMenu.fromJson(Map<String, dynamic> json) => ResolvedMenu(
-    id: readInt(json['id']) ?? 0,
+    id: _requiredPreviewInt(json, 'id'),
     name: readString(json['name'], fallback: 'Unnamed menu'),
-    priority: readInt(json['priority']) ?? 0,
-    isAssigned: readBool(json['isAssigned']),
-    isScheduledAvailable: readBool(json['isScheduledAvailable']),
-    scheduleReason: readString(json['scheduleReason']),
+    priority: _requiredPreviewInt(json, 'priority'),
+    isAssigned: _requiredPreviewBool(json, 'isAssigned'),
+    isScheduledAvailable: _requiredPreviewBool(json, 'isScheduledAvailable'),
+    scheduleReason: _requiredPreviewString(json, 'scheduleReason'),
     sections: (json['sections'] as List? ?? const [])
         .whereType<Map>()
         .map(
@@ -546,3 +566,33 @@ List<String> _strings(dynamic value) => (value as List? ?? const [])
     .map((dynamic item) => readString(item))
     .where((String item) => item.isNotEmpty)
     .toList(growable: false);
+
+int _requiredPreviewInt(Map<String, dynamic> json, String key) {
+  final int? value = readInt(json[key]);
+  if (value == null) {
+    throw FormatException('Menu collection preview is missing $key.');
+  }
+  return value;
+}
+
+String _requiredPreviewString(Map<String, dynamic> json, String key) {
+  final String value = readString(json[key]).trim();
+  if (value.isEmpty) {
+    throw FormatException('Menu collection preview is missing $key.');
+  }
+  return value;
+}
+
+bool _requiredPreviewBool(Map<String, dynamic> json, String key) {
+  final dynamic value = json[key];
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    return switch (value.toLowerCase()) {
+      'true' || '1' => true,
+      'false' || '0' => false,
+      _ => throw FormatException('Menu collection preview has invalid $key.'),
+    };
+  }
+  throw FormatException('Menu collection preview is missing $key.');
+}

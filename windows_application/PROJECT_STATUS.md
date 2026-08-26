@@ -118,8 +118,19 @@ state, legacy Variants/Modifiers routes redirect to Workspace tabs, and
 Recipe/Variant children retain Product and Variant identities for returns.
 Batch 8 and Phase 4K remain **NOT STARTED**.
 
-CURRENT APPROVED WORK: **Batch 7 final closure verification** is complete. Batch
-8 and Phase 4K remain **NOT STARTED**.
+CURRENT APPROVED WORK: **Batch 10 — Assignments & Schedules, Group 1** is
+implemented. The main workspace is now context-first, uses one bounded
+collection preview for active assigned Menus, and defers Menu schedule-rule
+requests until Manage Schedule is opened. **Group 2 — Reorder Menus** is
+implemented as a focused exact-scope draft with accessible Up/Down controls
+and one complete-scope sync on Done. Scopes containing archived diagnostic
+Menu assignments block reordering because the current backend contract rejects
+archived Menus in scope sync. **Group 3 — Add Menus** is implemented as a
+directional exact-scope side sheet: one bounded all-lifecycle Menu list keeps
+current-scope assignments and archived Menus visible but disabled, supports
+local multi-selection, then performs one complete-scope sync followed by
+authoritative scope reconciliation. Menu Schedule remains scheduled for its
+dedicated follow-up group.
 
 ## AUTHORITATIVE DOMAIN RULES
 

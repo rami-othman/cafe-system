@@ -2956,5 +2956,344 @@ class AppLocalizationsAr extends AppLocalizations {
       'يؤدي هذا إلى استعادة هذا الموضع فقط. ولا يستعيد المنتج أو يعيد تنشيطه.';
 
   @override
+  String get assignmentsWorkspaceTitle => 'التخصيصات والجدولة';
+
+  @override
+  String get assignmentsWorkspaceHelp =>
+      'اختر فرعًا وقناة بيع، ثم تحكم بالقوائم المتاحة في سياق البيع هذا.';
+
+  @override
+  String get assignmentsBranch => 'الفرع';
+
+  @override
+  String get assignmentsSalesChannel => 'قناة البيع';
+
+  @override
+  String get assignmentsTimezone => 'المنطقة الزمنية';
+
+  @override
+  String get assignmentsChooseBranch => 'اختر فرعًا';
+
+  @override
+  String get assignmentsChooseChannel => 'اختر قناة بيع';
+
+  @override
+  String get assignmentsTimezonePending => 'اختر فرعًا';
+
+  @override
+  String get assignmentsNoContextTitle => 'اختر سياق بيع';
+
+  @override
+  String get assignmentsNoContextHelp => 'اختر فرعًا وقناة بيع لإدارة قوائمه.';
+
+  @override
+  String get assignmentsAssignedMenus => 'القوائم المخصصة';
+
+  @override
+  String assignmentsMenuCount(int count) {
+    return '$count قوائم مخصصة';
+  }
+
+  @override
+  String get assignmentsReorderMenus => 'ترتيب القوائم';
+
+  @override
+  String get assignmentsReorderHelp =>
+      'استخدم الأسهم لتغيير ترتيب ظهور القوائم في سياق البيع هذا. لا يحدد الترتيب القائمة الفائزة.';
+
+  @override
+  String get assignmentsReorderDone => 'تم';
+
+  @override
+  String get assignmentsMoveUp => 'نقل للأعلى';
+
+  @override
+  String get assignmentsMoveDown => 'نقل للأسفل';
+
+  @override
+  String get assignmentsReorderSaveFailed =>
+      'تعذر حفظ ترتيب القوائم. حاول مرة أخرى.';
+
+  @override
+  String get assignmentsReorderArchivedUnavailable =>
+      'لا يتوفر ترتيب القوائم بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.';
+
+  @override
+  String get assignmentsAddMenus => 'إضافة قوائم';
+
+  @override
+  String get assignmentsNoMenusTitle => 'لا توجد قوائم مخصصة';
+
+  @override
+  String assignmentsNoMenusHelp(String branch, String channel) {
+    return 'أضف قائمة إلى $branch · $channel.';
+  }
+
+  @override
+  String get assignmentsLoadErrorTitle => 'تعذر تحميل التخصيصات';
+
+  @override
+  String assignmentsLifecycle(String status) {
+    return 'القائمة: $status';
+  }
+
+  @override
+  String get assignmentsPaused => 'موقوفة';
+
+  @override
+  String get assignmentsActive => 'التخصيص نشط';
+
+  @override
+  String get assignmentsInactive => 'التخصيص غير نشط';
+
+  @override
+  String get assignmentsAvailableNow => 'متاحة الآن';
+
+  @override
+  String get assignmentsOutsideHours => 'خارج ساعات الجدولة';
+
+  @override
+  String get assignmentsNoScheduleRestriction => 'لا توجد قيود للجدولة';
+
+  @override
+  String get assignmentsScheduleUnknown => 'حالة الجدولة غير متاحة';
+
+  @override
+  String get assignmentsManageSchedule => 'إدارة الجدول';
+
+  @override
+  String get assignmentsRemove => 'إزالة من سياق البيع هذا';
+
+  @override
+  String get assignmentsArchivedDiagnostic =>
+      'قائمة مؤرشفة — الإجراءات غير متاحة';
+
+  @override
+  String get assignmentsChannelWaiterApp => 'تطبيق النادل';
+
+  @override
+  String get assignmentsChannelKiosk => 'الكشك';
+
+  @override
+  String get assignmentsChannelQrOrdering => 'طلب QR';
+
+  @override
+  String get assignmentsChannelDelivery => 'التوصيل';
+
+  @override
+  String get assignmentsChannelOnlineOrdering => 'الطلب عبر الإنترنت';
+
+  @override
+  String get assignmentsMenuFallback => 'قائمة';
+
+  @override
+  String get assignmentsAddSearch => 'البحث في القوائم';
+
+  @override
+  String get assignmentsAddEmpty =>
+      'جميع القوائم المتاحة مخصصة بالفعل لسياق البيع هذا.';
+
+  @override
+  String assignmentsAddSelected(int count) {
+    return 'المحدد: $count';
+  }
+
+  @override
+  String assignmentsAddSelectedAction(int count) {
+    return 'إضافة $count قوائم';
+  }
+
+  @override
+  String get assignmentsAddAlreadyAssigned => 'مخصصة بالفعل';
+
+  @override
+  String get assignmentsAddArchivedUnavailable =>
+      'لا يمكن تخصيص القوائم المؤرشفة.';
+
+  @override
+  String get assignmentsAddNoMatches => 'لا توجد قوائم تطابق بحثك.';
+
+  @override
+  String get assignmentsAddLoadError => 'تعذر تحميل القوائم';
+
+  @override
+  String get assignmentsAddSaveError => 'تعذر إضافة القوائم. حاول مرة أخرى.';
+
+  @override
+  String get assignmentsAddDuplicateError =>
+      'قائمة واحدة أو أكثر مخصصة بالفعل لسياق البيع هذا.';
+
+  @override
+  String get assignmentsAddArchivedScopeError =>
+      'إضافة القوائم غير متاحة بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.';
+
+  @override
+  String get menuScheduleTitle => 'جدول القائمة';
+
+  @override
+  String menuScheduleTimesShownIn(String timezone) {
+    return 'الأوقات معروضة بتوقيت $timezone';
+  }
+
+  @override
+  String get menuScheduleUsingBroader => 'يُستخدم جدول القائمة الأوسع';
+
+  @override
+  String menuScheduleCustomizedFor(String context) {
+    return 'مخصص لـ $context';
+  }
+
+  @override
+  String get menuScheduleCustomize => 'تخصيص لهذا السياق';
+
+  @override
+  String get menuScheduleUseBroader => 'استخدام الجدول الأوسع';
+
+  @override
+  String get menuScheduleAvailableAllDay => 'متاح طوال اليوم';
+
+  @override
+  String get menuScheduleUnavailable => 'غير متاح';
+
+  @override
+  String get menuScheduleCustomHours => 'ساعات مخصصة';
+
+  @override
+  String get menuScheduleStartTime => 'وقت البدء';
+
+  @override
+  String get menuScheduleEndTime => 'وقت الانتهاء';
+
+  @override
+  String menuScheduleEditDay(String day) {
+    return 'تحرير $day';
+  }
+
+  @override
+  String get menuScheduleSaveDay => 'تطبيق';
+
+  @override
+  String get menuScheduleSave => 'حفظ الجدول';
+
+  @override
+  String get menuScheduleLoadError => 'تعذر تحميل جدول القائمة';
+
+  @override
+  String get menuScheduleSaveError => 'تعذر حفظ جدول القائمة. حاول مرة أخرى.';
+
+  @override
+  String menuScheduleMultipleWindows(int count) {
+    return '$count فترات زمنية';
+  }
+
+  @override
+  String get menuScheduleMultipleWindowsReadOnly =>
+      'يحتوي هذا اليوم على عدة فترات زمنية. سيتم الحفاظ عليها ويمكن تحريرها لاحقًا في الجدول المتقدم.';
+
+  @override
+  String get menuScheduleUnavailableNotSupported =>
+      'يستخدم هذا اليوم قاعدة يومية. احتفظ بها كما هي حتى توفر الجدولة المتقدمة.';
+
+  @override
+  String get menuScheduleInvalidTimes => 'أدخل وقتين مختلفين بصيغة HH:mm.';
+
+  @override
+  String get menuScheduleMonday => 'الاثنين';
+
+  @override
+  String get menuScheduleTuesday => 'الثلاثاء';
+
+  @override
+  String get menuScheduleWednesday => 'الأربعاء';
+
+  @override
+  String get menuScheduleThursday => 'الخميس';
+
+  @override
+  String get menuScheduleFriday => 'الجمعة';
+
+  @override
+  String get menuScheduleSaturday => 'السبت';
+
+  @override
+  String get menuScheduleSunday => 'الأحد';
+
+  @override
+  String get menuScheduleMoreOptions => 'خيارات الجدول الإضافية';
+
+  @override
+  String get menuScheduleDateLimits => 'حدود التاريخ';
+
+  @override
+  String get menuScheduleStartDate => 'تاريخ البدء (اختياري)';
+
+  @override
+  String get menuScheduleEndDate => 'تاريخ الانتهاء (اختياري)';
+
+  @override
+  String get menuScheduleAddTimeWindow => 'إضافة فترة زمنية';
+
+  @override
+  String menuScheduleOvernightUntil(String time) {
+    return 'يمتد لليوم التالي — متاح حتى $time';
+  }
+
+  @override
+  String get menuScheduleEveryDayReadOnly =>
+      'تنطبق هذه القاعدة على كل يوم، لذلك يتم الاحتفاظ بها كما هي للحفاظ على معنى الجدول.';
+
+  @override
+  String get menuScheduleCheckTitle => 'التحقق من الجدول';
+
+  @override
+  String get menuScheduleDate => 'التاريخ';
+
+  @override
+  String get menuScheduleTime => 'الوقت';
+
+  @override
+  String menuScheduleCheckTimezone(String timezone) {
+    return 'تُقيَّم الأوقات بتوقيت $timezone';
+  }
+
+  @override
+  String get menuScheduleCheckSaveFirst =>
+      'احفظ تغييرات الجدول أولاً للتحقق من الجدول المحفوظ.';
+
+  @override
+  String get menuScheduleCheckFailed => 'تعذر التحقق من الجدول. حاول مرة أخرى.';
+
+  @override
+  String get menuScheduleInvalidDateRange =>
+      'يجب أن يكون تاريخ الانتهاء في تاريخ البدء أو بعده.';
+
+  @override
+  String get menuScheduleDiscardTitle => 'تجاهل تغييرات الجدول؟';
+
+  @override
+  String get menuScheduleDiscardMessage => 'لم يتم حفظ تغييرات الجدول.';
+
+  @override
+  String get menuScheduleDiscard => 'تجاهل التغييرات';
+
+  @override
+  String menuScheduleCustomizeDayTitle(String day) {
+    return 'تخصيص $day';
+  }
+
+  @override
+  String get menuScheduleCustomizeDayMessage =>
+      'ينطبق هذا الجدول حاليًا على كل الأيام. سيحافظ تخصيص يوم واحد على الجدول نفسه للأيام الأخرى ويسمح بتغيير ذلك اليوم بشكل مستقل.';
+
+  @override
+  String menuScheduleCustomizeDayAction(String day) {
+    return 'تخصيص $day';
+  }
+
+  @override
+  String get menuScheduleDateLimitsMixed =>
+      'تحتوي هذه القواعد على حدود تاريخ مختلفة. تُترك حدود التاريخ دون تغيير هنا حتى لا يستبدلها هذا المحرر.';
+
+  @override
   String get menuListNotAvailable => '—';
 }

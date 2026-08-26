@@ -2955,5 +2955,349 @@ class AppLocalizationsEn extends AppLocalizations {
       'This restores this Placement only. It does not restore or reactivate the Product.';
 
   @override
+  String get assignmentsWorkspaceTitle => 'Assignments & Schedules';
+
+  @override
+  String get assignmentsWorkspaceHelp =>
+      'Choose a Branch and sales channel, then control which Menus are available in that selling context.';
+
+  @override
+  String get assignmentsBranch => 'Branch';
+
+  @override
+  String get assignmentsSalesChannel => 'Sales Channel';
+
+  @override
+  String get assignmentsTimezone => 'Timezone';
+
+  @override
+  String get assignmentsChooseBranch => 'Choose a Branch';
+
+  @override
+  String get assignmentsChooseChannel => 'Choose a sales channel';
+
+  @override
+  String get assignmentsTimezonePending => 'Select a Branch';
+
+  @override
+  String get assignmentsNoContextTitle => 'Choose a selling context';
+
+  @override
+  String get assignmentsNoContextHelp =>
+      'Select a Branch and sales channel to manage its Menus.';
+
+  @override
+  String get assignmentsAssignedMenus => 'Assigned Menus';
+
+  @override
+  String assignmentsMenuCount(int count) {
+    return '$count Menus assigned';
+  }
+
+  @override
+  String get assignmentsReorderMenus => 'Reorder Menus';
+
+  @override
+  String get assignmentsReorderHelp =>
+      'Use the arrows to change the order Menus appear in this selling context. Ordering does not decide which Menu wins.';
+
+  @override
+  String get assignmentsReorderDone => 'Done';
+
+  @override
+  String get assignmentsMoveUp => 'Move up';
+
+  @override
+  String get assignmentsMoveDown => 'Move down';
+
+  @override
+  String get assignmentsReorderSaveFailed =>
+      'We couldn\'t save this Menu order. Try again.';
+
+  @override
+  String get assignmentsReorderArchivedUnavailable =>
+      'Reordering is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.';
+
+  @override
+  String get assignmentsAddMenus => 'Add Menus';
+
+  @override
+  String get assignmentsNoMenusTitle => 'No Menus assigned';
+
+  @override
+  String assignmentsNoMenusHelp(String branch, String channel) {
+    return 'Add a Menu to $branch · $channel.';
+  }
+
+  @override
+  String get assignmentsLoadErrorTitle => 'Couldn\'t load assignments';
+
+  @override
+  String assignmentsLifecycle(String status) {
+    return 'Menu: $status';
+  }
+
+  @override
+  String get assignmentsPaused => 'Paused';
+
+  @override
+  String get assignmentsActive => 'Assignment Active';
+
+  @override
+  String get assignmentsInactive => 'Assignment Inactive';
+
+  @override
+  String get assignmentsAvailableNow => 'Available now';
+
+  @override
+  String get assignmentsOutsideHours => 'Outside scheduled hours';
+
+  @override
+  String get assignmentsNoScheduleRestriction => 'No schedule restriction';
+
+  @override
+  String get assignmentsScheduleUnknown => 'Schedule status unavailable';
+
+  @override
+  String get assignmentsManageSchedule => 'Manage Schedule';
+
+  @override
+  String get assignmentsRemove => 'Remove from this selling context';
+
+  @override
+  String get assignmentsArchivedDiagnostic =>
+      'Archived Menu — actions unavailable';
+
+  @override
+  String get assignmentsChannelWaiterApp => 'Waiter App';
+
+  @override
+  String get assignmentsChannelKiosk => 'Kiosk';
+
+  @override
+  String get assignmentsChannelQrOrdering => 'QR Ordering';
+
+  @override
+  String get assignmentsChannelDelivery => 'Delivery';
+
+  @override
+  String get assignmentsChannelOnlineOrdering => 'Online Ordering';
+
+  @override
+  String get assignmentsMenuFallback => 'Menu';
+
+  @override
+  String get assignmentsAddSearch => 'Search Menus';
+
+  @override
+  String get assignmentsAddEmpty =>
+      'All available Menus are already assigned to this selling context.';
+
+  @override
+  String assignmentsAddSelected(int count) {
+    return 'Selected: $count';
+  }
+
+  @override
+  String assignmentsAddSelectedAction(int count) {
+    return 'Add $count Menus';
+  }
+
+  @override
+  String get assignmentsAddAlreadyAssigned => 'Already assigned';
+
+  @override
+  String get assignmentsAddArchivedUnavailable =>
+      'Archived Menus can’t be assigned.';
+
+  @override
+  String get assignmentsAddNoMatches => 'No Menus match your search.';
+
+  @override
+  String get assignmentsAddLoadError => 'Couldn’t load Menus';
+
+  @override
+  String get assignmentsAddSaveError => 'Couldn’t add Menus. Try again.';
+
+  @override
+  String get assignmentsAddDuplicateError =>
+      'One or more Menus are already assigned to this selling context.';
+
+  @override
+  String get assignmentsAddArchivedScopeError =>
+      'Adding Menus is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.';
+
+  @override
+  String get menuScheduleTitle => 'Menu Schedule';
+
+  @override
+  String menuScheduleTimesShownIn(String timezone) {
+    return 'Times shown in $timezone';
+  }
+
+  @override
+  String get menuScheduleUsingBroader => 'Using broader Menu schedule';
+
+  @override
+  String menuScheduleCustomizedFor(String context) {
+    return 'Customized for $context';
+  }
+
+  @override
+  String get menuScheduleCustomize => 'Customize for this context';
+
+  @override
+  String get menuScheduleUseBroader => 'Use broader schedule';
+
+  @override
+  String get menuScheduleAvailableAllDay => 'Available all day';
+
+  @override
+  String get menuScheduleUnavailable => 'Unavailable';
+
+  @override
+  String get menuScheduleCustomHours => 'Custom hours';
+
+  @override
+  String get menuScheduleStartTime => 'Start time';
+
+  @override
+  String get menuScheduleEndTime => 'End time';
+
+  @override
+  String menuScheduleEditDay(String day) {
+    return 'Edit $day';
+  }
+
+  @override
+  String get menuScheduleSaveDay => 'Apply';
+
+  @override
+  String get menuScheduleSave => 'Save Schedule';
+
+  @override
+  String get menuScheduleLoadError => 'Couldn\'t load Menu schedule';
+
+  @override
+  String get menuScheduleSaveError =>
+      'Couldn\'t save Menu schedule. Try again.';
+
+  @override
+  String menuScheduleMultipleWindows(int count) {
+    return '$count time windows';
+  }
+
+  @override
+  String get menuScheduleMultipleWindowsReadOnly =>
+      'This day has multiple time windows. They are preserved and can be edited in the advanced schedule later.';
+
+  @override
+  String get menuScheduleUnavailableNotSupported =>
+      'This day uses an Every Day rule. Keep it unchanged until advanced scheduling is available.';
+
+  @override
+  String get menuScheduleInvalidTimes =>
+      'Enter two different times in HH:mm format.';
+
+  @override
+  String get menuScheduleMonday => 'Monday';
+
+  @override
+  String get menuScheduleTuesday => 'Tuesday';
+
+  @override
+  String get menuScheduleWednesday => 'Wednesday';
+
+  @override
+  String get menuScheduleThursday => 'Thursday';
+
+  @override
+  String get menuScheduleFriday => 'Friday';
+
+  @override
+  String get menuScheduleSaturday => 'Saturday';
+
+  @override
+  String get menuScheduleSunday => 'Sunday';
+
+  @override
+  String get menuScheduleMoreOptions => 'More schedule options';
+
+  @override
+  String get menuScheduleDateLimits => 'Date limits';
+
+  @override
+  String get menuScheduleStartDate => 'Start date (optional)';
+
+  @override
+  String get menuScheduleEndDate => 'End date (optional)';
+
+  @override
+  String get menuScheduleAddTimeWindow => 'Add time window';
+
+  @override
+  String menuScheduleOvernightUntil(String time) {
+    return 'Overnight — available until $time the next day';
+  }
+
+  @override
+  String get menuScheduleEveryDayReadOnly =>
+      'This rule applies every day. It is kept as-is so its schedule meaning is preserved.';
+
+  @override
+  String get menuScheduleCheckTitle => 'Check Schedule';
+
+  @override
+  String get menuScheduleDate => 'Date';
+
+  @override
+  String get menuScheduleTime => 'Time';
+
+  @override
+  String menuScheduleCheckTimezone(String timezone) {
+    return 'Times evaluated in $timezone';
+  }
+
+  @override
+  String get menuScheduleCheckSaveFirst =>
+      'Save schedule changes before checking the saved schedule.';
+
+  @override
+  String get menuScheduleCheckFailed =>
+      'Could not check the schedule. Try again.';
+
+  @override
+  String get menuScheduleInvalidDateRange =>
+      'End date must be on or after the start date.';
+
+  @override
+  String get menuScheduleDiscardTitle => 'Discard schedule changes?';
+
+  @override
+  String get menuScheduleDiscardMessage =>
+      'Your schedule changes have not been saved.';
+
+  @override
+  String get menuScheduleDiscard => 'Discard changes';
+
+  @override
+  String menuScheduleCustomizeDayTitle(String day) {
+    return 'Customize $day';
+  }
+
+  @override
+  String get menuScheduleCustomizeDayMessage =>
+      'This schedule currently applies to every day. Customizing one day will keep the same schedule for the other days and let you change that day separately.';
+
+  @override
+  String menuScheduleCustomizeDayAction(String day) {
+    return 'Customize $day';
+  }
+
+  @override
+  String get menuScheduleDateLimitsMixed =>
+      'These rules have different date limits. Date limits are left unchanged here so this editor does not overwrite them.';
+
+  @override
   String get menuListNotAvailable => '—';
 }

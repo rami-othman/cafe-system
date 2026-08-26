@@ -17,19 +17,25 @@ class MenuAssignment extends Equatable {
     this.menu,
   });
 
-  factory MenuAssignment.fromJson(Map<String, dynamic> json) => MenuAssignment(
-    id: _int(json['id']),
-    menuId: _int(json['menuId']),
-    branchId: _int(json['branchId']),
-    channel: (json['channel'] ?? '').toString(),
-    priority: _int(json['priority'], fallback: 0),
-    isActive: json['isActive'] != false,
-    createdAt: _date(json['createdAt']),
-    updatedAt: _date(json['updatedAt']),
-    menu: json['menu'] is Map
-        ? MenuRecord.fromJson(Map<String, dynamic>.from(json['menu'] as Map))
-        : null,
-  );
+  factory MenuAssignment.fromJson(Map<String, dynamic> json) {
+    final dynamic menu = json['menu'];
+    if (menu is! Map) {
+      throw const FormatException(
+        'Menu assignment response is missing its embedded menu summary.',
+      );
+    }
+    return MenuAssignment(
+      id: _requiredInt(json, 'id'),
+      menuId: _requiredInt(json, 'menuId'),
+      branchId: _requiredInt(json, 'branchId'),
+      channel: _requiredString(json, 'channel'),
+      priority: _requiredInt(json, 'priority'),
+      isActive: _requiredBool(json, 'isActive'),
+      createdAt: _date(json['createdAt']),
+      updatedAt: _date(json['updatedAt']),
+      menu: MenuRecord.fromJson(Map<String, dynamic>.from(menu)),
+    );
+  }
 
   final int id, menuId, branchId, priority;
   final String channel;
@@ -131,15 +137,21 @@ class MenuScheduleRule extends Equatable {
     priority: '$priority',
     isActive: isActive,
   );
-  Map<String, dynamic> toSyncJson() => MenuScheduleRuleDraft(
-    dayOfWeek: dayOfWeek,
-    startTime: startTime ?? '',
-    endTime: endTime ?? '',
-    startDate: startDate ?? '',
-    endDate: endDate ?? '',
-    priority: '$priority',
-    isActive: isActive,
-  ).toJson(branchId: branchId, channel: channel);
+
+  /// Complete-replacement sync must preserve the API's nullable contract.
+  /// Send every supported field explicitly: omission is not used to express
+  /// an unrestricted day, all-day availability, or an absent date limit.
+  Map<String, dynamic> toSyncJson() => <String, dynamic>{
+    'branchId': branchId,
+    'channel': channel,
+    'dayOfWeek': dayOfWeek,
+    'startTime': startTime,
+    'endTime': endTime,
+    'startDate': startDate,
+    'endDate': endDate,
+    'priority': priority,
+    'isActive': isActive,
+  };
 
   @override
   List<Object?> get props => <Object?>[
@@ -206,6 +218,36 @@ class MenuScheduleRuleDraft {
 
 int _int(dynamic value, {int fallback = 0}) =>
     value is int ? value : int.tryParse('${value ?? ''}') ?? fallback;
+int _requiredInt(Map<String, dynamic> json, String key) {
+  final int? value = int.tryParse('${json[key] ?? ''}');
+  if (value == null) {
+    throw FormatException('Menu assignment response is missing $key.');
+  }
+  return value;
+}
+
+String _requiredString(Map<String, dynamic> json, String key) {
+  final String value = '${json[key] ?? ''}'.trim();
+  if (value.isEmpty) {
+    throw FormatException('Menu assignment response is missing $key.');
+  }
+  return value;
+}
+
+bool _requiredBool(Map<String, dynamic> json, String key) {
+  final dynamic value = json[key];
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    return switch (value.toLowerCase()) {
+      'true' || '1' => true,
+      'false' || '0' => false,
+      _ => throw FormatException('Menu assignment response has invalid $key.'),
+    };
+  }
+  throw FormatException('Menu assignment response is missing $key.');
+}
+
 int? _nullableInt(dynamic value) => value == null ? null : _int(value);
 String? _nullableString(dynamic value) => value == null ? null : '$value';
 DateTime? _date(dynamic value) =>

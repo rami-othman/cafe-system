@@ -5381,6 +5381,600 @@ abstract class AppLocalizations {
   /// **'This restores this Placement only. It does not restore or reactivate the Product.'**
   String get menuProductsRestoreHelp;
 
+  /// No description provided for @assignmentsWorkspaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments & Schedules'**
+  String get assignmentsWorkspaceTitle;
+
+  /// No description provided for @assignmentsWorkspaceHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a Branch and sales channel, then control which Menus are available in that selling context.'**
+  String get assignmentsWorkspaceHelp;
+
+  /// No description provided for @assignmentsBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get assignmentsBranch;
+
+  /// No description provided for @assignmentsSalesChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Channel'**
+  String get assignmentsSalesChannel;
+
+  /// No description provided for @assignmentsTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone'**
+  String get assignmentsTimezone;
+
+  /// No description provided for @assignmentsChooseBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a Branch'**
+  String get assignmentsChooseBranch;
+
+  /// No description provided for @assignmentsChooseChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a sales channel'**
+  String get assignmentsChooseChannel;
+
+  /// No description provided for @assignmentsTimezonePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a Branch'**
+  String get assignmentsTimezonePending;
+
+  /// No description provided for @assignmentsNoContextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a selling context'**
+  String get assignmentsNoContextTitle;
+
+  /// No description provided for @assignmentsNoContextHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a Branch and sales channel to manage its Menus.'**
+  String get assignmentsNoContextHelp;
+
+  /// No description provided for @assignmentsAssignedMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned Menus'**
+  String get assignmentsAssignedMenus;
+
+  /// No description provided for @assignmentsMenuCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Menus assigned'**
+  String assignmentsMenuCount(int count);
+
+  /// No description provided for @assignmentsReorderMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Menus'**
+  String get assignmentsReorderMenus;
+
+  /// No description provided for @assignmentsReorderHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the arrows to change the order Menus appear in this selling context. Ordering does not decide which Menu wins.'**
+  String get assignmentsReorderHelp;
+
+  /// No description provided for @assignmentsReorderDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get assignmentsReorderDone;
+
+  /// No description provided for @assignmentsMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get assignmentsMoveUp;
+
+  /// No description provided for @assignmentsMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get assignmentsMoveDown;
+
+  /// No description provided for @assignmentsReorderSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t save this Menu order. Try again.'**
+  String get assignmentsReorderSaveFailed;
+
+  /// No description provided for @assignmentsReorderArchivedUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Reordering is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.'**
+  String get assignmentsReorderArchivedUnavailable;
+
+  /// No description provided for @assignmentsAddMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Menus'**
+  String get assignmentsAddMenus;
+
+  /// No description provided for @assignmentsNoMenusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menus assigned'**
+  String get assignmentsNoMenusTitle;
+
+  /// No description provided for @assignmentsNoMenusHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a Menu to {branch} · {channel}.'**
+  String assignmentsNoMenusHelp(String branch, String channel);
+
+  /// No description provided for @assignmentsLoadErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load assignments'**
+  String get assignmentsLoadErrorTitle;
+
+  /// No description provided for @assignmentsLifecycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu: {status}'**
+  String assignmentsLifecycle(String status);
+
+  /// No description provided for @assignmentsPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get assignmentsPaused;
+
+  /// No description provided for @assignmentsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment Active'**
+  String get assignmentsActive;
+
+  /// No description provided for @assignmentsInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment Inactive'**
+  String get assignmentsInactive;
+
+  /// No description provided for @assignmentsAvailableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Available now'**
+  String get assignmentsAvailableNow;
+
+  /// No description provided for @assignmentsOutsideHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside scheduled hours'**
+  String get assignmentsOutsideHours;
+
+  /// No description provided for @assignmentsNoScheduleRestriction.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedule restriction'**
+  String get assignmentsNoScheduleRestriction;
+
+  /// No description provided for @assignmentsScheduleUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule status unavailable'**
+  String get assignmentsScheduleUnknown;
+
+  /// No description provided for @assignmentsManageSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Schedule'**
+  String get assignmentsManageSchedule;
+
+  /// No description provided for @assignmentsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from this selling context'**
+  String get assignmentsRemove;
+
+  /// No description provided for @assignmentsArchivedDiagnostic.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived Menu — actions unavailable'**
+  String get assignmentsArchivedDiagnostic;
+
+  /// No description provided for @assignmentsChannelWaiterApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiter App'**
+  String get assignmentsChannelWaiterApp;
+
+  /// No description provided for @assignmentsChannelKiosk.
+  ///
+  /// In en, this message translates to:
+  /// **'Kiosk'**
+  String get assignmentsChannelKiosk;
+
+  /// No description provided for @assignmentsChannelQrOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Ordering'**
+  String get assignmentsChannelQrOrdering;
+
+  /// No description provided for @assignmentsChannelDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get assignmentsChannelDelivery;
+
+  /// No description provided for @assignmentsChannelOnlineOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'Online Ordering'**
+  String get assignmentsChannelOnlineOrdering;
+
+  /// No description provided for @assignmentsMenuFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get assignmentsMenuFallback;
+
+  /// No description provided for @assignmentsAddSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Menus'**
+  String get assignmentsAddSearch;
+
+  /// No description provided for @assignmentsAddEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'All available Menus are already assigned to this selling context.'**
+  String get assignmentsAddEmpty;
+
+  /// No description provided for @assignmentsAddSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {count}'**
+  String assignmentsAddSelected(int count);
+
+  /// No description provided for @assignmentsAddSelectedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} Menus'**
+  String assignmentsAddSelectedAction(int count);
+
+  /// No description provided for @assignmentsAddAlreadyAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Already assigned'**
+  String get assignmentsAddAlreadyAssigned;
+
+  /// No description provided for @assignmentsAddArchivedUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived Menus can’t be assigned.'**
+  String get assignmentsAddArchivedUnavailable;
+
+  /// No description provided for @assignmentsAddNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menus match your search.'**
+  String get assignmentsAddNoMatches;
+
+  /// No description provided for @assignmentsAddLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load Menus'**
+  String get assignmentsAddLoadError;
+
+  /// No description provided for @assignmentsAddSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add Menus. Try again.'**
+  String get assignmentsAddSaveError;
+
+  /// No description provided for @assignmentsAddDuplicateError.
+  ///
+  /// In en, this message translates to:
+  /// **'One or more Menus are already assigned to this selling context.'**
+  String get assignmentsAddDuplicateError;
+
+  /// No description provided for @assignmentsAddArchivedScopeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding Menus is unavailable while this selling context contains an archived Menu. Remove the archived assignment first.'**
+  String get assignmentsAddArchivedScopeError;
+
+  /// No description provided for @menuScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu Schedule'**
+  String get menuScheduleTitle;
+
+  /// No description provided for @menuScheduleTimesShownIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Times shown in {timezone}'**
+  String menuScheduleTimesShownIn(String timezone);
+
+  /// No description provided for @menuScheduleUsingBroader.
+  ///
+  /// In en, this message translates to:
+  /// **'Using broader Menu schedule'**
+  String get menuScheduleUsingBroader;
+
+  /// No description provided for @menuScheduleCustomizedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customized for {context}'**
+  String menuScheduleCustomizedFor(String context);
+
+  /// No description provided for @menuScheduleCustomize.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize for this context'**
+  String get menuScheduleCustomize;
+
+  /// No description provided for @menuScheduleUseBroader.
+  ///
+  /// In en, this message translates to:
+  /// **'Use broader schedule'**
+  String get menuScheduleUseBroader;
+
+  /// No description provided for @menuScheduleAvailableAllDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Available all day'**
+  String get menuScheduleAvailableAllDay;
+
+  /// No description provided for @menuScheduleUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get menuScheduleUnavailable;
+
+  /// No description provided for @menuScheduleCustomHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom hours'**
+  String get menuScheduleCustomHours;
+
+  /// No description provided for @menuScheduleStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get menuScheduleStartTime;
+
+  /// No description provided for @menuScheduleEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End time'**
+  String get menuScheduleEndTime;
+
+  /// No description provided for @menuScheduleEditDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {day}'**
+  String menuScheduleEditDay(String day);
+
+  /// No description provided for @menuScheduleSaveDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get menuScheduleSaveDay;
+
+  /// No description provided for @menuScheduleSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Schedule'**
+  String get menuScheduleSave;
+
+  /// No description provided for @menuScheduleLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load Menu schedule'**
+  String get menuScheduleLoadError;
+
+  /// No description provided for @menuScheduleSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save Menu schedule. Try again.'**
+  String get menuScheduleSaveError;
+
+  /// No description provided for @menuScheduleMultipleWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} time windows'**
+  String menuScheduleMultipleWindows(int count);
+
+  /// No description provided for @menuScheduleMultipleWindowsReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This day has multiple time windows. They are preserved and can be edited in the advanced schedule later.'**
+  String get menuScheduleMultipleWindowsReadOnly;
+
+  /// No description provided for @menuScheduleUnavailableNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This day uses an Every Day rule. Keep it unchanged until advanced scheduling is available.'**
+  String get menuScheduleUnavailableNotSupported;
+
+  /// No description provided for @menuScheduleInvalidTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter two different times in HH:mm format.'**
+  String get menuScheduleInvalidTimes;
+
+  /// No description provided for @menuScheduleMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get menuScheduleMonday;
+
+  /// No description provided for @menuScheduleTuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get menuScheduleTuesday;
+
+  /// No description provided for @menuScheduleWednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get menuScheduleWednesday;
+
+  /// No description provided for @menuScheduleThursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get menuScheduleThursday;
+
+  /// No description provided for @menuScheduleFriday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get menuScheduleFriday;
+
+  /// No description provided for @menuScheduleSaturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get menuScheduleSaturday;
+
+  /// No description provided for @menuScheduleSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get menuScheduleSunday;
+
+  /// No description provided for @menuScheduleMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More schedule options'**
+  String get menuScheduleMoreOptions;
+
+  /// No description provided for @menuScheduleDateLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Date limits'**
+  String get menuScheduleDateLimits;
+
+  /// No description provided for @menuScheduleStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date (optional)'**
+  String get menuScheduleStartDate;
+
+  /// No description provided for @menuScheduleEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date (optional)'**
+  String get menuScheduleEndDate;
+
+  /// No description provided for @menuScheduleAddTimeWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add time window'**
+  String get menuScheduleAddTimeWindow;
+
+  /// No description provided for @menuScheduleOvernightUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Overnight — available until {time} the next day'**
+  String menuScheduleOvernightUntil(String time);
+
+  /// No description provided for @menuScheduleEveryDayReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This rule applies every day. It is kept as-is so its schedule meaning is preserved.'**
+  String get menuScheduleEveryDayReadOnly;
+
+  /// No description provided for @menuScheduleCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Schedule'**
+  String get menuScheduleCheckTitle;
+
+  /// No description provided for @menuScheduleDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get menuScheduleDate;
+
+  /// No description provided for @menuScheduleTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get menuScheduleTime;
+
+  /// No description provided for @menuScheduleCheckTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Times evaluated in {timezone}'**
+  String menuScheduleCheckTimezone(String timezone);
+
+  /// No description provided for @menuScheduleCheckSaveFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Save schedule changes before checking the saved schedule.'**
+  String get menuScheduleCheckSaveFirst;
+
+  /// No description provided for @menuScheduleCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check the schedule. Try again.'**
+  String get menuScheduleCheckFailed;
+
+  /// No description provided for @menuScheduleInvalidDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'End date must be on or after the start date.'**
+  String get menuScheduleInvalidDateRange;
+
+  /// No description provided for @menuScheduleDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard schedule changes?'**
+  String get menuScheduleDiscardTitle;
+
+  /// No description provided for @menuScheduleDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your schedule changes have not been saved.'**
+  String get menuScheduleDiscardMessage;
+
+  /// No description provided for @menuScheduleDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes'**
+  String get menuScheduleDiscard;
+
+  /// No description provided for @menuScheduleCustomizeDayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize {day}'**
+  String menuScheduleCustomizeDayTitle(String day);
+
+  /// No description provided for @menuScheduleCustomizeDayMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This schedule currently applies to every day. Customizing one day will keep the same schedule for the other days and let you change that day separately.'**
+  String get menuScheduleCustomizeDayMessage;
+
+  /// No description provided for @menuScheduleCustomizeDayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize {day}'**
+  String menuScheduleCustomizeDayAction(String day);
+
+  /// No description provided for @menuScheduleDateLimitsMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'These rules have different date limits. Date limits are left unchanged here so this editor does not overwrite them.'**
+  String get menuScheduleDateLimitsMixed;
+
   /// No description provided for @menuListNotAvailable.
   ///
   /// In en, this message translates to:

@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'dart:io';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../pos/models/json_helpers.dart';
 import '../models/catalog_models.dart';
 import '../models/product_catalog_filter.dart';
 import '../products/models/product_editor_draft.dart';
@@ -69,6 +70,10 @@ abstract class MenuCatalogRepository {
       throw UnsupportedError('Menu review is not configured.');
   Future<ResolvedPreview> previewMenu(int menuId, ReviewContext context) =>
       throw UnsupportedError('Menu review is not configured.');
+  Future<MenuScheduleCheck> previewMenuSchedule(
+    int menuId,
+    ReviewContext context,
+  ) => throw UnsupportedError('Menu review is not configured.');
   Future<ResolvedPreview> previewMenuCollection(ReviewContext context) =>
       throw UnsupportedError('Menu review is not configured.');
   Future<MenuPublicationResult> publishMenuScope(ReviewContext context) =>
@@ -540,6 +545,37 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
         ),
       );
   @override
+  Future<MenuScheduleCheck> previewMenuSchedule(int id, ReviewContext c) async {
+    final Map<String, dynamic> response = Map<String, dynamic>.from(
+      await _apiClient.post('admin/menus/$id/preview', data: c.previewJson()),
+    );
+    final dynamic menus = response['menus'];
+    if (menus is! List) {
+      throw const FormatException('Invalid Menu schedule preview response.');
+    }
+    Map<String, dynamic>? menu;
+    // Keep this schedule-only projection deliberately shallow. In particular,
+    // do not cast the heterogeneous preview payload through Iterable.cast:
+    // malformed optional diagnostics must never turn a valid Menu schedule
+    // result into a RangeError in the manager drawer.
+    for (final item in menus) {
+      if (item is! Map) continue;
+      final candidate = Map<String, dynamic>.from(item);
+      if (readInt(candidate['id']) == id) {
+        menu = candidate;
+        break;
+      }
+    }
+    if (menu == null) {
+      throw const FormatException('Menu was not returned by preview.');
+    }
+    return MenuScheduleCheck(
+      isScheduledAvailable: readBool(menu['isScheduledAvailable']),
+      scheduleReason: readString(menu['scheduleReason']),
+    );
+  }
+
+  @override
   Future<ResolvedPreview> previewMenuCollection(ReviewContext c) async =>
       ResolvedPreview.fromJson(
         Map<String, dynamic>.from(
@@ -739,8 +775,8 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   Future<List<MenuAssignment>> listMenuAssignments({
     required int branchId,
     required String channel,
-  }) async => _menuAssignments(
-    await _apiClient.get(
+  }) => _menuAssignments(
+    _apiClient.get(
       'admin/menu-management/assignments',
       queryParameters: <String, dynamic>{
         'branchId': branchId,
@@ -754,8 +790,8 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     required int branchId,
     required String channel,
     required List<MenuAssignmentDraft> assignments,
-  }) async => _menuAssignments(
-    await _apiClient.put(
+  }) => _menuAssignments(
+    _apiClient.put(
       'admin/menu-management/assignments',
       data: <String, dynamic>{
         'branchId': branchId,
@@ -766,17 +802,15 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   );
 
   @override
-  Future<List<MenuScheduleRule>> listMenuAvailabilityRules(int menuId) async =>
-      _menuRules(
-        await _apiClient.get('admin/menus/$menuId/availability-rules'),
-      );
+  Future<List<MenuScheduleRule>> listMenuAvailabilityRules(int menuId) =>
+      _menuRules(_apiClient.get('admin/menus/$menuId/availability-rules'));
 
   @override
   Future<List<MenuScheduleRule>> syncMenuAvailabilityRules(
     int menuId,
     List<Map<String, dynamic>> rules,
-  ) async => _menuRules(
-    await _apiClient.put(
+  ) => _menuRules(
+    _apiClient.put(
       'admin/menus/$menuId/availability-rules',
       data: <String, dynamic>{'rules': rules},
     ),
@@ -1560,10 +1594,14 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
 
   Future<List<MenuScheduleRule>> _menuRules(Future<dynamic> response) async {
     final dynamic body = await response;
-    if (body is! List) {
+    // Dio normally unwraps Laravel's `data` field. Accept the envelope as
+    // well because schedule rules are fetched on demand and must not fail
+    // merely because a runtime transport returned the complete JSON body.
+    final dynamic rows = body is Map ? body['data'] : body;
+    if (rows is! List) {
       throw const FormatException('Invalid menu availability rules response.');
     }
-    return body
+    return rows
         .whereType<Map>()
         .map(
           (item) => MenuScheduleRule.fromJson(Map<String, dynamic>.from(item)),
