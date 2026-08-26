@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'dart:io';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/debug/schedule_check_debug.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/catalog_models.dart';
 import '../models/product_catalog_filter.dart';
@@ -546,33 +547,54 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
       );
   @override
   Future<MenuScheduleCheck> previewMenuSchedule(int id, ReviewContext c) async {
-    final Map<String, dynamic> response = Map<String, dynamic>.from(
-      await _apiClient.post('admin/menus/$id/preview', data: c.previewJson()),
-    );
-    final dynamic menus = response['menus'];
-    if (menus is! List) {
-      throw const FormatException('Invalid Menu schedule preview response.');
-    }
-    Map<String, dynamic>? menu;
-    // Keep this schedule-only projection deliberately shallow. In particular,
-    // do not cast the heterogeneous preview payload through Iterable.cast:
-    // malformed optional diagnostics must never turn a valid Menu schedule
-    // result into a RangeError in the manager drawer.
-    for (final item in menus) {
-      if (item is! Map) continue;
-      final candidate = Map<String, dynamic>.from(item);
-      if (readInt(candidate['id']) == id) {
-        menu = candidate;
-        break;
+    try {
+      ScheduleCheckDebug.log(
+        'parser entered: BackendMenuCatalogRepository.previewMenuSchedule',
+      );
+      final Map<String, dynamic> response = Map<String, dynamic>.from(
+        await _apiClient.post(
+          'admin/menus/$id/preview',
+          data: c.previewJson(),
+          debugContext: 'menu schedule preview',
+        ),
+      );
+      final dynamic menus = response['menus'];
+      if (menus is! List) {
+        throw const FormatException('Invalid Menu schedule preview response.');
       }
+      Map<String, dynamic>? menu;
+      // Keep this schedule-only projection deliberately shallow. In particular,
+      // do not cast the heterogeneous preview payload through Iterable.cast:
+      // malformed optional diagnostics must never turn a valid Menu schedule
+      // result into a RangeError in the manager drawer.
+      for (final item in menus) {
+        if (item is! Map) continue;
+        final candidate = Map<String, dynamic>.from(item);
+        if (readInt(candidate['id']) == id) {
+          menu = candidate;
+          break;
+        }
+      }
+      if (menu == null) {
+        throw const FormatException('Menu was not returned by preview.');
+      }
+      final result = MenuScheduleCheck(
+        isScheduledAvailable: readBool(menu['isScheduledAvailable']),
+        scheduleReason: readString(menu['scheduleReason']),
+      );
+      ScheduleCheckDebug.log(
+        'parsed menuId=$id isScheduledAvailable=${result.isScheduledAvailable} '
+        'scheduleReason=${result.scheduleReason}',
+      );
+      return result;
+    } catch (error, stackTrace) {
+      ScheduleCheckDebug.failure(
+        'BackendMenuCatalogRepository.previewMenuSchedule',
+        error,
+        stackTrace,
+      );
+      rethrow;
     }
-    if (menu == null) {
-      throw const FormatException('Menu was not returned by preview.');
-    }
-    return MenuScheduleCheck(
-      isScheduledAvailable: readBool(menu['isScheduledAvailable']),
-      scheduleReason: readString(menu['scheduleReason']),
-    );
   }
 
   @override
@@ -803,7 +825,12 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
 
   @override
   Future<List<MenuScheduleRule>> listMenuAvailabilityRules(int menuId) =>
-      _menuRules(_apiClient.get('admin/menus/$menuId/availability-rules'));
+      _menuRules(
+        _apiClient.get(
+          'admin/menus/$menuId/availability-rules',
+          debugMenuScheduleSave: true,
+        ),
+      );
 
   @override
   Future<List<MenuScheduleRule>> syncMenuAvailabilityRules(
@@ -813,6 +840,7 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     _apiClient.put(
       'admin/menus/$menuId/availability-rules',
       data: <String, dynamic>{'rules': rules},
+      debugMenuScheduleSave: true,
     ),
   );
   @override

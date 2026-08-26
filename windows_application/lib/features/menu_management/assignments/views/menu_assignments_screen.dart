@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/localization/localization_extensions.dart';
-import '../../../../core/network/api_exception.dart';
+import '../../../../core/debug/schedule_check_debug.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -1558,7 +1558,9 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
             ),
             child: Text(
               _dateLimitsError ??
-                  state.errorMessage ??
+                  (state.errorMessage == null
+                      ? null
+                      : context.l10n.menuScheduleSaveError) ??
                   context.l10n.menuScheduleSaveError,
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
             ),
@@ -2105,7 +2107,7 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
   Future<void> _checkSchedule() async {
     if (_checking || _hasUnsavedChanges) return;
     final match = RegExp(
-      r'^([01]\d|2[0-3]):[0-5]\d$',
+      r'^([01]\d|2[0-3]):([0-5]\d)$',
     ).firstMatch(_checkTime.text);
     if (match == null) {
       setState(() => _checkResult = _ScheduleCheckResult.invalid);
@@ -2123,6 +2125,15 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
         int.parse(match.group(2)!),
         context.read<MenuAssignmentsCubit>().state.selectedBranch!.timezone,
       );
+      final state = context.read<MenuAssignmentsCubit>().state;
+      ScheduleCheckDebug.log(
+        'UI check schedule menuId=${widget.assignment.menuId} '
+        'branchId=${state.selectedBranch!.id} channel=${state.selectedChannel} '
+        'selectedDate=${_checkDate.toIso8601String()} '
+        'selectedTime=${_checkTime.text} '
+        'branchTimezone=${state.selectedBranch!.timezone} '
+        'generatedAt=${at.toIso8601String()}',
+      );
       final menu = await context.read<MenuAssignmentsCubit>().checkMenuSchedule(
         widget.assignment.menuId,
         at,
@@ -2134,7 +2145,12 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
               : _ScheduleCheckResult.outsideHours,
         );
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      ScheduleCheckDebug.failure(
+        '_MenuScheduleSheetState._checkSchedule',
+        error,
+        stackTrace,
+      );
       if (mounted) {
         setState(() {
           _checkResult = _ScheduleCheckResult.failure;
@@ -2146,18 +2162,8 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
     }
   }
 
-  String _scheduleCheckFailureMessage(Object error) {
-    if (error is ApiException && error.message.trim().isNotEmpty) {
-      return error.message;
-    }
-    if (error is FormatException && error.message.trim().isNotEmpty) {
-      return error.message;
-    }
-    final description = error.toString().trim();
-    return description.isEmpty
-        ? context.l10n.menuScheduleCheckFailed
-        : description;
-  }
+  String _scheduleCheckFailureMessage(Object error) =>
+      context.l10n.menuScheduleCheckFailed;
 
   bool get _hasUnsavedChanges {
     final saved = _savedDraft;

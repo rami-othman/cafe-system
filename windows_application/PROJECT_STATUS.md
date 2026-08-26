@@ -196,6 +196,20 @@ instant, and returns the corresponding Branch-local wall-clock time consistently
 
 ## KNOWN ARCHITECTURE DEBT
 
+### Batch 10 Runtime Fix — Save Schedule (Phase 2)
+
+- Menu Schedule saves through `saveMenuSchedule(...)`: one complete rules PUT,
+  one authoritative rules reload, then one bounded collection-preview refresh.
+- A save now remains unsuccessful when either confirmation request fails; the
+  drawer retains its dirty draft and presents only the localized generic save
+  message while debug builds retain the technical request/response/stack trace.
+- The Windows runtime verified RAMI / Downtown / POS: Monday changed from
+  all-day to `07:00–22:00`, persisted in Laravel, and remained visible after
+  closing and reopening the drawer.
+- The known `Asia/Damascus` fixed-offset implementation was not changed. Save
+  serializes local rule fields (`H:i`, `YYYY-MM-DD`, and explicit nulls) and
+  does not depend on that preview/check timezone conversion path.
+
 This is a Phase 4K concern only; no cleanup is authorized by UX-G0.
 
 - `menu_catalog_repository.dart` remains a large shared Menu Management surface.

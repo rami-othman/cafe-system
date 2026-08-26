@@ -4,6 +4,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/debug/menu_schedule_save_debug.dart';
+import '../../../../core/debug/schedule_check_debug.dart';
 import '../../../pos/models/branch.dart';
 import '../../menus/models/menu_filter.dart';
 import '../../menus/models/menu_models.dart';
@@ -580,6 +582,14 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
       return false;
     }
     final int ticket = _generation;
+    MenuScheduleSaveDebug.log(
+      'cubit saveMenuSchedule menuId=$menuId '
+      'branchId=${state.selectedBranch!.id} channel=${state.selectedChannel}',
+    );
+    MenuScheduleSaveDebug.json(
+      'PUT availability-rules payload',
+      <String, dynamic>{'rules': rules},
+    );
     emit(
       state.copyWith(
         currentActionKey: 'save-menu-schedule-$menuId',
@@ -588,17 +598,23 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
       ),
     );
     try {
-      final List<MenuScheduleRule> synced = await repository
-          .syncMenuAvailabilityRules(menuId, rules);
+      await repository.syncMenuAvailabilityRules(menuId, rules);
       if (ticket != _generation || isClosed) return false;
 
-      // The sync endpoint is complete replacement. Read the authoritative
-      // collection back before reconciling the editor, while retaining the
-      // successful sync response as a safe fallback if only that read fails.
-      List<MenuScheduleRule> updated = synced;
+      // The sync endpoint is complete replacement. The explicit reload is the
+      // persistence confirmation for the editor; a 200 response alone is not
+      // allowed to clear the dirty draft.
+      late final List<MenuScheduleRule> updated;
       try {
         updated = await repository.listMenuAvailabilityRules(menuId);
-      } catch (_) {}
+      } catch (error, stackTrace) {
+        MenuScheduleSaveDebug.failure(
+          'authoritative availability-rules reload',
+          error,
+          stackTrace,
+        );
+        rethrow;
+      }
       if (ticket != _generation || isClosed) return false;
 
       Map<int, ResolvedMenu> previewMenus = state.previewMenus;
@@ -615,12 +631,13 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
           for (final ResolvedMenu menu in preview.menus) menu.id: menu,
         };
         previewUnavailable = false;
-      } catch (_) {
-        // A saved schedule is authoritative even if its supplemental preview
-        // cannot be refreshed.  Keep the workspace useful and mark the
-        // lightweight status as unavailable instead of reporting false save
-        // failure.
-        previewUnavailable = true;
+      } catch (error, stackTrace) {
+        MenuScheduleSaveDebug.failure(
+          'bounded collection preview refresh',
+          error,
+          stackTrace,
+        );
+        rethrow;
       }
       if (ticket != _generation || isClosed) return false;
       emit(
@@ -635,12 +652,17 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
         ),
       );
       return true;
-    } catch (error) {
+    } catch (error, stackTrace) {
+      MenuScheduleSaveDebug.failure(
+        'MenuAssignmentsCubit.saveMenuSchedule',
+        error,
+        stackTrace,
+      );
       if (ticket != _generation || isClosed) return false;
       emit(
         state.copyWith(
           clearAction: true,
-          errorMessage: _message(error),
+          errorMessage: 'Couldn\'t save Menu schedule. Try again.',
           fieldErrors: _errors(error),
         ),
       );
@@ -654,14 +676,26 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
   /// cannot turn a successful schedule save into a failed editor state.
   Future<MenuScheduleCheck> checkMenuSchedule(int menuId, DateTime at) async {
     if (!state.hasScope) throw StateError('A branch and channel are required.');
-    return repository.previewMenuSchedule(
-      menuId,
-      ReviewContext(
-        branchId: state.selectedBranch!.id,
-        channel: state.selectedChannel!,
-        evaluationAt: at,
-      ),
+    final context = ReviewContext(
+      branchId: state.selectedBranch!.id,
+      channel: state.selectedChannel!,
+      evaluationAt: at,
     );
+    ScheduleCheckDebug.log(
+      'cubit checkMenuSchedule menuId=$menuId branchId=${context.branchId} '
+      'channel=${context.channel} at=${context.evaluationAt}',
+    );
+    ScheduleCheckDebug.json('request payload', context.previewJson());
+    try {
+      return await repository.previewMenuSchedule(menuId, context);
+    } catch (error, stackTrace) {
+      ScheduleCheckDebug.failure(
+        'MenuAssignmentsCubit.checkMenuSchedule',
+        error,
+        stackTrace,
+      );
+      rethrow;
+    }
   }
 
   Future<void> assignMenu(MenuRecord menu) async {

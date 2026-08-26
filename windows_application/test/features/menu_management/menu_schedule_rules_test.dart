@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
+import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/features/menu_management/assignments/controllers/menu_assignments_cubit.dart';
 import 'package:windows_application/features/menu_management/assignments/models/menu_assignment_models.dart';
@@ -99,6 +100,148 @@ void main() {
         expect(requests.single.data['includeHidden'], isFalse);
       },
     );
+
+    test(
+      'schedule check uses the Laravel single-menu envelope through Cubit, repository, and response unwrapping',
+      () async {
+        bool isAvailable = true;
+        bool networkFailure = false;
+        final dio = Dio(BaseOptions(baseUrl: 'http://localhost/api/v1/'));
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              final data = switch (options.path) {
+                'branches' => <String, dynamic>{
+                  'data': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'id': 1,
+                      'name': 'Downtown',
+                      'timezone': 'Asia/Damascus',
+                      'isActive': true,
+                    },
+                  ],
+                },
+                'admin/menu-management/assignments' => <String, dynamic>{
+                  'data': <Map<String, dynamic>>[
+                    <String, dynamic>{
+                      'id': 1,
+                      'menuId': 10,
+                      'branchId': 1,
+                      'channel': 'pos',
+                      'priority': 0,
+                      'isActive': true,
+                      'menu': <String, dynamic>{
+                        'id': 10,
+                        'name': 'RAMI',
+                        'status': 'active',
+                        'priority': 0,
+                        'sectionCount': 0,
+                        'visibleProductCount': 0,
+                      },
+                    },
+                  ],
+                },
+                'admin/menu-management/preview' => <String, dynamic>{
+                  'data': <String, dynamic>{
+                    'canPublish': true,
+                    'context': <String, dynamic>{
+                      'timezone': 'Asia/Damascus',
+                      'evaluatedAt': '2026-08-26T10:00:00+00:00',
+                    },
+                    'menus': const <Map<String, dynamic>>[],
+                  },
+                },
+                'admin/menus/10/preview' when networkFailure => null,
+                'admin/menus/10/preview' => _laravelSingleMenuPreviewFixture(
+                  isAvailable: isAvailable,
+                  scheduleReason: isAvailable
+                      ? 'matched_rule'
+                      : 'outside_schedule',
+                ),
+                _ => throw StateError('Unexpected request: ${options.path}'),
+              };
+              if (networkFailure && options.path == 'admin/menus/10/preview') {
+                handler.reject(
+                  DioException(
+                    requestOptions: options,
+                    type: DioExceptionType.connectionError,
+                  ),
+                );
+                return;
+              }
+              handler.resolve(
+                Response<dynamic>(requestOptions: options, data: data),
+              );
+            },
+          ),
+        );
+        final repository = BackendMenuCatalogRepository(DioApiClient(dio: dio));
+        final cubit = MenuAssignmentsCubit(repository: repository);
+
+        await cubit.load(branchId: 1, channel: 'pos');
+        final available = await cubit.checkMenuSchedule(
+          10,
+          DateTime.utc(2026, 8, 26, 10),
+        );
+        expect(available.isScheduledAvailable, isTrue);
+        expect(available.scheduleReason, 'matched_rule');
+
+        isAvailable = false;
+        final outsideHours = await cubit.checkMenuSchedule(
+          10,
+          DateTime.utc(2026, 8, 26, 22),
+        );
+        expect(outsideHours.isScheduledAvailable, isFalse);
+        expect(outsideHours.scheduleReason, 'outside_schedule');
+
+        networkFailure = true;
+        await expectLater(
+          cubit.checkMenuSchedule(10, DateTime.utc(2026, 8, 26, 10)),
+          throwsA(isA<ApiException>()),
+        );
+      },
+    );
+
+    testWidgets('schedule-check UI presents results and never leaks errors', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = _ScheduleRepository()
+        ..initialRules = <MenuScheduleRule>[
+          _rule(day: 1, start: '07:00', end: '22:00'),
+        ];
+      await tester.pumpWidget(_scheduleApp(repository));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Manage Schedule'));
+      await tester.pumpAndSettle();
+
+      final check = find.byKey(const Key('menu-schedule-check'));
+      await tester.ensureVisible(check);
+      await tester.pumpAndSettle();
+      await tester.tap(check);
+      await tester.pumpAndSettle();
+      expect(find.text('Available'), findsOneWidget);
+
+      repository.scheduleCheck = const MenuScheduleCheck(
+        isScheduledAvailable: false,
+        scheduleReason: 'outside_schedule',
+      );
+      await tester.tap(check);
+      await tester.pumpAndSettle();
+      expect(find.text('Outside scheduled hours'), findsOneWidget);
+
+      repository.scheduleCheckError = RangeError.range(2, 0, 1);
+      await tester.tap(check);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Could not check the schedule. Try again.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('RangeError'), findsNothing);
+    });
 
     test('no scoped rules is unrestricted', () {
       expect(
@@ -421,6 +564,284 @@ void main() {
       },
     );
 
+    test(
+      'production save path persists the complete draft, reloads it, and refreshes one bounded preview',
+      () async {
+        final requests = <RequestOptions>[];
+        var previewCalls = 0;
+        var nextRuleId = 100;
+        var storedRules = <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 1,
+            'branchId': 1,
+            'channel': 'pos',
+            'dayOfWeek': null,
+            'startTime': null,
+            'endTime': null,
+            'startDate': null,
+            'endDate': null,
+            'priority': 0,
+            'isActive': true,
+          },
+          <String, dynamic>{
+            'id': 2,
+            'branchId': 1,
+            'channel': null,
+            'dayOfWeek': null,
+            'startTime': null,
+            'endTime': null,
+            'startDate': null,
+            'endDate': null,
+            'priority': 0,
+            'isActive': true,
+          },
+          <String, dynamic>{
+            'id': 3,
+            'branchId': null,
+            'channel': 'delivery',
+            'dayOfWeek': null,
+            'startTime': null,
+            'endTime': null,
+            'startDate': null,
+            'endDate': null,
+            'priority': 0,
+            'isActive': true,
+          },
+          <String, dynamic>{
+            'id': 4,
+            'branchId': null,
+            'channel': null,
+            'dayOfWeek': null,
+            'startTime': null,
+            'endTime': null,
+            'startDate': null,
+            'endDate': null,
+            'priority': 0,
+            'isActive': true,
+          },
+        ];
+        final dio = Dio(BaseOptions(baseUrl: 'http://localhost:8000/api/v1/'));
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              requests.add(options);
+              final Map<String, dynamic> response;
+              switch ('${options.method} ${options.path}') {
+                case 'GET branches':
+                  response = <String, dynamic>{
+                    'data': <Map<String, dynamic>>[
+                      <String, dynamic>{
+                        'id': 1,
+                        'name': 'Downtown',
+                        'timezone': 'Asia/Damascus',
+                        'isActive': true,
+                      },
+                    ],
+                  };
+                case 'GET admin/menu-management/assignments':
+                  response = _assignmentFixture();
+                case 'POST admin/menu-management/preview':
+                  previewCalls++;
+                  response = _collectionPreviewFixture(
+                    isAvailable: previewCalls == 1,
+                  );
+                case 'GET admin/menus/10/availability-rules':
+                  response = <String, dynamic>{'data': storedRules};
+                case 'PUT admin/menus/10/availability-rules':
+                  final body = Map<String, dynamic>.from(options.data as Map);
+                  final rules = (body['rules'] as List)
+                      .cast<Map>()
+                      .map(
+                        (rule) => <String, dynamic>{
+                          'id': nextRuleId++,
+                          ...Map<String, dynamic>.from(rule),
+                        },
+                      )
+                      .toList(growable: false);
+                  storedRules = rules;
+                  response = <String, dynamic>{'data': rules};
+                default:
+                  throw StateError(
+                    'Unexpected production-path request: '
+                    '${options.method} ${options.path}',
+                  );
+              }
+              handler.resolve(
+                Response<dynamic>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: response,
+                ),
+              );
+            },
+          ),
+        );
+        final cubit = MenuAssignmentsCubit(
+          repository: BackendMenuCatalogRepository(DioApiClient(dio: dio)),
+        );
+        await cubit.load(branchId: 1, channel: 'pos');
+        await cubit.loadScheduleRules(10);
+
+        // This is the exact complete-rule draft produced after the drawer
+        // expands an Every Day exact rule and customizes Monday.
+        final draft = <Map<String, dynamic>>[
+          _syncRule(day: 1, start: '07:00', end: '22:00'),
+          _syncRule(day: 2, startDate: '2026-09-01'),
+          _syncRule(day: 3, endDate: '2026-09-30'),
+          _syncRule(day: 4, startDate: '2026-09-01', endDate: '2026-09-30'),
+          _syncRule(day: 5, start: '07:00', end: '11:00'),
+          _syncRule(day: 5, start: '17:00', end: '22:00'),
+          _syncRule(day: 6, start: '22:00', end: '02:00'),
+          _syncRule(day: 0),
+          _syncRule(branchId: 1, channel: null),
+          _syncRule(branchId: null, channel: 'delivery'),
+          _syncRule(branchId: null, channel: null),
+        ];
+        final start = requests.length;
+
+        expect(await cubit.saveMenuSchedule(10, draft), isTrue);
+
+        final saveRequests = requests.skip(start).toList(growable: false);
+        expect(
+          saveRequests
+              .where(
+                (request) =>
+                    request.method == 'PUT' &&
+                    request.path == 'admin/menus/10/availability-rules',
+              )
+              .length,
+          1,
+        );
+        expect(
+          saveRequests
+              .where(
+                (request) =>
+                    request.method == 'GET' &&
+                    request.path == 'admin/menus/10/availability-rules',
+              )
+              .length,
+          1,
+        );
+        expect(
+          saveRequests
+              .where(
+                (request) =>
+                    request.method == 'POST' &&
+                    request.path == 'admin/menu-management/preview',
+              )
+              .length,
+          1,
+        );
+        expect(
+          saveRequests.where((request) => request.path == 'admin/menus/10'),
+          isEmpty,
+        );
+        expect(
+          saveRequests.where((request) => request.path.contains('price')),
+          isEmpty,
+        );
+
+        final put = saveRequests.singleWhere(
+          (request) => request.method == 'PUT',
+        );
+        final payload = Map<String, dynamic>.from(put.data as Map);
+        final exact = (payload['rules'] as List)
+            .cast<Map>()
+            .map(Map<String, dynamic>.from)
+            .where((rule) => rule['branchId'] == 1 && rule['channel'] == 'pos')
+            .toList(growable: false);
+        expect(exact, hasLength(8));
+        expect(exact.where((rule) => rule['dayOfWeek'] == null), isEmpty);
+        expect(
+          exact.singleWhere((rule) => rule['dayOfWeek'] == 1)['startTime'],
+          '07:00',
+        );
+        expect(
+          exact.singleWhere((rule) => rule['dayOfWeek'] == 1)['endTime'],
+          '22:00',
+        );
+        expect(
+          exact
+              .where((rule) => rule['dayOfWeek'] == 5)
+              .map((rule) => '${rule['startTime']}–${rule['endTime']}'),
+          containsAll(<String>['07:00–11:00', '17:00–22:00']),
+        );
+        expect(
+          exact.singleWhere((rule) => rule['dayOfWeek'] == 6)['endTime'],
+          '02:00',
+        );
+        expect(
+          exact.singleWhere((rule) => rule['dayOfWeek'] == 2)['startDate'],
+          '2026-09-01',
+        );
+        expect(
+          exact.singleWhere((rule) => rule['dayOfWeek'] == 3)['endDate'],
+          '2026-09-30',
+        );
+        expect(
+          exact.singleWhere((rule) => rule['dayOfWeek'] == 0)['startDate'],
+          isNull,
+        );
+        for (final rule in payload['rules'] as List) {
+          final map = Map<String, dynamic>.from(rule as Map);
+          expect(
+            map.keys,
+            containsAll(<String>[
+              'branchId',
+              'channel',
+              'dayOfWeek',
+              'startTime',
+              'endTime',
+              'startDate',
+              'endDate',
+              'priority',
+              'isActive',
+            ]),
+          );
+          expect(
+            map['channel'],
+            anyOf(isNull, equals('pos'), equals('delivery')),
+          );
+        }
+        expect(cubit.state.scheduleRules[10], hasLength(11));
+        expect(cubit.state.previewMenus[10]!.isScheduledAvailable, isFalse);
+        expect(cubit.state.currentActionKey, isNull);
+
+        // The Use broader action submits the same complete collection without
+        // only the exact Downtown/POS rules; all broader scopes survive.
+        final broader = draft
+            .where(
+              (rule) => !(rule['branchId'] == 1 && rule['channel'] == 'pos'),
+            )
+            .toList(growable: false);
+        expect(await cubit.saveMenuSchedule(10, broader), isTrue);
+        expect(
+          cubit.state.scheduleRules[10]!.where(
+            (rule) => rule.matchesExactScope(1, 'pos'),
+          ),
+          isEmpty,
+        );
+        expect(
+          cubit.state.scheduleRules[10]!.where(
+            (rule) => rule.branchId == 1 && rule.channel == null,
+          ),
+          hasLength(1),
+        );
+        expect(
+          cubit.state.scheduleRules[10]!.where(
+            (rule) => rule.branchId == null && rule.channel == 'delivery',
+          ),
+          hasLength(1),
+        );
+        expect(
+          cubit.state.scheduleRules[10]!.where(
+            (rule) => rule.branchId == null && rule.channel == null,
+          ),
+          hasLength(1),
+        );
+      },
+    );
+
     test('check schedule uses the authoritative single-menu preview', () async {
       final repository = _ScheduleRepository();
       final cubit = MenuAssignmentsCubit(repository: repository);
@@ -529,7 +950,7 @@ void main() {
   });
 }
 
-Widget _scheduleApp(_ScheduleRepository repository) => MaterialApp(
+Widget _scheduleApp(MenuCatalogRepository repository) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: BlocProvider<MenuAssignmentsCubit>(
@@ -539,6 +960,120 @@ Widget _scheduleApp(_ScheduleRepository repository) => MaterialApp(
     ),
   ),
 );
+
+/// This is the real Laravel single-menu preview envelope. The deliberately
+/// malformed deep diagnostics mirror the response class that the schedule
+/// check must ignore: only the returned Menu schedule fields are authoritative
+/// to this manager-facing operation.
+Map<String, dynamic> _laravelSingleMenuPreviewFixture({
+  required bool isAvailable,
+  required String scheduleReason,
+}) => <String, dynamic>{
+  'data': <String, dynamic>{
+    'context': <String, dynamic>{
+      'branchId': 1,
+      'channel': 'pos',
+      'language': 'default',
+      'evaluatedAt': '2026-08-26T10:00:00+00:00',
+      'timezone': 'Asia/Damascus',
+    },
+    'canPublish': false,
+    'validation': const <String, dynamic>{
+      'errorCount': 0,
+      'warningCount': 0,
+      'informationCount': 0,
+      'errors': <Object>[],
+      'warnings': <Object>[],
+      'information': <Object>[],
+    },
+    'menus': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'id': 10,
+        'name': 'RAMI',
+        'description': null,
+        'coverImageUrl': null,
+        'priority': 0,
+        'isAssigned': true,
+        'isScheduledAvailable': isAvailable,
+        'scheduleReason': scheduleReason,
+        'sections': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 1,
+            'name': 'Coffee',
+            'products': <Map<String, dynamic>>[
+              <String, dynamic>{'variants': ''},
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};
+
+Map<String, dynamic> _assignmentFixture() => <String, dynamic>{
+  'data': <Map<String, dynamic>>[
+    <String, dynamic>{
+      'id': 1,
+      'menuId': 10,
+      'branchId': 1,
+      'channel': 'pos',
+      'priority': 0,
+      'isActive': true,
+      'menu': <String, dynamic>{
+        'id': 10,
+        'name': 'RAMI',
+        'status': 'active',
+        'priority': 0,
+        'sectionCount': 0,
+        'visibleProductCount': 0,
+      },
+    },
+  ],
+};
+
+Map<String, dynamic> _collectionPreviewFixture({required bool isAvailable}) =>
+    <String, dynamic>{
+      'data': <String, dynamic>{
+        'canPublish': true,
+        'context': <String, dynamic>{
+          'timezone': 'Asia/Damascus',
+          'evaluatedAt': '2026-08-26T10:00:00+00:00',
+        },
+        'menus': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 10,
+            'name': 'RAMI',
+            'priority': 0,
+            'isAssigned': true,
+            'isScheduledAvailable': isAvailable,
+            'scheduleReason': isAvailable ? 'matched_rule' : 'outside_schedule',
+            'sections': const <Object>[],
+          },
+        ],
+      },
+    };
+
+Map<String, dynamic> _syncRule({
+  int? branchId = 1,
+  String? channel = 'pos',
+  int? day,
+  String? start,
+  String? end,
+  String? startDate,
+  String? endDate,
+  int priority = 0,
+  bool isActive = true,
+}) => <String, dynamic>{
+  'branchId': branchId,
+  'channel': channel,
+  'dayOfWeek': day,
+  'startTime': start,
+  'endTime': end,
+  'startDate': startDate,
+  'endDate': endDate,
+  'priority': priority,
+  'isActive': isActive,
+};
 
 MenuScheduleRule _rule({
   required int day,
@@ -582,6 +1117,11 @@ class _ScheduleRepository extends MenuCatalogRepository {
   List<Map<String, dynamic>> synced = <Map<String, dynamic>>[];
   List<MenuScheduleRule> initialRules = <MenuScheduleRule>[];
   List<ReviewContext> previewContexts = <ReviewContext>[];
+  MenuScheduleCheck scheduleCheck = const MenuScheduleCheck(
+    isScheduledAvailable: true,
+    scheduleReason: 'matched_rule',
+  );
+  Object? scheduleCheckError;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   @override
@@ -659,6 +1199,10 @@ class _ScheduleRepository extends MenuCatalogRepository {
   Future<ResolvedPreview> previewMenuCollection(ReviewContext context) async =>
       ResolvedPreview.fromJson(<String, dynamic>{
         'canPublish': true,
+        'context': <String, dynamic>{
+          'timezone': 'Asia/Damascus',
+          'evaluatedAt': '2026-08-26T10:00:00+00:00',
+        },
         'menus': <Map<String, dynamic>>[
           <String, dynamic>{
             'id': 10,
@@ -678,9 +1222,7 @@ class _ScheduleRepository extends MenuCatalogRepository {
     ReviewContext context,
   ) async {
     previewContexts.add(context);
-    return const MenuScheduleCheck(
-      isScheduledAvailable: true,
-      scheduleReason: 'matched_rule',
-    );
+    if (scheduleCheckError != null) throw scheduleCheckError!;
+    return scheduleCheck;
   }
 }

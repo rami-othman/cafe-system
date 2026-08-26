@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
+import '../debug/menu_schedule_save_debug.dart';
 import 'api_exception.dart';
 import 'api_response_parser.dart';
+import '../debug/schedule_check_debug.dart';
 
 class DioApiClient {
   DioApiClient({Dio? dio})
@@ -49,9 +51,14 @@ class DioApiClient {
         : '${ApiConfig.baseUrl}/';
   }
 
-  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) {
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    bool debugMenuScheduleSave = false,
+  }) {
     return _send(
       () => _dio.get<dynamic>(path, queryParameters: queryParameters),
+      debugMenuScheduleSave: debugMenuScheduleSave,
     );
   }
 
@@ -71,6 +78,7 @@ class DioApiClient {
     String path, {
     Object? data,
     Map<String, dynamic>? queryParameters,
+    String? debugContext,
   }) {
     return _send(
       () => _dio.post<dynamic>(
@@ -78,6 +86,7 @@ class DioApiClient {
         data: data,
         queryParameters: queryParameters,
       ),
+      debugContext: debugContext,
     );
   }
 
@@ -109,10 +118,12 @@ class DioApiClient {
     String path, {
     Object? data,
     Map<String, dynamic>? queryParameters,
+    bool debugMenuScheduleSave = false,
   }) {
     return _send(
       () =>
           _dio.put<dynamic>(path, data: data, queryParameters: queryParameters),
+      debugMenuScheduleSave: debugMenuScheduleSave,
     );
   }
 
@@ -130,11 +141,43 @@ class DioApiClient {
     );
   }
 
-  Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
+  Future<dynamic> _send(
+    Future<Response<dynamic>> Function() request, {
+    String? debugContext,
+    bool debugMenuScheduleSave = false,
+  }) async {
     try {
       final Response<dynamic> response = await request();
-      return ApiResponseParser.unwrapData(response.data);
-    } on DioException catch (error) {
+      if (debugMenuScheduleSave) {
+        MenuScheduleSaveDebug.log(
+          'HTTP ${response.requestOptions.method} '
+          '${response.requestOptions.uri} status=${response.statusCode}',
+        );
+        MenuScheduleSaveDebug.json('HTTP raw response', response.data);
+      }
+      if (debugContext != null) {
+        ScheduleCheckDebug.log(
+          'HTTP ${response.requestOptions.method} '
+          '${response.requestOptions.uri} status=${response.statusCode}',
+        );
+        ScheduleCheckDebug.json('HTTP raw response', response.data);
+      }
+      return ApiResponseParser.unwrapData(
+        response.data,
+        debugContext: debugContext,
+      );
+    } on DioException catch (error, stackTrace) {
+      if (debugMenuScheduleSave) {
+        MenuScheduleSaveDebug.log(
+          'HTTP ${error.requestOptions.method} ${error.requestOptions.uri} '
+          'status=${error.response?.statusCode}',
+        );
+        MenuScheduleSaveDebug.json('HTTP error response', error.response?.data);
+        MenuScheduleSaveDebug.failure('DioApiClient', error, stackTrace);
+      }
+      if (debugContext != null) {
+        ScheduleCheckDebug.failure('DioApiClient', error, stackTrace);
+      }
       throw _handleDioException(error);
     }
   }
