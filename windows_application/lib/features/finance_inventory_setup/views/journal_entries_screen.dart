@@ -19,9 +19,8 @@ class _JournalState extends State<JournalEntriesScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<FinanceSetupCubit>().loadEntries(),
-    );
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
+    Future<void>.microtask(cubit.loadEntries);
   }
 
   @override
@@ -122,16 +121,16 @@ class _JournalState extends State<JournalEntriesScreen> {
     ),
   );
   Future<void> _post(BuildContext context, JournalEntry entry) async {
-    final ok = await context.read<FinanceSetupCubit>().postEntry(entry.id);
-    if (mounted && !ok)
-      ScaffoldMessenger.of(context).showSnackBar(
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final ok = await cubit.postEntry(entry.id);
+    if (mounted && !ok) {
+      messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            context.read<FinanceSetupCubit>().state.errorMessage ??
-                'تعذر ترحيل القيد.',
-          ),
+          content: Text(cubit.state.errorMessage ?? 'تعذر ترحيل القيد.'),
         ),
       );
+    }
   }
 
   void _details(BuildContext context, JournalEntry entry) {
@@ -176,6 +175,7 @@ class _JournalState extends State<JournalEntriesScreen> {
   }
 
   Future<void> _draft(BuildContext context, FinanceSetupState state) async {
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
     final accounts = state.accounts.where((a) => a.isActive).toList();
     var debit = accounts.first.id;
     var credit = accounts[1].id;
@@ -193,7 +193,7 @@ class _JournalState extends State<JournalEntriesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   DropdownButtonFormField<int>(
-                    value: debit,
+                    initialValue: debit,
                     decoration: const InputDecoration(
                       labelText: 'الحساب المدين',
                     ),
@@ -208,7 +208,7 @@ class _JournalState extends State<JournalEntriesScreen> {
                     onChanged: (v) => set(() => debit = v ?? debit),
                   ),
                   DropdownButtonFormField<int>(
-                    value: credit,
+                    initialValue: credit,
                     decoration: const InputDecoration(
                       labelText: 'الحساب الدائن',
                     ),
@@ -242,28 +242,28 @@ class _JournalState extends State<JournalEntriesScreen> {
                 onPressed: () async {
                   final value = double.tryParse(amount.text);
                   if (value == null || value <= 0 || debit == credit) return;
-                  final ok = await context
-                      .read<FinanceSetupCubit>()
-                      .createDraft(<String, dynamic>{
-                        'entryDate': DateTime.now().toIso8601String().substring(
-                          0,
-                          10,
-                        ),
-                        'sourceType': 'manual',
-                        'lines': <Map<String, dynamic>>[
-                          <String, dynamic>{
-                            'accountId': debit,
-                            'debit': amount.text,
-                            'credit': '0.00',
-                          },
-                          <String, dynamic>{
-                            'accountId': credit,
-                            'debit': '0.00',
-                            'credit': amount.text,
-                          },
-                        ],
-                      });
-                  if (dialog.mounted && ok) Navigator.pop(dialog);
+                  final ok = await cubit.createDraft(<String, dynamic>{
+                    'entryDate': DateTime.now().toIso8601String().substring(
+                      0,
+                      10,
+                    ),
+                    'sourceType': 'manual',
+                    'lines': <Map<String, dynamic>>[
+                      <String, dynamic>{
+                        'accountId': debit,
+                        'debit': amount.text,
+                        'credit': '0.00',
+                      },
+                      <String, dynamic>{
+                        'accountId': credit,
+                        'debit': '0.00',
+                        'credit': amount.text,
+                      },
+                    ],
+                  });
+                  if (dialog.mounted && ok) {
+                    Navigator.pop(dialog);
+                  }
                 },
               ),
             ],

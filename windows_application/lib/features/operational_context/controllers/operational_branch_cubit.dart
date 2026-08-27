@@ -7,7 +7,7 @@ class OperationalBranchCubit extends Cubit<OperationalBranchState> {
   OperationalBranchCubit({required this.repository})
     : super(const OperationalBranchState());
 
-  final OperationalBranchRepository repository;
+  final OperationalBranchReader repository;
 
   Future<void> loadBranches({int? preferredBranchId}) async {
     if (state.isLoading) return;

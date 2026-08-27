@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/constants/app_sizes.dart';
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
@@ -30,7 +31,12 @@ import '../features/finance_inventory_setup/views/financial_accounts_screen.dart
 import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
 import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
 import '../features/inventory/controllers/inventory_cubit.dart';
-import '../features/inventory/views/inventory_screens.dart';
+import '../features/inventory/views/inventory_items_screen.dart';
+import '../features/inventory/views/item_details_screen.dart';
+import '../features/inventory/views/item_form_screen.dart';
+import '../features/inventory/views/inventory_screens.dart'
+    hide InventoryItemDetailsScreen, InventoryItemsScreen;
+import '../features/inventory/views/inventory_workflow_screens.dart';
 import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../features/operational_context/models/operational_branch_state.dart';
 import 'app_shell.dart';
@@ -44,15 +50,29 @@ final GoRouter appRouter = GoRouter(
           activeLabel: _activeLabelFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
+          showDefaultTopBar: state.matchedLocation.startsWith(
+            AppRoutes.inventory,
+          ),
           onRefresh: _refreshActionFor(state),
           textDirection: state.matchedLocation.startsWith(AppRoutes.inventory)
               ? TextDirection.rtl
               : TextDirection.ltr,
           sidebarWidth: state.matchedLocation.startsWith(AppRoutes.inventory)
-              ? 236
+              ? AppSizes.inventorySidebarWidth
               : null,
           topBarHeight: state.matchedLocation.startsWith(AppRoutes.inventory)
-              ? 64
+              ? AppSizes.inventoryTopBarHeight
+              : null,
+          sidebarLogoSize: state.matchedLocation.startsWith(AppRoutes.inventory)
+              ? AppSizes.inventoryLogoMarkSize
+              : null,
+          sidebarPadding: state.matchedLocation.startsWith(AppRoutes.inventory)
+              ? const EdgeInsetsDirectional.fromSTEB(
+                  AppSizes.inventorySidebarHorizontalPadding,
+                  AppSizes.inventorySidebarVerticalPadding,
+                  AppSizes.inventorySidebarHorizontalPadding,
+                  AppSizes.inventorySidebarVerticalPadding,
+                )
               : null,
           child: child,
         );
@@ -118,6 +138,17 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const InventoryItemsScreen(),
         ),
         GoRoute(
+          path: AppRoutes.inventoryItemCreate,
+          name: AppRouteNames.inventoryItemCreate,
+          builder: (context, state) => const ItemFormScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryItemEdit,
+          name: AppRouteNames.inventoryItemEdit,
+          builder: (context, state) =>
+              ItemFormScreen(itemId: int.parse(state.pathParameters['id']!)),
+        ),
+        GoRoute(
           path: AppRoutes.inventoryUnitConversions,
           name: AppRouteNames.inventoryUnitConversions,
           builder: (context, state) => const InventoryUnitConversionsScreen(),
@@ -152,6 +183,30 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.inventoryCounts,
           name: AppRouteNames.inventoryCounts,
           builder: (context, state) => const InventoryCountsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryTransfers,
+          name: AppRouteNames.inventoryTransfers,
+          builder: (context, state) => const InventoryTransfersWorkspaceScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryTransferDetails,
+          name: AppRouteNames.inventoryTransferDetails,
+          builder: (context, state) => InventoryTransfersWorkspaceScreen(
+            transferId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.barCheckTemplates,
+          name: AppRouteNames.barCheckTemplates,
+          builder: (context, state) => const BarCheckTemplatesScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.barCheckTemplateDetails,
+          name: AppRouteNames.barCheckTemplateDetails,
+          builder: (context, state) => BarCheckTemplateEditorScreen(
+            templateId: int.parse(state.pathParameters['id']!),
+          ),
         ),
         GoRoute(
           path: AppRoutes.inventoryCountDetails,
@@ -263,6 +318,10 @@ Widget? _rightPanelFor(GoRouterState state) {
 }
 
 Widget? _topBarFor(GoRouterState state) {
+  if (state.matchedLocation.startsWith(AppRoutes.inventory)) {
+    return const InventorySubNavigation();
+  }
+
   return switch (state.matchedLocation) {
     AppRoutes.menu => const MenuTopBar(),
     AppRoutes.menuProducts => const MenuTopBar(
@@ -368,15 +427,24 @@ abstract final class AppRoutes {
       '/finance-inventory-setup/journal-entries';
   static const String inventory = '/inventory';
   static const String inventoryItems = '/inventory/items';
+  static const String inventoryItemCreate = '/inventory/items/new';
+  static const String inventoryItemEdit = '/inventory/items/:id/edit';
   static const String inventoryUnitConversions = '/inventory/units-conversions';
   static const String inventoryItemDetails = '/inventory/items/:id';
   static String inventoryItemDetailPath(int id) => '/inventory/items/$id';
+  static String inventoryItemEditPath(int id) => '/inventory/items/$id/edit';
   static const String inventoryBalances = '/inventory/balances';
   static const String inventoryMovements = '/inventory/movements';
   static const String inventoryMovementCreate = '/inventory/movements/new';
   static const String inventoryMovementLegacyCreate =
       '/inventory/movements/create';
   static const String inventoryCounts = '/inventory/counts';
+  static const String inventoryTransfers = '/inventory/transfers';
+  static const String inventoryTransferDetails = '/inventory/transfers/:id';
+  static String inventoryTransferPath(int id) => '/inventory/transfers/$id';
+  static const String barCheckTemplates = '/inventory/bar-check-templates';
+  static const String barCheckTemplateDetails = '/inventory/bar-check-templates/:id';
+  static String barCheckTemplatePath(int id) => '/inventory/bar-check-templates/$id';
   static const String inventoryCountDetails = '/inventory/counts/:id';
   static String inventoryCountDetailPath(int id) => '/inventory/counts/$id';
 }
@@ -401,11 +469,17 @@ abstract final class AppRouteNames {
   static const String financeJournalEntries = 'finance-journal-entries';
   static const String inventory = 'inventory';
   static const String inventoryItems = 'inventory-items';
+  static const String inventoryItemCreate = 'inventory-item-create';
+  static const String inventoryItemEdit = 'inventory-item-edit';
   static const String inventoryUnitConversions = 'inventory-unit-conversions';
   static const String inventoryItemDetails = 'inventory-item-details';
   static const String inventoryBalances = 'inventory-balances';
   static const String inventoryMovements = 'inventory-movements';
   static const String inventoryMovementCreate = 'inventory-movement-create';
   static const String inventoryCounts = 'inventory-counts';
+  static const String inventoryTransfers = 'inventory-transfers';
+  static const String inventoryTransferDetails = 'inventory-transfer-details';
+  static const String barCheckTemplates = 'bar-check-templates';
+  static const String barCheckTemplateDetails = 'bar-check-template-details';
   static const String inventoryCountDetails = 'inventory-count-details';
 }

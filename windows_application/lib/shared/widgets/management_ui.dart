@@ -138,25 +138,54 @@ class ManagementFilterBar extends StatelessWidget {
   );
 }
 
-class ManagementTableShell extends StatelessWidget {
+class ManagementTableShell extends StatefulWidget {
   const ManagementTableShell({
     super.key,
     required this.child,
     this.minWidth = 760,
+    this.verticalScroll = false,
   });
   final Widget child;
   final double minWidth;
+  final bool verticalScroll;
+
+  @override
+  State<ManagementTableShell> createState() => _ManagementTableShellState();
+}
+
+class _ManagementTableShellState extends State<ManagementTableShell> {
+  late final ScrollController _verticalController = ScrollController();
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Widget content = minWidth <= 0
-        ? child
+    final Widget table = widget.minWidth <= 0
+        ? widget.child
         : SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: minWidth),
-              child: child,
+              constraints: BoxConstraints(minWidth: widget.minWidth),
+              child: widget.child,
             ),
           );
+
+    final Widget content = widget.verticalScroll
+        ? Scrollbar(
+            controller: _verticalController,
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              controller: _verticalController,
+              primary: false,
+              child: table,
+            ),
+          )
+        : table;
+
     return AppCard(padding: EdgeInsets.zero, child: content);
   }
 }

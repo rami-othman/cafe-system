@@ -18,6 +18,7 @@ import '../../features/finance_inventory_setup/repositories/finance_setup_reposi
 import '../../features/inventory/controllers/inventory_cubit.dart';
 import '../../features/inventory/repositories/inventory_repository.dart';
 import '../../features/operational_context/controllers/operational_branch_cubit.dart';
+import '../../features/operational_context/repositories/fake_operational_branch_repository.dart';
 import '../../features/operational_context/repositories/operational_branch_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
@@ -131,17 +132,19 @@ void setupServiceLocator({bool useBackend = true}) {
     );
   }
 
-  if (!serviceLocator.isRegistered<OperationalBranchRepository>()) {
-    serviceLocator.registerLazySingleton<OperationalBranchRepository>(
-      () => OperationalBranchRepository(
-        apiClient: useBackend ? serviceLocator<DioApiClient>() : null,
-      ),
+  if (!serviceLocator.isRegistered<OperationalBranchReader>()) {
+    serviceLocator.registerLazySingleton<OperationalBranchReader>(
+      () => useBackend
+          ? OperationalBranchRepository(
+              apiClient: serviceLocator<DioApiClient>(),
+            )
+          : const FakeOperationalBranchRepository(),
     );
   }
   if (!serviceLocator.isRegistered<OperationalBranchCubit>()) {
     serviceLocator.registerFactory<OperationalBranchCubit>(
       () => OperationalBranchCubit(
-        repository: serviceLocator<OperationalBranchRepository>(),
+        repository: serviceLocator<OperationalBranchReader>(),
       ),
     );
   }

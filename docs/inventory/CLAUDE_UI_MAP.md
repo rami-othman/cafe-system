@@ -9,7 +9,9 @@ Read and parsed on 2026-08-23:
 - `design_reference/inventory/Cafe618 Inventory Operations.dc.html` (79,413 B)
 - `design_reference/inventory/github.md` (1,403 B)
 
-The files define 20 Inventory workspaces (including the visual kit). Module is
+The files define 19 total entries: seven Module entries (including the visual
+kit), four Extensions screens, and eight Operations screens. This is 18 actual
+Inventory screens/workspaces plus one Design Kit. Module is
 the Arabic RTL authority. Extensions and Operations use English LTR source
 layouts; their geometry, table structure, dialogs and state behaviour must be
 preserved while all user-facing copy is localized to Arabic RTL.
@@ -32,6 +34,17 @@ preserved while all user-facing copy is localized to Arabic RTL.
 ## Screen/workflow map
 
 Classification: **A** reuse as-is, **B** reuse + visual correction, **C** refactor, **D** missing — build new.
+
+## Module secondary navigation
+
+The Extensions source is the only Claude export that defines a module
+secondary-navigation list. Its complete, source-supported sequence is rendered
+in Arabic RTL as: **نظرة عامة / المواد المخزنية / أرصدة المخازن / حركات
+المخزون / جرد المخزون / تحويلات المخازن**. Units & Conversions and the
+Operations workspaces are intentionally not added to that secondary list:
+Operations does not define a corresponding tab list, and Units is an
+Operations screen. They remain route/context-action destinations rather than
+invented navigation tabs.
 
 | Source | Screen/workflow | Source-derived filters, columns, actions and important states | Current implementation | Class |
 | --- | --- | --- | --- | --- |

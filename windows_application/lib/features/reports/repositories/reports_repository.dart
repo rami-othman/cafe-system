@@ -26,7 +26,7 @@ class ReportsRepository {
       queryParameters: <String, dynamic>{
         'from': DateFormat('yyyy-MM-dd').format(from),
         'to': DateFormat('yyyy-MM-dd').format(to),
-        if (branchId != null) 'branch_id': branchId,
+        if (branchId case final int value) 'branch_id': value,
         'compare_previous': comparePrevious,
       },
     );

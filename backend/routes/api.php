@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\StockCountController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\WarehouseController;
+use App\Http\Controllers\Api\WarehouseTransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -45,6 +47,18 @@ Route::prefix('v1')->group(function (): void {
     Route::patch('warehouses/{warehouse}/status', [WarehouseController::class, 'status']);
 
     Route::prefix('inventory')->group(function (): void {
+        Route::get('bar-checks', [BarCheckController::class, 'index']);
+        Route::post('bar-checks', [BarCheckController::class, 'start']);
+        Route::get('bar-check-templates', [BarCheckController::class, 'templates']);
+        Route::post('bar-check-templates', [BarCheckController::class, 'storeTemplate']);
+        Route::get('bar-check-templates/{template}', [BarCheckController::class, 'showTemplate']);
+        Route::patch('bar-check-templates/{template}', [BarCheckController::class, 'updateTemplate']);
+        Route::get('transfers', [WarehouseTransferController::class, 'index']);
+        Route::post('transfers', [WarehouseTransferController::class, 'store']);
+        Route::get('transfers/{transfer}', [WarehouseTransferController::class, 'show']);
+        Route::patch('transfers/{transfer}', [WarehouseTransferController::class, 'update']);
+        Route::post('transfers/{transfer}/receive', [WarehouseTransferController::class, 'receive']);
+        Route::post('transfers/{transfer}/{action}', [WarehouseTransferController::class, 'action']);
         Route::get('dashboard', [InventoryBalanceController::class, 'dashboard']);
         Route::get('balances', [InventoryBalanceController::class, 'index']);
         Route::get('units', [InventoryItemController::class, 'units']);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,11 +7,13 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/app_router.dart';
+import '../../../core/constants/app_sizes.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/inventory_text_styles.dart';
+import '../../../core/utils/backend_datetime.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -52,6 +55,29 @@ ManagementTone _movementTone(String value) => switch (value) {
   'transfer_in' || 'transfer_out' => ManagementTone.info,
   _ => ManagementTone.neutral,
 };
+String _dashboardMovementLabel(InventoryMovement movement) =>
+    switch (movement.dashboardType) {
+      'purchase_receive' => 'استلام شراء',
+      'recipe_consumption' => 'استهلاك بيع',
+      'transfer_in' => 'تحويل وارد',
+      'transfer_out' => 'تحويل صادر',
+      'waste' => 'هدر',
+      'adjustment' => 'تعديل مخزون',
+      'opening_balance' => 'رصيد افتتاحي',
+      'return' => 'مرتجع',
+      _ => _movementLabel(movement.type),
+    };
+ManagementTone _dashboardMovementTone(InventoryMovement movement) =>
+    switch (movement.dashboardType) {
+      'purchase_receive' => ManagementTone.success,
+      'recipe_consumption' => ManagementTone.danger,
+      'transfer_in' || 'transfer_out' => ManagementTone.info,
+      'waste' => ManagementTone.warning,
+      'adjustment' => ManagementTone.warning,
+      'opening_balance' => ManagementTone.success,
+      'return' => ManagementTone.neutral,
+      _ => _movementTone(movement.type),
+    };
 bool _isOutbound(String type) =>
     type == 'stock_out' || type == 'waste' || type == 'adjustment_out';
 String _stockLabel(String quantity, bool low) {
@@ -116,6 +142,8 @@ class InventoryDashboardScreen extends StatefulWidget {
 class _InventoryDashboardState extends State<InventoryDashboardScreen> {
   int? _branchId;
   int? _warehouseId;
+  String _activityMovementType = '';
+  int _trendDays = 30;
   late DateTimeRange _range;
   final TextEditingController _search = TextEditingController();
   @override
@@ -126,9 +154,9 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
       start: DateTime(today.year, today.month),
       end: today,
     );
+    final InventoryCubit cubit = context.read<InventoryCubit>();
     Future<void>.microtask(() {
-      context.read<InventoryCubit>().loadDashboard();
-      context.read<InventoryCubit>().loadBalances();
+      cubit.loadDashboard();
     });
   }
 
@@ -143,10 +171,13 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
     child: BlocBuilder<InventoryCubit, InventoryState>(
       builder: (BuildContext context, InventoryState state) {
         final InventoryDashboard? dashboard = state.dashboard;
-        if (dashboard == null) {
+        if (dashboard == null ||
+            state.dashboardError != null ||
+            state.dashboardPermissionDenied) {
           return _LoadState(
-            loading: state.loading,
-            error: state.error,
+            loading: state.dashboardLoading,
+            error: state.dashboardError,
+            permissionDenied: state.dashboardPermissionDenied,
             onRetry: _reload,
           );
         }
@@ -158,20 +189,7 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                 title: 'إدارة المخزون',
                 subtitle:
                     'تابع المخزون والحركات والتنبيهات التشغيلية في الفروع.',
-                actions: <Widget>[
-                  AppButton(
-                    label: 'بدء جرد مخزون',
-                    icon: Icons.fact_check_outlined,
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => context.go(AppRoutes.inventoryCounts),
-                  ),
-                  AppButton(
-                    label: 'إضافة حركة',
-                    icon: Icons.add,
-                    onPressed: () =>
-                        context.go(AppRoutes.inventoryMovementCreate),
-                  ),
-                ],
+                actions: const <Widget>[],
               ),
               const SizedBox(height: AppSpacing.lg),
               ManagementFilterBar(
@@ -189,8 +207,7 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                   ),
                   _DashboardWarehouseDropdown(
                     value: _warehouseId,
-                    branchId: _branchId,
-                    warehouses: state.warehouses,
+                    warehouses: dashboard.warehouses,
                     onChanged: (int? value) {
                       setState(() => _warehouseId = value);
                       _reload();
@@ -211,6 +228,10 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
+              if (state.dashboardLoading) ...<Widget>[
+                const LinearProgressIndicator(),
+                const SizedBox(height: AppSpacing.md),
+              ],
               LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) =>
                     Wrap(
@@ -222,6 +243,11 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                                   label: 'إجمالي قيمة المخزون',
                                   metric: dashboard.kpis.totalValue,
                                   icon: Icons.account_balance_wallet_outlined,
+                                ),
+                                _DashboardKpi(
+                                  label: 'إجمالي المواد',
+                                  metric: dashboard.kpis.totalItems,
+                                  icon: Icons.inventory_2_outlined,
                                 ),
                                 _DashboardKpi(
                                   label: 'مواد منخفضة المخزون',
@@ -236,8 +262,14 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                                   color: const Color(0xFFFFE6E4),
                                 ),
                                 _DashboardKpi(
-                                  label: 'قيمة الهالك',
-                                  metric: dashboard.kpis.wasteValue,
+                                  label: 'تكلفة استهلاك اليوم',
+                                  metric: dashboard.kpis.todayConsumption,
+                                  icon: Icons.restaurant_outlined,
+                                  color: AppColors.discountBlueBadge,
+                                ),
+                                _DashboardKpi(
+                                  label: 'تكلفة هالك اليوم',
+                                  metric: dashboard.kpis.todayWaste,
                                   icon: Icons.delete_outline,
                                   color: AppColors.discountBlueBadge,
                                 ),
@@ -247,13 +279,19 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                                   width: constraints.maxWidth < 900
                                       ? constraints.maxWidth
                                       : (constraints.maxWidth -
-                                                AppSpacing.lg * 3) /
-                                            4,
+                                                AppSpacing.lg * 2) /
+                                            3,
                                   child: card,
                                 ),
                               )
                               .toList(),
                     ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _DashboardQuickActions(
+                onAddItem: () => context.go(AppRoutes.inventoryItems),
+                onMovement: () => context.go(AppRoutes.inventoryMovementCreate),
+                onCount: () => context.go(AppRoutes.inventoryCounts),
               ),
               const SizedBox(height: AppSpacing.lg),
               LayoutBuilder(
@@ -262,7 +300,7 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                     ? Column(
                         children: <Widget>[
                           _DashboardWarehouseValueCard(
-                            values: dashboard.warehouseValues,
+                            values: dashboard.warehouses,
                             onTap: (int id) {
                               setState(() => _warehouseId = id);
                               _reload();
@@ -271,6 +309,7 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                           const SizedBox(height: AppSpacing.lg),
                           _DashboardLowStockAlerts(
                             alerts: dashboard.alerts,
+                            summary: dashboard.alertSummary,
                             onOpen: (InventoryLowStockAlert alert) =>
                                 context.go(
                                   AppRoutes.inventoryItemDetailPath(
@@ -284,9 +323,9 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Expanded(
-                            flex: 3,
+                            flex: 1,
                             child: _DashboardWarehouseValueCard(
-                              values: dashboard.warehouseValues,
+                              values: dashboard.warehouses,
                               onTap: (int id) {
                                 setState(() => _warehouseId = id);
                                 _reload();
@@ -295,9 +334,10 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                           ),
                           const SizedBox(width: AppSpacing.lg),
                           Expanded(
-                            flex: 2,
+                            flex: 1,
                             child: _DashboardLowStockAlerts(
                               alerts: dashboard.alerts,
+                              summary: dashboard.alertSummary,
                               onOpen: (InventoryLowStockAlert alert) =>
                                   context.go(
                                     AppRoutes.inventoryItemDetailPath(
@@ -310,12 +350,27 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
                       ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              const Text(
-                'أحدث حركات المخزون',
-                style: AppTextStyles.titleMedium,
+              InventoryDashboardAnalyticsSection(
+                loading: state.dashboardLoading,
+                trend: dashboard.stockValueTrend,
+                waste: dashboard.wasteSummary,
+                consumption: dashboard.consumptionSummary,
+                selectedTrendDays: _trendDays,
+                onTrendDaysChanged: (int value) {
+                  setState(() => _trendDays = value);
+                  _reload();
+                },
               ),
-              const SizedBox(height: AppSpacing.sm),
-              _DashboardMovementsTable(items: dashboard.recent),
+              const SizedBox(height: AppSpacing.xl),
+              InventoryDashboardRecentActivityFeed(
+                items: dashboard.recent,
+                selectedType: _activityMovementType,
+                onTypeChanged: (String value) {
+                  setState(() => _activityMovementType = value);
+                  _reload();
+                },
+                onViewAll: () => context.go(AppRoutes.inventoryMovements),
+              ),
             ],
           ),
         );
@@ -350,6 +405,8 @@ class _InventoryDashboardState extends State<InventoryDashboardScreen> {
     from: _apiDate(_range.start),
     to: _apiDate(_range.end),
     search: _search.text.trim(),
+    movementType: _activityMovementType.isEmpty ? null : _activityMovementType,
+    trendDays: _trendDays,
   );
 }
 
@@ -746,6 +803,7 @@ Future<void> _showUnitConversionDialog(
   InventoryItemUnitConversion? current,
   VoidCallback? onSaved,
 }) async {
+  final InventoryCubit cubit = context.read<InventoryCubit>();
   final List<InventoryUnit> availableUnits = units.isEmpty
       ? InventoryUnit.fallback
       : units;
@@ -836,8 +894,7 @@ Future<void> _showUnitConversionDialog(
                     );
                     return;
                   }
-                  final bool saved = await context
-                      .read<InventoryCubit>()
+                  final bool saved = await cubit
                       .saveUnitConversion(item.id, <String, dynamic>{
                         'sourceUnit': sourceUnit,
                         'targetUnit': targetUnit,
@@ -876,14 +933,12 @@ class _InventoryItemDetailsState extends State<InventoryItemDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<InventoryCubit>().loadItemDetails(widget.itemId),
-    );
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    Future<void>.microtask(() => cubit.loadItemDetails(widget.itemId));
   }
 
   @override
   Widget build(BuildContext context) => _InventoryPage(
-    showNavigation: false,
     child: BlocBuilder<InventoryCubit, InventoryState>(
       builder: (BuildContext context, InventoryState state) {
         final InventoryItem? item = state.selectedItem;
@@ -1017,13 +1072,16 @@ class InventoryBalancesScreen extends StatefulWidget {
 }
 
 class _InventoryBalancesState extends State<InventoryBalancesScreen> {
+  static const int _rowsPerPage = 5;
   int? _warehouseId;
   String _query = '';
   String _status = '';
+  int _page = 1;
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => context.read<InventoryCubit>().loadBalances());
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    Future<void>.microtask(cubit.loadBalances);
   }
 
   @override
@@ -1031,82 +1089,118 @@ class _InventoryBalancesState extends State<InventoryBalancesScreen> {
     child: BlocBuilder<InventoryCubit, InventoryState>(
       builder: (BuildContext context, InventoryState state) {
         final List<InventoryBalance> rows = state.balances;
+        final int lastPage = (rows.length + _rowsPerPage - 1) ~/ _rowsPerPage;
+        final int page = lastPage == 0 ? 1 : _page.clamp(1, lastPage);
+        final List<InventoryBalance> pageRows = rows
+            .skip((page - 1) * _rowsPerPage)
+            .take(_rowsPerPage)
+            .toList(growable: false);
         final double value = rows.fold<double>(
           0,
           (double sum, InventoryBalance balance) =>
               sum + (double.tryParse(balance.value) ?? 0),
         );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const ManagementPageHeader(
-              title: 'أرصدة المخازن',
-              subtitle: 'عرض الكميات المتاحة وقيمتها في كل مخزن.',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            ManagementFilterBar(
-              children: <Widget>[
-                _WarehouseDropdown(
-                  value: _warehouseId,
-                  warehouses: state.warehouses,
-                  onChanged: (int? value) {
-                    setState(() => _warehouseId = value);
-                    _load();
-                  },
-                ),
-                _SearchField(
-                  hint: 'البحث في المواد المخزنية',
-                  onChanged: (String value) => _query = value,
-                  onSubmitted: (_) => _load(),
-                ),
-                _StringDropdown(
-                  value: _status,
-                  label: 'حالة المخزون',
-                  options: const <String, String>{
-                    'low': 'مخزون منخفض',
-                    'out': 'نفد المخزون',
-                  },
-                  onChanged: (String value) {
-                    setState(() => _status = value);
-                    _load();
-                  },
-                ),
-                IconButton(
-                  tooltip: 'تطبيق المرشحات',
-                  onPressed: _load,
-                  icon: const Icon(Icons.filter_alt_outlined),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.lg,
-              children: <Widget>[
-                _Kpi(
-                  label: 'قيمة المخزون',
-                  value: _money('$value'),
-                  icon: Icons.account_balance_wallet_outlined,
-                ),
-                _Kpi(
-                  label: 'مواد منخفضة المخزون',
-                  value:
-                      '${rows.where((InventoryBalance row) => row.low).length}',
-                  icon: Icons.warning_amber_outlined,
-                  color: AppColors.discountOrangeBadge,
-                ),
-                _Kpi(
-                  label: 'مواد متاحة',
-                  value:
-                      '${rows.where((InventoryBalance row) => (double.tryParse(row.available) ?? 0) > 0).length}',
-                  icon: Icons.check_circle_outline,
-                  color: AppColors.discountGreenBadge,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(
-              child: state.loading && rows.isEmpty
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const ManagementPageHeader(
+                title: 'أرصدة المخازن',
+                subtitle: 'عرض الكميات المتاحة وقيمتها في كل مخزن.',
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              ManagementFilterBar(
+                children: <Widget>[
+                  _WarehouseDropdown(
+                    value: _warehouseId,
+                    warehouses: state.warehouses,
+                    onChanged: (int? value) {
+                      setState(() => _warehouseId = value);
+                      _load();
+                    },
+                  ),
+                  _SearchField(
+                    hint: 'البحث في المواد المخزنية',
+                    onChanged: (String value) => _query = value,
+                    onSubmitted: (_) => _load(),
+                  ),
+                  _StringDropdown(
+                    value: _status,
+                    label: 'حالة المخزون',
+                    options: const <String, String>{
+                      'low': 'مخزون منخفض',
+                      'out': 'نفد المخزون',
+                    },
+                    onChanged: (String value) {
+                      setState(() => _status = value);
+                      _load();
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'تطبيق المرشحات',
+                    onPressed: _load,
+                    icon: const Icon(Icons.filter_alt_outlined),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final List<Widget> cards = <Widget>[
+                    _Kpi(
+                      label: 'قيمة المخزون',
+                      value: _money('$value'),
+                      icon: Icons.account_balance_wallet_outlined,
+                      compact: true,
+                    ),
+                    _Kpi(
+                      label: 'مواد منخفضة المخزون',
+                      value:
+                          '${rows.where((InventoryBalance row) => row.low).length}',
+                      icon: Icons.warning_amber_outlined,
+                      color: AppColors.discountOrangeBadge,
+                      compact: true,
+                    ),
+                    _Kpi(
+                      label: 'مواد متاحة',
+                      value:
+                          '${rows.where((InventoryBalance row) => (double.tryParse(row.available) ?? 0) > 0).length}',
+                      icon: Icons.check_circle_outline,
+                      color: AppColors.discountGreenBadge,
+                      compact: true,
+                    ),
+                  ];
+
+                  if (constraints.maxWidth < 760) {
+                    return Wrap(
+                      spacing: AppSpacing.md,
+                      runSpacing: AppSpacing.md,
+                      children: cards
+                          .map(
+                            (Widget card) => SizedBox(
+                              width: constraints.maxWidth,
+                              child: card,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  }
+
+                  return Row(
+                    children: cards
+                        .expand(
+                          (Widget card) => <Widget>[
+                            Expanded(child: card),
+                            const SizedBox(width: AppSpacing.md),
+                          ],
+                        )
+                        .take(cards.length * 2 - 1)
+                        .toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              state.loading && rows.isEmpty
                   ? const _LoadingSkeleton()
                   : state.error != null && rows.isEmpty
                   ? _LoadState(
@@ -1118,24 +1212,40 @@ class _InventoryBalancesState extends State<InventoryBalancesScreen> {
                   ? const _EmptyState(
                       message: 'لا توجد أرصدة للمرشحات المحددة.',
                     )
-                  : _BalancesTable(
-                      items: rows,
-                      onOpen: (InventoryBalance balance) => context.go(
-                        AppRoutes.inventoryItemDetailPath(balance.itemId),
-                      ),
+                  : Column(
+                      children: <Widget>[
+                        _BalancesTable(
+                          items: pageRows,
+                          onOpen: (InventoryBalance balance) => context.go(
+                            AppRoutes.inventoryItemDetailPath(balance.itemId),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _BalancesPagination(
+                          page: page,
+                          lastPage: lastPage,
+                          total: rows.length,
+                          visibleCount: pageRows.length,
+                          onPageChanged: (int value) =>
+                              setState(() => _page = value),
+                        ),
+                      ],
                     ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     ),
   );
 
-  void _load() => context.read<InventoryCubit>().loadBalances(
-    warehouseId: _warehouseId,
-    search: _query,
-    stockStatus: _status,
-  );
+  void _load() {
+    setState(() => _page = 1);
+    context.read<InventoryCubit>().loadBalances(
+      warehouseId: _warehouseId,
+      search: _query,
+      stockStatus: _status,
+    );
+  }
 }
 
 class InventoryMovementsScreen extends StatefulWidget {
@@ -1151,95 +1261,115 @@ class _InventoryMovementsState extends State<InventoryMovementsScreen> {
   @override
   void initState() {
     super.initState();
+    final InventoryCubit cubit = context.read<InventoryCubit>();
     Future<void>.microtask(() {
-      context.read<InventoryCubit>().loadMovements();
-      context.read<InventoryCubit>().loadBalances();
+      cubit.loadMovements();
+      cubit.loadBalances();
     });
   }
 
   @override
   Widget build(BuildContext context) => _InventoryPage(
     child: BlocBuilder<InventoryCubit, InventoryState>(
-      builder: (BuildContext context, InventoryState state) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          ManagementPageHeader(
-            title: 'حركات المخزون',
-            subtitle: 'سجل كامل قابل للتدقيق لجميع نشاطات المخزون.',
-            actions: <Widget>[
-              AppButton(
-                label: 'إضافة حركة',
-                icon: Icons.add,
-                onPressed: () => context.go(AppRoutes.inventoryMovementCreate),
-              ),
-            ],
+      builder: (BuildContext context, InventoryState state) =>
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                ManagementPageHeader(
+                  title: 'حركات المخزون',
+                  subtitle: 'سجل كامل قابل للتدقيق لجميع نشاطات المخزون.',
+                  actions: <Widget>[
+                    AppButton(
+                      label: 'إضافة حركة',
+                      icon: Icons.add,
+                      onPressed: () =>
+                          context.go(AppRoutes.inventoryMovementCreate),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                ManagementFilterBar(
+                  children: <Widget>[
+                    const _ReadOnlyFilter(
+                      label: 'كل التواريخ',
+                      icon: Icons.date_range_outlined,
+                    ),
+                    _WarehouseDropdown(
+                      value: _warehouseId,
+                      warehouses: state.warehouses,
+                      onChanged: (int? value) {
+                        setState(() => _warehouseId = value);
+                        _load();
+                      },
+                    ),
+                    _ItemDropdown(
+                      value: _itemId,
+                      items: state.items,
+                      onChanged: (int? value) {
+                        setState(() => _itemId = value);
+                        _load();
+                      },
+                    ),
+                    _StringDropdown(
+                      value: _type,
+                      label: 'نوع الحركة',
+                      options: const <String, String>{
+                        'stock_in': 'إدخال مخزون',
+                        'stock_out': 'إخراج مخزون',
+                        'waste': 'هالك',
+                        'adjustment_in': 'تسوية',
+                        'stock_count_variance': 'فرق جرد',
+                        'transfer_in': 'تحويل',
+                      },
+                      onChanged: (String value) {
+                        setState(() => _type = value);
+                        _load();
+                      },
+                    ),
+                    const _ReadOnlyFilter(
+                      label: 'كل الموظفين',
+                      icon: Icons.person_outline,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                state.loading && state.movements.isEmpty
+                    ? const _LoadingSkeleton()
+                    : state.error != null && state.movements.isEmpty
+                    ? _LoadState(
+                        loading: false,
+                        error: state.error,
+                        onRetry: _load,
+                      )
+                    : state.movements.isEmpty
+                    ? const _EmptyState(
+                        message: 'لا توجد حركات تطابق المرشحات المحددة.',
+                      )
+                    : Column(
+                        children: <Widget>[
+                          _MovementsTable(items: state.movements),
+                          const SizedBox(height: AppSpacing.md),
+                          _MovementsPagination(
+                            page: state.movementsPage,
+                            lastPage: state.movementsLastPage,
+                            total: state.movementsTotal,
+                            visibleCount: state.movements.length,
+                            onPageChanged: _load,
+                          ),
+                        ],
+                      ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          ManagementFilterBar(
-            children: <Widget>[
-              const _ReadOnlyFilter(
-                label: 'كل التواريخ',
-                icon: Icons.date_range_outlined,
-              ),
-              _WarehouseDropdown(
-                value: _warehouseId,
-                warehouses: state.warehouses,
-                onChanged: (int? value) {
-                  setState(() => _warehouseId = value);
-                  _load();
-                },
-              ),
-              _ItemDropdown(
-                value: _itemId,
-                items: state.items,
-                onChanged: (int? value) {
-                  setState(() => _itemId = value);
-                  _load();
-                },
-              ),
-              _StringDropdown(
-                value: _type,
-                label: 'نوع الحركة',
-                options: const <String, String>{
-                  'stock_in': 'إدخال مخزون',
-                  'stock_out': 'إخراج مخزون',
-                  'waste': 'هالك',
-                  'adjustment_in': 'تسوية',
-                  'stock_count_variance': 'فرق جرد',
-                  'transfer_in': 'تحويل',
-                },
-                onChanged: (String value) {
-                  setState(() => _type = value);
-                  _load();
-                },
-              ),
-              const _ReadOnlyFilter(
-                label: 'كل الموظفين',
-                icon: Icons.person_outline,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Expanded(
-            child: state.loading && state.movements.isEmpty
-                ? const _LoadingSkeleton()
-                : state.error != null && state.movements.isEmpty
-                ? _LoadState(loading: false, error: state.error, onRetry: _load)
-                : state.movements.isEmpty
-                ? const _EmptyState(
-                    message: 'لا توجد حركات تطابق المرشحات المحددة.',
-                  )
-                : _MovementsTable(items: state.movements),
-          ),
-        ],
-      ),
     ),
   );
 
-  void _load() => context.read<InventoryCubit>().loadMovements(
+  void _load([int page = 1]) => context.read<InventoryCubit>().loadMovements(
     warehouseId: _warehouseId,
     itemId: _itemId,
     type: _type,
+    page: page,
   );
 }
 
@@ -1263,9 +1393,10 @@ class _InventoryMovementCreateState
   @override
   void initState() {
     super.initState();
+    final InventoryCubit cubit = context.read<InventoryCubit>();
     Future<void>.microtask(() {
-      context.read<InventoryCubit>().loadMovements();
-      context.read<InventoryCubit>().loadBalances();
+      cubit.loadMovements();
+      cubit.loadBalances();
     });
   }
 
@@ -1280,7 +1411,6 @@ class _InventoryMovementCreateState
 
   @override
   Widget build(BuildContext context) => _InventoryPage(
-    showNavigation: false,
     child: BlocBuilder<InventoryCubit, InventoryState>(
       builder: (BuildContext context, InventoryState state) {
         final InventoryItem? item = _itemId == null
@@ -1460,6 +1590,7 @@ class _InventoryMovementCreateState
   );
 
   Future<void> _post(BuildContext context, double available) async {
+    final InventoryCubit cubit = context.read<InventoryCubit>();
     final double quantity = double.tryParse(_quantity.text) ?? 0;
     if (_warehouseId == null ||
         _itemId == null ||
@@ -1492,32 +1623,26 @@ class _InventoryMovementCreateState
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !context.mounted) return;
     final String reason = <String>[
       _reason.text.trim(),
       _notes.text.trim(),
     ].where((String value) => value.isNotEmpty).join(' — ');
-    final bool saved = await context
-        .read<InventoryCubit>()
-        .postMovement(<String, dynamic>{
-          'warehouseId': _warehouseId,
-          'itemId': _itemId,
-          'type': _type,
-          'quantity': _quantity.text.trim(),
-          if (!_isOutbound(_type) && _cost.text.trim().isNotEmpty)
-            'unitCost': _cost.text.trim(),
-          if (reason.isNotEmpty) 'reason': reason,
-        });
-    if (!mounted) return;
+    final bool saved = await cubit.postMovement(<String, dynamic>{
+      'warehouseId': _warehouseId,
+      'itemId': _itemId,
+      'type': _type,
+      'quantity': _quantity.text.trim(),
+      if (!_isOutbound(_type) && _cost.text.trim().isNotEmpty)
+        'unitCost': _cost.text.trim(),
+      if (reason.isNotEmpty) 'reason': reason,
+    });
+    if (!context.mounted) return;
     if (saved) {
       _notice(context, 'تم ترحيل حركة المخزون بنجاح.');
       context.go(AppRoutes.inventoryMovements);
     } else {
-      _notice(
-        context,
-        _friendlyError(context.read<InventoryCubit>().state.error),
-        error: true,
-      );
+      _notice(context, _friendlyError(cubit.state.error), error: true);
     }
   }
 }
@@ -1528,11 +1653,85 @@ class InventoryCountsScreen extends StatefulWidget {
   State<InventoryCountsScreen> createState() => _InventoryCountsState();
 }
 
+/// Source-shaped destination for the transfer workflow. Its operational data
+/// and workspace are introduced with the transfer API in Phase 4.
+class InventoryTransfersScreen extends StatelessWidget {
+  const InventoryTransfersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) => _InventoryPage(
+    child: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          ManagementPageHeader(
+            title: 'تحويلات المخازن',
+            subtitle: 'متابعة التحويلات بين المخازن التشغيلية.',
+            actions: <Widget>[
+              AppButton(
+                label: 'إنشاء تحويل',
+                icon: Icons.add,
+                onPressed: () {},
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _EmptyState(
+            message: 'لا توجد تحويلات مخزون ضمن النطاق المحدد.',
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+enum _CountPeriod { all, today, last7Days, currentMonth }
+
+extension on _CountPeriod {
+  String get label => switch (this) {
+    _CountPeriod.all => 'كل الفترات',
+    _CountPeriod.today => 'اليوم',
+    _CountPeriod.last7Days => 'آخر 7 أيام',
+    _CountPeriod.currentMonth => 'هذا الشهر',
+  };
+
+  (String? from, String? to) get range {
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final DateFormat formatter = DateFormat('yyyy-MM-dd');
+    return switch (this) {
+      _CountPeriod.all => (null, null),
+      _CountPeriod.today => (formatter.format(today), formatter.format(today)),
+      _CountPeriod.last7Days => (
+        formatter.format(today.subtract(const Duration(days: 6))),
+        formatter.format(today),
+      ),
+      _CountPeriod.currentMonth => (
+        formatter.format(DateTime(now.year, now.month)),
+        formatter.format(today),
+      ),
+    };
+  }
+}
+
 class _InventoryCountsState extends State<InventoryCountsScreen> {
+  String _status = '';
+  int? _warehouseId;
+  String _countType = '';
+  String _source = '';
+  int? _createdBy;
+  _CountPeriod _period = _CountPeriod.all;
+
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => context.read<InventoryCubit>().loadCounts());
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    Future<void>.microtask(() {
+      _loadCounts();
+      // Categories are supplied by the live inventory catalog. They are only
+      // used to build a cycle count and are never a client-side fallback.
+      cubit.loadItems();
+    });
   }
 
   @override
@@ -1542,21 +1741,62 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           ManagementPageHeader(
-            title: 'جرد المخزون',
-            subtitle: 'تخطيط الجرد الفعلي ومراجعة الفروقات قبل ترحيلها.',
+            title: 'الجرد المخزني',
+            subtitle: 'إدارة الجرد الفعلي ومراجعته وترحيل فروقات المخزون.',
             actions: <Widget>[
               AppButton(
-                label: 'بدء جرد مخزون',
+                label: 'بدء جرد جديد',
                 icon: Icons.add,
                 onPressed: _branchWarehouses(context, state.warehouses).isEmpty
                     ? null
                     : () => _startCount(
                         context,
                         _branchWarehouses(context, state.warehouses),
+                        state.itemCategories,
                       ),
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.lg),
+          _CountFilters(
+            status: _status,
+            warehouseId: _warehouseId,
+            countType: _countType,
+            createdBy: _createdBy,
+            period: _period,
+            warehouses: _branchWarehouses(context, state.warehouses),
+            creators: state.countCreators,
+            onStatusChanged: (String value) {
+              setState(() => _status = value);
+              _loadCounts();
+            },
+            onWarehouseChanged: (int? value) {
+              setState(() => _warehouseId = value);
+              _loadCounts();
+            },
+            onCountTypeChanged: (String value) {
+              setState(() => _countType = value);
+              _loadCounts();
+            },
+            onCreatedByChanged: (int? value) {
+              setState(() => _createdBy = value);
+              _loadCounts();
+            },
+            onPeriodChanged: (_CountPeriod value) {
+              setState(() => _period = value);
+              _loadCounts();
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _CountSourceSelector(
+            value: _source,
+            onChanged: (String value) {
+              setState(() => _source = value);
+              _loadCounts();
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _CountKpis(summary: state.countSummary),
           const SizedBox(height: AppSpacing.lg),
           Expanded(
             child: state.loading && state.counts.isEmpty
@@ -1565,15 +1805,30 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
                 ? _LoadState(
                     loading: false,
                     error: state.error,
-                    onRetry: () => context.read<InventoryCubit>().loadCounts(),
+                    onRetry: _loadCounts,
                   )
                 : state.counts.isEmpty
                 ? const _EmptyState(message: 'لم يُنشأ أي جرد مخزون بعد.')
-                : _CountsTable(
-                    items: state.counts,
-                    onOpen: (InventoryCount count) => context.go(
-                      AppRoutes.inventoryCountDetailPath(count.id),
-                    ),
+                : Column(
+                    children: <Widget>[
+                      Expanded(
+                        child: _CountsTable(
+                          items: state.counts,
+                          onOpen: (InventoryCount count) => context.go(
+                            AppRoutes.inventoryCountDetailPath(count.id),
+                          ),
+                        ),
+                      ),
+                      if (state.countsLastPage > 1) ...<Widget>[
+                        const SizedBox(height: AppSpacing.sm),
+                        _CountsPagination(
+                          page: state.countsPage,
+                          lastPage: state.countsLastPage,
+                          total: state.countsTotal,
+                          onPageChanged: (int page) => _loadCounts(page: page),
+                        ),
+                      ],
+                    ],
                   ),
           ),
         ],
@@ -1584,51 +1839,49 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
   Future<void> _startCount(
     BuildContext context,
     List<WarehouseLocation> warehouses,
+    List<String> categories,
   ) async {
-    int warehouseId = warehouses.first.id;
-    final bool? create = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: const Text('بدء جرد مخزون'),
-        content: DropdownButtonFormField<int>(
-          initialValue: warehouseId,
-          decoration: const InputDecoration(labelText: 'المخزن'),
-          items: warehouses
-              .map(
-                (WarehouseLocation warehouse) => DropdownMenuItem<int>(
-                  value: warehouse.id,
-                  child: Text(_warehouseLabel(warehouse)),
-                ),
-              )
-              .toList(),
-          onChanged: (int? value) => warehouseId = value ?? warehouseId,
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('إلغاء'),
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    final StockCountStartRequest? request =
+        await showDialog<StockCountStartRequest>(
+          context: context,
+          builder: (BuildContext dialogContext) => StockCountStartDialog(
+            warehouses: warehouses,
+            categories: categories,
           ),
-          AppButton(
-            label: 'إنشاء مسودة',
-            onPressed: () => Navigator.pop(dialogContext, true),
-          ),
-        ],
-      ),
-    );
-    if (create != true || !mounted) return;
-    final bool saved = await context
-        .read<InventoryCubit>()
-        .createCount(<String, dynamic>{
-          'warehouseId': warehouseId,
-          'countDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        });
-    if (!mounted) return;
+        );
+    if (request == null || !context.mounted) return;
+    final bool saved = await cubit.createCount(<String, dynamic>{
+      'warehouseId': request.warehouseId,
+      'countDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'countType': request.countType,
+      if (request.countType == 'cycle') 'categoryFilters': request.categories,
+      if (request.notes.isNotEmpty) 'notes': request.notes,
+    });
+    if (!context.mounted) return;
     _notice(
       context,
-      saved
-          ? 'تم إنشاء مسودة الجرد.'
-          : _friendlyError(context.read<InventoryCubit>().state.error),
+      saved ? 'تم إنشاء مسودة الجرد.' : _friendlyError(cubit.state.error),
       error: !saved,
+    );
+    if (saved && cubit.state.selectedCount != null) {
+      context.go(
+        AppRoutes.inventoryCountDetailPath(cubit.state.selectedCount!.id),
+      );
+    }
+  }
+
+  void _loadCounts({int page = 1}) {
+    final (String? from, String? to) = _period.range;
+    context.read<InventoryCubit>().loadCounts(
+      status: _status.isEmpty ? null : _status,
+      warehouseId: _warehouseId,
+      countType: _countType.isEmpty ? null : _countType,
+      source: _source.isEmpty ? null : _source,
+      createdBy: _createdBy,
+      from: from,
+      to: to,
+      page: page,
     );
   }
 }
@@ -1656,7 +1909,6 @@ class _InventoryCountDetailsScreenState
 
   @override
   Widget build(BuildContext context) => _InventoryPage(
-    showNavigation: false,
     child: BlocBuilder<InventoryCubit, InventoryState>(
       builder: (BuildContext context, InventoryState state) {
         final InventoryCount? count = state.selectedCount;
@@ -1667,6 +1919,11 @@ class _InventoryCountDetailsScreenState
             onRetry: () =>
                 context.read<InventoryCubit>().loadCountDetails(widget.countId),
           );
+        }
+        final bool renderApprovedWorkspace =
+            state.selectedCount?.id == widget.countId;
+        if (renderApprovedWorkspace) {
+          return _StockCountWorkspace(count: count);
         }
         return SingleChildScrollView(
           child: Column(
@@ -1730,6 +1987,1246 @@ class _InventoryCountDetailsScreenState
       },
     ),
   );
+}
+
+class StockCountStartRequest {
+  const StockCountStartRequest({
+    required this.warehouseId,
+    required this.countType,
+    required this.categories,
+    required this.notes,
+  });
+
+  final int warehouseId;
+  final String countType;
+  final List<String> categories;
+  final String notes;
+}
+
+class StockCountStartDialog extends StatefulWidget {
+  const StockCountStartDialog({
+    super.key,
+    required this.warehouses,
+    required this.categories,
+  });
+
+  final List<WarehouseLocation> warehouses;
+  final List<String> categories;
+
+  @override
+  State<StockCountStartDialog> createState() => _StockCountStartDialogState();
+}
+
+class _StockCountStartDialogState extends State<StockCountStartDialog> {
+  int? _warehouseId;
+  String _countType = 'full';
+  final Set<String> _categories = <String>{};
+  final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  bool get _canStart =>
+      _warehouseId != null && (_countType == 'full' || _categories.isNotEmpty);
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+    titlePadding: const EdgeInsetsDirectional.fromSTEB(20, 18, 20, 0),
+    title: Row(
+      children: <Widget>[
+        const Expanded(
+          child: Text('بدء جرد جديد', style: AppTextStyles.titleMedium),
+        ),
+        IconButton(
+          tooltip: 'إغلاق',
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.close),
+        ),
+      ],
+    ),
+    content: SizedBox(
+      width: 680,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            DropdownButtonFormField<int>(
+              initialValue: _warehouseId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'المستودع',
+                hintText: 'اختر المستودع…',
+              ),
+              items: widget.warehouses
+                  .map(
+                    (WarehouseLocation warehouse) => DropdownMenuItem<int>(
+                      value: warehouse.id,
+                      child: Text(_warehouseLabel(warehouse)),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (int? value) => setState(() => _warehouseId = value),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text('نوع الجرد', style: AppTextStyles.labelMedium),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              children: <Widget>[
+                _CountTypeOption(
+                  label: 'جرد كامل',
+                  selected: _countType == 'full',
+                  onPressed: () => setState(() => _countType = 'full'),
+                ),
+                _CountTypeOption(
+                  label: 'جرد دوري / جزئي',
+                  selected: _countType == 'cycle',
+                  onPressed: () => setState(() => _countType = 'cycle'),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _countType == 'full'
+                  ? 'سيتم جرد جميع عناصر المخزون النشطة المخصصة لهذا المستودع.'
+                  : 'سيتم جرد عناصر المخزون النشطة في الفئات المحددة فقط.',
+              style: AppTextStyles.bodySmall,
+            ),
+            if (_countType == 'cycle') ...<Widget>[
+              const SizedBox(height: AppSpacing.lg),
+              Text('الفئات المراد جردها', style: AppTextStyles.labelMedium),
+              const SizedBox(height: AppSpacing.sm),
+              if (widget.categories.isEmpty)
+                const Text(
+                  'لا توجد فئات نشطة متاحة للجرد حالياً.',
+                  style: AppTextStyles.bodySmall,
+                )
+              else
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: widget.categories
+                      .map(
+                        (String category) => FilterChip(
+                          label: Text(category),
+                          selected: _categories.contains(category),
+                          onSelected: (bool selected) => setState(() {
+                            if (selected) {
+                              _categories.add(category);
+                            } else {
+                              _categories.remove(category);
+                            }
+                          }),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: _notesController,
+              minLines: 3,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'ملاحظات (اختياري)',
+                hintText: 'أي تفاصيل إضافية عن هذا الجرد',
+                alignLabelWithHint: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+    actions: <Widget>[
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إلغاء'),
+      ),
+      AppButton(
+        label: 'بدء الجرد',
+        minimumHeight: 42,
+        onPressed: _canStart
+            ? () => Navigator.pop(
+                context,
+                StockCountStartRequest(
+                  warehouseId: _warehouseId!,
+                  countType: _countType,
+                  categories: _categories.toList(growable: false),
+                  notes: _notesController.text.trim(),
+                ),
+              )
+            : null,
+      ),
+    ],
+  );
+}
+
+class _CountTypeOption extends StatelessWidget {
+  const _CountTypeOption({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 150,
+    height: 44,
+    child: OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: selected ? AppColors.primary : AppColors.surface,
+        foregroundColor: selected
+            ? AppColors.textInverse
+            : AppColors.textPrimary,
+        side: BorderSide(
+          color: selected ? AppColors.primary : AppColors.border,
+        ),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
+      ),
+      child: Text(label),
+    ),
+  );
+}
+
+class _StockCountWorkspace extends StatefulWidget {
+  const _StockCountWorkspace({required this.count});
+  final InventoryCount count;
+
+  @override
+  State<_StockCountWorkspace> createState() => _StockCountWorkspaceState();
+}
+
+class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
+  String _search = '';
+  String _filter = 'all';
+  final Map<int, String> _pendingCountedQuantities = <int, String>{};
+  final Map<int, String> _pendingReasons = <int, String>{};
+  final Map<int, Timer> _lineSaveTimers = <int, Timer>{};
+  final Map<int, String> _lineErrors = <int, String>{};
+
+  @override
+  void dispose() {
+    for (final Timer timer in _lineSaveTimers.values) {
+      timer.cancel();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final InventoryCount count = widget.count;
+    final InventoryState state = context.watch<InventoryCubit>().state;
+    final bool editable = _countIsEditable(count.status);
+    final List<InventoryCountLine> lines = count.lines
+        .where((line) {
+          final String query = _search.trim().toLowerCase();
+          final bool matchesQuery =
+              query.isEmpty ||
+              line.itemName.toLowerCase().contains(query) ||
+              line.sku.toLowerCase().contains(query);
+          final bool hasVariance =
+              (double.tryParse(line.varianceQuantity) ?? 0).abs() > 0.0001;
+          final bool matchesFilter = switch (_filter) {
+            'counted' => line.isCounted && !hasVariance,
+            'remaining' => !line.isCounted,
+            'variance' => hasVariance,
+            'reason_required' =>
+              line.isCounted && hasVariance && line.reason == null,
+            _ => true,
+          };
+          return matchesQuery && matchesFilter;
+        })
+        .toList(growable: false);
+    final int counted = count.lines
+        .where(
+          (InventoryCountLine line) =>
+              line.isCounted ||
+              _pendingCountedQuantities.containsKey(line.itemId),
+        )
+        .length;
+    final int variance = count.lines
+        .where(
+          (line) =>
+              (double.tryParse(line.varianceQuantity) ?? 0).abs() > 0.0001,
+        )
+        .length;
+    final bool hasMissingVarianceReason = count.lines.any(
+      (InventoryCountLine line) =>
+          line.isCounted &&
+          (double.tryParse(line.varianceQuantity) ?? 0).abs() > 0.0001 &&
+          (line.reason?.trim().isEmpty ?? true),
+    );
+    final String varianceValue = count.lines
+        .fold<double>(
+          0,
+          (sum, line) => sum + (double.tryParse(line.varianceValue) ?? 0),
+        )
+        .toStringAsFixed(2);
+
+    return Directionality(
+      textDirection: ui.TextDirection.rtl,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () => context.go(AppRoutes.inventoryCounts),
+                  child: const Text('إدارة المخزون'),
+                ),
+                const Text('/'),
+                TextButton(
+                  onPressed: () => context.go(AppRoutes.inventoryCounts),
+                  child: const Text('الجرد المخزني'),
+                ),
+                const Text('/'),
+                Text(count.number, style: AppTextStyles.labelLarge),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Wrap(
+                          spacing: AppSpacing.xxl,
+                          runSpacing: AppSpacing.md,
+                          children: <Widget>[
+                            _Detail('رقم الجرد', count.number),
+                            _Detail('المستودع', count.warehouseName),
+                            _Detail(
+                              'نوع الجرد',
+                              count.countType == 'cycle'
+                                  ? 'دوري / جزئي'
+                                  : 'كامل',
+                            ),
+                            _CountStatusDetail(status: count.status),
+                            _Detail('بدأ بواسطة', count.createdByName ?? '—'),
+                            _Detail('بدأ في', _shortDate(count.date)),
+                          ],
+                        ),
+                      ),
+                      if (editable)
+                        TextButton(
+                          onPressed: () => _cancel(context, count),
+                          child: const Text(
+                            'إلغاء الجرد',
+                            style: TextStyle(color: AppColors.danger),
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (count.notes != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'ملاحظات: ${count.notes}',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _WorkspaceKpis(
+              total: count.lines.length,
+              counted: counted,
+              variance: variance,
+              varianceValue: varianceValue,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final Widget filters = Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final (String key, String label) in <(String, String)>[
+                      ('all', 'الكل'),
+                      ('remaining', 'غير معدود'),
+                      ('counted', 'مطابق'),
+                      ('variance', 'يوجد فرق'),
+                      ('reason_required', 'بحاجة لسبب'),
+                    ])
+                      ChoiceChip(
+                        label: Text(label),
+                        selected: _filter == key,
+                        showCheckmark: false,
+                        visualDensity: VisualDensity.compact,
+                        selectedColor: AppColors.paginationActive,
+                        labelStyle: TextStyle(
+                          color: _filter == key
+                              ? AppColors.surface
+                              : AppColors.textPrimary,
+                        ),
+                        onSelected: (_) => setState(() => _filter = key),
+                      ),
+                  ],
+                );
+                final Widget search = SizedBox(
+                  width: constraints.maxWidth > 900 ? 300 : double.infinity,
+                  child: TextField(
+                    onChanged: (value) => setState(() => _search = value),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      prefixIcon: Icon(Icons.search, size: 20),
+                      hintText: 'بحث عن عنصر أو رمز SKU...',
+                    ),
+                  ),
+                );
+                return AppCard(
+                  padding: AppSpacing.allMd,
+                  child: constraints.maxWidth > 900
+                      ? Directionality(
+                          textDirection: ui.TextDirection.ltr,
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(child: filters),
+                              const SizedBox(width: AppSpacing.md),
+                              search,
+                            ],
+                          ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            filters,
+                            const SizedBox(height: AppSpacing.md),
+                            search,
+                          ],
+                        ),
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+            lines.isEmpty
+                ? const _EmptyState(
+                    message: 'لا توجد أسطر مطابقة للبحث أو التصفية.',
+                  )
+                : _WorkspaceLinesTable(
+                    lines: lines,
+                    editable: editable,
+                    pendingCountedQuantities: _pendingCountedQuantities,
+                    lineErrors: _lineErrors,
+                    onCountedChanged: (InventoryCountLine line, String value) =>
+                        _queueQuantitySave(context, count, line, value),
+                    onCountedSubmitted:
+                        (InventoryCountLine line, String value) =>
+                            _saveQuantityNow(context, count, line, value),
+                    onReasonChanged: (InventoryCountLine line, String value) =>
+                        _queueReasonSave(context, count, line, value),
+                  ),
+            const SizedBox(height: AppSpacing.md),
+            AppCard(
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: AppSpacing.sm,
+                children: <Widget>[
+                  Text(
+                    _saveStatusMessage(
+                      state,
+                      editable,
+                      count.status,
+                      hasMissingVarianceReason,
+                    ),
+                    style: AppTextStyles.bodySmall,
+                  ),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: <Widget>[
+                      if (editable)
+                        AppButton(
+                          label: 'حفظ كمسودة',
+                          variant: AppButtonVariant.outlined,
+                          onPressed: state.saving
+                              ? null
+                              : () => _saveDraft(context, count),
+                        ),
+                      if (count.status == 'draft')
+                        AppButton(
+                          label: 'بدء الجرد',
+                          onPressed: state.saving
+                              ? null
+                              : () => _advanceCount(context, count),
+                        ),
+                      if (count.status == 'in_progress')
+                        AppButton(
+                          label: 'إرسال للمراجعة',
+                          onPressed:
+                              !state.saving &&
+                                  counted == count.lines.length &&
+                                  count.lines.isNotEmpty &&
+                                  !hasMissingVarianceReason
+                              ? () => _submitForReview(context, count)
+                              : null,
+                        ),
+                      if (count.status == 'submitted')
+                        AppButton(
+                          label: 'اعتماد الجرد',
+                          icon: Icons.verified_outlined,
+                          onPressed: state.saving
+                              ? null
+                              : () => _advanceCount(context, count),
+                        ),
+                      if (count.status == 'approved')
+                        AppButton(
+                          label: 'ترحيل الفروقات',
+                          icon: Icons.post_add_outlined,
+                          onPressed: state.saving
+                              ? null
+                              : () => _advanceCount(context, count),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitForReview(
+    BuildContext context,
+    InventoryCount count,
+  ) async {
+    if (!await _flushPendingSaves(context, count) || !context.mounted) return;
+    final InventoryCount latest =
+        context.read<InventoryCubit>().state.selectedCount ?? count;
+    final bool submitted = await context.read<InventoryCubit>().countAction(
+      latest.id,
+      'submit',
+    );
+    if (!context.mounted) return;
+    _notice(
+      context,
+      submitted
+          ? 'تم إرسال الجرد للمراجعة.'
+          : _friendlyError(context.read<InventoryCubit>().state.error),
+      error: !submitted,
+    );
+  }
+
+  String _saveStatusMessage(
+    InventoryState state,
+    bool editable,
+    String countStatus,
+    bool hasMissingVarianceReason,
+  ) {
+    if (!editable) return _countStatus(countStatus);
+    if (state.countLineSaveStatus == InventoryCountLineSaveStatus.saving) {
+      return 'جارٍ حفظ التغييرات…';
+    }
+    if (state.countLineSaveStatus == InventoryCountLineSaveStatus.saved) {
+      return 'تم الحفظ تلقائياً.';
+    }
+    if (state.countLineSaveStatus == InventoryCountLineSaveStatus.failed) {
+      return 'تعذر الحفظ. راجع الكمية أو أعد المحاولة.';
+    }
+    return hasMissingVarianceReason
+        ? 'أدخل سبباً لكل فرق كمية قبل الإرسال للمراجعة.'
+        : 'تُحفظ التغييرات تلقائياً بعد التوقف عن الكتابة.';
+  }
+
+  void _queueQuantitySave(
+    BuildContext context,
+    InventoryCount count,
+    InventoryCountLine line,
+    String value,
+  ) {
+    final String quantity = value.trim();
+    _lineSaveTimers.remove(line.itemId)?.cancel();
+    setState(() {
+      if (quantity.isEmpty) {
+        _pendingCountedQuantities.remove(line.itemId);
+        _lineErrors.remove(line.itemId);
+        return;
+      }
+      _pendingCountedQuantities[line.itemId] = quantity;
+      if (!RegExp(r'^\d+(?:\.\d{1,3})?$').hasMatch(quantity)) {
+        _lineErrors[line.itemId] = 'أدخل رقماً غير سالب حتى 3 منازل عشرية';
+      } else {
+        _lineErrors.remove(line.itemId);
+      }
+    });
+    if (_lineErrors.containsKey(line.itemId)) return;
+    _lineSaveTimers[line.itemId] = Timer(
+      const Duration(milliseconds: 600),
+      () => _saveQuantityNow(context, count, line, quantity),
+    );
+  }
+
+  void _queueReasonSave(
+    BuildContext context,
+    InventoryCount count,
+    InventoryCountLine line,
+    String value,
+  ) {
+    _pendingReasons[line.itemId] = value.trim();
+    final String? pendingQuantity = _pendingCountedQuantities[line.itemId];
+    if (pendingQuantity != null) {
+      _queueQuantitySave(context, count, line, pendingQuantity);
+      return;
+    }
+    if (!line.isCounted) return;
+    _lineSaveTimers.remove(line.itemId)?.cancel();
+    _lineSaveTimers[line.itemId] = Timer(
+      const Duration(milliseconds: 600),
+      () => _saveQuantityNow(context, count, line, line.countedQuantity),
+    );
+  }
+
+  Future<void> _saveQuantityNow(
+    BuildContext context,
+    InventoryCount count,
+    InventoryCountLine line,
+    String value,
+  ) async {
+    final String quantity = value.trim();
+    if (!RegExp(r'^\d+(?:\.\d{1,3})?$').hasMatch(quantity)) return;
+    _lineSaveTimers.remove(line.itemId)?.cancel();
+    final String? pendingReason = _pendingReasons[line.itemId];
+    final bool saved = await context
+        .read<InventoryCubit>()
+        .saveCountLine(count.id, <String, dynamic>{
+          'itemId': line.itemId,
+          'countedQuantity': quantity,
+          if (pendingReason != null || line.reason != null)
+            'reason': pendingReason ?? line.reason,
+        });
+    if (!mounted) return;
+    setState(() {
+      if (saved) {
+        _pendingCountedQuantities.remove(line.itemId);
+        _pendingReasons.remove(line.itemId);
+      }
+    });
+  }
+
+  Future<bool> _flushPendingSaves(
+    BuildContext context,
+    InventoryCount count,
+  ) async {
+    if (_lineErrors.isNotEmpty) {
+      _notice(context, 'صحح الكميات غير الصالحة قبل المتابعة.', error: true);
+      return false;
+    }
+    final Set<int> pendingLineIds = <int>{
+      ..._pendingCountedQuantities.keys,
+      ..._pendingReasons.keys,
+    };
+    for (final Timer timer in _lineSaveTimers.values) {
+      timer.cancel();
+    }
+    _lineSaveTimers.clear();
+    for (final int itemId in pendingLineIds) {
+      final InventoryCountLine line = count.lines.firstWhere(
+        (InventoryCountLine item) => item.itemId == itemId,
+      );
+      final String? pendingQuantity = _pendingCountedQuantities[itemId];
+      final String quantity = pendingQuantity ?? line.countedQuantity;
+      await _saveQuantityNow(context, count, line, quantity);
+      if (!mounted || !context.mounted) return false;
+      final InventoryCubit cubit = context.read<InventoryCubit>();
+      if (cubit.state.countLineSaveStatus ==
+          InventoryCountLineSaveStatus.failed) {
+        _notice(context, _friendlyError(cubit.state.error), error: true);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<void> _saveDraft(BuildContext context, InventoryCount count) async {
+    final bool saved = await _flushPendingSaves(context, count);
+    if (!context.mounted) return;
+    _notice(
+      context,
+      saved
+          ? 'تم حفظ مسودة الجرد.'
+          : _friendlyError(context.read<InventoryCubit>().state.error),
+      error: !saved,
+    );
+  }
+
+  Future<void> _cancel(BuildContext context, InventoryCount count) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('إلغاء الجرد؟'),
+        content: const Text('لن تتمكن من متابعة هذا الجرد بعد إلغائه.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('رجوع'),
+          ),
+          AppButton(
+            label: 'إلغاء الجرد',
+            onPressed: () => Navigator.pop(dialogContext, true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await context.read<InventoryCubit>().countAction(count.id, 'cancel');
+    if (!context.mounted) return;
+    context.go(AppRoutes.inventoryCounts);
+  }
+}
+
+class _CountFilters extends StatelessWidget {
+  const _CountFilters({
+    required this.status,
+    required this.warehouseId,
+    required this.countType,
+    required this.createdBy,
+    required this.period,
+    required this.warehouses,
+    required this.creators,
+    required this.onStatusChanged,
+    required this.onWarehouseChanged,
+    required this.onCountTypeChanged,
+    required this.onCreatedByChanged,
+    required this.onPeriodChanged,
+  });
+
+  final String status;
+  final int? warehouseId;
+  final String countType;
+  final int? createdBy;
+  final _CountPeriod period;
+  final List<WarehouseLocation> warehouses;
+  final List<InventoryCountCreator> creators;
+  final ValueChanged<String> onStatusChanged;
+  final ValueChanged<int?> onWarehouseChanged;
+  final ValueChanged<String> onCountTypeChanged;
+  final ValueChanged<int?> onCreatedByChanged;
+  final ValueChanged<_CountPeriod> onPeriodChanged;
+
+  InputDecoration _decoration(String label) => InputDecoration(
+    labelText: label,
+    isDense: true,
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.sm,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) => ManagementFilterBar(
+    children: <Widget>[
+      SizedBox(
+        width: 210,
+        child: DropdownButtonFormField<_CountPeriod>(
+          initialValue: period,
+          isExpanded: true,
+          decoration: _decoration('الفترة'),
+          items: _CountPeriod.values
+              .map(
+                (_CountPeriod value) => DropdownMenuItem<_CountPeriod>(
+                  value: value,
+                  child: _DropdownSelection(value.label),
+                ),
+              )
+              .toList(growable: false),
+          onChanged: (_CountPeriod? value) {
+            if (value != null) onPeriodChanged(value);
+          },
+        ),
+      ),
+      SizedBox(
+        width: 230,
+        child: DropdownButtonFormField<int?>(
+          initialValue:
+              warehouses.any((WarehouseLocation item) => item.id == warehouseId)
+              ? warehouseId
+              : null,
+          isExpanded: true,
+          decoration: _decoration('المستودع'),
+          items: <DropdownMenuItem<int?>>[
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: _DropdownSelection('كل المستودعات'),
+            ),
+            ...warehouses.map(
+              (WarehouseLocation warehouse) => DropdownMenuItem<int?>(
+                value: warehouse.id,
+                child: _DropdownSelection(_warehouseLabel(warehouse)),
+              ),
+            ),
+          ],
+          onChanged: onWarehouseChanged,
+        ),
+      ),
+      SizedBox(
+        width: 200,
+        child: DropdownButtonFormField<String>(
+          initialValue: countType,
+          isExpanded: true,
+          decoration: _decoration('نوع الجرد'),
+          items: const <DropdownMenuItem<String>>[
+            DropdownMenuItem(
+              value: '',
+              child: _DropdownSelection('كل الأنواع'),
+            ),
+            DropdownMenuItem(
+              value: 'full',
+              child: _DropdownSelection('جرد كامل'),
+            ),
+            DropdownMenuItem(
+              value: 'cycle',
+              child: _DropdownSelection('جرد دوري / جزئي'),
+            ),
+            DropdownMenuItem(
+              value: 'shift_check',
+              child: _DropdownSelection('فحص شيفت POS'),
+            ),
+          ],
+          onChanged: (String? value) => onCountTypeChanged(value ?? ''),
+        ),
+      ),
+      SizedBox(
+        width: 210,
+        child: DropdownButtonFormField<String>(
+          initialValue: status,
+          isExpanded: true,
+          decoration: _decoration('الحالة'),
+          items: const <DropdownMenuItem<String>>[
+            DropdownMenuItem(
+              value: '',
+              child: _DropdownSelection('كل الحالات'),
+            ),
+            DropdownMenuItem(
+              value: 'draft',
+              child: _DropdownSelection('مسودة'),
+            ),
+            DropdownMenuItem(
+              value: 'in_progress',
+              child: _DropdownSelection('قيد التنفيذ'),
+            ),
+            DropdownMenuItem(
+              value: 'submitted',
+              child: _DropdownSelection('بانتظار الاعتماد'),
+            ),
+            DropdownMenuItem(
+              value: 'approved',
+              child: _DropdownSelection('بانتظار الترحيل'),
+            ),
+            DropdownMenuItem(
+              value: 'posted',
+              child: _DropdownSelection('مُرحّل'),
+            ),
+          ],
+          onChanged: (String? value) => onStatusChanged(value ?? ''),
+        ),
+      ),
+      SizedBox(
+        width: 210,
+        child: DropdownButtonFormField<int?>(
+          initialValue:
+              creators.any((InventoryCountCreator item) => item.id == createdBy)
+              ? createdBy
+              : null,
+          isExpanded: true,
+          decoration: _decoration('أنشئ بواسطة'),
+          items: <DropdownMenuItem<int?>>[
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: _DropdownSelection('كل المستخدمين'),
+            ),
+            ...creators.map(
+              (InventoryCountCreator creator) => DropdownMenuItem<int?>(
+                value: creator.id,
+                child: _DropdownSelection(creator.name),
+              ),
+            ),
+          ],
+          onChanged: onCreatedByChanged,
+        ),
+      ),
+    ],
+  );
+}
+
+class _DropdownSelection extends StatelessWidget {
+  const _DropdownSelection(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.centerStart,
+    child: Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.bodyMedium,
+    ),
+  );
+}
+
+class _CountKpis extends StatelessWidget {
+  const _CountKpis({required this.summary});
+  final InventoryCountSummary summary;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      _CountKpi(
+        label: 'مسودات',
+        value: summary.drafts,
+        color: AppColors.textPrimary,
+      ),
+      const SizedBox(width: AppSpacing.md),
+      _CountKpi(
+        label: 'قيد التنفيذ',
+        value: summary.inProgress,
+        color: AppColors.info,
+      ),
+      const SizedBox(width: AppSpacing.md),
+      _CountKpi(
+        label: 'بانتظار الاعتماد',
+        value: summary.submitted,
+        color: AppColors.warning,
+      ),
+      const SizedBox(width: AppSpacing.md),
+      _CountKpi(
+        label: 'بانتظار الترحيل',
+        value: summary.approved,
+        color: AppColors.paginationActive,
+      ),
+    ],
+  );
+}
+
+class _CountSourceSelector extends StatelessWidget {
+  const _CountSourceSelector({required this.value, required this.onChanged});
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: AppSpacing.sm,
+    runSpacing: AppSpacing.sm,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: <Widget>[
+      Text('المصدر:', style: AppTextStyles.labelMedium),
+      for (final (String id, String label) option in <(String, String)>[
+        ('', 'الكل'),
+        ('administrative', 'جرد إداري'),
+        ('shift_pos', 'فحص شيفت POS'),
+      ])
+        ChoiceChip(
+          label: Text(option.$2),
+          selected: value == option.$1,
+          onSelected: (_) => onChanged(option.$1),
+        ),
+    ],
+  );
+}
+
+class _CountsPagination extends StatelessWidget {
+  const _CountsPagination({
+    required this.page,
+    required this.lastPage,
+    required this.total,
+    required this.onPageChanged,
+  });
+  final int page;
+  final int lastPage;
+  final int total;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      Text('إجمالي $total جرد', style: AppTextStyles.labelSmall),
+      const Spacer(),
+      IconButton(
+        tooltip: 'الصفحة السابقة',
+        onPressed: page > 1 ? () => onPageChanged(page - 1) : null,
+        icon: const Icon(Icons.chevron_right),
+      ),
+      Text('الصفحة $page من $lastPage', style: AppTextStyles.labelSmall),
+      IconButton(
+        tooltip: 'الصفحة التالية',
+        onPressed: page < lastPage ? () => onPageChanged(page + 1) : null,
+        icon: const Icon(Icons.chevron_left),
+      ),
+    ],
+  );
+}
+
+class _CountKpi extends StatelessWidget {
+  const _CountKpi({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+  final String label;
+  final int value;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: AppCard(
+      padding: AppSpacing.allMd,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(label, style: AppTextStyles.labelSmall),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '$value',
+            style: AppTextStyles.titleLarge.copyWith(color: color),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _WorkspaceKpis extends StatelessWidget {
+  const _WorkspaceKpis({
+    required this.total,
+    required this.counted,
+    required this.variance,
+    required this.varianceValue,
+  });
+  final int total;
+  final int counted;
+  final int variance;
+  final String varianceValue;
+  @override
+  Widget build(BuildContext context) => AppCard(
+    padding: AppSpacing.allMd,
+    child: Row(
+      children: <Widget>[
+        _WorkspaceKpi(
+          label: 'إجمالي العناصر',
+          value: '$total',
+          color: AppColors.textPrimary,
+        ),
+        const VerticalDivider(width: 1),
+        _WorkspaceKpi(
+          label: 'تم جرده',
+          value: '$counted',
+          color: AppColors.info,
+        ),
+        const VerticalDivider(width: 1),
+        _WorkspaceKpi(
+          label: 'المتبقي',
+          value: '${total - counted}',
+          color: AppColors.textSecondary,
+        ),
+        const VerticalDivider(width: 1),
+        _WorkspaceKpi(
+          label: 'عناصر بها فرق',
+          value: '$variance',
+          color: AppColors.warning,
+        ),
+        const VerticalDivider(width: 1),
+        _WorkspaceKpi(
+          label: 'إجمالي قيمة الفرق',
+          value: _money(varianceValue),
+          color: (double.tryParse(varianceValue) ?? 0) < 0
+              ? AppColors.danger
+              : AppColors.success,
+        ),
+      ],
+    ),
+  );
+}
+
+class _WorkspaceKpi extends StatelessWidget {
+  const _WorkspaceKpi({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+  final String label;
+  final String value;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      children: <Widget>[
+        Text(
+          label,
+          style: AppTextStyles.labelSmall,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          value,
+          style: AppTextStyles.titleMedium.copyWith(color: color),
+          textDirection: ui.TextDirection.ltr,
+        ),
+      ],
+    ),
+  );
+}
+
+class _WorkspaceLinesTable extends StatelessWidget {
+  const _WorkspaceLinesTable({
+    required this.lines,
+    required this.editable,
+    required this.pendingCountedQuantities,
+    required this.lineErrors,
+    required this.onCountedChanged,
+    required this.onCountedSubmitted,
+    required this.onReasonChanged,
+  });
+  final List<InventoryCountLine> lines;
+  final bool editable;
+  final Map<int, String> pendingCountedQuantities;
+  final Map<int, String> lineErrors;
+  final void Function(InventoryCountLine line, String value) onCountedChanged;
+  final void Function(InventoryCountLine line, String value) onCountedSubmitted;
+  final void Function(InventoryCountLine line, String value) onReasonChanged;
+
+  @override
+  Widget build(BuildContext context) => ManagementTableShell(
+    minWidth: 1170,
+    child: DataTable(
+      headingRowColor: const WidgetStatePropertyAll<Color>(
+        AppColors.menuTableHeader,
+      ),
+      columns: const <DataColumn>[
+        DataColumn(label: Text('العنصر')),
+        DataColumn(label: Text('رمز SKU')),
+        DataColumn(label: Text('الوحدة')),
+        DataColumn(label: Text('الكمية المتوقعة'), numeric: true),
+        DataColumn(label: Text('الكمية المجردة'), numeric: true),
+        DataColumn(label: Text('فرق الكمية'), numeric: true),
+        DataColumn(label: Text('متوسط التكلفة'), numeric: true),
+        DataColumn(label: Text('قيمة الفرق'), numeric: true),
+        DataColumn(label: Text('السبب')),
+      ],
+      rows: lines
+          .map(
+            (InventoryCountLine line) =>
+                _row(context, line, pendingCountedQuantities[line.itemId]),
+          )
+          .toList(growable: false),
+    ),
+  );
+
+  DataRow _row(
+    BuildContext context,
+    InventoryCountLine line,
+    String? pendingCountedQuantity,
+  ) {
+    final double variance = double.tryParse(line.varianceQuantity) ?? 0;
+    final bool hasVariance = variance.abs() > 0.0001;
+    return DataRow(
+      cells: <DataCell>[
+        DataCell(Text(line.itemName, style: AppTextStyles.labelMedium)),
+        DataCell(Text(line.sku, textDirection: ui.TextDirection.ltr)),
+        DataCell(Text(_unitLabel(line.unit))),
+        DataCell(
+          Text(
+            _number(line.expectedQuantity, digits: 3),
+            textDirection: ui.TextDirection.ltr,
+          ),
+        ),
+        DataCell(
+          SizedBox(
+            width: 78,
+            child: TextFormField(
+              initialValue:
+                  pendingCountedQuantity ??
+                  (line.isCounted ? line.countedQuantity : ''),
+              enabled: editable,
+              textDirection: ui.TextDirection.ltr,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                hintText: '—',
+                isDense: true,
+                errorText: lineErrors[line.itemId],
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.sm,
+                ),
+              ),
+              onChanged: (String value) => onCountedChanged(line, value),
+              onFieldSubmitted: (String value) =>
+                  onCountedSubmitted(line, value),
+            ),
+          ),
+        ),
+        DataCell(
+          Text(
+            _number(line.varianceQuantity, digits: 3),
+            textDirection: ui.TextDirection.ltr,
+            style: TextStyle(
+              color: hasVariance ? AppColors.danger : AppColors.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        DataCell(
+          Text(
+            _money(line.averageUnitCost),
+            textDirection: ui.TextDirection.ltr,
+          ),
+        ),
+        DataCell(
+          Text(
+            _money(line.varianceValue),
+            textDirection: ui.TextDirection.ltr,
+            style: TextStyle(
+              color: (double.tryParse(line.varianceValue) ?? 0) < 0
+                  ? AppColors.danger
+                  : AppColors.success,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        DataCell(_reasonControl(context, line, hasVariance)),
+      ],
+    );
+  }
+
+  Widget _reasonControl(
+    BuildContext context,
+    InventoryCountLine line,
+    bool hasVariance,
+  ) {
+    if (!hasVariance || !line.isCounted) return const Text('—');
+    return SizedBox(
+      width: 180,
+      child: TextFormField(
+        initialValue: line.reason ?? '',
+        enabled: editable,
+        maxLength: 4000,
+        decoration: const InputDecoration(
+          isDense: true,
+          hintText: 'سبب الفرق',
+          counterText: '',
+        ),
+        onChanged: (String value) => onReasonChanged(line, value),
+      ),
+    );
+  }
 }
 
 bool _countIsEditable(String status) =>
@@ -1902,35 +3399,22 @@ Future<void> _showCountLineDialog(
 }
 
 class _InventoryPage extends StatelessWidget {
-  const _InventoryPage({required this.child, this.showNavigation = true});
+  const _InventoryPage({required this.child});
   final Widget child;
-  final bool showNavigation;
   @override
-  Widget build(BuildContext context) {
-    if (!showNavigation) {
-      return DesktopPageLayout(child: child);
-    }
-    return DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          const _InventorySubNavigation(),
-          const Divider(height: 1, color: AppColors.divider),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-              child: child,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => DesktopPageLayout(
+    padding: const EdgeInsetsDirectional.fromSTEB(
+      AppSizes.inventoryContentHorizontalPadding,
+      AppSizes.inventoryContentVerticalPadding,
+      AppSizes.inventoryContentHorizontalPadding,
+      AppSizes.inventoryContentVerticalPadding,
+    ),
+    child: child,
+  );
 }
 
-class _InventorySubNavigation extends StatelessWidget {
-  const _InventorySubNavigation();
+class InventorySubNavigation extends StatelessWidget {
+  const InventorySubNavigation({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -1949,11 +3433,6 @@ class _InventorySubNavigation extends StatelessWidget {
             icon: Icons.inventory_2_outlined,
           ),
           _InventoryNavDestination(
-            label: 'الوحدات والتحويلات',
-            path: AppRoutes.inventoryUnitConversions,
-            icon: Icons.straighten_outlined,
-          ),
-          _InventoryNavDestination(
             label: 'أرصدة المخازن',
             path: AppRoutes.inventoryBalances,
             icon: Icons.warehouse_outlined,
@@ -1968,36 +3447,55 @@ class _InventorySubNavigation extends StatelessWidget {
             path: AppRoutes.inventoryCounts,
             icon: Icons.fact_check_outlined,
           ),
+          _InventoryNavDestination(
+            label: 'تحويلات المخازن',
+            path: AppRoutes.inventoryTransfers,
+            icon: Icons.swap_calls_outlined,
+          ),
+          _InventoryNavDestination(
+            label: 'قوالب فحص البار',
+            path: AppRoutes.barCheckTemplates,
+            icon: Icons.fact_check_outlined,
+          ),
         ];
 
-    return SizedBox(
-      height: 58,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: AppSpacing.horizontalXl,
-        child: Row(
-          children: destinations
-              .map(
-                (_InventoryNavDestination destination) => Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: _InventoryNavTab(
-                    destination: destination,
-                    active: _isActive(currentPath, destination.path),
-                    onTap: () {
-                      final Uri target = Uri(
-                        path: destination.path,
-                        queryParameters: routerState.uri.queryParameters.isEmpty
-                            ? null
-                            : routerState.uri.queryParameters,
-                      );
-                      context.go(target.toString());
-                    },
-                  ),
-                ),
-              )
-              .toList(growable: false),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          height: 58,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: AppSpacing.horizontalXl,
+            child: Row(
+              children: destinations
+                  .map(
+                    (_InventoryNavDestination destination) => Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        end: AppSpacing.sm,
+                      ),
+                      child: _InventoryNavTab(
+                        destination: destination,
+                        active: _isActive(currentPath, destination.path),
+                        onTap: () {
+                          final Uri target = Uri(
+                            path: destination.path,
+                            queryParameters:
+                                routerState.uri.queryParameters.isEmpty
+                                ? null
+                                : routerState.uri.queryParameters,
+                          );
+                          context.go(target.toString());
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
         ),
-      ),
+        const Divider(height: 1, color: AppColors.divider),
+      ],
     );
   }
 
@@ -2080,7 +3578,9 @@ class _DashboardKpi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool money =
-        label == 'Total Inventory Value' || label == 'Waste Value';
+        label == 'إجمالي قيمة المخزون' ||
+        label == 'تكلفة استهلاك اليوم' ||
+        label == 'تكلفة هالك اليوم';
     final double? current = double.tryParse(metric.value);
     final double? previous = metric.previousValue == null
         ? null
@@ -2147,40 +3647,153 @@ class _DashboardKpi extends StatelessWidget {
   }
 }
 
-class _DashboardWarehouseValueCard extends StatelessWidget {
+class _DashboardQuickActions extends StatelessWidget {
+  const _DashboardQuickActions({
+    required this.onAddItem,
+    required this.onMovement,
+    required this.onCount,
+  });
+  final VoidCallback onAddItem;
+  final VoidCallback onMovement;
+  final VoidCallback onCount;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const Text('إجراءات سريعة', style: AppTextStyles.titleMedium),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: <Widget>[
+            _DashboardQuickAction(
+              label: 'إضافة مادة',
+              icon: Icons.add_box_outlined,
+              onTap: onAddItem,
+            ),
+            _DashboardQuickAction(
+              label: 'حركة مخزون',
+              icon: Icons.swap_vert_outlined,
+              onTap: onMovement,
+            ),
+            _DashboardQuickAction(
+              label: 'جرد مخزون',
+              icon: Icons.fact_check_outlined,
+              onTap: onCount,
+            ),
+            const _DashboardQuickAction(
+              label: 'تحويل مخزون',
+              icon: Icons.swap_horiz_outlined,
+              unavailable: true,
+            ),
+            const _DashboardQuickAction(
+              label: 'أمر شراء',
+              icon: Icons.shopping_cart_outlined,
+              unavailable: true,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class _DashboardQuickAction extends StatelessWidget {
+  const _DashboardQuickAction({
+    required this.label,
+    required this.icon,
+    this.onTap,
+    this.unavailable = false,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool unavailable;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: unavailable ? 'غير متاح حتى تكتمل هذه العملية' : label,
+    child: OutlinedButton.icon(
+      onPressed: unavailable ? null : onTap,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+    ),
+  );
+}
+
+class _DashboardWarehouseValueCard extends StatefulWidget {
   const _DashboardWarehouseValueCard({
     required this.values,
     required this.onTap,
   });
   final List<InventoryWarehouseValue> values;
   final ValueChanged<int> onTap;
+
+  @override
+  State<_DashboardWarehouseValueCard> createState() =>
+      _DashboardWarehouseValueCardState();
+}
+
+class _DashboardWarehouseValueCardState
+    extends State<_DashboardWarehouseValueCard> {
+  bool _expanded = false;
+
   @override
   Widget build(BuildContext context) {
-    final double maximum = values.fold(
-      0,
-      (double current, InventoryWarehouseValue item) =>
-          current > (double.tryParse(item.value) ?? 0)
-          ? current
-          : (double.tryParse(item.value) ?? 0),
-    );
+    final List<InventoryWarehouseValue> visible = _expanded
+        ? widget.values
+        : widget.values.take(4).toList(growable: false);
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'قيمة المخزون حسب المخزن',
-            style: AppTextStyles.titleMedium,
+          Row(
+            children: <Widget>[
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('صحة المخازن', style: AppTextStyles.titleMedium),
+                    SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'حالة الجاهزية والتنبيهات لكل مخزن',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.values.length > 4)
+                TextButton(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  child: Text(_expanded ? 'عرض أقل' : 'عرض كل المخازن'),
+                ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
-          if (values.isEmpty)
+          if (widget.values.isEmpty)
             const _EmptyState(message: 'لا يتوفر مخزون في المخازن لهذا النطاق.')
           else
-            ...values.map(
-              (InventoryWarehouseValue item) => _DashboardWarehouseRow(
-                item: item,
-                maximum: maximum,
-                onTap: () => onTap(item.id),
-              ),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) =>
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: visible
+                        .map(
+                          (InventoryWarehouseValue item) => SizedBox(
+                            width: constraints.maxWidth < 560
+                                ? constraints.maxWidth
+                                : (constraints.maxWidth - AppSpacing.sm) / 2,
+                            child: _DashboardWarehouseHealthCard(
+                              item: item,
+                              onTap: () => widget.onTap(item.id),
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
             ),
         ],
       ),
@@ -2188,58 +3801,452 @@ class _DashboardWarehouseValueCard extends StatelessWidget {
   }
 }
 
-class _DashboardWarehouseRow extends StatelessWidget {
-  const _DashboardWarehouseRow({
+class _DashboardWarehouseHealthCard extends StatelessWidget {
+  const _DashboardWarehouseHealthCard({
     required this.item,
-    required this.maximum,
     required this.onTap,
   });
   final InventoryWarehouseValue item;
-  final double maximum;
   final VoidCallback onTap;
+
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: AppRadius.control,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
+  Widget build(BuildContext context) {
+    final Color statusColor = _warehouseStatusColor(item.status);
+    final String statusLabel = _warehouseStatusLabel(item.status);
+    return Material(
+      color: AppColors.transparent,
+      borderRadius: AppRadius.control,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.control,
+        child: Container(
+          padding: AppSpacing.allMd,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: AppRadius.control,
+            border: Border.all(color: statusColor.withValues(alpha: .34)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Icon(
-                Icons.warehouse_outlined,
-                size: 18,
-                color: AppColors.secondary,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(
+                      Icons.warehouse_outlined,
+                      color: statusColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(item.name, style: AppTextStyles.labelLarge),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.warehouseTypeLabel,
+                          style: AppTextStyles.labelSmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  _DashboardStatusPill(label: statusLabel, color: statusColor),
+                ],
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text(item.name, style: AppTextStyles.labelLarge)),
-              Text(_money(item.value), style: AppTextStyles.labelMedium),
+              const SizedBox(height: AppSpacing.md),
+              Text(_money(item.value), style: AppTextStyles.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                '${item.itemCount} مادة · ${item.alertsCount} تنبيه',
+                style: AppTextStyles.labelSmall,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'جاهزية المخزون ${item.healthPercentage}%',
+                      style: AppTextStyles.labelSmall,
+                    ),
+                  ),
+                  Text(
+                    _lastActivityLabel(item.lastMovementAt),
+                    style: AppTextStyles.labelSmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              ClipRRect(
+                borderRadius: AppRadius.pillRadius,
+                child: LinearProgressIndicator(
+                  value: item.healthPercentage.clamp(0, 100) / 100,
+                  minHeight: 6,
+                  color: statusColor,
+                  backgroundColor: AppColors.discountIconBackground,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-          ClipRRect(
-            borderRadius: AppRadius.pillRadius,
-            child: LinearProgressIndicator(
-              value: maximum == 0
-                  ? 0
-                  : (double.tryParse(item.value) ?? 0) / maximum,
-              minHeight: 7,
-              color: AppColors.tertiary,
-              backgroundColor: AppColors.discountIconBackground,
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+Color _warehouseStatusColor(String status) => switch (status) {
+  'critical' => AppColors.danger,
+  'attention' => AppColors.warning,
+  _ => AppColors.success,
+};
+
+String _warehouseStatusLabel(String status) => switch (status) {
+  'critical' => 'حرج',
+  'attention' => 'يحتاج متابعة',
+  _ => 'سليم',
+};
+
+class _DashboardStatusPill extends StatelessWidget {
+  const _DashboardStatusPill({required this.label, required this.color});
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsetsDirectional.fromSTEB(7, 3, 7, 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .12),
+      borderRadius: AppRadius.pillRadius,
+    ),
+    child: Text(label, style: AppTextStyles.labelSmall.copyWith(color: color)),
+  );
+}
+
+String _lastActivityLabel(String? value) {
+  final DateTime? date = parseBackendDateTime(value);
+  if (date == null) return 'لا نشاط مسجل';
+  final Duration elapsed = DateTime.now().difference(date);
+  if (elapsed.inMinutes < 1) return 'آخر حركة الآن';
+  if (elapsed.inMinutes < 60) return 'آخر حركة منذ ${elapsed.inMinutes} د';
+  if (elapsed.inHours < 24) return 'آخر حركة منذ ${elapsed.inHours} س';
+  return 'آخر حركة ${DateFormat('d MMM').format(date)}';
+}
+
+class _DashboardLowStockAlerts extends StatefulWidget {
+  const _DashboardLowStockAlerts({
+    required this.alerts,
+    required this.summary,
+    required this.onOpen,
+  });
+  final List<InventoryLowStockAlert> alerts;
+  final InventoryAlertSummary summary;
+  final ValueChanged<InventoryLowStockAlert> onOpen;
+
+  @override
+  State<_DashboardLowStockAlerts> createState() =>
+      _DashboardLowStockAlertsState();
+}
+
+class _DashboardLowStockAlertsState extends State<_DashboardLowStockAlerts> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text('تنبيهات المخزون', style: AppTextStyles.titleMedium),
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'مواد تحتاج إلى تدخل قبل تأثر التشغيل',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            if (widget.alerts.length > 4)
+              TextButton(
+                onPressed: () => setState(() => _expanded = !_expanded),
+                child: Text(_expanded ? 'عرض أقل' : 'عرض الكل'),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: <Widget>[
+            _AlertSummaryBadge(
+              label: 'حرج: ${widget.summary.critical}',
+              tone: ManagementTone.danger,
+            ),
+            _AlertSummaryBadge(
+              label: 'منخفض: ${widget.summary.low}',
+              tone: ManagementTone.warning,
+            ),
+            _AlertSummaryBadge(
+              label: 'الإجمالي: ${widget.summary.total}',
+              tone: ManagementTone.neutral,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (widget.alerts.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            child: _EmptyState(
+              message: 'كل المواد المتابعة أعلى من الحد الأدنى.',
+            ),
+          )
+        else
+          ...(_expanded
+                  ? widget.alerts
+                  : widget.alerts.take(4).toList(growable: false))
+              .map(
+                (InventoryLowStockAlert alert) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _InventoryAlertCard(
+                    alert: alert,
+                    onOpen: () => widget.onOpen(alert),
+                  ),
+                ),
+              ),
+      ],
     ),
   );
 }
 
-class _DashboardLowStockAlerts extends StatelessWidget {
-  const _DashboardLowStockAlerts({required this.alerts, required this.onOpen});
-  final List<InventoryLowStockAlert> alerts;
-  final ValueChanged<InventoryLowStockAlert> onOpen;
+class _AlertSummaryBadge extends StatelessWidget {
+  const _AlertSummaryBadge({required this.label, required this.tone});
+  final String label;
+  final ManagementTone tone;
+
+  @override
+  Widget build(BuildContext context) =>
+      ManagementBadge(label: label, tone: tone);
+}
+
+class _InventoryAlertCard extends StatelessWidget {
+  const _InventoryAlertCard({required this.alert, required this.onOpen});
+  final InventoryLowStockAlert alert;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = _alertColor(alert.severity);
+    return Container(
+      padding: AppSpacing.allMd,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.control,
+        border: Border.all(color: color.withValues(alpha: .3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  alert.outOfStock
+                      ? Icons.remove_shopping_cart_outlined
+                      : Icons.warning_amber_rounded,
+                  size: 18,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(alert.itemName, style: AppTextStyles.labelLarge),
+                    const SizedBox(height: 2),
+                    Text(alert.warehouseName, style: AppTextStyles.labelSmall),
+                  ],
+                ),
+              ),
+              _DashboardStatusPill(
+                label: _alertLabel(alert.severity),
+                color: color,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: <Widget>[
+              _AlertQuantity(
+                label: 'الحالي',
+                value: alert.quantity,
+                unit: alert.unit,
+                color: color,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              _AlertQuantity(
+                label: 'الحد الأدنى',
+                value: alert.minimumLevel,
+                unit: alert.unit,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              _AlertQuantity(
+                label: 'المطلوب',
+                value: alert.missingQuantity,
+                unit: alert.unit,
+                color: AppColors.secondary,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: <Widget>[
+              TextButton.icon(
+                onPressed: onOpen,
+                icon: const Icon(Icons.open_in_new_outlined, size: 16),
+                label: const Text('عرض المادة'),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Tooltip(
+                message: 'يتطلب سير عمل أوامر الشراء',
+                child: OutlinedButton.icon(
+                  onPressed: null,
+                  icon: Icon(Icons.shopping_cart_outlined, size: 16),
+                  label: Text('إنشاء أمر شراء'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AlertQuantity extends StatelessWidget {
+  const _AlertQuantity({
+    required this.label,
+    required this.value,
+    required this.unit,
+    this.color,
+  });
+  final String label;
+  final String value;
+  final String unit;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: AppTextStyles.labelSmall),
+        const SizedBox(height: 2),
+        Text(
+          '${_number(value, digits: 3)} ${_unitLabel(unit)}',
+          style: AppTextStyles.labelMedium.copyWith(color: color),
+        ),
+      ],
+    ),
+  );
+}
+
+Color _alertColor(String severity) => switch (severity) {
+  'out_of_stock' || 'critical' => AppColors.danger,
+  _ => AppColors.warning,
+};
+
+String _alertLabel(String severity) => switch (severity) {
+  'out_of_stock' => 'نافد',
+  'critical' => 'حرج',
+  _ => 'منخفض',
+};
+
+class InventoryDashboardAnalyticsSection extends StatelessWidget {
+  const InventoryDashboardAnalyticsSection({
+    super.key,
+    required this.loading,
+    required this.trend,
+    required this.waste,
+    required this.consumption,
+    required this.selectedTrendDays,
+    required this.onTrendDaysChanged,
+  });
+
+  final bool loading;
+  final InventoryStockValueTrend trend;
+  final InventoryWasteSummary waste;
+  final InventoryConsumptionSummary consumption;
+  final int selectedTrendDays;
+  final ValueChanged<int> onTrendDaysChanged;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: <Widget>[
+      _DashboardTrendCard(
+        loading: loading,
+        trend: trend,
+        selectedDays: selectedTrendDays,
+        onDaysChanged: onTrendDaysChanged,
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) =>
+            constraints.maxWidth < 900
+            ? Column(
+                children: <Widget>[
+                  _WasteAnalyticsCard(summary: waste),
+                  const SizedBox(height: AppSpacing.lg),
+                  _ConsumptionAnalyticsCard(summary: consumption),
+                ],
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(child: _WasteAnalyticsCard(summary: waste)),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: _ConsumptionAnalyticsCard(summary: consumption),
+                  ),
+                ],
+              ),
+      ),
+    ],
+  );
+}
+
+class _DashboardTrendCard extends StatelessWidget {
+  const _DashboardTrendCard({
+    required this.loading,
+    required this.trend,
+    required this.selectedDays,
+    required this.onDaysChanged,
+  });
+
+  final bool loading;
+  final InventoryStockValueTrend trend;
+  final int selectedDays;
+  final ValueChanged<int> onDaysChanged;
+
   @override
   Widget build(BuildContext context) => AppCard(
     child: Column(
@@ -2249,136 +4256,568 @@ class _DashboardLowStockAlerts extends StatelessWidget {
           children: <Widget>[
             const Expanded(
               child: Text(
-                'تنبيهات المخزون المنخفض',
+                'تغير قيمة المخزون',
                 style: AppTextStyles.titleMedium,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.discountOrangeBadge,
-                borderRadius: AppRadius.pillRadius,
-              ),
-              child: Text('${alerts.length}', style: AppTextStyles.labelSmall),
+            _TrendPeriodSelector(
+              selectedDays: selectedDays,
+              onChanged: onDaysChanged,
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        if (alerts.isEmpty)
-          const Text(
-            'كل المواد المتابعة أعلى من حد إعادة الطلب.',
-            style: AppTextStyles.bodySmall,
+        const SizedBox(height: AppSpacing.xs),
+        const Text(
+          'قيمة المخزون اليومية من البيانات الخادمية',
+          style: AppTextStyles.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        if (loading)
+          const _AnalyticsChartSkeleton()
+        else if (!trend.available || trend.points.isEmpty)
+          const SizedBox(
+            height: 160,
+            child: _EmptyState(message: 'لا تتوفر بيانات'),
           )
-        else
-          ...alerts.map(
-            (InventoryLowStockAlert alert) =>
-                _DashboardAlertRow(alert: alert, onTap: () => onOpen(alert)),
+        else ...<Widget>[
+          SizedBox(
+            height: 180,
+            width: double.infinity,
+            child: CustomPaint(painter: _StockValueTrendPainter(trend.points)),
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: <Widget>[
+              Text(
+                _trendDate(trend.points.first.date),
+                style: AppTextStyles.labelSmall,
+              ),
+              const Spacer(),
+              Text(
+                _trendDate(trend.points.last.date),
+                style: AppTextStyles.labelSmall,
+              ),
+            ],
+          ),
+        ],
       ],
     ),
   );
 }
 
-class _DashboardAlertRow extends StatelessWidget {
-  const _DashboardAlertRow({required this.alert, required this.onTap});
-  final InventoryLowStockAlert alert;
-  final VoidCallback onTap;
+class _TrendPeriodSelector extends StatelessWidget {
+  const _TrendPeriodSelector({
+    required this.selectedDays,
+    required this.onChanged,
+  });
+
+  final int selectedDays;
+  final ValueChanged<int> onChanged;
+
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: AppRadius.control,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+  Widget build(BuildContext context) => Wrap(
+    spacing: 4,
+    children: <int>[7, 30, 90]
+        .map(
+          (int days) => ChoiceChip(
+            label: Text('$days يوم'),
+            selected: selectedDays == days,
+            onSelected: (_) => onChanged(days),
+            visualDensity: VisualDensity.compact,
+          ),
+        )
+        .toList(growable: false),
+  );
+}
+
+class _AnalyticsChartSkeleton extends StatelessWidget {
+  const _AnalyticsChartSkeleton();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 180,
+    child: Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List<Widget>.generate(
+            3,
+            (_) => Container(height: 1, color: AppColors.border),
+          ),
+        ),
+        const Center(child: CircularProgressIndicator()),
+      ],
+    ),
+  );
+}
+
+class _WasteAnalyticsCard extends StatelessWidget {
+  const _WasteAnalyticsCard({required this.summary});
+  final InventoryWasteSummary summary;
+
+  @override
+  Widget build(BuildContext context) => _AnalyticsSummaryCard(
+    title: 'تحليل الهدر',
+    icon: Icons.delete_outline,
+    tone: AppColors.warning,
+    metrics: <_AnalyticsMetric>[
+      _AnalyticsMetric(label: 'هدر اليوم', value: _money(summary.todayCost)),
+      _AnalyticsMetric(
+        label: 'هدر هذا الأسبوع',
+        value: _money(summary.weekCost),
+      ),
+      _AnalyticsMetric(label: 'حركات الهدر', value: '${summary.movementCount}'),
+    ],
+    items: summary.topItems,
+    emptyMessage: 'لا تتوفر بيانات هدر',
+  );
+}
+
+class _ConsumptionAnalyticsCard extends StatelessWidget {
+  const _ConsumptionAnalyticsCard({required this.summary});
+  final InventoryConsumptionSummary summary;
+
+  @override
+  Widget build(BuildContext context) => _AnalyticsSummaryCard(
+    title: 'الاستهلاك',
+    icon: Icons.restaurant_outlined,
+    tone: AppColors.tertiary,
+    metrics: <_AnalyticsMetric>[
+      _AnalyticsMetric(
+        label: 'تكلفة الاستهلاك',
+        value: _money(summary.totalCost),
+      ),
+    ],
+    items: summary.topItems,
+    emptyMessage: 'لا تتوفر بيانات استهلاك',
+  );
+}
+
+class _AnalyticsMetric {
+  const _AnalyticsMetric({required this.label, required this.value});
+  final String label;
+  final String value;
+}
+
+class _AnalyticsSummaryCard extends StatelessWidget {
+  const _AnalyticsSummaryCard({
+    required this.title,
+    required this.icon,
+    required this.tone,
+    required this.metrics,
+    required this.items,
+    required this.emptyMessage,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color tone;
+  final List<_AnalyticsMetric> metrics;
+  final List<InventoryAnalyticsTopItem> items;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(icon, color: tone),
+            const SizedBox(width: AppSpacing.sm),
+            Text(title, style: AppTextStyles.titleMedium),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.lg,
+          runSpacing: AppSpacing.sm,
+          children: metrics
+              .map(
+                (_AnalyticsMetric metric) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(metric.label, style: AppTextStyles.labelSmall),
+                    const SizedBox(height: 2),
+                    Text(metric.value, style: AppTextStyles.labelLarge),
+                  ],
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text('أكثر المواد', style: AppTextStyles.labelMedium),
+        const SizedBox(height: AppSpacing.xs),
+        if (items.isEmpty)
+          _CompactAnalyticsEmptyState(message: emptyMessage)
+        else
+          ...items
+              .take(3)
+              .map(
+                (InventoryAnalyticsTopItem item) => Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          item.itemName,
+                          style: AppTextStyles.labelMedium,
+                        ),
+                      ),
+                      Text(
+                        '${_number(item.quantity, digits: 3)} ${_unitLabel(item.unit)} · ${_money(item.cost)}',
+                        style: AppTextStyles.labelSmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+      ],
+    ),
+  );
+}
+
+class _CompactAnalyticsEmptyState extends StatelessWidget {
+  const _CompactAnalyticsEmptyState({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 72,
+    width: double.infinity,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        const Icon(Icons.inbox_outlined, size: 20, color: AppColors.textMuted),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Text(
+            message,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _StockValueTrendPainter extends CustomPainter {
+  const _StockValueTrendPainter(this.points);
+  final List<InventoryStockValueTrendPoint> points;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty || size.isEmpty) return;
+    final List<double> values = points
+        .map(
+          (InventoryStockValueTrendPoint point) =>
+              double.tryParse(point.value) ?? 0,
+        )
+        .toList(growable: false);
+    double low = values.first;
+    double high = values.first;
+    for (final double value in values.skip(1)) {
+      if (value < low) low = value;
+      if (value > high) high = value;
+    }
+    final double spread = high - low;
+    final double displaySpread = spread == 0 ? 1 : spread;
+    const double top = 12;
+    const double bottom = 12;
+    final double plotHeight = size.height - top - bottom;
+    final double plotWidth = size.width;
+    final Paint guidePaint = Paint()
+      ..color = AppColors.border.withValues(alpha: .65)
+      ..strokeWidth = 1;
+    for (int index = 0; index < 3; index++) {
+      final double y = top + plotHeight * index / 2;
+      canvas.drawLine(Offset(0, y), Offset(plotWidth, y), guidePaint);
+    }
+    final Path line = Path();
+    for (int index = 0; index < values.length; index++) {
+      final double x = values.length == 1
+          ? plotWidth / 2
+          : plotWidth * index / (values.length - 1);
+      final double y =
+          top + (high - values[index]) / displaySpread * plotHeight;
+      if (index == 0) {
+        line.moveTo(x, y);
+      } else {
+        line.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = AppColors.tertiary
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _StockValueTrendPainter oldDelegate) =>
+      oldDelegate.points != points;
+}
+
+String _trendDate(String value) {
+  final DateTime? date = parseBackendDateTime(value);
+  return date == null ? '—' : DateFormat('MMM d').format(date);
+}
+
+class InventoryDashboardRecentActivityFeed extends StatelessWidget {
+  const InventoryDashboardRecentActivityFeed({
+    super.key,
+    required this.items,
+    required this.selectedType,
+    required this.onTypeChanged,
+    required this.onViewAll,
+  });
+  final List<InventoryMovement> items;
+  final String selectedType;
+  final ValueChanged<String> onTypeChanged;
+  final VoidCallback onViewAll;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'النشاط الأخير للمخزون',
+                    style: AppTextStyles.titleMedium,
+                  ),
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'وفق نطاق التاريخ والمخزن المحدد أعلاه',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: onViewAll,
+              child: const Text('عرض كل الحركات'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: SizedBox(
+            width: 190,
+            child: _RecentActivityTypeFilter(
+              value: selectedType,
+              onChanged: onTypeChanged,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (items.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            child: _EmptyState(message: 'لا توجد حركات مخزون حديثة'),
+          )
+        else
+          ...items
+              .take(8)
+              .map(
+                (InventoryMovement item) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _RecentActivityRow(item: item),
+                ),
+              ),
+      ],
+    ),
+  );
+}
+
+class _RecentActivityTypeFilter extends StatelessWidget {
+  const _RecentActivityTypeFilter({
+    required this.value,
+    required this.onChanged,
+  });
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) => DropdownButtonFormField<String>(
+    key: ValueKey<String>(value),
+    initialValue: value,
+    isExpanded: true,
+    decoration: const InputDecoration(
+      labelText: 'نوع الحركة',
+      isDense: true,
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      contentPadding: EdgeInsetsDirectional.fromSTEB(12, 10, 12, 8),
+    ),
+    items: const <DropdownMenuItem<String>>[
+      DropdownMenuItem<String>(value: '', child: Text('كل الحركات')),
+      DropdownMenuItem<String>(
+        value: 'purchase_receive',
+        child: Text('استلام شراء'),
+      ),
+      DropdownMenuItem<String>(
+        value: 'recipe_consumption',
+        child: Text('استهلاك بيع'),
+      ),
+      DropdownMenuItem<String>(value: 'transfer_in', child: Text('تحويل وارد')),
+      DropdownMenuItem<String>(
+        value: 'transfer_out',
+        child: Text('تحويل صادر'),
+      ),
+      DropdownMenuItem<String>(value: 'waste', child: Text('هدر')),
+      DropdownMenuItem<String>(value: 'adjustment', child: Text('تعديل مخزون')),
+      DropdownMenuItem<String>(
+        value: 'opening_balance',
+        child: Text('رصيد افتتاحي'),
+      ),
+      DropdownMenuItem<String>(value: 'return', child: Text('مرتجع')),
+    ],
+    onChanged: (String? value) => onChanged(value ?? ''),
+  );
+}
+
+class _RecentActivityRow extends StatelessWidget {
+  const _RecentActivityRow({required this.item});
+  final InventoryMovement item;
+
+  @override
+  Widget build(BuildContext context) {
+    final ManagementTone tone = _dashboardMovementTone(item);
+    final Color color = _activityColor(tone);
+    return Container(
+      padding: AppSpacing.allMd,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.control,
+        border: Border.all(color: color.withValues(alpha: .24)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            alert.outOfStock
-                ? Icons.error_outline
-                : Icons.warning_amber_outlined,
-            color: alert.outOfStock ? AppColors.danger : AppColors.warning,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              _activityIcon(item.dashboardType),
+              color: color,
+              size: 19,
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(alert.itemName, style: AppTextStyles.labelLarge),
-                Text(alert.warehouseName, style: AppTextStyles.labelSmall),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        item.itemName,
+                        style: AppTextStyles.labelLarge,
+                      ),
+                    ),
+                    ManagementBadge(
+                      label: _dashboardMovementLabel(item),
+                      tone: tone,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
+                  children: <Widget>[
+                    _ActivityMeta(
+                      icon: Icons.warehouse_outlined,
+                      label: item.warehouseName,
+                    ),
+                    if (item.reference case final String reference)
+                      _ActivityMeta(
+                        icon: Icons.link_outlined,
+                        label: reference,
+                      ),
+                    if (item.employee case final String employee)
+                      _ActivityMeta(
+                        icon: Icons.person_outline,
+                        label: employee,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  _shortDate(item.occurredAt),
+                  style: AppTextStyles.labelSmall,
+                ),
               ],
             ),
           ),
+          const SizedBox(width: AppSpacing.md),
           Text(
-            '${_number(alert.quantity, digits: 3)} ${alert.unit}',
-            style: AppTextStyles.labelMedium,
+            '${_number('${item.quantity.abs()}', digits: 3)} ${_unitLabel(item.unit)}',
+            style: AppTextStyles.labelMedium.copyWith(color: color),
           ),
         ],
       ),
-    ),
+    );
+  }
+}
+
+class _ActivityMeta extends StatelessWidget {
+  const _ActivityMeta({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      Icon(icon, size: 14, color: AppColors.textMuted),
+      const SizedBox(width: 3),
+      Text(label, style: AppTextStyles.labelSmall),
+    ],
   );
 }
 
-class _DashboardMovementsTable extends StatelessWidget {
-  const _DashboardMovementsTable({required this.items});
-  final List<InventoryMovement> items;
-  @override
-  Widget build(BuildContext context) => AppCard(
-    padding: EdgeInsets.zero,
-    child: items.isEmpty
-        ? const Padding(
-            padding: AppSpacing.allXl,
-            child: _EmptyState(message: 'لا توجد حركات مخزون ضمن هذا النطاق.'),
-          )
-        : ManagementTableShell(
-            minWidth: 820,
-            child: DataTable(
-              headingRowColor: const WidgetStatePropertyAll<Color>(
-                AppColors.menuTableHeader,
-              ),
-              columns: const <DataColumn>[
-                DataColumn(label: Text('المادة')),
-                DataColumn(label: Text('نوع الحركة')),
-                DataColumn(label: Text('الكمية'), numeric: true),
-                DataColumn(label: Text('المخزن')),
-                DataColumn(label: Text('الوقت')),
-              ],
-              rows: items
-                  .take(10)
-                  .map(
-                    (InventoryMovement item) => DataRow(
-                      cells: <DataCell>[
-                        DataCell(
-                          Text(item.itemName, style: AppTextStyles.labelLarge),
-                        ),
-                        DataCell(
-                          ManagementBadge(
-                            label: _movementLabel(item.type),
-                            tone: _movementTone(item.type),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            '${item.quantity >= 0 ? '+' : ''}${_number('${item.quantity}', digits: 3)} ${_unitLabel(item.unit)}',
-                            style: TextStyle(
-                              color: item.quantity >= 0
-                                  ? AppColors.success
-                                  : AppColors.danger,
-                            ),
-                          ),
-                        ),
-                        DataCell(Text(item.warehouseName)),
-                        DataCell(Text(_shortDate(item.occurredAt))),
-                      ],
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-  );
-}
+Color _activityColor(ManagementTone tone) => switch (tone) {
+  ManagementTone.success => AppColors.success,
+  ManagementTone.warning => AppColors.warning,
+  ManagementTone.danger => AppColors.danger,
+  ManagementTone.info => AppColors.info,
+  ManagementTone.neutral => AppColors.secondary,
+};
+
+IconData _activityIcon(String type) => switch (type) {
+  'purchase_receive' => Icons.move_to_inbox_outlined,
+  'recipe_consumption' => Icons.restaurant_outlined,
+  'transfer_in' => Icons.call_received_outlined,
+  'transfer_out' => Icons.call_made_outlined,
+  'waste' => Icons.delete_outline,
+  'opening_balance' => Icons.account_balance_wallet_outlined,
+  'return' => Icons.assignment_return_outlined,
+  _ => Icons.tune_outlined,
+};
 
 class _DashboardBranchDropdown extends StatelessWidget {
   const _DashboardBranchDropdown({
@@ -2419,26 +4858,19 @@ class _DashboardBranchDropdown extends StatelessWidget {
 class _DashboardWarehouseDropdown extends StatelessWidget {
   const _DashboardWarehouseDropdown({
     required this.value,
-    required this.branchId,
     required this.warehouses,
     required this.onChanged,
   });
   final int? value;
-  final int? branchId;
-  final List<WarehouseLocation> warehouses;
+  final List<InventoryWarehouseValue> warehouses;
   final ValueChanged<int?> onChanged;
   @override
   Widget build(BuildContext context) {
-    final visible = warehouses
-        .where(
-          (WarehouseLocation warehouse) =>
-              warehouse.isActive &&
-              !warehouse.isLegacy &&
-              (branchId == null || warehouse.branchId == branchId),
-        )
-        .toList(growable: false);
+    final List<InventoryWarehouseValue> visible = warehouses;
     final selected =
-        visible.any((WarehouseLocation warehouse) => warehouse.id == value)
+        visible.any(
+          (InventoryWarehouseValue warehouse) => warehouse.id == value,
+        )
         ? value
         : null;
     return SizedBox(
@@ -2456,9 +4888,9 @@ class _DashboardWarehouseDropdown extends StatelessWidget {
         items: <DropdownMenuItem<int?>>[
           const DropdownMenuItem<int?>(value: null, child: Text('كل المخازن')),
           ...visible.map(
-            (WarehouseLocation warehouse) => DropdownMenuItem<int?>(
+            (InventoryWarehouseValue warehouse) => DropdownMenuItem<int?>(
               value: warehouse.id,
-              child: Text(warehouse.displayName),
+              child: Text(warehouse.name),
             ),
           ),
         ],
@@ -2474,94 +4906,59 @@ class _Kpi extends StatelessWidget {
     required this.value,
     required this.icon,
     this.color,
+    this.compact = false,
   });
   final String label;
   final String value;
   final IconData icon;
   final Color? color;
+  final bool compact;
   @override
-  Widget build(BuildContext context) => ManagementKpiCard(
-    label: label,
-    value: value,
-    icon: icon,
-    color: color ?? AppColors.discountIconBackground,
-  );
+  Widget build(BuildContext context) => compact
+      ? AppCard(
+          padding: AppSpacing.allMd,
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color ?? AppColors.discountIconBackground,
+                  borderRadius: AppRadius.control,
+                ),
+                child: Icon(icon, size: 20, color: AppColors.secondary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(label, style: AppTextStyles.labelSmall),
+                    const SizedBox(height: 2),
+                    Text(value, style: AppTextStyles.titleMedium),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )
+      : ManagementKpiCard(
+          label: label,
+          value: value,
+          icon: icon,
+          color: color ?? AppColors.discountIconBackground,
+        );
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.action, this.onTap});
+  const _SectionHeader({required this.title});
   final String title;
-  final String? action;
-  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Row(
     children: <Widget>[
       Expanded(child: Text(title, style: AppTextStyles.titleMedium)),
-      if (action != null) TextButton(onPressed: onTap, child: Text(action!)),
     ],
-  );
-}
-
-class _WarehouseValueCard extends StatelessWidget {
-  const _WarehouseValueCard({required this.values});
-  final List<InventoryWarehouseValue> values;
-  @override
-  Widget build(BuildContext context) => AppCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text('قيمة المخزون حسب المخزن', style: AppTextStyles.titleMedium),
-        const SizedBox(height: AppSpacing.md),
-        if (values.isEmpty)
-          Text('لا تتوفر قيم للمخازن.', style: AppTextStyles.bodySmall)
-        else
-          ...values.map(
-            (InventoryWarehouseValue value) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Row(
-                children: <Widget>[
-                  const Icon(
-                    Icons.warehouse_outlined,
-                    size: 18,
-                    color: AppColors.secondary,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(value.name, style: AppTextStyles.bodyMedium),
-                  ),
-                  Text(_money(value.value), style: AppTextStyles.labelLarge),
-                ],
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-}
-
-class _LowStockAlert extends StatelessWidget {
-  const _LowStockAlert({required this.count, required this.onOpen});
-  final int count;
-  final VoidCallback onOpen;
-  @override
-  Widget build(BuildContext context) => AppCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-        const SizedBox(height: AppSpacing.sm),
-        Text('تنبيه مخزون منخفض', style: AppTextStyles.titleMedium),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          count == 0
-              ? 'كل المواد المتابعة ضمن مستويات المخزون الآن.'
-              : '$count مواد تحتاج إلى اهتمام قبل أن تتأثر العمليات.',
-          style: AppTextStyles.bodySmall,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        TextButton(onPressed: onOpen, child: const Text('مراجعة الأرصدة')),
-      ],
-    ),
   );
 }
 
@@ -2577,6 +4974,7 @@ class _ItemsTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ManagementTableShell(
     minWidth: 1060,
+    verticalScroll: true,
     child: DataTable(
       horizontalMargin: AppSpacing.md,
       columnSpacing: AppSpacing.lg,
@@ -2676,6 +5074,82 @@ class _ItemsPagination extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _MovementsPagination extends StatelessWidget {
+  const _MovementsPagination({
+    required this.page,
+    required this.lastPage,
+    required this.total,
+    required this.visibleCount,
+    required this.onPageChanged,
+  });
+  final int page;
+  final int lastPage;
+  final int total;
+  final int visibleCount;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final int first = total == 0 ? 0 : (page - 1) * 5 + 1;
+    final int last = first + visibleCount - 1;
+    return Row(
+      children: <Widget>[
+        Text('$first–$last من $total حركة', style: AppTextStyles.bodySmall),
+        const Spacer(),
+        Text('الصفحة $page من $lastPage', style: AppTextStyles.bodySmall),
+        IconButton(
+          tooltip: 'الصفحة السابقة',
+          onPressed: page > 1 ? () => onPageChanged(page - 1) : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+        IconButton(
+          tooltip: 'الصفحة التالية',
+          onPressed: page < lastPage ? () => onPageChanged(page + 1) : null,
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+}
+
+class _BalancesPagination extends StatelessWidget {
+  const _BalancesPagination({
+    required this.page,
+    required this.lastPage,
+    required this.total,
+    required this.visibleCount,
+    required this.onPageChanged,
+  });
+  final int page;
+  final int lastPage;
+  final int total;
+  final int visibleCount;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final int first = total == 0 ? 0 : (page - 1) * 5 + 1;
+    final int last = first + visibleCount - 1;
+    return Row(
+      children: <Widget>[
+        Text('$first–$last من $total رصيد', style: AppTextStyles.bodySmall),
+        const Spacer(),
+        Text('الصفحة $page من $lastPage', style: AppTextStyles.bodySmall),
+        IconButton(
+          tooltip: 'الصفحة السابقة',
+          onPressed: page > 1 ? () => onPageChanged(page - 1) : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+        IconButton(
+          tooltip: 'الصفحة التالية',
+          onPressed: page < lastPage ? () => onPageChanged(page + 1) : null,
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
 }
 
 class _ItemBalancesTable extends StatelessWidget {
@@ -2816,76 +5290,92 @@ class _BalancesTable extends StatelessWidget {
   final List<InventoryBalance> items;
   final ValueChanged<InventoryBalance>? onOpen;
   @override
-  Widget build(BuildContext context) => ManagementTableShell(
-    minWidth: 950,
-    child: DataTable(
-      headingRowColor: const WidgetStatePropertyAll<Color>(
-        AppColors.menuTableHeader,
+  Widget build(BuildContext context) {
+    final Widget table = ManagementTableShell(
+      minWidth: AppSizes.inventoryDesktopTableWidth,
+      child: DataTable(
+        headingRowColor: const WidgetStatePropertyAll<Color>(
+          AppColors.menuTableHeader,
+        ),
+        columns: const <DataColumn>[
+          DataColumn(label: Text('المادة')),
+          DataColumn(label: Text('الكمية الفعلية'), numeric: true),
+          DataColumn(label: Text('الكمية المتاحة'), numeric: true),
+          DataColumn(label: Text('متوسط التكلفة'), numeric: true),
+          DataColumn(label: Text('إجمالي القيمة'), numeric: true),
+          DataColumn(label: Text('حالة المخزون')),
+        ],
+        rows: items
+            .map(
+              (InventoryBalance balance) => DataRow(
+                onSelectChanged: onOpen == null
+                    ? null
+                    : (_) => onOpen!(balance),
+                cells: <DataCell>[
+                  DataCell(
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          balance.itemName.isEmpty
+                              ? 'مادة مخزنية'
+                              : balance.itemName,
+                          style: AppTextStyles.labelLarge,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Text(
+                              balance.warehouseName,
+                              style: AppTextStyles.labelSmall,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            ManagementBadge(
+                              label: balance.warehouseTypeLabel,
+                              tone: ManagementTone.info,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${_number(balance.quantity, digits: 3)} ${_unitLabel(balance.unit)}',
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${_number(balance.available, digits: 3)} ${_unitLabel(balance.unit)}',
+                    ),
+                  ),
+                  DataCell(Text(_money(balance.cost))),
+                  DataCell(Text(_money(balance.value))),
+                  DataCell(
+                    ManagementBadge(
+                      label: _stockLabel(balance.available, balance.low),
+                      tone: _stockTone(balance.available, balance.low),
+                    ),
+                  ),
+                ],
+              ),
+            )
+            .toList(),
       ),
-      columns: const <DataColumn>[
-        DataColumn(label: Text('المادة')),
-        DataColumn(label: Text('الكمية الفعلية'), numeric: true),
-        DataColumn(label: Text('الكمية المتاحة'), numeric: true),
-        DataColumn(label: Text('متوسط التكلفة'), numeric: true),
-        DataColumn(label: Text('إجمالي القيمة'), numeric: true),
-        DataColumn(label: Text('حالة المخزون')),
-      ],
-      rows: items
-          .map(
-            (InventoryBalance balance) => DataRow(
-              onSelectChanged: onOpen == null ? null : (_) => onOpen!(balance),
-              cells: <DataCell>[
-                DataCell(
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        balance.itemName.isEmpty
-                            ? 'مادة مخزنية'
-                            : balance.itemName,
-                        style: AppTextStyles.labelLarge,
-                      ),
-                      Row(
-                        children: <Widget>[
-                          Text(
-                            balance.warehouseName,
-                            style: AppTextStyles.labelSmall,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          ManagementBadge(
-                            label: balance.warehouseTypeLabel,
-                            tone: ManagementTone.info,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${_number(balance.quantity, digits: 3)} ${_unitLabel(balance.unit)}',
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${_number(balance.available, digits: 3)} ${_unitLabel(balance.unit)}',
-                  ),
-                ),
-                DataCell(Text(_money(balance.cost))),
-                DataCell(Text(_money(balance.value))),
-                DataCell(
-                  ManagementBadge(
-                    label: _stockLabel(balance.available, balance.low),
-                    tone: _stockTone(balance.available, balance.low),
-                  ),
-                ),
-              ],
-            ),
-          )
-          .toList(),
-    ),
-  );
+    );
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) =>
+          constraints.maxWidth >= AppSizes.inventoryDesktopTableWidth
+          ? Center(
+              child: SizedBox(
+                width: AppSizes.inventoryDesktopTableWidth,
+                child: table,
+              ),
+            )
+          : table,
+    );
+  }
 }
 
 class _MovementsTable extends StatelessWidget {
@@ -2974,36 +5464,42 @@ class _CountsTable extends StatelessWidget {
   final ValueChanged<InventoryCount> onOpen;
   @override
   Widget build(BuildContext context) => ManagementTableShell(
-    minWidth: 720,
+    minWidth: 1170,
+    verticalScroll: true,
     child: DataTable(
+      showCheckboxColumn: false,
       headingRowColor: const WidgetStatePropertyAll<Color>(
         AppColors.menuTableHeader,
       ),
       columns: const <DataColumn>[
+        DataColumn(label: Text('رقم الجرد')),
         DataColumn(label: Text('المخزن')),
+        DataColumn(label: Text('نوع الجرد')),
         DataColumn(label: Text('تاريخ الجرد')),
+        DataColumn(label: Text('أنشئ بواسطة')),
+        DataColumn(label: Text('العناصر المجرودة / الإجمالي'), numeric: true),
         DataColumn(label: Text('الحالة')),
-        DataColumn(label: Text('الإجراء')),
       ],
       rows: items
           .map(
             (InventoryCount count) => DataRow(
               onSelectChanged: (_) => onOpen(count),
               cells: <DataCell>[
+                DataCell(Text(count.number, style: AppTextStyles.labelMedium)),
                 DataCell(Text(count.warehouseName)),
-                DataCell(Text(_shortDate(count.date))),
+                DataCell(Text(_countTypeLabel(count.countType))),
+                DataCell(Text(_countListDate(count.date))),
+                DataCell(Text(count.createdByName ?? '—')),
                 DataCell(
-                  ManagementBadge(
-                    label: _countStatus(count.status),
-                    tone: count.status == 'posted'
-                        ? ManagementTone.success
-                        : ManagementTone.warning,
+                  Text(
+                    '${count.countedItems}/${count.totalItems}',
+                    textDirection: ui.TextDirection.ltr,
                   ),
                 ),
                 DataCell(
-                  TextButton(
-                    onPressed: () => onOpen(count),
-                    child: const Text('فتح الجرد'),
+                  ManagementBadge(
+                    label: _countStatus(count.status),
+                    tone: _countTone(count.status),
                   ),
                 ),
               ],
@@ -3013,6 +5509,14 @@ class _CountsTable extends StatelessWidget {
     ),
   );
 }
+
+ManagementTone _countTone(String status) => switch (status) {
+  'posted' => ManagementTone.success,
+  'in_progress' => ManagementTone.info,
+  'submitted' || 'approved' => ManagementTone.warning,
+  'cancelled' => ManagementTone.danger,
+  _ => ManagementTone.neutral,
+};
 
 class _CountLinesTable extends StatelessWidget {
   const _CountLinesTable({required this.lines});
@@ -3235,10 +5739,11 @@ class _ItemDropdown extends StatelessWidget {
           }
         },
         child: InputDecorator(
-          isEmpty: selected == null,
+          isEmpty: false,
           decoration: const InputDecoration(
             labelText: 'المادة المخزنية',
             suffixIcon: Icon(Icons.search_outlined),
+            floatingLabelBehavior: FloatingLabelBehavior.always,
           ),
           child: Text(
             selected == null
@@ -3337,7 +5842,7 @@ class _StringDropdown extends StatelessWidget {
   final ValueChanged<String> onChanged;
   @override
   Widget build(BuildContext context) => SizedBox(
-    width: 170,
+    width: 230,
     child: DropdownButtonFormField<String>(
       isExpanded: true,
       initialValue: value,
@@ -3351,14 +5856,11 @@ class _StringDropdown extends StatelessWidget {
         ),
       ),
       items: <DropdownMenuItem<String>>[
-        DropdownMenuItem<String>(
-          value: '',
-          child: Text('كل $label', overflow: TextOverflow.ellipsis),
-        ),
+        DropdownMenuItem<String>(value: '', child: Text('كل $label')),
         ...options.entries.map(
           (MapEntry<String, String> entry) => DropdownMenuItem<String>(
             value: entry.key,
-            child: Text(entry.value, overflow: TextOverflow.ellipsis),
+            child: Text(entry.value),
           ),
         ),
       ],
@@ -3639,6 +6141,23 @@ class _Detail extends StatelessWidget {
   );
 }
 
+class _CountStatusDetail extends StatelessWidget {
+  const _CountStatusDetail({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      const Text('الحالة', style: AppTextStyles.labelSmall),
+      const SizedBox(height: AppSpacing.xs),
+      ManagementBadge(label: _countStatus(status), tone: _countTone(status)),
+    ],
+  );
+}
+
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.active});
   final bool active;
@@ -3683,19 +6202,23 @@ class _LoadState extends StatelessWidget {
     required this.loading,
     required this.error,
     required this.onRetry,
+    this.permissionDenied = false,
   });
   final bool loading;
   final String? error;
   final VoidCallback onRetry;
+  final bool permissionDenied;
   @override
   Widget build(BuildContext context) => loading
       ? const _LoadingSkeleton()
       : ManagementMessage(
-          message: error == null
+          message: permissionDenied
+              ? 'ليس لديك صلاحية عرض لوحة المخزون.'
+              : error == null
               ? 'لا تتوفر بيانات مخزون.'
               : _friendlyError(error),
-          error: error != null,
-          onRetry: onRetry,
+          error: error != null || permissionDenied,
+          onRetry: permissionDenied ? null : onRetry,
         );
 }
 
@@ -4024,11 +6547,37 @@ String _safeEnglish(String? value, {required String fallback}) {
 }
 
 String _shortDate(String value) {
-  final DateTime? date = DateTime.tryParse(value);
+  final DateTime? date = parseBackendDateTime(value);
   return date == null
       ? '—'
-      : DateFormat('MMM d, y · h:mm a').format(date.toLocal());
+      : DateFormat('MMM d, y · h:mm a').format(date);
 }
+
+String _countListDate(String value) {
+  final DateTime? date = DateTime.tryParse(value);
+  if (date == null) return '—';
+  const List<String> months = <String>[
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ];
+  return '${date.day} ${months[date.month - 1]} ${date.year}';
+}
+
+String _countTypeLabel(String value) => switch (value) {
+  'cycle' => 'جرد دوري / جزئي',
+  'shift_check' => 'فحص شيفت POS',
+  _ => 'جرد كامل',
+};
 
 String _apiDate(DateTime value) => DateFormat('yyyy-MM-dd').format(value);
 String _countStatus(String status) => switch (status) {

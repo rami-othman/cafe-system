@@ -30,6 +30,25 @@ class WarehouseController extends Controller
         if ($request->boolean('includeLegacy') !== true) {
             $query->where('warehouses.code', 'not like', 'LEGACY-%');
         }
+        if ($request->boolean('forStockCount')) {
+            $actorId = FinancialActor::id($request, $tenantId);
+            if ($actorId) {
+                $role = DB::table('users')->where('id', $actorId)->value('role');
+                if ($role !== 'owner') {
+                    $query->where(function (Builder $warehouses) use ($tenantId, $actorId): void {
+                        $warehouses
+                            ->whereNull('warehouses.branch_id')
+                            ->orWhereIn(
+                                'warehouses.branch_id',
+                                DB::table('user_branches')
+                                    ->where('tenant_id', $tenantId)
+                                    ->where('user_id', $actorId)
+                                    ->select('branch_id'),
+                            );
+                    });
+                }
+            }
+        }
         if ($request->filled('search')) {
             $search = '%'.strtolower((string) $request->query('search')).'%';
             $query->where(fn (Builder $items) => $items->whereRaw('LOWER(warehouses.name) LIKE ?', [$search])->orWhereRaw('LOWER(warehouses.code) LIKE ?', [$search]));

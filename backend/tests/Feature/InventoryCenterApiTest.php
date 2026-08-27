@@ -230,6 +230,229 @@ class InventoryCenterApiTest extends TestCase
         $this->getJson('/api/v1/inventory/dashboard', $headers)->assertOk()->assertJsonPath('data.lowStockItemCount', 5)->assertJsonPath('data.outOfStockItemCount', 1);
     }
 
+    public function test_stock_count_list_returns_filtered_pages_summary_and_creator_options(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $warehouse = $this->warehouse($tenant);
+        $headers = $this->headers($tenant);
+        $first = (int) $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-10',
+            'countType' => 'full',
+        ], $headers)->assertCreated()->json('data.id');
+        $shift = (int) $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-11',
+            'countType' => 'cycle',
+        ], $headers)->assertCreated()->json('data.id');
+        DB::table('stock_counts')->where('id', $shift)->update(['count_type' => 'shift_check']);
+        DB::table('stock_counts')->where('id', $first)->update(['category_filters' => json_encode(['category' => 'beverages'])]);
+
+        $administrative = $this->getJson('/api/v1/inventory/counts?source=administrative&warehouseId='.$warehouse.'&from=2026-08-10&to=2026-08-10&perPage=1', $headers);
+        $administrative
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.lastPage', 1)
+            ->assertJsonPath('meta.summary.drafts', 1)
+            ->assertJsonPath('data.0.id', $first)
+            ->assertJsonCount(1, 'meta.filterOptions.createdBy');
+
+        $this->getJson('/api/v1/inventory/counts?source=shift_pos&countType=shift_check&perPage=1', $headers)
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $shift)
+            ->assertJsonPath('data.0.countType', 'shift_check');
+    }
+
+    public function test_stock_count_lines_keep_the_creation_snapshot_and_enforce_workspace_lifecycle(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $warehouse = $this->warehouse($tenant);
+        $headers = $this->headers($tenant);
+        $item = $this->createItem($tenant);
+        DB::table('inventory_item_warehouses')->insertOrIgnore([
+            'tenant_id' => $tenant,
+            'inventory_item_id' => $item,
+            'warehouse_id' => $warehouse,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'stock_in', '10.000', '2.0000'), $headers)->assertCreated();
+        $count = (int) $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-24',
+            'countType' => 'full',
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/inventory/counts/'.$count.'/start', [], $headers)->assertOk();
+
+        // Inventory may move after the count starts, but its expected quantity
+        // and unit cost must remain the creation snapshot.
+        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'stock_in', '4.000', '3.0000'), $headers)->assertCreated();
+        $this->putJson('/api/v1/inventory/counts/'.$count.'/lines', [
+            'itemId' => $item,
+            'countedQuantity' => '8.000',
+            'reason' => 'Physical count discrepancy',
+        ], $headers)->assertOk();
+        $this->assertDatabaseHas('stock_count_lines', [
+            'stock_count_id' => $count,
+            'inventory_item_id' => $item,
+            'expected_quantity' => '10.000',
+            'average_unit_cost' => '2.0000',
+            'counted_quantity' => '8.000',
+            'variance_quantity' => '-2.000',
+        ]);
+        $this->putJson('/api/v1/inventory/counts/'.$count.'/lines', [
+            'itemId' => $item,
+            'countedQuantity' => '-1.000',
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('countedQuantity');
+
+        foreach (DB::table('stock_count_lines')->where('stock_count_id', $count)->get() as $line) {
+            if ((int) $line->inventory_item_id === $item) {
+                continue;
+            }
+            $this->putJson('/api/v1/inventory/counts/'.$count.'/lines', [
+                'itemId' => $line->inventory_item_id,
+                'countedQuantity' => $line->expected_quantity,
+            ], $headers)->assertOk();
+        }
+        $this->postJson('/api/v1/inventory/counts/'.$count.'/submit', [], $headers)
+            ->assertOk()
+            ->assertJsonPath('data.status', 'submitted');
+        $this->putJson('/api/v1/inventory/counts/'.$count.'/lines', [
+            'itemId' => $item,
+            'countedQuantity' => '9.000',
+            'reason' => 'Late edit',
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('status');
+
+        $branchWarehouse = (int) DB::table('warehouses')
+            ->where('tenant_id', $tenant)
+            ->whereNotNull('branch_id')
+            ->value('id');
+        $branchCount = (int) $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $branchWarehouse,
+            'countDate' => '2026-08-25',
+            'countType' => 'full',
+        ], $headers)->assertCreated()->json('data.id');
+        $branchLine = DB::table('stock_count_lines')
+            ->where('stock_count_id', $branchCount)
+            ->first();
+        $manager = (int) DB::table('users')->insertGetId([
+            'tenant_id' => $tenant,
+            'name' => 'Workspace manager',
+            'email' => 'workspace-manager@cafe618.local',
+            'password' => 'not-used-in-feature-test',
+            'role' => 'manager',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->putJson('/api/v1/inventory/counts/'.$branchCount.'/lines', [
+            'itemId' => $branchLine->inventory_item_id,
+            'countedQuantity' => '0.000',
+        ], $headers + ['X-User-Id' => $manager])->assertForbidden();
+    }
+
+    public function test_stock_count_creation_validates_scope_access_duplicates_and_generates_eligible_lines(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $warehouse = $this->warehouse($tenant);
+        $headers = $this->headers($tenant);
+        $eligible = DB::table('inventory_items as items')
+            ->where('items.tenant_id', $tenant)
+            ->where('items.is_active', true)
+            ->whereNull('items.deleted_at')
+            ->whereNotIn('items.item_type', ['non_stock_item', 'service'])
+            ->whereExists(fn ($query) => $query->selectRaw('1')
+                ->from('inventory_item_warehouses as availability')
+                ->whereColumn('availability.inventory_item_id', 'items.id')
+                ->where('availability.tenant_id', $tenant)
+                ->where('availability.warehouse_id', $warehouse))
+            ->count();
+
+        $full = $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-21',
+            'countType' => 'full',
+            'notes' => 'Full count creation test',
+        ], $headers)
+            ->assertCreated()
+            ->assertJsonPath('data.countType', 'full')
+            ->assertJsonPath('data.status', 'draft')
+            ->json('data.id');
+        $this->assertSame($eligible, DB::table('stock_count_lines')->where('stock_count_id', $full)->count());
+
+        $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-21',
+            'countType' => 'full',
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('warehouseId');
+        $this->postJson('/api/v1/inventory/counts', [
+            'countDate' => '2026-08-21',
+            'countType' => 'full',
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('warehouseId');
+
+        $category = DB::table('inventory_items as items')
+            ->where('items.tenant_id', $tenant)
+            ->where('items.is_active', true)
+            ->whereExists(fn ($query) => $query->selectRaw('1')
+                ->from('inventory_item_warehouses as availability')
+                ->whereColumn('availability.inventory_item_id', 'items.id')
+                ->where('availability.tenant_id', $tenant)
+                ->where('availability.warehouse_id', $warehouse))
+            ->value('items.category');
+        $expectedCycleLines = DB::table('inventory_items as items')
+            ->where('items.tenant_id', $tenant)
+            ->where('items.is_active', true)
+            ->whereNull('items.deleted_at')
+            ->whereNotIn('items.item_type', ['non_stock_item', 'service'])
+            ->where('items.category', $category)
+            ->whereExists(fn ($query) => $query->selectRaw('1')
+                ->from('inventory_item_warehouses as availability')
+                ->whereColumn('availability.inventory_item_id', 'items.id')
+                ->where('availability.tenant_id', $tenant)
+                ->where('availability.warehouse_id', $warehouse))
+            ->count();
+        $cycle = $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-22',
+            'countType' => 'cycle',
+            'categoryFilters' => [$category],
+        ], $headers)->assertCreated()->assertJsonPath('data.countType', 'cycle')->json('data.id');
+        $this->assertSame($expectedCycleLines, DB::table('stock_count_lines')->where('stock_count_id', $cycle)->count());
+
+        $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $warehouse,
+            'countDate' => '2026-08-23',
+            'countType' => 'full',
+        ], $this->headers($this->otherTenant()))->assertNotFound();
+
+        $branchWarehouse = DB::table('warehouses')
+            ->where('tenant_id', $tenant)
+            ->whereNotNull('branch_id')
+            ->value('id');
+        $manager = (int) DB::table('users')->insertGetId([
+            'tenant_id' => $tenant,
+            'name' => 'Unassigned manager',
+            'email' => 'unassigned-manager@cafe618.local',
+            'password' => 'not-used-in-feature-test',
+            'role' => 'manager',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->getJson('/api/v1/warehouses?status=active&forStockCount=true', $headers + ['X-User-Id' => $manager])
+            ->assertOk()
+            ->assertJsonMissing(['id' => $branchWarehouse]);
+        $this->postJson('/api/v1/inventory/counts', [
+            'warehouseId' => $branchWarehouse,
+            'countDate' => '2026-08-23',
+            'countType' => 'full',
+        ], $headers + ['X-User-Id' => $manager])->assertForbidden();
+    }
+
     public function test_dashboard_filters_and_orders_alerts_and_movements_from_real_inventory_data(): void
     {
         $this->seed();
@@ -240,18 +463,86 @@ class InventoryCenterApiTest extends TestCase
         $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'stock_in', '10.000', '2.0000'), $headers)->assertCreated();
         $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'waste', '2.000', null, 'Damaged stock'), $headers)->assertCreated();
 
-        $response = $this->getJson('/api/v1/inventory/dashboard?warehouse_id='.$warehouse.'&from='.now()->toDateString().'&to='.now()->toDateString().'&search=Test&compare_previous=true', $headers);
+        $response = $this->getJson('/api/v1/inventory/dashboard?warehouse_id='.$warehouse.'&from='.now()->toDateString().'&to='.now()->toDateString().'&search=Test&movement_type=waste&trend_days=7&compare_previous=true', $headers);
 
         $response->assertOk()
+            ->assertJsonStructure(['data' => ['recentMovements' => [['type', 'itemNameEn', 'warehouseName', 'quantityIn', 'quantityOut', 'reference', 'userName', 'occurredAt', 'createdAt']]]])
             ->assertJsonPath('data.kpis.totalInventoryValue.value', '16.00')
+            ->assertJsonPath('data.kpis.totalItems.value', '1')
             ->assertJsonPath('data.kpis.wasteValue.value', '4.00')
+            ->assertJsonPath('data.kpis.todayConsumptionCost.value', '0.00')
+            ->assertJsonPath('data.kpis.todayWasteCost.value', '4.00')
+            ->assertJsonPath('data.wasteSummary.todayCost', '4.00')
+            ->assertJsonPath('data.wasteSummary.weekCost', '4.00')
+            ->assertJsonPath('data.wasteSummary.movementCount', 1)
+            ->assertJsonPath('data.wasteSummary.topItems.0.itemName', 'Test material')
+            ->assertJsonPath('data.consumptionSummary.totalCost', '0.00')
             ->assertJsonPath('data.recentMovements.0.type', 'waste')
+            ->assertJsonPath('data.recentMovements.0.dashboardType', 'waste')
+            ->assertJsonPath('data.lowStockAlerts.0.minimumLevel', '20.000')
+            ->assertJsonPath('data.lowStockAlerts.0.missingQuantity', '12.000')
+            ->assertJsonPath('data.lowStockAlerts.0.suggestedReorderQuantity', '12.000')
+            ->assertJsonPath('data.lowStockAlerts.0.severity', 'critical')
+            ->assertJsonPath('data.inventoryAlertsSummary.critical', 1)
+            ->assertJsonPath('data.inventoryAlertsSummary.low', 0)
+            ->assertJsonPath('data.inventoryAlertsSummary.total', 1)
             ->assertJsonPath('data.recentMovements.0.itemNameEn', 'Test material');
         $this->assertCount(1, $response->json('data.stockValueByWarehouse'));
+        $this->assertSame(1, $response->json('data.stockValueByWarehouse.0.itemCount'));
+        $this->assertSame(1, $response->json('data.stockValueByWarehouse.0.alertsCount'));
+        $this->assertSame('critical', $response->json('data.stockValueByWarehouse.0.status'));
+        $this->assertSame(0, $response->json('data.stockValueByWarehouse.0.healthPercentage'));
+        $this->assertNotEmpty($response->json('data.stockValueByWarehouse.0.lastMovementAt'));
+        $this->assertNotEmpty($response->json('data.stockValueTrend.points'));
+        $this->assertCount(7, $response->json('data.stockValueTrend.points'));
+        $this->assertCount(7, $response->json('data.stock_value_trend'));
         $this->assertSame(
             $response->json('data.lowStockAlerts'),
             collect($response->json('data.lowStockAlerts'))->sortBy(fn (array $alert) => $alert['outOfStock'] ? 0 : 1)->values()->all(),
         );
+    }
+
+    public function test_item_management_validates_units_and_filters_assigned_warehouses(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $warehouse = $this->warehouse($tenant);
+        $headers = $this->headers($tenant);
+        $payload = [
+            'nameAr' => 'Managed milk',
+            'nameEn' => 'Managed milk',
+            'sku' => 'MANAGED-MILK',
+            'barcode' => '990001',
+            'itemType' => 'stock_item',
+            'category' => 'Dairy',
+            'unit' => 'liter',
+            'purchaseUnit' => 'box',
+            'consumptionUnit' => 'liter',
+            'minimumStock' => '5.000',
+            'reorderLevel' => '10.000',
+            'latestUnitCost' => '2.0000',
+            'lastPurchaseCost' => '2.2500',
+            'trackExpiry' => true,
+            'trackBatch' => true,
+            'warehouseIds' => [$warehouse],
+            'isActive' => true,
+        ];
+        $this->postJson('/api/v1/inventory/items', $payload, $headers)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('purchaseConversionFactor');
+
+        $created = $this->postJson('/api/v1/inventory/items', $payload + [
+            'purchaseConversionFactor' => '12',
+        ], $headers)->assertCreated()
+            ->assertJsonPath('data.purchaseUnit', 'box')
+            ->assertJsonPath('data.lastPurchaseCost', '2.2500')
+            ->assertJsonPath('data.trackExpiry', true)
+            ->json('data');
+
+        $this->getJson('/api/v1/inventory/items?search=990001&warehouseId='.$warehouse, $headers)
+            ->assertOk()
+            ->assertJsonPath('data.meta.total', 1)
+            ->assertJsonPath('data.items.0.id', $created['id']);
     }
 
     private function createItem(int $tenant): int

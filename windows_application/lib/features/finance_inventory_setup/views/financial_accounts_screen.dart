@@ -20,9 +20,8 @@ class _AccountsState extends State<FinancialAccountsScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<FinanceSetupCubit>().loadAccounts(),
-    );
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
+    Future<void>.microtask(cubit.loadAccounts);
   }
 
   @override
@@ -135,6 +134,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     ),
   );
   Future<void> _form(BuildContext context, [FinancialAccount? current]) async {
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
     final code = TextEditingController(text: current?.code);
     final name = TextEditingController(text: current?.nameAr);
     await showDialog<void>(
@@ -170,20 +170,21 @@ class _AccountsState extends State<FinancialAccountsScreen> {
               label: 'حفظ',
               icon: Icons.save_outlined,
               onPressed: () async {
-                if (code.text.trim().isEmpty || name.text.trim().isEmpty)
+                if (code.text.trim().isEmpty || name.text.trim().isEmpty) {
                   return;
-                final ok = await context
-                    .read<FinanceSetupCubit>()
-                    .saveAccount(<String, dynamic>{
-                      'code': code.text.trim(),
-                      'nameAr': name.text.trim(),
-                      'nameEn': current?.nameEn ?? name.text.trim(),
-                      'accountGroup': current?.accountGroup ?? 'expenses',
-                      'normalBalance': current?.normalBalance ?? 'debit',
-                      'parentAccountId': current?.parentAccountId,
-                      'isActive': current?.isActive ?? true,
-                    }, id: current?.id);
-                if (dialog.mounted && ok) Navigator.pop(dialog);
+                }
+                final ok = await cubit.saveAccount(<String, dynamic>{
+                  'code': code.text.trim(),
+                  'nameAr': name.text.trim(),
+                  'nameEn': current?.nameEn ?? name.text.trim(),
+                  'accountGroup': current?.accountGroup ?? 'expenses',
+                  'normalBalance': current?.normalBalance ?? 'debit',
+                  'parentAccountId': current?.parentAccountId,
+                  'isActive': current?.isActive ?? true,
+                }, id: current?.id);
+                if (dialog.mounted && ok) {
+                  Navigator.pop(dialog);
+                }
               },
             ),
           ],

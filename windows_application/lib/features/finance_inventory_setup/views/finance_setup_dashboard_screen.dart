@@ -22,9 +22,8 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<FinanceSetupCubit>().loadDashboard(),
-    );
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
+    Future<void>.microtask(cubit.loadDashboard);
   }
 
   @override
@@ -34,7 +33,7 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
       child: BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
         builder: (context, state) {
           final status = state.status;
-          if (status == null)
+          if (status == null) {
             return state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : ManagementMessage(
@@ -43,6 +42,7 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                     onRetry: () =>
                         context.read<FinanceSetupCubit>().loadDashboard(),
                   );
+          }
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

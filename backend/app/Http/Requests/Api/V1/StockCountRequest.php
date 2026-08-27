@@ -13,6 +13,13 @@ class StockCountRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['warehouseId' => ['required', 'integer'], 'countDate' => ['required', 'date_format:Y-m-d'], 'notes' => ['nullable', 'string', 'max:4000']];
+        return [
+            'warehouseId' => ['required', 'integer'],
+            'countDate' => ['required', 'date_format:Y-m-d'],
+            'countType' => ['nullable', 'in:full,cycle'],
+            'categoryFilters' => ['nullable', 'array'],
+            'categoryFilters.*' => ['string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:4000'],
+        ];
     }
 }

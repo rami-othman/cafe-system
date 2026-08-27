@@ -15,6 +15,37 @@ Phase 1 — Project Foundation
 
 ## Completed Work
 
+- Updated the RTL Start Stock Count modal with an explicit real-warehouse
+  selection, partial-count category validation, backend branch-access checks,
+  active-duplicate protection, generated-line coverage, and workspace routing.
+- Rebuilt the Arabic RTL Stock Counts list around the live paginated inventory
+  API: real status KPIs, period/warehouse/type/status/creator/source filters,
+  creator options, row navigation, retry states, and desktop overflow coverage.
+- Backfilled warehouse-material availability from existing stock balances so
+  newly created stock counts for the Bar and other warehouses receive their
+  real count lines; the inventory demo seeder now maintains those links.
+- Aligned the Stock Count Workspace controls and line-table density with the
+  approved reference, including a real-data reason-required filter.
+- Added the Bar Check backend foundation: tenant-scoped templates and template
+  lines, shift-linked `SHIFT_CHECK` stock-count snapshots, and a shift-close
+  blocker for required incomplete checks. The Inventory Flutter center and
+  workspace are the next implementation slice.
+- Arranged inventory balance summary cards in a compact horizontal desktop row,
+  with a responsive stacked layout for narrower windows.
+- Added a visible, draggable vertical scrollbar to the Inventory Items table,
+  while retaining horizontal scrolling for wide data sets.
+- Enabled the same vertical table scrolling for inventory balances, movements,
+  and stock-count list screens.
+- Paginated the Inventory Movements table at five server-loaded records per
+  page, with range and previous/next controls.
+- Preserved the movement API pagination metadata instead of unwrapping its
+  data array before the page parser receives it.
+- Made the paginated Inventory Movements table end after the records on the
+  current page instead of stretching to fill the remaining viewport.
+- Made the Inventory Movements page scroll as needed so the page controls do
+  not overflow below the table on shorter Windows windows.
+- Applied the five-row paginated table treatment to Inventory Balances and
+  widened filter dropdowns so their full labels remain visible.
 - Created the initial Flutter project scaffold.
 - Added foundation dependencies for routing, state management, dependency
   injection, value equality, and currency formatting.
@@ -126,6 +157,30 @@ Phase 1 — Project Foundation
 - Inventory Items now uses tenant-scoped server filtering and pagination, real
   available stock, and a complete add/edit form with category, stock-control,
   notes, and safe deactivation handling.
+- Hardened the source-derived Inventory shell: physical RTL sidebar placement
+  is covered at 1440×900, while Inventory-specific geometry no longer changes
+  the existing LTR modules.
+- Removed runtime branch fallback data. Backend-free widget runs use an
+  explicit operational-branch fake instead.
+- Reconciled the Inventory source map and Arabic RTL secondary navigation with
+  the Claude Module/Extensions/Operations exports.
+- Aligned the live Stock Counts list, start-count dialog, and count workspace
+  with the approved RTL desktop layout: compact filters/KPIs/tables, real
+  cycle-category selection, count notes, workspace filter pills, and
+  lifecycle-safe footer actions.
+- Unified the Stock Count list and workspace tables with the shared Inventory
+  Items table geometry and visual defaults.
+- Hardened the Inventory Items filter dropdown so its selected value is always
+  represented by one unique menu item, including the `packaging` type.
+- Fixed the Inventory Item form type selector to support every backend-valid
+  item type, including `packaging`, and to safely handle stale values.
+- Fixed the desktop Warehouse Balances table width at 1300px and preserved
+  horizontal scrolling below that available content width.
+- Added an internal vertical scrollbar to the Inventory Items table so its
+  result rows no longer clip the page footer.
+- Stock Count workspace now stages entered quantities for review submission,
+  saves them through the existing line endpoint first, and then uses the real
+  submit transition; users no longer need to press Enter in each quantity field.
 
 ## Next Step
 
@@ -330,3 +385,18 @@ workflows when those APIs are ready.
   add counted item lines and move a count through start, submit, approve and
   an explicitly confirmed variance-posting step without duplicating the count
   workflow.
+- 2026-08-23: Resolved all Dart analyzer findings across the Finance,
+  Inventory, and Reports modules, including unsafe asynchronous context usage,
+  unused Inventory widgets, deprecated form-field values, and query-map lints.
+- 2026-08-26: Completed the Stock Count Workspace vertical slice: it now uses
+  the existing count-detail API, immutable creation-time stock snapshots,
+  debounced line autosave with visible saving/saved/failed states, real
+  variance/reason validation, lifecycle submission, read-only final states,
+  and branch-access checks for line edits and transitions. Final variance
+  posting remains intentionally outside this slice.
+- 2026-08-27: Added the Bar Check Template and Warehouse Transfer vertical
+  slices. Templates now support persisted branch/warehouse configuration,
+  editable live inventory lines, tolerance type/value and review rules. Draft
+  transfers support real line editing, submission, dispatch through immutable
+  stock movements, and idempotent receipt posting with received/discrepancy
+  quantities in the RTL inventory workspace.

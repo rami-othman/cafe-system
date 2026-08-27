@@ -5,11 +5,10 @@ import '../repositories/reports_repository.dart';
 import 'reports_overview_state.dart';
 
 class ReportsOverviewCubit extends Cubit<ReportsOverviewState> {
-  ReportsOverviewCubit({required ReportsRepository repository})
-    : _repository = repository,
-      super(const ReportsOverviewState());
+  ReportsOverviewCubit({required this.repository})
+    : super(const ReportsOverviewState());
 
-  final ReportsRepository _repository;
+  final ReportsRepository repository;
 
   Future<void> load() async {
     final DateTime now = DateTime.now();
@@ -27,7 +26,7 @@ class ReportsOverviewCubit extends Cubit<ReportsOverviewState> {
       ),
     );
     try {
-      final data = await _repository.getOverview(
+      final data = await repository.getOverview(
         from: range.start,
         to: range.end,
         branchId: state.branchId,

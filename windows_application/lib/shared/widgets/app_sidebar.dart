@@ -16,12 +16,16 @@ class AppSidebar extends StatelessWidget {
     this.isCollapsed = false,
     this.textDirection = TextDirection.ltr,
     this.expandedWidth = AppSizes.sidebarWidth,
+    this.logoMarkSize = AppSizes.logoMarkSize,
+    this.padding,
   });
 
   final String activeLabel;
   final bool isCollapsed;
   final TextDirection textDirection;
   final double expandedWidth;
+  final double logoMarkSize;
+  final EdgeInsetsGeometry? padding;
 
   bool get _isArabic => textDirection == TextDirection.rtl;
 
@@ -47,6 +51,15 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final EdgeInsetsGeometry effectivePadding =
+        padding ??
+        EdgeInsetsDirectional.fromSTEB(
+          isCollapsed ? AppSpacing.sm : AppSpacing.lg,
+          AppSpacing.xxl,
+          isCollapsed ? AppSpacing.sm : AppSpacing.md,
+          AppSpacing.xxl,
+        );
+
     return Container(
       width: isCollapsed ? AppSizes.sidebarRailWidth : expandedWidth,
       decoration: const BoxDecoration(color: AppColors.sidebarBackground)
@@ -56,12 +69,7 @@ class AppSidebar extends StatelessWidget {
                 : const Border(right: BorderSide(color: AppColors.shellBorder)),
           ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          isCollapsed ? AppSpacing.sm : AppSpacing.lg,
-          AppSpacing.xxl,
-          isCollapsed ? AppSpacing.sm : AppSpacing.md,
-          AppSpacing.xxl,
-        ),
+        padding: effectivePadding,
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             final bool pinSettings =
@@ -73,7 +81,11 @@ class AppSidebar extends StatelessWidget {
                   ? CrossAxisAlignment.center
                   : CrossAxisAlignment.start,
               children: <Widget>[
-                _LogoBlock(isCollapsed: isCollapsed, isArabic: _isArabic),
+                _LogoBlock(
+                  isCollapsed: isCollapsed,
+                  isArabic: _isArabic,
+                  logoMarkSize: logoMarkSize,
+                ),
                 const SizedBox(height: AppSpacing.xxxl),
                 Expanded(
                   child: ListView(
@@ -130,16 +142,21 @@ class AppSidebar extends StatelessWidget {
 }
 
 class _LogoBlock extends StatelessWidget {
-  const _LogoBlock({required this.isCollapsed, required this.isArabic});
+  const _LogoBlock({
+    required this.isCollapsed,
+    required this.isArabic,
+    required this.logoMarkSize,
+  });
 
   final bool isCollapsed;
   final bool isArabic;
+  final double logoMarkSize;
 
   @override
   Widget build(BuildContext context) {
     final Widget mark = Container(
-      width: AppSizes.logoMarkSize,
-      height: AppSizes.logoMarkSize,
+      width: logoMarkSize,
+      height: logoMarkSize,
       alignment: Alignment.center,
       decoration: const BoxDecoration(
         color: AppColors.tertiary,

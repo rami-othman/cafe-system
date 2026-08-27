@@ -19,9 +19,8 @@ class _WarehousesState extends State<WarehousesSetupScreen> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<FinanceSetupCubit>().loadWarehouses(),
-    );
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
+    Future<void>.microtask(cubit.loadWarehouses);
   }
 
   @override
@@ -107,6 +106,7 @@ class _WarehousesState extends State<WarehousesSetupScreen> {
     ),
   );
   Future<void> _form(BuildContext context, [WarehouseLocation? current]) async {
+    final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
     final name = TextEditingController(text: current?.name);
     final code = TextEditingController(text: current?.code);
     await showDialog<void>(
@@ -140,19 +140,20 @@ class _WarehousesState extends State<WarehousesSetupScreen> {
               label: 'حفظ',
               icon: Icons.save_outlined,
               onPressed: () async {
-                if (name.text.trim().isEmpty || code.text.trim().isEmpty)
+                if (name.text.trim().isEmpty || code.text.trim().isEmpty) {
                   return;
-                final ok = await context
-                    .read<FinanceSetupCubit>()
-                    .saveWarehouse(<String, dynamic>{
-                      'name': name.text.trim(),
-                      'code': code.text.trim(),
-                      'type': current?.type ?? 'central',
-                      'branchId': current?.branchId,
-                      'notes': current?.notes,
-                      'isActive': current?.isActive ?? true,
-                    }, id: current?.id);
-                if (dialog.mounted && ok) Navigator.pop(dialog);
+                }
+                final ok = await cubit.saveWarehouse(<String, dynamic>{
+                  'name': name.text.trim(),
+                  'code': code.text.trim(),
+                  'type': current?.type ?? 'central',
+                  'branchId': current?.branchId,
+                  'notes': current?.notes,
+                  'isActive': current?.isActive ?? true,
+                }, id: current?.id);
+                if (dialog.mounted && ok) {
+                  Navigator.pop(dialog);
+                }
               },
             ),
           ],

@@ -15,17 +15,22 @@ class InventoryRepository {
     String? from,
     String? to,
     String? search,
+    String? movementType,
+    int? trendDays,
     bool comparePrevious = true,
   }) async => InventoryDashboard.fromJson(
     Map<String, dynamic>.from(
       await _api.get(
             'inventory/dashboard',
             queryParameters: <String, dynamic>{
-              if (branchId != null) 'branch_id': branchId,
-              if (warehouseId != null) 'warehouse_id': warehouseId,
-              if (from != null) 'from': from,
-              if (to != null) 'to': to,
+              if (branchId case final int value) 'branch_id': value,
+              if (warehouseId case final int value) 'warehouse_id': value,
+              if (from case final String value) 'from': value,
+              if (to case final String value) 'to': value,
               if (search != null && search.isNotEmpty) 'search': search,
+              if (movementType != null && movementType.isNotEmpty)
+                'movement_type': movementType,
+              if (trendDays case final int value) 'trend_days': value,
               // Query parameters arrive at Laravel as strings; `1`/`0` are
               // accepted by its boolean validator while `true`/`false` are not.
               'compare_previous': comparePrevious ? '1' : '0',
@@ -55,6 +60,7 @@ class InventoryRepository {
     String? category,
     String? status,
     String? stockStatus,
+    int? warehouseId,
     int page = 1,
     int perPage = 25,
   }) async => InventoryItemsPage.fromJson(
@@ -70,6 +76,7 @@ class InventoryRepository {
               if (status != null && status.isNotEmpty) 'status': status,
               if (stockStatus != null && stockStatus.isNotEmpty)
                 'stockStatus': stockStatus,
+              if (warehouseId case final int value) 'warehouseId': value,
             },
           )
           as Map,
@@ -107,7 +114,7 @@ class InventoryRepository {
       'inventory/balances',
       queryParameters: <String, dynamic>{
         'perPage': 100,
-        if (warehouseId != null) 'warehouseId': warehouseId,
+        if (warehouseId case final int value) 'warehouseId': value,
         if (search != null && search.isNotEmpty) 'search': search,
         if (stockStatus == 'low') 'lowStock': 'true',
         if (stockStatus == 'out') 'outOfStock': 'true',
@@ -118,33 +125,88 @@ class InventoryRepository {
     int? warehouseId,
     int? itemId,
     String? type,
-  }) async => readMapList(
-    await _api.get(
-      'inventory/movements',
-      queryParameters: <String, dynamic>{
-        'perPage': 100,
-        if (warehouseId != null) 'warehouseId': warehouseId,
-        if (itemId != null) 'itemId': itemId,
-        if (type != null && type.isNotEmpty) 'type': type,
-      },
+  }) async => (await movementsPage(
+    warehouseId: warehouseId,
+    itemId: itemId,
+    type: type,
+    perPage: 100,
+  )).movements;
+
+  Future<InventoryMovementsPage> movementsPage({
+    int? warehouseId,
+    int? itemId,
+    String? type,
+    int page = 1,
+    int perPage = 5,
+  }) async => InventoryMovementsPage.fromJson(
+    Map<String, dynamic>.from(
+      await _api.getRaw(
+            'inventory/movements',
+            queryParameters: <String, dynamic>{
+              'page': page,
+              'perPage': perPage,
+              if (warehouseId case final int value) 'warehouseId': value,
+              if (itemId case final int value) 'itemId': value,
+              if (type != null && type.isNotEmpty) 'type': type,
+            },
+          )
+          as Map,
     ),
-  ).map(InventoryMovement.fromJson).toList(growable: false);
-  Future<List<InventoryCount>> counts() async => readMapList(
-    await _api.get(
-      'inventory/counts',
-      queryParameters: const <String, dynamic>{'perPage': 100},
+  );
+  Future<List<InventoryCount>> counts({
+    String? status,
+    int? warehouseId,
+    String? countType,
+  }) async => (await countsPage(
+    status: status,
+    warehouseId: warehouseId,
+    countType: countType,
+    perPage: 100,
+  )).items;
+
+  Future<InventoryCountsPage> countsPage({
+    String? status,
+    int? warehouseId,
+    String? countType,
+    String? source,
+    int? createdBy,
+    String? from,
+    String? to,
+    int page = 1,
+    int perPage = 10,
+  }) async => InventoryCountsPage.fromJson(
+    Map<String, dynamic>.from(
+      await _api.getRaw(
+            'inventory/counts',
+            queryParameters: <String, dynamic>{
+              'page': page,
+              'perPage': perPage,
+              if (status != null && status.isNotEmpty) 'status': status,
+              if (warehouseId case final int value) 'warehouseId': value,
+              if (countType != null && countType.isNotEmpty)
+                'countType': countType,
+              if (source != null && source.isNotEmpty) 'source': source,
+              if (createdBy case final int value) 'createdBy': value,
+              if (from != null && from.isNotEmpty) 'from': from,
+              if (to != null && to.isNotEmpty) 'to': to,
+            },
+          )
+          as Map,
     ),
-  ).map(InventoryCount.fromJson).toList(growable: false);
+  );
   Future<InventoryCount> count(int id) async => InventoryCount.fromJson(
     Map<String, dynamic>.from(await _api.get('inventory/counts/$id') as Map),
   );
-  Future<List<WarehouseLocation>> warehouses() async =>
+  Future<List<WarehouseLocation>> warehouses({
+    bool accessibleForStockCount = false,
+  }) async =>
       readMapList(
             await _api.get(
               'warehouses',
-              queryParameters: const <String, dynamic>{
+              queryParameters: <String, dynamic>{
                 'perPage': 100,
                 'status': 'active',
+                if (accessibleForStockCount) 'forStockCount': true,
               },
             ),
           )
@@ -181,9 +243,12 @@ class InventoryRepository {
     await _api.post('inventory/movements', data: payload);
   }
 
-  Future<void> createCount(Map<String, dynamic> payload) async {
-    await _api.post('inventory/counts', data: payload);
-  }
+  Future<InventoryCount> createCount(Map<String, dynamic> payload) async =>
+      InventoryCount.fromJson(
+        Map<String, dynamic>.from(
+          await _api.post('inventory/counts', data: payload) as Map,
+        ),
+      );
 
   Future<void> countAction(int id, String action) async {
     await _api.post('inventory/counts/$id/$action');
@@ -192,4 +257,15 @@ class InventoryRepository {
   Future<void> saveCountLine(int countId, Map<String, dynamic> payload) async {
     await _api.put('inventory/counts/$countId/lines', data: payload);
   }
+
+  Future<List<BarCheckTemplate>> barCheckTemplates() async => readMapList(await _api.get('inventory/bar-check-templates')).map(BarCheckTemplate.fromJson).toList(growable: false);
+  Future<BarCheckTemplate> barCheckTemplate(int id) async => BarCheckTemplate.fromJson(Map<String, dynamic>.from(await _api.get('inventory/bar-check-templates/$id') as Map));
+  Future<BarCheckTemplate> createBarCheckTemplate(Map<String, dynamic> payload) async => BarCheckTemplate.fromJson(Map<String, dynamic>.from(await _api.post('inventory/bar-check-templates', data: payload) as Map));
+  Future<BarCheckTemplate> updateBarCheckTemplate(int id, Map<String, dynamic> payload) async => BarCheckTemplate.fromJson(Map<String, dynamic>.from(await _api.patch('inventory/bar-check-templates/$id', data: payload) as Map));
+  Future<List<WarehouseTransfer>> transfers() async => readMapList(await _api.get('inventory/transfers')).map(WarehouseTransfer.fromJson).toList(growable: false);
+  Future<WarehouseTransfer> transfer(int id) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.get('inventory/transfers/$id') as Map));
+  Future<WarehouseTransfer> createTransfer(Map<String, dynamic> payload) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.post('inventory/transfers', data: payload) as Map));
+  Future<WarehouseTransfer> updateTransfer(int id, Map<String, dynamic> payload) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.patch('inventory/transfers/$id', data: payload) as Map));
+  Future<WarehouseTransfer> transferAction(int id, String action) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.post('inventory/transfers/$id/$action') as Map));
+  Future<WarehouseTransfer> receiveTransfer(int id, Map<String, dynamic> payload) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.post('inventory/transfers/$id/receive', data: payload) as Map));
 }

@@ -32,6 +32,13 @@ class InventoryCenterSeeder extends Seeder
             DB::table('inventory_items')->updateOrInsert(['tenant_id' => $tenant, 'sku' => $item['sku']], ['name' => $item['nameAr'], 'name_ar' => $item['nameAr'], 'name_en' => $item['nameEn'], 'catalog_identity' => InventoryCatalogIdentity::forValues($item['sku'], $item['nameEn'], $unit, $item['type']), 'item_type' => $item['type'], 'category' => $item['category'], 'unit' => $unit, 'minimum_stock' => $item['minimum'], 'reorder_level' => $item['minimum'], 'cost_per_unit' => $item['cost'], 'latest_unit_cost' => $item['cost'], 'is_active' => true, 'created_by' => $manager, 'updated_by' => $manager, 'created_at' => $now, 'updated_at' => $now]);
             $itemId = (int) DB::table('inventory_items')->where('tenant_id', $tenant)->where('sku', $item['sku'])->value('id');
             $warehouse = $position % 8 === 0 ? $warehouses->firstWhere('type', 'bar') ?: $central : ($position % 9 === 0 ? $warehouses->firstWhere('type', 'kitchen') ?: $central : $central);
+            // A stock-count is scoped to the materials explicitly available in
+            // its warehouse. Keep the demo catalogue assignment in sync with
+            // the balance that is seeded below.
+            DB::table('inventory_item_warehouses')->updateOrInsert(
+                ['tenant_id' => $tenant, 'inventory_item_id' => $itemId, 'warehouse_id' => $warehouse->id],
+                ['created_at' => $now, 'updated_at' => $now],
+            );
             if (! DB::table('stock_balances')->where(['tenant_id' => $tenant, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $itemId])->exists()) {
                 if ($item['opening'] === '0.000') {
                     DB::table('stock_balances')->insert(['tenant_id' => $tenant, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $itemId, 'quantity_on_hand' => 0, 'reserved_quantity' => 0, 'average_unit_cost' => $item['cost'], 'created_at' => $now, 'updated_at' => $now]);

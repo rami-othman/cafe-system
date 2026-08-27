@@ -13,6 +13,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class InventoryItemController extends Controller
 {
@@ -21,6 +22,10 @@ class InventoryItemController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $warehouseId = $request->filled('warehouseId') ? (int) $request->query('warehouseId') : null;
+        if ($warehouseId && ! DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->exists()) {
+            abort(422, 'The selected warehouse is not available.');
+        }
         $stockTotals = DB::table('stock_balances')
             ->select(
                 'inventory_item_id',
@@ -30,11 +35,24 @@ class InventoryItemController extends Controller
             )
             ->where('tenant_id', $tenant)
             ->groupBy('inventory_item_id');
+        if ($warehouseId) {
+            $stockTotals->where('warehouse_id', $warehouseId);
+        }
         $query = DB::table('inventory_items as items')
             ->leftJoinSub($stockTotals, 'stock_totals', fn ($join) => $join->on('stock_totals.inventory_item_id', '=', 'items.id'))
             ->where('items.tenant_id', $tenant)
             ->whereNull('items.deleted_at')
             ->select('items.*', 'stock_totals.total_quantity', 'stock_totals.available_quantity', 'stock_totals.total_value');
+        if ($warehouseId && Schema::hasTable('inventory_item_warehouses')) {
+            $query->whereExists(fn (Builder $assigned) => $assigned
+                ->selectRaw('1')
+                ->from('inventory_item_warehouses as availability')
+                ->whereColumn('availability.inventory_item_id', 'items.id')
+                ->where('availability.tenant_id', $tenant)
+                ->where('availability.warehouse_id', $warehouseId));
+        } elseif ($warehouseId) {
+            $query->whereRaw('1 = 0');
+        }
         if ($request->filled('search')) {
             $like = '%'.strtolower($request->query('search')).'%';
             $query->where(fn (Builder $q) => $q->whereRaw('LOWER(items.name_ar) LIKE ?', [$like])->orWhereRaw('LOWER(items.name_en) LIKE ?', [$like])->orWhereRaw('LOWER(items.sku) LIKE ?', [$like])->orWhereRaw('LOWER(items.barcode) LIKE ?', [$like]));
@@ -48,12 +66,25 @@ class InventoryItemController extends Controller
             $query->where('items.is_active', $request->query('status') === 'active');
         }
         match ($request->query('stockStatus')) {
+            'active' => $query->where('items.is_active', true),
+            'inactive' => $query->where('items.is_active', false),
             'in' => $query->whereRaw('COALESCE(stock_totals.available_quantity, 0) > items.reorder_level'),
-            'low' => $query->whereRaw('COALESCE(stock_totals.available_quantity, 0) > 0')->whereRaw('COALESCE(stock_totals.available_quantity, 0) <= items.reorder_level'),
-            'out' => $query->whereRaw('COALESCE(stock_totals.available_quantity, 0) <= 0'),
+            'low', 'low_stock' => $query->whereNotIn('items.item_type', ['non_stock_item', 'service'])->whereRaw('COALESCE(stock_totals.available_quantity, 0) > 0')->whereRaw('COALESCE(stock_totals.available_quantity, 0) <= items.reorder_level'),
+            'out', 'out_of_stock' => $query->whereNotIn('items.item_type', ['non_stock_item', 'service'])->whereRaw('COALESCE(stock_totals.available_quantity, 0) <= 0'),
+            // Expiry is deliberately empty until batches with expiry dates exist;
+            // an item-level toggle alone is not evidence of an expired quantity.
+            'expired' => $query->whereRaw('1 = 0'),
             default => null,
         };
-        $paginator = $query->orderBy('items.name_en')->orderBy('items.id')->paginate($this->perPage($request));
+        $paginator = $query
+            ->orderBy('items.name_en')
+            ->orderBy('items.id')
+            ->paginate(
+                $this->perPage($request),
+                ['*'],
+                'page',
+                max(1, (int) $request->query('page', 1)),
+            );
 
         return response()->json([
             'data' => [
@@ -161,8 +192,21 @@ class InventoryItemController extends Controller
                 ->selectRaw('COALESCE(SUM(quantity_on_hand - reserved_quantity), 0) as available_quantity')
                 ->selectRaw('COALESCE(SUM(quantity_on_hand * average_unit_cost), 0) as total_value')
                 ->first();
-        $data = ['id' => (int) $item->id, 'nameAr' => $item->name_ar, 'nameEn' => $item->name_en, 'displayName' => $item->name_en ?: $item->sku, 'sku' => $item->sku, 'barcode' => $item->barcode, 'itemType' => $item->item_type, 'category' => $item->category, 'unit' => $item->unit, 'minimumStock' => $item->minimum_stock, 'reorderLevel' => $item->reorder_level, 'latestUnitCost' => $item->latest_unit_cost, 'totalQuantity' => number_format((float) ($totals->total_quantity ?? 0), 3, '.', ''), 'availableQuantity' => number_format((float) ($totals->available_quantity ?? 0), 3, '.', ''), 'totalValue' => number_format((float) ($totals->total_value ?? 0), 2, '.', ''), 'isActive' => (bool) $item->is_active, 'notes' => $item->notes];
+        $availableQuantity = (float) ($totals->available_quantity ?? 0);
+        $stockStatus = ! $item->is_active || in_array($item->item_type, ['non_stock_item', 'service'], true)
+            ? ($item->is_active ? 'active' : 'inactive')
+            : ($availableQuantity <= 0
+                ? 'out_of_stock'
+                : ($availableQuantity <= (float) $item->reorder_level ? 'low_stock' : 'active'));
+        $data = ['id' => (int) $item->id, 'nameAr' => $item->name_ar, 'nameEn' => $item->name_en, 'displayName' => $item->name_en ?: $item->sku, 'sku' => $item->sku, 'barcode' => $item->barcode, 'itemType' => $item->item_type, 'category' => $item->category, 'unit' => $item->unit, 'purchaseUnit' => $item->purchase_unit ?? null, 'consumptionUnit' => $item->consumption_unit ?? null, 'minimumStock' => $item->minimum_stock, 'reorderLevel' => $item->reorder_level, 'latestUnitCost' => $item->latest_unit_cost, 'lastPurchaseCost' => $item->last_purchase_cost ?? null, 'preferredSupplierName' => $item->preferred_supplier_name ?? null, 'trackExpiry' => (bool) ($item->track_expiry ?? false), 'trackBatch' => (bool) ($item->track_batch ?? false), 'stockStatus' => $stockStatus, 'lastUpdatedAt' => $item->updated_at, 'totalQuantity' => number_format((float) ($totals->total_quantity ?? 0), 3, '.', ''), 'availableQuantity' => number_format($availableQuantity, 3, '.', ''), 'totalValue' => number_format((float) ($totals->total_value ?? 0), 2, '.', ''), 'isActive' => (bool) $item->is_active, 'notes' => $item->notes];
         if ($detail) {
+            $data['warehouseIds'] = Schema::hasTable('inventory_item_warehouses') ? DB::table('inventory_item_warehouses')
+                ->where('tenant_id', $tenant)
+                ->where('inventory_item_id', $item->id)
+                ->orderBy('warehouse_id')
+                ->pluck('warehouse_id')
+                ->map(fn ($id) => (int) $id)
+                ->values() : collect();
             $data['stockByWarehouse'] = DB::table('stock_balances as balances')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('balances.inventory_item_id', $item->id)->whereNull('warehouses.deleted_at')->where('warehouses.is_active', true)->where('warehouses.code', 'not like', 'LEGACY-%')->orderByRaw('CASE WHEN warehouses.branch_id IS NULL THEN 0 ELSE 1 END')->orderBy('branches.name')->orderBy('warehouses.name')->get(['balances.*', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name'])->map(fn (object $row) => $this->balance($row))->values();
             $data['recentMovements'] = DB::table('stock_movements as movements')->join('warehouses as warehouses', 'warehouses.id', '=', 'movements.warehouse_id')->where('movements.tenant_id', $tenant)->where('movements.inventory_item_id', $item->id)->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%')->orderByDesc('movements.occurred_at')->orderByDesc('movements.id')->limit(5)->get(['movements.*', 'warehouses.name as warehouse_name'])->map(fn (object $row) => $this->movement($row))->values();
             $data['lastMovement'] = $data['recentMovements']->first();

@@ -6,21 +6,20 @@ import '../repositories/finance_setup_repository.dart';
 import 'finance_setup_state.dart';
 
 class FinanceSetupCubit extends Cubit<FinanceSetupState> {
-  FinanceSetupCubit({required FinanceSetupRepository repository})
-    : _repository = repository,
-      super(const FinanceSetupState());
+  FinanceSetupCubit({required this.repository})
+    : super(const FinanceSetupState());
 
-  final FinanceSetupRepository _repository;
+  final FinanceSetupRepository repository;
 
   Future<void> loadDashboard() => _load(() async {
-    final SetupStatus status = await _repository.getSetupStatus();
+    final SetupStatus status = await repository.getSetupStatus();
     emit(state.copyWith(status: status, clearError: true));
   });
 
   Future<void> loadWarehouses({String? search}) => _load(() async {
-    final Future<List<WarehouseLocation>> warehousesFuture = _repository
+    final Future<List<WarehouseLocation>> warehousesFuture = repository
         .getWarehouses(search: search);
-    final Future<List<Branch>> branchesFuture = _repository.getBranches();
+    final Future<List<Branch>> branchesFuture = repository.getBranches();
     final List<WarehouseLocation> warehouses = await warehousesFuture;
     final List<Branch> branches = await branchesFuture;
     emit(
@@ -33,16 +32,16 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
   });
 
   Future<void> loadAccounts({String? search}) => _load(() async {
-    final List<FinancialAccount> accounts = await _repository.getAccounts(
+    final List<FinancialAccount> accounts = await repository.getAccounts(
       search: search,
     );
     emit(state.copyWith(accounts: accounts, clearError: true));
   });
 
   Future<void> loadEntries() => _load(() async {
-    final Future<List<JournalEntry>> entriesFuture = _repository
+    final Future<List<JournalEntry>> entriesFuture = repository
         .getJournalEntries();
-    final Future<List<FinancialAccount>> accountsFuture = _repository
+    final Future<List<FinancialAccount>> accountsFuture = repository
         .getAccounts();
     final List<JournalEntry> entries = await entriesFuture;
     final List<FinancialAccount> accounts = await accountsFuture;
@@ -53,28 +52,28 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
 
   Future<bool> saveWarehouse(Map<String, dynamic> payload, {int? id}) =>
       _save(() async {
-        await _repository.saveWarehouse(payload, id: id);
+        await repository.saveWarehouse(payload, id: id);
         await loadWarehouses();
       });
   Future<bool> setWarehouseStatus(int id, bool isActive) => _save(() async {
-    await _repository.setWarehouseStatus(id, isActive);
+    await repository.setWarehouseStatus(id, isActive);
     await loadWarehouses();
   });
   Future<bool> saveAccount(Map<String, dynamic> payload, {int? id}) =>
       _save(() async {
-        await _repository.saveAccount(payload, id: id);
+        await repository.saveAccount(payload, id: id);
         await loadAccounts();
       });
   Future<bool> setAccountStatus(int id, bool isActive) => _save(() async {
-    await _repository.setAccountStatus(id, isActive);
+    await repository.setAccountStatus(id, isActive);
     await loadAccounts();
   });
   Future<bool> createDraft(Map<String, dynamic> payload) => _save(() async {
-    await _repository.createDraft(payload);
+    await repository.createDraft(payload);
     await loadEntries();
   });
   Future<bool> postEntry(int id) => _save(() async {
-    await _repository.postJournalEntry(id);
+    await repository.postJournalEntry(id);
     await loadEntries();
   });
 

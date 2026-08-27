@@ -51,6 +51,17 @@ class DioApiClient {
     );
   }
 
+  /// Keeps pagination metadata alongside the response data.
+  Future<dynamic> getRaw(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _send(
+      () => _dio.get<dynamic>(path, queryParameters: queryParameters),
+      unwrapData: false,
+    );
+  }
+
   Future<dynamic> post(
     String path, {
     Object? data,
@@ -104,10 +115,15 @@ class DioApiClient {
     );
   }
 
-  Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
+  Future<dynamic> _send(
+    Future<Response<dynamic>> Function() request, {
+    bool unwrapData = true,
+  }) async {
     try {
       final Response<dynamic> response = await request();
-      return ApiResponseParser.unwrapData(response.data);
+      return unwrapData
+          ? ApiResponseParser.unwrapData(response.data)
+          : response.data;
     } on DioException catch (error) {
       throw _handleDioException(error);
     }
