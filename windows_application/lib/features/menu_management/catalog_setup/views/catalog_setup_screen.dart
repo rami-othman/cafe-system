@@ -65,96 +65,99 @@ class _CatalogSetupScreenState extends State<CatalogSetupScreen> {
       final l10n = context.l10n;
       final cubit = context.read<CatalogSetupCubit>();
       return DesktopPageLayout(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  l10n.catalogSetupTitle,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+        child: SingleChildScrollView(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.catalogSetupTitle,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  l10n.catalogSetupWorkspaceHelp,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    l10n.catalogSetupWorkspaceHelp,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        _title(l10n, state.kind),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+                  const SizedBox(height: AppSpacing.lg),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _title(l10n, state.kind),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(_purpose(l10n, state.kind)),
-                      if (state.kind == CatalogSetupKind.reportingCategories)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.xs),
-                          child: Text(
-                            l10n.catalogSetupReportingNote,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.textMuted),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(_purpose(l10n, state.kind)),
+                        if (state.kind == CatalogSetupKind.reportingCategories)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.xs),
+                            child: Text(
+                              l10n.catalogSetupReportingNote,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.textMuted),
+                            ),
                           ),
-                        ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Wrap(
-                        spacing: AppSpacing.sm,
-                        runSpacing: AppSpacing.sm,
-                        children: CatalogSetupKind.values
-                            .map(
-                              (kind) => ChoiceChip(
-                                label: Text(_title(l10n, kind)),
-                                selected: kind == state.kind,
-                                onSelected: (_) => _selectKind(kind),
-                                selectedColor: AppColors.primary,
-                                labelStyle: TextStyle(
-                                  color: kind == state.kind
-                                      ? AppColors.textInverse
-                                      : AppColors.textSecondary,
-                                  fontWeight: FontWeight.w700,
+                        const SizedBox(height: AppSpacing.lg),
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: CatalogSetupKind.values
+                              .map(
+                                (kind) => ChoiceChip(
+                                  label: Text(_title(l10n, kind)),
+                                  selected: kind == state.kind,
+                                  onSelected: (_) => _selectKind(kind),
+                                  selectedColor: AppColors.primary,
+                                  labelStyle: TextStyle(
+                                    color: kind == state.kind
+                                        ? AppColors.textInverse
+                                        : AppColors.textSecondary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  side: const BorderSide(
+                                    color: AppColors.border,
+                                  ),
                                 ),
-                                side: const BorderSide(color: AppColors.border),
-                              ),
-                            )
-                            .toList(growable: false),
-                      ),
-                    ],
+                              )
+                              .toList(growable: false),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: _ManagementPanel(
-                    state: state,
-                    search: _search,
-                    searchHint: _searchHint(l10n, state.kind),
-                    entity: _singular(l10n, state.kind),
-                    onSearch: _onSearch,
-                    onStatus: cubit.setStatus,
-                    onRefresh: cubit.load,
-                    onAdd: () => _openEditor(),
-                    onEdit: (record) => _openEditor(record),
-                    onArchive: _confirmArchive,
-                    onRestore: cubit.restore,
-                    onMove: cubit.move,
-                    emptyTitle: _emptyTitle(l10n, state.kind),
-                    emptyHelp: _emptyHelp(l10n, state.kind),
-                    onRetry: cubit.load,
+                  const SizedBox(height: AppSpacing.md),
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: _ManagementPanel(
+                      state: state,
+                      search: _search,
+                      searchHint: _searchHint(l10n, state.kind),
+                      entity: _singular(l10n, state.kind),
+                      onSearch: _onSearch,
+                      onStatus: cubit.setStatus,
+                      onRefresh: cubit.load,
+                      onAdd: () => _openEditor(),
+                      onEdit: (record) => _openEditor(record),
+                      onArchive: _confirmArchive,
+                      onRestore: cubit.restore,
+                      onMove: cubit.move,
+                      emptyTitle: _emptyTitle(l10n, state.kind),
+                      emptyHelp: _emptyHelp(l10n, state.kind),
+                      onRetry: cubit.load,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

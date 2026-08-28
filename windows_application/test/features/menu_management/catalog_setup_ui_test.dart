@@ -38,6 +38,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'short desktop windows scroll instead of vertically overflowing',
+    (tester) async {
+      await _pump(tester, height: 501);
+
+      expect(find.text('Catalog Setup'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Catalog Setup shares tabs and changes the primary action', (
     tester,
   ) async {
@@ -265,8 +275,9 @@ Future<void> _pump(
   Locale locale = const Locale('en'),
   bool settle = true,
   double width = 1440,
+  double height = 1200,
 }) async {
-  tester.view.physicalSize = Size(width, 1200);
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
