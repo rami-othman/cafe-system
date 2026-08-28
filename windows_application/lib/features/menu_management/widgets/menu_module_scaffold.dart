@@ -11,10 +11,10 @@ class MenuBreadcrumb {
   final VoidCallback? onTap;
 }
 
-/// Shared page anatomy for future Menu Management screens.
+/// Shared shell anatomy for Menu Management screens.
 ///
-/// The optional [navigationSlot] intentionally does not provide navigation
-/// behaviour. Batch 2 will supply the route-backed module navigation.
+/// [navigationSlot] is rendered once, above the page workspace, so module
+/// navigation stays stable across list, detail, and editor routes.
 class MenuModuleScaffold extends StatelessWidget {
   const MenuModuleScaffold({
     super.key,
@@ -46,8 +46,7 @@ class MenuModuleScaffold extends StatelessWidget {
                     : AppSizes.menuModuleStandardContentPadding,
               );
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          return Column(
             children: <Widget>[
               ?navigationSlot,
               Expanded(

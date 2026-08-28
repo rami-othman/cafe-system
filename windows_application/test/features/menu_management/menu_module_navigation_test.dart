@@ -61,29 +61,49 @@ void main() {
     }
   });
 
-  testWidgets('1280 shows an icon rail with accessible destinations', (
-    WidgetTester tester,
-  ) async {
-    await pumpMenuManagementHarness(
-      tester,
-      viewport: MenuDesktopViewport.desktop1280,
-      child: const MenuModuleNavigation(
-        selected: MenuModuleDestination.products,
-      ),
-    );
+  testWidgets(
+    '1280 shows all grouped horizontal destinations without overflow',
+    (WidgetTester tester) async {
+      await pumpMenuManagementHarness(
+        tester,
+        viewport: MenuDesktopViewport.desktop1280,
+        child: const MenuModuleNavigation(
+          selected: MenuModuleDestination.products,
+        ),
+      );
 
-    expect(
-      tester.getSize(find.byKey(const Key('menu-module-navigation'))).width,
-      64,
-    );
-    expect(find.text('Catalog'), findsNothing);
-    expect(find.byTooltip('Products'), findsOneWidget);
-    expect(find.byTooltip('Review & Publish'), findsOneWidget);
-    expectNoMenuLayoutOverflow(tester);
-  });
+      expect(
+        tester.getSize(find.byKey(const Key('menu-module-navigation'))).width,
+        1280,
+      );
+      expect(
+        tester
+            .widget<Container>(find.byKey(const Key('menu-module-navigation')))
+            .color,
+        AppColors.contentBackground,
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('menu-module-products'))).height,
+        44,
+      );
+      for (final MenuModuleDestination destination
+          in MenuModuleDestination.values) {
+        expect(
+          find.byKey(Key('menu-module-${destination.name}')),
+          findsOneWidget,
+        );
+      }
+      final Text assignments = tester.widget<Text>(
+        find.text('Assignments & Schedules'),
+      );
+      expect(assignments.maxLines, 1);
+      expect(assignments.softWrap, isFalse);
+      expectNoMenuLayoutOverflow(tester);
+    },
+  );
 
   testWidgets(
-    '1440 and 1920 show grouped labeled navigation and selected state',
+    '1440 and 1920 show grouped horizontal navigation and selected state',
     (WidgetTester tester) async {
       for (final MenuDesktopViewport viewport in <MenuDesktopViewport>[
         MenuDesktopViewport.desktop1440,
@@ -97,13 +117,6 @@ void main() {
           ),
         );
 
-        expect(
-          tester.getSize(find.byKey(const Key('menu-module-navigation'))).width,
-          208,
-        );
-        expect(find.text('Catalog'), findsOneWidget);
-        expect(find.text('Menus'), findsWidgets);
-        expect(find.text('Release'), findsOneWidget);
         expect(
           find.byKey(const Key('menu-module-assignments')),
           findsOneWidget,
@@ -143,6 +156,48 @@ void main() {
     ]);
   });
 
+  testWidgets('pointer navigation selects the configured destination', (
+    WidgetTester tester,
+  ) async {
+    MenuModuleDestination? selection;
+    await pumpMenuManagementHarness(
+      tester,
+      child: MenuModuleNavigation(
+        selected: MenuModuleDestination.products,
+        onDestinationSelected: (MenuModuleDestination destination) {
+          selection = destination;
+        },
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('menu-module-assignments')));
+
+    expect(selection, MenuModuleDestination.assignments);
+    expect(selection!.path, '/menu-management/assignments');
+  });
+
+  testWidgets('module scaffold renders navigation above the full workspace', (
+    WidgetTester tester,
+  ) async {
+    await pumpMenuManagementHarness(
+      tester,
+      viewport: MenuDesktopViewport.desktop1280,
+      child: MenuModuleScaffold(
+        navigationSlot: const MenuModuleNavigation(
+          selected: MenuModuleDestination.products,
+        ),
+        child: const SizedBox(key: Key('menu-module-workspace')),
+      ),
+    );
+
+    final Finder navigation = find.byKey(const Key('menu-module-navigation'));
+    final Finder workspace = find.byKey(const Key('menu-module-workspace'));
+    expect(tester.getSize(navigation).width, 1280);
+    expect(tester.getTopLeft(navigation).dy, 0);
+    expect(tester.getTopLeft(workspace).dy, greaterThan(0));
+    expectNoMenuLayoutOverflow(tester);
+  });
+
   testWidgets('breadcrumbs reflect deep route context without technical IDs', (
     WidgetTester tester,
   ) async {
@@ -156,7 +211,7 @@ void main() {
             Uri.parse('/menu-management/products/7/variants'),
           );
           return MenuModuleScaffold(
-            navigationSlot: const SizedBox(width: 64),
+            navigationSlot: const SizedBox(height: 64),
             breadcrumbs: breadcrumbs,
             child: const SizedBox.expand(
               child: ColoredBox(color: AppColors.surface),
@@ -173,6 +228,26 @@ void main() {
     ]);
     expect(find.text('7'), findsNothing);
     expectNoMenuLayoutOverflow(tester);
+  });
+
+  testWidgets('Catalog Setup omits its redundant breadcrumb row', (
+    WidgetTester tester,
+  ) async {
+    late List<MenuBreadcrumb> breadcrumbs;
+    await pumpMenuManagementHarness(
+      tester,
+      child: Builder(
+        builder: (BuildContext context) {
+          breadcrumbs = menuModuleBreadcrumbsFor(
+            context,
+            Uri.parse('/menu-management/catalog-setup?tab=categories'),
+          );
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+
+    expect(breadcrumbs, isEmpty);
   });
 
   testWidgets(
@@ -224,8 +299,8 @@ void main() {
         find.byKey(const Key('menu-module-navigation')),
         TextDirection.rtl,
       );
-      expect(find.byTooltip('المنتجات'), findsOneWidget);
-      expect(find.byTooltip('مراجعة ونشر'), findsOneWidget);
+      expect(find.text('المنتجات'), findsOneWidget);
+      expect(find.text('مراجعة ونشر'), findsOneWidget);
       expectNoMenuLayoutOverflow(tester);
     },
   );

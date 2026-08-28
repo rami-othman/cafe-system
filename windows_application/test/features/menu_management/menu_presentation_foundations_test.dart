@@ -18,7 +18,7 @@ void main() {
           tester,
           viewport: viewport,
           child: MenuModuleScaffold(
-            navigationSlot: const SizedBox(width: 64),
+            navigationSlot: const SizedBox(height: 64),
             breadcrumbs: const <MenuBreadcrumb>[
               MenuBreadcrumb(label: 'Products'),
               MenuBreadcrumb(label: 'Iced Latte'),

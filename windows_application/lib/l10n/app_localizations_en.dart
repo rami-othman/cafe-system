@@ -817,13 +817,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuManagementMenus => 'Menus';
 
   @override
-  String get menuManagementAssignments => 'Assignments & schedules';
+  String get menuManagementAssignments => 'Assignments & Schedules';
 
   @override
   String get menuManagementReview => 'Review & preview';
 
   @override
-  String get menuManagementCatalogSetup => 'Catalog setup';
+  String get menuManagementCatalogSetup => 'Catalog Setup';
 
   @override
   String get recipeConsumptionHelp =>

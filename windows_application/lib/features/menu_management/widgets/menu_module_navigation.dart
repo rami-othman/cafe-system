@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/menu_management_route_locations.dart';
 import '../../../app/localization/localization_extensions.dart';
-import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -69,7 +68,6 @@ class MenuModuleNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool compact = MediaQuery.sizeOf(context).width < 1440;
     final AppLocalizations? l10n = context.maybeL10n;
     final List<_NavigationGroup> groups = <_NavigationGroup>[
       _NavigationGroup(
@@ -100,32 +98,43 @@ class MenuModuleNavigation extends StatelessWidget {
       label: l10n?.menuManagementNavigation ?? 'Menu Management navigation',
       child: Container(
         key: const Key('menu-module-navigation'),
-        width: compact
-            ? AppSizes.menuModuleNavigationCompactWidth
-            : AppSizes.menuModuleNavigationExpandedWidth,
-        color: AppColors.surface,
-        padding: EdgeInsetsDirectional.symmetric(
-          horizontal: compact ? AppSpacing.sm : AppSpacing.md,
-          vertical: AppSpacing.lg,
-        ),
+        color: AppColors.contentBackground,
         child: DecoratedBox(
           decoration: const BoxDecoration(
-            border: BorderDirectional(end: BorderSide(color: AppColors.border)),
+            border: Border(bottom: BorderSide(color: AppColors.border)),
           ),
-          child: ListView.separated(
-            padding: EdgeInsets.zero,
-            itemCount: groups.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.lg),
-            itemBuilder: (BuildContext context, int index) =>
-                _NavigationGroupView(
-                  group: groups[index],
-                  selected: selected,
-                  compact: compact,
-                  labelFor: (MenuModuleDestination destination) =>
-                      _destinationLabel(l10n, destination),
-                  onSelected: (MenuModuleDestination destination) =>
-                      _select(context, destination),
-                ),
+          child: SingleChildScrollView(
+            key: const Key('menu-module-navigation-scroll'),
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                for (int index = 0; index < groups.length; index++) ...<Widget>[
+                  if (index > 0)
+                    const Padding(
+                      padding: EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      child: SizedBox(
+                        height: 32,
+                        child: VerticalDivider(color: AppColors.border),
+                      ),
+                    ),
+                  _NavigationGroupView(
+                    group: groups[index],
+                    selected: selected,
+                    labelFor: (MenuModuleDestination destination) =>
+                        _destinationLabel(l10n, destination),
+                    onSelected: (MenuModuleDestination destination) =>
+                        _select(context, destination),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -144,14 +153,12 @@ class _NavigationGroupView extends StatelessWidget {
   const _NavigationGroupView({
     required this.group,
     required this.selected,
-    required this.compact,
     required this.labelFor,
     required this.onSelected,
   });
 
   final _NavigationGroup group;
   final MenuModuleDestination selected;
-  final bool compact;
   final String Function(MenuModuleDestination destination) labelFor;
   final ValueChanged<MenuModuleDestination> onSelected;
 
@@ -159,32 +166,14 @@ class _NavigationGroupView extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     container: true,
     label: group.label,
-    child: Column(
-      crossAxisAlignment: compact
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        if (!compact) ...<Widget>[
-          Padding(
-            padding: const EdgeInsetsDirectional.only(
-              start: AppSpacing.sm,
-              bottom: AppSpacing.sm,
-            ),
-            child: Text(
-              group.label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
         for (final MenuModuleDestination destination in group.destinations)
           _DestinationButton(
             key: Key('menu-module-${destination.name}'),
             destination: destination,
             label: labelFor(destination),
-            compact: compact,
             selected: destination == selected,
             onPressed: () => onSelected(destination),
           ),
@@ -198,14 +187,12 @@ class _DestinationButton extends StatelessWidget {
     super.key,
     required this.destination,
     required this.label,
-    required this.compact,
     required this.selected,
     required this.onPressed,
   });
 
   final MenuModuleDestination destination;
   final String label;
-  final bool compact;
   final bool selected;
   final VoidCallback onPressed;
 
@@ -222,51 +209,39 @@ class _DestinationButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: AppRadius.control,
           focusColor: AppColors.primarySoft,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: EdgeInsetsDirectional.symmetric(
-                horizontal: compact ? AppSpacing.sm : AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              child: Row(
-                mainAxisAlignment: compact
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.start,
-                children: <Widget>[
-                  Icon(
-                    destination.icon,
-                    size: 20,
-                    color: selected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+          hoverColor: AppColors.primarySoft,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(
+                  destination.icon,
+                  size: 20,
+                  color: selected ? AppColors.primary : AppColors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: selected ? AppColors.primary : AppColors.textPrimary,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
-                  if (!compact) ...<Widget>[
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                          fontWeight: selected
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
-    return compact ? Tooltip(message: label, child: button) : button;
+    return button;
   }
 }
 
@@ -278,10 +253,10 @@ String _destinationLabel(
   MenuModuleDestination.modifiers =>
     l10n?.menuManagementModifiers ?? 'Modifiers',
   MenuModuleDestination.catalogSetup =>
-    l10n?.menuManagementCatalogSetup ?? 'Catalog setup',
+    l10n?.menuManagementCatalogSetup ?? 'Catalog Setup',
   MenuModuleDestination.menus => l10n?.menuManagementMenus ?? 'Menus',
   MenuModuleDestination.assignments =>
-    l10n?.menuManagementAssignments ?? 'Assignments & schedules',
+    l10n?.menuManagementAssignments ?? 'Assignments & Schedules',
   MenuModuleDestination.review =>
     l10n?.menuManagementReviewPublish ?? 'Review & Publish',
 };
@@ -291,6 +266,9 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
   final MenuModuleDestination destination = MenuModuleDestination.forPath(
     uri.path,
   );
+  if (destination == MenuModuleDestination.catalogSetup) {
+    return const <MenuBreadcrumb>[];
+  }
   final String rootLabel = _destinationLabel(l10n, destination);
   final List<MenuBreadcrumb> breadcrumbs = <MenuBreadcrumb>[
     MenuBreadcrumb(label: rootLabel, onTap: () => context.go(destination.path)),

@@ -1505,7 +1505,7 @@ abstract class AppLocalizations {
   /// No description provided for @menuManagementAssignments.
   ///
   /// In en, this message translates to:
-  /// **'Assignments & schedules'**
+  /// **'Assignments & Schedules'**
   String get menuManagementAssignments;
 
   /// No description provided for @menuManagementReview.
@@ -1517,7 +1517,7 @@ abstract class AppLocalizations {
   /// No description provided for @menuManagementCatalogSetup.
   ///
   /// In en, this message translates to:
-  /// **'Catalog setup'**
+  /// **'Catalog Setup'**
   String get menuManagementCatalogSetup;
 
   /// No description provided for @recipeConsumptionHelp.
