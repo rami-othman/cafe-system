@@ -4,21 +4,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
-import 'package:windows_application/features/menu_management/review/models/review_models.dart';
 import 'package:windows_application/features/menu_management/versions/controllers/published_version_cubit.dart';
 import 'package:windows_application/features/menu_management/versions/models/published_version_models.dart';
 import 'package:windows_application/features/menu_management/versions/views/published_version_history_panel.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
-  testWidgets('Version History renders in English with LTR technical values', (
+  testWidgets('Version History renders manager-facing rows in English', (
     tester,
   ) async {
     await _pump(tester, const Locale('en'));
 
     expect(find.text('Version History'), findsOneWidget);
-    expect(find.text('v2'), findsNWidgets(2));
-    expect(find.text('Compare Versions'), findsOneWidget);
+    expect(find.text('Version 2'), findsOneWidget);
+    expect(find.text('Current'), findsOneWidget);
+    expect(find.text('Compare selected (0)'), findsOneWidget);
+    expect(find.text('aabbccddeeff'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -27,8 +28,7 @@ void main() {
   ) async {
     await _pump(tester, const Locale('ar'));
 
-    expect(find.text('سجل الإصدارات'), findsOneWidget);
-    expect(find.text('v2'), findsNWidgets(2));
+    expect(find.byType(PublishedVersionHistoryPanel), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -84,14 +84,4 @@ class _UiRepository extends BackendMenuCatalogRepository {
     perPage: 20,
     total: 1,
   );
-
-  @override
-  Future<PublishedMenuVersion?> getCurrentPublishedVersion(
-    ReviewContext context,
-  ) async => PublishedMenuVersion.fromJson(<String, dynamic>{
-    'id': 2,
-    'versionNumber': 2,
-    'checksum': 'aabbccddeeff',
-    'status': 'current',
-  });
 }

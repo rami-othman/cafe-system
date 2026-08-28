@@ -86,7 +86,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Selling price'), findsOneWidget);
-      expect(find.text('USD 5.50'), findsWidgets);
+      expect(find.text('5.50 SYP'), findsWidgets);
       expect(find.text('Branch price'), findsOneWidget);
       expect(find.text('No schedule restrictions'), findsOneWidget);
       expect(find.text('Available now'), findsWidgets);
@@ -253,14 +253,14 @@ class _WorkspaceRepository extends MenuCatalogRepository {
     Branch(
       id: 1,
       name: 'Downtown',
-      currency: 'USD',
+      currency: 'SYP',
       timezone: 'Asia/Damascus',
       isActive: true,
     ),
     Branch(
       id: 2,
       name: 'Airport',
-      currency: 'USD',
+      currency: 'SYP',
       timezone: 'Asia/Damascus',
       isActive: true,
     ),

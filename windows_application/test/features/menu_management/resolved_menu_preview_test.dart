@@ -33,7 +33,7 @@ void main() {
       expect(cubit.state.contextStatus, ReviewLoadStatus.ready);
       expect(cubit.state.selectedBranch?.id, 1);
       expect(cubit.state.channel, 'pos');
-      expect(cubit.state.menuId, isNull);
+      expect(cubit.state.menuId, 999);
       expect(cubit.state.eligibleMenus, isEmpty);
       expect(cubit.state.context?.validationJson(), <String, dynamic>{
         'branchId': 1,
@@ -50,6 +50,7 @@ void main() {
       final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
       await cubit.load(menuId: 10);
 
+      repository.validationCalls = 0;
       final Completer<MenuValidationResult> validation =
           Completer<MenuValidationResult>();
       repository.validationLoader = (_) => validation.future;
@@ -143,7 +144,7 @@ void main() {
         Directionality.of(tester.element(find.byType(MenuReviewScreen))),
         TextDirection.rtl,
       );
-      expect(find.text('Review & Preview'), findsAtLeastNWidgets(1));
+      expect(find.text('مراجعة ونشر'), findsAtLeastNWidgets(1));
       expect(tester.takeException(), isNull);
     },
   );
@@ -196,6 +197,11 @@ class _ReviewRepository extends BackendMenuCatalogRepository {
   @override
   Future<ResolvedPreview> previewMenuCollection(ReviewContext context) =>
       previewLoader?.call(context) ?? Future<ResolvedPreview>.value(_preview());
+
+  @override
+  Future<PublishedMenuVersion?> getCurrentPublishedVersion(
+    ReviewContext context,
+  ) => Future<PublishedMenuVersion?>.value(null);
 }
 
 MenuAssignment _assignment() => MenuAssignment(

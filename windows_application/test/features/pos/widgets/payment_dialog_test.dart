@@ -19,7 +19,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Change Due'), findsOneWidget);
-    expect(find.text('\$5.50'), findsOneWidget);
+    expect(find.text('5.5 SYP'), findsOneWidget);
   });
 
   testWidgets('cash confirm is disabled when amount is too low', (

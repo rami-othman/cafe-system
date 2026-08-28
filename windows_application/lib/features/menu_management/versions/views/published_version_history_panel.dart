@@ -1,16 +1,17 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../app/localization/localization_extensions.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../controllers/published_version_cubit.dart';
 import '../models/published_version_models.dart';
+import '../widgets/restore_version_dialog.dart';
+import '../widgets/version_compare_dialog.dart';
+import '../widgets/version_detail_dialog.dart';
+import '../widgets/version_history_row.dart';
 
 class PublishedVersionHistoryPanel extends StatefulWidget {
   const PublishedVersionHistoryPanel({
@@ -19,9 +20,11 @@ class PublishedVersionHistoryPanel extends StatefulWidget {
     required this.branchName,
     required this.channel,
   });
+
   final int? branchId;
   final String branchName;
   final String channel;
+
   @override
   State<PublishedVersionHistoryPanel> createState() =>
       _PublishedVersionHistoryPanelState();
@@ -32,23 +35,27 @@ class _PublishedVersionHistoryPanelState
   @override
   void initState() {
     super.initState();
-    _sync();
+    _syncContext();
   }
 
   @override
   void didUpdateWidget(covariant PublishedVersionHistoryPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.branchId != widget.branchId ||
-        oldWidget.channel != widget.channel)
-      _sync();
+        oldWidget.channel != widget.channel) {
+      _syncContext();
+    }
   }
 
-  void _sync() => WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted)
-      context.read<PublishedVersionCubit>().setContext(
-        widget.branchId,
-        widget.channel,
+  void _syncContext() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      unawaited(
+        context.read<PublishedVersionCubit>().setContext(
+          widget.branchId,
+          widget.channel,
+        ),
       );
+    }
   });
 
   @override
@@ -61,87 +68,66 @@ class _PublishedVersionHistoryPanelState
       return ListView(
         padding: const EdgeInsets.only(top: 20),
         children: <Widget>[
-          AppCard(
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: <Widget>[
-                Text(
-                  context.l10n.versionHistory,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                _detail('Branch', widget.branchName),
-                _detail('Sales channel', widget.channel),
-                if (state.currentVersion != null)
-                  _detail(
-                    'Current Version',
-                    'v${state.currentVersion!.versionNumber}',
-                    technical: true,
-                  ),
-                OutlinedButton.icon(
-                  onPressed: state.historyStatus == VersionRequestStatus.loading
-                      ? null
-                      : cubit.refresh,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(context.l10n.commonRefresh),
-                ),
-              ],
-            ),
+          _HistoryHeader(
+            branchName: widget.branchName,
+            channel: widget.channel,
+            selectionCount: state.comparisonSelection.length,
+            comparing: state.comparisonStatus == VersionRequestStatus.loading,
+            onCompare: state.comparisonSelection.length == 2
+                ? () => _showCompare(context)
+                : null,
+            onRefresh: state.historyStatus == VersionRequestStatus.loading
+                ? null
+                : cubit.refresh,
           ),
           const SizedBox(height: 12),
-          if (state.rollbackResult != null)
-            _rollbackMessage(state.rollbackResult!),
+          if (state.rollbackResult != null) ...<Widget>[
+            _RestoreResultBanner(result: state.rollbackResult!),
+            const SizedBox(height: 12),
+          ],
           if (state.historyStatus == VersionRequestStatus.loading &&
               history == null)
             const Padding(
               padding: EdgeInsets.all(36),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (state.historyError != null && history == null)
-            _error(state.historyError!, cubit.refresh)
+          else if (state.historyStatus == VersionRequestStatus.failure &&
+              history == null)
+            _HistoryFailure(onRetry: cubit.refresh)
           else if (history == null || history.items.isEmpty)
-            const AppCard(
-              child: Text(
-                'No published Menu Versions exist for this Branch and Channel.',
-              ),
+            _HistoryEmpty(
+              branchName: widget.branchName,
+              channel: widget.channel,
             )
           else ...<Widget>[
-            if (state.historyError != null)
-              _error(state.historyError!, cubit.refresh),
+            if (state.historyStatus ==
+                VersionRequestStatus.failure) ...<Widget>[
+              _HistoryFailure(onRetry: cubit.refresh),
+              const SizedBox(height: 12),
+            ],
             ...history.items.map(
-              (version) => _VersionRow(
+              (version) => VersionHistoryRow(
                 version: version,
-                onDetails: () => _showDetail(context, version),
-                onCompare: () => _showComparison(context, version),
-                onRollback: version.isCurrent || version.status == 'current'
+                selectedForComparison: state.comparisonSelection.any(
+                  (selected) => selected.id == version.id,
+                ),
+                comparisonSelectionFull: state.comparisonSelection.length == 2,
+                onToggleComparison: () =>
+                    cubit.toggleComparisonSelection(version),
+                onView: () => _showDetail(context, version),
+                onRestore: version.isCurrent || version.status == 'current'
                     ? null
-                    : () => _showRollback(context, version),
+                    : () => _showRestore(context, version),
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                OutlinedButton(
-                  onPressed:
-                      history.hasPrevious &&
-                          state.historyStatus != VersionRequestStatus.loading
-                      ? cubit.previousPage
-                      : null,
-                  child: const Text('Previous'),
-                ),
-                const SizedBox(width: 12),
-                Text('Page ${history.page}'),
-                const SizedBox(width: 12),
-                OutlinedButton(
-                  onPressed:
-                      history.hasNext &&
-                          state.historyStatus != VersionRequestStatus.loading
-                      ? cubit.nextPage
-                      : null,
-                  child: const Text('Next'),
-                ),
-              ],
+            _Pagination(
+              page: history.page,
+              hasPrevious: history.hasPrevious,
+              hasNext: history.hasNext,
+              loading: state.historyStatus == VersionRequestStatus.loading,
+              onPrevious: cubit.previousPage,
+              onNext: cubit.nextPage,
             ),
           ],
         ],
@@ -157,26 +143,32 @@ class _PublishedVersionHistoryPanelState
     unawaited(cubit.openDetail(version));
     await showDialog<void>(
       context: context,
-      builder: (_) =>
-          BlocProvider.value(value: cubit, child: const _DetailDialog()),
-    );
-  }
-
-  Future<void> _showComparison(
-    BuildContext context,
-    PublishedVersion source,
-  ) async {
-    final cubit = context.read<PublishedVersionCubit>();
-    await showDialog<void>(
-      context: context,
       builder: (_) => BlocProvider.value(
         value: cubit,
-        child: _ComparisonDialog(source: source),
+        child: VersionDetailDialog(
+          scopeKey: cubit.state.scopeKey,
+          onRestore: version.isCurrent || version.status == 'current'
+              ? null
+              : () {
+                  Navigator.pop(context);
+                  _showRestore(context, version);
+                },
+        ),
       ),
     );
   }
 
-  Future<void> _showRollback(
+  Future<void> _showCompare(BuildContext context) => showDialog<void>(
+    context: context,
+    builder: (_) => BlocProvider.value(
+      value: context.read<PublishedVersionCubit>(),
+      child: VersionCompareDialog(
+        scopeKey: context.read<PublishedVersionCubit>().state.scopeKey,
+      ),
+    ),
+  );
+
+  Future<void> _showRestore(
     BuildContext context,
     PublishedVersion target,
   ) async {
@@ -186,548 +178,164 @@ class _PublishedVersionHistoryPanelState
       context: context,
       builder: (_) => BlocProvider.value(
         value: cubit,
-        child: _RollbackDialog(
+        child: RestoreVersionDialog(
           target: target,
-          branchName: widget.branchName,
-          channel: widget.channel,
+          scopeKey: cubit.state.scopeKey,
         ),
       ),
     );
   }
 }
 
-class _VersionRow extends StatelessWidget {
-  const _VersionRow({
-    required this.version,
-    required this.onDetails,
+class _HistoryHeader extends StatelessWidget {
+  const _HistoryHeader({
+    required this.branchName,
+    required this.channel,
+    required this.selectionCount,
+    required this.comparing,
     required this.onCompare,
-    this.onRollback,
+    required this.onRefresh,
   });
-  final PublishedVersion version;
-  final VoidCallback onDetails;
-  final VoidCallback onCompare;
-  final VoidCallback? onRollback;
+
+  final String branchName;
+  final String channel;
+  final int selectionCount;
+  final bool comparing;
+  final VoidCallback? onCompare;
+  final VoidCallback? onRefresh;
+
   @override
   Widget build(BuildContext context) => AppCard(
-    margin: const EdgeInsets.only(bottom: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    child: Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: <Widget>[
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: <Widget>[
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: Text(
-                'v${version.versionNumber}',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            _status(version.status),
-            if (version.isCurrent || version.status == 'current')
-              Chip(label: Text(context.l10n.versionStatusCurrent)),
-            if (version.publicationStatus != null)
-              Text('Publication: ${_label(version.publicationStatus!)}'),
-          ],
+        Text(
+          context.l10n.versionHistory,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 16,
-          runSpacing: 8,
-          children: <Widget>[
-            _detail(
-              'Published',
-              version.publishedAt.isEmpty ? '-' : version.publishedAt,
-            ),
-            if (version.changeSummary != null &&
-                version.changeSummary!.isNotEmpty)
-              _detail(
-                'Change summary',
-                version.changeSummary!.entries
-                    .map((entry) => '${entry.key}: ${entry.value}')
-                    .join(' · '),
-              ),
-          ],
+        Text(
+          '$branchName · $channel',
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: Text(context.l10n.technicalDetails),
-          children: <Widget>[
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: <Widget>[
-                _detail(
-                  'Checksum',
-                  _shortChecksum(version.checksum),
-                  technical: true,
-                  tooltip: version.checksum,
-                ),
-                if (version.publicationId != null)
-                  _detail(
-                    'Publication ID',
-                    '${version.publicationId}',
-                    technical: true,
-                  ),
-              ],
-            ),
-          ],
+        FilledButton.icon(
+          onPressed: comparing ? null : onCompare,
+          icon: const Icon(Icons.compare_arrows),
+          label: Text(context.l10n.versionCompareSelected(selectionCount)),
         ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          children: <Widget>[
-            TextButton(
-              onPressed: onDetails,
-              child: Text(context.l10n.versionDetail),
-            ),
-            TextButton(
-              onPressed: onCompare,
-              child: Text(context.l10n.compareVersions),
-            ),
-            if (onRollback != null)
-              TextButton(
-                onPressed: onRollback,
-                child: Text(context.l10n.versionRollback),
-              ),
-          ],
+        OutlinedButton.icon(
+          onPressed: onRefresh,
+          icon: const Icon(Icons.refresh),
+          label: Text(context.l10n.commonRefresh),
         ),
       ],
     ),
   );
 }
 
-class _DetailDialog extends StatelessWidget {
-  const _DetailDialog();
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.l10n.versionDetail),
-    content: SizedBox(
-      width: 650,
-      child: BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
-        builder: (context, state) {
-          if (state.detailStatus == VersionRequestStatus.loading)
-            return const SizedBox(
-              height: 120,
-              child: Center(child: CircularProgressIndicator()),
-            );
-          if (state.detailError != null) return Text(state.detailError!);
-          final detail = state.detail;
-          if (detail == null)
-            return const Text('Version detail is unavailable.');
-          final s = detail.summary;
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 10,
-                  children: <Widget>[
-                    _detail(
-                      'Version',
-                      'v${detail.version.versionNumber}',
-                      technical: true,
-                    ),
-                    _detail('Status', _label(detail.version.status)),
-                    _detail(
-                      'Branch',
-                      '${detail.version.branchId ?? '-'}',
-                      technical: true,
-                    ),
-                    _detail('Channel', detail.version.channel ?? '-'),
-                    _detail(
-                      'Published',
-                      detail.version.publishedAt,
-                      technical: true,
-                    ),
-                    _detail(
-                      'Checksum',
-                      detail.version.checksum,
-                      technical: true,
-                    ),
-                    if (detail.version.publicationId != null)
-                      _detail(
-                        'Publication ID',
-                        '${detail.version.publicationId}',
-                        technical: true,
-                      ),
-                    if (detail.version.publicationStatus != null)
-                      _detail(
-                        'Publication status',
-                        _label(detail.version.publicationStatus!),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Immutable Snapshot summary',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 8,
-                  children: <Widget>[
-                    _detail('Menus', '${s.menuCount}'),
-                    _detail('Sections', '${s.sectionCount}'),
-                    _detail('Products', '${s.productCount}'),
-                    _detail('Variants', '${s.variantCount}'),
-                    _detail('Modifier Groups', '${s.modifierGroupCount}'),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                if (state.payloadStatus == VersionRequestStatus.loading)
-                  const Center(child: CircularProgressIndicator())
-                else if (detail.payload == null) ...<Widget>[
-                  const Text(
-                    'Snapshot payload is diagnostic, read-only, and is not used for POS Sync.',
-                  ),
-                  TextButton.icon(
-                    onPressed: context
-                        .read<PublishedVersionCubit>()
-                        .loadPayload,
-                    icon: const Icon(Icons.data_object),
-                    label: const Text('Load Snapshot Payload'),
-                  ),
-                ] else ...<Widget>[
-                  const Text(
-                    'Immutable historical Snapshot payload (read-only)',
-                  ),
-                  const SizedBox(height: 8),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Container(
-                      width: double.infinity,
-                      constraints: const BoxConstraints(maxHeight: 300),
-                      color: AppColors.surfaceAlt,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(12),
-                        child: SelectableText(
-                          JsonEncoder.withIndent('  ').convert(detail.payload),
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                if (state.payloadError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      state.payloadError!,
-                      style: const TextStyle(color: AppColors.danger),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: Text(context.l10n.commonClose),
-      ),
-    ],
-  );
-}
+class _HistoryEmpty extends StatelessWidget {
+  const _HistoryEmpty({required this.branchName, required this.channel});
 
-class _ComparisonDialog extends StatelessWidget {
-  const _ComparisonDialog({required this.source});
-  final PublishedVersion source;
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text('${context.l10n.compareVersions} v${source.versionNumber}'),
-    content: SizedBox(
-      width: 680,
-      child: BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
-        builder: (context, state) {
-          final cubit = context.read<PublishedVersionCubit>();
-          final items =
-              state.history?.items
-                  .where((item) => item.id != source.id)
-                  .toList() ??
-              const <PublishedVersion>[];
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                DropdownButtonFormField<PublishedVersion>(
-                  initialValue: state.comparisonTarget,
-                  decoration: const InputDecoration(
-                    labelText: 'Comparison Version',
-                  ),
-                  items: items
-                      .map(
-                        (item) => DropdownMenuItem(
-                          value: item,
-                          child: Text('v${item.versionNumber}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: cubit.selectComparisonTarget,
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed:
-                      state.comparisonTarget == null ||
-                          state.comparisonStatus == VersionRequestStatus.loading
-                      ? null
-                      : () => cubit.compare(source),
-                  child: Text(context.l10n.compareVersions),
-                ),
-                if (state.comparisonStatus == VersionRequestStatus.loading)
-                  const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                if (state.comparisonError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      state.comparisonError!,
-                      style: const TextStyle(color: AppColors.danger),
-                    ),
-                  ),
-                if (state.comparison != null)
-                  _comparisonResult(state.comparison!),
-              ],
-            ),
-          );
-        },
-      ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: Text(context.l10n.commonClose),
-      ),
-    ],
-  );
-}
-
-class _RollbackDialog extends StatefulWidget {
-  const _RollbackDialog({
-    required this.target,
-    required this.branchName,
-    required this.channel,
-  });
-  final PublishedVersion target;
   final String branchName;
   final String channel;
+
   @override
-  State<_RollbackDialog> createState() => _RollbackDialogState();
+  Widget build(BuildContext context) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          context.l10n.versionHistoryEmptyTitle,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 6),
+        Text(context.l10n.versionHistoryEmptyDescription(branchName, channel)),
+      ],
+    ),
+  );
 }
 
-class _RollbackDialogState extends State<_RollbackDialog> {
-  final TextEditingController controller = TextEditingController();
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
+class _HistoryFailure extends StatelessWidget {
+  const _HistoryFailure({required this.onRetry});
+
+  final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.l10n.versionNewRollback),
-    content: SizedBox(
-      width: 520,
-      child: BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
-        builder: (context, state) => SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('Target Version: v${widget.target.versionNumber}'),
-              Text(
-                'Current Version: ${state.currentVersion == null ? '-' : 'v${state.currentVersion!.versionNumber}'}',
-              ),
-              Text('Branch: ${widget.branchName}'),
-              Text('Channel: ${widget.channel}'),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  'Published: ${widget.target.publishedAt}\nChecksum: ${widget.target.checksum}',
-                ),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Rollback will create a new immutable Version using the selected historical Snapshot. The historical Version itself will not be modified or reactivated.',
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: controller,
-                maxLength: 1000,
-                decoration: InputDecoration(
-                  labelText: context.l10n.versionRollbackReason,
-                ),
-              ),
-              if (state.rollbackError != null)
-                Text(
-                  state.rollbackError!,
-                  style: const TextStyle(color: AppColors.danger),
-                ),
-            ],
+  Widget build(BuildContext context) => AppCard(
+    child: Row(
+      children: <Widget>[
+        const Icon(Icons.error_outline, color: AppColors.danger),
+        const SizedBox(width: 8),
+        Expanded(child: Text(context.l10n.versionHistoryLoadError)),
+        TextButton(onPressed: onRetry, child: Text(context.l10n.commonRetry)),
+      ],
+    ),
+  );
+}
+
+class _RestoreResultBanner extends StatelessWidget {
+  const _RestoreResultBanner({required this.result});
+
+  final RollbackResult result;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    child: Row(
+      children: <Widget>[
+        Icon(
+          result.noChanges ? Icons.info_outline : Icons.check_circle_outline,
+          color: result.noChanges ? AppColors.warning : AppColors.success,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            result.noChanges
+                ? context.l10n.versionRestoreNoChanges(
+                    result.sourceVersionNumber,
+                  )
+                : context.l10n.versionRestoreSuccess(
+                    result.versionNumber,
+                    result.sourceVersionNumber,
+                  ),
           ),
         ),
-      ),
+      ],
     ),
-    actions: <Widget>[
-      BlocBuilder<PublishedVersionCubit, PublishedVersionState>(
-        builder: (context, state) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextButton(
-              onPressed: state.rollbackStatus == RollbackStatus.submitting
-                  ? null
-                  : () => Navigator.pop(context),
-              child: Text(context.l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: state.rollbackStatus == RollbackStatus.submitting
-                  ? null
-                  : () async {
-                      await context.read<PublishedVersionCubit>().rollback(
-                        controller.text,
-                      );
-                      if (context.mounted &&
-                          context
-                                  .read<PublishedVersionCubit>()
-                                  .state
-                                  .rollbackStatus !=
-                              RollbackStatus.failure) {
-                        Navigator.pop(context);
-                      }
-                    },
-              child: Text(
-                state.rollbackStatus == RollbackStatus.submitting
-                    ? 'Creating…'
-                    : context.l10n.versionNewRollback,
-              ),
-            ),
-          ],
-        ),
+  );
+}
+
+class _Pagination extends StatelessWidget {
+  const _Pagination({
+    required this.page,
+    required this.hasPrevious,
+    required this.hasNext,
+    required this.loading,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final int page;
+  final bool hasPrevious;
+  final bool hasNext;
+  final bool loading;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      OutlinedButton(
+        onPressed: hasPrevious && !loading ? onPrevious : null,
+        child: Text(context.l10n.versionPreviousPage),
+      ),
+      const SizedBox(width: 12),
+      Text(context.l10n.versionPage(page)),
+      const SizedBox(width: 12),
+      OutlinedButton(
+        onPressed: hasNext && !loading ? onNext : null,
+        child: Text(context.l10n.versionNextPage),
       ),
     ],
   );
 }
-
-Widget _comparisonResult(VersionComparison result) => Padding(
-  padding: const EdgeInsets.only(top: 16),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      if (result.sameChecksum)
-        const Text(
-          'These Versions have identical semantic Snapshot content.',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      if (result.truncated)
-        const Padding(
-          padding: EdgeInsets.only(top: 8),
-          child: Text(
-            'Only a bounded subset of differences is displayed; this comparison is not exhaustive.',
-            style: TextStyle(color: AppColors.warning),
-          ),
-        ),
-      ...result.changes.entries
-          .where((entry) => entry.value.isNotEmpty)
-          .map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    _comparisonLabel(entry.key),
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: SelectableText(entry.value.join(', ')),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      if (!result.sameChecksum &&
-          result.changes.values.every((entries) => entries.isEmpty))
-        const Padding(
-          padding: EdgeInsets.only(top: 10),
-          child: Text('No bounded structural differences were returned.'),
-        ),
-    ],
-  ),
-);
-Widget _rollbackMessage(RollbackResult result) => AppCard(
-  margin: const EdgeInsets.only(bottom: 12),
-  child: Text(
-    result.noChanges
-        ? 'The selected Version matches the current published content. No new Version was created.'
-        : 'Rollback successful. Source v${result.sourceVersionNumber} created new current Version v${result.versionNumber}. Publication ID: ${result.publicationId ?? '-'}',
-  ),
-);
-Widget _error(String message, VoidCallback retry) => AppCard(
-  margin: const EdgeInsets.only(bottom: 12),
-  child: Row(
-    children: <Widget>[
-      const Icon(Icons.error_outline, color: AppColors.danger),
-      const SizedBox(width: 8),
-      Expanded(child: Text(message)),
-      TextButton(onPressed: retry, child: const Text('Retry')),
-    ],
-  ),
-);
-Widget _status(String value) => Chip(label: Text(_label(value)));
-Widget _detail(
-  String label,
-  String value, {
-  bool technical = false,
-  String? tooltip,
-}) => SizedBox(
-  width: technical ? 230 : 160,
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text(label, style: const TextStyle(color: AppColors.textSecondary)),
-      Directionality(
-        textDirection: technical ? TextDirection.ltr : TextDirection.ltr,
-        child: Tooltip(
-          message: tooltip ?? value,
-          child: Text(value, overflow: TextOverflow.ellipsis),
-        ),
-      ),
-    ],
-  ),
-);
-String _shortChecksum(String checksum) =>
-    checksum.length <= 14 ? checksum : '${checksum.substring(0, 12)}…';
-String _label(String value) => value
-    .split('_')
-    .map(
-      (word) =>
-          word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}',
-    )
-    .join(' ');
-String _comparisonLabel(String key) =>
-    <String, String>{
-      'menusAdded': 'Menus added',
-      'menusRemoved': 'Menus removed',
-      'menusChanged': 'Menus changed',
-      'sectionsAdded': 'Sections added',
-      'sectionsRemoved': 'Sections removed',
-      'productsAdded': 'Products added',
-      'productsRemoved': 'Products removed',
-      'productsChanged': 'Products changed',
-      'priceChanges': 'Price changes',
-      'modifierChanges': 'Modifier changes',
-      'scheduleChanges': 'Schedule changes',
-    }[key] ??
-    key;

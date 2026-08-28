@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../pos/models/branch.dart';
-import '../../assignments/controllers/menu_assignments_cubit.dart'
-    show salesChannels;
 import '../../assignments/models/menu_assignment_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../models/review_models.dart';
@@ -85,11 +84,10 @@ class MenuReviewState extends Equatable {
   bool get isCollection => menuId == null;
   bool get isBusy => contextStatus == ReviewLoadStatus.loading;
 
-  /// Publishing is affected only by the selected Branch, Channel, and Menu
-  /// scope. Preview controls must not discard an in-flight publication result.
-  String? get publishingScopeKey => selectedBranch == null
-      ? null
-      : '${selectedBranch!.id}|$channel|${menuId ?? 'collection'}';
+  /// Publishing is always affected by the selected Branch and Channel.
+  /// Preview controls must not discard an in-flight publication result.
+  String? get publishingScopeKey =>
+      selectedBranch == null ? null : '${selectedBranch!.id}|$channel';
   ReviewContext? get context => selectedBranch == null
       ? null
       : ReviewContext(
@@ -251,9 +249,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
     // Context starts changing before asynchronous assignment loading completes;
     // invalidate publication data immediately so old scope responses cannot win.
     _invalidateResults();
-    final String selectedChannel = salesChannels.contains(channel)
-        ? channel!
-        : state.channel;
+    final String selectedChannel = _supportedChannel(channel) ?? state.channel;
     emit(
       state.copyWith(
         contextStatus: ReviewLoadStatus.loading,
@@ -283,28 +279,11 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
             contextStatus: ReviewLoadStatus.ready,
             branches: branches,
             clearBranch: true,
-            eligibleMenus: const [],
             clearMenu: true,
           ),
         );
         return;
       }
-      final List<MenuAssignment> assignments = await repository
-          .listMenuAssignments(branchId: branch.id, channel: selectedChannel);
-      if (isClosed || ticket != _contextTicket) return;
-      final List<MenuAssignment> eligible =
-          assignments
-              .where(
-                (item) =>
-                    item.isActive &&
-                    item.menu != null &&
-                    !item.menu!.isArchived,
-              )
-              .toList(growable: false)
-            ..sort((a, b) => a.priority.compareTo(b.priority));
-      final int? selectedMenu = eligible.any((item) => item.menuId == menuId)
-          ? menuId
-          : null;
       _invalidateResults();
       emit(
         state.copyWith(
@@ -312,10 +291,12 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
           branches: branches,
           selectedBranch: branch,
           channel: selectedChannel,
-          eligibleMenus: eligible,
-          menuId: selectedMenu,
+          // A menu ID can arrive through a legacy diagnostic deep link, but
+          // the manager workflow always renders the automatic collection.
+          menuId: menuId != null && menuId > 0 ? menuId : null,
           evaluationAt: evaluationAt,
-          clearMenu: selectedMenu == null,
+          clearMenu: menuId == null || menuId <= 0,
+          validationStatus: ReviewRequestStatus.idle,
           clearValidation: true,
           clearPreview: true,
           clearValidationError: true,
@@ -328,7 +309,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
           clearPublicationError: true,
         ),
       );
-      await loadCurrentVersion();
+      await Future.wait<void>(<Future<void>>[loadCurrentVersion(), validate()]);
     } catch (error) {
       if (isClosed || ticket != _contextTicket) return;
       emit(
@@ -348,8 +329,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
     menuId: state.menuId,
   );
   void selectScope(int? value) {
-    if (value != null &&
-        !state.eligibleMenus.any((assignment) => assignment.menuId == value)) {
+    if (value != null && value <= 0) {
       return;
     }
     if (state.menuId == value) return;
@@ -373,6 +353,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
       ),
     );
     unawaited(loadCurrentVersion());
+    unawaited(validate());
   }
 
   void setLanguage(String value) => _setPreviewControl(language: value);
@@ -513,14 +494,21 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
   }
 
   Future<void> publish() async {
-    final ReviewContext? context = state.context;
+    final ReviewContext? reviewContext = state.context;
     final String? scopeKey = state.publishingScopeKey;
-    if (context == null ||
+    if (reviewContext == null ||
         state.publicationStatus == PublicationActionStatus.publishing ||
         state.validationStatus != ReviewRequestStatus.loaded ||
         state.validation?.canPublish != true) {
       return;
     }
+    // The manager workflow always publishes the backend-selected active
+    // assignment collection for this exact Branch + Channel.  It never
+    // submits a local menu selection or preview-only controls.
+    final ReviewContext publishContext = ReviewContext(
+      branchId: reviewContext.branchId,
+      channel: reviewContext.channel,
+    );
     final int ticket = ++_publicationTicket;
     emit(
       state.copyWith(
@@ -530,7 +518,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
     );
     try {
       final MenuPublicationResult result = await repository.publishMenuScope(
-        context,
+        publishContext,
       );
       if (isClosed ||
           ticket != _publicationTicket ||
@@ -557,21 +545,21 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
           error is ApiException &&
           error.statusCode == 422 &&
           (error.validationErrors?.containsKey('publish') ?? false);
+      debugPrint('Menu publish request failed: $error');
       emit(
         state.copyWith(
           publicationStatus: validationBlocked
               ? PublicationActionStatus.validationBlocked
               : PublicationActionStatus.failure,
           publicationError: validationBlocked
-              ? 'Backend validation blocked publication. Review the refreshed diagnostics.'
-              : _message(error),
+              ? 'publish_validation_changed'
+              : 'publish_failed',
         ),
       );
       if (validationBlocked) {
-        // Laravel returns a safe 422 message rather than a full validation
-        // payload. Reload diagnostics; publishing itself is never retried.
+        // Revalidation is server-authoritative. Reload only readiness so the
+        // issue browser cannot retain a stale ready state.
         await validate();
-        await loadCurrentVersion();
       }
     }
   }
@@ -604,4 +592,16 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
   String _message(Object error) => error is ApiException
       ? error.message
       : 'Unable to load menu review data. Please try again.';
+
+  String? _supportedChannel(String? value) =>
+      const <String>[
+        'pos',
+        'waiter_app',
+        'kiosk',
+        'qr_ordering',
+        'delivery',
+        'online_ordering',
+      ].contains(value)
+      ? value
+      : null;
 }

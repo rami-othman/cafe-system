@@ -444,6 +444,168 @@ class AppLocalizationsAr extends AppLocalizations {
   String get versionStatusRolledBack => 'تم التراجع عنه';
 
   @override
+  String get versionView => 'عرض';
+
+  @override
+  String versionSelectForCompare(int version) {
+    return 'حدد الإصدار $version للمقارنة';
+  }
+
+  @override
+  String versionCompareSelected(int count) {
+    return 'مقارنة المحدد ($count)';
+  }
+
+  @override
+  String get versionHistoryEmptyTitle => 'لا يوجد سجل إصدارات';
+
+  @override
+  String versionHistoryEmptyDescription(Object branch, Object channel) {
+    return 'لم يُنشر إصدار قائمة لـ $branch · $channel بعد.';
+  }
+
+  @override
+  String get versionHistoryLoadError => 'تعذر تحميل سجل الإصدارات.';
+
+  @override
+  String get versionDetailLoadError => 'تعذر تحميل هذا الإصدار.';
+
+  @override
+  String get versionCompareError => 'تعذرت مقارنة هذين الإصدارين.';
+
+  @override
+  String get versionRestoreError => 'تعذرت استعادة هذا الإصدار.';
+
+  @override
+  String get versionPreviousPage => 'السابق';
+
+  @override
+  String get versionNextPage => 'التالي';
+
+  @override
+  String versionPage(int page) {
+    return 'الصفحة $page';
+  }
+
+  @override
+  String versionChangeCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تغيير',
+      many: '$count تغييرًا',
+      few: '$count تغييرات',
+      two: 'تغييران',
+      one: 'تغيير واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionChangesSince(num count, int version) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تغيير',
+      many: '$count تغييرًا',
+      few: '$count تغييرات',
+      two: 'تغييران',
+      one: 'تغيير واحد',
+    );
+    return '$_temp0 منذ الإصدار $version';
+  }
+
+  @override
+  String versionPublishedAt(Object date) {
+    return 'نُشر $date';
+  }
+
+  @override
+  String get versionMenus => 'القوائم';
+
+  @override
+  String get versionSections => 'الأقسام';
+
+  @override
+  String get versionProducts => 'المنتجات';
+
+  @override
+  String get versionPricing => 'التسعير';
+
+  @override
+  String get versionModifiers => 'الخيارات';
+
+  @override
+  String get versionRecipes => 'الوصفات';
+
+  @override
+  String get versionSchedules => 'الجدولة';
+
+  @override
+  String get versionChanges => 'تغييرات';
+
+  @override
+  String get versionChangeSummary => 'ملخص التغييرات';
+
+  @override
+  String get versionChangeSummaryAvailable =>
+      'يتضمن هذا الإصدار ملخصًا مسجلًا للتغييرات.';
+
+  @override
+  String get versionChangeSummaryUnavailable =>
+      'لا يتوفر ملخص للتغييرات لهذا الإصدار.';
+
+  @override
+  String get versionRestoreThisVersion => 'استعادة هذا الإصدار';
+
+  @override
+  String versionRestoreTitle(int version) {
+    return 'استعادة الإصدار $version؟';
+  }
+
+  @override
+  String versionRestoreExplanation(int version) {
+    return 'سيُنشأ إصدار منشور جديد بمحتوى الإصدار $version. ستبقى الإصدارات المنشورة بعد الإصدار $version في السجل.';
+  }
+
+  @override
+  String get versionRestoreReason => 'سبب الاستعادة (اختياري)';
+
+  @override
+  String get versionRestoreReasonHint =>
+      'مثال: استعادة بعد تغيير سعر غير مقصود';
+
+  @override
+  String get versionRestoreAsNewVersion => 'استعادة كإصدار جديد';
+
+  @override
+  String get versionRestoring => 'جارٍ الاستعادة…';
+
+  @override
+  String get versionRestoreResultTitle => 'تمت استعادة الإصدار';
+
+  @override
+  String versionRestoreSuccess(int newVersion, int sourceVersion) {
+    return 'أُنشئ الإصدار $newVersion من الإصدار $sourceVersion. الإصدار $newVersion هو الحالي الآن.';
+  }
+
+  @override
+  String versionRestoreNoChanges(int version) {
+    return 'الإصدار $version يطابق المحتوى المنشور الحالي بالفعل. لم يُنشأ إصدار جديد.';
+  }
+
+  @override
+  String versionComparisonDirection(int fromVersion, int toVersion) {
+    return 'الإصدار $fromVersion ← الإصدار $toVersion';
+  }
+
+  @override
+  String get versionNoContentDifferences => 'لم يُعثر على اختلافات في المحتوى.';
+
+  @override
+  String get versionComparisonTruncated => 'لا تُعرض التغييرات الإضافية.';
+
+  @override
   String get catalogSetupTitle => 'إعداد الكتالوج';
 
   @override
@@ -3296,4 +3458,423 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get menuListNotAvailable => '—';
+
+  @override
+  String get reviewPublishPageHelp =>
+      'راجِع جاهزية القائمة، وعاين تجربة البيع، وانشر إصدارًا لسياق البيع هذا.';
+
+  @override
+  String get reviewSellingContext => 'سياق البيع';
+
+  @override
+  String get reviewSellingContextHelp =>
+      'تغطي هذه المراجعة القوائم المعيّنة لسياق البيع المحدد.';
+
+  @override
+  String get reviewBranch => 'الفرع';
+
+  @override
+  String get reviewSalesChannel => 'قناة البيع';
+
+  @override
+  String get reviewTimezone => 'المنطقة الزمنية';
+
+  @override
+  String get reviewScope => 'النطاق';
+
+  @override
+  String get reviewScopeAssignedMenus => 'القوائم المعيّنة لهذا السياق';
+
+  @override
+  String get reviewReadinessTab => 'الجاهزية';
+
+  @override
+  String get reviewPreviewTab => 'المعاينة';
+
+  @override
+  String get reviewPublishTab => 'النشر';
+
+  @override
+  String get reviewVersionsTab => 'الإصدارات';
+
+  @override
+  String get reviewCurrentlyPublished => 'المنشور حاليًا';
+
+  @override
+  String get reviewNotPublishedYet => 'لم يُنشر بعد';
+
+  @override
+  String get reviewNoCurrentVersion => 'لم يُنشر إصدار قائمة لسياق البيع هذا.';
+
+  @override
+  String get reviewCurrentVersionLoadError =>
+      'تعذر تحميل الإصدار المنشور الحالي.';
+
+  @override
+  String reviewVersionNumber(int version) {
+    return 'الإصدار $version';
+  }
+
+  @override
+  String reviewPublishedAt(String date) {
+    return 'نُشر $date';
+  }
+
+  @override
+  String get reviewViewVersions => 'عرض الإصدارات';
+
+  @override
+  String get reviewReadiness => 'الجاهزية';
+
+  @override
+  String get reviewReadinessHelp => 'راجِع التحقق المعتمد لسياق البيع هذا.';
+
+  @override
+  String get reviewCheckAgain => 'تحقق مجددًا';
+
+  @override
+  String get reviewNeedsAttention => 'تحتاج إلى اهتمام';
+
+  @override
+  String get reviewReadyToPublish => 'جاهز للنشر';
+
+  @override
+  String get reviewFixBlockingErrors => 'أصلح الأخطاء المانعة قبل النشر.';
+
+  @override
+  String get reviewErrors => 'أخطاء';
+
+  @override
+  String get reviewWarnings => 'تحذيرات';
+
+  @override
+  String reviewWarningsToReview(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count تحذير للمراجعة.',
+      many: '$count تحذيرًا للمراجعة.',
+      few: '$count تحذيرات للمراجعة.',
+      two: 'تحذيران للمراجعة.',
+      one: 'تحذير واحد للمراجعة.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reviewNoIssuesForScope(String branch, String channel) {
+    return 'لم تُعثر على مشكلات لـ $branch · $channel.';
+  }
+
+  @override
+  String get reviewNoMenusAssigned => 'لا توجد قوائم معيّنة';
+
+  @override
+  String reviewNoMenusAssignedHelp(String branch, String channel) {
+    return 'عيّن قائمة نشطة واحدة على الأقل لـ $branch · $channel قبل النشر.';
+  }
+
+  @override
+  String get reviewGoToAssignments => 'انتقل إلى التعيينات';
+
+  @override
+  String get reviewReadinessLoadError => 'تعذر تحميل نتائج الجاهزية.';
+
+  @override
+  String get reviewTryAgain => 'حاول مرة أخرى.';
+
+  @override
+  String get reviewIssuesAll => 'الكل';
+
+  @override
+  String get reviewSearchIssues => 'البحث في المشكلات...';
+
+  @override
+  String get reviewNoMatchingIssues => 'لا توجد مشكلات مطابقة';
+
+  @override
+  String get reviewTryDifferentSearch => 'جرّب بحثًا أو تصفية مختلفة.';
+
+  @override
+  String reviewIssueCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مشكلة',
+      many: '$count مشكلة',
+      few: '$count مشكلات',
+      two: 'مشكلتان',
+      one: 'مشكلة واحدة',
+      zero: 'لا توجد مشكلات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewIssueGroupMenus => 'القوائم';
+
+  @override
+  String get reviewIssueGroupSections => 'الأقسام';
+
+  @override
+  String get reviewIssueGroupProducts => 'المنتجات';
+
+  @override
+  String get reviewIssueGroupVariants => 'الخيارات';
+
+  @override
+  String get reviewIssueGroupRecipesMaterials => 'الوصفات والمواد';
+
+  @override
+  String get reviewIssueGroupModifiers => 'المعدّلات';
+
+  @override
+  String get reviewIssueGroupPricing => 'التسعير';
+
+  @override
+  String get reviewIssueGroupAvailability => 'التوفّر';
+
+  @override
+  String get reviewIssueGroupAssignmentsScope => 'التعيينات والنطاق';
+
+  @override
+  String get reviewIssueGroupOther => 'أخرى / عامة';
+
+  @override
+  String get reviewIssueGeneral => 'عام';
+
+  @override
+  String get reviewOpenMenu => 'فتح القائمة';
+
+  @override
+  String get reviewOpenProduct => 'فتح المنتج';
+
+  @override
+  String get reviewOpenSections => 'فتح الأقسام';
+
+  @override
+  String get reviewReviewMenu => 'مراجعة القائمة';
+
+  @override
+  String get reviewIssueContextMenu => 'مشكلة في القائمة';
+
+  @override
+  String get reviewIssueContextSection => 'مشكلة في القسم';
+
+  @override
+  String get reviewIssueContextProduct => 'مشكلة في المنتج';
+
+  @override
+  String get reviewIssueContextVariant => 'مشكلة في الخيار';
+
+  @override
+  String get reviewIssueContextPlacement => 'مشكلة في موضع القائمة';
+
+  @override
+  String get reviewIssueContextModifier => 'مشكلة في المعدِّل';
+
+  @override
+  String get reviewIssueContextRecipe => 'مشكلة في الوصفة أو المادة';
+
+  @override
+  String get reviewIssueContextScope => 'مشكلة في سياق البيع';
+
+  @override
+  String get reviewIssueContextGeneral => 'مشكلة عامة';
+
+  @override
+  String get reviewPreviewContext =>
+      'عاين مجموعة القوائم المعيّنة لسياق البيع هذا.';
+
+  @override
+  String get reviewPreviewLanguage => 'لغة المعاينة';
+
+  @override
+  String get reviewPreviewLanguageDefault => 'اللغة الافتراضية';
+
+  @override
+  String get reviewPreviewLanguageArabic => 'العربية';
+
+  @override
+  String get reviewPreviewLanguageEnglish => 'الإنجليزية';
+
+  @override
+  String get reviewPreviewShowHidden => 'إظهار العناصر المخفية';
+
+  @override
+  String get reviewPreviewShowUnavailable => 'إظهار العناصر غير المتاحة';
+
+  @override
+  String get reviewPreviewRefresh => 'تحديث المعاينة';
+
+  @override
+  String get reviewPreviewLoading => 'جارٍ تحميل المعاينة';
+
+  @override
+  String get reviewPreviewBlockingBanner =>
+      'تحتوي هذه المعاينة على مشكلات يجب إصلاحها قبل النشر.';
+
+  @override
+  String get reviewPreviewReviewReadiness => 'مراجعة الجاهزية';
+
+  @override
+  String get reviewPreviewAvailableNow => 'متاح الآن';
+
+  @override
+  String get reviewPreviewOutsideScheduledHours => 'خارج ساعات الجدول';
+
+  @override
+  String get reviewPreviewHidden => 'مخفي';
+
+  @override
+  String get reviewPreviewUnavailable => 'غير متاح';
+
+  @override
+  String get reviewPreviewSoldOut => 'نفد المخزون';
+
+  @override
+  String get reviewPreviewTemporarilyUnavailable => 'غير متاح مؤقتًا';
+
+  @override
+  String get reviewPreviewAvailable => 'متاح';
+
+  @override
+  String get reviewPreviewFeatured => 'مميّز';
+
+  @override
+  String get reviewPreviewDefault => 'افتراضي';
+
+  @override
+  String get reviewPreviewVariants => 'الخيارات';
+
+  @override
+  String get reviewPreviewModifiers => 'المعدّلات';
+
+  @override
+  String get reviewPreviewRecipeConfigured => 'الوصفة مهيأة';
+
+  @override
+  String reviewPreviewRecipeComponents(int count) {
+    return '$count مكوّنات';
+  }
+
+  @override
+  String get reviewPreviewNoMenus => 'لا توجد قوائم للمعاينة';
+
+  @override
+  String get reviewPreviewNoMenusHelp =>
+      'عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا.';
+
+  @override
+  String get reviewPreviewEmptySection => 'لا توجد منتجات مضمنة في هذا القسم.';
+
+  @override
+  String get reviewPreviewError => 'تعذر تحميل المعاينة.';
+
+  @override
+  String get reviewPreviewRetry => 'إعادة المحاولة';
+
+  @override
+  String get reviewPreviewBasePrice => 'السعر الأساسي';
+
+  @override
+  String get reviewPreviewRequired => 'مطلوب';
+
+  @override
+  String get reviewPreviewOptional => 'اختياري';
+
+  @override
+  String get reviewPreviewOptionUnavailable => 'خيار غير متاح';
+
+  @override
+  String reviewPublishQuestion(String branch, String channel) {
+    return 'نشر $branch · $channel؟';
+  }
+
+  @override
+  String get reviewPublishScopeHelp =>
+      'سينشئ هذا إصدارًا منشورًا للقائمة لسياق البيع الدقيق هذا.';
+
+  @override
+  String get reviewPublishCurrentVersion => 'الإصدار الحالي';
+
+  @override
+  String get reviewPublishCheckingReadiness => 'جارٍ التحقق من الجاهزية…';
+
+  @override
+  String get reviewPublishWaitForReadiness =>
+      'انتظر اكتمال فحص الجاهزية الحالي قبل النشر.';
+
+  @override
+  String get reviewPublishNoAssignedMenu =>
+      'عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا قبل النشر.';
+
+  @override
+  String get reviewPublishCannotPublish => 'لا يمكن النشر بعد';
+
+  @override
+  String get reviewPublishReviewErrors => 'مراجعة الأخطاء';
+
+  @override
+  String get reviewPublishReviewIssues => 'مراجعة المشكلات';
+
+  @override
+  String reviewPublishWarningsCanProceed(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تبقى $count تحذيرات. يمكنك مع ذلك نشر هذا الإصدار.',
+      one: 'تبقى تحذير واحد. يمكنك مع ذلك نشر هذا الإصدار.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPublishCleanReady =>
+      'لم يُعثر على مشكلات مانعة. يمكنك نشر هذا الإصدار.';
+
+  @override
+  String get reviewPublishAction => 'نشر إصدار القائمة';
+
+  @override
+  String get reviewPublishPublishing => 'جارٍ النشر…';
+
+  @override
+  String reviewPublishConfirmTitle(String branch, String channel) {
+    return 'نشر $branch · $channel؟';
+  }
+
+  @override
+  String get reviewPublishImmutableExplanation =>
+      'سيُنشأ إصدار قائمة غير قابل للتعديل إذا تغيّر التكوين.';
+
+  @override
+  String get reviewPublishAlreadyUpToDate => 'محدّث بالفعل';
+
+  @override
+  String reviewPublishNoChanges(int version) {
+    return 'لم يُعثر على تغييرات في القائمة منذ الإصدار $version. لم يُنشأ إصدار جديد.';
+  }
+
+  @override
+  String get reviewPublishSuccess => 'تم النشر بنجاح';
+
+  @override
+  String reviewPublishCurrentForScope(String branch, String channel) {
+    return 'هذا هو الإصدار المنشور الحالي لـ $branch · $channel.';
+  }
+
+  @override
+  String get reviewPublishRevalidationFailedTitle =>
+      'تغيّرت القائمة ولم تعد جاهزة للنشر.';
+
+  @override
+  String get reviewPublishRevalidationFailedMessage =>
+      'تم اكتشاف مشكلات جديدة أثناء التحقق النهائي.';
+
+  @override
+  String get reviewPublishRequestFailed => 'تعذّر نشر إصدار القائمة.';
+
+  @override
+  String get reviewPublishTryAgain => 'حاول مرة أخرى';
 }

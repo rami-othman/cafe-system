@@ -132,7 +132,10 @@ class _PickerRepository extends MenuCatalogRepository {
         ),
       );
     }
-    final List<ProductSummary> products = page == 1
+    final List<ProductSummary> products =
+        page == 1 && filter.search == 'latte' && filter.categoryId == 4
+        ? <ProductSummary>[_product(12)]
+        : page == 1
         ? <ProductSummary>[
             _product(11),
             _product(12),

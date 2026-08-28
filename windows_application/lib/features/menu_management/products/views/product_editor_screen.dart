@@ -380,7 +380,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                 ),
                                 price: true,
                                 required: draft.productType == 'standard',
-                                prefix: '\$',
+                                prefix: 'SYP',
                               ),
                             ],
                           ),
@@ -438,7 +438,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                 error:
                                     state.fieldErrors['variants.0.costPrice'],
                                 price: true,
-                                prefix: '\$',
+                                prefix: 'SYP',
                               ),
                               _text(
                                 'SKU',

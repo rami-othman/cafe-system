@@ -271,7 +271,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('Selling price'), findsOneWidget);
-      expect(find.text('USD 4.00'), findsWidgets);
+      expect(find.text('4 SYP'), findsWidgets);
       expect(find.text('Branch'), findsWidgets);
       expect(find.byKey(const Key('change-price')), findsOneWidget);
       expect(find.byKey(const Key('more-price-rules')), findsOneWidget);

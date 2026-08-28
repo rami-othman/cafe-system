@@ -239,59 +239,65 @@ void main() {
         expect(cubit.state.draft, before);
       },
     );
-    test('customizing an inherited Variant adds a Variant rule, not a Product rule', () async {
-      final repository = _AvailabilityRepository();
-      final cubit = AvailabilityCubit(repository: repository);
-      await cubit.load(11, variantId: 12);
-      cubit.selectContext(clearBranch: true, clearChannel: true);
+    test(
+      'customizing an inherited Variant adds a Variant rule, not a Product rule',
+      () async {
+        final repository = _AvailabilityRepository();
+        final cubit = AvailabilityCubit(repository: repository);
+        await cubit.load(11, variantId: 12);
+        cubit.selectContext(clearBranch: true, clearChannel: true);
 
-      expect(cubit.state.exactRules, isEmpty);
-      expect(cubit.state.inheritedRules, isNotEmpty);
-      const customized = AvailabilityRuleDraft(
-        productVariantId: 12,
-        branchId: null,
-        channel: null,
-        dayOfWeek: 1,
-        startTime: '07:00',
-        endTime: '22:00',
-        startDate: null,
-        endDate: null,
-        priority: 0,
-        isActive: true,
-      );
+        expect(cubit.state.exactRules, isEmpty);
+        expect(cubit.state.inheritedRules, isNotEmpty);
+        const customized = AvailabilityRuleDraft(
+          productVariantId: 12,
+          branchId: null,
+          channel: null,
+          dayOfWeek: 1,
+          startTime: '07:00',
+          endTime: '22:00',
+          startDate: null,
+          endDate: null,
+          priority: 0,
+          isActive: true,
+        );
 
-      expect(cubit.addOrUpdate(customized), isTrue);
-      expect(await cubit.save(), isTrue);
-      expect(
-        repository.lastSync.where((rule) => rule.productVariantId == null),
-        hasLength(2),
-      );
-      expect(repository.lastSync, contains(customized));
-    });
+        expect(cubit.addOrUpdate(customized), isTrue);
+        expect(await cubit.save(), isTrue);
+        expect(
+          repository.lastSync.where((rule) => rule.productVariantId == null),
+          hasLength(2),
+        );
+        expect(repository.lastSync, contains(customized));
+      },
+    );
 
-    test('accepts and persists a 22:00 to 02:00 overnight Variant rule', () async {
-      final repository = _AvailabilityRepository();
-      final cubit = AvailabilityCubit(repository: repository);
-      await cubit.load(11, variantId: 12);
-      cubit.selectContext(clearBranch: true, clearChannel: true);
-      const overnight = AvailabilityRuleDraft(
-        productVariantId: 12,
-        branchId: null,
-        channel: null,
-        dayOfWeek: 1,
-        startTime: '22:00',
-        endTime: '02:00',
-        startDate: null,
-        endDate: null,
-        priority: 0,
-        isActive: true,
-      );
+    test(
+      'accepts and persists a 22:00 to 02:00 overnight Variant rule',
+      () async {
+        final repository = _AvailabilityRepository();
+        final cubit = AvailabilityCubit(repository: repository);
+        await cubit.load(11, variantId: 12);
+        cubit.selectContext(clearBranch: true, clearChannel: true);
+        const overnight = AvailabilityRuleDraft(
+          productVariantId: 12,
+          branchId: null,
+          channel: null,
+          dayOfWeek: 1,
+          startTime: '22:00',
+          endTime: '02:00',
+          startDate: null,
+          endDate: null,
+          priority: 0,
+          isActive: true,
+        );
 
-      expect(overnight.isOvernight, isTrue);
-      expect(cubit.addOrUpdate(overnight), isTrue);
-      expect(await cubit.save(), isTrue);
-      expect(repository.lastSync, contains(overnight));
-    });
+        expect(overnight.isOvernight, isTrue);
+        expect(cubit.addOrUpdate(overnight), isTrue);
+        expect(await cubit.save(), isTrue);
+        expect(repository.lastSync, contains(overnight));
+      },
+    );
 
     test('global preview is forwarded without a Branch id', () async {
       final repository = _AvailabilityRepository();
@@ -306,21 +312,18 @@ void main() {
   });
 
   group('scheduled availability screen', () {
-    testWidgets(
-      'renders the regular availability hierarchy',
-      (tester) async {
-        final repository = _AvailabilityRepository();
-        await tester.pumpWidget(
-          _screen(repository, variantId: 12, branchId: 1, channel: 'pos'),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('renders the regular availability hierarchy', (tester) async {
+      final repository = _AvailabilityRepository();
+      await tester.pumpWidget(
+        _screen(repository, variantId: 12, branchId: 1, channel: 'pos'),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('Regular availability'), findsOneWidget);
-        expect(find.text('Advanced Schedule Rules'), findsOneWidget);
-        expect(find.text('Check Availability'), findsOneWidget);
-        expect(find.byKey(const Key('edit-selling-hours')), findsOneWidget);
-      },
-    );
+      expect(find.text('Regular availability'), findsOneWidget);
+      expect(find.text('Advanced Schedule Rules'), findsOneWidget);
+      expect(find.text('Check Availability'), findsOneWidget);
+      expect(find.byKey(const Key('edit-selling-hours')), findsOneWidget);
+    });
 
     testWidgets('sanitizes invalid query context and archives are read-only', (
       tester,
@@ -339,9 +342,7 @@ void main() {
       );
       expect(
         tester
-            .widget<FilledButton>(
-              find.byKey(const Key('edit-selling-hours')),
-            )
+            .widget<FilledButton>(find.byKey(const Key('edit-selling-hours')))
             .onPressed,
         isNull,
       );

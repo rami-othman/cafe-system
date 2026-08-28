@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import 'currency_formatter.dart';
+
 abstract final class LocalizedFormatters {
   static String date(DateTime value, {required String locale}) =>
       DateFormat.yMMMd(locale).format(value);
@@ -20,8 +22,9 @@ abstract final class LocalizedFormatters {
     num value, {
     required String locale,
     required String currencyCode,
-  }) => NumberFormat.simpleCurrency(
+  }) => CurrencyFormatter.format(
+    value,
     locale: locale,
-    name: currencyCode,
-  ).format(value);
+    currencyCode: currencyCode,
+  );
 }

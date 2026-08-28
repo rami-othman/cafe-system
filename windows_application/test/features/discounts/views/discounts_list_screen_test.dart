@@ -20,7 +20,7 @@ void main() {
     expect(find.text('Student Discount'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('292'), findsOneWidget);
-    expect(find.text('\$520.00'), findsOneWidget);
+    expect(find.text('520 SYP'), findsOneWidget);
   });
 
   testWidgets('filters loaded discounts by search and status', (
@@ -71,8 +71,8 @@ class _Repository implements DiscountsRepository {
   Future<List<Branch>> getBranches() async => const <Branch>[];
   @override
   Future<List<DiscountListItem>> getDiscounts() async => <DiscountListItem>[
-    _item('1', 'Morning Rush 15%', DiscountStatus.active, 128, '\$192.00'),
-    _item('2', 'Student Discount', DiscountStatus.active, 164, '\$328.00'),
+    _item('1', 'Morning Rush 15%', DiscountStatus.active, 128, '192 SYP'),
+    _item('2', 'Student Discount', DiscountStatus.active, 164, '328 SYP'),
   ];
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
@@ -108,10 +108,10 @@ DiscountListItem _item(
   name: name,
   secondaryLabel: name == 'Student Discount' ? 'Automatic' : 'Code: MRNG15',
   type: name == 'Student Discount' ? 'Fixed Amount' : 'Percentage',
-  displayValue: name == 'Student Discount' ? '\$2.00 off' : '15% off',
+  displayValue: name == 'Student Discount' ? '2 SYP off' : '15% off',
   conditions: name == 'Student Discount'
       ? 'Requires Student ID tag'
-      : 'Min. \$10 spent',
+      : 'Min. 10 SYP spent',
   validPeriodPrimary: 'Always Valid',
   status: status,
   usageCount: usage,

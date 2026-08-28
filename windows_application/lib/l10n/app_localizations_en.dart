@@ -434,6 +434,162 @@ class AppLocalizationsEn extends AppLocalizations {
   String get versionStatusRolledBack => 'Rolled back';
 
   @override
+  String get versionView => 'View';
+
+  @override
+  String versionSelectForCompare(int version) {
+    return 'Select Version $version for comparison';
+  }
+
+  @override
+  String versionCompareSelected(int count) {
+    return 'Compare selected ($count)';
+  }
+
+  @override
+  String get versionHistoryEmptyTitle => 'No version history';
+
+  @override
+  String versionHistoryEmptyDescription(Object branch, Object channel) {
+    return 'No Menu version has been published for $branch · $channel yet.';
+  }
+
+  @override
+  String get versionHistoryLoadError => 'Could not load version history.';
+
+  @override
+  String get versionDetailLoadError => 'Could not load this version.';
+
+  @override
+  String get versionCompareError => 'Could not compare these versions.';
+
+  @override
+  String get versionRestoreError => 'Could not restore this version.';
+
+  @override
+  String get versionPreviousPage => 'Previous';
+
+  @override
+  String get versionNextPage => 'Next';
+
+  @override
+  String versionPage(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String versionChangeCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes',
+      one: '1 change',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String versionChangesSince(num count, int version) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes',
+      one: '1 change',
+    );
+    return '$_temp0 since Version $version';
+  }
+
+  @override
+  String versionPublishedAt(Object date) {
+    return 'Published $date';
+  }
+
+  @override
+  String get versionMenus => 'Menus';
+
+  @override
+  String get versionSections => 'Sections';
+
+  @override
+  String get versionProducts => 'Products';
+
+  @override
+  String get versionPricing => 'Pricing';
+
+  @override
+  String get versionModifiers => 'Modifiers';
+
+  @override
+  String get versionRecipes => 'Recipes';
+
+  @override
+  String get versionSchedules => 'Schedules';
+
+  @override
+  String get versionChanges => 'changes';
+
+  @override
+  String get versionChangeSummary => 'Change summary';
+
+  @override
+  String get versionChangeSummaryAvailable =>
+      'This version includes a recorded change summary.';
+
+  @override
+  String get versionChangeSummaryUnavailable =>
+      'No change summary is available for this version.';
+
+  @override
+  String get versionRestoreThisVersion => 'Restore this Version';
+
+  @override
+  String versionRestoreTitle(int version) {
+    return 'Restore Version $version?';
+  }
+
+  @override
+  String versionRestoreExplanation(int version) {
+    return 'A new published version will be created using the contents of Version $version. Versions published after Version $version will remain in history.';
+  }
+
+  @override
+  String get versionRestoreReason => 'Reason for restore (optional)';
+
+  @override
+  String get versionRestoreReasonHint =>
+      'For example, restore after an unintended pricing change';
+
+  @override
+  String get versionRestoreAsNewVersion => 'Restore as New Version';
+
+  @override
+  String get versionRestoring => 'Restoring…';
+
+  @override
+  String get versionRestoreResultTitle => 'Version restored';
+
+  @override
+  String versionRestoreSuccess(int newVersion, int sourceVersion) {
+    return 'Version $newVersion was created from Version $sourceVersion. Version $newVersion is now Current.';
+  }
+
+  @override
+  String versionRestoreNoChanges(int version) {
+    return 'Version $version already matches the current published content. No new version was created.';
+  }
+
+  @override
+  String versionComparisonDirection(int fromVersion, int toVersion) {
+    return 'Version $fromVersion → Version $toVersion';
+  }
+
+  @override
+  String get versionNoContentDifferences => 'No content differences found.';
+
+  @override
+  String get versionComparisonTruncated => 'Additional changes are not shown.';
+
+  @override
   String get catalogSetupTitle => 'Catalog Setup';
 
   @override
@@ -3300,4 +3456,421 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuListNotAvailable => '—';
+
+  @override
+  String get reviewPublishPageHelp =>
+      'Review Menu readiness, preview the selling experience, and publish a version for this selling context.';
+
+  @override
+  String get reviewSellingContext => 'Selling Context';
+
+  @override
+  String get reviewSellingContextHelp =>
+      'This review covers the Menus assigned to the selected selling context.';
+
+  @override
+  String get reviewBranch => 'Branch';
+
+  @override
+  String get reviewSalesChannel => 'Sales Channel';
+
+  @override
+  String get reviewTimezone => 'Timezone';
+
+  @override
+  String get reviewScope => 'Scope';
+
+  @override
+  String get reviewScopeAssignedMenus => 'Menus assigned to this context';
+
+  @override
+  String get reviewReadinessTab => 'Readiness';
+
+  @override
+  String get reviewPreviewTab => 'Preview';
+
+  @override
+  String get reviewPublishTab => 'Publish';
+
+  @override
+  String get reviewVersionsTab => 'Versions';
+
+  @override
+  String get reviewCurrentlyPublished => 'Currently Published';
+
+  @override
+  String get reviewNotPublishedYet => 'Not published yet';
+
+  @override
+  String get reviewNoCurrentVersion =>
+      'No Menu version has been published for this selling context.';
+
+  @override
+  String get reviewCurrentVersionLoadError =>
+      'Could not load the current published version.';
+
+  @override
+  String reviewVersionNumber(int version) {
+    return 'Version $version';
+  }
+
+  @override
+  String reviewPublishedAt(String date) {
+    return 'Published $date';
+  }
+
+  @override
+  String get reviewViewVersions => 'View Versions';
+
+  @override
+  String get reviewReadiness => 'Readiness';
+
+  @override
+  String get reviewReadinessHelp =>
+      'Review the authoritative validation for this selling context.';
+
+  @override
+  String get reviewCheckAgain => 'Check Again';
+
+  @override
+  String get reviewNeedsAttention => 'Needs Attention';
+
+  @override
+  String get reviewReadyToPublish => 'Ready to Publish';
+
+  @override
+  String get reviewFixBlockingErrors =>
+      'Fix the blocking errors before publishing.';
+
+  @override
+  String get reviewErrors => 'Errors';
+
+  @override
+  String get reviewWarnings => 'Warnings';
+
+  @override
+  String reviewWarningsToReview(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings to review.',
+      one: '1 warning to review.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reviewNoIssuesForScope(String branch, String channel) {
+    return 'No issues found for $branch · $channel.';
+  }
+
+  @override
+  String get reviewNoMenusAssigned => 'No Menus assigned';
+
+  @override
+  String reviewNoMenusAssignedHelp(String branch, String channel) {
+    return 'Assign at least one active Menu to $branch · $channel before publishing.';
+  }
+
+  @override
+  String get reviewGoToAssignments => 'Go to Assignments';
+
+  @override
+  String get reviewReadinessLoadError => 'Could not load readiness results.';
+
+  @override
+  String get reviewTryAgain => 'Try again.';
+
+  @override
+  String get reviewIssuesAll => 'All';
+
+  @override
+  String get reviewSearchIssues => 'Search issues...';
+
+  @override
+  String get reviewNoMatchingIssues => 'No matching issues';
+
+  @override
+  String get reviewTryDifferentSearch => 'Try a different search or filter.';
+
+  @override
+  String reviewIssueCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count issues',
+      one: '1 issue',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewIssueGroupMenus => 'Menus';
+
+  @override
+  String get reviewIssueGroupSections => 'Sections';
+
+  @override
+  String get reviewIssueGroupProducts => 'Products';
+
+  @override
+  String get reviewIssueGroupVariants => 'Variants';
+
+  @override
+  String get reviewIssueGroupRecipesMaterials => 'Recipes & Materials';
+
+  @override
+  String get reviewIssueGroupModifiers => 'Modifiers';
+
+  @override
+  String get reviewIssueGroupPricing => 'Pricing';
+
+  @override
+  String get reviewIssueGroupAvailability => 'Availability';
+
+  @override
+  String get reviewIssueGroupAssignmentsScope => 'Assignments / Scope';
+
+  @override
+  String get reviewIssueGroupOther => 'Other / General';
+
+  @override
+  String get reviewIssueGeneral => 'General';
+
+  @override
+  String get reviewOpenMenu => 'Open Menu';
+
+  @override
+  String get reviewOpenProduct => 'Open Product';
+
+  @override
+  String get reviewOpenSections => 'Open Sections';
+
+  @override
+  String get reviewReviewMenu => 'Review Menu';
+
+  @override
+  String get reviewIssueContextMenu => 'Menu issue';
+
+  @override
+  String get reviewIssueContextSection => 'Section issue';
+
+  @override
+  String get reviewIssueContextProduct => 'Product issue';
+
+  @override
+  String get reviewIssueContextVariant => 'Variant issue';
+
+  @override
+  String get reviewIssueContextPlacement => 'Menu placement issue';
+
+  @override
+  String get reviewIssueContextModifier => 'Modifier issue';
+
+  @override
+  String get reviewIssueContextRecipe => 'Recipe or material issue';
+
+  @override
+  String get reviewIssueContextScope => 'Selling context issue';
+
+  @override
+  String get reviewIssueContextGeneral => 'General issue';
+
+  @override
+  String get reviewPreviewContext =>
+      'Inspect the assigned Menu collection for this selling context.';
+
+  @override
+  String get reviewPreviewLanguage => 'Preview language';
+
+  @override
+  String get reviewPreviewLanguageDefault => 'Default';
+
+  @override
+  String get reviewPreviewLanguageArabic => 'Arabic';
+
+  @override
+  String get reviewPreviewLanguageEnglish => 'English';
+
+  @override
+  String get reviewPreviewShowHidden => 'Show hidden items';
+
+  @override
+  String get reviewPreviewShowUnavailable => 'Show unavailable items';
+
+  @override
+  String get reviewPreviewRefresh => 'Refresh Preview';
+
+  @override
+  String get reviewPreviewLoading => 'Loading Preview';
+
+  @override
+  String get reviewPreviewBlockingBanner =>
+      'This preview contains issues that must be fixed before publishing.';
+
+  @override
+  String get reviewPreviewReviewReadiness => 'Review Readiness';
+
+  @override
+  String get reviewPreviewAvailableNow => 'Available now';
+
+  @override
+  String get reviewPreviewOutsideScheduledHours => 'Outside scheduled hours';
+
+  @override
+  String get reviewPreviewHidden => 'Hidden';
+
+  @override
+  String get reviewPreviewUnavailable => 'Unavailable';
+
+  @override
+  String get reviewPreviewSoldOut => 'Sold out';
+
+  @override
+  String get reviewPreviewTemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
+  String get reviewPreviewAvailable => 'Available';
+
+  @override
+  String get reviewPreviewFeatured => 'Featured';
+
+  @override
+  String get reviewPreviewDefault => 'Default';
+
+  @override
+  String get reviewPreviewVariants => 'Variants';
+
+  @override
+  String get reviewPreviewModifiers => 'Modifiers';
+
+  @override
+  String get reviewPreviewRecipeConfigured => 'Recipe configured';
+
+  @override
+  String reviewPreviewRecipeComponents(int count) {
+    return '$count components';
+  }
+
+  @override
+  String get reviewPreviewNoMenus => 'No Menus to preview';
+
+  @override
+  String get reviewPreviewNoMenusHelp =>
+      'Assign at least one active Menu to this selling context.';
+
+  @override
+  String get reviewPreviewEmptySection =>
+      'No products are included in this section.';
+
+  @override
+  String get reviewPreviewError => 'Could not load Preview.';
+
+  @override
+  String get reviewPreviewRetry => 'Retry';
+
+  @override
+  String get reviewPreviewBasePrice => 'Base price';
+
+  @override
+  String get reviewPreviewRequired => 'Required';
+
+  @override
+  String get reviewPreviewOptional => 'Optional';
+
+  @override
+  String get reviewPreviewOptionUnavailable => 'Unavailable option';
+
+  @override
+  String reviewPublishQuestion(String branch, String channel) {
+    return 'Publish $branch · $channel?';
+  }
+
+  @override
+  String get reviewPublishScopeHelp =>
+      'This creates a published Menu version for this exact selling context.';
+
+  @override
+  String get reviewPublishCurrentVersion => 'Current version';
+
+  @override
+  String get reviewPublishCheckingReadiness => 'Checking readiness…';
+
+  @override
+  String get reviewPublishWaitForReadiness =>
+      'Wait for the current readiness check before publishing.';
+
+  @override
+  String get reviewPublishNoAssignedMenu =>
+      'Assign at least one active Menu to this selling context before publishing.';
+
+  @override
+  String get reviewPublishCannotPublish => 'Cannot publish yet';
+
+  @override
+  String get reviewPublishReviewErrors => 'Review Errors';
+
+  @override
+  String get reviewPublishReviewIssues => 'Review Issues';
+
+  @override
+  String reviewPublishWarningsCanProceed(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings remain. You can still publish this version.',
+      one: '1 warning remains. You can still publish this version.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPublishCleanReady =>
+      'No blocking issues were found. You can publish this version.';
+
+  @override
+  String get reviewPublishAction => 'Publish Menu Version';
+
+  @override
+  String get reviewPublishPublishing => 'Publishing…';
+
+  @override
+  String reviewPublishConfirmTitle(String branch, String channel) {
+    return 'Publish $branch · $channel?';
+  }
+
+  @override
+  String get reviewPublishImmutableExplanation =>
+      'A new immutable Menu version will be created if the configuration changed.';
+
+  @override
+  String get reviewPublishAlreadyUpToDate => 'Already up to date';
+
+  @override
+  String reviewPublishNoChanges(int version) {
+    return 'No Menu changes were found since Version $version. No new version was created.';
+  }
+
+  @override
+  String get reviewPublishSuccess => 'Published successfully';
+
+  @override
+  String reviewPublishCurrentForScope(String branch, String channel) {
+    return 'This is now the current published Menu version for $branch · $channel.';
+  }
+
+  @override
+  String get reviewPublishRevalidationFailedTitle =>
+      'Menu changed and is no longer ready to publish.';
+
+  @override
+  String get reviewPublishRevalidationFailedMessage =>
+      'New issues were found during the final check.';
+
+  @override
+  String get reviewPublishRequestFailed =>
+      'Could not publish the Menu version.';
+
+  @override
+  String get reviewPublishTryAgain => 'Try Again';
 }

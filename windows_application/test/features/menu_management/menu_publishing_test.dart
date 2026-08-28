@@ -37,7 +37,7 @@ void main() {
   );
 
   test(
-    'publishing uses validated selected scope and refreshes current Version',
+    'publishing uses the validated Branch and Channel collection and refreshes current Version',
     () async {
       final _PublishingRepository repository = _PublishingRepository();
       final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
@@ -47,7 +47,7 @@ void main() {
       await cubit.publish();
 
       expect(repository.publishedContexts, hasLength(1));
-      expect(repository.publishedContexts.single.menuId, 10);
+      expect(repository.publishedContexts.single.menuId, isNull);
       expect(cubit.state.publicationStatus, PublicationActionStatus.success);
       expect(cubit.state.currentVersion?.versionNumber, 2);
     },
@@ -132,6 +132,46 @@ void main() {
   );
 
   test(
+    'warnings do not block publishing, but errors prevent a publish request',
+    () async {
+      final _PublishingRepository repository = _PublishingRepository();
+      final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
+      repository.validationLoader = (_) => Future<MenuValidationResult>.value(
+        _validation(canPublish: true, warnings: 4),
+      );
+
+      await cubit.load();
+      await cubit.publish();
+      expect(repository.publishedContexts, hasLength(1));
+
+      repository.validationLoader = (_) => Future<MenuValidationResult>.value(
+        _validation(canPublish: false, warnings: 5),
+      );
+      await cubit.validate();
+      await cubit.publish();
+      expect(repository.publishedContexts, hasLength(1));
+    },
+  );
+
+  test(
+    'network publishing failures retain the review workspace state',
+    () async {
+      final _PublishingRepository repository = _PublishingRepository();
+      final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
+      await cubit.load();
+      repository.publicationLoader = (_) => Future<MenuPublicationResult>.error(
+        const ApiException(message: 'connection lost'),
+      );
+
+      await cubit.publish();
+
+      expect(cubit.state.publicationStatus, PublicationActionStatus.failure);
+      expect(cubit.state.validation?.canPublish, isTrue);
+      expect(cubit.state.currentVersion, isNotNull);
+    },
+  );
+
+  test(
     'duplicate publishing is prevented while a request is in flight',
     () async {
       final _PublishingRepository repository = _PublishingRepository();
@@ -152,18 +192,36 @@ void main() {
   );
 
   test(
-    'an unassigned or archived Menu cannot become the publishing scope',
+    'a stale publish response cannot update a new selling context',
+    () async {
+      final _PublishingRepository repository = _PublishingRepository();
+      final Completer<MenuPublicationResult> publication =
+          Completer<MenuPublicationResult>();
+      repository.publicationLoader = (_) => publication.future;
+      final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
+      await cubit.load();
+
+      unawaited(cubit.publish());
+      await Future<void>.delayed(Duration.zero);
+      await cubit.selectChannel('kiosk');
+      publication.complete(_publication());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.channel, 'kiosk');
+      expect(cubit.state.lastPublication, isNull);
+      expect(cubit.state.publicationStatus, PublicationActionStatus.idle);
+    },
+  );
+
+  test(
+    'legacy explicit Menu scope remains available without assignment preloading',
     () async {
       final _PublishingRepository repository = _PublishingRepository();
       final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
       await cubit.load(menuId: 10);
 
       cubit.selectScope(999);
-      expect(cubit.state.menuId, 10);
-
-      repository.assignments = <MenuAssignment>[_assignment(archived: true)];
-      await cubit.load(menuId: 10);
-      expect(cubit.state.menuId, isNull);
+      expect(cubit.state.menuId, 999);
       expect(cubit.state.eligibleMenus, isEmpty);
     },
   );
@@ -228,11 +286,11 @@ class _PublishingRepository extends BackendMenuCatalogRepository {
       );
 }
 
-MenuValidationResult _validation({bool canPublish = true}) =>
+MenuValidationResult _validation({bool canPublish = true, int warnings = 0}) =>
     MenuValidationResult.fromJson(<String, dynamic>{
       'isValid': canPublish,
       'errorCount': canPublish ? 0 : 1,
-      'warningCount': 0,
+      'warningCount': warnings,
       'informationCount': 0,
     });
 

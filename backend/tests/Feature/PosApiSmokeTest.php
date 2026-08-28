@@ -70,7 +70,8 @@ class PosApiSmokeTest extends TestCase
 
         $this->getJson('/api/v1/branches')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'Downtown');
+            ->assertJsonPath('data.0.name', 'Downtown')
+            ->assertJsonPath('data.0.currency', 'SYP');
 
         $state = $this->getJson("/api/v1/pos/state?branchId={$branchId}")
             ->assertOk()
@@ -150,6 +151,11 @@ class PosApiSmokeTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.payment.status', 'completed');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->json('data.payment.id'),
+            'currency' => 'SYP',
+        ]);
 
         $this->getJson("/api/v1/orders/{$orderId}/receipt")
             ->assertOk()

@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/json_helpers.dart';
 import '../../pos/models/branch.dart';
 import '../models/discount_list_item.dart';
@@ -94,7 +95,7 @@ class DiscountsApiRepository implements DiscountsRepository {
         _ => 'Percentage',
       },
       displayValue: switch (type) {
-        'fixed' => '\$${value.toStringAsFixed(2)} off',
+        'fixed' => '${CurrencyFormatter.format(value)} off',
         'bogo' => 'Buy ${value.toInt()} Get ${value.toInt()}',
         _ => '${_decimal(value)}% off',
       },
@@ -110,8 +111,9 @@ class DiscountsApiRepository implements DiscountsRepository {
         _ => DiscountStatus.active,
       },
       usageCount: readInt(json['usedCount']) ?? 0,
-      estimatedSavedValue:
-          '\$${readDouble(json['estimatedSavedValue']).toStringAsFixed(2)}',
+      estimatedSavedValue: CurrencyFormatter.format(
+        readDouble(json['estimatedSavedValue']),
+      ),
       code: code.isEmpty ? null : code,
       description: _nullableString(json['description']),
       applicationMode: readString(json['applicationMode'], fallback: 'code'),

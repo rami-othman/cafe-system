@@ -19,12 +19,11 @@ class MenuPublishingService
     public function publish(int $tenantId, array $input): array
     {
         $branch = $this->validation->branch($tenantId, $input['branchId']);
+        $automatic = ! array_key_exists('menuIds', $input);
         $menuIds = $this->menuIds($tenantId, $branch->id, $input['channel'], $input['menuIds'] ?? null);
         $publication = MenuPublication::query()->create(['tenant_id' => $tenantId, 'status' => MenuPublicationStatus::Pending]);
         $this->audit($tenantId, $publication, MenuAuditAction::PublicationStarted, ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds]);
-        $result = $menuIds === []
-            ? ['isValid' => false, 'errorCount' => 1, 'warningCount' => 0, 'informationCount' => 0, 'errors' => [['code' => 'NO_ASSIGNED_MENU', 'severity' => 'error', 'message' => 'No actively assigned menus are available for publishing.']], 'warnings' => [], 'information' => [], 'menus' => []]
-            : $this->validation->validateCollection($tenantId, $branch, $input['channel'], $menuIds, null)->toArray();
+        $result = $this->validation->validateCollection($tenantId, $branch, $input['channel'], $automatic ? null : $menuIds, null)->toArray();
         if ($result['errorCount'] > 0) {
             $publication->update(['status' => MenuPublicationStatus::Failed, 'validation_result' => $this->boundedValidation($result), 'failure_message' => 'Menu validation failed.']);
             $this->audit($tenantId, $publication, MenuAuditAction::PublicationFailed, ['branchId' => $branch->id, 'channel' => $input['channel'], 'validation' => $this->counts($result)]);
@@ -79,10 +78,11 @@ class MenuPublishingService
                 throw ValidationException::withMessages(['menuIds' => 'One or more selected menus are invalid.']);
             }
 
-            return array_values($submitted);
+            // Explicit subsets retain the existing global Menu canonical order.
+            return Menu::withTrashed()->where('tenant_id', $tenantId)->whereIn('id', $submitted)->orderBy('priority')->orderBy('id')->pluck('id')->all();
         }
 
-        return Menu::query()->where('tenant_id', $tenantId)->whereHas('assignments', fn ($q) => $q->where('branch_id', $branchId)->where('channel', $channel)->where('is_active', true))->orderBy('priority')->orderBy('id')->pluck('id')->all();
+        return $this->validation->assignedMenuIds($tenantId, $branchId, $channel);
     }
 
     private function response(bool $published, bool $noChanges, MenuPublication $publication, PublishedMenuVersion $version, array $validation): array

@@ -174,6 +174,7 @@ List<ValidationIssue> _issues(dynamic value) => (value as List? ?? const [])
 class ResolvedPreview extends Equatable {
   const ResolvedPreview({
     required this.canPublish,
+    required this.validation,
     required this.timezone,
     required this.evaluatedAt,
     required this.menus,
@@ -187,6 +188,11 @@ class ResolvedPreview extends Equatable {
     }
     return ResolvedPreview(
       canPublish: readBool(json['canPublish']),
+      validation: PreviewValidation.fromJson(
+        json['validation'] is Map
+            ? Map<String, dynamic>.from(json['validation'] as Map)
+            : const <String, dynamic>{},
+      ),
       timezone: readString(context['timezone']),
       evaluatedAt: readString(context['evaluatedAt']),
       menus: menus
@@ -200,6 +206,7 @@ class ResolvedPreview extends Equatable {
   }
 
   final bool canPublish;
+  final PreviewValidation validation;
   final String timezone;
   final String evaluatedAt;
   final List<ResolvedMenu> menus;
@@ -207,10 +214,36 @@ class ResolvedPreview extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     canPublish,
+    validation,
     timezone,
     evaluatedAt,
     menus,
   ];
+}
+
+/// Compact diagnostics returned with the preview. Readiness remains the full
+/// issue browser; this summary only supports Preview-local state messaging.
+class PreviewValidation extends Equatable {
+  const PreviewValidation({required this.errorCount, required this.issues});
+
+  factory PreviewValidation.fromJson(Map<String, dynamic> json) =>
+      PreviewValidation(
+        errorCount: readInt(json['errorCount']) ?? 0,
+        issues: <ValidationIssue>[
+          ..._issues(json['errors']),
+          ..._issues(json['warnings']),
+          ..._issues(json['information']),
+        ],
+      );
+
+  final int errorCount;
+  final List<ValidationIssue> issues;
+
+  bool get hasNoAssignedMenu =>
+      issues.any((ValidationIssue issue) => issue.code == 'NO_ASSIGNED_MENU');
+
+  @override
+  List<Object?> get props => <Object?>[errorCount, issues];
 }
 
 /// A deliberately small projection of the single-menu preview contract used
@@ -330,6 +363,8 @@ class ResolvedMenu extends Equatable {
   const ResolvedMenu({
     required this.id,
     required this.name,
+    required this.description,
+    required this.coverImageUrl,
     required this.priority,
     required this.isAssigned,
     required this.isScheduledAvailable,
@@ -340,6 +375,8 @@ class ResolvedMenu extends Equatable {
   factory ResolvedMenu.fromJson(Map<String, dynamic> json) => ResolvedMenu(
     id: _requiredPreviewInt(json, 'id'),
     name: readString(json['name'], fallback: 'Unnamed menu'),
+    description: readString(json['description']),
+    coverImageUrl: readString(json['coverImageUrl']),
     priority: _requiredPreviewInt(json, 'priority'),
     isAssigned: _requiredPreviewBool(json, 'isAssigned'),
     isScheduledAvailable: _requiredPreviewBool(json, 'isScheduledAvailable'),
@@ -355,6 +392,8 @@ class ResolvedMenu extends Equatable {
 
   final int id;
   final String name;
+  final String description;
+  final String coverImageUrl;
   final int priority;
   final bool isAssigned;
   final bool isScheduledAvailable;
@@ -365,6 +404,8 @@ class ResolvedMenu extends Equatable {
   List<Object?> get props => <Object?>[
     id,
     name,
+    description,
+    coverImageUrl,
     priority,
     isAssigned,
     isScheduledAvailable,
@@ -375,13 +416,19 @@ class ResolvedMenu extends Equatable {
 
 class ResolvedSection extends Equatable {
   const ResolvedSection({
+    required this.id,
     required this.name,
+    required this.description,
+    required this.imageUrl,
     required this.sortOrder,
     required this.products,
   });
   factory ResolvedSection.fromJson(Map<String, dynamic> json) =>
       ResolvedSection(
+        id: readInt(json['id']) ?? 0,
         name: readString(json['name'], fallback: 'Unnamed section'),
+        description: readString(json['description']),
+        imageUrl: readString(json['imageUrl']),
         sortOrder: readInt(json['sortOrder']) ?? 0,
         products: (json['products'] as List? ?? const [])
             .whereType<Map>()
@@ -391,17 +438,32 @@ class ResolvedSection extends Equatable {
             )
             .toList(growable: false),
       );
+  final int id;
   final String name;
+  final String description;
+  final String imageUrl;
   final int sortOrder;
   final List<ResolvedProduct> products;
   @override
-  List<Object?> get props => <Object?>[name, sortOrder, products];
+  List<Object?> get props => <Object?>[
+    id,
+    name,
+    description,
+    imageUrl,
+    sortOrder,
+    products,
+  ];
 }
 
 class ResolvedProduct extends Equatable {
   const ResolvedProduct({
+    required this.placementId,
     required this.id,
     required this.name,
+    required this.description,
+    required this.imageUrl,
+    required this.sortOrder,
+    required this.isFeatured,
     required this.isVisible,
     required this.isScheduledAvailable,
     required this.isOperationallyAvailable,
@@ -413,8 +475,13 @@ class ResolvedProduct extends Equatable {
   factory ResolvedProduct.fromJson(
     Map<String, dynamic> json,
   ) => ResolvedProduct(
+    placementId: readInt(json['placementId']) ?? 0,
     id: readInt(json['productId']) ?? 0,
     name: readString(json['name'], fallback: 'Unnamed product'),
+    description: readString(json['description']),
+    imageUrl: readString(json['imageUrl']),
+    sortOrder: readInt(json['sortOrder']) ?? 0,
+    isFeatured: readBool(json['isFeatured']),
     isVisible: readBool(json['isVisible']),
     isScheduledAvailable: readBool(json['isScheduledAvailable']),
     isOperationallyAvailable: readBool(json['isOperationallyAvailable']),
@@ -435,8 +502,13 @@ class ResolvedProduct extends Equatable {
         )
         .toList(growable: false),
   );
+  final int placementId;
   final int id;
   final String name;
+  final String description;
+  final String imageUrl;
+  final int sortOrder;
+  final bool isFeatured;
   final bool isVisible;
   final bool isScheduledAvailable;
   final bool isOperationallyAvailable;
@@ -446,8 +518,13 @@ class ResolvedProduct extends Equatable {
   final List<ResolvedModifierGroup> modifiers;
   @override
   List<Object?> get props => <Object?>[
+    placementId,
     id,
     name,
+    description,
+    imageUrl,
+    sortOrder,
+    isFeatured,
     isVisible,
     isScheduledAvailable,
     isOperationallyAvailable,
@@ -460,50 +537,77 @@ class ResolvedProduct extends Equatable {
 
 class ResolvedVariant extends Equatable {
   const ResolvedVariant({
+    required this.id,
     required this.name,
+    required this.sku,
+    required this.barcode,
+    required this.sortOrder,
+    required this.basePrice,
     required this.effectivePrice,
-    required this.priceScope,
     required this.isDefault,
     required this.isScheduledAvailable,
     required this.isOperationallyAvailable,
     required this.isSellable,
     required this.reasons,
+    required this.recipeConfigured,
+    required this.recipeComponentCount,
   });
   factory ResolvedVariant.fromJson(Map<String, dynamic> json) =>
       ResolvedVariant(
+        id: readInt(json['id']) ?? 0,
         name: readString(json['name'], fallback: 'Unnamed variant'),
+        sku: readString(json['sku']),
+        barcode: readString(json['barcode']),
+        sortOrder: readInt(json['sortOrder']) ?? 0,
+        basePrice: readDouble(json['basePrice']),
         effectivePrice: readDouble(json['effectivePrice']),
-        priceScope: readString(json['matchedPriceScope']),
         isDefault: readBool(json['isDefault']),
         isScheduledAvailable: readBool(json['isScheduledAvailable']),
         isOperationallyAvailable: readBool(json['isOperationallyAvailable']),
         isSellable: readBool(json['isSellable']),
         reasons: _strings(json['unavailabilityReasons']),
+        recipeConfigured: readBool(json['recipeConfigured']),
+        recipeComponentCount: readInt(json['recipeComponentCount']) ?? 0,
       );
+  final int id;
   final String name;
+  final String sku;
+  final String barcode;
+  final int sortOrder;
+  final double basePrice;
   final double effectivePrice;
-  final String priceScope;
   final bool isDefault;
   final bool isScheduledAvailable;
   final bool isOperationallyAvailable;
   final bool isSellable;
   final List<String> reasons;
+  final bool recipeConfigured;
+  final int recipeComponentCount;
   @override
   List<Object?> get props => <Object?>[
+    id,
     name,
+    sku,
+    barcode,
+    sortOrder,
+    basePrice,
     effectivePrice,
-    priceScope,
     isDefault,
     isScheduledAvailable,
     isOperationallyAvailable,
     isSellable,
     reasons,
+    recipeConfigured,
+    recipeComponentCount,
   ];
 }
 
 class ResolvedModifierGroup extends Equatable {
   const ResolvedModifierGroup({
+    required this.id,
     required this.name,
+    required this.groupType,
+    required this.selectionType,
     required this.isRequired,
     required this.minSelections,
     required this.maxSelections,
@@ -512,7 +616,10 @@ class ResolvedModifierGroup extends Equatable {
   });
   factory ResolvedModifierGroup.fromJson(Map<String, dynamic> json) =>
       ResolvedModifierGroup(
+        id: readInt(json['id']) ?? 0,
         name: readString(json['name'], fallback: 'Unnamed modifier group'),
+        groupType: readString(json['groupType']),
+        selectionType: readString(json['selectionType']),
         isRequired: readBool(json['isRequired']),
         minSelections: readInt(json['minSelections']) ?? 0,
         maxSelections: readInt(json['maxSelections']) ?? 0,
@@ -526,7 +633,10 @@ class ResolvedModifierGroup extends Equatable {
             )
             .toList(growable: false),
       );
+  final int id;
   final String name;
+  final String groupType;
+  final String selectionType;
   final bool isRequired;
   final int minSelections;
   final int maxSelections;
@@ -534,7 +644,10 @@ class ResolvedModifierGroup extends Equatable {
   final List<ResolvedModifierOption> options;
   @override
   List<Object?> get props => <Object?>[
+    id,
     name,
+    groupType,
+    selectionType,
     isRequired,
     minSelections,
     maxSelections,
@@ -545,21 +658,37 @@ class ResolvedModifierGroup extends Equatable {
 
 class ResolvedModifierOption extends Equatable {
   const ResolvedModifierOption({
+    required this.id,
     required this.name,
     required this.priceDelta,
+    required this.isDefault,
     required this.isAvailable,
+    required this.sortOrder,
   });
   factory ResolvedModifierOption.fromJson(Map<String, dynamic> json) =>
       ResolvedModifierOption(
+        id: readInt(json['id']) ?? 0,
         name: readString(json['name'], fallback: 'Unnamed option'),
         priceDelta: readDouble(json['priceDelta']),
+        isDefault: readBool(json['isDefault']),
         isAvailable: readBool(json['isAvailable']),
+        sortOrder: readInt(json['sortOrder']) ?? 0,
       );
+  final int id;
   final String name;
   final double priceDelta;
+  final bool isDefault;
   final bool isAvailable;
+  final int sortOrder;
   @override
-  List<Object?> get props => <Object?>[name, priceDelta, isAvailable];
+  List<Object?> get props => <Object?>[
+    id,
+    name,
+    priceDelta,
+    isDefault,
+    isAvailable,
+    sortOrder,
+  ];
 }
 
 List<String> _strings(dynamic value) => (value as List? ?? const [])

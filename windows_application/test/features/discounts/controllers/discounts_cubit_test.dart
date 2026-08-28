@@ -88,6 +88,6 @@ DiscountListItem _item(String id, String name, bool active) => DiscountListItem(
   validPeriodPrimary: 'Always Valid',
   status: active ? DiscountStatus.active : DiscountStatus.inactive,
   usageCount: 0,
-  estimatedSavedValue: '\$0.00',
+  estimatedSavedValue: '0 SYP',
   isActive: active,
 );

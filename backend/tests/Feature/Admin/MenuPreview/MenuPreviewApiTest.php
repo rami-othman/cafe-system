@@ -40,6 +40,23 @@ class MenuPreviewApiTest extends TestCase
         $this->postJson('/api/v1/admin/menu-management/preview', ['branchId' => $branch, 'channel' => 'pos', 'menuIds' => [$foreignMenu]], $this->headers($tenant))->assertUnprocessable()->assertJsonValidationErrors('menuIds');
     }
 
+    public function test_automatic_collection_without_active_assignments_is_not_publishable(): void
+    {
+        [$tenant, $branch, $menu] = $this->graph();
+        DB::table('menu_assignments')->where('menu_id', $menu)->update(['is_active' => false]);
+
+        $this->postJson('/api/v1/admin/menu-management/preview', ['branchId' => $branch, 'channel' => 'pos'], $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data.canPublish', false)
+            ->assertJsonPath('data.validation.errorCount', 1)
+            ->assertJsonPath('data.validation.errors.0.code', 'NO_ASSIGNED_MENU')
+            ->assertJsonCount(0, 'data.menus');
+
+        $explicit = $this->postJson('/api/v1/admin/menu-management/preview', ['branchId' => $branch, 'channel' => 'pos', 'menuIds' => [$menu]], $this->headers($tenant))->assertOk();
+        $this->assertFalse(collect($explicit->json('data.validation.errors'))->contains('code', 'NO_ASSIGNED_MENU'));
+        $this->assertTrue(collect($explicit->json('data.validation.errors'))->contains('code', 'MENU_MISSING_ASSIGNMENT'));
+    }
+
     public function test_price_overrides_and_menu_schedule_are_resolved(): void
     {
         [$tenant, $branch, $menu, $product, $variant] = $this->graph();

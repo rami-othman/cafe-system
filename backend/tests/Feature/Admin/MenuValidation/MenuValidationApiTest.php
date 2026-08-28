@@ -93,6 +93,23 @@ class MenuValidationApiTest extends TestCase
         $this->postJson('/api/v1/admin/menus/'.$foreignMenu.'/validate', ['branchId' => $branch, 'channel' => 'pos'], $this->headers($tenant))->assertNotFound();
     }
 
+    public function test_automatic_collection_without_active_assignments_is_blocked_but_explicit_selection_keeps_existing_diagnostics(): void
+    {
+        [$tenant, $branch, $menu] = $this->menuGraph();
+        DB::table('menu_assignments')->where('menu_id', $menu)->update(['is_active' => false]);
+
+        $this->postJson('/api/v1/admin/menu-management/validate', ['branchId' => $branch, 'channel' => 'pos'], $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data.isValid', false)
+            ->assertJsonPath('data.errorCount', 1)
+            ->assertJsonCount(0, 'data.menus')
+            ->assertJsonPath('data.errors.0.code', 'NO_ASSIGNED_MENU');
+
+        $explicit = $this->postJson('/api/v1/admin/menu-management/validate', ['branchId' => $branch, 'channel' => 'pos', 'menuIds' => [$menu]], $this->headers($tenant))->assertOk();
+        $this->assertFalse(collect($explicit->json('data.errors'))->contains('code', 'NO_ASSIGNED_MENU'));
+        $this->assertTrue(collect($explicit->json('data.errors'))->contains('code', 'MENU_MISSING_ASSIGNMENT'));
+    }
+
     public function test_combined_remove_validation_uses_bounded_group_maxima_and_runtime_resolver_remains_authoritative(): void
     {
         $cases = [

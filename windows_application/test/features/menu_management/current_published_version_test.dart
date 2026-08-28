@@ -29,7 +29,7 @@ void main() {
   );
 
   test(
-    'single Menu publishing submits exactly one supported menu ID',
+    'publishing never submits menu IDs, even when a legacy review context has one',
     () async {
       late RequestOptions request;
       final BackendMenuCatalogRepository repository = _repository((options) {
@@ -41,11 +41,7 @@ void main() {
         const ReviewContext(branchId: 7, channel: 'pos', menuId: 11),
       );
 
-      expect(request.data, <String, dynamic>{
-        'branchId': 7,
-        'channel': 'pos',
-        'menuIds': <int>[11],
-      });
+      expect(request.data, <String, dynamic>{'branchId': 7, 'channel': 'pos'});
     },
   );
 

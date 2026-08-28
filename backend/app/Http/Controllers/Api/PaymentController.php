@@ -57,7 +57,13 @@ class PaymentController extends Controller
         abort_if(! $row, 404, 'Order not found.');
         abort_if((float) $data['amount'] < (float) $row->total, 422, 'Payment amount is less than order total.');
 
-        $payment = DB::transaction(function () use ($tenantId, $row, $data) {
+        $currency = (string) (DB::table('branches')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $row->branch_id)
+            ->whereNull('deleted_at')
+            ->value('currency') ?? 'SYP');
+
+        $payment = DB::transaction(function () use ($tenantId, $row, $data, $currency) {
             $now = now();
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId,
@@ -67,7 +73,7 @@ class PaymentController extends Controller
                 'cashier_id' => $row->cashier_id,
                 'method' => $data['method'],
                 'amount' => $data['amount'],
-                'currency' => 'SYP',
+                'currency' => $currency,
                 'status' => 'completed',
                 'reference_number' => $data['reference'] ?? null,
                 'notes' => $data['note'] ?? null,

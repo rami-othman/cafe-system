@@ -118,7 +118,15 @@ state, legacy Variants/Modifiers routes redirect to Workspace tabs, and
 Recipe/Variant children retain Product and Variant identities for returns.
 Batch 8 and Phase 4K remain **NOT STARTED**.
 
-CURRENT APPROVED WORK: **Batch 10 — Assignments & Schedules, Group 1** is
+CURRENT APPROVED WORK: **Batch 11 — Review & Publish, Group 1** is implemented.
+Review & Publish is now a constrained, Readiness-first Branch + Sales Channel
+workspace. It auto-loads only current-version metadata and authoritative
+collection validation, keeps failures local, presents no-assignment as a
+scope-level Assignments handoff, and initializes history only after Versions is
+selected. Detailed issues, Preview, Publish, and Versions redesign remain for
+their later Batch 11 groups.
+
+**Batch 10 — Assignments & Schedules, Group 1** is
 implemented. The main workspace is now context-first, uses one bounded
 collection preview for active assigned Menus, and defers Menu schedule-rule
 requests until Manage Schedule is opened. **Group 2 — Reorder Menus** is
@@ -183,6 +191,21 @@ Temporary unavailability is entered as a Branch-local wall-clock timestamp.
 Flutter sends `YYYY-MM-DDTHH:mm:ss` without a workstation/device offset. The
 backend interprets it in the authoritative Branch timezone, persists the canonical
 instant, and returns the corresponding Branch-local wall-clock time consistently.
+
+## BATCH 11 — GROUP 5: VERSIONS, COMPARE & RESTORE
+
+- Version History loads only when the Versions tab opens, using one bounded,
+  paginated version-history request. The row-level `isCurrent` marker is the
+  authoritative Current badge; no separate current-version request is made.
+- Detail, Compare, and Restore remain opt-in. The manager UI hides checksum,
+  publication IDs, and raw snapshot payloads while retaining the established
+  version API contracts.
+- Comparison is limited to two selected versions and uses the server comparison
+  endpoint in ascending version direction. Restore confirms that it creates a
+  new immutable Version and refreshes the bounded history after completion.
+- English and Arabic strings cover history, comparison, restore confirmation,
+  result, and local failure states. Scope changes invalidate stale version
+  requests and clear the selected history state.
 
 ## DEFERRED / NOT IMPLEMENTED
 

@@ -18,7 +18,7 @@ void main() {
     await tester.pumpWidget(const App());
     await tester.pumpAndSettle();
 
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
 
     await tester.tap(find.text('Orders'));
     await tester.pumpAndSettle();
@@ -28,7 +28,7 @@ void main() {
       find.text('View and manage all active, held, and recent orders.'),
       findsOneWidget,
     );
-    expect(find.text('PAY \$0.00'), findsNothing);
+    expect(find.text('PAY 0 SYP'), findsNothing);
     expect(find.text('Sarah Jenkins'), findsOneWidget);
     expect(find.text('Walk-in 4'), findsNothing);
 
@@ -50,7 +50,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Search products...'), findsOneWidget);
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
   });
 
   testWidgets('opens and closes order details panel from an order card', (

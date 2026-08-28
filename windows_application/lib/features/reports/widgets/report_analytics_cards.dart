@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../models/daily_report_data.dart';
 
@@ -41,7 +42,7 @@ class HourlySalesChart extends StatelessWidget {
   Widget build(BuildContext context) => ReportSectionCard(
     title: 'Sales by Hour',
     trailing: Text(
-      'Peak: 9:00 AM (\$845.50)',
+      'Peak: 9:00 AM (${CurrencyFormatter.format(845.50)})',
       style: AppTextStyles.labelSmall.copyWith(color: AppColors.textMuted),
     ),
     child: SizedBox(

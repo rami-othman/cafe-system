@@ -28,7 +28,8 @@ class PublishedMenuSnapshotBuilder
                     ]),
                 ]),
             ]),
-        ])->orderBy('priority')->orderBy('id')->get();
+        ])->get()->keyBy('id');
+        $menus = collect($menuIds)->map(fn (int $id) => $menus->get($id))->filter()->values();
 
         return ['context' => ['tenantId' => $tenantId, 'branchId' => $branch->id, 'channel' => $channel, 'schemaVersion' => 2, 'generatedAt' => null], 'menus' => $menus->map(fn (Menu $menu) => $this->menu($tenantId, $menu, $branch, $channel))->values()->all()];
     }

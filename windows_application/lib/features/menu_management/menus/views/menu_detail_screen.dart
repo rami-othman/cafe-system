@@ -7,7 +7,6 @@ import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/menu_detail_cubit.dart';
 import '../controllers/menu_editor_cubit.dart';
@@ -63,68 +62,66 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      BlocBuilder<MenuDetailCubit, MenuDetailState>(
-        builder: (context, state) {
-          final menu = state.menu;
-          if (menu == null) return _loadingOrError(state);
-          return DesktopPageLayout(
-            padding: EdgeInsets.zero,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.xl,
-                AppSpacing.xl,
-                72,
-              ),
-              child: Align(
-                alignment: AlignmentDirectional.topStart,
-                child: ConstrainedBox(
-                  key: const Key('menu-workspace-content'),
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      _WorkspaceHeader(
-                        menu: menu,
-                        state: state,
-                        onEdit: _openEditor,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _Tabs(selected: _tab, onSelected: _select),
-                      const SizedBox(height: AppSpacing.lg),
-                      if (menu.isArchived) const _ReadOnlyNotice(),
-                      if (state.errorMessage != null)
-                        _Message(state.errorMessage!),
-                      switch (_tab) {
-                        MenuWorkspaceTab.overview => _Overview(
-                          menu: menu,
-                          onTab: _select,
-                        ),
-                        MenuWorkspaceTab.sections => _Sections(
-                          menu: menu,
-                          state: state,
-                        ),
-                        MenuWorkspaceTab.products => ProductPlacementsScreen(
-                          menuId: widget.menuId,
-                          embedded: true,
-                          initialMenu: menu,
-                          onAddSection: () => showMenuSectionEditor(
-                            context,
-                            onSubmit: context
-                                .read<MenuDetailCubit>()
-                                .createSection,
-                          ),
-                        ),
-                      },
-                    ],
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<MenuDetailCubit, MenuDetailState>(
+    builder: (context, state) {
+      final menu = state.menu;
+      if (menu == null) return _loadingOrError(state);
+      return DesktopPageLayout(
+        padding: EdgeInsets.zero,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.xl,
+            AppSpacing.xl,
+            72,
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.topStart,
+            child: ConstrainedBox(
+              key: const Key('menu-workspace-content'),
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _WorkspaceHeader(
+                    menu: menu,
+                    state: state,
+                    onEdit: _openEditor,
                   ),
-                ),
+                  const SizedBox(height: AppSpacing.md),
+                  _Tabs(selected: _tab, onSelected: _select),
+                  const SizedBox(height: AppSpacing.lg),
+                  if (menu.isArchived) const _ReadOnlyNotice(),
+                  if (state.errorMessage != null) _Message(state.errorMessage!),
+                  switch (_tab) {
+                    MenuWorkspaceTab.overview => _Overview(
+                      menu: menu,
+                      onTab: _select,
+                    ),
+                    MenuWorkspaceTab.sections => _Sections(
+                      menu: menu,
+                      state: state,
+                    ),
+                    MenuWorkspaceTab.products => ProductPlacementsScreen(
+                      menuId: widget.menuId,
+                      embedded: true,
+                      initialMenu: menu,
+                      onAddSection: () => showMenuSectionEditor(
+                        context,
+                        onSubmit: context.read<MenuDetailCubit>().createSection,
+                      ),
+                    ),
+                  },
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       );
+    },
+  );
 
   Widget _loadingOrError(MenuDetailState state) => DesktopPageLayout(
     child: Center(
@@ -1090,6 +1087,7 @@ class _MenuOverviewCopy {
 /// Compatibility accessors for the new ARB entries while Flutter's generated
 /// localization source is refreshed. Once `gen-l10n` writes the entries, the
 /// generated instance members take precedence over these extension members.
+/*
 extension _MenuSectionLocalizations on AppLocalizations {
   bool get _ar => localeName.startsWith('ar');
   String get menuSectionsTitle => _ar ? 'الأقسام' : 'Sections';
@@ -1149,6 +1147,7 @@ extension _MenuSectionLocalizations on AppLocalizations {
       : 'Couldn’t save this Section. Check the fields and try again.';
   String get menuSectionEditorSave => _ar ? 'حفظ التغييرات' : 'Save Changes';
 }
+*/
 
 Future<void> showMenuSectionEditor(
   BuildContext context, {

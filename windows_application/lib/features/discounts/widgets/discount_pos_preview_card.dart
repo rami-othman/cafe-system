@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/tax_formatter.dart';
 import '../../../shared/widgets/app_card.dart';
 
@@ -106,7 +107,7 @@ class _ReceiptRow extends StatelessWidget {
           child: Text(label, style: style.copyWith(color: color)),
         ),
         Text(
-          '$sign SAR ${value.abs().toStringAsFixed(2)}',
+          '$sign${CurrencyFormatter.format(value.abs())}',
           style: style.copyWith(color: color),
         ),
       ],

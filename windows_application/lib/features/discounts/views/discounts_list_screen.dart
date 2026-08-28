@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../controllers/discounts_cubit.dart';
@@ -184,7 +185,7 @@ class DiscountsListScreen extends StatelessWidget {
       DiscountSummaryMetric(label: 'TOTAL USAGE (THIS MONTH)', value: '$usage'),
       DiscountSummaryMetric(
         label: 'ESTIMATED VALUE SAVED',
-        value: '\$${saved.toStringAsFixed(2)}',
+        value: CurrencyFormatter.format(saved),
       ),
     ];
   }

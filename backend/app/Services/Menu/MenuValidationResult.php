@@ -7,6 +7,14 @@ class MenuValidationResult
     /** @var array<int, array{menuId:int, issues:array<int, MenuValidationIssue>}> */
     private array $menus = [];
 
+    /** @var array<int, MenuValidationIssue> */
+    private array $collectionIssues = [];
+
+    public function noAssignedMenu(): void
+    {
+        $this->collectionIssues[] = new MenuValidationIssue('NO_ASSIGNED_MENU', 'error', 'No actively assigned menus are available for publishing.', 'menu_collection', null, 0);
+    }
+
     public function begin(int $menuId): void
     {
         $this->menus[$menuId] ??= ['menuId' => $menuId, 'issues' => []];
@@ -20,7 +28,7 @@ class MenuValidationResult
 
     public function toArray(): array
     {
-        $issues = collect($this->menus)->flatMap(fn (array $menu) => $menu['issues']);
+        $issues = collect($this->collectionIssues)->concat(collect($this->menus)->flatMap(fn (array $menu) => $menu['issues']));
         $by = fn (string $severity) => $issues->filter(fn (MenuValidationIssue $issue) => $issue->severity === $severity)->values()->map->toArray()->all();
         $menus = collect($this->menus)->map(function (array $menu): array {
             $issues = collect($menu['issues']);

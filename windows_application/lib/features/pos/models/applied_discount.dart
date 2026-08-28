@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
 
+import '../../../core/utils/currency_formatter.dart';
+
 enum AppliedDiscountType { percentage, fixedAmount }
 
 class AppliedDiscount extends Equatable {
@@ -33,7 +35,7 @@ class AppliedDiscount extends Equatable {
   String get displayLabel {
     return switch (type) {
       AppliedDiscountType.percentage => '${value.toStringAsFixed(0)}% off',
-      AppliedDiscountType.fixedAmount => '-\$${value.toStringAsFixed(2)}',
+      AppliedDiscountType.fixedAmount => '-${CurrencyFormatter.format(value)}',
     };
   }
 

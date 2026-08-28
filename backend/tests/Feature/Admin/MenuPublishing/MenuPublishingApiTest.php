@@ -10,6 +10,15 @@ class MenuPublishingApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_current_version_returns_null_when_the_scope_has_not_been_published(): void
+    {
+        [$tenant, $branch] = $this->graph();
+
+        $this->getJson('/api/v1/admin/menu-management/current-version?branchId='.$branch.'&channel=pos', $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data', null);
+    }
+
     public function test_publish_creates_immutable_current_snapshot_and_no_change_attempt(): void
     {
         [$tenant, $branch, $menu, $product, $variant, $section, $placement] = $this->graph();
@@ -52,6 +61,67 @@ class MenuPublishingApiTest extends TestCase
         $this->getJson('/api/v1/admin/menu-management/current-version?branchId='.$branch.'&channel=pos', $this->headers($foreign))->assertUnprocessable()->assertJsonValidationErrors('branchId');
     }
 
+    public function test_assignment_scope_reorder_controls_automatic_preview_validation_and_snapshot_order(): void
+    {
+        [$tenant, $branch, $first, $product] = $this->graph();
+        $second = $this->menu($tenant, $product, 'Second', 0);
+        $inactive = $this->menu($tenant, $product, 'Inactive', 50);
+        DB::table('menus')->where('id', $first)->update(['priority' => 100]);
+        $headers = $this->headers($tenant);
+
+        $this->putJson('/api/v1/admin/menu-management/assignments', [
+            'branchId' => $branch,
+            'channel' => 'pos',
+            'assignments' => [
+                ['menuId' => $first, 'isActive' => true],
+                ['menuId' => $second, 'isActive' => true],
+                ['menuId' => $inactive, 'isActive' => false],
+            ],
+        ], $headers)->assertOk();
+        $this->putJson('/api/v1/admin/menu-management/assignments', [
+            'branchId' => $branch,
+            'channel' => 'pos',
+            'assignments' => [
+                ['menuId' => $second, 'isActive' => true],
+                ['menuId' => $first, 'isActive' => true],
+                ['menuId' => $inactive, 'isActive' => false],
+            ],
+        ], $headers)->assertOk();
+
+        $this->postJson('/api/v1/admin/menu-management/validate', ['branchId' => $branch, 'channel' => 'pos'], $headers)
+            ->assertOk()
+            ->assertJsonPath('data.menus.0.menuId', $second)
+            ->assertJsonPath('data.menus.1.menuId', $first);
+        $this->postJson('/api/v1/admin/menu-management/preview', ['branchId' => $branch, 'channel' => 'pos'], $headers)
+            ->assertOk()
+            ->assertJsonPath('data.menus.0.id', $second)
+            ->assertJsonPath('data.menus.1.id', $first)
+            ->assertJsonCount(2, 'data.menus');
+
+        $version = $this->publish($tenant, $branch)->assertOk()->json('data.version');
+        $payload = $this->getJson("/api/v1/admin/menu-management/versions/{$version['id']}?includePayload=true", $headers)
+            ->assertOk()
+            ->json('data.payload');
+        $this->assertSame([$second, $first], array_column($payload['menus'], 'id'));
+    }
+
+    public function test_publish_without_active_assignments_records_the_shared_no_assigned_menu_result(): void
+    {
+        [$tenant, $branch, $menu] = $this->graph();
+        DB::table('menu_assignments')->where('menu_id', $menu)->update(['is_active' => false]);
+
+        $this->publish($tenant, $branch)->assertUnprocessable()->assertJsonValidationErrors('publish');
+        $result = (string) DB::table('menu_publications')->where('tenant_id', $tenant)->value('validation_result');
+        $this->assertStringContainsString('NO_ASSIGNED_MENU', $result);
+
+        $this->postJson('/api/v1/admin/menu-management/publish', ['branchId' => $branch, 'channel' => 'pos', 'menuIds' => [$menu]], $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('publish');
+        $explicitResult = (string) DB::table('menu_publications')->where('tenant_id', $tenant)->latest('id')->value('validation_result');
+        $this->assertStringContainsString('MENU_MISSING_ASSIGNMENT', $explicitResult);
+        $this->assertStringNotContainsString('NO_ASSIGNED_MENU', $explicitResult);
+    }
+
     public function test_schema_v2_recipe_snapshot_is_immutable_ordered_and_recipe_only_change_versions_it(): void
     {
         [$tenant, $branch, , $product, $variant] = $this->graph();
@@ -88,6 +158,15 @@ class MenuPublishingApiTest extends TestCase
     private function publish(int $tenant, int $branch)
     {
         return $this->postJson('/api/v1/admin/menu-management/publish', ['branchId' => $branch, 'channel' => 'pos'], $this->headers($tenant));
+    }
+
+    private function menu(int $tenant, int $product, string $name, int $priority): int
+    {
+        $menu = DB::table('menus')->insertGetId(['tenant_id' => $tenant, 'name' => $name, 'status' => 'draft', 'priority' => $priority, 'created_at' => now(), 'updated_at' => now()]);
+        $section = DB::table('menu_sections')->insertGetId(['tenant_id' => $tenant, 'menu_id' => $menu, 'name' => 'Coffee', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('menu_item_placements')->insert(['tenant_id' => $tenant, 'menu_section_id' => $section, 'product_id' => $product, 'is_visible' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        return $menu;
     }
 
     private function graph(?int $tenant = null): array

@@ -465,7 +465,7 @@ class _PriceFact extends StatelessWidget {
       Text(
         value,
         textDirection:
-            value.startsWith('USD') ||
+            value.endsWith('SYP') ||
                 value.startsWith('+') ||
                 value.startsWith('-')
             ? TextDirection.ltr

@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../repositories/menu_catalog_repository.dart';
-import '../../review/models/review_models.dart';
 import '../models/published_version_models.dart';
 
 enum VersionRequestStatus { idle, loading, loaded, failure }
@@ -31,10 +30,9 @@ class PublishedVersionState extends Equatable {
     this.comparisonStatus = VersionRequestStatus.idle,
     this.rollbackStatus = RollbackStatus.idle,
     this.history,
-    this.currentVersion,
     this.selectedVersion,
     this.detail,
-    this.comparisonTarget,
+    this.comparisonSelection = const <PublishedVersion>[],
     this.comparison,
     this.rollbackResult,
     this.historyError,
@@ -51,10 +49,9 @@ class PublishedVersionState extends Equatable {
   final VersionRequestStatus comparisonStatus;
   final RollbackStatus rollbackStatus;
   final PublishedVersionPage? history;
-  final PublishedMenuVersion? currentVersion;
   final PublishedVersion? selectedVersion;
   final PublishedVersionDetail? detail;
-  final PublishedVersion? comparisonTarget;
+  final List<PublishedVersion> comparisonSelection;
   final VersionComparison? comparison;
   final RollbackResult? rollbackResult;
   final String? historyError;
@@ -74,10 +71,9 @@ class PublishedVersionState extends Equatable {
     VersionRequestStatus? comparisonStatus,
     RollbackStatus? rollbackStatus,
     PublishedVersionPage? history,
-    PublishedMenuVersion? currentVersion,
     PublishedVersion? selectedVersion,
     PublishedVersionDetail? detail,
-    PublishedVersion? comparisonTarget,
+    List<PublishedVersion>? comparisonSelection,
     VersionComparison? comparison,
     RollbackResult? rollbackResult,
     String? historyError,
@@ -86,10 +82,9 @@ class PublishedVersionState extends Equatable {
     String? comparisonError,
     String? rollbackError,
     bool clearHistory = false,
-    bool clearCurrent = false,
     bool clearSelected = false,
     bool clearDetail = false,
-    bool clearComparisonTarget = false,
+    bool clearComparisonSelection = false,
     bool clearComparison = false,
     bool clearRollbackResult = false,
     bool clearHistoryError = false,
@@ -106,14 +101,13 @@ class PublishedVersionState extends Equatable {
     comparisonStatus: comparisonStatus ?? this.comparisonStatus,
     rollbackStatus: rollbackStatus ?? this.rollbackStatus,
     history: clearHistory ? null : history ?? this.history,
-    currentVersion: clearCurrent ? null : currentVersion ?? this.currentVersion,
     selectedVersion: clearSelected
         ? null
         : selectedVersion ?? this.selectedVersion,
     detail: clearDetail ? null : detail ?? this.detail,
-    comparisonTarget: clearComparisonTarget
-        ? null
-        : comparisonTarget ?? this.comparisonTarget,
+    comparisonSelection: clearComparisonSelection
+        ? const <PublishedVersion>[]
+        : comparisonSelection ?? this.comparisonSelection,
     comparison: clearComparison ? null : comparison ?? this.comparison,
     rollbackResult: clearRollbackResult
         ? null
@@ -138,10 +132,9 @@ class PublishedVersionState extends Equatable {
     comparisonStatus,
     rollbackStatus,
     history,
-    currentVersion,
     selectedVersion,
     detail,
-    comparisonTarget,
+    comparisonSelection,
     comparison,
     rollbackResult,
     historyError,
@@ -162,8 +155,16 @@ class PublishedVersionCubit extends Cubit<PublishedVersionState> {
   int _rollbackTicket = 0;
 
   Future<void> setContext(int? branchId, String? channel) async {
-    if (branchId == null || branchId <= 0 || channel == null || channel.isEmpty)
+    if (branchId == null ||
+        branchId <= 0 ||
+        channel == null ||
+        channel.isEmpty) {
+      if (state.hasContext) {
+        _invalidateRequests();
+        emit(const PublishedVersionState());
+      }
       return;
+    }
     if (state.branchId == branchId && state.channel == channel) return;
     _invalidateRequests();
     emit(PublishedVersionState(branchId: branchId, channel: channel));
@@ -189,17 +190,12 @@ class PublishedVersionCubit extends Cubit<PublishedVersionState> {
         channel: state.channel!,
         page: requestedPage,
       );
-      final current = await repository.getCurrentPublishedVersion(
-        ReviewContext(branchId: state.branchId!, channel: state.channel!),
-      );
       if (isClosed || request != _historyTicket || scope != state.scopeKey)
         return;
       emit(
         state.copyWith(
           historyStatus: VersionRequestStatus.loaded,
           history: result,
-          currentVersion: current,
-          clearCurrent: current == null,
         ),
       );
     } catch (error) {
@@ -295,21 +291,35 @@ class PublishedVersionCubit extends Cubit<PublishedVersionState> {
     }
   }
 
-  void selectComparisonTarget(PublishedVersion? version) => emit(
-    state.copyWith(
-      comparisonTarget: version,
-      clearComparisonTarget: version == null,
-      clearComparison: true,
-      clearComparisonError: true,
-    ),
-  );
+  void toggleComparisonSelection(PublishedVersion version) {
+    final selected = List<PublishedVersion>.of(state.comparisonSelection);
+    final index = selected.indexWhere((item) => item.id == version.id);
+    if (index >= 0) {
+      selected.removeAt(index);
+    } else if (selected.length < 2) {
+      selected.add(version);
+    } else {
+      return;
+    }
+    emit(
+      state.copyWith(
+        comparisonSelection: selected,
+        clearComparison: true,
+        clearComparisonError: true,
+      ),
+    );
+  }
 
-  Future<void> compare(PublishedVersion source) async {
-    final PublishedVersion? target = state.comparisonTarget;
-    if (target == null ||
-        target.id == source.id ||
+  Future<void> compareSelected() async {
+    if (state.comparisonSelection.length != 2 ||
         state.comparisonStatus == VersionRequestStatus.loading)
       return;
+    final selected = List<PublishedVersion>.of(state.comparisonSelection)
+      ..sort(
+        (first, second) => first.versionNumber.compareTo(second.versionNumber),
+      );
+    final PublishedVersion source = selected.first;
+    final PublishedVersion target = selected.last;
     final int request = ++_comparisonTicket;
     final String? scope = state.scopeKey;
     emit(
@@ -387,7 +397,7 @@ class PublishedVersionCubit extends Cubit<PublishedVersionState> {
           rollbackResult: result,
           clearDetail: true,
           clearComparison: true,
-          clearComparisonTarget: true,
+          clearComparisonSelection: true,
         ),
       );
       await loadHistory();

@@ -185,9 +185,7 @@ class AvailabilityCubit extends Cubit<AvailabilityState> {
   /// absence of exact Variant rules; no Product records are copied.
   Future<bool> useProductScheduleAgain() async {
     if (state.selectedVariantId == null || !state.canEdit) return false;
-    final identities = state.exactRules
-        .map((rule) => rule.identity)
-        .toSet();
+    final identities = state.exactRules.map((rule) => rule.identity).toSet();
     if (identities.isEmpty) return true;
     emit(
       state.copyWith(

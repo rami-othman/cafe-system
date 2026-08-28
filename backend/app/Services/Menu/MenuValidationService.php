@@ -47,23 +47,38 @@ class MenuValidationService
 
     public function validateCollection(int $tenantId, Branch $branch, string $channel, ?array $menuIds, ?string $at): MenuValidationResult
     {
+        $automatic = $menuIds === null;
         if ($menuIds !== null) {
             $menus = Menu::withTrashed()->where('tenant_id', $tenantId)->whereIn('id', $menuIds)->get();
             if ($menus->count() !== count($menuIds)) {
                 throw ValidationException::withMessages(['menuIds' => 'One or more selected menus are invalid.']);
             }
         } else {
-            $menus = Menu::query()->where('tenant_id', $tenantId)->whereHas('assignments', fn ($query) => $query->where('branch_id', $branch->id)->where('channel', $channel)->where('is_active', true))->get();
+            $menuIds = $this->assignedMenuIds($tenantId, $branch->id, $channel);
+            if ($menuIds === []) {
+                $result = new MenuValidationResult;
+                $result->noAssignedMenu();
+
+                return $result;
+            }
+            $menus = Menu::query()->where('tenant_id', $tenantId)->whereIn('id', $menuIds)->get();
         }
 
-        return $this->validate($tenantId, $menus, $branch, $channel, $at);
+        return $this->validate($tenantId, $menus, $branch, $channel, $at, $automatic, $menuIds);
     }
 
-    private function validate(int $tenantId, Collection $menus, Branch $branch, string $channel, ?string $at): MenuValidationResult
+    public function assignedMenuIds(int $tenantId, int $branchId, string $channel): array
+    {
+        return Menu::query()->where('menus.tenant_id', $tenantId)
+            ->join('menu_assignments', fn ($join) => $join->on('menu_assignments.menu_id', '=', 'menus.id')->where('menu_assignments.tenant_id', $tenantId)->where('menu_assignments.branch_id', $branchId)->where('menu_assignments.channel', $channel)->where('menu_assignments.is_active', true))
+            ->orderBy('menu_assignments.priority')->orderBy('menus.id')->pluck('menus.id')->all();
+    }
+
+    private function validate(int $tenantId, Collection $menus, Branch $branch, string $channel, ?string $at, bool $preserveOrder = false, ?array $orderedIds = null): MenuValidationResult
     {
         $this->duplicateSkus = ProductVariant::query()->where('tenant_id', $tenantId)->where('is_active', true)->whereNotNull('sku')->groupBy('sku')->havingRaw('count(*) > 1')->pluck('sku')->all();
         $this->duplicateBarcodes = ProductVariant::query()->where('tenant_id', $tenantId)->where('is_active', true)->whereNotNull('barcode')->groupBy('barcode')->havingRaw('count(*) > 1')->pluck('barcode')->all();
-        $loaded = $this->load($menus->pluck('id')->all());
+        $loaded = $this->load($orderedIds ?? $menus->pluck('id')->all(), $preserveOrder);
         $result = new MenuValidationResult;
         $evaluatedAt = CarbonImmutable::parse($at ?? 'now', $branch->timezone ?: config('app.timezone'));
         foreach ($loaded as $menu) {
@@ -74,9 +89,9 @@ class MenuValidationService
         return $result;
     }
 
-    private function load(array $ids): Collection
+    private function load(array $ids, bool $preserveOrder = false): Collection
     {
-        return Menu::withTrashed()->whereIn('id', $ids)->with([
+        $menus = Menu::withTrashed()->whereIn('id', $ids)->with([
             'assignments', 'availabilityRules' => fn ($query) => $query->withTrashed(),
             'sections' => fn ($query) => $query->withTrashed()->with([
                 'placements' => fn ($placements) => $placements->withTrashed()->with([
@@ -87,7 +102,15 @@ class MenuValidationService
                     ]),
                 ]),
             ]),
-        ])->orderBy('id')->get();
+        ])->when(! $preserveOrder, fn ($query) => $query->orderBy('id'))->get();
+
+        if (! $preserveOrder) {
+            return $menus;
+        }
+
+        $menus = $menus->keyBy('id');
+
+        return collect($ids)->map(fn (int $id) => $menus->get($id))->filter()->values();
     }
 
     private function validateMenu(MenuValidationResult $result, Menu $menu, int $tenantId, Branch $branch, string $channel, CarbonImmutable $at): void

@@ -12,7 +12,7 @@ import 'package:windows_application/features/menu_management/versions/models/pub
 void main() {
   group('PublishedVersionCubit history lifecycle', () {
     test(
-      'loads metadata-only history and current Version for its scope',
+      'loads one bounded metadata-only history request for its scope',
       () async {
         final repository = _VersionsRepository();
         final cubit = PublishedVersionCubit(repository: repository);
@@ -21,7 +21,7 @@ void main() {
 
         expect(cubit.state.historyStatus, VersionRequestStatus.loaded);
         expect(cubit.state.history?.items.map((item) => item.id), <int>[3, 2]);
-        expect(cubit.state.currentVersion?.versionNumber, 3);
+        expect(cubit.state.history?.items.first.isCurrent, isTrue);
         expect(repository.historyCalls, <_HistoryCall>[
           _HistoryCall(1, 'pos', 1),
         ]);
@@ -87,13 +87,13 @@ void main() {
     );
 
     test(
-      'duplicate history load is prevented and failure retains current metadata',
+      'duplicate history load is prevented and failure retains loaded history',
       () async {
         final repository = _VersionsRepository();
         final pending = Completer<PublishedVersionPage>();
         final cubit = PublishedVersionCubit(repository: repository);
         await cubit.setContext(1, 'pos');
-        final current = cubit.state.currentVersion;
+        final history = cubit.state.history;
         repository.historyLoader = (_, _, _) => pending.future;
 
         unawaited(cubit.refresh());
@@ -106,7 +106,7 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         expect(cubit.state.historyStatus, VersionRequestStatus.failure);
-        expect(cubit.state.currentVersion, current);
+        expect(cubit.state.history, history);
         expect(cubit.state.historyError, 'History unavailable');
       },
     );
@@ -148,16 +148,22 @@ void main() {
         final pending = Completer<VersionComparison>();
         final cubit = PublishedVersionCubit(repository: repository);
         await cubit.setContext(1, 'pos');
-        final source = cubit.state.history!.items.first;
-        final target = cubit.state.history!.items.last;
-        cubit.selectComparisonTarget(target);
+        final newest = cubit.state.history!.items.first;
+        final oldest = cubit.state.history!.items.last;
+        cubit.toggleComparisonSelection(newest);
+        cubit.toggleComparisonSelection(oldest);
+        cubit.toggleComparisonSelection(_version(1));
+        expect(cubit.state.comparisonSelection, <PublishedVersion>[
+          newest,
+          oldest,
+        ]);
         repository.comparisonLoader = (_, _) => pending.future;
 
-        unawaited(cubit.compare(source));
-        unawaited(cubit.compare(source));
+        unawaited(cubit.compareSelected());
+        unawaited(cubit.compareSelected());
         await Future<void>.delayed(Duration.zero);
         expect(repository.comparisonCalls, <_ComparisonCall>[
-          _ComparisonCall(source.id, target.id),
+          _ComparisonCall(oldest.id, newest.id),
         ]);
         await cubit.setContext(2, 'online');
         pending.complete(_comparison());

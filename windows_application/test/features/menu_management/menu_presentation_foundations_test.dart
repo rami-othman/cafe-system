@@ -187,7 +187,7 @@ void main() {
       title: 'Iced Latte',
       summary: 'Coffee · Station bar · 3 variants',
       metrics: const <EntityMetric>[
-        EntityMetric(label: 'Base price', value: r'$3.50'),
+        EntityMetric(label: 'Base price', value: '3.50 SYP'),
       ],
       status: const EntityStatus(
         label: 'Active',

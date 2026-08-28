@@ -21,6 +21,10 @@ class MenuPublishingController extends Controller
 
     public function current(CurrentPublishedMenuVersionRequest $request): JsonResponse
     {
-        return response()->json(['data' => (new PublishedMenuVersionResource($this->publishing->current(TenantContext::id($request), $request->validated())))->resolve($request)]);
+        $version = $this->publishing->current(TenantContext::id($request), $request->validated());
+
+        return response()->json([
+            'data' => $version === null ? null : (new PublishedMenuVersionResource($version))->resolve($request),
+        ]);
     }
 }

@@ -288,7 +288,7 @@ class _CreateDiscountPolicyScreenState
                     label: 'Min Spend (optional)',
                     child: AppTextField(
                       controller: _minSpendController,
-                      hintText: 'SAR 0.00',
+                      hintText: '0 SYP',
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -298,7 +298,7 @@ class _CreateDiscountPolicyScreenState
                     label: 'Max Discount (optional)',
                     child: AppTextField(
                       controller: _maxDiscountController,
-                      hintText: 'SAR 0.00',
+                      hintText: '0 SYP',
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -339,7 +339,7 @@ class _CreateDiscountPolicyScreenState
                 label: 'Minimum Order Amount',
                 child: AppTextField(
                   controller: _minimumOrderController,
-                  hintText: 'SAR 0.00',
+                  hintText: '0 SYP',
                 ),
               ),
               _LabeledField(
@@ -461,7 +461,7 @@ class _CreateDiscountPolicyScreenState
                 label: 'Maximum Discount Amount Without Approval',
                 child: AppTextField(
                   controller: _maximumApprovalController,
-                  prefixText: 'SAR  ',
+                  prefixText: 'SYP ',
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),

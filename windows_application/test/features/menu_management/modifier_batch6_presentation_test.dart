@@ -66,10 +66,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(r'+$0.75'), findsOneWidget);
+    expect(find.text('+0.75 SYP'), findsOneWidget);
     expect(find.text('No extra charge'), findsOneWidget);
-    expect(find.text(r'-$0.50'), findsOneWidget);
-    expect(find.text(r'+$-0.50'), findsNothing);
+    expect(find.text('-0.5 SYP'), findsOneWidget);
+    expect(find.text('+-0.50 SYP'), findsNothing);
   });
 
   testWidgets('modifier library presents compact rows and reorder mode', (

@@ -854,6 +854,240 @@ abstract class AppLocalizations {
   /// **'Rolled back'**
   String get versionStatusRolledBack;
 
+  /// No description provided for @versionView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get versionView;
+
+  /// No description provided for @versionSelectForCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Version {version} for comparison'**
+  String versionSelectForCompare(int version);
+
+  /// No description provided for @versionCompareSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare selected ({count})'**
+  String versionCompareSelected(int count);
+
+  /// No description provided for @versionHistoryEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No version history'**
+  String get versionHistoryEmptyTitle;
+
+  /// No description provided for @versionHistoryEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menu version has been published for {branch} · {channel} yet.'**
+  String versionHistoryEmptyDescription(Object branch, Object channel);
+
+  /// No description provided for @versionHistoryLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load version history.'**
+  String get versionHistoryLoadError;
+
+  /// No description provided for @versionDetailLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this version.'**
+  String get versionDetailLoadError;
+
+  /// No description provided for @versionCompareError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not compare these versions.'**
+  String get versionCompareError;
+
+  /// No description provided for @versionRestoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore this version.'**
+  String get versionRestoreError;
+
+  /// No description provided for @versionPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get versionPreviousPage;
+
+  /// No description provided for @versionNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get versionNextPage;
+
+  /// No description provided for @versionPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page}'**
+  String versionPage(int page);
+
+  /// No description provided for @versionChangeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change} other{{count} changes}}'**
+  String versionChangeCount(num count);
+
+  /// No description provided for @versionChangesSince.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 change} other{{count} changes}} since Version {version}'**
+  String versionChangesSince(num count, int version);
+
+  /// No description provided for @versionPublishedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Published {date}'**
+  String versionPublishedAt(Object date);
+
+  /// No description provided for @versionMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get versionMenus;
+
+  /// No description provided for @versionSections.
+  ///
+  /// In en, this message translates to:
+  /// **'Sections'**
+  String get versionSections;
+
+  /// No description provided for @versionProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get versionProducts;
+
+  /// No description provided for @versionPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get versionPricing;
+
+  /// No description provided for @versionModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get versionModifiers;
+
+  /// No description provided for @versionRecipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes'**
+  String get versionRecipes;
+
+  /// No description provided for @versionSchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedules'**
+  String get versionSchedules;
+
+  /// No description provided for @versionChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'changes'**
+  String get versionChanges;
+
+  /// No description provided for @versionChangeSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Change summary'**
+  String get versionChangeSummary;
+
+  /// No description provided for @versionChangeSummaryAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This version includes a recorded change summary.'**
+  String get versionChangeSummaryAvailable;
+
+  /// No description provided for @versionChangeSummaryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No change summary is available for this version.'**
+  String get versionChangeSummaryUnavailable;
+
+  /// No description provided for @versionRestoreThisVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this Version'**
+  String get versionRestoreThisVersion;
+
+  /// No description provided for @versionRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Version {version}?'**
+  String versionRestoreTitle(int version);
+
+  /// No description provided for @versionRestoreExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A new published version will be created using the contents of Version {version}. Versions published after Version {version} will remain in history.'**
+  String versionRestoreExplanation(int version);
+
+  /// No description provided for @versionRestoreReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for restore (optional)'**
+  String get versionRestoreReason;
+
+  /// No description provided for @versionRestoreReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, restore after an unintended pricing change'**
+  String get versionRestoreReasonHint;
+
+  /// No description provided for @versionRestoreAsNewVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore as New Version'**
+  String get versionRestoreAsNewVersion;
+
+  /// No description provided for @versionRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring…'**
+  String get versionRestoring;
+
+  /// No description provided for @versionRestoreResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Version restored'**
+  String get versionRestoreResultTitle;
+
+  /// No description provided for @versionRestoreSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {newVersion} was created from Version {sourceVersion}. Version {newVersion} is now Current.'**
+  String versionRestoreSuccess(int newVersion, int sourceVersion);
+
+  /// No description provided for @versionRestoreNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} already matches the current published content. No new version was created.'**
+  String versionRestoreNoChanges(int version);
+
+  /// No description provided for @versionComparisonDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {fromVersion} → Version {toVersion}'**
+  String versionComparisonDirection(int fromVersion, int toVersion);
+
+  /// No description provided for @versionNoContentDifferences.
+  ///
+  /// In en, this message translates to:
+  /// **'No content differences found.'**
+  String get versionNoContentDifferences;
+
+  /// No description provided for @versionComparisonTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional changes are not shown.'**
+  String get versionComparisonTruncated;
+
   /// No description provided for @catalogSetupTitle.
   ///
   /// In en, this message translates to:
@@ -5980,6 +6214,720 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'—'**
   String get menuListNotAvailable;
+
+  /// No description provided for @reviewPublishPageHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Menu readiness, preview the selling experience, and publish a version for this selling context.'**
+  String get reviewPublishPageHelp;
+
+  /// No description provided for @reviewSellingContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling Context'**
+  String get reviewSellingContext;
+
+  /// No description provided for @reviewSellingContextHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This review covers the Menus assigned to the selected selling context.'**
+  String get reviewSellingContextHelp;
+
+  /// No description provided for @reviewBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get reviewBranch;
+
+  /// No description provided for @reviewSalesChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Channel'**
+  String get reviewSalesChannel;
+
+  /// No description provided for @reviewTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone'**
+  String get reviewTimezone;
+
+  /// No description provided for @reviewScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get reviewScope;
+
+  /// No description provided for @reviewScopeAssignedMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus assigned to this context'**
+  String get reviewScopeAssignedMenus;
+
+  /// No description provided for @reviewReadinessTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Readiness'**
+  String get reviewReadinessTab;
+
+  /// No description provided for @reviewPreviewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get reviewPreviewTab;
+
+  /// No description provided for @reviewPublishTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish'**
+  String get reviewPublishTab;
+
+  /// No description provided for @reviewVersionsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Versions'**
+  String get reviewVersionsTab;
+
+  /// No description provided for @reviewCurrentlyPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently Published'**
+  String get reviewCurrentlyPublished;
+
+  /// No description provided for @reviewNotPublishedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not published yet'**
+  String get reviewNotPublishedYet;
+
+  /// No description provided for @reviewNoCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menu version has been published for this selling context.'**
+  String get reviewNoCurrentVersion;
+
+  /// No description provided for @reviewCurrentVersionLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the current published version.'**
+  String get reviewCurrentVersionLoadError;
+
+  /// No description provided for @reviewVersionNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String reviewVersionNumber(int version);
+
+  /// No description provided for @reviewPublishedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Published {date}'**
+  String reviewPublishedAt(String date);
+
+  /// No description provided for @reviewViewVersions.
+  ///
+  /// In en, this message translates to:
+  /// **'View Versions'**
+  String get reviewViewVersions;
+
+  /// No description provided for @reviewReadiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Readiness'**
+  String get reviewReadiness;
+
+  /// No description provided for @reviewReadinessHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the authoritative validation for this selling context.'**
+  String get reviewReadinessHelp;
+
+  /// No description provided for @reviewCheckAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Again'**
+  String get reviewCheckAgain;
+
+  /// No description provided for @reviewNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs Attention'**
+  String get reviewNeedsAttention;
+
+  /// No description provided for @reviewReadyToPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to Publish'**
+  String get reviewReadyToPublish;
+
+  /// No description provided for @reviewFixBlockingErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix the blocking errors before publishing.'**
+  String get reviewFixBlockingErrors;
+
+  /// No description provided for @reviewErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors'**
+  String get reviewErrors;
+
+  /// No description provided for @reviewWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get reviewWarnings;
+
+  /// No description provided for @reviewWarningsToReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 warning to review.} other{{count} warnings to review.}}'**
+  String reviewWarningsToReview(num count);
+
+  /// No description provided for @reviewNoIssuesForScope.
+  ///
+  /// In en, this message translates to:
+  /// **'No issues found for {branch} · {channel}.'**
+  String reviewNoIssuesForScope(String branch, String channel);
+
+  /// No description provided for @reviewNoMenusAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menus assigned'**
+  String get reviewNoMenusAssigned;
+
+  /// No description provided for @reviewNoMenusAssignedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign at least one active Menu to {branch} · {channel} before publishing.'**
+  String reviewNoMenusAssignedHelp(String branch, String channel);
+
+  /// No description provided for @reviewGoToAssignments.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Assignments'**
+  String get reviewGoToAssignments;
+
+  /// No description provided for @reviewReadinessLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load readiness results.'**
+  String get reviewReadinessLoadError;
+
+  /// No description provided for @reviewTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again.'**
+  String get reviewTryAgain;
+
+  /// No description provided for @reviewIssuesAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get reviewIssuesAll;
+
+  /// No description provided for @reviewSearchIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Search issues...'**
+  String get reviewSearchIssues;
+
+  /// No description provided for @reviewNoMatchingIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching issues'**
+  String get reviewNoMatchingIssues;
+
+  /// No description provided for @reviewTryDifferentSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different search or filter.'**
+  String get reviewTryDifferentSearch;
+
+  /// No description provided for @reviewIssueCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 issue} other{{count} issues}}'**
+  String reviewIssueCount(num count);
+
+  /// No description provided for @reviewIssueGroupMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus'**
+  String get reviewIssueGroupMenus;
+
+  /// No description provided for @reviewIssueGroupSections.
+  ///
+  /// In en, this message translates to:
+  /// **'Sections'**
+  String get reviewIssueGroupSections;
+
+  /// No description provided for @reviewIssueGroupProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get reviewIssueGroupProducts;
+
+  /// No description provided for @reviewIssueGroupVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants'**
+  String get reviewIssueGroupVariants;
+
+  /// No description provided for @reviewIssueGroupRecipesMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes & Materials'**
+  String get reviewIssueGroupRecipesMaterials;
+
+  /// No description provided for @reviewIssueGroupModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get reviewIssueGroupModifiers;
+
+  /// No description provided for @reviewIssueGroupPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get reviewIssueGroupPricing;
+
+  /// No description provided for @reviewIssueGroupAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get reviewIssueGroupAvailability;
+
+  /// No description provided for @reviewIssueGroupAssignmentsScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments / Scope'**
+  String get reviewIssueGroupAssignmentsScope;
+
+  /// No description provided for @reviewIssueGroupOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other / General'**
+  String get reviewIssueGroupOther;
+
+  /// No description provided for @reviewIssueGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get reviewIssueGeneral;
+
+  /// No description provided for @reviewOpenMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Menu'**
+  String get reviewOpenMenu;
+
+  /// No description provided for @reviewOpenProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Product'**
+  String get reviewOpenProduct;
+
+  /// No description provided for @reviewOpenSections.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Sections'**
+  String get reviewOpenSections;
+
+  /// No description provided for @reviewReviewMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Menu'**
+  String get reviewReviewMenu;
+
+  /// No description provided for @reviewIssueContextMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu issue'**
+  String get reviewIssueContextMenu;
+
+  /// No description provided for @reviewIssueContextSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Section issue'**
+  String get reviewIssueContextSection;
+
+  /// No description provided for @reviewIssueContextProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product issue'**
+  String get reviewIssueContextProduct;
+
+  /// No description provided for @reviewIssueContextVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant issue'**
+  String get reviewIssueContextVariant;
+
+  /// No description provided for @reviewIssueContextPlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu placement issue'**
+  String get reviewIssueContextPlacement;
+
+  /// No description provided for @reviewIssueContextModifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifier issue'**
+  String get reviewIssueContextModifier;
+
+  /// No description provided for @reviewIssueContextRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe or material issue'**
+  String get reviewIssueContextRecipe;
+
+  /// No description provided for @reviewIssueContextScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling context issue'**
+  String get reviewIssueContextScope;
+
+  /// No description provided for @reviewIssueContextGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General issue'**
+  String get reviewIssueContextGeneral;
+
+  /// No description provided for @reviewPreviewContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect the assigned Menu collection for this selling context.'**
+  String get reviewPreviewContext;
+
+  /// No description provided for @reviewPreviewLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview language'**
+  String get reviewPreviewLanguage;
+
+  /// No description provided for @reviewPreviewLanguageDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get reviewPreviewLanguageDefault;
+
+  /// No description provided for @reviewPreviewLanguageArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get reviewPreviewLanguageArabic;
+
+  /// No description provided for @reviewPreviewLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get reviewPreviewLanguageEnglish;
+
+  /// No description provided for @reviewPreviewShowHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Show hidden items'**
+  String get reviewPreviewShowHidden;
+
+  /// No description provided for @reviewPreviewShowUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Show unavailable items'**
+  String get reviewPreviewShowUnavailable;
+
+  /// No description provided for @reviewPreviewRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Preview'**
+  String get reviewPreviewRefresh;
+
+  /// No description provided for @reviewPreviewLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Preview'**
+  String get reviewPreviewLoading;
+
+  /// No description provided for @reviewPreviewBlockingBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'This preview contains issues that must be fixed before publishing.'**
+  String get reviewPreviewBlockingBanner;
+
+  /// No description provided for @reviewPreviewReviewReadiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Readiness'**
+  String get reviewPreviewReviewReadiness;
+
+  /// No description provided for @reviewPreviewAvailableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Available now'**
+  String get reviewPreviewAvailableNow;
+
+  /// No description provided for @reviewPreviewOutsideScheduledHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside scheduled hours'**
+  String get reviewPreviewOutsideScheduledHours;
+
+  /// No description provided for @reviewPreviewHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get reviewPreviewHidden;
+
+  /// No description provided for @reviewPreviewUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get reviewPreviewUnavailable;
+
+  /// No description provided for @reviewPreviewSoldOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold out'**
+  String get reviewPreviewSoldOut;
+
+  /// No description provided for @reviewPreviewTemporarilyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporarily unavailable'**
+  String get reviewPreviewTemporarilyUnavailable;
+
+  /// No description provided for @reviewPreviewAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get reviewPreviewAvailable;
+
+  /// No description provided for @reviewPreviewFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get reviewPreviewFeatured;
+
+  /// No description provided for @reviewPreviewDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get reviewPreviewDefault;
+
+  /// No description provided for @reviewPreviewVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants'**
+  String get reviewPreviewVariants;
+
+  /// No description provided for @reviewPreviewModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get reviewPreviewModifiers;
+
+  /// No description provided for @reviewPreviewRecipeConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe configured'**
+  String get reviewPreviewRecipeConfigured;
+
+  /// No description provided for @reviewPreviewRecipeComponents.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} components'**
+  String reviewPreviewRecipeComponents(int count);
+
+  /// No description provided for @reviewPreviewNoMenus.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menus to preview'**
+  String get reviewPreviewNoMenus;
+
+  /// No description provided for @reviewPreviewNoMenusHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign at least one active Menu to this selling context.'**
+  String get reviewPreviewNoMenusHelp;
+
+  /// No description provided for @reviewPreviewEmptySection.
+  ///
+  /// In en, this message translates to:
+  /// **'No products are included in this section.'**
+  String get reviewPreviewEmptySection;
+
+  /// No description provided for @reviewPreviewError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load Preview.'**
+  String get reviewPreviewError;
+
+  /// No description provided for @reviewPreviewRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get reviewPreviewRetry;
+
+  /// No description provided for @reviewPreviewBasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Base price'**
+  String get reviewPreviewBasePrice;
+
+  /// No description provided for @reviewPreviewRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get reviewPreviewRequired;
+
+  /// No description provided for @reviewPreviewOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get reviewPreviewOptional;
+
+  /// No description provided for @reviewPreviewOptionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable option'**
+  String get reviewPreviewOptionUnavailable;
+
+  /// No description provided for @reviewPublishQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish {branch} · {channel}?'**
+  String reviewPublishQuestion(String branch, String channel);
+
+  /// No description provided for @reviewPublishScopeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This creates a published Menu version for this exact selling context.'**
+  String get reviewPublishScopeHelp;
+
+  /// No description provided for @reviewPublishCurrentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current version'**
+  String get reviewPublishCurrentVersion;
+
+  /// No description provided for @reviewPublishCheckingReadiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking readiness…'**
+  String get reviewPublishCheckingReadiness;
+
+  /// No description provided for @reviewPublishWaitForReadiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for the current readiness check before publishing.'**
+  String get reviewPublishWaitForReadiness;
+
+  /// No description provided for @reviewPublishNoAssignedMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign at least one active Menu to this selling context before publishing.'**
+  String get reviewPublishNoAssignedMenu;
+
+  /// No description provided for @reviewPublishCannotPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot publish yet'**
+  String get reviewPublishCannotPublish;
+
+  /// No description provided for @reviewPublishReviewErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Errors'**
+  String get reviewPublishReviewErrors;
+
+  /// No description provided for @reviewPublishReviewIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Issues'**
+  String get reviewPublishReviewIssues;
+
+  /// No description provided for @reviewPublishWarningsCanProceed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 warning remains. You can still publish this version.} other{{count} warnings remain. You can still publish this version.}}'**
+  String reviewPublishWarningsCanProceed(num count);
+
+  /// No description provided for @reviewPublishCleanReady.
+  ///
+  /// In en, this message translates to:
+  /// **'No blocking issues were found. You can publish this version.'**
+  String get reviewPublishCleanReady;
+
+  /// No description provided for @reviewPublishAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish Menu Version'**
+  String get reviewPublishAction;
+
+  /// No description provided for @reviewPublishPublishing.
+  ///
+  /// In en, this message translates to:
+  /// **'Publishing…'**
+  String get reviewPublishPublishing;
+
+  /// No description provided for @reviewPublishConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish {branch} · {channel}?'**
+  String reviewPublishConfirmTitle(String branch, String channel);
+
+  /// No description provided for @reviewPublishImmutableExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A new immutable Menu version will be created if the configuration changed.'**
+  String get reviewPublishImmutableExplanation;
+
+  /// No description provided for @reviewPublishAlreadyUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Already up to date'**
+  String get reviewPublishAlreadyUpToDate;
+
+  /// No description provided for @reviewPublishNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No Menu changes were found since Version {version}. No new version was created.'**
+  String reviewPublishNoChanges(int version);
+
+  /// No description provided for @reviewPublishSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Published successfully'**
+  String get reviewPublishSuccess;
+
+  /// No description provided for @reviewPublishCurrentForScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This is now the current published Menu version for {branch} · {channel}.'**
+  String reviewPublishCurrentForScope(String branch, String channel);
+
+  /// No description provided for @reviewPublishRevalidationFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu changed and is no longer ready to publish.'**
+  String get reviewPublishRevalidationFailedTitle;
+
+  /// No description provided for @reviewPublishRevalidationFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'New issues were found during the final check.'**
+  String get reviewPublishRevalidationFailedMessage;
+
+  /// No description provided for @reviewPublishRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not publish the Menu version.'**
+  String get reviewPublishRequestFailed;
+
+  /// No description provided for @reviewPublishTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get reviewPublishTryAgain;
 }
 
 class _AppLocalizationsDelegate

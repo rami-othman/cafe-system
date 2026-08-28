@@ -16,7 +16,7 @@ class DiscountSeeder extends Seeder
 
         $now = now();
         $discounts = [
-            ['Morning Rush 15%', 'MRNG15', 'percentage', 15, 'Min. $10 spent', 'Oct 1 - Oct 31', '7:00 AM - 10:00 AM', 'active', 128, 192],
+            ['Morning Rush 15%', 'MRNG15', 'percentage', 15, 'Min. 10 SYP spent', 'Oct 1 - Oct 31', '7:00 AM - 10:00 AM', 'active', 128, 192],
             ['Student Discount', null, 'fixed', 2, 'Requires Student ID tag', 'Always Valid', null, 'active', 164, 328],
             ['Holiday Special', 'HOLIDAY24', 'percentage', 20, 'Any pastry + drink', 'Dec 15 - Dec 31', null, 'scheduled', 0, 0, 'Desserts'],
             ['Summer Coolers', 'SUMMER', 'bogo', 1, 'Iced beverages only', 'Jun 1 - Aug 31', null, 'expired', 94, 188, 'Cold Drinks'],
@@ -28,7 +28,7 @@ class DiscountSeeder extends Seeder
             ['Friday Fizz', 'FIZZ', 'bogo', 1, 'Sparkling drinks', 'Every Friday', null, 'active', 20, 40, 'Cold Drinks'],
             ['Winter Warmer', 'WARM10', 'percentage', 10, 'Hot beverages', 'Jan 1 - Feb 28', null, 'inactive', 0, 0, 'Coffee'],
             ['Birthday Reward', null, 'fixed', 5, 'Birthday month', 'Always Valid', null, 'active', 15, 75],
-            ['Office Catering', 'OFFICE', 'percentage', 12, 'Orders over $75', 'Sep 1 - Sep 30', null, 'scheduled', 0, 0],
+            ['Office Catering', 'OFFICE', 'percentage', 12, 'Orders over 75 SYP', 'Sep 1 - Sep 30', null, 'scheduled', 0, 0],
             ['Weekend Brunch', 'BRUNCH', 'percentage', 10, 'Saturday and Sunday', 'Always Valid', null, 'active', 17, 34],
             ['Rainy Day Perk', 'RAINY', 'fixed', 1, 'Mobile orders', 'Apr 1 - Apr 30', null, 'expired', 12, 12],
             ['Bean Bag Bundle', 'BEANS', 'fixed', 4, 'Two coffee bags', 'Always Valid', null, 'active', 9, 36],

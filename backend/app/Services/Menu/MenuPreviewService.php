@@ -36,30 +36,29 @@ class MenuPreviewService
     public function collection(int $tenantId, array $input): array
     {
         $branch = $this->branch($tenantId, $input['branchId']);
-        if (array_key_exists('menuIds', $input)) {
+        $automatic = ! array_key_exists('menuIds', $input);
+        if (! $automatic) {
             $ids = $input['menuIds'];
             $found = Menu::withTrashed()->where('tenant_id', $tenantId)->whereIn('id', $ids)->count();
             if ($found !== count($ids)) {
                 throw ValidationException::withMessages(['menuIds' => 'One or more selected menus are invalid.']);
             }
         } else {
-            $ids = Menu::query()->where('tenant_id', $tenantId)->whereHas('assignments', fn ($query) => $query
-                ->where('branch_id', $branch->id)->where('channel', $input['channel'])->where('is_active', true))
-                ->orderBy('priority')->orderBy('id')->pluck('id')->all();
+            $ids = $this->validation->assignedMenuIds($tenantId, $branch->id, $input['channel']);
         }
 
-        return $this->build($tenantId, collect($ids), $branch, $input);
+        return $this->build($tenantId, collect($ids), $branch, $input, $automatic);
     }
 
-    private function build(int $tenantId, Collection $ids, Branch $branch, array $input): array
+    private function build(int $tenantId, Collection $ids, Branch $branch, array $input, bool $automatic = false): array
     {
         $language = $input['language'] ?? 'default';
         $timezone = $branch->timezone ?: config('app.timezone');
         $at = CarbonImmutable::parse($input['at'] ?? 'now', $timezone);
         $includeUnavailable = $input['includeUnavailable'] ?? true;
         $includeHidden = $input['includeHidden'] ?? false;
-        $menus = $this->load($ids->all());
-        $validation = $this->validation->validateCollection($tenantId, $branch, $input['channel'], $ids->all(), $at->toIso8601String())->toArray();
+        $menus = $this->load($ids->all(), $automatic);
+        $validation = $this->validation->validateCollection($tenantId, $branch, $input['channel'], $automatic ? null : $ids->all(), $at->toIso8601String())->toArray();
 
         return [
             'context' => ['branchId' => $branch->id, 'channel' => $input['channel'], 'language' => $language, 'evaluatedAt' => $at->toIso8601String(), 'timezone' => $timezone],
@@ -69,9 +68,9 @@ class MenuPreviewService
         ];
     }
 
-    private function load(array $ids): Collection
+    private function load(array $ids, bool $preserveOrder = false): Collection
     {
-        return Menu::withTrashed()->whereIn('id', $ids)->with([
+        $menus = Menu::withTrashed()->whereIn('id', $ids)->with([
             'assignments', 'availabilityRules' => fn ($query) => $query->withTrashed(),
             'sections' => fn ($sections) => $sections->withTrashed()->orderBy('sort_order')->orderBy('id')->with([
                 'placements' => fn ($placements) => $placements->withTrashed()->orderBy('sort_order')->orderBy('id')->with([
@@ -81,7 +80,15 @@ class MenuPreviewService
                     ]),
                 ]),
             ]),
-        ])->orderBy('priority')->orderBy('id')->get();
+        ])->when(! $preserveOrder, fn ($query) => $query->orderBy('priority')->orderBy('id'))->get();
+
+        if (! $preserveOrder) {
+            return $menus;
+        }
+
+        $menus = $menus->keyBy('id');
+
+        return collect($ids)->map(fn (int $id) => $menus->get($id))->filter()->values();
     }
 
     private function menu(int $tenantId, Menu $menu, Branch $branch, string $channel, CarbonImmutable $at, string $language, bool $includeUnavailable, bool $includeHidden): array

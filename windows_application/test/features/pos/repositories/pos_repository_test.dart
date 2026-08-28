@@ -30,6 +30,7 @@ class _FakePosApiClient extends DioApiClient {
   Future<dynamic> get(
     String path, {
     Map<String, dynamic>? queryParameters,
+    bool debugMenuScheduleSave = false,
   }) async {
     return switch (path) {
       'menu/categories' => <Map<String, Object?>>[

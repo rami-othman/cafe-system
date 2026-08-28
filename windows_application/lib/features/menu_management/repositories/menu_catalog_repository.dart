@@ -616,7 +616,7 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
         'branchId': c.branchId,
         'channel': c.channel,
         // Omission means the backend publishes its active assigned collection.
-        if (c.menuId != null) 'menuIds': <int>[c.menuId!],
+        // Menu IDs are intentionally never part of the manager publish flow.
       },
     );
     if (response is! Map) {

@@ -128,7 +128,7 @@ void main() {
       expect(detail.status, OrderStatus.completed);
       expect(detail.orderType, 'Takeaway');
       expect(detail.items.single.modifiers, <String>[
-        'Milk: Oat Milk (+\$0.75)',
+        'Milk: Oat Milk (+0.75 SYP)',
         'Note: Extra hot',
       ]);
       expect(detail.payment.methodLabel, 'Cash');
