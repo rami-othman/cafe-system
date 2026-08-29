@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Support\InventoryUnitCatalog;
+use App\Support\InventoryDecimal;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class InventoryItemUnitConversionRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if ($validator->errors()->isEmpty() && (float) $this->input('factor') <= 0) {
+            if ($validator->errors()->isEmpty() && InventoryDecimal::factor($this->input('factor')) <= 0) {
                 $validator->errors()->add('factor', 'The conversion factor must be greater than zero.');
             }
             if ($validator->errors()->isNotEmpty()) {

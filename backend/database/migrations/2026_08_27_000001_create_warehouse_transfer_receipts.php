@@ -19,5 +19,8 @@ return new class extends Migration
         });
     }
 
-    public function down(): void => Schema::dropIfExists('warehouse_transfer_receipts');
+    public function down(): void
+    {
+        Schema::dropIfExists('warehouse_transfer_receipts');
+    }
 };

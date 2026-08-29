@@ -15,6 +15,10 @@ Phase 1 — Project Foundation
 
 ## Completed Work
 
+- Hardened Inventory Count and Bar Check posting: explicit uncounted state,
+  base-unit snapshots, tolerance/reason/manager-review gates, and a required
+  Bar Check shift-close gate. Count and Bar Check state helpers now live in
+  their own feature slices while the legacy screen is migrated incrementally.
 - Updated the RTL Start Stock Count modal with an explicit real-warehouse
   selection, partial-count category validation, backend branch-access checks,
   active-duplicate protection, generated-line coverage, and workspace routing.
@@ -400,3 +404,8 @@ workflows when those APIs are ready.
   transfers support real line editing, submission, dispatch through immutable
   stock movements, and idempotent receipt posting with received/discrepancy
   quantities in the RTL inventory workspace.
+- 2026-08-27: Hardened Inventory posting before the next workflow phase:
+  movement writes now pass through the Inventory domain posting service with
+  idempotency, base-unit conversion, integer-safe decimal arithmetic, and a
+  dry-run reconciliation command. Existing tenant-header development behavior
+  and Flutter movement routes remain compatible.

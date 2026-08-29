@@ -1389,6 +1389,7 @@ class _InventoryMovementCreateState
   final TextEditingController _cost = TextEditingController();
   final TextEditingController _reason = TextEditingController();
   final TextEditingController _notes = TextEditingController();
+  String? _idempotencyKey;
 
   @override
   void initState() {
@@ -1576,7 +1577,7 @@ class _InventoryMovementCreateState
                         icon: Icons.check_circle_outline,
                         onPressed: state.saving
                             ? null
-                            : () => _post(context, available),
+                            : () => _post(context, available, item?.unit),
                       ),
                     ],
                   ),
@@ -1589,7 +1590,11 @@ class _InventoryMovementCreateState
     ),
   );
 
-  Future<void> _post(BuildContext context, double available) async {
+  Future<void> _post(
+    BuildContext context,
+    double available,
+    String? unit,
+  ) async {
     final InventoryCubit cubit = context.read<InventoryCubit>();
     final double quantity = double.tryParse(_quantity.text) ?? 0;
     if (_warehouseId == null ||
@@ -1628,17 +1633,22 @@ class _InventoryMovementCreateState
       _reason.text.trim(),
       _notes.text.trim(),
     ].where((String value) => value.isNotEmpty).join(' — ');
+    final String key = _idempotencyKey ??=
+        'movement-${DateTime.now().microsecondsSinceEpoch}';
     final bool saved = await cubit.postMovement(<String, dynamic>{
       'warehouseId': _warehouseId,
       'itemId': _itemId,
       'type': _type,
       'quantity': _quantity.text.trim(),
+      if (unit != null && unit.isNotEmpty) 'unit': unit,
+      'idempotencyKey': key,
       if (!_isOutbound(_type) && _cost.text.trim().isNotEmpty)
         'unitCost': _cost.text.trim(),
       if (reason.isNotEmpty) 'reason': reason,
     });
     if (!context.mounted) return;
     if (saved) {
+      _idempotencyKey = null;
       _notice(context, 'تم ترحيل حركة المخزون بنجاح.');
       context.go(AppRoutes.inventoryMovements);
     } else {
@@ -2609,6 +2619,7 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
         .saveCountLine(count.id, <String, dynamic>{
           'itemId': line.itemId,
           'countedQuantity': quantity,
+          if (line.countUnit != null) 'unit': line.countUnit,
           if (pendingReason != null || line.reason != null)
             'reason': pendingReason ?? line.reason,
         });
@@ -3386,6 +3397,7 @@ Future<void> _showCountLineDialog(
       .saveCountLine(count.id, <String, dynamic>{
         'itemId': selected.id,
         'countedQuantity': countedQuantity,
+        if (selected.unit.isNotEmpty) 'unit': selected.unit,
         if (lineReason.isNotEmpty) 'reason': lineReason,
       });
   if (!context.mounted) return;
@@ -6548,9 +6560,7 @@ String _safeEnglish(String? value, {required String fallback}) {
 
 String _shortDate(String value) {
   final DateTime? date = parseBackendDateTime(value);
-  return date == null
-      ? '—'
-      : DateFormat('MMM d, y · h:mm a').format(date);
+  return date == null ? '—' : DateFormat('MMM d, y · h:mm a').format(date);
 }
 
 String _countListDate(String value) {

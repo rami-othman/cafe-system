@@ -37,6 +37,7 @@ import '../features/inventory/views/item_form_screen.dart';
 import '../features/inventory/views/inventory_screens.dart'
     hide InventoryItemDetailsScreen, InventoryItemsScreen;
 import '../features/inventory/views/inventory_workflow_screens.dart';
+import '../features/inventory/transfers/views/transfers_screen.dart';
 import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../features/operational_context/models/operational_branch_state.dart';
 import 'app_shell.dart';
@@ -187,12 +188,12 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.inventoryTransfers,
           name: AppRouteNames.inventoryTransfers,
-          builder: (context, state) => const InventoryTransfersWorkspaceScreen(),
+          builder: (context, state) => const TransfersScreen(),
         ),
         GoRoute(
           path: AppRoutes.inventoryTransferDetails,
           name: AppRouteNames.inventoryTransferDetails,
-          builder: (context, state) => InventoryTransfersWorkspaceScreen(
+          builder: (context, state) => TransfersScreen(
             transferId: int.parse(state.pathParameters['id']!),
           ),
         ),

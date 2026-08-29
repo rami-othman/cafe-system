@@ -24,6 +24,29 @@ final class InventoryDecimal
         return self::scaled($value, 4, $field);
     }
 
+    public static function factor(mixed $value, string $field = 'factor'): int
+    {
+        return self::scaled($value, 6, $field);
+    }
+
+    public static function conversionFactor(int $value): string
+    {
+        return self::decimal($value, 6);
+    }
+
+    /** Converts a quantity in 1/1000 units with a factor in 1/1,000,000. */
+    public static function applyFactor(int $quantityUnits, int $factorUnits): int
+    {
+        $product = $quantityUnits * $factorUnits;
+        if ($product % 1000000 !== 0) {
+            throw ValidationException::withMessages([
+                'quantity' => 'The converted quantity exceeds the supported base-unit precision.',
+            ]);
+        }
+
+        return intdiv($product, 1000000);
+    }
+
     public static function quantity(int $value): string
     {
         return self::decimal($value, 3);
@@ -36,7 +59,14 @@ final class InventoryDecimal
 
     public static function totalCost(int $quantityUnits, int $costUnits): string
     {
-        return number_format(($quantityUnits * $costUnits) / 10000000, 2, '.', '');
+        $raw = $quantityUnits * $costUnits;
+        $negative = $raw < 0;
+        $absolute = abs($raw);
+        // Quantity has three decimal places and unit cost four; round their
+        // seven-decimal product to currency cents using integer arithmetic.
+        $cents = intdiv($absolute + 50000, 100000);
+
+        return ($negative ? '-' : '').self::decimal($cents, 2);
     }
 
     private static function scaled(mixed $value, int $scale, string $field): int
@@ -51,6 +81,12 @@ final class InventoryDecimal
 
     private static function decimal(int $value, int $scale): string
     {
-        return number_format($value / (10 ** $scale), $scale, '.', '');
+        $negative = $value < 0;
+        $absolute = abs($value);
+        $divisor = 10 ** $scale;
+        $whole = intdiv($absolute, $divisor);
+        $fraction = str_pad((string) ($absolute % $divisor), $scale, '0', STR_PAD_LEFT);
+
+        return ($negative ? '-' : '').$whole.'.'.$fraction;
     }
 }

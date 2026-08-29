@@ -11,9 +11,9 @@ final class FinancialActor
     public static function id(Request $request, int $tenantId): ?int
     {
         $authenticated = $request->attributes->get('auth_user');
-        $requestedId = is_array($authenticated) ? (int) ($authenticated['id'] ?? 0) : (int) $request->header('X-User-Id', 0);
+        $requestedId = is_array($authenticated) ? (int) ($authenticated['id'] ?? 0) : 0;
         if ($requestedId <= 0) {
-            return null;
+            throw new HttpException(401, 'Authenticated actor is required.');
         }
 
         $user = DB::table('users')->where('tenant_id', $tenantId)->where('id', $requestedId)->where('is_active', true)->whereNull('deleted_at')->first();
@@ -25,7 +25,10 @@ final class FinancialActor
 
     public static function assertBranchAccess(?int $actorId, int $tenantId, ?int $branchId): void
     {
-        if (! $actorId || ! $branchId) {
+        if (! $actorId) {
+            throw new HttpException(401, 'Authenticated actor is required.');
+        }
+        if (! $branchId) {
             return;
         }
 

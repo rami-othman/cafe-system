@@ -21,6 +21,7 @@ class AuthenticateApiToken
             ->join('users', 'users.id', '=', 'api_tokens.user_id')
             ->where('api_tokens.token_hash', hash('sha256', $plainToken))
             ->where(fn ($query) => $query->whereNull('api_tokens.expires_at')->orWhere('api_tokens.expires_at', '>', now()))
+            ->where('users.is_active', true)
             ->whereNull('users.deleted_at')
             ->select([
                 'api_tokens.id',

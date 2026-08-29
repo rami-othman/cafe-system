@@ -45,12 +45,14 @@ class InventoryRepository {
     String? type,
     String? category,
     String? status,
+    int? warehouseId,
     bool activeOnly = false,
   }) async => (await itemsPage(
     search: search,
     type: type,
     category: category,
     status: status ?? (activeOnly ? 'active' : null),
+    warehouseId: warehouseId,
     perPage: 100,
   )).items;
 
@@ -258,14 +260,29 @@ class InventoryRepository {
     await _api.put('inventory/counts/$countId/lines', data: payload);
   }
 
+  Future<void> reviewCountLine(
+    int countId,
+    int itemId,
+    Map<String, dynamic> payload,
+  ) async {
+    await _api.post('inventory/counts/$countId/lines/$itemId/review', data: payload);
+  }
+
   Future<List<BarCheckTemplate>> barCheckTemplates() async => readMapList(await _api.get('inventory/bar-check-templates')).map(BarCheckTemplate.fromJson).toList(growable: false);
   Future<BarCheckTemplate> barCheckTemplate(int id) async => BarCheckTemplate.fromJson(Map<String, dynamic>.from(await _api.get('inventory/bar-check-templates/$id') as Map));
   Future<BarCheckTemplate> createBarCheckTemplate(Map<String, dynamic> payload) async => BarCheckTemplate.fromJson(Map<String, dynamic>.from(await _api.post('inventory/bar-check-templates', data: payload) as Map));
   Future<BarCheckTemplate> updateBarCheckTemplate(int id, Map<String, dynamic> payload) async => BarCheckTemplate.fromJson(Map<String, dynamic>.from(await _api.patch('inventory/bar-check-templates/$id', data: payload) as Map));
-  Future<List<WarehouseTransfer>> transfers() async => readMapList(await _api.get('inventory/transfers')).map(WarehouseTransfer.fromJson).toList(growable: false);
+  Future<WarehouseTransfersPage> transfersPage({String? search, String? status, int? sourceWarehouseId, int? destinationWarehouseId, int page = 1, int perPage = 25}) async => WarehouseTransfersPage.fromJson(Map<String, dynamic>.from(await _api.getRaw('inventory/transfers', queryParameters: <String, dynamic>{'page': page, 'perPage': perPage, if (search != null && search.isNotEmpty) 'search': search, if (status != null && status.isNotEmpty) 'status': status, if (sourceWarehouseId != null) 'sourceWarehouseId': sourceWarehouseId, if (destinationWarehouseId != null) 'destinationWarehouseId': destinationWarehouseId}) as Map));
+  Future<List<WarehouseTransfer>> transfers() async => (await transfersPage(perPage: 100)).items;
   Future<WarehouseTransfer> transfer(int id) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.get('inventory/transfers/$id') as Map));
   Future<WarehouseTransfer> createTransfer(Map<String, dynamic> payload) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.post('inventory/transfers', data: payload) as Map));
   Future<WarehouseTransfer> updateTransfer(int id, Map<String, dynamic> payload) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.patch('inventory/transfers/$id', data: payload) as Map));
-  Future<WarehouseTransfer> transferAction(int id, String action) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.post('inventory/transfers/$id/$action') as Map));
+  Future<WarehouseTransfer> transferAction(
+    int id,
+    String action, [
+    Map<String, dynamic>? payload,
+  ]) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(
+    await _api.post('inventory/transfers/$id/$action', data: payload) as Map,
+  ));
   Future<WarehouseTransfer> receiveTransfer(int id, Map<String, dynamic> payload) async => WarehouseTransfer.fromJson(Map<String, dynamic>.from(await _api.post('inventory/transfers/$id/receive', data: payload) as Map));
 }

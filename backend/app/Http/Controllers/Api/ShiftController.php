@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class ShiftController extends Controller
 {
+    public function __construct(private readonly BarCheckTemplateService $barCheckTemplates) {}
     public function current(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
@@ -64,17 +66,13 @@ class ShiftController extends Controller
         $row = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift)->whereNull('deleted_at')->first();
         abort_if(! $row, 404, 'Shift not found.');
 
-        $barCheckPending = DB::table('bar_check_templates as templates')
-            ->where('templates.tenant_id', $tenantId)
-            ->where('templates.branch_id', $row->branch_id)
-            ->where('templates.is_active', true)
-            ->where('templates.required_for_shift_close', true)
-            ->whereNotExists(fn ($query) => $query->selectRaw('1')
-                ->from('stock_counts as counts')
-                ->whereColumn('counts.bar_check_template_id', 'templates.id')
-                ->where('counts.shift_id', $row->id)
-                ->where('counts.status', 'posted'))
-            ->exists();
+        $requiredTemplates = DB::table('bar_check_templates')->where('tenant_id', $tenantId)->where('branch_id', $row->branch_id)->where('is_active', true)->where('required_for_shift_close', true)->get();
+        $barCheckPending = $requiredTemplates->contains(function (object $template) use ($tenantId, $row): bool {
+            if (! $this->barCheckTemplates->isUsable($tenantId, $template)) return false;
+            return ! DB::table('stock_counts')->where('tenant_id', $tenantId)->where('shift_id', $row->id)
+                ->where('bar_check_template_id', $template->id)->where('warehouse_id', $template->warehouse_id)
+                ->where('branch_id', $template->branch_id)->where('count_type', 'shift_check')->where('status', 'posted')->exists();
+        });
         if ($barCheckPending) {
             abort(422, 'يجب إكمال فحص البار قبل إغلاق الشيفت.');
         }

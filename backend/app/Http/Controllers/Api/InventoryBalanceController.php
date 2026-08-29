@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\TenantContext;
+use App\Support\InventoryAccess;
 use App\Support\WarehousePresentation;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -17,6 +18,7 @@ class InventoryBalanceController extends Controller
     {
         $tenant = TenantContext::id($request);
         $query = DB::table('stock_balances as balances')->join('inventory_items as items', 'items.id', '=', 'balances.inventory_item_id')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('items.is_active', true)->whereNull('items.deleted_at')->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%')->select('balances.*', 'items.name_ar', 'items.name_en', 'items.sku', 'items.unit', 'items.minimum_stock', 'items.reorder_level', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name');
+        InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
         if ($request->filled('warehouseId')) {
             $query->where('balances.warehouse_id', $request->query('warehouseId'));
         }
@@ -75,6 +77,11 @@ class InventoryBalanceController extends Controller
         $previousTo = Carbon::parse($from)->subDay()->toDateString();
         $previousFrom = Carbon::parse($previousTo)->subDays($periodDays - 1)->toDateString();
         $base = DB::table('stock_balances as balances')->join('inventory_items as items', 'items.id', '=', 'balances.inventory_item_id')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('items.is_active', true)->whereNull('items.deleted_at')->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%');
+        InventoryAccess::assertBranchAccess($request, $branchId);
+        if ($warehouseId) {
+            InventoryAccess::assertBranchAccess($request, DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->value('branch_id'));
+        }
+        InventoryAccess::scopeWarehouseBranches($base, $request, 'warehouses.branch_id');
         if ($branchId) {
             $base->where('warehouses.branch_id', $branchId);
         }
@@ -86,8 +93,9 @@ class InventoryBalanceController extends Controller
             $base->where(fn (Builder $query) => $query->whereRaw('LOWER(items.name_en) LIKE ?', [$like])->orWhereRaw('LOWER(items.name_ar) LIKE ?', [$like])->orWhereRaw('LOWER(items.sku) LIKE ?', [$like]));
         }
         $rows = $base->get(['balances.*', 'items.name_en', 'items.name_ar', 'items.sku', 'items.unit', 'items.minimum_stock', 'items.reorder_level', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name']);
-        $movementScope = function (Builder $query) use ($tenant, $branchId, $warehouseId, $filters): void {
+        $movementScope = function (Builder $query) use ($tenant, $branchId, $warehouseId, $filters, $request): void {
             $query->where('movements.tenant_id', $tenant)->where('items.is_active', true)->whereNull('items.deleted_at')->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%');
+            InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
             if ($branchId) $query->where('warehouses.branch_id', $branchId);
             if ($warehouseId) $query->where('movements.warehouse_id', $warehouseId);
             if (! empty($filters['search'])) {
@@ -159,6 +167,7 @@ class InventoryBalanceController extends Controller
         ];
 
         $warehousesQuery = DB::table('warehouses as warehouses')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('warehouses.tenant_id', $tenant)->where('warehouses.is_active', true)->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%');
+        InventoryAccess::scopeWarehouseBranches($warehousesQuery, $request, 'warehouses.branch_id');
         if ($branchId) $warehousesQuery->where('warehouses.branch_id', $branchId);
         if ($warehouseId) $warehousesQuery->where('warehouses.id', $warehouseId);
         $lowStockRows = $rows->filter(fn (object $row) => (float) $row->quantity_on_hand <= (float) $row->reorder_level);

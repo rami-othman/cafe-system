@@ -42,6 +42,7 @@ class InventoryState extends Equatable {
     this.barCheckTemplates = const <BarCheckTemplate>[],
     this.selectedBarCheckTemplate,
     this.transfers = const <WarehouseTransfer>[],
+    this.transferMeta = const TransferPaginationMeta(),
     this.selectedTransfer,
   });
   final bool loading;
@@ -80,6 +81,7 @@ class InventoryState extends Equatable {
   final List<BarCheckTemplate> barCheckTemplates;
   final BarCheckTemplate? selectedBarCheckTemplate;
   final List<WarehouseTransfer> transfers;
+  final TransferPaginationMeta transferMeta;
   final WarehouseTransfer? selectedTransfer;
   InventoryState copyWith({
     bool? loading,
@@ -121,6 +123,7 @@ class InventoryState extends Equatable {
     List<BarCheckTemplate>? barCheckTemplates,
     BarCheckTemplate? selectedBarCheckTemplate,
     List<WarehouseTransfer>? transfers,
+    TransferPaginationMeta? transferMeta,
     WarehouseTransfer? selectedTransfer,
   }) => InventoryState(
     loading: loading ?? this.loading,
@@ -165,6 +168,7 @@ class InventoryState extends Equatable {
     barCheckTemplates: barCheckTemplates ?? this.barCheckTemplates,
     selectedBarCheckTemplate: selectedBarCheckTemplate ?? this.selectedBarCheckTemplate,
     transfers: transfers ?? this.transfers,
+    transferMeta: transferMeta ?? this.transferMeta,
     selectedTransfer: selectedTransfer ?? this.selectedTransfer,
   );
   @override
@@ -205,6 +209,7 @@ class InventoryState extends Equatable {
     barCheckTemplates,
     selectedBarCheckTemplate,
     transfers,
+    transferMeta,
     selectedTransfer,
   ];
 }

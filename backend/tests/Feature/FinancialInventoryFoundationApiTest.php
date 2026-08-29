@@ -93,7 +93,14 @@ class FinancialInventoryFoundationApiTest extends TestCase
 
     private function headers(int $tenantId): array
     {
-        return ['X-Tenant-Id' => $tenantId];
+        $userId = (int) DB::table('users')->where('tenant_id', $tenantId)->where('role', 'owner')->value('id');
+        if (! $userId) {
+            $userId = (int) DB::table('users')->insertGetId(['tenant_id' => $tenantId, 'name' => 'Finance Owner', 'email' => "finance-owner-$tenantId@example.test", 'password' => bcrypt('password'), 'role' => 'owner', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        }
+        $plainToken = "financial-test-$tenantId-$userId";
+        DB::table('api_tokens')->updateOrInsert(['tenant_id' => $tenantId, 'user_id' => $userId, 'name' => 'financial-feature-test'], ['token_hash' => hash('sha256', $plainToken), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return ['Authorization' => "Bearer $plainToken", 'X-Tenant-Id' => $tenantId];
     }
 
     private function createTenant(string $slug): int

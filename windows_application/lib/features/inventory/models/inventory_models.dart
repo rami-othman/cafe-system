@@ -13,16 +13,48 @@ class BarCheckTemplateLine {
   Map<String, dynamic> toJson() => <String, dynamic>{'itemId': itemId, 'countUnit': countUnit, 'required': required, 'toleranceType': toleranceType, 'tolerance': tolerance, 'requiresReviewWhenExceeded': requiresReviewWhenExceeded};
 }
 
-class WarehouseTransfer {
-  const WarehouseTransfer({required this.id, required this.number, required this.sourceWarehouseId, required this.sourceWarehouseName, required this.destinationWarehouseId, required this.destinationWarehouseName, required this.status, required this.lines, this.notes, this.createdAt, this.submittedAt, this.approvedAt, this.dispatchedAt, this.receivedAt});
-  final int id; final String number; final int sourceWarehouseId; final String sourceWarehouseName; final int destinationWarehouseId; final String destinationWarehouseName; final String status; final List<WarehouseTransferLine> lines; final String? notes; final String? createdAt; final String? submittedAt; final String? approvedAt; final String? dispatchedAt; final String? receivedAt;
-  factory WarehouseTransfer.fromJson(Map<String, dynamic> json) => WarehouseTransfer(id: readInt(json['id']) ?? 0, number: readString(json['number']), sourceWarehouseId: readInt(json['sourceWarehouseId']) ?? 0, sourceWarehouseName: readString(json['sourceWarehouseName']), destinationWarehouseId: readInt(json['destinationWarehouseId']) ?? 0, destinationWarehouseName: readString(json['destinationWarehouseName']), status: readString(json['status']), lines: readMapList(json['lines']).map(WarehouseTransferLine.fromJson).toList(growable: false), notes: readString(json['notes']).isEmpty ? null : readString(json['notes']), createdAt: readString(json['createdAt']).isEmpty ? null : readString(json['createdAt']), submittedAt: readString(json['submittedAt']).isEmpty ? null : readString(json['submittedAt']), approvedAt: readString(json['approvedAt']).isEmpty ? null : readString(json['approvedAt']), dispatchedAt: readString(json['dispatchedAt']).isEmpty ? null : readString(json['dispatchedAt']), receivedAt: readString(json['receivedAt']).isEmpty ? null : readString(json['receivedAt']));
+enum TransferStatus {
+  draft('draft', 'مسودة'), submitted('submitted', 'بانتظار الاعتماد'),
+  approved('approved', 'معتمد / جاهز للإرسال'), rejected('rejected', 'مرفوض'),
+  cancelled('cancelled', 'ملغي'), dispatched('dispatched', 'قيد النقل'),
+  partiallyReceived('partially_received', 'مستلم جزئياً / قيد النقل'),
+  received('received', 'مستلم'), closedShortage('closed_shortage', 'مغلق بعجز');
+
+  const TransferStatus(this.value, this.arabicLabel);
+  final String value;
+  final String arabicLabel;
+  static TransferStatus fromValue(String value) => TransferStatus.values.firstWhere(
+    (TransferStatus status) => status.value == value,
+    orElse: () => TransferStatus.draft,
+  );
+  bool get isTerminal => <TransferStatus>{rejected, cancelled, received, closedShortage}.contains(this);
 }
 
+class TransferPaginationMeta {
+  const TransferPaginationMeta({this.currentPage = 1, this.lastPage = 1, this.total = 0, this.perPage = 25, this.kpis = const <String, int>{}});
+  final int currentPage; final int lastPage; final int total; final int perPage; final Map<String, int> kpis;
+  factory TransferPaginationMeta.fromJson(Map<String, dynamic> json) => TransferPaginationMeta(currentPage: readInt(json['currentPage']) ?? 1, lastPage: readInt(json['lastPage']) ?? 1, total: readInt(json['total']) ?? 0, perPage: readInt(json['perPage']) ?? 25, kpis: Map<String, dynamic>.from(json['kpis'] as Map? ?? const <String, dynamic>{}).map((String key, dynamic value) => MapEntry(key, readInt(value) ?? 0)));
+}
+
+class WarehouseTransfersPage {
+  const WarehouseTransfersPage({required this.items, required this.meta});
+  final List<WarehouseTransfer> items; final TransferPaginationMeta meta;
+  factory WarehouseTransfersPage.fromJson(Map<String, dynamic> json) => WarehouseTransfersPage(items: readMapList(json['data']).map(WarehouseTransfer.fromJson).toList(growable: false), meta: TransferPaginationMeta.fromJson(Map<String, dynamic>.from(json['meta'] as Map? ?? const <String, dynamic>{})));
+}
+
+class WarehouseTransfer {
+  const WarehouseTransfer({required this.id, required this.number, required this.sourceWarehouseId, required this.sourceWarehouseName, required this.destinationWarehouseId, required this.destinationWarehouseName, required this.status, required this.lines, this.sourceBranchId, this.sourceBranchName, this.destinationBranchId, this.destinationBranchName, this.notes, this.rejectionReason, this.discrepancyReason, this.createdAt, this.submittedAt, this.approvedAt, this.dispatchedAt, this.receivedAt, this.canEdit = false, this.canSubmit = false, this.canApprove = false, this.canReject = false, this.canDispatch = false, this.canReceive = false, this.canCloseShortage = false, this.canCancel = false, this.auditTimeline = const <TransferTimelineEvent>[]});
+  final int id; final String number; final int sourceWarehouseId; final String sourceWarehouseName; final int destinationWarehouseId; final String destinationWarehouseName; final String status; final List<WarehouseTransferLine> lines; final int? sourceBranchId; final String? sourceBranchName; final int? destinationBranchId; final String? destinationBranchName; final String? notes; final String? rejectionReason; final String? discrepancyReason; final String? createdAt; final String? submittedAt; final String? approvedAt; final String? dispatchedAt; final String? receivedAt; final bool canEdit; final bool canSubmit; final bool canApprove; final bool canReject; final bool canDispatch; final bool canReceive; final bool canCloseShortage; final bool canCancel; final List<TransferTimelineEvent> auditTimeline;
+  TransferStatus get statusType => TransferStatus.fromValue(status);
+  factory WarehouseTransfer.fromJson(Map<String, dynamic> json) => WarehouseTransfer(id: readInt(json['id']) ?? 0, number: readString(json['number']), sourceWarehouseId: readInt(json['sourceWarehouseId']) ?? 0, sourceWarehouseName: readString(json['sourceWarehouseName']), destinationWarehouseId: readInt(json['destinationWarehouseId']) ?? 0, destinationWarehouseName: readString(json['destinationWarehouseName']), status: TransferStatus.fromValue(readString(json['status'])).value, lines: readMapList(json['lines']).map(WarehouseTransferLine.fromJson).toList(growable: false), sourceBranchId: readInt(json['sourceBranchId']), sourceBranchName: readString(json['sourceBranchName']).isEmpty ? null : readString(json['sourceBranchName']), destinationBranchId: readInt(json['destinationBranchId']), destinationBranchName: readString(json['destinationBranchName']).isEmpty ? null : readString(json['destinationBranchName']), notes: readString(json['notes']).isEmpty ? null : readString(json['notes']), rejectionReason: readString(json['rejectionReason']).isEmpty ? null : readString(json['rejectionReason']), discrepancyReason: readString(json['discrepancyReason']).isEmpty ? null : readString(json['discrepancyReason']), createdAt: readString(json['createdAt']).isEmpty ? null : readString(json['createdAt']), submittedAt: readString(json['submittedAt']).isEmpty ? null : readString(json['submittedAt']), approvedAt: readString(json['approvedAt']).isEmpty ? null : readString(json['approvedAt']), dispatchedAt: readString(json['dispatchedAt']).isEmpty ? null : readString(json['dispatchedAt']), receivedAt: readString(json['receivedAt']).isEmpty ? null : readString(json['receivedAt']), canEdit: readBool(json['canEdit']), canSubmit: readBool(json['canSubmit']), canApprove: readBool(json['canApprove']), canReject: readBool(json['canReject']), canDispatch: readBool(json['canDispatch']), canReceive: readBool(json['canReceive']), canCloseShortage: readBool(json['canCloseShortage']), canCancel: readBool(json['canCancel']), auditTimeline: readMapList(json['auditTimeline']).map(TransferTimelineEvent.fromJson).toList(growable: false));
+}
+
+class TransferTimelineEvent { const TransferTimelineEvent({required this.status, required this.at, this.actor}); final String status; final String at; final String? actor; factory TransferTimelineEvent.fromJson(Map<String,dynamic> json) => TransferTimelineEvent(status: readString(json['status']), at: readString(json['at']), actor: readString(json['actor']).isEmpty ? null : readString(json['actor'])); }
+
 class WarehouseTransferLine {
-  const WarehouseTransferLine({required this.itemId, required this.itemName, required this.sku, required this.unit, required this.requestedQuantity, required this.dispatchedQuantity, required this.receivedQuantity, required this.availableQuantity, required this.discrepancyQuantity});
-  final int itemId; final String itemName; final String sku; final String unit; final String requestedQuantity; final String dispatchedQuantity; final String receivedQuantity; final String availableQuantity; final String discrepancyQuantity;
-  factory WarehouseTransferLine.fromJson(Map<String, dynamic> json) => WarehouseTransferLine(itemId: readInt(json['itemId']) ?? 0, itemName: readString(json['itemName']), sku: readString(json['sku']), unit: readString(json['unit']), requestedQuantity: readString(json['requestedQuantity'], fallback: '0'), dispatchedQuantity: readString(json['dispatchedQuantity'], fallback: '0'), receivedQuantity: readString(json['receivedQuantity'], fallback: '0'), availableQuantity: readString(json['availableQuantity'], fallback: '0'), discrepancyQuantity: readString(json['discrepancyQuantity'], fallback: '0'));
+  const WarehouseTransferLine({required this.itemId, required this.itemName, required this.sku, required this.unit, required this.requestedQuantity, required this.dispatchedQuantity, required this.receivedQuantity, required this.availableQuantity, required this.discrepancyQuantity, this.reservedQuantity = '0', this.inTransitQuantity = '0', this.discrepancyReason});
+  final int itemId; final String itemName; final String sku; final String unit; final String requestedQuantity; final String dispatchedQuantity; final String receivedQuantity; final String availableQuantity; final String discrepancyQuantity; final String reservedQuantity; final String inTransitQuantity; final String? discrepancyReason;
+  factory WarehouseTransferLine.fromJson(Map<String, dynamic> json) => WarehouseTransferLine(itemId: readInt(json['itemId']) ?? 0, itemName: readString(json['itemName']), sku: readString(json['sku']), unit: readString(json['unit']), requestedQuantity: readString(json['requestedQuantity'], fallback: '0'), dispatchedQuantity: readString(json['dispatchedQuantity'], fallback: '0'), receivedQuantity: readString(json['receivedQuantity'], fallback: '0'), availableQuantity: readString(json['availableQuantity'], fallback: '0'), discrepancyQuantity: readString(json['discrepancyQuantity'], fallback: '0'), reservedQuantity: readString(json['reservedQuantity'], fallback: '0'), inTransitQuantity: readString(json['inTransitQuantity'], fallback: '0'), discrepancyReason: readString(json['discrepancyReason']).isEmpty ? null : readString(json['discrepancyReason']));
 }
 
 class InventoryUnit {
@@ -679,6 +711,11 @@ class InventoryCountLine {
     required this.averageUnitCost,
     required this.varianceValue,
     required this.isCounted,
+    this.countUnit,
+    this.isRequired = true,
+    this.varianceStatus,
+    this.requiresReviewWhenExceeded = false,
+    this.managerReviewStatus,
     this.reason,
   });
   final int itemId;
@@ -691,6 +728,11 @@ class InventoryCountLine {
   final String averageUnitCost;
   final String varianceValue;
   final bool isCounted;
+  final String? countUnit;
+  final bool isRequired;
+  final String? varianceStatus;
+  final bool requiresReviewWhenExceeded;
+  final String? managerReviewStatus;
   final String? reason;
 
   factory InventoryCountLine.fromJson(
@@ -709,6 +751,19 @@ class InventoryCountLine {
     averageUnitCost: readString(json['averageUnitCost'], fallback: '0.0000'),
     varianceValue: readString(json['varianceValue'], fallback: '0.00'),
     isCounted: readBool(json['isCounted']),
+    countUnit: readString(json['countUnit']).isEmpty
+        ? null
+        : readString(json['countUnit']),
+    isRequired: json.containsKey('isRequired')
+        ? readBool(json['isRequired'])
+        : true,
+    varianceStatus: readString(json['varianceStatus']).isEmpty
+        ? null
+        : readString(json['varianceStatus']),
+    requiresReviewWhenExceeded: readBool(json['requiresReviewWhenExceeded']),
+    managerReviewStatus: readString(json['managerReviewStatus']).isEmpty
+        ? null
+        : readString(json['managerReviewStatus']),
     reason: readString(json['reason']).isEmpty
         ? null
         : readString(json['reason']),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\WarehouseRequest;
 use App\Services\WarehouseService;
 use App\Support\FinancialActor;
+use App\Support\InventoryAccess;
 use App\Support\TenantContext;
 use App\Support\WarehousePresentation;
 use Illuminate\Database\Query\Builder;
@@ -27,27 +28,9 @@ class WarehouseController extends Controller
             ->where('warehouses.tenant_id', $tenantId)
             ->whereNull('warehouses.deleted_at')
             ->select('warehouses.*', 'branches.name as branch_name');
+        InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
         if ($request->boolean('includeLegacy') !== true) {
             $query->where('warehouses.code', 'not like', 'LEGACY-%');
-        }
-        if ($request->boolean('forStockCount')) {
-            $actorId = FinancialActor::id($request, $tenantId);
-            if ($actorId) {
-                $role = DB::table('users')->where('id', $actorId)->value('role');
-                if ($role !== 'owner') {
-                    $query->where(function (Builder $warehouses) use ($tenantId, $actorId): void {
-                        $warehouses
-                            ->whereNull('warehouses.branch_id')
-                            ->orWhereIn(
-                                'warehouses.branch_id',
-                                DB::table('user_branches')
-                                    ->where('tenant_id', $tenantId)
-                                    ->where('user_id', $actorId)
-                                    ->select('branch_id'),
-                            );
-                    });
-                }
-            }
         }
         if ($request->filled('search')) {
             $search = '%'.strtolower((string) $request->query('search')).'%';

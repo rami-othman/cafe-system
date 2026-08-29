@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\InventoryItemRequest;
 use App\Services\InventoryItemService;
 use App\Support\FinancialActor;
+use App\Support\InventoryDecimal;
 use App\Support\TenantContext;
 use App\Support\InventoryUnitCatalog;
+use App\Support\InventoryAccess;
 use App\Support\WarehousePresentation;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -35,6 +37,17 @@ class InventoryItemController extends Controller
             )
             ->where('tenant_id', $tenant)
             ->groupBy('inventory_item_id');
+        $allowedBranches = InventoryAccess::allowedBranchIds($request);
+        if ($allowedBranches !== null) {
+            $stockTotals->whereIn('warehouse_id', function ($warehouses) use ($tenant, $allowedBranches): void {
+                $warehouses->select('id')->from('warehouses')->where('tenant_id', $tenant)->where(function ($scope) use ($allowedBranches): void {
+                    $scope->whereNull('branch_id');
+                    if ($allowedBranches !== []) {
+                        $scope->orWhereIn('branch_id', $allowedBranches);
+                    }
+                });
+            });
+        }
         if ($warehouseId) {
             $stockTotals->where('warehouse_id', $warehouseId);
         }
@@ -135,7 +148,12 @@ class InventoryItemController extends Controller
     {
         $tenant = TenantContext::id($request);
 
-        return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $item), true)]);
+        // Branch users obtain branch-filtered stock and movement details from
+        // the dedicated endpoints below. Do not expose tenant-wide detail
+        // aggregates from this catalogue endpoint.
+        $detail = InventoryAccess::allowedBranchIds($request) === null;
+
+        return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $item), $detail)]);
     }
 
     public function store(InventoryItemRequest $request): JsonResponse
@@ -167,7 +185,9 @@ class InventoryItemController extends Controller
     {
         $tenant = TenantContext::id($request);
         $this->items->find($tenant, $item);
-        $rows = DB::table('stock_balances as balances')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('balances.inventory_item_id', $item)->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%')->orderBy('warehouses.name')->get(['balances.*', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name']);
+        $query = DB::table('stock_balances as balances')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('balances.inventory_item_id', $item)->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%')->orderBy('warehouses.name');
+        InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
+        $rows = $query->get(['balances.*', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name']);
 
         return response()->json(['data' => $rows->map(fn (object $row) => $this->balance($row))->values()]);
     }
@@ -176,7 +196,9 @@ class InventoryItemController extends Controller
     {
         $tenant = TenantContext::id($request);
         $this->items->find($tenant, $item);
-        $rows = DB::table('stock_movements as movements')->join('warehouses', 'warehouses.id', '=', 'movements.warehouse_id')->where('movements.tenant_id', $tenant)->where('movements.inventory_item_id', $item)->orderByDesc('movements.occurred_at')->get(['movements.*', 'warehouses.name as warehouse_name']);
+        $query = DB::table('stock_movements as movements')->join('warehouses', 'warehouses.id', '=', 'movements.warehouse_id')->where('movements.tenant_id', $tenant)->where('movements.inventory_item_id', $item)->orderByDesc('movements.occurred_at');
+        InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
+        $rows = $query->get(['movements.*', 'warehouses.name as warehouse_name']);
 
         return response()->json(['data' => $rows->map(fn (object $row) => $this->movement($row))->values()]);
     }
@@ -198,7 +220,7 @@ class InventoryItemController extends Controller
             : ($availableQuantity <= 0
                 ? 'out_of_stock'
                 : ($availableQuantity <= (float) $item->reorder_level ? 'low_stock' : 'active'));
-        $data = ['id' => (int) $item->id, 'nameAr' => $item->name_ar, 'nameEn' => $item->name_en, 'displayName' => $item->name_en ?: $item->sku, 'sku' => $item->sku, 'barcode' => $item->barcode, 'itemType' => $item->item_type, 'category' => $item->category, 'unit' => $item->unit, 'purchaseUnit' => $item->purchase_unit ?? null, 'consumptionUnit' => $item->consumption_unit ?? null, 'minimumStock' => $item->minimum_stock, 'reorderLevel' => $item->reorder_level, 'latestUnitCost' => $item->latest_unit_cost, 'lastPurchaseCost' => $item->last_purchase_cost ?? null, 'preferredSupplierName' => $item->preferred_supplier_name ?? null, 'trackExpiry' => (bool) ($item->track_expiry ?? false), 'trackBatch' => (bool) ($item->track_batch ?? false), 'stockStatus' => $stockStatus, 'lastUpdatedAt' => $item->updated_at, 'totalQuantity' => number_format((float) ($totals->total_quantity ?? 0), 3, '.', ''), 'availableQuantity' => number_format($availableQuantity, 3, '.', ''), 'totalValue' => number_format((float) ($totals->total_value ?? 0), 2, '.', ''), 'isActive' => (bool) $item->is_active, 'notes' => $item->notes];
+        $data = ['id' => (int) $item->id, 'nameAr' => $item->name_ar, 'nameEn' => $item->name_en, 'displayName' => $item->name_en ?: $item->sku, 'sku' => $item->sku, 'barcode' => $item->barcode, 'itemType' => $item->item_type, 'category' => $item->category, 'unit' => $item->unit, 'purchaseUnit' => $item->purchase_unit ?? null, 'consumptionUnit' => $item->consumption_unit ?? null, 'minimumStock' => InventoryDecimal::quantity(InventoryDecimal::units($item->minimum_stock)), 'reorderLevel' => InventoryDecimal::quantity(InventoryDecimal::units($item->reorder_level)), 'latestUnitCost' => InventoryDecimal::unitCost(InventoryDecimal::cost($item->latest_unit_cost)), 'lastPurchaseCost' => $item->last_purchase_cost === null ? null : InventoryDecimal::unitCost(InventoryDecimal::cost($item->last_purchase_cost, 'lastPurchaseCost')), 'preferredSupplierName' => $item->preferred_supplier_name ?? null, 'trackExpiry' => (bool) ($item->track_expiry ?? false), 'trackBatch' => (bool) ($item->track_batch ?? false), 'stockStatus' => $stockStatus, 'lastUpdatedAt' => $item->updated_at, 'totalQuantity' => number_format((float) ($totals->total_quantity ?? 0), 3, '.', ''), 'availableQuantity' => number_format($availableQuantity, 3, '.', ''), 'totalValue' => number_format((float) ($totals->total_value ?? 0), 2, '.', ''), 'isActive' => (bool) $item->is_active, 'notes' => $item->notes];
         if ($detail) {
             $data['warehouseIds'] = Schema::hasTable('inventory_item_warehouses') ? DB::table('inventory_item_warehouses')
                 ->where('tenant_id', $tenant)

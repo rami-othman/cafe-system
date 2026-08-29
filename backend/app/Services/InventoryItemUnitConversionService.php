@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\InventoryUnitCatalog;
+use App\Support\InventoryDecimal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -36,7 +37,7 @@ class InventoryItemUnitConversionService
             $payload = [
                 'source_unit' => $data['sourceUnit'],
                 'target_unit' => $data['targetUnit'],
-                'factor' => number_format((float) $data['factor'], 6, '.', ''),
+                'factor' => InventoryDecimal::conversionFactor(InventoryDecimal::factor($data['factor'])),
                 'is_active' => $data['isActive'],
                 'updated_by' => $actorId,
                 'updated_at' => now(),
@@ -94,7 +95,7 @@ class InventoryItemUnitConversionService
             'sourceLabel' => InventoryUnitCatalog::UNITS[$conversion->source_unit],
             'targetUnit' => $conversion->target_unit,
             'targetLabel' => InventoryUnitCatalog::UNITS[$conversion->target_unit],
-            'factor' => number_format((float) $conversion->factor, 6, '.', ''),
+            'factor' => InventoryDecimal::conversionFactor(InventoryDecimal::factor($conversion->factor)),
             'isActive' => (bool) $conversion->is_active,
         ];
     }

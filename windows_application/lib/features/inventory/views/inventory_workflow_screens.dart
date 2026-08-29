@@ -177,6 +177,11 @@ class _BarCheckTemplateEditorScreenState
       await c.loadBarCheckTemplate(widget.templateId);
       if (!mounted) return;
       await c.loadBarCheckTemplates();
+      if (!mounted) return;
+      final template = c.state.selectedBarCheckTemplate;
+      if (template != null) {
+        await c.loadBarCheckTemplateItems(template.warehouseId);
+      }
     });
   }
 
@@ -293,6 +298,9 @@ class _BarCheckTemplateEditorScreenState
                           _branchId = branchId;
                           _warehouseId = nextWarehouse.id;
                         });
+                        context.read<InventoryCubit>().loadBarCheckTemplateItems(
+                          nextWarehouse.id,
+                        );
                       },
                     ),
                   ),
@@ -320,6 +328,11 @@ class _BarCheckTemplateEditorScreenState
                       onChanged: (warehouseId) {
                         if (warehouseId != null)
                           setState(() => _warehouseId = warehouseId);
+                        if (warehouseId != null) {
+                          context
+                              .read<InventoryCubit>()
+                              .loadBarCheckTemplateItems(warehouseId);
+                        }
                       },
                     ),
                   ),
@@ -350,25 +363,37 @@ class _BarCheckTemplateEditorScreenState
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  if (_search.text.isNotEmpty && available.isNotEmpty)
-                    ...available
-                        .take(6)
-                        .map(
-                          (item) => ListTile(
-                            title: Text(item.name),
-                            subtitle: Text(
-                              item.sku,
-                              textDirection: TextDirection.ltr,
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.add_circle_outline),
-                              onPressed: () => setState(() {
-                                _lines.add(_EditableBarLine(item));
-                                _search.clear();
-                              }),
-                            ),
-                          ),
+                  if (_search.text.isNotEmpty && available.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      height: 176,
+                      child: Scrollbar(
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: available.length > 6 ? 6 : available.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final item = available[index];
+                            return ListTile(
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
+                              title: Text(item.name),
+                              subtitle: Text(
+                                item.sku,
+                                textDirection: TextDirection.ltr,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.add_circle_outline),
+                                onPressed: () => setState(() {
+                                  _lines.add(_EditableBarLine(item));
+                                  _search.clear();
+                                }),
+                              ),
+                            );
+                          },
                         ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

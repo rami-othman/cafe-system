@@ -16,8 +16,6 @@ class DioApiClient {
               headers: <String, Object?>{
                 Headers.acceptHeader: 'application/json',
                 Headers.contentTypeHeader: 'application/json',
-                if (ApiConfig.defaultTenantId > 0)
-                  'X-Tenant-Id': ApiConfig.defaultTenantId,
               },
             ),
           ) {
@@ -26,10 +24,11 @@ class DioApiClient {
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
           options.headers[Headers.contentTypeHeader] = 'application/json';
-          if (ApiConfig.defaultTenantId > 0) {
-            options.headers['X-Tenant-Id'] = ApiConfig.defaultTenantId;
+          options.headers.remove('X-Tenant-Id');
+          if (_bearerToken.isNotEmpty) {
+            options.headers['authorization'] = 'Bearer $_bearerToken';
           } else {
-            options.headers.remove('X-Tenant-Id');
+            options.headers.remove('authorization');
           }
           handler.next(options);
         },
@@ -38,6 +37,11 @@ class DioApiClient {
   }
 
   final Dio _dio;
+  String _bearerToken = ApiConfig.apiToken;
+
+  /// Called by the authenticated application shell after `/auth/login`.
+  /// A retry keeps its request body/idempotency key; this only changes auth.
+  void setBearerToken(String? token) => _bearerToken = token?.trim() ?? '';
 
   static String get _normalizedBaseUrl {
     return ApiConfig.baseUrl.endsWith('/')

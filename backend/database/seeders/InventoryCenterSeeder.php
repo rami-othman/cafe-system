@@ -60,7 +60,14 @@ class InventoryCenterSeeder extends Seeder
             $counts = app(StockCountService::class);
             $id = $counts->create($request, $tenant, ['warehouseId' => $central->id, 'countDate' => '2026-08-17', 'notes' => 'جرد تجريبي مرحّل'], $manager);
             $counts->transition($request, $tenant, $id, 'start', $manager);
-            $counts->upsertLine($tenant, $id, ['itemId' => $beans, 'countedQuantity' => '20.000', 'reason' => 'فرق عدّ تجريبي']);
+            DB::table('stock_count_lines')->where('stock_count_id', $id)->orderBy('id')->get()->each(function (object $line) use ($counts, $tenant, $id, $manager, $beans): void {
+                $isBeans = (int) $line->inventory_item_id === $beans;
+                $counts->upsertLine($tenant, $id, [
+                    'itemId' => (int) $line->inventory_item_id,
+                    'countedQuantity' => $isBeans ? '20.000' : $line->expected_quantity,
+                    'reason' => $isBeans ? 'فرق عدّ تجريبي' : null,
+                ], $manager);
+            });
             $counts->transition($request, $tenant, $id, 'submit', $manager);
             $counts->transition($request, $tenant, $id, 'approve', $manager);
             $counts->transition($request, $tenant, $id, 'post', $manager);

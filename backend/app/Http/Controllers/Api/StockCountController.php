@@ -7,6 +7,8 @@ use App\Http\Requests\Api\V1\StockCountLineRequest;
 use App\Http\Requests\Api\V1\StockCountRequest;
 use App\Services\StockCountService;
 use App\Support\FinancialActor;
+use App\Support\InventoryDecimal;
+use App\Support\InventoryAccess;
 use App\Support\TenantContext;
 use App\Support\WarehousePresentation;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +33,7 @@ class StockCountController extends Controller
             ->where('counts.tenant_id', $tenant)
             ->where('warehouses.code', 'not like', 'LEGACY-%')
             ->select('counts.*', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'branches.name as branch_name', 'creator.name as creator_name', 'line_totals.total_items', 'line_totals.counted_items', 'line_totals.variance_items', 'line_totals.variance_value');
+        InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
         foreach (['status' => 'counts.status', 'warehouseId' => 'counts.warehouse_id', 'countType' => 'counts.count_type', 'branchId' => 'warehouses.branch_id'] as $key => $column) {
             if ($request->filled($key)) {
                 $query->where($column, $request->query($key));
@@ -77,6 +80,7 @@ class StockCountController extends Controller
     public function show(Request $request, int $count): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $this->assertCountBranchAccess($request, $tenant, $count);
 
         return response()->json(['data' => $this->serialize($tenant, $this->counts->find($tenant, $count), true)]);
     }
@@ -84,6 +88,7 @@ class StockCountController extends Controller
     public function line(StockCountLineRequest $request, int $count): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $this->assertCountBranchAccess($request, $tenant, $count);
         $this->counts->upsertLine(
             $tenant,
             $count,
@@ -97,8 +102,22 @@ class StockCountController extends Controller
     public function action(Request $request, int $count, string $action): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $this->assertCountBranchAccess($request, $tenant, $count);
         abort_unless(in_array($action, ['start', 'submit', 'approve', 'post', 'cancel'], true), 404);
         $this->counts->transition($request, $tenant, $count, $action, FinancialActor::id($request, $tenant));
+
+        return response()->json(['data' => $this->serialize($tenant, $this->counts->find($tenant, $count), true)]);
+    }
+
+    public function reviewLine(Request $request, int $count, int $item): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+        $this->assertCountBranchAccess($request, $tenant, $count);
+        $data = $request->validate([
+            'decision' => ['required', 'in:approved,rejected'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $this->counts->reviewLine($request, $tenant, $count, $item, $data, FinancialActor::id($request, $tenant));
 
         return response()->json(['data' => $this->serialize($tenant, $this->counts->find($tenant, $count), true)]);
     }
@@ -106,11 +125,21 @@ class StockCountController extends Controller
     private function serialize(int $tenant, object $count, bool $detail = false): array
     {
         $warehouse = DB::table('warehouses as warehouses')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('warehouses.id', $count->warehouse_id)->select('warehouses.name', 'warehouses.code', 'warehouses.type', 'branches.name as branch_name')->first();
-        $data = ['id' => (int) $count->id, 'number' => 'SC-'.str_pad((string) $count->id, 5, '0', STR_PAD_LEFT), 'warehouseId' => (int) $count->warehouse_id, 'warehouseName' => $warehouse?->name, 'warehouseCode' => $warehouse?->code, 'displayWarehouseName' => WarehousePresentation::displayName($warehouse?->branch_name, $warehouse?->type ?? 'central'), 'warehouseTypeLabel' => WarehousePresentation::typeLabel($warehouse?->type ?? 'central'), 'countDate' => $count->count_date, 'countType' => $count->count_type ?? 'full', 'categoryFilters' => $count->category_filters ? json_decode($count->category_filters, true) : [], 'status' => $count->status, 'notes' => $count->notes, 'countedBy' => $count->counted_by ? (int) $count->counted_by : null, 'createdByName' => $count->creator_name ?? null, 'approvedBy' => $count->approved_by ? (int) $count->approved_by : null, 'submittedAt' => $count->submitted_at, 'approvedAt' => $count->approved_at, 'postedAt' => $count->posted_at, 'totalItems' => (int) ($count->total_items ?? 0), 'countedItems' => (int) ($count->counted_items ?? 0), 'varianceItems' => (int) ($count->variance_items ?? 0), 'varianceValue' => number_format((float) ($count->variance_value ?? 0), 2, '.', '')];
+        $data = ['id' => (int) $count->id, 'number' => 'SC-'.str_pad((string) $count->id, 5, '0', STR_PAD_LEFT), 'warehouseId' => (int) $count->warehouse_id, 'warehouseName' => $warehouse?->name, 'warehouseCode' => $warehouse?->code, 'displayWarehouseName' => WarehousePresentation::displayName($warehouse?->branch_name, $warehouse?->type ?? 'central'), 'warehouseTypeLabel' => WarehousePresentation::typeLabel($warehouse?->type ?? 'central'), 'countDate' => $count->count_date, 'countType' => $count->count_type ?? 'full', 'categoryFilters' => $count->category_filters ? json_decode($count->category_filters, true) : [], 'status' => $count->status, 'notes' => $count->notes, 'countedBy' => $count->counted_by ? (int) $count->counted_by : null, 'createdByName' => $count->creator_name ?? null, 'approvedBy' => $count->approved_by ? (int) $count->approved_by : null, 'submittedAt' => $count->submitted_at, 'approvedAt' => $count->approved_at, 'postedAt' => $count->posted_at, 'totalItems' => (int) ($count->total_items ?? 0), 'countedItems' => (int) ($count->counted_items ?? 0), 'varianceItems' => (int) ($count->variance_items ?? 0), 'varianceValue' => (string) ($count->variance_value ?? '0.00')];
         if ($detail) {
-            $data['lines'] = DB::table('stock_count_lines as lines')->join('inventory_items as items', 'items.id', '=', 'lines.inventory_item_id')->where('lines.tenant_id', $tenant)->where('lines.stock_count_id', $count->id)->orderBy('items.name_en')->get(['lines.*', 'items.name_ar', 'items.name_en', 'items.sku', 'items.unit'])->map(fn (object $line) => ['id' => (int) $line->id, 'itemId' => (int) $line->inventory_item_id, 'itemNameAr' => $line->name_ar, 'itemNameEn' => $line->name_en ?: $line->name_ar, 'sku' => $line->sku, 'unit' => $line->unit, 'expectedQuantity' => $line->expected_quantity, 'countedQuantity' => $line->counted_quantity, 'varianceQuantity' => $line->variance_quantity, 'averageUnitCost' => $line->average_unit_cost ?? '0.0000', 'varianceValue' => number_format((float) $line->variance_quantity * (float) ($line->average_unit_cost ?? 0), 2, '.', ''), 'isCounted' => $line->counted_at !== null, 'reason' => $line->reason])->values();
+            $data['lines'] = DB::table('stock_count_lines as lines')->join('inventory_items as items', 'items.id', '=', 'lines.inventory_item_id')->where('lines.tenant_id', $tenant)->where('lines.stock_count_id', $count->id)->orderBy('items.name_en')->get(['lines.*', 'items.name_ar', 'items.name_en', 'items.sku', 'items.unit'])->map(fn (object $line) => ['id' => (int) $line->id, 'itemId' => (int) $line->inventory_item_id, 'itemNameAr' => $line->name_ar, 'itemNameEn' => $line->name_en ?: $line->name_ar, 'sku' => $line->sku, 'unit' => $line->unit, 'countUnit' => $line->entered_unit ?: $line->unit, 'expectedQuantity' => $line->expected_quantity, 'countedQuantity' => $line->counted_quantity, 'enteredQuantity' => $line->entered_quantity, 'conversionFactor' => $line->conversion_factor, 'baseQuantity' => $line->base_quantity, 'varianceQuantity' => $line->variance_quantity, 'varianceStatus' => $line->variance_status, 'isRequired' => (bool) $line->is_required, 'isCounted' => (bool) $line->is_counted, 'quantityTolerance' => $line->quantity_tolerance, 'toleranceType' => $line->tolerance_type, 'requiresReviewWhenExceeded' => (bool) $line->requires_review_when_exceeded, 'managerReviewStatus' => $line->manager_review_status, 'managerReviewedBy' => $line->manager_reviewed_by ? (int) $line->manager_reviewed_by : null, 'managerReviewedAt' => $line->manager_reviewed_at, 'managerReviewNotes' => $line->manager_review_notes, 'averageUnitCost' => $line->average_unit_cost ?? '0.0000', 'varianceValue' => InventoryDecimal::totalCost(InventoryDecimal::signedUnits($line->variance_quantity), InventoryDecimal::cost($line->average_unit_cost ?? '0')), 'reason' => $line->reason])->values();
         }
 
         return $data;
+    }
+
+    private function assertCountBranchAccess(Request $request, int $tenant, int $count): void
+    {
+        $branchId = DB::table('stock_counts as counts')
+            ->join('warehouses as warehouses', 'warehouses.id', '=', 'counts.warehouse_id')
+            ->where('counts.tenant_id', $tenant)
+            ->where('counts.id', $count)
+            ->value('warehouses.branch_id');
+        InventoryAccess::assertBranchAccess($request, $branchId ? (int) $branchId : null);
     }
 }

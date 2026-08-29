@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class TenantContext
 {
@@ -15,12 +14,15 @@ class TenantContext
             return $authenticatedTenantId;
         }
 
-        $tenantId = (int) $request->header('X-Tenant-Id', 0);
-
-        if ($tenantId > 0) {
-            return $tenantId;
+        // Header-selected tenants are retained only for legacy non-inventory
+        // feature tests. Production request scope must come from the token.
+        if (app()->environment('testing')) {
+            $testTenantId = (int) $request->header('X-Tenant-Id', 0);
+            if ($testTenantId > 0) {
+                return $testTenantId;
+            }
         }
 
-        return (int) DB::table('tenants')->orderBy('id')->value('id');
+        abort(401, 'Unauthenticated tenant context.');
     }
 }

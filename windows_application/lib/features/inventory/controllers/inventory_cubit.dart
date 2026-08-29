@@ -284,6 +284,15 @@ class InventoryCubit extends Cubit<InventoryState> {
     }
   }
 
+  Future<bool> reviewCountLine(
+    int countId,
+    int itemId,
+    Map<String, dynamic> payload,
+  ) => _save(() async {
+    await repository.reviewCountLine(countId, itemId, payload);
+    await loadCountDetails(countId);
+  });
+
   Future<void> loadBarCheckTemplates() => _load(() async {
     final results = await Future.wait(<Future<dynamic>>[
       repository.barCheckTemplates(), repository.warehouses(), repository.items(activeOnly: true),
@@ -294,6 +303,13 @@ class InventoryCubit extends Cubit<InventoryState> {
     final template = await repository.barCheckTemplate(id);
     emit(state.copyWith(selectedBarCheckTemplate: template, clearError: true));
   });
+  Future<void> loadBarCheckTemplateItems(int warehouseId) => _load(() async {
+    final items = await repository.items(
+      activeOnly: true,
+      warehouseId: warehouseId,
+    );
+    emit(state.copyWith(items: items, clearError: true));
+  });
   Future<bool> createBarCheckTemplate(Map<String, dynamic> payload) => _save(() async {
     final template = await repository.createBarCheckTemplate(payload);
     emit(state.copyWith(selectedBarCheckTemplate: template));
@@ -303,15 +319,22 @@ class InventoryCubit extends Cubit<InventoryState> {
     final template = await repository.updateBarCheckTemplate(id, payload);
     emit(state.copyWith(selectedBarCheckTemplate: template));
     await loadBarCheckTemplates();
+    await loadBarCheckTemplateItems(template.warehouseId);
   });
-  Future<void> loadTransfers() => _load(() async {
-    final results = await Future.wait(<Future<dynamic>>[repository.transfers(), repository.warehouses(), repository.items(activeOnly: true)]);
-    emit(state.copyWith(transfers: results[0] as List<WarehouseTransfer>, warehouses: results[1] as List<WarehouseLocation>, items: results[2] as List<InventoryItem>, clearError: true));
+  Future<void> loadTransfers({String? search, String? status, int? sourceWarehouseId, int? destinationWarehouseId, int page = 1}) => _load(() async {
+    final results = await Future.wait(<Future<dynamic>>[repository.transfersPage(search: search, status: status, sourceWarehouseId: sourceWarehouseId, destinationWarehouseId: destinationWarehouseId, page: page), repository.warehouses()]);
+    final transfers = results[0] as WarehouseTransfersPage;
+    emit(state.copyWith(transfers: transfers.items, transferMeta: transfers.meta, warehouses: results[1] as List<WarehouseLocation>, clearError: true));
   });
+  Future<void> loadTransferItems(int warehouseId) => _load(() async { emit(state.copyWith(items: await repository.items(activeOnly: true, warehouseId: warehouseId), clearError: true)); });
   Future<void> loadTransfer(int id) => _load(() async { emit(state.copyWith(selectedTransfer: await repository.transfer(id), clearError: true)); });
   Future<bool> createTransfer(Map<String, dynamic> payload) => _save(() async { final transfer = await repository.createTransfer(payload); emit(state.copyWith(selectedTransfer: transfer)); await loadTransfers(); });
   Future<bool> updateTransfer(int id, Map<String, dynamic> payload) => _save(() async { final transfer = await repository.updateTransfer(id, payload); emit(state.copyWith(selectedTransfer: transfer)); await loadTransfers(); });
-  Future<bool> transferAction(int id, String action) => _save(() async { final transfer = await repository.transferAction(id, action); emit(state.copyWith(selectedTransfer: transfer)); await loadTransfers(); });
+  Future<bool> transferAction(
+    int id,
+    String action, [
+    Map<String, dynamic>? payload,
+  ]) => _save(() async { final transfer = await repository.transferAction(id, action, payload); emit(state.copyWith(selectedTransfer: transfer)); await loadTransfers(); });
   Future<bool> receiveTransfer(int id, Map<String, dynamic> payload) => _save(() async { final transfer = await repository.receiveTransfer(id, payload); emit(state.copyWith(selectedTransfer: transfer)); await loadTransfers(); });
 
   Future<void> _load(Future<void> Function() task) async {
