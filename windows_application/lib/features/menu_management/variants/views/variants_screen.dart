@@ -71,7 +71,7 @@ class _VariantsScreenState extends State<VariantsScreen> {
       return DesktopPageLayout(
         child: Center(
           child: _Retry(
-            message: state.formError ?? 'Product not found.',
+            message: state.formError ?? context.l10n.productDetailNotFound,
             onRetry: () => context.read<VariantsCubit>().load(widget.productId),
           ),
         ),
@@ -82,7 +82,7 @@ class _VariantsScreenState extends State<VariantsScreen> {
       return DesktopPageLayout(
         child: Center(
           child: _Retry(
-            message: 'This product is archived and variants are read-only.',
+            message: context.l10n.variantReadOnly,
             onRetry: () =>
                 context.go('/menu-management/products/${product.id}'),
           ),
@@ -116,11 +116,10 @@ class _VariantsScreenState extends State<VariantsScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Expanded(
+                    Expanded(
                       child: _ScreenIntroduction(
-                        title: 'Variants',
-                        helper:
-                            'Manage the selling options available for this Product.',
+                        title: context.l10n.variantTitle,
+                        helper: context.l10n.variantHelp,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -128,7 +127,7 @@ class _VariantsScreenState extends State<VariantsScreen> {
                       key: const Key('add-variant-action'),
                       onPressed: state.isMutating ? null : () => _edit(),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Variant'),
+                      label: Text(context.l10n.variantAdd),
                     ),
                   ],
                 ),
@@ -138,22 +137,22 @@ class _VariantsScreenState extends State<VariantsScreen> {
                   runSpacing: AppSpacing.sm,
                   children: <Widget>[
                     SegmentedButton<VariantFilter>(
-                      segments: const <ButtonSegment<VariantFilter>>[
+                      segments: <ButtonSegment<VariantFilter>>[
                         ButtonSegment(
                           value: VariantFilter.active,
-                          label: Text('Active'),
+                          label: Text(context.l10n.variantActive),
                         ),
                         ButtonSegment(
                           value: VariantFilter.inactive,
-                          label: Text('Inactive'),
+                          label: Text(context.l10n.variantInactive),
                         ),
                         ButtonSegment(
                           value: VariantFilter.archived,
-                          label: Text('Archived'),
+                          label: Text(context.l10n.variantArchived),
                         ),
                         ButtonSegment(
                           value: VariantFilter.all,
-                          label: Text('All'),
+                          label: Text(context.l10n.variantAll),
                         ),
                       ],
                       selected: <VariantFilter>{state.filter},
@@ -172,10 +171,14 @@ class _VariantsScreenState extends State<VariantsScreen> {
                           ? null
                           : () => setState(() => _reorderMode = !_reorderMode),
                       icon: Icon(_reorderMode ? Icons.check : Icons.reorder),
-                      label: Text(_reorderMode ? 'Done' : 'Reorder'),
+                      label: Text(
+                        _reorderMode
+                            ? context.l10n.variantDone
+                            : context.l10n.variantReorder,
+                      ),
                     ),
                     IconButton(
-                      tooltip: 'Refresh Variants',
+                      tooltip: context.l10n.variantRefresh,
                       onPressed: state.isMutating
                           ? null
                           : () => context.read<VariantsCubit>().refresh(),
@@ -218,9 +221,9 @@ class _VariantsScreenState extends State<VariantsScreen> {
   );
   Future<void> _setDefault(ProductVariant variant) async {
     if (await _confirm(
-              'Set “${variant.name}” as the Default Variant?',
-              'The Product’s displayed base price, SKU, barcode, and legacy POS compatibility will use this Variant. Existing Orders are not changed.',
-              confirm: 'Set Default',
+              context.l10n.variantSetDefaultTitle(variant.name),
+              context.l10n.variantSetDefaultMessage,
+              confirm: context.l10n.variantSetDefaultAction,
             ) ==
             true &&
         mounted) {
@@ -232,9 +235,9 @@ class _VariantsScreenState extends State<VariantsScreen> {
     final VariantsState state = context.read<VariantsCubit>().state;
     if (!variant.isDefault) {
       if (await _confirm(
-                'Archive “${variant.name}”?',
-                'This Variant will be archived and can be restored later.',
-                confirm: 'Archive',
+                context.l10n.variantArchiveTitle(variant.name),
+                context.l10n.variantArchiveMessage,
+                confirm: context.l10n.commonArchive,
               ) ==
               true &&
           mounted) {
@@ -264,12 +267,12 @@ class _VariantsScreenState extends State<VariantsScreen> {
   Future<void> _onlyActive() => showDialog<void>(
     context: context,
     builder: (dialog) => AlertDialog(
-      title: const Text('Cannot archive Default Variant'),
-      content: const Text('The only active Variant cannot be archived.'),
+      title: Text(context.l10n.variantCannotArchiveDefaultTitle),
+      content: Text(context.l10n.variantCannotArchiveDefaultMessage),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(dialog),
-          child: const Text('Close'),
+          child: Text(context.l10n.commonClose),
         ),
       ],
     ),
@@ -283,12 +286,12 @@ class _VariantsScreenState extends State<VariantsScreen> {
       int selected = choices.first.id;
       return StatefulBuilder(
         builder: (_, setState) => AlertDialog(
-          title: Text('Archive “${current.name}”?'),
+          title: Text(context.l10n.variantArchiveTitle(current.name)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text('Select an active replacement Default Variant.'),
+              Text(context.l10n.variantSelectReplacement),
               const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<int>(
                 initialValue: selected,
@@ -307,11 +310,11 @@ class _VariantsScreenState extends State<VariantsScreen> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialog),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialog, selected),
-              child: const Text('Archive'),
+              child: Text(context.l10n.commonArchive),
             ),
           ],
         ),
@@ -326,9 +329,9 @@ class _VariantsScreenState extends State<VariantsScreen> {
         .any((item) => item.isDefault);
     if (!hasDefault &&
         await _confirm(
-              'Restore “${variant.name}” as Default?',
-              'This Product has no active Default Variant, so this restored Variant must become the Default Variant.',
-              confirm: 'Restore as Default',
+              context.l10n.variantRestoreDefaultTitle(variant.name),
+              context.l10n.variantRestoreDefaultMessage,
+              confirm: context.l10n.variantRestoreDefaultAction,
             ) !=
             true) {
       return;
@@ -344,7 +347,7 @@ class _VariantsScreenState extends State<VariantsScreen> {
   Future<bool?> _confirm(
     String title,
     String content, {
-    String confirm = 'Confirm',
+    required String confirm,
   }) => showDialog<bool>(
     context: context,
     builder: (dialog) => AlertDialog(
@@ -353,7 +356,7 @@ class _VariantsScreenState extends State<VariantsScreen> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(dialog, false),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(dialog, true),
@@ -425,7 +428,7 @@ class _VariantTable extends StatelessWidget {
           DataColumn(label: Text('Cost Price')),
           DataColumn(label: Text('Default')),
           DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Actions')),
+          DataColumn(label: Text(context.l10n.variantActions)),
         ],
         rows: items
             .map((variant) {
@@ -441,14 +444,14 @@ class _VariantTable extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               IconButton(
-                                tooltip: 'Move up',
+                                tooltip: context.l10n.variantMoveUp,
                                 onPressed: state.isMutating || order == 0
                                     ? null
                                     : () => move(variant, -1),
                                 icon: const Icon(Icons.arrow_upward),
                               ),
                               IconButton(
-                                tooltip: 'Move down',
+                                tooltip: context.l10n.variantMoveDown,
                                 onPressed:
                                     state.isMutating ||
                                         order == state.activeVariants.length - 1
@@ -462,22 +465,26 @@ class _VariantTable extends StatelessWidget {
                   DataCell(Text(variant.name)),
                   DataCell(Text(variant.sku ?? '—')),
                   DataCell(Text(variant.barcode ?? '—')),
-                  DataCell(Text(catalogMoney(variant.basePrice))),
+                  DataCell(Text(catalogMoney(context, variant.basePrice))),
                   DataCell(
                     Text(
                       variant.costPrice == null
                           ? '—'
-                          : catalogMoney(variant.costPrice!),
+                          : catalogMoney(context, variant.costPrice!),
                     ),
                   ),
                   DataCell(
                     variant.isDefault
-                        ? const Chip(label: Text('Default'))
+                        ? Chip(label: Text(context.l10n.variantDefault))
                         : const Text('—'),
                   ),
                   DataCell(
                     Chip(
-                      label: Text(variant.isArchived ? 'Archived' : 'Active'),
+                      label: Text(
+                        variant.isArchived
+                            ? context.l10n.variantArchived
+                            : context.l10n.variantActive,
+                      ),
                     ),
                   ),
                   DataCell(
@@ -485,7 +492,7 @@ class _VariantTable extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         IconButton(
-                          tooltip: 'Edit',
+                          tooltip: context.l10n.variantEdit,
                           onPressed: state.isMutating || variant.isArchived
                               ? null
                               : () => edit(variant),
@@ -494,7 +501,7 @@ class _VariantTable extends StatelessWidget {
                         if (!variant.isArchived)
                           IconButton(
                             key: Key('manage-recipe-${variant.id}'),
-                            tooltip: 'Manage Recipe / Materials',
+                            tooltip: context.l10n.variantManageRecipe,
                             onPressed: state.isMutating
                                 ? null
                                 : () => context.go(
@@ -509,7 +516,7 @@ class _VariantTable extends StatelessWidget {
                         if (!variant.isArchived)
                           IconButton(
                             key: Key('manage-price-overrides-${variant.id}'),
-                            tooltip: 'Manage Price Overrides',
+                            tooltip: context.l10n.variantPricing,
                             onPressed: state.isMutating
                                 ? null
                                 : () => context.push(
@@ -523,7 +530,7 @@ class _VariantTable extends StatelessWidget {
                         if (!variant.isArchived)
                           IconButton(
                             key: Key('manage-availability-${variant.id}'),
-                            tooltip: 'Manage Scheduled Availability',
+                            tooltip: context.l10n.variantSellingHours,
                             onPressed: state.isMutating
                                 ? null
                                 : () => context.push(
@@ -539,7 +546,7 @@ class _VariantTable extends StatelessWidget {
                             key: Key(
                               'manage-operational-availability-${variant.id}',
                             ),
-                            tooltip: 'Manage Availability / Sold Out',
+                            tooltip: context.l10n.variantCurrentAvailability,
                             onPressed: state.isMutating
                                 ? null
                                 : () => context.push(
@@ -552,14 +559,16 @@ class _VariantTable extends StatelessWidget {
                           ),
                         if (!variant.isArchived && !variant.isDefault)
                           IconButton(
-                            tooltip: 'Set as Default',
+                            tooltip: context.l10n.variantSetDefaultAction,
                             onPressed: state.isMutating
                                 ? null
                                 : () => setDefault(variant),
                             icon: const Icon(Icons.star_outline),
                           ),
                         IconButton(
-                          tooltip: variant.isArchived ? 'Restore' : 'Archive',
+                          tooltip: variant.isArchived
+                              ? context.l10n.commonRestore
+                              : context.l10n.commonArchive,
                           onPressed: state.isMutating
                               ? null
                               : () => variant.isArchived
@@ -634,19 +643,19 @@ class _VariantCompactRows extends StatelessWidget {
                 if (reorderMode && !variant.isArchived) ...<Widget>[
                   Column(
                     children: <Widget>[
-                      const Icon(
+                      Icon(
                         Icons.drag_indicator,
-                        semanticLabel: 'Reorder',
+                        semanticLabel: context.l10n.variantReorderSemantic,
                       ),
                       IconButton(
-                        tooltip: 'Move up',
+                        tooltip: context.l10n.variantMoveUp,
                         onPressed: state.isMutating || order == 0
                             ? null
                             : () => move(variant, -1),
                         icon: const Icon(Icons.keyboard_arrow_up),
                       ),
                       IconButton(
-                        tooltip: 'Move down',
+                        tooltip: context.l10n.variantMoveDown,
                         onPressed:
                             state.isMutating ||
                                 order == state.activeVariants.length - 1
@@ -673,12 +682,13 @@ class _VariantCompactRows extends StatelessWidget {
                             ),
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
-                          if (variant.isDefault) const _VariantBadge('Default'),
+                          if (variant.isDefault)
+                            _VariantBadge(context.l10n.variantDefault),
                         ],
                       ),
                       if (variant.sku?.isNotEmpty == true)
                         Text(
-                          'SKU: ${variant.sku}',
+                          context.l10n.variantSku(variant.sku!),
                           textDirection: TextDirection.ltr,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textSecondary),
@@ -688,8 +698,8 @@ class _VariantCompactRows extends StatelessWidget {
                 ),
                 Expanded(
                   child: _VariantFact(
-                    catalogMoney(variant.basePrice),
-                    'Base price',
+                    catalogMoney(context, variant.basePrice),
+                    context.l10n.variantBasePrice,
                     ltr: true,
                   ),
                 ),
@@ -697,10 +707,10 @@ class _VariantCompactRows extends StatelessWidget {
                   flex: 2,
                   child: _VariantStatus(
                     state.recipeConfigured[variant.id] == true
-                        ? 'Recipe configured'
+                        ? context.l10n.variantRecipeConfigured
                         : recipeRequired
-                        ? 'Recipe missing'
-                        : 'Recipe not configured',
+                        ? context.l10n.variantRecipeMissing
+                        : context.l10n.variantRecipeNotConfigured,
                     state.recipeConfigured[variant.id] == true
                         ? Icons.check_circle_outline
                         : recipeRequired
@@ -716,10 +726,10 @@ class _VariantCompactRows extends StatelessWidget {
                 Expanded(
                   child: _VariantStatus(
                     variant.isArchived
-                        ? 'Archived'
+                        ? context.l10n.variantArchived
                         : variant.isInactive
-                        ? 'Inactive'
-                        : 'Active',
+                        ? context.l10n.variantInactive
+                        : context.l10n.variantActive,
                     variant.isArchived
                         ? Icons.archive_outlined
                         : variant.isInactive
@@ -734,7 +744,7 @@ class _VariantCompactRows extends StatelessWidget {
                 ),
                 PopupMenuButton<_VariantAction>(
                   key: Key('variant-overflow-${variant.id}'),
-                  tooltip: 'Actions for ${variant.name}',
+                  tooltip: context.l10n.variantActionsFor(variant.name),
                   icon: const Icon(Icons.more_vert),
                   onSelected: (action) =>
                       _variantAction(context, action, variant),
@@ -759,27 +769,35 @@ class _VariantCompactRows extends StatelessWidget {
           ),
         ]
       : <PopupMenuEntry<_VariantAction>>[
-          _item(_VariantAction.edit, 'Edit Variant', Icons.edit_outlined),
+          _item(
+            _VariantAction.edit,
+            context.l10n.variantEdit,
+            Icons.edit_outlined,
+          ),
           _item(
             _VariantAction.recipe,
-            'Manage Recipe',
+            context.l10n.variantManageRecipe,
             Icons.receipt_long_outlined,
           ),
-          _item(_VariantAction.pricing, 'Pricing', Icons.price_change_outlined),
+          _item(
+            _VariantAction.pricing,
+            context.l10n.variantPricing,
+            Icons.price_change_outlined,
+          ),
           _item(
             _VariantAction.sellingHours,
-            'Selling Hours',
+            context.l10n.variantSellingHours,
             Icons.schedule_outlined,
           ),
           _item(
             _VariantAction.currentAvailability,
-            'Current Availability',
+            context.l10n.variantCurrentAvailability,
             Icons.do_not_disturb_on_outlined,
           ),
           if (!variant.isDefault)
             _item(
               _VariantAction.setDefault,
-              'Set as Default',
+              context.l10n.variantSetDefaultAction,
               Icons.star_outline,
             ),
           const PopupMenuDivider(),
@@ -1006,7 +1024,11 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
   Widget build(BuildContext context) =>
       BlocBuilder<VariantsCubit, VariantsState>(
         builder: (_, state) => AlertDialog(
-          title: Text(widget.variant == null ? 'Add Variant' : 'Edit Variant'),
+          title: Text(
+            widget.variant == null
+                ? context.l10n.variantAdd
+                : context.l10n.variantEdit,
+          ),
           content: SizedBox(
             width: 560,
             child: SingleChildScrollView(
@@ -1014,20 +1036,20 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   _field(
-                    'Name',
+                    context.l10n.variantName,
                     _draft.name,
                     (v) => _set(_draft.copyWith(name: v)),
                     state.fieldErrors['name'],
                     required: true,
                   ),
                   _field(
-                    'Arabic name',
+                    context.l10n.variantArabicName,
                     _draft.nameAr,
                     (v) => _set(_draft.copyWith(nameAr: v)),
                     state.fieldErrors['nameAr'],
                   ),
                   _field(
-                    'English name',
+                    context.l10n.variantEnglishName,
                     _draft.nameEn,
                     (v) => _set(_draft.copyWith(nameEn: v)),
                     state.fieldErrors['nameEn'],
@@ -1045,7 +1067,7 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
                     state.fieldErrors['barcode'],
                   ),
                   _field(
-                    'Base Price',
+                    context.l10n.variantBasePrice,
                     _draft.basePrice,
                     (v) => _set(_draft.copyWith(basePrice: v)),
                     localizedConfiguredPriceError(
@@ -1056,14 +1078,14 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
                     decimal: true,
                   ),
                   _field(
-                    'Cost Price',
+                    context.l10n.variantCostPrice,
                     _draft.costPrice,
                     (v) => _set(_draft.copyWith(costPrice: v)),
                     state.fieldErrors['costPrice'],
                     decimal: true,
                   ),
                   _field(
-                    'Sort Order',
+                    context.l10n.variantSortOrder,
                     _draft.sortOrder,
                     (v) => _set(_draft.copyWith(sortOrder: v)),
                     state.fieldErrors['sortOrder'],
@@ -1071,15 +1093,15 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Active status'),
+                    title: Text(context.l10n.variantActiveStatus),
                     value: _draft.isActive,
                     onChanged: (v) => _set(_draft.copyWith(isActive: v)),
                   ),
                   if (widget.variant == null)
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Make this the Default Variant'),
-                      subtitle: const Text('A Default Variant must be active.'),
+                      title: Text(context.l10n.variantMakeDefault),
+                      subtitle: Text(context.l10n.variantDefaultMustBeActive),
                       value: _makeDefault,
                       onChanged: _draft.isActive
                           ? (v) => setState(() => _makeDefault = v ?? false)
@@ -1093,11 +1115,15 @@ class _VariantEditorDialogState extends State<_VariantEditorDialog> {
           actions: <Widget>[
             TextButton(
               onPressed: state.isMutating ? null : () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.commonCancel),
             ),
             FilledButton(
               onPressed: state.isMutating ? null : _submit,
-              child: Text(state.isMutating ? 'Saving...' : 'Save'),
+              child: Text(
+                state.isMutating
+                    ? context.l10n.variantSaving
+                    : context.l10n.commonSave,
+              ),
             ),
           ],
         ),
@@ -1156,8 +1182,8 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) => Center(
     child: Text(
       filter == VariantFilter.archived
-          ? 'No archived Variants.'
-          : 'No Variants returned for this product.',
+          ? context.l10n.variantNoArchived
+          : context.l10n.variantEmpty,
     ),
   );
 }
@@ -1172,7 +1198,7 @@ class _Retry extends StatelessWidget {
     children: <Widget>[
       Text(message),
       const SizedBox(height: AppSpacing.md),
-      OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+      OutlinedButton(onPressed: onRetry, child: Text(context.l10n.commonRetry)),
     ],
   );
 }

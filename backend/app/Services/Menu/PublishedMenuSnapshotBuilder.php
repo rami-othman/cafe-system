@@ -13,6 +13,8 @@ use App\Services\Catalog\RecipeConfigurationService;
 /** Builds the static source of truth for a published menu version. */
 class PublishedMenuSnapshotBuilder
 {
+    private const SCHEMA_VERSION = 3;
+
     public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials) {}
 
     public function build(int $tenantId, Branch $branch, string $channel, array $menuIds): array
@@ -31,12 +33,17 @@ class PublishedMenuSnapshotBuilder
         ])->get()->keyBy('id');
         $menus = collect($menuIds)->map(fn (int $id) => $menus->get($id))->filter()->values();
 
-        return ['context' => ['tenantId' => $tenantId, 'branchId' => $branch->id, 'channel' => $channel, 'schemaVersion' => 2, 'generatedAt' => null], 'menus' => $menus->map(fn (Menu $menu) => $this->menu($tenantId, $menu, $branch, $channel))->values()->all()];
+        // The supplied candidate sequence is the published scope sequence. Do
+        // not sort here: automatic candidates use assignment order, while an
+        // explicit subset uses the established canonical Menu order.
+        return ['context' => ['tenantId' => $tenantId, 'branchId' => $branch->id, 'channel' => $channel, 'schemaVersion' => self::SCHEMA_VERSION, 'generatedAt' => null], 'menus' => $menus->values()->map(fn (Menu $menu, int $scopeOrder) => $this->menu($tenantId, $menu, $branch, $channel, $scopeOrder))->all()];
     }
 
-    private function menu(int $tenantId, Menu $menu, Branch $branch, string $channel): array
+    private function menu(int $tenantId, Menu $menu, Branch $branch, string $channel, int $scopeOrder): array
     {
-        return ['id' => $menu->id, 'name' => $this->localized($menu, 'name'), 'description' => $this->localized($menu, 'description'), 'coverImageUrl' => $menu->cover_image_url, 'priority' => $menu->priority,
+        // Runtime consumers must use the serialized sequence/scopeOrder and
+        // must never re-sort a published snapshot by Catalog Menu priority.
+        return ['id' => $menu->id, 'name' => $this->localized($menu, 'name'), 'description' => $this->localized($menu, 'description'), 'coverImageUrl' => $menu->cover_image_url, 'scopeOrder' => $scopeOrder,
             'availabilityRules' => $menu->availabilityRules->map(fn ($rule) => $this->rule($rule))->values()->all(),
             'sections' => $menu->sections->map(function ($section) use ($tenantId, $branch, $channel): array {
                 return ['id' => $section->id, 'name' => $this->localized($section, 'name'), 'description' => $this->localized($section, 'description'), 'imageUrl' => $section->image_url, 'sortOrder' => $section->sort_order,

@@ -4,8 +4,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/debug/menu_schedule_save_debug.dart';
-import '../../../../core/debug/schedule_check_debug.dart';
 import '../../../pos/models/branch.dart';
 import '../../menus/models/menu_filter.dart';
 import '../../menus/models/menu_models.dart';
@@ -582,14 +580,6 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
       return false;
     }
     final int ticket = _generation;
-    MenuScheduleSaveDebug.log(
-      'cubit saveMenuSchedule menuId=$menuId '
-      'branchId=${state.selectedBranch!.id} channel=${state.selectedChannel}',
-    );
-    MenuScheduleSaveDebug.json(
-      'PUT availability-rules payload',
-      <String, dynamic>{'rules': rules},
-    );
     emit(
       state.copyWith(
         currentActionKey: 'save-menu-schedule-$menuId',
@@ -607,12 +597,7 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
       late final List<MenuScheduleRule> updated;
       try {
         updated = await repository.listMenuAvailabilityRules(menuId);
-      } catch (error, stackTrace) {
-        MenuScheduleSaveDebug.failure(
-          'authoritative availability-rules reload',
-          error,
-          stackTrace,
-        );
+      } catch (_) {
         rethrow;
       }
       if (ticket != _generation || isClosed) return false;
@@ -631,12 +616,7 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
           for (final ResolvedMenu menu in preview.menus) menu.id: menu,
         };
         previewUnavailable = false;
-      } catch (error, stackTrace) {
-        MenuScheduleSaveDebug.failure(
-          'bounded collection preview refresh',
-          error,
-          stackTrace,
-        );
+      } catch (_) {
         rethrow;
       }
       if (ticket != _generation || isClosed) return false;
@@ -652,12 +632,7 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
         ),
       );
       return true;
-    } catch (error, stackTrace) {
-      MenuScheduleSaveDebug.failure(
-        'MenuAssignmentsCubit.saveMenuSchedule',
-        error,
-        stackTrace,
-      );
+    } catch (error) {
       if (ticket != _generation || isClosed) return false;
       emit(
         state.copyWith(
@@ -681,21 +656,7 @@ class MenuAssignmentsCubit extends Cubit<MenuAssignmentsState> {
       channel: state.selectedChannel!,
       evaluationAt: at,
     );
-    ScheduleCheckDebug.log(
-      'cubit checkMenuSchedule menuId=$menuId branchId=${context.branchId} '
-      'channel=${context.channel} at=${context.evaluationAt}',
-    );
-    ScheduleCheckDebug.json('request payload', context.previewJson());
-    try {
-      return await repository.previewMenuSchedule(menuId, context);
-    } catch (error, stackTrace) {
-      ScheduleCheckDebug.failure(
-        'MenuAssignmentsCubit.checkMenuSchedule',
-        error,
-        stackTrace,
-      );
-      rethrow;
-    }
+    return repository.previewMenuSchedule(menuId, context);
   }
 
   Future<void> assignMenu(MenuRecord menu) async {

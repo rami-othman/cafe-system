@@ -3873,4 +3873,628 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reviewPublishTryAgain => 'Try Again';
+
+  @override
+  String get menuUiUnsavedChangesTitle => 'Unsaved changes';
+
+  @override
+  String get menuUiUnsavedChangesMessage =>
+      'You have unsaved changes. If you leave now, they will be discarded.';
+
+  @override
+  String get menuUiStay => 'Stay';
+
+  @override
+  String get menuUiLeaveWithoutSaving => 'Leave without saving';
+
+  @override
+  String get productEditorCreated => 'Product created successfully.';
+
+  @override
+  String get productEditorUpdated => 'Product updated successfully.';
+
+  @override
+  String get productEditorCreateHelp =>
+      'Define what this product is, where it belongs, and how it is sold.';
+
+  @override
+  String get productEditorEditHelp =>
+      'Update the product information managers use every day.';
+
+  @override
+  String get productEditorArchivedReadOnly =>
+      'Archived products are available for reference only. Restore this product to edit it.';
+
+  @override
+  String get productEditorViewWorkspace => 'View Product Workspace';
+
+  @override
+  String get productEditorDefaultName => 'Default Product Name';
+
+  @override
+  String get productEditorDefaultDescription => 'Default Description';
+
+  @override
+  String get productEditorImage => 'Product Image';
+
+  @override
+  String get productEditorUploadingImage => 'Uploading image…';
+
+  @override
+  String get productEditorChooseImage => 'Choose Image';
+
+  @override
+  String get productEditorChangeImage => 'Change Image';
+
+  @override
+  String get productEditorRemoveImage => 'Remove Image';
+
+  @override
+  String get productEditorImageFormats => 'PNG, JPG, WEBP, or GIF up to 5 MB';
+
+  @override
+  String get productEditorTranslationsClose => 'Close translations';
+
+  @override
+  String get productEditorDefaultContent => 'Default content';
+
+  @override
+  String get productEditorLocalizedName => 'Localized Name';
+
+  @override
+  String get productEditorLocalizedDescription => 'Localized Description';
+
+  @override
+  String get productEditorStockTracking => 'Stock Tracking';
+
+  @override
+  String get productEditorStockTrackingHelp =>
+      'Track the materials consumed when this Product is prepared.';
+
+  @override
+  String get productEditorNoDefaultVariant => 'No default variant returned.';
+
+  @override
+  String get productEditorManageVariants => 'Manage Variants';
+
+  @override
+  String get productDetailNotFound => 'Product not found.';
+
+  @override
+  String get productDetailEdit => 'Edit Product';
+
+  @override
+  String get productDetailArchiveTitle => 'Archive Product?';
+
+  @override
+  String get productDetailRestoreTitle => 'Restore Product?';
+
+  @override
+  String get productDetailArchiveAction => 'Archive Product';
+
+  @override
+  String get productDetailRestoreAction => 'Restore Product';
+
+  @override
+  String get productDetailUsageEmpty =>
+      'This Product is not currently used in any menus.';
+
+  @override
+  String get variantTitle => 'Variants';
+
+  @override
+  String get variantHelp =>
+      'Manage the selling options available for this Product.';
+
+  @override
+  String get variantAdd => 'Add Variant';
+
+  @override
+  String get variantEdit => 'Edit Variant';
+
+  @override
+  String get variantReorder => 'Reorder';
+
+  @override
+  String get variantDone => 'Done';
+
+  @override
+  String get variantRefresh => 'Refresh Variants';
+
+  @override
+  String get variantReadOnly =>
+      'This product is archived and variants are read-only.';
+
+  @override
+  String get variantCannotArchiveDefaultTitle =>
+      'Cannot archive Default Variant';
+
+  @override
+  String get variantCannotArchiveDefaultMessage =>
+      'The only active Variant cannot be archived.';
+
+  @override
+  String get variantArchiveMessage =>
+      'This Variant will be archived and can be restored later.';
+
+  @override
+  String get variantSelectReplacement =>
+      'Select an active replacement Default Variant.';
+
+  @override
+  String get variantOrder => 'Order';
+
+  @override
+  String get variantName => 'Variant name';
+
+  @override
+  String get variantBasePrice => 'Base Price';
+
+  @override
+  String get variantCostPrice => 'Cost Price';
+
+  @override
+  String get variantDefault => 'Default';
+
+  @override
+  String get variantActions => 'Actions';
+
+  @override
+  String get variantActiveStatus => 'Active status';
+
+  @override
+  String get variantMakeDefault => 'Make this the Default Variant';
+
+  @override
+  String get variantDefaultMustBeActive => 'A Default Variant must be active.';
+
+  @override
+  String get variantSaving => 'Saving…';
+
+  @override
+  String get variantNoArchived => 'No archived Variants.';
+
+  @override
+  String get variantEmpty => 'No Variants returned for this product.';
+
+  @override
+  String get modifierAssignmentTitle => 'Modifiers';
+
+  @override
+  String get modifierAssignmentSaveChanges => 'Save Changes';
+
+  @override
+  String get modifierAssignmentAddGroup => 'Add Modifier Group';
+
+  @override
+  String get modifierAssignmentNoAssigned =>
+      'No Modifier Groups are assigned to this Product.';
+
+  @override
+  String get modifierAssignmentNoAvailable =>
+      'No available Modifier Groups found.';
+
+  @override
+  String get modifierAssignmentSearch => 'Search Modifier Groups';
+
+  @override
+  String get modifierAssignmentRemoveTitle => 'Remove modifier group?';
+
+  @override
+  String get modifierAssignmentRemoveMessage =>
+      'Remove this Modifier Group from the Product? The Group and its Options will remain available in the Modifier Library.';
+
+  @override
+  String get modifierAssignmentUseLibrarySettings => 'Use library settings';
+
+  @override
+  String get modifierAssignmentApply => 'Apply';
+
+  @override
+  String get modifierAssignmentCurrentBehavior => 'Current behavior';
+
+  @override
+  String get modifierAssignmentNonNegative => 'Use non-negative whole numbers.';
+
+  @override
+  String get modifierAssignmentInvalidConstraints =>
+      'The effective selection constraints are invalid.';
+
+  @override
+  String get productDetailUncategorized => 'Uncategorized product';
+
+  @override
+  String get productDetailArchiveMenuAction => 'Archive Product';
+
+  @override
+  String get productDetailRestoreMenuAction => 'Restore Product';
+
+  @override
+  String get productDetailBasePrice => 'Base Price';
+
+  @override
+  String get productDetailKitchenStation => 'Kitchen Station';
+
+  @override
+  String get productDetailWorkspaceNavigation => 'Product workspace navigation';
+
+  @override
+  String get productDetailSetupHelp =>
+      'The catalog and preparation details for this product.';
+
+  @override
+  String get productDetailDescription => 'Description';
+
+  @override
+  String get productDetailAdvancedTechnical => 'Advanced & Technical';
+
+  @override
+  String get productDetailUsageHelp =>
+      'Menus where this Product is currently used.';
+
+  @override
+  String productDetailUsageCount(int count) {
+    return '$count active menu placements.';
+  }
+
+  @override
+  String get productDetailArchivedVariantsMessage =>
+      'This product is archived and variants are read-only.';
+
+  @override
+  String get productDetailArchivedModifiersMessage =>
+      'This product is archived and modifier assignments are read-only.';
+
+  @override
+  String get productDetailViewAction => 'View Product Detail';
+
+  @override
+  String get variantActive => 'Active';
+
+  @override
+  String get variantInactive => 'Inactive';
+
+  @override
+  String get variantArchived => 'Archived';
+
+  @override
+  String get variantAll => 'All';
+
+  @override
+  String variantSetDefaultTitle(String name) {
+    return 'Set “$name” as the Default Variant?';
+  }
+
+  @override
+  String get variantSetDefaultMessage =>
+      'The Product’s displayed base price, SKU, barcode, and legacy POS compatibility will use this Variant. Existing Orders are not changed.';
+
+  @override
+  String variantArchiveTitle(String name) {
+    return 'Archive “$name”?';
+  }
+
+  @override
+  String variantRestoreDefaultTitle(String name) {
+    return 'Restore “$name” as Default?';
+  }
+
+  @override
+  String get variantRestoreDefaultMessage =>
+      'This Product has no active Default Variant, so this restored Variant must become the Default Variant.';
+
+  @override
+  String get variantSetDefaultAction => 'Set Default';
+
+  @override
+  String get variantRestoreDefaultAction => 'Restore as Default';
+
+  @override
+  String get variantMoveUp => 'Move up';
+
+  @override
+  String get variantMoveDown => 'Move down';
+
+  @override
+  String variantActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get variantReorderSemantic => 'Reorder';
+
+  @override
+  String variantSku(String sku) {
+    return 'SKU: $sku';
+  }
+
+  @override
+  String get variantRecipeConfigured => 'Recipe configured';
+
+  @override
+  String get variantRecipeMissing => 'Recipe missing';
+
+  @override
+  String get variantRecipeNotConfigured => 'Recipe not configured';
+
+  @override
+  String get variantManageRecipe => 'Manage Recipe';
+
+  @override
+  String get variantPricing => 'Pricing';
+
+  @override
+  String get variantSellingHours => 'Selling Hours';
+
+  @override
+  String get variantCurrentAvailability => 'Current Availability';
+
+  @override
+  String get variantArabicName => 'Arabic name';
+
+  @override
+  String get variantEnglishName => 'English name';
+
+  @override
+  String get variantSortOrder => 'Sort Order';
+
+  @override
+  String get modifierAssignmentArchivedReadOnly =>
+      'This product is archived and modifier assignments are read-only.';
+
+  @override
+  String get modifierAssignmentViewProduct => 'View Product Detail';
+
+  @override
+  String get modifierAssignmentProduct => 'Product';
+
+  @override
+  String modifierAssignmentAssignedGroups(int count) {
+    return 'Assigned Groups ($count)';
+  }
+
+  @override
+  String get modifierAssignmentAvailableGroups => 'Available Groups';
+
+  @override
+  String get modifierAssignmentReorder => 'Reorder';
+
+  @override
+  String get modifierAssignmentDone => 'Done';
+
+  @override
+  String get modifierAssignmentMoveUp => 'Move up';
+
+  @override
+  String get modifierAssignmentMoveDown => 'Move down';
+
+  @override
+  String modifierAssignmentActionsFor(String name) {
+    return 'Actions for $name';
+  }
+
+  @override
+  String get modifierAssignmentChooseGroupHelp =>
+      'Choose a group to make its customer choices available for this Product.';
+
+  @override
+  String modifierAssignmentCustomizeFor(String name) {
+    return 'Customize for $name';
+  }
+
+  @override
+  String modifierAssignmentCustomizedFor(String name) {
+    return 'Customized for $name';
+  }
+
+  @override
+  String get modifierAssignmentUsingLibrarySettings => 'Using library settings';
+
+  @override
+  String get modifierAssignmentHowChoose => 'How should customers choose?';
+
+  @override
+  String get modifierAssignmentChooseOne => 'Choose one';
+
+  @override
+  String get modifierAssignmentChooseMultiple => 'Choose multiple';
+
+  @override
+  String get modifierAssignmentMultipleHelp =>
+      'This group uses multiple choices from the Modifier Library.';
+
+  @override
+  String get modifierAssignmentSingleHelp =>
+      'This group uses one choice from the Modifier Library.';
+
+  @override
+  String get modifierAssignmentMinimumChoices => 'Minimum choices';
+
+  @override
+  String get modifierAssignmentMaximumChoices => 'Maximum choices';
+
+  @override
+  String get modifierAssignmentAllowDuplicate =>
+      'Can the same option be added more than once?';
+
+  @override
+  String modifierAssignmentConfigure(String name) {
+    return 'Configure $name';
+  }
+
+  @override
+  String modifierAssignmentOverride(String label) {
+    return '$label override';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultBoolean(String value) {
+    return 'Library Default: $value';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultNumber(int value) {
+    return 'Library Default: $value';
+  }
+
+  @override
+  String modifierAssignmentEffectiveSetting(String value) {
+    return 'Effective Setting: $value';
+  }
+
+  @override
+  String get modifierAssignmentHelp =>
+      'Choose which Modifier Groups customers can use with this Product.';
+
+  @override
+  String get modifierAssignmentMaterialImpact => 'Material impact configured';
+
+  @override
+  String get modifierAssignmentViewGroup => 'View Modifier Group';
+
+  @override
+  String get modifierAssignmentCustomizeForProduct => 'Customize for Product';
+
+  @override
+  String get modifierAssignmentRemoveFromProduct => 'Remove from Product';
+
+  @override
+  String get menuDetailArchiveTitle => 'Archive menu?';
+
+  @override
+  String get menuDetailRestoreTitle => 'Restore menu?';
+
+  @override
+  String get menuDetailArchiveMessage =>
+      'This archives the menu without deleting it. Its composition remains available to review.';
+
+  @override
+  String get menuDetailRestoreMessage =>
+      'Restoring this menu returns it to Draft. It does not restore archived sections.';
+
+  @override
+  String get productEditorProductType => 'Product Type';
+
+  @override
+  String get productEditorStandard => 'Standard';
+
+  @override
+  String get productEditorOpenPrice => 'Open price';
+
+  @override
+  String get productEditorPreparationTime => 'Preparation Time';
+
+  @override
+  String get productEditorMinutes => 'minutes';
+
+  @override
+  String get productEditorInitialOptionHelp =>
+      'Every product starts with one selling option. You can add more variants later.';
+
+  @override
+  String get productEditorVariantName => 'Variant Name';
+
+  @override
+  String get productEditorDefaultVariant => 'Default Variant';
+
+  @override
+  String get productEditorDefaultVariantHelp =>
+      'Selling options are managed separately so product details stay focused.';
+
+  @override
+  String get productEditorTranslationsHelp =>
+      'Add localized content without crowding the main product form.';
+
+  @override
+  String get productEditorTranslationsPanelHelp =>
+      'Use the translation panel to provide Arabic and English names and descriptions.';
+
+  @override
+  String get productEditorSortOrder => 'Sort Order';
+
+  @override
+  String get productEditorVariantCost => 'Variant Cost';
+
+  @override
+  String get productEditorNone => 'None';
+
+  @override
+  String get productEditorPreviewUnavailable => 'Preview unavailable';
+
+  @override
+  String get productEditorDropImage => 'Drop an image here or click to browse';
+
+  @override
+  String get productEditorImageLoadFailed => 'Image could not be loaded';
+
+  @override
+  String get productEditorWhatIsProduct => 'What is this product?';
+
+  @override
+  String get productEditorClassificationHelp =>
+      'Choose where this product belongs in the catalog and preparation flow.';
+
+  @override
+  String get productEditorKitchenStationHelp =>
+      'Where this product is generally prepared.';
+
+  @override
+  String get productEditorReportingCategoryHelp =>
+      'Used for sales and performance reports.';
+
+  @override
+  String get productEditorSellingPreparationHelp =>
+      'Set how this product is sold and what preparation information the team needs.';
+
+  @override
+  String get productEditorArabicConfigured => 'Arabic configured';
+
+  @override
+  String get productEditorEnglishConfigured => 'English configured';
+
+  @override
+  String productEditorBasePriceValue(String price) {
+    return 'Base price $price';
+  }
+
+  @override
+  String get productDetailArchiveMessage =>
+      'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.';
+
+  @override
+  String get productDetailRestoreMessage =>
+      'This restores the Product to the editable Catalog. Availability still depends on Menu assignments, schedules, operational status, validation, and publishing.';
+
+  @override
+  String get productCatalogArchiveMessage =>
+      'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.\n\nThe Product is not permanently deleted. Central Modifier Groups are not deleted, and Variants remain stored according to Backend behavior.';
+
+  @override
+  String get productCatalogRestoreMessage =>
+      'This restores the Product to the editable Catalog. Its availability in Menus still depends on Menu assignments, schedules, operational status, validation, and publishing.';
+
+  @override
+  String productCatalogUsageMessage(int count, String names) {
+    return 'This Product is currently used in $count Menu placements$names.';
+  }
+
+  @override
+  String get operationalOverrideClearTitle => 'Clear operational override?';
+
+  @override
+  String operationalOverrideClearMessage(String level, String scope) {
+    return 'Clear the $level override for $scope?\n\nScheduled Availability, Product configuration, and historical Published Versions will not be changed.';
+  }
+
+  @override
+  String get operationalOverrideClearAction => 'Clear override';
+
+  @override
+  String get productDetailProductId => 'Product ID';
+
+  @override
+  String get productDetailUpdated => 'Updated';
+
+  @override
+  String get productDetailImageUrl => 'Image URL';
 }

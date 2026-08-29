@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/localization/localization_extensions.dart';
-import '../../../../core/debug/schedule_check_debug.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -2125,15 +2124,6 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
         int.parse(match.group(2)!),
         context.read<MenuAssignmentsCubit>().state.selectedBranch!.timezone,
       );
-      final state = context.read<MenuAssignmentsCubit>().state;
-      ScheduleCheckDebug.log(
-        'UI check schedule menuId=${widget.assignment.menuId} '
-        'branchId=${state.selectedBranch!.id} channel=${state.selectedChannel} '
-        'selectedDate=${_checkDate.toIso8601String()} '
-        'selectedTime=${_checkTime.text} '
-        'branchTimezone=${state.selectedBranch!.timezone} '
-        'generatedAt=${at.toIso8601String()}',
-      );
       final menu = await context.read<MenuAssignmentsCubit>().checkMenuSchedule(
         widget.assignment.menuId,
         at,
@@ -2145,12 +2135,7 @@ class _MenuScheduleSheetState extends State<_MenuScheduleSheet> {
               : _ScheduleCheckResult.outsideHours,
         );
       }
-    } catch (error, stackTrace) {
-      ScheduleCheckDebug.failure(
-        '_MenuScheduleSheetState._checkSchedule',
-        error,
-        stackTrace,
-      );
+    } catch (error) {
       if (mounted) {
         setState(() {
           _checkResult = _ScheduleCheckResult.failure;

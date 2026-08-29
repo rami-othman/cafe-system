@@ -244,23 +244,6 @@ class _Toolbar extends StatelessWidget {
           onChanged: (value) =>
               cubit.updateFilter(state.filter.copyWith(direction: value)),
         ),
-        Tooltip(
-          message: copy.refresh,
-          child: Semantics(
-            label: copy.refresh,
-            button: true,
-            child: IconButton(
-              key: const Key('menu-list-refresh'),
-              onPressed: state.isBusy ? null : cubit.refresh,
-              icon: state.status == MenuListStatus.refreshing
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh_outlined),
-            ),
-          ),
-        ),
       ];
       final Widget search = TextField(
         key: const Key('menu-list-search'),
@@ -690,7 +673,7 @@ class _Skeleton extends StatelessWidget {
           _TableLine(
             cells: <Widget>[
               _Cell(flex: 29, child: Text('Main menu $index')),
-              _Cell(flex: 16, child: const Text('Active')),
+              _Cell(flex: 16, child: Text(copy.statusValue('active'))),
               _Cell(flex: 10, number: true, child: const Text('3')),
               _Cell(flex: 20, number: true, child: const Text('12')),
               _Cell(flex: 26, child: const Text('Aug 20, 2026 6:10 PM')),

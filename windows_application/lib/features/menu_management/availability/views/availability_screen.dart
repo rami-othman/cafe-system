@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../app/menu_management_route_locations.dart';
+import '../../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -34,6 +35,8 @@ class AvailabilityScreen extends StatefulWidget {
 }
 
 class _AvailabilityScreenState extends State<AvailabilityScreen> {
+  late VoidCallback _unregisterUnsavedNavigation;
+  bool _registeredUnsavedNavigation = false;
   @override
   void initState() {
     super.initState();
@@ -60,6 +63,28 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         clearChannel: !channel,
       );
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_registeredUnsavedNavigation) return;
+    final UnsavedNavigationController? navigation =
+        UnsavedNavigationScope.maybeOf(context);
+    if (navigation == null) return;
+    _registeredUnsavedNavigation = true;
+    _unregisterUnsavedNavigation = navigation.register(
+      UnsavedNavigationGuard(
+        isDirty: () => context.read<AvailabilityCubit>().state.isDirty,
+        confirmLeave: _mayLeave,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_registeredUnsavedNavigation) _unregisterUnsavedNavigation();
+    super.dispose();
   }
 
   Future<bool> _mayLeave() async {

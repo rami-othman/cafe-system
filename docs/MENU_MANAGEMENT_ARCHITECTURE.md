@@ -10,10 +10,13 @@ Materials is **COMPLETE after closure verification**.
 The authoritative project-status record is
 [`windows_application/PROJECT_STATUS.md`](../windows_application/PROJECT_STATUS.md).
 
+Batches 8 through 11 are complete through Publish / Versions. The next major
+integration is Published Menu Snapshot / POS Consumption; it is not implemented.
+
 The Product Workspace is the canonical Product parent. Recipe and Material
 Effect child routes remain ID-based and preserve Product, Variant, Modifier Group,
-and Modifier Option identity without display-name query parameters. Batch 8 and
-Phase 4K architecture cleanup are **NOT STARTED**.
+and Modifier Option identity without display-name query parameters. Phase 4K
+architecture cleanup remains deferred.
 
 ## Core domain contracts
 
@@ -63,6 +66,15 @@ immutable Branch + Channel snapshots/version history only when semantic content
 changes; rollback creates a new Version and never reactivates old history.
 Published snapshots deliberately exclude operational availability runtime state,
 remaining quantities, and Inventory runtime data.
+
+Snapshot schema v3 defines Menu runtime order as the serialized `menus[]`
+sequence, with each Menu's zero-based `scopeOrder` repeating that position.
+Automatic Branch + Channel publications use exact-scope active assignment order;
+explicit `menuIds` retain established canonical Menu order. Catalog
+`menu.priority` is excluded from v3 snapshot Menu entries, and future POS
+consumers must not use it to re-sort a snapshot. Historical snapshots retain
+their original payload; rollback copies the selected payload verbatim into a new
+Version.
 
 ## Performance contracts retained by UX-G0
 

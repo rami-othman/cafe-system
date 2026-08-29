@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/menu_management_route_locations.dart';
 import '../../../../app/localization/localization_extensions.dart';
+import '../../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -33,6 +34,8 @@ class ProductEditorScreen extends StatefulWidget {
 
 class _ProductEditorScreenState extends State<ProductEditorScreen> {
   String? _localImagePath;
+  late VoidCallback _unregisterUnsavedNavigation;
+  bool _registeredUnsavedNavigation = false;
 
   bool get _isCreate => widget.productId == null;
 
@@ -51,6 +54,28 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_registeredUnsavedNavigation) return;
+    final UnsavedNavigationController? navigation =
+        UnsavedNavigationScope.maybeOf(context);
+    if (navigation == null) return;
+    _registeredUnsavedNavigation = true;
+    _unregisterUnsavedNavigation = navigation.register(
+      UnsavedNavigationGuard(
+        isDirty: () => context.read<ProductEditorCubit>().state.isDirty,
+        confirmLeave: _mayLeave,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_registeredUnsavedNavigation) _unregisterUnsavedNavigation();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) =>
       BlocListener<ProductEditorCubit, ProductEditorState>(
         listenWhen: (_, current) =>
@@ -63,8 +88,8 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
             SnackBar(
               content: Text(
                 _isCreate
-                    ? 'Product created successfully.'
-                    : 'Product updated successfully.',
+                    ? context.l10n.productEditorCreated
+                    : context.l10n.productEditorUpdated,
               ),
             ),
           );
@@ -77,7 +102,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
             return PopScope(
               canPop: allowPop,
               onPopInvokedWithResult: (didPop, _) {
-                if (!didPop) _confirmLeave();
+                if (!didPop) _leaveToReturnLocation();
               },
               child: DesktopPageLayout(
                 padding: EdgeInsets.zero,
@@ -105,7 +130,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
             const SizedBox(height: AppSpacing.md),
             OutlinedButton(
               onPressed: context.read<ProductEditorCubit>().retry,
-              child: const Text('Retry'),
+              child: Text(context.l10n.commonRetry),
             ),
           ],
         ),
@@ -135,9 +160,9 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     TextButton.icon(
-                      onPressed: _confirmLeave,
+                      onPressed: _leaveToReturnLocation,
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
+                      label: Text(context.l10n.commonBack),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     MenuPageHeader(
@@ -145,21 +170,20 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                           ? l10n?.productUxCreateProduct ?? 'Create Product'
                           : l10n?.productUxEditProduct ?? 'Edit Product',
                       subtitle: _isCreate
-                          ? 'Define what this product is, where it belongs, and how it is sold.'
-                          : 'Update the product information managers use every day.',
+                          ? context.l10n.productEditorCreateHelp
+                          : context.l10n.productEditorEditHelp,
                     ),
                     if (state.isReadOnly) ...<Widget>[
                       const SizedBox(height: AppSpacing.lg),
-                      const _Notice(
-                        message:
-                            'Archived products are available for reference only. Restore this product to edit it.',
+                      _Notice(
+                        message: context.l10n.productEditorArchivedReadOnly,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       OutlinedButton(
-                        onPressed: () => context.go(
+                        onPressed: () => context.guardedGo(
                           '/menu-management/products/${widget.productId}',
                         ),
-                        child: const Text('View Product Workspace'),
+                        child: Text(context.l10n.productEditorViewWorkspace),
                       ),
                     ] else ...<Widget>[
                       if (state.referenceErrors.isNotEmpty) ...<Widget>[
@@ -172,11 +196,11 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                       const SizedBox(height: AppSpacing.xl),
                       ContentSection(
                         title: l10n?.productUxGeneral ?? 'General',
-                        description: 'What is this product?',
+                        description: context.l10n.productEditorWhatIsProduct,
                         child: _FormGrid(
                           children: <Widget>[
                             _text(
-                              'Default Product Name',
+                              context.l10n.productEditorDefaultName,
                               draft.name,
                               (value) => cubit.updateDraft(
                                 draft.copyWith(name: value),
@@ -200,7 +224,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                   : _removeImage,
                             ),
                             _text(
-                              'Default Description',
+                              context.l10n.productEditorDefaultDescription,
                               draft.description,
                               (value) => cubit.updateDraft(
                                 draft.copyWith(description: value),
@@ -217,7 +241,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         title:
                             l10n?.productUxClassification ?? 'Classification',
                         description:
-                            'Choose where this product belongs in the catalog and preparation flow.',
+                            context.l10n.productEditorClassificationHelp,
                         trailingAction: TextButton.icon(
                           onPressed: () => context
                               .push('/menu-management/catalog-setup')
@@ -231,14 +255,14 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         child: _FormGrid(
                           children: <Widget>[
                             _select<int>(
-                              'Category',
+                              context.l10n.productOverviewCategory,
                               draft.categoryId,
                               state.categories
                                   .map(
                                     (item) => DropdownMenuItem<int>(
                                       value: item.id,
                                       child: Text(
-                                        '${item.name}${item.isActive ? '' : ' (Archived)'}',
+                                        '${item.name}${item.isActive ? '' : ' (${context.l10n.commonArchived})'}',
                                       ),
                                     ),
                                   )
@@ -253,14 +277,14 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                               required: true,
                             ),
                             _select<int>(
-                              'Kitchen Station',
+                              context.l10n.productOverviewKitchenStation,
                               draft.kitchenStationId,
                               state.kitchenStations
                                   .map(
                                     (item) => DropdownMenuItem<int>(
                                       value: item.id,
                                       child: Text(
-                                        '${item.name}${item.isActive ? '' : ' (Archived)'}',
+                                        '${item.name}${item.isActive ? '' : ' (${context.l10n.commonArchived})'}',
                                       ),
                                     ),
                                   )
@@ -273,17 +297,17 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                               ),
                               state.fieldErrors['kitchenStationId'],
                               helper:
-                                  'Where this product is generally prepared.',
+                                  context.l10n.productEditorKitchenStationHelp,
                             ),
                             _select<int>(
-                              'Reporting Category',
+                              context.l10n.productOverviewReportingCategory,
                               draft.reportingCategoryId,
                               state.reportingCategories
                                   .map(
                                     (item) => DropdownMenuItem<int>(
                                       value: item.id,
                                       child: Text(
-                                        '${item.name}${item.isActive ? '' : ' (Archived)'}',
+                                        '${item.name}${item.isActive ? '' : ' (${context.l10n.commonArchived})'}',
                                       ),
                                     ),
                                   )
@@ -295,7 +319,9 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                 ),
                               ),
                               state.fieldErrors['reportingCategoryId'],
-                              helper: 'Used for sales and performance reports.',
+                              helper: context
+                                  .l10n
+                                  .productEditorReportingCategoryHelp,
                             ),
                           ],
                         ),
@@ -306,20 +332,24 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                             l10n?.productUxSellingPreparation ??
                             'Selling & Preparation',
                         description:
-                            'Set how this product is sold and what preparation information the team needs.',
+                            context.l10n.productEditorSellingPreparationHelp,
                         child: _FormGrid(
                           children: <Widget>[
                             _select<String>(
-                              'Product Type',
+                              context.l10n.productEditorProductType,
                               draft.productType,
-                              const <DropdownMenuItem<String>>[
+                              <DropdownMenuItem<String>>[
                                 DropdownMenuItem(
                                   value: 'standard',
-                                  child: Text('Standard'),
+                                  child: Text(
+                                    context.l10n.productEditorStandard,
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'open_price',
-                                  child: Text('Open price'),
+                                  child: Text(
+                                    context.l10n.productEditorOpenPrice,
+                                  ),
                                 ),
                               ],
                               (value) => cubit.updateDraft(
@@ -330,7 +360,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                               state.fieldErrors['productType'],
                             ),
                             _text(
-                              'Preparation Time',
+                              context.l10n.productEditorPreparationTime,
                               draft.preparationTimeMinutes,
                               (value) => cubit.updateDraft(
                                 draft.copyWith(preparationTimeMinutes: value),
@@ -338,7 +368,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                               error:
                                   state.fieldErrors['preparationTimeMinutes'],
                               digits: true,
-                              suffix: 'minutes',
+                              suffix: context.l10n.productEditorMinutes,
                             ),
                             _StockTracking(
                               value: draft.isStockTracked,
@@ -356,11 +386,11 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                               l10n?.productUxInitialSellingOption ??
                               'Initial selling option',
                           description:
-                              'Every product starts with one selling option. You can add more variants later.',
+                              context.l10n.productEditorInitialOptionHelp,
                           child: _FormGrid(
                             children: <Widget>[
                               _text(
-                                'Variant Name',
+                                context.l10n.productEditorVariantName,
                                 draft.variantName,
                                 (value) => cubit.updateDraft(
                                   draft.copyWith(variantName: value),
@@ -369,7 +399,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                                 required: true,
                               ),
                               _text(
-                                'Base Price',
+                                context.l10n.productOverviewBasePrice,
                                 draft.variantBasePrice,
                                 (value) => cubit.updateDraft(
                                   draft.copyWith(variantBasePrice: value),
@@ -387,12 +417,12 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         )
                       else
                         ContentSection(
-                          title: 'Default Variant',
+                          title: context.l10n.productEditorDefaultVariant,
                           description:
-                              'Selling options are managed separately so product details stay focused.',
+                              context.l10n.productEditorDefaultVariantHelp,
                           child: _DefaultVariantSummary(
                             variant: state.currentDefaultVariant,
-                            onManage: () => context.go(
+                            onManage: () => context.guardedGo(
                               MenuManagementRouteLocations.productWorkspace(
                                 widget.productId!,
                                 tab: ProductWorkspaceTab.variants,
@@ -403,15 +433,14 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                       const SizedBox(height: AppSpacing.lg),
                       ContentSection(
                         title: l10n?.productUxTranslations ?? 'Translations',
-                        description:
-                            'Add localized content without crowding the main product form.',
+                        description: context.l10n.productEditorTranslationsHelp,
                         trailingAction: FilledButton.tonal(
                           key: const Key('product-translations-action'),
                           onPressed: () => _showTranslations(draft),
                           child: Text(_translationSummary(draft)),
                         ),
-                        child: const Text(
-                          'Use the translation panel to provide Arabic and English names and descriptions.',
+                        child: Text(
+                          context.l10n.productEditorTranslationsPanelHelp,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
@@ -420,7 +449,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                         child: _FormGrid(
                           children: <Widget>[
                             _text(
-                              'Sort Order',
+                              context.l10n.productEditorSortOrder,
                               draft.sortOrder,
                               (value) => cubit.updateDraft(
                                 draft.copyWith(sortOrder: value),
@@ -430,7 +459,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                             ),
                             if (_isCreate) ...<Widget>[
                               _text(
-                                'Variant Cost',
+                                context.l10n.productEditorVariantCost,
                                 draft.variantCostPrice,
                                 (value) => cubit.updateDraft(
                                   draft.copyWith(variantCostPrice: value),
@@ -471,7 +500,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
         ),
         StickyFormActions(
           cancelLabel: l10n?.productUxCancel ?? 'Cancel',
-          onCancel: _confirmLeave,
+          onCancel: _leaveToReturnLocation,
           primaryLabel: _isCreate
               ? l10n?.productUxCreateProduct ?? 'Create Product'
               : l10n?.productUxSaveChanges ?? 'Save Changes',
@@ -605,7 +634,7 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
       key: ValueKey<T?>(value),
       initialValue: value,
       isExpanded: true,
-      hint: const Text('None'),
+      hint: Text(context.l10n.productEditorNone),
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         errorText: error,
@@ -616,30 +645,31 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
     ),
   );
 
-  Future<void> _confirmLeave() async {
+  Future<bool> _mayLeave() async {
     final ProductEditorState state = context.read<ProductEditorCubit>().state;
-    if (!state.isDirty) {
-      if (mounted) context.go(_returnLocation);
-      return;
-    }
+    if (!state.isDirty) return true;
     final bool? leave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Unsaved changes'),
-        content: const Text('You have unsaved changes. Leave without saving?'),
+        title: Text(context.l10n.menuUiUnsavedChangesTitle),
+        content: Text(context.l10n.menuUiUnsavedChangesMessage),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Stay'),
+            child: Text(context.l10n.menuUiStay),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Leave'),
+            child: Text(context.l10n.menuUiLeaveWithoutSaving),
           ),
         ],
       ),
     );
-    if (leave == true && mounted) context.go(_returnLocation);
+    return leave == true;
+  }
+
+  Future<void> _leaveToReturnLocation() async {
+    if (await _mayLeave() && mounted) context.go(_returnLocation);
   }
 }
 
@@ -699,7 +729,10 @@ class _ImageEditor extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Product Image', style: Theme.of(context).textTheme.labelLarge),
+        Text(
+          context.l10n.productEditorImage,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         const SizedBox(height: AppSpacing.sm),
         DropTarget(
           onDragDone: (detail) {
@@ -720,7 +753,7 @@ class _ImageEditor extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: isUploading
-                  ? const Column(
+                  ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         SizedBox(
@@ -729,26 +762,26 @@ class _ImageEditor extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(height: AppSpacing.sm),
-                        Text('Uploading image…'),
+                        Text(context.l10n.productEditorUploadingImage),
                       ],
                     )
                   : localImagePath != null
                   ? Image.file(
                       File(localImagePath!),
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const _ImagePlaceholder(
-                        message: 'Preview unavailable',
+                      errorBuilder: (_, _, _) => _ImagePlaceholder(
+                        message: context.l10n.productEditorPreviewUnavailable,
                       ),
                     )
                   : imageUrl.trim().isEmpty
-                  ? const _ImagePlaceholder(
-                      message: 'Drop an image here or click to browse',
+                  ? _ImagePlaceholder(
+                      message: context.l10n.productEditorDropImage,
                     )
                   : Image.network(
                       imageUrl.trim(),
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const _ImagePlaceholder(
-                        message: 'Image could not be loaded',
+                      errorBuilder: (_, _, _) => _ImagePlaceholder(
+                        message: context.l10n.productEditorImageLoadFailed,
                       ),
                     ),
             ),
@@ -769,13 +802,15 @@ class _ImageEditor extends StatelessWidget {
               key: const Key('product-image-action'),
               onPressed: isUploading ? null : onPick,
               child: Text(
-                imageUrl.trim().isEmpty ? 'Choose Image' : 'Change Image',
+                imageUrl.trim().isEmpty
+                    ? context.l10n.productEditorChooseImage
+                    : context.l10n.productEditorChangeImage,
               ),
             ),
             if (onRemove != null)
               TextButton(
                 onPressed: isUploading ? null : onRemove,
-                child: const Text('Remove Image'),
+                child: Text(context.l10n.productEditorRemoveImage),
               ),
           ],
         ),
@@ -795,7 +830,7 @@ class _ImagePlaceholder extends StatelessWidget {
       const SizedBox(height: AppSpacing.xs),
       Text(message),
       const SizedBox(height: AppSpacing.xs),
-      const Text('PNG, JPG, WEBP, or GIF up to 5 MB'),
+      Text(context.l10n.productEditorImageFormats),
     ],
   );
 }
@@ -811,10 +846,8 @@ class _StockTracking extends StatelessWidget {
       color: Colors.transparent,
       child: SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
-        title: const Text('Stock Tracking'),
-        subtitle: const Text(
-          'Track the materials consumed when this Product is prepared.',
-        ),
+        title: Text(context.l10n.productEditorStockTracking),
+        subtitle: Text(context.l10n.productEditorStockTrackingHelp),
         value: value,
         onChanged: onChanged,
       ),
@@ -833,10 +866,12 @@ class _DefaultVariantSummary extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(variant?.name ?? 'No default variant returned.'),
+            Text(variant?.name ?? context.l10n.productEditorNoDefaultVariant),
             if (variant != null)
               Text(
-                'Base price ${catalogMoney(variant!.basePrice)}',
+                context.l10n.productEditorBasePriceValue(
+                  catalogMoney(context, variant!.basePrice),
+                ),
                 textDirection: TextDirection.ltr,
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textMuted,
@@ -848,7 +883,7 @@ class _DefaultVariantSummary extends StatelessWidget {
       OutlinedButton.icon(
         onPressed: onManage,
         icon: const Icon(Icons.tune_outlined),
-        label: const Text('Manage Variants'),
+        label: Text(context.l10n.productEditorManageVariants),
       ),
     ],
   );
@@ -892,7 +927,7 @@ class _TranslationSheetState extends State<_TranslationSheet>
               ),
             ),
             IconButton(
-              tooltip: 'Close translations',
+              tooltip: context.l10n.productEditorTranslationsClose,
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.close),
             ),
@@ -959,7 +994,10 @@ class _TranslationFields extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('Default content', style: Theme.of(context).textTheme.labelLarge),
+        Text(
+          context.l10n.productEditorDefaultContent,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         const SizedBox(height: AppSpacing.xs),
         Text(defaultName.isEmpty ? '—' : defaultName),
         if (defaultDescription.isNotEmpty) Text(defaultDescription),
@@ -967,14 +1005,18 @@ class _TranslationFields extends StatelessWidget {
         TextFormField(
           initialValue: name,
           onChanged: onNameChanged,
-          decoration: const InputDecoration(labelText: 'Localized Name'),
+          decoration: InputDecoration(
+            labelText: context.l10n.productEditorLocalizedName,
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
         TextFormField(
           initialValue: description,
           maxLines: 5,
           onChanged: onDescriptionChanged,
-          decoration: const InputDecoration(labelText: 'Localized Description'),
+          decoration: InputDecoration(
+            labelText: context.l10n.productEditorLocalizedDescription,
+          ),
         ),
       ],
     ),

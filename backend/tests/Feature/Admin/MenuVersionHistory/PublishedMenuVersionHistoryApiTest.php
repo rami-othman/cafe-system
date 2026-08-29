@@ -141,6 +141,30 @@ class PublishedMenuVersionHistoryApiTest extends TestCase
         $this->assertDatabaseHas('published_menu_versions', ['id' => $current, 'status' => 'rolled_back']);
     }
 
+    public function test_schema_v2_history_detail_compare_and_rollback_preserve_the_legacy_payload(): void
+    {
+        $tenant = $this->tenant('legacy-schema');
+        $branch = $this->branch($tenant);
+        [, $legacy] = $this->version($tenant, $branch, 1, 'legacy-v2', 'superseded');
+        [, $current] = $this->version($tenant, $branch, 2, 'current-v3', 'current');
+        $legacyPayload = ['context' => ['tenantId' => $tenant, 'branchId' => $branch, 'channel' => 'pos', 'schemaVersion' => 2], 'menus' => [['id' => 1, 'priority' => 100, 'sections' => []]]];
+        $currentPayload = ['context' => ['tenantId' => $tenant, 'branchId' => $branch, 'channel' => 'pos', 'schemaVersion' => 3], 'menus' => [['id' => 1, 'scopeOrder' => 0, 'sections' => []]]];
+        DB::table('published_menu_versions')->where('id', $legacy)->update(['payload_json' => json_encode($legacyPayload)]);
+        DB::table('published_menu_versions')->where('id', $current)->update(['payload_json' => json_encode($currentPayload)]);
+
+        $this->getJson("/api/v1/admin/menu-management/versions/{$legacy}?includePayload=true", $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data.payload.context.schemaVersion', 2)
+            ->assertJsonPath('data.payload.menus.0.priority', 100);
+        $this->getJson("/api/v1/admin/menu-management/versions/{$legacy}/compare?againstVersionId={$current}", $this->headers($tenant))->assertOk();
+        $rolled = $this->postJson("/api/v1/admin/menu-management/versions/{$legacy}/rollback", ['reason' => 'restore v2'], $this->headers($tenant))
+            ->assertOk()
+            ->json('data.version.id');
+
+        $this->assertSame($legacyPayload, json_decode((string) DB::table('published_menu_versions')->where('id', $legacy)->value('payload_json'), true));
+        $this->assertSame($legacyPayload, json_decode((string) DB::table('published_menu_versions')->where('id', $rolled)->value('payload_json'), true));
+    }
+
     private function version(int $tenant, int $branch, int $number, string $checksum, string $status): array
     {
         $publication = DB::table('menu_publications')->insertGetId(['tenant_id' => $tenant, 'status' => 'published', 'change_summary' => '{}', 'created_at' => now(), 'updated_at' => now()]);

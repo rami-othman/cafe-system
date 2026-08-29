@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/localization/localization_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
@@ -35,6 +37,8 @@ class ProductModifierAssignmentsScreen extends StatefulWidget {
 class _ProductModifierAssignmentsScreenState
     extends State<ProductModifierAssignmentsScreen> {
   bool _reorderMode = false;
+  late VoidCallback _unregisterUnsavedNavigation;
+  bool _registeredUnsavedNavigation = false;
   @override
   void initState() {
     super.initState();
@@ -45,23 +49,45 @@ class _ProductModifierAssignmentsScreenState
     );
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_registeredUnsavedNavigation) return;
+    final UnsavedNavigationController? navigation =
+        UnsavedNavigationScope.maybeOf(context);
+    if (navigation == null) return;
+    _registeredUnsavedNavigation = true;
+    _unregisterUnsavedNavigation = navigation.register(
+      UnsavedNavigationGuard(
+        isDirty: () =>
+            context.read<ProductModifierAssignmentsCubit>().state.isDirty,
+        confirmLeave: _canLeave,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_registeredUnsavedNavigation) _unregisterUnsavedNavigation();
+    super.dispose();
+  }
+
   Future<bool> _canLeave() async {
     if (!context.read<ProductModifierAssignmentsCubit>().state.isDirty)
       return true;
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text(
-              'You have unsaved changes. Leave without saving?',
-            ),
+            title: Text(context.l10n.menuUiUnsavedChangesTitle),
+            content: Text(context.l10n.menuUiUnsavedChangesMessage),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Stay'),
+                child: Text(context.l10n.menuUiStay),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Leave'),
+                child: Text(context.l10n.menuUiLeaveWithoutSaving),
               ),
             ],
           ),
@@ -101,7 +127,9 @@ class _ProductModifierAssignmentsScreenState
             if (state.product == null)
               return DesktopPageLayout(
                 child: Center(
-                  child: Text(state.errorMessage ?? 'Product not found.'),
+                  child: Text(
+                    state.errorMessage ?? context.l10n.productDetailNotFound,
+                  ),
                 ),
               );
             final cubit = context.read<ProductModifierAssignmentsCubit>();
@@ -111,15 +139,13 @@ class _ProductModifierAssignmentsScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      const Text(
-                        'This product is archived and modifier assignments are read-only.',
-                      ),
+                      Text(context.l10n.modifierAssignmentArchivedReadOnly),
                       const SizedBox(height: AppSpacing.md),
                       OutlinedButton(
-                        onPressed: () => context.go(
+                        onPressed: () => context.guardedGo(
                           '/menu-management/products/${state.product!.id}',
                         ),
-                        child: const Text('View Product Detail'),
+                        child: Text(context.l10n.modifierAssignmentViewProduct),
                       ),
                     ],
                   ),
@@ -177,7 +203,7 @@ class _ProductModifierAssignmentsScreenState
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.save_outlined),
-                    label: const Text('Save Changes'),
+                    label: Text(context.l10n.modifierAssignmentSaveChanges),
                   ),
                 ],
               ),
@@ -347,7 +373,7 @@ class _ModifierAssignmentsContent extends StatelessWidget {
                       key: const Key('add-modifier-group-action'),
                       onPressed: state.isSaving ? null : onAdd,
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Modifier Group'),
+                      label: Text(context.l10n.modifierAssignmentAddGroup),
                     ),
                   ],
                 ),
@@ -362,7 +388,11 @@ class _ModifierAssignmentsContent extends StatelessWidget {
                           ? null
                           : () => onReorderModeChanged(!reorderMode),
                       icon: Icon(reorderMode ? Icons.check : Icons.reorder),
-                      label: Text(reorderMode ? 'Done' : 'Reorder'),
+                      label: Text(
+                        reorderMode
+                            ? context.l10n.modifierAssignmentDone
+                            : context.l10n.modifierAssignmentReorder,
+                      ),
                     ),
                     FilledButton.icon(
                       key: const Key('save-product-modifiers'),
@@ -376,7 +406,7 @@ class _ModifierAssignmentsContent extends StatelessWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.save_outlined),
-                      label: const Text('Save Changes'),
+                      label: Text(context.l10n.modifierAssignmentSaveChanges),
                     ),
                   ],
                 ),
@@ -422,10 +452,13 @@ class _ModifierIntroduction extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      Text('Modifiers', style: Theme.of(context).textTheme.headlineSmall),
+      Text(
+        context.l10n.modifierAssignmentTitle,
+        style: Theme.of(context).textTheme.headlineSmall,
+      ),
       const SizedBox(height: AppSpacing.xs),
       Text(
-        'Choose which Modifier Groups customers can use with this Product.',
+        context.l10n.modifierAssignmentHelp,
         style: Theme.of(
           context,
         ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
@@ -470,14 +503,17 @@ class _AssignedModifierRow extends StatelessWidget {
         if (reorderMode) ...<Widget>[
           Column(
             children: <Widget>[
-              const Icon(Icons.drag_indicator, semanticLabel: 'Reorder'),
+              Icon(
+                Icons.drag_indicator,
+                semanticLabel: context.l10n.variantReorderSemantic,
+              ),
               IconButton(
-                tooltip: 'Move up',
+                tooltip: context.l10n.modifierAssignmentMoveUp,
                 onPressed: index == 0 ? null : () => onMove(-1),
                 icon: const Icon(Icons.keyboard_arrow_up),
               ),
               IconButton(
-                tooltip: 'Move down',
+                tooltip: context.l10n.modifierAssignmentMoveDown,
                 onPressed: index == total - 1 ? null : () => onMove(1),
                 icon: const Icon(Icons.keyboard_arrow_down),
               ),
@@ -510,7 +546,9 @@ class _AssignedModifierRow extends StatelessWidget {
               ),
               if (hasMaterialImpact) ...<Widget>[
                 const SizedBox(height: AppSpacing.xs),
-                const _SubtleIndicator(label: 'Material impact configured'),
+                _SubtleIndicator(
+                  label: context.l10n.modifierAssignmentMaterialImpact,
+                ),
               ],
               if (error != null)
                 Text(
@@ -523,8 +561,10 @@ class _AssignedModifierRow extends StatelessWidget {
         Expanded(
           child: Text(
             assignment.hasCustomSettings
-                ? 'Customized for ${_productName(context)}'
-                : 'Using library settings',
+                ? context.l10n.modifierAssignmentCustomizedFor(
+                    _productName(context),
+                  )
+                : context.l10n.modifierAssignmentUsingLibrarySettings,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: assignment.hasCustomSettings
                   ? AppColors.secondary
@@ -532,13 +572,13 @@ class _AssignedModifierRow extends StatelessWidget {
             ),
           ),
         ),
-        const _SubtleIndicator(label: 'Active'),
+        _SubtleIndicator(label: context.l10n.variantActive),
         PopupMenuButton<_ModifierAction>(
           key: Key('modifier-overflow-${assignment.modifierGroupId}'),
-          tooltip: 'Actions for ${assignment.name}',
+          tooltip: context.l10n.modifierAssignmentActionsFor(assignment.name),
           icon: const Icon(Icons.more_vert),
           onSelected: (action) => switch (action) {
-            _ModifierAction.view => context.go(
+            _ModifierAction.view => context.guardedGo(
               '/menu-management/modifiers/${assignment.modifierGroupId}',
             ),
             _ModifierAction.customize => onEdit(),
@@ -547,20 +587,22 @@ class _AssignedModifierRow extends StatelessWidget {
           itemBuilder: (context) => <PopupMenuEntry<_ModifierAction>>[
             _modifierItem(
               _ModifierAction.view,
-              'View Modifier Group',
+              context.l10n.modifierAssignmentViewGroup,
               Icons.visibility_outlined,
             ),
             _modifierItem(
               _ModifierAction.customize,
               assignment.hasCustomSettings
-                  ? 'Customize for Product'
-                  : 'Customize for ${_productName(context)}',
+                  ? context.l10n.modifierAssignmentCustomizeForProduct
+                  : context.l10n.modifierAssignmentCustomizeFor(
+                      _productName(context),
+                    ),
               Icons.tune,
             ),
             const PopupMenuDivider(),
             _modifierItem(
               _ModifierAction.remove,
-              'Remove from Product',
+              context.l10n.modifierAssignmentRemoveFromProduct,
               Icons.remove_circle_outline,
             ),
           ],
@@ -639,9 +681,7 @@ class _AssignmentEmpty extends StatelessWidget {
       border: Border.all(color: AppColors.border),
       borderRadius: AppRadius.card,
     ),
-    child: const Center(
-      child: Text('No Modifier Groups are assigned to this Product.'),
-    ),
+    child: Center(child: Text(context.l10n.modifierAssignmentNoAssigned)),
   );
 }
 
@@ -698,25 +738,23 @@ class _AvailableGroupsSheetState extends State<_AvailableGroupsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Add Modifier Group',
+          context.l10n.modifierAssignmentAddGroup,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: AppSpacing.sm),
-        const Text(
-          'Choose a group to make its customer choices available for this Product.',
-        ),
+        Text(context.l10n.modifierAssignmentChooseGroupHelp),
         const SizedBox(height: AppSpacing.lg),
         TextField(
           onChanged: (v) => setState(() => query = v),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             prefixIcon: Icon(Icons.search),
-            labelText: 'Search Modifier Groups',
+            labelText: context.l10n.modifierAssignmentSearch,
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
         Expanded(
           child: groups.isEmpty
-              ? const Center(child: Text('No available Modifier Groups found.'))
+              ? Center(child: Text(context.l10n.modifierAssignmentNoAvailable))
               : ListView.separated(
                   itemCount: groups.length,
                   separatorBuilder: (_, _) => const Divider(),
@@ -736,7 +774,7 @@ class _AvailableGroupsSheetState extends State<_AvailableGroupsSheet> {
                       ),
                       trailing: FilledButton(
                         onPressed: () => widget.onAdd(group),
-                        child: const Text('Add'),
+                        child: Text(context.l10n.commonAdd),
                       ),
                     );
                   },
@@ -826,15 +864,27 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Customize for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}',
+                  context.l10n.modifierAssignmentCustomizeFor(
+                    context
+                        .read<ProductModifierAssignmentsCubit>()
+                        .state
+                        .product!
+                        .name,
+                  ),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                const Text('Current behavior'),
+                Text(context.l10n.modifierAssignmentCurrentBehavior),
                 Text(
                   a.hasCustomSettings
-                      ? 'Customized for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}'
-                      : 'Using library settings',
+                      ? context.l10n.modifierAssignmentCustomizedFor(
+                          context
+                              .read<ProductModifierAssignmentsCubit>()
+                              .state
+                              .product!
+                              .name,
+                        )
+                      : context.l10n.modifierAssignmentUsingLibrarySettings,
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: AppColors.secondary),
@@ -846,7 +896,9 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                   value: false,
                   groupValue: customized,
                   onChanged: (v) => setState(() => customized = false),
-                  title: const Text('Use library settings'),
+                  title: Text(
+                    context.l10n.modifierAssignmentUseLibrarySettings,
+                  ),
                 ),
                 RadioListTile<bool>(
                   contentPadding: EdgeInsets.zero,
@@ -855,13 +907,19 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                   groupValue: customized,
                   onChanged: (v) => setState(() => customized = true),
                   title: Text(
-                    'Customize for ${context.read<ProductModifierAssignmentsCubit>().state.product!.name}',
+                    context.l10n.modifierAssignmentCustomizeFor(
+                      context
+                          .read<ProductModifierAssignmentsCubit>()
+                          .state
+                          .product!
+                          .name,
+                    ),
                   ),
                 ),
                 if (customized) ...<Widget>[
                   const Divider(height: AppSpacing.xl),
                   Text(
-                    'How should customers choose?',
+                    context.l10n.modifierAssignmentHowChoose,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   RadioListTile<String>(
@@ -870,7 +928,7 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                     value: 'single',
                     groupValue: a.selectionType,
                     onChanged: null,
-                    title: const Text('Choose one'),
+                    title: Text(context.l10n.modifierAssignmentChooseOne),
                   ),
                   RadioListTile<String>(
                     contentPadding: EdgeInsets.zero,
@@ -878,13 +936,13 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                     value: 'multiple',
                     groupValue: a.selectionType,
                     onChanged: null,
-                    title: const Text('Choose multiple'),
+                    title: Text(context.l10n.modifierAssignmentChooseMultiple),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     multiple
-                        ? 'This group uses multiple choices from the Modifier Library.'
-                        : 'This group uses one choice from the Modifier Library.',
+                        ? context.l10n.modifierAssignmentMultipleHelp
+                        : context.l10n.modifierAssignmentSingleHelp,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -893,9 +951,15 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: SegmentedButton<bool>(
-                      segments: const <ButtonSegment<bool>>[
-                        ButtonSegment(value: false, label: Text('Optional')),
-                        ButtonSegment(value: true, label: Text('Required')),
+                      segments: <ButtonSegment<bool>>[
+                        ButtonSegment(
+                          value: false,
+                          label: Text(context.l10n.modifierOptional),
+                        ),
+                        ButtonSegment(
+                          value: true,
+                          label: Text(context.l10n.modifierRequired),
+                        ),
                       ],
                       selected: <bool>{required},
                       onSelectionChanged: (v) =>
@@ -907,16 +971,18 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                     TextField(
                       controller: min,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Minimum choices',
+                      decoration: InputDecoration(
+                        labelText:
+                            context.l10n.modifierAssignmentMinimumChoices,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextField(
                       controller: max,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Maximum choices',
+                      decoration: InputDecoration(
+                        labelText:
+                            context.l10n.modifierAssignmentMaximumChoices,
                       ),
                     ),
                   ],
@@ -924,9 +990,7 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                     contentPadding: EdgeInsets.zero,
                     value: quantity,
                     onChanged: (v) => setState(() => quantity = v),
-                    title: const Text(
-                      'Can the same option be added more than once?',
-                    ),
+                    title: Text(context.l10n.modifierAssignmentAllowDuplicate),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
@@ -955,7 +1019,7 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
             children: <Widget>[
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(context.l10n.commonCancel),
               ),
               if (customized)
                 TextButton(
@@ -968,7 +1032,9 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                       clearAllowQuantity: true,
                     ),
                   ),
-                  child: const Text('Use library settings again'),
+                  child: Text(
+                    context.l10n.modifierAssignmentUseLibrarySettings,
+                  ),
                 ),
               FilledButton(
                 onPressed: () => Navigator.pop(
@@ -991,7 +1057,7 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
                           clearAllowQuantity: true,
                         ),
                 ),
-                child: const Text('Apply'),
+                child: Text(context.l10n.modifierAssignmentApply),
               ),
             ],
           ),
@@ -1004,18 +1070,16 @@ class _CustomizationSheetState extends State<_CustomizationSheet> {
 Future<bool?> _removeDialog(BuildContext context) => showDialog<bool>(
   context: context,
   builder: (context) => AlertDialog(
-    title: const Text('Remove modifier group?'),
-    content: const Text(
-      'Remove this Modifier Group from the Product? The Group and its Options will remain available in the Modifier Library.',
-    ),
+    title: Text(context.l10n.modifierAssignmentRemoveTitle),
+    content: Text(context.l10n.modifierAssignmentRemoveMessage),
     actions: <Widget>[
       TextButton(
         onPressed: () => Navigator.pop(context, false),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.commonCancel),
       ),
       FilledButton(
         onPressed: () => Navigator.pop(context, true),
-        child: const Text('Remove'),
+        child: Text(context.l10n.commonDelete),
       ),
     ],
   ),
@@ -1070,7 +1134,7 @@ class _EditorState extends State<_Editor> {
         (maxOverride && parsedMax == null) ||
         (parsedMin != null && parsedMin < 0) ||
         (parsedMax != null && parsedMax < 0)) {
-      setState(() => error = 'Use non-negative whole numbers.');
+      setState(() => error = context.l10n.modifierAssignmentNonNegative);
       return;
     }
     final next = widget.assignment.copyWith(
@@ -1086,9 +1150,7 @@ class _EditorState extends State<_Editor> {
     if (next.effectiveMaxSelections < next.effectiveMinSelections ||
         (next.selectionType == 'single' && next.effectiveMaxSelections > 1) ||
         (next.effectiveIsRequired && next.effectiveMinSelections < 1)) {
-      setState(
-        () => error = 'The effective selection constraints are invalid.',
-      );
+      setState(() => error = context.l10n.modifierAssignmentInvalidConstraints);
       return;
     }
     Navigator.pop(context, next);
@@ -1098,14 +1160,14 @@ class _EditorState extends State<_Editor> {
   Widget build(BuildContext context) {
     final a = widget.assignment;
     return AlertDialog(
-      title: Text('Configure ${a.localizedName}'),
+      title: Text(context.l10n.modifierAssignmentConfigure(a.localizedName)),
       content: SizedBox(
         width: 450,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             _boolSetting(
-              'Required',
+              context.l10n.modifierRequired,
               requiredOverride,
               requiredValue,
               a.libraryIsRequired,
@@ -1113,21 +1175,21 @@ class _EditorState extends State<_Editor> {
               (v) => setState(() => requiredValue = v),
             ),
             _numberSetting(
-              'Minimum selections',
+              context.l10n.modifierAssignmentMinimumChoices,
               minOverride,
               min,
               a.libraryMinSelections,
               (v) => setState(() => minOverride = v),
             ),
             _numberSetting(
-              'Maximum selections',
+              context.l10n.modifierAssignmentMaximumChoices,
               maxOverride,
               max,
               a.libraryMaxSelections,
               (v) => setState(() => maxOverride = v),
             ),
             _boolSetting(
-              'Allow quantity',
+              context.l10n.modifierAllowQuantity,
               quantityOverride,
               quantityValue,
               a.libraryAllowQuantity,
@@ -1135,7 +1197,15 @@ class _EditorState extends State<_Editor> {
               (v) => setState(() => quantityValue = v),
             ),
             Text(
-              'Effective Setting: ${requiredOverride ? (requiredValue ? 'Required' : 'Optional') : (a.libraryIsRequired ? 'Required' : 'Optional')}',
+              context.l10n.modifierAssignmentEffectiveSetting(
+                requiredOverride
+                    ? (requiredValue
+                          ? context.l10n.modifierRequired
+                          : context.l10n.modifierOptional)
+                    : (a.libraryIsRequired
+                          ? context.l10n.modifierRequired
+                          : context.l10n.modifierOptional),
+              ),
             ),
             if (error != null)
               Text(
@@ -1148,9 +1218,12 @@ class _EditorState extends State<_Editor> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.commonCancel),
         ),
-        FilledButton(onPressed: save, child: const Text('Apply')),
+        FilledButton(
+          onPressed: save,
+          child: Text(context.l10n.modifierAssignmentApply),
+        ),
       ],
     );
   }
@@ -1169,8 +1242,12 @@ class _EditorState extends State<_Editor> {
         value: overridden,
         contentPadding: EdgeInsets.zero,
         onChanged: (v) => onOverride(v ?? false),
-        title: Text('$label override'),
-        subtitle: Text('Library Default: ${defaultValue ? 'Yes' : 'No'}'),
+        title: Text(context.l10n.modifierAssignmentOverride(label)),
+        subtitle: Text(
+          context.l10n.modifierAssignmentLibraryDefaultBoolean(
+            defaultValue ? context.l10n.commonYes : context.l10n.commonNo,
+          ),
+        ),
       ),
       if (overridden) Switch(value: value, onChanged: onValue),
     ],
@@ -1188,8 +1265,10 @@ class _EditorState extends State<_Editor> {
         value: overridden,
         contentPadding: EdgeInsets.zero,
         onChanged: (v) => onOverride(v ?? false),
-        title: Text('$label override'),
-        subtitle: Text('Library Default: $defaultValue'),
+        title: Text(context.l10n.modifierAssignmentOverride(label)),
+        subtitle: Text(
+          context.l10n.modifierAssignmentLibraryDefaultNumber(defaultValue),
+        ),
       ),
       if (overridden)
         TextField(

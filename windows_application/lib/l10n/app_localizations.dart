@@ -6928,6 +6928,1098 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try Again'**
   String get reviewPublishTryAgain;
+
+  /// No description provided for @menuUiUnsavedChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get menuUiUnsavedChangesTitle;
+
+  /// No description provided for @menuUiUnsavedChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. If you leave now, they will be discarded.'**
+  String get menuUiUnsavedChangesMessage;
+
+  /// No description provided for @menuUiStay.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay'**
+  String get menuUiStay;
+
+  /// No description provided for @menuUiLeaveWithoutSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave without saving'**
+  String get menuUiLeaveWithoutSaving;
+
+  /// No description provided for @productEditorCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Product created successfully.'**
+  String get productEditorCreated;
+
+  /// No description provided for @productEditorUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Product updated successfully.'**
+  String get productEditorUpdated;
+
+  /// No description provided for @productEditorCreateHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Define what this product is, where it belongs, and how it is sold.'**
+  String get productEditorCreateHelp;
+
+  /// No description provided for @productEditorEditHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the product information managers use every day.'**
+  String get productEditorEditHelp;
+
+  /// No description provided for @productEditorArchivedReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived products are available for reference only. Restore this product to edit it.'**
+  String get productEditorArchivedReadOnly;
+
+  /// No description provided for @productEditorViewWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'View Product Workspace'**
+  String get productEditorViewWorkspace;
+
+  /// No description provided for @productEditorDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Product Name'**
+  String get productEditorDefaultName;
+
+  /// No description provided for @productEditorDefaultDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Description'**
+  String get productEditorDefaultDescription;
+
+  /// No description provided for @productEditorImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Image'**
+  String get productEditorImage;
+
+  /// No description provided for @productEditorUploadingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading image…'**
+  String get productEditorUploadingImage;
+
+  /// No description provided for @productEditorChooseImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Image'**
+  String get productEditorChooseImage;
+
+  /// No description provided for @productEditorChangeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Image'**
+  String get productEditorChangeImage;
+
+  /// No description provided for @productEditorRemoveImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Image'**
+  String get productEditorRemoveImage;
+
+  /// No description provided for @productEditorImageFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'PNG, JPG, WEBP, or GIF up to 5 MB'**
+  String get productEditorImageFormats;
+
+  /// No description provided for @productEditorTranslationsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close translations'**
+  String get productEditorTranslationsClose;
+
+  /// No description provided for @productEditorDefaultContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Default content'**
+  String get productEditorDefaultContent;
+
+  /// No description provided for @productEditorLocalizedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Localized Name'**
+  String get productEditorLocalizedName;
+
+  /// No description provided for @productEditorLocalizedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Localized Description'**
+  String get productEditorLocalizedDescription;
+
+  /// No description provided for @productEditorStockTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock Tracking'**
+  String get productEditorStockTracking;
+
+  /// No description provided for @productEditorStockTrackingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Track the materials consumed when this Product is prepared.'**
+  String get productEditorStockTrackingHelp;
+
+  /// No description provided for @productEditorNoDefaultVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'No default variant returned.'**
+  String get productEditorNoDefaultVariant;
+
+  /// No description provided for @productEditorManageVariants.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Variants'**
+  String get productEditorManageVariants;
+
+  /// No description provided for @productDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Product not found.'**
+  String get productDetailNotFound;
+
+  /// No description provided for @productDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Product'**
+  String get productDetailEdit;
+
+  /// No description provided for @productDetailArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive Product?'**
+  String get productDetailArchiveTitle;
+
+  /// No description provided for @productDetailRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Product?'**
+  String get productDetailRestoreTitle;
+
+  /// No description provided for @productDetailArchiveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive Product'**
+  String get productDetailArchiveAction;
+
+  /// No description provided for @productDetailRestoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Product'**
+  String get productDetailRestoreAction;
+
+  /// No description provided for @productDetailUsageEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product is not currently used in any menus.'**
+  String get productDetailUsageEmpty;
+
+  /// No description provided for @variantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Variants'**
+  String get variantTitle;
+
+  /// No description provided for @variantHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage the selling options available for this Product.'**
+  String get variantHelp;
+
+  /// No description provided for @variantAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Variant'**
+  String get variantAdd;
+
+  /// No description provided for @variantEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Variant'**
+  String get variantEdit;
+
+  /// No description provided for @variantReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get variantReorder;
+
+  /// No description provided for @variantDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get variantDone;
+
+  /// No description provided for @variantRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Variants'**
+  String get variantRefresh;
+
+  /// No description provided for @variantReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is archived and variants are read-only.'**
+  String get variantReadOnly;
+
+  /// No description provided for @variantCannotArchiveDefaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot archive Default Variant'**
+  String get variantCannotArchiveDefaultTitle;
+
+  /// No description provided for @variantCannotArchiveDefaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The only active Variant cannot be archived.'**
+  String get variantCannotArchiveDefaultMessage;
+
+  /// No description provided for @variantArchiveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This Variant will be archived and can be restored later.'**
+  String get variantArchiveMessage;
+
+  /// No description provided for @variantSelectReplacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an active replacement Default Variant.'**
+  String get variantSelectReplacement;
+
+  /// No description provided for @variantOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get variantOrder;
+
+  /// No description provided for @variantName.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant name'**
+  String get variantName;
+
+  /// No description provided for @variantBasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Price'**
+  String get variantBasePrice;
+
+  /// No description provided for @variantCostPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Price'**
+  String get variantCostPrice;
+
+  /// No description provided for @variantDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get variantDefault;
+
+  /// No description provided for @variantActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get variantActions;
+
+  /// No description provided for @variantActiveStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Active status'**
+  String get variantActiveStatus;
+
+  /// No description provided for @variantMakeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Make this the Default Variant'**
+  String get variantMakeDefault;
+
+  /// No description provided for @variantDefaultMustBeActive.
+  ///
+  /// In en, this message translates to:
+  /// **'A Default Variant must be active.'**
+  String get variantDefaultMustBeActive;
+
+  /// No description provided for @variantSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get variantSaving;
+
+  /// No description provided for @variantNoArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived Variants.'**
+  String get variantNoArchived;
+
+  /// No description provided for @variantEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Variants returned for this product.'**
+  String get variantEmpty;
+
+  /// No description provided for @modifierAssignmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get modifierAssignmentTitle;
+
+  /// No description provided for @modifierAssignmentSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get modifierAssignmentSaveChanges;
+
+  /// No description provided for @modifierAssignmentAddGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Modifier Group'**
+  String get modifierAssignmentAddGroup;
+
+  /// No description provided for @modifierAssignmentNoAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No Modifier Groups are assigned to this Product.'**
+  String get modifierAssignmentNoAssigned;
+
+  /// No description provided for @modifierAssignmentNoAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No available Modifier Groups found.'**
+  String get modifierAssignmentNoAvailable;
+
+  /// No description provided for @modifierAssignmentSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Modifier Groups'**
+  String get modifierAssignmentSearch;
+
+  /// No description provided for @modifierAssignmentRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove modifier group?'**
+  String get modifierAssignmentRemoveTitle;
+
+  /// No description provided for @modifierAssignmentRemoveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this Modifier Group from the Product? The Group and its Options will remain available in the Modifier Library.'**
+  String get modifierAssignmentRemoveMessage;
+
+  /// No description provided for @modifierAssignmentUseLibrarySettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Use library settings'**
+  String get modifierAssignmentUseLibrarySettings;
+
+  /// No description provided for @modifierAssignmentApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get modifierAssignmentApply;
+
+  /// No description provided for @modifierAssignmentCurrentBehavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Current behavior'**
+  String get modifierAssignmentCurrentBehavior;
+
+  /// No description provided for @modifierAssignmentNonNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Use non-negative whole numbers.'**
+  String get modifierAssignmentNonNegative;
+
+  /// No description provided for @modifierAssignmentInvalidConstraints.
+  ///
+  /// In en, this message translates to:
+  /// **'The effective selection constraints are invalid.'**
+  String get modifierAssignmentInvalidConstraints;
+
+  /// No description provided for @productDetailUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized product'**
+  String get productDetailUncategorized;
+
+  /// No description provided for @productDetailArchiveMenuAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive Product'**
+  String get productDetailArchiveMenuAction;
+
+  /// No description provided for @productDetailRestoreMenuAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Product'**
+  String get productDetailRestoreMenuAction;
+
+  /// No description provided for @productDetailBasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Price'**
+  String get productDetailBasePrice;
+
+  /// No description provided for @productDetailKitchenStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Station'**
+  String get productDetailKitchenStation;
+
+  /// No description provided for @productDetailWorkspaceNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Product workspace navigation'**
+  String get productDetailWorkspaceNavigation;
+
+  /// No description provided for @productDetailSetupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The catalog and preparation details for this product.'**
+  String get productDetailSetupHelp;
+
+  /// No description provided for @productDetailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get productDetailDescription;
+
+  /// No description provided for @productDetailAdvancedTechnical.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced & Technical'**
+  String get productDetailAdvancedTechnical;
+
+  /// No description provided for @productDetailUsageHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus where this Product is currently used.'**
+  String get productDetailUsageHelp;
+
+  /// No description provided for @productDetailUsageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active menu placements.'**
+  String productDetailUsageCount(int count);
+
+  /// No description provided for @productDetailArchivedVariantsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is archived and variants are read-only.'**
+  String get productDetailArchivedVariantsMessage;
+
+  /// No description provided for @productDetailArchivedModifiersMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is archived and modifier assignments are read-only.'**
+  String get productDetailArchivedModifiersMessage;
+
+  /// No description provided for @productDetailViewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View Product Detail'**
+  String get productDetailViewAction;
+
+  /// No description provided for @variantActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get variantActive;
+
+  /// No description provided for @variantInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get variantInactive;
+
+  /// No description provided for @variantArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get variantArchived;
+
+  /// No description provided for @variantAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get variantAll;
+
+  /// No description provided for @variantSetDefaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set “{name}” as the Default Variant?'**
+  String variantSetDefaultTitle(String name);
+
+  /// No description provided for @variantSetDefaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The Product’s displayed base price, SKU, barcode, and legacy POS compatibility will use this Variant. Existing Orders are not changed.'**
+  String get variantSetDefaultMessage;
+
+  /// No description provided for @variantArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive “{name}”?'**
+  String variantArchiveTitle(String name);
+
+  /// No description provided for @variantRestoreDefaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore “{name}” as Default?'**
+  String variantRestoreDefaultTitle(String name);
+
+  /// No description provided for @variantRestoreDefaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product has no active Default Variant, so this restored Variant must become the Default Variant.'**
+  String get variantRestoreDefaultMessage;
+
+  /// No description provided for @variantSetDefaultAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Default'**
+  String get variantSetDefaultAction;
+
+  /// No description provided for @variantRestoreDefaultAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore as Default'**
+  String get variantRestoreDefaultAction;
+
+  /// No description provided for @variantMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get variantMoveUp;
+
+  /// No description provided for @variantMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get variantMoveDown;
+
+  /// No description provided for @variantActionsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {name}'**
+  String variantActionsFor(String name);
+
+  /// No description provided for @variantReorderSemantic.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get variantReorderSemantic;
+
+  /// No description provided for @variantSku.
+  ///
+  /// In en, this message translates to:
+  /// **'SKU: {sku}'**
+  String variantSku(String sku);
+
+  /// No description provided for @variantRecipeConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe configured'**
+  String get variantRecipeConfigured;
+
+  /// No description provided for @variantRecipeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe missing'**
+  String get variantRecipeMissing;
+
+  /// No description provided for @variantRecipeNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe not configured'**
+  String get variantRecipeNotConfigured;
+
+  /// No description provided for @variantManageRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Recipe'**
+  String get variantManageRecipe;
+
+  /// No description provided for @variantPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get variantPricing;
+
+  /// No description provided for @variantSellingHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling Hours'**
+  String get variantSellingHours;
+
+  /// No description provided for @variantCurrentAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Availability'**
+  String get variantCurrentAvailability;
+
+  /// No description provided for @variantArabicName.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic name'**
+  String get variantArabicName;
+
+  /// No description provided for @variantEnglishName.
+  ///
+  /// In en, this message translates to:
+  /// **'English name'**
+  String get variantEnglishName;
+
+  /// No description provided for @variantSortOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Order'**
+  String get variantSortOrder;
+
+  /// No description provided for @modifierAssignmentArchivedReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is archived and modifier assignments are read-only.'**
+  String get modifierAssignmentArchivedReadOnly;
+
+  /// No description provided for @modifierAssignmentViewProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'View Product Detail'**
+  String get modifierAssignmentViewProduct;
+
+  /// No description provided for @modifierAssignmentProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get modifierAssignmentProduct;
+
+  /// No description provided for @modifierAssignmentAssignedGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned Groups ({count})'**
+  String modifierAssignmentAssignedGroups(int count);
+
+  /// No description provided for @modifierAssignmentAvailableGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Groups'**
+  String get modifierAssignmentAvailableGroups;
+
+  /// No description provided for @modifierAssignmentReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get modifierAssignmentReorder;
+
+  /// No description provided for @modifierAssignmentDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get modifierAssignmentDone;
+
+  /// No description provided for @modifierAssignmentMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get modifierAssignmentMoveUp;
+
+  /// No description provided for @modifierAssignmentMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get modifierAssignmentMoveDown;
+
+  /// No description provided for @modifierAssignmentActionsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions for {name}'**
+  String modifierAssignmentActionsFor(String name);
+
+  /// No description provided for @modifierAssignmentChooseGroupHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a group to make its customer choices available for this Product.'**
+  String get modifierAssignmentChooseGroupHelp;
+
+  /// No description provided for @modifierAssignmentCustomizeFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize for {name}'**
+  String modifierAssignmentCustomizeFor(String name);
+
+  /// No description provided for @modifierAssignmentCustomizedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Customized for {name}'**
+  String modifierAssignmentCustomizedFor(String name);
+
+  /// No description provided for @modifierAssignmentUsingLibrarySettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Using library settings'**
+  String get modifierAssignmentUsingLibrarySettings;
+
+  /// No description provided for @modifierAssignmentHowChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'How should customers choose?'**
+  String get modifierAssignmentHowChoose;
+
+  /// No description provided for @modifierAssignmentChooseOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one'**
+  String get modifierAssignmentChooseOne;
+
+  /// No description provided for @modifierAssignmentChooseMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose multiple'**
+  String get modifierAssignmentChooseMultiple;
+
+  /// No description provided for @modifierAssignmentMultipleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This group uses multiple choices from the Modifier Library.'**
+  String get modifierAssignmentMultipleHelp;
+
+  /// No description provided for @modifierAssignmentSingleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This group uses one choice from the Modifier Library.'**
+  String get modifierAssignmentSingleHelp;
+
+  /// No description provided for @modifierAssignmentMinimumChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum choices'**
+  String get modifierAssignmentMinimumChoices;
+
+  /// No description provided for @modifierAssignmentMaximumChoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum choices'**
+  String get modifierAssignmentMaximumChoices;
+
+  /// No description provided for @modifierAssignmentAllowDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Can the same option be added more than once?'**
+  String get modifierAssignmentAllowDuplicate;
+
+  /// No description provided for @modifierAssignmentConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure {name}'**
+  String modifierAssignmentConfigure(String name);
+
+  /// No description provided for @modifierAssignmentOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} override'**
+  String modifierAssignmentOverride(String label);
+
+  /// No description provided for @modifierAssignmentLibraryDefaultBoolean.
+  ///
+  /// In en, this message translates to:
+  /// **'Library Default: {value}'**
+  String modifierAssignmentLibraryDefaultBoolean(String value);
+
+  /// No description provided for @modifierAssignmentLibraryDefaultNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Library Default: {value}'**
+  String modifierAssignmentLibraryDefaultNumber(int value);
+
+  /// No description provided for @modifierAssignmentEffectiveSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective Setting: {value}'**
+  String modifierAssignmentEffectiveSetting(String value);
+
+  /// No description provided for @modifierAssignmentHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which Modifier Groups customers can use with this Product.'**
+  String get modifierAssignmentHelp;
+
+  /// No description provided for @modifierAssignmentMaterialImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'Material impact configured'**
+  String get modifierAssignmentMaterialImpact;
+
+  /// No description provided for @modifierAssignmentViewGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'View Modifier Group'**
+  String get modifierAssignmentViewGroup;
+
+  /// No description provided for @modifierAssignmentCustomizeForProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize for Product'**
+  String get modifierAssignmentCustomizeForProduct;
+
+  /// No description provided for @modifierAssignmentRemoveFromProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Product'**
+  String get modifierAssignmentRemoveFromProduct;
+
+  /// No description provided for @menuDetailArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive menu?'**
+  String get menuDetailArchiveTitle;
+
+  /// No description provided for @menuDetailRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore menu?'**
+  String get menuDetailRestoreTitle;
+
+  /// No description provided for @menuDetailArchiveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This archives the menu without deleting it. Its composition remains available to review.'**
+  String get menuDetailArchiveMessage;
+
+  /// No description provided for @menuDetailRestoreMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring this menu returns it to Draft. It does not restore archived sections.'**
+  String get menuDetailRestoreMessage;
+
+  /// No description provided for @productEditorProductType.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Type'**
+  String get productEditorProductType;
+
+  /// No description provided for @productEditorStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get productEditorStandard;
+
+  /// No description provided for @productEditorOpenPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Open price'**
+  String get productEditorOpenPrice;
+
+  /// No description provided for @productEditorPreparationTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation Time'**
+  String get productEditorPreparationTime;
+
+  /// No description provided for @productEditorMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get productEditorMinutes;
+
+  /// No description provided for @productEditorInitialOptionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Every product starts with one selling option. You can add more variants later.'**
+  String get productEditorInitialOptionHelp;
+
+  /// No description provided for @productEditorVariantName.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant Name'**
+  String get productEditorVariantName;
+
+  /// No description provided for @productEditorDefaultVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Variant'**
+  String get productEditorDefaultVariant;
+
+  /// No description provided for @productEditorDefaultVariantHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Selling options are managed separately so product details stay focused.'**
+  String get productEditorDefaultVariantHelp;
+
+  /// No description provided for @productEditorTranslationsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add localized content without crowding the main product form.'**
+  String get productEditorTranslationsHelp;
+
+  /// No description provided for @productEditorTranslationsPanelHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the translation panel to provide Arabic and English names and descriptions.'**
+  String get productEditorTranslationsPanelHelp;
+
+  /// No description provided for @productEditorSortOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Order'**
+  String get productEditorSortOrder;
+
+  /// No description provided for @productEditorVariantCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant Cost'**
+  String get productEditorVariantCost;
+
+  /// No description provided for @productEditorNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get productEditorNone;
+
+  /// No description provided for @productEditorPreviewUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview unavailable'**
+  String get productEditorPreviewUnavailable;
+
+  /// No description provided for @productEditorDropImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop an image here or click to browse'**
+  String get productEditorDropImage;
+
+  /// No description provided for @productEditorImageLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Image could not be loaded'**
+  String get productEditorImageLoadFailed;
+
+  /// No description provided for @productEditorWhatIsProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'What is this product?'**
+  String get productEditorWhatIsProduct;
+
+  /// No description provided for @productEditorClassificationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where this product belongs in the catalog and preparation flow.'**
+  String get productEditorClassificationHelp;
+
+  /// No description provided for @productEditorKitchenStationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this product is generally prepared.'**
+  String get productEditorKitchenStationHelp;
+
+  /// No description provided for @productEditorReportingCategoryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for sales and performance reports.'**
+  String get productEditorReportingCategoryHelp;
+
+  /// No description provided for @productEditorSellingPreparationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Set how this product is sold and what preparation information the team needs.'**
+  String get productEditorSellingPreparationHelp;
+
+  /// No description provided for @productEditorArabicConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic configured'**
+  String get productEditorArabicConfigured;
+
+  /// No description provided for @productEditorEnglishConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'English configured'**
+  String get productEditorEnglishConfigured;
+
+  /// No description provided for @productEditorBasePriceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Base price {price}'**
+  String productEditorBasePriceValue(String price);
+
+  /// No description provided for @productDetailArchiveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.'**
+  String get productDetailArchiveMessage;
+
+  /// No description provided for @productDetailRestoreMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This restores the Product to the editable Catalog. Availability still depends on Menu assignments, schedules, operational status, validation, and publishing.'**
+  String get productDetailRestoreMessage;
+
+  /// No description provided for @productCatalogArchiveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.\n\nThe Product is not permanently deleted. Central Modifier Groups are not deleted, and Variants remain stored according to Backend behavior.'**
+  String get productCatalogArchiveMessage;
+
+  /// No description provided for @productCatalogRestoreMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This restores the Product to the editable Catalog. Its availability in Menus still depends on Menu assignments, schedules, operational status, validation, and publishing.'**
+  String get productCatalogRestoreMessage;
+
+  /// No description provided for @productCatalogUsageMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This Product is currently used in {count} Menu placements{names}.'**
+  String productCatalogUsageMessage(int count, String names);
+
+  /// No description provided for @operationalOverrideClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear operational override?'**
+  String get operationalOverrideClearTitle;
+
+  /// No description provided for @operationalOverrideClearMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the {level} override for {scope}?\n\nScheduled Availability, Product configuration, and historical Published Versions will not be changed.'**
+  String operationalOverrideClearMessage(String level, String scope);
+
+  /// No description provided for @operationalOverrideClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear override'**
+  String get operationalOverrideClearAction;
+
+  /// No description provided for @productDetailProductId.
+  ///
+  /// In en, this message translates to:
+  /// **'Product ID'**
+  String get productDetailProductId;
+
+  /// No description provided for @productDetailUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get productDetailUpdated;
+
+  /// No description provided for @productDetailImageUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Image URL'**
+  String get productDetailImageUrl;
 }
 
 class _AppLocalizationsDelegate

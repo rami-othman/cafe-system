@@ -3877,4 +3877,627 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reviewPublishTryAgain => 'حاول مرة أخرى';
+
+  @override
+  String get menuUiUnsavedChangesTitle => 'تغييرات غير محفوظة';
+
+  @override
+  String get menuUiUnsavedChangesMessage =>
+      'لديك تغييرات غير محفوظة. إذا غادرت الآن، سيتم تجاهلها.';
+
+  @override
+  String get menuUiStay => 'بقاء';
+
+  @override
+  String get menuUiLeaveWithoutSaving => 'المغادرة دون حفظ';
+
+  @override
+  String get productEditorCreated => 'تم إنشاء المنتج بنجاح.';
+
+  @override
+  String get productEditorUpdated => 'تم تحديث المنتج بنجاح.';
+
+  @override
+  String get productEditorCreateHelp =>
+      'حدد ماهية هذا المنتج، ومكانه في الكتالوج، وكيفية بيعه.';
+
+  @override
+  String get productEditorEditHelp =>
+      'حدّث بيانات المنتج التي يستخدمها المديرون يوميًا.';
+
+  @override
+  String get productEditorArchivedReadOnly =>
+      'المنتجات المؤرشفة متاحة للرجوع إليها فقط. استعد المنتج لتعديله.';
+
+  @override
+  String get productEditorViewWorkspace => 'عرض مساحة عمل المنتج';
+
+  @override
+  String get productEditorDefaultName => 'اسم المنتج الافتراضي';
+
+  @override
+  String get productEditorDefaultDescription => 'الوصف الافتراضي';
+
+  @override
+  String get productEditorImage => 'صورة المنتج';
+
+  @override
+  String get productEditorUploadingImage => 'جارٍ رفع الصورة…';
+
+  @override
+  String get productEditorChooseImage => 'اختر صورة';
+
+  @override
+  String get productEditorChangeImage => 'تغيير الصورة';
+
+  @override
+  String get productEditorRemoveImage => 'إزالة الصورة';
+
+  @override
+  String get productEditorImageFormats =>
+      'PNG، JPG، WEBP، أو GIF بحد أقصى 5 ميغابايت';
+
+  @override
+  String get productEditorTranslationsClose => 'إغلاق الترجمات';
+
+  @override
+  String get productEditorDefaultContent => 'المحتوى الافتراضي';
+
+  @override
+  String get productEditorLocalizedName => 'الاسم المترجم';
+
+  @override
+  String get productEditorLocalizedDescription => 'الوصف المترجم';
+
+  @override
+  String get productEditorStockTracking => 'تتبع المخزون';
+
+  @override
+  String get productEditorStockTrackingHelp =>
+      'تتبع المواد المستهلكة عند تحضير المنتج.';
+
+  @override
+  String get productEditorNoDefaultVariant => 'لم يتم إرجاع خيار افتراضي.';
+
+  @override
+  String get productEditorManageVariants => 'إدارة الخيارات';
+
+  @override
+  String get productDetailNotFound => 'المنتج غير موجود.';
+
+  @override
+  String get productDetailEdit => 'تعديل المنتج';
+
+  @override
+  String get productDetailArchiveTitle => 'أرشفة المنتج؟';
+
+  @override
+  String get productDetailRestoreTitle => 'استعادة المنتج؟';
+
+  @override
+  String get productDetailArchiveAction => 'أرشفة المنتج';
+
+  @override
+  String get productDetailRestoreAction => 'استعادة المنتج';
+
+  @override
+  String get productDetailUsageEmpty =>
+      'هذا المنتج غير مستخدم حاليًا في أي قوائم.';
+
+  @override
+  String get variantTitle => 'الخيارات';
+
+  @override
+  String get variantHelp => 'أدِر خيارات البيع المتاحة لهذا المنتج.';
+
+  @override
+  String get variantAdd => 'إضافة خيار';
+
+  @override
+  String get variantEdit => 'تعديل الخيار';
+
+  @override
+  String get variantReorder => 'إعادة الترتيب';
+
+  @override
+  String get variantDone => 'تم';
+
+  @override
+  String get variantRefresh => 'تحديث الخيارات';
+
+  @override
+  String get variantReadOnly => 'هذا المنتج مؤرشف وخياراته للعرض فقط.';
+
+  @override
+  String get variantCannotArchiveDefaultTitle =>
+      'لا يمكن أرشفة الخيار الافتراضي';
+
+  @override
+  String get variantCannotArchiveDefaultMessage =>
+      'لا يمكن أرشفة الخيار النشط الوحيد.';
+
+  @override
+  String get variantArchiveMessage =>
+      'سيتم أرشفة هذا الخيار ويمكن استعادته لاحقًا.';
+
+  @override
+  String get variantSelectReplacement =>
+      'اختر خيارًا نشطًا بديلًا للخيار الافتراضي.';
+
+  @override
+  String get variantOrder => 'الترتيب';
+
+  @override
+  String get variantName => 'اسم الخيار';
+
+  @override
+  String get variantBasePrice => 'السعر الأساسي';
+
+  @override
+  String get variantCostPrice => 'سعر التكلفة';
+
+  @override
+  String get variantDefault => 'الافتراضي';
+
+  @override
+  String get variantActions => 'الإجراءات';
+
+  @override
+  String get variantActiveStatus => 'حالة النشاط';
+
+  @override
+  String get variantMakeDefault => 'تعيينه كخيار افتراضي';
+
+  @override
+  String get variantDefaultMustBeActive =>
+      'يجب أن يكون الخيار الافتراضي نشطًا.';
+
+  @override
+  String get variantSaving => 'جارٍ الحفظ…';
+
+  @override
+  String get variantNoArchived => 'لا توجد خيارات مؤرشفة.';
+
+  @override
+  String get variantEmpty => 'لم يُعد أي خيارات لهذا المنتج.';
+
+  @override
+  String get modifierAssignmentTitle => 'المعدّلات';
+
+  @override
+  String get modifierAssignmentSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get modifierAssignmentAddGroup => 'إضافة مجموعة معدّلات';
+
+  @override
+  String get modifierAssignmentNoAssigned =>
+      'لا تُعيّن أي مجموعات معدّلات لهذا المنتج.';
+
+  @override
+  String get modifierAssignmentNoAvailable =>
+      'لم يُعثر على مجموعات معدّلات متاحة.';
+
+  @override
+  String get modifierAssignmentSearch => 'البحث في مجموعات المعدّلات';
+
+  @override
+  String get modifierAssignmentRemoveTitle => 'إزالة مجموعة المعدّلات؟';
+
+  @override
+  String get modifierAssignmentRemoveMessage =>
+      'إزالة مجموعة المعدّلات من المنتج؟ ستبقى المجموعة وخياراتها متاحة في مكتبة المعدّلات.';
+
+  @override
+  String get modifierAssignmentUseLibrarySettings => 'استخدام إعدادات المكتبة';
+
+  @override
+  String get modifierAssignmentApply => 'تطبيق';
+
+  @override
+  String get modifierAssignmentCurrentBehavior => 'السلوك الحالي';
+
+  @override
+  String get modifierAssignmentNonNegative => 'استخدم أرقامًا صحيحة غير سالبة.';
+
+  @override
+  String get modifierAssignmentInvalidConstraints =>
+      'قيود الاختيار الفعّالة غير صالحة.';
+
+  @override
+  String get productDetailUncategorized => 'منتج بلا فئة';
+
+  @override
+  String get productDetailArchiveMenuAction => 'أرشفة المنتج';
+
+  @override
+  String get productDetailRestoreMenuAction => 'استعادة المنتج';
+
+  @override
+  String get productDetailBasePrice => 'السعر الأساسي';
+
+  @override
+  String get productDetailKitchenStation => 'محطة التحضير';
+
+  @override
+  String get productDetailWorkspaceNavigation => 'تنقل مساحة عمل المنتج';
+
+  @override
+  String get productDetailSetupHelp => 'تفاصيل الكتالوج والتحضير لهذا المنتج.';
+
+  @override
+  String get productDetailDescription => 'الوصف';
+
+  @override
+  String get productDetailAdvancedTechnical => 'متقدم وتقني';
+
+  @override
+  String get productDetailUsageHelp =>
+      'القوائم التي يُستخدم فيها هذا المنتج حاليًا.';
+
+  @override
+  String productDetailUsageCount(int count) {
+    return '$count مواضع نشطة في القوائم.';
+  }
+
+  @override
+  String get productDetailArchivedVariantsMessage =>
+      'هذا المنتج مؤرشف وخياراته للعرض فقط.';
+
+  @override
+  String get productDetailArchivedModifiersMessage =>
+      'هذا المنتج مؤرشف وتعيينات المعدّلات للعرض فقط.';
+
+  @override
+  String get productDetailViewAction => 'عرض تفاصيل المنتج';
+
+  @override
+  String get variantActive => 'نشط';
+
+  @override
+  String get variantInactive => 'غير نشط';
+
+  @override
+  String get variantArchived => 'مؤرشف';
+
+  @override
+  String get variantAll => 'الكل';
+
+  @override
+  String variantSetDefaultTitle(String name) {
+    return 'تعيين «$name» كخيار افتراضي؟';
+  }
+
+  @override
+  String get variantSetDefaultMessage =>
+      'سيُستخدم سعر المنتج الأساسي وSKU والباركود وتوافق POS القديم من هذا الخيار. لا تتغير الطلبات الحالية.';
+
+  @override
+  String variantArchiveTitle(String name) {
+    return 'أرشفة «$name»؟';
+  }
+
+  @override
+  String variantRestoreDefaultTitle(String name) {
+    return 'استعادة «$name» كخيار افتراضي؟';
+  }
+
+  @override
+  String get variantRestoreDefaultMessage =>
+      'لا يوجد لهذا المنتج خيار افتراضي نشط، لذا يجب تعيين هذا الخيار المستعاد كافتراضي.';
+
+  @override
+  String get variantSetDefaultAction => 'تعيين افتراضي';
+
+  @override
+  String get variantRestoreDefaultAction => 'استعادة كافتراضي';
+
+  @override
+  String get variantMoveUp => 'نقل للأعلى';
+
+  @override
+  String get variantMoveDown => 'نقل للأسفل';
+
+  @override
+  String variantActionsFor(String name) {
+    return 'إجراءات $name';
+  }
+
+  @override
+  String get variantReorderSemantic => 'إعادة الترتيب';
+
+  @override
+  String variantSku(String sku) {
+    return 'SKU: $sku';
+  }
+
+  @override
+  String get variantRecipeConfigured => 'الوصفة مُعدّة';
+
+  @override
+  String get variantRecipeMissing => 'الوصفة مفقودة';
+
+  @override
+  String get variantRecipeNotConfigured => 'الوصفة غير مُعدّة';
+
+  @override
+  String get variantManageRecipe => 'إدارة الوصفة';
+
+  @override
+  String get variantPricing => 'التسعير';
+
+  @override
+  String get variantSellingHours => 'ساعات البيع';
+
+  @override
+  String get variantCurrentAvailability => 'الإتاحة الحالية';
+
+  @override
+  String get variantArabicName => 'الاسم بالعربية';
+
+  @override
+  String get variantEnglishName => 'الاسم بالإنجليزية';
+
+  @override
+  String get variantSortOrder => 'ترتيب العرض';
+
+  @override
+  String get modifierAssignmentArchivedReadOnly =>
+      'هذا المنتج مؤرشف وتعيينات المعدّلات للعرض فقط.';
+
+  @override
+  String get modifierAssignmentViewProduct => 'عرض تفاصيل المنتج';
+
+  @override
+  String get modifierAssignmentProduct => 'المنتج';
+
+  @override
+  String modifierAssignmentAssignedGroups(int count) {
+    return 'المجموعات المعيّنة ($count)';
+  }
+
+  @override
+  String get modifierAssignmentAvailableGroups => 'المجموعات المتاحة';
+
+  @override
+  String get modifierAssignmentReorder => 'إعادة الترتيب';
+
+  @override
+  String get modifierAssignmentDone => 'تم';
+
+  @override
+  String get modifierAssignmentMoveUp => 'نقل للأعلى';
+
+  @override
+  String get modifierAssignmentMoveDown => 'نقل للأسفل';
+
+  @override
+  String modifierAssignmentActionsFor(String name) {
+    return 'إجراءات $name';
+  }
+
+  @override
+  String get modifierAssignmentChooseGroupHelp =>
+      'اختر مجموعة لإتاحة خياراتها لعملاء هذا المنتج.';
+
+  @override
+  String modifierAssignmentCustomizeFor(String name) {
+    return 'تخصيص لـ $name';
+  }
+
+  @override
+  String modifierAssignmentCustomizedFor(String name) {
+    return 'مخصّص لـ $name';
+  }
+
+  @override
+  String get modifierAssignmentUsingLibrarySettings => 'يستخدم إعدادات المكتبة';
+
+  @override
+  String get modifierAssignmentHowChoose => 'كيف ينبغي للعملاء الاختيار؟';
+
+  @override
+  String get modifierAssignmentChooseOne => 'اختر واحدًا';
+
+  @override
+  String get modifierAssignmentChooseMultiple => 'اختر عدة خيارات';
+
+  @override
+  String get modifierAssignmentMultipleHelp =>
+      'تستخدم هذه المجموعة خيارات متعددة من مكتبة المعدّلات.';
+
+  @override
+  String get modifierAssignmentSingleHelp =>
+      'تستخدم هذه المجموعة خيارًا واحدًا من مكتبة المعدّلات.';
+
+  @override
+  String get modifierAssignmentMinimumChoices => 'الحد الأدنى للخيارات';
+
+  @override
+  String get modifierAssignmentMaximumChoices => 'الحد الأقصى للخيارات';
+
+  @override
+  String get modifierAssignmentAllowDuplicate =>
+      'هل يمكن إضافة الخيار نفسه أكثر من مرة؟';
+
+  @override
+  String modifierAssignmentConfigure(String name) {
+    return 'تهيئة $name';
+  }
+
+  @override
+  String modifierAssignmentOverride(String label) {
+    return 'تجاوز $label';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultBoolean(String value) {
+    return 'افتراضي المكتبة: $value';
+  }
+
+  @override
+  String modifierAssignmentLibraryDefaultNumber(int value) {
+    return 'افتراضي المكتبة: $value';
+  }
+
+  @override
+  String modifierAssignmentEffectiveSetting(String value) {
+    return 'الإعداد الفعّال: $value';
+  }
+
+  @override
+  String get modifierAssignmentHelp =>
+      'اختر مجموعات المعدّلات التي يمكن للعملاء استخدامها مع هذا المنتج.';
+
+  @override
+  String get modifierAssignmentMaterialImpact => 'تم إعداد تأثير المواد';
+
+  @override
+  String get modifierAssignmentViewGroup => 'عرض مجموعة المعدّلات';
+
+  @override
+  String get modifierAssignmentCustomizeForProduct => 'تخصيص للمنتج';
+
+  @override
+  String get modifierAssignmentRemoveFromProduct => 'إزالة من المنتج';
+
+  @override
+  String get menuDetailArchiveTitle => 'أرشفة القائمة؟';
+
+  @override
+  String get menuDetailRestoreTitle => 'استعادة القائمة؟';
+
+  @override
+  String get menuDetailArchiveMessage =>
+      'تؤرشف هذه القائمة دون حذفها. يبقى تكوينها متاحًا للمراجعة.';
+
+  @override
+  String get menuDetailRestoreMessage =>
+      'تعيد استعادة هذه القائمة إلى المسودة. لا تستعيد الأقسام المؤرشفة.';
+
+  @override
+  String get productEditorProductType => 'نوع المنتج';
+
+  @override
+  String get productEditorStandard => 'عادي';
+
+  @override
+  String get productEditorOpenPrice => 'سعر مفتوح';
+
+  @override
+  String get productEditorPreparationTime => 'وقت التحضير';
+
+  @override
+  String get productEditorMinutes => 'دقائق';
+
+  @override
+  String get productEditorInitialOptionHelp =>
+      'يبدأ كل منتج بخيار بيع واحد. يمكنك إضافة خيارات أخرى لاحقًا.';
+
+  @override
+  String get productEditorVariantName => 'اسم خيار البيع';
+
+  @override
+  String get productEditorDefaultVariant => 'الخيار الافتراضي';
+
+  @override
+  String get productEditorDefaultVariantHelp =>
+      'تُدار خيارات البيع بشكل منفصل ليبقى تفاصيل المنتج مركّزة.';
+
+  @override
+  String get productEditorTranslationsHelp =>
+      'أضف محتوى مترجمًا دون إزدحام نموذج المنتج الرئيسي.';
+
+  @override
+  String get productEditorTranslationsPanelHelp =>
+      'استخدم لوحة الترجمات لإدخال أسماء وأوصاف عربية وإنجليزية.';
+
+  @override
+  String get productEditorSortOrder => 'ترتيب العرض';
+
+  @override
+  String get productEditorVariantCost => 'تكلفة خيار البيع';
+
+  @override
+  String get productEditorNone => 'لا شيء';
+
+  @override
+  String get productEditorPreviewUnavailable => 'المعاينة غير متاحة';
+
+  @override
+  String get productEditorDropImage => 'أفلت صورة هنا أو انقر للتصفح';
+
+  @override
+  String get productEditorImageLoadFailed => 'تعذر تحميل الصورة';
+
+  @override
+  String get productEditorWhatIsProduct => 'ما هو هذا المنتج؟';
+
+  @override
+  String get productEditorClassificationHelp =>
+      'اختر موضع هذا المنتج في الكتالوج وتدفق التحضير.';
+
+  @override
+  String get productEditorKitchenStationHelp =>
+      'الموضع العادي لتحضير هذا المنتج.';
+
+  @override
+  String get productEditorReportingCategoryHelp =>
+      'تُستخدم لتقارير المبيعات والأداء.';
+
+  @override
+  String get productEditorSellingPreparationHelp =>
+      'حدد كيفية بيع هذا المنتج وما يلزم فريق العمل من معلومات تحضير.';
+
+  @override
+  String get productEditorArabicConfigured => 'تم إعداد العربية';
+
+  @override
+  String get productEditorEnglishConfigured => 'تم إعداد الإنجليزية';
+
+  @override
+  String productEditorBasePriceValue(String price) {
+    return 'السعر الأساسي $price';
+  }
+
+  @override
+  String get productDetailArchiveMessage =>
+      'لن يعود هذا المنتج متاحًا لإعداد القوائم الجديد أو استخدام الكتالوج العادي. لا تتغير الطلبات الحالية والإصدارات المنشورة السابقة.';
+
+  @override
+  String get productDetailRestoreMessage =>
+      'يعيد هذا المنتج إلى الكتالوج القابل للتعديل. وتبقى إتاحته معتمدة على تعيينات القوائم والجداول والحالة التشغيلية والتحقق والنشر.';
+
+  @override
+  String get productCatalogArchiveMessage =>
+      'لن يعود هذا المنتج متاحًا لإعداد القوائم الجديد أو استخدام الكتالوج العادي.\n\nلا يُحذف المنتج نهائيًا. لا تُحذف مجموعات المعدّلات المركزية، وتبقى الخيارات مخزنة حسب سلوك الخلفية.';
+
+  @override
+  String get productCatalogRestoreMessage =>
+      'يعيد هذا المنتج إلى الكتالوج القابل للتعديل. وتبقى إتاحته في القوائم معتمدة على تعيينات القوائم والجداول والحالة التشغيلية والتحقق والنشر.';
+
+  @override
+  String productCatalogUsageMessage(int count, String names) {
+    return 'يُستخدم هذا المنتج حاليًا في $count مواضع في القوائم$names.';
+  }
+
+  @override
+  String get operationalOverrideClearTitle => 'مسح التجاوز التشغيلي؟';
+
+  @override
+  String operationalOverrideClearMessage(String level, String scope) {
+    return 'مسح تجاوز $level لـ $scope؟\n\nلن يتم تغيير الإتاحة المجدولة، أو إعدادات المنتج، أو الإصدارات المنشورة السابقة.';
+  }
+
+  @override
+  String get operationalOverrideClearAction => 'مسح التجاوز';
+
+  @override
+  String get productDetailProductId => 'معرّف المنتج';
+
+  @override
+  String get productDetailUpdated => 'آخر تحديث';
+
+  @override
+  String get productDetailImageUrl => 'رابط الصورة';
 }

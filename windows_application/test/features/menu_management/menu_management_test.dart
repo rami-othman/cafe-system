@@ -17,6 +17,7 @@ import 'package:windows_application/features/menu_management/products/controller
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/menu_management/variants/models/variant_editor_draft.dart';
 import 'package:windows_application/features/menu_management/views/product_catalog_screen.dart';
+import 'package:windows_application/features/menu_management/views/product_detail_screen.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 
@@ -461,6 +462,10 @@ void main() {
       await tester.tap(find.text('Advanced & Technical'));
       await tester.pumpAndSettle();
       expect(find.text('Product ID'), findsOneWidget);
+      expect(find.text('Sort Order'), findsOneWidget);
+      expect(find.text('Created'), findsOneWidget);
+      expect(find.text('Updated'), findsOneWidget);
+      expect(find.text('3.5 SYP'), findsWidgets);
       for (final double width in <double>[1280, 1440, 1920]) {
         tester.view.physicalSize = Size(width, 900);
         await tester.pumpAndSettle();
@@ -485,6 +490,57 @@ void main() {
       expect(find.text('Initial selling option'), findsOneWidget);
     },
   );
+
+  testWidgets('Product Detail uses Arabic presentation labels and SYP suffix', (
+    tester,
+  ) async {
+    final _FakeRepository repository = _FakeRepository();
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<ProductCatalogCubit>(
+                create: (_) => ProductCatalogCubit(repository: repository),
+              ),
+              BlocProvider<ProductDetailCubit>(
+                create: (_) => ProductDetailCubit(repository: repository),
+              ),
+              BlocProvider<ProductLifecycleCubit>(
+                create: (_) => ProductLifecycleCubit(repository: repository),
+              ),
+            ],
+            child: const ProductDetailScreen(productId: 11),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('نشط'), findsOneWidget);
+    expect(find.text('3.5 ل.س'), findsWidgets);
+    await tester.ensureVisible(find.text('متقدم وتقني'));
+    await tester.tap(find.text('متقدم وتقني'));
+    await tester.pumpAndSettle();
+    expect(find.text('معرّف المنتج'), findsOneWidget);
+    expect(find.text('ترتيب العرض'), findsOneWidget);
+    expect(find.text('تاريخ الإنشاء'), findsOneWidget);
+    expect(find.text('آخر تحديث'), findsOneWidget);
+    expect(
+      Directionality.of(tester.element(find.text('معرّف المنتج'))),
+      TextDirection.rtl,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpCatalog(

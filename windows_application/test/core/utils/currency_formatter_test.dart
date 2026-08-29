@@ -4,6 +4,17 @@ import 'package:windows_application/features/pos/models/branch.dart';
 
 void main() {
   group('CurrencyFormatter', () {
+    test('formats decimal Syrian Pound amounts for each manager locale', () {
+      expect(
+        CurrencyFormatter.format(3.5, locale: 'en_US', currencyCode: 'SYP'),
+        '3.5 SYP',
+      );
+      expect(
+        CurrencyFormatter.format(3.5, locale: 'ar', currencyCode: 'SYP'),
+        '3.5 ل.س',
+      );
+    });
+
     test('formats whole Syrian Pound amounts for English managers', () {
       expect(
         CurrencyFormatter.format(12000, locale: 'en_US', currencyCode: 'SYP'),

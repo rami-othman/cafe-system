@@ -138,6 +138,39 @@ void main() {
   );
 
   testWidgets(
+    'Arabic product detail, menu detail, variant, and modifier assignment labels use ARB values',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final l10n = AppLocalizations.of(context);
+              return Column(
+                children: <Widget>[
+                  Text(l10n.productDetailDescription),
+                  Text(l10n.productDetailAdvancedTechnical),
+                  Text(l10n.menuSectionsTitle),
+                  Text(l10n.variantAdd),
+                  Text(l10n.modifierAssignmentAddGroup),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+
+      expect(find.text('الوصف'), findsOneWidget);
+      expect(find.text('متقدم وتقني'), findsOneWidget);
+      expect(find.text('الأقسام'), findsOneWidget);
+      expect(find.text('إضافة خيار'), findsOneWidget);
+      expect(find.text('إضافة مجموعة معدّلات'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'actual GoRouter keeps the Menu Management shell stable for valid and invalid IDs',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1200);

@@ -16,6 +16,7 @@ import 'package:windows_application/features/menu_management/pricing/configured_
 import 'package:windows_application/features/menu_management/products/views/product_editor_screen.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/menu_management/variants/models/variant_editor_draft.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   test('create and update payloads keep the variant contract separate', () {
@@ -170,7 +171,9 @@ void main() {
       await tester.tap(find.text('Back').first);
       await tester.pumpAndSettle();
       expect(
-        find.text('You have unsaved changes. Leave without saving?'),
+        find.text(
+          'You have unsaved changes. If you leave now, they will be discarded.',
+        ),
         findsOneWidget,
       );
       await tester.tap(find.text('Stay'));
@@ -266,7 +269,13 @@ void main() {
         ],
       );
       addTearDown(router.dispose);
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, 'Draft Latte');
       await tester.pump();
@@ -285,6 +294,8 @@ void main() {
 
 Widget _editorApp(_EditorRepository repository, {int? productId}) =>
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: MultiBlocProvider(
           providers: <BlocProvider<dynamic>>[

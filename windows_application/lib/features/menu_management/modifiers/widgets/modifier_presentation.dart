@@ -87,7 +87,7 @@ String modifierOptionCountLabel(BuildContext context, int count) =>
 
 String modifierPriceAdjustmentLabel(BuildContext context, num value) {
   if (value == 0) return context.l10n.modifierNoExtraCharge;
-  final String formatted = catalogMoney(value);
+  final String formatted = catalogMoney(context, value);
   return value > 0 ? '+$formatted' : formatted;
 }
 

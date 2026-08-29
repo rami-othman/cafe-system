@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../app/menu_management_route_locations.dart';
 import '../../../app/localization/localization_extensions.dart';
+import '../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -63,7 +62,7 @@ class MenuModuleNavigation extends StatelessWidget {
       callback(destination);
       return;
     }
-    context.go(destination.path);
+    context.guardedGo(destination.path);
   }
 
   @override
@@ -271,7 +270,10 @@ List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {
   }
   final String rootLabel = _destinationLabel(l10n, destination);
   final List<MenuBreadcrumb> breadcrumbs = <MenuBreadcrumb>[
-    MenuBreadcrumb(label: rootLabel, onTap: () => context.go(destination.path)),
+    MenuBreadcrumb(
+      label: rootLabel,
+      onTap: () => context.guardedGo(destination.path),
+    ),
   ];
 
   String? detail;
@@ -432,7 +434,7 @@ MenuBreadcrumb _productBreadcrumb(
   final int? productId = _productIdFor(uri);
   return MenuBreadcrumb(
     label: l10n?.menuBreadcrumbProduct ?? 'Product',
-    onTap: () => context.go(
+    onTap: () => context.guardedGo(
       productId == null
           ? MenuModuleDestination.products.path
           : '/menu-management/products/$productId',
@@ -449,7 +451,7 @@ MenuBreadcrumb _workspaceTabBreadcrumb(
   final int? productId = _productIdFor(uri);
   return MenuBreadcrumb(
     label: label,
-    onTap: () => context.go(
+    onTap: () => context.guardedGo(
       productId == null
           ? MenuModuleDestination.products.path
           : MenuManagementRouteLocations.productWorkspace(
@@ -469,7 +471,7 @@ MenuBreadcrumb _modifierGroupBreadcrumb(
   final int? modifierGroupId = _routeId(uri, 'modifiers');
   return MenuBreadcrumb(
     label: l10n?.menuBreadcrumbModifierGroup ?? 'Modifier group',
-    onTap: () => context.go(
+    onTap: () => context.guardedGo(
       modifierGroupId == null
           ? MenuModuleDestination.modifiers.path
           : '/menu-management/modifiers/$modifierGroupId',
@@ -485,7 +487,7 @@ MenuBreadcrumb _menuBreadcrumb(
   final int? menuId = _routeId(uri, 'menus');
   return MenuBreadcrumb(
     label: l10n?.menuBreadcrumbMenu ?? 'Menu',
-    onTap: () => context.go(
+    onTap: () => context.guardedGo(
       menuId == null
           ? MenuModuleDestination.menus.path
           : '/menu-management/menus/$menuId',

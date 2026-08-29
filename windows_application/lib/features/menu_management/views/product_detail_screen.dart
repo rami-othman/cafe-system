@@ -108,13 +108,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text(state.errorMessage ?? 'Product not found.'),
+                      Text(
+                        state.errorMessage ??
+                            context.l10n.productDetailNotFound,
+                      ),
                       const SizedBox(height: AppSpacing.md),
                       OutlinedButton(
                         onPressed: () => context
                             .read<ProductDetailCubit>()
                             .load(widget.productId),
-                        child: const Text('Retry'),
+                        child: Text(context.l10n.commonRetry),
                       ),
                     ],
                   ),
@@ -155,72 +158,71 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       );
 
-  Widget _workspaceBody(
-    ProductDetail product,
-    ProductDetailState state,
-  ) => switch (widget.tab) {
-    ProductWorkspaceTab.overview => _Overview(product: product),
-    ProductWorkspaceTab.variants =>
-      product.isArchived
-          ? _DestinationPanel(
-              title: 'Variants',
-              message: 'This product is archived and variants are read-only.',
-              actionLabel: 'View Product Detail',
-              onPressed: null,
-            )
-          : BlocProvider<VariantsCubit>(
-              create: (_) => serviceLocator<VariantsCubit>(),
-              child: VariantsScreen(
-                productId: product.id,
-                embedded: true,
-                onSummaryChanged: context
-                    .read<ProductDetailCubit>()
-                    .replaceProduct,
+  Widget _workspaceBody(ProductDetail product, ProductDetailState state) =>
+      switch (widget.tab) {
+        ProductWorkspaceTab.overview => _Overview(product: product),
+        ProductWorkspaceTab.variants =>
+          product.isArchived
+              ? _DestinationPanel(
+                  title: context.l10n.productUxVariants,
+                  message: context.l10n.productDetailArchivedVariantsMessage,
+                  actionLabel: context.l10n.productDetailViewAction,
+                  onPressed: null,
+                )
+              : BlocProvider<VariantsCubit>(
+                  create: (_) => serviceLocator<VariantsCubit>(),
+                  child: VariantsScreen(
+                    productId: product.id,
+                    embedded: true,
+                    onSummaryChanged: context
+                        .read<ProductDetailCubit>()
+                        .replaceProduct,
+                  ),
+                ),
+        ProductWorkspaceTab.modifiers =>
+          product.isArchived
+              ? _DestinationPanel(
+                  title: context.l10n.productUxModifiers,
+                  message: context.l10n.productDetailArchivedModifiersMessage,
+                  actionLabel: context.l10n.productDetailViewAction,
+                  onPressed: null,
+                )
+              : BlocProvider<ProductModifierAssignmentsCubit>(
+                  create: (_) =>
+                      serviceLocator<ProductModifierAssignmentsCubit>(),
+                  child: ProductModifierAssignmentsScreen(
+                    productId: product.id,
+                    embedded: true,
+                    onSummaryChanged: context
+                        .read<ProductDetailCubit>()
+                        .replaceProduct,
+                  ),
+                ),
+        ProductWorkspaceTab.recipe => BlocProvider<VariantRecipeCubit>(
+          create: (_) =>
+              VariantRecipeCubit(context.read<ProductDetailCubit>().repository),
+          child: RecipeMaterialsWorkspace(
+            product: product,
+            readOnly: product.isArchived,
+            selectedVariantId: widget.variantId,
+            onVariantChanged: (variantId) => context.go(
+              MenuManagementRouteLocations.productWorkspace(
+                product.id,
+                tab: ProductWorkspaceTab.recipe,
+                variantId: variantId,
               ),
             ),
-    ProductWorkspaceTab.modifiers =>
-      product.isArchived
-          ? _DestinationPanel(
-              title: 'Modifiers',
-              message:
-                  'This product is archived and modifier assignments are read-only.',
-              actionLabel: 'View Product Detail',
-              onPressed: null,
-            )
-          : BlocProvider<ProductModifierAssignmentsCubit>(
-              create: (_) => serviceLocator<ProductModifierAssignmentsCubit>(),
-              child: ProductModifierAssignmentsScreen(
-                productId: product.id,
-                embedded: true,
-                onSummaryChanged: context
-                    .read<ProductDetailCubit>()
-                    .replaceProduct,
-              ),
-            ),
-    ProductWorkspaceTab.recipe => BlocProvider<VariantRecipeCubit>(
-      create: (_) =>
-          VariantRecipeCubit(context.read<ProductDetailCubit>().repository),
-      child: RecipeMaterialsWorkspace(
-        product: product,
-        readOnly: product.isArchived,
-        selectedVariantId: widget.variantId,
-        onVariantChanged: (variantId) => context.go(
-          MenuManagementRouteLocations.productWorkspace(
-            product.id,
-            tab: ProductWorkspaceTab.recipe,
-            variantId: variantId,
           ),
         ),
-      ),
-    ),
-    ProductWorkspaceTab.availability => ProductAvailabilityWorkspace(
-      product: product,
-    ),
-    ProductWorkspaceTab.usage => _UsagePanel(
-      state: state,
-      onRetry: () => context.read<ProductDetailCubit>().loadUsage(product.id),
-    ),
-  };
+        ProductWorkspaceTab.availability => ProductAvailabilityWorkspace(
+          product: product,
+        ),
+        ProductWorkspaceTab.usage => _UsagePanel(
+          state: state,
+          onRetry: () =>
+              context.read<ProductDetailCubit>().loadUsage(product.id),
+        ),
+      };
 }
 
 class _WorkspaceHeader extends StatelessWidget {
@@ -242,7 +244,7 @@ class _WorkspaceHeader extends StatelessWidget {
                   product.category?.displayName(
                     Localizations.localeOf(context),
                   ) ??
-                  'Uncategorized product',
+                  context.l10n.productDetailUncategorized,
               primaryAction: product.isArchived
                   ? null
                   : FilledButton.icon(
@@ -251,13 +253,13 @@ class _WorkspaceHeader extends StatelessWidget {
                         '/menu-management/products/${product.id}/edit',
                       ),
                       icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Edit Product'),
+                      label: Text(context.l10n.productDetailEdit),
                     ),
               overflowActions: <MenuOverflowAction>[
                 MenuOverflowAction(
                   label: product.isArchived
-                      ? 'Restore Product'
-                      : 'Archive Product',
+                      ? context.l10n.productDetailRestoreMenuAction
+                      : context.l10n.productDetailArchiveMenuAction,
                   icon: product.isArchived
                       ? Icons.restore
                       : Icons.archive_outlined,
@@ -272,16 +274,25 @@ class _WorkspaceHeader extends StatelessWidget {
               children: <Widget>[
                 CatalogProductStatus(product: product),
                 _HeaderMetric(
-                  'Base Price',
+                  context.l10n.productDetailBasePrice,
                   product.defaultVariant == null
                       ? '—'
-                      : catalogMoney(product.defaultVariant!.basePrice),
+                      : catalogMoney(
+                          context,
+                          product.defaultVariant!.basePrice,
+                        ),
                 ),
-                _HeaderMetric('Variants', '${product.variantCount}'),
-                _HeaderMetric('Modifiers', '${product.modifierGroupCount}'),
+                _HeaderMetric(
+                  context.l10n.productUxVariants,
+                  '${product.variantCount}',
+                ),
+                _HeaderMetric(
+                  context.l10n.productUxModifiers,
+                  '${product.modifierGroupCount}',
+                ),
                 if (product.kitchenStation != null)
                   _HeaderMetric(
-                    'Kitchen Station',
+                    context.l10n.productDetailKitchenStation,
                     product.kitchenStation!.displayName(
                       Localizations.localeOf(context),
                     ),
@@ -311,7 +322,9 @@ class _HeaderMetric extends StatelessWidget {
       ),
       Text(
         value,
-        textDirection: label == 'Base Price' ? TextDirection.ltr : null,
+        textDirection: label == context.l10n.productDetailBasePrice
+            ? TextDirection.ltr
+            : null,
         style: Theme.of(context).textTheme.labelLarge,
       ),
     ],
@@ -328,7 +341,7 @@ class _WorkspaceNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
-    label: 'Product workspace navigation',
+    label: context.l10n.productDetailWorkspaceNavigation,
     child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SegmentedButton<ProductWorkspaceTab>(
@@ -383,7 +396,7 @@ class _Overview extends StatelessWidget {
       ContentSection(
         title:
             context.maybeL10n?.productOverviewProductSetup ?? 'Product Setup',
-        description: 'The catalog and preparation details for this product.',
+        description: context.l10n.productDetailSetupHelp,
         child: _BusinessDetails(product: product),
       ),
       const SizedBox(height: AppSpacing.lg),
@@ -403,7 +416,7 @@ class _Overview extends StatelessWidget {
                 'Base Price',
                 product.defaultVariant == null
                     ? '—'
-                    : catalogMoney(product.defaultVariant!.basePrice),
+                    : catalogMoney(context, product.defaultVariant!.basePrice),
                 technical: true,
               ),
               _Fact('Variant Count', '${product.variantCount}'),
@@ -427,23 +440,44 @@ class _Overview extends StatelessWidget {
       ),
       if (product.description?.isNotEmpty ?? false) ...<Widget>[
         const SizedBox(height: AppSpacing.lg),
-        ContentSection(title: 'Description', child: Text(product.description!)),
+        ContentSection(
+          title: context.l10n.productDetailDescription,
+          child: Text(product.description!),
+        ),
       ],
       const SizedBox(height: AppSpacing.lg),
       DetailsDisclosure(
-        title: 'Advanced & Technical',
+        title: context.l10n.productDetailAdvancedTechnical,
         child: Wrap(
           spacing: 48,
           runSpacing: AppSpacing.lg,
           children: <Widget>[
-            _Fact('Product ID', '${product.id}', technical: true),
-            _Fact('Sort Order', '${product.sortOrder}', technical: true),
-            _Fact('Created', catalogDate(product.createdAt)),
-            _Fact('Updated', catalogDate(product.updatedAt)),
+            _Fact(
+              context.l10n.productDetailProductId,
+              '${product.id}',
+              technical: true,
+            ),
+            _Fact(
+              context.l10n.productEditorSortOrder,
+              '${product.sortOrder}',
+              technical: true,
+            ),
+            _Fact(context.l10n.menuListCreated, catalogDate(product.createdAt)),
+            _Fact(
+              context.l10n.productDetailUpdated,
+              catalogDate(product.updatedAt),
+            ),
             if (product.imageUrl != null)
-              _Fact('Image URL', product.imageUrl!, technical: true),
+              _Fact(
+                context.l10n.productDetailImageUrl,
+                product.imageUrl!,
+                technical: true,
+              ),
             if (product.isArchived)
-              _Fact('Archived', catalogDate(product.archivedAt)),
+              _Fact(
+                context.l10n.commonArchived,
+                catalogDate(product.archivedAt),
+              ),
           ],
         ),
       ),
@@ -472,7 +506,7 @@ class _BusinessSummary extends StatelessWidget {
             label: l10n?.productOverviewBasePrice ?? 'Base Price',
             value: product.defaultVariant == null
                 ? notConfigured
-                : catalogMoney(product.defaultVariant!.basePrice),
+                : catalogMoney(context, product.defaultVariant!.basePrice),
             ltrValue: product.defaultVariant != null,
           ),
           _SummaryMetric(
@@ -657,8 +691,8 @@ class _UsagePanel extends StatelessWidget {
   final VoidCallback onRetry;
   @override
   Widget build(BuildContext context) => ContentSection(
-    title: 'Usage',
-    description: 'Menus where this Product is currently used.',
+    title: context.l10n.productUxUsage,
+    description: context.l10n.productDetailUsageHelp,
     child: Builder(
       builder: (context) {
         if (state.isLoadingUsage) {
@@ -673,19 +707,22 @@ class _UsagePanel extends StatelessWidget {
             children: <Widget>[
               Text(state.usageError!),
               const SizedBox(height: AppSpacing.md),
-              OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+              OutlinedButton(
+                onPressed: onRetry,
+                child: Text(context.l10n.commonRetry),
+              ),
             ],
           );
         }
         final ProductMenuUsage? usage = state.usage;
         if (usage == null || usage.activePlacementCount == 0) {
-          return const Text('This Product is not currently used in any menus.');
+          return Text(context.l10n.productDetailUsageEmpty);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              '${usage.activePlacementCount} active menu placement${usage.activePlacementCount == 1 ? '' : 's'}.',
+              context.l10n.productDetailUsageCount(usage.activePlacementCount),
             ),
             if (usage.menuNames.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
@@ -713,7 +750,11 @@ class _LifecycleAction {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (dialog) => AlertDialog(
-        title: Text(archive ? 'Archive Product?' : 'Restore Product?'),
+        title: Text(
+          archive
+              ? context.l10n.productDetailArchiveTitle
+              : context.l10n.productDetailRestoreTitle,
+        ),
         content: Text(
           archive
               ? 'This Product will no longer be available for new Menu configuration or normal Catalog use. Existing Orders and published historical Versions will not be changed.'
@@ -722,11 +763,15 @@ class _LifecycleAction {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(dialog, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialog, true),
-            child: Text(archive ? 'Archive Product' : 'Restore Product'),
+            child: Text(
+              archive
+                  ? context.l10n.productDetailArchiveAction
+                  : context.l10n.productDetailRestoreAction,
+            ),
           ),
         ],
       ),

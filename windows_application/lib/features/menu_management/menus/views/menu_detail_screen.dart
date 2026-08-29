@@ -744,21 +744,21 @@ class _SectionRow extends StatelessWidget {
         spacing: AppSpacing.xs,
         children: <Widget>[
           IconButton(
-            tooltip: 'Move Up',
+            tooltip: context.l10n.menuSectionsMoveUp,
             onPressed: disabled || section.isArchived || index == 0
                 ? null
                 : () => cubit.moveSection(section.id, -1),
             icon: const Icon(Icons.arrow_upward),
           ),
           IconButton(
-            tooltip: 'Move Down',
+            tooltip: context.l10n.menuSectionsMoveDown,
             onPressed: disabled || section.isArchived || index == length - 1
                 ? null
                 : () => cubit.moveSection(section.id, 1),
             icon: const Icon(Icons.arrow_downward),
           ),
           PopupMenuButton<String>(
-            tooltip: 'Section actions',
+            tooltip: context.l10n.menuSectionsActions(section.displayName),
             onSelected: disabled
                 ? null
                 : (value) async {
@@ -780,10 +780,17 @@ class _SectionRow extends StatelessWidget {
                   },
             itemBuilder: (_) => <PopupMenuEntry<String>>[
               if (!section.isArchived)
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text(context.l10n.menuSectionsEdit),
+                ),
               PopupMenuItem(
                 value: section.isArchived ? 'restore' : 'archive',
-                child: Text(section.isArchived ? 'Restore' : 'Archive'),
+                child: Text(
+                  section.isArchived
+                      ? context.l10n.menuSectionsRestore
+                      : context.l10n.menuSectionsArchive,
+                ),
               ),
             ],
           ),
@@ -984,9 +991,12 @@ class _SectionsWorkspaceSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text('Sections', style: TextStyle(fontSize: 24)),
+          Text(
+            context.l10n.menuSectionsTitle,
+            style: const TextStyle(fontSize: 24),
+          ),
           const SizedBox(height: AppSpacing.xs),
-          const Text('Organize this menu into customer-friendly groups.'),
+          Text(context.l10n.menuSectionsHelp),
           const SizedBox(height: AppSpacing.lg),
           Container(
             height: 178,
@@ -1008,20 +1018,28 @@ Future<bool> _confirmMenu(
     await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(restore ? 'Restore menu?' : 'Archive menu?'),
+        title: Text(
+          restore
+              ? context.l10n.menuDetailRestoreTitle
+              : context.l10n.menuDetailArchiveTitle,
+        ),
         content: Text(
           restore
-              ? 'Restoring this menu returns it to Draft. It does not restore archived sections.'
-              : 'This archives the menu without deleting it. Its composition remains available to review.',
+              ? context.l10n.menuDetailRestoreMessage
+              : context.l10n.menuDetailArchiveMessage,
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(restore ? 'Restore' : 'Archive'),
+            child: Text(
+              restore
+                  ? context.l10n.menuOverviewRestore
+                  : context.l10n.menuOverviewArchive,
+            ),
           ),
         ],
       ),

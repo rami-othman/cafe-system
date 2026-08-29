@@ -462,15 +462,15 @@ class _PriceCard extends StatelessWidget {
       value: loading
           ? l10n.batch8Loading
           : price == null
-          ? _catalogMoney(variant?.basePrice)
-          : _money(price.effectivePrice),
+          ? _catalogMoney(context, variant?.basePrice)
+          : _money(context, price.effectivePrice),
       valueLabel: l10n.batch8EffectiveSellingPrice,
       facts: <Widget>[
         _Fact(
           l10n.batch8BasePrice,
           price == null
-              ? _catalogMoney(variant?.basePrice)
-              : _money(price.basePrice),
+              ? _catalogMoney(context, variant?.basePrice)
+              : _money(context, price.basePrice),
         ),
         _Fact(
           l10n.batch8Using,
@@ -665,7 +665,10 @@ class _EffectiveResult extends StatelessWidget {
                         ? l10n.batch8AvailabilityLoadError
                         : prices.effectivePrice == null
                         ? l10n.batch8Loading
-                        : _money(prices.effectivePrice!.effectivePrice),
+                        : _money(
+                            context,
+                            prices.effectivePrice!.effectivePrice,
+                          ),
                   ),
                   _ResultMetric(
                     label: l10n.batch8Availability,
@@ -866,10 +869,13 @@ class _WorkspaceMessage extends StatelessWidget {
   );
 }
 
-String _money(PriceAmount value) =>
-    CurrencyFormatter.formatMinorUnits(value.minorUnits);
-String _catalogMoney(num? value) =>
-    value == null ? '—' : CurrencyFormatter.format(value);
+String _money(BuildContext context, PriceAmount value) =>
+    CurrencyFormatter.formatMinorUnits(
+      value.minorUnits,
+      locale: Localizations.localeOf(context).toLanguageTag(),
+    );
+String _catalogMoney(BuildContext context, num? value) =>
+    value == null ? '—' : CurrencyFormatter.formatForContext(context, value);
 String _time(DateTime value) =>
     '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 String _operationalLabel(dynamic l10n, OperationalAvailabilityStatus? status) =>

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../core/constants/app_constants.dart';
+import '../../core/navigation/unsaved_navigation_guard.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
@@ -80,7 +79,7 @@ class AppSidebar extends StatelessWidget {
                           isCollapsed: isCollapsed,
                           onTap: destination.routePath == null
                               ? null
-                              : () => context.go(destination.routePath!),
+                              : () => context.guardedGo(destination.routePath!),
                         ),
                       if (!pinSettings)
                         AppSidebarItem(

@@ -61,7 +61,7 @@ class MenuPublishingApiTest extends TestCase
         $this->getJson('/api/v1/admin/menu-management/current-version?branchId='.$branch.'&channel=pos', $this->headers($foreign))->assertUnprocessable()->assertJsonValidationErrors('branchId');
     }
 
-    public function test_assignment_scope_reorder_controls_automatic_preview_validation_and_snapshot_order(): void
+    public function test_assignment_scope_order_controls_automatic_preview_and_published_snapshot_contract(): void
     {
         [$tenant, $branch, $first, $product] = $this->graph();
         $second = $this->menu($tenant, $product, 'Second', 0);
@@ -73,17 +73,24 @@ class MenuPublishingApiTest extends TestCase
             'branchId' => $branch,
             'channel' => 'pos',
             'assignments' => [
-                ['menuId' => $first, 'isActive' => true],
-                ['menuId' => $second, 'isActive' => true],
+                ['menuId' => $first, 'priority' => 0, 'isActive' => true],
+                ['menuId' => $second, 'priority' => 1, 'isActive' => true],
                 ['menuId' => $inactive, 'isActive' => false],
             ],
         ], $headers)->assertOk();
+        $initial = $this->publish($tenant, $branch)->assertOk()->assertJsonPath('data.version.versionNumber', 1)->json('data.version');
+        $initialPayload = $this->getJson("/api/v1/admin/menu-management/versions/{$initial['id']}?includePayload=true", $headers)
+            ->assertOk()
+            ->json('data.payload');
+        $this->assertSame([$first, $second], array_column($initialPayload['menus'], 'id'));
+        $this->assertSame([0, 1], array_column($initialPayload['menus'], 'scopeOrder'));
+        $this->assertArrayNotHasKey('priority', $initialPayload['menus'][0]);
         $this->putJson('/api/v1/admin/menu-management/assignments', [
             'branchId' => $branch,
             'channel' => 'pos',
             'assignments' => [
-                ['menuId' => $second, 'isActive' => true],
-                ['menuId' => $first, 'isActive' => true],
+                ['menuId' => $second, 'priority' => 0, 'isActive' => true],
+                ['menuId' => $first, 'priority' => 1, 'isActive' => true],
                 ['menuId' => $inactive, 'isActive' => false],
             ],
         ], $headers)->assertOk();
@@ -98,11 +105,56 @@ class MenuPublishingApiTest extends TestCase
             ->assertJsonPath('data.menus.1.id', $first)
             ->assertJsonCount(2, 'data.menus');
 
-        $version = $this->publish($tenant, $branch)->assertOk()->json('data.version');
+        $version = $this->publish($tenant, $branch)->assertOk()->assertJsonPath('data.version.versionNumber', 2)->json('data.version');
         $payload = $this->getJson("/api/v1/admin/menu-management/versions/{$version['id']}?includePayload=true", $headers)
             ->assertOk()
             ->json('data.payload');
         $this->assertSame([$second, $first], array_column($payload['menus'], 'id'));
+        $this->assertSame([0, 1], array_column($payload['menus'], 'scopeOrder'));
+        $this->assertSame(3, $payload['context']['schemaVersion']);
+        $this->assertArrayNotHasKey('priority', $payload['menus'][0]);
+    }
+
+    public function test_automatic_snapshot_order_is_independent_per_branch_channel_scope(): void
+    {
+        [$tenant, $downtown, $first, $product] = $this->graph();
+        $second = $this->menu($tenant, $product, 'Second', 0);
+        $airport = $this->branch($tenant, 'Airport');
+        DB::table('menus')->where('id', $first)->update(['priority' => 100]);
+        $headers = $this->headers($tenant);
+
+        foreach ([
+            [$downtown, [['menuId' => $first, 'priority' => 0, 'isActive' => true], ['menuId' => $second, 'priority' => 1, 'isActive' => true]]],
+            [$airport, [['menuId' => $second, 'priority' => 0, 'isActive' => true], ['menuId' => $first, 'priority' => 1, 'isActive' => true]]],
+        ] as [$branch, $assignments]) {
+            $this->putJson('/api/v1/admin/menu-management/assignments', ['branchId' => $branch, 'channel' => 'pos', 'assignments' => $assignments], $headers)->assertOk();
+        }
+
+        $downtownVersion = $this->publish($tenant, $downtown)->assertOk()->json('data.version.id');
+        $airportVersion = $this->publish($tenant, $airport)->assertOk()->json('data.version.id');
+        $downtownPayload = json_decode((string) DB::table('published_menu_versions')->where('id', $downtownVersion)->value('payload_json'), true);
+        $airportPayload = json_decode((string) DB::table('published_menu_versions')->where('id', $airportVersion)->value('payload_json'), true);
+
+        $this->assertSame([$first, $second], array_column($downtownPayload['menus'], 'id'));
+        $this->assertSame([$second, $first], array_column($airportPayload['menus'], 'id'));
+        $this->assertSame([0, 1], array_column($downtownPayload['menus'], 'scopeOrder'));
+        $this->assertSame([0, 1], array_column($airportPayload['menus'], 'scopeOrder'));
+    }
+
+    public function test_explicit_menu_ids_retain_canonical_menu_order_and_publish_scope_order(): void
+    {
+        [$tenant, $branch, $first, $product] = $this->graph();
+        $second = $this->menu($tenant, $product, 'Second', 0);
+        DB::table('menus')->where('id', $first)->update(['priority' => 100]);
+        DB::table('menu_assignments')->insert(['tenant_id' => $tenant, 'menu_id' => $second, 'branch_id' => $branch, 'channel' => 'pos', 'priority' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        $version = $this->postJson('/api/v1/admin/menu-management/publish', ['branchId' => $branch, 'channel' => 'pos', 'menuIds' => [$first, $second]], $this->headers($tenant))
+            ->assertOk()
+            ->json('data.version.id');
+        $payload = json_decode((string) DB::table('published_menu_versions')->where('id', $version)->value('payload_json'), true);
+
+        $this->assertSame([$second, $first], array_column($payload['menus'], 'id'));
+        $this->assertSame([0, 1], array_column($payload['menus'], 'scopeOrder'));
     }
 
     public function test_publish_without_active_assignments_records_the_shared_no_assigned_menu_result(): void
@@ -122,7 +174,7 @@ class MenuPublishingApiTest extends TestCase
         $this->assertStringNotContainsString('NO_ASSIGNED_MENU', $explicitResult);
     }
 
-    public function test_schema_v2_recipe_snapshot_is_immutable_ordered_and_recipe_only_change_versions_it(): void
+    public function test_schema_v3_recipe_snapshot_is_immutable_ordered_and_recipe_only_change_versions_it(): void
     {
         [$tenant, $branch, , $product, $variant] = $this->graph();
         $beans = $this->material($tenant, 'BEANS', 'kilogram');
@@ -141,7 +193,7 @@ class MenuPublishingApiTest extends TestCase
         $one = $this->publish($tenant, $branch)->assertOk()->json('data.version');
         $payload = json_decode((string) DB::table('published_menu_versions')->where('id', $one['id'])->value('payload_json'), true);
         $node = $payload['menus'][0]['sections'][0]['products'][0]['variants'][0];
-        $this->assertSame(2, $payload['context']['schemaVersion']);
+        $this->assertSame(3, $payload['context']['schemaVersion']);
         $this->assertSame([$beans, $milk], array_column($node['baseRecipe'], 'materialId'));
         $this->assertSame('18', $node['baseRecipe'][0]['quantity']);
         $this->assertSame('g', $node['baseRecipe'][0]['unitCode']);

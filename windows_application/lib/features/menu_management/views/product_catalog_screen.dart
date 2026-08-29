@@ -84,15 +84,6 @@ class _ProductCatalogScreenState extends State<ProductCatalogScreen> {
                         icon: const Icon(Icons.add),
                         label: Text(copy.createProduct),
                       ),
-                      secondaryActions: <Widget>[
-                        IconButton(
-                          tooltip: copy.refreshProducts,
-                          onPressed: state.isLoading || state.isRefreshing
-                              ? null
-                              : cubit.refresh,
-                          icon: const Icon(Icons.refresh),
-                        ),
-                      ],
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     _Filters(
@@ -726,7 +717,7 @@ class _ProductRow extends StatelessWidget {
           label: copy.basePrice,
           value: product.defaultVariant == null
               ? '—'
-              : catalogMoney(product.defaultVariant!.basePrice),
+              : catalogMoney(context, product.defaultVariant!.basePrice),
         );
         final Widget summary = _ProductBusinessSummary(value: businessSummary);
         final Widget endControls = Row(
@@ -908,10 +899,10 @@ class CatalogProductStatus extends StatelessWidget {
     ),
     child: Text(
       product.isArchived
-          ? 'Archived'
+          ? context.l10n.commonArchived
           : product.isActive
-          ? 'Active'
-          : 'Inactive',
+          ? context.l10n.commonActive
+          : context.l10n.commonInactive,
       textAlign: TextAlign.center,
       style: AppTextStyles.labelSmall.copyWith(
         color: product.isActive && !product.isArchived
@@ -1044,7 +1035,11 @@ class _ProductActions extends StatelessWidget {
             value: product.isActive
                 ? _ProductAction.deactivate
                 : _ProductAction.activate,
-            child: Text(product.isActive ? 'Deactivate' : 'Activate'),
+            child: Text(
+              product.isActive
+                  ? context.l10n.commonDeactivate
+                  : context.l10n.commonActivate,
+            ),
           ),
           PopupMenuItem(
             value: _ProductAction.archive,
@@ -1127,7 +1122,11 @@ Future<void> _showLifecycleDialog(
   await showDialog<void>(
     context: context,
     builder: (dialog) => AlertDialog(
-      title: Text(archive ? 'Archive Product?' : 'Restore Product?'),
+      title: Text(
+        archive
+            ? context.l10n.productDetailArchiveTitle
+            : context.l10n.productDetailRestoreTitle,
+      ),
       content: SizedBox(
         width: 500,
         child: Column(
@@ -1152,7 +1151,7 @@ Future<void> _showLifecycleDialog(
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(dialog),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.commonCancel),
         ),
         FilledButton(
           style: archive
@@ -1168,7 +1167,11 @@ Future<void> _showLifecycleDialog(
               await cubit.restore(product.id);
             }
           },
-          child: Text(archive ? 'Archive Product' : 'Restore Product'),
+          child: Text(
+            archive
+                ? context.l10n.productDetailArchiveAction
+                : context.l10n.productDetailRestoreAction,
+          ),
         ),
       ],
     ),
@@ -1192,7 +1195,7 @@ class _ErrorPanel extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh),
-          label: const Text('Retry'),
+          label: Text(context.l10n.commonRetry),
         ),
       ],
     ),

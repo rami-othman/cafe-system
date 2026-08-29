@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/localization/localization_extensions.dart';
+import '../../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -26,19 +27,45 @@ class ModifierGroupEditorScreen extends StatefulWidget {
 
 class _ModifierGroupEditorScreenState extends State<ModifierGroupEditorScreen> {
   bool _started = false;
+  late VoidCallback _unregisterUnsavedNavigation;
+  bool _registeredUnsavedNavigation = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => widget.groupId == null
-          ? context.read<ModifierGroupEditorCubit>().initializeCreate()
-          : context.read<ModifierGroupEditorCubit>().loadForEdit(
-              widget.groupId!,
+    if (!_registeredUnsavedNavigation) {
+      final UnsavedNavigationController? navigation =
+          UnsavedNavigationScope.maybeOf(context);
+      if (navigation != null) {
+        _registeredUnsavedNavigation = true;
+        _unregisterUnsavedNavigation = navigation.register(
+          UnsavedNavigationGuard(
+            isDirty: () =>
+                context.read<ModifierGroupEditorCubit>().state.isDirty,
+            confirmLeave: () => _canLeave(
+              context,
+              context.read<ModifierGroupEditorCubit>().state.isDirty,
             ),
-    );
+          ),
+        );
+      }
+    }
+    if (!_started) {
+      _started = true;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => widget.groupId == null
+            ? context.read<ModifierGroupEditorCubit>().initializeCreate()
+            : context.read<ModifierGroupEditorCubit>().loadForEdit(
+                widget.groupId!,
+              ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_registeredUnsavedNavigation) _unregisterUnsavedNavigation();
+    super.dispose();
   }
 
   void _returnToParent(BuildContext context, int? groupId) {

@@ -833,8 +833,13 @@ Widget? _topBarFor(GoRouterState state) {
 
 Future<void> Function(BuildContext context)? _refreshActionFor(
   GoRouterState state,
+) => refreshActionForMatchedLocation(state.matchedLocation);
+
+@visibleForTesting
+Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
+  String matchedLocation,
 ) {
-  return switch (state.matchedLocation) {
+  return switch (matchedLocation) {
     AppRoutes.pos =>
       (BuildContext context) => context.read<PosCubit>().loadInitialData(),
     AppRoutes.orders =>

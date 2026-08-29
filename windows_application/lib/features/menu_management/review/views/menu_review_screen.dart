@@ -246,7 +246,7 @@ class _ErrorCard extends StatelessWidget {
         const Icon(Icons.error_outline, color: AppColors.danger),
         const SizedBox(width: 8),
         Expanded(child: Text(message)),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
+        TextButton(onPressed: onRetry, child: Text(context.l10n.commonRetry)),
       ],
     ),
   );

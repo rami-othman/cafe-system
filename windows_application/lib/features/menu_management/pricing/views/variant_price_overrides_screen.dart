@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/localization/localization_extensions.dart';
 import '../../../../app/menu_management_route_locations.dart';
+import '../../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -44,6 +45,8 @@ class VariantPriceOverridesScreen extends StatefulWidget {
 
 class _VariantPriceOverridesScreenState
     extends State<VariantPriceOverridesScreen> {
+  late VoidCallback _unregisterUnsavedNavigation;
+  bool _registeredUnsavedNavigation = false;
   @override
   void initState() {
     super.initState();
@@ -53,6 +56,28 @@ class _VariantPriceOverridesScreenState
         widget.variantId,
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_registeredUnsavedNavigation) return;
+    final UnsavedNavigationController? navigation =
+        UnsavedNavigationScope.maybeOf(context);
+    if (navigation == null) return;
+    _registeredUnsavedNavigation = true;
+    _unregisterUnsavedNavigation = navigation.register(
+      UnsavedNavigationGuard(
+        isDirty: () => context.read<VariantPriceOverridesCubit>().state.isDirty,
+        confirmLeave: () => _confirmLeave().then((value) => value == true),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_registeredUnsavedNavigation) _unregisterUnsavedNavigation();
+    super.dispose();
   }
 
   Future<void> _back() async {
@@ -259,7 +284,7 @@ class _EffectivePricePanel extends StatelessWidget {
                   const _EffectiveLoading()
                 else ...<Widget>[
                   Text(
-                    _money(result.effectivePrice),
+                    _money(context, result.effectivePrice),
                     textDirection: TextDirection.ltr,
                     style: AppTextStyles.displayMedium.copyWith(fontSize: 40),
                   ),
@@ -271,11 +296,11 @@ class _EffectivePricePanel extends StatelessWidget {
                       final facts = <Widget>[
                         _PriceFact(
                           label: l10n.batch8BasePrice,
-                          value: _money(result.basePrice),
+                          value: _money(context, result.basePrice),
                         ),
                         _PriceFact(
                           label: l10n.batch8Difference,
-                          value: _difference(difference),
+                          value: _difference(context, difference),
                           valueColor: _differenceColor(difference),
                         ),
                         _PriceFact(
@@ -618,7 +643,7 @@ class _RuleRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(
-              _money(draft.price),
+              _money(context, draft.price),
               textDirection: TextDirection.ltr,
               style: AppTextStyles.titleMedium,
             ),
@@ -939,6 +964,7 @@ class _PriceComparison extends StatelessWidget {
         : difference.minorUnits > 0
         ? l10n.batch8PriceAboveBase(
             _money(
+              context,
               PriceAmount.parse(
                 (difference.minorUnits.abs() / 100).toStringAsFixed(2),
               ),
@@ -947,6 +973,7 @@ class _PriceComparison extends StatelessWidget {
         : difference.minorUnits < 0
         ? l10n.batch8PriceBelowBase(
             _money(
+              context,
               PriceAmount.parse(
                 (difference.minorUnits.abs() / 100).toStringAsFixed(2),
               ),
@@ -963,7 +990,7 @@ class _PriceComparison extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _PriceFact(label: l10n.batch8BasePrice, value: _money(base)),
+          _PriceFact(label: l10n.batch8BasePrice, value: _money(context, base)),
           if (comparison.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
             Text(comparison, style: AppTextStyles.bodySmall),
@@ -1047,10 +1074,16 @@ PriceAmount? _tryParsePrice(String value) {
   }
 }
 
-String _money(PriceAmount value) =>
-    CurrencyFormatter.formatMinorUnits(value.minorUnits);
-String _difference(PriceAmount value) {
-  final absolute = CurrencyFormatter.formatMinorUnits(value.minorUnits.abs());
+String _money(BuildContext context, PriceAmount value) =>
+    CurrencyFormatter.formatMinorUnits(
+      value.minorUnits,
+      locale: Localizations.localeOf(context).toLanguageTag(),
+    );
+String _difference(BuildContext context, PriceAmount value) {
+  final absolute = CurrencyFormatter.formatMinorUnits(
+    value.minorUnits.abs(),
+    locale: Localizations.localeOf(context).toLanguageTag(),
+  );
   return value.minorUnits > 0
       ? '+$absolute'
       : value.minorUnits < 0

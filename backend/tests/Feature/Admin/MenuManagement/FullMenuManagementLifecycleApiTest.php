@@ -226,7 +226,7 @@ class FullMenuManagementLifecycleApiTest extends TestCase
             ->json('data.version');
         $payloadOne = (string) DB::table('published_menu_versions')->where('id', $versionOne['id'])->value('payload_json');
         $snapshotOne = json_decode($payloadOne, true);
-        $this->assertSame(2, $snapshotOne['context']['schemaVersion']);
+        $this->assertSame(3, $snapshotOne['context']['schemaVersion']);
         $this->assertSame('5.25', $snapshotOne['menus'][0]['sections'][0]['products'][0]['variants'][1]['effectivePrice']);
         $this->assertStringNotContainsString('remainingQuantity', $payloadOne);
         $this->assertStringNotContainsString('operational', strtolower($payloadOne));
