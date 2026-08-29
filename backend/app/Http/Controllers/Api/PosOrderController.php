@@ -4,20 +4,29 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\PosPricingService;
+use App\Services\TenantTaxService;
 use App\Support\TenantContext;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PosOrderController extends Controller
 {
-    public function __construct(private readonly PosPricingService $pricing)
-    {
-    }
+    public function __construct(
+        private readonly PosPricingService $pricing,
+        private readonly TenantTaxService $taxes,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+
+        $request->validate([
+            'branchId' => ['nullable', 'integer', $this->tenantExists('branches', $tenantId)],
+        ]);
 
         $query = DB::table('orders')
             ->where('tenant_id', $tenantId)
@@ -43,21 +52,22 @@ class PosOrderController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $tenantId = TenantContext::id($request);
         $data = $request->validate([
-            'branchId' => ['required', 'integer', 'exists:branches,id'],
-            'shiftId' => ['nullable', 'integer', 'exists:shifts,id'],
+            'branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)],
+            'shiftId' => ['nullable', 'integer', $this->tenantExists('shifts', $tenantId)],
             'orderType' => ['required', 'in:dine_in,takeaway,delivery'],
-            'tableId' => ['nullable', 'integer', 'exists:cafe_tables,id'],
-            'customerId' => ['nullable', 'integer', 'exists:customers,id'],
+            'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
+            'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.productId' => ['required', 'integer', 'exists:products,id'],
+            'items.*.productId' => ['required', 'integer', $this->tenantExists('products', $tenantId)],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.modifiers' => ['array'],
             'items.*.note' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
         ]);
 
-        $tenantId = TenantContext::id($request);
+        $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
         $order = DB::transaction(function () use ($tenantId, $data) {
             $now = now();
             $orderId = DB::table('orders')->insertGetId([
@@ -70,6 +80,7 @@ class PosOrderController extends Controller
                 'type' => $data['orderType'],
                 'status' => 'draft',
                 'payment_status' => 'unpaid',
+                'tax_rate' => $this->taxes->rateFor($tenantId),
                 'notes' => $data['note'] ?? null,
                 'opened_at' => $now,
                 'created_at' => $now,
@@ -96,15 +107,16 @@ class PosOrderController extends Controller
 
     public function update(Request $request, int $order): JsonResponse
     {
+        $tenantId = TenantContext::id($request);
+        $existingOrder = $this->findOrder($tenantId, $order);
         $data = $request->validate([
             'orderType' => ['sometimes', 'in:dine_in,takeaway,delivery'],
-            'tableId' => ['nullable', 'integer', 'exists:cafe_tables,id'],
-            'customerId' => ['nullable', 'integer', 'exists:customers,id'],
+            'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
+            'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
             'note' => ['nullable', 'string'],
         ]);
 
-        $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertBranchRelationships($tenantId, $data, (int) $existingOrder->branch_id);
 
         $updates = ['updated_at' => now()];
 
@@ -146,14 +158,14 @@ class PosOrderController extends Controller
 
     public function addItem(Request $request, int $order): JsonResponse
     {
+        $tenantId = TenantContext::id($request);
         $data = $request->validate([
-            'productId' => ['required', 'integer', 'exists:products,id'],
+            'productId' => ['required', 'integer', $this->tenantExists('products', $tenantId)],
             'quantity' => ['required', 'numeric', 'min:1'],
             'modifiers' => ['array'],
             'note' => ['nullable', 'string'],
         ]);
 
-        $tenantId = TenantContext::id($request);
         $this->findOrder($tenantId, $order);
 
         DB::transaction(function () use ($tenantId, $order, $data): void {
@@ -349,6 +361,27 @@ class PosOrderController extends Controller
         return $order;
     }
 
+    private function tenantExists(string $table, int $tenantId)
+    {
+        return Rule::exists($table, 'id')->where(
+            fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'),
+        );
+    }
+
+    private function assertBranchRelationships(int $tenantId, array $data, int $branchId): void
+    {
+        foreach (['shiftId' => 'shifts', 'tableId' => 'cafe_tables'] as $field => $table) {
+            if (! empty($data[$field]) && ! DB::table($table)
+                ->where('tenant_id', $tenantId)
+                ->where('branch_id', $branchId)
+                ->where('id', $data[$field])
+                ->whereNull('deleted_at')
+                ->exists()) {
+                throw ValidationException::withMessages([$field => "The selected {$field} is invalid."]);
+            }
+        }
+    }
+
     private function nextOrderNumber(int $tenantId, int $branchId): string
     {
         $count = DB::table('orders')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->count() + 1;
@@ -384,7 +417,7 @@ class PosOrderController extends Controller
             'totals' => [
                 'subtotal' => (float) $order->subtotal,
                 'discountTotal' => (float) $order->discount_total,
-                'taxRate' => 0.08,
+                'taxRate' => (float) $order->tax_rate,
                 'taxTotal' => (float) $order->tax_total,
                 'serviceTotal' => (float) $order->service_total,
                 'total' => (float) $order->total,

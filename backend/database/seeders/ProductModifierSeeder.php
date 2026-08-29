@@ -19,6 +19,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => true,
                 'min_selections' => 1,
                 'max_selections' => 1,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Hot', 'price_delta' => 0, 'is_default' => true],
                     ['name' => 'Iced', 'price_delta' => 0, 'is_default' => false],
@@ -30,6 +31,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => true,
                 'min_selections' => 1,
                 'max_selections' => 1,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Small (8oz)', 'price_delta' => -0.50, 'is_default' => false],
                     ['name' => 'Medium (12oz)', 'price_delta' => 0, 'is_default' => true],
@@ -42,6 +44,7 @@ class ProductModifierSeeder extends Seeder
                 'is_required' => false,
                 'min_selections' => 0,
                 'max_selections' => 1,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Whole Milk', 'price_delta' => 0, 'is_default' => true],
                     ['name' => 'Oat Milk', 'price_delta' => 0.75, 'is_default' => false],
@@ -53,7 +56,8 @@ class ProductModifierSeeder extends Seeder
                 'selection_type' => 'multiple',
                 'is_required' => false,
                 'min_selections' => 0,
-                'max_selections' => 5,
+                'max_selections' => 3,
+                'allow_quantity' => false,
                 'options' => [
                     ['name' => 'Extra Espresso Shot', 'price_delta' => 1.00, 'is_default' => false],
                     ['name' => 'Vanilla Syrup', 'price_delta' => 0.50, 'is_default' => false],
@@ -64,24 +68,31 @@ class ProductModifierSeeder extends Seeder
 
         $groupIds = [];
         foreach ($groups as $code => $group) {
-            $groupIds[$code] = DB::table('modifier_groups')->insertGetId([
+            DB::table('modifier_groups')->updateOrInsert([
                 'tenant_id' => $tenantId,
-                'name' => $group['name'],
                 'code' => $code,
+            ], [
+                'name' => $group['name'],
                 'selection_type' => $group['selection_type'],
                 'is_required' => $group['is_required'],
                 'min_selections' => $group['min_selections'],
                 'max_selections' => $group['max_selections'],
+                'allow_quantity' => $group['allow_quantity'],
                 'sort_order' => count($groupIds),
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+            $groupIds[$code] = (int) DB::table('modifier_groups')
+                ->where('tenant_id', $tenantId)
+                ->where('code', $code)
+                ->value('id');
 
             foreach ($group['options'] as $sortOrder => $option) {
-                DB::table('modifier_options')->insert([
+                DB::table('modifier_options')->updateOrInsert([
                     'tenant_id' => $tenantId,
                     'modifier_group_id' => $groupIds[$code],
                     'name' => $option['name'],
+                ], [
                     'price_delta' => $option['price_delta'],
                     'is_default' => $option['is_default'],
                     'sort_order' => $sortOrder,
@@ -95,10 +106,11 @@ class ProductModifierSeeder extends Seeder
             $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->where('name', $productName)->value('id');
 
             foreach (array_values($groupIds) as $sortOrder => $groupId) {
-                DB::table('product_modifier_group')->insert([
+                DB::table('product_modifier_group')->updateOrInsert([
                     'tenant_id' => $tenantId,
                     'product_id' => $productId,
                     'modifier_group_id' => $groupId,
+                ], [
                     'sort_order' => $sortOrder,
                     'created_at' => $now,
                     'updated_at' => $now,

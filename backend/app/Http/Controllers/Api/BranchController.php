@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\TenantTaxService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class BranchController extends Controller
     {
         $tenantId = TenantContext::id($request);
 
+        $taxRate = app(TenantTaxService::class)->rateFor($tenantId);
         $branches = DB::table('branches')
             ->where('tenant_id', $tenantId)
             ->whereNull('deleted_at')
@@ -25,6 +27,7 @@ class BranchController extends Controller
                 'currency' => $branch->currency,
                 'timezone' => $branch->timezone,
                 'isActive' => (bool) $branch->is_active,
+                'taxRate' => $taxRate,
             ]);
 
         return response()->json(['data' => $branches]);

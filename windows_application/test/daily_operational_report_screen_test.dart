@@ -38,14 +38,14 @@ void main() {
     await _pumpApp(tester);
 
     for (final String value in <String>[
-      '\$4,250.00',
-      '\$4,632.50',
+      '4,250 SYP',
+      '4,632.50 SYP',
       '142',
-      '\$8.77',
-      '-\$125.00',
-      '\$382.50',
-      '-\$42.50',
-      '\$650.00',
+      '8.77 SYP',
+      '-125 SYP',
+      '382.50 SYP',
+      '-42.50 SYP',
+      '650 SYP',
     ]) {
       expect(find.text(value), findsWidgets);
     }
@@ -73,7 +73,7 @@ void main() {
     expect(find.text('#1142'), findsOneWidget);
     expect(find.text('Paid'), findsNWidgets(4));
     expect(find.text('Refunded'), findsOneWidget);
-    expect(find.text('\$34.72'), findsOneWidget);
+    expect(find.text('34.72 SYP'), findsOneWidget);
   });
 
   testWidgets('print and export actions show report action messages', (

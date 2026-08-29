@@ -72,6 +72,7 @@ abstract final class AppColors {
   static const Color orderRefundedBorder = Color(0x33BA1A1A);
   static const Color orderRefundedText = Color(0xFFBA1A1A);
   static const Color orderDetailsBackdrop = Color(0x59000000);
+  static const Color materialEffectBackdrop = Color(0x26000000);
   static const Color orderDetailsPaymentBackground = Color(0xFFFFF8F1);
   static const Color orderDetailsTimelineLine = Color(0xFFD8CEC6);
   static const Color refundWarningBackground = Color(0xFFFFF1F0);

@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../models/applied_discount.dart';
 import '../models/available_discount.dart';
 import 'coupon_code_input.dart';
@@ -25,9 +26,9 @@ class DiscountDialog extends StatefulWidget {
 }
 
 class _DiscountDialogState extends State<DiscountDialog> {
-  static const String _minimumOrderMessage =
-      'Minimum order amount (\$20) not reached.';
-  static const List<AvailableDiscount> _availableDiscounts =
+  static final String _minimumOrderMessage =
+      'Minimum order amount (${CurrencyFormatter.format(20)}) not reached.';
+  static final List<AvailableDiscount> _availableDiscounts =
       <AvailableDiscount>[
         AvailableDiscount(
           id: 'morning-rush',
@@ -43,7 +44,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
           id: 'vip-reward',
           title: 'VIP Reward',
           subtitle: 'Loyalty member tier',
-          badgeLabel: '-\$5.00',
+          badgeLabel: '-${CurrencyFormatter.format(5)}',
           type: AvailableDiscountType.fixedAmount,
           value: 5,
           couponCode: 'VIP5',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../app/localization/app_locale_cubit.dart';
+import '../../app/localization/localization_extensions.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
@@ -16,10 +18,14 @@ class AppTopBar extends StatefulWidget {
     super.key,
     this.showCartButton = false,
     this.onRefresh,
+    this.showOperationalBranchTabs = true,
+    this.contextTitle,
   });
 
   final bool showCartButton;
   final Future<void> Function(BuildContext context)? onRefresh;
+  final bool showOperationalBranchTabs;
+  final String? contextTitle;
 
   @override
   State<AppTopBar> createState() => _AppTopBarState();
@@ -47,8 +53,12 @@ class _AppTopBarState extends State<AppTopBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final OrdersState ordersState = context.watch<OrdersCubit>().state;
-        final OrdersCubit ordersCubit = context.read<OrdersCubit>();
+        final OrdersState? ordersState = widget.showOperationalBranchTabs
+            ? context.watch<OrdersCubit>().state
+            : null;
+        final OrdersCubit? ordersCubit = widget.showOperationalBranchTabs
+            ? context.read<OrdersCubit>()
+            : null;
         final bool isVeryCompact =
             constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
         final bool isCompact =
@@ -69,17 +79,30 @@ class _AppTopBarState extends State<AppTopBar> {
           child: Row(
             children: <Widget>[
               Expanded(
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: <Widget>[
-                    for (final Branch branch in ordersState.branches)
-                      _BranchTab(
-                        label: branch.name,
-                        isActive: branch.id == ordersState.selectedBranchId,
-                        onTap: () => ordersCubit.selectBranch(branch.id),
+                child: widget.showOperationalBranchTabs
+                    ? ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: <Widget>[
+                          for (final Branch branch in ordersState!.branches)
+                            _BranchTab(
+                              label: branch.name,
+                              isActive:
+                                  branch.id == ordersState.selectedBranchId,
+                              onTap: () => ordersCubit!.selectBranch(branch.id),
+                            ),
+                        ],
+                      )
+                    : Semantics(
+                        header: true,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            widget.contextTitle ??
+                                context.l10n.navigationMenuManagement,
+                            style: AppTextStyles.titleMedium,
+                          ),
+                        ),
                       ),
-                  ],
-                ),
               ),
               if (showShiftBadge) ...const <Widget>[
                 SizedBox(width: AppSpacing.lg),
@@ -89,7 +112,7 @@ class _AppTopBarState extends State<AppTopBar> {
                 const SizedBox(width: AppSpacing.sm),
                 _TopBarIconButton(
                   icon: Icons.shopping_cart_outlined,
-                  tooltip: 'Cart',
+                  tooltip: context.l10n.tooltipCart,
                   onPressed: () {},
                 ),
               ],
@@ -97,22 +120,24 @@ class _AppTopBarState extends State<AppTopBar> {
                 const SizedBox(width: AppSpacing.sm),
                 _TopBarIconButton(
                   icon: Icons.refresh_outlined,
-                  tooltip: 'Refresh screen data',
+                  tooltip: context.l10n.tooltipRefreshScreenData,
                   isLoading: _isRefreshing,
                   onPressed: _isRefreshing ? null : _refresh,
                 ),
               ],
+              const SizedBox(width: AppSpacing.sm),
+              const _LanguageSelector(),
               if (showOptionalIcons) ...<Widget>[
                 const SizedBox(width: AppSpacing.sm),
                 _TopBarIconButton(
                   icon: Icons.notifications_none_outlined,
-                  tooltip: 'Notifications',
+                  tooltip: context.l10n.tooltipNotifications,
                   onPressed: () {},
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 _TopBarIconButton(
                   icon: Icons.account_circle_outlined,
-                  tooltip: 'Profile',
+                  tooltip: context.l10n.tooltipProfile,
                   onPressed: () {},
                 ),
               ],
@@ -120,6 +145,53 @@ class _AppTopBarState extends State<AppTopBar> {
           ),
         );
       },
+    );
+  }
+}
+
+class _LanguageSelector extends StatelessWidget {
+  const _LanguageSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocaleCubit localeCubit = context.read<AppLocaleCubit>();
+    final bool isArabic =
+        context.watch<AppLocaleCubit>().state.locale.languageCode == 'ar';
+    return PopupMenuButton<Locale>(
+      key: const Key('app-language-selector'),
+      tooltip: context.l10n.languageSelection,
+      initialValue: isArabic ? AppLocaleCubit.arabic : AppLocaleCubit.english,
+      onSelected: localeCubit.selectLocale,
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
+        PopupMenuItem<Locale>(
+          value: AppLocaleCubit.english,
+          child: Text(context.l10n.languageEnglish),
+        ),
+        PopupMenuItem<Locale>(
+          value: AppLocaleCubit.arabic,
+          child: Text(context.l10n.languageArabic),
+        ),
+      ],
+      child: Semantics(
+        button: true,
+        label: context.l10n.language,
+        child: SizedBox(
+          height: AppSizes.iconButtonSize,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.language, color: AppColors.primary),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                isArabic
+                    ? context.l10n.languageArabic
+                    : context.l10n.languageEnglish,
+                style: AppTextStyles.labelMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

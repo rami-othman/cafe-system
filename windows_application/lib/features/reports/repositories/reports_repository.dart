@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/daily_report_data.dart';
 
@@ -191,10 +192,8 @@ class ReportsRepository {
     valueColor: valueColor,
   );
 
-  String _money(double value, String currency) => NumberFormat.currency(
-    symbol: '$currency ',
-    decimalDigits: 2,
-  ).format(value);
+  String _money(double value, String currency) =>
+      CurrencyFormatter.format(value, currencyCode: currency);
 
   String _time(dynamic value) {
     final DateTime? date = DateTime.tryParse(readString(value));

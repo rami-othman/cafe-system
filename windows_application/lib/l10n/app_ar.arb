@@ -1,0 +1,1430 @@
+{
+  "@@locale": "ar",
+  "appName": "نظام كافيه 618",
+  "language": "اللغة",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+  "languageSelection": "اختر اللغة",
+  "commonSave": "حفظ",
+  "commonCancel": "إلغاء",
+  "commonClose": "إغلاق",
+  "commonDelete": "حذف",
+  "commonEdit": "تعديل",
+  "commonAdd": "إضافة",
+  "commonRetry": "إعادة المحاولة",
+  "commonRefresh": "تحديث",
+  "commonSearch": "بحث",
+  "commonLoading": "جارٍ التحميل…",
+  "commonError": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+  "commonNoData": "لا توجد بيانات متاحة.",
+  "commonUnknown": "غير معروف",
+  "commonActive": "نشط",
+  "commonDeactivate": "إلغاء التنشيط",
+  "commonActivate": "تنشيط",
+  "commonArchive": "أرشفة",
+  "commonRestore": "استعادة",
+  "commonArchived": "مؤرشف",
+  "commonAll": "الكل",
+  "commonInactive": "غير نشط",
+  "commonAvailable": "متاح",
+  "commonSoldOut": "نفد",
+  "commonYes": "نعم",
+  "commonNo": "لا",
+  "commonBack": "رجوع",
+  "navigationDashboard": "لوحة التحكم",
+  "navigationPos": "نقطة البيع",
+  "navigationOrders": "الطلبات",
+  "navigationCustomers": "العملاء",
+  "navigationDiscounts": "الخصومات",
+  "navigationMenuManagement": "إدارة القائمة",
+  "navigationInventory": "المخزون",
+  "navigationReports": "التقارير",
+  "navigationSettings": "الإعدادات",
+  "operationalHub": "مركز العمليات",
+  "tooltipCart": "السلة",
+  "tooltipRefreshScreenData": "تحديث بيانات الشاشة",
+  "tooltipNotifications": "الإشعارات",
+  "tooltipProfile": "الملف الشخصي",
+  "invalidCatalogRoute": "مسار الكتالوج المطلوب غير صالح.",
+  "productsEmptyMessage": "لا توجد منتجات.",
+  "ordersEmptyMessage": "لا توجد طلبات.",
+  "menusEmptyMessage": "لا توجد قوائم.",
+  "productCount": "{count, plural, =0{لا توجد منتجات} =1{منتج واحد} =2{منتجان} few{{count} منتجات} many{{count} منتجًا} other{{count} منتج}}",
+  "orderCount": "{count, plural, =0{لا توجد طلبات} =1{طلب واحد} =2{طلبان} few{{count} طلبات} many{{count} طلبًا} other{{count} طلب}}",
+  "variantCount": "{count, plural, =0{لا توجد خيارات} =1{خيار واحد} =2{خياران} few{{count} خيارات} many{{count} خيارًا} other{{count} خيار}}",
+  "validationIssueCount": "{count, plural, =0{لا توجد مشكلات تحقق} =1{مشكلة تحقق واحدة} =2{مشكلتا تحقق} few{{count} مشكلات تحقق} many{{count} مشكلة تحقق} other{{count} مشكلة تحقق}}",
+  "statusPending": "قيد الانتظار",
+  "statusOpen": "مفتوح",
+  "statusCompleted": "مكتمل",
+  "statusCancelled": "ملغى",
+  "statusPaid": "مدفوع",
+  "statusUnpaid": "غير مدفوع",
+  "statusArchived": "مؤرشف",
+  "statusDraft": "مسودة",
+  "statusPublished": "منشور",
+  "statusScheduled": "مجدول",
+  "statusTemporarilyUnavailable": "غير متاح مؤقتًا",
+  "statusAssigned": "مُعيَّن",
+  "statusUnassigned": "غير مُعيَّن",
+  "priceSourceBase": "السعر الأساسي",
+  "priceSourceOverride": "سعر مخصص",
+  "validationSeverityError": "خطأ",
+  "validationSeverityWarning": "تحذير",
+  "validationSeverityInfo": "معلومات",
+  "salesChannelPos": "نقطة البيع",
+  "salesChannelOnline": "عبر الإنترنت",
+  "productTypeSimple": "منتج بسيط",
+  "productTypeVariant": "منتج متعدد الخيارات",
+  "genericFormError": "تعذر حفظ التغييرات. راجع الحقول المميزة وحاول مرة أخرى."
+,
+  "menuPublishTab": "نشر",
+  "menuPublishAction": "نشر القائمة",
+  "menuPublishPublishing": "جارٍ النشر…",
+  "menuPublishBranch": "الفرع",
+  "menuPublishChannel": "قناة البيع",
+  "menuPublishScope": "النطاق",
+  "menuPublishCollectionScope": "مجموعة القوائم المعينة كاملة",
+  "menuPublishOneMenu": "قائمة واحدة",
+  "menuPublishValidation": "آخر تحقق",
+  "menuPublishValidationRequired": "يلزم إجراء التحقق",
+  "menuPublishCanPublish": "يمكن النشر",
+  "menuPublishCannotPublish": "لا يمكن النشر",
+  "menuPublishErrors": "الأخطاء",
+  "menuPublishWarnings": "التحذيرات",
+  "menuPublishRunValidationFirst": "أجرِ التحقق للنطاق المحدد قبل النشر.",
+  "menuPublishBlockedByValidation": "النشر معطل لأن نتيجة التحقق المحملة تحتوي على أخطاء.",
+  "menuPublishWarningsAllowed": "التحذيرات لا تمنع النشر. راجعها وأكد النشر صراحةً.",
+  "menuPublishConfirmTitle": "تأكيد نشر القائمة",
+  "menuPublishCurrentVersion": "الإصدار المنشور الحالي",
+  "menuPublishConfirmationExplanation": "ينشئ النشر إصدارًا ثابتًا جديدًا للقائمة للفرع وقناة البيع المحددين عند تغير محتوى القائمة المحلول. لا يتم تعديل الطلبات الحالية.",
+  "menuPublishLoadingCurrentVersion": "جارٍ تحميل الإصدار المنشور الحالي…",
+  "menuPublishNoCurrentVersion": "لا يوجد إصدار قائمة منشور لهذا الفرع وقناة البيع.",
+  "menuPublishVersionNumber": "الإصدار",
+  "menuPublishStatus": "الحالة",
+  "menuPublishPublishedAt": "نُشر في",
+  "menuPublishChecksum": "البصمة",
+  "menuPublishPublicationId": "معرف النشر",
+  "menuPublishSuccess": "تم نشر القائمة بنجاح.",
+  "menuPublishNoChanges": "لم يتم اكتشاف أي تغييرات في القائمة.",
+  "menuPublishNoChangesExplanation": "يبقى الإصدار المنشور الحالي دون تغيير.",
+  "menuPublishBackendBlocked": "حظر تحقق الخادم النشر. لم يتم إنشاء إصدار.",
+  "versionHistory": "سجل الإصدارات",
+  "versionDetail": "تفاصيل الإصدار",
+  "compareVersions": "مقارنة الإصدارات",
+  "identicalContent": "محتوى متطابق",
+  "versionsAdded": "مضاف",
+  "versionsRemoved": "محذوف",
+  "versionsChanged": "متغير",
+  "versionPriceChanges": "تغييرات الأسعار",
+  "versionModifierChanges": "تغييرات الخيارات",
+  "versionScheduleChanges": "تغييرات الجداول",
+  "versionRollback": "تراجع",
+  "versionRollbackReason": "سبب التراجع",
+  "versionNewRollback": "إصدار تراجع جديد",
+  "versionNoChangeRollback": "تراجع بدون تغيير",
+  "versionTruncatedComparison": "يعرض جزء محدود من الاختلافات.",
+  "versionImmutableSnapshot": "هذه لقطة تاريخية غير قابلة للتعديل.",
+  "versionStatusCurrent": "حالي",
+  "versionStatusSuperseded": "مستبدل",
+  "versionStatusRolledBack": "تم التراجع عنه",
+  "versionView": "عرض",
+  "versionSelectForCompare": "حدد الإصدار {version} للمقارنة",
+  "@versionSelectForCompare": {"placeholders": {"version": {"type": "int"}}},
+  "versionCompareSelected": "مقارنة المحدد ({count})",
+  "@versionCompareSelected": {"placeholders": {"count": {"type": "int"}}},
+  "versionHistoryEmptyTitle": "لا يوجد سجل إصدارات",
+  "versionHistoryEmptyDescription": "لم يُنشر إصدار قائمة لـ {branch} · {channel} بعد.",
+  "@versionHistoryEmptyDescription": {"placeholders": {"branch": {}, "channel": {}}},
+  "versionHistoryLoadError": "تعذر تحميل سجل الإصدارات.",
+  "versionDetailLoadError": "تعذر تحميل هذا الإصدار.",
+  "versionCompareError": "تعذرت مقارنة هذين الإصدارين.",
+  "versionRestoreError": "تعذرت استعادة هذا الإصدار.",
+  "versionPreviousPage": "السابق",
+  "versionNextPage": "التالي",
+  "versionPage": "الصفحة {page}",
+  "@versionPage": {"placeholders": {"page": {"type": "int"}}},
+  "versionChangeCount": "{count, plural, =1{تغيير واحد} =2{تغييران} few{{count} تغييرات} many{{count} تغييرًا} other{{count} تغيير}}",
+  "@versionChangeCount": {"placeholders": {"count": {"type": "num"}}},
+  "versionChangesSince": "{count, plural, =1{تغيير واحد} =2{تغييران} few{{count} تغييرات} many{{count} تغييرًا} other{{count} تغيير}} منذ الإصدار {version}",
+  "@versionChangesSince": {"placeholders": {"count": {"type": "num"}, "version": {"type": "int"}}},
+  "versionPublishedAt": "نُشر {date}",
+  "@versionPublishedAt": {"placeholders": {"date": {}}},
+  "versionMenus": "القوائم",
+  "versionSections": "الأقسام",
+  "versionProducts": "المنتجات",
+  "versionPricing": "التسعير",
+  "versionModifiers": "الخيارات",
+  "versionRecipes": "الوصفات",
+  "versionSchedules": "الجدولة",
+  "versionChanges": "تغييرات",
+  "versionChangeSummary": "ملخص التغييرات",
+  "versionChangeSummaryAvailable": "يتضمن هذا الإصدار ملخصًا مسجلًا للتغييرات.",
+  "versionChangeSummaryUnavailable": "لا يتوفر ملخص للتغييرات لهذا الإصدار.",
+  "versionRestoreThisVersion": "استعادة هذا الإصدار",
+  "versionRestoreTitle": "استعادة الإصدار {version}؟",
+  "@versionRestoreTitle": {"placeholders": {"version": {"type": "int"}}},
+  "versionRestoreExplanation": "سيُنشأ إصدار منشور جديد بمحتوى الإصدار {version}. ستبقى الإصدارات المنشورة بعد الإصدار {version} في السجل.",
+  "@versionRestoreExplanation": {"placeholders": {"version": {"type": "int"}}},
+  "versionRestoreReason": "سبب الاستعادة (اختياري)",
+  "versionRestoreReasonHint": "مثال: استعادة بعد تغيير سعر غير مقصود",
+  "versionRestoreAsNewVersion": "استعادة كإصدار جديد",
+  "versionRestoring": "جارٍ الاستعادة…",
+  "versionRestoreResultTitle": "تمت استعادة الإصدار",
+  "versionRestoreSuccess": "أُنشئ الإصدار {newVersion} من الإصدار {sourceVersion}. الإصدار {newVersion} هو الحالي الآن.",
+  "@versionRestoreSuccess": {"placeholders": {"newVersion": {"type": "int"}, "sourceVersion": {"type": "int"}}},
+  "versionRestoreNoChanges": "الإصدار {version} يطابق المحتوى المنشور الحالي بالفعل. لم يُنشأ إصدار جديد.",
+  "@versionRestoreNoChanges": {"placeholders": {"version": {"type": "int"}}},
+  "versionComparisonDirection": "الإصدار {fromVersion} ← الإصدار {toVersion}",
+  "@versionComparisonDirection": {"placeholders": {"fromVersion": {"type": "int"}, "toVersion": {"type": "int"}}},
+  "versionNoContentDifferences": "لم يُعثر على اختلافات في المحتوى.",
+  "versionComparisonTruncated": "لا تُعرض التغييرات الإضافية.",
+  "catalogSetupTitle": "\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c",
+  "catalogSetupCategoriesTitle": "\u0641\u0626\u0627\u062a \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c",
+  "catalogSetupReportingCategoriesTitle": "\u0641\u0626\u0627\u062a \u0627\u0644\u062a\u0642\u0627\u0631\u064a\u0631",
+  "catalogSetupKitchenStationsTitle": "\u0645\u062d\u0637\u0627\u062a \u0627\u0644\u0645\u0637\u0628\u062e",
+  "catalogSetupCategory": "\u0641\u0626\u0629",
+  "catalogSetupReportingCategory": "\u0641\u0626\u0629 \u062a\u0642\u0627\u0631\u064a\u0631",
+  "catalogSetupKitchenStation": "\u0645\u062d\u0637\u0629 \u0645\u0637\u0628\u062e",
+  "catalogSetupCategoriesExplanation": "\u062a\u0635\u0646\u0641 \u0627\u0644\u0641\u0626\u0627\u062a \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0641\u064a \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c.",
+  "catalogSetupReportingCategoriesExplanation": "\u062a\u062c\u0645\u0639 \u0641\u0626\u0627\u062a \u0627\u0644\u062a\u0642\u0627\u0631\u064a\u0631 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0644\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u0648\u062a\u0642\u0627\u0631\u064a\u0631 \u0627\u0644\u0623\u062f\u0627\u0621. \u0644\u0627 \u062a\u062a\u062d\u0643\u0645 \u0641\u064a \u0645\u0648\u0636\u0639 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0641\u064a \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621.",
+  "catalogSetupKitchenStationsExplanation": "\u062a\u062d\u062f\u062f \u0645\u062d\u0637\u0627\u062a \u0627\u0644\u0645\u0637\u0628\u062e \u0645\u0646\u0637\u0642\u0629 \u062a\u062d\u0636\u064a\u0631 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a\u061b \u0648\u0644\u0627 \u062a\u0639\u062f \u0625\u0639\u062f\u0627\u062f\u064b\u0627 \u0644\u0627\u062a\u0635\u0627\u0644 \u0627\u0644\u0637\u0627\u0628\u0639\u0629.",
+  "catalogSetupAll": "\u0627\u0644\u0643\u0644",
+  "catalogSetupProducts": "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
+  "catalogSetupOrder": "\u0627\u0644\u062a\u0631\u062a\u064a\u0628",
+  "catalogSetupActions": "\u0627\u0644\u0625\u062c\u0631\u0627\u0621\u0627\u062a",
+  "catalogSetupCodePrinter": "\u0627\u0644\u0631\u0645\u0632 / \u0627\u0644\u0637\u0627\u0628\u0639\u0629",
+  "catalogSetupNoMatchingRecords": "\u0644\u0627 \u062a\u0648\u062c\u062f \u0633\u062c\u0644\u0627\u062a \u0645\u0637\u0627\u0628\u0642\u0629.",
+  "catalogSetupUnableToLoad": "\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c.",
+  "catalogSetupCreate": "\u0625\u0646\u0634\u0627\u0621 {type}",
+  "@catalogSetupCreate": {"placeholders": {"type": {"type": "String"}}},
+  "catalogSetupEdit": "\u062a\u0639\u062f\u064a\u0644 {type}",
+  "@catalogSetupEdit": {"placeholders": {"type": {"type": "String"}}},
+  "catalogSetupArchive": "\u0623\u0631\u0634\u0641\u0629 {type}",
+  "@catalogSetupArchive": {"placeholders": {"type": {"type": "String"}}},
+  "catalogSetupRestore": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629",
+  "catalogSetupMoveUp": "\u0646\u0642\u0644 \u0644\u0623\u0639\u0644\u0649",
+  "catalogSetupMoveDown": "\u0646\u0642\u0644 \u0644\u0623\u0633\u0641\u0644",
+  "catalogSetupName": "\u0627\u0644\u0627\u0633\u0645",
+  "catalogSetupNameArabic": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
+  "catalogSetupNameEnglish": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629",
+  "catalogSetupCode": "\u0627\u0644\u0631\u0645\u0632",
+  "catalogSetupDescription": "\u0627\u0644\u0648\u0635\u0641",
+  "catalogSetupPrinterName": "\u0627\u0633\u0645 \u0627\u0644\u0637\u0627\u0628\u0639\u0629",
+  "catalogSetupPage": "\u0627\u0644\u0635\u0641\u062d\u0629 {page}",
+  "@catalogSetupPage": {"placeholders": {"page": {"type": "int"}}},
+  "catalogSetupPrevious": "\u0627\u0644\u0633\u0627\u0628\u0642",
+  "catalogSetupNext": "\u0627\u0644\u062a\u0627\u0644\u064a",
+  "catalogSetupArchiveConfirmation": "{name} \u0645\u0633\u062a\u062e\u062f\u0645 \u0641\u064a {count} \u0645\u0646 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a. \u062a\u0628\u0642\u0649 \u062a\u0639\u064a\u064a\u0646\u0627\u062a \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 \u062e\u0627\u0636\u0639\u0629 \u0644\u0642\u0648\u0627\u0639\u062f \u0627\u0644\u062e\u0627\u062f\u0645.",
+  "recipeMaterials": "\u0627\u0644\u0648\u0635\u0641\u0629 / \u0627\u0644\u0645\u0648\u0627\u062f",
+  "manageRecipe": "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0648\u0635\u0641\u0629",
+  "baseRecipe": "\u0627\u0644\u0648\u0635\u0641\u0629 \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629",
+  "material": "\u0627\u0644\u0645\u0627\u062f\u0629",
+  "quantity": "\u0627\u0644\u0643\u0645\u064a\u0629",
+  "unit": "\u0627\u0644\u0648\u062d\u062f\u0629",
+  "addMaterial": "\u0625\u0636\u0627\u0641\u0629 \u0645\u0627\u062f\u0629",
+  "removeMaterial": "\u0625\u0632\u0627\u0644\u0629",
+  "materialAdjustments": "\u062a\u0639\u062f\u064a\u0644\u0627\u062a \u0627\u0644\u0645\u0648\u0627\u062f",
+  "effectiveFrom": "\u0641\u0639\u0627\u0644 \u0645\u0646",
+  "global": "\u0639\u0627\u0645",
+  "productOverride": "\u062a\u062c\u0627\u0648\u0632 \u0627\u0644\u0645\u0646\u062a\u062c",
+  "variantOverride": "\u062a\u062c\u0627\u0648\u0632 \u0627\u0644\u062e\u064a\u0627\u0631",
+  "inherited": "\u0645\u0648\u0631\u0648\u062b",
+  "createOverride": "\u0625\u0646\u0634\u0627\u0621 \u062a\u062c\u0627\u0648\u0632",
+  "suppressInheritedEffects": "\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u062a\u0623\u062b\u064a\u0631\u0627\u062a \u0627\u0644\u0645\u0648\u0631\u0648\u062b\u0629",
+  "restoreInheritance": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0648\u0631\u064a\u062b",
+  "recipeSimulation": "\u0645\u062d\u0627\u0643\u0627\u0629 \u0627\u0644\u0648\u0635\u0641\u0629",
+  "selectedModifiers": "\u0627\u0644\u0645\u0639\u062f\u0644\u0627\u062a \u0627\u0644\u0645\u062d\u062f\u062f\u0629",
+  "resolvedRecipe": "\u0627\u0644\u0648\u0635\u0641\u0629 \u0627\u0644\u0646\u0647\u0627\u0626\u064a\u0629",
+  "recipeUnavailableMaterial": "\u0627\u0644\u0645\u0648\u0627\u062f \u0630\u0627\u062a \u0627\u0644\u0648\u062d\u062f\u0629 \u063a\u064a\u0631 \u0627\u0644\u0645\u0639\u0631\u0641\u0629 \u0645\u0639\u0637\u0644\u0629 \u0648\u0644\u0627 \u064a\u0645\u0643\u0646 \u062d\u0641\u0638\u0647\u0627.",
+  "recipeReadOnly": "\u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631 \u0645\u0624\u0631\u0634\u0641. \u062a\u0643\u0648\u064a\u0646 \u0627\u0644\u0648\u0635\u0641\u0629 \u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637.",
+  "recipeEmpty": "\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0643\u0648\u0646\u0627\u062a \u0648\u0635\u0641\u0629 \u0645\u0639\u062f\u0629.",
+  "recipeInheritedDraft": "\u0647\u0630\u0647 \u0627\u0644\u0645\u0633\u0648\u062f\u0629 \u0645\u0646\u0633\u0648\u062e\u0629 \u0645\u0646 \u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0645\u0648\u0631\u0648\u062b. \u0627\u0644\u062d\u0641\u0638 \u064a\u0646\u0634\u0626 \u062a\u062c\u0627\u0648\u0632\u0627\u064b \u0643\u0627\u0645\u0644\u0627\u064b.",
+  "recipeEmptyOverride": "\u0647\u0630\u0627 \u0627\u0644\u062a\u062c\u0627\u0648\u0632 \u0644\u0627 \u064a\u062d\u062a\u0648\u064a \u0639\u0644\u0649 \u0623\u064a \u062a\u0623\u062b\u064a\u0631\u0627\u062a \u0644\u0644\u0645\u0648\u0627\u062f.",
+  "recipeSuppressConfirmationTitle": "\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u062a\u0623\u062b\u064a\u0631\u0627\u062a \u0627\u0644\u0645\u0648\u0631\u0648\u062b\u0629\u061f",
+  "recipeSuppressConfirmationBody": "\u062d\u0641\u0638 \u0645\u0644\u0641 \u0641\u0627\u0631\u063a \u0645\u062d\u062f\u062f \u0627\u0644\u0646\u0637\u0627\u0642 \u064a\u0632\u064a\u0644 \u0643\u0644 \u062a\u0623\u062b\u064a\u0631\u0627\u062a ADD \u0648REMOVE \u0627\u0644\u0645\u0648\u0631\u0648\u062b\u0629 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u0646\u0637\u0627\u0642.",
+  "recipeRemoveOverrideTitle": "\u0625\u0632\u0627\u0644\u0629 \u0647\u0630\u0627 \u0627\u0644\u062a\u062c\u0627\u0648\u0632\u061f",
+  "recipeRemoveOverrideBody": "\u0625\u0632\u0627\u0644\u062a\u0647 \u062a\u0633\u062a\u0639\u064a\u062f \u0623\u0642\u0631\u0628 \u062a\u0623\u062b\u064a\u0631\u0627\u062a \u0627\u0644\u0645\u0648\u0627\u062f \u0627\u0644\u0645\u0648\u0631\u0648\u062b\u0629.",
+  "menuManagementWorkflow": "\u0645\u0633\u0627\u0631 \u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629",
+  "menuManagementBuild": "\u0628\u0646\u0627\u0621",
+  "menuManagementConfigure": "\u0625\u0639\u062f\u0627\u062f",
+  "menuManagementRelease": "\u0645\u0631\u0627\u062c\u0639\u0629 \u0648\u0646\u0634\u0631",
+  "menuManagementProducts": "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
+  "menuManagementModifiers": "\u0627\u0644\u0645\u0639\u062f\u0644\u0627\u062a",
+  "menuManagementMenus": "\u0627\u0644\u0642\u0648\u0627\u0626\u0645",
+  "menuManagementAssignments": "\u0627\u0644\u062a\u0639\u064a\u064a\u0646\u0627\u062a \u0648\u0627\u0644\u062c\u062f\u0627\u0648\u0644",
+  "menuManagementReview": "\u0645\u0631\u0627\u062c\u0639\u0629 \u0648\u0645\u0639\u0627\u064a\u0646\u0629",
+  "menuManagementCatalogSetup": "\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c",
+  "recipeConsumptionHelp": "\u062d\u062f\u062f \u0627\u0644\u0645\u0648\u0627\u062f \u0627\u0644\u0645\u0633\u062a\u0647\u0644\u0643\u0629 \u0639\u0646\u062f \u062a\u062d\u0636\u064a\u0631 \u0648\u062d\u062f\u0629 \u0648\u0627\u062d\u062f\u0629 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631.",
+  "recipeNoComponentsHelp": "\u0644\u0645 \u062a\u064f\u0639\u062f \u0623\u064a \u0645\u0648\u0627\u062f \u0628\u0639\u062f. \u0623\u0636\u0641 \u0643\u0644 \u0645\u0627\u062f\u0629 \u062a\u064f\u0633\u062a\u062e\u062f\u0645 \u0644\u062a\u062d\u0636\u064a\u0631 \u0648\u062d\u062f\u0629 \u0648\u0627\u062d\u062f\u0629 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631.",
+  "recipeOverrideGlobal": "\u0627\u0644\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0639\u0627\u0645",
+  "recipeOverrideProduct": "\u062a\u062c\u0627\u0648\u0632 \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c",
+  "recipeOverrideVariant": "\u062a\u062c\u0627\u0648\u0632 \u0644\u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631",
+  "recipeInheritedFromGlobal": "\u0645\u0648\u0631\u0648\u062b \u0645\u0646 \u0627\u0644\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0639\u0627\u0645",
+  "recipeInheritedFromProduct": "\u0645\u0648\u0631\u0648\u062b \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c",
+  "recipeSimulationHelp": "\u062d\u062f\u062f \u0627\u0644\u0645\u0639\u062f\u0644\u0627\u062a\u060c \u062b\u0645 \u0627\u062d\u0633\u0628 \u0627\u0644\u0648\u0635\u0641\u0629 \u0648\u0631\u0627\u062c\u0639 \u0627\u0644\u0645\u0648\u0627\u062f \u0627\u0644\u0645\u0633\u062a\u0647\u0644\u0643\u0629.",
+  "recipeSimulationResultHelp": "\u0627\u0644\u0645\u0648\u0627\u062f \u0627\u0644\u0645\u0633\u062a\u0647\u0644\u0643\u0629",
+  "recipeSimulationStartHelp": "\u062d\u062f\u062f \u0627\u0644\u0645\u0639\u062f\u0644\u0627\u062a\u060c \u062b\u0645 \u0627\u062d\u0633\u0628 \u0627\u0644\u0648\u0635\u0641\u0629 \u0644\u062a\u0631\u0649 \u0627\u0644\u0645\u0648\u0627\u062f \u0627\u0644\u0645\u0633\u062a\u0647\u0644\u0643\u0629.",
+  "reviewWorkflowHelp": "\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0645\u062d\u062f\u062f\u0629\u060c \u0648\u0639\u0627\u064a\u0646 \u0645\u0627 \u064a\u0635\u0644 \u0625\u0644\u0649 \u0627\u0644\u0641\u0631\u0639 \u0648\u0642\u0646\u0627\u0629 \u0627\u0644\u0628\u064a\u0639\u060c \u062b\u0645 \u0627\u0646\u0631\u0647\u0627 \u0648\u0631\u0627\u062c\u0639 \u0633\u062c\u0644 \u0627\u0644\u0625\u0635\u062f\u0627\u0631\u0627\u062a.",
+  "reviewCheckMenu": "1. \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0642\u0627\u0626\u0645\u0629",
+  "reviewPreviewStep": "2. \u0645\u0639\u0627\u064a\u0646\u0629",
+  "reviewPublishStep": "3. \u0646\u0634\u0631",
+  "reviewVersionsStep": "4. \u0633\u062c\u0644 \u0627\u0644\u0625\u0635\u062f\u0627\u0631\u0627\u062a",
+  "validationNoBlockingErrors": "\u0644\u0645 \u064a\u064f\u0639\u062b\u0631 \u0639\u0644\u0649 \u0623\u062e\u0637\u0627\u0621 \u062a\u062d\u0642\u0642 \u0645\u0627\u0646\u0639\u0629.",
+  "validationResolveErrors": "\u0627\u0639\u0627\u0644\u062c \u0627\u0644\u0623\u062e\u0637\u0627\u0621 \u0623\u062f\u0646\u0627\u0647 \u0642\u0628\u0644 \u0623\u0646 \u064a\u0645\u0643\u0646 \u0646\u0634\u0631 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629.",
+  "validationIssueCode": "\u0627\u0644\u0631\u0645\u0632: {code}",
+  "@validationIssueCode": {"placeholders": {"code": {"type": "String"}}},
+  "modifierSelectionExactly": "\u064a\u062c\u0628 \u0623\u0646 \u064a\u062e\u062a\u0627\u0631 \u0627\u0644\u0639\u0645\u064a\u0644 {count, plural, =1 {\u062e\u064a\u0627\u0631 \u0648\u0627\u062d\u062f} =2 {\u062e\u064a\u0627\u0631\u064a\u0646} few {# \u062e\u064a\u0627\u0631\u0627\u062a} many {# \u062e\u064a\u0627\u0631\u064b\u0627} other {# \u062e\u064a\u0627\u0631}} \u0628\u0627\u0644\u0636\u0628\u0637.",
+  "@modifierSelectionExactly": {"placeholders": {"count": {"type": "num"}}},
+  "modifierSelectionRange": "\u064a\u0645\u0643\u0646 \u0644\u0644\u0639\u0645\u064a\u0644 \u0627\u062e\u062a\u064a\u0627\u0631 \u0645\u0646 {min} \u0625\u0644\u0649 {max} \u062e\u064a\u0627\u0631\u0627\u062a.",
+  "@modifierSelectionRange": {"placeholders": {"min": {"type": "num"}, "max": {"type": "num"}}},
+  "reviewAdvancedOptions": "\u062e\u064a\u0627\u0631\u0627\u062a \u0645\u0639\u0627\u064a\u0646\u0629 \u0645\u062a\u0642\u062f\u0645\u0629",
+  "technicalDetails": "\u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u062a\u0642\u0646\u064a\u0629",
+  "managerAvailabilityScheduledHelp": "\u0645\u062a\u0649 \u064a\u0646\u0628\u063a\u064a \u0623\u0646 \u064a\u0643\u0648\u0646 \u0647\u0630\u0627 \u0627\u0644\u0639\u0646\u0635\u0631 \u0645\u062a\u0627\u062d\u064b\u0627 \u0628\u0634\u0643\u0644 \u0639\u0627\u062f\u061f",
+  "managerAvailabilityOperationalHelp": "\u0647\u0644 \u0627\u0644\u0639\u0646\u0635\u0631 \u063a\u064a\u0631 \u0645\u062a\u0627\u062d \u0645\u0624\u0642\u062a\u064b\u0627 \u0627\u0644\u0622\u0646\u061f",
+  "@catalogSetupArchiveConfirmation": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}},
+  "menuManagementNavigation": "التنقل في إدارة القوائم",
+  "menuManagementCatalog": "الكتالوج",
+  "menuManagementMenusGroup": "القوائم",
+  "menuManagementReleaseGroup": "الإصدار",
+  "menuManagementReviewPublish": "مراجعة ونشر",
+  "menuBreadcrumbProduct": "المنتج",
+  "menuBreadcrumbVariant": "الخيار",
+  "menuBreadcrumbCreateProduct": "إنشاء منتج",
+  "menuBreadcrumbEditProduct": "تعديل المنتج",
+  "menuBreadcrumbVariants": "الخيارات",
+  "menuBreadcrumbModifiers": "المعدلات",
+  "menuBreadcrumbPricing": "التسعير",
+  "menuBreadcrumbRecipe": "الوصفة",
+  "menuBreadcrumbRecipeSimulation": "محاكاة الوصفة",
+  "menuBreadcrumbAvailability": "التوفر",
+  "menuBreadcrumbOperationalAvailability": "التوفر التشغيلي",
+  "menuBreadcrumbMaterialAdjustments": "تعديلات المواد",
+  "menuBreadcrumbModifierGroup": "مجموعة المعدلات",
+  "menuBreadcrumbCreateModifierGroup": "إنشاء مجموعة معدلات",
+  "menuBreadcrumbEditModifierGroup": "تعديل مجموعة المعدلات",
+  "menuBreadcrumbMenu": "القائمة",
+  "menuBreadcrumbCreateMenu": "إنشاء قائمة",
+  "menuBreadcrumbEditMenu": "تعديل القائمة",
+  "menuBreadcrumbComposition": "التكوين",
+  "menuBreadcrumbVersionHistory": "سجل الإصدارات",
+  "productCatalogTitle": "المنتجات",
+  "productCatalogSubtitle": "أدر المنتجات المتاحة عبر قوائمك.",
+  "productCatalogCreateProduct": "إنشاء منتج",
+  "productCatalogRefresh": "تحديث المنتجات",
+  "productCatalogSearch": "ابحث عن المنتجات أو SKU أو الباركود",
+  "productCatalogLifecycle": "الحالة",
+  "productCatalogAllProducts": "كل المنتجات",
+  "productCatalogMoreFilters": "مزيد من الفلاتر",
+  "productCatalogMoreFiltersSemantic": "مزيد من الفلاتر، {count} نشط",
+  "@productCatalogMoreFiltersSemantic": {"placeholders": {"count": {"type": "int"}}},
+  "productCatalogClearAll": "مسح الكل",
+  "productCatalogClear": "مسح",
+  "productCatalogApply": "تطبيق",
+  "productCatalogSort": "فرز",
+  "productCatalogSortOrder": "ترتيب العرض",
+  "productCatalogNameAscending": "الاسم أ–ي",
+  "productCatalogNameDescending": "الاسم ي–أ",
+  "productCatalogNewest": "الأحدث أولاً",
+  "productCatalogProductType": "نوع المنتج",
+  "productCatalogHasVariants": "لديه خيارات",
+  "productCatalogNoVariants": "بدون خيارات",
+  "productCatalogHasModifiers": "لديه معدلات",
+  "productCatalogNoModifiers": "بدون معدلات",
+  "productCatalogStandard": "عادي",
+  "productCatalogOpenPrice": "سعر مفتوح",
+  "productCatalogCombo": "وجبة مجمعة",
+  "productCatalogSetup": "الإعداد",
+  "productCatalogDefaultVariant": "الافتراضي",
+  "productCatalogStatus": "الحالة",
+  "productCatalogOpen": "فتح",
+  "productCatalogManageVariants": "إدارة الخيارات",
+  "productCatalogManageModifiers": "إدارة المعدلات",
+  "productCatalogArchive": "أرشفة",
+  "productCatalogRestore": "استعادة",
+  "productCatalogActionsFor": "إجراءات المنتج {name}",
+  "@productCatalogActionsFor": {"placeholders": {"name": {"type": "String"}}},
+  "productCatalogSetupSummary": "{variants} خيارات · {modifiers} معدلات",
+  "@productCatalogSetupSummary": {"placeholders": {"variants": {"type": "int"}, "modifiers": {"type": "int"}}},
+  "productCatalogLoadMore": "تحميل مزيد من المنتجات",
+  "productCatalogUnableToLoad": "تعذر تحميل المنتجات.",
+  "productCatalogNoArchived": "لا توجد منتجات مؤرشفة.",
+  "productCatalogNoActive": "لا توجد منتجات نشطة.",
+  "productCatalogNoMatches": "لا تطابق أي منتجات هذه الفلاتر.",
+  "productCatalogNoProductsYet": "لم يتم إنشاء أي منتجات بعد.",
+  "productCatalogMoreFiltersHelper": "ضيّق قائمة المنتجات بمعايير إضافية.",
+  "productCatalogFilterClassification": "التصنيف",
+  "productCatalogFilterPreparation": "التحضير",
+  "productCatalogFilterProductSetup": "إعداد المنتج",
+  "productCatalogClearFilters": "مسح الفلاتر",
+  "productCatalogApplyFilters": "تطبيق الفلاتر",
+  "productUxGeneral": "عام",
+  "productUxClassification": "التصنيف",
+  "productUxSellingPreparation": "البيع والتحضير",
+  "productUxInitialSellingOption": "خيار البيع الأولي",
+  "productUxTranslations": "الترجمات",
+  "productUxAdvanced": "متقدم",
+  "productUxOverview": "نظرة عامة",
+  "productUxUsage": "الاستخدام",
+  "productUxVariants": "الأنواع",
+  "productUxModifiers": "الإضافات",
+  "productUxRecipeMaterials": "الوصفة والمواد",
+  "productUxAvailability": "التوفر",
+  "productUxCreateProduct": "إنشاء منتج",
+  "productUxSaveChanges": "حفظ التغييرات",
+  "productUxCancel": "إلغاء",
+  "productUxManageCatalogSetup": "إدارة إعدادات الكتالوج",
+  "productUxEditProduct": "تعديل المنتج",
+  "productUxArchived": "مؤرشف"
+  ,"productOverviewBasePrice": "السعر الأساسي"
+  ,"productOverviewVariants": "الأنواع"
+  ,"productOverviewModifierGroups": "مجموعات الإضافات"
+  ,"productOverviewStockTracking": "تتبع المخزون"
+  ,"productOverviewEnabled": "مفعّل"
+  ,"productOverviewDisabled": "غير مفعّل"
+  ,"productOverviewNotConfigured": "غير مهيأ"
+  ,"productOverviewProductSetup": "إعداد المنتج"
+  ,"productOverviewCategory": "الفئة"
+  ,"productOverviewDefaultVariant": "النوع الافتراضي"
+  ,"productOverviewKitchenStation": "محطة التحضير"
+  ,"productOverviewProductType": "نوع المنتج"
+  ,"productOverviewReportingCategory": "فئة التقارير"
+  ,"productOverviewPreparationTime": "وقت التحضير"
+  ,"productOverviewMinutes": "دقائق"
+  ,"modifierLibraryTitle": "مكتبة المعدلات"
+  ,"modifierLibrarySubtitle": "أنشئ خيارات عميل قابلة لإعادة الاستخدام ويمكن إسنادها إلى المنتجات."
+  ,"modifierCreateGroup": "إنشاء مجموعة معدلات"
+  ,"modifierSearch": "البحث في المعدلات"
+  ,"modifierActive": "نشط"
+  ,"modifierArchived": "مؤرشف"
+  ,"modifierAll": "الكل"
+  ,"modifierReorder": "إعادة الترتيب"
+  ,"modifierDone": "تم"
+  ,"modifierClearFiltersBeforeReorder": "امسح البحث وعوامل التصفية قبل إعادة ترتيب مجموعات المعدلات."
+  ,"modifierOptionsCount": "{count, plural, =0 {0 خيارات} =1 {خيار واحد} =2 {خياران} few {# خيارات} many {# خيارًا} other {# خيار}}"
+  ,"@modifierOptionsCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierOptionPreviewMore": "+ {count} المزيد"
+  ,"@modifierOptionPreviewMore": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleExactly": "يجب على العميل اختيار {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}} بالضبط."
+  ,"@modifierRuleExactly": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleOptionalExactly": "اختياري — يمكن للعميل اختيار {count, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}."
+  ,"@modifierRuleOptionalExactly": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierRuleAtLeastUpTo": "يجب على العميل اختيار {min} على الأقل وحتى {max, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}."
+  ,"@modifierRuleAtLeastUpTo": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}}
+  ,"modifierRuleOptionalUpTo": "اختياري — يمكن للعميل اختيار ما يصل إلى {max, plural, =1 {خيار واحد} =2 {خيارين} few {# خيارات} many {# خيارًا} other {# خيار}}."
+  ,"@modifierRuleOptionalUpTo": {"placeholders": {"max": {"type": "int"}}}
+  ,"modifierRuleQuantity": "يمكن إضافة الخيار نفسه أكثر من مرة."
+  ,"modifierViewGroup": "عرض المجموعة"
+  ,"modifierEditGroup": "تعديل المجموعة"
+  ,"modifierSetDefault": "تعيين كافتراضي"
+  ,"modifierMaterialAdjustments": "تعديلات المواد"
+  ,"modifierArchive": "أرشفة"
+  ,"modifierRestore": "استعادة"
+  ,"modifierNoGroups": "لم يتم إنشاء مجموعات معدلات بعد."
+  ,"modifierNoGroupMatches": "لا توجد مجموعات معدلات تطابق عوامل التصفية الحالية."
+  ,"modifierUnableToLoad": "تعذر تحميل مجموعات المعدلات."
+  ,"modifierRetry": "إعادة المحاولة"
+  ,"modifierLoadMore": "تحميل المزيد"
+  ,"modifierRefresh": "تحديث مجموعات المعدلات"
+  ,"modifierGroupDetailNotFound": "لم يتم العثور على مجموعة المعدلات."
+  ,"modifierOptions": "الخيارات"
+  ,"modifierAddOption": "إضافة خيار"
+  ,"modifierOptionFilter": "حالة الخيار"
+  ,"modifierNoArchivedOptions": "لا توجد خيارات معدلات مؤرشفة."
+  ,"modifierNoOptions": "لم يتم إنشاء خيارات معدلات بعد."
+  ,"modifierReorderOptions": "إعادة ترتيب الخيارات"
+  ,"modifierMoveUp": "نقل لأعلى"
+  ,"modifierMoveDown": "نقل لأسفل"
+  ,"modifierDefault": "افتراضي"
+  ,"modifierNoExtraCharge": "بدون تكلفة إضافية"
+  ,"modifierPriceAdjustment": "تعديل السعر"
+  ,"modifierMaterialUsageConfigured": "تم إعداد استخدام المواد"
+  ,"modifierStatusActive": "نشط"
+  ,"modifierStatusArchived": "مؤرشف"
+  ,"modifierStatusInactive": "غير نشط"
+  ,"modifierAdvancedDetails": "التفاصيل المتقدمة"
+  ,"modifierSelectionMode": "طريقة الاختيار"
+  ,"modifierMinimum": "الحد الأدنى"
+  ,"modifierMaximum": "الحد الأقصى"
+  ,"modifierAllowQuantity": "السماح بالكمية"
+  ,"modifierGroupType": "نوع المجموعة"
+  ,"modifierSortOrder": "ترتيب العرض"
+  ,"modifierCreateTitle": "إنشاء مجموعة معدلات"
+  ,"modifierEditTitle": "تعديل مجموعة معدلات"
+  ,"modifierBasicInformation": "المعلومات الأساسية"
+  ,"modifierBasicInformationHelper": "سمِّ مجموعة خيارات العميل القابلة لإعادة الاستخدام."
+  ,"modifierGroupName": "اسم مجموعة المعدلات"
+  ,"modifierGroupNameHint": "مثال: نوع الحليب"
+  ,"modifierInternalCode": "الرمز الداخلي"
+  ,"modifierGroupTypeChoice": "اختيار"
+  ,"modifierGroupTypeAddOn": "إضافة"
+  ,"modifierGroupTypePreparation": "تعليمات التحضير"
+  ,"modifierYes": "نعم"
+  ,"modifierNo": "لا"
+  ,"modifierTranslations": "الترجمات"
+  ,"modifierArabic": "العربية"
+  ,"modifierEnglish": "الإنجليزية"
+  ,"modifierClose": "إغلاق"
+  ,"modifierSelectionRules": "قواعد الاختيار"
+  ,"modifierSelectionRulesHelper": "حدد طريقة تفاعل العملاء مع هذه الخيارات."
+  ,"modifierHowChoose": "كيف ينبغي للعملاء الاختيار؟"
+  ,"modifierChooseOne": "اختيار واحد"
+  ,"modifierChooseMultiple": "اختيارات متعددة"
+  ,"modifierChoiceRequired": "هل الاختيار مطلوب؟"
+  ,"modifierOptional": "اختياري"
+  ,"modifierRequired": "مطلوب"
+  ,"modifierMinimumChoices": "الحد الأدنى للاختيارات"
+  ,"modifierMaximumChoices": "الحد الأقصى للاختيارات"
+  ,"modifierSameOptionQuantity": "هل يمكن إضافة الخيار نفسه أكثر من مرة؟"
+  ,"modifierQuantityHelper": "مثال: 2 من الإضافات."
+  ,"modifierCurrentRuleSummary": "ملخص القاعدة الحالية"
+  ,"modifierInitialOption": "الخيار الأولي"
+  ,"modifierInitialOptions": "الخيارات الأولية"
+  ,"modifierInitialOptionHelper": "أضف ما يكفي من الخيارات النشطة ليتوافق مع الحد الأقصى قبل إنشاء مجموعة المعدلات."
+  ,"modifierAddAnotherOption": "إضافة خيار آخر"
+  ,"modifierRemoveOption": "إزالة الخيار"
+  ,"modifierAtLeastActiveOptions": "أضف {count} خيارات نشطة على الأقل أو خفّض الحد الأقصى للاختيارات."
+  ,"@modifierAtLeastActiveOptions": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierOptionName": "اسم الخيار"
+  ,"modifierOptionNameHint": "مثال: حليب كامل الدسم"
+  ,"modifierAdvanced": "متقدم"
+  ,"modifierActiveStatus": "الحالة النشطة"
+  ,"modifierAvailableForUse": "متاح للاستخدام في القوائم."
+  ,"modifierCancel": "إلغاء"
+  ,"modifierSaveChanges": "حفظ التغييرات"
+  ,"modifierCreateAction": "إنشاء مجموعة معدلات"
+  ,"modifierSaving": "جارٍ الحفظ..."
+  ,"modifierUnsavedChanges": "لديك تغييرات غير محفوظة. هل تريد المغادرة دون حفظ؟"
+  ,"modifierStay": "البقاء"
+  ,"modifierLeave": "مغادرة"
+  ,"modifierOptionCreateTitle": "إضافة خيار"
+  ,"modifierOptionEditTitle": "تعديل الخيار"
+  ,"modifierOptionBasicInformation": "المعلومات الأساسية"
+  ,"modifierOptionDefault": "خيار افتراضي"
+  ,"modifierOptionActive": "نشط"
+  ,"modifierOptionAvailable": "متاح"
+  ,"modifierOptionAdvanced": "متقدم"
+  ,"modifierOptionSave": "حفظ"
+  ,"modifierOptionSaving": "جارٍ الحفظ..."
+  ,"modifierOptionNameRequired": "اسم الخيار مطلوب."
+  ,"modifierOptionPriceInvalid": "أدخل تعديلاً صالحاً للسعر."
+  ,"modifierOptionSortInvalid": "أدخل رقماً صحيحاً لترتيب العرض."
+  ,"modifierArchiveGroupTitle": "أرشفة مجموعة المعدلات؟"
+  ,"modifierArchiveOptionTitle": "أرشفة خيار المعدلات؟"
+  ,"modifierArchiveMessage": "يبقى العنصر محفوظاً ويمكن استعادته لاحقاً."
+  ,"modifierConfirmArchive": "أرشفة"
+  ,"modifierOptionSaveError": "تعذر حفظ خيار المعدلات. تحقق من قواعد الخيار وحاول مرة أخرى."
+  ,"modifierOptionGroupInvalid": "لا يمكن تغيير هذا الخيار لأنه سيجعل مجموعة المعدلات غير صالحة."
+  ,"modifierGroupSaveError": "تعذر حفظ مجموعة المعدلات."
+  ,"modifierGroupRequired": "اسم مجموعة المعدلات مطلوب."
+  ,"modifierNumberInvalid": "أدخل صفراً أو رقماً صحيحاً موجباً."
+  ,"modifierMaximumMinimumError": "يجب أن يكون الحد الأقصى أكبر من أو مساوياً للحد الأدنى."
+  ,"modifierSingleMaximumError": "لا يمكن أن يتجاوز الحد الأقصى لمجموعة الاختيار الواحد 1."
+  ,"modifierRequiredMinimumError": "تحتاج المجموعات المطلوبة إلى حد أدنى لا يقل عن 1."
+  ,"modifierInitialOptionRequired": "الخيار النشط الأولي مطلوب."
+  ,"modifierPriceInvalid": "أدخل صفراً أو سعراً موجباً."
+  ,"modifierInitialMaximumError": "تحتوي المجموعة الجديدة على خيار أولي واحد؛ لا يمكن أن يتجاوز الحد الأقصى 1."
+  ,"configuredSellPriceMustBePositive": "يجب أن يكون سعر البيع أكبر من صفر."
+  ,"recipeVariant": "النوع"
+  ,"recipeConfigured": "تم إعداد الوصفة · {count} مواد"
+  ,"@recipeConfigured": {"placeholders": {"count": {"type": "int"}}}
+  ,"recipeMissing": "الوصفة مفقودة"
+  ,"recipeNotConfigured": "الوصفة غير معدّة"
+  ,"recipeModifierMaterialEffects": "تأثيرات مواد المعدلات"
+  ,"recipeModifierMaterialEffectsHelp": "اطلع على كيفية تغيير اختيارات العميل للمواد المستهلكة."
+  ,"recipeNoMaterialChange": "لا تغيير في المواد"
+  ,"recipeUsingGlobalSettings": "باستخدام الإعدادات العامة"
+  ,"recipeCustomizedForProduct": "مخصص للمنتج"
+  ,"recipeCustomizedForVariant": "مخصص للنوع"
+  ,"recipeTest": "اختبار الوصفة"
+  ,"recipeBackToWorkspace": "العودة إلى الوصفة والمواد"
+  ,"recipeSave": "حفظ الوصفة"
+  ,"recipeSaved": "تم حفظ الوصفة."
+  ,"recipeCurrentBehavior": "السلوك الحالي"
+  ,"recipeUseInherited": "استخدام الإعدادات الموروثة"
+  ,"recipeUseInheritedAgain": "استخدم الإعدادات الموروثة مجدداً"
+  ,"recipeCustomizeFor": "تخصيص لـ {context}"
+  ,"@recipeCustomizeFor": {"placeholders": {"context": {"type": "String"}}}
+  ,"recipeNoMaterialEffectFor": "لا تأثير مادي لـ {context}"
+  ,"@recipeNoMaterialEffectFor": {"placeholders": {"context": {"type": "String"}}}
+  ,"recipeRemoves": "يزيل"
+  ,"recipeAdds": "يضيف"
+  ,"recipeAddMaterialToRemove": "إضافة مادة لإزالتها"
+  ,"recipeAddMaterialToAdd": "إضافة مادة لإضافتها"
+  ,"recipeSaveChanges": "حفظ التغييرات"
+  ,"recipeCancel": "إلغاء"
+  ,"recipeQuantityRequired": "الكمية مطلوبة."
+  ,"recipeQuantityInvalid": "أدخل رقماً موجباً بحد أقصى 6 منازل عشرية."
+  ,"recipeDuplicateMaterial": "هذه المادة مستخدمة بالفعل."
+  ,"recipeMaterialSearch": "ابحث عن المواد"
+  ,"recipeNoMaterialResults": "لا توجد مواد مطابقة."
+  ,"recipeFinalMaterials": "المواد النهائية"
+  ,"recipePreviewMaterials": "معاينة المواد"
+  ,"recipeHowCalculated": "كيف تم احتساب هذا"
+  ,"recipeChoicesChanged": "تغيرت الاختيارات"
+  ,"recipeStaleResult": "عاين المواد مجدداً لتحديث النتيجة."
+  ,"recipeDecreaseQuantity": "تقليل الكمية"
+  ,"recipeIncreaseQuantity": "زيادة الكمية"
+  ,"batch8AvailabilityTitle": "إتاحة البيع"
+  ,"batch8AvailabilityHelp": "راجع السعر وساعات البيع المعتادة والحالة التشغيلية الحالية لهذا السياق."
+  ,"batch8Variant": "النوع"
+  ,"batch8Branch": "الفرع"
+  ,"batch8Channel": "قناة البيع"
+  ,"batch8AvailabilityLoadError": "تعذر تحميل بيانات الإتاحة."
+  ,"batch8Retry": "إعادة المحاولة"
+  ,"batch8Loading": "جارٍ التحميل…"
+  ,"batch8Checking": "جارٍ التحقق…"
+  ,"batch8SellingPrice": "سعر البيع"
+  ,"batch8BasePrice": "السعر الأساسي"
+  ,"batch8EffectiveSellingPrice": "سعر البيع الفعلي"
+  ,"batch8Using": "المصدر"
+  ,"batch8ManagePricing": "إدارة الأسعار"
+  ,"batch8PriceLoadingHelp": "جارٍ تحديد سعر البيع لهذا السياق."
+  ,"batch8PriceFromBase": "السعر الأساسي للنوع"
+  ,"batch8PriceFromBranch": "سعر الفرع"
+  ,"batch8PriceFromChannel": "سعر قناة البيع"
+  ,"batch8PriceFromBranchAndChannel": "سعر الفرع وقناة البيع"
+  ,"batch8RegularAvailability": "الإتاحة المعتادة"
+  ,"batch8NoScheduleRestrictions": "لا توجد قيود على الجدول"
+  ,"batch8NoScheduleRestrictionsHelp": "متاح عادةً ما دامت نقطة البيع مفتوحة في هذا السياق."
+  ,"batch8ScheduleLoadingHelp": "جارٍ التحقق من ساعات البيع المعتادة لهذا السياق."
+  ,"batch8AvailableNow": "متاح الآن"
+  ,"batch8UnavailableNow": "غير متاح الآن"
+  ,"batch8Unavailable": "غير متاح"
+  ,"batch8AvailableAccordingSchedule": "متاح وفق ساعات البيع المعتادة."
+  ,"batch8UnavailableAccordingSchedule": "خارج ساعات البيع المعتادة."
+  ,"batch8ScheduleRules": "ساعات البيع المُعدّة"
+  ,"batch8ManageSchedule": "إدارة الجدول"
+  ,"batch8CurrentAvailability": "الإتاحة الحالية"
+  ,"batch8CurrentLoadingHelp": "جارٍ التحقق من الحالة التشغيلية المؤقتة لهذا السياق."
+  ,"batch8SoldOut": "نفدت الكمية"
+  ,"batch8TemporarilyUnavailable": "غير متاح مؤقتًا"
+  ,"batch8NoTemporaryRestriction": "لا يوجد قيد تشغيلي مؤقت نشط."
+  ,"batch8TemporaryRestrictionActive": "يوجد قيد تشغيلي مؤقت نشط."
+  ,"batch8TemporaryUntil": "القيد المؤقت ساري حتى {time}."
+  ,"@batch8TemporaryUntil": {"placeholders": {"time": {"type": "String"}}}
+  ,"batch8ManageAvailability": "إدارة الإتاحة"
+  ,"batch8EffectiveSellingResult": "نتيجة البيع الفعلية"
+  ,"batch8Availability": "الإتاحة"
+  ,"batch8PricingBack": "رجوع"
+  ,"batch8PricingRefresh": "تحديث"
+  ,"batch8PricingLoadError": "تعذر تحميل بيانات التسعير."
+  ,"batch8PricingArchived": "هذا المنتج أو النوع مؤرشف. الأسعار معروضة للمرجعية ولا يمكن تعديلها."
+  ,"batch8PricingContext": "{variant} · سعر البيع"
+  ,"@batch8PricingContext": {"placeholders": {"variant": {"type": "String"}}}
+  ,"batch8PricingHelp": "سعر البيع للنوع والفرع وقناة البيع المحددة."
+  ,"batch8SalesChannel": "قناة البيع"
+  ,"batch8NoBranch": "بدون فرع"
+  ,"batch8NoChannel": "بدون قناة"
+  ,"batch8ChangePrice": "تغيير السعر"
+  ,"batch8MorePriceRules": "قواعد أسعار إضافية"
+  ,"batch8RulesConfigured": "{count} قاعدة مُعدّة"
+  ,"@batch8RulesConfigured": {"placeholders": {"count": {"type": "int"}}}
+  ,"batch8Show": "عرض"
+  ,"batch8Hide": "إخفاء"
+  ,"batch8NoPriceAdjustments": "لا توجد تعديلات على السعر."
+  ,"batch8BasePriceEverywhere": "السعر الأساسي مطبق في كل مكان."
+  ,"batch8Difference": "الفرق"
+  ,"batch8AddPrice": "إضافة سعر"
+  ,"batch8SetSellingPrice": "تعيين سعر البيع"
+  ,"batch8Product": "المنتج"
+  ,"batch8AppliesTo": "يُطبّق على"
+  ,"batch8ScopeBranch": "الفرع"
+  ,"batch8ScopeChannel": "القناة"
+  ,"batch8ScopeBranchChannel": "الفرع + القناة"
+  ,"batch8Price": "السعر"
+  ,"batch8PriceAboveBase": "أعلى من السعر الأساسي بمقدار {difference}"
+  ,"@batch8PriceAboveBase": {"placeholders": {"difference": {"type": "String"}}}
+  ,"batch8PriceBelowBase": "أقل من السعر الأساسي بمقدار {difference}"
+  ,"@batch8PriceBelowBase": {"placeholders": {"difference": {"type": "String"}}}
+  ,"batch8PriceSameAsBase": "مطابق للسعر الأساسي"
+  ,"batch8Cancel": "إلغاء"
+  ,"batch8SavePrice": "حفظ السعر"
+  ,"batch8Edit": "تعديل"
+  ,"batch8Remove": "إزالة"
+  ,"batch8RemovePriceTitle": "إزالة قاعدة السعر؟"
+  ,"batch8RemovePriceMessage": "سيُزال تعديل السعر لهذا النوع."
+  ,"batch8Keep": "إبقاء"
+  ,"batch8BranchPriceFor": "سعر فرع {branch}"
+  ,"@batch8BranchPriceFor": {"placeholders": {"branch": {"type": "String"}}}
+  ,"batch8ChannelPriceFor": "سعر قناة {channel}"
+  ,"@batch8ChannelPriceFor": {"placeholders": {"channel": {"type": "String"}}}
+  ,"batch8BranchChannelPriceFor": "سعر {branch} · {channel}"
+  ,"@batch8BranchChannelPriceFor": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}}
+  ,"batch8RuleBranchPrice": "سعر الفرع"
+  ,"batch8RuleChannelPrice": "سعر القناة"
+  ,"batch8RuleBranchChannelPrice": "سعر الفرع + القناة"
+  ,"batch8ChannelPos": "نقطة البيع"
+  ,"batch8ChannelWaiterApp": "تطبيق النادل"
+  ,"batch8ChannelKiosk": "الكشك"
+  ,"batch8ChannelQrOrdering": "الطلب عبر رمز QR"
+  ,"batch8ChannelDelivery": "التوصيل"
+  ,"batch8ChannelOnlineOrdering": "الطلب عبر الإنترنت"
+  ,"batch8UnsavedPriceChanges": "تغييرات سعر غير محفوظة"
+  ,"batch8UnsavedPriceChangesMessage": "لديك تغييرات سعر غير محفوظة. هل تريد المغادرة بدون حفظ؟"
+  ,"batch8Leave": "مغادرة"
+  ,"scheduledUnsavedChanges": "ساعات بيع غير محفوظة"
+  ,"scheduledUnsavedChangesHelp": "لديك تغييرات غير محفوظة على ساعات البيع. هل تريد المغادرة دون حفظ؟"
+  ,"scheduledStay": "البقاء"
+  ,"scheduledLeave": "مغادرة"
+  ,"scheduledLoadError": "تعذر تحميل إتاحة البيع المعتادة."
+  ,"scheduledSaveError": "تعذر حفظ ساعات البيع. راجع القيم المدخلة وحاول مرة أخرى."
+  ,"scheduledSaved": "تم حفظ ساعات البيع."
+  ,"scheduledArchived": "هذا المنتج أو النوع مؤرشف. تُعرض ساعات البيع للمرجعية ولا يمكن تعديلها."
+  ,"scheduledRegularForProduct": "المنتج · الإتاحة المعتادة"
+  ,"scheduledRegularForVariant": "{variant} · الإتاحة المعتادة"
+  ,"@scheduledRegularForVariant": {"placeholders": {"variant": {"type": "String"}}}
+  ,"scheduledProduct": "المنتج"
+  ,"scheduledAllBranches": "كل الفروع"
+  ,"scheduledAllChannels": "كل القنوات"
+  ,"scheduledUsingProduct": "باستخدام جدول المنتج"
+  ,"scheduledProductSchedule": "جدول المنتج"
+  ,"scheduledCustomizedFor": "مخصص لـ {variant}"
+  ,"@scheduledCustomizedFor": {"placeholders": {"variant": {"type": "String"}}}
+  ,"scheduledCustomizeFor": "تخصيص لـ {variant}"
+  ,"@scheduledCustomizeFor": {"placeholders": {"variant": {"type": "String"}}}
+  ,"scheduledUseProductAgain": "استخدام جدول المنتج مجددًا"
+  ,"scheduledWeeklyInAdvanced": "تظهر ساعات الأسبوع ضمن قواعد الجدول المتقدمة."
+  ,"scheduledNoSpecificRestriction": "لا يوجد قيد محدد"
+  ,"scheduledAvailableAllDay": "متاح طوال اليوم"
+  ,"scheduledEditSellingHours": "تعديل ساعات البيع"
+  ,"scheduledAdvancedRules": "قواعد الجدول المتقدمة"
+  ,"scheduledNoAdvancedRules": "لا توجد قواعد جدول متقدمة"
+  ,"scheduledViewRules": "عرض القواعد"
+  ,"scheduledInactiveRule": "قاعدة جدول غير نشطة"
+  ,"scheduledPriorityRule": "قاعدة جدول ذات أولوية"
+  ,"scheduledDateBoundRule": "قاعدة جدول محددة بالتاريخ"
+  ,"scheduledCheckAvailability": "فحص الإتاحة"
+  ,"scheduledCheckHelp": "افحص التاريخ والوقت ضمن سياق البيع المحدد."
+  ,"scheduledDate": "التاريخ"
+  ,"scheduledTime": "الوقت"
+  ,"scheduledCheck": "فحص"
+  ,"scheduledCheckError": "تعذر فحص الإتاحة. حاول مرة أخرى."
+  ,"scheduledAvailableUsingProduct": "متاح وفق جدول المنتج."
+  ,"scheduledDay": "اليوم"
+  ,"scheduledEveryDay": "كل يوم"
+  ,"scheduledAvailability": "الإتاحة"
+  ,"scheduledAvailableAllDayHelp": "لا يوجد قيد زمني لهذا اليوم."
+  ,"scheduledCustomHours": "ساعات مخصصة"
+  ,"scheduledCustomHoursHelp": "حدد وقت البدء والانتهاء المعتادين."
+  ,"scheduledStartTime": "وقت البدء"
+  ,"scheduledEndTime": "وقت الانتهاء"
+  ,"scheduledOvernightUntil": "متاح ليلًا حتى {time} في اليوم التالي."
+  ,"@scheduledOvernightUntil": {"placeholders": {"time": {"type": "String"}}}
+  ,"scheduledDateLimits": "حدود التاريخ"
+  ,"scheduledOptional": "اختياري"
+  ,"scheduledStartDate": "تاريخ البدء"
+  ,"scheduledEndDate": "تاريخ الانتهاء"
+  ,"scheduledSelectDate": "اختر التاريخ"
+  ,"scheduledAdvanced": "متقدم"
+  ,"scheduledPriority": "الأولوية"
+  ,"scheduledActive": "نشط"
+  ,"scheduledSaveSellingHours": "حفظ ساعات البيع"
+  ,"scheduledFrom": "من"
+  ,"scheduledUntil": "حتى"
+  ,"scheduledSunday": "الأحد"
+  ,"scheduledMonday": "الإثنين"
+  ,"scheduledTuesday": "الثلاثاء"
+  ,"scheduledWednesday": "الأربعاء"
+  ,"scheduledThursday": "الخميس"
+  ,"scheduledFriday": "الجمعة"
+  ,"scheduledSaturday": "السبت"
+  ,"operationalAvailabilityTitle": "الإتاحة التشغيلية"
+  ,"operationalAvailabilityPurpose": "هل يمكن للعملاء طلب هذا الصنف الآن؟ للاستثناءات التشغيلية المؤقتة فقط."
+  ,"operationalAvailabilityContext": "السياق الحالي"
+  ,"operationalAvailabilityProductVariant": "المنتج / النوع"
+  ,"operationalAvailabilityProductOnly": "المنتج"
+  ,"operationalAvailabilityBranch": "الفرع"
+  ,"operationalAvailabilityChannel": "قناة البيع"
+  ,"operationalAvailabilitySelectBranch": "اختر فرعًا نشطًا"
+  ,"operationalAvailabilitySelectChannel": "اختر قناة بيع"
+  ,"operationalAvailabilityAvailableNow": "متوفر الآن"
+  ,"operationalAvailabilitySoldOut": "نفدت الكمية"
+  ,"operationalAvailabilityTemporarilyUnavailable": "غير متوفر مؤقتًا"
+  ,"operationalAvailabilityNoRestriction": "لا يوجد قيد تشغيلي مؤقت نشط."
+  ,"operationalAvailabilityActiveRestriction": "يوجد قيد تشغيلي مؤقت نشط."
+  ,"operationalAvailabilityUntil": "حتى: {time}"
+  ,"@operationalAvailabilityUntil": {"placeholders": {"time": {"type": "String"}}}
+  ,"operationalAvailabilityReason": "السبب"
+  ,"operationalAvailabilityMarkUnavailable": "جعله غير متوفر مؤقتًا"
+  ,"operationalAvailabilityMakeAvailable": "إعادة التوفر الآن"
+  ,"operationalAvailabilityEditStatus": "تعديل الحالة"
+  ,"operationalAvailabilityEditTemporary": "تعديل القيد المؤقت"
+  ,"operationalAvailabilityUseDefault": "استخدام الحالة الافتراضية"
+  ,"operationalAvailabilityUseDefaultTitle": "استخدام الحالة الافتراضية؟"
+  ,"operationalAvailabilityUseDefaultMessage": "سيؤدي ذلك إلى إزالة الحالة المضبوطة لهذا السياق المحدد فقط، ثم التحقق من الإتاحة الناتجة مرة أخرى."
+  ,"operationalAvailabilityDefaultAction": "استخدام الافتراضي"
+  ,"operationalAvailabilityAllVariants": "تنطبق هذه الحالة على جميع أنواع هذا المنتج."
+  ,"operationalAvailabilityOnlyVariant": "تؤثر هذه الحالة في {variant} فقط."
+  ,"@operationalAvailabilityOnlyVariant": {"placeholders": {"variant": {"type": "String"}}}
+  ,"operationalAvailabilityLoadingCurrent": "جارٍ تحديث الإتاحة الحالية…"
+  ,"operationalAvailabilityNoContext": "اختر فرعًا نشطًا وقناة بيع لعرض الإتاحة الحالية."
+  ,"operationalAvailabilityLoadError": "تعذر تحميل الإتاحة الحالية. حاول مرة أخرى."
+  ,"operationalAvailabilityArchived": "هذا الصنف مؤرشف. تُعرض الإتاحة الحالية للرجوع إليها ولا يمكن تعديلها."
+  ,"operationalAvailabilitySetStatus": "تعيين حالة الإتاحة"
+  ,"operationalAvailabilityEditStatusTitle": "تعديل حالة الإتاحة"
+  ,"operationalAvailabilityStatus": "الحالة"
+  ,"operationalAvailabilityDuration": "المدة"
+  ,"operationalAvailabilitySpecificTime": "حتى وقت محدد"
+  ,"operationalAvailabilityEndTimeRequired": "اختر وقت انتهاء هذا القيد المؤقت."
+  ,"operationalAvailabilitySelectEndTime": "اختر تاريخ ووقت الانتهاء"
+  ,"operationalAvailabilityBranchTime": "يُعرض الوقت بالتوقيت المحلي للفرع المحدد."
+  ,"operationalAvailabilitySave": "حفظ الحالة"
+  ,"operationalAvailabilitySaving": "جارٍ الحفظ…"
+  ,"operationalAvailabilityCancel": "إلغاء"
+  ,"operationalAvailabilityExplicitAvailable": "متوفر في سياق البيع هذا."
+  ,"operationalAvailabilitySaveError": "تعذر حفظ حالة الإتاحة. راجع التفاصيل وحاول مرة أخرى."
+  ,"catalogSetupWorkspaceHelp": "اضبط التصنيفات ووجهات التحضير المستخدمة للمنتجات."
+  ,"catalogSetupCategoriesPurpose": "نظّم المنتجات ضمن مجموعات واضحة في الكتالوج والقائمة."
+  ,"catalogSetupReportingPurpose": "جمّع المنتجات لأغراض تقارير المبيعات والأداء."
+  ,"catalogSetupReportingNote": "لا تحدد فئات التقارير مكان ظهور المنتجات في القائمة."
+  ,"catalogSetupStationsPurpose": "حدد المكان الذي تُحضَّر فيه المنتجات والأصناف."
+  ,"catalogSetupSearchCategories": "ابحث في الفئات..."
+  ,"catalogSetupSearchReporting": "ابحث في فئات التقارير..."
+  ,"catalogSetupSearchStations": "ابحث في محطات التحضير..."
+  ,"catalogSetupAdd": "إضافة {type}"
+  ,"@catalogSetupAdd": {"placeholders": {"type": {"type": "String"}}}
+  ,"catalogSetupSave": "حفظ {type}"
+  ,"@catalogSetupSave": {"placeholders": {"type": {"type": "String"}}}
+  ,"catalogSetupNoCategories": "لا توجد فئات بعد"
+  ,"catalogSetupNoReportingCategories": "لا توجد فئات تقارير بعد"
+  ,"catalogSetupNoKitchenStations": "لا توجد محطات تحضير بعد"
+  ,"catalogSetupEmptyCategoriesHelp": "تساعد الفئات في تنظيم المنتجات ضمن مجموعات واضحة."
+  ,"catalogSetupEmptyReportingHelp": "تساعد فئات التقارير في تجميع المنتجات لتقارير مبيعات مفيدة."
+  ,"catalogSetupEmptyStationsHelp": "تساعد محطات التحضير في تحديد مكان تحضير كل منتج."
+  ,"catalogSetupCouldNotLoad": "تعذر تحميل البيانات"
+  ,"catalogSetupLoadHelp": "تحقق من الاتصال ثم حاول مرة أخرى."
+  ,"catalogSetupShowing": "عرض {shown} من {total}"
+  ,"@catalogSetupShowing": {"placeholders": {"shown": {"type": "int"}, "total": {"type": "int"}}}
+  ,"catalogSetupActive": "نشط"
+  ,"catalogSetupArchived": "مؤرشف"
+  ,"catalogSetupInactive": "غير نشط"
+  ,"catalogSetupEditorHelp": "استخدم الأسماء التي يتعرف إليها الموظفون والعملاء."
+  ,"catalogSetupPrimaryName": "الاسم"
+  ,"catalogSetupArchiveTitle": "أرشفة {name}؟"
+  ,"@catalogSetupArchiveTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"catalogSetupArchiveHelp": "يمكن استعادة السجلات المؤرشفة لاحقًا. تظل إسنادات المنتجات الحالية محكومة بقواعد النظام."
+  ,"catalogSetupValidationRequired": "أدخل اسمًا للمتابعة."
+  ,"catalogSetupRefreshInProgress": "جارٍ تحديث إعداد الكتالوج"
+  ,"menuListTitle": "\u0627\u0644\u0642\u0648\u0627\u0626\u0645"
+  ,"menuListSubtitle": "\u0623\u0646\u0634\u0626 \u0648\u0646\u0638\u0651\u0645 \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u062a\u064a \u064a\u0645\u0643\u0646 \u0644\u0644\u0639\u0645\u0644\u0627\u0621 \u0627\u0644\u0637\u0644\u0628 \u0645\u0646\u0647\u0627."
+  ,"menuListAdd": "\u0625\u0636\u0627\u0641\u0629 \u0642\u0627\u0626\u0645\u0629"
+  ,"menuListSearch": "\u0627\u0628\u062d\u062b \u0641\u064a \u0627\u0644\u0642\u0648\u0627\u0626\u0645..."
+  ,"menuListStatus": "\u0627\u0644\u062d\u0627\u0644\u0629"
+  ,"menuListSort": "\u0641\u0631\u0632"
+  ,"menuListDirection": "\u0627\u0644\u0627\u062a\u062c\u0627\u0647"
+  ,"menuListRefresh": "\u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0642\u0648\u0627\u0626\u0645"
+  ,"menuListMenu": "\u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuListSections": "\u0627\u0644\u0623\u0642\u0633\u0627\u0645"
+  ,"menuListVisibleProducts": "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0638\u0627\u0647\u0631\u0629"
+  ,"menuListLastUpdated": "\u0622\u062e\u0631 \u062a\u062d\u062f\u064a\u062b"
+  ,"menuListActions": "\u0627\u0644\u0625\u062c\u0631\u0627\u0621\u0627\u062a"
+  ,"menuListOpen": "\u0641\u062a\u062d"
+  ,"menuListClearFilters": "\u0645\u0633\u062d \u0627\u0644\u062a\u0635\u0641\u064a\u0627\u062a"
+  ,"menuListNoMenusYet": "\u0644\u0627 \u062a\u0648\u062c\u062f \u0642\u0648\u0627\u0626\u0645 \u0628\u0639\u062f"
+  ,"menuListNoMenusHelp": "\u0623\u0646\u0634\u0626 \u0623\u0648\u0644 \u0642\u0627\u0626\u0645\u0629 \u0648\u0627\u0628\u062f\u0623 \u0628\u062a\u0646\u0638\u064a\u0645 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0636\u0645\u0646 \u0627\u0644\u0623\u0642\u0633\u0627\u0645."
+  ,"menuListNoMatches": "\u0644\u0627 \u062a\u0648\u062c\u062f \u0642\u0648\u0627\u0626\u0645 \u062a\u0637\u0627\u0628\u0642 \u0627\u0644\u062a\u0635\u0641\u064a\u0627\u062a."
+  ,"menuListNoMatchesHelp": "\u062c\u0631\u0651\u0628 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0628\u062d\u062b \u0623\u0648 \u062a\u0635\u0641\u064a\u0629 \u0627\u0644\u062d\u0627\u0644\u0629."
+  ,"menuListCouldNotLoad": "\u062a\u0639\u0630\u0651\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0642\u0648\u0627\u0626\u0645"
+  ,"menuListCouldNotLoadHelp": "\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u062a\u0635\u0627\u0644\u0643 \u062b\u0645 \u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649."
+  ,"menuListLoadMore": "\u0639\u0631\u0636 \u0627\u0644\u0645\u0632\u064a\u062f"
+  ,"menuListArchiveTitle": "\u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629\u061f"
+  ,"menuListArchiveHelp": "\u064a\u0645\u0643\u0646 \u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0644\u0627\u062d\u0642\u064b\u0627. \u0644\u0627 \u062a\u062a\u063a\u064a\u0631 \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0648\u0627\u0644\u0625\u0635\u062f\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0629."
+  ,"menuListRestoreTitle": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629\u061f"
+  ,"menuListRestoreHelp": "\u062a\u062c\u0639\u0644 \u0627\u0644\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0642\u0627\u0628\u0644\u0629 \u0644\u0644\u062a\u0639\u062f\u064a\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649. \u0644\u0627 \u064a\u0624\u062f\u0651\u064a \u0630\u0644\u0643 \u0625\u0644\u0649 \u0646\u0634\u0631\u0647\u0627."
+  ,"menuListActionsFor": "\u0625\u062c\u0631\u0627\u0621\u0627\u062a \u0627\u0644\u0642\u0627\u0626\u0645\u0629 {name}"
+  ,"@menuListActionsFor": {"placeholders": {"name": {"type": "String"}}}
+  ,"menuListPaused": "\u0645\u0648\u0642\u0641\u0629 \u0645\u0624\u0642\u062a\u064b\u0627"
+  ,"menuListPriority": "\u0627\u0644\u0623\u0648\u0644\u0648\u064a\u0629"
+  ,"menuListName": "\u0627\u0644\u0627\u0633\u0645"
+  ,"menuListCreated": "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0625\u0646\u0634\u0627\u0621"
+  ,"menuListUpdated": "\u0622\u062e\u0631 \u062a\u062d\u062f\u064a\u062b"
+  ,"menuListAscending": "\u062a\u0635\u0627\u0639\u062f\u064a"
+  ,"menuListDescending": "\u062a\u0646\u0627\u0632\u0644\u064a"
+  ,"menuListAll": "\u0627\u0644\u0643\u0644"
+  ,"menuListDraft": "\u0645\u0633\u0648\u062f\u0629"
+  ,"menuListActive": "\u0646\u0634\u0637\u0629"
+  ,"menuListArchived": "\u0645\u0624\u0631\u0634\u0641\u0629"
+  ,"menuListEdit": "\u062a\u0639\u062f\u064a\u0644"
+  ,"menuListArchive": "\u0623\u0631\u0634\u0641\u0629"
+  ,"menuListRestore": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629"
+  ,"menuListCancel": "\u0625\u0644\u063a\u0627\u0621"
+  ,"menuListRetry": "\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629"
+  ,"menuEditorAddTitle": "\u0625\u0636\u0627\u0641\u0629 \u0642\u0627\u0626\u0645\u0629"
+  ,"menuEditorEditTitle": "\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuEditorAddHelp": "\u0627\u0628\u062f\u0623 \u0628\u0627\u0644\u0623\u0633\u0645\u0627\u0621 \u0627\u0644\u062a\u064a \u064a\u062a\u0639\u0631\u0651\u0641 \u0639\u0644\u064a\u0647\u0627 \u0627\u0644\u0645\u0648\u0638\u0641\u0648\u0646 \u0648\u0627\u0644\u0639\u0645\u0644\u0627\u0621."
+  ,"menuEditorEditHelp": "\u062d\u062f\u0651\u062b \u0647\u0648\u064a\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0645\u0646 \u062f\u0648\u0646 \u0645\u063a\u0627\u062f\u0631\u0629 \u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0639\u0645\u0644."
+  ,"menuEditorClose": "\u0625\u063a\u0644\u0627\u0642 \u0645\u062d\u0631\u0631 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuEditorEnglishName": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629"
+  ,"menuEditorArabicName": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0639\u0631\u0628\u064a\u0629"
+  ,"menuEditorMoreDetails": "\u062a\u0641\u0627\u0635\u064a\u0644 \u0623\u0643\u062b\u0631"
+  ,"menuEditorHideDetails": "\u0625\u062e\u0641\u0627\u0621 \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644"
+  ,"menuEditorEnglishDescription": "\u0627\u0644\u0648\u0635\u0641 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629"
+  ,"menuEditorArabicDescription": "\u0627\u0644\u0648\u0635\u0641 \u0628\u0627\u0644\u0639\u0631\u0628\u064a\u0629"
+  ,"menuEditorCoverImageUrl": "\u0631\u0627\u0628\u0637 \u0635\u0648\u0631\u0629 \u0627\u0644\u063a\u0644\u0627\u0641"
+  ,"menuEditorPriority": "\u0627\u0644\u0623\u0648\u0644\u0648\u064a\u0629"
+  ,"menuEditorPriorityHelp": "\u062a\u062d\u062f\u062f \u062a\u0631\u062a\u064a\u0628 \u0639\u0631\u0636 \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0645\u0639\u064b\u0627."
+  ,"menuEditorStatus": "\u062d\u0627\u0644\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuEditorCreate": "\u0625\u0646\u0634\u0627\u0621 \u0642\u0627\u0626\u0645\u0629"
+  ,"menuEditorSaveChanges": "\u062d\u0641\u0638 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a"
+  ,"menuEditorDraftHelp": "\u062a\u0628\u062f\u0623 \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u062c\u062f\u064a\u062f\u0629 \u0643\u0645\u0633\u0648\u062f\u0629. \u064a\u0645\u0643\u0646\u0643 \u062a\u0641\u0639\u064a\u0644\u0647\u0627 \u0644\u0627\u062d\u0642\u064b\u0627."
+  ,"menuEditorNameRequired": "\u0623\u062f\u062e\u0644 \u0627\u0633\u0645\u064b\u0627 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629 \u0623\u0648 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0644\u0644\u0645\u062a\u0627\u0628\u0639\u0629."
+  ,"menuEditorPriorityInvalid": "\u0623\u062f\u062e\u0644 \u0631\u0642\u0645\u064b\u0627 \u0635\u062d\u064a\u062d\u064b\u0627 \u0644\u0644\u0623\u0648\u0644\u0648\u064a\u0629."
+  ,"menuEditorSaveFailed": "\u062a\u0639\u0630\u0651\u0631 \u062d\u0641\u0638 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629. \u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649."
+  ,"menuEditorArchivedReadOnly": "\u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u0645\u0624\u0631\u0634\u0641\u0629 \u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637. \u0627\u0633\u062a\u0639\u062f \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0642\u0628\u0644 \u062a\u0639\u062f\u064a\u0644\u0647\u0627."
+  ,"menuEditorStatusDraft": "\u0645\u0633\u0648\u062f\u0629"
+  ,"menuEditorStatusActive": "\u0646\u0634\u0637\u0629"
+  ,"menuEditorStatusPaused": "\u0645\u0648\u0642\u0641\u0629 \u0645\u0624\u0642\u062a\u064b\u0627"
+  ,"menuEditorStatusArchived": "\u0645\u0624\u0631\u0634\u0641\u0629"
+  ,"menuOverviewEditMenu": "\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuOverviewActions": "\u0625\u062c\u0631\u0627\u0621\u0627\u062a \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuOverviewTab": "\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629"
+  ,"menuOverviewSectionsTab": "\u0627\u0644\u0623\u0642\u0633\u0627\u0645"
+  ,"menuOverviewProductsTab": "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a"
+  ,"menuOverviewWorkspaceTabs": "\u0639\u0644\u0627\u0645\u0627\u062a \u062a\u0628\u0648\u064a\u0628 \u0645\u0633\u0627\u062d\u0629 \u0639\u0645\u0644 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuOverviewDetails": "\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuOverviewName": "\u0627\u0644\u0627\u0633\u0645"
+  ,"menuOverviewStatus": "\u0627\u0644\u062d\u0627\u0644\u0629"
+  ,"menuOverviewComposition": "\u0627\u0644\u062a\u0643\u0648\u064a\u0646"
+  ,"menuOverviewManageSections": "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0623\u0642\u0633\u0627\u0645"
+  ,"menuOverviewManageProducts": "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a"
+  ,"menuOverviewCompositionValue": "{sectionCount} \u0623\u0642\u0633\u0627\u0645 · {visibleProductCount} \u0645\u0646\u062a\u062c \u0638\u0627\u0647\u0631"
+  ,"@menuOverviewCompositionValue": {"placeholders": {"sectionCount": {"type": "int"}, "visibleProductCount": {"type": "int"}}}
+  ,"menuOverviewDraft": "\u0645\u0633\u0648\u062f\u0629"
+  ,"menuOverviewActive": "\u0646\u0634\u0637\u0629"
+  ,"menuOverviewPaused": "\u0645\u0648\u0642\u0641\u0629 \u0645\u0624\u0642\u062a\u064b\u0627"
+  ,"menuOverviewArchived": "\u0645\u0624\u0631\u0634\u0641\u0629"
+  ,"menuOverviewArchivedReadOnly": "\u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0645\u0624\u0631\u0634\u0641\u0629 \u0648\u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637. \u0627\u0633\u062a\u0639\u062f \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0642\u0628\u0644 \u062a\u0639\u062f\u064a\u0644 \u062a\u0643\u0648\u064a\u0646\u0647\u0627."
+  ,"menuOverviewLoading": "\u062c\u0627\u0631\u064d \u062a\u062d\u0645\u064a\u0644 \u0645\u0633\u0627\u062d\u0629 \u0639\u0645\u0644 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuOverviewCouldNotLoad": "\u062a\u0639\u0630\u0651\u0631 \u062a\u062d\u0645\u064a\u0644 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629"
+  ,"menuOverviewArchive": "\u0623\u0631\u0634\u0641\u0629"
+  ,"menuOverviewRestore": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629"
+  ,"menuSectionsTitle": "\u0627\u0644\u0623\u0642\u0633\u0627\u0645"
+  ,"menuSectionsHelp": "\u0646\u0638\u0651\u0645 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0636\u0645\u0646 \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u064a\u0633\u0647\u0644 \u0639\u0644\u0649 \u0627\u0644\u0639\u0645\u064a\u0644 \u062a\u0635\u0641\u062d\u0647\u0627."
+  ,"menuSectionsAdd": "\u0625\u0636\u0627\u0641\u0629 \u0642\u0633\u0645"
+  ,"menuSectionsReorder": "\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0623\u0642\u0633\u0627\u0645"
+  ,"menuSectionsDone": "\u062a\u0645"
+  ,"menuSectionsReorderHelp": "\u0627\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0623\u0633\u0647\u0645 \u0644\u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0630\u064a \u064a\u0631\u0627\u0647 \u0627\u0644\u0639\u0645\u0644\u0627\u0621."
+  ,"menuSectionsProducts": "{count} \u0645\u0646\u062a\u062c\u0627\u062a"
+  ,"@menuSectionsProducts": {"placeholders": {"count": {"type": "int"}}}
+  ,"menuSectionsArchived": "\u0645\u0624\u0631\u0634\u0641"
+  ,"menuSectionsInactive": "\u063a\u064a\u0631 \u0646\u0634\u0637"
+  ,"menuSectionsActions": "\u0625\u062c\u0631\u0627\u0621\u0627\u062a {name}"
+  ,"@menuSectionsActions": {"placeholders": {"name": {"type": "String"}}}
+  ,"menuSectionsEdit": "\u062a\u0639\u062f\u064a\u0644"
+  ,"menuSectionsArchive": "\u0623\u0631\u0634\u0641\u0629"
+  ,"menuSectionsRestore": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629"
+  ,"menuSectionsMoveUp": "\u0646\u0642\u0644 \u0644\u0644\u0623\u0639\u0644\u0649"
+  ,"menuSectionsMoveDown": "\u0646\u0642\u0644 \u0644\u0644\u0623\u0633\u0641\u0644"
+  ,"menuSectionsNoSections": "\u0644\u0627 \u062a\u0648\u062c\u062f \u0623\u0642\u0633\u0627\u0645 \u0628\u0639\u062f"
+  ,"menuSectionsEmptyHelp": "\u0623\u0646\u0634\u0626 \u0642\u0633\u0645\u064b\u0627 \u0642\u0628\u0644 \u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a."
+  ,"menuSectionsLoadError": "\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0623\u0642\u0633\u0627\u0645"
+  ,"menuSectionEditorAddTitle": "\u0625\u0636\u0627\u0641\u0629 \u0642\u0633\u0645"
+  ,"menuSectionEditorEditTitle": "\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0642\u0633\u0645"
+  ,"menuSectionEditorAddHelp": "\u0623\u0646\u0634\u0626 \u0645\u062c\u0645\u0648\u0639\u0629 \u0648\u0627\u0636\u062d\u0629 \u064a\u0645\u0643\u0646 \u0644\u0644\u0639\u0645\u0644\u0627\u0621 \u062a\u0635\u0641\u062d\u0647\u0627."
+  ,"menuSectionEditorEditHelp": "\u062d\u062f\u0651\u062b \u0647\u0630\u0647 \u0627\u0644\u0645\u062c\u0645\u0648\u0639\u0629 \u062f\u0648\u0646 \u0645\u063a\u0627\u062f\u0631\u0629 \u0645\u0633\u0627\u062d\u0629 \u0639\u0645\u0644 \u0627\u0644\u0642\u0627\u0626\u0645\u0629."
+  ,"menuSectionEditorClose": "\u0625\u063a\u0644\u0627\u0642 \u0645\u062d\u0631\u0631 \u0627\u0644\u0642\u0633\u0645"
+  ,"menuSectionEditorEnglishName": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629"
+  ,"menuSectionEditorArabicName": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0639\u0631\u0628\u064a\u0629"
+  ,"menuSectionEditorMoreDetails": "\u062a\u0641\u0627\u0635\u064a\u0644 \u0623\u0643\u062b\u0631"
+  ,"menuSectionEditorHideDetails": "\u0625\u062e\u0641\u0627\u0621 \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644"
+  ,"menuSectionEditorDescription": "\u0627\u0644\u0648\u0635\u0641"
+  ,"menuSectionEditorImageUrl": "\u0631\u0627\u0628\u0637 \u0627\u0644\u0635\u0648\u0631\u0629"
+  ,"menuSectionEditorActive": "\u0642\u0633\u0645 \u0646\u0634\u0637"
+  ,"menuSectionEditorNameRequired": "\u0623\u062f\u062e\u0644 \u0627\u0633\u0645\u064b\u0627 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629 \u0623\u0648 \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0644\u0644\u0645\u062a\u0627\u0628\u0639\u0629."
+  ,"menuSectionEditorSaveFailed": "\u062a\u0639\u0630\u0631 \u062d\u0641\u0638 \u0647\u0630\u0627 \u0627\u0644\u0642\u0633\u0645. \u0631\u0627\u062c\u0639 \u0627\u0644\u062d\u0642\u0648\u0644 \u0648\u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649."
+  ,"menuSectionEditorSave": "\u062d\u0641\u0638 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a"
+  ,"menuProductsTitle": "المنتجات"
+  ,"menuProductsHelp": "نظّم المنتجات التي يراها العملاء داخل كل قسم."
+  ,"menuProductsAdd": "إضافة منتجات"
+  ,"menuProductsReorder": "ترتيب المنتجات"
+  ,"menuProductsDone": "تم"
+  ,"menuProductsReorderHelp": "استخدم الأسهم لتغيير ترتيب المنتجات داخل كل قسم."
+  ,"menuProductsSearchHint": "ابحث عن منتج في هذه القائمة"
+  ,"menuProductsCount": "{count} منتجات"
+  ,"@menuProductsCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"menuProductsPickerTitle": "إضافة منتجات"
+  ,"menuProductsPickerTargetSection": "إضافة إلى قسم"
+  ,"menuProductsPickerSearchHint": "البحث عن منتجات..."
+  ,"menuProductsPickerAlreadyInSection": "مضاف مسبقًا في {section}"
+  ,"@menuProductsPickerAlreadyInSection": {"placeholders": {"section": {"type": "String"}}}
+  ,"menuProductsPickerSelected": "المحدد: {count}"
+  ,"@menuProductsPickerSelected": {"placeholders": {"count": {"type": "int"}}}
+  ,"menuProductsPickerNoMatches": "لا توجد منتجات مطابقة لبحثك."
+  ,"menuProductsPickerNoEligible": "جميع المنتجات المتاحة مضافة بالفعل إلى هذا القسم."
+  ,"menuProductsPickerLoadError": "تعذر تحميل المنتجات."
+  ,"menuProductsPickerPartialAdded": "تمت إضافة {added} منتجات. تعذر إضافة {failed}."
+  ,"@menuProductsPickerPartialAdded": {"placeholders": {"added": {"type": "int"}, "failed": {"type": "int"}}}
+  ,"menuProductsPickerConflict": "هذا المنتج موجود بالفعل في {section}."
+  ,"@menuProductsPickerConflict": {"placeholders": {"section": {"type": "String"}}}
+  ,"menuProductsBasePrice": "السعر الأساسي {price}"
+  ,"@menuProductsBasePrice": {"placeholders": {"price": {"type": "String"}}}
+  ,"menuProductsFeatured": "مميز"
+  ,"menuProductsHidden": "مخفي"
+  ,"menuProductsArchivedPlacement": "تمت إزالته من القائمة"
+  ,"menuProductsArchivedProduct": "منتج مؤرشف"
+  ,"menuProductsInactive": "غير نشط"
+  ,"menuProductsActions": "إجراءات المنتج"
+  ,"menuProductsMarkFeatured": "تعيين كمميز"
+  ,"menuProductsRemoveFeatured": "إزالة التمييز"
+  ,"menuProductsHide": "إخفاء من القائمة"
+  ,"menuProductsShow": "إظهار في القائمة"
+  ,"menuProductsMove": "نقل إلى قسم"
+  ,"menuProductsRemove": "إزالة من القائمة"
+  ,"menuProductsRestore": "استعادة الموضع"
+  ,"menuProductsMoveUp": "نقل للأعلى"
+  ,"menuProductsMoveDown": "نقل للأسفل"
+  ,"menuProductsEmpty": "لا توجد منتجات في هذا القسم بعد."
+  ,"menuProductsNoMatches": "لا توجد منتجات مطابقة في هذا القسم."
+  ,"menuProductsNoSections": "لا توجد أقسام بعد"
+  ,"menuProductsNoSectionsHelp": "أنشئ قسمًا قبل إضافة المنتجات."
+  ,"menuProductsArchivedMenuReadOnly": "هذه القائمة مؤرشفة وللعرض فقط. لا يزال تكوينها متاحًا للمراجعة."
+  ,"menuProductsLoadError": "تعذر تحميل المنتجات"
+  ,"menuProductsRemoveHelp": "يؤدي هذا إلى إزالة المنتج من هذا القسم والقائمة فقط. يبقى المنتج في الكتالوج."
+  ,"menuProductsRestoreHelp": "يؤدي هذا إلى استعادة هذا الموضع فقط. ولا يستعيد المنتج أو يعيد تنشيطه."
+  ,"menuListNotAvailable": "—",
+  "assignmentsWorkspaceTitle": "التخصيصات والجدولة",
+  "assignmentsWorkspaceHelp": "اختر فرعًا وقناة بيع، ثم تحكم بالقوائم المتاحة في سياق البيع هذا.",
+  "assignmentsBranch": "الفرع",
+  "assignmentsSalesChannel": "قناة البيع",
+  "assignmentsTimezone": "المنطقة الزمنية",
+  "assignmentsChooseBranch": "اختر فرعًا",
+  "assignmentsChooseChannel": "اختر قناة بيع",
+  "assignmentsTimezonePending": "اختر فرعًا",
+  "assignmentsNoContextTitle": "اختر سياق بيع",
+  "assignmentsNoContextHelp": "اختر فرعًا وقناة بيع لإدارة قوائمه.",
+  "assignmentsAssignedMenus": "القوائم المخصصة",
+  "assignmentsMenuCount": "{count} قوائم مخصصة",
+  "@assignmentsMenuCount": {"placeholders": {"count": {"type": "int"}}},
+  "assignmentsReorderMenus": "ترتيب القوائم",
+  "assignmentsReorderHelp": "استخدم الأسهم لتغيير ترتيب ظهور القوائم في سياق البيع هذا. لا يحدد الترتيب القائمة الفائزة.",
+  "assignmentsReorderDone": "تم",
+  "assignmentsMoveUp": "نقل للأعلى",
+  "assignmentsMoveDown": "نقل للأسفل",
+  "assignmentsReorderSaveFailed": "تعذر حفظ ترتيب القوائم. حاول مرة أخرى.",
+  "assignmentsReorderArchivedUnavailable": "لا يتوفر ترتيب القوائم بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.",
+  "assignmentsAddMenus": "إضافة قوائم",
+  "assignmentsNoMenusTitle": "لا توجد قوائم مخصصة",
+  "assignmentsNoMenusHelp": "أضف قائمة إلى {branch} · {channel}.",
+  "@assignmentsNoMenusHelp": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}},
+  "assignmentsLoadErrorTitle": "تعذر تحميل التخصيصات",
+  "assignmentsLifecycle": "القائمة: {status}",
+  "@assignmentsLifecycle": {"placeholders": {"status": {"type": "String"}}},
+  "assignmentsPaused": "موقوفة",
+  "assignmentsActive": "التخصيص نشط",
+  "assignmentsInactive": "التخصيص غير نشط",
+  "assignmentsAvailableNow": "متاحة الآن",
+  "assignmentsOutsideHours": "خارج ساعات الجدولة",
+  "assignmentsNoScheduleRestriction": "لا توجد قيود للجدولة",
+  "assignmentsScheduleUnknown": "حالة الجدولة غير متاحة",
+  "assignmentsManageSchedule": "إدارة الجدول",
+  "assignmentsRemove": "إزالة من سياق البيع هذا",
+  "assignmentsArchivedDiagnostic": "قائمة مؤرشفة — الإجراءات غير متاحة",
+  "assignmentsChannelWaiterApp": "تطبيق النادل",
+  "assignmentsChannelKiosk": "الكشك",
+  "assignmentsChannelQrOrdering": "طلب QR",
+  "assignmentsChannelDelivery": "التوصيل",
+  "assignmentsChannelOnlineOrdering": "الطلب عبر الإنترنت",
+  "assignmentsMenuFallback": "قائمة",
+  "assignmentsAddSearch": "البحث في القوائم",
+  "assignmentsAddEmpty": "جميع القوائم المتاحة مخصصة بالفعل لسياق البيع هذا.",
+  "assignmentsAddSelected": "المحدد: {count}",
+  "@assignmentsAddSelected": {"placeholders": {"count": {"type": "int"}}},
+  "assignmentsAddSelectedAction": "إضافة {count} قوائم",
+  "@assignmentsAddSelectedAction": {"placeholders": {"count": {"type": "int"}}},
+  "assignmentsAddAlreadyAssigned": "مخصصة بالفعل",
+  "assignmentsAddArchivedUnavailable": "لا يمكن تخصيص القوائم المؤرشفة.",
+  "assignmentsAddNoMatches": "لا توجد قوائم تطابق بحثك.",
+  "assignmentsAddLoadError": "تعذر تحميل القوائم",
+  "assignmentsAddSaveError": "تعذر إضافة القوائم. حاول مرة أخرى.",
+  "assignmentsAddDuplicateError": "قائمة واحدة أو أكثر مخصصة بالفعل لسياق البيع هذا.",
+  "assignmentsAddArchivedScopeError": "إضافة القوائم غير متاحة بينما يحتوي سياق البيع هذا على قائمة مؤرشفة. أزل التخصيص المؤرشف أولاً.",
+  "menuScheduleTitle": "جدول القائمة",
+  "menuScheduleTimesShownIn": "الأوقات معروضة بتوقيت {timezone}",
+  "@menuScheduleTimesShownIn": {"placeholders": {"timezone": {"type": "String"}}},
+  "menuScheduleUsingBroader": "يُستخدم جدول القائمة الأوسع",
+  "menuScheduleCustomizedFor": "مخصص لـ {context}",
+  "@menuScheduleCustomizedFor": {"placeholders": {"context": {"type": "String"}}},
+  "menuScheduleCustomize": "تخصيص لهذا السياق",
+  "menuScheduleUseBroader": "استخدام الجدول الأوسع",
+  "menuScheduleAvailableAllDay": "متاح طوال اليوم",
+  "menuScheduleUnavailable": "غير متاح",
+  "menuScheduleCustomHours": "ساعات مخصصة",
+  "menuScheduleStartTime": "وقت البدء",
+  "menuScheduleEndTime": "وقت الانتهاء",
+  "menuScheduleEditDay": "تحرير {day}",
+  "@menuScheduleEditDay": {"placeholders": {"day": {"type": "String"}}},
+  "menuScheduleSaveDay": "تطبيق",
+  "menuScheduleSave": "حفظ الجدول",
+  "menuScheduleLoadError": "تعذر تحميل جدول القائمة",
+  "menuScheduleSaveError": "تعذر حفظ جدول القائمة. حاول مرة أخرى.",
+  "menuScheduleMultipleWindows": "{count} فترات زمنية",
+  "@menuScheduleMultipleWindows": {"placeholders": {"count": {"type": "int"}}},
+  "menuScheduleMultipleWindowsReadOnly": "يحتوي هذا اليوم على عدة فترات زمنية. سيتم الحفاظ عليها ويمكن تحريرها لاحقًا في الجدول المتقدم.",
+  "menuScheduleUnavailableNotSupported": "يستخدم هذا اليوم قاعدة يومية. احتفظ بها كما هي حتى توفر الجدولة المتقدمة.",
+  "menuScheduleInvalidTimes": "أدخل وقتين مختلفين بصيغة HH:mm.",
+  "menuScheduleMonday": "الاثنين",
+  "menuScheduleTuesday": "الثلاثاء",
+  "menuScheduleWednesday": "الأربعاء",
+  "menuScheduleThursday": "الخميس",
+  "menuScheduleFriday": "الجمعة",
+  "menuScheduleSaturday": "السبت",
+  "menuScheduleSunday": "الأحد",
+  "menuScheduleMoreOptions": "خيارات الجدول الإضافية",
+  "menuScheduleDateLimits": "حدود التاريخ",
+  "menuScheduleStartDate": "تاريخ البدء (اختياري)",
+  "menuScheduleEndDate": "تاريخ الانتهاء (اختياري)",
+  "menuScheduleAddTimeWindow": "إضافة فترة زمنية",
+  "menuScheduleOvernightUntil": "يمتد لليوم التالي — متاح حتى {time}",
+  "@menuScheduleOvernightUntil": {"placeholders": {"time": {"type": "String"}}},
+  "menuScheduleEveryDayReadOnly": "تنطبق هذه القاعدة على كل يوم، لذلك يتم الاحتفاظ بها كما هي للحفاظ على معنى الجدول.",
+  "menuScheduleCheckTitle": "التحقق من الجدول",
+  "menuScheduleDate": "التاريخ",
+  "menuScheduleTime": "الوقت",
+  "menuScheduleCheckTimezone": "تُقيَّم الأوقات بتوقيت {timezone}",
+  "@menuScheduleCheckTimezone": {"placeholders": {"timezone": {"type": "String"}}},
+  "menuScheduleCheckSaveFirst": "احفظ تغييرات الجدول أولاً للتحقق من الجدول المحفوظ.",
+  "menuScheduleCheckFailed": "تعذر التحقق من الجدول. حاول مرة أخرى.",
+  "menuScheduleInvalidDateRange": "يجب أن يكون تاريخ الانتهاء في تاريخ البدء أو بعده.",
+  "menuScheduleDiscardTitle": "تجاهل تغييرات الجدول؟",
+  "menuScheduleDiscardMessage": "لم يتم حفظ تغييرات الجدول.",
+  "menuScheduleDiscard": "تجاهل التغييرات",
+  "menuScheduleCustomizeDayTitle": "تخصيص {day}",
+  "@menuScheduleCustomizeDayTitle": {"placeholders": {"day": {"type": "String"}}},
+  "menuScheduleCustomizeDayMessage": "ينطبق هذا الجدول حاليًا على كل الأيام. سيحافظ تخصيص يوم واحد على الجدول نفسه للأيام الأخرى ويسمح بتغيير ذلك اليوم بشكل مستقل.",
+  "menuScheduleCustomizeDayAction": "تخصيص {day}",
+  "@menuScheduleCustomizeDayAction": {"placeholders": {"day": {"type": "String"}}},
+  "menuScheduleDateLimitsMixed": "تحتوي هذه القواعد على حدود تاريخ مختلفة. تُترك حدود التاريخ دون تغيير هنا حتى لا يستبدلها هذا المحرر."
+  ,"reviewPublishPageHelp": "راجِع جاهزية القائمة، وعاين تجربة البيع، وانشر إصدارًا لسياق البيع هذا.",
+  "reviewSellingContext": "سياق البيع",
+  "reviewSellingContextHelp": "تغطي هذه المراجعة القوائم المعيّنة لسياق البيع المحدد.",
+  "reviewBranch": "الفرع",
+  "reviewSalesChannel": "قناة البيع",
+  "reviewTimezone": "المنطقة الزمنية",
+  "reviewScope": "النطاق",
+  "reviewScopeAssignedMenus": "القوائم المعيّنة لهذا السياق",
+  "reviewReadinessTab": "الجاهزية",
+  "reviewPreviewTab": "المعاينة",
+  "reviewPublishTab": "النشر",
+  "reviewVersionsTab": "الإصدارات",
+  "reviewCurrentlyPublished": "المنشور حاليًا",
+  "reviewNotPublishedYet": "لم يُنشر بعد",
+  "reviewNoCurrentVersion": "لم يُنشر إصدار قائمة لسياق البيع هذا.",
+  "reviewCurrentVersionLoadError": "تعذر تحميل الإصدار المنشور الحالي.",
+  "reviewVersionNumber": "الإصدار {version}",
+  "@reviewVersionNumber": {"placeholders": {"version": {"type": "int"}}},
+  "reviewPublishedAt": "نُشر {date}",
+  "@reviewPublishedAt": {"placeholders": {"date": {"type": "String"}}},
+  "reviewViewVersions": "عرض الإصدارات",
+  "reviewReadiness": "الجاهزية",
+  "reviewReadinessHelp": "راجِع التحقق المعتمد لسياق البيع هذا.",
+  "reviewCheckAgain": "تحقق مجددًا",
+  "reviewNeedsAttention": "تحتاج إلى اهتمام",
+  "reviewReadyToPublish": "جاهز للنشر",
+  "reviewFixBlockingErrors": "أصلح الأخطاء المانعة قبل النشر.",
+  "reviewErrors": "أخطاء",
+  "reviewWarnings": "تحذيرات",
+  "reviewWarningsToReview": "{count, plural, =1{تحذير واحد للمراجعة.} =2{تحذيران للمراجعة.} few{{count} تحذيرات للمراجعة.} many{{count} تحذيرًا للمراجعة.} other{{count} تحذير للمراجعة.}}",
+  "@reviewWarningsToReview": {"placeholders": {"count": {"type": "num"}}},
+  "reviewNoIssuesForScope": "لم تُعثر على مشكلات لـ {branch} · {channel}.",
+  "@reviewNoIssuesForScope": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}},
+  "reviewNoMenusAssigned": "لا توجد قوائم معيّنة",
+  "reviewNoMenusAssignedHelp": "عيّن قائمة نشطة واحدة على الأقل لـ {branch} · {channel} قبل النشر.",
+  "@reviewNoMenusAssignedHelp": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}},
+  "reviewGoToAssignments": "انتقل إلى التعيينات",
+  "reviewReadinessLoadError": "تعذر تحميل نتائج الجاهزية.",
+  "reviewTryAgain": "حاول مرة أخرى.",
+  "reviewIssuesAll": "الكل",
+  "reviewSearchIssues": "البحث في المشكلات...",
+  "reviewNoMatchingIssues": "لا توجد مشكلات مطابقة",
+  "reviewTryDifferentSearch": "جرّب بحثًا أو تصفية مختلفة.",
+  "reviewIssueCount": "{count, plural, =0{لا توجد مشكلات} =1{مشكلة واحدة} =2{مشكلتان} few{{count} مشكلات} many{{count} مشكلة} other{{count} مشكلة}}",
+  "@reviewIssueCount": {"placeholders": {"count": {"type": "num"}}},
+  "reviewIssueGroupMenus": "القوائم",
+  "reviewIssueGroupSections": "الأقسام",
+  "reviewIssueGroupProducts": "المنتجات",
+  "reviewIssueGroupVariants": "الخيارات",
+  "reviewIssueGroupRecipesMaterials": "الوصفات والمواد",
+  "reviewIssueGroupModifiers": "المعدّلات",
+  "reviewIssueGroupPricing": "التسعير",
+  "reviewIssueGroupAvailability": "التوفّر",
+  "reviewIssueGroupAssignmentsScope": "التعيينات والنطاق",
+  "reviewIssueGroupOther": "أخرى / عامة",
+  "reviewIssueGeneral": "عام",
+  "reviewOpenMenu": "فتح القائمة",
+  "reviewOpenProduct": "فتح المنتج",
+  "reviewOpenSections": "فتح الأقسام",
+  "reviewReviewMenu": "مراجعة القائمة",
+  "reviewIssueContextMenu": "مشكلة في القائمة",
+  "reviewIssueContextSection": "مشكلة في القسم",
+  "reviewIssueContextProduct": "مشكلة في المنتج",
+  "reviewIssueContextVariant": "مشكلة في الخيار",
+  "reviewIssueContextPlacement": "مشكلة في موضع القائمة",
+  "reviewIssueContextModifier": "مشكلة في المعدِّل",
+  "reviewIssueContextRecipe": "مشكلة في الوصفة أو المادة",
+  "reviewIssueContextScope": "مشكلة في سياق البيع",
+  "reviewIssueContextGeneral": "مشكلة عامة",
+  "reviewPreviewContext": "عاين مجموعة القوائم المعيّنة لسياق البيع هذا.",
+  "reviewPreviewLanguage": "لغة المعاينة",
+  "reviewPreviewLanguageDefault": "اللغة الافتراضية",
+  "reviewPreviewLanguageArabic": "العربية",
+  "reviewPreviewLanguageEnglish": "الإنجليزية",
+  "reviewPreviewShowHidden": "إظهار العناصر المخفية",
+  "reviewPreviewShowUnavailable": "إظهار العناصر غير المتاحة",
+  "reviewPreviewRefresh": "تحديث المعاينة",
+  "reviewPreviewLoading": "جارٍ تحميل المعاينة",
+  "reviewPreviewBlockingBanner": "تحتوي هذه المعاينة على مشكلات يجب إصلاحها قبل النشر.",
+  "reviewPreviewReviewReadiness": "مراجعة الجاهزية",
+  "reviewPreviewAvailableNow": "متاح الآن",
+  "reviewPreviewOutsideScheduledHours": "خارج ساعات الجدول",
+  "reviewPreviewHidden": "مخفي",
+  "reviewPreviewUnavailable": "غير متاح",
+  "reviewPreviewSoldOut": "نفد المخزون",
+  "reviewPreviewTemporarilyUnavailable": "غير متاح مؤقتًا",
+  "reviewPreviewAvailable": "متاح",
+  "reviewPreviewFeatured": "مميّز",
+  "reviewPreviewDefault": "افتراضي",
+  "reviewPreviewVariants": "الخيارات",
+  "reviewPreviewModifiers": "المعدّلات",
+  "reviewPreviewRecipeConfigured": "الوصفة مهيأة",
+  "reviewPreviewRecipeComponents": "{count} مكوّنات",
+  "@reviewPreviewRecipeComponents": {"placeholders": {"count": {"type": "int"}}},
+  "reviewPreviewNoMenus": "لا توجد قوائم للمعاينة",
+  "reviewPreviewNoMenusHelp": "عيّن قائمة نشطة واحدة على الأقل لسياق البيع هذا.",
+  "reviewPreviewEmptySection": "لا توجد منتجات مضمنة في هذا القسم.",
+  "reviewPreviewError": "تعذر تحميل المعاينة.",
+  "reviewPreviewRetry": "إعادة المحاولة",
+  "reviewPreviewBasePrice": "السعر الأساسي",
+  "reviewPreviewRequired": "مطلوب",
+  "reviewPreviewOptional": "اختياري",
+  "reviewPublishQuestion": "\u0646\u0634\u0631 {branch} \u00b7 {channel}\u061f",
+  "@reviewPublishQuestion": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}},
+  "reviewPublishScopeHelp": "\u0633\u064a\u0646\u0634\u0626 \u0647\u0630\u0627 \u0625\u0635\u062f\u0627\u0631\u064b\u0627 \u0645\u0646\u0634\u0648\u0631\u064b\u0627 \u0644\u0644\u0642\u0627\u0626\u0645\u0629 \u0644\u0633\u064a\u0627\u0642 \u0627\u0644\u0628\u064a\u0639 \u0627\u0644\u062f\u0642\u064a\u0642 \u0647\u0630\u0627.",
+  "reviewPublishCurrentVersion": "\u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u062d\u0627\u0644\u064a",
+  "reviewPublishCheckingReadiness": "\u062c\u0627\u0631\u064d \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u062c\u0627\u0647\u0632\u064a\u0629\u2026",
+  "reviewPublishWaitForReadiness": "\u0627\u0646\u062a\u0638\u0631 \u0627\u0643\u062a\u0645\u0627\u0644 \u0641\u062d\u0635 \u0627\u0644\u062c\u0627\u0647\u0632\u064a\u0629 \u0627\u0644\u062d\u0627\u0644\u064a \u0642\u0628\u0644 \u0627\u0644\u0646\u0634\u0631.",
+  "reviewPublishNoAssignedMenu": "\u0639\u064a\u0651\u0646 \u0642\u0627\u0626\u0645\u0629 \u0646\u0634\u0637\u0629 \u0648\u0627\u062d\u062f\u0629 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644 \u0644\u0633\u064a\u0627\u0642 \u0627\u0644\u0628\u064a\u0639 \u0647\u0630\u0627 \u0642\u0628\u0644 \u0627\u0644\u0646\u0634\u0631.",
+  "reviewPublishCannotPublish": "\u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u0646\u0634\u0631 \u0628\u0639\u062f",
+  "reviewPublishReviewErrors": "\u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0623\u062e\u0637\u0627\u0621",
+  "reviewPublishReviewIssues": "\u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0645\u0634\u0643\u0644\u0627\u062a",
+  "reviewPublishWarningsCanProceed": "{count, plural, =1{\u062a\u0628\u0642\u0649 \u062a\u062d\u0630\u064a\u0631 \u0648\u0627\u062d\u062f. \u064a\u0645\u0643\u0646\u0643 \u0645\u0639 \u0630\u0644\u0643 \u0646\u0634\u0631 \u0647\u0630\u0627 \u0627\u0644\u0625\u0635\u062f\u0627\u0631.} other{\u062a\u0628\u0642\u0649 {count} \u062a\u062d\u0630\u064a\u0631\u0627\u062a. \u064a\u0645\u0643\u0646\u0643 \u0645\u0639 \u0630\u0644\u0643 \u0646\u0634\u0631 \u0647\u0630\u0627 \u0627\u0644\u0625\u0635\u062f\u0627\u0631.}}",
+  "@reviewPublishWarningsCanProceed": {"placeholders": {"count": {"type": "num"}}},
+  "reviewPublishCleanReady": "\u0644\u0645 \u064a\u064f\u0639\u062b\u0631 \u0639\u0644\u0649 \u0645\u0634\u0643\u0644\u0627\u062a \u0645\u0627\u0646\u0639\u0629. \u064a\u0645\u0643\u0646\u0643 \u0646\u0634\u0631 \u0647\u0630\u0627 \u0627\u0644\u0625\u0635\u062f\u0627\u0631.",
+  "reviewPublishAction": "\u0646\u0634\u0631 \u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0642\u0627\u0626\u0645\u0629",
+  "reviewPublishPublishing": "\u062c\u0627\u0631\u064d \u0627\u0644\u0646\u0634\u0631\u2026",
+  "reviewPublishConfirmTitle": "\u0646\u0634\u0631 {branch} \u00b7 {channel}\u061f",
+  "@reviewPublishConfirmTitle": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}},
+  "reviewPublishImmutableExplanation": "\u0633\u064a\u064f\u0646\u0634\u0623 \u0625\u0635\u062f\u0627\u0631 \u0642\u0627\u0626\u0645\u0629 \u063a\u064a\u0631 \u0642\u0627\u0628\u0644 \u0644\u0644\u062a\u0639\u062f\u064a\u0644 \u0625\u0630\u0627 \u062a\u063a\u064a\u0651\u0631 \u0627\u0644\u062a\u0643\u0648\u064a\u0646.",
+  "reviewPublishAlreadyUpToDate": "\u0645\u062d\u062f\u0651\u062b \u0628\u0627\u0644\u0641\u0639\u0644",
+  "reviewPublishNoChanges": "\u0644\u0645 \u064a\u064f\u0639\u062b\u0631 \u0639\u0644\u0649 \u062a\u063a\u064a\u064a\u0631\u0627\u062a \u0641\u064a \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0645\u0646\u0630 \u0627\u0644\u0625\u0635\u062f\u0627\u0631 {version}. \u0644\u0645 \u064a\u064f\u0646\u0634\u0623 \u0625\u0635\u062f\u0627\u0631 \u062c\u062f\u064a\u062f.",
+  "@reviewPublishNoChanges": {"placeholders": {"version": {"type": "int"}}},
+  "reviewPublishSuccess": "\u062a\u0645 \u0627\u0644\u0646\u0634\u0631 \u0628\u0646\u062c\u0627\u062d",
+  "reviewPublishCurrentForScope": "\u0647\u0630\u0627 \u0647\u0648 \u0627\u0644\u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0645\u0646\u0634\u0648\u0631 \u0627\u0644\u062d\u0627\u0644\u064a \u0644\u0640 {branch} \u00b7 {channel}.",
+  "@reviewPublishCurrentForScope": {"placeholders": {"branch": {"type": "String"}, "channel": {"type": "String"}}},
+  "reviewPublishRevalidationFailedTitle": "\u062a\u063a\u064a\u0651\u0631\u062a \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0648\u0644\u0645 \u062a\u0639\u062f \u062c\u0627\u0647\u0632\u0629 \u0644\u0644\u0646\u0634\u0631.",
+  "reviewPublishRevalidationFailedMessage": "\u062a\u0645 \u0627\u0643\u062a\u0634\u0627\u0641 \u0645\u0634\u0643\u0644\u0627\u062a \u062c\u062f\u064a\u062f\u0629 \u0623\u062b\u0646\u0627\u0621 \u0627\u0644\u062a\u062d\u0642\u0642 \u0627\u0644\u0646\u0647\u0627\u0626\u064a.",
+  "reviewPublishRequestFailed": "\u062a\u0639\u0630\u0651\u0631 \u0646\u0634\u0631 \u0625\u0635\u062f\u0627\u0631 \u0627\u0644\u0642\u0627\u0626\u0645\u0629.",
+  "reviewPublishTryAgain": "\u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649",
+  "reviewPreviewOptionUnavailable": "خيار غير متاح"
+  ,"menuUiUnsavedChangesTitle": "\u062a\u063a\u064a\u064a\u0631\u0627\u062a \u063a\u064a\u0631 \u0645\u062d\u0641\u0648\u0638\u0629"
+  ,"menuUiUnsavedChangesMessage": "\u0644\u062f\u064a\u0643 \u062a\u063a\u064a\u064a\u0631\u0627\u062a \u063a\u064a\u0631 \u0645\u062d\u0641\u0648\u0638\u0629. \u0625\u0630\u0627 \u063a\u0627\u062f\u0631\u062a \u0627\u0644\u0622\u0646\u060c \u0633\u064a\u062a\u0645 \u062a\u062c\u0627\u0647\u0644\u0647\u0627."
+  ,"menuUiStay": "\u0628\u0642\u0627\u0621"
+  ,"menuUiLeaveWithoutSaving": "\u0627\u0644\u0645\u063a\u0627\u062f\u0631\u0629 \u062f\u0648\u0646 \u062d\u0641\u0638"
+  ,"productEditorCreated": "\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u0646\u062a\u062c \u0628\u0646\u062c\u0627\u062d."
+  ,"productEditorUpdated": "\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0645\u0646\u062a\u062c \u0628\u0646\u062c\u0627\u062d."
+  ,"productEditorCreateHelp": "\u062d\u062f\u062f \u0645\u0627\u0647\u064a\u0629 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c\u060c \u0648\u0645\u0643\u0627\u0646\u0647 \u0641\u064a \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c\u060c \u0648\u0643\u064a\u0641\u064a\u0629 \u0628\u064a\u0639\u0647."
+  ,"productEditorEditHelp": "\u062d\u062f\u0651\u062b \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u0646\u062a\u062c \u0627\u0644\u062a\u064a \u064a\u0633\u062a\u062e\u062f\u0645\u0647\u0627 \u0627\u0644\u0645\u062f\u064a\u0631\u0648\u0646 \u064a\u0648\u0645\u064a\u064b\u0627."
+  ,"productEditorArchivedReadOnly": "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0645\u0624\u0631\u0634\u0641\u0629 \u0645\u062a\u0627\u062d\u0629 \u0644\u0644\u0631\u062c\u0648\u0639 \u0625\u0644\u064a\u0647\u0627 \u0641\u0642\u0637. \u0627\u0633\u062a\u0639\u062f \u0627\u0644\u0645\u0646\u062a\u062c \u0644\u062a\u0639\u062f\u064a\u0644\u0647."
+  ,"productEditorViewWorkspace": "\u0639\u0631\u0636 \u0645\u0633\u0627\u062d\u0629 \u0639\u0645\u0644 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productEditorDefaultName": "\u0627\u0633\u0645 \u0627\u0644\u0645\u0646\u062a\u062c \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"productEditorDefaultDescription": "\u0627\u0644\u0648\u0635\u0641 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"productEditorImage": "\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productEditorUploadingImage": "\u062c\u0627\u0631\u064d \u0631\u0641\u0639 \u0627\u0644\u0635\u0648\u0631\u0629…"
+  ,"productEditorChooseImage": "\u0627\u062e\u062a\u0631 \u0635\u0648\u0631\u0629"
+  ,"productEditorChangeImage": "\u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0635\u0648\u0631\u0629"
+  ,"productEditorRemoveImage": "\u0625\u0632\u0627\u0644\u0629 \u0627\u0644\u0635\u0648\u0631\u0629"
+  ,"productEditorImageFormats": "PNG\u060c JPG\u060c WEBP\u060c \u0623\u0648 GIF \u0628\u062d\u062f \u0623\u0642\u0635\u0649 5 \u0645\u064a\u063a\u0627\u0628\u0627\u064a\u062a"
+  ,"productEditorTranslationsClose": "\u0625\u063a\u0644\u0627\u0642 \u0627\u0644\u062a\u0631\u062c\u0645\u0627\u062a"
+  ,"productEditorDefaultContent": "\u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"productEditorLocalizedName": "\u0627\u0644\u0627\u0633\u0645 \u0627\u0644\u0645\u062a\u0631\u062c\u0645"
+  ,"productEditorLocalizedDescription": "\u0627\u0644\u0648\u0635\u0641 \u0627\u0644\u0645\u062a\u0631\u062c\u0645"
+  ,"productEditorStockTracking": "\u062a\u062a\u0628\u0639 \u0627\u0644\u0645\u062e\u0632\u0648\u0646"
+  ,"productEditorStockTrackingHelp": "\u062a\u062a\u0628\u0639 \u0627\u0644\u0645\u0648\u0627\u062f \u0627\u0644\u0645\u0633\u062a\u0647\u0644\u0643\u0629 \u0639\u0646\u062f \u062a\u062d\u0636\u064a\u0631 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"productEditorNoDefaultVariant": "\u0644\u0645 \u064a\u062a\u0645 \u0625\u0631\u062c\u0627\u0639 \u062e\u064a\u0627\u0631 \u0627\u0641\u062a\u0631\u0627\u0636\u064a."
+  ,"productEditorManageVariants": "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a"
+  ,"productDetailNotFound": "\u0627\u0644\u0645\u0646\u062a\u062c \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f."
+  ,"productDetailEdit": "\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailArchiveTitle": "\u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u061f"
+  ,"productDetailRestoreTitle": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u061f"
+  ,"productDetailArchiveAction": "\u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailRestoreAction": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailUsageEmpty": "\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u063a\u064a\u0631 \u0645\u0633\u062a\u062e\u062f\u0645 \u062d\u0627\u0644\u064a\u064b\u0627 \u0641\u064a \u0623\u064a \u0642\u0648\u0627\u0626\u0645."
+  ,"variantTitle": "\u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a"
+  ,"variantHelp": "\u0623\u062f\u0650\u0631 \u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0628\u064a\u0639 \u0627\u0644\u0645\u062a\u0627\u062d\u0629 \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"variantAdd": "\u0625\u0636\u0627\u0641\u0629 \u062e\u064a\u0627\u0631"
+  ,"variantEdit": "\u062a\u0639\u062f\u064a\u0644 \u0627\u0644\u062e\u064a\u0627\u0631"
+  ,"variantReorder": "\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0631\u062a\u064a\u0628"
+  ,"variantDone": "\u062a\u0645"
+  ,"variantRefresh": "\u062a\u062d\u062f\u064a\u062b \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a"
+  ,"variantReadOnly": "\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0624\u0631\u0634\u0641 \u0648\u062e\u064a\u0627\u0631\u0627\u062a\u0647 \u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637."
+  ,"variantCannotArchiveDefaultTitle": "\u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u062e\u064a\u0627\u0631 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"variantCannotArchiveDefaultMessage": "\u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u062e\u064a\u0627\u0631 \u0627\u0644\u0646\u0634\u0637 \u0627\u0644\u0648\u062d\u064a\u062f."
+  ,"variantArchiveMessage": "\u0633\u064a\u062a\u0645 \u0623\u0631\u0634\u0641\u0629 \u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631 \u0648\u064a\u0645\u0643\u0646 \u0627\u0633\u062a\u0639\u0627\u062f\u062a\u0647 \u0644\u0627\u062d\u0642\u064b\u0627."
+  ,"variantSelectReplacement": "\u0627\u062e\u062a\u0631 \u062e\u064a\u0627\u0631\u064b\u0627 \u0646\u0634\u0637\u064b\u0627 \u0628\u062f\u064a\u0644\u064b\u0627 \u0644\u0644\u062e\u064a\u0627\u0631 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a."
+  ,"variantOrder": "\u0627\u0644\u062a\u0631\u062a\u064a\u0628"
+  ,"variantName": "\u0627\u0633\u0645 \u0627\u0644\u062e\u064a\u0627\u0631"
+  ,"variantBasePrice": "\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064a"
+  ,"variantCostPrice": "\u0633\u0639\u0631 \u0627\u0644\u062a\u0643\u0644\u0641\u0629"
+  ,"variantDefault": "\u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"variantActions": "\u0627\u0644\u0625\u062c\u0631\u0627\u0621\u0627\u062a"
+  ,"variantActiveStatus": "\u062d\u0627\u0644\u0629 \u0627\u0644\u0646\u0634\u0627\u0637"
+  ,"variantMakeDefault": "\u062a\u0639\u064a\u064a\u0646\u0647 \u0643\u062e\u064a\u0627\u0631 \u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"variantDefaultMustBeActive": "\u064a\u062c\u0628 \u0623\u0646 \u064a\u0643\u0648\u0646 \u0627\u0644\u062e\u064a\u0627\u0631 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a \u0646\u0634\u0637\u064b\u0627."
+  ,"variantSaving": "\u062c\u0627\u0631\u064d \u0627\u0644\u062d\u0641\u0638…"
+  ,"variantNoArchived": "\u0644\u0627 \u062a\u0648\u062c\u062f \u062e\u064a\u0627\u0631\u0627\u062a \u0645\u0624\u0631\u0634\u0641\u0629."
+  ,"variantEmpty": "\u0644\u0645 \u064a\u064f\u0639\u062f \u0623\u064a \u062e\u064a\u0627\u0631\u0627\u062a \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"modifierAssignmentTitle": "\u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a"
+  ,"modifierAssignmentSaveChanges": "\u062d\u0641\u0638 \u0627\u0644\u062a\u063a\u064a\u064a\u0631\u0627\u062a"
+  ,"modifierAssignmentAddGroup": "\u0625\u0636\u0627\u0641\u0629 \u0645\u062c\u0645\u0648\u0639\u0629 \u0645\u0639\u062f\u0651\u0644\u0627\u062a"
+  ,"modifierAssignmentNoAssigned": "\u0644\u0627 \u062a\u064f\u0639\u064a\u0651\u0646 \u0623\u064a \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"modifierAssignmentNoAvailable": "\u0644\u0645 \u064a\u064f\u0639\u062b\u0631 \u0639\u0644\u0649 \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0645\u062a\u0627\u062d\u0629."
+  ,"modifierAssignmentSearch": "\u0627\u0644\u0628\u062d\u062b \u0641\u064a \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a"
+  ,"modifierAssignmentRemoveTitle": "\u0625\u0632\u0627\u0644\u0629 \u0645\u062c\u0645\u0648\u0639\u0629 \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a\u061f"
+  ,"modifierAssignmentRemoveMessage": "\u0625\u0632\u0627\u0644\u0629 \u0645\u062c\u0645\u0648\u0639\u0629 \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0645\u0646 \u0627\u0644\u0645\u0646\u062a\u062c\u061f \u0633\u062a\u0628\u0642\u0649 \u0627\u0644\u0645\u062c\u0645\u0648\u0639\u0629 \u0648\u062e\u064a\u0627\u0631\u0627\u062a\u0647\u0627 \u0645\u062a\u0627\u062d\u0629 \u0641\u064a \u0645\u0643\u062a\u0628\u0629 \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a."
+  ,"modifierAssignmentUseLibrarySettings": "\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0645\u0643\u062a\u0628\u0629"
+  ,"modifierAssignmentApply": "\u062a\u0637\u0628\u064a\u0642"
+  ,"modifierAssignmentCurrentBehavior": "\u0627\u0644\u0633\u0644\u0648\u0643 \u0627\u0644\u062d\u0627\u0644\u064a"
+  ,"modifierAssignmentNonNegative": "\u0627\u0633\u062a\u062e\u062f\u0645 \u0623\u0631\u0642\u0627\u0645\u064b\u0627 \u0635\u062d\u064a\u062d\u0629 \u063a\u064a\u0631 \u0633\u0627\u0644\u0628\u0629."
+  ,"modifierAssignmentInvalidConstraints": "\u0642\u064a\u0648\u062f \u0627\u0644\u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0641\u0639\u0651\u0627\u0644\u0629 \u063a\u064a\u0631 \u0635\u0627\u0644\u062d\u0629."
+  ,"productDetailUncategorized": "\u0645\u0646\u062a\u062c \u0628\u0644\u0627 \u0641\u0626\u0629"
+  ,"productDetailArchiveMenuAction": "\u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailRestoreMenuAction": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailBasePrice": "\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064a"
+  ,"productDetailKitchenStation": "\u0645\u062d\u0637\u0629 \u0627\u0644\u062a\u062d\u0636\u064a\u0631"
+  ,"productDetailWorkspaceNavigation": "\u062a\u0646\u0642\u0644 \u0645\u0633\u0627\u062d\u0629 \u0639\u0645\u0644 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailSetupHelp": "\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c \u0648\u0627\u0644\u062a\u062d\u0636\u064a\u0631 \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"productDetailDescription": "\u0627\u0644\u0648\u0635\u0641"
+  ,"productDetailAdvancedTechnical": "\u0645\u062a\u0642\u062f\u0645 \u0648\u062a\u0642\u0646\u064a"
+  ,"productDetailUsageHelp": "\u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u062a\u064a \u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0641\u064a\u0647\u0627 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u062d\u0627\u0644\u064a\u064b\u0627."
+  ,"productDetailUsageCount": "{count} \u0645\u0648\u0627\u0636\u0639 \u0646\u0634\u0637\u0629 \u0641\u064a \u0627\u0644\u0642\u0648\u0627\u0626\u0645."
+  ,"@productDetailUsageCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"productDetailArchivedVariantsMessage": "\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0624\u0631\u0634\u0641 \u0648\u062e\u064a\u0627\u0631\u0627\u062a\u0647 \u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637."
+  ,"productDetailArchivedModifiersMessage": "\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0624\u0631\u0634\u0641 \u0648\u062a\u0639\u064a\u064a\u0646\u0627\u062a \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637."
+  ,"productDetailViewAction": "\u0639\u0631\u0636 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"variantActive": "\u0646\u0634\u0637"
+  ,"variantInactive": "\u063a\u064a\u0631 \u0646\u0634\u0637"
+  ,"variantArchived": "\u0645\u0624\u0631\u0634\u0641"
+  ,"variantAll": "\u0627\u0644\u0643\u0644"
+  ,"variantSetDefaultTitle": "\u062a\u0639\u064a\u064a\u0646 \u00ab{name}\u00bb \u0643\u062e\u064a\u0627\u0631 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u061f"
+  ,"@variantSetDefaultTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"variantSetDefaultMessage": "\u0633\u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0633\u0639\u0631 \u0627\u0644\u0645\u0646\u062a\u062c \u0627\u0644\u0623\u0633\u0627\u0633\u064a \u0648SKU \u0648\u0627\u0644\u0628\u0627\u0631\u0643\u0648\u062f \u0648\u062a\u0648\u0627\u0641\u0642 POS \u0627\u0644\u0642\u062f\u064a\u0645 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631. \u0644\u0627 \u062a\u062a\u063a\u064a\u0631 \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629."
+  ,"variantArchiveTitle": "\u0623\u0631\u0634\u0641\u0629 \u00ab{name}\u00bb\u061f"
+  ,"@variantArchiveTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"variantRestoreDefaultTitle": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u00ab{name}\u00bb \u0643\u062e\u064a\u0627\u0631 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u061f"
+  ,"@variantRestoreDefaultTitle": {"placeholders": {"name": {"type": "String"}}}
+  ,"variantRestoreDefaultMessage": "\u0644\u0627 \u064a\u0648\u062c\u062f \u0644\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u062e\u064a\u0627\u0631 \u0627\u0641\u062a\u0631\u0627\u0636\u064a \u0646\u0634\u0637\u060c \u0644\u0630\u0627 \u064a\u062c\u0628 \u062a\u0639\u064a\u064a\u0646 \u0647\u0630\u0627 \u0627\u0644\u062e\u064a\u0627\u0631 \u0627\u0644\u0645\u0633\u062a\u0639\u0627\u062f \u0643\u0627\u0641\u062a\u0631\u0627\u0636\u064a."
+  ,"variantSetDefaultAction": "\u062a\u0639\u064a\u064a\u0646 \u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"variantRestoreDefaultAction": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0643\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"variantMoveUp": "\u0646\u0642\u0644 \u0644\u0644\u0623\u0639\u0644\u0649"
+  ,"variantMoveDown": "\u0646\u0642\u0644 \u0644\u0644\u0623\u0633\u0641\u0644"
+  ,"variantActionsFor": "\u0625\u062c\u0631\u0627\u0621\u0627\u062a {name}"
+  ,"@variantActionsFor": {"placeholders": {"name": {"type": "String"}}}
+  ,"variantReorderSemantic": "\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0631\u062a\u064a\u0628"
+  ,"variantSku": "SKU: {sku}"
+  ,"@variantSku": {"placeholders": {"sku": {"type": "String"}}}
+  ,"variantRecipeConfigured": "\u0627\u0644\u0648\u0635\u0641\u0629 \u0645\u064f\u0639\u062f\u0651\u0629"
+  ,"variantRecipeMissing": "\u0627\u0644\u0648\u0635\u0641\u0629 \u0645\u0641\u0642\u0648\u062f\u0629"
+  ,"variantRecipeNotConfigured": "\u0627\u0644\u0648\u0635\u0641\u0629 \u063a\u064a\u0631 \u0645\u064f\u0639\u062f\u0651\u0629"
+  ,"variantManageRecipe": "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0648\u0635\u0641\u0629"
+  ,"variantPricing": "\u0627\u0644\u062a\u0633\u0639\u064a\u0631"
+  ,"variantSellingHours": "\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0628\u064a\u0639"
+  ,"variantCurrentAvailability": "\u0627\u0644\u0625\u062a\u0627\u062d\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629"
+  ,"variantArabicName": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0639\u0631\u0628\u064a\u0629"
+  ,"variantEnglishName": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629"
+  ,"variantSortOrder": "\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0639\u0631\u0636"
+  ,"modifierAssignmentArchivedReadOnly": "\u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0624\u0631\u0634\u0641 \u0648\u062a\u0639\u064a\u064a\u0646\u0627\u062a \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0644\u0644\u0639\u0631\u0636 \u0641\u0642\u0637."
+  ,"modifierAssignmentViewProduct": "\u0639\u0631\u0636 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"modifierAssignmentProduct": "\u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"modifierAssignmentAssignedGroups": "\u0627\u0644\u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u0639\u064a\u0651\u0646\u0629 ({count})"
+  ,"@modifierAssignmentAssignedGroups": {"placeholders": {"count": {"type": "int"}}}
+  ,"modifierAssignmentAvailableGroups": "\u0627\u0644\u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u062a\u0627\u062d\u0629"
+  ,"modifierAssignmentReorder": "\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0631\u062a\u064a\u0628"
+  ,"modifierAssignmentDone": "\u062a\u0645"
+  ,"modifierAssignmentMoveUp": "\u0646\u0642\u0644 \u0644\u0644\u0623\u0639\u0644\u0649"
+  ,"modifierAssignmentMoveDown": "\u0646\u0642\u0644 \u0644\u0644\u0623\u0633\u0641\u0644"
+  ,"modifierAssignmentActionsFor": "\u0625\u062c\u0631\u0627\u0621\u0627\u062a {name}"
+  ,"@modifierAssignmentActionsFor": {"placeholders": {"name": {"type": "String"}}}
+  ,"modifierAssignmentChooseGroupHelp": "\u0627\u062e\u062a\u0631 \u0645\u062c\u0645\u0648\u0639\u0629 \u0644\u0625\u062a\u0627\u062d\u0629 \u062e\u064a\u0627\u0631\u0627\u062a\u0647\u0627 \u0644\u0639\u0645\u0644\u0627\u0621 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"modifierAssignmentCustomizeFor": "\u062a\u062e\u0635\u064a\u0635 \u0644\u0640 {name}"
+  ,"@modifierAssignmentCustomizeFor": {"placeholders": {"name": {"type": "String"}}}
+  ,"modifierAssignmentCustomizedFor": "\u0645\u062e\u0635\u0651\u0635 \u0644\u0640 {name}"
+  ,"@modifierAssignmentCustomizedFor": {"placeholders": {"name": {"type": "String"}}}
+  ,"modifierAssignmentUsingLibrarySettings": "\u064a\u0633\u062a\u062e\u062f\u0645 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0645\u0643\u062a\u0628\u0629"
+  ,"modifierAssignmentHowChoose": "\u0643\u064a\u0641 \u064a\u0646\u0628\u063a\u064a \u0644\u0644\u0639\u0645\u0644\u0627\u0621 \u0627\u0644\u0627\u062e\u062a\u064a\u0627\u0631\u061f"
+  ,"modifierAssignmentChooseOne": "\u0627\u062e\u062a\u0631 \u0648\u0627\u062d\u062f\u064b\u0627"
+  ,"modifierAssignmentChooseMultiple": "\u0627\u062e\u062a\u0631 \u0639\u062f\u0629 \u062e\u064a\u0627\u0631\u0627\u062a"
+  ,"modifierAssignmentMultipleHelp": "\u062a\u0633\u062a\u062e\u062f\u0645 \u0647\u0630\u0647 \u0627\u0644\u0645\u062c\u0645\u0648\u0639\u0629 \u062e\u064a\u0627\u0631\u0627\u062a \u0645\u062a\u0639\u062f\u062f\u0629 \u0645\u0646 \u0645\u0643\u062a\u0628\u0629 \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a."
+  ,"modifierAssignmentSingleHelp": "\u062a\u0633\u062a\u062e\u062f\u0645 \u0647\u0630\u0647 \u0627\u0644\u0645\u062c\u0645\u0648\u0639\u0629 \u062e\u064a\u0627\u0631\u064b\u0627 \u0648\u0627\u062d\u062f\u064b\u0627 \u0645\u0646 \u0645\u0643\u062a\u0628\u0629 \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a."
+  ,"modifierAssignmentMinimumChoices": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u062f\u0646\u0649 \u0644\u0644\u062e\u064a\u0627\u0631\u0627\u062a"
+  ,"modifierAssignmentMaximumChoices": "\u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 \u0644\u0644\u062e\u064a\u0627\u0631\u0627\u062a"
+  ,"modifierAssignmentAllowDuplicate": "\u0647\u0644 \u064a\u0645\u0643\u0646 \u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u062e\u064a\u0627\u0631 \u0646\u0641\u0633\u0647 \u0623\u0643\u062b\u0631 \u0645\u0646 \u0645\u0631\u0629\u061f"
+  ,"modifierAssignmentConfigure": "\u062a\u0647\u064a\u0626\u0629 {name}"
+  ,"@modifierAssignmentConfigure": {"placeholders": {"name": {"type": "String"}}}
+  ,"modifierAssignmentOverride": "\u062a\u062c\u0627\u0648\u0632 {label}"
+  ,"@modifierAssignmentOverride": {"placeholders": {"label": {"type": "String"}}}
+  ,"modifierAssignmentLibraryDefaultBoolean": "\u0627\u0641\u062a\u0631\u0627\u0636\u064a \u0627\u0644\u0645\u0643\u062a\u0628\u0629: {value}"
+  ,"@modifierAssignmentLibraryDefaultBoolean": {"placeholders": {"value": {"type": "String"}}}
+  ,"modifierAssignmentLibraryDefaultNumber": "\u0627\u0641\u062a\u0631\u0627\u0636\u064a \u0627\u0644\u0645\u0643\u062a\u0628\u0629: {value}"
+  ,"@modifierAssignmentLibraryDefaultNumber": {"placeholders": {"value": {"type": "int"}}}
+  ,"modifierAssignmentEffectiveSetting": "\u0627\u0644\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0641\u0639\u0651\u0627\u0644: {value}"
+  ,"@modifierAssignmentEffectiveSetting": {"placeholders": {"value": {"type": "String"}}}
+  ,"commonYes": "\u0646\u0639\u0645"
+  ,"commonNo": "\u0644\u0627"
+  ,"modifierAssignmentHelp": "\u0627\u062e\u062a\u0631 \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0627\u0644\u062a\u064a \u064a\u0645\u0643\u0646 \u0644\u0644\u0639\u0645\u0644\u0627\u0621 \u0627\u0633\u062a\u062e\u062f\u0627\u0645\u0647\u0627 \u0645\u0639 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"modifierAssignmentMaterialImpact": "\u062a\u0645 \u0625\u0639\u062f\u0627\u062f \u062a\u0623\u062b\u064a\u0631 \u0627\u0644\u0645\u0648\u0627\u062f"
+  ,"modifierAssignmentViewGroup": "\u0639\u0631\u0636 \u0645\u062c\u0645\u0648\u0639\u0629 \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a"
+  ,"modifierAssignmentCustomizeForProduct": "\u062a\u062e\u0635\u064a\u0635 \u0644\u0644\u0645\u0646\u062a\u062c"
+  ,"modifierAssignmentRemoveFromProduct": "\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"menuDetailArchiveTitle": "\u0623\u0631\u0634\u0641\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629\u061f"
+  ,"menuDetailRestoreTitle": "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0642\u0627\u0626\u0645\u0629\u061f"
+  ,"menuDetailArchiveMessage": "\u062a\u0624\u0631\u0634\u0641 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u062f\u0648\u0646 \u062d\u0630\u0641\u0647\u0627. \u064a\u0628\u0642\u0649 \u062a\u0643\u0648\u064a\u0646\u0647\u0627 \u0645\u062a\u0627\u062d\u064b\u0627 \u0644\u0644\u0645\u0631\u0627\u062c\u0639\u0629."
+  ,"menuDetailRestoreMessage": "\u062a\u0639\u064a\u062f \u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0625\u0644\u0649 \u0627\u0644\u0645\u0633\u0648\u062f\u0629. \u0644\u0627 \u062a\u0633\u062a\u0639\u064a\u062f \u0627\u0644\u0623\u0642\u0633\u0627\u0645 \u0627\u0644\u0645\u0624\u0631\u0634\u0641\u0629."
+  ,"productEditorProductType": "\u0646\u0648\u0639 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productEditorStandard": "\u0639\u0627\u062f\u064a"
+  ,"productEditorOpenPrice": "\u0633\u0639\u0631 \u0645\u0641\u062a\u0648\u062d"
+  ,"productEditorPreparationTime": "\u0648\u0642\u062a \u0627\u0644\u062a\u062d\u0636\u064a\u0631"
+  ,"productEditorMinutes": "\u062f\u0642\u0627\u0626\u0642"
+  ,"productEditorInitialOptionHelp": "\u064a\u0628\u062f\u0623 \u0643\u0644 \u0645\u0646\u062a\u062c \u0628\u062e\u064a\u0627\u0631 \u0628\u064a\u0639 \u0648\u0627\u062d\u062f. \u064a\u0645\u0643\u0646\u0643 \u0625\u0636\u0627\u0641\u0629 \u062e\u064a\u0627\u0631\u0627\u062a \u0623\u062e\u0631\u0649 \u0644\u0627\u062d\u0642\u064b\u0627."
+  ,"productEditorVariantName": "\u0627\u0633\u0645 \u062e\u064a\u0627\u0631 \u0627\u0644\u0628\u064a\u0639"
+  ,"productEditorDefaultVariant": "\u0627\u0644\u062e\u064a\u0627\u0631 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a"
+  ,"productEditorDefaultVariantHelp": "\u062a\u064f\u062f\u0627\u0631 \u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0628\u064a\u0639 \u0628\u0634\u0643\u0644 \u0645\u0646\u0641\u0635\u0644 \u0644\u064a\u0628\u0642\u0649 \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0631\u0643\u0651\u0632\u0629."
+  ,"productEditorTranslationsHelp": "\u0623\u0636\u0641 \u0645\u062d\u062a\u0648\u0649 \u0645\u062a\u0631\u062c\u0645\u064b\u0627 \u062f\u0648\u0646 \u0625\u0632\u062f\u062d\u0627\u0645 \u0646\u0645\u0648\u0630\u062c \u0627\u0644\u0645\u0646\u062a\u062c \u0627\u0644\u0631\u0626\u064a\u0633\u064a."
+  ,"productEditorTranslationsPanelHelp": "\u0627\u0633\u062a\u062e\u062f\u0645 \u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u0631\u062c\u0645\u0627\u062a \u0644\u0625\u062f\u062e\u0627\u0644 \u0623\u0633\u0645\u0627\u0621 \u0648\u0623\u0648\u0635\u0627\u0641 \u0639\u0631\u0628\u064a\u0629 \u0648\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629."
+  ,"productEditorSortOrder": "\u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0639\u0631\u0636"
+  ,"productEditorVariantCost": "\u062a\u0643\u0644\u0641\u0629 \u062e\u064a\u0627\u0631 \u0627\u0644\u0628\u064a\u0639"
+  ,"productEditorNone": "\u0644\u0627 \u0634\u064a\u0621"
+  ,"productEditorPreviewUnavailable": "\u0627\u0644\u0645\u0639\u0627\u064a\u0646\u0629 \u063a\u064a\u0631 \u0645\u062a\u0627\u062d\u0629"
+  ,"productEditorDropImage": "\u0623\u0641\u0644\u062a \u0635\u0648\u0631\u0629 \u0647\u0646\u0627 \u0623\u0648 \u0627\u0646\u0642\u0631 \u0644\u0644\u062a\u0635\u0641\u062d"
+  ,"productEditorImageLoadFailed": "\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0635\u0648\u0631\u0629"
+  ,"productEditorWhatIsProduct": "\u0645\u0627 \u0647\u0648 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c\u061f"
+  ,"productEditorClassificationHelp": "\u0627\u062e\u062a\u0631 \u0645\u0648\u0636\u0639 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0641\u064a \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c \u0648\u062a\u062f\u0641\u0642 \u0627\u0644\u062a\u062d\u0636\u064a\u0631."
+  ,"productEditorKitchenStationHelp": "\u0627\u0644\u0645\u0648\u0636\u0639 \u0627\u0644\u0639\u0627\u062f\u064a \u0644\u062a\u062d\u0636\u064a\u0631 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c."
+  ,"productEditorReportingCategoryHelp": "\u062a\u064f\u0633\u062a\u062e\u062f\u0645 \u0644\u062a\u0642\u0627\u0631\u064a\u0631 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u0648\u0627\u0644\u0623\u062f\u0627\u0621."
+  ,"productEditorSellingPreparationHelp": "\u062d\u062f\u062f \u0643\u064a\u0641\u064a\u0629 \u0628\u064a\u0639 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0648\u0645\u0627 \u064a\u0644\u0632\u0645 \u0641\u0631\u064a\u0642 \u0627\u0644\u0639\u0645\u0644 \u0645\u0646 \u0645\u0639\u0644\u0648\u0645\u0627\u062a \u062a\u062d\u0636\u064a\u0631."
+  ,"productEditorArabicConfigured": "\u062a\u0645 \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0639\u0631\u0628\u064a\u0629"
+  ,"productEditorEnglishConfigured": "\u062a\u0645 \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629"
+  ,"productEditorBasePriceValue": "\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0623\u0633\u0627\u0633\u064a {price}"
+  ,"@productEditorBasePriceValue": {"placeholders": {"price": {"type": "String"}}}
+  ,"productDetailArchiveMessage": "\u0644\u0646 \u064a\u0639\u0648\u062f \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u062a\u0627\u062d\u064b\u0627 \u0644\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u062c\u062f\u064a\u062f \u0623\u0648 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c \u0627\u0644\u0639\u0627\u062f\u064a. \u0644\u0627 \u062a\u062a\u063a\u064a\u0631 \u0627\u0644\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 \u0648\u0627\u0644\u0625\u0635\u062f\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629."
+  ,"productDetailRestoreMessage": "\u064a\u0639\u064a\u062f \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0625\u0644\u0649 \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c \u0627\u0644\u0642\u0627\u0628\u0644 \u0644\u0644\u062a\u0639\u062f\u064a\u0644. \u0648\u062a\u0628\u0642\u0649 \u0625\u062a\u0627\u062d\u062a\u0647 \u0645\u0639\u062a\u0645\u062f\u0629 \u0639\u0644\u0649 \u062a\u0639\u064a\u064a\u0646\u0627\u062a \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0648\u0627\u0644\u062c\u062f\u0627\u0648\u0644 \u0648\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u062a\u0634\u063a\u064a\u0644\u064a\u0629 \u0648\u0627\u0644\u062a\u062d\u0642\u0642 \u0648\u0627\u0644\u0646\u0634\u0631."
+  ,"productCatalogArchiveMessage": "\u0644\u0646 \u064a\u0639\u0648\u062f \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u062a\u0627\u062d\u064b\u0627 \u0644\u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u062c\u062f\u064a\u062f \u0623\u0648 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c \u0627\u0644\u0639\u0627\u062f\u064a.\n\n\u0644\u0627 \u064a\u064f\u062d\u0630\u0641 \u0627\u0644\u0645\u0646\u062a\u062c \u0646\u0647\u0627\u0626\u064a\u064b\u0627. \u0644\u0627 \u062a\u064f\u062d\u0630\u0641 \u0645\u062c\u0645\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u0639\u062f\u0651\u0644\u0627\u062a \u0627\u0644\u0645\u0631\u0643\u0632\u064a\u0629\u060c \u0648\u062a\u0628\u0642\u0649 \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a \u0645\u062e\u0632\u0646\u0629 \u062d\u0633\u0628 \u0633\u0644\u0648\u0643 \u0627\u0644\u062e\u0644\u0641\u064a\u0629."
+  ,"productCatalogRestoreMessage": "\u064a\u0639\u064a\u062f \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u0625\u0644\u0649 \u0627\u0644\u0643\u062a\u0627\u0644\u0648\u062c \u0627\u0644\u0642\u0627\u0628\u0644 \u0644\u0644\u062a\u0639\u062f\u064a\u0644. \u0648\u062a\u0628\u0642\u0649 \u0625\u062a\u0627\u062d\u062a\u0647 \u0641\u064a \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0645\u0639\u062a\u0645\u062f\u0629 \u0639\u0644\u0649 \u062a\u0639\u064a\u064a\u0646\u0627\u062a \u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0648\u0627\u0644\u062c\u062f\u0627\u0648\u0644 \u0648\u0627\u0644\u062d\u0627\u0644\u0629 \u0627\u0644\u062a\u0634\u063a\u064a\u0644\u064a\u0629 \u0648\u0627\u0644\u062a\u062d\u0642\u0642 \u0648\u0627\u0644\u0646\u0634\u0631."
+  ,"productCatalogUsageMessage": "\u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0647\u0630\u0627 \u0627\u0644\u0645\u0646\u062a\u062c \u062d\u0627\u0644\u064a\u064b\u0627 \u0641\u064a {count} \u0645\u0648\u0627\u0636\u0639 \u0641\u064a \u0627\u0644\u0642\u0648\u0627\u0626\u0645{names}."
+  ,"@productCatalogUsageMessage": {"placeholders": {"count": {"type": "int"}, "names": {"type": "String"}}}
+  ,"operationalOverrideClearTitle": "\u0645\u0633\u062d \u0627\u0644\u062a\u062c\u0627\u0648\u0632 \u0627\u0644\u062a\u0634\u063a\u064a\u0644\u064a\u061f"
+  ,"operationalOverrideClearMessage": "\u0645\u0633\u062d \u062a\u062c\u0627\u0648\u0632 {level} \u0644\u0640 {scope}\u061f\n\n\u0644\u0646 \u064a\u062a\u0645 \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0625\u062a\u0627\u062d\u0629 \u0627\u0644\u0645\u062c\u062f\u0648\u0644\u0629\u060c \u0623\u0648 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0645\u0646\u062a\u062c\u060c \u0623\u0648 \u0627\u0644\u0625\u0635\u062f\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0629 \u0627\u0644\u0633\u0627\u0628\u0642\u0629."
+  ,"@operationalOverrideClearMessage": {"placeholders": {"level": {"type": "String"}, "scope": {"type": "String"}}}
+  ,"operationalOverrideClearAction": "\u0645\u0633\u062d \u0627\u0644\u062a\u062c\u0627\u0648\u0632"
+  ,"productDetailProductId": "\u0645\u0639\u0631\u0651\u0641 \u0627\u0644\u0645\u0646\u062a\u062c"
+  ,"productDetailUpdated": "\u0622\u062e\u0631 \u062a\u062d\u062f\u064a\u062b"
+  ,"productDetailImageUrl": "\u0631\u0627\u0628\u0637 \u0627\u0644\u0635\u0648\u0631\u0629"
+}

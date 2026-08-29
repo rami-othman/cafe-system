@@ -25,7 +25,11 @@ class DioApiClient {
       InterceptorsWrapper(
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
-          options.headers[Headers.contentTypeHeader] = 'application/json';
+          if (options.data is FormData) {
+            options.headers.remove(Headers.contentTypeHeader);
+          } else {
+            options.headers[Headers.contentTypeHeader] = 'application/json';
+          }
           if (ApiConfig.defaultTenantId > 0) {
             options.headers['X-Tenant-Id'] = ApiConfig.defaultTenantId;
           } else {
@@ -51,6 +55,18 @@ class DioApiClient {
     );
   }
 
+  /// Returns the complete Laravel response body. Most existing endpoints use
+  /// [get], which unwraps the conventional `data` field. Paginated endpoints
+  /// also need their `meta` object, so they opt in to this method.
+  Future<dynamic> getEnvelope(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _sendEnvelope(
+      () => _dio.get<dynamic>(path, queryParameters: queryParameters),
+    );
+  }
+
   Future<dynamic> post(
     String path, {
     Object? data,
@@ -61,6 +77,16 @@ class DioApiClient {
         path,
         data: data,
         queryParameters: queryParameters,
+      ),
+    );
+  }
+
+  Future<dynamic> postMultipart(String path, {required FormData data}) {
+    return _send(
+      () => _dio.post<dynamic>(
+        path,
+        data: data,
+        options: Options(contentType: Headers.multipartFormDataContentType),
       ),
     );
   }
@@ -76,6 +102,17 @@ class DioApiClient {
         data: data,
         queryParameters: queryParameters,
       ),
+    );
+  }
+
+  Future<dynamic> put(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _send(
+      () =>
+          _dio.put<dynamic>(path, data: data, queryParameters: queryParameters),
     );
   }
 
@@ -97,6 +134,16 @@ class DioApiClient {
     try {
       final Response<dynamic> response = await request();
       return ApiResponseParser.unwrapData(response.data);
+    } on DioException catch (error) {
+      throw _handleDioException(error);
+    }
+  }
+
+  Future<dynamic> _sendEnvelope(
+    Future<Response<dynamic>> Function() request,
+  ) async {
+    try {
+      return (await request()).data;
     } on DioException catch (error) {
       throw _handleDioException(error);
     }

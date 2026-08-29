@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../controllers/discounts_cubit.dart';
@@ -26,8 +27,9 @@ class DiscountsListScreen extends StatelessWidget {
         final DiscountsCubit cubit = context.read<DiscountsCubit>();
         final List<DiscountListItem> filteredDiscounts =
             cubit.filteredDiscounts;
-        final List<DiscountSummaryMetric> summaryMetrics =
-            _summaryMetrics(state.discounts);
+        final List<DiscountSummaryMetric> summaryMetrics = _summaryMetrics(
+          state.discounts,
+        );
 
         return DesktopPageLayout(
           padding: EdgeInsets.zero,
@@ -160,19 +162,31 @@ class DiscountsListScreen extends StatelessWidget {
     List<DiscountListItem> discounts,
   ) {
     final int active = discounts
-        .where((DiscountListItem discount) => discount.status == DiscountStatus.active)
+        .where(
+          (DiscountListItem discount) =>
+              discount.status == DiscountStatus.active,
+        )
         .length;
     final int usage = discounts.fold<int>(
       0,
       (int total, DiscountListItem discount) => total + discount.usageCount,
     );
-    final double saved = discounts.fold<double>(0, (double total, DiscountListItem discount) {
-      return total + double.tryParse(discount.estimatedSavedValue.replaceAll(RegExp(r'[^0-9.]'), ''))!;
+    final double saved = discounts.fold<double>(0, (
+      double total,
+      DiscountListItem discount,
+    ) {
+      return total +
+          double.tryParse(
+            discount.estimatedSavedValue.replaceAll(RegExp(r'[^0-9.]'), ''),
+          )!;
     });
     return <DiscountSummaryMetric>[
       DiscountSummaryMetric(label: 'ACTIVE DISCOUNTS', value: '$active'),
       DiscountSummaryMetric(label: 'TOTAL USAGE (THIS MONTH)', value: '$usage'),
-      DiscountSummaryMetric(label: 'ESTIMATED VALUE SAVED', value: '\$${saved.toStringAsFixed(2)}'),
+      DiscountSummaryMetric(
+        label: 'ESTIMATED VALUE SAVED',
+        value: CurrencyFormatter.format(saved),
+      ),
     ];
   }
 
@@ -187,14 +201,29 @@ class DiscountsListScreen extends StatelessWidget {
         title: const Text('Delete discount?'),
         content: Text('“${discount.name}” will no longer be available in POS.'),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true) {
+      return;
+    }
     final bool deleted = await cubit.deleteDiscount(discount.id);
-    if (context.mounted) _showSnackBar(context, deleted ? 'Discount deleted.' : cubit.state.errorMessage ?? 'Unable to delete discount.');
+    if (context.mounted) {
+      _showSnackBar(
+        context,
+        deleted
+            ? 'Discount deleted.'
+            : cubit.state.errorMessage ?? 'Unable to delete discount.',
+      );
+    }
   }
 
   void _showDetails(BuildContext context, DiscountListItem discount) {
@@ -212,17 +241,25 @@ class DiscountsListScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text('${discount.validPeriodPrimary} · ${discount.status.label}'),
             const SizedBox(height: AppSpacing.sm),
-            Text('Used ${discount.usageCount} times · ${discount.estimatedSavedValue} saved'),
+            Text(
+              'Used ${discount.usageCount} times · ${discount.estimatedSavedValue} saved',
+            ),
           ],
         ),
-        actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
 
-  void _showSnackBar(BuildContext context, String message) => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+  void _showSnackBar(BuildContext context, String message) =>
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _DiscountError extends StatelessWidget {
@@ -234,7 +271,12 @@ class _DiscountError extends StatelessWidget {
     width: double.infinity,
     padding: AppSpacing.allMd,
     color: AppColors.discountOrangeBadge,
-    child: Text(message, style: AppTextStyles.bodySmall.copyWith(color: AppColors.discountOrangeText)),
+    child: Text(
+      message,
+      style: AppTextStyles.bodySmall.copyWith(
+        color: AppColors.discountOrangeText,
+      ),
+    ),
   );
 }
 

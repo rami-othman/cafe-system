@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../models/daily_report_data.dart';
 import 'report_analytics_cards.dart';
 
@@ -59,7 +60,7 @@ class RefundSummaryCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          '-\$42.50',
+          '-${CurrencyFormatter.format(42.50)}',
           style: AppTextStyles.headlineMedium.copyWith(
             color: AppColors.dangerStrong,
           ),
@@ -309,7 +310,7 @@ class _DiscountSummary extends StatelessWidget {
           children: <Widget>[
             Text('Total Discount Value', style: AppTextStyles.labelSmall),
             Text(
-              '-\$125.00',
+              '-${CurrencyFormatter.format(125)}',
               style: AppTextStyles.labelMedium.copyWith(
                 color: AppColors.warning,
               ),

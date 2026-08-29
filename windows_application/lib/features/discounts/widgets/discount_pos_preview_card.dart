@@ -4,19 +4,26 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/tax_formatter.dart';
 import '../../../shared/widgets/app_card.dart';
 
 class DiscountPosPreviewCard extends StatelessWidget {
-  const DiscountPosPreviewCard({super.key, required this.discountPercent});
+  const DiscountPosPreviewCard({
+    super.key,
+    required this.discountPercent,
+    required this.taxRate,
+  });
 
   final int discountPercent;
+  final double taxRate;
 
   @override
   Widget build(BuildContext context) {
     const double subtotal = 50;
     final double discount = subtotal * discountPercent / 100;
     final double taxable = subtotal - discount;
-    final double tax = taxable * 0.15;
+    final double tax = taxable * taxRate;
     final double total = taxable + tax;
 
     return AppCard(
@@ -62,7 +69,7 @@ class DiscountPosPreviewCard extends StatelessWidget {
                   color: AppColors.success,
                 ),
                 const Padding(padding: AppSpacing.verticalMd, child: Divider()),
-                _ReceiptRow(label: 'Tax / VAT (15%)', value: tax),
+                _ReceiptRow(label: TaxFormatter.taxLabel(taxRate), value: tax),
                 const SizedBox(height: AppSpacing.md),
                 _ReceiptRow(label: 'Total', value: total, emphasized: true),
               ],
@@ -100,7 +107,7 @@ class _ReceiptRow extends StatelessWidget {
           child: Text(label, style: style.copyWith(color: color)),
         ),
         Text(
-          '$sign SAR ${value.abs().toStringAsFixed(2)}',
+          '$sign${CurrencyFormatter.format(value.abs())}',
           style: style.copyWith(color: color),
         ),
       ],

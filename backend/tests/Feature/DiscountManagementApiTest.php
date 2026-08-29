@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\TenantAccessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -74,8 +75,8 @@ class DiscountManagementApiTest extends TestCase
 
     public function test_tenant_and_branch_seed_data_is_idempotent(): void
     {
-        $this->seed(\Database\Seeders\TenantAccessSeeder::class);
-        $this->seed(\Database\Seeders\TenantAccessSeeder::class);
+        $this->seed(TenantAccessSeeder::class);
+        $this->seed(TenantAccessSeeder::class);
 
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
         $this->assertSame(1, DB::table('tenants')->where('slug', 'cafe-618')->count());

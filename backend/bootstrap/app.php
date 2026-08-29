@@ -1,12 +1,12 @@
 <?php
 
+use App\Http\Middleware\AuthenticateApiToken;
+use App\Http\Middleware\AuthenticatePlatformAdmin;
+use App\Http\Middleware\EnsurePlatformPermission;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use App\Http\Middleware\AuthenticateApiToken;
-use App\Http\Middleware\AuthenticatePlatformAdmin;
-use App\Http\Middleware\EnsurePlatformPermission;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))

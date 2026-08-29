@@ -14,6 +14,7 @@ class AppShell extends StatelessWidget {
     this.rightPanel,
     this.topBar,
     this.onRefresh,
+    this.prioritizeContentWidth = false,
   });
 
   final Widget child;
@@ -21,6 +22,7 @@ class AppShell extends StatelessWidget {
   final Widget? rightPanel;
   final Widget? topBar;
   final Future<void> Function(BuildContext context)? onRefresh;
+  final bool prioritizeContentWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,10 @@ class AppShell extends StatelessWidget {
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           final double width = constraints.maxWidth;
-          final bool isLarge = Responsive.isLargeWidth(width);
+          final bool isLarge =
+              Responsive.isLargeWidth(width) &&
+              (!prioritizeContentWidth ||
+                  width >= AppSizes.menuModuleSidebarExpandedBreakpoint);
           final bool isCompact = Responsive.isCompactWidth(width);
           final double rightPanelWidth = isLarge
               ? AppSizes.rightPanelWidth

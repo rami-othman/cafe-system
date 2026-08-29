@@ -88,6 +88,7 @@ abstract final class AppSizes {
   static const double orderFilterTabHeight = 40;
   static const double orderActionButtonHeight = 40;
   static const double orderDetailsPanelWidth = 460;
+  static const double materialEffectPanelWidth = 620;
   static const double orderDetailsCompactGutter = 72;
   static const double orderDetailsHeaderIconSize = 36;
   static const double orderDetailsAvatarSize = 44;
@@ -98,6 +99,15 @@ abstract final class AppSizes {
   static const double refundInputHeight = 44;
   static const double refundNotesHeight = 80;
   static const double menuContentMaxWidth = 1600;
+  static const double menuModuleContentMaxWidth = 1560;
+  static const double menuModuleCompactContentPadding = 16;
+  static const double menuModuleStandardContentPadding = 24;
+  static const double menuModuleNavigationCompactWidth = 64;
+  static const double menuModuleNavigationExpandedWidth = 208;
+  static const double menuModuleSidebarExpandedBreakpoint = 1600;
+  static const double menuEntityRowMetricsBreakpoint = 1300;
+  static const double menuContextInlineBreakpoint = 1180;
+  static const double menuHeaderInlineBreakpoint = 760;
   static const double menuSearchWidth = 256;
   static const double menuSearchHeight = 40;
   static const double menuKpiHeight = 112;

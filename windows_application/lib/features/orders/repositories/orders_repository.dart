@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/config/tax_config.dart';
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/branch.dart';
 import '../../pos/models/json_helpers.dart';
 import '../controllers/orders_state.dart';
@@ -156,6 +158,10 @@ class OrdersRepository {
       items: items,
       subtotal: _totalFromJson(json, 'subtotal'),
       tax: _totalFromJson(json, 'taxTotal'),
+      taxRate: readDouble(
+        _mapFromJson(json['totals'])['taxRate'],
+        fallback: TaxConfig.defaultTaxRate,
+      ),
       tip: _totalFromJson(json, 'serviceTotal'),
       total: _totalFromJson(json, 'total'),
       payment: _paymentFromJson(readMapList(json['payments'])),
@@ -237,7 +243,7 @@ class OrdersRepository {
     final double priceDelta = readDouble(json['priceDelta']);
     final String price = priceDelta == 0
         ? ''
-        : ' (${priceDelta > 0 ? '+' : '-'}\$${priceDelta.abs().toStringAsFixed(2)})';
+        : ' (${priceDelta > 0 ? '+' : '-'}${CurrencyFormatter.format(priceDelta.abs())})';
 
     if (groupName.isEmpty && optionName.isEmpty) {
       return '';
@@ -386,7 +392,7 @@ class OrdersRepository {
         OrderDetailItem(
           quantity: 2,
           name: 'Oat Flat White',
-          modifiers: <String>['Size: Large (+\$0.50)', 'Milk: Oat Milk'],
+          modifiers: <String>['Size: Large (+0.50 SYP)', 'Milk: Oat Milk'],
           total: 11,
         ),
         OrderDetailItem(
@@ -408,7 +414,7 @@ class OrdersRepository {
         OrderDetailItem(
           quantity: 2,
           name: 'Iced Latte',
-          modifiers: <String>['Size: Large (+\$0.50)', 'Vanilla (+\$0.75)'],
+          modifiers: <String>['Size: Large (+0.50 SYP)', 'Vanilla (+0.75 SYP)'],
           total: 12,
         ),
         OrderDetailItem(
@@ -428,7 +434,7 @@ class OrdersRepository {
         OrderDetailItem(
           quantity: 2,
           name: 'Avo Toast',
-          modifiers: <String>['Add Poached Egg (+\$1.50)', 'Chili Flakes'],
+          modifiers: <String>['Add Poached Egg (+1.50 SYP)', 'Chili Flakes'],
           total: 28,
         ),
       ],
@@ -449,7 +455,7 @@ class OrdersRepository {
       0,
       (double total, OrderDetailItem item) => total + item.total,
     );
-    final double tax = _roundCurrency(subtotal * 0.085);
+    final double tax = _roundCurrency(subtotal * TaxConfig.defaultTaxRate);
     final double tip = _roundCurrency(subtotal * 0.15);
     final double total = _roundCurrency(subtotal + tax + tip);
     final DateTime createdAt = DateTime(2023, 10, 24, 10, 42);
@@ -466,6 +472,7 @@ class OrdersRepository {
       items: items,
       subtotal: subtotal,
       tax: tax,
+      taxRate: TaxConfig.defaultTaxRate,
       tip: tip,
       total: total,
       payment: OrderPaymentSummary(

@@ -21,8 +21,17 @@ class PosPricingService
         }
 
         $selectedOptions = $this->selectedOptions($tenantId, $productId, $modifiers);
-        $modifierTotal = $selectedOptions->sum(fn ($option) => (float) $option->price_delta);
-        $unitPrice = (float) $product->price + $modifierTotal;
+        // Database decimals are strings. Sum in integer minor units so a
+        // signed modifier cannot introduce binary-float drift or a negative
+        // sell price.
+        $unitCents = $this->minorUnits((string) $product->price);
+        foreach ($selectedOptions as $option) {
+            $unitCents += $this->minorUnits((string) $option->price_delta);
+        }
+        if ($unitCents < 0) {
+            throw ValidationException::withMessages(['modifiers' => 'Selected modifiers result in an invalid negative unit price.']);
+        }
+        $unitPrice = $unitCents / 100;
 
         return [
             'product' => $product,
@@ -45,8 +54,11 @@ class PosPricingService
             ->where('order_id', $orderId)
             ->sum('discount_amount');
 
+        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
+        abort_if(! $order, 404, 'Order not found.');
+
         $taxable = max(0, $subtotal - $discountTotal);
-        $taxTotal = round($taxable * 0.08, 2);
+        $taxTotal = round($taxable * (float) $order->tax_rate, 2);
         $total = round($taxable + $taxTotal, 2);
 
         DB::table('orders')
@@ -135,5 +147,15 @@ class PosPricingService
         }
 
         return $options;
+    }
+
+    private function minorUnits(string $value): int
+    {
+        $negative = str_starts_with($value, '-');
+        $value = ltrim($value, '+-');
+        [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
+        $cents = ((int) $whole * 100) + (int) str_pad(substr($fraction, 0, 2), 2, '0');
+
+        return $negative ? -$cents : $cents;
     }
 }

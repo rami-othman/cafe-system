@@ -4,19 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\TenantContext;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PosStateController extends Controller
 {
     public function show(Request $request): JsonResponse
     {
+        $tenantId = TenantContext::id($request);
         $data = $request->validate([
-            'branchId' => ['required', 'integer', 'exists:branches,id'],
+            'branchId' => ['required', 'integer', Rule::exists('branches', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'))],
         ]);
 
-        $tenantId = TenantContext::id($request);
         $shift = DB::table('shifts')
             ->where('tenant_id', $tenantId)
             ->where('branch_id', $data['branchId'])

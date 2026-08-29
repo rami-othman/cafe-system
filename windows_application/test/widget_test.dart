@@ -17,14 +17,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cafe System 618'), findsOneWidget);
-    expect(find.text('DOWNTOWN'), findsOneWidget);
+    expect(find.text('Downtown'), findsOneWidget);
     expect(find.text('SHIFT OPEN'), findsOneWidget);
     expect(find.text('Search products...'), findsOneWidget);
     expect(find.text('COFFEE'), findsOneWidget);
     expect(find.text('Espresso'), findsOneWidget);
     expect(find.text('DINE-IN'), findsOneWidget);
     expect(find.text('Cappuccino'), findsOneWidget);
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
 
     await tester.tap(find.text('Espresso'));
     await tester.pumpAndSettle();
@@ -34,7 +34,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Espresso'), findsNWidgets(2));
-    expect(find.text('PAY \$3.78'), findsOneWidget);
+    expect(find.text('PAY 3.78 SYP'), findsOneWidget);
   });
 
   testWidgets('adapts the POS shell across desktop breakpoints', (
@@ -44,15 +44,15 @@ void main() {
 
     await _pumpAtSize(tester, const Size(1280, 800));
     expect(find.text('Dashboard'), findsOneWidget);
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
 
     await _pumpAtSize(tester, const Size(1000, 800));
     expect(find.text('Dashboard'), findsNothing);
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
 
     await _pumpAtSize(tester, const Size(820, 760));
     expect(find.text('Dashboard'), findsNothing);
-    expect(find.text('PAY \$0.00'), findsNothing);
+    expect(find.text('PAY 0 SYP'), findsNothing);
     expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
 
     addTearDown(() {
@@ -71,7 +71,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
-    expect(find.text('PAY \$0.00'), findsNothing);
+    expect(find.text('PAY 0 SYP'), findsNothing);
 
     await _pumpAtSize(tester, const Size(520, 320));
     await tester.pump();
@@ -123,9 +123,9 @@ void main() {
     await tester.tap(find.text('Add to Order'));
     await tester.pumpAndSettle();
 
-    expect(find.text('PAY \$3.78'), findsOneWidget);
+    expect(find.text('PAY 3.78 SYP'), findsOneWidget);
 
-    await tester.tap(find.text('PAY \$3.78'));
+    await tester.tap(find.text('PAY 3.78 SYP'));
     await tester.pumpAndSettle();
 
     expect(find.text('Payment'), findsOneWidget);
@@ -142,7 +142,7 @@ void main() {
     expect(find.text('ESPRESSO'), findsOneWidget);
     expect(find.text('PAID VIA:'), findsOneWidget);
     expect(find.text('CARD'), findsOneWidget);
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
 
     await tester.tap(find.text('Send via WhatsApp'));
     await tester.pump();
@@ -153,7 +153,7 @@ void main() {
 
     expect(find.text('Receipt Preview'), findsNothing);
     expect(find.text('Payment completed'), findsOneWidget);
-    expect(find.text('PAY \$0.00'), findsOneWidget);
+    expect(find.text('PAY 0 SYP'), findsOneWidget);
 
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -195,7 +195,7 @@ void main() {
     await tester.tap(find.text('Add to Order'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('PAY \$3.78'));
+    await tester.tap(find.text('PAY 3.78 SYP'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Card'));
     await tester.pump();

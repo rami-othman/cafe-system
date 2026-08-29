@@ -1,4 +1,5 @@
 import 'json_helpers.dart';
+import '../../../core/config/tax_config.dart';
 import 'order_receipt.dart';
 import 'payment_method.dart';
 import 'payment_result.dart';
@@ -28,6 +29,7 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
     discountTotal: readDouble(json['discountTotal']),
     discountLabel: readDouble(json['discountTotal']) > 0 ? 'Discount' : null,
     tax: readDouble(json['taxTotal']),
+    taxRate: readDouble(json['taxRate'], fallback: TaxConfig.defaultTaxRate),
     total: total,
     payment: PaymentResult(
       method: paymentMethodFromApi(readString(payment['method'])),

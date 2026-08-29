@@ -125,7 +125,13 @@ class _DiscountTableHeader extends StatelessWidget {
 }
 
 class _DiscountTableRow extends StatefulWidget {
-  const _DiscountTableRow({required this.discount, required this.onView, required this.onEdit, required this.onToggleStatus, required this.onDelete});
+  const _DiscountTableRow({
+    required this.discount,
+    required this.onView,
+    required this.onEdit,
+    required this.onToggleStatus,
+    required this.onDelete,
+  });
 
   final DiscountListItem discount;
   final ValueChanged<DiscountListItem> onView;
@@ -196,30 +202,38 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
             ),
             _BodyCell(
               flex: 14,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: <Widget>[
-                  _RowAction(
-                    icon: Icons.visibility_outlined,
-                    tooltip: 'View discount',
-                    onPressed: () => widget.onView(discount),
-                  ),
-                  _RowAction(
-                    icon: Icons.edit_outlined,
-                    tooltip: 'Edit discount',
-                    onPressed: () => widget.onEdit(discount),
-                  ),
-                  _RowAction(
-                    icon: discount.isActive ? Icons.pause_circle_outline : Icons.play_circle_outline,
-                    tooltip: discount.isActive ? 'Deactivate discount' : 'Activate discount',
-                    onPressed: () => widget.onToggleStatus(discount),
-                  ),
-                  _RowAction(
-                    icon: Icons.delete_outline,
-                    tooltip: 'Delete discount',
-                    onPressed: () => widget.onDelete(discount),
-                  ),
-                ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    _RowAction(
+                      icon: Icons.visibility_outlined,
+                      tooltip: 'View discount',
+                      onPressed: () => widget.onView(discount),
+                    ),
+                    _RowAction(
+                      icon: Icons.edit_outlined,
+                      tooltip: 'Edit discount',
+                      onPressed: () => widget.onEdit(discount),
+                    ),
+                    _RowAction(
+                      icon: discount.isActive
+                          ? Icons.pause_circle_outline
+                          : Icons.play_circle_outline,
+                      tooltip: discount.isActive
+                          ? 'Deactivate discount'
+                          : 'Activate discount',
+                      onPressed: () => widget.onToggleStatus(discount),
+                    ),
+                    _RowAction(
+                      icon: Icons.delete_outline,
+                      tooltip: 'Delete discount',
+                      onPressed: () => widget.onDelete(discount),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -374,7 +388,11 @@ class _ValidPeriodCell extends StatelessWidget {
 }
 
 class _RowAction extends StatelessWidget {
-  const _RowAction({required this.icon, required this.tooltip, required this.onPressed});
+  const _RowAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   final IconData icon;
   final String tooltip;

@@ -30,6 +30,7 @@ class ReceiptController extends Controller
                 'subtotal' => (float) $orderRow->subtotal,
                 'discountTotal' => (float) $orderRow->discount_total,
                 'taxTotal' => (float) $orderRow->tax_total,
+                'taxRate' => (float) $orderRow->tax_rate,
                 'total' => (float) $orderRow->total,
                 'payment' => $payment ? [
                     'method' => $payment->method,

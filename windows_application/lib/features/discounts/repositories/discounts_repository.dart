@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/json_helpers.dart';
 import '../../pos/models/branch.dart';
 import '../models/discount_list_item.dart';
@@ -38,7 +39,10 @@ class DiscountsApiRepository implements DiscountsRepository {
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) async {
     _debugRequest('POST /discounts', request);
-    final dynamic response = await _apiClient.post('discounts', data: request.toJson());
+    final dynamic response = await _apiClient.post(
+      'discounts',
+      data: request.toJson(),
+    );
     return _fromJson(Map<String, dynamic>.from(response as Map));
   }
 
@@ -71,8 +75,12 @@ class DiscountsApiRepository implements DiscountsRepository {
   DiscountListItem _fromJson(Map<String, dynamic> json) {
     final String type = readString(json['type']).toLowerCase();
     final double value = readDouble(json['value']);
-    final DateTime? startsAt = DateTime.tryParse(readString(json['startsAt']))?.toLocal();
-    final DateTime? endsAt = DateTime.tryParse(readString(json['endsAt']))?.toLocal();
+    final DateTime? startsAt = DateTime.tryParse(
+      readString(json['startsAt']),
+    )?.toLocal();
+    final DateTime? endsAt = DateTime.tryParse(
+      readString(json['endsAt']),
+    )?.toLocal();
     final String code = readString(json['code']).trim();
     final String primary = readString(json['displayPeriodPrimary']).trim();
     final String statusValue = readString(json['status']).toLowerCase();
@@ -87,12 +95,14 @@ class DiscountsApiRepository implements DiscountsRepository {
         _ => 'Percentage',
       },
       displayValue: switch (type) {
-        'fixed' => '\$${value.toStringAsFixed(2)} off',
+        'fixed' => '${CurrencyFormatter.format(value)} off',
         'bogo' => 'Buy ${value.toInt()} Get ${value.toInt()}',
         _ => '${_decimal(value)}% off',
       },
       conditions: readString(json['conditions'], fallback: 'No conditions'),
-      validPeriodPrimary: primary.isNotEmpty ? primary : _period(startsAt, endsAt),
+      validPeriodPrimary: primary.isNotEmpty
+          ? primary
+          : _period(startsAt, endsAt),
       validPeriodSecondary: _nullableString(json['displayPeriodSecondary']),
       status: switch (statusValue) {
         'scheduled' => DiscountStatus.scheduled,
@@ -101,7 +111,9 @@ class DiscountsApiRepository implements DiscountsRepository {
         _ => DiscountStatus.active,
       },
       usageCount: readInt(json['usedCount']) ?? 0,
-      estimatedSavedValue: '\$${readDouble(json['estimatedSavedValue']).toStringAsFixed(2)}',
+      estimatedSavedValue: CurrencyFormatter.format(
+        readDouble(json['estimatedSavedValue']),
+      ),
       code: code.isEmpty ? null : code,
       description: _nullableString(json['description']),
       applicationMode: readString(json['applicationMode'], fallback: 'code'),
@@ -114,7 +126,10 @@ class DiscountsApiRepository implements DiscountsRepository {
       startsAt: startsAt,
       endsAt: endsAt,
       isActive: readBool(json['isActive'], fallback: statusValue != 'inactive'),
-      appliesToAllBranches: readBool(json['appliesToAllBranches'], fallback: true),
+      appliesToAllBranches: readBool(
+        json['appliesToAllBranches'],
+        fallback: true,
+      ),
       branchIds: (json['branchIds'] as List<dynamic>? ?? const <dynamic>[])
           .map(readInt)
           .whereType<int>()
@@ -135,8 +150,9 @@ class DiscountsApiRepository implements DiscountsRepository {
     return string.isEmpty ? null : string;
   }
 
-  static String _decimal(double value) =>
-      value == value.truncateToDouble() ? value.toInt().toString() : value.toString();
+  static String _decimal(double value) => value == value.truncateToDouble()
+      ? value.toInt().toString()
+      : value.toString();
 
   void _debugRequest(String endpoint, DiscountUpsertRequest request) {
     assert(() {

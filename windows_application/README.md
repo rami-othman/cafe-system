@@ -1,59 +1,37 @@
-# Cafe System 618
+# Cafe System 618 Windows Application
 
-Cafe System 618 is a cafe and restaurant management system built as a Flutter
-application. The first product focus is the point-of-sale workflow, but this
-repository is currently in the general project foundation phase.
+Flutter desktop client for Cafe System 618. The authoritative Menu Management
+status and contracts are in [PROJECT_STATUS.md](PROJECT_STATUS.md); the companion
+backend/domain record is [Menu Management Architecture](../docs/MENU_MANAGEMENT_ARCHITECTURE.md).
 
-## Platform Focus
+Menu Management currently covers catalog and variants, Modifier Library and product
+assignments, recipes/material adjustments, menu composition, assignments/schedules,
+review/publish, and version history. It keeps lifecycle, scheduled availability,
+operational availability, and menu publication as separate concerns.
 
-The current priority is Windows desktop. Future tablet support may be added
-later, so layout and architecture decisions should avoid blocking responsive
-adaptation.
+Operational temporary-unavailability mutations submit an offset-less Branch-local
+timestamp. Flutter must not send `DateTime.toIso8601String()` for that field; the
+backend Branch timezone is authoritative.
 
-## Tech Stack
+UX-G0 is **COMPLETE**. Batch 7-P, Navigation & Flow Stabilization, and Batch 7.1
+are **COMPLETE**. Batch 7 — Recipes & Materials is **COMPLETE after closure
+verification**. The Product Workspace remains the canonical Product parent;
+Recipe and Material Effect child routes retain Product/Variant/Option IDs and do
+not use display-name URL parameters. Batch 8 and Phase 4K are **NOT STARTED**.
+POS Published Snapshot Sync and Inventory runtime remain deferred.
 
-- Flutter
-- Dart
-- flutter_bloc / Cubit
-- go_router
-- get_it
-- equatable
-- intl
+The supplied pre-closure baseline was 337 Flutter tests with zero failures. The
+final closure verification is 343 Flutter tests with zero failures, alongside
+118 backend tests with 1,720 assertions. The current Codex-shell
+`flutter gen-l10n` command timed out without output; prior local Windows
+generation passed.
 
-## Architecture Summary
+Verification gate (run each command independently):
 
-The app uses a feature-based architecture under `lib/features`. Each feature
-uses an MVC-style internal structure:
-
-```txt
-feature_name/
-  models/
-  views/
-  controllers/
-  widgets/
-  repositories/
-```
-
-Cubit is the controller and state-management layer. Shared application setup
-lives in `lib/app`, reusable foundation code lives in `lib/core`, and reusable
-UI/layout primitives live in `lib/shared`.
-
-## Run the App
-
-```bash
+```sh
 flutter pub get
-flutter run -d windows
-```
-
-## Analyze the App
-
-```bash
+flutter gen-l10n
+dart format .
 flutter analyze
+flutter test --reporter compact
 ```
-
-## Development Status
-
-Current phase: Phase 1 — Project Foundation.
-
-Next step: build the shared theme/design system before implementing feature
-screens.
