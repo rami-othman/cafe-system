@@ -10,13 +10,14 @@ Materials is **COMPLETE after closure verification**.
 The authoritative project-status record is
 [`windows_application/PROJECT_STATUS.md`](../windows_application/PROJECT_STATUS.md).
 
-Batches 8 through 11 are complete through Publish / Versions. Phases 12A–12D
-are complete and the Phase 12E Flutter implementation now renders the
-Branch-scoped Published Runtime Contract v1, keeps placement/version identities
-through the cart, and creates snapshot-aware orders. Legacy Catalog endpoints
-coexist until 12G; offline, reconnect, and pending-version recovery are deferred
-to 12F. Phase 12E closure remains subject to its full-suite and Windows smoke
-verification gate.
+Batches 8 through 11 are complete through Publish / Versions. Batch 12 is
+complete: 12A Runtime Contract, 12B Backend POS Runtime Sync API, 12C
+Snapshot-Aware Order Contract, 12D Flutter Sync / Scoped Cache, 12E Published
+POS UI Cutover, 12F Offline / Reconnect / Pending Version, and 12G Legacy
+Cutover / Final Regression. Production POS uses Published Runtime Contract v1
+through `/pos/menu-sync`, retains placement/version identity through the cart,
+and creates snapshot-aware orders. Legacy Catalog endpoints and the no-version
+order path remain deprecated compatibility interfaces only.
 
 The Product Workspace is the canonical Product parent. Recipe and Material
 Effect child routes remain ID-based and preserve Product, Variant, Modifier Group,
@@ -105,10 +106,10 @@ Inventory runtime is intentionally excluded.
 
 ### Snapshot-aware POS orders (Phase 12C)
 
-`POST /api/v1/orders` remains backward-compatible while Flutter is migrated. A
-request without `publishedMenuVersionId` takes the temporary legacy live-Catalog
-path (Batch 12 migration debt, to be removed in 12G). A request with it is the
-strict snapshot-aware path: every item must include `productId`, `placementId`,
+`POST /api/v1/orders` remains backward-compatible. A request without
+`publishedMenuVersionId` takes the deprecated legacy live-Catalog compatibility
+path; production Flutter POS does not use it. A request with it is the strict
+snapshot-aware path: every item must include `productId`, `placementId`,
 `variantId`, and `modifierOptionIds`; client price fields are ignored.
 
 For a new versioned order, the supplied version must be the current immutable POS
@@ -143,16 +144,16 @@ later Catalog or snapshot lookup.
 
 ## Deferred work and Phase 4K debt
 
-POS Published Snapshot Sync/local cache, Inventory runtime, authentication, and
-combos are deferred. Phase 4K may assess the large shared Menu repository,
-oversized Menu screens/services, overlapping published-version and recipe models,
-combined Recipe Cubits, broad lint suppressions, and legacy POS Catalog coupling.
-None of that work belongs to UX-G0.
+Inventory runtime, authentication, and combos remain deferred. Published POS
+Snapshot Sync/local cache is complete. Phase 4K may assess the large shared Menu
+repository, oversized Menu screens/services, overlapping published-version and
+recipe models, combined Recipe Cubits, broad lint suppressions, and legacy POS
+Catalog coupling. None of that work belongs to UX-G0.
 
 ## Batch 12 final cutover (Phase 12G)
 
 This section supersedes the earlier Phase 12 delivery notes above. Phases 12A
-through 12F are complete; Phase 12G final verification remains pending.
+through 12G are complete; Batch 12 is closed.
 
 ```text
 Menu Management -> Publish -> Immutable Version -> POS Runtime Mapper
@@ -183,6 +184,17 @@ resolved backend-side, so unpublished schedule edits do not affect POS.
 
 Orders with `published_menu_version_id = null` remain readable and operational
 for history, details, receipts, and refunds; they are not artificially migrated.
+Offline menu and cart preparation are supported, while true offline transaction
+or payment processing is not implemented.
+
+## Pre-Auth handoff
+
+The approved next sequence is Pre-Auth Hardening A (Order lifecycle +
+payment/refund concurrency/idempotency), Pre-Auth Hardening B (Flutter
+route-scoped Cubits / shared app context cleanup), Pre-Auth Hardening C (Discount
+runtime correctness), Pre-Auth Hardening D (Publish validation race + docs/error
+hygiene), then Auth + Employee Roles + Permissions + Branch Assignment. These
+are future phases and are not implemented by Batch 12.
 
 ### Legacy API and order-path audit
 

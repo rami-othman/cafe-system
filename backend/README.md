@@ -12,8 +12,12 @@ Variant/Override prices are strictly positive; Modifier price adjustments are
 signed; final POS unit prices below zero are rejected.
 
 Recipe components configure consumption only. They do not perform inventory stock
-deduction, reservations, or automatic availability. POS Published Snapshot Sync is
-also not implemented. Authentication is intentionally deferred.
+deduction, reservations, or automatic availability. Batch 12 Published POS runtime
+sync is complete: production POS uses `/pos/menu-sync`, a scoped Flutter cache,
+and snapshot-aware orders. Offline menu and cart preparation are supported, but
+true offline transaction or payment processing is not implemented. Authentication
+is intentionally deferred; the approved next work is documented in
+`windows_application/PROJECT_STATUS.md`.
 
 Backend verification gate:
 

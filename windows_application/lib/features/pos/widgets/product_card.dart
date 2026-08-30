@@ -95,7 +95,10 @@ class _ProductDetails extends StatelessWidget {
         : AppColors.textMuted;
 
     return Padding(
-      padding: AppSpacing.allMd,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -125,18 +128,23 @@ class _ProductDetails extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                CurrencyFormatter.formatForContext(
-                  context,
-                  product.price,
-                  currencyCode: product.currencyCode ?? 'SYP',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.titleMedium.copyWith(
-                  color: priceColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Text(
+                    CurrencyFormatter.formatForContext(
+                      context,
+                      product.price,
+                      currencyCode: product.currencyCode ?? 'SYP',
+                    ),
+                    maxLines: 1,
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: priceColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
             ],

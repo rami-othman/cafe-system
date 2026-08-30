@@ -35,28 +35,45 @@ the selected historical payload unchanged.
 - Phase 12D — Flutter Runtime DTOs + Sync Repository + Scoped Cache: **COMPLETE**
 - Phase 12E — Published Menu presentation cutover: **COMPLETE**
 - Phase 12F — Offline / reconnect / pending-version behavior: **COMPLETE**
-- Phase 12G — Legacy cutover + final regression: **PENDING FINAL VERIFICATION**
+- Phase 12G — Legacy cutover + final regression: **COMPLETE**
 
-Batch 12 final closure is **PENDING FINAL VERIFICATION**. Production POS follows Published Runtime Contract v1
-only: Branch -> `/pos/menu-sync` -> scoped cache -> published Menu / Sections /
-Placements -> version-bound cart -> snapshot-aware order. It never falls back to
-the live Catalog when publication, network, or contract/cache validation fails.
+**BATCH 12 — COMPLETE.** Production POS follows Published Runtime Contract v1
+only: Menu Management -> Publish -> Immutable Published Version -> POS Runtime
+Contract v1 -> `/pos/menu-sync` -> scoped Flutter cache -> Published POS UI ->
+version-bound cart -> snapshot-aware Order. It never falls back to the live
+Catalog when publication, network, or contract/cache validation fails.
 The bounded runtime overlay keeps Sold Out and Temporarily Unavailable state
 fresh without republishing; published schedules remain backend-resolved.
 
-The legacy Catalog menu endpoints and the no-version `POST /orders` branch are
-retained as deprecated compatibility paths for non-POS consumers and existing
-historical workflows. They are not used by production POS. Historical orders
+Offline menu and cart preparation are supported. True offline transaction or
+payment processing is not implemented. The legacy Catalog Menu endpoints and the
+no-version `POST /orders` branch are retained as deprecated compatibility paths
+for non-POS consumers and existing historical workflows. They are not used by
+the production Windows POS. Historical orders
 with no published version remain readable, refundable, and receiptable. Future
 authenticated barista/terminal assignment may restrict visible Branch choices;
 current Branch / cart isolation remains authoritative.
 
-## Pre-Merge Hardening
+## Batch 12 closure verification
 
-1. Unsaved navigation guard: **COMPLETE**
-2. Snapshot ordering contract: **COMPLETE**
-3. Localization/UI cleanup: **COMPLETE**
-4. Final merge verification: **PENDING**
+On the exact closure worktree: backend focused tests passed (41 tests / 485
+assertions), the full Laravel suite passed (138 tests / 1,891 assertions), and
+Pint, Dart format, and `git diff --check` passed. Manual Windows verification
+passed: `flutter gen-l10n`, `flutter analyze`, `flutter test` (487 passed), and
+`flutter build windows`. The built executable launched successfully and rendered
+the Published POS screen.
+
+## Pre-Auth handoff
+
+The approved next sequence is:
+
+1. **Pre-Auth Hardening A** — Order lifecycle + payment/refund concurrency/idempotency
+2. **Pre-Auth Hardening B** — Flutter route-scoped Cubits / shared app context cleanup
+3. **Pre-Auth Hardening C** — Discount runtime correctness
+4. **Pre-Auth Hardening D** — Publish validation race + docs/error hygiene
+5. **Auth + Employee Roles + Permissions + Branch Assignment**
+
+These phases are approved handoff work only and are not part of Batch 12.
 
 ## Important architecture notes
 
@@ -74,10 +91,12 @@ current Branch / cart isolation remains authoritative.
 
 ## Batch 12 status
 
-- 12A ✅
-- 12B ✅
-- 12C ✅
-- 12D ✅
-- 12E ✅
-- 12F ✅
-- 12G ⏳ final Flutter suite / Windows build verification pending
+- 12A ✅ Runtime Contract
+- 12B ✅ Backend POS Runtime Sync API
+- 12C ✅ Snapshot-Aware Order Contract
+- 12D ✅ Flutter Sync / Scoped Cache
+- 12E ✅ Published POS UI Cutover
+- 12F ✅ Offline / Reconnect / Pending Version
+- 12G ✅ Legacy Cutover / Final Regression
+
+**BATCH 12 — COMPLETE**
