@@ -266,6 +266,90 @@ abstract class AppLocalizations {
   /// **'Sold out'**
   String get commonSoldOut;
 
+  /// No description provided for @posNoPublishedMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'No menu has been published for this branch yet.'**
+  String get posNoPublishedMenu;
+
+  /// No description provided for @posNoAvailableMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'No published menu is currently available.'**
+  String get posNoAvailableMenu;
+
+  /// No description provided for @posNoAvailableItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No available items in this section.'**
+  String get posNoAvailableItems;
+
+  /// No description provided for @posUnableToLoadMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load the published menu.'**
+  String get posUnableToLoadMenu;
+
+  /// No description provided for @posMenuRefreshRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu data needs refresh before this order can continue.'**
+  String get posMenuRefreshRequired;
+
+  /// No description provided for @posOfflineUsingSavedMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline — using saved menu'**
+  String get posOfflineUsingSavedMenu;
+
+  /// No description provided for @posSyncErrorUsingSavedMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to sync menu — using saved menu'**
+  String get posSyncErrorUsingSavedMenu;
+
+  /// No description provided for @posLastSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced: {time}'**
+  String posLastSynced(String time);
+
+  /// No description provided for @posMenuUpdateReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu update ready — will apply after current order'**
+  String get posMenuUpdateReady;
+
+  /// No description provided for @posNoSavedMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved menu available. Reconnect to load menu.'**
+  String get posNoSavedMenu;
+
+  /// No description provided for @posConnectionRequiredToCompleteOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection required to complete this order.'**
+  String get posConnectionRequiredToCompleteOrder;
+
+  /// No description provided for @posMenuChangedReviewOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu changed — review order.'**
+  String get posMenuChangedReviewOrder;
+
+  /// No description provided for @posBranchSwitchBlockedWithCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish, hold, or cancel the current order before switching branches.'**
+  String get posBranchSwitchBlockedWithCart;
+
+  /// No description provided for @posTemporarilyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporarily unavailable'**
+  String get posTemporarilyUnavailable;
+
   /// No description provided for @commonYes.
   ///
   /// In en, this message translates to:

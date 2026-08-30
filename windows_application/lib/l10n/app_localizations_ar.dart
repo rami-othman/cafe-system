@@ -93,6 +93,56 @@ class AppLocalizationsAr extends AppLocalizations {
   String get commonSoldOut => 'نفد';
 
   @override
+  String get posNoPublishedMenu => 'لم يتم نشر قائمة لهذا الفرع بعد.';
+
+  @override
+  String get posNoAvailableMenu => 'لا توجد قائمة منشورة متاحة حالياً.';
+
+  @override
+  String get posNoAvailableItems => 'لا توجد عناصر متاحة في هذا القسم.';
+
+  @override
+  String get posUnableToLoadMenu => 'تعذر تحميل القائمة المنشورة.';
+
+  @override
+  String get posMenuRefreshRequired => 'يجب تحديث بيانات القائمة قبل المتابعة.';
+
+  @override
+  String get posOfflineUsingSavedMenu =>
+      'غير متصل — يتم استخدام القائمة المحفوظة';
+
+  @override
+  String get posSyncErrorUsingSavedMenu =>
+      'تعذر مزامنة القائمة — يتم استخدام القائمة المحفوظة';
+
+  @override
+  String posLastSynced(String time) {
+    return 'آخر مزامنة: $time';
+  }
+
+  @override
+  String get posMenuUpdateReady =>
+      'تحديث القائمة جاهز — سيُطبّق بعد الطلب الحالي';
+
+  @override
+  String get posNoSavedMenu =>
+      'لا توجد قائمة محفوظة. أعد الاتصال لتحميل القائمة.';
+
+  @override
+  String get posConnectionRequiredToCompleteOrder =>
+      'الاتصال مطلوب لإتمام هذا الطلب.';
+
+  @override
+  String get posMenuChangedReviewOrder => 'تغيرت القائمة — راجع الطلب.';
+
+  @override
+  String get posBranchSwitchBlockedWithCart =>
+      'أكمل الطلب الحالي أو علّقه أو ألغِه قبل تبديل الفرع.';
+
+  @override
+  String get posTemporarilyUnavailable => 'غير متاح مؤقتاً';
+
+  @override
   String get commonYes => 'نعم';
 
   @override

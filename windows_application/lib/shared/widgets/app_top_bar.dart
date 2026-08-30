@@ -8,8 +8,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../features/orders/controllers/orders_cubit.dart';
-import '../../features/orders/controllers/orders_state.dart';
+import '../../features/pos/controllers/pos_cubit.dart';
+import '../../features/pos/controllers/pos_state.dart';
 import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
 
@@ -53,12 +53,15 @@ class _AppTopBarState extends State<AppTopBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final OrdersState? ordersState = widget.showOperationalBranchTabs
-            ? context.watch<OrdersCubit>().state
-            : null;
-        final OrdersCubit? ordersCubit = widget.showOperationalBranchTabs
-            ? context.read<OrdersCubit>()
-            : null;
+        PosCubit? posCubit;
+        if (widget.showOperationalBranchTabs) {
+          try {
+            posCubit = context.watch<PosCubit>();
+          } catch (_) {
+            // Standalone top-bar tests and menu-only shells do not provide POS.
+          }
+        }
+        final PosState? posState = posCubit?.state;
         final bool isVeryCompact =
             constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
         final bool isCompact =
@@ -79,16 +82,15 @@ class _AppTopBarState extends State<AppTopBar> {
           child: Row(
             children: <Widget>[
               Expanded(
-                child: widget.showOperationalBranchTabs
+                child: widget.showOperationalBranchTabs && posState != null
                     ? ListView(
                         scrollDirection: Axis.horizontal,
                         children: <Widget>[
-                          for (final Branch branch in ordersState!.branches)
+                          for (final Branch branch in posState.branches)
                             _BranchTab(
                               label: branch.name,
-                              isActive:
-                                  branch.id == ordersState.selectedBranchId,
-                              onTap: () => ordersCubit!.selectBranch(branch.id),
+                              isActive: branch.id == posState.branchId,
+                              onTap: () => _selectBranch(posCubit, branch.id),
                             ),
                         ],
                       )
@@ -145,6 +147,15 @@ class _AppTopBarState extends State<AppTopBar> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _selectBranch(PosCubit? cubit, int branchId) async {
+    if (cubit == null) return;
+    final bool switched = await cubit.selectBranch(branchId);
+    if (!mounted || switched) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.posBranchSwitchBlockedWithCart)),
     );
   }
 }

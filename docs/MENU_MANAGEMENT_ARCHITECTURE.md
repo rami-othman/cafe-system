@@ -10,8 +10,13 @@ Materials is **COMPLETE after closure verification**.
 The authoritative project-status record is
 [`windows_application/PROJECT_STATUS.md`](../windows_application/PROJECT_STATUS.md).
 
-Batches 8 through 11 are complete through Publish / Versions. The next major
-integration is Published Menu Snapshot / POS Consumption; it is not implemented.
+Batches 8 through 11 are complete through Publish / Versions. Phases 12A–12D
+are complete and the Phase 12E Flutter implementation now renders the
+Branch-scoped Published Runtime Contract v1, keeps placement/version identities
+through the cart, and creates snapshot-aware orders. Legacy Catalog endpoints
+coexist until 12G; offline, reconnect, and pending-version recovery are deferred
+to 12F. Phase 12E closure remains subject to its full-suite and Windows smoke
+verification gate.
 
 The Product Workspace is the canonical Product parent. Recipe and Material
 Effect child routes remain ID-based and preserve Product, Variant, Modifier Group,
@@ -76,6 +81,53 @@ consumers must not use it to re-sort a snapshot. Historical snapshots retain
 their original payload; rollback copies the selected payload verbatim into a new
 Version.
 
+### POS runtime sync (Phase 12B)
+
+`GET /api/v1/pos/menu-sync?branchId={id}&knownVersionId={optional}` is the
+single POS runtime bootstrap/sync endpoint. Its channel is always server-bound to
+`pos`; clients cannot select another sales channel. A response contains Branch
+context, version metadata, the POS runtime contract v1 static menu projection,
+and a fresh runtime overlay. When `knownVersionId` is the current published
+version ID, `upToDate` is true and the static menu is `null`, while runtime state
+is still returned. A valid Branch with no POS publication returns HTTP 200 with
+`version`, `menu`, and `runtime` all `null`.
+
+Static menu configuration and schedule-rule definitions come only from the
+immutable `PublishedMenuVersion.payload_json`; draft Catalog, price, placement,
+and schedule edits cannot leak into this endpoint. The mapper supports source
+snapshot schemas v2 and v3 and always exposes `runtimeContractVersion: 1`; an
+unknown source schema returns HTTP 409 with
+`UNSUPPORTED_MENU_SNAPSHOT_SCHEMA`. The v3 `menus[]` sequence / `scopeOrder` is
+preserved exactly. Runtime availability is evaluated at request time in the
+Branch timezone: published schedule rules are evaluated server-side, while live
+operational availability is bulk-resolved for the exact Branch + POS scope.
+Inventory runtime is intentionally excluded.
+
+### Snapshot-aware POS orders (Phase 12C)
+
+`POST /api/v1/orders` remains backward-compatible while Flutter is migrated. A
+request without `publishedMenuVersionId` takes the temporary legacy live-Catalog
+path (Batch 12 migration debt, to be removed in 12G). A request with it is the
+strict snapshot-aware path: every item must include `productId`, `placementId`,
+`variantId`, and `modifierOptionIds`; client price fields are ignored.
+
+For a new versioned order, the supplied version must be the current immutable POS
+version for the authenticated Tenant and requested Branch. A stale or foreign,
+wrong-Branch, or non-POS version is rejected; historical versions are therefore
+not a price-selection mechanism. The new order stores that version in
+`orders.published_menu_version_id`. Draft and held versioned orders are pinned:
+later item mutations re-use their stored version even if a newer publication is
+current.
+
+Products, placements, variants, modifier membership/selection limits, names,
+prices, and published schedules are resolved only from `payload_json` (v2/v3).
+The resolver loads and evaluates the snapshot once per operation. Its only live
+data is the bounded Branch/POS operational overlay, so Sold Out and Temporarily
+Unavailable states take effect without republishing. Order items retain selected
+variant and placement identities plus stored unit/line monetary values; modifier
+rows retain their charged price delta. Completed historical totals never need a
+later Catalog or snapshot lookup.
+
 ## Performance contracts retained by UX-G0
 
 - Modifier Library returns a bounded Option preview with its Group page; it does
@@ -96,6 +148,56 @@ combos are deferred. Phase 4K may assess the large shared Menu repository,
 oversized Menu screens/services, overlapping published-version and recipe models,
 combined Recipe Cubits, broad lint suppressions, and legacy POS Catalog coupling.
 None of that work belongs to UX-G0.
+
+## Batch 12 final cutover (Phase 12G)
+
+This section supersedes the earlier Phase 12 delivery notes above. Phases 12A
+through 12F are complete; Phase 12G final verification remains pending.
+
+```text
+Menu Management -> Publish -> Immutable Version -> POS Runtime Mapper
+-> GET /pos/menu-sync -> Flutter tenant/branch/pos-scoped cache
+-> Published POS UI -> version-bound cart -> snapshot-aware Orders
+```
+
+Production POS always sends `publishedMenuVersionId`. Every new line includes
+`productId`, `placementId`, `variantId`, `modifierOptionIds`, and quantity;
+client price fields are ignored. The runtime/cache is the only production menu
+source. Startup, refresh, reconnect, branch switch, browse, product tap,
+customization, search, and cart navigation make zero calls to the legacy Catalog
+menu endpoints. Product tap makes no menu detail, modifier, or price request.
+
+Runtime responses are parsed and scope-validated before atomic cache replacement.
+Malformed/unsupported responses preserve a valid cache and never activate live
+Catalog data. No-publication, no-cache offline, and invalid-contract states are
+intentional blocking states, not fallbacks. Valid cached menus remain usable for
+browse/customization/cart construction offline, while create/pay/receipt and all
+server mutations remain blocked and are never queued as fake transactions.
+
+Static changes discovered while a cart/order is active are held as one pending
+version; the cart stays pinned to its immutable version and the pending version
+activates atomically after the cart clears. Restore makes a new current version;
+source snapshot v2 is mapped backend-side to runtime contract v1. Dynamic
+operational availability is the only live overlay. Published schedules are
+resolved backend-side, so unpublished schedule edits do not affect POS.
+
+Orders with `published_menu_version_id = null` remain readable and operational
+for history, details, receipts, and refunds; they are not artificially migrated.
+
+### Legacy API and order-path audit
+
+| Reference | Classification | Final decision |
+| --- | --- | --- |
+| `/menu/categories`, `/menu/products`, `/menu/products/{id}` routes/OpenAPI | E - compatibility API intentionally retained | Deprecated; production POS uses `/pos/menu-sync` only. |
+| Laravel `PosApiSmokeTest` | C - compatibility regression | Retained to protect existing contract. |
+| Admin Catalog/Pricing tests | B - non-POS use | Retained. |
+| Flutter `PosRepository` legacy menu methods/local data | C - deterministic fake/local fixture data | Retained and isolated from backend production mode. |
+| Flutter legacy repository tests | C - test fixture | Retained. |
+| Earlier POS audit/handoff/integration prose | D - superseded documentation | Historical only; this section is authoritative. |
+
+The no-version `POST /orders` path is E - deprecated external compatibility.
+External usage cannot be proved absent, so it remains, but production Flutter POS
+never uses it and it is not a runtime-failure fallback.
 
 ## Historical note
 

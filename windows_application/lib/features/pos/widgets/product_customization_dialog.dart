@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_sizes.dart';
@@ -10,6 +12,7 @@ import '../models/backend_product_detail.dart';
 import '../models/modifier_group.dart';
 import '../models/modifier_option.dart';
 import '../models/pos_product.dart';
+import '../models/pos_menu_runtime_models.dart';
 import '../models/product_customization.dart';
 import '../models/product_modifier.dart';
 import '../models/selected_modifier.dart';
@@ -113,6 +116,25 @@ class _ProductCustomizationDialogState
   ProductCustomization get _customization {
     final List<SelectedModifier> selectedModifiers = _selectedModifiers();
     final List<String> backendModifierLabels = _selectedBackendLabels();
+    final bool published = widget.product.isPublishedRuntime;
+    final double publishedModifierTotal = _activeDetail == null
+        ? 0
+        : _activeDetail!.modifierGroups.fold<double>(
+            0,
+            (double total, ModifierGroup group) =>
+                total +
+                group.options
+                    .where(
+                      (ModifierOption option) =>
+                          _backendSelections[group.id]?.contains(option.id) ??
+                          false,
+                    )
+                    .fold<double>(
+                      0,
+                      (double sum, ModifierOption option) =>
+                          sum + option.priceDelta,
+                    ),
+          );
 
     return ProductCustomization(
       product: widget.product,
@@ -125,11 +147,57 @@ class _ProductCustomizationDialogState
       specialInstructions: _instructionsController.text,
       selectedModifiers: selectedModifiers,
       backendModifierLabels: backendModifierLabels,
+      publishedVariantId: published ? widget.product.defaultVariantId : null,
+      publishedModifierOptionIds: published
+          ? selectedModifiers
+                .map((SelectedModifier modifier) => modifier.optionId)
+                .toList(growable: false)
+          : const <int>[],
+      publishedUnitPrice: published
+          ? widget.product.price + publishedModifierTotal
+          : null,
     );
   }
 
+  BackendProductDetail? get _activeDetail =>
+      widget.productDetail ?? _runtimeProductDetail;
+
+  BackendProductDetail? get _runtimeProductDetail {
+    if (!widget.product.isPublishedRuntime) return null;
+    final String languageCode = PlatformDispatcher.instance.locale.languageCode;
+    return BackendProductDetail.fromJson(<String, dynamic>{
+      'id': widget.product.backendId,
+      'name': widget.product.name,
+      'basePrice': widget.product.price,
+      'isAvailable': widget.product.isAvailable,
+      'modifierGroups': widget.product.modifierGroups
+          .map(
+            (PosModifierGroup group) => <String, dynamic>{
+              'id': group.id,
+              'name': group.name.resolve(languageCode),
+              'type': group.selectionType ?? 'single',
+              'required': group.isRequired,
+              'minSelections': group.minSelections ?? 0,
+              'maxSelections': group.maxSelections ?? 1,
+              'options': group.options
+                  .map(
+                    (PosModifierOption option) => <String, dynamic>{
+                      'id': option.id,
+                      'name': option.name.resolve(languageCode),
+                      'priceDelta': option.priceDelta ?? 0,
+                      'isDefault': option.isDefault,
+                      'isAvailable': option.isAvailable,
+                    },
+                  )
+                  .toList(growable: false),
+            },
+          )
+          .toList(growable: false),
+    });
+  }
+
   void _initializeBackendSelections() {
-    final BackendProductDetail? detail = widget.productDetail;
+    final BackendProductDetail? detail = _activeDetail;
     if (detail == null) {
       return;
     }
@@ -171,7 +239,7 @@ class _ProductCustomizationDialogState
   }
 
   List<String> _selectedBackendLabels() {
-    final BackendProductDetail? detail = widget.productDetail;
+    final BackendProductDetail? detail = _activeDetail;
     if (detail == null) {
       return const <String>[];
     }
@@ -335,10 +403,11 @@ class _ProductCustomizationDialogState
             setState(() => _sweetness = value);
           },
         );
-        final Widget activeModifiers = widget.productDetail == null
+        final BackendProductDetail? detail = _activeDetail;
+        final Widget activeModifiers = detail == null
             ? modifiers
             : _BackendModifiersColumn(
-                detail: widget.productDetail!,
+                detail: detail,
                 selections: _backendSelections,
                 instructionsController: _instructionsController,
                 onOptionToggled: _toggleBackendOption,
@@ -571,11 +640,30 @@ class _ProductInfoColumn extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Icon(
-                  product.icon ?? Icons.local_cafe_outlined,
-                  color: AppColors.secondary,
-                  size: 72,
-                ),
+                child:
+                    product.imageUrl == null || product.imageUrl!.trim().isEmpty
+                    ? Icon(
+                        product.icon ?? Icons.local_cafe_outlined,
+                        color: AppColors.secondary,
+                        size: 72,
+                      )
+                    : ClipRRect(
+                        borderRadius: AppRadius.control,
+                        child: Image.network(
+                          product.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (
+                                BuildContext context,
+                                Object error,
+                                StackTrace? stackTrace,
+                              ) => Icon(
+                                product.icon ?? Icons.local_cafe_outlined,
+                                color: AppColors.secondary,
+                                size: 72,
+                              ),
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -588,7 +676,9 @@ class _ProductInfoColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'A classic Italian espresso-based beverage with steamed milk and a thick layer of micro-foam.',
+              product.description?.trim().isNotEmpty == true
+                  ? product.description!.trim()
+                  : 'A classic Italian espresso-based beverage with steamed milk and a thick layer of micro-foam.',
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
                 fontWeight: FontWeight.w400,

@@ -12,6 +12,10 @@ class CartItem extends Equatable {
     required this.unitPrice,
     this.backendItemId,
     this.backendProductId,
+    this.publishedMenuVersionId,
+    this.placementId,
+    this.variantId,
+    this.modifierOptionIds = const <int>[],
     this.modifiers = const <String>[],
     this.selectedModifiers = const <SelectedModifier>[],
     this.specialInstructions = '',
@@ -20,6 +24,13 @@ class CartItem extends Equatable {
   final String id;
   final int? backendItemId;
   final int? backendProductId;
+
+  /// Null for legacy Catalog cart lines. 12E will set this only from a
+  /// published runtime menu identity.
+  final int? publishedMenuVersionId;
+  final int? placementId;
+  final int? variantId;
+  final List<int> modifierOptionIds;
   final PosProduct product;
   final int quantity;
   final double unitPrice;
@@ -54,6 +65,10 @@ class CartItem extends Equatable {
     double? unitPrice,
     int? backendItemId,
     int? backendProductId,
+    int? publishedMenuVersionId,
+    int? placementId,
+    int? variantId,
+    List<int>? modifierOptionIds,
     List<String>? modifiers,
     List<SelectedModifier>? selectedModifiers,
     String? specialInstructions,
@@ -65,6 +80,11 @@ class CartItem extends Equatable {
       unitPrice: unitPrice ?? this.unitPrice,
       backendItemId: backendItemId ?? this.backendItemId,
       backendProductId: backendProductId ?? this.backendProductId,
+      publishedMenuVersionId:
+          publishedMenuVersionId ?? this.publishedMenuVersionId,
+      placementId: placementId ?? this.placementId,
+      variantId: variantId ?? this.variantId,
+      modifierOptionIds: modifierOptionIds ?? this.modifierOptionIds,
       modifiers: modifiers ?? this.modifiers,
       selectedModifiers: selectedModifiers ?? this.selectedModifiers,
       specialInstructions: specialInstructions ?? this.specialInstructions,
@@ -76,6 +96,10 @@ class CartItem extends Equatable {
     id,
     backendItemId,
     backendProductId,
+    publishedMenuVersionId,
+    placementId,
+    variantId,
+    modifierOptionIds,
     product,
     quantity,
     unitPrice,

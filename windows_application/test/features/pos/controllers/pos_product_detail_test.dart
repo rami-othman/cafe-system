@@ -115,6 +115,28 @@ void main() {
       expect(await first, isA<ProductDetailLoaded>());
     },
   );
+
+  test(
+    'published runtime product never requests the legacy detail endpoint',
+    () async {
+      final ProductDetailLoadResult result = await cubit.loadProductDetail(
+        const PosProduct(
+          id: 'published-12-40',
+          backendId: 1,
+          name: 'Published Latte',
+          category: '',
+          size: 'Regular',
+          price: 4.5,
+          isAvailable: true,
+          publishedMenuVersionId: 12,
+          placementId: 40,
+        ),
+      );
+
+      expect(result, isA<ProductDetailNotRequired>());
+      expect(repository.calls, 0);
+    },
+  );
 }
 
 const PosProduct _a = PosProduct(

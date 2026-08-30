@@ -13,6 +13,8 @@ import '../features/discounts/views/discounts_list_screen.dart';
 import '../features/orders/controllers/orders_cubit.dart';
 import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
+import '../features/pos/controllers/pos_state.dart';
+import '../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../features/pos/views/pos_screen.dart';
 import '../features/pos/widgets/pos_cart_panel.dart';
 import '../features/reports/controllers/daily_report_cubit.dart';
@@ -126,6 +128,9 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<PosCubit>(
               create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
             ),
+            BlocProvider<PosMenuSyncCubit>(
+              create: (_) => serviceLocator<PosMenuSyncCubit>(),
+            ),
             BlocProvider<OrdersCubit>(
               create: (_) => serviceLocator<OrdersCubit>()..loadOrders(),
             ),
@@ -148,7 +153,15 @@ final GoRouter appRouter = GoRouter(
               create: (_) => serviceLocator<MenuListCubit>(),
             ),
           ],
-          child: shell,
+          child: BlocListener<PosCubit, PosState>(
+            listenWhen: (PosState previous, PosState current) =>
+                previous.branchId != current.branchId &&
+                current.branches.isNotEmpty,
+            listener: (BuildContext context, PosState state) {
+              context.read<OrdersCubit>().applyPosBranchContext(state.branchId);
+            },
+            child: shell,
+          ),
         );
       },
       routes: <RouteBase>[
@@ -840,8 +853,13 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
   String matchedLocation,
 ) {
   return switch (matchedLocation) {
-    AppRoutes.pos =>
-      (BuildContext context) => context.read<PosCubit>().loadInitialData(),
+    AppRoutes.pos => (BuildContext context) {
+      final PosState pos = context.read<PosCubit>().state;
+      return context.read<PosMenuSyncCubit>().sync(
+        pos.branchId,
+        hasActiveCart: pos.hasCartItems || pos.currentOrderId != null,
+      );
+    },
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>

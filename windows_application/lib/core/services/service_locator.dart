@@ -6,6 +6,9 @@ import '../network/dio_api_client.dart';
 import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
+import '../../features/pos/controllers/pos_menu_sync_cubit.dart';
+import '../../features/pos/repositories/pos_menu_sync_cache.dart';
+import '../../features/pos/repositories/pos_menu_sync_repository.dart';
 import '../../features/pos/repositories/pos_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
@@ -62,6 +65,25 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<PosCubit>()) {
     serviceLocator.registerFactory<PosCubit>(
       () => PosCubit(repository: serviceLocator<PosRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<PosMenuSyncCache>()) {
+    serviceLocator.registerLazySingleton<PosMenuSyncCache>(
+      FilePosMenuSyncCache.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<PosMenuSyncRepository>()) {
+    serviceLocator.registerLazySingleton<PosMenuSyncRepository>(
+      () => PosMenuSyncRepository(
+        apiClient: serviceLocator<DioApiClient>(),
+        cache: serviceLocator<PosMenuSyncCache>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<PosMenuSyncCubit>()) {
+    serviceLocator.registerFactory<PosMenuSyncCubit>(
+      () =>
+          PosMenuSyncCubit(repository: serviceLocator<PosMenuSyncRepository>()),
     );
   }
 

@@ -32,7 +32,7 @@ class PosRepository {
       return const <Branch>[
         Branch(
           id: 1,
-          name: 'Downtown Branch',
+          name: 'Downtown',
           currency: 'SYP',
           timezone: 'Asia/Damascus',
           isActive: true,

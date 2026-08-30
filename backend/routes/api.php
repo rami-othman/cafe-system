@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PosMenuSyncController;
 use App\Http\Controllers\Api\PosOrderController;
 use App\Http\Controllers\Api\PosStateController;
 use App\Http\Controllers\Api\ReceiptController;
@@ -195,9 +196,12 @@ Route::prefix('v1')->group(function (): void {
     Route::post('shifts/current', [ShiftController::class, 'open']);
     Route::post('shifts/{shift}/close', [ShiftController::class, 'close']);
 
+    // Deprecated compatibility endpoints. Production POS uses pos/menu-sync
+    // and snapshot-aware orders; retain these while external consumers migrate.
     Route::get('menu/categories', [MenuController::class, 'categories']);
     Route::get('menu/products', [MenuController::class, 'products']);
     Route::get('menu/products/{product}', [MenuController::class, 'product']);
+    Route::get('pos/menu-sync', [PosMenuSyncController::class, 'show']);
 
     Route::get('customers', [CustomerController::class, 'index']);
     Route::get('tables', [TableController::class, 'index']);

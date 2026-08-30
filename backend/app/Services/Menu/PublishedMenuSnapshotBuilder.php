@@ -55,7 +55,7 @@ class PublishedMenuSnapshotBuilder
     {
         return ['placementId' => $placement->id, 'productId' => $product->id,
             'name' => $this->overrideOrLocalized($placement->display_name_override, $product, 'name'), 'description' => $this->overrideOrLocalized($placement->display_description_override, $product, 'description'), 'imageUrl' => $placement->display_image_override ?: $product->image_url,
-            'isFeatured' => (bool) $placement->is_featured, 'sortOrder' => $placement->sort_order, 'productType' => $this->value($product->product_type), 'preparationTimeMinutes' => $product->preparation_time_minutes,
+            'isFeatured' => (bool) $placement->is_featured, 'isVisible' => (bool) $placement->is_visible, 'sortOrder' => $placement->sort_order, 'productType' => $this->value($product->product_type), 'preparationTimeMinutes' => $product->preparation_time_minutes,
             'categoryId' => $product->category_id, 'reportingCategoryId' => $product->reporting_category_id, 'kitchenStationId' => $product->kitchen_station_id,
             'productAvailabilityRules' => $product->availabilityRules->map(fn ($rule) => $this->rule($rule))->values()->all(),
             'variants' => $product->variants->map(fn (ProductVariant $variant) => $this->variant($tenantId, $variant, $branch, $channel, $product))->values()->all(),

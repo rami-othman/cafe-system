@@ -6,6 +6,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../app/localization/localization_extensions.dart';
 import '../models/pos_product.dart';
 
 class ProductCard extends StatelessWidget {
@@ -38,7 +39,7 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ),
-          if (!product.isAvailable) const _UnavailableOverlay(),
+          if (!product.isAvailable) _UnavailableOverlay(product: product),
         ],
       ),
     );
@@ -58,11 +59,26 @@ class _ProductVisual extends StatelessWidget {
       color: product.isAvailable
           ? AppColors.productVisualBackground
           : AppColors.surfaceAlt,
-      child: Icon(
-        product.icon ?? Icons.restaurant_menu_outlined,
-        color: AppColors.secondary,
-        size: 34,
-      ),
+      child: product.imageUrl == null || product.imageUrl!.trim().isEmpty
+          ? Icon(
+              product.icon ?? Icons.restaurant_menu_outlined,
+              color: AppColors.secondary,
+              size: 34,
+            )
+          : Image.network(
+              product.imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (
+                    BuildContext context,
+                    Object error,
+                    StackTrace? stackTrace,
+                  ) => Icon(
+                    product.icon ?? Icons.restaurant_menu_outlined,
+                    color: AppColors.secondary,
+                    size: 34,
+                  ),
+            ),
     );
   }
 }
@@ -89,7 +105,7 @@ class _ProductDetails extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.labelLarge.copyWith(
               color: AppColors.primary,
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -103,18 +119,23 @@ class _ProductDetails extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.labelSmall.copyWith(
                     color: AppColors.textMuted,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
                   ),
                 ),
               ),
               Text(
-                CurrencyFormatter.format(product.price),
+                CurrencyFormatter.formatForContext(
+                  context,
+                  product.price,
+                  currencyCode: product.currencyCode ?? 'SYP',
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.titleMedium.copyWith(
                   color: priceColor,
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -127,7 +148,9 @@ class _ProductDetails extends StatelessWidget {
 }
 
 class _UnavailableOverlay extends StatelessWidget {
-  const _UnavailableOverlay();
+  const _UnavailableOverlay({required this.product});
+
+  final PosProduct product;
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +175,7 @@ class _UnavailableOverlay extends StatelessWidget {
               ],
             ),
             child: Text(
-              'UNAVAILABLE',
+              _label(context),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textMuted,
                 fontWeight: FontWeight.w800,
@@ -164,4 +187,10 @@ class _UnavailableOverlay extends StatelessWidget {
       ),
     );
   }
+
+  String _label(BuildContext context) => switch (product.unavailabilityReason) {
+    'sold_out' => context.l10n.commonSoldOut,
+    'temporarily_unavailable' => context.l10n.posTemporarilyUnavailable,
+    _ => context.l10n.posTemporarilyUnavailable,
+  };
 }

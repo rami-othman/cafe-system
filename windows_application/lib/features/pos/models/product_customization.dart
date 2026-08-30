@@ -17,6 +17,9 @@ class ProductCustomization extends Equatable {
     required this.specialInstructions,
     this.selectedModifiers = const <SelectedModifier>[],
     this.backendModifierLabels = const <String>[],
+    this.publishedVariantId,
+    this.publishedModifierOptionIds = const <int>[],
+    this.publishedUnitPrice,
   });
 
   final PosProduct product;
@@ -29,8 +32,15 @@ class ProductCustomization extends Equatable {
   final String specialInstructions;
   final List<SelectedModifier> selectedModifiers;
   final List<String> backendModifierLabels;
+  final int? publishedVariantId;
+  final List<int> publishedModifierOptionIds;
+  final double? publishedUnitPrice;
+
+  bool get isPublishedRuntime =>
+      product.isPublishedRuntime && publishedVariantId != null;
 
   double get unitPrice {
+    if (publishedUnitPrice != null) return publishedUnitPrice!;
     final double addOnsTotal = addOns.fold<double>(
       0,
       (double total, ProductModifierOption option) => total + option.priceDelta,
@@ -62,6 +72,18 @@ class ProductCustomization extends Equatable {
   }
 
   String get configurationKey {
+    if (isPublishedRuntime) {
+      final List<int> options = List<int>.of(publishedModifierOptionIds)
+        ..sort();
+      return <Object?>[
+        product.publishedMenuVersionId,
+        product.placementId,
+        product.backendId,
+        publishedVariantId,
+        options.join('+'),
+        specialInstructions.trim(),
+      ].join('|');
+    }
     final String? backendKey = backendConfigurationKey;
     if (backendKey != null) {
       return backendKey;
@@ -109,5 +131,8 @@ class ProductCustomization extends Equatable {
     specialInstructions,
     selectedModifiers,
     backendModifierLabels,
+    publishedVariantId,
+    publishedModifierOptionIds,
+    publishedUnitPrice,
   ];
 }

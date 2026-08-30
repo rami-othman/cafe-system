@@ -86,7 +86,8 @@ paths:
   /menu/categories:
     get:
       tags: [Menu]
-      summary: List menu categories
+      deprecated: true
+      summary: Legacy compatibility list of Catalog categories (not for production POS)
       parameters:
         - $ref: '#/components/parameters/BranchId'
       responses:
@@ -102,7 +103,8 @@ paths:
   /menu/products:
     get:
       tags: [Menu]
-      summary: Search and list POS products
+      deprecated: true
+      summary: Legacy compatibility Catalog product list (not for production POS)
       parameters:
         - $ref: '#/components/parameters/BranchId'
         - name: categoryId
@@ -133,7 +135,8 @@ paths:
   /menu/products/{productId}:
     get:
       tags: [Menu]
-      summary: Get product details and customization groups
+      deprecated: true
+      summary: Legacy compatibility Catalog product detail (not for production POS)
       parameters:
         - $ref: '#/components/parameters/ProductId'
         - $ref: '#/components/parameters/BranchId'

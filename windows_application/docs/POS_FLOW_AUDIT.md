@@ -3,6 +3,11 @@
 Audit date: 2026-07-12  
 Scope: Flutter Windows POS/Orders UI, Cubits, repositories, Dio contract, Laravel API/domain code, migrations, and automated checks. This was an analysis-only audit; no production, migration, seeder, or API-contract code was changed.
 
+> Historical document: this 2026-07-12 audit predates Batch 12. Its Catalog
+> startup/product-detail topology is superseded. Current production POS uses
+> `/pos/menu-sync` Published Runtime Contract v1 only; the Catalog endpoints
+> cited below are deprecated compatibility APIs and not production POS calls.
+
 ## A. Executive Summary
 
 The catalog, a basic backend order lifecycle, backend totals, backend receipt retrieval, and the Orders list/detail read paths are connected and have a passing smoke test. The implementation is **development-only, not production-ready**. The highest risks are duplicate financial operations, incorrect refund limits, an authoritative cart that deliberately stores duplicate configured items, and order context/refund actions that appear in the UI but do not persist as the user would expect.

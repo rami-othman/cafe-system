@@ -1298,7 +1298,7 @@ class _Move extends StatelessWidget {
 Future<bool> _confirm(BuildContext context, {required bool archive}) async =>
     await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(
           archive
               ? context.l10n.menuProductsRemove
@@ -1311,11 +1311,11 @@ Future<bool> _confirm(BuildContext context, {required bool archive}) async =>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(
               archive
                   ? context.l10n.menuProductsRemove

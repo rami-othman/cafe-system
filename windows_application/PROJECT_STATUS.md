@@ -29,9 +29,27 @@ the selected historical payload unchanged.
 
 ## Current POS boundary
 
-Current POS still consumes legacy Catalog/Menu endpoints. Published Snapshot → POS
-consumption, local snapshot cache, offline synchronization, Inventory runtime,
-stock deduction, and reservations are **NOT IMPLEMENTED**.
+- Phase 12A — Runtime Contract: **COMPLETE**
+- Phase 12B — Backend POS Runtime Sync API: **COMPLETE**
+- Phase 12C — Snapshot-Aware Order Contract (backend): **COMPLETE**
+- Phase 12D — Flutter Runtime DTOs + Sync Repository + Scoped Cache: **COMPLETE**
+- Phase 12E — Published Menu presentation cutover: **COMPLETE**
+- Phase 12F — Offline / reconnect / pending-version behavior: **COMPLETE**
+- Phase 12G — Legacy cutover + final regression: **PENDING FINAL VERIFICATION**
+
+Batch 12 final closure is **PENDING FINAL VERIFICATION**. Production POS follows Published Runtime Contract v1
+only: Branch -> `/pos/menu-sync` -> scoped cache -> published Menu / Sections /
+Placements -> version-bound cart -> snapshot-aware order. It never falls back to
+the live Catalog when publication, network, or contract/cache validation fails.
+The bounded runtime overlay keeps Sold Out and Temporarily Unavailable state
+fresh without republishing; published schedules remain backend-resolved.
+
+The legacy Catalog menu endpoints and the no-version `POST /orders` branch are
+retained as deprecated compatibility paths for non-POS consumers and existing
+historical workflows. They are not used by production POS. Historical orders
+with no published version remain readable, refundable, and receiptable. Future
+authenticated barista/terminal assignment may restrict visible Branch choices;
+current Branch / cart isolation remains authoritative.
 
 ## Pre-Merge Hardening
 
@@ -54,7 +72,12 @@ stock deduction, and reservations are **NOT IMPLEMENTED**.
   Workspace remains the canonical Product parent.
 - Phase 4K architecture cleanup and broader localization migration remain deferred.
 
-## Next major integration
+## Batch 12 status
 
-**Published Menu Snapshot / POS Consumption** — not implemented. This is the next
-major integration after merge.
+- 12A ✅
+- 12B ✅
+- 12C ✅
+- 12D ✅
+- 12E ✅
+- 12F ✅
+- 12G ⏳ final Flutter suite / Windows build verification pending

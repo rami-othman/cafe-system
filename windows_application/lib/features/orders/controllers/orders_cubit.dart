@@ -66,13 +66,15 @@ class OrdersCubit extends Cubit<OrdersState> {
     await loadOrders();
   }
 
-  Future<void> selectBranch(int branchId) async {
+  /// Mirrors the POS-owned branch context for order listing.  This is not a
+  /// user-selectable branch state; the shell tabs are owned by [PosCubit].
+  Future<void> applyPosBranchContext(int branchId) async {
     if (state.selectedBranchId == branchId ||
         !state.branches.any((Branch branch) => branch.id == branchId)) {
       return;
     }
 
-    _debugLog('Selected branch $branchId');
+    _debugLog('Applying POS branch context $branchId');
     emit(state.copyWith(selectedBranchId: branchId));
     await loadOrders();
   }

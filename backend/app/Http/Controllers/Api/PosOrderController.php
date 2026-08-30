@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
+use App\Services\Menu\PublishedMenuOrderResolver;
 use App\Services\PosPricingService;
 use App\Services\TenantTaxService;
 use App\Support\TenantContext;
@@ -18,6 +20,7 @@ class PosOrderController extends Controller
     public function __construct(
         private readonly PosPricingService $pricing,
         private readonly TenantTaxService $taxes,
+        private readonly PublishedMenuOrderResolver $publishedOrders,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -53,46 +56,67 @@ class PosOrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        // The no-version branch is retained solely for backward-compatible
+        // integrations and historical workflows. Production POS must send a
+        // publishedMenuVersionId and is resolved only from that snapshot.
+        $snapshotRequested = $request->filled('publishedMenuVersionId');
         $data = $request->validate([
             'branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)],
             'shiftId' => ['nullable', 'integer', $this->tenantExists('shifts', $tenantId)],
             'orderType' => ['required', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
             'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
+            'publishedMenuVersionId' => ['nullable', 'integer'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.productId' => ['required', 'integer', $this->tenantExists('products', $tenantId)],
+            // Product identity belongs to the snapshot on the versioned path;
+            // the temporary no-version path remains the legacy Catalog flow.
+            'items.*.productId' => $snapshotRequested
+                ? ['required', 'integer']
+                : ['required', 'integer', $this->tenantExists('products', $tenantId)],
+            'items.*.variantId' => ['nullable', 'integer'],
+            'items.*.placementId' => ['nullable', 'integer'],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.modifiers' => ['array'],
+            'items.*.modifierOptionIds' => ['array'],
+            'items.*.modifierOptionIds.*' => ['integer'],
             'items.*.note' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
-        $order = DB::transaction(function () use ($tenantId, $data) {
-            $now = now();
-            $orderId = DB::table('orders')->insertGetId([
-                'tenant_id' => $tenantId,
-                'branch_id' => $data['branchId'],
-                'shift_id' => $data['shiftId'] ?? null,
-                'table_id' => $data['tableId'] ?? null,
-                'customer_id' => $data['customerId'] ?? null,
-                'order_number' => $this->nextOrderNumber($tenantId, $data['branchId']),
-                'type' => $data['orderType'],
-                'status' => 'draft',
-                'payment_status' => 'unpaid',
-                'tax_rate' => $this->taxes->rateFor($tenantId),
-                'notes' => $data['note'] ?? null,
-                'opened_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+        try {
+            $order = DB::transaction(function () use ($tenantId, $data) {
+                $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
+                    ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
+                    : null;
+                $now = now();
+                $orderId = DB::table('orders')->insertGetId([
+                    'tenant_id' => $tenantId,
+                    'branch_id' => $data['branchId'],
+                    'published_menu_version_id' => $snapshot['version']->id ?? null,
+                    'shift_id' => $data['shiftId'] ?? null,
+                    'table_id' => $data['tableId'] ?? null,
+                    'customer_id' => $data['customerId'] ?? null,
+                    'order_number' => $this->nextOrderNumber($tenantId, $data['branchId']),
+                    'type' => $data['orderType'],
+                    'status' => 'draft',
+                    'payment_status' => 'unpaid',
+                    'tax_rate' => $this->taxes->rateFor($tenantId),
+                    'notes' => $data['note'] ?? null,
+                    'opened_at' => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
 
-            foreach ($data['items'] as $item) {
-                $this->persistItem($tenantId, $orderId, $item);
-            }
+                foreach ($data['items'] as $item) {
+                    $this->persistItem($tenantId, $orderId, $item, $snapshot);
+                }
 
-            return $this->pricing->recalculateOrder($tenantId, $orderId);
-        });
+                return $this->pricing->recalculateOrder($tenantId, $orderId);
+            });
+        } catch (UnsupportedMenuSnapshotSchemaException $exception) {
+            return $this->unsupportedSnapshotResponse($exception);
+        }
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $order)], 201);
     }
@@ -159,19 +183,29 @@ class PosOrderController extends Controller
     public function addItem(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        $orderRow = $this->findOrder($tenantId, $order);
         $data = $request->validate([
-            'productId' => ['required', 'integer', $this->tenantExists('products', $tenantId)],
+            'productId' => $orderRow->published_menu_version_id === null
+                ? ['required', 'integer', $this->tenantExists('products', $tenantId)]
+                : ['required', 'integer'],
+            'variantId' => ['nullable', 'integer'],
+            'placementId' => ['nullable', 'integer'],
             'quantity' => ['required', 'numeric', 'min:1'],
             'modifiers' => ['array'],
+            'modifierOptionIds' => ['array'],
+            'modifierOptionIds.*' => ['integer'],
             'note' => ['nullable', 'string'],
         ]);
 
-        $this->findOrder($tenantId, $order);
-
-        DB::transaction(function () use ($tenantId, $order, $data): void {
-            $this->persistItem($tenantId, $order, $data);
-            $this->pricing->recalculateOrder($tenantId, $order);
-        });
+        try {
+            DB::transaction(function () use ($tenantId, $order, $data, $orderRow): void {
+                $snapshot = $orderRow->published_menu_version_id === null ? null : $this->publishedOrders->bindPinnedOrder($tenantId, (int) $orderRow->branch_id, (int) $orderRow->published_menu_version_id);
+                $this->persistItem($tenantId, $order, $data, $snapshot);
+                $this->pricing->recalculateOrder($tenantId, $order);
+            });
+        } catch (UnsupportedMenuSnapshotSchemaException $exception) {
+            return $this->unsupportedSnapshotResponse($exception);
+        }
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))], 201);
     }
@@ -181,38 +215,65 @@ class PosOrderController extends Controller
         $data = $request->validate([
             'quantity' => ['sometimes', 'numeric', 'min:1'],
             'modifiers' => ['sometimes', 'array'],
+            'modifierOptionIds' => ['sometimes', 'array'],
+            'modifierOptionIds.*' => ['integer'],
             'note' => ['nullable', 'string'],
         ]);
 
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $orderRow = $this->findOrder($tenantId, $order);
         $existing = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->where('id', $item)->whereNull('deleted_at')->first();
         abort_if(! $existing, 404, 'Order item not found.');
 
-        DB::transaction(function () use ($tenantId, $order, $item, $existing, $data): void {
-            $quantity = $data['quantity'] ?? (float) $existing->quantity;
-            $modifiers = $data['modifiers'] ?? DB::table('order_item_modifiers')
-                ->where('tenant_id', $tenantId)
-                ->where('order_item_id', $item)
-                ->get()
-                ->map(fn ($modifier) => ['optionId' => $modifier->modifier_option_id])
-                ->all();
+        try {
+            DB::transaction(function () use ($tenantId, $order, $item, $existing, $data, $orderRow): void {
+                $quantity = $data['quantity'] ?? (float) $existing->quantity;
+                if ($orderRow->published_menu_version_id !== null) {
+                    $optionIds = $data['modifierOptionIds'] ?? DB::table('order_item_modifiers')
+                        ->where('tenant_id', $tenantId)->where('order_item_id', $item)->pluck('modifier_option_id')->map(fn ($id) => (int) $id)->all();
+                    $snapshot = $this->publishedOrders->bindPinnedOrder($tenantId, (int) $orderRow->branch_id, (int) $orderRow->published_menu_version_id);
+                    $price = $this->publishedOrders->priceItem($snapshot, [
+                        'productId' => (int) $existing->product_id,
+                        'placementId' => (int) $existing->menu_item_placement_id,
+                        'variantId' => (int) $existing->product_variant_id,
+                        'quantity' => $quantity,
+                        'modifierOptionIds' => $optionIds,
+                    ]);
+                    DB::table('order_item_modifiers')->where('tenant_id', $tenantId)->where('order_item_id', $item)->delete();
+                    DB::table('order_items')->where('tenant_id', $tenantId)->where('id', $item)->update([
+                        'quantity' => $quantity, 'unit_price' => $price['unitPrice'], 'total' => $price['lineTotal'],
+                        'notes' => array_key_exists('note', $data) ? $data['note'] : $existing->notes, 'updated_at' => now(),
+                    ]);
+                    $this->persistModifiers($tenantId, $item, $price['selectedOptions']);
+                    $this->pricing->recalculateOrder($tenantId, $order);
 
-            DB::table('order_item_modifiers')->where('tenant_id', $tenantId)->where('order_item_id', $item)->delete();
+                    return;
+                }
+                $modifiers = $data['modifiers'] ?? DB::table('order_item_modifiers')
+                    ->where('tenant_id', $tenantId)
+                    ->where('order_item_id', $item)
+                    ->get()
+                    ->map(fn ($modifier) => ['optionId' => $modifier->modifier_option_id])
+                    ->all();
 
-            $price = $this->pricing->priceItem($tenantId, (int) $existing->product_id, $quantity, $modifiers);
+                DB::table('order_item_modifiers')->where('tenant_id', $tenantId)->where('order_item_id', $item)->delete();
 
-            DB::table('order_items')->where('tenant_id', $tenantId)->where('id', $item)->update([
-                'quantity' => $quantity,
-                'unit_price' => $price['unit_price'],
-                'total' => $price['line_total'],
-                'notes' => array_key_exists('note', $data) ? $data['note'] : $existing->notes,
-                'updated_at' => now(),
-            ]);
+                $price = $this->pricing->priceItem($tenantId, (int) $existing->product_id, $quantity, $modifiers);
 
-            $this->persistModifiers($tenantId, $item, $price['selected_options']);
-            $this->pricing->recalculateOrder($tenantId, $order);
-        });
+                DB::table('order_items')->where('tenant_id', $tenantId)->where('id', $item)->update([
+                    'quantity' => $quantity,
+                    'unit_price' => $price['unit_price'],
+                    'total' => $price['line_total'],
+                    'notes' => array_key_exists('note', $data) ? $data['note'] : $existing->notes,
+                    'updated_at' => now(),
+                ]);
+
+                $this->persistModifiers($tenantId, $item, $price['selected_options']);
+                $this->pricing->recalculateOrder($tenantId, $order);
+            });
+        } catch (UnsupportedMenuSnapshotSchemaException $exception) {
+            return $this->unsupportedSnapshotResponse($exception);
+        }
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
     }
@@ -312,8 +373,31 @@ class PosOrderController extends Controller
         ], 202);
     }
 
-    private function persistItem(int $tenantId, int $orderId, array $item): int
+    private function persistItem(int $tenantId, int $orderId, array $item, ?array $snapshot = null): int
     {
+        if ($snapshot !== null) {
+            $price = $this->publishedOrders->priceItem($snapshot, $item);
+            $itemId = DB::table('order_items')->insertGetId([
+                'tenant_id' => $tenantId,
+                'order_id' => $orderId,
+                'product_id' => $price['productId'],
+                'product_variant_id' => $price['variantId'],
+                'menu_item_placement_id' => $price['placementId'],
+                'product_name' => $price['productName'],
+                'variant_name' => $price['variantName'],
+                'quantity' => $price['quantity'],
+                'unit_price' => $price['unitPrice'],
+                'total' => $price['lineTotal'],
+                'notes' => $item['note'] ?? null,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $this->persistModifiers($tenantId, $itemId, $price['selectedOptions']);
+
+            return $itemId;
+        }
+
         $quantity = (float) $item['quantity'];
         $price = $this->pricing->priceItem($tenantId, (int) $item['productId'], $quantity, $item['modifiers'] ?? []);
 
@@ -339,14 +423,15 @@ class PosOrderController extends Controller
     private function persistModifiers(int $tenantId, int $itemId, iterable $selectedOptions): void
     {
         foreach ($selectedOptions as $option) {
+            $snapshotOption = is_array($option);
             DB::table('order_item_modifiers')->insert([
                 'tenant_id' => $tenantId,
                 'order_item_id' => $itemId,
-                'modifier_group_id' => $option->modifier_group_id,
-                'modifier_option_id' => $option->id,
-                'group_name' => $option->group_name,
-                'option_name' => $option->name,
-                'price_delta' => $option->price_delta,
+                'modifier_group_id' => $snapshotOption ? $option['modifierGroupId'] : $option->modifier_group_id,
+                'modifier_option_id' => $snapshotOption ? $option['id'] : $option->id,
+                'group_name' => $snapshotOption ? $option['groupName'] : $option->group_name,
+                'option_name' => $snapshotOption ? $option['optionName'] : $option->name,
+                'price_delta' => $snapshotOption ? $option['priceDelta'] : $option->price_delta,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -403,6 +488,7 @@ class PosOrderController extends Controller
             'id' => $order->id,
             'orderNumber' => $order->order_number,
             'branchId' => $order->branch_id,
+            'publishedMenuVersionId' => $order->published_menu_version_id,
             'shiftId' => $order->shift_id,
             'orderType' => $order->type,
             'status' => $order->status,
@@ -526,6 +612,9 @@ class PosOrderController extends Controller
                 return [
                     'id' => $item->id,
                     'productId' => $item->product_id,
+                    'variantId' => $item->product_variant_id,
+                    'placementId' => $item->menu_item_placement_id,
+                    'variantName' => $item->variant_name,
                     'name' => $item->product_name,
                     'quantity' => (float) $item->quantity,
                     'unitPrice' => (float) $item->unit_price,
@@ -552,5 +641,10 @@ class PosOrderController extends Controller
             'amount' => (float) $discount->discount_amount,
             'reason' => $discount->discount_name,
         ];
+    }
+
+    private function unsupportedSnapshotResponse(UnsupportedMenuSnapshotSchemaException $exception): JsonResponse
+    {
+        return response()->json(['message' => $exception->getMessage(), 'code' => 'UNSUPPORTED_MENU_SNAPSHOT_SCHEMA'], 409);
     }
 }

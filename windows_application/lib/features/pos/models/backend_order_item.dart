@@ -48,6 +48,8 @@ class BackendOrderItem extends Equatable {
     required this.lineTotal,
     required this.modifiers,
     this.note,
+    this.variantId,
+    this.placementId,
   });
 
   factory BackendOrderItem.fromJson(Map<String, dynamic> json) {
@@ -64,6 +66,8 @@ class BackendOrderItem extends Equatable {
       note: readString(json['note']).trim().isEmpty
           ? null
           : readString(json['note']).trim(),
+      variantId: readInt(json['variantId']),
+      placementId: readInt(json['placementId']),
     );
   }
 
@@ -75,6 +79,8 @@ class BackendOrderItem extends Equatable {
   final double lineTotal;
   final List<BackendOrderItemModifier> modifiers;
   final String? note;
+  final int? variantId;
+  final int? placementId;
 
   List<String> get modifierLabels {
     return modifiers
@@ -114,5 +120,7 @@ class BackendOrderItem extends Equatable {
     lineTotal,
     modifiers,
     note,
+    variantId,
+    placementId,
   ];
 }

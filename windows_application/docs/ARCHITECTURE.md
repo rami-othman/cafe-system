@@ -121,9 +121,49 @@ Repositories isolate data access for a feature. They may later coordinate with
 API clients, databases, or local storage, but those integrations should only be
 added when explicitly required.
 
-`PosRepository` currently returns deterministic fake categories and products
-only. It does not connect to backend APIs, database, or local storage.
+`PosRepository` retains deterministic fake categories/products for local widget
+tests and carries non-menu POS/order API calls. Its legacy Catalog menu methods
+are compatibility/fixture-only; backend production POS does not invoke them.
 
-`OrdersRepository` currently returns deterministic fake order summaries only.
-It does not connect to backend APIs, database, local storage, or receipt
-printing.
+`OrdersRepository` owns order history/detail access, including historical legacy
+orders whose `publishedMenuVersionId` is null.
+
+## POS published runtime sync, presentation, and reconnect (Phases 12D–12F)
+
+`PosMenuSyncRepository` is separate from the legacy `PosRepository`. It consumes
+only `GET /pos/menu-sync` runtime contract v1, preserving published Menu /
+Section / placement order and using backend-provided runtime sellability and
+effective prices without local schedule or pricing resolution. `PosMenuSyncCubit`
+owns refresh state while `PosCubit` remains transaction/cart state; the active
+backend POS UI consumes only this published runtime path. `PosPublishedMenuPresenter`
+preserves backend Menu/Section/placement ordering and maps identities into cards.
+New versioned cart lines retain `publishedMenuVersionId`, `placementId`,
+`productId`, `variantId`, and selected modifier option IDs, which are sent via
+the snapshot-aware order request. The legacy Catalog endpoints are now
+deprecated compatibility APIs and are not used by the published POS UI.
+
+Static projections are scoped by configured tenant identity, branch, and `pos`
+channel in an app-support JSON file. The cache stores context, version identity,
+the static projection, last backend-evaluated runtime overlay, and sync time—not
+credentials. The cached runtime overlay is explicitly stale while offline; the
+client never resolves schedules or assumes that remotely sold-out items became
+available.
+A flushed temporary file is promoted with a recoverable previous-file rename so
+an interrupted write can only recover a complete prior or next snapshot. A known
+version is sent only from a valid same-scope cache; an up-to-date response without
+that cache is retried once as a full sync. Versioned order DTO fields are ready,
+but legacy cart/order calls do not synthesize snapshot identities.
+
+Phase 12F renders a matching cached menu before its remote sync completes. API
+request success or failure—not a network-interface indicator—is the reachability
+authority. A failed sync keeps the saved menu available and exposes either an
+offline or sync-error status; recovery uses bounded 10/30/90-second retries and
+the existing manual Refresh action. Static version changes apply immediately only
+to an empty session. An active cart or server draft retains `activeMenu`; the
+newest valid remote menu is `pendingMenu` and applies atomically after the cart
+clears. An authoritative no-publication response remains distinct from a network
+failure: it is deferred only until an active cart completes, then removes the
+menu. Local cart preparation is allowed while offline, but order creation,
+server-held order changes, payment, final receipts, refunds, and inventory
+mutations are not queued or simulated; the backend revalidates the snapshot when
+an order is submitted after reconnect.

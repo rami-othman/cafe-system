@@ -10,6 +10,7 @@ class CreateOrderRequest {
     this.tableId,
     this.customerId,
     this.note,
+    this.publishedMenuVersionId,
   });
 
   final int branchId;
@@ -19,6 +20,7 @@ class CreateOrderRequest {
   final int? customerId;
   final List<AddOrderItemRequest> items;
   final String? note;
+  final int? publishedMenuVersionId;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -27,6 +29,8 @@ class CreateOrderRequest {
       'orderType': orderType.apiValue,
       'tableId': tableId,
       'customerId': customerId,
+      if (publishedMenuVersionId != null)
+        'publishedMenuVersionId': publishedMenuVersionId,
       'items': items
           .map((AddOrderItemRequest item) => item.toJson())
           .toList(growable: false),
@@ -40,12 +44,18 @@ class AddOrderItemRequest {
     required this.productId,
     required this.quantity,
     this.modifiers = const <SelectedModifier>[],
+    this.placementId,
+    this.variantId,
+    this.modifierOptionIds,
     this.note,
   });
 
   final int productId;
   final int quantity;
   final List<SelectedModifier> modifiers;
+  final int? placementId;
+  final int? variantId;
+  final List<int>? modifierOptionIds;
   final String? note;
 
   Map<String, dynamic> toJson() {
@@ -55,6 +65,9 @@ class AddOrderItemRequest {
       'modifiers': modifiers
           .map((SelectedModifier modifier) => modifier.toJson())
           .toList(growable: false),
+      if (placementId != null) 'placementId': placementId,
+      if (variantId != null) 'variantId': variantId,
+      if (modifierOptionIds != null) 'modifierOptionIds': modifierOptionIds,
       if (note != null && note!.trim().isNotEmpty) 'note': note!.trim(),
     };
   }

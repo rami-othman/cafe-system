@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/config/tax_config.dart';
 import '../../../core/network/api_exception.dart';
 import '../models/applied_discount.dart';
 import '../models/backend_order.dart';
 import '../models/backend_order_item.dart';
 import '../models/backend_product_detail.dart';
+import '../models/branch.dart';
 import '../models/cart_item.dart';
 import '../models/create_order_request.dart';
 import '../models/customer.dart';
@@ -17,6 +17,7 @@ import '../models/pos_product.dart';
 import '../models/product_customization.dart';
 import '../models/product_detail_load_result.dart';
 import '../models/receipt_line_item.dart';
+import '../models/selected_modifier.dart';
 import '../models/update_order_item_request.dart';
 import '../repositories/pos_repository.dart';
 import 'pos_state.dart';
@@ -24,49 +25,131 @@ import 'pos_state.dart';
 enum PaymentCompletionStatus { completed, retryableFailure, uncertain }
 
 class PosCubit extends Cubit<PosState> {
-  PosCubit({required this.repository}) : super(const PosState());
+  PosCubit({required this.repository})
+    : super(
+        PosState(
+          isBackendMode: repository.usesBackend,
+          // Until the POS sync flow is mounted, retain legacy direct-cubit
+          // behavior. PosScreen immediately replaces this with API-derived
+          // reachability for real backend sessions.
+          isBackendReachable: true,
+        ),
+      );
 
   final PosRepository repository;
   Future<void> _cartMutationQueue = Future<void>.value();
   int _queuedCartMutations = 0;
   int _receiptRequestGeneration = 0;
   int _productDetailRequestVersion = 0;
+  int _branchLoadGeneration = 0;
+
+  static const String connectionRequiredMessage =
+      'pos.connectionRequiredToCompleteOrder';
+  static const String menuChangedReviewMessage = 'pos.menuChangedReviewOrder';
 
   Future<void> loadInitialData() async {
-    emit(state.copyWith(isLoading: true, clearErrorMessage: true));
+    emit(
+      state.copyWith(
+        isLoading: true,
+        isBackendMode: repository.usesBackend,
+        clearErrorMessage: true,
+      ),
+    );
 
     try {
       final branches = await repository.getBranches();
-      final int branchId = branches.isEmpty ? 1 : branches.first.id;
-      final double taxRate = branches.isEmpty
-          ? TaxConfig.defaultTaxRate
-          : branches.first.taxRate;
-      final shift = await repository.getCurrentShift(branchId: branchId);
-      final List<String> categories = await repository.getCategories(
-        branchId: branchId,
-      );
-      final List<PosProduct> products = await repository.getProducts(
-        branchId: branchId,
-      );
       final List<Customer> customers = await repository.getCustomers();
-      await repository.getPosState(branchId: branchId);
-
+      final Branch branch = branches.isEmpty
+          ? const Branch(
+              id: 1,
+              name: 'Default Branch',
+              currency: 'SYP',
+              timezone: 'Asia/Damascus',
+              isActive: true,
+            )
+          : branches.firstWhere(
+              (Branch item) => item.id == state.branchId,
+              orElse: () => branches.first,
+            );
+      emit(state.copyWith(branches: branches, customers: customers));
+      await _activateBranch(branch, reloadCustomers: false);
+    } catch (error) {
+      final String message = _messageFor(error);
       emit(
         state.copyWith(
-          branchId: branchId,
-          taxRate: taxRate,
+          isLoading: false,
+          errorMessage: message,
+          apiErrorMessage: message,
+        ),
+      );
+    }
+  }
+
+  /// Changes the one POS selling context.  An order/draft is branch-bound, so
+  /// callers must leave the existing cart intact before switching branches.
+  Future<bool> selectBranch(int branchId) async {
+    if (branchId == state.branchId) return true;
+    if (state.hasCartItems || state.currentOrderId != null) return false;
+    final Branch? branch = state.branches.cast<Branch?>().firstWhere(
+      (Branch? item) => item?.id == branchId && item!.isActive,
+      orElse: () => null,
+    );
+    if (branch == null) return false;
+    await _activateBranch(branch);
+    return true;
+  }
+
+  Future<void> _activateBranch(
+    Branch branch, {
+    bool reloadCustomers = false,
+  }) async {
+    final int request = ++_branchLoadGeneration;
+    // This emits the authoritative context before any branch-scoped work.
+    // PosScreen clears the old published presentation immediately when it
+    // observes this branchId change.
+    emit(
+      state.copyWith(
+        branchId: branch.id,
+        taxRate: branch.taxRate,
+        isLoading: true,
+        clearErrorMessage: true,
+        clearApiErrorMessage: true,
+        requiresMenuRefresh: false,
+      ),
+    );
+
+    try {
+      final shift = await repository.getCurrentShift(branchId: branch.id);
+      final List<String> categories = repository.usesBackend
+          ? const <String>[]
+          : await repository.getCategories(branchId: branch.id);
+      final List<PosProduct> products = repository.usesBackend
+          ? const <PosProduct>[]
+          : await repository.getProducts(branchId: branch.id);
+      final List<Customer>? customers = reloadCustomers
+          ? await repository.getCustomers()
+          : null;
+      await repository.getPosState(branchId: branch.id);
+      if (isClosed || request != _branchLoadGeneration) return;
+      emit(
+        state.copyWith(
+          branchId: branch.id,
+          taxRate: branch.taxRate,
           shiftId: shift?.id,
           isBackendMode: repository.usesBackend,
+          customers: customers,
           products: products,
           categories: categories,
-          customers: customers,
           selectedCategory: categories.isEmpty ? '' : categories.first,
+          searchQuery: '',
           isLoading: false,
           clearErrorMessage: true,
           clearApiErrorMessage: true,
+          requiresMenuRefresh: false,
         ),
       );
     } catch (error) {
+      if (isClosed || request != _branchLoadGeneration) return;
       final String message = _messageFor(error);
       emit(
         state.copyWith(
@@ -84,6 +167,13 @@ class PosCubit extends Cubit<PosState> {
 
   void updateSearchQuery(String query) {
     emit(state.copyWith(searchQuery: query));
+  }
+
+  /// Menu-sync request results, rather than an OS interface flag, determine
+  /// whether backend mutations may be attempted.
+  void setBackendReachability(bool reachable) {
+    if (state.isBackendReachable == reachable) return;
+    emit(state.copyWith(isBackendReachable: reachable));
   }
 
   void addProductToCart(PosProduct product) {
@@ -124,7 +214,12 @@ class PosCubit extends Cubit<PosState> {
 
   Future<ProductDetailLoadResult> loadProductDetail(PosProduct product) async {
     final int? productId = product.backendId;
-    if (!repository.usesBackend || productId == null) {
+    // Published runtime cards already contain the complete variant and
+    // modifier contract. This guard makes the no-legacy-detail-request rule
+    // hold even if a future caller bypasses PosScreen's published-card path.
+    if (product.isPublishedRuntime ||
+        !repository.usesBackend ||
+        productId == null) {
       return const ProductDetailNotRequired();
     }
 
@@ -179,6 +274,16 @@ class PosCubit extends Cubit<PosState> {
   ) async {
     if (!customization.product.isAvailable) {
       return false;
+    }
+
+    if (customization.isPublishedRuntime) {
+      if (state.currentOrderId != null) {
+        return _enqueueCartMutation(
+          fallbackMessage: 'Could not add item. Please try again.',
+          action: () => _addPublishedProductToBackendOrder(customization),
+        );
+      }
+      return _addPublishedProductToLocalCart(customization);
     }
 
     if (repository.usesBackend && customization.product.backendId != null) {
@@ -462,6 +567,14 @@ class PosCubit extends Cubit<PosState> {
       return completeBackendPayment(result);
     }
 
+    if (state.isBackendMode) {
+      if (!state.isBackendReachable) {
+        emit(state.copyWith(paymentErrorMessage: connectionRequiredMessage));
+        return PaymentCompletionStatus.retryableFailure;
+      }
+      return _createPublishedOrderAndPay(result);
+    }
+
     final OrderReceipt receipt = _buildReceiptSnapshot(result);
 
     emit(
@@ -477,9 +590,19 @@ class PosCubit extends Cubit<PosState> {
 
   Future<PaymentCompletionStatus> completeBackendPayment(
     PaymentResult requestedPayment,
-  ) async {
-    if (state.isPaymentSubmitting || state.uncertainPaymentOrderId != null) {
+  ) => _completeBackendPayment(requestedPayment);
+
+  Future<PaymentCompletionStatus> _completeBackendPayment(
+    PaymentResult requestedPayment, {
+    bool paymentSubmissionAlreadyStarted = false,
+  }) async {
+    if ((!paymentSubmissionAlreadyStarted && state.isPaymentSubmitting) ||
+        state.uncertainPaymentOrderId != null) {
       return PaymentCompletionStatus.uncertain;
+    }
+    if (!state.isBackendReachable) {
+      emit(state.copyWith(paymentErrorMessage: connectionRequiredMessage));
+      return PaymentCompletionStatus.retryableFailure;
     }
 
     final int? orderId = state.currentOrderId;
@@ -488,13 +611,15 @@ class PosCubit extends Cubit<PosState> {
       return PaymentCompletionStatus.retryableFailure;
     }
 
-    emit(
-      state.copyWith(
-        isPaymentSubmitting: true,
-        clearPaymentErrorMessage: true,
-        clearApiErrorMessage: true,
-      ),
-    );
+    if (!paymentSubmissionAlreadyStarted) {
+      emit(
+        state.copyWith(
+          isPaymentSubmitting: true,
+          clearPaymentErrorMessage: true,
+          clearApiErrorMessage: true,
+        ),
+      );
+    }
 
     try {
       final PaymentResult payment = await repository.payOrder(
@@ -563,6 +688,7 @@ class PosCubit extends Cubit<PosState> {
       state.copyWith(
         cartItems: cartItems,
         clearAppliedDiscount: cartItems.isEmpty,
+        clearCurrentOrderId: cartItems.isEmpty && state.currentOrderId == null,
       ),
     );
   }
@@ -631,6 +757,215 @@ class PosCubit extends Cubit<PosState> {
     _emitBackendOrder(order);
   }
 
+  Future<void> _addPublishedProductToBackendOrder(
+    ProductCustomization customization,
+  ) async {
+    final PosProduct product = customization.product;
+    final int? versionId = product.publishedMenuVersionId;
+    final int? productId = product.backendId;
+    final int? placementId = product.placementId;
+    final int? variantId = customization.publishedVariantId;
+    if (versionId == null ||
+        productId == null ||
+        placementId == null ||
+        variantId == null) {
+      throw const ApiException(message: 'Published menu item is incomplete.');
+    }
+    if ((state.currentOrderId != null &&
+            state.publishedMenuVersionId != versionId) ||
+        (state.publishedMenuVersionId != null &&
+            state.publishedMenuVersionId != versionId)) {
+      throw const ApiException(
+        message:
+            'MENU_VERSION_STALE: refresh the POS menu before adding items.',
+      );
+    }
+
+    final AddOrderItemRequest itemRequest = AddOrderItemRequest(
+      productId: productId,
+      placementId: placementId,
+      variantId: variantId,
+      modifierOptionIds: customization.publishedModifierOptionIds,
+      quantity: customization.quantity,
+      note: customization.specialInstructions,
+    );
+
+    if (state.currentOrderId == null) {
+      if (state.shiftId == null) {
+        throw const ApiException(
+          message:
+              'No open shift found. Open a shift before creating an order.',
+        );
+      }
+      final BackendOrder order = await repository.createOrder(
+        CreateOrderRequest(
+          branchId: state.branchId,
+          shiftId: state.shiftId,
+          orderType: state.orderType,
+          tableId: null,
+          customerId: state.selectedCustomer?.backendId,
+          publishedMenuVersionId: versionId,
+          items: <AddOrderItemRequest>[itemRequest],
+        ),
+      );
+      _emitBackendOrder(order);
+      return;
+    }
+
+    final BackendOrder order = await repository.addOrderItem(
+      orderId: state.currentOrderId!,
+      request: itemRequest,
+    );
+    _emitBackendOrder(order);
+  }
+
+  Future<bool> _addPublishedProductToLocalCart(
+    ProductCustomization customization,
+  ) async {
+    final PosProduct product = customization.product;
+    final int? versionId = product.publishedMenuVersionId;
+    final int? productId = product.backendId;
+    final int? placementId = product.placementId;
+    final int? variantId = customization.publishedVariantId;
+    if (versionId == null ||
+        productId == null ||
+        placementId == null ||
+        variantId == null) {
+      emit(
+        state.copyWith(
+          cartMutationError: 'Could not add this published menu item.',
+        ),
+      );
+      return false;
+    }
+    if (state.publishedMenuVersionId != null &&
+        state.publishedMenuVersionId != versionId) {
+      emit(
+        state.copyWith(
+          cartMutationError: menuChangedReviewMessage,
+          requiresMenuRefresh: true,
+        ),
+      );
+      return false;
+    }
+
+    final String key = customization.configurationKey;
+    final int index = state.cartItems.indexWhere(
+      (CartItem item) => item.id == key,
+    );
+    final CartItem next = CartItem(
+      id: key,
+      backendProductId: productId,
+      publishedMenuVersionId: versionId,
+      placementId: placementId,
+      variantId: variantId,
+      modifierOptionIds: customization.publishedModifierOptionIds,
+      product: product,
+      quantity: customization.quantity,
+      unitPrice: customization.unitPrice,
+      modifiers: customization.modifierLabels,
+      specialInstructions: customization.specialInstructions.trim(),
+    );
+    if (index < 0) {
+      emit(
+        state.copyWith(
+          cartItems: <CartItem>[...state.cartItems, next],
+          publishedMenuVersionId: versionId,
+        ),
+      );
+    } else {
+      final List<CartItem> items = List<CartItem>.of(state.cartItems);
+      items[index] = items[index].copyWith(
+        quantity: items[index].quantity + customization.quantity,
+      );
+      emit(state.copyWith(cartItems: items, publishedMenuVersionId: versionId));
+    }
+    return true;
+  }
+
+  Future<PaymentCompletionStatus> _createPublishedOrderAndPay(
+    PaymentResult requestedPayment,
+  ) async {
+    int? versionId;
+    for (final CartItem item in state.cartItems) {
+      if (item.publishedMenuVersionId != null) {
+        versionId = item.publishedMenuVersionId;
+        break;
+      }
+    }
+    if (versionId == null ||
+        state.cartItems.any(
+          (CartItem item) =>
+              item.publishedMenuVersionId != versionId ||
+              item.backendProductId == null ||
+              item.placementId == null ||
+              item.variantId == null,
+        )) {
+      emit(
+        state.copyWith(
+          paymentErrorMessage: menuChangedReviewMessage,
+          requiresMenuRefresh: true,
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+    if (state.shiftId == null) {
+      emit(
+        state.copyWith(
+          paymentErrorMessage:
+              'No open shift found. Open a shift before paying.',
+        ),
+      );
+      return PaymentCompletionStatus.retryableFailure;
+    }
+
+    emit(
+      state.copyWith(isPaymentSubmitting: true, clearPaymentErrorMessage: true),
+    );
+    try {
+      final BackendOrder order = await repository.createOrder(
+        CreateOrderRequest(
+          branchId: state.branchId,
+          shiftId: state.shiftId,
+          orderType: state.orderType,
+          customerId: state.selectedCustomer?.backendId,
+          publishedMenuVersionId: versionId,
+          items: state.cartItems
+              .map(
+                (CartItem item) => AddOrderItemRequest(
+                  productId: item.backendProductId!,
+                  placementId: item.placementId,
+                  variantId: item.variantId,
+                  modifierOptionIds: item.modifierOptionIds,
+                  quantity: item.quantity,
+                  note: item.specialInstructions,
+                ),
+              )
+              .toList(growable: false),
+        ),
+      );
+      if (isClosed) return PaymentCompletionStatus.uncertain;
+      _emitBackendOrder(order);
+      // Creating a snapshot-aware order is the first half of the same payment
+      // action. Keep the UI locked, but let the owned hand-off submit /pay.
+      return _completeBackendPayment(
+        requestedPayment,
+        paymentSubmissionAlreadyStarted: true,
+      );
+    } catch (error) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            isPaymentSubmitting: false,
+            paymentErrorMessage: _messageFor(error),
+            requiresMenuRefresh: _isMenuVersionStale(error),
+          ),
+        );
+      }
+      return PaymentCompletionStatus.retryableFailure;
+    }
+  }
+
   Future<void> _syncOrder(Future<BackendOrder> Function() action) async {
     await _enqueueCartMutation(
       fallbackMessage: 'Could not update order. Please try again.',
@@ -642,6 +977,10 @@ class PosCubit extends Cubit<PosState> {
     required String fallbackMessage,
     required Future<void> Function() action,
   }) {
+    if (repository.usesBackend && !state.isBackendReachable) {
+      emit(state.copyWith(cartMutationError: connectionRequiredMessage));
+      return Future<bool>.value(false);
+    }
     _queuedCartMutations += 1;
     if (!isClosed && !state.isCartMutationInProgress) {
       emit(
@@ -649,6 +988,7 @@ class PosCubit extends Cubit<PosState> {
           isCartMutationInProgress: true,
           isSyncingOrder: true,
           clearCartMutationError: true,
+          requiresMenuRefresh: false,
         ),
       );
     }
@@ -668,6 +1008,7 @@ class PosCubit extends Cubit<PosState> {
               cartMutationError: error is ApiException
                   ? _messageFor(error)
                   : fallbackMessage,
+              requiresMenuRefresh: _isMenuVersionStale(error),
             ),
           );
         }
@@ -699,6 +1040,7 @@ class PosCubit extends Cubit<PosState> {
         branchId: order.branchId,
         taxRate: order.totals.taxRate,
         shiftId: order.shiftId,
+        publishedMenuVersionId: order.publishedMenuVersionId,
         orderType: orderTypeFromApi(order.orderType),
         selectedCustomer: _customerFromBackendOrder(order),
         clearSelectedCustomer: order.customerId == null,
@@ -750,6 +1092,12 @@ class PosCubit extends Cubit<PosState> {
       id: item.id.toString(),
       backendItemId: item.id,
       backendProductId: item.productId,
+      publishedMenuVersionId: state.publishedMenuVersionId,
+      placementId: item.placementId,
+      variantId: item.variantId,
+      modifierOptionIds: item.selectedModifiers
+          .map((SelectedModifier modifier) => modifier.optionId)
+          .toList(growable: false),
       product: product,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
@@ -927,6 +1275,9 @@ class PosCubit extends Cubit<PosState> {
 
     return error.toString();
   }
+
+  bool _isMenuVersionStale(Object error) =>
+      error is ApiException && error.message.contains('MENU_VERSION_STALE');
 
   List<String> _defaultModifiersFor(PosProduct product) {
     return switch (product.id) {

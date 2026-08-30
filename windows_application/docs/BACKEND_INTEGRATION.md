@@ -16,7 +16,24 @@ The Flutter POS flow uses `DioApiClient` in `lib/core/network`. The client wraps
 --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-## Startup Flow
+## Production POS flow (Batch 12)
+
+After Branch context is available, `PosMenuSyncCubit` makes the sole menu
+request: `GET /pos/menu-sync?branchId={id}&knownVersionId={optional}`. Published
+Menu/Section/Placement data, variants, modifiers, prices, and runtime
+availability come only from that response or its tenant/branch/`pos`-scoped
+cache. Product tap makes no Menu detail request. New POS orders send
+`publishedMenuVersionId` and each line's `productId`, `placementId`, `variantId`,
+`modifierOptionIds`, and quantity.
+
+Network, no-publication, malformed-contract, and corrupt-cache conditions use
+explicit states; production POS never falls back to `/menu/categories`,
+`/menu/products`, or `/menu/products/{id}`. A valid offline cache permits
+browse/customization/cart only; payment/order submission is blocked. The
+deprecated legacy Catalog endpoints and no-version orders remain compatibility
+contracts for non-POS clients.
+
+## Historical startup flow (superseded by Batch 12)
 
 `PosCubit.loadInitialData()` now loads backend data through `PosRepository`:
 
@@ -29,7 +46,7 @@ The Flutter POS flow uses `DioApiClient` in `lib/core/network`. The client wraps
 
 If the backend is unreachable, the POS state receives the clear API error message from `ApiException`.
 
-## POS Order Flow
+## Historical POS order flow (superseded by Batch 12)
 
 The current POS checkout flow is backend-backed through Dio:
 

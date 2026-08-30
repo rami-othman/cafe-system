@@ -1,5 +1,10 @@
 # POS Frontend API Handoff
 
+> Historical handoff: the Catalog endpoint flow in this document was superseded
+> by Batch 12. Production POS now uses `/api/v1/pos/menu-sync` Published Runtime
+> Contract v1 and snapshot-aware orders; legacy Catalog endpoints are deprecated
+> compatibility APIs only.
+
 ## Base
 
 ```text

@@ -8,6 +8,8 @@ import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/features/pos/models/create_order_request.dart';
 import 'package:windows_application/features/pos/models/customer.dart';
 import 'package:windows_application/features/pos/models/order_type.dart';
+import 'package:windows_application/features/pos/models/payment_method.dart';
+import 'package:windows_application/features/pos/models/payment_result.dart';
 import 'package:windows_application/features/pos/models/pos_product.dart';
 import 'package:windows_application/features/pos/models/product_customization.dart';
 import 'package:windows_application/features/pos/models/product_modifier.dart';
@@ -91,7 +93,94 @@ void main() {
     expect(cubit.state.isCartMutationInProgress, isFalse);
     expect(cubit.state.cartMutationError, 'Quantity is unavailable.');
   });
+
+  test(
+    'published item pins immutable menu identities without creating an order',
+    () async {
+      await cubit.addCustomizedProductToCart(_publishedCustomization());
+
+      expect(repository.lastCreateRequest, isNull);
+      expect(cubit.state.publishedMenuVersionId, 12);
+      expect(cubit.state.cartItems.single.backendProductId, 4);
+      expect(cubit.state.cartItems.single.placementId, 40);
+      expect(cubit.state.cartItems.single.variantId, 30);
+    },
+  );
+
+  test(
+    'offline published cart stays local and payment cannot create an order',
+    () async {
+      await cubit.addCustomizedProductToCart(_publishedCustomization());
+      cubit.setBackendReachability(false);
+
+      final PaymentCompletionStatus result = await cubit.completeLocalPayment(
+        const PaymentResult(
+          method: PaymentMethod.cash,
+          totalDue: 4.5,
+          amountReceived: 4.5,
+          changeDue: 0,
+        ),
+      );
+
+      expect(result, PaymentCompletionStatus.retryableFailure);
+      expect(repository.lastCreateRequest, isNull);
+      expect(cubit.state.cartItems, hasLength(1));
+      expect(
+        cubit.state.paymentErrorMessage,
+        PosCubit.connectionRequiredMessage,
+      );
+    },
+  );
+
+  test(
+    'published cart creates, pays, and clears as one guarded checkout action',
+    () async {
+      await cubit.addCustomizedProductToCart(_publishedCustomization());
+
+      final PaymentCompletionStatus result = await cubit.completeLocalPayment(
+        const PaymentResult(
+          method: PaymentMethod.cash,
+          totalDue: 4.5,
+          amountReceived: 4.5,
+          changeDue: 0,
+        ),
+      );
+
+      expect(result, PaymentCompletionStatus.completed);
+      expect(repository.createCalls, 1);
+      expect(repository.payCalls, 1);
+      expect(repository.lastCreateRequest!.publishedMenuVersionId, 12);
+      expect(cubit.state.currentOrderId, isNull);
+      expect(cubit.state.cartItems, isEmpty);
+      expect(cubit.state.isPaymentSubmitting, isFalse);
+      expect(cubit.state.lastPaidOrderId, 5);
+    },
+  );
 }
+
+ProductCustomization _publishedCustomization() => ProductCustomization(
+  product: const PosProduct(
+    id: 'published-12-40',
+    backendId: 4,
+    name: 'Published Americano',
+    category: '',
+    size: 'Regular',
+    price: 4,
+    isAvailable: true,
+    publishedMenuVersionId: 12,
+    placementId: 40,
+  ),
+  quantity: 1,
+  temperature: '',
+  size: const ProductModifierOption(id: 'published', label: ''),
+  milkBase: const ProductModifierOption(id: 'published', label: ''),
+  addOns: const <ProductModifierOption>[],
+  sweetness: '',
+  specialInstructions: '',
+  publishedVariantId: 30,
+  publishedModifierOptionIds: const <int>[71],
+  publishedUnitPrice: 4.5,
+);
 
 ProductCustomization _customization({
   List<SelectedModifier> modifiers = const <SelectedModifier>[
@@ -126,7 +215,10 @@ class _BackendCartRepository extends PosRepository {
   int createCalls = 0;
   int addCalls = 0;
   int updateCalls = 0;
+  int payCalls = 0;
   bool failUpdate = false;
+  int? publishedVersion;
+  CreateOrderRequest? lastCreateRequest;
   List<BackendOrderItem> _items = const <BackendOrderItem>[];
 
   @override
@@ -169,6 +261,8 @@ class _BackendCartRepository extends PosRepository {
   @override
   Future<BackendOrder> createOrder(CreateOrderRequest request) async {
     createCalls += 1;
+    lastCreateRequest = request;
+    publishedVersion = request.publishedMenuVersionId;
     _items = <BackendOrderItem>[_item(id: 10, request: request.items.single)];
     return _order();
   }
@@ -216,6 +310,25 @@ class _BackendCartRepository extends PosRepository {
     return _order();
   }
 
+  @override
+  Future<PaymentResult> payOrder({
+    required int orderId,
+    required String method,
+    required double amount,
+    String? reference,
+    required double totalDue,
+  }) async {
+    payCalls += 1;
+    return PaymentResult(
+      method: PaymentMethod.cash,
+      totalDue: totalDue,
+      amountReceived: amount,
+      changeDue: amount - totalDue,
+      status: 'paid',
+      paymentId: 1,
+    );
+  }
+
   BackendOrderItem _item({
     required int id,
     required AddOrderItemRequest request,
@@ -238,6 +351,8 @@ class _BackendCartRepository extends PosRepository {
           )
           .toList(growable: false),
       note: request.note?.trim().isEmpty ?? true ? null : request.note!.trim(),
+      variantId: request.variantId,
+      placementId: request.placementId,
     );
   }
 
@@ -250,6 +365,7 @@ class _BackendCartRepository extends PosRepository {
     status: 'draft',
     paymentStatus: 'unpaid',
     items: _items,
+    publishedMenuVersionId: publishedVersion,
     totals: BackendOrderTotals(
       subtotal: _items.fold<double>(
         0,

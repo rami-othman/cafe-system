@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/config/tax_config.dart';
 import '../models/applied_discount.dart';
+import '../models/branch.dart';
 import '../models/cart_item.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
@@ -11,6 +12,7 @@ import '../models/pos_product.dart';
 
 class PosState extends Equatable {
   const PosState({
+    this.branches = const <Branch>[],
     this.products = const <PosProduct>[],
     this.categories = const <String>[],
     this.selectedCategory = '',
@@ -37,7 +39,9 @@ class PosState extends Equatable {
     this.taxRate = TaxConfig.defaultTaxRate,
     this.shiftId,
     this.currentOrderId,
+    this.publishedMenuVersionId,
     this.isBackendMode = false,
+    this.isBackendReachable = true,
     this.isSyncingOrder = false,
     this.isCartMutationInProgress = false,
     this.cartMutationError,
@@ -48,8 +52,12 @@ class PosState extends Equatable {
     this.backendTotal,
     this.isLoading = false,
     this.errorMessage,
+    this.requiresMenuRefresh = false,
   });
 
+  /// The POS-owned selling context.  The shell branch tabs must use this
+  /// collection and [branchId], never an independently selected branch.
+  final List<Branch> branches;
   final List<PosProduct> products;
   final List<String> categories;
   final String selectedCategory;
@@ -76,7 +84,15 @@ class PosState extends Equatable {
   final double taxRate;
   final int? shiftId;
   final int? currentOrderId;
+
+  /// Remains null for every legacy Catalog session. 12E will pin this from a
+  /// published runtime menu before creating snapshot-aware orders.
+  final int? publishedMenuVersionId;
   final bool isBackendMode;
+
+  /// A successful menu sync is the reachability authority; interface state is
+  /// deliberately not inferred from Wi-Fi/Ethernet availability.
+  final bool isBackendReachable;
   final bool isSyncingOrder;
   final bool isCartMutationInProgress;
   final String? cartMutationError;
@@ -87,6 +103,7 @@ class PosState extends Equatable {
   final double? backendTotal;
   final bool isLoading;
   final String? errorMessage;
+  final bool requiresMenuRefresh;
 
   List<PosProduct> get filteredProducts {
     final String normalizedQuery = searchQuery.trim().toLowerCase();
@@ -158,6 +175,7 @@ class PosState extends Equatable {
   }
 
   PosState copyWith({
+    List<Branch>? branches,
     List<PosProduct>? products,
     List<String>? categories,
     String? selectedCategory,
@@ -184,7 +202,9 @@ class PosState extends Equatable {
     double? taxRate,
     int? shiftId,
     int? currentOrderId,
+    int? publishedMenuVersionId,
     bool? isBackendMode,
+    bool? isBackendReachable,
     bool? isSyncingOrder,
     bool? isCartMutationInProgress,
     String? cartMutationError,
@@ -195,6 +215,7 @@ class PosState extends Equatable {
     double? backendTotal,
     bool? isLoading,
     String? errorMessage,
+    bool? requiresMenuRefresh,
     bool clearErrorMessage = false,
     bool clearApiErrorMessage = false,
     bool clearCartMutationError = false,
@@ -212,6 +233,7 @@ class PosState extends Equatable {
     bool clearBackendTotals = false,
   }) {
     return PosState(
+      branches: branches ?? this.branches,
       products: products ?? this.products,
       categories: categories ?? this.categories,
       selectedCategory: selectedCategory ?? this.selectedCategory,
@@ -259,7 +281,11 @@ class PosState extends Equatable {
       currentOrderId: clearCurrentOrderId
           ? null
           : currentOrderId ?? this.currentOrderId,
+      publishedMenuVersionId: clearCurrentOrderId
+          ? null
+          : publishedMenuVersionId ?? this.publishedMenuVersionId,
       isBackendMode: isBackendMode ?? this.isBackendMode,
+      isBackendReachable: isBackendReachable ?? this.isBackendReachable,
       isSyncingOrder: isSyncingOrder ?? this.isSyncingOrder,
       isCartMutationInProgress:
           isCartMutationInProgress ?? this.isCartMutationInProgress,
@@ -283,11 +309,13 @@ class PosState extends Equatable {
       errorMessage: clearErrorMessage
           ? null
           : errorMessage ?? this.errorMessage,
+      requiresMenuRefresh: requiresMenuRefresh ?? this.requiresMenuRefresh,
     );
   }
 
   @override
   List<Object?> get props => <Object?>[
+    branches,
     products,
     categories,
     selectedCategory,
@@ -314,7 +342,9 @@ class PosState extends Equatable {
     taxRate,
     shiftId,
     currentOrderId,
+    publishedMenuVersionId,
     isBackendMode,
+    isBackendReachable,
     isSyncingOrder,
     isCartMutationInProgress,
     cartMutationError,
@@ -325,5 +355,6 @@ class PosState extends Equatable {
     backendTotal,
     isLoading,
     errorMessage,
+    requiresMenuRefresh,
   ];
 }

@@ -25,6 +25,7 @@ class BackendOrder extends Equatable {
     this.tableId,
     this.tableName,
     this.tableCode,
+    this.publishedMenuVersionId,
   });
 
   factory BackendOrder.fromJson(Map<String, dynamic> json) {
@@ -72,6 +73,7 @@ class BackendOrder extends Equatable {
       tableCode: readString((json['table'] as Map?)?['code']).isEmpty
           ? null
           : readString((json['table'] as Map?)?['code']),
+      publishedMenuVersionId: readInt(json['publishedMenuVersionId']),
     );
   }
 
@@ -94,6 +96,7 @@ class BackendOrder extends Equatable {
   final int? tableId;
   final String? tableName;
   final String? tableCode;
+  final int? publishedMenuVersionId;
 
   @override
   List<Object?> get props => <Object?>[
@@ -116,5 +119,6 @@ class BackendOrder extends Equatable {
     tableId,
     tableName,
     tableCode,
+    publishedMenuVersionId,
   ];
 }

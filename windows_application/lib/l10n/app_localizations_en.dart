@@ -93,6 +93,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSoldOut => 'Sold out';
 
   @override
+  String get posNoPublishedMenu =>
+      'No menu has been published for this branch yet.';
+
+  @override
+  String get posNoAvailableMenu => 'No published menu is currently available.';
+
+  @override
+  String get posNoAvailableItems => 'No available items in this section.';
+
+  @override
+  String get posUnableToLoadMenu => 'Unable to load the published menu.';
+
+  @override
+  String get posMenuRefreshRequired =>
+      'Menu data needs refresh before this order can continue.';
+
+  @override
+  String get posOfflineUsingSavedMenu => 'Offline — using saved menu';
+
+  @override
+  String get posSyncErrorUsingSavedMenu =>
+      'Unable to sync menu — using saved menu';
+
+  @override
+  String posLastSynced(String time) {
+    return 'Last synced: $time';
+  }
+
+  @override
+  String get posMenuUpdateReady =>
+      'Menu update ready — will apply after current order';
+
+  @override
+  String get posNoSavedMenu =>
+      'No saved menu available. Reconnect to load menu.';
+
+  @override
+  String get posConnectionRequiredToCompleteOrder =>
+      'Connection required to complete this order.';
+
+  @override
+  String get posMenuChangedReviewOrder => 'Menu changed — review order.';
+
+  @override
+  String get posBranchSwitchBlockedWithCart =>
+      'Finish, hold, or cancel the current order before switching branches.';
+
+  @override
+  String get posTemporarilyUnavailable => 'Temporarily unavailable';
+
+  @override
   String get commonYes => 'Yes';
 
   @override

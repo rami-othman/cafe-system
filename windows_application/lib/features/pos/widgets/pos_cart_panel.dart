@@ -109,6 +109,8 @@ class PosCartPanel extends StatelessWidget {
                     : () => _showPaymentDialog(context, state, cubit),
                 isSyncingOrder:
                     state.isCartMutationInProgress || state.isPaymentSubmitting,
+                isBackendReachable:
+                    !state.isBackendMode || state.isBackendReachable,
               ),
             ],
           ),
@@ -366,6 +368,7 @@ class _CartFooter extends StatelessWidget {
     required this.onHold,
     required this.onPay,
     required this.isSyncingOrder,
+    required this.isBackendReachable,
   });
 
   final double subtotal;
@@ -381,6 +384,7 @@ class _CartFooter extends StatelessWidget {
   final VoidCallback onHold;
   final VoidCallback? onPay;
   final bool isSyncingOrder;
+  final bool isBackendReachable;
 
   @override
   Widget build(BuildContext context) {
@@ -409,7 +413,11 @@ class _CartFooter extends StatelessWidget {
               onHold: isSyncingOrder || !hasCartItems ? null : onHold,
               onPay: isSyncingOrder ? null : onPay,
               isPaymentEnabled:
-                  !isSyncingOrder && hasCartItems && total > 0 && itemCount > 0,
+                  !isSyncingOrder &&
+                  isBackendReachable &&
+                  hasCartItems &&
+                  total > 0 &&
+                  itemCount > 0,
             ),
           ],
         ),

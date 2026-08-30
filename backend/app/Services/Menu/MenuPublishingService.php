@@ -5,6 +5,7 @@ namespace App\Services\Menu;
 use App\Domain\Menu\Enums\MenuAuditAction;
 use App\Domain\Menu\Enums\MenuPublicationStatus;
 use App\Domain\Menu\Enums\PublishedMenuVersionStatus;
+use App\Models\Branch;
 use App\Models\Menu;
 use App\Models\MenuAuditLog;
 use App\Models\MenuPublication;
@@ -67,7 +68,12 @@ class MenuPublishingService
     {
         $branch = $this->validation->branch($tenantId, $input['branchId']);
 
-        return PublishedMenuVersion::query()->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('channel', $input['channel'])->where('status', PublishedMenuVersionStatus::Current)->first();
+        return $this->currentForBranch($tenantId, $branch, $input['channel']);
+    }
+
+    public function currentForBranch(int $tenantId, Branch $branch, string $channel): ?PublishedMenuVersion
+    {
+        return PublishedMenuVersion::query()->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('channel', $channel)->where('status', PublishedMenuVersionStatus::Current)->first();
     }
 
     private function menuIds(int $tenantId, int $branchId, string $channel, ?array $submitted): array
