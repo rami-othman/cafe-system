@@ -38,6 +38,41 @@ Shell responsiveness is based on centralized tokens in
 - `< 900`: collapsed sidebar rail and content only; right panel content is not
   included inline and can be exposed by compact-mode controls.
 
+## Pre-Auth Hardening B state ownership
+
+The root `App` owns locale and the centralized unsaved-navigation controller.
+`AppShell` owns only desktop navigation chrome and the active route refresh
+callback; it does not create administrative feature data.
+
+`PosCubit` is session workspace state. It retains the cashier's cart, selling
+context, and authoritative active Branch while a user visits another route and
+returns. Branch switching remains guarded by its active cart/current order
+check. This is deliberately the single branch source today; a future
+`AuthSessionCubit` can establish the allowed/default Branch before handing it
+to the POS workspace without changing route-level feature ownership.
+
+`PosMenuSyncCubit` is scoped to `/` and is disposed on POS exit, including the
+POS screen's bounded reconnect timer. Orders follows the POS branch only while
+`/orders` is mounted. Reports likewise pass that branch to the existing daily
+report API contract only while `/reports` is mounted.
+
+Feature list state is route-owned and lazy:
+
+- `/orders` -> `OrdersCubit`
+- `/discounts` and `/discounts/create` -> `DiscountsCubit`
+- `/reports` -> `DailyReportCubit`
+- `/menu-management/products` -> `ProductCatalogCubit` and
+  `ProductLifecycleCubit`
+- `/menu-management/modifiers` -> `ModifierLibraryCubit`
+- `/menu-management/menus` -> `MenuListCubit`
+
+Menu Management details and editors provide their own detail/editor Cubits;
+they do not depend on a hidden global catalog tree. Repositories and the shared
+Dio client remain lazy shared infrastructure, not shared mutable feature state.
+Consequently an unvisited feature has neither a Cubit instance nor a startup
+request. The top Refresh action resolves from the current route and invokes
+only that route's Cubit.
+
 ## `core`
 
 The `core` folder contains foundation code used across the application:
@@ -49,6 +84,19 @@ The `core` folder contains foundation code used across the application:
 - utilities such as responsive helpers and formatting
 
 Core files should be generic and not depend on a specific feature.
+
+## API error boundary (Pre-Auth Hardening D)
+
+`DioApiClient` is the shared failure boundary. It returns typed `ApiException`
+categories for unavailable network, unauthenticated, forbidden, validation,
+conflict, server, and unknown failures. Structured backend code and 422 field
+errors are retained for domain UI; 5xx and transport diagnostics are reduced to
+safe user-facing text. POS menu sync keeps its purpose-built cached-menu/offline
+result model, so generic network mapping cannot replace the 12F offline UX.
+
+401/403 are neutral future-auth seams only: there is no login redirect or tenant
+employee permission system yet. Existing Platform Super Admin authentication is
+a separate system from the upcoming tenant employee Auth/RBAC work.
 
 ## `shared`
 

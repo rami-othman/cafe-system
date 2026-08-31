@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
+use App\Services\DiscountEligibilityService;
+use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
 use App\Support\TenantContext;
 use Illuminate\Database\Query\Builder;
@@ -15,7 +18,11 @@ use Illuminate\Validation\ValidationException;
 
 class DiscountController extends Controller
 {
-    public function __construct(private readonly PosPricingService $pricing) {}
+    public function __construct(
+        private readonly PosPricingService $pricing,
+        private readonly OrderLifecyclePolicy $lifecycle,
+        private readonly DiscountEligibilityService $eligibility,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -106,7 +113,7 @@ class DiscountController extends Controller
 
         $discounts = $this->discountQuery($tenantId)->where('is_active', true)->get()
             ->filter(fn (object $discount) => $this->status($discount) === 'active')
-            ->map(fn (object $discount) => $this->serializeDiscount($discount, $order))
+            ->map(fn (object $discount) => $this->serializeDiscount($tenantId, $discount, $order))
             ->values();
 
         return response()->json(['data' => $discounts]);
@@ -124,12 +131,15 @@ class DiscountController extends Controller
             throw ValidationException::withMessages(['discount' => 'A coupon code or discountId is required.']);
         }
 
-        $orderRow = $this->findOrder($tenantId, $order);
         $discount = $this->findDiscount($tenantId, $data);
-        $this->assertEligible($tenantId, $discount, $orderRow);
-        $amount = $this->discountAmount($tenantId, $orderRow, $discount);
+        $this->assertApplicationMode($discount, $data);
 
-        DB::transaction(function () use ($tenantId, $order, $discount, $amount, $data): void {
+        $amount = DB::transaction(function () use ($tenantId, $order, $discount, $data): float {
+            $orderRow = $this->lockedOrder($tenantId, $order);
+            $this->lifecycle->assertDiscountable($orderRow);
+            $discount = DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->whereNull('deleted_at')->lockForUpdate()->first();
+            $result = $this->eligibility->assertApplicable($tenantId, $discount, $orderRow);
+            $amount = $result['amount'];
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             DB::table('order_discounts')->insert([
                 'tenant_id' => $tenantId, 'order_id' => $order, 'discount_id' => $discount->id,
@@ -137,8 +147,9 @@ class DiscountController extends Controller
                 'discount_value' => $discount->value, 'discount_amount' => $amount,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
-            DB::table('discounts')->where('tenant_id', $tenantId)->where('id', $discount->id)->increment('used_count');
             $this->pricing->recalculateOrder($tenantId, $order);
+
+            return $amount;
         });
 
         $updated = $this->findOrder($tenantId, $order);
@@ -153,8 +164,8 @@ class DiscountController extends Controller
     public function remove(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
         DB::transaction(function () use ($tenantId, $order): void {
+            $this->lifecycle->assertDiscountable($this->lockedOrder($tenantId, $order));
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
         });
@@ -179,7 +190,8 @@ class DiscountController extends Controller
             'startTime' => ['nullable', 'date_format:H:i'], 'endTime' => ['nullable', 'date_format:H:i'],
             'minimumOrderAmount' => ['nullable', 'numeric', 'min:0'], 'maximumDiscountAmount' => ['nullable', 'numeric', 'min:0'],
             'usageLimit' => ['nullable', 'integer', 'min:1'], 'usageLimitPerCustomer' => ['nullable', 'integer', 'min:1'],
-            'customerEligibility' => ['nullable', 'string', 'max:100'], 'paymentMethod' => ['nullable', 'string', 'max:100'],
+            'customerEligibility' => ['nullable', Rule::in(['All Customers', 'Regular', 'VIP', 'New Customers'])],
+            'paymentMethod' => ['nullable', Rule::in(['Any Payment Method', 'Cash', 'Card', 'Wallet'])],
             'isActive' => ['required', 'boolean'], 'targetProductIds' => ['nullable', 'array'], 'targetProductIds.*' => ['integer'],
             'targetCategoryIds' => ['nullable', 'array'], 'targetCategoryIds.*' => ['integer'],
             'appliesToAllBranches' => ['required', 'boolean'],
@@ -221,7 +233,8 @@ class DiscountController extends Controller
             'start_time' => $data['startTime'] ?? null, 'end_time' => $data['endTime'] ?? null,
             'minimum_order_amount' => $data['minimumOrderAmount'] ?? 0, 'maximum_discount_amount' => $data['maximumDiscountAmount'] ?? null,
             'usage_limit' => $data['usageLimit'] ?? null, 'usage_limit_per_customer' => $data['usageLimitPerCustomer'] ?? null,
-            'customer_eligibility' => $data['customerEligibility'] ?? null, 'payment_method' => $data['paymentMethod'] ?? null,
+            'customer_eligibility' => $data['customerEligibility'] ?? null,
+            'payment_method' => isset($data['paymentMethod']) && $data['paymentMethod'] !== 'Any Payment Method' ? strtolower($data['paymentMethod']) : null,
             'is_active' => $data['isActive'], 'updated_at' => now(),
         ];
 
@@ -279,84 +292,22 @@ class DiscountController extends Controller
         return $order;
     }
 
+    private function lockedOrder(int $tenantId, int $orderId): object
+    {
+        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->lockForUpdate()->first();
+        abort_if(! $order, 404, 'Order not found.');
+
+        return $order;
+    }
+
     private function findDiscount(int $tenantId, array $data): object
     {
-        $query = $this->discountQuery($tenantId)->where('is_active', true);
+        $query = $this->discountQuery($tenantId);
         ! empty($data['discountId']) ? $query->where('id', $data['discountId']) : $query->whereRaw('LOWER(code) = ?', [strtolower($data['code'])]);
         $discount = $query->first();
         abort_if(! $discount, 404, 'Discount not found.');
 
         return $discount;
-    }
-
-    private function assertEligible(int $tenantId, object $discount, object $order): void
-    {
-        if ($this->status($discount) !== 'active') {
-            throw ValidationException::withMessages(['discount' => 'Discount is not currently active.']);
-        }
-        if ($discount->usage_limit !== null && $discount->used_count >= $discount->usage_limit) {
-            throw ValidationException::withMessages(['discount' => 'Discount usage limit has been reached.']);
-        }
-        if ((float) $order->subtotal < (float) $discount->minimum_order_amount) {
-            throw ValidationException::withMessages(['discount' => 'Minimum order amount not reached.']);
-        }
-        $branchTargets = $this->targetIds($tenantId, $discount->id, 'branch');
-        if ($branchTargets && ! in_array((int) $order->branch_id, $branchTargets, true)) {
-            throw ValidationException::withMessages(['discount' => 'Discount is not available at this branch.']);
-        }
-    }
-
-    private function discountAmount(int $tenantId, object $order, object $discount): float
-    {
-        $eligibleSubtotal = $this->eligibleSubtotal($tenantId, $order, $discount);
-        $amount = match ($discount->type) {
-            'percentage' => $eligibleSubtotal * ((float) $discount->value / 100), 'fixed' => min((float) $discount->value, $eligibleSubtotal),
-            'bogo' => $this->bogoAmount($tenantId, (int) $order->id, $discount), default => 0,
-        };
-        if ($discount->maximum_discount_amount !== null) {
-            $amount = min($amount, (float) $discount->maximum_discount_amount);
-        }
-
-        return round(min($amount, $eligibleSubtotal), 2);
-    }
-
-    private function eligibleSubtotal(int $tenantId, object $order, object $discount): float
-    {
-        if ($discount->scope === 'order') {
-            return (float) $order->subtotal;
-        }
-        $items = DB::table('order_items')->join('products', 'products.id', '=', 'order_items.product_id')
-            ->where('order_items.tenant_id', $tenantId)->where('order_items.order_id', $order->id)->whereNull('order_items.deleted_at');
-        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
-        $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
-        $items->where(function (Builder $query) use ($productIds, $categoryIds): void {
-            if ($productIds) {
-                $query->whereIn('products.id', $productIds);
-            } if ($categoryIds) {
-                $productIds ? $query->orWhereIn('products.category_id', $categoryIds) : $query->whereIn('products.category_id', $categoryIds);
-            }
-        });
-
-        return (float) $items->sum('order_items.total');
-    }
-
-    private function bogoAmount(int $tenantId, int $orderId, object $discount): float
-    {
-        $items = DB::table('order_items')->join('products', 'products.id', '=', 'order_items.product_id')->where('order_items.tenant_id', $tenantId)->where('order_items.order_id', $orderId)->whereNull('order_items.deleted_at');
-        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
-        $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
-        if ($productIds || $categoryIds) {
-            $items->where(function (Builder $query) use ($productIds, $categoryIds): void {
-                if ($productIds) {
-                    $query->whereIn('products.id', $productIds);
-                } if ($categoryIds) {
-                    $productIds ? $query->orWhereIn('products.category_id', $categoryIds) : $query->whereIn('products.category_id', $categoryIds);
-                }
-            });
-        }
-        $item = $items->where('order_items.quantity', '>=', 2)->orderBy('order_items.unit_price')->first();
-
-        return $item ? (float) $item->unit_price * floor((float) $item->quantity / max(2, (int) $discount->value + 1)) : 0;
     }
 
     private function targetIds(int $tenantId, int $discountId, string $type): array
@@ -397,14 +348,33 @@ class DiscountController extends Controller
         ];
     }
 
-    private function serializeDiscount(object $discount, ?object $order): array
+    private function serializeDiscount(int $tenantId, object $discount, ?object $order): array
     {
-        $eligible = ! $order || (float) $order->subtotal >= (float) $discount->minimum_order_amount;
+        $eligible = true;
+        $message = null;
+        if ($order) {
+            try {
+                $this->eligibility->assertApplicable($tenantId, $discount, $order);
+            } catch (OrderLifecycleException $exception) {
+                $eligible = false;
+                $message = $exception->getMessage();
+            }
+        }
 
         return ['id' => $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'type' => $discount->type, 'value' => (float) $discount->value,
             'badge' => match ($discount->type) {
-                'percentage' => ((float) $discount->value).'% OFF', 'fixed' => '-$'.number_format((float) $discount->value, 2), 'bogo' => 'BOGO', default => strtoupper($discount->type)
+                'percentage' => ((float) $discount->value).'% OFF', 'fixed' => '-SYP '.number_format((float) $discount->value, 2), 'bogo' => 'BOGO', default => strtoupper($discount->type)
             },
-            'minimumOrderAmount' => (float) $discount->minimum_order_amount, 'eligible' => $eligible, 'message' => $eligible ? null : 'Minimum order amount not reached.', 'validUntil' => $discount->ends_at];
+            'minimumOrderAmount' => (float) $discount->minimum_order_amount, 'eligible' => $eligible, 'message' => $message, 'validUntil' => $discount->ends_at];
+    }
+
+    private function assertApplicationMode(object $discount, array $data): void
+    {
+        if ($discount->application_mode === 'code' && empty($data['code'])) {
+            throw new OrderLifecycleException('DISCOUNT_CODE_REQUIRED', 'This discount requires its code.');
+        }
+        if (in_array($discount->application_mode, ['auto', 'manual'], true) && empty($data['discountId'])) {
+            throw new OrderLifecycleException('DISCOUNT_SELECTION_REQUIRED', 'Select this discount from the available discounts list.');
+        }
     }
 }

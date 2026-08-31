@@ -194,6 +194,36 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Please try again.'**
   String get commonError;
 
+  /// No description provided for @errorConnectionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection unavailable.'**
+  String get errorConnectionUnavailable;
+
+  /// No description provided for @errorAuthenticationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication required.'**
+  String get errorAuthenticationRequired;
+
+  /// No description provided for @errorPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to perform this action.'**
+  String get errorPermissionDenied;
+
+  /// No description provided for @errorConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This action conflicts with the current state.'**
+  String get errorConflict;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorServer;
+
   /// No description provided for @commonNoData.
   ///
   /// In en, this message translates to:

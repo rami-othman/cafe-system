@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -626,6 +628,7 @@ class PosCubit extends Cubit<PosState> {
         orderId: orderId,
         method: requestedPayment.method.apiValue,
         amount: requestedPayment.amountReceived,
+        idempotencyKey: _operationKey('payment'),
         totalDue: totalDue,
       );
       if (isClosed) {
@@ -1257,6 +1260,11 @@ class PosCubit extends Cubit<PosState> {
 
   bool _isPotentiallyUncertainPaymentFailure(Object error) {
     return error is! ApiException || error.statusCode == null;
+  }
+
+  String _operationKey(String operation) {
+    final int random = Random.secure().nextInt(1 << 32);
+    return '$operation-${DateTime.now().microsecondsSinceEpoch}-${random.toRadixString(16)}';
   }
 
   bool _isConfirmedPaid(BackendOrder order) {

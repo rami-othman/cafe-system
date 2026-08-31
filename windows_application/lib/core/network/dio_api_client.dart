@@ -153,11 +153,12 @@ class DioApiClient {
     final int? statusCode = error.response?.statusCode;
     final dynamic body = error.response?.data;
     final String? responseMessage = _messageFromBody(body);
+    final String? responseCode = _codeFromBody(body);
 
     if (_isBackendOffline(error)) {
-      return const ApiException(
-        message:
-            'Backend is not reachable. Start Laravel server on http://localhost:8000.',
+      return ApiException(
+        message: 'Connection unavailable.',
+        type: ApiErrorType.networkUnavailable,
       );
     }
 
@@ -166,14 +167,36 @@ class DioApiClient {
         message: responseMessage ?? 'The submitted data was invalid.',
         statusCode: statusCode,
         validationErrors: _validationErrorsFromBody(body),
+        code: responseCode,
+        type: ApiErrorType.validation,
       );
     }
 
-    if (statusCode == 401 || statusCode == 403) {
+    if (statusCode == 401) {
+      return ApiException(
+        message: 'Authentication required.',
+        statusCode: statusCode,
+        code: responseCode,
+        type: ApiErrorType.unauthenticated,
+      );
+    }
+
+    if (statusCode == 403) {
+      return ApiException(
+        message: 'You do not have permission to perform this action.',
+        statusCode: statusCode,
+        code: responseCode,
+        type: ApiErrorType.forbidden,
+      );
+    }
+
+    if (statusCode == 409) {
       return ApiException(
         message:
-            responseMessage ?? 'You are not allowed to perform this action.',
+            responseMessage ?? 'This action conflicts with the current state.',
         statusCode: statusCode,
+        code: responseCode,
+        type: ApiErrorType.conflict,
       );
     }
 
@@ -181,19 +204,23 @@ class DioApiClient {
       return ApiException(
         message: responseMessage ?? 'The requested resource was not found.',
         statusCode: statusCode,
+        code: responseCode,
       );
     }
 
     if (statusCode != null && statusCode >= 500) {
       return ApiException(
-        message: responseMessage ?? 'Backend error. Please try again.',
+        message: 'Something went wrong. Please try again.',
         statusCode: statusCode,
+        type: ApiErrorType.server,
       );
     }
 
     return ApiException(
       message: responseMessage ?? 'Unexpected network error. Please try again.',
       statusCode: statusCode,
+      code: responseCode,
+      type: ApiErrorType.unknown,
     );
   }
 
@@ -219,6 +246,15 @@ class DioApiClient {
       if (message is String && message.trim().isNotEmpty) {
         return message;
       }
+    }
+
+    return null;
+  }
+
+  String? _codeFromBody(dynamic body) {
+    if (body is Map<String, dynamic>) {
+      final dynamic code = body['code'];
+      if (code is String && code.trim().isNotEmpty) return code;
     }
 
     return null;

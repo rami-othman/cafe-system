@@ -9,6 +9,7 @@ import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_empty_state.dart';
 import '../../../shared/widgets/app_loading.dart';
+import '../../pos/controllers/pos_cubit.dart';
 import '../controllers/daily_report_cubit.dart';
 import '../controllers/daily_report_state.dart';
 import '../models/daily_report_data.dart';
@@ -112,8 +113,8 @@ class _ReportContent extends StatelessWidget {
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (date != null) {
-      cubit.selectDate(date);
+    if (date != null && context.mounted) {
+      cubit.selectDate(date, branchId: context.read<PosCubit>().state.branchId);
     }
   }
 

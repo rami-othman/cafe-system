@@ -148,6 +148,7 @@ class PosApiSmokeTest extends TestCase
         $payment = $this->postJson("/api/v1/orders/{$orderId}/pay", [
             'method' => 'cash',
             'amount' => 30,
+            'idempotencyKey' => 'smoke-payment-1',
         ])
             ->assertOk()
             ->assertJsonPath('data.payment.status', 'completed');
@@ -156,6 +157,16 @@ class PosApiSmokeTest extends TestCase
             'id' => $payment->json('data.payment.id'),
             'currency' => 'SYP',
         ]);
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'method' => 'cash', 'amount' => 30, 'idempotencyKey' => 'smoke-payment-1',
+        ])->assertOk()->assertJsonPath('data.payment.id', $payment->json('data.payment.id'));
+        $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'method' => 'card', 'amount' => 30, 'idempotencyKey' => 'smoke-payment-1',
+        ])->assertUnprocessable()->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
+        $this->patchJson("/api/v1/orders/{$orderId}", ['note' => 'late edit'])
+            ->assertUnprocessable()->assertJsonPath('code', 'ORDER_NOT_EDITABLE');
 
         $this->getJson("/api/v1/orders/{$orderId}/receipt")
             ->assertOk()
@@ -167,15 +178,27 @@ class PosApiSmokeTest extends TestCase
             ->assertAccepted()
             ->assertJsonPath('data.status', 'queued');
 
-        $this->postJson("/api/v1/orders/{$orderId}/refunds", [
+        $refundPayload = [
             'type' => 'partial',
             'amount' => 5,
             'reason' => 'Customer Request',
             'managerNotes' => 'Approved from POS refund flow.',
-        ])
+            'idempotencyKey' => 'smoke-refund-1',
+        ];
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", $refundPayload)
             ->assertCreated()
             ->assertJsonPath('data.status', 'completed')
             ->assertJsonPath('data.paymentId', $payment->json('data.payment.id'));
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", $refundPayload)
+            ->assertCreated()->assertJsonPath('data.amount', 5);
+        $this->assertSame(1, DB::table('payment_refunds')->where('order_id', $orderId)->count());
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", array_merge($refundPayload, ['amount' => 6]))
+            ->assertUnprocessable()->assertJsonPath('code', 'REFUND_IDEMPOTENCY_CONFLICT');
+
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", [
+            'type' => 'full', 'reason' => 'Close remaining balance', 'idempotencyKey' => 'smoke-refund-2',
+        ])->assertCreated()->assertJsonPath('data.status', 'completed');
+        $this->assertDatabaseHas('orders', ['id' => $orderId, 'status' => 'refunded', 'payment_status' => 'refunded']);
 
         $this->getJson("/api/v1/orders/{$orderId}")
             ->assertOk()

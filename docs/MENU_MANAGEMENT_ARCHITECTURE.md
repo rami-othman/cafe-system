@@ -73,6 +73,16 @@ changes; rollback creates a new Version and never reactivates old history.
 Published snapshots deliberately exclude operational availability runtime state,
 remaining quantities, and Inventory runtime data.
 
+Pre-Auth Hardening D closes the validation/snapshot race. Publish first acquires
+the exact tenant + Branch + channel PostgreSQL advisory lock, then opens its
+repeatable-read critical section. Candidate resolution, blocking validation,
+snapshot build, checksum/no-change selection, version transition, and audit use
+the same authoritative state. A waiting same-scope publisher begins its snapshot
+only after the lock holder commits; unrelated Branch/channel scopes remain
+independent. Validation errors create no Version, and warnings remain
+non-blocking. Rollback still creates a new Version from immutable historical
+`payload_json` without reading live Catalog tables.
+
 Snapshot schema v3 defines Menu runtime order as the serialized `menus[]`
 sequence, with each Menu's zero-based `scopeOrder` repeating that position.
 Automatic Branch + Channel publications use exact-scope active assignment order;
@@ -189,12 +199,14 @@ or payment processing is not implemented.
 
 ## Pre-Auth handoff
 
-The approved next sequence is Pre-Auth Hardening A (Order lifecycle +
-payment/refund concurrency/idempotency), Pre-Auth Hardening B (Flutter
-route-scoped Cubits / shared app context cleanup), Pre-Auth Hardening C (Discount
-runtime correctness), Pre-Auth Hardening D (Publish validation race + docs/error
-hygiene), then Auth + Employee Roles + Permissions + Branch Assignment. These
-are future phases and are not implemented by Batch 12.
+Pre-Auth Hardening A/B/C/D are closed. The next phase is Tenant Employee
+Authentication, Roles, Permissions, Branch Assignment, server-side
+authorization, actor identity/audit attribution, and Flutter permission-aware
+navigation. It is not implemented here. Platform Super Admin authentication
+remains a separate security domain.
+
+The completed pre-auth phases remain part of the baseline; only the tenant
+employee-auth handoff above remains outstanding.
 
 ### Legacy API and order-path audit
 

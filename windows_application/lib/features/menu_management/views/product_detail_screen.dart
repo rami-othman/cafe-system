@@ -8,7 +8,6 @@ import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
-import '../controllers/product_catalog_cubit.dart';
 import '../controllers/product_detail_cubit.dart';
 import '../controllers/product_lifecycle_cubit.dart';
 import '../availability/widgets/product_availability_workspace.dart';
@@ -79,10 +78,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 current.status == ProductLifecycleStatus.failure),
         listener: (context, lifecycle) async {
           if (lifecycle.status == ProductLifecycleStatus.success) {
-            await Future.wait<void>(<Future<void>>[
-              context.read<ProductDetailCubit>().load(widget.productId),
-              context.read<ProductCatalogCubit>().refresh(),
-            ]);
+            await context.read<ProductDetailCubit>().load(widget.productId);
           }
           if (!context.mounted) {
             return;

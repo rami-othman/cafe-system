@@ -147,8 +147,16 @@ class OrdersScreen extends StatelessWidget {
       return;
     }
 
-    cubit.confirmRefund(result);
-    _showSnackBar(context, 'Refund recorded locally.');
+    try {
+      await cubit.submitRefund(result);
+      if (context.mounted) {
+        _showSnackBar(context, 'Refund recorded.');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showSnackBar(context, 'Could not record refund. Please try again.');
+      }
+    }
   }
 }
 

@@ -63,9 +63,73 @@ passed: `flutter gen-l10n`, `flutter analyze`, `flutter test` (487 passed), and
 `flutter build windows`. The built executable launched successfully and rendered
 the Published POS screen.
 
+## Pre-Auth hardening
+
+### Pre-Auth Hardening A ✅ CLOSED
+
+- `OrderLifecyclePolicy` permits normal mutation only for unpaid Draft/Held
+  orders; completed and refunded orders are immutable.
+- Payment and refunds use database locks, tenant/order-scoped idempotency keys,
+  unique constraints, and durable locked number counters.
+- Flutter supplies one key per payment/refund attempt; offline payments remain
+  blocked.
+- True PostgreSQL process-concurrency coverage passed for payment/refund
+  idempotency and order/refund number contention.
+
+### Pre-Auth Hardening B ✅ CLOSED
+
+- Mutable admin feature Cubits are lazy and route-scoped; POS startup no
+  longer creates Orders, Discounts, Reports, or Menu Management state.
+- `PosCubit` remains the session POS workspace so cart and branch context
+  survive a temporary route change. Its branch safety rule remains unchanged.
+- Orders and Reports follow that authoritative branch only while their route is
+  mounted; report requests pass the supported `branchId` contract.
+- Router topology tests assert that POS does not request unvisited feature
+  repositories and that Orders, Reports, and Discounts initialize independently.
+
+### Pre-Auth Hardening C ✅ CLOSED
+
+- `DiscountEligibilityService` is the authoritative runtime policy for managed
+  discounts, including Branch-local date/day/time and overnight windows.
+- Product/category targeting uses persisted immutable category identity for
+  versioned Orders; legacy Orders retain their live-Catalog compatibility path.
+- Payment-time revalidation covers tender restrictions and current policy state.
+  Discount usage is consumed only by a successful payment with locked global and
+  per-customer checks, and payment retries cannot double-consume it.
+- Full Laravel verification passed: 149 tests / 1,985 assertions; Pint and
+  `git diff --check` passed; `cafe_system_618_testing` migration rebuild and
+  seed completed successfully. No Flutter files changed for Hardening C.
+
+### Pre-Auth Hardening D ✅ CLOSED
+
+- Publication now acquires its exact tenant + Branch + channel advisory lock
+  before it starts the repeatable-read critical section. Candidate resolution,
+  blocking validation, snapshot construction, checksum/no-change selection,
+  version writes, and publication audit all use that one authoritative state.
+- PostgreSQL worker coverage verifies same-scope serialization, no-change
+  contention, cross-scope independence, and an independent-connection edit
+  between validation and snapshot construction.
+- Flutter has a small typed API error foundation for unavailable network,
+  unauthenticated, forbidden, validation, conflict, server, and unknown paths.
+  Safe generic EN/AR copy is available; useful 422 domain messages and stable
+  backend codes are retained. POS cached-menu offline behavior remains distinct.
+
+Closure verification passed locally: Laravel 152 tests / 2,003 assertions,
+Flutter 496 tests, `flutter analyze`, and the Windows build all completed.
+
+**PRE-AUTH HARDENING COMPLETE.**
+
 ## Pre-Auth handoff
 
-The approved next sequence is:
+Auth has not started. Platform Super Admin authentication/permissions already
+exist as a separate security domain; upcoming tenant employee Auth/RBAC must not
+be conflated with it.
+
+The next phase is Tenant Employee Authentication, Roles, Permissions, Branch
+Assignment, server-side authorization, actor identity/audit attribution, and
+Flutter permission-aware navigation. It is not implemented by this baseline.
+
+The hardening sequence is:
 
 1. **Pre-Auth Hardening A** — Order lifecycle + payment/refund concurrency/idempotency
 2. **Pre-Auth Hardening B** — Flutter route-scoped Cubits / shared app context cleanup
@@ -73,7 +137,8 @@ The approved next sequence is:
 4. **Pre-Auth Hardening D** — Publish validation race + docs/error hygiene
 5. **Auth + Employee Roles + Permissions + Branch Assignment**
 
-These phases are approved handoff work only and are not part of Batch 12.
+Hardening items 1–4 are closed; only the final tenant employee-auth handoff is
+future work and it is not part of Batch 12.
 
 ## Important architecture notes
 

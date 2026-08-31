@@ -10,7 +10,7 @@ class DailyReportCubit extends Cubit<DailyReportState> {
 
   final ReportsRepository _repository;
 
-  Future<void> loadReport({DateTime? date}) async {
+  Future<void> loadReport({DateTime? date, int? branchId}) async {
     final DateTime? selectedDate = date ?? state.selectedDate;
     emit(
       state.copyWith(
@@ -21,6 +21,7 @@ class DailyReportCubit extends Cubit<DailyReportState> {
     try {
       final DailyReportData report = await _repository.getDailyReport(
         date: selectedDate,
+        branchId: branchId,
       );
       final DateTime? reportDate = selectedDate ?? report.reportDate;
       emit(
@@ -45,7 +46,8 @@ class DailyReportCubit extends Cubit<DailyReportState> {
     }
   }
 
-  Future<void> selectDate(DateTime date) => loadReport(date: date);
+  Future<void> selectDate(DateTime date, {int? branchId}) =>
+      loadReport(date: date, branchId: branchId);
   void showEmpty() => emit(state.copyWith(status: DailyReportStatus.empty));
   void showError() => emit(
     state.copyWith(

@@ -23,6 +23,12 @@ preparation are supported; true offline transaction or payment processing is not
 Legacy Menu APIs and the no-version order path are deprecated compatibility
 interfaces and are not used by the production Windows POS.
 
+Pre-Auth Hardening A/B/C/D are closed. Publishing validates and builds from one
+locked repeatable-read state, and the shared API client exposes typed safe error
+categories while retaining useful backend validation details. Auth is not
+started; upcoming tenant employee Auth/RBAC is distinct from Platform Super Admin
+authentication.
+
 Final manual closure verification on the current worktree passed: `flutter
 gen-l10n`, `flutter analyze`, `flutter test` (487 passed), and `flutter build
 windows`. The built Windows executable was launched successfully and rendered the

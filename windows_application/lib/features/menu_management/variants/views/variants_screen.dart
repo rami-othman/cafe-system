@@ -10,7 +10,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
-import '../../controllers/product_catalog_cubit.dart';
 import '../../models/catalog_models.dart';
 import '../../widgets/catalog_formatters.dart';
 import '../../pricing/configured_price_validation.dart';
@@ -49,7 +48,6 @@ class _VariantsScreenState extends State<VariantsScreen> {
             before.successMessage != after.successMessage &&
             after.successMessage != null,
         listener: (context, state) {
-          context.read<ProductCatalogCubit>().refresh();
           if (state.summaryChanged && state.product != null) {
             widget.onSummaryChanged?.call(state.product!);
           }

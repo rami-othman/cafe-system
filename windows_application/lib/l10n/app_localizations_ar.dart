@@ -57,6 +57,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get commonError => 'حدث خطأ ما. يرجى المحاولة مرة أخرى.';
 
   @override
+  String get errorConnectionUnavailable => 'تعذر الاتصال.';
+
+  @override
+  String get errorAuthenticationRequired => 'المصادقة مطلوبة.';
+
+  @override
+  String get errorPermissionDenied => 'ليس لديك صلاحية لتنفيذ هذا الإجراء.';
+
+  @override
+  String get errorConflict => 'يتعارض هذا الإجراء مع الحالة الحالية.';
+
+  @override
+  String get errorServer => 'حدث خطأ ما. يرجى المحاولة مرة أخرى.';
+
+  @override
   String get commonNoData => 'لا توجد بيانات متاحة.';
 
   @override

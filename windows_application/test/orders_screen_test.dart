@@ -154,7 +154,7 @@ void main() {
 
     expect(find.text('REFUNDED'), findsOneWidget);
     expect(find.text('Refunded'), findsWidgets);
-    expect(find.text('Refund recorded locally.'), findsOneWidget);
+    expect(find.text('Refund recorded.'), findsOneWidget);
   });
 }
 

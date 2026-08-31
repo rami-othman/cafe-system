@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
 use App\Services\Menu\PublishedMenuOrderResolver;
+use App\Services\OrderLifecyclePolicy;
+use App\Services\PosNumberGenerator;
 use App\Services\PosPricingService;
 use App\Services\TenantTaxService;
 use App\Support\TenantContext;
@@ -21,6 +23,8 @@ class PosOrderController extends Controller
         private readonly PosPricingService $pricing,
         private readonly TenantTaxService $taxes,
         private readonly PublishedMenuOrderResolver $publishedOrders,
+        private readonly OrderLifecyclePolicy $lifecycle,
+        private readonly PosNumberGenerator $numbers,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -97,7 +101,7 @@ class PosOrderController extends Controller
                     'shift_id' => $data['shiftId'] ?? null,
                     'table_id' => $data['tableId'] ?? null,
                     'customer_id' => $data['customerId'] ?? null,
-                    'order_number' => $this->nextOrderNumber($tenantId, $data['branchId']),
+                    'order_number' => $this->numbers->nextOrderNumber($tenantId, $data['branchId']),
                     'type' => $data['orderType'],
                     'status' => 'draft',
                     'payment_status' => 'unpaid',
@@ -160,7 +164,11 @@ class PosOrderController extends Controller
             $updates['notes'] = $data['note'];
         }
 
-        DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update($updates);
+        DB::transaction(function () use ($tenantId, $order, $updates): void {
+            $this->lifecycle->assertMutable($this->lockedOrder($tenantId, $order));
+            DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update($updates);
+            $this->pricing->recalculateOrder($tenantId, $order);
+        });
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
     }
@@ -168,14 +176,12 @@ class PosOrderController extends Controller
     public function cancel(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
-
-        DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
-            'status' => 'cancelled',
-            'closed_at' => now(),
-            'updated_at' => now(),
-            'deleted_at' => now(),
-        ]);
+        DB::transaction(function () use ($tenantId, $order): void {
+            $this->lifecycle->assertCancellable($this->lockedOrder($tenantId, $order));
+            DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
+                'status' => 'cancelled', 'closed_at' => now(), 'updated_at' => now(), 'deleted_at' => now(),
+            ]);
+        });
 
         return response()->json(null, 204);
     }
@@ -198,8 +204,10 @@ class PosOrderController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($tenantId, $order, $data, $orderRow): void {
-                $snapshot = $orderRow->published_menu_version_id === null ? null : $this->publishedOrders->bindPinnedOrder($tenantId, (int) $orderRow->branch_id, (int) $orderRow->published_menu_version_id);
+            DB::transaction(function () use ($tenantId, $order, $data): void {
+                $lockedOrder = $this->lockedOrder($tenantId, $order);
+                $this->lifecycle->assertMutable($lockedOrder);
+                $snapshot = $lockedOrder->published_menu_version_id === null ? null : $this->publishedOrders->bindPinnedOrder($tenantId, (int) $lockedOrder->branch_id, (int) $lockedOrder->published_menu_version_id);
                 $this->persistItem($tenantId, $order, $data, $snapshot);
                 $this->pricing->recalculateOrder($tenantId, $order);
             });
@@ -226,7 +234,9 @@ class PosOrderController extends Controller
         abort_if(! $existing, 404, 'Order item not found.');
 
         try {
-            DB::transaction(function () use ($tenantId, $order, $item, $existing, $data, $orderRow): void {
+            DB::transaction(function () use ($tenantId, $order, $item, $existing, $data): void {
+                $orderRow = $this->lockedOrder($tenantId, $order);
+                $this->lifecycle->assertMutable($orderRow);
                 $quantity = $data['quantity'] ?? (float) $existing->quantity;
                 if ($orderRow->published_menu_version_id !== null) {
                     $optionIds = $data['modifierOptionIds'] ?? DB::table('order_item_modifiers')
@@ -241,7 +251,7 @@ class PosOrderController extends Controller
                     ]);
                     DB::table('order_item_modifiers')->where('tenant_id', $tenantId)->where('order_item_id', $item)->delete();
                     DB::table('order_items')->where('tenant_id', $tenantId)->where('id', $item)->update([
-                        'quantity' => $quantity, 'unit_price' => $price['unitPrice'], 'total' => $price['lineTotal'],
+                        'quantity' => $quantity, 'unit_price' => $price['unitPrice'], 'total' => $price['lineTotal'], 'category_id' => $price['categoryId'],
                         'notes' => array_key_exists('note', $data) ? $data['note'] : $existing->notes, 'updated_at' => now(),
                     ]);
                     $this->persistModifiers($tenantId, $item, $price['selectedOptions']);
@@ -281,9 +291,8 @@ class PosOrderController extends Controller
     public function removeItem(Request $request, int $order, int $item): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
-
         DB::transaction(function () use ($tenantId, $order, $item): void {
+            $this->lifecycle->assertMutable($this->lockedOrder($tenantId, $order));
             DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->where('id', $item)->update([
                 'deleted_at' => now(),
                 'updated_at' => now(),
@@ -297,12 +306,10 @@ class PosOrderController extends Controller
     public function hold(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
-
-        DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
-            'status' => 'held',
-            'updated_at' => now(),
-        ]);
+        DB::transaction(function () use ($tenantId, $order): void {
+            $this->lifecycle->assertHoldable($this->lockedOrder($tenantId, $order));
+            DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update(['status' => 'held', 'updated_at' => now()]);
+        });
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
     }
@@ -316,12 +323,10 @@ class PosOrderController extends Controller
         ]);
 
         $tenantId = TenantContext::id($request);
-        $row = $this->findOrder($tenantId, $order);
-        $amount = $data['type'] === 'percentage'
-            ? round((float) $row->subtotal * ((float) $data['value'] / 100), 2)
-            : min((float) $data['value'], (float) $row->subtotal);
-
-        DB::transaction(function () use ($tenantId, $order, $data, $amount): void {
+        DB::transaction(function () use ($tenantId, $order, $data): void {
+            $row = $this->lockedOrder($tenantId, $order);
+            $this->lifecycle->assertDiscountable($row);
+            $amount = $data['type'] === 'percentage' ? round((float) $row->subtotal * ((float) $data['value'] / 100), 2) : min((float) $data['value'], (float) $row->subtotal);
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             DB::table('order_discounts')->insert([
                 'tenant_id' => $tenantId,
@@ -342,9 +347,8 @@ class PosOrderController extends Controller
     public function removeDiscount(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
-
         DB::transaction(function () use ($tenantId, $order): void {
+            $this->lifecycle->assertDiscountable($this->lockedOrder($tenantId, $order));
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
         });
@@ -381,6 +385,7 @@ class PosOrderController extends Controller
                 'tenant_id' => $tenantId,
                 'order_id' => $orderId,
                 'product_id' => $price['productId'],
+                'category_id' => $price['categoryId'],
                 'product_variant_id' => $price['variantId'],
                 'menu_item_placement_id' => $price['placementId'],
                 'product_name' => $price['productName'],
@@ -405,6 +410,7 @@ class PosOrderController extends Controller
             'tenant_id' => $tenantId,
             'order_id' => $orderId,
             'product_id' => $price['product']->id,
+            'category_id' => $price['product']->category_id,
             'product_name' => $price['product']->name,
             'quantity' => $quantity,
             'unit_price' => $price['unit_price'],
@@ -446,6 +452,14 @@ class PosOrderController extends Controller
         return $order;
     }
 
+    private function lockedOrder(int $tenantId, int $orderId): object
+    {
+        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->lockForUpdate()->first();
+        abort_if(! $order, 404, 'Order not found.');
+
+        return $order;
+    }
+
     private function tenantExists(string $table, int $tenantId)
     {
         return Rule::exists($table, 'id')->where(
@@ -465,13 +479,6 @@ class PosOrderController extends Controller
                 throw ValidationException::withMessages([$field => "The selected {$field} is invalid."]);
             }
         }
-    }
-
-    private function nextOrderNumber(int $tenantId, int $branchId): string
-    {
-        $count = DB::table('orders')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->count() + 1;
-
-        return now()->format('Ymd').'-'.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
     }
 
     private function serializeOrder(int $tenantId, object $order, bool $withItems = true): array

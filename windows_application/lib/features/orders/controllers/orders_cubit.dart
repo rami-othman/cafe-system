@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,14 +16,14 @@ class OrdersCubit extends Cubit<OrdersState> {
 
   final OrdersRepository repository;
 
-  Future<void> loadOrders() async {
+  Future<void> loadOrders({int? branchId}) async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
       final branches = state.branches.isEmpty
           ? await repository.getBranches()
           : state.branches;
-      final selectedBranchId = _selectedBranchId(branches);
+      final selectedBranchId = _selectedBranchId(branches, branchId: branchId);
       if (selectedBranchId == null) {
         emit(
           state.copyWith(
@@ -66,9 +68,10 @@ class OrdersCubit extends Cubit<OrdersState> {
     await loadOrders();
   }
 
-  /// Mirrors the POS-owned branch context for order listing.  This is not a
-  /// user-selectable branch state; the shell tabs are owned by [PosCubit].
-  Future<void> applyPosBranchContext(int branchId) async {
+  /// Mirrors the session POS branch context for order listing. This is never a
+  /// user-selectable Orders value; the route receives the authoritative branch
+  /// from the POS workspace while it is mounted.
+  Future<void> applyBranchContext(int branchId) async {
     if (state.selectedBranchId == branchId ||
         !state.branches.any((Branch branch) => branch.id == branchId)) {
       return;
@@ -122,6 +125,14 @@ class OrdersCubit extends Cubit<OrdersState> {
 
   Future<void> refreshOrders() async {
     await loadOrders();
+  }
+
+  Future<void> submitRefund(RefundResult request) async {
+    final RefundResult result = await repository.submitRefund(
+      request: request,
+      idempotencyKey: _operationKey(),
+    );
+    confirmRefund(result);
   }
 
   void confirmRefund(RefundResult result) {
@@ -180,7 +191,14 @@ class OrdersCubit extends Cubit<OrdersState> {
     }
   }
 
-  int? _selectedBranchId(List<Branch> branches) {
+  String _operationKey() =>
+      'refund-${DateTime.now().microsecondsSinceEpoch}-${Random.secure().nextInt(1 << 32).toRadixString(16)}';
+
+  int? _selectedBranchId(List<Branch> branches, {int? branchId}) {
+    if (branchId != null &&
+        branches.any((Branch branch) => branch.id == branchId)) {
+      return branchId;
+    }
     if (state.selectedBranchId != null &&
         branches.any((Branch branch) => branch.id == state.selectedBranchId)) {
       return state.selectedBranchId;

@@ -283,6 +283,7 @@ class PosRepository {
     required int orderId,
     required String method,
     required double amount,
+    required String idempotencyKey,
     String? reference,
     required double totalDue,
   }) async {
@@ -292,6 +293,7 @@ class PosRepository {
         'method': method,
         'amount': amount,
         'reference': reference,
+        'idempotencyKey': idempotencyKey,
       },
     );
     return paymentResultFromJson(

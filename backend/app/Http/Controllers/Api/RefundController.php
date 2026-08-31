@@ -2,108 +2,103 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
+use App\Services\OrderLifecyclePolicy;
+use App\Services\PosNumberGenerator;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class RefundController extends Controller
 {
+    public function __construct(
+        private readonly OrderLifecyclePolicy $lifecycle,
+        private readonly PosNumberGenerator $numbers,
+    ) {}
+
     public function store(Request $request, int $order): JsonResponse
     {
         $data = $request->validate([
-            'type' => ['required', 'in:full,partial'],
-            'amount' => ['nullable', 'numeric', 'min:0.01'],
-            'reason' => ['required', 'string', 'max:120'],
-            'managerNotes' => ['nullable', 'string'],
+            'type' => ['required', 'in:full,partial'], 'amount' => ['nullable', 'numeric', 'min:0.01'],
+            'reason' => ['required', 'string', 'max:120'], 'managerNotes' => ['nullable', 'string'],
+            'idempotencyKey' => ['required', 'string', 'max:120'],
         ]);
-
         $tenantId = TenantContext::id($request);
-        $orderRow = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->first();
-        abort_if(! $orderRow, 404, 'Order not found.');
-        abort_if($orderRow->payment_status === 'unpaid', 422, 'Only paid orders can be refunded.');
+        $hash = $this->payloadHash($data);
 
-        $payment = DB::table('payments')
-            ->where('tenant_id', $tenantId)
-            ->where('order_id', $order)
-            ->where('status', 'completed')
-            ->whereNull('deleted_at')
-            ->latest('paid_at')
-            ->first();
-        abort_if(! $payment, 422, 'No completed payment exists for this order.');
+        $refund = DB::transaction(function () use ($tenantId, $order, $data, $hash) {
+            $orderRow = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->lockForUpdate()->first();
+            abort_if(! $orderRow, 404, 'Order not found.');
 
-        $alreadyRefunded = (float) DB::table('payment_refunds')
-            ->where('tenant_id', $tenantId)
-            ->where('order_id', $order)
-            ->where('status', 'completed')
-            ->sum('amount');
-        $remaining = round((float) $payment->amount - $alreadyRefunded, 2);
-        $amount = $data['type'] === 'full' ? $remaining : round((float) ($data['amount'] ?? 0), 2);
+            $existing = DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('order_id', $orderRow->id)
+                ->where('idempotency_key', $data['idempotencyKey'])->first();
+            if ($existing) {
+                if (! hash_equals((string) $existing->idempotency_hash, $hash)) {
+                    throw new OrderLifecycleException('REFUND_IDEMPOTENCY_CONFLICT', 'This refund key was already used for a different request.');
+                }
 
-        if ($amount <= 0 || $amount > $remaining) {
-            throw ValidationException::withMessages(['amount' => 'Refund amount exceeds the refundable balance.']);
-        }
+                return $existing;
+            }
 
-        $refund = DB::transaction(function () use ($tenantId, $orderRow, $payment, $data, $amount, $remaining) {
+            $this->lifecycle->assertRefundable($orderRow);
+            // Lock the completed settlement after the order to keep payment/refund
+            // lock order deterministic across financial operations.
+            $payment = DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $orderRow->id)
+                ->where('status', 'completed')->whereNull('deleted_at')->orderBy('id')->lockForUpdate()->first();
+            if (! $payment || (int) $payment->branch_id !== (int) $orderRow->branch_id) {
+                throw new OrderLifecycleException('REFUND_NOT_ALLOWED', 'No completed payment exists for this order.');
+            }
+
+            $alreadyRefunded = (float) DB::table('payment_refunds')->where('tenant_id', $tenantId)
+                ->where('order_id', $orderRow->id)->where('payment_id', $payment->id)->where('status', 'completed')->sum('amount');
+            $remaining = round((float) $payment->amount - $alreadyRefunded, 2);
+            $amount = $data['type'] === 'full' ? $remaining : round((float) ($data['amount'] ?? 0), 2);
+            if ($amount <= 0 || $amount > $remaining) {
+                throw new OrderLifecycleException('REFUND_EXCEEDS_REMAINING', 'Refund amount exceeds the refundable balance.');
+            }
+
             $now = now();
             $refundId = DB::table('payment_refunds')->insertGetId([
-                'tenant_id' => $tenantId,
-                'branch_id' => $orderRow->branch_id,
-                'order_id' => $orderRow->id,
-                'payment_id' => $payment->id,
-                'refund_number' => $this->nextRefundNumber($tenantId),
-                'type' => $data['type'],
-                'amount' => $amount,
-                'reason' => $data['reason'],
-                'manager_notes' => $data['managerNotes'] ?? null,
-                'status' => 'completed',
-                'refunded_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
+                'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'order_id' => $orderRow->id,
+                'payment_id' => $payment->id, 'refund_number' => $this->numbers->nextRefundNumber($tenantId),
+                'type' => $data['type'], 'amount' => $amount, 'reason' => $data['reason'],
+                'manager_notes' => $data['managerNotes'] ?? null, 'status' => 'completed',
+                'idempotency_key' => $data['idempotencyKey'], 'idempotency_hash' => $hash,
+                'refunded_at' => $now, 'created_at' => $now, 'updated_at' => $now,
             ]);
-
-            $paymentStatus = $amount >= $remaining ? 'refunded' : 'partially_refunded';
+            $fullyRefunded = abs(round($amount - $remaining, 2)) < 0.005;
             DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderRow->id)->update([
-                'payment_status' => $paymentStatus,
-                'status' => $paymentStatus === 'refunded' ? 'refunded' : $orderRow->status,
-                'updated_at' => $now,
+                'payment_status' => $fullyRefunded ? 'refunded' : 'partially_refunded',
+                'status' => $fullyRefunded ? 'refunded' : 'paid', 'updated_at' => $now,
             ]);
-
             DB::table('activity_logs')->insert([
-                'tenant_id' => $tenantId,
-                'branch_id' => $orderRow->branch_id,
-                'action' => 'order.refunded',
-                'entity_type' => 'order',
-                'entity_id' => $orderRow->id,
-                'description' => "Refunded \${$amount} for {$data['reason']}.",
-                'created_at' => $now,
-                'updated_at' => $now,
+                'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'action' => 'order.refunded',
+                'entity_type' => 'order', 'entity_id' => $orderRow->id,
+                'description' => "Refunded \${$amount} for {$data['reason']}.", 'created_at' => $now, 'updated_at' => $now,
             ]);
 
             return DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('id', $refundId)->first();
-        });
+        }, 3);
 
-        return response()->json([
-            'data' => [
-                'id' => $refund->id,
-                'orderId' => $refund->order_id,
-                'paymentId' => $refund->payment_id,
-                'refundNumber' => $refund->refund_number,
-                'type' => $refund->type,
-                'amount' => (float) $refund->amount,
-                'reason' => $refund->reason,
-                'status' => $refund->status,
-                'refundedAt' => $refund->refunded_at,
-            ],
-        ], 201);
+        return response()->json(['data' => $this->serialize($refund)], 201);
     }
 
-    private function nextRefundNumber(int $tenantId): string
+    private function payloadHash(array $data): string
     {
-        $count = DB::table('payment_refunds')->where('tenant_id', $tenantId)->count() + 1;
+        return hash('sha256', json_encode([
+            'type' => $data['type'], 'amount' => array_key_exists('amount', $data) ? (string) $data['amount'] : null,
+            'reason' => $data['reason'], 'managerNotes' => $data['managerNotes'] ?? null,
+        ], JSON_THROW_ON_ERROR));
+    }
 
-        return 'RF-'.now()->format('Ymd').'-'.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+    private function serialize(object $refund): array
+    {
+        return [
+            'id' => $refund->id, 'orderId' => $refund->order_id, 'paymentId' => $refund->payment_id,
+            'refundNumber' => $refund->refund_number, 'type' => $refund->type, 'amount' => (float) $refund->amount,
+            'reason' => $refund->reason, 'status' => $refund->status, 'refundedAt' => $refund->refunded_at,
+        ];
     }
 }

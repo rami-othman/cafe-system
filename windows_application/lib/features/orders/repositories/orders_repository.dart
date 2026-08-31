@@ -13,6 +13,8 @@ import '../models/order_summary.dart';
 import '../models/order_summary_item.dart';
 import '../models/order_timeline_event.dart';
 import '../models/order_type.dart';
+import '../models/refund_result.dart';
+import '../models/refund_type.dart';
 
 class OrdersRepository {
   const OrdersRepository({this.apiClient});
@@ -78,6 +80,39 @@ class OrdersRepository {
     _debugLog('Loaded order $orderId detail with ${detail.items.length} items');
 
     return detail;
+  }
+
+  Future<RefundResult> submitRefund({
+    required RefundResult request,
+    required String idempotencyKey,
+  }) async {
+    if (!usesBackend) {
+      return request;
+    }
+    final dynamic response = await apiClient!.post(
+      'orders/${request.orderId}/refunds',
+      data: <String, dynamic>{
+        'type': request.type == RefundType.full ? 'full' : 'partial',
+        'amount': request.amount,
+        'reason': request.reason,
+        'managerNotes': request.managerNotes,
+        'idempotencyKey': idempotencyKey,
+      },
+    );
+    final Map<String, dynamic> json = Map<String, dynamic>.from(
+      response as Map,
+    );
+    return RefundResult(
+      orderId: readString(json['orderId'], fallback: request.orderId),
+      type: readString(json['type']) == 'full'
+          ? RefundType.full
+          : RefundType.partial,
+      amount: readDouble(json['amount'], fallback: request.amount),
+      reason: readString(json['reason'], fallback: request.reason),
+      managerNotes: request.managerNotes,
+      refundedAt:
+          DateTime.tryParse(readString(json['refundedAt'])) ?? DateTime.now(),
+    );
   }
 
   Map<String, dynamic> _queryForFilter({

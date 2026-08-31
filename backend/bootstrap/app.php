@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
 use App\Http\Middleware\EnsurePlatformPermission;
@@ -29,4 +30,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+        $exceptions->render(function (OrderLifecycleException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->domainCode,
+                ], 422);
+            }
+        });
     })->create();

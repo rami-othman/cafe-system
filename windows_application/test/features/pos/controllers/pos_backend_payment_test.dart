@@ -308,6 +308,7 @@ class _BackendPaymentRepository extends PosRepository {
     required int orderId,
     required String method,
     required double amount,
+    required String idempotencyKey,
     String? reference,
     required double totalDue,
   }) async {

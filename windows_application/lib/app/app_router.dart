@@ -123,45 +123,12 @@ final GoRouter appRouter = GoRouter(
               : child,
         );
 
-        return MultiBlocProvider(
-          providers: <BlocProvider<dynamic>>[
-            BlocProvider<PosCubit>(
-              create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
-            ),
-            BlocProvider<PosMenuSyncCubit>(
-              create: (_) => serviceLocator<PosMenuSyncCubit>(),
-            ),
-            BlocProvider<OrdersCubit>(
-              create: (_) => serviceLocator<OrdersCubit>()..loadOrders(),
-            ),
-            BlocProvider<DiscountsCubit>(
-              create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
-            ),
-            BlocProvider<DailyReportCubit>(
-              create: (_) => serviceLocator<DailyReportCubit>()..loadReport(),
-            ),
-            BlocProvider<ProductCatalogCubit>(
-              create: (_) => serviceLocator<ProductCatalogCubit>(),
-            ),
-            BlocProvider<ProductLifecycleCubit>(
-              create: (_) => serviceLocator<ProductLifecycleCubit>(),
-            ),
-            BlocProvider<ModifierLibraryCubit>(
-              create: (_) => serviceLocator<ModifierLibraryCubit>(),
-            ),
-            BlocProvider<MenuListCubit>(
-              create: (_) => serviceLocator<MenuListCubit>(),
-            ),
-          ],
-          child: BlocListener<PosCubit, PosState>(
-            listenWhen: (PosState previous, PosState current) =>
-                previous.branchId != current.branchId &&
-                current.branches.isNotEmpty,
-            listener: (BuildContext context, PosState state) {
-              context.read<OrdersCubit>().applyPosBranchContext(state.branchId);
-            },
-            child: shell,
-          ),
+        // The shell keeps only session-wide POS transaction state alive. Every
+        // mutable administrative feature is provided by its route below, so an
+        // unvisited module cannot issue a background request.
+        return BlocProvider<PosCubit>(
+          create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
+          child: shell,
         );
       },
       routes: <RouteBase>[
@@ -510,17 +477,33 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.menuManagementProducts,
           name: AppRouteNames.menuManagementProducts,
-          builder: (context, state) => const ProductCatalogScreen(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<ProductCatalogCubit>(
+                create: (_) => serviceLocator<ProductCatalogCubit>(),
+              ),
+              BlocProvider<ProductLifecycleCubit>(
+                create: (_) => serviceLocator<ProductLifecycleCubit>(),
+              ),
+            ],
+            child: const ProductCatalogScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.menuManagementModifiers,
           name: AppRouteNames.menuManagementModifiers,
-          builder: (context, state) => const ModifierLibraryScreen(),
+          builder: (context, state) => BlocProvider<ModifierLibraryCubit>(
+            create: (_) => serviceLocator<ModifierLibraryCubit>(),
+            child: const ModifierLibraryScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.menuManagementMenus,
           name: AppRouteNames.menuManagementMenus,
-          builder: (context, state) => const MenuListScreen(),
+          builder: (context, state) => BlocProvider<MenuListCubit>(
+            create: (_) => serviceLocator<MenuListCubit>(),
+            child: const MenuListScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.menuManagementAssignments,
@@ -783,8 +766,15 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['productId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<ProductDetailCubit>(
-              create: (_) => serviceLocator<ProductDetailCubit>(),
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<ProductDetailCubit>(
+                  create: (_) => serviceLocator<ProductDetailCubit>(),
+                ),
+                BlocProvider<ProductLifecycleCubit>(
+                  create: (_) => serviceLocator<ProductLifecycleCubit>(),
+                ),
+              ],
               child: ProductDetailScreen(
                 productId: id,
                 tab: ProductWorkspaceTab.fromQuery(
@@ -800,34 +790,83 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
-          builder: (context, state) => const DailyOperationalReportScreen(),
+          builder: (context, state) => BlocProvider<DailyReportCubit>(
+            create: (_) => serviceLocator<DailyReportCubit>()
+              ..loadReport(branchId: context.read<PosCubit>().state.branchId),
+            child: _BranchFollowingReport(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.discounts,
           name: AppRouteNames.discounts,
-          builder: (context, state) => const DiscountsListScreen(),
+          builder: (context, state) => BlocProvider<DiscountsCubit>(
+            create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
+            child: const DiscountsListScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.pos,
           name: AppRouteNames.pos,
-          builder: (context, state) => const PosScreen(),
+          builder: (context, state) => BlocProvider<PosMenuSyncCubit>(
+            create: (_) => serviceLocator<PosMenuSyncCubit>(),
+            child: const PosScreen(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.orders,
           name: AppRouteNames.orders,
-          builder: (context, state) => const OrdersScreen(),
+          builder: (context, state) => BlocProvider<OrdersCubit>(
+            create: (_) => serviceLocator<OrdersCubit>()
+              ..loadOrders(branchId: context.read<PosCubit>().state.branchId),
+            child: const _BranchFollowingOrders(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.discountCreate,
           name: AppRouteNames.discountCreate,
-          builder: (context, state) => CreateDiscountPolicyScreen(
-            initialDiscount: state.extra as DiscountListItem?,
+          builder: (context, state) => BlocProvider<DiscountsCubit>(
+            create: (_) => serviceLocator<DiscountsCubit>()..loadDiscounts(),
+            child: CreateDiscountPolicyScreen(
+              initialDiscount: state.extra as DiscountListItem?,
+            ),
           ),
         ),
       ],
     ),
   ],
 );
+
+/// Orders exist only while their route is visible, but they must immediately
+/// follow the session POS branch if the cashier changes it from the shell.
+class _BranchFollowingOrders extends StatelessWidget {
+  const _BranchFollowingOrders();
+
+  @override
+  Widget build(BuildContext context) => BlocListener<PosCubit, PosState>(
+    listenWhen: (PosState previous, PosState current) =>
+        previous.branchId != current.branchId,
+    listener: (BuildContext context, PosState state) {
+      context.read<OrdersCubit>().applyBranchContext(state.branchId);
+    },
+    child: const OrdersScreen(),
+  );
+}
+
+/// Reports have no independent branch selector. Their route-owned data always
+/// reloads from the same POS branch context used by the rest of the shell.
+class _BranchFollowingReport extends StatelessWidget {
+  const _BranchFollowingReport();
+
+  @override
+  Widget build(BuildContext context) => BlocListener<PosCubit, PosState>(
+    listenWhen: (PosState previous, PosState current) =>
+        previous.branchId != current.branchId,
+    listener: (BuildContext context, PosState state) {
+      context.read<DailyReportCubit>().loadReport(branchId: state.branchId);
+    },
+    child: const DailyOperationalReportScreen(),
+  );
+}
 
 Widget? _rightPanelFor(GoRouterState state) {
   return switch (state.matchedLocation) {
@@ -863,7 +902,9 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>
-      (BuildContext context) => context.read<DailyReportCubit>().loadReport(),
+      (BuildContext context) => context.read<DailyReportCubit>().loadReport(
+        branchId: context.read<PosCubit>().state.branchId,
+      ),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
     AppRoutes.menuManagementProducts =>

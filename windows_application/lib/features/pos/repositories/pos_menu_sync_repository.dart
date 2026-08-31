@@ -130,12 +130,12 @@ class PosMenuSyncRepository {
       );
     }
     if (error is ApiException) {
-      if (error.statusCode == 409) {
+      if (error.type == ApiErrorType.conflict) {
         return const PosMenuSyncFailure(
           kind: PosMenuSyncFailureKind.unsupportedSourceSchema,
         );
       }
-      if (error.statusCode == 422) {
+      if (error.type == ApiErrorType.validation) {
         return const PosMenuSyncFailure(
           kind: PosMenuSyncFailureKind.invalidBranch,
         );

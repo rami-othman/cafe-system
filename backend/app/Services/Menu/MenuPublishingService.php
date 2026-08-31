@@ -19,46 +19,74 @@ class MenuPublishingService
 
     public function publish(int $tenantId, array $input): array
     {
-        $branch = $this->validation->branch($tenantId, $input['branchId']);
         $automatic = ! array_key_exists('menuIds', $input);
-        $menuIds = $this->menuIds($tenantId, $branch->id, $input['channel'], $input['menuIds'] ?? null);
         $publication = MenuPublication::query()->create(['tenant_id' => $tenantId, 'status' => MenuPublicationStatus::Pending]);
-        $this->audit($tenantId, $publication, MenuAuditAction::PublicationStarted, ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds]);
-        $result = $this->validation->validateCollection($tenantId, $branch, $input['channel'], $automatic ? null : $menuIds, null)->toArray();
-        if ($result['errorCount'] > 0) {
-            $publication->update(['status' => MenuPublicationStatus::Failed, 'validation_result' => $this->boundedValidation($result), 'failure_message' => 'Menu validation failed.']);
-            $this->audit($tenantId, $publication, MenuAuditAction::PublicationFailed, ['branchId' => $branch->id, 'channel' => $input['channel'], 'validation' => $this->counts($result)]);
-            throw ValidationException::withMessages(['publish' => 'Menu validation failed.']);
-        }
+        $lockKey = "menu-publish:{$tenantId}:{$input['branchId']}:{$input['channel']}";
 
         try {
-            return DB::transaction(function () use ($tenantId, $branch, $input, $menuIds, $publication, $result): array {
-                DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ["menu-publish:{$tenantId}:{$branch->id}:{$input['channel']}"]);
-                $current = PublishedMenuVersion::query()->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('channel', $input['channel'])->where('status', PublishedMenuVersionStatus::Current)->lockForUpdate()->first();
-                $snapshot = $this->snapshots->build($tenantId, $branch, $input['channel'], $menuIds);
-                $checksum = $this->serializer->checksum($snapshot);
-                if ($current && hash_equals($current->checksum, $checksum)) {
-                    $publication->update(['status' => MenuPublicationStatus::Published, 'validation_result' => $this->boundedValidation($result), 'change_summary' => ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds, 'noChanges' => true], 'published_at' => now()]);
-                    $this->audit($tenantId, $publication, MenuAuditAction::PublicationNoChanges, ['branchId' => $branch->id, 'channel' => $input['channel'], 'versionNumber' => $current->version_number, 'checksum' => $checksum, 'noChanges' => true]);
+            // This must be a session lock, not an xact lock: a blocked
+            // pg_advisory_xact_lock establishes its transaction snapshot
+            // before it wakes. Acquiring first means the transaction below
+            // begins only after the preceding publisher has committed.
+            DB::select('SELECT pg_advisory_lock(hashtext(?))', [$lockKey]);
+            try {
+                $outcome = DB::transaction(function ($connection) use ($tenantId, $input, $automatic, $publication): array {
+                    // PostgreSQL establishes a REPEATABLE READ snapshot on the
+                    // first statement. Set it before resolving the scope so
+                    // validation and the subsequently-built payload observe the
+                    // exact same authoritative database state. PostgreSQL forbids
+                    // changing isolation inside a savepoint, so production refuses
+                    // a caller-owned transaction rather than silently weakening
+                    // the invariant. Laravel's transaction-wrapped feature tests
+                    // are the only intentional exception.
+                    if ($connection->transactionLevel() === 1) {
+                        $connection->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+                    } elseif (! app()->environment('testing')) {
+                        throw new \LogicException('Menu publishing must begin its own transaction.');
+                    }
+                    $branch = $this->validation->branch($tenantId, $input['branchId']);
+                    $menuIds = $this->menuIds($tenantId, $branch->id, $input['channel'], $automatic ? null : $input['menuIds']);
+                    $this->audit($tenantId, $publication, MenuAuditAction::PublicationStarted, ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds]);
+                    $result = $this->validation->validateCollection($tenantId, $branch, $input['channel'], $automatic ? null : $menuIds, null)->toArray();
+                    if ($result['errorCount'] > 0) {
+                        $publication->update(['status' => MenuPublicationStatus::Failed, 'validation_result' => $this->boundedValidation($result), 'failure_message' => 'Menu validation failed.']);
+                        $this->audit($tenantId, $publication, MenuAuditAction::PublicationFailed, ['branchId' => $branch->id, 'channel' => $input['channel'], 'validation' => $this->counts($result)]);
 
-                    return $this->response(false, true, $publication, $current, $result);
-                }
-                $next = ((int) PublishedMenuVersion::query()->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('channel', $input['channel'])->max('version_number')) + 1;
-                if ($current) {
-                    $current->update(['status' => PublishedMenuVersionStatus::Superseded]);
-                    $this->audit($tenantId, $publication, MenuAuditAction::VersionSuperseded, ['branchId' => $branch->id, 'channel' => $input['channel'], 'versionNumber' => $current->version_number]);
-                }
-                $version = PublishedMenuVersion::query()->create(['tenant_id' => $tenantId, 'menu_publication_id' => $publication->id, 'branch_id' => $branch->id, 'channel' => $input['channel'], 'version_number' => $next, 'payload_json' => $snapshot, 'checksum' => $checksum, 'status' => PublishedMenuVersionStatus::Current, 'published_at' => now()]);
-                $publication->update(['status' => MenuPublicationStatus::Published, 'validation_result' => $this->boundedValidation($result), 'change_summary' => ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds, 'versionNumber' => $next, 'checksum' => $checksum, 'noChanges' => false], 'published_at' => now()]);
-                $this->audit($tenantId, $publication, MenuAuditAction::Published, ['branchId' => $branch->id, 'channel' => $input['channel'], 'versionNumber' => $next, 'checksum' => $checksum, 'noChanges' => false]);
+                        return ['validationFailure' => true];
+                    }
+                    $current = PublishedMenuVersion::query()->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('channel', $input['channel'])->where('status', PublishedMenuVersionStatus::Current)->lockForUpdate()->first();
+                    $snapshot = $this->snapshots->build($tenantId, $branch, $input['channel'], $menuIds);
+                    $checksum = $this->serializer->checksum($snapshot);
+                    if ($current && hash_equals($current->checksum, $checksum)) {
+                        $publication->update(['status' => MenuPublicationStatus::Published, 'validation_result' => $this->boundedValidation($result), 'change_summary' => ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds, 'noChanges' => true], 'published_at' => now()]);
+                        $this->audit($tenantId, $publication, MenuAuditAction::PublicationNoChanges, ['branchId' => $branch->id, 'channel' => $input['channel'], 'versionNumber' => $current->version_number, 'checksum' => $checksum, 'noChanges' => true]);
 
-                return $this->response(true, false, $publication, $version, $result);
-            });
+                        return ['response' => $this->response(false, true, $publication, $current, $result)];
+                    }
+                    $next = ((int) PublishedMenuVersion::query()->where('tenant_id', $tenantId)->where('branch_id', $branch->id)->where('channel', $input['channel'])->max('version_number')) + 1;
+                    if ($current) {
+                        $current->update(['status' => PublishedMenuVersionStatus::Superseded]);
+                        $this->audit($tenantId, $publication, MenuAuditAction::VersionSuperseded, ['branchId' => $branch->id, 'channel' => $input['channel'], 'versionNumber' => $current->version_number]);
+                    }
+                    $version = PublishedMenuVersion::query()->create(['tenant_id' => $tenantId, 'menu_publication_id' => $publication->id, 'branch_id' => $branch->id, 'channel' => $input['channel'], 'version_number' => $next, 'payload_json' => $snapshot, 'checksum' => $checksum, 'status' => PublishedMenuVersionStatus::Current, 'published_at' => now()]);
+                    $publication->update(['status' => MenuPublicationStatus::Published, 'validation_result' => $this->boundedValidation($result), 'change_summary' => ['branchId' => $branch->id, 'channel' => $input['channel'], 'menuIds' => $menuIds, 'versionNumber' => $next, 'checksum' => $checksum, 'noChanges' => false], 'published_at' => now()]);
+                    $this->audit($tenantId, $publication, MenuAuditAction::Published, ['branchId' => $branch->id, 'channel' => $input['channel'], 'versionNumber' => $next, 'checksum' => $checksum, 'noChanges' => false]);
+
+                    return ['response' => $this->response(true, false, $publication, $version, $result)];
+                });
+            } finally {
+                DB::select('SELECT pg_advisory_unlock(hashtext(?))', [$lockKey]);
+            }
+            if ($outcome['validationFailure'] ?? false) {
+                throw ValidationException::withMessages(['publish' => 'Menu validation failed.']);
+            }
+
+            return $outcome['response'];
         } catch (\Throwable $exception) {
             $publication->refresh();
             if ($publication->status === MenuPublicationStatus::Pending) {
                 $publication->update(['status' => MenuPublicationStatus::Failed, 'failure_message' => 'Publishing could not be completed.']);
-                $this->audit($tenantId, $publication, MenuAuditAction::PublicationFailed, ['branchId' => $branch->id, 'channel' => $input['channel']]);
+                $this->audit($tenantId, $publication, MenuAuditAction::PublicationFailed, ['branchId' => $input['branchId'], 'channel' => $input['channel']]);
             }
             throw $exception;
         }

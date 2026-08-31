@@ -57,6 +57,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonError => 'Something went wrong. Please try again.';
 
   @override
+  String get errorConnectionUnavailable => 'Connection unavailable.';
+
+  @override
+  String get errorAuthenticationRequired => 'Authentication required.';
+
+  @override
+  String get errorPermissionDenied =>
+      'You do not have permission to perform this action.';
+
+  @override
+  String get errorConflict => 'This action conflicts with the current state.';
+
+  @override
+  String get errorServer => 'Something went wrong. Please try again.';
+
+  @override
   String get commonNoData => 'No data available.';
 
   @override

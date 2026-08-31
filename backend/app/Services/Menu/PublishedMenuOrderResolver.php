@@ -150,6 +150,7 @@ class PublishedMenuOrderResolver
 
         return [
             'productId' => $productId,
+            'categoryId' => isset($placement['categoryId']) ? (int) $placement['categoryId'] : null,
             'productName' => $this->name($placement['name'] ?? null),
             'placementId' => $placementId,
             'variantId' => $variantId,

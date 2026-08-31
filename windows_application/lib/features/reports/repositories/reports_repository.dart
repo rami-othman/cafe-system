@@ -11,7 +11,10 @@ class ReportsRepository {
 
   final DioApiClient? apiClient;
 
-  Future<DailyReportData> getDailyReport({DateTime? date}) async {
+  Future<DailyReportData> getDailyReport({
+    DateTime? date,
+    int? branchId,
+  }) async {
     if (apiClient == null) {
       return DailyReportData.mock();
     }
@@ -20,6 +23,7 @@ class ReportsRepository {
       'reports/daily',
       queryParameters: <String, dynamic>{
         if (date != null) 'date': DateFormat('yyyy-MM-dd').format(date),
+        'branchId': ?branchId,
       },
     );
     return _fromJson(Map<String, dynamic>.from(response as Map));

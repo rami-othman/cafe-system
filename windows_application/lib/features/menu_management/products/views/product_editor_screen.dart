@@ -14,7 +14,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/layouts/desktop_page_layout.dart';
-import '../../controllers/product_catalog_cubit.dart';
 import '../../models/catalog_models.dart';
 import '../../widgets/catalog_formatters.dart';
 import '../../widgets/menu_content_components.dart';
@@ -82,7 +81,6 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
             current.status == ProductEditorStatus.success,
         listener: (context, state) async {
           final ProductDetail product = state.savedProduct!;
-          await context.read<ProductCatalogCubit>().refresh();
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

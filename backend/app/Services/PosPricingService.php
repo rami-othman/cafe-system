@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 
 class PosPricingService
 {
+    public function __construct(private readonly DiscountEligibilityService $discounts) {}
+
     public function priceItem(int $tenantId, int $productId, int|float $quantity, array $modifiers = []): array
     {
         $product = DB::table('products')
@@ -41,21 +43,28 @@ class PosPricingService
         ];
     }
 
-    public function recalculateOrder(int $tenantId, int $orderId): object
+    public function recalculateOrder(int $tenantId, int $orderId, bool $rejectInvalidDiscount = false, ?string $paymentMethod = null): object
     {
+        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
+        abort_if(! $order, 404, 'Order not found.');
         $subtotal = (float) DB::table('order_items')
             ->where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
             ->whereNull('deleted_at')
             ->sum('total');
+        // Eligibility uses the current cart, even though the persisted order
+        // total is only written after the discount result is known.
+        $order->subtotal = $subtotal;
+        // Draft cart mutations recalculate a managed discount or remove it if
+        // current authoritative Order state no longer satisfies the policy.
+        if (in_array($order->status, ['draft', 'held'], true) && $order->payment_status === 'unpaid') {
+            $this->discounts->refreshAppliedDiscounts($tenantId, $order, $paymentMethod, $rejectInvalidDiscount);
+        }
 
         $discountTotal = (float) DB::table('order_discounts')
             ->where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
             ->sum('discount_amount');
-
-        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
-        abort_if(! $order, 404, 'Order not found.');
 
         $taxable = max(0, $subtotal - $discountTotal);
         $taxTotal = round($taxable * (float) $order->tax_rate, 2);
