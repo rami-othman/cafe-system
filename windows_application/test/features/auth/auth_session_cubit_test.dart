@@ -36,6 +36,27 @@ void main() {
     expect((await storage.read())?.accessToken, 'opaque-token');
   });
 
+  test('validation failures return safely to the login state', () async {
+    final _MemoryStorage storage = _MemoryStorage();
+    final AuthSessionCubit cubit = _cubit(
+      storage: storage,
+      repository: _FakeRepository(
+        loginError: const ApiException(
+          message: 'Provide exactly one of email or username.',
+          statusCode: 422,
+          type: ApiErrorType.validation,
+        ),
+      ),
+      now: () => now,
+    );
+
+    await cubit.login(identifier: 'cashier', password: 'password');
+
+    expect(cubit.state.status, AuthSessionStatus.unauthenticated);
+    expect(cubit.state.message, AuthMessage.loginFailed);
+    expect(await storage.read(), isNull);
+  });
+
   test(
     'must-change-password login is retained without creating another token',
     () async {
@@ -171,11 +192,14 @@ class _MemoryStorage implements AuthSessionStorage {
   Future<AuthSession?> read() async => session;
   @override
   Future<void> write(AuthSession next) async => session = next;
+  @override
+  Stream<void> get changes => const Stream<void>.empty();
 }
 
 class _FakeRepository implements AuthRepository {
-  _FakeRepository({this.loginSession, this.meError});
+  _FakeRepository({this.loginSession, this.loginError, this.meError});
   final AuthSession? loginSession;
+  final ApiException? loginError;
   final ApiException? meError;
   int changePasswordCalls = 0;
   @override
@@ -190,7 +214,11 @@ class _FakeRepository implements AuthRepository {
   Future<AuthSession> login({
     required String identifier,
     required String password,
-  }) async => loginSession ?? _session();
+  }) async {
+    if (loginError != null) throw loginError!;
+    return loginSession ?? _session();
+  }
+
   @override
   Future<void> logout() async {}
   @override

@@ -6,6 +6,7 @@ import '../../models/catalog_models.dart';
 import '../../repositories/menu_catalog_repository.dart';
 import '../../pricing/configured_price_validation.dart';
 import '../models/product_editor_draft.dart';
+import '../models/selected_product_image.dart';
 import 'product_editor_state.dart';
 
 class ProductEditorCubit extends Cubit<ProductEditorState> {
@@ -75,7 +76,7 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
     ),
   );
 
-  Future<void> uploadImage(String filePath) async {
+  Future<void> uploadImage(SelectedProductImage image) async {
     if (state.isUploadingImage || state.isReadOnly) return;
     emit(
       state.copyWith(
@@ -85,7 +86,7 @@ class ProductEditorCubit extends Cubit<ProductEditorState> {
       ),
     );
     try {
-      final String imageUrl = await repository.uploadProductImage(filePath);
+      final String imageUrl = await repository.uploadProductImage(image);
       emit(
         state.copyWith(
           draft: state.draft.copyWith(imageUrl: imageUrl),

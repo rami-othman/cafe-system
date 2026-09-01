@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: cafe-system-618-staging-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_SSLMODE
+        value: require
+      - key: TRUSTED_PROXIES
+        value: "*"
+      - key: RUN_MIGRATIONS
+        value: "false"
+      - key: PRODUCT_IMAGE_DISK
+        value: supabase-product-images
+      - key: SUPABASE_STORAGE_REGION
+        value: us-east-1
+      - key: SUPABASE_STORAGE_BUCKET
+        value: product-images
+      - key: SUPABASE_STORAGE_USE_PATH_STYLE
+        value: "true"
+      - key: APP_KEY
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_STORAGE_ENDPOINT
+        sync: false
+      - key: SUPABASE_STORAGE_ACCESS_KEY_ID
+        sync: false
+      - key: SUPABASE_STORAGE_SECRET_ACCESS_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_PUBLIC_URL
+        sync: false

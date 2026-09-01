@@ -25,13 +25,17 @@ class ApiAuthRepository implements AuthRepository {
   }) async {
     final String trimmedIdentifier = identifier.trim();
     final bool isEmail = trimmedIdentifier.contains('@');
+    final Map<String, dynamic> loginPayload = <String, dynamic>{
+      if (isEmail)
+        'email': trimmedIdentifier
+      else
+        'username': trimmedIdentifier,
+      'password': password,
+      'deviceName': 'Cafe System 618 Windows',
+    };
     final dynamic data = await _apiClient.post(
       'auth/login',
-      data: <String, dynamic>{
-        isEmail ? 'email' : 'username': trimmedIdentifier,
-        'password': password,
-        'deviceName': 'Cafe System 618 Windows',
-      },
+      data: loginPayload,
     );
     return AuthSession.fromApi(_asMap(data));
   }

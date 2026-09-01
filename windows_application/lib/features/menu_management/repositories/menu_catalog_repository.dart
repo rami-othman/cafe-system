@@ -2,13 +2,12 @@
 
 import 'package:dio/dio.dart';
 
-import 'dart:io';
-
 import '../../../core/network/dio_api_client.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/catalog_models.dart';
 import '../models/product_catalog_filter.dart';
 import '../products/models/product_editor_draft.dart';
+import '../products/models/selected_product_image.dart';
 import '../variants/models/variant_editor_draft.dart';
 import '../modifiers/models/modifier_editor_drafts.dart';
 import '../modifiers/models/modifier_models.dart';
@@ -114,7 +113,7 @@ abstract class MenuCatalogRepository {
     int productId,
     ProductEditorDraft draft,
   );
-  Future<String> uploadProductImage(String filePath) =>
+  Future<String> uploadProductImage(SelectedProductImage image) =>
       throw UnsupportedError('Product image uploads are not configured.');
   Future<ProductDetail> setProductActive(int productId, bool isActive) =>
       throw UnsupportedError('Product activation is not configured.');
@@ -1372,13 +1371,14 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   }
 
   @override
-  Future<String> uploadProductImage(String filePath) async {
+  Future<String> uploadProductImage(SelectedProductImage image) async {
     final dynamic response = await _apiClient.postMultipart(
       'admin/catalog/product-images',
       data: FormData.fromMap(<String, dynamic>{
-        'image': await MultipartFile.fromFile(
-          filePath,
-          filename: File(filePath).uri.pathSegments.last,
+        'image': MultipartFile.fromBytes(
+          image.bytes,
+          filename: image.filename,
+          contentType: DioMediaType.parse(image.mimeType),
         ),
       }),
     );

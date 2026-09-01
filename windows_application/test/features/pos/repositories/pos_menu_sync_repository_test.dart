@@ -12,6 +12,7 @@ import 'package:windows_application/features/pos/models/pos_menu_sync_result.dar
 import 'package:windows_application/features/pos/controllers/pos_menu_sync_cubit.dart';
 import 'package:windows_application/features/pos/controllers/pos_menu_sync_state.dart';
 import 'package:windows_application/features/pos/repositories/pos_menu_sync_cache.dart';
+import 'package:windows_application/features/pos/repositories/pos_menu_sync_cache_platform_io.dart';
 import 'package:windows_application/features/pos/repositories/pos_menu_sync_repository.dart';
 
 void main() {

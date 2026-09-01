@@ -1,5 +1,8 @@
 enum ApiErrorType {
   networkUnavailable,
+  connectionTimeout,
+  sendTimeout,
+  receiveTimeout,
   unauthenticated,
   forbidden,
   validation,

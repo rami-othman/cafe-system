@@ -5,6 +5,111 @@ Management reference is [Menu Management Architecture](../docs/MENU_MANAGEMENT_A
 and the current project baseline is
 [PROJECT_STATUS](../windows_application/PROJECT_STATUS.md).
 
+## Deployment Phase 1B — Supabase staging contract
+
+Local development remains unchanged: `backend/.env` points at local PostgreSQL
+and uses `PRODUCT_IMAGE_DISK=product-images-local`. For explicit Supabase
+staging verification, copy `.env.staging.example` to the Git-ignored
+`.env.staging`, populate it locally, and run Artisan with `--env=staging`.
+Never put a staging URL, password, S3 secret, or `APP_KEY` in Git.
+
+The only approved database target is the Supabase **Session Pooler** at
+`aws-0-eu-central-1.pooler.supabase.com:5432`, database `postgres`, user
+`postgres.uowuallmnboeqhsydzlk`, with `sslmode=require`. Do not use port 6543,
+the Supabase Data API, Supabase Auth, a custom PostgreSQL schema, or RLS for
+application tables. Verify the non-secret target identity before any command.
+
+```powershell
+# From backend/ after creating ignored .env.staging
+php artisan migrate:status --env=staging
+php artisan migrate --force --env=staging
+php artisan migrate:status --env=staging
+```
+
+Never run `migrate:fresh`, `db:wipe`, or `DatabaseSeeder` against staging.
+The explicit, small, idempotent initializer creates the Cafe System 618 staging
+tenant, Owner/Manager/Cashier (with temporary credentials from the ignored env
+file and `must_change_password=true`), Downtown branch, three products, and one
+current POS publication. It refuses any non-staging, non-PostgreSQL, or
+non-approved-Pooler target.
+
+```powershell
+php artisan staging:initialize --env=staging --confirm-staging
+```
+
+Product uploads stay multipart (`image`, with optional `productId`) and are
+handled by `ProductImageStorage`. Local uploads retain the legacy public API URL
+and local disk. Staging uses the public `product-images` Supabase Storage bucket
+with server-only S3 credentials and paths
+`tenants/{tenantId}/products/{uuid}.{extension}`. The public URL must be HTTPS.
+When `productId` is supplied, the service uploads first, updates the product in a
+database transaction, then best-effort removes only the old managed object; an
+archived product keeps its image. No Flutter client receives write credentials.
+
+Create the Storage bucket once in Supabase Dashboard: **Storage → New bucket →
+Name `product-images` → Public bucket enabled → Create bucket**. Then go to
+**Storage → Configuration → S3**, enable the S3 protocol and create a
+server-only access key. Copy its key ID/secret, region, and direct
+`https://<project-ref>.storage.supabase.co/storage/v1/s3` endpoint into ignored
+`.env.staging` (or later Render secrets). Do not use the browser anon key for
+server writes.
+
+## Deployment Phase 1A — local cloud-image readiness
+
+**Status: CLOSED LOCALLY.** The root Dockerfile has two targets: `development`
+continues to support `docker compose up` with the existing source and named
+`vendor` bind mounts, while `cloud` is a self-contained staging image. The
+cloud target copies the Laravel application and lockfile-resolved production
+Composer dependencies into the image; it never uses a host mount or host
+`vendor` directory.
+
+Build the cloud image from the repository root:
+
+```powershell
+docker build --target cloud -t cafe-system-618-backend:phase-1a .
+```
+
+At runtime its entrypoint requires a stable, externally supplied `APP_KEY`,
+clears and rebuilds only Laravel's configuration/view caches (without touching
+the configured application cache store), optionally runs only `php artisan migrate
+--force`, then runs `php artisan serve --host=0.0.0.0 --port=$PORT`. `PORT`
+defaults to `8000` for local smoke tests but Render supplies it dynamically.
+Set `RUN_MIGRATIONS=true` only for the current single-instance staging service.
+It must remain `false` for normal local containers and future multi-instance
+production, where migrations belong in a dedicated release/pre-deploy step.
+The entrypoint never runs `migrate:fresh` or `db:wipe`.
+
+The Render environment contract is: `APP_ENV=staging`, `APP_DEBUG=false`, a
+stable `APP_KEY`, `APP_URL`, `LOG_CHANNEL=stderr`, `PORT`, `DB_CONNECTION=pgsql`,
+either `DB_URL` or the individual PostgreSQL values, `DB_SSLMODE=require`,
+`TRUSTED_PROXIES=*`, `CORS_ALLOWED_ORIGINS`, and `RUN_MIGRATIONS`. Do not commit
+these values. The staging entrypoint refuses absent cloud DB configuration
+instead of falling back to SQLite. `APP_DEBUG=false` prevents stack traces in
+normal error responses.
+
+The cloud image defaults `CACHE_STORE=file`, `SESSION_DRIVER=file`, and
+`QUEUE_CONNECTION=sync` for its ephemeral, single-service staging runtime; they
+may be overridden only when the corresponding shared infrastructure exists.
+
+Render terminates HTTPS upstream. `TRUSTED_PROXIES=*` is appropriate only for
+the Render service because its container is reachable through the Render proxy;
+leave it unset locally. This allows forwarded HTTPS/host information to drive
+redirect and public-disk URL generation. `APP_URL` remains the source of truth
+for configured URLs.
+
+CORS is environment-driven through the comma-separated `CORS_ALLOWED_ORIGINS`.
+It supports `Authorization`, `Content-Type`, and `Accept` preflight requests
+without using a credentialed wildcard. If not supplied, local Super Admin
+development retains `SUPER_ADMIN_WEB_URL` / `http://localhost:3000` behavior.
+
+No queue worker or scheduler service is needed: the configured queue driver is
+`sync` and `routes/console.php` defines no scheduled work. Logs can be sent to
+stderr. `storage/` and `bootstrap/cache/` are writable framework scratch space,
+but Render's filesystem is ephemeral. Product-image uploads remain local-disk
+compatibility behavior and must not be manager-tested in cloud staging until
+Phase 1B moves them to Supabase Storage. This phase does not connect Supabase
+or deploy Render.
+
 Menu Management includes catalog/variants, reusable Modifiers, recipes and
 material adjustments, menus and schedules, validation/preview/publishing, immutable
 versions, Price Overrides, and operational availability. Catalog and configured

@@ -1,5 +1,9 @@
 # Cafe System 618 Windows Application
 
+The same Flutter project now targets Windows and Web. See
+[Deployment Phase 1C](docs/DEPLOYMENT_PHASE_1C.md) for the platform matrix,
+browser-session security limitation, IndexedDB POS cache, and local Web command.
+
 Flutter desktop client for Cafe System 618. The authoritative Menu Management
 status and contracts are in [PROJECT_STATUS.md](PROJECT_STATUS.md); the companion
 backend/domain record is [Menu Management Architecture](../docs/MENU_MANAGEMENT_ARCHITECTURE.md).

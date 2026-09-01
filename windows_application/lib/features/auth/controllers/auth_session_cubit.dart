@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -20,12 +22,21 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
     this._storage,
     this._apiClient,
     this._now,
-  ) : super(const AuthSessionState());
+  ) : super(const AuthSessionState()) {
+    _storageChanges = _storage.changes.listen((_) => unawaited(restore()));
+  }
 
   final AuthRepository _repository;
   final AuthSessionStorage _storage;
   final DioApiClient _apiClient;
   final DateTime Function() _now;
+  late final StreamSubscription<void> _storageChanges;
+
+  @override
+  Future<void> close() async {
+    await _storageChanges.cancel();
+    return super.close();
+  }
 
   Future<void> restore() async {
     emit(const AuthSessionState(status: AuthSessionStatus.restoring));

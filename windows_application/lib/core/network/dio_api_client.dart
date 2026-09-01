@@ -10,9 +10,12 @@ class DioApiClient {
           Dio(
             BaseOptions(
               baseUrl: _normalizedBaseUrl,
-              connectTimeout: const Duration(seconds: 15),
-              sendTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 15),
+              // A request that reaches Laravel may commit after the client
+              // times out. These bounds accommodate staging TLS/storage
+              // latency without authorizing automatic mutation retries.
+              connectTimeout: const Duration(seconds: 10),
+              sendTimeout: const Duration(seconds: 30),
+              receiveTimeout: const Duration(seconds: 45),
               headers: <String, Object?>{
                 Headers.acceptHeader: 'application/json',
                 Headers.contentTypeHeader: 'application/json',
@@ -177,6 +180,29 @@ class DioApiClient {
     final String? responseMessage = _messageFromBody(body);
     final String? responseCode = _codeFromBody(body);
 
+    if (error.type == DioExceptionType.connectionTimeout) {
+      return const ApiException(
+        message: 'Connection timed out before the server could be reached.',
+        type: ApiErrorType.connectionTimeout,
+      );
+    }
+
+    if (error.type == DioExceptionType.sendTimeout) {
+      return const ApiException(
+        message:
+            'Upload timed out before it completed. Do not retry unless you confirm the result.',
+        type: ApiErrorType.sendTimeout,
+      );
+    }
+
+    if (error.type == DioExceptionType.receiveTimeout) {
+      return const ApiException(
+        message:
+            'The server response timed out. The operation may have completed; check before retrying.',
+        type: ApiErrorType.receiveTimeout,
+      );
+    }
+
     if (_isBackendOffline(error)) {
       return ApiException(
         message: 'Connection unavailable.',
@@ -260,10 +286,7 @@ class DioApiClient {
           errorText.contains('failed host lookup');
     }
 
-    return error.type == DioExceptionType.connectionError ||
-        error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.sendTimeout ||
-        error.type == DioExceptionType.receiveTimeout;
+    return error.type == DioExceptionType.connectionError;
   }
 
   String? _messageFromBody(dynamic body) {

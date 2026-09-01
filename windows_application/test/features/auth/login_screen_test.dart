@@ -63,4 +63,6 @@ class _NoopStorage implements AuthSessionStorage {
   Future<AuthSession?> read() async => null;
   @override
   Future<void> write(AuthSession session) async {}
+  @override
+  Stream<void> get changes => const Stream<void>.empty();
 }

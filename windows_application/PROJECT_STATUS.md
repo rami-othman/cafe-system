@@ -12,6 +12,11 @@ suite is guarded to use `cafe_system_618_testing`.
 - Batch 12: **COMPLETE**
 - Auth Phase 2: **CLOSED**
 - Flutter Auth Phase 3: **IMPLEMENTED — verification in progress**
+- Phase 1B staging smoke: Flutter login sends exactly one trimmed identity key
+  (`email` or `username`), never `identifier`; request-contract coverage
+  protects session parsing and safe 422 handling.
+- Deployment Phase 1C: Flutter Web platform abstractions implemented; final
+  local browser/staging smoke remains environment-dependent.
 - Final Permission Catalog: **DEFERRED**
 
 Auth Phase 1 closure was manually verified on this exact worktree with

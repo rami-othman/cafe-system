@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +20,8 @@ import '../../pricing/configured_price_validation.dart';
 import '../controllers/product_editor_cubit.dart';
 import '../controllers/product_editor_state.dart';
 import '../models/product_editor_draft.dart';
+import '../models/selected_product_image.dart';
+import '../widgets/product_image_drop_target.dart';
 
 class ProductEditorScreen extends StatefulWidget {
   const ProductEditorScreen({super.key, this.productId});
@@ -32,7 +31,7 @@ class ProductEditorScreen extends StatefulWidget {
 }
 
 class _ProductEditorScreenState extends State<ProductEditorScreen> {
-  String? _localImagePath;
+  SelectedProductImage? _selectedImage;
   late VoidCallback _unregisterUnsavedNavigation;
   bool _registeredUnsavedNavigation = false;
 
@@ -211,13 +210,13 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
                               imageUrl: draft.imageUrl,
                               error: state.fieldErrors['imageUrl'],
                               uploadError: state.imageUploadError,
-                              localImagePath: _localImagePath,
+                              selectedImage: _selectedImage,
                               isUploading: state.isUploadingImage,
                               onPick: _pickImage,
                               onDrop: _uploadImage,
                               onRemove:
                                   draft.imageUrl.trim().isEmpty &&
-                                      _localImagePath == null
+                                      _selectedImage == null
                                   ? null
                                   : _removeImage,
                             ),
@@ -528,24 +527,33 @@ class _ProductEditorScreenState extends State<ProductEditorScreen> {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
-      withData: false,
+      withData: true,
     );
-    final String? path = result?.files.single.path;
-    if (path != null) await _uploadImage(path);
+    final PlatformFile? file = result?.files.single;
+    final bytes = file?.bytes;
+    if (file != null && bytes != null) {
+      await _uploadImage(
+        SelectedProductImage(
+          bytes: bytes,
+          filename: file.name,
+          mimeType: _mimeTypeFor(file.name),
+        ),
+      );
+    }
   }
 
-  Future<void> _uploadImage(String path) async {
+  Future<void> _uploadImage(SelectedProductImage image) async {
     if (!mounted) return;
-    setState(() => _localImagePath = path);
-    await context.read<ProductEditorCubit>().uploadImage(path);
+    setState(() => _selectedImage = image);
+    await context.read<ProductEditorCubit>().uploadImage(image);
     if (!mounted) return;
     if (context.read<ProductEditorCubit>().state.imageUploadError == null) {
-      setState(() => _localImagePath = null);
+      setState(() => _selectedImage = null);
     }
   }
 
   void _removeImage() {
-    setState(() => _localImagePath = null);
+    setState(() => _selectedImage = null);
     context.read<ProductEditorCubit>().updateDraft(
       context.read<ProductEditorCubit>().state.draft.copyWith(imageUrl: ''),
     );
@@ -709,18 +717,18 @@ class _ImageEditor extends StatelessWidget {
     required this.error,
     required this.onPick,
     required this.onDrop,
-    this.localImagePath,
+    this.selectedImage,
     this.uploadError,
     this.isUploading = false,
     this.onRemove,
   });
   final String imageUrl;
   final String? error;
-  final String? localImagePath;
+  final SelectedProductImage? selectedImage;
   final String? uploadError;
   final bool isUploading;
   final VoidCallback onPick;
-  final ValueChanged<String> onDrop;
+  final ValueChanged<SelectedProductImage> onDrop;
   final VoidCallback? onRemove;
   @override
   Widget build(BuildContext context) => _GridField(
@@ -732,10 +740,8 @@ class _ImageEditor extends StatelessWidget {
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: AppSpacing.sm),
-        DropTarget(
-          onDragDone: (detail) {
-            if (detail.files.isNotEmpty) onDrop(detail.files.first.path);
-          },
+        ProductImageDropTarget(
+          onDrop: onDrop,
           child: InkWell(
             onTap: isUploading ? null : onPick,
             borderRadius: BorderRadius.circular(12),
@@ -763,9 +769,9 @@ class _ImageEditor extends StatelessWidget {
                         Text(context.l10n.productEditorUploadingImage),
                       ],
                     )
-                  : localImagePath != null
-                  ? Image.file(
-                      File(localImagePath!),
+                  : selectedImage != null
+                  ? Image.memory(
+                      selectedImage!.bytes,
                       fit: BoxFit.contain,
                       errorBuilder: (_, _, _) => _ImagePlaceholder(
                         message: context.l10n.productEditorPreviewUnavailable,
@@ -815,6 +821,17 @@ class _ImageEditor extends StatelessWidget {
       ],
     ),
   );
+}
+
+String _mimeTypeFor(String filename) {
+  final String extension = filename.split('.').last.toLowerCase();
+  return switch (extension) {
+    'jpg' || 'jpeg' => 'image/jpeg',
+    'png' => 'image/png',
+    'webp' => 'image/webp',
+    'gif' => 'image/gif',
+    _ => 'application/octet-stream',
+  };
 }
 
 class _ImagePlaceholder extends StatelessWidget {

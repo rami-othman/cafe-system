@@ -74,7 +74,7 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<AuthSessionStorage>()) {
     serviceLocator.registerLazySingleton<AuthSessionStorage>(
       () => useBackend
-          ? SecureAuthSessionStorage()
+          ? createAuthSessionStorage()
           : MemoryAuthSessionStorage(_testAuthSession),
     );
   }
@@ -113,7 +113,7 @@ void setupServiceLocator({bool useBackend = true}) {
   }
   if (!serviceLocator.isRegistered<PosMenuSyncCache>()) {
     serviceLocator.registerLazySingleton<PosMenuSyncCache>(
-      FilePosMenuSyncCache.new,
+      createPosMenuSyncCache,
     );
   }
   if (!serviceLocator.isRegistered<PosMenuSyncRepository>()) {

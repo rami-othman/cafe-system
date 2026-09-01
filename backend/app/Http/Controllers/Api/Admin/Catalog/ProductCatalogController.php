@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Rules\StrictlyPositiveMoney;
 use App\Services\Catalog\CatalogProductService;
+use App\Services\Catalog\ProductImageStorage;
+use App\Services\Catalog\ProductImageStorageException;
 use App\Services\Catalog\ProductModifierAssignmentService;
 use App\Services\Catalog\ProductVariantService;
 use App\Support\TenantContext;
@@ -22,7 +24,7 @@ use Illuminate\Validation\Rule;
 
 class ProductCatalogController extends Controller
 {
-    public function __construct(private readonly CatalogProductService $products, private readonly ProductVariantService $variants, private readonly ProductModifierAssignmentService $assignments) {}
+    public function __construct(private readonly CatalogProductService $products, private readonly ProductVariantService $variants, private readonly ProductModifierAssignmentService $assignments, private readonly ProductImageStorage $images) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -76,13 +78,24 @@ class ProductCatalogController extends Controller
     {
         $request->validate([
             'image' => ['required', 'file', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:5120'],
+            'productId' => ['nullable', 'integer'],
         ]);
         $tenant = TenantContext::id($request);
-        $path = $request->file('image')->store("product-images/{$tenant}", 'public');
+        $product = $request->filled('productId') ? $this->findProduct($tenant, (int) $request->input('productId')) : null;
+
+        try {
+            $stored = $product
+                ? $this->images->replace($product, $request->file('image'))
+                : $this->images->store($request->file('image'), $tenant);
+        } catch (ProductImageStorageException $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Product image upload failed.'], 503);
+        }
 
         return response()->json([
             'data' => [
-                'url' => $request->getSchemeAndHttpHost().'/api/v1/product-images/'.$tenant.'/'.basename($path),
+                'url' => $stored->url,
             ],
         ], 201);
     }
@@ -92,8 +105,11 @@ class ProductCatalogController extends Controller
         if ($filename !== basename($filename) || ! preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
             abort(404);
         }
+        if (! $this->images->usesLocalDisk()) {
+            abort(404);
+        }
         $path = "product-images/{$tenant}/{$filename}";
-        $disk = Storage::disk('public');
+        $disk = Storage::disk('product-images-local');
         if (! $disk->exists($path)) {
             abort(404);
         }
