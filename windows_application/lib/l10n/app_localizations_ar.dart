@@ -4565,4 +4565,104 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get productDetailImageUrl => 'رابط الصورة';
+
+  @override
+  String get authLoginTitle => 'تسجيل الدخول إلى مساحة العمل';
+
+  @override
+  String get authLoginSubtitle => 'تسجيل دخول مركز العمليات';
+
+  @override
+  String get authEmailOrUsername => 'البريد الإلكتروني أو اسم المستخدم';
+
+  @override
+  String get authIdentifierRequired => 'أدخل بريدك الإلكتروني أو اسم المستخدم.';
+
+  @override
+  String get authPassword => 'كلمة المرور';
+
+  @override
+  String get authPasswordRequired => 'أدخل كلمة المرور.';
+
+  @override
+  String get authLogIn => 'تسجيل الدخول';
+
+  @override
+  String get authLoggingIn => 'جاري تسجيل الدخول…';
+
+  @override
+  String get authLoginHelp =>
+      'استخدم بريد العمل أو اسم مستخدم الموظف للمتابعة.';
+
+  @override
+  String get authLoginFailed =>
+      'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مجددًا.';
+
+  @override
+  String get authChangePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get authChangePasswordExplanation =>
+      'يتطلب تسجيل الدخول الأول أو إعادة التعيين من مدير تعيين كلمة مرور جديدة.';
+
+  @override
+  String get authCurrentPassword => 'كلمة المرور الحالية';
+
+  @override
+  String get authNewPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get authConfirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String authMinimumPassword(int count) {
+    return 'استخدم ما لا يقل عن $count محرفًا.';
+  }
+
+  @override
+  String get authManagerPasswordRule =>
+      'يحتاج المالكون والمديرون إلى 10 محارف على الأقل.';
+
+  @override
+  String get authEmployeePasswordRule =>
+      'يحتاج الموظفون إلى 8 محارف على الأقل.';
+
+  @override
+  String get authPasswordsDoNotMatch => 'كلمتا المرور غير متطابقتين.';
+
+  @override
+  String get authSavePassword => 'حفظ كلمة المرور';
+
+  @override
+  String get authSavingPassword => 'جاري حفظ كلمة المرور…';
+
+  @override
+  String get authPasswordChangeFailed =>
+      'تعذر تغيير كلمة المرور. تحقق من كلمة المرور الحالية وحاول مجددًا.';
+
+  @override
+  String get authRestoringSession => 'جاري استعادة الجلسة الآمنة…';
+
+  @override
+  String get authSessionExpired => 'انتهت جلستك. يرجى تسجيل الدخول مجددًا.';
+
+  @override
+  String get authOfflineSessionExpired =>
+      'انتهت جلستك بدون اتصال. اتصل بالإنترنت وسجل الدخول مجددًا.';
+
+  @override
+  String get authSettingsSubtitle => 'إعدادات الحساب والجلسة';
+
+  @override
+  String get authAccount => 'الحساب';
+
+  @override
+  String get authSignedInTenant => 'مسجل الدخول إلى';
+
+  @override
+  String get authLogout => 'تسجيل الخروج';
+
+  @override
+  String get authLogoutConfirmation =>
+      'هل أنت متأكد من رغبتك في تسجيل الخروج من هذا الجهاز؟';
 }

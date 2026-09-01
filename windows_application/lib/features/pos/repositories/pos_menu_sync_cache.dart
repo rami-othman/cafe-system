@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-import '../../../core/config/api_config.dart';
 import '../models/pos_menu_runtime_models.dart';
 
 class PosMenuCacheScope {
@@ -13,10 +12,15 @@ class PosMenuCacheScope {
     this.channel = 'pos',
   });
 
-  factory PosMenuCacheScope.forBranch(int branchId) => PosMenuCacheScope(
-    tenantIdentity: ApiConfig.defaultTenantId > 0
-        ? 'configured-${ApiConfig.defaultTenantId}'
-        : 'backend-default',
+  factory PosMenuCacheScope.forBranch({
+    required int? tenantId,
+    required int branchId,
+  }) => PosMenuCacheScope(
+    // An unavailable identity intentionally cannot collide with any real
+    // tenant. Production sync becomes tenant-scoped as soon as auth restores.
+    tenantIdentity: tenantId != null && tenantId > 0
+        ? 'tenant-$tenantId'
+        : 'unauthenticated',
     branchId: branchId,
   );
 

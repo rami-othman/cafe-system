@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../core/constants/app_sizes.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/responsive.dart';
 import '../shared/widgets/app_sidebar.dart';
+import '../features/auth/controllers/auth_session_cubit.dart';
 import '../shared/widgets/app_top_bar.dart';
 
 class AppShell extends StatelessWidget {
@@ -42,7 +44,16 @@ class AppShell extends StatelessWidget {
 
           return Row(
             children: <Widget>[
-              AppSidebar(activeLabel: activeLabel, isCollapsed: !isLarge),
+              AppSidebar(
+                activeLabel: activeLabel,
+                isCollapsed: !isLarge,
+                actorRole: context
+                    .read<AuthSessionCubit>()
+                    .state
+                    .session
+                    ?.user
+                    .role,
+              ),
               Expanded(
                 child: Column(
                   children: <Widget>[

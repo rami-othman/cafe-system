@@ -58,6 +58,7 @@ import '../features/menu_management/review/views/menu_review_screen.dart';
 import '../features/menu_management/versions/controllers/published_version_cubit.dart';
 import '../features/menu_management/widgets/menu_module_navigation.dart';
 import '../features/menu_management/widgets/menu_module_scaffold.dart';
+import '../features/auth/views/settings_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../shared/widgets/app_top_bar.dart';
@@ -103,7 +104,12 @@ final GoRouter appRouter = GoRouter(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
-          onRefresh: _refreshActionFor(state),
+          // The shell top bar is above route-owned Cubits. Only POS sync is
+          // shell-scoped; other screens expose refresh within their own route
+          // provider rather than reading a sibling from the top bar.
+          onRefresh: state.uri.path == AppRoutes.pos
+              ? _refreshActionFor(state)
+              : null,
           prioritizeContentWidth: isMenuManagement,
           child: isMenuManagement
               ? MenuModuleScaffold(
@@ -126,8 +132,15 @@ final GoRouter appRouter = GoRouter(
         // The shell keeps only session-wide POS transaction state alive. Every
         // mutable administrative feature is provided by its route below, so an
         // unvisited module cannot issue a background request.
-        return BlocProvider<PosCubit>(
-          create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
+        return MultiBlocProvider(
+          providers: <BlocProvider<dynamic>>[
+            BlocProvider<PosCubit>(
+              create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
+            ),
+            BlocProvider<PosMenuSyncCubit>(
+              create: (_) => serviceLocator<PosMenuSyncCubit>(),
+            ),
+          ],
           child: shell,
         );
       },
@@ -805,12 +818,14 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.settings,
+          name: AppRouteNames.settings,
+          builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.pos,
           name: AppRouteNames.pos,
-          builder: (context, state) => BlocProvider<PosMenuSyncCubit>(
-            create: (_) => serviceLocator<PosMenuSyncCubit>(),
-            child: const PosScreen(),
-          ),
+          builder: (context, state) => const PosScreen(),
         ),
         GoRoute(
           path: AppRoutes.orders,
@@ -879,7 +894,9 @@ Widget? _topBarFor(GoRouterState state) {
   if (!state.uri.path.startsWith(AppRoutes.menuManagement)) return null;
   return AppTopBar(
     showOperationalBranchTabs: false,
-    onRefresh: _refreshActionFor(state),
+    // Menu routes own their Cubits below the shell. Their views already have
+    // route-local refresh controls, so the shell-level button must not read a
+    // provider outside its BuildContext.
   );
 }
 
@@ -925,6 +942,7 @@ String _activeDestinationFor(GoRouterState state) {
     AppRoutes.discounts || AppRoutes.discountCreate => 'discounts',
     AppRoutes.orders => 'orders',
     AppRoutes.reports => 'reports',
+    AppRoutes.settings => 'settings',
     _ => 'pos',
   };
 }
@@ -935,6 +953,7 @@ abstract final class AppRoutes {
   static const String reports = '/reports';
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
+  static const String settings = '/settings';
   static const String menuManagement = '/menu-management';
   static const String menuManagementProducts = '/menu-management/products';
   static const String menuManagementModifiers = '/menu-management/modifiers';
@@ -1002,6 +1021,7 @@ abstract final class AppRouteNames {
   static const String reports = 'reports';
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
+  static const String settings = 'settings';
   static const String menuManagementProducts = 'menu-management-products';
   static const String menuManagementModifiers = 'menu-management-modifiers';
   static const String menuManagementMenus = 'menu-management-menus';

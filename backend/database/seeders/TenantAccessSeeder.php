@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Services\DefaultTenantRoleService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,7 @@ class TenantAccessSeeder extends Seeder
             'updated_at' => $now,
         ]);
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $roles = app(DefaultTenantRoleService::class)->ensureForTenant($tenantId);
 
         $branchIds = [];
         foreach ([
@@ -49,17 +51,26 @@ class TenantAccessSeeder extends Seeder
 
         $userIds = [];
         foreach ([
-            ['name' => 'Cafe Owner', 'email' => 'owner@cafe618.local', 'role' => 'owner'],
-            ['name' => 'Cashier User', 'email' => 'cashier@cafe618.local', 'role' => 'cashier'],
-            ['name' => 'Shift Manager', 'email' => 'manager@cafe618.local', 'role' => 'manager'],
+            ['name' => 'Cafe Owner', 'email' => 'owner@cafe618.local', 'username' => null, 'role' => 'owner', 'password' => 'owner-local-dev'],
+            ['name' => 'Cashier User', 'email' => 'cashier@cafe618.local', 'username' => 'cashier', 'role' => 'cashier', 'password' => 'cashier-dev'],
+            ['name' => 'Shift Manager', 'email' => 'manager@cafe618.local', 'username' => null, 'role' => 'manager', 'password' => 'manager-local-dev'],
         ] as $user) {
             DB::table('users')->updateOrInsert([
                 'tenant_id' => $tenantId,
                 'email' => $user['email'],
             ], [
                 'name' => $user['name'],
-                'password' => Hash::make('password'),
+                'username' => $user['username'],
+                'normalized_username' => $user['username'] ? mb_strtolower($user['username']) : null,
+                'password' => Hash::make($user['password']),
                 'role' => $user['role'],
+                'tenant_role_id' => $roles[match ($user['role']) {
+                    'owner' => DefaultTenantRoleService::OWNER,
+                    'manager' => DefaultTenantRoleService::MANAGER,
+                    default => DefaultTenantRoleService::EMPLOYEE,
+                }]->id,
+                'is_active' => true,
+                'must_change_password' => false,
                 'email_verified_at' => $now,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -71,7 +82,10 @@ class TenantAccessSeeder extends Seeder
         }
 
         $assignments = [];
-        foreach ($userIds as $userId) {
+        foreach ($userIds as $email => $userId) {
+            if ($email === 'owner@cafe618.local') {
+                continue;
+            }
             $assignments[] = [
                 'tenant_id' => $tenantId,
                 'user_id' => $userId,

@@ -76,14 +76,14 @@ class OperationalAvailabilityService
         return $this->clear(ProductVariantOperationalAvailability::class, $tenantId, 'product_variant_id', $variant->id, $data);
     }
 
-    public function list(int $tenantId, array $filters): LengthAwarePaginator
+    public function list(int $tenantId, array $filters, ?array $accessibleBranchIds = null): LengthAwarePaginator
     {
         $archived = (bool) ($filters['includeArchived'] ?? false);
         $products = DB::table('product_operational_availabilities as oa')->join('products as p', 'p.id', '=', 'oa.product_id')->join('branches as b', 'b.id', '=', 'oa.branch_id')
-            ->where('oa.tenant_id', $tenantId)->selectRaw("oa.id, 'product' as level, oa.product_id, p.name as product_name, null as product_variant_id, null as variant_name, oa.branch_id, b.name as branch_name, b.timezone as branch_timezone, oa.channel, oa.status, oa.remaining_quantity, oa.unavailable_until, oa.reason, oa.created_at, oa.updated_at")
+            ->where('oa.tenant_id', $tenantId)->when($accessibleBranchIds !== null, fn ($q) => $q->whereIn('oa.branch_id', $accessibleBranchIds))->selectRaw("oa.id, 'product' as level, oa.product_id, p.name as product_name, null as product_variant_id, null as variant_name, oa.branch_id, b.name as branch_name, b.timezone as branch_timezone, oa.channel, oa.status, oa.remaining_quantity, oa.unavailable_until, oa.reason, oa.created_at, oa.updated_at")
             ->when(! $archived, fn ($q) => $q->whereNull('p.deleted_at')->where('p.is_active', true)->whereNull('b.deleted_at')->where('b.is_active', true));
         $variants = DB::table('product_variant_operational_availabilities as oa')->join('product_variants as v', 'v.id', '=', 'oa.product_variant_id')->join('products as p', 'p.id', '=', 'v.product_id')->join('branches as b', 'b.id', '=', 'oa.branch_id')
-            ->where('oa.tenant_id', $tenantId)->selectRaw("oa.id, 'variant' as level, p.id as product_id, p.name as product_name, oa.product_variant_id, v.name as variant_name, oa.branch_id, b.name as branch_name, b.timezone as branch_timezone, oa.channel, oa.status, oa.remaining_quantity, oa.unavailable_until, oa.reason, oa.created_at, oa.updated_at")
+            ->where('oa.tenant_id', $tenantId)->when($accessibleBranchIds !== null, fn ($q) => $q->whereIn('oa.branch_id', $accessibleBranchIds))->selectRaw("oa.id, 'variant' as level, p.id as product_id, p.name as product_name, oa.product_variant_id, v.name as variant_name, oa.branch_id, b.name as branch_name, b.timezone as branch_timezone, oa.channel, oa.status, oa.remaining_quantity, oa.unavailable_until, oa.reason, oa.created_at, oa.updated_at")
             ->when(! $archived, fn ($q) => $q->whereNull('v.deleted_at')->where('v.is_active', true)->whereNull('p.deleted_at')->where('p.is_active', true)->whereNull('b.deleted_at')->where('b.is_active', true));
         $query = DB::query()->fromSub($products->unionAll($variants), 'operational_availabilities');
         foreach (['branchId' => 'branch_id', 'channel' => 'channel', 'status' => 'status'] as $input => $column) {
@@ -139,7 +139,9 @@ class OperationalAvailabilityService
     {
         $available = $data['status'] === OperationalAvailabilityStatus::Available->value;
 
-        return ['branch_id' => $data['branchId'], 'channel' => $data['channel'], 'status' => $data['status'], 'remaining_quantity' => $data['remainingQuantity'] ?? null,
+        $actor = request()->attributes->get('auth_user');
+
+        return ['branch_id' => $data['branchId'], 'channel' => $data['channel'], 'status' => $data['status'], 'remaining_quantity' => $data['remainingQuantity'] ?? null, 'updated_by' => $actor ? (int) $actor->id : null,
             'unavailable_until' => $available || empty($data['unavailableUntil']) ? null : CarbonImmutable::createFromFormat('Y-m-d\\TH:i:s', $data['unavailableUntil'], $branch->timezone ?: config('app.timezone'))->utc(), 'reason' => $available ? null : ($data['reason'] ?? null)];
     }
 

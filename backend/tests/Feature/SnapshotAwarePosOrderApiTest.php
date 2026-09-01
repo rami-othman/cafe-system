@@ -160,6 +160,6 @@ class SnapshotAwarePosOrderApiTest extends TestCase
 
     private function headers(array $scope): array
     {
-        return ['X-Tenant-Id' => (string) $scope['tenant']];
+        return ['Authorization' => 'Bearer '.$this->authenticateTenantUser($scope['tenant'])];
     }
 }

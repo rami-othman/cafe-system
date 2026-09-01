@@ -128,6 +128,6 @@ class PosMenuSyncApiTest extends TestCase
 
     private function headers(int $tenant): array
     {
-        return ['X-Tenant-Id' => (string) $tenant];
+        return ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant)];
     }
 }

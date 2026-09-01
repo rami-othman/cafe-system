@@ -7,13 +7,17 @@ use App\Http\Requests\Admin\Menu\ComparePublishedMenuVersionsRequest;
 use App\Http\Requests\Admin\Menu\ListPublishedMenuVersionsRequest;
 use App\Http\Requests\Admin\Menu\RollbackPublishedMenuVersionRequest;
 use App\Http\Requests\Admin\Menu\ShowPublishedMenuVersionRequest;
+use App\Services\BranchAccessService;
 use App\Services\Menu\PublishedMenuVersionService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 
 class PublishedMenuVersionController extends Controller
 {
-    public function __construct(private readonly PublishedMenuVersionService $versions) {}
+    public function __construct(
+        private readonly PublishedMenuVersionService $versions,
+        private readonly BranchAccessService $branches,
+    ) {}
 
     public function index(ListPublishedMenuVersionsRequest $r): JsonResponse
     {
@@ -25,6 +29,7 @@ class PublishedMenuVersionController extends Controller
     public function show(ShowPublishedMenuVersionRequest $r, int $version): JsonResponse
     {
         $v = $this->versions->version(TenantContext::id($r), $version);
+        $this->branches->authorizeRequestBranch($r, (int) $v->branch_id);
         $d = $this->meta($v) + ['branchId' => $v->branch_id, 'channel' => $this->value($v->channel), 'publication' => ['id' => $v->menu_publication_id, 'status' => $this->value($v->menuPublication?->status)], 'snapshotSummary' => $this->summary($v->payload_json)];
         if ($r->validated('includePayload')) {
             $d['payload'] = $v->payload_json;
@@ -35,11 +40,15 @@ class PublishedMenuVersionController extends Controller
 
     public function compare(ComparePublishedMenuVersionsRequest $r, int $version): JsonResponse
     {
+        $this->branches->authorizeRequestBranch($r, (int) $this->versions->version(TenantContext::id($r), $version)->branch_id);
+
         return response()->json(['data' => $this->versions->compare(TenantContext::id($r), $version, $r->validated('againstVersionId'))]);
     }
 
     public function rollback(RollbackPublishedMenuVersionRequest $r, int $version): JsonResponse
     {
+        $this->branches->authorizeRequestBranch($r, (int) $this->versions->version(TenantContext::id($r), $version)->branch_id);
+
         return response()->json(['data' => $this->versions->rollback(TenantContext::id($r), $version, $r->validated())]);
     }
 

@@ -4,6 +4,8 @@ use App\Models\User;
 
 return [
 
+    'tenant_token_ttl_days' => (int) env('TENANT_TOKEN_TTL_DAYS', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults

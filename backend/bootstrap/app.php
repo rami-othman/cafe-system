@@ -3,7 +3,11 @@
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
+use App\Http\Middleware\CanManageEmployees;
+use App\Http\Middleware\CanManageMenuManagement;
+use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsurePlatformPermission;
+use App\Http\Middleware\RequireChangedPassword;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.token' => AuthenticateApiToken::class,
             'platform.admin' => AuthenticatePlatformAdmin::class,
             'platform.permission' => EnsurePlatformPermission::class,
+            'password.changed' => RequireChangedPassword::class,
+            'employees.manage' => CanManageEmployees::class,
+            'menu.management' => CanManageMenuManagement::class,
+            'branch.access' => EnsureBranchAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -36,6 +44,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $exception->getMessage(),
                     'code' => $exception->domainCode,
                 ], 422);
+            }
+        });
+        $exceptions->render(function (DomainException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => $exception->getMessage(), 'code' => 'DOMAIN_RULE_VIOLATION'], 422);
             }
         });
     })->create();

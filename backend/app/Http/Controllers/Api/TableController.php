@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ class TableController extends Controller
 
         $query = DB::table('cafe_tables')
             ->where('tenant_id', $tenantId)
+            ->whereIn('branch_id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))
             ->whereNull('deleted_at');
 
         if ($request->filled('branchId')) {

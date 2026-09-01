@@ -35,8 +35,26 @@ import '../../features/menu_management/assignments/controllers/menu_assignments_
 import '../../features/menu_management/review/controllers/menu_review_cubit.dart';
 import '../../features/menu_management/versions/controllers/published_version_cubit.dart';
 import '../../features/menu_management/catalog_setup/controllers/catalog_setup_cubit.dart';
+import '../../features/auth/controllers/auth_session_cubit.dart';
+import '../../features/auth/repositories/auth_repository.dart';
+import '../../features/auth/repositories/auth_session_storage.dart';
+import '../../features/auth/models/auth_session.dart';
 
 final GetIt serviceLocator = GetIt.instance;
+
+final AuthSession _testAuthSession = AuthSession(
+  accessToken: 'test-session-token',
+  user: const AuthUser(
+    id: 1,
+    name: 'Test Operator',
+    role: 'manager',
+    email: 'test@example.local',
+  ),
+  tenant: const AuthTenant(id: 1, name: 'Test Cafe'),
+  mustChangePassword: false,
+  lastValidatedAt: DateTime.utc(2026, 1, 1),
+  offlineSessionMaxAgeSeconds: 43200,
+);
 
 void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<AppLocaleRepository>()) {
@@ -53,6 +71,32 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<DioApiClient>()) {
     serviceLocator.registerLazySingleton<DioApiClient>(DioApiClient.new);
   }
+  if (!serviceLocator.isRegistered<AuthSessionStorage>()) {
+    serviceLocator.registerLazySingleton<AuthSessionStorage>(
+      () => useBackend
+          ? SecureAuthSessionStorage()
+          : MemoryAuthSessionStorage(_testAuthSession),
+    );
+  }
+  if (!serviceLocator.isRegistered<AuthRepository>()) {
+    serviceLocator.registerLazySingleton<AuthRepository>(
+      () => useBackend
+          ? ApiAuthRepository(serviceLocator<DioApiClient>())
+          : OfflineAuthRepository(),
+    );
+  }
+  if (!serviceLocator.isRegistered<AuthSessionCubit>()) {
+    serviceLocator.registerLazySingleton<AuthSessionCubit>(
+      () => AuthSessionCubit(
+        repository: serviceLocator<AuthRepository>(),
+        storage: serviceLocator<AuthSessionStorage>(),
+        apiClient: serviceLocator<DioApiClient>(),
+      ),
+    );
+  }
+  serviceLocator<DioApiClient>().onAuthenticationFailure = (_) {
+    serviceLocator<AuthSessionCubit>().expire();
+  };
 
   if (!serviceLocator.isRegistered<PosRepository>()) {
     serviceLocator.registerLazySingleton<PosRepository>(

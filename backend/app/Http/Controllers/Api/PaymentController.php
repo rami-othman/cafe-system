@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Services\DiscountEligibilityService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
@@ -49,7 +50,8 @@ class PaymentController extends Controller
         $tenantId = TenantContext::id($request);
         $hash = $this->payloadHash($data);
 
-        $result = DB::transaction(function () use ($tenantId, $order, $data, $hash): array {
+        $actorId = (int) $request->attributes->get('auth_user')->id;
+        $result = DB::transaction(function () use ($tenantId, $order, $data, $hash, $actorId): array {
             $row = $this->lockedOrder($tenantId, $order);
             $existing = DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
@@ -79,7 +81,7 @@ class PaymentController extends Controller
             $now = now();
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $row->branch_id, 'order_id' => $row->id,
-                'shift_id' => $row->shift_id, 'cashier_id' => $row->cashier_id, 'method' => $data['method'],
+                'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $data['method'],
                 'amount' => $row->total, 'currency' => $currency, 'status' => 'completed',
                 'idempotency_key' => $data['idempotencyKey'], 'idempotency_hash' => $hash,
                 'reference_number' => $data['reference'] ?? null, 'notes' => $data['note'] ?? null,
@@ -100,6 +102,7 @@ class PaymentController extends Controller
     {
         $row = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->lockForUpdate()->first();
         abort_if(! $row, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $row->branch_id);
 
         return $row;
     }
@@ -108,6 +111,7 @@ class PaymentController extends Controller
     {
         $row = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->first();
         abort_if(! $row, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $row->branch_id);
 
         return $row;
     }

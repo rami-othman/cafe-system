@@ -19,6 +19,14 @@ class MenuCompositionAuditService
             'action' => $action,
             'before_data' => $before,
             'after_data' => $after,
+            'changed_by' => $this->actorId(),
         ]);
+    }
+
+    private function actorId(): ?int
+    {
+        $user = request()->attributes->get('auth_user');
+
+        return $user ? (int) $user->id : null;
     }
 }

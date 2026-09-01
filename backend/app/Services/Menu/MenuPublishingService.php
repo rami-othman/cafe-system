@@ -20,7 +20,7 @@ class MenuPublishingService
     public function publish(int $tenantId, array $input): array
     {
         $automatic = ! array_key_exists('menuIds', $input);
-        $publication = MenuPublication::query()->create(['tenant_id' => $tenantId, 'status' => MenuPublicationStatus::Pending]);
+        $publication = MenuPublication::query()->create(['tenant_id' => $tenantId, 'status' => MenuPublicationStatus::Pending, 'published_by' => $this->actorId()]);
         $lockKey = "menu-publish:{$tenantId}:{$input['branchId']}:{$input['channel']}";
 
         try {
@@ -136,11 +136,18 @@ class MenuPublishingService
 
     private function audit(int $tenantId, MenuPublication $publication, MenuAuditAction $action, array $after): void
     {
-        MenuAuditLog::query()->create(['tenant_id' => $tenantId, 'menu_publication_id' => $publication->id, 'entity_type' => MenuPublication::class, 'entity_id' => $publication->id, 'action' => $action, 'after_data' => $after]);
+        MenuAuditLog::query()->create(['tenant_id' => $tenantId, 'menu_publication_id' => $publication->id, 'entity_type' => MenuPublication::class, 'entity_id' => $publication->id, 'action' => $action, 'after_data' => $after, 'changed_by' => $this->actorId()]);
     }
 
     private function value(mixed $value): mixed
     {
         return $value instanceof \BackedEnum ? $value->value : $value;
+    }
+
+    private function actorId(): ?int
+    {
+        $user = request()->attributes->get('auth_user');
+
+        return $user ? (int) $user->id : null;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosNumberGenerator;
 use App\Support\TenantContext;
@@ -28,9 +29,11 @@ class RefundController extends Controller
         $tenantId = TenantContext::id($request);
         $hash = $this->payloadHash($data);
 
-        $refund = DB::transaction(function () use ($tenantId, $order, $data, $hash) {
+        $actorId = (int) $request->attributes->get('auth_user')->id;
+        $refund = DB::transaction(function () use ($tenantId, $order, $data, $hash, $actorId) {
             $orderRow = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->lockForUpdate()->first();
             abort_if(! $orderRow, 404, 'Order not found.');
+            app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $orderRow->branch_id);
 
             $existing = DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('order_id', $orderRow->id)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
@@ -75,7 +78,7 @@ class RefundController extends Controller
             ]);
             DB::table('activity_logs')->insert([
                 'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'action' => 'order.refunded',
-                'entity_type' => 'order', 'entity_id' => $orderRow->id,
+                'user_id' => $actorId, 'entity_type' => 'order', 'entity_id' => $orderRow->id,
                 'description' => "Refunded \${$amount} for {$data['reason']}.", 'created_at' => $now, 'updated_at' => $now,
             ]);
 

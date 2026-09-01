@@ -16,12 +16,13 @@ class PlatformAuthAndTenantTest extends TestCase
         $this->seed(SuperAdminSeeder::class);
         $this->postJson('/api/super-admin/v1/auth/login', ['email' => 'admin@cafe618.local', 'password' => 'change-me-local-only'])->assertOk();
         $planId = DB::table('plans')->where('code', 'starter')->value('id');
-        $response = $this->postJson('/api/super-admin/v1/tenants', ['name' => 'Acme Cafe', 'slug' => 'acme-cafe', 'email' => 'hello@acme.test', 'timezone' => 'UTC', 'currency' => 'SYP', 'planId' => $planId, 'trialDays' => 14, 'ownerName' => 'Acme Owner', 'ownerEmail' => 'owner@acme.test', 'branchName' => 'Central']);
+        $response = $this->postJson('/api/super-admin/v1/tenants', ['name' => 'Acme Cafe', 'slug' => 'acme-cafe', 'email' => 'hello@acme.test', 'timezone' => 'UTC', 'currency' => 'SYP', 'planId' => $planId, 'trialDays' => 14, 'ownerName' => 'Acme Owner', 'ownerEmail' => 'owner@acme.test', 'ownerPassword' => 'temporary-owner', 'ownerPassword_confirmation' => 'temporary-owner', 'branchName' => 'Central']);
         $response->assertCreated()->assertJsonPath('data.slug', 'acme-cafe');
         $tenantId = $response->json('data.id');
         $this->assertDatabaseHas('branches', ['tenant_id' => $tenantId, 'currency' => 'SYP']);
         $this->assertDatabaseHas('subscriptions', ['tenant_id' => $tenantId, 'status' => 'trialing']);
         $this->assertDatabaseHas('platform_audit_logs', ['action' => 'tenant.created', 'tenant_id' => $tenantId]);
+        $this->assertDatabaseHas('users', ['tenant_id' => $tenantId, 'email' => 'owner@acme.test', 'must_change_password' => true]);
     }
 
     public function test_tenant_user_cannot_access_platform_boundary(): void

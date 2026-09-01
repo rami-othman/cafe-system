@@ -2,8 +2,34 @@
 
 Cafe System 618 has a Laravel backend in `backend` and a Flutter Windows client
 in `windows_application`. Tenant isolation is backend-authoritative. The test
-suite is guarded to use `cafe_system_618_testing`; authentication remains
-intentionally deferred.
+suite is guarded to use `cafe_system_618_testing`.
+
+## Authentication status
+
+- Auth Phase 0: **CLOSED**
+- Auth Phase 1: **CLOSED**
+- Pre-Auth Hardening A-D: **CLOSED**
+- Batch 12: **COMPLETE**
+- Auth Phase 2: **CLOSED**
+- Flutter Auth Phase 3: **IMPLEMENTED — verification in progress**
+- Final Permission Catalog: **DEFERRED**
+
+Auth Phase 1 closure was manually verified on this exact worktree with
+`docker compose exec -T backend php artisan test`: **160 tests passed, 2,054
+assertions, 0 failures, in 67.15 seconds**. The suite includes the Auth Phase 1,
+Platform Super Admin, publication/payment/discount concurrency, POS runtime,
+snapshot-aware order, tenant isolation, and testing-database isolation coverage.
+
+Auth Phase 2 closure passed `migrate:fresh --seed` against
+`cafe_system_618_testing` and the full Laravel suite: **164 tests, 2,099
+assertions, 0 failures**. It delivers the backend-only Tenant Employee
+Management domain: separate `tenant_roles` identities (Owner/Manager/Employee),
+one authoritative Role per User, read-only role catalog, temporary-password
+employee creation, Manager-to-Manager creation, protected Owner lifecycle and
+credentials, Tenant-safe active Branch assignments, lifecycle/password token
+revocation, and the temporary Owner/Manager employee-administration boundary.
+The final Permission Catalog, custom role management, Flutter Auth, actor
+attribution, and full operational route authorization remain deferred.
 
 ## Current delivery state
 
@@ -121,9 +147,9 @@ Flutter 496 tests, `flutter analyze`, and the Windows build all completed.
 
 ## Pre-Auth handoff
 
-Auth has not started. Platform Super Admin authentication/permissions already
-exist as a separate security domain; upcoming tenant employee Auth/RBAC must not
-be conflated with it.
+Auth Phase 0 and Auth Phase 1 are closed. Platform Super Admin
+authentication/permissions remain a separate security domain. Auth Phase 2,
+Flutter Auth, and the final Permission Catalog remain future work.
 
 The next phase is Tenant Employee Authentication, Roles, Permissions, Branch
 Assignment, server-side authorization, actor identity/audit attribution, and

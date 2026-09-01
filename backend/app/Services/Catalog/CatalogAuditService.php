@@ -11,6 +11,7 @@ class CatalogAuditService
     public function log(int $tenantId, Model|string $entity, MenuAuditAction $action, ?array $before = null, ?array $after = null): void
     {
         $model = $entity instanceof Model ? $entity : null;
-        MenuAuditLog::query()->create(['tenant_id' => $tenantId, 'entity_type' => $model ? $model::class : $entity, 'entity_id' => $model?->getKey(), 'action' => $action, 'before_data' => $before, 'after_data' => $after]);
+        $user = request()->attributes->get('auth_user');
+        MenuAuditLog::query()->create(['tenant_id' => $tenantId, 'entity_type' => $model ? $model::class : $entity, 'entity_id' => $model?->getKey(), 'action' => $action, 'before_data' => $before, 'after_data' => $after, 'changed_by' => $user ? (int) $user->id : null]);
     }
 }

@@ -15,6 +15,11 @@ class TenantContext
             return $authenticatedTenantId;
         }
 
+        if ($request->attributes->get('tenant_context_protected')) {
+            abort(401, 'Authenticated tenant context is required.');
+        }
+
+        // Temporary legacy fallback for routes not yet moved to the Auth boundary.
         $tenantId = (int) $request->header('X-Tenant-Id', 0);
 
         if ($tenantId > 0) {

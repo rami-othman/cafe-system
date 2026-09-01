@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -21,7 +22,7 @@ class DailyReportController extends Controller
             'date' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
-        $branchId = $data['branchId'] ?? DB::table('branches')->where('tenant_id', $tenantId)->orderBy('id')->value('id');
+        $branchId = $data['branchId'] ?? DB::table('branches')->where('tenant_id', $tenantId)->whereIn('id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))->orderBy('id')->value('id');
         abort_unless($branchId, 404, 'No branch is available for this tenant.');
 
         $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->first();

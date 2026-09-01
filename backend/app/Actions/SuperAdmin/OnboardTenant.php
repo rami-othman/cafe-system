@@ -2,13 +2,15 @@
 
 namespace App\Actions\SuperAdmin;
 
+use App\Services\DefaultTenantRoleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OnboardTenant
 {
+    public function __construct(private readonly DefaultTenantRoleService $roles) {}
+
     public function handle(array $data, int $actorId): int
     {
         return DB::transaction(function () use ($data, $actorId): int {
@@ -22,9 +24,10 @@ class OnboardTenant
                 'email' => $data['email'], 'phone' => $data['phone'] ?? null, 'timezone' => $data['timezone'],
                 'currency' => $data['currency'], 'tax_rate' => '0.080000', 'logo_url' => $data['logoUrl'] ?? null, 'created_at' => $now, 'updated_at' => $now,
             ]);
+            $roles = $this->roles->ensureForTenant($tenantId);
             $ownerId = DB::table('users')->insertGetId([
-                'tenant_id' => $tenantId, 'name' => $data['ownerName'], 'email' => $data['ownerEmail'],
-                'password' => Hash::make(Str::random(32)), 'role' => 'owner', 'is_active' => true,
+                'tenant_id' => $tenantId, 'tenant_role_id' => $roles[DefaultTenantRoleService::OWNER]->id, 'name' => $data['ownerName'], 'email' => $data['ownerEmail'],
+                'password' => Hash::make($data['ownerPassword']), 'role' => 'owner', 'is_active' => true, 'must_change_password' => true,
                 'created_at' => $now, 'updated_at' => $now,
             ]);
             $branchId = DB::table('branches')->insertGetId([
@@ -32,7 +35,6 @@ class OnboardTenant
                 'phone' => $data['branchPhone'] ?? null, 'timezone' => $data['timezone'], 'currency' => $data['currency'],
                 'is_active' => true, 'created_at' => $now, 'updated_at' => $now,
             ]);
-            DB::table('user_branches')->insert(['tenant_id' => $tenantId, 'user_id' => $ownerId, 'branch_id' => $branchId, 'created_at' => $now, 'updated_at' => $now]);
             DB::table('warehouses')->insert(['tenant_id' => $tenantId, 'branch_id' => $branchId, 'name' => 'Main Warehouse', 'type' => 'main', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
             DB::table('tenant_settings')->insert(['tenant_id' => $tenantId, 'settings' => json_encode([]), 'created_at' => $now, 'updated_at' => $now]);
             $trialEnds = $now->copy()->addDays($data['trialDays']);

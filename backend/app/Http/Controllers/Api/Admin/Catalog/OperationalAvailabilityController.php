@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\Catalog\UpdateProductOperationalAvailabilityRequest;
 use App\Http\Requests\Admin\Catalog\UpdateVariantOperationalAvailabilityRequest;
 use App\Http\Resources\Catalog\OperationalAvailabilityPreviewResource;
 use App\Http\Resources\Catalog\OperationalAvailabilityResource;
+use App\Services\BranchAccessService;
 use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\OperationalAvailabilityService;
 use App\Support\TenantContext;
@@ -24,7 +25,7 @@ class OperationalAvailabilityController extends Controller
         $filters = $request->validated();
         $filters['includeArchived'] = $request->boolean('includeArchived');
 
-        return OperationalAvailabilityResource::collection($this->availability->list(TenantContext::id($request), $filters))->response();
+        return OperationalAvailabilityResource::collection($this->availability->list(TenantContext::id($request), $filters, app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user'))))->response();
     }
 
     public function updateProduct(UpdateProductOperationalAvailabilityRequest $request, int $product): JsonResponse

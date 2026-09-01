@@ -14,10 +14,12 @@ class AppSidebar extends StatelessWidget {
     super.key,
     required this.activeLabel,
     this.isCollapsed = false,
+    this.actorRole,
   });
 
   final String activeLabel;
   final bool isCollapsed;
+  final String? actorRole;
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
     _SidebarDestination('dashboard', Icons.dashboard_outlined),
@@ -36,6 +38,11 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Iterable<_SidebarDestination> destinations = _destinations.where(
+      (destination) =>
+          destination.id != 'menuManagement' ||
+          _canTemporarilyManageMenus(actorRole),
+    );
     return Container(
       width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,
       decoration: const BoxDecoration(
@@ -69,7 +76,7 @@ class AppSidebar extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     children: <Widget>[
                       for (final _SidebarDestination destination
-                          in _destinations)
+                          in destinations)
                         AppSidebarItem(
                           icon: destination.icon,
                           label: _labelFor(context, destination.id),
@@ -86,6 +93,8 @@ class AppSidebar extends StatelessWidget {
                           icon: Icons.settings_outlined,
                           label: _settingsLabel(context),
                           isCollapsed: isCollapsed,
+                          isActive: activeLabel == 'settings',
+                          onTap: () => context.guardedGo('/settings'),
                         ),
                     ],
                   ),
@@ -95,6 +104,8 @@ class AppSidebar extends StatelessWidget {
                     icon: Icons.settings_outlined,
                     label: _settingsLabel(context),
                     isCollapsed: isCollapsed,
+                    isActive: activeLabel == 'settings',
+                    onTap: () => context.guardedGo('/settings'),
                   ),
               ],
             );
@@ -104,6 +115,12 @@ class AppSidebar extends StatelessWidget {
     );
   }
 }
+
+/// Transitional visibility rule paired with the backend's
+/// TemporaryMenuManagementPolicy. This is intentionally role-based until the
+/// final Permission Catalog replaces it.
+bool _canTemporarilyManageMenus(String? role) =>
+    role == 'owner' || role == 'manager' || role == null;
 
 class _LogoBlock extends StatelessWidget {
   const _LogoBlock({required this.isCollapsed});

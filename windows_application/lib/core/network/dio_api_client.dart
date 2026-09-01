@@ -16,8 +16,6 @@ class DioApiClient {
               headers: <String, Object?>{
                 Headers.acceptHeader: 'application/json',
                 Headers.contentTypeHeader: 'application/json',
-                if (ApiConfig.defaultTenantId > 0)
-                  'X-Tenant-Id': ApiConfig.defaultTenantId,
               },
             ),
           ) {
@@ -30,11 +28,9 @@ class DioApiClient {
           } else {
             options.headers[Headers.contentTypeHeader] = 'application/json';
           }
-          if (ApiConfig.defaultTenantId > 0) {
-            options.headers['X-Tenant-Id'] = ApiConfig.defaultTenantId;
-          } else {
-            options.headers.remove('X-Tenant-Id');
-          }
+          // Tenant identity is derived from the bearer token. Never send the
+          // legacy X-Tenant-Id header on authenticated operational requests.
+          options.headers.remove('X-Tenant-Id');
           handler.next(options);
         },
       ),
@@ -42,6 +38,24 @@ class DioApiClient {
   }
 
   final Dio _dio;
+  int? _authenticatedTenantId;
+  void Function(ApiException error)? onAuthenticationFailure;
+
+  int? get authenticatedTenantId => _authenticatedTenantId;
+
+  /// The API uses opaque bearer tokens. The token is held in memory and is
+  /// supplied by the auth session owner after a secure-store restore or login.
+  void setAccessToken(String? token) {
+    if (token == null || token.isEmpty) {
+      _dio.options.headers.remove('Authorization');
+      return;
+    }
+    _dio.options.headers['Authorization'] = 'Bearer $token';
+  }
+
+  void setAuthenticatedTenantId(int? tenantId) {
+    _authenticatedTenantId = tenantId != null && tenantId > 0 ? tenantId : null;
+  }
 
   static String get _normalizedBaseUrl {
     return ApiConfig.baseUrl.endsWith('/')
@@ -135,7 +149,11 @@ class DioApiClient {
       final Response<dynamic> response = await request();
       return ApiResponseParser.unwrapData(response.data);
     } on DioException catch (error) {
-      throw _handleDioException(error);
+      final ApiException apiError = _handleDioException(error);
+      if (_isAuthenticatedRequest(error, apiError)) {
+        onAuthenticationFailure?.call(apiError);
+      }
+      throw apiError;
     }
   }
 
@@ -145,7 +163,11 @@ class DioApiClient {
     try {
       return (await request()).data;
     } on DioException catch (error) {
-      throw _handleDioException(error);
+      final ApiException apiError = _handleDioException(error);
+      if (_isAuthenticatedRequest(error, apiError)) {
+        onAuthenticationFailure?.call(apiError);
+      }
+      throw apiError;
     }
   }
 
@@ -223,6 +245,10 @@ class DioApiClient {
       type: ApiErrorType.unknown,
     );
   }
+
+  bool _isAuthenticatedRequest(DioException error, ApiException apiError) =>
+      apiError.type == ApiErrorType.unauthenticated &&
+      error.requestOptions.headers['Authorization'] != null;
 
   bool _isBackendOffline(DioException error) {
     if (error.type == DioExceptionType.unknown) {

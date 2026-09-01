@@ -4564,4 +4564,105 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productDetailImageUrl => 'Image URL';
+
+  @override
+  String get authLoginTitle => 'Log in to your workspace';
+
+  @override
+  String get authLoginSubtitle => 'Operational Hub Login';
+
+  @override
+  String get authEmailOrUsername => 'Email or Username';
+
+  @override
+  String get authIdentifierRequired => 'Enter your email or username.';
+
+  @override
+  String get authPassword => 'Password';
+
+  @override
+  String get authPasswordRequired => 'Enter your password.';
+
+  @override
+  String get authLogIn => 'Log In';
+
+  @override
+  String get authLoggingIn => 'Logging in…';
+
+  @override
+  String get authLoginHelp =>
+      'Use your work email or employee username to continue.';
+
+  @override
+  String get authLoginFailed =>
+      'We could not log you in. Check your details and try again.';
+
+  @override
+  String get authChangePassword => 'Change Password';
+
+  @override
+  String get authChangePasswordExplanation =>
+      'Your first login or an administrator reset requires you to set a new password.';
+
+  @override
+  String get authCurrentPassword => 'Current Password';
+
+  @override
+  String get authNewPassword => 'New Password';
+
+  @override
+  String get authConfirmNewPassword => 'Confirm New Password';
+
+  @override
+  String authMinimumPassword(int count) {
+    return 'Use at least $count characters.';
+  }
+
+  @override
+  String get authManagerPasswordRule =>
+      'Owners and managers need at least 10 characters.';
+
+  @override
+  String get authEmployeePasswordRule =>
+      'Employees need at least 8 characters.';
+
+  @override
+  String get authPasswordsDoNotMatch => 'The passwords do not match.';
+
+  @override
+  String get authSavePassword => 'Save Password';
+
+  @override
+  String get authSavingPassword => 'Saving password…';
+
+  @override
+  String get authPasswordChangeFailed =>
+      'We could not change your password. Please check the current password and try again.';
+
+  @override
+  String get authRestoringSession => 'Restoring your secure session…';
+
+  @override
+  String get authSessionExpired =>
+      'Your session has expired. Please log in again.';
+
+  @override
+  String get authOfflineSessionExpired =>
+      'Your offline session has expired. Connect to the internet and log in again.';
+
+  @override
+  String get authSettingsSubtitle => 'Account and session controls';
+
+  @override
+  String get authAccount => 'Account';
+
+  @override
+  String get authSignedInTenant => 'Signed in to';
+
+  @override
+  String get authLogout => 'Log Out';
+
+  @override
+  String get authLogoutConfirmation =>
+      'Are you sure you want to log out from this device?';
 }

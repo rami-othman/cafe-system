@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Services\Menu\PublishedMenuOrderResolver;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosNumberGenerator;
@@ -37,6 +38,7 @@ class PosOrderController extends Controller
 
         $query = DB::table('orders')
             ->where('tenant_id', $tenantId)
+            ->whereIn('branch_id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))
             ->whereNull('deleted_at');
 
         if ($request->filled('branchId')) {
@@ -89,7 +91,8 @@ class PosOrderController extends Controller
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
         try {
-            $order = DB::transaction(function () use ($tenantId, $data) {
+            $actorId = (int) $request->attributes->get('auth_user')->id;
+            $order = DB::transaction(function () use ($tenantId, $data, $actorId) {
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
                     : null;
@@ -101,6 +104,8 @@ class PosOrderController extends Controller
                     'shift_id' => $data['shiftId'] ?? null,
                     'table_id' => $data['tableId'] ?? null,
                     'customer_id' => $data['customerId'] ?? null,
+                    // Authenticated creator of this transaction context.
+                    'cashier_id' => $actorId,
                     'order_number' => $this->numbers->nextOrderNumber($tenantId, $data['branchId']),
                     'type' => $data['orderType'],
                     'status' => 'draft',
@@ -448,6 +453,7 @@ class PosOrderController extends Controller
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
         abort_if(! $order, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $order->branch_id);
 
         return $order;
     }
@@ -456,6 +462,7 @@ class PosOrderController extends Controller
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->lockForUpdate()->first();
         abort_if(! $order, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $order->branch_id);
 
         return $order;
     }

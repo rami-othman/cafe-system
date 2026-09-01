@@ -18,20 +18,20 @@ class PosMenuSyncRepository {
     required int branchId,
   }) async {
     final PosCachedMenu? cached = await cache.read(
-      PosMenuCacheScope.forBranch(branchId),
+      _scopeFor(branchId),
     );
     return cached?.withRuntime(null);
   }
 
   Future<DateTime?> cachedSyncedAt({required int branchId}) async {
     final PosCachedMenu? cached = await cache.read(
-      PosMenuCacheScope.forBranch(branchId),
+      _scopeFor(branchId),
     );
     return cached?.syncedAt;
   }
 
   Future<PosMenuSyncResult> sync({required int branchId}) {
-    final PosMenuCacheScope scope = PosMenuCacheScope.forBranch(branchId);
+    final PosMenuCacheScope scope = _scopeFor(branchId);
     return _inFlight.putIfAbsent(scope.fileName, () async {
       try {
         return await _syncScope(scope);
@@ -143,4 +143,9 @@ class PosMenuSyncRepository {
     }
     return const PosMenuSyncFailure(kind: PosMenuSyncFailureKind.network);
   }
+
+  PosMenuCacheScope _scopeFor(int branchId) => PosMenuCacheScope.forBranch(
+    tenantId: apiClient.authenticatedTenantId,
+    branchId: branchId,
+  );
 }

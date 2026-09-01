@@ -41,7 +41,7 @@ class PublishedMenuVersionService
     public function rollback(int $tenant, int $id, array $input): array
     {
         $target = $this->version($tenant, $id);
-        $p = MenuPublication::query()->create(['tenant_id' => $tenant, 'status' => MenuPublicationStatus::Pending, 'source_publication_id' => $target->menu_publication_id]);
+        $p = MenuPublication::query()->create(['tenant_id' => $tenant, 'status' => MenuPublicationStatus::Pending, 'source_publication_id' => $target->menu_publication_id, 'published_by' => $this->actorId()]);
         $this->audit($tenant, $p, MenuAuditAction::RollbackStarted, ['sourceVersionId' => $target->id]);
         try {
             return DB::transaction(function () use ($tenant, $target, $p, $input) {
@@ -81,11 +81,18 @@ class PublishedMenuVersionService
 
     private function audit(int $tenant, MenuPublication $p, MenuAuditAction $a, array $data): void
     {
-        MenuAuditLog::query()->create(['tenant_id' => $tenant, 'menu_publication_id' => $p->id, 'entity_type' => MenuPublication::class, 'entity_id' => $p->id, 'action' => $a, 'after_data' => $data]);
+        MenuAuditLog::query()->create(['tenant_id' => $tenant, 'menu_publication_id' => $p->id, 'entity_type' => MenuPublication::class, 'entity_id' => $p->id, 'action' => $a, 'after_data' => $data, 'changed_by' => $this->actorId()]);
     }
 
     private function value(mixed $v): mixed
     {
         return $v instanceof \BackedEnum ? $v->value : $v;
+    }
+
+    private function actorId(): ?int
+    {
+        $user = request()->attributes->get('auth_user');
+
+        return $user ? (int) $user->id : null;
     }
 }

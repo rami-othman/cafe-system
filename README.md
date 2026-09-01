@@ -10,7 +10,19 @@ Cafe System 618 contains a Laravel API in `backend/` and a Flutter Windows deskt
 - `GET /api/v1/menu/categories`, `GET /api/v1/menu/products`, and `GET /api/v1/menu/products/{product}` are deprecated compatibility Catalog APIs. Production POS does not call them.
 - Tax configuration is tenant-level (`tenants.tax_rate`); each order persists an immutable `orders.tax_rate` snapshot.
 
-Authentication for tenant API routes is intentionally deferred. `X-Tenant-Id` and the first-tenant development fallback remain in place, while tenant-scoped validation protects tenant-owned references.
+Auth Phase 1 supplies a separate tenant-user opaque Bearer-token foundation.
+Existing operational routes retain their temporary `X-Tenant-Id`/first-tenant
+fallback until the Flutter login cutover, while new `/api/v1/auth/*` protected
+routes always derive Tenant context from the authenticated token. See the
+backend README for the identity, lifecycle, offline-session, and branch-access
+contract. Platform Super Admin authentication and RBAC remain separate.
+
+Auth Phase 2 is closed: Tenant Employee Management adds per-tenant default
+Owner/Manager/Employee role identities, protected employee lifecycle and
+credential APIs, temporary passwords, must-change-password gating, transactional
+Branch assignments, and token revocation. Tenant roles are separate from
+Platform Super Admin RBAC; the final Permission Catalog, custom role management,
+Flutter Auth, and the full operational authorization cutover remain deferred.
 
 See [backend/README.md](backend/README.md), [windows_application/README.md](windows_application/README.md), and [Menu Management Architecture](docs/MENU_MANAGEMENT_ARCHITECTURE.md).
 

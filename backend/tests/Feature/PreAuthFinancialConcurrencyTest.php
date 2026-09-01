@@ -96,9 +96,9 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         ]]);
         $existingId = DB::table('payments')->where('order_id', $orderId)->value('id');
 
-        $this->postJson("/api/v1/orders/{$orderId}/pay", $payload)
+        $this->postJson("/api/v1/orders/{$orderId}/pay", $payload, $this->headers($tenantId))
             ->assertOk()->assertJsonPath('data.payment.id', $existingId);
-        $this->postJson("/api/v1/orders/{$orderId}/pay", [...$payload, 'method' => 'card'])
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [...$payload, 'method' => 'card'], $this->headers($tenantId))
             ->assertUnprocessable()->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
         $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
     }
@@ -135,7 +135,7 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         $this->assertSame(1, DB::table('payment_refunds')->where('order_id', $orderId)->count());
         $this->assertSame(70.0, (float) DB::table('payment_refunds')->where('order_id', $orderId)->sum('amount'));
 
-        $this->postJson("/api/v1/orders/{$orderId}/refunds", $payload['request'])
+        $this->postJson("/api/v1/orders/{$orderId}/refunds", $payload['request'], $this->headers($tenantId))
             ->assertCreated()->assertJsonPath('data.id', $refundIds->first());
         $this->assertSame(1, DB::table('payment_refunds')->where('order_id', $orderId)->count());
         $this->assertSame(30.0, 100 - (float) DB::table('payment_refunds')->where('order_id', $orderId)->sum('amount'));
@@ -271,6 +271,11 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         ]];
     }
 
+    private function headers(int $tenantId): array
+    {
+        return ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenantId)];
+    }
+
     /** @return list<array{ok: bool, result?: array, code?: string|null, message?: string}> */
     private function runConcurrently(string $mode, array $payloads): array
     {
@@ -281,6 +286,12 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         try {
             foreach ($payloads as $payload) {
                 $payload['barrier'] = $barrier;
+                // The opaque token is intentionally persisted before spawning.
+                // Every worker is a separate process and must pass through the
+                // same bearer middleware and branch policy as production.
+                if (isset($payload['tenantId'])) {
+                    $payload['accessToken'] = $this->authenticateTenantUser((int) $payload['tenantId']);
+                }
                 $pipes = [];
                 $process = proc_open([
                     PHP_BINARY,

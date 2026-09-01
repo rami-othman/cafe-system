@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -83,6 +84,7 @@ class ReceiptController extends Controller
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
         abort_if(! $order, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $order->branch_id);
 
         return $order;
     }

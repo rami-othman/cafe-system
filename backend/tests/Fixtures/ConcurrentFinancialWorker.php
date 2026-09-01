@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\RefundController;
 use App\Services\PosNumberGenerator;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -35,18 +34,8 @@ DB::select('select pg_advisory_unlock(?)', [$payload['barrier']]);
 
 try {
     $result = match ($mode) {
-        'payment' => app(PaymentController::class)->pay(
-            Request::create('/api/v1/orders/'.$payload['orderId'].'/pay', 'POST', $payload['request'], [], [], [
-                'HTTP_X_TENANT_ID' => (string) $payload['tenantId'],
-            ]),
-            $payload['orderId'],
-        ),
-        'refund' => app(RefundController::class)->store(
-            Request::create('/api/v1/orders/'.$payload['orderId'].'/refunds', 'POST', $payload['request'], [], [], [
-                'HTTP_X_TENANT_ID' => (string) $payload['tenantId'],
-            ]),
-            $payload['orderId'],
-        ),
+        'payment' => authenticatedResponse('/api/v1/orders/'.$payload['orderId'].'/pay', $payload),
+        'refund' => authenticatedResponse('/api/v1/orders/'.$payload['orderId'].'/refunds', $payload),
         'order-number' => DB::transaction(function () use ($payload): array {
             $number = app(PosNumberGenerator::class)->nextOrderNumber($payload['tenantId'], $payload['branchId']);
             $now = now();
@@ -69,7 +58,12 @@ try {
     };
 
     if ($result instanceof JsonResponse) {
-        $result = json_decode((string) $result->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $body = json_decode((string) $result->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        if ($result->getStatusCode() >= 400) {
+            echo json_encode(['ok' => false, 'code' => $body['code'] ?? null, 'message' => $body['message'] ?? 'Request failed.'], JSON_THROW_ON_ERROR);
+            exit(1);
+        }
+        $result = $body;
     }
 
     echo json_encode(['ok' => true, 'result' => $result], JSON_THROW_ON_ERROR);
@@ -81,4 +75,18 @@ try {
         'message' => $exception->getMessage(),
     ], JSON_THROW_ON_ERROR);
     exit(1);
+}
+
+function authenticatedResponse(string $path, array $payload): JsonResponse
+{
+    $request = Request::create($path, 'POST', $payload['request'], [], [], [
+        'HTTP_ACCEPT' => 'application/json',
+        'HTTP_AUTHORIZATION' => 'Bearer '.$payload['accessToken'],
+    ]);
+    $response = app(HttpKernel::class)->handle($request);
+    if (! $response instanceof JsonResponse) {
+        throw new RuntimeException('Concurrent worker received a non-JSON API response.');
+    }
+
+    return $response;
 }

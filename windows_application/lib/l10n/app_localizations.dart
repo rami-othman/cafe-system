@@ -8134,6 +8134,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image URL'**
   String get productDetailImageUrl;
+
+  /// No description provided for @authLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to your workspace'**
+  String get authLoginTitle;
+
+  /// No description provided for @authLoginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational Hub Login'**
+  String get authLoginSubtitle;
+
+  /// No description provided for @authEmailOrUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or Username'**
+  String get authEmailOrUsername;
+
+  /// No description provided for @authIdentifierRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email or username.'**
+  String get authIdentifierRequired;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPassword;
+
+  /// No description provided for @authPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password.'**
+  String get authPasswordRequired;
+
+  /// No description provided for @authLogIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Log In'**
+  String get authLogIn;
+
+  /// No description provided for @authLoggingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging in…'**
+  String get authLoggingIn;
+
+  /// No description provided for @authLoginHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your work email or employee username to continue.'**
+  String get authLoginHelp;
+
+  /// No description provided for @authLoginFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not log you in. Check your details and try again.'**
+  String get authLoginFailed;
+
+  /// No description provided for @authChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get authChangePassword;
+
+  /// No description provided for @authChangePasswordExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first login or an administrator reset requires you to set a new password.'**
+  String get authChangePasswordExplanation;
+
+  /// No description provided for @authCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Password'**
+  String get authCurrentPassword;
+
+  /// No description provided for @authNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get authNewPassword;
+
+  /// No description provided for @authConfirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get authConfirmNewPassword;
+
+  /// No description provided for @authMinimumPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least {count} characters.'**
+  String authMinimumPassword(int count);
+
+  /// No description provided for @authManagerPasswordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Owners and managers need at least 10 characters.'**
+  String get authManagerPasswordRule;
+
+  /// No description provided for @authEmployeePasswordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Employees need at least 8 characters.'**
+  String get authEmployeePasswordRule;
+
+  /// No description provided for @authPasswordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The passwords do not match.'**
+  String get authPasswordsDoNotMatch;
+
+  /// No description provided for @authSavePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Password'**
+  String get authSavePassword;
+
+  /// No description provided for @authSavingPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving password…'**
+  String get authSavingPassword;
+
+  /// No description provided for @authPasswordChangeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not change your password. Please check the current password and try again.'**
+  String get authPasswordChangeFailed;
+
+  /// No description provided for @authRestoringSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring your secure session…'**
+  String get authRestoringSession;
+
+  /// No description provided for @authSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please log in again.'**
+  String get authSessionExpired;
+
+  /// No description provided for @authOfflineSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your offline session has expired. Connect to the internet and log in again.'**
+  String get authOfflineSessionExpired;
+
+  /// No description provided for @authSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account and session controls'**
+  String get authSettingsSubtitle;
+
+  /// No description provided for @authAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get authAccount;
+
+  /// No description provided for @authSignedInTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in to'**
+  String get authSignedInTenant;
+
+  /// No description provided for @authLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get authLogout;
+
+  /// No description provided for @authLogoutConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out from this device?'**
+  String get authLogoutConfirmation;
 }
 
 class _AppLocalizationsDelegate

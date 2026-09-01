@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\SuperAdmin\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiToken;
 use App\Services\SuperAdmin\PlatformAuditService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -58,14 +59,14 @@ class PlatformManagementController extends Controller
 
     public function updateTenantUser(Request $request, int $user, PlatformAuditService $audit): JsonResponse
     {
-        $data = $request->validate(['isActive' => ['required', 'boolean'], 'role' => ['nullable', 'string', 'max:80'], 'reason' => ['required', 'string', 'max:500']]);
+        $data = $request->validate(['isActive' => ['required', 'boolean'], 'reason' => ['required', 'string', 'max:500']]);
         $before = DB::table('users')->where('id', $user)->whereNotNull('tenant_id')->whereNull('deleted_at')->first();
         abort_if(! $before, 404);
         $changes = ['is_active' => $data['isActive'], 'updated_at' => now()];
-        if ($data['role'] ?? null) {
-            $changes['role'] = $data['role'];
-        }
         DB::table('users')->where('id', $user)->update($changes);
+        if (! $data['isActive']) {
+            ApiToken::query()->where('user_id', $user)->whereNull('revoked_at')->update(['revoked_at' => now(), 'updated_at' => now()]);
+        }
         $after = DB::table('users')->find($user);
         $audit->record($request, 'tenant_user.updated', 'user', $user, $before->tenant_id, (array) $before, (array) $after, $data['reason']);
 

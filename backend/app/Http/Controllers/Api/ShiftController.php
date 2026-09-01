@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Support\TenantContext;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class ShiftController extends Controller
 
         $shift = DB::table('shifts')
             ->where('tenant_id', $tenantId)
+            ->whereIn('branch_id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))
             ->when($branchId > 0, fn ($query) => $query->where('branch_id', $branchId))
             ->where('status', 'open')
             ->whereNull('deleted_at')
@@ -36,7 +38,7 @@ class ShiftController extends Controller
         $tenantId = TenantContext::id($request);
         $data = $request->validate([
             'branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)],
-            'userId' => ['nullable', 'integer', $this->tenantExists('users', $tenantId)],
+            'userId' => ['prohibited'],
             'openingCash' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -45,7 +47,7 @@ class ShiftController extends Controller
         $id = DB::table('shifts')->insertGetId([
             'tenant_id' => $tenantId,
             'branch_id' => $data['branchId'],
-            'user_id' => $data['userId'] ?? (int) DB::table('users')->where('tenant_id', $tenantId)->orderBy('id')->value('id'),
+            'user_id' => $request->attributes->get('auth_user')->id,
             'opening_cash' => $data['openingCash'],
             'status' => 'open',
             'opened_at' => $now,
@@ -68,6 +70,7 @@ class ShiftController extends Controller
         $tenantId = TenantContext::id($request);
         $row = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift)->whereNull('deleted_at')->first();
         abort_if(! $row, 404, 'Shift not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $row->branch_id);
 
         $cashPayments = (float) DB::table('payments')
             ->where('tenant_id', $tenantId)

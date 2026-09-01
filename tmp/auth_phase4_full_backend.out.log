@@ -1,0 +1,190 @@
+
+  [90;1m.[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[31;1m⨯[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m
+  [90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m
+  [90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m[90;1m.[39;22m
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Unit\MenuDomain\MenuMod[22m… [41;1m UniqueConstraintViolationException [49;22m  
+[39;1m  SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+DETAIL:  Key (typname, typnamespace)=(tenants, 2200) already exists. (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: create table "tenants" ("id" bigserial not null primary key, "name" varchar(255) not null, "slug" varchar(255) not null, "status" varchar(255) not null default 'active', "plan" varchar(255) null, "email" varchar(255) null, "phone" varchar(255) null, "logo_url" varchar(255) null, "timezone" varchar(255) not null default 'UTC', "currency" varchar(255) not null default 'SYP', "created_at" timestamp(0) without time zone null, "updated_at" timestamp(0) without time zone null, "deleted_at" timestamp(0) without time zone null))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000001_create_tenants_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Availability\ProductAvailabil[22m… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "tenants" does not exist (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: alter table "loyalty_accounts" add constraint "loyalty_accounts_tenant_id_foreign" foreign key ("tenant_id") references "tenants" ("id"))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000016_create_loyalty_accounts_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Availability\ProductAvailabil[22m… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P07]: Duplicate table: 7 ERROR:  relation "tenants" already exists (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: create table "tenants" ("id" bigserial not null primary key, "name" varchar(255) not null, "slug" varchar(255) not null, "status" varchar(255) not null default 'active', "plan" varchar(255) null, "email" varchar(255) null, "phone" varchar(255) null, "logo_url" varchar(255) null, "timezone" varchar(255) not null default 'UTC', "currency" varchar(255) not null default 'SYP', "created_at" timestamp(0) without time zone null, "updated_at" timestamp(0) without time zone null, "deleted_at" timestamp(0) without time zone null))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000001_create_tenants_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Availability\ProductAvailabil[22m… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[40P01]: Deadlock detected: 7 ERROR:  deadlock detected
+DETAIL:  Process 7147 waits for AccessExclusiveLock on relation 1062882 of database 21278; blocked by process 7136.
+Process 7136 waits for ShareRowExclusiveLock on relation 1062971 of database 21278; blocked by process 7147.
+HINT:  See server log for query details. (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: drop table "public"."activity_logs", "public"."branches", "public"."cafe_tables", "public"."categories", "public"."customers", "public"."discount_targets", "public"."discounts", "public"."inventory_items", "public"."loyalty_accounts", "public"."loyalty_transactions", "public"."migrations", "public"."order_discounts", "public"."order_items", "public"."orders", "public"."payments", "public"."products", "public"."shifts", "public"."stock_movements", "public"."tenants", "public"."user_branches", "public"."users", "public"."warehouses" cascade)[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Availability\ProductAvailabil[22m… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "tenants" does not exist (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: alter table "warehouses" add constraint "warehouses_tenant_id_foreign" foreign key ("tenant_id") references "tenants" ("id"))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000018_create_warehouses_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Catalog\CatalogApiTest[22m [90m>[39m conf… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P07]: Duplicate table: 7 ERROR:  relation "tenants" already exists (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: create table "tenants" ("id" bigserial not null primary key, "name" varchar(255) not null, "slug" varchar(255) not null, "status" varchar(255) not null default 'active', "plan" varchar(255) null, "email" varchar(255) null, "phone" varchar(255) null, "logo_url" varchar(255) null, "timezone" varchar(255) not null default 'UTC', "currency" varchar(255) not null default 'SYP', "created_at" timestamp(0) without time zone null, "updated_at" timestamp(0) without time zone null, "deleted_at" timestamp(0) without time zone null))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000001_create_tenants_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Catalog\CatalogApiTest[22m [90m>[39m prod… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "tenants" does not exist (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: alter table "modifier_groups" add constraint "modifier_groups_tenant_id_foreign" foreign key ("tenant_id") references "tenants" ("id"))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_06_20_000001_create_pos_modifier_tables.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Catalog\CatalogApiTest[22m [90m>[39m prod… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P07]: Duplicate table: 7 ERROR:  relation "tenants" already exists (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: create table "tenants" ("id" bigserial not null primary key, "name" varchar(255) not null, "slug" varchar(255) not null, "status" varchar(255) not null default 'active', "plan" varchar(255) null, "email" varchar(255) null, "phone" varchar(255) null, "logo_url" varchar(255) null, "timezone" varchar(255) not null default 'UTC', "currency" varchar(255) not null default 'SYP', "created_at" timestamp(0) without time zone null, "updated_at" timestamp(0) without time zone null, "deleted_at" timestamp(0) without time zone null))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000001_create_tenants_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Catalog\CatalogApiTest[22m [90m>[39m prod… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "tenants" does not exist (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: alter table "loyalty_transactions" add constraint "loyalty_transactions_tenant_id_foreign" foreign key ("tenant_id") references "tenants" ("id"))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000017_create_loyalty_transactions_table.php[39;22m:[39;1m11[39;22m
+
+  [31m────────────────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mTests\Feature\Admin\Catalog\CatalogApiTest[22m [90m>[39m prod… [41;1m QueryException [49;22m  
+[39;1m  SQLSTATE[42P07]: Duplicate table: 7 ERROR:  relation "tenants" already exists (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: create table "tenants" ("id" bigserial not null primary key, "name" varchar(255) not null, "slug" varchar(255) not null, "status" varchar(255) not null default 'active', "plan" varchar(255) null, "email" varchar(255) null, "phone" varchar(255) null, "logo_url" varchar(255) null, "timezone" varchar(255) not null default 'UTC', "currency" varchar(255) not null default 'SYP', "created_at" timestamp(0) without time zone null, "updated_at" timestamp(0) without time zone null, "deleted_at" timestamp(0) without time zone null))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m841[39m
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      [2m+10 vendor frames [22m
+  [33m11  [39m[39;1mdatabase/migrations/2026_05_31_000001_create_tenants_table.php[39;22m:[39;1m11[39;22m
+
+
+  [90mTests:[39m    [31;1m10 failed[39;22m[90m,[39m[39m [39m[32;1m159 passed[39;22m[90m (1927 assertions)[39m
+  [90mDuration:[39m [39m140.22s[39m
+

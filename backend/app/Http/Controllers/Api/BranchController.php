@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Services\TenantTaxService;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +19,7 @@ class BranchController extends Controller
         $taxRate = app(TenantTaxService::class)->rateFor($tenantId);
         $branches = DB::table('branches')
             ->where('tenant_id', $tenantId)
+            ->whereIn('id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->get()
