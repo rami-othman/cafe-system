@@ -15,6 +15,12 @@ Phase 1 — Project Foundation
 
 ## Completed Work
 
+- Unified the Finance desktop navigation bar across all Finance routes, fixed
+  its operational destinations, repaired Finance-only Arabic text encoding,
+  and added a reusable ten-row paginator to the Finance tables.
+- Added the connected Finance Operations demo to local/development/test
+  database seeding. The idempotent demo now includes a paginated expense
+  scenario while preserving its verified cash reconciliation and period close.
 - Hardened Inventory Count and Bar Check posting: explicit uncounted state,
   base-unit snapshots, tolerance/reason/manager-review gates, and a required
   Bar Check shift-close gate. Count and Bar Check state helpers now live in
@@ -218,6 +224,9 @@ workflows when those APIs are ready.
 
 ## Recent Changes Log
 
+- 2026-09-01: Corrected the Finance UI encoding and navigation, introduced a
+  shared 10-row Finance table paginator, applied the Finance analyzer fixes,
+  and made the verified connected Finance demo part of non-production seeds.
 - 2026-06-09: Implemented shared theme/design system foundation with warm
   artisan cafe colors, Manrope typography registration, spacing/radius/size
   tokens, shared button/text-field/card updates, and design-system

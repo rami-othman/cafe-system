@@ -500,6 +500,7 @@ class PosCubit extends Cubit<PosState> {
         method: requestedPayment.method.apiValue,
         amount: requestedPayment.amountReceived,
         totalDue: totalDue,
+        idempotencyKey: _paymentIdempotencyKeyFor(orderId),
       );
       if (isClosed) {
         return PaymentCompletionStatus.uncertain;
@@ -907,6 +908,15 @@ class PosCubit extends Cubit<PosState> {
   bool _isPotentiallyUncertainPaymentFailure(Object error) {
     return error is! ApiException || error.statusCode == null;
   }
+
+  /// Stable across every retry of paying this same order (a manual retry
+  /// after [PaymentCompletionStatus.retryableFailure], or the uncertain-
+  /// payment verification path above) so the backend's idempotency-key
+  /// dedupe can never see two different keys for the same checkout attempt.
+  /// Deliberately derived from orderId rather than a per-attempt random
+  /// value: an order can only be paid once in this schema, so scoping the
+  /// key to the order is sufficient and needs no extra state to reset.
+  String _paymentIdempotencyKeyFor(int orderId) => 'pos-payment-order-$orderId';
 
   bool _isConfirmedPaid(BackendOrder order) {
     const Set<String> paidValues = <String>{'paid', 'completed', 'complete'};

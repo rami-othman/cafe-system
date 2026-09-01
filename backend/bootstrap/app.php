@@ -8,6 +8,7 @@ use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\EnsureInventoryPermission;
+use App\Http\Middleware\EnsureFinancePermission;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.admin' => AuthenticatePlatformAdmin::class,
             'platform.permission' => EnsurePlatformPermission::class,
             'inventory.permission' => EnsureInventoryPermission::class,
+            'finance.permission' => EnsureFinancePermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

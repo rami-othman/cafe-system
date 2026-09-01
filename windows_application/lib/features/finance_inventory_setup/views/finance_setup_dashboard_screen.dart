@@ -61,7 +61,15 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                       label: 'دليل الحسابات',
                       icon: Icons.account_tree_outlined,
                       variant: AppButtonVariant.outlined,
-                      onPressed: () => context.go(AppRoutes.financeAccounts),
+                      onPressed: () =>
+                          context.go(AppRoutes.financeAccountsCanonical),
+                    ),
+                    AppButton(
+                      label: 'فئات المصروفات',
+                      icon: Icons.category_outlined,
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () =>
+                          context.go(AppRoutes.financeExpenseCategories),
                     ),
                   ],
                 ),
@@ -121,7 +129,7 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                 _Readiness(
                   label: 'دليل الحسابات الأساسي',
                   ready: status.systemAccountsReady,
-                  onTap: () => context.go(AppRoutes.financeAccounts),
+                  onTap: () => context.go(AppRoutes.financeAccountsCanonical),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _Readiness(
@@ -143,7 +151,53 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                   label: 'قيود اليومية',
                   icon: Icons.menu_book_outlined,
                   variant: AppButtonVariant.outlined,
-                  onPressed: () => context.go(AppRoutes.financeJournalEntries),
+                  onPressed: () =>
+                      context.go(AppRoutes.financeJournalEntriesCanonical),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  'الحسابات الافتراضية الحالية',
+                  style: AppTextStyles.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                ManagementTableShell(
+                  minWidth: 0,
+                  child: Padding(
+                    padding: AppSpacing.allLg,
+                    child: Column(
+                      children: status.defaultAccounts.isEmpty
+                          ? const <Widget>[
+                              Text('لم يتم العثور على حسابات افتراضية مُهيأة.'),
+                            ]
+                          : status.defaultAccounts
+                                .map(
+                                  (account) => ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      '${account.code} — ${account.nameAr}',
+                                    ),
+                                    trailing: ManagementBadge(
+                                      label: account.isActive
+                                          ? 'نشط'
+                                          : 'غير نشط',
+                                      tone: account.isActive
+                                          ? ManagementTone.success
+                                          : ManagementTone.neutral,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  'جاهزية التكاملات المستقبلية',
+                  style: AppTextStyles.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text(
+                  'النقد والبنوك، المصروفات، نقاط البيع، الموردون، محاسبة المخزون، التسويات والتقارير المالية: مؤجلة للمراحل التالية ولا توجد إعدادات صورية لها.',
                 ),
               ],
             ),

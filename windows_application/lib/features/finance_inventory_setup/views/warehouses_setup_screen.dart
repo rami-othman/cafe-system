@@ -8,6 +8,7 @@ import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../controllers/finance_setup_state.dart';
 import '../models/finance_setup_models.dart';
+import '../widgets/finance_paginated_table.dart';
 
 class WarehousesSetupScreen extends StatefulWidget {
   const WarehousesSetupScreen({super.key});
@@ -59,7 +60,8 @@ class _WarehousesState extends State<WarehousesSetupScreen> {
                     )
                   : ManagementTableShell(
                       minWidth: 760,
-                      child: DataTable(
+                      child: FinancePaginatedTable(
+                        minWidth: 760,
                         columns: const <DataColumn>[
                           DataColumn(label: Text('المستودع')),
                           DataColumn(label: Text('الرمز')),
@@ -170,9 +172,19 @@ class _WarehouseFilter extends StatelessWidget {
   final String label;
   final IconData icon;
   @override
-  Widget build(BuildContext context) => OutlinedButton.icon(
-    onPressed: () {},
-    icon: Icon(icon, size: 18),
-    label: Text(label),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: BoxDecoration(
+      border: Border.all(color: Theme.of(context).dividerColor),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(icon, size: 18),
+        const SizedBox(width: 8),
+        Text(label),
+      ],
+    ),
   );
 }

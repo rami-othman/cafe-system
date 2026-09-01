@@ -54,7 +54,7 @@ class InventoryCenterSeeder extends Seeder
         $this->movementOnce($request, $tenant, $manager, $central->id, $beans, 'stock_in', '12.000', '10.250', 'توريد حبوب قهوة أسبوعي', 'seed-stock-in');
         $this->movementOnce($request, $tenant, $manager, $central->id, $beans, 'stock_out', '2.000', null, 'استهلاك تحضير تجريبي', 'seed-stock-out');
         $this->movementOnce($request, $tenant, $manager, $central->id, $milk, 'waste', '1.000', null, 'انتهاء صلاحية الحليب', 'seed-waste');
-        $this->movementOnce($request, $tenant, $manager, $central->id, $cups, 'adjustment_in', '5.000', '0.0800', 'تصحيح عدّ العبوات', 'seed-adjustment');
+        $this->movementOnce($request, $tenant, $manager, $central->id, $cups, 'stock_in', '5.000', '0.0800', 'توريد تجريبي للعبوات', 'seed-adjustment');
 
         if (! DB::table('stock_counts')->where('tenant_id', $tenant)->where('notes', 'جرد تجريبي مرحّل')->exists()) {
             $counts = app(StockCountService::class);

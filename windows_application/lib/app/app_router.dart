@@ -27,9 +27,19 @@ import '../features/reports/controllers/reports_overview_cubit.dart';
 import '../features/reports/views/reports_overview_screen.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen.dart';
+import '../features/finance_inventory_setup/views/finance_workspace_screen.dart';
+import '../features/finance_inventory_setup/views/finance_operations_screen.dart';
+import '../features/finance_inventory_setup/views/financial_reports_screen.dart';
+import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
+import '../features/finance_inventory_setup/views/payment_methods_screen.dart';
+import '../features/finance_inventory_setup/views/expenses_screen.dart';
+import '../features/finance_inventory_setup/views/expense_categories_screen.dart';
+import '../features/finance_inventory_setup/views/suppliers_screen.dart';
+import '../features/finance_inventory_setup/views/supplier_profile_screen.dart';
 import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
 import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
 import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
+import '../features/finance_inventory_setup/widgets/finance_navigation_bar.dart';
 import '../features/inventory/controllers/inventory_cubit.dart';
 import '../features/inventory/views/inventory_items_screen.dart';
 import '../features/inventory/views/item_details_screen.dart';
@@ -55,7 +65,9 @@ final GoRouter appRouter = GoRouter(
             AppRoutes.inventory,
           ),
           onRefresh: _refreshActionFor(state),
-          textDirection: state.matchedLocation.startsWith(AppRoutes.inventory)
+          textDirection:
+              (state.matchedLocation.startsWith(AppRoutes.inventory) ||
+                  state.matchedLocation.startsWith(AppRoutes.finance))
               ? TextDirection.rtl
               : TextDirection.ltr,
           sidebarWidth: state.matchedLocation.startsWith(AppRoutes.inventory)
@@ -217,6 +229,126 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.finance,
+          name: AppRouteNames.finance,
+          builder: (context, state) => const FinanceWorkspaceScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReports,
+          name: AppRouteNames.financeReports,
+          builder: (context, state) => FinancialReportsScreen(
+            accountId: int.tryParse(
+              state.uri.queryParameters['accountId'] ?? '',
+            ),
+            supplierId: int.tryParse(
+              state.uri.queryParameters['supplierId'] ?? '',
+            ),
+            reportType: state.uri.queryParameters['type'],
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReconciliations,
+          name: AppRouteNames.financeReconciliations,
+          builder: (context, state) => const FinanceOperationScreen(
+            kind: FinanceOperationKind.reconciliation,
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReconciliationDetails,
+          name: AppRouteNames.financeReconciliationDetails,
+          builder: (context, state) => FinanceOperationScreen(
+            kind: FinanceOperationKind.reconciliation,
+            id: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeDailyClosings,
+          name: AppRouteNames.financeDailyClosings,
+          builder: (context, state) =>
+              const FinanceOperationScreen(kind: FinanceOperationKind.closing),
+        ),
+        GoRoute(
+          path: AppRoutes.financeDailyClosingDetails,
+          name: AppRouteNames.financeDailyClosingDetails,
+          builder: (context, state) => FinanceOperationScreen(
+            kind: FinanceOperationKind.closing,
+            id: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountingPeriods,
+          name: AppRouteNames.financeAccountingPeriods,
+          builder: (context, state) =>
+              const FinanceOperationScreen(kind: FinanceOperationKind.period),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountingPeriodDetails,
+          name: AppRouteNames.financeAccountingPeriodDetails,
+          builder: (context, state) => FinanceOperationScreen(
+            kind: FinanceOperationKind.period,
+            id: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountsCanonical,
+          name: AppRouteNames.financeAccountsCanonical,
+          builder: (context, state) => const FinancialAccountsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeJournalEntriesCanonical,
+          name: AppRouteNames.financeJournalEntriesCanonical,
+          builder: (context, state) => const JournalEntriesScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeJournalEntryDetails,
+          name: AppRouteNames.financeJournalEntryDetails,
+          builder: (context, state) => JournalEntriesScreen(
+            initialEntryId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSettings,
+          name: AppRouteNames.financeSettings,
+          builder: (context, state) => const FinanceSetupDashboardScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeCashBanks,
+          name: AppRouteNames.financeCashBanks,
+          builder: (context, state) => const CashBanksScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financePaymentMethods,
+          name: AppRouteNames.financePaymentMethods,
+          builder: (context, state) => const PaymentMethodsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeExpenses,
+          name: AppRouteNames.financeExpenses,
+          builder: (context, state) => const ExpensesScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeExpenseCategories,
+          name: AppRouteNames.financeExpenseCategories,
+          builder: (context, state) => const ExpenseCategoriesScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSuppliers,
+          name: AppRouteNames.financeSuppliers,
+          builder: (context, state) => const SuppliersScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSupplierDetails,
+          name: AppRouteNames.financeSupplierDetails,
+          builder: (context, state) => SupplierProfileScreen(
+            supplierId: int.parse(state.pathParameters['id']!),
+            initialTab: state.uri.queryParameters['tab'] == 'payments'
+                ? 2
+                : state.uri.queryParameters['tab'] == 'invoices'
+                ? 1
+                : 0,
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.financeSetup,
           name: AppRouteNames.financeSetup,
           builder: (context, state) => const FinanceSetupDashboardScreen(),
@@ -319,6 +451,9 @@ Widget? _rightPanelFor(GoRouterState state) {
 }
 
 Widget? _topBarFor(GoRouterState state) {
+  if (state.matchedLocation.startsWith(AppRoutes.finance)) {
+    return FinanceNavigationBar(selected: _financeTabFor(state));
+  }
   if (state.matchedLocation.startsWith(AppRoutes.inventory)) {
     return const InventorySubNavigation();
   }
@@ -342,6 +477,22 @@ Widget? _topBarFor(GoRouterState state) {
   };
 }
 
+String _financeTabFor(GoRouterState state) {
+  final String path = state.matchedLocation;
+  if (path == AppRoutes.finance)
+    return state.uri.queryParameters['tab'] ?? 'overview';
+  if (path.startsWith('/finance/cash-banks')) return 'cashbanks';
+  if (path.startsWith('/finance/expenses')) return 'expenses';
+  if (path.startsWith('/finance/suppliers') ||
+      path.startsWith('/finance/supplier-'))
+    return 'suppliers';
+  if (path.startsWith('/finance/reconciliations')) return 'reconciliation';
+  if (path.startsWith('/finance/journal-entries')) return 'journals';
+  if (path.startsWith('/finance/daily-closings')) return 'closing';
+  if (path.startsWith('/finance/reports')) return 'reports';
+  return 'overview';
+}
+
 Future<void> Function(BuildContext context)? _refreshActionFor(
   GoRouterState state,
 ) {
@@ -358,17 +509,27 @@ Future<void> Function(BuildContext context)? _refreshActionFor(
       (BuildContext context) => context.read<ReportsOverviewCubit>().load(),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
-    AppRoutes.financeSetup =>
+    AppRoutes.finance || AppRoutes.financeSettings || AppRoutes.financeSetup =>
       (BuildContext context) =>
           context.read<FinanceSetupCubit>().loadDashboard(),
     AppRoutes.financeWarehouses =>
       (BuildContext context) =>
           context.read<FinanceSetupCubit>().loadWarehouses(),
-    AppRoutes.financeAccounts =>
+    AppRoutes.financeAccounts || AppRoutes.financeAccountsCanonical =>
       (BuildContext context) =>
           context.read<FinanceSetupCubit>().loadAccounts(),
-    AppRoutes.financeJournalEntries =>
+    AppRoutes.financeJournalEntries ||
+    AppRoutes.financeJournalEntriesCanonical =>
       (BuildContext context) => context.read<FinanceSetupCubit>().loadEntries(),
+    AppRoutes.financeCashBanks =>
+      (BuildContext context) => Future<void>.value(),
+    AppRoutes.financePaymentMethods =>
+      (BuildContext context) => Future<void>.value(),
+    AppRoutes.financeExpenses => (BuildContext context) => Future<void>.value(),
+    AppRoutes.financeExpenseCategories =>
+      (BuildContext context) => Future<void>.value(),
+    AppRoutes.financeSuppliers || AppRoutes.financeSupplierDetails =>
+      (BuildContext context) => Future<void>.value(),
     AppRoutes.inventory =>
       (BuildContext context) => context.read<InventoryCubit>().loadDashboard(),
     AppRoutes.inventoryItems =>
@@ -392,6 +553,9 @@ String _activeLabelFor(GoRouterState state) {
   }
   if (state.matchedLocation.startsWith(AppRoutes.inventory)) {
     return 'Inventory Management';
+  }
+  if (state.matchedLocation.startsWith(AppRoutes.finance)) {
+    return 'المالية';
   }
 
   return switch (state.matchedLocation) {
@@ -422,6 +586,31 @@ abstract final class AppRoutes {
   static const String menuProductAvailability =
       '/menu/products/:id/availability';
   static const String financeSetup = '/finance-inventory-setup';
+  static const String finance = '/finance';
+  static const String financeReports = '/finance/reports/general-ledger';
+  static const String financeReconciliations = '/finance/reconciliations';
+  static const String financeReconciliationDetails =
+      '/finance/reconciliations/:id';
+  static const String financeDailyClosings = '/finance/daily-closings';
+  static const String financeDailyClosingDetails =
+      '/finance/daily-closings/:id';
+  static const String financeAccountingPeriods = '/finance/accounting-periods';
+  static const String financeAccountingPeriodDetails =
+      '/finance/accounting-periods/:id';
+  static const String financeAccountsCanonical = '/finance/accounts';
+  static const String financeJournalEntriesCanonical =
+      '/finance/journal-entries';
+  static const String financeJournalEntryDetails =
+      '/finance/journal-entries/:id';
+  static const String financeSettings = '/finance/settings';
+  static const String financeCashBanks = '/finance/cash-banks';
+  static const String financePaymentMethods =
+      '/finance/settings/payment-methods';
+  static const String financeExpenses = '/finance/expenses';
+  static const String financeExpenseCategories =
+      '/finance/settings/expense-categories';
+  static const String financeSuppliers = '/finance/suppliers';
+  static const String financeSupplierDetails = '/finance/suppliers/:id';
   static const String financeWarehouses = '/finance-inventory-setup/warehouses';
   static const String financeAccounts = '/finance-inventory-setup/accounts';
   static const String financeJournalEntries =
@@ -444,8 +633,10 @@ abstract final class AppRoutes {
   static const String inventoryTransferDetails = '/inventory/transfers/:id';
   static String inventoryTransferPath(int id) => '/inventory/transfers/$id';
   static const String barCheckTemplates = '/inventory/bar-check-templates';
-  static const String barCheckTemplateDetails = '/inventory/bar-check-templates/:id';
-  static String barCheckTemplatePath(int id) => '/inventory/bar-check-templates/$id';
+  static const String barCheckTemplateDetails =
+      '/inventory/bar-check-templates/:id';
+  static String barCheckTemplatePath(int id) =>
+      '/inventory/bar-check-templates/$id';
   static const String inventoryCountDetails = '/inventory/counts/:id';
   static String inventoryCountDetailPath(int id) => '/inventory/counts/$id';
 }
@@ -465,6 +656,29 @@ abstract final class AppRouteNames {
   static const String menuProductVariants = 'menu-product-variants';
   static const String menuProductAvailability = 'menu-product-availability';
   static const String financeSetup = 'finance-setup';
+  static const String finance = 'finance';
+  static const String financeReports = 'finance-reports';
+  static const String financeReconciliations = 'finance-reconciliations';
+  static const String financeReconciliationDetails =
+      'finance-reconciliation-details';
+  static const String financeDailyClosings = 'finance-daily-closings';
+  static const String financeDailyClosingDetails =
+      'finance-daily-closing-details';
+  static const String financeAccountingPeriods = 'finance-accounting-periods';
+  static const String financeAccountingPeriodDetails =
+      'finance-accounting-period-details';
+  static const String financeAccountsCanonical = 'finance-accounts-canonical';
+  static const String financeJournalEntriesCanonical =
+      'finance-journal-entries-canonical';
+  static const String financeJournalEntryDetails =
+      'finance-journal-entry-details';
+  static const String financeSettings = 'finance-settings';
+  static const String financeCashBanks = 'finance-cash-banks';
+  static const String financePaymentMethods = 'finance-payment-methods';
+  static const String financeExpenses = 'finance-expenses';
+  static const String financeExpenseCategories = 'finance-expense-categories';
+  static const String financeSuppliers = 'finance-suppliers';
+  static const String financeSupplierDetails = 'finance-supplier-details';
   static const String financeWarehouses = 'finance-warehouses';
   static const String financeAccounts = 'finance-accounts';
   static const String financeJournalEntries = 'finance-journal-entries';

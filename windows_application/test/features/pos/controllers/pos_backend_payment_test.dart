@@ -78,6 +78,8 @@ void main() {
     expect(cubit.state.cartItems, isNotEmpty);
     expect(cubit.state.isPaymentSubmitting, isFalse);
     expect(cubit.state.paymentErrorMessage, 'Amount received is invalid.');
+    final String? keyFromFirstAttempt = repository.lastIdempotencyKey;
+    expect(keyFromFirstAttempt, isNotNull);
 
     repository.payError = null;
     expect(
@@ -85,6 +87,10 @@ void main() {
       PaymentCompletionStatus.completed,
     );
     expect(repository.payCalls, 2);
+    // Retrying payment for the same order must reuse the same idempotency
+    // key — the backend dedupes a replayed /pay request by this key, so a
+    // different value on retry would defeat the double-charge protection.
+    expect(repository.lastIdempotencyKey, keyFromFirstAttempt);
   });
 
   test(
@@ -249,6 +255,7 @@ class _BackendPaymentRepository extends PosRepository {
   Object? payError;
   Object? receiptError;
   Object? getOrderError;
+  String? lastIdempotencyKey;
   bool verifiedOrderPaid = false;
   Completer<PaymentResult>? payCompleter;
   BackendOrder? _order;
@@ -310,8 +317,10 @@ class _BackendPaymentRepository extends PosRepository {
     required double amount,
     String? reference,
     required double totalDue,
+    String? idempotencyKey,
   }) async {
     payCalls += 1;
+    lastIdempotencyKey = idempotencyKey;
     if (payCompleter != null) return payCompleter!.future;
     if (payError != null) throw payError!;
     return _payment();

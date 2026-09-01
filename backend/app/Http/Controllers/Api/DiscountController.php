@@ -123,6 +123,7 @@ class DiscountController extends Controller
 
         $tenantId = TenantContext::id($request);
         $orderRow = $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($orderRow);
         $discount = $this->findDiscount($tenantId, $data);
         $this->assertEligible($tenantId, $discount, $orderRow);
         $amount = $this->discountAmount($tenantId, $orderRow, $discount);
@@ -150,7 +151,7 @@ class DiscountController extends Controller
     public function remove(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($this->findOrder($tenantId, $order));
         DB::transaction(function () use ($tenantId, $order): void {
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
             $this->pricing->recalculateOrder($tenantId, $order);
@@ -253,6 +254,8 @@ class DiscountController extends Controller
     private function discountQuery(int $tenantId): Builder { return DB::table('discounts')->where('tenant_id', $tenantId)->whereNull('deleted_at'); }
     private function findManagedDiscount(int $tenantId, int $id): object { $discount = $this->discountQuery($tenantId)->where('id', $id)->first(); abort_if(! $discount, 404, 'Discount not found.'); return $discount; }
     private function findOrder(int $tenantId, int $orderId): object { $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first(); abort_if(! $order, 404, 'Order not found.'); return $order; }
+
+    private function assertOrderIsEditable(object $order): void { abort_if($order->payment_status !== 'unpaid', 422, 'This order has a payment on record and cannot be changed directly. Issue a refund or reversal first.'); }
 
     private function findDiscount(int $tenantId, array $data): object
     {

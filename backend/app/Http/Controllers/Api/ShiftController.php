@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
+use App\Services\ShiftCashSummaryService;
+use App\Support\Money;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class ShiftController extends Controller
 {
-    public function __construct(private readonly BarCheckTemplateService $barCheckTemplates) {}
+    public function __construct(private readonly BarCheckTemplateService $barCheckTemplates, private readonly ShiftCashSummaryService $cashSummary) {}
     public function current(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
@@ -77,16 +79,10 @@ class ShiftController extends Controller
             abort(422, 'يجب إكمال فحص البار قبل إغلاق الشيفت.');
         }
 
-        $cashPayments = (float) DB::table('payments')
-            ->where('tenant_id', $tenantId)
-            ->where('shift_id', $shift)
-            ->where('method', 'cash')
-            ->where('status', 'completed')
-            ->whereNull('deleted_at')
-            ->sum('amount');
-
-        $expectedCash = (float) $row->opening_cash + $cashPayments;
-        $cashDifference = round((float) $data['closingCash'] - $expectedCash, 2);
+        $summary = $this->cashSummary->summarize($tenantId, $row);
+        $expectedCash = $summary['expectedCash'];
+        $closingCashCents = Money::cents($data['closingCash']);
+        $cashDifference = Money::decimal($closingCashCents - Money::cents($expectedCash));
 
         DB::table('shifts')->where('id', $shift)->update([
             'closing_cash' => $data['closingCash'],

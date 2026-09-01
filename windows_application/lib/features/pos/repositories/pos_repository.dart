@@ -285,6 +285,7 @@ class PosRepository {
     required double amount,
     String? reference,
     required double totalDue,
+    String? idempotencyKey,
   }) async {
     final dynamic response = await apiClient!.post(
       'orders/$orderId/pay',
@@ -292,6 +293,7 @@ class PosRepository {
         'method': method,
         'amount': amount,
         'reference': reference,
+        if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
       },
     );
     return paymentResultFromJson(

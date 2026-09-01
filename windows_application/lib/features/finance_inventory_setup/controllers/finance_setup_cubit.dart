@@ -31,22 +31,51 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
     );
   });
 
-  Future<void> loadAccounts({String? search}) => _load(() async {
+  Future<void> loadAccounts({
+    String? search,
+    String? group,
+    String? status,
+    String? system,
+  }) => _load(() async {
     final List<FinancialAccount> accounts = await repository.getAccounts(
       search: search,
+      group: group,
+      status: status,
+      system: system,
     );
     emit(state.copyWith(accounts: accounts, clearError: true));
   });
 
-  Future<void> loadEntries() => _load(() async {
+  Future<void> loadEntries({
+    String? search,
+    String? status,
+    String? sourceType,
+    int? branchId,
+    String? from,
+    String? to,
+  }) => _load(() async {
     final Future<List<JournalEntry>> entriesFuture = repository
-        .getJournalEntries();
+        .getJournalEntries(
+          search: search,
+          status: status,
+          sourceType: sourceType,
+          branchId: branchId,
+          from: from,
+          to: to,
+        );
     final Future<List<FinancialAccount>> accountsFuture = repository
         .getAccounts();
+    final Future<List<Branch>> branchesFuture = repository.getBranches();
     final List<JournalEntry> entries = await entriesFuture;
     final List<FinancialAccount> accounts = await accountsFuture;
+    final List<Branch> branches = await branchesFuture;
     emit(
-      state.copyWith(entries: entries, accounts: accounts, clearError: true),
+      state.copyWith(
+        entries: entries,
+        accounts: accounts,
+        branches: branches,
+        clearError: true,
+      ),
     );
   });
 
@@ -74,6 +103,19 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
   });
   Future<bool> postEntry(int id) => _save(() async {
     await repository.postJournalEntry(id);
+    await loadEntries();
+  });
+  Future<JournalEntry?> getEntry(int id) async {
+    try {
+      return await repository.getJournalEntry(id);
+    } catch (error) {
+      emit(state.copyWith(errorMessage: error.toString()));
+      return null;
+    }
+  }
+
+  Future<bool> reverseEntry(int id) => _save(() async {
+    await repository.reverseJournalEntry(id);
     await loadEntries();
   });
 

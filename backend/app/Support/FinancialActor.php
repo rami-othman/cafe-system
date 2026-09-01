@@ -18,8 +18,6 @@ final class FinancialActor
 
         $user = DB::table('users')->where('tenant_id', $tenantId)->where('id', $requestedId)->where('is_active', true)->whereNull('deleted_at')->first();
         abort_unless($user, 403, 'The selected user is not allowed for this tenant.');
-        abort_unless(in_array($user->role, ['owner', 'manager'], true), 403, 'Finance setup requires an owner or manager.');
-
         return (int) $user->id;
     }
 

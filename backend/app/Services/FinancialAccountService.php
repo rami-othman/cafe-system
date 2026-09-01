@@ -70,8 +70,25 @@ class FinancialAccountService
         if ($accountId && (int) $parentId === $accountId) {
             throw ValidationException::withMessages(['parentAccountId' => 'An account cannot be its own parent.']);
         }
-        if (! DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $parentId)->whereNull('deleted_at')->exists()) {
+        $parent = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $parentId)->whereNull('deleted_at')->first();
+        if (! $parent) {
             throw ValidationException::withMessages(['parentAccountId' => 'The parent account does not belong to this tenant.']);
+        }
+        if (! $parent->is_active) {
+            throw ValidationException::withMessages(['parentAccountId' => 'The parent account must be active.']);
+        }
+
+        // Parent links are tenant-local and may be nested. Walk the existing
+        // chain before writing so an update cannot create A -> B -> A (or a
+        // longer cycle) that would make the chart hierarchy unusable.
+        $visited = [];
+        $cursor = (int) $parent->id;
+        while ($cursor) {
+            if (isset($visited[$cursor]) || ($accountId && $cursor === $accountId)) {
+                throw ValidationException::withMessages(['parentAccountId' => 'The selected parent would create a circular account hierarchy.']);
+            }
+            $visited[$cursor] = true;
+            $cursor = (int) (DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $cursor)->value('parent_account_id') ?? 0);
         }
     }
 

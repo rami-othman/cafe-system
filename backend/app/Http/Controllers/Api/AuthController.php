@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\TenantContext;
+use App\Support\FinanceAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +61,7 @@ class AuthController extends Controller
             'data' => [
                 'tenantId' => TenantContext::id($request),
                 'user' => $request->attributes->get('auth_user'),
+                'financeCapabilities' => FinanceAccess::capabilities($request),
             ],
         ]);
     }

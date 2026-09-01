@@ -22,7 +22,7 @@ class ReportsOverviewApiTest extends TestCase
         $otherTenant = DB::table('tenants')->insertGetId(['name' => 'Other cafe', 'slug' => 'other-cafe', 'status' => 'active', 'plan' => 'starter', 'currency' => 'SYP', 'timezone' => 'UTC', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('branches')->insert(['tenant_id' => $otherTenant, 'name' => 'Hidden Branch', 'currency' => 'SYP', 'timezone' => 'UTC', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
-        $response = $this->getJson($this->overviewPath(), ['X-Tenant-Id' => $tenantId]);
+        $response = $this->getJson($this->overviewPath(), $this->headers($tenantId));
 
         $response->assertOk()
             ->assertJsonCount(4, 'data.branches')
@@ -46,7 +46,7 @@ class ReportsOverviewApiTest extends TestCase
         $branchId = (int) DB::table('branches')->where('tenant_id', $tenantId)->where('name', 'Downtown')->value('id');
         $from = now()->subDays(13)->toDateString();
         $to = now()->toDateString();
-        $response = $this->getJson("/api/v1/reports/overview?from={$from}&to={$to}&branch_id={$branchId}", ['X-Tenant-Id' => $tenantId]);
+        $response = $this->getJson("/api/v1/reports/overview?from={$from}&to={$to}&branch_id={$branchId}", $this->headers($tenantId));
         $sales = (float) DB::table('orders')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])->whereBetween('closed_at', [now()->subDays(13)->startOfDay(), now()->endOfDay()])->sum('total');
         $refunds = (float) DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('status', 'completed')->whereBetween('refunded_at', [now()->subDays(13)->startOfDay(), now()->endOfDay()])->sum('amount');
 
@@ -66,13 +66,30 @@ class ReportsOverviewApiTest extends TestCase
         $otherTenant = DB::table('tenants')->insertGetId(['name' => 'Other cafe', 'slug' => 'other-cafe', 'status' => 'active', 'plan' => 'starter', 'currency' => 'SYP', 'timezone' => 'UTC', 'created_at' => now(), 'updated_at' => now()]);
         $branchId = DB::table('branches')->insertGetId(['tenant_id' => $otherTenant, 'name' => 'Foreign Branch', 'currency' => 'SYP', 'timezone' => 'UTC', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
-        $this->getJson($this->overviewPath()."&branch_id={$branchId}", ['X-Tenant-Id' => $tenantId])
+        $this->getJson($this->overviewPath()."&branch_id={$branchId}", $this->headers($tenantId))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('branch_id');
+    }
+
+    public function test_overview_requires_authentication(): void
+    {
+        $this->getJson($this->overviewPath())->assertUnauthorized();
     }
 
     private function overviewPath(): string
     {
         return '/api/v1/reports/overview?from='.now()->subDays(13)->toDateString().'&to='.now()->toDateString().'&compare_previous=true';
+    }
+
+    private function headers(int $tenantId): array
+    {
+        $userId = (int) DB::table('users')->where('tenant_id', $tenantId)->where('role', 'owner')->value('id');
+        $plainToken = 'reports-overview-test-token';
+        DB::table('api_tokens')->updateOrInsert(
+            ['tenant_id' => $tenantId, 'user_id' => $userId, 'name' => 'reports-overview-test'],
+            ['token_hash' => hash('sha256', $plainToken), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()],
+        );
+
+        return ['Authorization' => "Bearer $plainToken", 'X-Tenant-Id' => $tenantId];
     }
 }

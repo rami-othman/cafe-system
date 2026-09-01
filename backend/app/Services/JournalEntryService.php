@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class JournalEntryService
 {
-    public function __construct(private readonly OperationalAuditService $audit) {}
+    public function __construct(private readonly OperationalAuditService $audit, private readonly AccountingPeriodGuard $periods) {}
 
     public function createDraft(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
@@ -26,6 +26,8 @@ class JournalEntryService
                 'entry_date' => $data['entryDate'],
                 'source_type' => $data['sourceType'] ?? 'manual',
                 'source_id' => $data['sourceId'] ?? null,
+                'source_event' => $data['sourceEvent'] ?? null,
+                'reversal_of_id' => $data['reversalOfId'] ?? null,
                 'description' => $data['description'] ?? null,
                 'status' => 'draft',
                 'created_by' => $actorId,
@@ -64,6 +66,10 @@ class JournalEntryService
                 if ($entry->status !== 'draft') {
                     throw ValidationException::withMessages(['entry' => 'Only draft journal entries can be posted.']);
                 }
+                // This is deliberately at the shared draft -> posted
+                // transition: manual entries, automatic domain postings and
+                // reversal entries all inherit the same financial-date lock.
+                $this->periods->assertPostingAllowed($tenantId, $entry->entry_date);
                 $this->assertBranch($tenantId, $entry->branch_id, $actorId);
                 [$debit, $credit] = $this->totals($tenantId, $entryId);
                 if ($debit <= 0 || $debit !== $credit) {
@@ -85,6 +91,86 @@ class JournalEntryService
             }
             throw $exception;
         }
+    }
+
+    /**
+     * Reverses a posted journal entry with a new, separate posted entry
+     * whose debit/credit lines are swapped from the original.
+     *
+     * The original entry is never edited, deleted, or given a different
+     * status — accounting history is immutable. "Has this entry been
+     * reversed" is answered by whether another entry exists with
+     * reversal_of_id pointing at it (see hasBeenReversed()), not by a status
+     * value on the original, which would be ambiguous: a status like
+     * "reversed" could be misread as meaning the entry's own posting was
+     * undone, when in fact both the original and its reversal remain posted
+     * forever, side by side, as two balanced entries.
+     */
+    public function reverse(Request $request, int $tenantId, int $entryId, ?int $actorId): int
+    {
+        return DB::transaction(function () use ($request, $tenantId, $entryId, $actorId): int {
+            $original = DB::table('journal_entries')->where('tenant_id', $tenantId)->where('id', $entryId)->lockForUpdate()->first();
+            abort_unless($original, 404, 'Journal entry not found.');
+            if ($original->status !== 'posted') {
+                throw ValidationException::withMessages(['entry' => 'Only a posted journal entry can be reversed.']);
+            }
+            $this->assertBranch($tenantId, $original->branch_id, $actorId);
+            // $original is already locked above, so every concurrent
+            // reverse() call against the same entry serializes here — the
+            // second caller only reaches this check after the first
+            // reversal (if any) has committed and become visible.
+            if ($this->hasBeenReversed($tenantId, $entryId)) {
+                throw ValidationException::withMessages(['entry' => 'This journal entry has already been reversed.']);
+            }
+
+            $lines = DB::table('journal_entry_lines')->where('tenant_id', $tenantId)->where('journal_entry_id', $entryId)->orderBy('line_number')->get();
+            $now = now();
+            $reversalId = (int) DB::table('journal_entries')->insertGetId([
+                'tenant_id' => $tenantId,
+                'branch_id' => $original->branch_id,
+                'entry_number' => $this->nextEntryNumber($tenantId, $now->toDateString()),
+                'entry_date' => $now->toDateString(),
+                'source_type' => 'journal_reversal',
+                'source_id' => $entryId,
+                'source_event' => null,
+                'reversal_of_id' => $entryId,
+                'description' => 'Reversal of '.$original->entry_number.($original->description ? ' — '.$original->description : ''),
+                'status' => 'draft',
+                'created_by' => $actorId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            foreach ($lines as $index => $line) {
+                DB::table('journal_entry_lines')->insert([
+                    'tenant_id' => $tenantId,
+                    'journal_entry_id' => $reversalId,
+                    'financial_account_id' => $line->financial_account_id,
+                    'line_number' => $index + 1,
+                    'description' => $line->description,
+                    'debit' => $line->credit,
+                    'credit' => $line->debit,
+                    'created_by' => $actorId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+
+            // Reuses the existing post() transition: re-locks the draft,
+            // re-checks debit == credit (defense in depth against a
+            // corrupted swap), and marks it posted — the same guarantee
+            // every other journal entry gets.
+            $this->post($request, $tenantId, $reversalId, $actorId);
+
+            $this->audit->record($request, $tenantId, 'journal_entry.reversed', 'journal_entry', $entryId, [], ['reversalEntryId' => $reversalId, 'reversalEntryNumber' => $this->find($tenantId, $reversalId)->entry_number], $original->branch_id, $actorId);
+
+            return $reversalId;
+        });
+    }
+
+    public function hasBeenReversed(int $tenantId, int $entryId): bool
+    {
+        return DB::table('journal_entries')->where('tenant_id', $tenantId)->where('reversal_of_id', $entryId)->exists();
     }
 
     public function find(int $tenantId, int $entryId): object
@@ -140,7 +226,11 @@ class JournalEntryService
     private function nextEntryNumber(int $tenantId, string $date): string
     {
         $prefix = 'JE-'.str_replace('-', '', $date).'-';
-        $count = DB::table('journal_entries')->where('tenant_id', $tenantId)->where('entry_date', $date)->lockForUpdate()->count() + 1;
+        // PostgreSQL rejects FOR UPDATE on aggregate queries.  Locking the
+        // tenant row serializes per-tenant numbering while retaining the
+        // existing deterministic daily sequence across all supported DBs.
+        DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
+        $count = DB::table('journal_entries')->where('tenant_id', $tenantId)->where('entry_date', $date)->count() + 1;
 
         return $prefix.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
     }

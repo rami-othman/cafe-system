@@ -46,6 +46,11 @@ class AppSidebar extends StatelessWidget {
       Icons.account_balance_wallet_outlined,
       '/finance-inventory-setup',
     ),
+    _SidebarDestination(
+      'المالية',
+      Icons.account_balance_wallet_outlined,
+      '/finance',
+    ),
     _SidebarDestination('Reports', Icons.bar_chart_outlined, '/reports'),
   ];
 

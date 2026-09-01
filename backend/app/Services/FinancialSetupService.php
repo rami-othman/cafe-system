@@ -6,6 +6,42 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialSetupService
 {
+    /**
+     * Read-only readiness check used by the dashboard. It reports only missing
+     * configuration that prevents financial posting or materially degrades it;
+     * it does not invent a second setup model.
+     */
+    public function financeReadiness(int $tenantId): array
+    {
+        $requiredCodes = collect($this->defaultAccounts())->pluck('code')->all();
+        $activeCodes = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')->pluck('code')->all();
+        $missingAccounts = array_values(array_diff($requiredCodes, $activeCodes));
+
+        $issues = [];
+        if ($missingAccounts !== []) {
+            $issues[] = ['code' => 'REQUIRED_ACCOUNTS_MISSING', 'severity' => 'critical', 'accountCodes' => $missingAccounts];
+        }
+
+        $locations = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('is_active', true)->pluck('id')->all();
+        if ($locations === []) {
+            $issues[] = ['code' => 'CASH_BANK_DESTINATION_MISSING', 'severity' => 'critical', 'accountCodes' => []];
+        }
+
+        $invalidMethods = DB::table('payment_methods as methods')
+            ->leftJoin('financial_accounts as accounts', 'accounts.id', '=', 'methods.financial_account_id')
+            ->leftJoin('financial_locations as locations', 'locations.id', '=', 'methods.financial_location_id')
+            ->where('methods.tenant_id', $tenantId)->where('methods.is_active', true)
+            ->where(function ($query): void {
+                $query->whereNull('accounts.id')->orWhere('accounts.is_active', false)
+                    ->orWhere(function ($location): void { $location->whereNotNull('methods.financial_location_id')->where(function ($q): void { $q->whereNull('locations.id')->orWhere('locations.is_active', false); }); });
+            })->get(['methods.code']);
+        if ($invalidMethods->isNotEmpty()) {
+            $issues[] = ['code' => 'PAYMENT_DESTINATION_INVALID', 'severity' => 'warning', 'paymentMethodCodes' => $invalidMethods->pluck('code')->values()->all()];
+        }
+
+        return ['ready' => $issues === [], 'issues' => $issues];
+    }
+
     /** @return array<int, array<string, string|bool>> */
     public function defaultAccounts(): array
     {
@@ -17,6 +53,7 @@ class FinancialSetupService
             ['code' => '1500', 'name_ar' => 'الأصول الثابتة', 'name_en' => 'Fixed Assets', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1590', 'name_ar' => 'مجمع الإهلاك', 'name_en' => 'Accumulated Depreciation', 'account_group' => 'assets', 'normal_balance' => 'credit'],
             ['code' => '2000', 'name_ar' => 'الحسابات الدائنة', 'name_en' => 'Accounts Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
+            ['code' => '2010', 'name_ar' => 'ضريبة المبيعات المستحقة', 'name_en' => 'Sales Tax Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
             ['code' => '3000', 'name_ar' => 'حقوق الملكية', 'name_en' => 'Equity', 'account_group' => 'equity', 'normal_balance' => 'credit'],
             ['code' => '4000', 'name_ar' => 'إيرادات المبيعات', 'name_en' => 'Sales Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '4010', 'name_ar' => 'الخصومات الممنوحة', 'name_en' => 'Discounts Given', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
@@ -43,11 +80,31 @@ class FinancialSetupService
                 );
             }
 
+            $this->ensureCashAndBankDefaults($tenantId, $actorId);
+
             $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
                 $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
             }
         });
+    }
+
+    /** Creates configuration only; balances remain entirely journal-derived. */
+    private function ensureCashAndBankDefaults(int $tenantId, ?int $actorId): void
+    {
+        $now = now();
+        $accounts = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereIn('code', ['1010', '1020', '1030'])->pluck('id', 'code');
+        foreach ([
+            ['code' => 'CASH-DRAWER', 'name' => 'Cash Drawer', 'kind' => 'cash', 'type' => 'cash_drawer', 'accountCode' => '1010'],
+            ['code' => 'MAIN-SAFE', 'name' => 'Main Safe', 'kind' => 'cash', 'type' => 'main_safe', 'accountCode' => '1020'],
+            ['code' => 'BANK', 'name' => 'Bank', 'kind' => 'bank', 'type' => 'bank', 'accountCode' => '1030'],
+        ] as $location) {
+            $accountId = $accounts[$location['accountCode']] ?? null;
+            if (! $accountId) continue;
+            DB::table('financial_locations')->updateOrInsert(['tenant_id' => $tenantId, 'code' => $location['code']], ['branch_id' => null, 'financial_account_id' => $accountId, 'name' => $location['name'], 'kind' => $location['kind'], 'type' => $location['type'], 'bank_name' => null, 'masked_reference' => null, 'is_active' => true, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+        }
+        $drawerId = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'CASH-DRAWER')->value('id');
+        if ($drawerId && isset($accounts['1010'])) DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => $drawerId, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
     }
 
     public function ensureCentralWarehouse(int $tenantId, ?int $actorId = null): void

@@ -18,6 +18,7 @@ final class InventoryPostingService
     public function __construct(
         private readonly OperationalAuditService $audit,
         private readonly UnitConversionResolver $conversions,
+        private readonly InventoryAccountingMapper $accounting,
     ) {}
 
     public function post(Request $request, int $tenantId, array $data, ?int $actorId): MovementPostingResult
@@ -70,7 +71,9 @@ final class InventoryPostingService
                 DB::table('stock_balances')->where('id', $balance->id)->update(['quantity_on_hand' => InventoryDecimal::quantity($after), 'average_unit_cost' => InventoryDecimal::unitCost($average), 'last_movement_at' => $now, 'updated_at' => $now]);
                 DB::table('inventory_items')->where('id', $item->id)->update(['latest_unit_cost' => InventoryDecimal::unitCost($incoming ? $inputCost : $average), 'cost_per_unit' => InventoryDecimal::unitCost($incoming ? $inputCost : $average), 'updated_at' => $now]);
                 $id = (int) DB::table('stock_movements')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'] ?? $warehouse->branch_id, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $item->id, 'type' => $data['type'], 'quantity' => InventoryDecimal::quantity($quantity), 'input_unit' => $converted['inputUnit'], 'conversion_factor' => InventoryDecimal::conversionFactor($converted['factor']), 'base_quantity' => InventoryDecimal::quantity($quantity), 'idempotency_key' => $key, 'quantity_in' => InventoryDecimal::quantity($incoming ? $quantity : 0), 'quantity_out' => InventoryDecimal::quantity($incoming ? 0 : $quantity), 'quantity_before' => InventoryDecimal::quantity($before), 'quantity_after' => InventoryDecimal::quantity($after), 'unit_cost' => InventoryDecimal::unitCost($cost), 'total_cost' => InventoryDecimal::totalCost($quantity, $cost), 'reason' => $data['reason'] ?? null, 'reference_type' => $data['referenceType'] ?? null, 'reference_id' => $data['referenceId'] ?? null, 'created_by' => $actorId, 'occurred_at' => $data['occurredAt'] ?? $now, 'created_at' => $now, 'updated_at' => $now]);
-                $this->audit->record($request, $tenantId, 'stock_movement.posted', 'stock_movement', $id, [], ['type' => $data['type'], 'quantityBefore' => InventoryDecimal::quantity($before), 'quantityAfter' => InventoryDecimal::quantity($after)], $warehouse->branch_id, $actorId);
+                $movement = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('id', $id)->first();
+                $impact = $this->accounting->postForFinalMovement($request, $tenantId, $movement, $actorId);
+                $this->audit->record($request, $tenantId, 'stock_movement.posted', 'stock_movement', $id, [], ['type' => $data['type'], 'quantityBefore' => InventoryDecimal::quantity($before), 'quantityAfter' => InventoryDecimal::quantity($after), 'financeImpact' => $impact['classification']], $warehouse->branch_id, $actorId);
                 return new MovementPostingResult($id);
             });
         } catch (QueryException $exception) {

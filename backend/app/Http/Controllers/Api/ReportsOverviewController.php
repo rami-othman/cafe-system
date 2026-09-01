@@ -199,8 +199,12 @@ class ReportsOverviewController extends Controller
 
     private function orders(int $tenantId, array $allowedBranchIds, ?int $branchId, Carbon $from, Carbon $to): Builder
     {
-        return DB::table('orders')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchId ? [$branchId] : $allowedBranchIds)
-            ->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])->whereBetween('closed_at', [$from, $to])->whereNull('deleted_at');
+        // Columns are qualified with the table name because topProducts()
+        // joins order_items (which also has a tenant_id column) onto this
+        // query — an unqualified "tenant_id" is ambiguous once that join is
+        // added, and every driver rejects it.
+        return DB::table('orders')->where('orders.tenant_id', $tenantId)->whereIn('orders.branch_id', $branchId ? [$branchId] : $allowedBranchIds)
+            ->whereIn('orders.payment_status', ['paid', 'partially_refunded', 'refunded'])->whereBetween('orders.closed_at', [$from, $to])->whereNull('orders.deleted_at');
     }
 
     private function refunds(int $tenantId, array $allowedBranchIds, ?int $branchId, Carbon $from, Carbon $to): Builder

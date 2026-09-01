@@ -30,6 +30,9 @@ class FinancialAccountController extends Controller
         if ($request->filled('status')) {
             $query->where('accounts.is_active', $request->query('status') === 'active');
         }
+        if ($request->filled('system')) {
+            $query->where('accounts.is_system_protected', $request->query('system') === 'system');
+        }
         $paginator = $query->orderBy('accounts.account_group')->orderBy('accounts.code')->paginate($this->perPage($request));
 
         return response()->json(['data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row))->values(), 'meta' => $this->meta($paginator)]);

@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\PosPricingService;
+use App\Support\IdempotencyFingerprint;
 use App\Support\TenantContext;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PosOrderController extends Controller
 {
@@ -55,35 +58,84 @@ class PosOrderController extends Controller
             'items.*.modifiers' => ['array'],
             'items.*.note' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
+            'idempotencyKey' => ['nullable', 'string', 'max:120'],
         ]);
 
         $tenantId = TenantContext::id($request);
-        $order = DB::transaction(function () use ($tenantId, $data) {
-            $now = now();
-            $orderId = DB::table('orders')->insertGetId([
-                'tenant_id' => $tenantId,
-                'branch_id' => $data['branchId'],
-                'shift_id' => $data['shiftId'] ?? null,
-                'table_id' => $data['tableId'] ?? null,
-                'customer_id' => $data['customerId'] ?? null,
-                'order_number' => $this->nextOrderNumber($tenantId, $data['branchId']),
-                'type' => $data['orderType'],
-                'status' => 'draft',
-                'payment_status' => 'unpaid',
-                'notes' => $data['note'] ?? null,
-                'opened_at' => $now,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+        $this->assertTenantOrderContext($tenantId, $data);
+        $key = $data['idempotencyKey'] ?? null;
+        $fingerprint = $key === null ? null : IdempotencyFingerprint::from($data);
 
-            foreach ($data['items'] as $item) {
-                $this->persistItem($tenantId, $orderId, $item);
+        if ($key !== null) {
+            $existing = $this->orderByIdempotencyKey($tenantId, $key);
+            if ($existing !== null) {
+                $this->assertMatchingIdempotencyRequest($existing, $fingerprint);
+
+                return response()->json(['data' => $this->serializeOrder($tenantId, $existing)]);
             }
+        }
 
-            return $this->pricing->recalculateOrder($tenantId, $orderId);
-        });
+        try {
+            $order = DB::transaction(function () use ($tenantId, $data, $key, $fingerprint) {
+                if ($key !== null) {
+                    $existing = $this->orderByIdempotencyKey($tenantId, $key, true);
+                    if ($existing !== null) {
+                        $this->assertMatchingIdempotencyRequest($existing, $fingerprint);
+
+                        return $existing;
+                    }
+                }
+
+                $now = now();
+                $orderId = DB::table('orders')->insertGetId([
+                    'tenant_id' => $tenantId,
+                    'branch_id' => $data['branchId'],
+                    'shift_id' => $data['shiftId'] ?? null,
+                    'table_id' => $data['tableId'] ?? null,
+                    'customer_id' => $data['customerId'] ?? null,
+                    'order_number' => $this->nextOrderNumber($tenantId, $data['branchId']),
+                    'type' => $data['orderType'],
+                    'status' => 'draft',
+                    'payment_status' => 'unpaid',
+                    'notes' => $data['note'] ?? null,
+                    'idempotency_key' => $key,
+                    'idempotency_fingerprint' => $fingerprint,
+                    'opened_at' => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+                foreach ($data['items'] as $item) {
+                    $this->persistItem($tenantId, $orderId, $item);
+                }
+
+                return $this->pricing->recalculateOrder($tenantId, $orderId);
+            });
+        } catch (QueryException $exception) {
+            if ($key !== null && ($existing = $this->orderByIdempotencyKey($tenantId, $key)) !== null) {
+                $this->assertMatchingIdempotencyRequest($existing, $fingerprint);
+
+                return response()->json(['data' => $this->serializeOrder($tenantId, $existing)]);
+            }
+            throw $exception;
+        }
 
         return response()->json(['data' => $this->serializeOrder($tenantId, $order)], 201);
+    }
+
+    private function orderByIdempotencyKey(int $tenantId, string $key, bool $lock = false): ?object
+    {
+        $query = DB::table('orders')->where('tenant_id', $tenantId)->where('idempotency_key', $key);
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
+    private function assertMatchingIdempotencyRequest(object $existing, ?string $fingerprint): void
+    {
+        abort_if($fingerprint === null || empty($existing->idempotency_fingerprint) || ! hash_equals((string) $existing->idempotency_fingerprint, $fingerprint), 409, 'This idempotency key was already used for a different request.');
     }
 
     public function show(Request $request, int $order): JsonResponse
@@ -104,7 +156,9 @@ class PosOrderController extends Controller
         ]);
 
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $orderRow = $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($orderRow);
+        $this->assertTenantOrderContext($tenantId, [...$data, 'branchId' => (int) $orderRow->branch_id]);
 
         $updates = ['updated_at' => now()];
 
@@ -132,7 +186,8 @@ class PosOrderController extends Controller
     public function cancel(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $row = $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($row);
 
         DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
             'status' => 'cancelled',
@@ -154,7 +209,7 @@ class PosOrderController extends Controller
         ]);
 
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($this->findOrder($tenantId, $order));
 
         DB::transaction(function () use ($tenantId, $order, $data): void {
             $this->persistItem($tenantId, $order, $data);
@@ -173,7 +228,7 @@ class PosOrderController extends Controller
         ]);
 
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($this->findOrder($tenantId, $order));
         $existing = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->where('id', $item)->whereNull('deleted_at')->first();
         abort_if(! $existing, 404, 'Order item not found.');
 
@@ -208,7 +263,7 @@ class PosOrderController extends Controller
     public function removeItem(Request $request, int $order, int $item): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($this->findOrder($tenantId, $order));
 
         DB::transaction(function () use ($tenantId, $order, $item): void {
             DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->where('id', $item)->update([
@@ -224,7 +279,7 @@ class PosOrderController extends Controller
     public function hold(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($this->findOrder($tenantId, $order));
 
         DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
             'status' => 'held',
@@ -244,6 +299,7 @@ class PosOrderController extends Controller
 
         $tenantId = TenantContext::id($request);
         $row = $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($row);
         $amount = $data['type'] === 'percentage'
             ? round((float) $row->subtotal * ((float) $data['value'] / 100), 2)
             : min((float) $data['value'], (float) $row->subtotal);
@@ -269,7 +325,7 @@ class PosOrderController extends Controller
     public function removeDiscount(Request $request, int $order): JsonResponse
     {
         $tenantId = TenantContext::id($request);
-        $this->findOrder($tenantId, $order);
+        $this->assertOrderIsEditable($this->findOrder($tenantId, $order));
 
         DB::transaction(function () use ($tenantId, $order): void {
             DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order)->delete();
@@ -347,6 +403,31 @@ class PosOrderController extends Controller
         abort_if(! $order, 404, 'Order not found.');
 
         return $order;
+    }
+
+    private function assertOrderIsEditable(object $order): void
+    {
+        abort_if($order->payment_status !== 'unpaid', 422, 'This order has a payment on record and cannot be changed directly. Issue a refund or reversal first.');
+    }
+
+    private function assertTenantOrderContext(int $tenantId, array $data): void
+    {
+        $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $data['branchId'])->where('is_active', true)->whereNull('deleted_at')->first();
+        if (! $branch) {
+            throw ValidationException::withMessages(['branchId' => 'The selected branch is not available for this tenant.']);
+        }
+
+        if (! empty($data['shiftId']) && ! DB::table('shifts')->where('tenant_id', $tenantId)->where('branch_id', $data['branchId'])->where('id', $data['shiftId'])->exists()) {
+            throw ValidationException::withMessages(['shiftId' => 'The selected shift does not belong to the selected tenant and branch.']);
+        }
+
+        if (! empty($data['tableId']) && ! DB::table('cafe_tables')->where('tenant_id', $tenantId)->where('branch_id', $data['branchId'])->where('id', $data['tableId'])->whereNull('deleted_at')->exists()) {
+            throw ValidationException::withMessages(['tableId' => 'The selected table does not belong to the selected tenant and branch.']);
+        }
+
+        if (! empty($data['customerId']) && ! DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'])->whereNull('deleted_at')->exists()) {
+            throw ValidationException::withMessages(['customerId' => 'The selected customer does not belong to this tenant.']);
+        }
     }
 
     private function nextOrderNumber(int $tenantId, int $branchId): string

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StockMovementRequest;
 use App\Domain\Inventory\InventoryPostingService;
+use App\Domain\Inventory\InventoryAccountingMapper;
 use App\Support\FinancialActor;
 use App\Support\InventoryAccess;
 use App\Support\InventoryDecimal;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class StockMovementController extends Controller
 {
-    public function __construct(private readonly InventoryPostingService $movements) {}
+    public function __construct(private readonly InventoryPostingService $movements, private readonly InventoryAccountingMapper $accounting) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -70,6 +71,6 @@ class StockMovementController extends Controller
 
     private function serialize(object $row): array
     {
-        return ['id' => (int) $row->id, 'warehouseId' => (int) $row->warehouse_id, 'warehouseName' => WarehousePresentation::displayName($row->branch_name, $row->warehouse_type), 'warehouseTypeLabel' => WarehousePresentation::typeLabel($row->warehouse_type), 'itemId' => (int) $row->inventory_item_id, 'itemNameAr' => $row->item_name_en ?: $row->sku, 'unit' => $row->unit, 'inputUnit' => $row->input_unit ?? $row->unit, 'conversionFactor' => InventoryDecimal::conversionFactor(InventoryDecimal::factor($row->conversion_factor ?? '1.000000')), 'baseQuantity' => InventoryDecimal::quantity(InventoryDecimal::units($row->base_quantity ?? $row->quantity)), 'type' => $row->type, 'quantityIn' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_in)), 'quantityOut' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_out)), 'quantityBefore' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_before)), 'quantityAfter' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_after)), 'unitCost' => InventoryDecimal::unitCost(InventoryDecimal::cost($row->unit_cost)), 'totalCost' => $row->total_cost, 'reason' => $row->reason, 'referenceType' => $row->reference_type, 'referenceId' => $row->reference_id ? (int) $row->reference_id : null, 'userName' => $row->user_name, 'occurredAt' => $row->occurred_at, 'createdAt' => $row->created_at];
+        return ['id' => (int) $row->id, 'warehouseId' => (int) $row->warehouse_id, 'warehouseName' => WarehousePresentation::displayName($row->branch_name, $row->warehouse_type), 'warehouseTypeLabel' => WarehousePresentation::typeLabel($row->warehouse_type), 'itemId' => (int) $row->inventory_item_id, 'itemNameAr' => $row->item_name_en ?: $row->sku, 'unit' => $row->unit, 'inputUnit' => $row->input_unit ?? $row->unit, 'conversionFactor' => InventoryDecimal::conversionFactor(InventoryDecimal::factor($row->conversion_factor ?? '1.000000')), 'baseQuantity' => InventoryDecimal::quantity(InventoryDecimal::units($row->base_quantity ?? $row->quantity)), 'type' => $row->type, 'quantityIn' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_in)), 'quantityOut' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_out)), 'quantityBefore' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_before)), 'quantityAfter' => InventoryDecimal::quantity(InventoryDecimal::units($row->quantity_after)), 'unitCost' => InventoryDecimal::unitCost(InventoryDecimal::cost($row->unit_cost)), 'totalCost' => $row->total_cost, 'reason' => $row->reason, 'referenceType' => $row->reference_type, 'referenceId' => $row->reference_id ? (int) $row->reference_id : null, 'userName' => $row->user_name, 'occurredAt' => $row->occurred_at, 'createdAt' => $row->created_at, 'financeImpact' => $this->accounting->impactForMovement((int) $row->tenant_id, $row)];
     }
 }
