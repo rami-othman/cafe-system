@@ -17,16 +17,12 @@ class PosMenuSyncRepository {
   Future<PosPublishedRuntimeMenu?> loadCachedMenu({
     required int branchId,
   }) async {
-    final PosCachedMenu? cached = await cache.read(
-      _scopeFor(branchId),
-    );
+    final PosCachedMenu? cached = await cache.read(_scopeFor(branchId));
     return cached?.withRuntime(null);
   }
 
   Future<DateTime?> cachedSyncedAt({required int branchId}) async {
-    final PosCachedMenu? cached = await cache.read(
-      _scopeFor(branchId),
-    );
+    final PosCachedMenu? cached = await cache.read(_scopeFor(branchId));
     return cached?.syncedAt;
   }
 

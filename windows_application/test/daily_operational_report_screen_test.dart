@@ -6,7 +6,10 @@ import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/reports/controllers/daily_report_cubit.dart';
 import 'package:windows_application/features/reports/views/daily_operational_report_screen.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
+import 'package:windows_application/shared/widgets/app_sidebar.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
+import 'package:windows_application/shared/widgets/app_top_bar.dart';
 
 void main() {
   setUp(() async {
@@ -26,8 +29,12 @@ void main() {
       expect(find.text('Today, Oct 24, 2023'), findsOneWidget);
       expect(find.text('Print'), findsOneWidget);
       expect(find.text('Export Report'), findsOneWidget);
-      expect(find.byTooltip('Refresh screen data'), findsOneWidget);
+      expect(find.byTooltip(_refreshTooltip(tester)), findsOneWidget);
       expect(_reportsSidebarItem(tester).isActive, isTrue);
+
+      await tester.tap(find.byTooltip(_refreshTooltip(tester)));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -148,10 +155,16 @@ Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-AppSidebarItem _reportsSidebarItem(WidgetTester tester) =>
-    tester.widget<AppSidebarItem>(
-      find.byWidgetPredicate(
-        (Widget widget) =>
-            widget is AppSidebarItem && widget.label == 'Reports',
-      ),
-    );
+AppSidebarItem _reportsSidebarItem(WidgetTester tester) {
+  final BuildContext sidebarContext = tester.element(find.byType(AppSidebar));
+  final String reportsLabel = AppLocalizations.of(
+    sidebarContext,
+  ).navigationReports;
+  return tester
+      .widgetList<AppSidebarItem>(find.byType(AppSidebarItem))
+      .singleWhere((AppSidebarItem item) => item.label == reportsLabel);
+}
+
+String _refreshTooltip(WidgetTester tester) => AppLocalizations.of(
+  tester.element(find.byType(AppTopBar)),
+).tooltipRefreshScreenData;

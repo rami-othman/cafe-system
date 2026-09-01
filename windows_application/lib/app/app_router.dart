@@ -100,14 +100,12 @@ final GoRouter appRouter = GoRouter(
         final bool isMenuManagement = state.uri.path.startsWith(
           AppRoutes.menuManagement,
         );
+        final bool isReports = state.matchedLocation == AppRoutes.reports;
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(state),
-          // The shell top bar is above route-owned Cubits. Only POS sync is
-          // shell-scoped; other screens expose refresh within their own route
-          // provider rather than reading a sibling from the top bar.
-          onRefresh: state.uri.path == AppRoutes.pos
+          onRefresh: state.uri.path == AppRoutes.pos || isReports
               ? _refreshActionFor(state)
               : null,
           prioritizeContentWidth: isMenuManagement,
@@ -140,6 +138,13 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<PosMenuSyncCubit>(
               create: (_) => serviceLocator<PosMenuSyncCubit>(),
             ),
+            if (isReports)
+              BlocProvider<DailyReportCubit>(
+                create: (BuildContext context) =>
+                    serviceLocator<DailyReportCubit>()..loadReport(
+                      branchId: context.read<PosCubit>().state.branchId,
+                    ),
+              ),
           ],
           child: shell,
         );
@@ -803,11 +808,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
-          builder: (context, state) => BlocProvider<DailyReportCubit>(
-            create: (_) => serviceLocator<DailyReportCubit>()
-              ..loadReport(branchId: context.read<PosCubit>().state.branchId),
-            child: _BranchFollowingReport(),
-          ),
+          builder: (context, state) => const _BranchFollowingReport(),
         ),
         GoRoute(
           path: AppRoutes.discounts,

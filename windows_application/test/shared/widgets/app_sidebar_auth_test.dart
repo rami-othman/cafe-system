@@ -3,26 +3,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/shared/widgets/app_sidebar.dart';
 
 void main() {
-  testWidgets('Employee and Cashier do not see Menu Management navigation', (
+  testWidgets('Employee does not see Menu Management but retains Reports', (
     WidgetTester tester,
   ) async {
-    for (final String role in <String>['employee', 'cashier']) {
-      await _pumpSidebar(tester, role);
-      expect(find.text('Menu Management'), findsNothing);
-      expect(find.text('Reports'), findsOneWidget);
-      await tester.pumpWidget(const SizedBox.shrink());
-    }
+    await _pumpSidebar(tester, 'employee');
+
+    expect(find.text('Menu Management'), findsNothing);
+    expect(find.text('Reports'), findsOneWidget);
   });
 
-  testWidgets('Owner and Manager see Menu Management navigation', (
+  testWidgets('Cashier does not see Menu Management but retains Reports', (
     WidgetTester tester,
   ) async {
-    for (final String role in <String>['owner', 'manager']) {
-      await _pumpSidebar(tester, role);
-      expect(find.text('Menu Management'), findsOneWidget);
-      expect(find.text('Reports'), findsOneWidget);
-      await tester.pumpWidget(const SizedBox.shrink());
-    }
+    await _pumpSidebar(tester, 'cashier');
+
+    expect(find.text('Menu Management'), findsNothing);
+    expect(find.text('Reports'), findsOneWidget);
+  });
+
+  testWidgets('Owner sees Menu Management and retains Reports', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'owner');
+
+    expect(find.text('Menu Management'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
+  });
+
+  testWidgets('Manager sees Menu Management and retains Reports', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'manager');
+
+    expect(find.text('Menu Management'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
   });
 }
 
