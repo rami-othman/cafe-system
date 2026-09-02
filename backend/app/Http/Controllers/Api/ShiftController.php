@@ -20,10 +20,16 @@ class ShiftController extends Controller
             'branchId' => ['nullable', 'integer', $this->tenantExists('branches', $tenantId)],
         ]);
         $branchId = (int) $request->query('branchId');
+        $actor = $request->attributes->get('auth_user');
+
+        if ($branchId > 0) {
+            app(BranchAccessService::class)->authorizeRequestBranch($request, $branchId);
+        }
 
         $shift = DB::table('shifts')
             ->where('tenant_id', $tenantId)
-            ->whereIn('branch_id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))
+            ->where('user_id', $actor->id)
+            ->whereIn('branch_id', app(BranchAccessService::class)->accessibleBranchIds($actor))
             ->when($branchId > 0, fn ($query) => $query->where('branch_id', $branchId))
             ->where('status', 'open')
             ->whereNull('deleted_at')
@@ -41,6 +47,8 @@ class ShiftController extends Controller
             'userId' => ['prohibited'],
             'openingCash' => ['required', 'numeric', 'min:0'],
         ]);
+
+        app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $data['branchId']);
 
         $now = now();
 
@@ -71,6 +79,7 @@ class ShiftController extends Controller
         $row = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift)->whereNull('deleted_at')->first();
         abort_if(! $row, 404, 'Shift not found.');
         app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $row->branch_id);
+        abort_unless((int) $row->user_id === (int) $request->attributes->get('auth_user')->id, 403, 'Only the shift owner can close this shift.');
 
         $cashPayments = (float) DB::table('payments')
             ->where('tenant_id', $tenantId)

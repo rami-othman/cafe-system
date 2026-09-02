@@ -85,7 +85,10 @@ class DiscountRuntimeEligibilityTest extends TestCase
         $category = DB::table('categories')->insertGetId(['tenant_id' => $tenant, 'name' => 'Published category', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
         $product = DB::table('products')->insertGetId(['tenant_id' => $tenant, 'category_id' => $category, 'name' => 'Product', 'price' => 100, 'cost_price' => 1, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
         $publication = DB::table('menu_publications')->insertGetId(['tenant_id' => $tenant, 'status' => 'published', 'published_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
-        $order = DB::table('orders')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'order_number' => 'D-1', 'type' => 'takeaway', 'status' => 'draft', 'payment_status' => 'unpaid', 'subtotal' => 100, 'tax_rate' => 0, 'total' => 100, 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
+        $this->authenticateTenantUser($tenant);
+        $actorId = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->orderBy('id')->value('id');
+        $shift = DB::table('shifts')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $actorId, 'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
+        $order = DB::table('orders')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'shift_id' => $shift, 'order_number' => 'D-1', 'type' => 'takeaway', 'status' => 'draft', 'payment_status' => 'unpaid', 'subtotal' => 100, 'tax_rate' => 0, 'total' => 100, 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         DB::table('order_items')->insert(['tenant_id' => $tenant, 'order_id' => $order, 'product_id' => $product, 'category_id' => $category, 'product_name' => 'Published Product', 'quantity' => 1, 'unit_price' => 100, 'total' => 100, 'created_at' => $now, 'updated_at' => $now]);
 
         return compact('tenant', 'branch', 'category', 'product', 'publication', 'order');

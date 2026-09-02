@@ -114,6 +114,7 @@ class PosCubit extends Cubit<PosState> {
         branchId: branch.id,
         taxRate: branch.taxRate,
         isLoading: true,
+        clearShiftId: true,
         clearErrorMessage: true,
         clearApiErrorMessage: true,
         requiresMenuRefresh: false,

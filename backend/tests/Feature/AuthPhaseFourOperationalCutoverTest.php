@@ -56,9 +56,15 @@ class AuthPhaseFourOperationalCutoverTest extends TestCase
         $owner = User::query()->where('tenant_id', $tenantId)->where('role', 'owner')->firstOrFail();
         $token = $this->authenticateTenantUser($tenantId, $owner);
         $now = now();
+        $shiftId = DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenantId, 'branch_id' => $branchId, 'user_id' => $owner->id,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
         $orderId = DB::table('orders')->insertGetId([
             'tenant_id' => $tenantId, 'branch_id' => $branchId, 'order_number' => 'AUTH4-001', 'type' => 'takeaway',
             'status' => 'draft', 'payment_status' => 'unpaid', 'subtotal' => 10, 'tax_total' => 0, 'total' => 10,
+            'shift_id' => $shiftId,
             'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now,
         ]);
 
@@ -68,6 +74,96 @@ class AuthPhaseFourOperationalCutoverTest extends TestCase
         $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->orderBy('id')->value('id');
         $this->withToken($token)->putJson("/api/v1/admin/catalog/products/{$productId}/operational-availability", ['branchId' => $branchId, 'channel' => 'pos', 'status' => 'sold_out'])->assertOk();
         $this->assertDatabaseHas('product_operational_availabilities', ['tenant_id' => $tenantId, 'product_id' => $productId, 'branch_id' => $branchId, 'updated_by' => $owner->id]);
+    }
+
+    public function test_current_shift_and_pos_state_only_report_the_authenticated_users_open_shift(): void
+    {
+        [$tenant, $branch, $owner] = $this->tenantBranchUser('shift-state', 'owner');
+        $other = User::query()->create([
+            'tenant_id' => $tenant->id, 'name' => 'Other Cashier',
+            'email' => 'other-shift@example.test', 'password' => Hash::make('password'),
+            'role' => 'cashier', 'is_active' => true,
+        ]);
+        $now = now();
+        DB::table('shifts')->insert([
+            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'user_id' => $other->id,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $token = $this->authenticateTenantUser($tenant->id, $owner);
+
+        $this->withToken($token)->getJson("/api/v1/shifts/current?branchId={$branch->id}")
+            ->assertOk()->assertJsonPath('data', null);
+        $this->withToken($token)->getJson("/api/v1/pos/state?branchId={$branch->id}")
+            ->assertOk()->assertJsonPath('data.terminal.status', 'closed')
+            ->assertJsonPath('data.currentShift', null);
+
+        $shiftId = DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'user_id' => $owner->id,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+
+        $this->withToken($token)->getJson("/api/v1/shifts/current?branchId={$branch->id}")
+            ->assertOk()->assertJsonPath('data.id', $shiftId)
+            ->assertJsonPath('data.userId', $owner->id);
+        $this->withToken($token)->getJson("/api/v1/pos/state?branchId={$branch->id}")
+            ->assertOk()->assertJsonPath('data.terminal.status', 'open')
+            ->assertJsonPath('data.currentShift.id', $shiftId);
+    }
+
+    public function test_payment_requires_the_authenticated_users_open_shift_for_the_order_branch(): void
+    {
+        [$tenant, $branch, $owner] = $this->tenantBranchUser('payment-shift', 'owner');
+        $otherBranch = Branch::query()->create([
+            'tenant_id' => $tenant->id, 'name' => 'Other Branch', 'timezone' => 'UTC',
+            'currency' => 'SYP', 'is_active' => true,
+        ]);
+        $other = User::query()->create([
+            'tenant_id' => $tenant->id, 'name' => 'Other Cashier',
+            'email' => 'other-payment@example.test', 'password' => Hash::make('password'),
+            'role' => 'cashier', 'is_active' => true,
+        ]);
+        $token = $this->authenticateTenantUser($tenant->id, $owner);
+        $now = now();
+
+        $withoutShift = $this->createPayableOrder($tenant->id, $branch->id, null, 'SHIFT-NONE', $now);
+        $this->withToken($token)->postJson("/api/v1/orders/{$withoutShift}/pay", [
+            'method' => 'cash', 'amount' => 10, 'idempotencyKey' => 'shift-none',
+        ])->assertUnprocessable()->assertJsonValidationErrors('shiftId');
+
+        $otherUserShift = DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'user_id' => $other->id,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $otherUserOrder = $this->createPayableOrder($tenant->id, $branch->id, $otherUserShift, 'SHIFT-OTHER-USER', $now);
+        $this->withToken($token)->postJson("/api/v1/orders/{$otherUserOrder}/pay", [
+            'method' => 'cash', 'amount' => 10, 'idempotencyKey' => 'shift-other-user',
+        ])->assertUnprocessable()->assertJsonValidationErrors('shiftId');
+
+        $otherBranchShift = DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenant->id, 'branch_id' => $otherBranch->id, 'user_id' => $owner->id,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $otherBranchOrder = $this->createPayableOrder($tenant->id, $branch->id, $otherBranchShift, 'SHIFT-OTHER-BRANCH', $now);
+        $this->withToken($token)->postJson("/api/v1/orders/{$otherBranchOrder}/pay", [
+            'method' => 'cash', 'amount' => 10, 'idempotencyKey' => 'shift-other-branch',
+        ])->assertUnprocessable()->assertJsonValidationErrors('shiftId');
+
+        $validShift = DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'user_id' => $owner->id,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $validOrder = $this->createPayableOrder($tenant->id, $branch->id, $validShift, 'SHIFT-VALID', $now);
+        $this->withToken($token)->postJson("/api/v1/orders/{$validOrder}/pay", [
+            'method' => 'cash', 'amount' => 10, 'idempotencyKey' => 'shift-valid',
+        ])->assertOk();
+        $this->assertDatabaseHas('payments', [
+            'order_id' => $validOrder, 'shift_id' => $validShift, 'cashier_id' => $owner->id,
+        ]);
     }
 
     public function test_temporary_menu_management_boundary_allows_owner_and_manager_but_forbids_employee_api_access(): void
@@ -129,5 +225,15 @@ class AuthPhaseFourOperationalCutoverTest extends TestCase
         $user = User::query()->create(['tenant_id' => $tenant->id, 'name' => ucfirst($role), 'email' => strtolower($name).'-'.uniqid().'@example.test', 'password' => Hash::make('password'), 'role' => $role, 'is_active' => true]);
 
         return [$tenant, $branch, $user];
+    }
+
+    private function createPayableOrder(int $tenantId, int $branchId, ?int $shiftId, string $number, $now): int
+    {
+        return DB::table('orders')->insertGetId([
+            'tenant_id' => $tenantId, 'branch_id' => $branchId, 'shift_id' => $shiftId,
+            'order_number' => $number, 'type' => 'takeaway', 'status' => 'draft',
+            'payment_status' => 'unpaid', 'subtotal' => 10, 'tax_total' => 0, 'total' => 10,
+            'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now,
+        ]);
     }
 }

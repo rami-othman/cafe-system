@@ -64,6 +64,7 @@ class PaymentController extends Controller
             }
 
             $this->lifecycle->assertPayable($row);
+            $this->assertActorHasOpenShift($tenantId, $row, $actorId);
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
@@ -122,6 +123,24 @@ class PaymentController extends Controller
             'id' => $payment->id, 'method' => $payment->method, 'amount' => (float) $payment->amount,
             'status' => $payment->status, 'paidAt' => $payment->paid_at,
         ]];
+    }
+
+    private function assertActorHasOpenShift(int $tenantId, object $order, int $actorId): void
+    {
+        $hasOpenShift = $order->shift_id !== null && DB::table('shifts')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $order->shift_id)
+            ->where('branch_id', $order->branch_id)
+            ->where('user_id', $actorId)
+            ->where('status', 'open')
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if (! $hasOpenShift) {
+            throw ValidationException::withMessages([
+                'shiftId' => 'No open shift found. Open a shift before paying.',
+            ]);
+        }
     }
 
     private function payloadHash(array $data): string

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Support\TenantContext;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -18,11 +19,14 @@ class PosStateController extends Controller
         $data = $request->validate([
             'branchId' => ['required', 'integer', Rule::exists('branches', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at'))],
         ]);
+        app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $data['branchId']);
 
         $shift = DB::table('shifts')
             ->where('tenant_id', $tenantId)
             ->where('branch_id', $data['branchId'])
+            ->where('user_id', $request->attributes->get('auth_user')->id)
             ->where('status', 'open')
+            ->whereNull('deleted_at')
             ->latest('opened_at')
             ->first();
 

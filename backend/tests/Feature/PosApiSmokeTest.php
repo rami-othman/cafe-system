@@ -59,6 +59,8 @@ class PosApiSmokeTest extends TestCase
 
         $branchId = DB::table('branches')->where('name', 'Downtown')->value('id');
         $productId = DB::table('products')->where('name', 'Cappuccino')->value('id');
+        $tenantId = DB::table('branches')->where('id', $branchId)->value('tenant_id');
+        $headers = ['X-Tenant-Id' => (string) $tenantId];
 
         $this->getJson('/api/v1/menu/categories')
             ->assertOk()
@@ -73,9 +75,15 @@ class PosApiSmokeTest extends TestCase
             ->assertJsonPath('data.0.name', 'Downtown')
             ->assertJsonPath('data.0.currency', 'SYP');
 
-        $state = $this->getJson("/api/v1/pos/state?branchId={$branchId}")
+        $shift = $this->postJson('/api/v1/shifts/current', [
+            'branchId' => $branchId,
+            'openingCash' => 0,
+        ], $headers)->assertCreated();
+
+        $state = $this->getJson("/api/v1/pos/state?branchId={$branchId}", $headers)
             ->assertOk()
-            ->assertJsonPath('data.terminal.status', 'open');
+            ->assertJsonPath('data.terminal.status', 'open')
+            ->assertJsonPath('data.currentShift.id', $shift->json('data.id'));
 
         $this->getJson('/api/v1/customers?search=Jane')
             ->assertOk()
@@ -86,7 +94,7 @@ class PosApiSmokeTest extends TestCase
             ->assertJsonPath('data.name', 'Cappuccino')
             ->assertJsonPath('data.modifierGroups.0.name', 'Temperature');
 
-        $shiftId = $state->json('data.currentShift.id');
+        $shiftId = $shift->json('data.id');
 
         $modifiers = DB::table('product_modifier_group')
             ->join('modifier_groups', 'modifier_groups.id', '=', 'product_modifier_group.modifier_group_id')

@@ -106,9 +106,14 @@ class _AppTopBarState extends State<AppTopBar> {
                         ),
                       ),
               ),
-              if (showShiftBadge) ...const <Widget>[
-                SizedBox(width: AppSpacing.lg),
-                ShiftStatusBadge(),
+              if (showShiftBadge) ...<Widget>[
+                const SizedBox(width: AppSpacing.lg),
+                ShiftStatusBadge(
+                  isOpen:
+                      posState != null &&
+                      !posState.isLoading &&
+                      posState.shiftId != null,
+                ),
               ],
               if (widget.showCartButton) ...<Widget>[
                 const SizedBox(width: AppSpacing.sm),

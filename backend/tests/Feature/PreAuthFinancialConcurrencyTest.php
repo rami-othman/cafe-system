@@ -215,9 +215,21 @@ class PreAuthFinancialConcurrencyTest extends TestCase
     private function makeOrder(int $tenantId, int $branchId, float $total): int
     {
         $now = now();
+        $actorId = (int) DB::table('users')
+            ->where('tenant_id', $tenantId)
+            ->where('role', 'owner')
+            ->where('is_active', true)
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->value('id');
+        $shiftId = DB::table('shifts')->insertGetId([
+            'tenant_id' => $tenantId, 'branch_id' => $branchId, 'user_id' => $actorId,
+            'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
 
         return DB::table('orders')->insertGetId([
-            'tenant_id' => $tenantId, 'branch_id' => $branchId,
+            'tenant_id' => $tenantId, 'branch_id' => $branchId, 'shift_id' => $shiftId,
             'order_number' => 'concurrency-'.uniqid(), 'type' => 'takeaway',
             'status' => 'draft', 'payment_status' => 'unpaid', 'tax_rate' => 0,
             'subtotal' => $total, 'total' => $total, 'opened_at' => $now,
@@ -232,6 +244,7 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         DB::table('orders')->where('id', $orderId)->update(['status' => 'paid', 'payment_status' => 'paid', 'closed_at' => $now]);
         $paymentId = DB::table('payments')->insertGetId([
             'tenant_id' => $tenantId, 'branch_id' => $branchId, 'order_id' => $orderId,
+            'shift_id' => DB::table('orders')->where('id', $orderId)->value('shift_id'),
             'method' => 'cash', 'amount' => $total, 'currency' => 'SYP', 'status' => 'completed',
             'paid_at' => $now, 'created_at' => $now, 'updated_at' => $now,
         ]);

@@ -28,7 +28,7 @@ void main() {
       expect(switched, isTrue);
       expect(cubit.state.branchId, 2);
       expect(cubit.state.taxRate, 0.2);
-      expect(cubit.state.shiftId, 20);
+      expect(cubit.state.shiftId, isNull);
       expect(cubit.state.products.single.name, 'Mall Latte');
       expect(repository.loadedBranchIds, <int>[1, 2]);
     },
@@ -78,6 +78,7 @@ class _BranchRepository extends PosRepository {
   @override
   Future<Shift?> getCurrentShift({required int branchId}) async {
     loadedBranchIds.add(branchId);
+    if (branchId == 2) return null;
     return Shift(
       id: branchId * 10,
       branchId: branchId,
