@@ -3,7 +3,8 @@
 set -euo pipefail
 
 : "${API_BASE_URL:?Set API_BASE_URL in Netlify to the Render HTTPS API URL, including /api/v1.}"
-: "${NETLIFY_CACHE_DIR:?NETLIFY_CACHE_DIR is required by the Netlify build environment.}"
+
+netlify_cache_dir="${NETLIFY_CACHE_DIR:-${HOME:-/tmp}/.cache/netlify}"
 
 case "$API_BASE_URL" in
   https://*) ;;
@@ -13,17 +14,19 @@ case "$API_BASE_URL" in
     ;;
 esac
 
-flutter_version="${FLUTTER_VERSION:-3.44.8}"
-flutter_root="$NETLIFY_CACHE_DIR/cafe-system-618/flutter-$flutter_version"
+flutter_version="3.44.8"
+flutter_root="$netlify_cache_dir/cafe-system-618/flutter-$flutter_version"
+pub_cache="$netlify_cache_dir/cafe-system-618/pub-cache"
+
+mkdir -p "$(dirname "$flutter_root")" "$pub_cache"
 
 if [ ! -x "$flutter_root/bin/flutter" ]; then
-  mkdir -p "$(dirname "$flutter_root")"
   git clone --depth 1 --branch "$flutter_version" \
     https://github.com/flutter/flutter.git "$flutter_root"
 fi
 
 export PATH="$flutter_root/bin:$PATH"
-export PUB_CACHE="$NETLIFY_CACHE_DIR/cafe-system-618/pub-cache"
+export PUB_CACHE="$pub_cache"
 
 flutter config --no-analytics
 flutter pub get
