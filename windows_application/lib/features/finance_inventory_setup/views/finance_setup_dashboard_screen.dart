@@ -71,6 +71,19 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                       onPressed: () =>
                           context.go(AppRoutes.financeExpenseCategories),
                     ),
+                    AppButton(
+                      label: 'طرق الدفع',
+                      icon: Icons.credit_card_outlined,
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () =>
+                          context.go(AppRoutes.financePaymentMethods),
+                    ),
+                    AppButton(
+                      label: 'النقد والبنوك',
+                      icon: Icons.account_balance_wallet_outlined,
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () => context.go(AppRoutes.financeCashBanks),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -124,6 +137,23 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                Wrap(
+                  spacing: AppSpacing.md,
+                  runSpacing: AppSpacing.md,
+                  children: <Widget>[
+                    ManagementKpiCard(
+                      label: 'طرق الدفع النشطة',
+                      value: '${status.activePaymentMethodCount}',
+                      icon: Icons.credit_card_outlined,
+                    ),
+                    ManagementKpiCard(
+                      label: 'المواقع النقدية والبنكية',
+                      value: '${status.cashBankAccountCount}',
+                      icon: Icons.account_balance_wallet_outlined,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 Text('قائمة الجاهزية', style: AppTextStyles.titleMedium),
                 const SizedBox(height: AppSpacing.sm),
                 _Readiness(
@@ -136,6 +166,15 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                   label: 'المستودع المركزي',
                   ready: status.centralWarehouseReady,
                   onTap: () => context.go(AppRoutes.financeWarehouses),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _Readiness(
+                  label: 'طرق الدفع والوجهات المالية',
+                  detail: status.activePaymentMethodCount == 0
+                      ? 'لم يتم إعداد طريقة دفع نشطة.'
+                      : '${status.activePaymentMethodCount} طريقة دفع نشطة.',
+                  ready: status.activePaymentMethodCount > 0,
+                  onTap: () => context.go(AppRoutes.financePaymentMethods),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _Readiness(

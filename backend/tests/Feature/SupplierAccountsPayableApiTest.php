@@ -228,6 +228,10 @@ class SupplierAccountsPayableApiTest extends TestCase
         $statement = $this->getJson("/api/v1/finance/suppliers/{$supplier2}/statement", $headers2)->assertOk();
         $lines = $statement->json('data.lines');
         $this->assertSame('800.00', end($lines)['runningBalance']);
+        // Each line must carry the source invoice/payment id so the Flutter
+        // statement can drill down to the exact record, not just its reference text.
+        $this->assertSame($inv1, $lines[0]['id']);
+        $this->assertSame('invoice', $lines[0]['type']);
     }
 
     public function test_allocation_across_different_supplier_or_tenant_invoice_is_rejected(): void

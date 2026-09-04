@@ -151,9 +151,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('daily-closings/{closing}/close', [DailyClosingController::class, 'close'])->middleware('finance.permission:finance.daily_closing.close');
         Route::get('accounts', [FinancialAccountController::class, 'index'])->middleware('finance.permission:finance.accounts.view');
         Route::post('accounts', [FinancialAccountController::class, 'store'])->middleware('finance.permission:finance.accounts.manage');
+        Route::get('accounts/{account}', [FinancialAccountController::class, 'show'])->middleware('finance.permission:finance.accounts.view');
         Route::patch('accounts/{account}', [FinancialAccountController::class, 'update'])->middleware('finance.permission:finance.accounts.manage');
         Route::patch('accounts/{account}/status', [FinancialAccountController::class, 'status'])->middleware('finance.permission:finance.accounts.manage');
         Route::get('journal-entries', [JournalEntryController::class, 'index'])->middleware('finance.permission:finance.journals.view');
+        Route::get('transactions/branches', [FinancialTransactionController::class, 'branches'])->middleware('finance.permission:finance.transactions.view');
         Route::get('transactions/summary', [FinancialTransactionController::class, 'summary'])->middleware('finance.permission:finance.transactions.view');
         Route::get('transactions', [FinancialTransactionController::class, 'index'])->middleware('finance.permission:finance.transactions.view');
         Route::get('transactions/{transaction}', [FinancialTransactionController::class, 'show'])->middleware('finance.permission:finance.transactions.view');
@@ -178,11 +180,13 @@ Route::prefix('v1')->group(function (): void {
         Route::get('cash-accounts/{location}', [FinancialLocationController::class, 'show'])->defaults('kind', 'cash')->middleware('finance.permission:finance.cash_accounts.view');
         Route::patch('cash-accounts/{location}', [FinancialLocationController::class, 'update'])->defaults('kind', 'cash')->middleware('finance.permission:finance.cash_accounts.manage');
         Route::patch('cash-accounts/{location}/status', [FinancialLocationController::class, 'status'])->defaults('kind', 'cash')->middleware('finance.permission:finance.cash_accounts.manage');
-        Route::get('cash-accounts/{location}/transactions', [FinancialLocationController::class, 'transactions'])->middleware('finance.permission:finance.cash_accounts.view');
+        Route::get('cash-accounts/{location}/transactions', [FinancialLocationController::class, 'transactions'])->defaults('kind', 'cash')->middleware('finance.permission:finance.cash_accounts.view');
         Route::get('bank-accounts', [FinancialLocationController::class, 'index'])->defaults('kind', 'bank')->middleware('finance.permission:finance.cash_accounts.view');
         Route::post('bank-accounts', [FinancialLocationController::class, 'store'])->defaults('kind', 'bank')->middleware('finance.permission:finance.cash_accounts.manage');
+        Route::get('bank-accounts/{location}', [FinancialLocationController::class, 'show'])->defaults('kind', 'bank')->middleware('finance.permission:finance.cash_accounts.view');
         Route::patch('bank-accounts/{location}', [FinancialLocationController::class, 'update'])->defaults('kind', 'bank')->middleware('finance.permission:finance.cash_accounts.manage');
         Route::patch('bank-accounts/{location}/status', [FinancialLocationController::class, 'status'])->defaults('kind', 'bank')->middleware('finance.permission:finance.cash_accounts.manage');
+        Route::get('bank-accounts/{location}/transactions', [FinancialLocationController::class, 'transactions'])->defaults('kind', 'bank')->middleware('finance.permission:finance.cash_accounts.view');
         Route::post('cash-transfers', [FinancialLocationController::class, 'transfer'])->middleware('finance.permission:finance.cash_transfer.create');
         Route::post('cash-transfers/{transfer}/reverse', [FinancialLocationController::class, 'reverseTransfer'])->middleware('finance.permission:finance.cash_transfer.reverse');
         Route::get('payment-methods', [PaymentMethodController::class, 'index'])->middleware('finance.permission:finance.settings.view');
@@ -194,6 +198,8 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('expense-categories/{category}', [ExpenseCategoryController::class, 'update'])->middleware('finance.permission:finance.settings.manage');
         Route::patch('expense-categories/{category}/status', [ExpenseCategoryController::class, 'status'])->middleware('finance.permission:finance.settings.manage');
         Route::get('expenses', [ExpenseController::class, 'index'])->middleware('finance.permission:finance.expenses.view');
+        Route::get('expenses/summary', [ExpenseController::class, 'summary'])->middleware('finance.permission:finance.expenses.view');
+        Route::get('expenses/branches', [ExpenseController::class, 'branches'])->middleware('finance.permission:finance.expenses.view');
         Route::post('expenses', [ExpenseController::class, 'store'])->middleware('finance.permission:finance.expenses.create');
         Route::get('expenses/{expense}', [ExpenseController::class, 'show'])->middleware('finance.permission:finance.expenses.view');
         Route::patch('expenses/{expense}', [ExpenseController::class, 'update'])->middleware('finance.permission:finance.expenses.edit');

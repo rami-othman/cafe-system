@@ -15,6 +15,24 @@ Phase 1 — Project Foundation
 
 ## Completed Work
 
+- Final Finance audit canonicalized reachable legacy Finance URLs: operational
+  `?tab=` paths and prior aliases now redirect to one canonical workspace,
+  while Overview and Transactions remain the only `FinanceWorkspaceScreen`
+  content paths. The complete Finance Laravel matrix (193 tests, 1,683
+  assertions) and Finance Flutter suite (133 tests) pass.
+- Completed the Phase 10 validation cleanup with dedicated Account Detail,
+  Accounting Period Detail, and Payment Method financial-location widget tests
+  at 1280, 1366, 1440, 1600, and 1920 pixels; each verifies RTL and no
+  rendering overflow, with real mocked API contracts and drill-through flows.
+- Extended Finance administration with tenant-scoped account detail and an
+  expandable Chart of Accounts tree, account-to-General-Ledger drill-through,
+  backend readiness-led accounting-period detail, payment-method financial
+  location linking, and Finance Settings links/readiness cards. Verification:
+  focused Laravel Finance tests, Finance Flutter tests, and the full Flutter
+  suite pass; existing unrelated analyzer informational lints remain.
+- Completed Finance Phase 1 shared visual foundation: exact Finance design tokens, canonical 12-tab navigation, reusable Finance shell/components, ten-row server pagination treatment, RTL/LTR amount handling, and widget regression coverage; individual screen redesign remains intentionally deferred to Phase 2.
+- Completed Finance Phase 0.75 row-level branch-security regression coverage for canonical Finance records, actions, reports, dashboard scope, tenant-wide masters, and rejected-mutation side effects; no Finance UI work was started.
+- Closed Finance Phase 0.5 contracts: checked in the corrected visual reference and frozen its design tokens; made cash/bank URLs kind-safe and branch-safe; added typed Flutter location contracts; and moved accounting-period operations to backend pagination at ten rows per page.
 - Unified the Finance desktop navigation bar across all Finance routes, fixed
   its operational destinations, repaired Finance-only Arabic text encoding,
   and added a reusable ten-row paginator to the Finance tables.
@@ -149,6 +167,168 @@ Phase 1 — Project Foundation
 - Implemented the Phase 2 Inventory Center feature with live tenant-scoped
   APIs, inventory dashboard, items, warehouse balances, immutable movement
   ledger entry, and stock-count workflow screens in the RTL Windows app.
+- Completed Finance Phase 2 Overview parity with the Claude reference: the
+  canonical `/finance` Overview now renders six live KPI cards, a
+  backend-driven needs-attention panel, a revenue-vs-expenses trend chart,
+  branch performance bars, and a recent activity table, all sourced from the
+  existing `dashboard`/`dashboard/trends`/`dashboard/branches` endpoints with
+  real period/branch/comparison context, loading/empty/error states, and
+  canonical KPI/attention/activity navigation. No Flutter-side accounting
+  calculations or fake data were introduced. Transactions, Cash & Banks,
+  Expenses, Suppliers, Reconciliation, Journal, Daily Closing, Reports,
+  Accounts, Periods, and Settings remain deferred to later phases.
+- Completed Finance Phase 3 Financial Transactions and Journal Drawer parity
+  with the Claude reference: the canonical `/finance?tab=transactions` screen
+  now has its own dedicated widget (no longer the shared generic workspace
+  table) with backend-driven summary KPIs, real global period/branch context,
+  backend-driven type/status/account/payment-method filters and debounced
+  search, a server-paginated table with debit/credit shown directly from the
+  backend, and a centralized transaction-type-to-Arabic-label/badge mapper
+  shared with the Overview. Row clicks open a production Journal Drawer that
+  lazily loads journal impact lines and reuses the existing
+  `FinanceSourceNavigation` contract for "view source" and "view journal"
+  actions. Added one small backend endpoint
+  (`GET finance/transactions/branches`) so the branch selector only ever
+  offers the actor's authorized branches, gated by the same
+  `finance.transactions.view` permission and covered by branch-isolation
+  tests. No transaction export exists yet — the "تصدير" action was
+  intentionally omitted rather than wired to a fake or newly invented
+  mechanism.
+- Completed Finance Phase 4 Cash & Banks, Account Details, and Transfers
+  parity with the Claude reference: `/finance/cash-banks` is rebuilt on the
+  shared `FinanceShell`/Phase 1 components with four backend-authoritative
+  KPIs (cash/bank totals composed client-side only as a sum of already-
+  authorized per-account balances; today's incoming/outgoing likewise),
+  a real configuration warning driven by payment methods missing a linked
+  financial location (no hard-coded method name), separate النقدية/البنوك
+  account groups matching Claude's row layout, and a "recent cash & bank
+  movements" feed reusing the Phase 3 transactions endpoint. Account
+  create/edit/activate-deactivate, account detail (KPIs + real ledger
+  movements with running balance), and transfers (validation, the fixed
+  debit-destination/credit-source accounting-impact preview, and posting)
+  are all wired to the existing `FinancialLocationService`/
+  `CashTransferService` contracts — no balance, posting, or reversal logic
+  was duplicated in Flutter. Extracted the Phase 3 journal drawer into a
+  shared `FinanceJournalDrawerBody` (now detail-driven rather than row-
+  driven) so Cash & Banks movement rows reuse the same production journal
+  inspection panel, extended with an "عكس التحويل" action that calls the
+  specialized cash-transfer reversal endpoint (never a generic journal
+  reverse) when a movement is a reversible, posted, not-yet-reversed
+  transfer. Added one small backend filter (`has_cash_effect` on
+  `GET finance/transactions`) reusing the existing cash/bank location set,
+  with tests.
+- Completed Finance Phase 5 Expenses parity with the Claude reference:
+  `/finance/expenses` is rebuilt on the shared `FinanceShell`/Phase 1
+  components with a real global period/branch context (no comparison
+  toggle — the backend has no comparison-period concept for expenses),
+  four backend-computed KPIs from a new `GET finance/expenses/summary`
+  endpoint (reusing the exact same filtered/visible query as the list, so
+  the totals are never a partial-page approximation), status/category
+  filters, and a 7-column table matching the design contract. Lifecycle
+  actions (submit/approve/reject/pay/reverse) are driven entirely by the
+  backend's existing per-record `allowedActions` field — computed from
+  actual permissions and the approval policy (e.g. a creator can never
+  approve their own expense) — rather than re-derived from `status` alone,
+  closing a real gap where the previous UI could offer an action the
+  backend would then reject. Payment reuses `FinanceAccountImpactPreview`
+  (debit the expense category account, credit the paid-from cash/bank
+  account) and the shared journal drawer for "عرض القيد"/"عرض قيد العكس".
+  A rejected expense has no resubmit action, matching the backend's actual
+  transition table, not Claude's demo. Added a small `GET
+  finance/expenses/branches` endpoint (mirroring Phase 3's
+  `transactions/branches`) so the branch selector never leaks unauthorized
+  branches, and extended `FinanceSourceNavigation`'s expense destination
+  with the expense id so a journal's "عرض المصدر" opens that exact expense.
+  Extended the shared `FinanceStatusBadge` resolver with the
+  `pending_approval`/`reversed` states and split `approved` from `paid`
+  instead of collapsing them onto one raw/misleading label.
+- Completed Finance Phase 6 Suppliers & Accounts Payable: `/finance/suppliers`
+  (list) and `/finance/suppliers/:id` (profile) are rebuilt on the shared
+  `FinanceShell`/Phase 1 components. The list shows four backend-derived KPIs
+  (outstanding, overdue, active suppliers, average payment terms — the last
+  only computed once the full unpaginated set is loaded, never approximated
+  from one page), a paginated `FinanceTable` via the existing `data`+`meta`
+  `finance/suppliers` endpoint, and status/search filters (no global period
+  context — the backend supports no date/branch filter on supplier master
+  data, matching the Cash & Banks precedent). The Profile screen has an
+  Entity Header, four KPIs, and three tabs (Invoices/Payments/Statement,
+  dropping the old unimplemented "Purchases" placeholder tab). Invoice and
+  payment lifecycle actions (edit/post/reverse) are entirely
+  `allowedActions`-driven from the backend, not re-derived from `status`.
+  The Supplier Payment dialog was redesigned around spec: a distinct
+  "Payment Amount" input plus live-computed "Allocated Amount" and
+  "Remaining Unallocated Amount" (must reach exactly 0.00, matching the
+  backend's exact-sum validation in `SupplierPaymentService::pay()`), with
+  the existing user-controlled per-invoice allocation inputs preserved as-is
+  — deliberately never auto-filling/paying all open invoices. Both invoice
+  and payment detail dialogs reuse the shared `FinanceJournalDrawer`/
+  `FinanceJournalDrawerBody` for "عرض القيد", and payment allocation rows
+  drill into the linked invoice detail. Added an `id` field to each
+  `GET finance/suppliers/{id}/statement` line (backend + test) so the
+  Statement tab's rows can drill down to the exact invoice/payment record;
+  the statement's summary (opening/closing/total invoices/total payments) is
+  computed client-side from the endpoint's already-complete, unwindowed line
+  list. Extended `FinanceSourceNavigation`'s supplier_invoice/supplier_payment
+  destinations with the record id (`?invoiceId=`/`?paymentId=`); since the
+  journal source payload carries no supplier id, the Suppliers list screen
+  resolves the invoice/payment's supplier once and redirects to its profile
+  with `?openInvoice=`/`?openPayment=`, which auto-opens that detail dialog.
+  Fixed a real, previously-uncaught overflow bug where none of the invoice
+  and payment form dropdowns set `isExpanded: true`, so the longest item in
+  each list (not just the selected one) could overflow the dialog. Also
+  fixed two pre-existing status-label bugs: supplier active/inactive reused
+  `FinanceStatusBadge`'s `active` case (renders "مكتمل"/completed, not
+  "نشط") — mirrored the Cash & Banks Phase 4 `_ActiveBadge` fix — and an
+  overdue invoice incorrectly reused `FinanceStatusBadge`'s `overdue` case
+  (grouped with rejected/cancelled, renders "مرفوض"/rejected) instead of a
+  dedicated "متأخر" badge.
+- Completed Finance Phase 7 Reconciliation: `/finance/reconciliation` (list)
+  and `/finance/reconciliation/:id` (workspace) replace the old generic
+  `FinanceOperationScreen(kind: reconciliation)` entirely — that kind and its
+  reconciliation-only rendering/mutation code were deleted, not left dead
+  behind a changed route; the legacy `/finance/reconciliations` (plural)
+  paths now resolve to the same dedicated screens rather than a second
+  implementation. The list shows the four backend-derived KPIs (open,
+  completed, unresolved difference, need-matching) and the exact
+  period/account/type/branch/balances/difference/progress/status columns
+  from `FinancialReconciliationQueryService`, plus a create-session dialog
+  using the real `POST finance/reconciliations` contract (cash/bank location
+  or card payment method, date range). The workspace renders a Cash layout
+  (KPIs, readiness, a real system-movements table) or a Bank/Card two-panel
+  compare (system transactions vs. statement lines) depending on backend
+  `type`, entirely from `GET .../{id}`, `.../system-transactions`, and
+  `.../suggestions`. Matching reuses the backend's actual one-statement-line-
+  to-one-journal-entry `POST .../matches` contract: a single Match click is
+  decomposed into one call for 1:1, or one call per pairing for many-to-one/
+  one-to-many (mirroring the backend's own many-to-one/one-to-many test
+  coverage), gated on the selected totals differing by zero; true many-to-
+  many (multiple selected on both sides at once) has no atomic backend
+  operation to submit, so it's deliberately disabled with an explained error
+  rather than inventing a bulk-match endpoint. Suggestions, unmatch (per
+  match record, not a fabricated "match group"), add/delete statement line,
+  and complete all call the corresponding real endpoints and reload
+  authoritative state afterward — never mutate rows locally as truth.
+  Readiness is exactly the backend's `canComplete` boolean plus
+  `blockingReasons` (Ready/Blocked/Completed); Claude's mock "Warning —
+  complete anyway" tier has no backend support (`complete()` rejects on any
+  blocker with no leniency), so it was not fabricated. Completed sessions are
+  read-only (no checkboxes, match/unmatch/add/delete/complete actions) with a
+  completion banner; "completed by" is omitted since the backend returns
+  only a bare numeric user id with no name to show. Journal/source drill-down
+  reuses the existing shared `FinanceJournalDrawer`/`FinanceSourceNavigation`
+  unchanged — no separate resolver was added for Reconciliation. Fixed a
+  real, previously-uncaught overflow bug in the Match button (`_matching`
+  was never reset to `false` after a successful match, leaving a spinner
+  stuck forever and `pumpAndSettle` hanging in tests). Also fixed an
+  unrelated pre-existing backend bug found while getting a clean test
+  baseline: `FinanceOperationsDemoSeeder`'s cash-reconciliation close date
+  was a hardcoded past string while the POS sale/refund it seeds always post
+  "today" — once the wall clock passed that hardcoded date, the seeded sale/
+  refund fell outside the reconciliation window and broke the hardcoded
+  actual-cash assumption with a false `NON_ZERO_DIFFERENCE`, failing every
+  test that seeds (this was silently masked in Phase 6's report as an
+  "unrelated" `DailyReportApiTest` failure); the close date now tracks
+  `now()` like the sale/refund it depends on.
 
 ## In Progress
 
@@ -224,6 +404,72 @@ workflows when those APIs are ready.
 
 ## Recent Changes Log
 
+- 2026-09-02: Completed Finance Phase 7 Reconciliation: `/finance/reconciliation`
+  and `/finance/reconciliation/:id` replace the old generic
+  `FinanceOperationScreen(kind: reconciliation)` (deleted, not left dead) and
+  the legacy plural route now points at the same screens. Cash workspace
+  shows real balances/readiness/system movements; Bank/Card workspace is a
+  real two-panel system-vs-statement compare whose Match action decomposes
+  into the backend's actual one-line-to-one-entry match() calls (1:1, N:1,
+  1:N — true N:M is disabled, no bulk-match endpoint exists to submit it
+  atomically). Suggestions, unmatch (per match record), add/delete statement
+  line, and complete all call real endpoints and reload authoritative state.
+  Readiness is exactly backend `canComplete`/`blockingReasons` — no fabricated
+  "warning, complete anyway" tier, since `complete()` has no such leniency.
+  Fixed a stuck-spinner bug (`_matching` never reset after a successful
+  match) and an unrelated pre-existing backend bug: `FinanceOperationsDemoSeeder`'s
+  hardcoded cash-reconciliation close date drifted behind the POS sale/
+  refund it seeds (which always post "today"), breaking every seeded test
+  with a false `NON_ZERO_DIFFERENCE` once the wall clock passed it — now
+  tracks `now()`.
+- 2026-09-02: Completed Finance Phase 6 Suppliers & Accounts Payable: rebuilt
+  `/finance/suppliers` and `/finance/suppliers/:id` on the shared Finance
+  design system, with `allowedActions`-driven invoice/payment lifecycle
+  buttons, a redesigned Payment dialog (explicit Payment Amount / Allocated /
+  Remaining Unallocated, still user-controlled per-invoice allocation, never
+  auto-paying all open invoices), and shared journal-drawer/statement
+  drill-down navigation. Added an `id` field to supplier statement lines
+  (backend + test) for drill-down, extended `FinanceSourceNavigation` with
+  invoice/payment ids and a supplier-resolving redirect for the "عرض المصدر"
+  deep link. Fixed a real dropdown overflow bug (`isExpanded` missing on the
+  invoice/payment form dropdowns) and two status-label bugs where supplier
+  active/inactive and invoice overdue state were rendered through
+  `FinanceStatusBadge`'s unrelated `active`/`overdue` cases instead of their
+  own dedicated badges.
+- 2026-09-02: Completed Finance Phase 5 Expenses: rebuilt `/finance/expenses`
+  on the shared Finance design system with real KPIs from a new
+  `GET finance/expenses/summary` endpoint, status/category filters, global
+  period/branch context, and a detail view whose lifecycle buttons are
+  driven by the backend's own `allowedActions` (permission- and approval-
+  policy-aware, not just `status`). Payment shows the accounting impact
+  preview; paid/reversed expenses link to the shared journal drawer. Added
+  `GET finance/expenses/branches` for a leak-safe branch selector and
+  extended `FinanceStatusBadge`/`FinanceSourceNavigation` centrally rather
+  than duplicating status or navigation logic locally.
+- 2026-09-01: Completed Finance Phase 4 Cash & Banks: rebuilt
+  `/finance/cash-banks` on the shared Finance design system with real
+  KPIs, a payment-method configuration warning, cash/bank account groups,
+  account create/edit/activate-deactivate, account detail with real ledger
+  movements, and a transfer dialog with accounting-impact preview and
+  active-account-only selection; generalized the Phase 3 journal drawer
+  into a shared, detail-driven `FinanceJournalDrawerBody` with a
+  transfer-reversal action; added a small `has_cash_effect` transaction
+  filter for the account-agnostic recent-movements feed.
+- 2026-09-01: Completed Finance Phase 3 Financial Transactions and Journal
+  Drawer: dedicated `FinanceTransactionsView` (summary KPIs, real
+  period/branch context, backend-driven filters/search, server pagination,
+  centralized type badges) replaces the generic workspace table for the
+  Transactions tab; added a production Journal Drawer with lazy-loaded
+  impact lines and centralized source/journal navigation; added the
+  branch-scoped `GET finance/transactions/branches` endpoint with tests.
+- 2026-09-01: Completed Finance Phase 2 Overview parity: connected the six KPI
+  cards, needs-attention panel, revenue/expense trend chart, branch
+  performance, and recent activity table to the live dashboard/trends/branches
+  endpoints, and fixed the recent activity table to show localized
+  transaction-type labels and navigate to the correct canonical Finance
+  destination per source type (expense, cash transfer, supplier invoice/
+  payment, order/refund, inventory movement, journal) instead of always
+  opening Journal Entries.
 - 2026-09-01: Corrected the Finance UI encoding and navigation, introduced a
   shared 10-row Finance table paginator, applied the Finance analyzer fixes,
   and made the verified connected Finance demo part of non-production seeds.

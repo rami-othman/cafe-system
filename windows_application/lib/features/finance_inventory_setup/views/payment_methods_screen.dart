@@ -65,14 +65,15 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
               : _rows.isEmpty
               ? const ManagementMessage(message: 'لا توجد طرق دفع مهيأة.')
               : ManagementTableShell(
-                  minWidth: 720,
+                  minWidth: 880,
                   child: FinancePaginatedTable(
-                    minWidth: 720,
+                    minWidth: 880,
                     columns: const <DataColumn>[
                       DataColumn(label: Text('الاسم')),
                       DataColumn(label: Text('الرمز')),
                       DataColumn(label: Text('النوع')),
                       DataColumn(label: Text('حساب الأستاذ')),
+                      DataColumn(label: Text('الوجهة المالية')),
                       DataColumn(label: Text('الحالة')),
                       DataColumn(label: Text('إجراء')),
                     ],
@@ -84,6 +85,9 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                               DataCell(Text(x.code)),
                               DataCell(Text(x.type)),
                               DataCell(Text(x.financialAccountCode)),
+                              DataCell(
+                                Text(x.financialLocationName ?? 'غير مربوط'),
+                              ),
                               DataCell(
                                 ManagementBadge(
                                   label: x.isActive ? 'نشط' : 'غير نشط',
@@ -127,12 +131,28 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
     final cubit = context.read<FinanceSetupCubit>();
     await cubit.loadAccounts();
     final accounts = cubit.state.accounts.where((a) => a.isActive).toList();
+    final List<dynamic> locationResults =
+        await Future.wait<dynamic>(<Future<dynamic>>[
+          cubit.repository.getFinancialLocations('cash'),
+          cubit.repository.getFinancialLocations('bank'),
+        ]);
+    final List<FinancialLocation> locations = <FinancialLocation>[
+      ...(locationResults[0] as List<FinancialLocation>),
+      ...(locationResults[1] as List<FinancialLocation>),
+    ].where((FinancialLocation location) => location.isActive).toList();
     if (!mounted || accounts.isEmpty) return;
     final code = TextEditingController(text: existing?.code ?? '');
     final name = TextEditingController(text: existing?.name ?? '');
     var account = accounts.any((a) => a.id == existing?.financialAccountId)
         ? existing!.financialAccountId
         : accounts.first.id;
+    int? locationId =
+        locations.any(
+          (FinancialLocation location) =>
+              location.id == existing?.financialLocationId,
+        )
+        ? existing!.financialLocationId
+        : null;
     var type = existing?.type ?? 'cash';
     String? error;
     await showDialog<void>(
@@ -173,6 +193,7 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                   onChanged: (v) => set(() => type = v!),
                 ),
                 DropdownButtonFormField<int>(
+                  isExpanded: true,
                   initialValue: account,
                   items: accounts
                       .map(
@@ -183,6 +204,37 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                       )
                       .toList(),
                   onChanged: (v) => set(() => account = v!),
+                ),
+                DropdownButtonFormField<int?>(
+                  isExpanded: true,
+                  initialValue: locationId,
+                  decoration: const InputDecoration(
+                    labelText: 'الوجهة النقدية أو البنكية',
+                    helperText: 'اختياري؛ يجب أن تستخدم حساب الأستاذ نفسه.',
+                  ),
+                  items: <DropdownMenuItem<int?>>[
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('غير مربوط بموقع مالي'),
+                    ),
+                    ...locations.map(
+                      (FinancialLocation location) => DropdownMenuItem<int?>(
+                        value: location.id,
+                        child: Text('${location.code} — ${location.name}'),
+                      ),
+                    ),
+                  ],
+                  onChanged: (int? value) => set(() {
+                    locationId = value;
+                    if (value != null) {
+                      account = locations
+                          .firstWhere(
+                            (FinancialLocation location) =>
+                                location.id == value,
+                          )
+                          .financialAccountId;
+                    }
+                  }),
                 ),
                 if (error != null)
                   Text(error!, style: const TextStyle(color: Colors.red)),
@@ -207,6 +259,7 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                     'name': name.text.trim(),
                     'type': type,
                     'financialAccountId': account,
+                    'financialLocationId': locationId,
                     'isActive': existing?.isActive ?? true,
                   }, id: existing?.id);
                   if (d.mounted) Navigator.pop(d);

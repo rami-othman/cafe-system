@@ -30,7 +30,16 @@ use RuntimeException;
 final class FinanceOperationsDemoSeeder extends Seeder
 {
     private const SLUG = 'cafe-618-finance-demo';
-    private const CLOSE_DATE = '2026-09-01';
+
+    /**
+     * The POS sale/refund below always post their journal entries dated
+     * "today" (PaymentController/RefundController stamp entryDate from
+     * now()), so the cash-drawer close date must track today too — a fixed
+     * historical date would silently drop out of the reconciliation window
+     * once the wall clock passes it, breaking the hardcoded 95.60 actual
+     * cash count with a false NON_ZERO_DIFFERENCE.
+     */
+    private function closeDate(): string { return now()->toDateString(); }
 
     public function run(): void
     {
@@ -252,17 +261,17 @@ final class FinanceOperationsDemoSeeder extends Seeder
         // the current schema, so use the canonical Cash Drawer location.
         $location = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
         if (! DB::table('shifts')->where('tenant_id', $tenant)->where('branch_id', $branch)->where('notes', 'Finance demo close shift')->exists()) {
-            DB::table('shifts')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $owner, 'opening_cash' => '30.00', 'closing_cash' => '95.60', 'expected_cash' => '95.60', 'cash_difference' => '0.00', 'status' => 'closed', 'opened_at' => self::CLOSE_DATE.' 08:00:00', 'closed_at' => self::CLOSE_DATE.' 22:00:00', 'notes' => 'Finance demo close shift', 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('shifts')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $owner, 'opening_cash' => '30.00', 'closing_cash' => '95.60', 'expected_cash' => '95.60', 'cash_difference' => '0.00', 'status' => 'closed', 'opened_at' => $this->closeDate().' 08:00:00', 'closed_at' => $this->closeDate().' 22:00:00', 'notes' => 'Finance demo close shift', 'created_at' => now(), 'updated_at' => now()]);
         }
 
         $reconciliations = app(FinancialReconciliationService::class);
-        $session = $reconciliations->create($request, $tenant, ['type' => 'cash', 'financialLocationId' => $location, 'dateFrom' => self::CLOSE_DATE, 'dateTo' => self::CLOSE_DATE, 'actualCashCount' => '95.60', 'notes' => 'Demo cash reconciliation', 'idempotencyKey' => 'finance-demo-cash-reconciliation'], $owner);
+        $session = $reconciliations->create($request, $tenant, ['type' => 'cash', 'financialLocationId' => $location, 'dateFrom' => $this->closeDate(), 'dateTo' => $this->closeDate(), 'actualCashCount' => '95.60', 'notes' => 'Demo cash reconciliation', 'idempotencyKey' => 'finance-demo-cash-reconciliation'], $owner);
         if ($session->status !== 'completed') $reconciliations->complete($request, $tenant, $session->id, $owner, app(FinancialReconciliationQueryService::class));
 
         $closings = app(DailyClosingService::class);
-        $closing = $closings->getOrCreate($request, $tenant, $branch, self::CLOSE_DATE, $owner);
+        $closing = $closings->getOrCreate($request, $tenant, $branch, $this->closeDate(), $owner);
         if ($closing->status !== 'closed') {
-            $preview = $closings->preview($request, $tenant, $branch, self::CLOSE_DATE, $owner);
+            $preview = $closings->preview($request, $tenant, $branch, $this->closeDate(), $owner);
             $closings->close($request, $tenant, $closing->id, ['actualCash' => $preview['cash']['expectedCash'], 'notes' => 'Finance demo completed close'], $owner);
         }
     }
@@ -271,7 +280,7 @@ final class FinanceOperationsDemoSeeder extends Seeder
     {
         $period = DB::table('accounting_periods')->where('tenant_id', $tenant)->where('name', 'Finance Demo July-August 2026')->first();
         $service = app(AccountingPeriodService::class);
-        if (! $period) $period = $service->create($request, $tenant, ['name' => 'Finance Demo July-August 2026', 'startDate' => '2026-07-01', 'endDate' => self::CLOSE_DATE, 'notes' => 'Closed deterministic Finance Operations demo period'], $owner);
+        if (! $period) $period = $service->create($request, $tenant, ['name' => 'Finance Demo July-August 2026', 'startDate' => '2026-07-01', 'endDate' => $this->closeDate(), 'notes' => 'Closed deterministic Finance Operations demo period'], $owner);
         if ($period->status === 'open') {
             $readiness = $service->readiness($tenant, $period->id);
             if (! $readiness['canClose']) throw new RuntimeException('Finance demo accounting period readiness failed: '.json_encode($readiness['blockers'], JSON_THROW_ON_ERROR));

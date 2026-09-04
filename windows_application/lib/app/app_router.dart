@@ -36,6 +36,10 @@ import '../features/finance_inventory_setup/views/expenses_screen.dart';
 import '../features/finance_inventory_setup/views/expense_categories_screen.dart';
 import '../features/finance_inventory_setup/views/suppliers_screen.dart';
 import '../features/finance_inventory_setup/views/supplier_profile_screen.dart';
+import '../features/finance_inventory_setup/views/reconciliation_screen.dart';
+import '../features/finance_inventory_setup/views/reconciliation_workspace_screen.dart';
+import '../features/finance_inventory_setup/views/daily_closing_screen.dart';
+import '../features/finance_inventory_setup/views/daily_closing_workspace_screen.dart';
 import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
 import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
 import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
@@ -51,6 +55,24 @@ import '../features/inventory/transfers/views/transfers_screen.dart';
 import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../features/operational_context/models/operational_branch_state.dart';
 import 'app_shell.dart';
+
+String _financeAliasPath(
+  String path,
+  GoRouterState state, {
+  Map<String, String> fixedQueryParameters = const <String, String>{},
+  Set<String> excludedQueryParameters = const <String>{},
+}) {
+  final Map<String, String> queryParameters =
+      Map<String, String>.from(state.uri.queryParameters)
+        ..removeWhere(
+          (String key, String value) => excludedQueryParameters.contains(key),
+        )
+        ..addAll(fixedQueryParameters);
+  return Uri(
+    path: path,
+    queryParameters: queryParameters.isEmpty ? null : queryParameters,
+  ).toString();
+}
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.pos,
@@ -231,11 +253,45 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
+          redirect: (context, state) {
+            final String? tab = state.uri.queryParameters['tab'];
+            final String? canonicalPath = switch (tab) {
+              'cashbanks' => AppRoutes.financeCashBanks,
+              'expenses' => AppRoutes.financeExpenses,
+              'suppliers' => AppRoutes.financeSuppliers,
+              'reconciliation' => AppRoutes.financeReconciliationCanonical,
+              'journals' => AppRoutes.financeJournalEntriesCanonical,
+              'closing' => AppRoutes.financeDailyClosingCanonical,
+              'reports' => AppRoutes.financeReportsCanonical,
+              'accounts' => AppRoutes.financeAccountsCanonical,
+              'periods' => AppRoutes.financeAccountingPeriods,
+              'settings' => AppRoutes.financeSettings,
+              _ => null,
+            };
+            return canonicalPath == null
+                ? null
+                : _financeAliasPath(
+                    canonicalPath,
+                    state,
+                    excludedQueryParameters: const <String>{'tab'},
+                  );
+          },
           builder: (context, state) => const FinanceWorkspaceScreen(),
         ),
         GoRoute(
           path: AppRoutes.financeReports,
           name: AppRouteNames.financeReports,
+          redirect: (context, state) => _financeAliasPath(
+            AppRoutes.financeReportsCanonical,
+            state,
+            fixedQueryParameters: const <String, String>{
+              'type': 'general-ledger',
+            },
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReportsCanonical,
+          name: AppRouteNames.financeReportsCanonical,
           builder: (context, state) => FinancialReportsScreen(
             accountId: int.tryParse(
               state.uri.queryParameters['accountId'] ?? '',
@@ -249,30 +305,55 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.financeReconciliations,
           name: AppRouteNames.financeReconciliations,
-          builder: (context, state) => const FinanceOperationScreen(
-            kind: FinanceOperationKind.reconciliation,
+          redirect: (context, state) => _financeAliasPath(
+            AppRoutes.financeReconciliationCanonical,
+            state,
           ),
         ),
         GoRoute(
           path: AppRoutes.financeReconciliationDetails,
           name: AppRouteNames.financeReconciliationDetails,
-          builder: (context, state) => FinanceOperationScreen(
-            kind: FinanceOperationKind.reconciliation,
-            id: int.parse(state.pathParameters['id']!),
+          redirect: (context, state) => _financeAliasPath(
+            '${AppRoutes.financeReconciliationCanonical}/${state.pathParameters['id']!}',
+            state,
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReconciliationCanonical,
+          name: AppRouteNames.financeReconciliationCanonical,
+          builder: (context, state) => const ReconciliationScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReconciliationCanonicalDetails,
+          name: AppRouteNames.financeReconciliationCanonicalDetails,
+          builder: (context, state) => ReconciliationWorkspaceScreen(
+            reconciliationId: int.parse(state.pathParameters['id']!),
           ),
         ),
         GoRoute(
           path: AppRoutes.financeDailyClosings,
           name: AppRouteNames.financeDailyClosings,
-          builder: (context, state) =>
-              const FinanceOperationScreen(kind: FinanceOperationKind.closing),
+          redirect: (context, state) =>
+              _financeAliasPath(AppRoutes.financeDailyClosingCanonical, state),
         ),
         GoRoute(
           path: AppRoutes.financeDailyClosingDetails,
           name: AppRouteNames.financeDailyClosingDetails,
-          builder: (context, state) => FinanceOperationScreen(
-            kind: FinanceOperationKind.closing,
-            id: int.parse(state.pathParameters['id']!),
+          redirect: (context, state) => _financeAliasPath(
+            '${AppRoutes.financeDailyClosingCanonical}/${state.pathParameters['id']!}',
+            state,
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeDailyClosingCanonical,
+          name: AppRouteNames.financeDailyClosingCanonical,
+          builder: (context, state) => const DailyClosingScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeDailyClosingCanonicalDetails,
+          name: AppRouteNames.financeDailyClosingCanonicalDetails,
+          builder: (context, state) => DailyClosingWorkspaceScreen(
+            closingId: int.parse(state.pathParameters['id']!),
           ),
         ),
         GoRoute(
@@ -293,6 +374,13 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.financeAccountsCanonical,
           name: AppRouteNames.financeAccountsCanonical,
           builder: (context, state) => const FinancialAccountsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountDetails,
+          name: AppRouteNames.financeAccountDetails,
+          builder: (context, state) => FinancialAccountsScreen(
+            accountId: int.parse(state.pathParameters['id']!),
+          ),
         ),
         GoRoute(
           path: AppRoutes.financeJournalEntriesCanonical,
@@ -342,16 +430,23 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => SupplierProfileScreen(
             supplierId: int.parse(state.pathParameters['id']!),
             initialTab: state.uri.queryParameters['tab'] == 'payments'
-                ? 2
-                : state.uri.queryParameters['tab'] == 'invoices'
                 ? 1
+                : state.uri.queryParameters['tab'] == 'statement'
+                ? 2
                 : 0,
+            openInvoiceId: int.tryParse(
+              state.uri.queryParameters['openInvoice'] ?? '',
+            ),
+            openPaymentId: int.tryParse(
+              state.uri.queryParameters['openPayment'] ?? '',
+            ),
           ),
         ),
         GoRoute(
           path: AppRoutes.financeSetup,
           name: AppRouteNames.financeSetup,
-          builder: (context, state) => const FinanceSetupDashboardScreen(),
+          redirect: (context, state) =>
+              _financeAliasPath(AppRoutes.financeSettings, state),
         ),
         GoRoute(
           path: AppRoutes.financeWarehouses,
@@ -361,12 +456,16 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.financeAccounts,
           name: AppRouteNames.financeAccounts,
-          builder: (context, state) => const FinancialAccountsScreen(),
+          redirect: (context, state) =>
+              _financeAliasPath(AppRoutes.financeAccountsCanonical, state),
         ),
         GoRoute(
           path: AppRoutes.financeJournalEntries,
           name: AppRouteNames.financeJournalEntries,
-          builder: (context, state) => const JournalEntriesScreen(),
+          redirect: (context, state) => _financeAliasPath(
+            AppRoutes.financeJournalEntriesCanonical,
+            state,
+          ),
         ),
         GoRoute(
           path: AppRoutes.reports,
@@ -479,17 +578,27 @@ Widget? _topBarFor(GoRouterState state) {
 
 String _financeTabFor(GoRouterState state) {
   final String path = state.matchedLocation;
-  if (path == AppRoutes.finance)
+  if (path == AppRoutes.finance) {
     return state.uri.queryParameters['tab'] ?? 'overview';
-  if (path.startsWith('/finance/cash-banks')) return 'cashbanks';
+  }
+  if (path.startsWith('/finance/cash-banks')) {
+    return 'cashbanks';
+  }
   if (path.startsWith('/finance/expenses')) return 'expenses';
   if (path.startsWith('/finance/suppliers') ||
-      path.startsWith('/finance/supplier-'))
+      path.startsWith('/finance/supplier-')) {
     return 'suppliers';
-  if (path.startsWith('/finance/reconciliations')) return 'reconciliation';
+  }
+  if (path.startsWith('/finance/reconciliation')) return 'reconciliation';
   if (path.startsWith('/finance/journal-entries')) return 'journals';
-  if (path.startsWith('/finance/daily-closings')) return 'closing';
+  if (path.startsWith('/finance/daily-closings') ||
+      path.startsWith('/finance/daily-closing')) {
+    return 'closing';
+  }
   if (path.startsWith('/finance/reports')) return 'reports';
+  if (path.startsWith('/finance/accounts')) return 'accounts';
+  if (path.startsWith('/finance/accounting-periods')) return 'periods';
+  if (path.startsWith('/finance/settings')) return 'settings';
   return 'overview';
 }
 
@@ -529,6 +638,16 @@ Future<void> Function(BuildContext context)? _refreshActionFor(
     AppRoutes.financeExpenseCategories =>
       (BuildContext context) => Future<void>.value(),
     AppRoutes.financeSuppliers || AppRoutes.financeSupplierDetails =>
+      (BuildContext context) => Future<void>.value(),
+    AppRoutes.financeReconciliations ||
+    AppRoutes.financeReconciliationDetails ||
+    AppRoutes.financeReconciliationCanonical ||
+    AppRoutes.financeReconciliationCanonicalDetails =>
+      (BuildContext context) => Future<void>.value(),
+    AppRoutes.financeDailyClosings ||
+    AppRoutes.financeDailyClosingDetails ||
+    AppRoutes.financeDailyClosingCanonical ||
+    AppRoutes.financeDailyClosingCanonicalDetails =>
       (BuildContext context) => Future<void>.value(),
     AppRoutes.inventory =>
       (BuildContext context) => context.read<InventoryCubit>().loadDashboard(),
@@ -588,16 +707,25 @@ abstract final class AppRoutes {
   static const String financeSetup = '/finance-inventory-setup';
   static const String finance = '/finance';
   static const String financeReports = '/finance/reports/general-ledger';
+  static const String financeReportsCanonical = '/finance/reports';
   static const String financeReconciliations = '/finance/reconciliations';
   static const String financeReconciliationDetails =
       '/finance/reconciliations/:id';
+  static const String financeReconciliationCanonical =
+      '/finance/reconciliation';
+  static const String financeReconciliationCanonicalDetails =
+      '/finance/reconciliation/:id';
   static const String financeDailyClosings = '/finance/daily-closings';
   static const String financeDailyClosingDetails =
       '/finance/daily-closings/:id';
+  static const String financeDailyClosingCanonical = '/finance/daily-closing';
+  static const String financeDailyClosingCanonicalDetails =
+      '/finance/daily-closing/:id';
   static const String financeAccountingPeriods = '/finance/accounting-periods';
   static const String financeAccountingPeriodDetails =
       '/finance/accounting-periods/:id';
   static const String financeAccountsCanonical = '/finance/accounts';
+  static const String financeAccountDetails = '/finance/accounts/:id';
   static const String financeJournalEntriesCanonical =
       '/finance/journal-entries';
   static const String financeJournalEntryDetails =
@@ -658,16 +786,26 @@ abstract final class AppRouteNames {
   static const String financeSetup = 'finance-setup';
   static const String finance = 'finance';
   static const String financeReports = 'finance-reports';
+  static const String financeReportsCanonical = 'finance-reports-canonical';
   static const String financeReconciliations = 'finance-reconciliations';
   static const String financeReconciliationDetails =
       'finance-reconciliation-details';
+  static const String financeReconciliationCanonical =
+      'finance-reconciliation-canonical';
+  static const String financeReconciliationCanonicalDetails =
+      'finance-reconciliation-canonical-details';
   static const String financeDailyClosings = 'finance-daily-closings';
   static const String financeDailyClosingDetails =
       'finance-daily-closing-details';
+  static const String financeDailyClosingCanonical =
+      'finance-daily-closing-canonical';
+  static const String financeDailyClosingCanonicalDetails =
+      'finance-daily-closing-canonical-details';
   static const String financeAccountingPeriods = 'finance-accounting-periods';
   static const String financeAccountingPeriodDetails =
       'finance-accounting-period-details';
   static const String financeAccountsCanonical = 'finance-accounts-canonical';
+  static const String financeAccountDetails = 'finance-account-details';
   static const String financeJournalEntriesCanonical =
       'finance-journal-entries-canonical';
   static const String financeJournalEntryDetails =

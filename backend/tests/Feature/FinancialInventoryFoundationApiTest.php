@@ -170,6 +170,10 @@ class FinancialInventoryFoundationApiTest extends TestCase
 
         $this->getJson('/api/v1/finance/accounts?search=9101&group=expenses&status=active&system=non-system', $this->headers($tenantId))
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $child->json('data.id'));
+        $this->getJson('/api/v1/finance/accounts/'.$child->json('data.id'), $this->headers($tenantId))
+            ->assertOk()
+            ->assertJsonPath('data.parentAccountId', $parent->json('data.id'))
+            ->assertJsonPath('data.parentCode', '9100');
         $this->patchJson('/api/v1/finance/accounts/'.$parent->json('data.id'), $this->accountPayload(['code' => '9100', 'nameAr' => 'Ø­Ø³Ø§Ø¨ Ø±Ø¦ÙŠØ³ÙŠ', 'parentAccountId' => $child->json('data.id')]), $this->headers($tenantId))
             ->assertUnprocessable()->assertJsonValidationErrors('parentAccountId');
         $this->patchJson('/api/v1/finance/accounts/'.$child->json('data.id').'/status', ['isActive' => false], $this->headers($tenantId))->assertOk()->assertJsonPath('data.isActive', false);

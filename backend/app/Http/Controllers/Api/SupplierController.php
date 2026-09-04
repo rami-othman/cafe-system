@@ -93,10 +93,10 @@ class SupplierController extends Controller
             ->get(['id', 'payment_number', 'payment_date as date', 'amount']);
 
         $lines = $invoices->map(fn (object $row) => [
-            'date' => $row->date, 'type' => 'invoice', 'reference' => $row->internal_reference,
+            'id' => (int) $row->id, 'date' => $row->date, 'type' => 'invoice', 'reference' => $row->internal_reference,
             'debit' => '0.00', 'credit' => Money::decimal(Money::cents($row->amount)), 'sortKey' => $row->date.'-1-'.$row->id,
         ])->concat($payments->map(fn (object $row) => [
-            'date' => $row->date, 'type' => 'payment', 'reference' => $row->payment_number,
+            'id' => (int) $row->id, 'date' => $row->date, 'type' => 'payment', 'reference' => $row->payment_number,
             'debit' => Money::decimal(Money::cents($row->amount)), 'credit' => '0.00', 'sortKey' => $row->date.'-2-'.$row->id,
         ]))->sortBy('sortKey')->values();
 

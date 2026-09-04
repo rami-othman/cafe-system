@@ -46,6 +46,27 @@ class FinancialAccountController extends Controller
         return response()->json(['data' => $this->serialize($this->accounts->find($tenantId, $id))], 201);
     }
 
+    /**
+     * Return one tenant-scoped account with its direct parent presentation.
+     * The chart list intentionally stays paginated; the detail workspace must
+     * never depend on whether the selected account happens to be on that page.
+     */
+    public function show(Request $request, int $account): JsonResponse
+    {
+        $tenantId = TenantContext::id($request);
+        $row = DB::table('financial_accounts as accounts')
+            ->leftJoin('financial_accounts as parents', 'parents.id', '=', 'accounts.parent_account_id')
+            ->where('accounts.tenant_id', $tenantId)
+            ->where('accounts.id', $account)
+            ->whereNull('accounts.deleted_at')
+            ->select('accounts.*', 'parents.code as parent_code', 'parents.name_ar as parent_name_ar')
+            ->first();
+
+        abort_unless($row, 404, 'Financial account not found.');
+
+        return response()->json(['data' => $this->serialize($row)]);
+    }
+
     public function update(FinancialAccountRequest $request, int $account): JsonResponse
     {
         $tenantId = TenantContext::id($request);

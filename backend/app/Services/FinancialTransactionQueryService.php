@@ -61,6 +61,7 @@ final class FinancialTransactionQueryService
         }
         if (! empty($filters['status'])) $query->where('entries.status', $filters['status']);
         if (! empty($filters['sourceType'])) $this->filterSourceType($query, $filters['sourceType']);
+        if (! empty($filters['hasCashEffect'])) $this->filterCashEffect($query, $tenantId);
         if (! empty($filters['reversalState'])) {
             match ($filters['reversalState']) {
                 'original_reversed' => $query->whereNotNull('reversal_entries.id'),
@@ -139,6 +140,14 @@ final class FinancialTransactionQueryService
         if ($entry->reversal_of_id) return ['state' => 'reversal_entry', 'originalJournalId' => (int) $entry->reversal_of_id, 'originalReference' => $entry->original_entry_number, 'reversalJournalId' => (int) $entry->id, 'reversalReference' => $entry->entry_number];
         if ($entry->reversal_entry_id) return ['state' => 'original_reversed', 'originalJournalId' => (int) $entry->id, 'originalReference' => $entry->entry_number, 'reversalJournalId' => (int) $entry->reversal_entry_id, 'reversalReference' => $entry->reversal_entry_number];
         return ['state' => 'none', 'originalJournalId' => null, 'originalReference' => null, 'reversalJournalId' => null, 'reversalReference' => null];
+    }
+
+    /** Restricts to entries with at least one line against a cash/bank location's ledger account — the feed behind the Cash & Banks "recent movements" section. */
+    private function filterCashEffect(Builder $query, int $tenantId): void
+    {
+        $cashAccountIds = DB::table('financial_locations')->where('tenant_id', $tenantId)->whereIn('kind', ['cash', 'bank'])->pluck('financial_account_id');
+        if ($cashAccountIds->isEmpty()) { $query->whereRaw('1 = 0'); return; }
+        $query->whereExists(fn (Builder $lines) => $lines->selectRaw('1')->from('journal_entry_lines as cash_lines')->whereColumn('cash_lines.journal_entry_id', 'entries.id')->where('cash_lines.tenant_id', $tenantId)->whereIn('cash_lines.financial_account_id', $cashAccountIds));
     }
 
     private function filterSourceType(Builder $query, string $type): void { if (in_array($type, ['sale','refund','expense','cash_transfer','supplier_invoice','supplier_payment','manual_journal','journal_reversal'], true)) { $query->where('entries.source_type', ['sale' => 'pos_order', 'refund' => 'payment_refund', 'manual_journal' => 'manual'][$type] ?? $type); return; } if ($type === 'inventory_waste') { $query->where('entries.source_type', 'inventory_movement')->where('entries.source_event', 'INVENTORY_WASTE'); return; } if ($type === 'stock_count_variance') { $query->where('entries.source_type', 'inventory_movement')->whereIn('entries.source_event', ['STOCK_COUNT_SHORTAGE','STOCK_COUNT_SURPLUS']); return; } $query->where('entries.source_type', $type); }

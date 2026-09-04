@@ -6,7 +6,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../repositories/finance_setup_repository.dart';
+import 'finance_overview.dart';
+import 'finance_transactions.dart';
 import '../widgets/finance_pagination.dart';
+import '../widgets/finance_design.dart';
+import '../widgets/finance_shell.dart';
 import '../widgets/finance_source_navigation.dart';
 
 /// The approved Finance workspace chrome.  Its content is deliberately driven
@@ -18,6 +22,21 @@ class FinanceWorkspaceScreen extends StatefulWidget {
   @override
   State<FinanceWorkspaceScreen> createState() => _FinanceWorkspaceScreenState();
 }
+
+String _financeSectionName(String tab) => switch (tab) {
+  'transactions' => 'الحركات المالية',
+  'cashbanks' => 'النقدية والبنوك',
+  'expenses' => 'المصروفات',
+  'suppliers' => 'الموردون والمستحقات',
+  'reconciliation' => 'التسويات',
+  'journals' => 'القيود المحاسبية',
+  'closing' => 'الإغلاق اليومي',
+  'reports' => 'التقارير المالية',
+  'accounts' => 'الحسابات',
+  'periods' => 'الفترات المالية',
+  'settings' => 'الإعدادات',
+  _ => 'نظرة عامة',
+};
 
 class _FinanceWorkspaceScreenState extends State<FinanceWorkspaceScreen> {
   late final FinanceSetupRepository _repository;
@@ -48,7 +67,7 @@ class _FinanceWorkspaceScreenState extends State<FinanceWorkspaceScreen> {
   void initState() {
     super.initState();
     _repository = serviceLocator<FinanceSetupRepository>();
-    _future = _load();
+    _future = Future<_WorkspacePayload>.value(const _WorkspacePayload());
   }
 
   @override
@@ -66,42 +85,11 @@ class _FinanceWorkspaceScreenState extends State<FinanceWorkspaceScreen> {
   Future<_WorkspacePayload> _load() async {
     switch (_tab) {
       case 'overview':
-        final List<dynamic> values =
-            await Future.wait<dynamic>(<Future<dynamic>>[
-              _repository.getFinanceMap('finance/dashboard'),
-              _repository.getFinanceMap('finance/dashboard/trends'),
-              _repository.getFinanceMap('finance/dashboard/branches'),
-            ]);
-        final Map<String, dynamic> branchResponse = Map<String, dynamic>.from(
-          values[2] as Map,
-        );
-        return _WorkspacePayload(
-          summary: Map<String, dynamic>.from(values[0] as Map),
-          rows: (branchResponse['branches'] as List? ?? const <dynamic>[])
-              .whereType<Map>()
-              .map(
-                (Map<dynamic, dynamic> row) => Map<String, dynamic>.from(row),
-              )
-              .toList(growable: false),
-          supporting: Map<String, dynamic>.from(values[1] as Map),
-        );
       case 'transactions':
-        final List<dynamic> values = await Future.wait<dynamic>(
-          <Future<dynamic>>[
-            _repository.getFinanceMap('finance/transactions/summary'),
-            _repository.getFinancePage(
-              'finance/transactions',
-              queryParameters: <String, dynamic>{'page': _page, 'perPage': 10},
-            ),
-          ],
-        );
-        final FinancePage<Map<String, dynamic>> page =
-            values[1] as FinancePage<Map<String, dynamic>>;
-        return _WorkspacePayload(
-          summary: Map<String, dynamic>.from(values[0] as Map),
-          rows: page.items,
-          pagination: page.meta,
-        );
+        // Both tabs render their own dedicated, self-loading widget below
+        // and never read `_future`/`_WorkspacePayload` — skip the generic
+        // fetch entirely instead of loading data nobody uses.
+        return const _WorkspacePayload();
       case 'cashbanks':
         final List<dynamic> values =
             await Future.wait<dynamic>(<Future<dynamic>>[
@@ -177,33 +165,44 @@ class _FinanceWorkspaceScreenState extends State<FinanceWorkspaceScreen> {
   Widget build(BuildContext context) => Directionality(
     textDirection: TextDirection.rtl,
     child: DesktopPageLayout(
-      child: FutureBuilder<_WorkspacePayload>(
-        future: _future,
-        builder:
-            (BuildContext context, AsyncSnapshot<_WorkspacePayload> snapshot) {
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    _FinanceWorkspaceHeader(onRefresh: _refresh),
-                    const SizedBox(height: AppSpacing.md),
-                    const _GlobalContextBar(),
-                    const SizedBox(height: AppSpacing.lg),
-                    if (snapshot.connectionState != ConnectionState.done)
-                      const _FinanceStateCard.loading()
-                    else if (snapshot.hasError)
-                      _FinanceStateCard.error(onRetry: _refresh)
-                    else
-                      _FinancePageBody(
-                        tab: _tab,
-                        payload: snapshot.data ?? const _WorkspacePayload(),
-                        onOpen: _openDetail,
-                        onPageChanged: _selectPage,
-                      ),
-                  ],
+      padding: EdgeInsets.zero,
+      child: FinanceShell(
+        currentSection: _financeSectionName(_tab),
+        showContext: false,
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'تحديث',
+            onPressed: (_tab == 'overview' || _tab == 'transactions')
+                ? null
+                : _refresh,
+            icon: const Icon(Icons.refresh, color: FinanceColors.primary),
+          ),
+        ],
+        child: switch (_tab) {
+          'overview' => FinanceOverview.fromRepository(_repository),
+          'transactions' => FinanceTransactionsView.fromRepository(
+            _repository,
+          ),
+          _ => FutureBuilder<_WorkspacePayload>(
+            future: _future,
+            builder:
+                (
+                  BuildContext context,
+                  AsyncSnapshot<_WorkspacePayload> snapshot,
+                ) => SingleChildScrollView(
+                  child: snapshot.connectionState != ConnectionState.done
+                      ? const _FinanceStateCard.loading()
+                      : snapshot.hasError
+                      ? _FinanceStateCard.error(onRetry: _refresh)
+                      : _FinancePageBody(
+                          tab: _tab,
+                          payload: snapshot.data ?? const _WorkspacePayload(),
+                          onOpen: _openDetail,
+                          onPageChanged: _selectPage,
+                        ),
                 ),
-              );
-            },
+          ),
+        },
       ),
     ),
   );
@@ -257,7 +256,6 @@ class _FinanceWorkspaceScreenState extends State<FinanceWorkspaceScreen> {
         return;
     }
     final String? endpoint = switch (_tab) {
-      'transactions' when id != null => 'finance/transactions/$id',
       'journals' when id != null => 'finance/journal-entries/$id',
       'reconciliation' when id != null => 'finance/reconciliations/$id',
       'closing' when id != null => 'finance/daily-closings/$id',
@@ -299,9 +297,6 @@ class _FinancePageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _TabContent content = _TabContent.forTab(tab);
-    if (tab == 'overview') {
-      return _OverviewContent(payload: payload, onOpen: onOpen);
-    }
     if (tab == 'reports') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,6 +370,8 @@ String? _operationalRoute(String tab) => switch (tab) {
   _ => null,
 };
 
+// Legacy sub-header retained for embedded hosts outside the canonical shell.
+// ignore: unused_element
 class _FinanceWorkspaceHeader extends StatelessWidget {
   const _FinanceWorkspaceHeader({required this.onRefresh});
   final Future<void> Function() onRefresh;
@@ -460,6 +457,8 @@ class _FinanceTabBar extends StatelessWidget {
   );
 }
 
+// Legacy context bar retained for embedded hosts outside the canonical shell.
+// ignore: unused_element
 class _GlobalContextBar extends StatelessWidget {
   const _GlobalContextBar();
   @override
@@ -772,163 +771,6 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _OverviewContent extends StatelessWidget {
-  const _OverviewContent({required this.payload, required this.onOpen});
-  final _WorkspacePayload payload;
-  final ValueChanged<Map<String, dynamic>> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final Map<String, dynamic> kpis = Map<String, dynamic>.from(
-      payload.summary['kpis'] as Map? ?? const <String, dynamic>{},
-    );
-    const List<_OverviewKpiDefinition> definitions = <_OverviewKpiDefinition>[
-      _OverviewKpiDefinition('netSales', 'صافي المبيعات'),
-      _OverviewKpiDefinition('grossProfit', 'إجمالي الربح'),
-      _OverviewKpiDefinition('operatingExpenses', 'المصروفات التشغيلية'),
-      _OverviewKpiDefinition('operatingProfit', 'الربح التشغيلي'),
-      _OverviewKpiDefinition('cashBanks', 'النقدية والبنوك'),
-      _OverviewKpiDefinition('supplierPayables', 'مستحقات الموردين'),
-    ];
-    final List<_KpiValue> cards = definitions
-        .map((_OverviewKpiDefinition definition) {
-          final Map<String, dynamic> value = Map<String, dynamic>.from(
-            kpis[definition.key] as Map? ?? const <String, dynamic>{},
-          );
-          return _KpiValue(
-            definition.label,
-            _text(value['current'] ?? value['total'] ?? value['outstanding']),
-            _kpiColor(definition.key),
-          );
-        })
-        .toList(growable: false);
-    final List<Map<String, dynamic>> recent =
-        (payload.summary['recentTransactions'] as List? ?? const <dynamic>[])
-            .whereType<Map>()
-            .map((Map<dynamic, dynamic> row) => Map<String, dynamic>.from(row))
-            .toList(growable: false);
-    final List<Map<String, dynamic>> alerts =
-        (payload.summary['alerts'] as List? ?? const <dynamic>[])
-            .whereType<Map>()
-            .map((Map<dynamic, dynamic> row) => Map<String, dynamic>.from(row))
-            .toList(growable: false);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        const _PageHeader(
-          title: 'نظرة عامة',
-          subtitle: 'ملخص الأداء المالي والجاهزية التشغيلية ضمن السياق المحدد',
-        ),
-        const SizedBox(height: AppSpacing.md),
-        _KpiGrid(items: cards),
-        if (payload.supporting.isNotEmpty) ...<Widget>[
-          const SizedBox(height: AppSpacing.lg),
-          _OverviewBreakdowns(data: payload.supporting),
-        ],
-        if (alerts.isNotEmpty) ...<Widget>[
-          const SizedBox(height: AppSpacing.lg),
-          _FinanceTable(title: 'تنبيهات تشغيلية', rows: alerts, onOpen: onOpen),
-        ],
-        const SizedBox(height: AppSpacing.lg),
-        if (recent.isEmpty)
-          const _FinanceStateCard.empty()
-        else
-          _FinanceTable(
-            title: 'أحدث الحركات المالية',
-            rows: recent,
-            onOpen: onOpen,
-          ),
-        if (payload.rows.isNotEmpty) ...<Widget>[
-          const SizedBox(height: AppSpacing.lg),
-          _FinanceTable(
-            title: 'أداء الفروع',
-            rows: payload.rows,
-            onOpen: onOpen,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _OverviewKpiDefinition {
-  const _OverviewKpiDefinition(this.key, this.label);
-  final String key;
-  final String label;
-}
-
-class _OverviewBreakdowns extends StatelessWidget {
-  const _OverviewBreakdowns({required this.data});
-  final Map<String, dynamic> data;
-
-  @override
-  Widget build(BuildContext context) {
-    const Map<String, String> titles = <String, String>{
-      'revenueVsExpenses': 'الإيرادات مقابل المصروفات',
-      'salesCogsGrossProfit': 'المبيعات والتكلفة وإجمالي الربح',
-      'expenseBreakdown': 'توزيع المصروفات',
-      'paymentMethodBreakdown': 'توزيع طرق الدفع',
-      'cogsDataQuality': 'اكتمال تكلفة المبيعات وجودة البيانات',
-    };
-    final List<Widget> sections = <Widget>[];
-    for (final MapEntry<String, String> entry in titles.entries) {
-      if (!data.containsKey(entry.key)) continue;
-      final dynamic value = data[entry.key];
-      sections.add(_BackendSection(title: entry.value, value: value));
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: sections,
-    );
-  }
-}
-
-class _BackendSection extends StatelessWidget {
-  const _BackendSection({required this.title, required this.value});
-  final String title;
-  final dynamic value;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: _surfaceDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: _FinanceColors.heading,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SelectableText(
-            _backendText(value),
-            style: const TextStyle(fontSize: 12.5, color: _FinanceColors.text),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-String _backendText(dynamic value) {
-  if (value is List) return value.map(_backendText).join('\n');
-  if (value is Map) {
-    return value.entries
-        .map(
-          (MapEntry<dynamic, dynamic> entry) =>
-              '${_labelFor('${entry.key}')}: ${_backendText(entry.value)}',
-        )
-        .join('  •  ');
-  }
-  return _display(value);
-}
-
 class _ReportCenter extends StatelessWidget {
   const _ReportCenter({required this.summary});
   final Map<String, dynamic> summary;
@@ -1142,12 +984,10 @@ class _WorkspacePayload {
   const _WorkspacePayload({
     this.summary = const <String, dynamic>{},
     this.rows = const <Map<String, dynamic>>[],
-    this.supporting = const <String, dynamic>{},
     this.pagination,
   });
   final Map<String, dynamic> summary;
   final List<Map<String, dynamic>> rows;
-  final Map<String, dynamic> supporting;
   final FinancePageMeta? pagination;
 }
 

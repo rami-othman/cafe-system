@@ -13,6 +13,10 @@ class FinancialLocationService
 
     public function save(Request $request, int $tenantId, array $data, ?int $id, ?int $actorId): int
     {
+        if ($id) {
+            $existing = $this->find($tenantId, $id);
+            FinancialActor::assertBranchAccess($actorId, $tenantId, $existing->branch_id ? (int) $existing->branch_id : null);
+        }
         $this->assertReferences($tenantId, $data, $actorId);
         return DB::transaction(function () use ($request, $tenantId, $data, $id, $actorId): int {
             $before = $id ? $this->find($tenantId, $id) : null;

@@ -328,6 +328,82 @@ class ExpenseWorkflowApiTest extends TestCase
         $this->assertSame(1, DB::table('journal_entries')->where('tenant_id', $tenant)->where('reversal_of_id', $originalJournalId)->count());
     }
 
+    public function test_summary_aggregates_the_same_filtered_scope_as_the_list_not_a_partial_page(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $categoryId = $this->rentCategory($tenant, $headers);
+
+        $draft = $this->createExpense($tenant, $headers, $categoryId, null, '10.00');
+        $pendingA = $this->createExpense($tenant, $headers, $categoryId, null, '20.00');
+        $this->postJson('/api/v1/finance/expenses/'.$pendingA.'/submit', [], $headers)->assertOk();
+        $pendingB = $this->createExpense($tenant, $headers, $categoryId, null, '30.00');
+        $this->postJson('/api/v1/finance/expenses/'.$pendingB.'/submit', [], $headers)->assertOk();
+        $rejected = $this->createExpense($tenant, $headers, $categoryId, null, '40.00');
+        $this->postJson('/api/v1/finance/expenses/'.$rejected.'/submit', [], $headers)->assertOk();
+        $this->postJson('/api/v1/finance/expenses/'.$rejected.'/reject', ['rejectionReason' => 'not needed'], $headers)->assertOk();
+
+        $summary = $this->getJson('/api/v1/finance/expenses/summary', $headers)->assertOk();
+        $this->assertGreaterThanOrEqual(4, $summary->json('data.count'));
+        $this->assertGreaterThanOrEqual(100.0, (float) $summary->json('data.totalAmount'));
+        $this->assertSame(50.0, (float) $summary->json('data.pendingApprovalAmount'));
+        $this->assertSame(40.0, (float) $summary->json('data.rejectedAmount'));
+
+        // The status filter narrows summary() exactly like it narrows index().
+        $rejectedOnly = $this->getJson('/api/v1/finance/expenses/summary?status=rejected', $headers)->assertOk();
+        $this->assertSame(1, $rejectedOnly->json('data.count'));
+        $this->assertSame(40.0, (float) $rejectedOnly->json('data.totalAmount'));
+        $this->assertSame(40.0, (float) $rejectedOnly->json('data.averageAmount'));
+
+        $draftStatus = DB::table('expenses')->where('id', $draft)->value('status');
+        $this->assertSame('draft', $draftStatus);
+    }
+
+    public function test_allowed_actions_reflect_backend_state_and_approval_policy_not_status_alone(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $ownerHeaders = $this->headers($tenant);
+        $branch = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+        $categoryId = $this->rentCategory($tenant, $ownerHeaders);
+        $managerHeaders = $this->managerHeaders($tenant, $branch);
+
+        $expense = $this->postJson('/api/v1/finance/expenses', [
+            'branchId' => $branch, 'expenseCategoryId' => $categoryId, 'amount' => '15.00', 'expenseDate' => '2026-08-20', 'description' => 'Allowed actions fixture',
+        ], $managerHeaders)->assertCreated();
+        $id = $expense->json('data.id');
+        $this->assertSame(['edit', 'submit'], $expense->json('data.allowedActions'));
+
+        $this->postJson('/api/v1/finance/expenses/'.$id.'/submit', [], $managerHeaders)->assertOk();
+
+        // The manager who created it cannot approve their own expense — only reject is offered.
+        $ownRead = $this->getJson('/api/v1/finance/expenses/'.$id, $managerHeaders)->assertOk();
+        $this->assertSame(['reject'], $ownRead->json('data.allowedActions'));
+
+        // The owner, unaffected by the self-approval rule, sees both.
+        $ownerRead = $this->getJson('/api/v1/finance/expenses/'.$id, $ownerHeaders)->assertOk();
+        $this->assertSame(['approve', 'reject'], $ownerRead->json('data.allowedActions'));
+
+        $this->postJson('/api/v1/finance/expenses/'.$id.'/approve', [], $ownerHeaders)->assertOk();
+        $approvedRead = $this->getJson('/api/v1/finance/expenses/'.$id, $ownerHeaders)->assertOk();
+        $this->assertSame(['pay'], $approvedRead->json('data.allowedActions'));
+    }
+
+    public function test_expenses_branches_only_expose_the_actors_authorized_branches(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $owner = $this->headers($tenant);
+        $branch = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+        $ownerBranches = $this->getJson('/api/v1/finance/expenses/branches', $owner)->assertOk()->json('data.branches');
+        $this->assertGreaterThanOrEqual(1, count($ownerBranches));
+
+        $manager = $this->managerHeaders($tenant, $branch);
+        $managerBranches = $this->getJson('/api/v1/finance/expenses/branches', $manager)->assertOk()->json('data.branches');
+        $this->assertSame([$branch], array_column($managerBranches, 'id'));
+    }
+
     private function rentCategory(int $tenant, array $headers): int
     {
         $account = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '6100')->value('id');

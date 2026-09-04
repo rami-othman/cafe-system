@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'finance_pagination.dart';
+import 'finance_design.dart';
 
 /// Consistent ten-row pagination for Finance data tables.
 ///
@@ -51,25 +52,35 @@ class _FinancePaginatedTableState extends State<FinancePaginatedTable> {
         .toInt();
 
     return SingleChildScrollView(
-      child: SizedBox(
-        width: widget.minWidth,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            DataTable(
-              columns: widget.columns,
-              rows: widget.rows.sublist(start, end),
-            ),
-            FinancePagination(
-              meta: FinancePageMeta(
-                currentPage: page,
-                perPage: FinancePaginatedTable.rowsPerPage,
-                total: total,
-                lastPage: lastPage,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: widget.minWidth),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              DataTable(
+                headingRowColor: const WidgetStatePropertyAll<Color>(
+                  FinanceColors.tableHead,
+                ),
+                dividerThickness: 0.7,
+                headingTextStyle: FinanceText.label.copyWith(
+                  color: FinanceColors.brown,
+                ),
+                columns: widget.columns,
+                rows: widget.rows.sublist(start, end),
               ),
-              onPageChanged: (int value) => setState(() => _page = value),
-            ),
-          ],
+              FinancePagination(
+                meta: FinancePageMeta(
+                  currentPage: page,
+                  perPage: FinancePaginatedTable.rowsPerPage,
+                  total: total,
+                  lastPage: lastPage,
+                ),
+                onPageChanged: (int value) => setState(() => _page = value),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Inventory\InventoryAccountingMapper;
 use App\Support\BranchScope;
 use App\Support\Money;
 use Illuminate\Database\Query\Builder;
@@ -11,7 +12,13 @@ use Illuminate\Validation\ValidationException;
 /** Formal reports: every amount is a sum of posted journal lines, never a dashboard cache. */
 final class FinancialReportQueryService
 {
-    public function __construct(private readonly FinancialReportContext $contexts, private readonly SupplierPayableQueryService $payables) {}
+    private const INVENTORY_POSTING_TYPES = ['waste', 'stock_count_variance', 'adjustment_in', 'adjustment_out'];
+
+    public function __construct(
+        private readonly FinancialReportContext $contexts,
+        private readonly SupplierPayableQueryService $payables,
+        private readonly InventoryAccountingMapper $inventoryMapper,
+    ) {}
 
     public function context(int $tenant, int $actor, array $filters): array { return $this->contexts->resolve($tenant, $actor, $filters); }
 
@@ -19,7 +26,26 @@ final class FinancialReportQueryService
     {
         $current = $this->profitAndLossRange($ctx, $ctx['dateFrom'], $ctx['dateTo']);
         $comparison = $ctx['comparisonFrom'] ? $this->profitAndLossRange($ctx, $ctx['comparisonFrom'], $ctx['comparisonTo']) : null;
-        return $current + ['comparison' => $comparison ? $this->comparison($current['totals'], $comparison['totals']) : null, 'integrity' => ['ledgerBased' => true]];
+        return $current + ['comparison' => $comparison ? $this->comparison($current['totals'], $comparison['totals']) : null, 'integrity' => $this->cogsIntegrity($ctx, $ctx['dateFrom'], $ctx['dateTo'])];
+    }
+
+    /**
+     * Real COGS-posting-completeness signal for the P&L period/branch scope, reusing
+     * `InventoryAccountingMapper` (the sole applicability engine, shared with Daily Closing's
+     * `UNPOSTED_INVENTORY_FINANCIAL_EVENT` check) instead of a static/always-true flag.
+     */
+    private function cogsIntegrity(array $ctx, string $from, string $to): array
+    {
+        $branchIds = $ctx['branchId'] !== null ? [$ctx['branchId']] : $ctx['authorizedBranchIds'];
+        $count = DB::table('stock_movements as m')
+            ->where('m.tenant_id', $ctx['tenantId'])->whereIn('m.branch_id', $branchIds)
+            ->whereDate('m.occurred_at', '>=', $from)->whereDate('m.occurred_at', '<=', $to)
+            ->whereIn('m.type', self::INVENTORY_POSTING_TYPES)
+            ->get(['m.id', 'm.type', 'm.reference_type', 'm.reference_id', 'm.total_cost', 'm.quantity_out'])
+            ->filter(fn (object $movement): bool => in_array($this->inventoryMapper->impactForMovement($ctx['tenantId'], $movement)['status'], ['CONFIGURATION_REQUIRED', 'FAILED'], true))
+            ->count();
+
+        return ['ledgerBased' => true, 'cogsComplete' => $count === 0, 'unpostedInventoryEventsCount' => $count];
     }
 
     public function balanceSheet(array $ctx, string $asOf): array

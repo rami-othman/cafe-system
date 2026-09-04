@@ -1,6 +1,7 @@
 import '../../../core/network/dio_api_client.dart';
 import '../../pos/models/branch.dart';
 import '../../pos/models/json_helpers.dart';
+import '../models/finance_report_models.dart';
 import '../models/finance_setup_models.dart';
 import '../widgets/finance_pagination.dart';
 
@@ -81,6 +82,12 @@ class FinanceSetupRepository {
       }),
     ),
   ).map(FinancialAccount.fromJson).toList(growable: false);
+  Future<FinancialAccount> getAccount(int id) async =>
+      FinancialAccount.fromJson(
+        Map<String, dynamic>.from(
+          await _api.get('finance/accounts/$id') as Map,
+        ),
+      );
   Future<List<JournalEntry>> getJournalEntries({
     String? search,
     String? status,
@@ -187,17 +194,21 @@ class FinanceSetupRepository {
             data: payload,
           ),
   );
-  Future<Map<String, dynamic>> getFinancialLocation(String kind, int id) =>
-      getFinanceMap(
-        'finance/${kind == 'cash' ? 'cash-accounts' : 'bank-accounts'}/$id',
+  Future<FinancialLocation> getFinancialLocation(String kind, int id) async =>
+      FinancialLocation.fromJson(
+        await getFinanceMap(
+          'finance/${kind == 'cash' ? 'cash-accounts' : 'bank-accounts'}/$id',
+        ),
       );
-  Future<List<Map<String, dynamic>>> getFinancialLocationTransactions(
+  Future<FinancialLocationTransactions> getFinancialLocationTransactions(
     String kind,
     int id, {
     Map<String, dynamic>? queryParameters,
-  }) => getFinanceList(
-    'finance/${kind == 'cash' ? 'cash-accounts' : 'bank-accounts'}/$id/transactions',
-    queryParameters: queryParameters,
+  }) async => FinancialLocationTransactions.fromJson(
+    await getFinanceMap(
+      'finance/${kind == 'cash' ? 'cash-accounts' : 'bank-accounts'}/$id/transactions',
+      queryParameters: queryParameters,
+    ),
   );
   Future<void> setFinancialLocationStatus(
     String kind,
@@ -210,12 +221,42 @@ class FinanceSetupRepository {
   Future<void> reverseCashTransfer(int id) =>
       _api.post('finance/cash-transfers/$id/reverse');
 
-  Future<Map<String, dynamic>> getReconciliation(int id) =>
-      getFinanceMap('finance/reconciliations/$id');
-  Future<List<Map<String, dynamic>>> getReconciliationTransactions(int id) =>
-      getFinanceList('finance/reconciliations/$id/system-transactions');
-  Future<List<Map<String, dynamic>>> getReconciliationSuggestions(int id) =>
-      getFinanceList('finance/reconciliations/$id/suggestions');
+  Future<FinancePage<ReconciliationSession>> getReconciliations({
+    Map<String, dynamic>? filters,
+  }) async {
+    final FinancePage<Map<String, dynamic>> page = await getFinancePage(
+      'finance/reconciliations',
+      queryParameters: filters,
+    );
+    return FinancePage<ReconciliationSession>(
+      items: page.items
+          .map(ReconciliationSession.fromJson)
+          .toList(growable: false),
+      meta: page.meta,
+    );
+  }
+
+  Future<ReconciliationSession> createReconciliation(
+    Map<String, dynamic> payload,
+  ) async => ReconciliationSession.fromJson(
+    Map<String, dynamic>.from(
+      await _api.post('finance/reconciliations', data: payload) as Map,
+    ),
+  );
+  Future<ReconciliationSession> getReconciliation(int id) async =>
+      ReconciliationSession.fromJson(
+        await getFinanceMap('finance/reconciliations/$id'),
+      );
+  Future<List<ReconciliationSystemTransaction>> getReconciliationTransactions(
+    int id,
+  ) async => (await getFinanceList(
+    'finance/reconciliations/$id/system-transactions',
+  )).map(ReconciliationSystemTransaction.fromJson).toList(growable: false);
+  Future<List<ReconciliationSuggestion>> getReconciliationSuggestions(
+    int id,
+  ) async => (await getFinanceList(
+    'finance/reconciliations/$id/suggestions',
+  )).map(ReconciliationSuggestion.fromJson).toList(growable: false);
   Future<void> updateReconciliation(int id, Map<String, dynamic> payload) =>
       _api.patch('finance/reconciliations/$id', data: payload);
   Future<void> addReconciliationStatementLine(
@@ -243,12 +284,50 @@ class FinanceSetupRepository {
   Future<void> completeReconciliation(int id) =>
       _api.post('finance/reconciliations/$id/complete');
 
-  Future<Map<String, dynamic>> getDailyClosing(int id) =>
-      getFinanceMap('finance/daily-closings/$id');
-  Future<void> updateDailyClosing(int id, Map<String, dynamic> payload) =>
-      _api.patch('finance/daily-closings/$id', data: payload);
-  Future<void> closeDailyClosing(int id) =>
-      _api.post('finance/daily-closings/$id/close');
+  Future<FinancePage<DailyClosingListItem>> getDailyClosings({
+    Map<String, dynamic>? filters,
+  }) async {
+    final FinancePage<Map<String, dynamic>> page = await getFinancePage(
+      'finance/daily-closings',
+      queryParameters: filters,
+    );
+    return FinancePage<DailyClosingListItem>(
+      items: page.items
+          .map(DailyClosingListItem.fromJson)
+          .toList(growable: false),
+      meta: page.meta,
+    );
+  }
+
+  Future<DailyClosingDetail> getDailyClosingPreview({
+    required int branchId,
+    required String date,
+  }) async => DailyClosingDetail.fromJson(
+    await getFinanceMap(
+      'finance/daily-closing',
+      queryParameters: <String, dynamic>{'branchId': branchId, 'date': date},
+    ),
+  );
+  Future<DailyClosingDetail> getDailyClosing(int id) async =>
+      DailyClosingDetail.fromJson(
+        await getFinanceMap('finance/daily-closings/$id'),
+      );
+  Future<DailyClosingDetail> updateDailyClosing(
+    int id,
+    Map<String, dynamic> payload,
+  ) async => DailyClosingDetail.fromJson(
+    await getFinanceMapFrom(
+      _api.patch('finance/daily-closings/$id', data: payload),
+    ),
+  );
+  Future<DailyClosingDetail> closeDailyClosing(
+    int id,
+    Map<String, dynamic> payload,
+  ) async => DailyClosingDetail.fromJson(
+    await getFinanceMapFrom(
+      _api.post('finance/daily-closings/$id/close', data: payload),
+    ),
+  );
 
   Future<Map<String, dynamic>> getAccountingPeriod(int id) =>
       getFinanceMap('finance/accounting-periods/$id');
@@ -355,6 +434,62 @@ class FinanceSetupRepository {
       _api.post('finance/supplier-payments', data: payload);
   Future<void> reverseSupplierPayment(int id) =>
       _api.post('finance/supplier-payments/$id/reverse');
+
+  Future<ProfitAndLossReport> getProfitAndLoss({
+    Map<String, dynamic>? filters,
+  }) async => ProfitAndLossReport.fromJson(
+    await getFinanceMap(
+      'finance/reports/profit-loss',
+      queryParameters: filters,
+    ),
+  );
+  Future<BalanceSheetReport> getBalanceSheet({
+    Map<String, dynamic>? filters,
+  }) async => BalanceSheetReport.fromJson(
+    await getFinanceMap(
+      'finance/reports/balance-sheet',
+      queryParameters: filters,
+    ),
+  );
+  Future<CashFlowReport> getCashFlow({Map<String, dynamic>? filters}) async =>
+      CashFlowReport.fromJson(
+        await getFinanceMap(
+          'finance/reports/cash-flow',
+          queryParameters: filters,
+        ),
+      );
+  Future<TrialBalanceReport> getTrialBalance({
+    Map<String, dynamic>? filters,
+  }) async => TrialBalanceReport.fromJson(
+    await getFinanceMap(
+      'finance/reports/trial-balance',
+      queryParameters: filters,
+    ),
+  );
+  Future<GeneralLedgerReport> getGeneralLedgerReport({
+    Map<String, dynamic>? filters,
+  }) async => GeneralLedgerReport.fromJson(
+    await getFinanceMap(
+      'finance/reports/general-ledger',
+      queryParameters: filters,
+    ),
+  );
+  Future<SupplierAgingReport> getSupplierAging({
+    Map<String, dynamic>? filters,
+  }) async => SupplierAgingReport.fromJson(
+    await getFinanceMap(
+      'finance/reports/supplier-aging',
+      queryParameters: filters,
+    ),
+  );
+  Future<SupplierStatementReport> getSupplierStatementReport({
+    Map<String, dynamic>? filters,
+  }) async => SupplierStatementReport.fromJson(
+    await getFinanceMap(
+      'finance/reports/supplier-statement',
+      queryParameters: filters,
+    ),
+  );
 
   Map<String, dynamic>? _query(Map<String, dynamic> values) {
     final Map<String, dynamic> result = Map<String, dynamic>.from(values)

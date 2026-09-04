@@ -55,6 +55,37 @@ class FinancialTransactionsApiTest extends TestCase
         $this->getJson("/api/v1/finance/transactions/$branchEntry", $this->headers((int) $foreign))->assertNotFound();
     }
 
+    public function test_has_cash_effect_filter_only_returns_entries_touching_a_cash_or_bank_location(): void
+    {
+        $this->seed(); $tenant = $this->tenant(); $owner = $this->headers($tenant);
+        $cash = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->value('id');
+        $equity = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '3000')->value('id');
+        $revenue = (int) DB::table('financial_accounts')->insertGetId(['tenant_id' => $tenant, 'code' => 'HCE-REV', 'name_ar' => 'HCE revenue', 'name_en' => 'HCE revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $receivable = (int) DB::table('financial_accounts')->insertGetId(['tenant_id' => $tenant, 'code' => 'HCE-AR', 'name_ar' => 'HCE receivable', 'name_en' => 'HCE receivable', 'account_group' => 'assets', 'normal_balance' => 'debit', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        $cashTouching = $this->postJson('/api/v1/finance/journal-entries', $this->journal($cash, $equity, 'Touches cash'), $owner)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/journal-entries/$cashTouching/post", [], $owner)->assertOk();
+        $noCashEffect = $this->postJson('/api/v1/finance/journal-entries', $this->journal($receivable, $revenue, 'No cash account touched'), $owner)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/journal-entries/$noCashEffect/post", [], $owner)->assertOk();
+
+        $response = $this->getJson('/api/v1/finance/transactions?has_cash_effect=1&status=posted', $owner)->assertOk();
+        $ids = array_column($response->json('data'), 'id');
+        $this->assertContains($cashTouching, $ids);
+        $this->assertNotContains($noCashEffect, $ids);
+    }
+
+    public function test_transactions_branches_only_expose_the_actors_authorized_branches(): void
+    {
+        $this->seed(); $tenant = $this->tenant(); $owner = $this->headers($tenant);
+        $branch = (int) DB::table('branches')->where('tenant_id', $tenant)->where('name', 'Downtown')->value('id');
+        $ownerBranches = $this->getJson('/api/v1/finance/transactions/branches', $owner)->assertOk()->json('data.branches');
+        $this->assertGreaterThanOrEqual(2, count($ownerBranches));
+
+        $manager = $this->singleBranchManagerHeaders($tenant, $branch);
+        $managerBranches = $this->getJson('/api/v1/finance/transactions/branches', $manager)->assertOk()->json('data.branches');
+        $this->assertSame([$branch], array_column($managerBranches, 'id'));
+    }
+
     private function tenant(): int { return (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id'); }
     private function headers(int $tenant, string $role = 'owner'): array { $user = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', $role)->value('id'); if (! $user) $user = (int) DB::table('users')->insertGetId(['tenant_id' => $tenant, 'name' => 'Transactions Owner', 'email' => "transactions-owner-$tenant@example.test", 'password' => bcrypt('password'), 'role' => $role, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]); $token = "transactions-$tenant-$role"; DB::table('api_tokens')->updateOrInsert(['tenant_id' => $tenant, 'user_id' => $user, 'name' => "transactions-$role"], ['token_hash' => hash('sha256', $token), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]); return ['Authorization' => "Bearer $token", 'X-Tenant-Id' => $tenant]; }
     private function singleBranchManagerHeaders(int $tenant, int $branch): array { $user = (int) DB::table('users')->insertGetId(['tenant_id' => $tenant, 'name' => 'Single Branch Manager', 'email' => "transactions-manager-$tenant@example.test", 'password' => bcrypt('password'), 'role' => 'manager', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]); foreach(FinanceAccess::defaultPermissionsForRole('manager') as $permission)DB::table('finance_role_permissions')->updateOrInsert(['tenant_id'=>$tenant,'role'=>'manager','permission'=>$permission],['created_at'=>now(),'updated_at'=>now()]); DB::table('user_branches')->insert(['tenant_id' => $tenant, 'user_id' => $user, 'branch_id' => $branch, 'created_at' => now(), 'updated_at' => now()]); $token = "transactions-manager-$tenant"; DB::table('api_tokens')->insert(['tenant_id' => $tenant, 'user_id' => $user, 'name' => 'transactions-single-manager', 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]); return ['Authorization' => "Bearer $token", 'X-Tenant-Id' => $tenant]; }

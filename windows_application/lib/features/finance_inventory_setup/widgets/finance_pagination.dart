@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'finance_design.dart';
+
 class FinancePageMeta {
   const FinancePageMeta({
     required this.currentPage,
@@ -7,17 +9,14 @@ class FinancePageMeta {
     required this.total,
     required this.lastPage,
   });
-
   const FinancePageMeta.singlePage({this.total = 0})
     : currentPage = 1,
       perPage = 10,
       lastPage = 1;
-
   final int currentPage;
   final int perPage;
   final int total;
   final int lastPage;
-
   bool get hasPrevious => currentPage > 1;
   bool get hasNext => currentPage < lastPage;
 
@@ -41,18 +40,18 @@ class FinancePageMeta {
 
 class FinancePage<T> {
   const FinancePage({required this.items, required this.meta});
-
   final List<T> items;
   final FinancePageMeta meta;
 }
 
+/// Uses the pagination metadata returned by Laravel; the parent fetches a new
+/// server page in response to [onPageChanged].
 class FinancePagination extends StatelessWidget {
   const FinancePagination({
     super.key,
     required this.meta,
     required this.onPageChanged,
   });
-
   final FinancePageMeta meta;
   final ValueChanged<int> onPageChanged;
 
@@ -68,16 +67,13 @@ class FinancePagination extends StatelessWidget {
         .clamp(0, meta.total)
         .toInt();
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: FinanceSpace.md),
       child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: FinanceSpace.sm,
+        runSpacing: FinanceSpace.sm,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
-          Text(
-            'عرض $start–$end من ${meta.total}',
-            style: const TextStyle(color: Color(0xff776B62)),
-          ),
+          Text('عرض $start–$end من ${meta.total}', style: FinanceText.small),
           OutlinedButton.icon(
             onPressed: meta.hasPrevious
                 ? () => onPageChanged(meta.currentPage - 1)
@@ -87,7 +83,7 @@ class FinancePagination extends StatelessWidget {
           ),
           Text(
             'صفحة ${meta.currentPage} من ${meta.lastPage}',
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
           ),
           OutlinedButton.icon(
             onPressed: meta.hasNext

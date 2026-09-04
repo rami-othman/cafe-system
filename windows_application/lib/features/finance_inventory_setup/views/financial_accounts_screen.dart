@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -11,7 +13,8 @@ import '../models/finance_setup_models.dart';
 import '../widgets/finance_paginated_table.dart';
 
 class FinancialAccountsScreen extends StatefulWidget {
-  const FinancialAccountsScreen({super.key});
+  const FinancialAccountsScreen({super.key, this.accountId});
+  final int? accountId;
   @override
   State<FinancialAccountsScreen> createState() => _AccountsState();
 }
@@ -21,11 +24,19 @@ class _AccountsState extends State<FinancialAccountsScreen> {
   String? _group;
   String? _status;
   String? _system;
+  final Set<int> _expanded = <int>{};
+  late Future<FinancialAccount>? _detailFuture;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(_load);
+    if (widget.accountId == null) {
+      Future<void>.microtask(_load);
+    } else {
+      final FinanceSetupCubit cubit = context.read<FinanceSetupCubit>();
+      _detailFuture = cubit.repository.getAccount(widget.accountId!);
+      Future<void>.microtask(cubit.loadAccounts);
+    }
   }
 
   Future<void> _load() => context.read<FinanceSetupCubit>().loadAccounts(
@@ -37,115 +48,229 @@ class _AccountsState extends State<FinancialAccountsScreen> {
 
   @override
   Widget build(BuildContext context) => DesktopPageLayout(
-    child: BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
-      builder: (context, state) {
-        final accounts = state.accounts;
-        final active = accounts.where((a) => a.isActive).length;
-        return Column(
+    child: widget.accountId == null
+        ? BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
+            builder: (context, state) {
+              final accounts = state.accounts;
+              final active = accounts.where((a) => a.isActive).length;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  ManagementPageHeader(
+                    title: 'دليل الحسابات',
+                    subtitle:
+                        'إدارة الحسابات الأساسية والهيكل المحاسبي ضمن نطاق المنشأة.',
+                    actions: <Widget>[
+                      AppButton(
+                        label: 'إضافة حساب',
+                        icon: Icons.add,
+                        onPressed: () => _form(accounts),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: <Widget>[
+                      ManagementKpiCard(
+                        label: 'إجمالي الحسابات',
+                        value: '${accounts.length}',
+                        icon: Icons.account_tree_outlined,
+                      ),
+                      ManagementKpiCard(
+                        label: 'الحسابات النشطة',
+                        value: '$active',
+                        icon: Icons.check_circle_outline,
+                      ),
+                      ManagementKpiCard(
+                        label: 'غير النشطة',
+                        value: '${accounts.length - active}',
+                        icon: Icons.pause_circle_outline,
+                      ),
+                      ManagementKpiCard(
+                        label: 'حسابات النظام',
+                        value:
+                            '${accounts.where((a) => a.isSystemProtected).length}',
+                        icon: Icons.lock_outline,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ManagementFilterBar(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 250,
+                        child: TextField(
+                          onChanged: (value) {
+                            _search = value;
+                            _load();
+                          },
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'البحث بالاسم أو الرمز',
+                          ),
+                        ),
+                      ),
+                      _filter(
+                        _group,
+                        'كل المجموعات',
+                        const <String?>[
+                          null,
+                          'assets',
+                          'liabilities',
+                          'equity',
+                          'revenue',
+                          'cost_of_sales',
+                          'expenses',
+                        ],
+                        _groupLabel,
+                        (value) {
+                          setState(() => _group = value);
+                          _load();
+                        },
+                      ),
+                      _filter(
+                        _status,
+                        'كل الحالات',
+                        const <String?>[null, 'active', 'inactive'],
+                        (value) => value == 'active' ? 'نشط' : 'غير نشط',
+                        (value) {
+                          setState(() => _status = value);
+                          _load();
+                        },
+                      ),
+                      _filter(
+                        _system,
+                        'كل الحسابات',
+                        const <String?>[null, 'system', 'non-system'],
+                        (value) =>
+                            value == 'system' ? 'حسابات النظام' : 'غير نظامية',
+                        (value) {
+                          setState(() => _system = value);
+                          _load();
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Expanded(child: _content(state, accounts)),
+                ],
+              );
+            },
+          )
+        : _accountDetail(),
+  );
+
+  Widget _accountDetail() => FutureBuilder<FinancialAccount>(
+    future: _detailFuture,
+    builder: (BuildContext context, AsyncSnapshot<FinancialAccount> snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return ManagementMessage(
+          message: snapshot.error.toString(),
+          error: true,
+          onRetry: _reloadDetail,
+        );
+      }
+      final account = snapshot.data!;
+      return SingleChildScrollView(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             ManagementPageHeader(
-              title: 'دليل الحسابات',
-              subtitle:
-                  'إدارة الحسابات الأساسية والهيكل المحاسبي ضمن نطاق المنشأة.',
+              title: '${account.code} — ${account.nameAr}',
+              subtitle: 'تفاصيل الحساب من دليل الحسابات.',
               actions: <Widget>[
                 AppButton(
-                  label: 'إضافة حساب',
-                  icon: Icons.add,
-                  onPressed: () => _form(accounts),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Wrap(
-              spacing: AppSpacing.md,
-              runSpacing: AppSpacing.md,
-              children: <Widget>[
-                ManagementKpiCard(
-                  label: 'إجمالي الحسابات',
-                  value: '${accounts.length}',
-                  icon: Icons.account_tree_outlined,
-                ),
-                ManagementKpiCard(
-                  label: 'الحسابات النشطة',
-                  value: '$active',
-                  icon: Icons.check_circle_outline,
-                ),
-                ManagementKpiCard(
-                  label: 'غير النشطة',
-                  value: '${accounts.length - active}',
-                  icon: Icons.pause_circle_outline,
-                ),
-                ManagementKpiCard(
-                  label: 'حسابات النظام',
-                  value: '${accounts.where((a) => a.isSystemProtected).length}',
-                  icon: Icons.lock_outline,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            ManagementFilterBar(
-              children: <Widget>[
-                SizedBox(
-                  width: 250,
-                  child: TextField(
-                    onChanged: (value) {
-                      _search = value;
-                      _load();
-                    },
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'البحث بالاسم أو الرمز',
-                    ),
+                  label: 'عرض دفتر الأستاذ',
+                  icon: Icons.menu_book_outlined,
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () => context.go(
+                    '${AppRoutes.financeReportsCanonical}?type=general-ledger&accountId=${account.id}',
                   ),
                 ),
-                _filter(
-                  _group,
-                  'كل المجموعات',
-                  const <String?>[
-                    null,
-                    'assets',
-                    'liabilities',
-                    'equity',
-                    'revenue',
-                    'cost_of_sales',
-                    'expenses',
-                  ],
-                  _groupLabel,
-                  (value) {
-                    setState(() => _group = value);
-                    _load();
-                  },
-                ),
-                _filter(
-                  _status,
-                  'كل الحالات',
-                  const <String?>[null, 'active', 'inactive'],
-                  (value) => value == 'active' ? 'نشط' : 'غير نشط',
-                  (value) {
-                    setState(() => _status = value);
-                    _load();
-                  },
-                ),
-                _filter(
-                  _system,
-                  'كل الحسابات',
-                  const <String?>[null, 'system', 'non-system'],
-                  (value) => value == 'system' ? 'حسابات النظام' : 'غير نظامية',
-                  (value) {
-                    setState(() => _system = value);
-                    _load();
-                  },
-                ),
+                if (!account.isSystemProtected)
+                  AppButton(
+                    label: 'تعديل',
+                    icon: Icons.edit_outlined,
+                    onPressed: () => _form(
+                      context.read<FinanceSetupCubit>().state.accounts,
+                      account,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            Expanded(child: _content(state, accounts)),
+            ManagementTableShell(
+              minWidth: 0,
+              child: Padding(
+                padding: AppSpacing.allLg,
+                child: Wrap(
+                  spacing: AppSpacing.xl,
+                  runSpacing: AppSpacing.lg,
+                  children: <Widget>[
+                    _detailValue('الرمز', account.code),
+                    _detailValue('الاسم العربي', account.nameAr),
+                    _detailValue('الاسم الإنجليزي', account.nameEn),
+                    _detailValue('المجموعة', _groupLabel(account.accountGroup)),
+                    _detailValue(
+                      'الرصيد الطبيعي',
+                      account.normalBalance == 'debit' ? 'مدين' : 'دائن',
+                    ),
+                    _detailValue(
+                      'الحساب الأب',
+                      account.parentCode == null
+                          ? '—'
+                          : '${account.parentCode} — ${account.parentNameAr ?? ''}',
+                    ),
+                    _detailValue(
+                      'الحالة',
+                      account.isActive ? 'نشط' : 'غير نشط',
+                    ),
+                    _detailValue(
+                      'حساب نظام',
+                      account.isSystemProtected ? 'محمي' : 'غير محمي',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            if (!account.isSystemProtected || !account.isActive)
+              AppButton(
+                label: account.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب',
+                icon: account.isActive
+                    ? Icons.pause_circle_outline
+                    : Icons.play_circle_outline,
+                variant: AppButtonVariant.outlined,
+                onPressed: () => _changeStatus(account),
+              ),
           ],
-        );
-      },
+        ),
+      );
+    },
+  );
+
+  Widget _detailValue(String label, String value) => SizedBox(
+    width: 230,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: AppSpacing.xs),
+        SelectableText(value),
+      ],
     ),
   );
+
+  void _reloadDetail() => setState(() {
+    _detailFuture = context.read<FinanceSetupCubit>().repository.getAccount(
+      widget.accountId!,
+    );
+  });
 
   Widget _content(FinanceSetupState state, List<FinancialAccount> accounts) {
     if (state.isLoading && accounts.isEmpty) {
@@ -164,6 +289,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
             'لا توجد حسابات مطابقة. أكمِل إعداد المالية أو غيّر عوامل التصفية.',
       );
     }
+    final hierarchy = _hierarchy(accounts, _expanded);
     return ManagementTableShell(
       minWidth: 1100,
       child: FinancePaginatedTable(
@@ -178,15 +304,70 @@ class _AccountsState extends State<FinancialAccountsScreen> {
           DataColumn(label: Text('محمي')),
           DataColumn(label: Text('')),
         ],
-        rows: accounts.map(_row).toList(),
+        rows: hierarchy
+            .map(
+              (item) => _row(
+                item.account,
+                depth: item.depth,
+                hasChildren: item.hasChildren,
+              ),
+            )
+            .toList(),
       ),
     );
   }
 
-  DataRow _row(FinancialAccount a) => DataRow(
+  DataRow _row(
+    FinancialAccount a, {
+    int depth = 0,
+    bool hasChildren = false,
+  }) => DataRow(
     cells: <DataCell>[
-      DataCell(Text(a.code)),
-      DataCell(Text(a.nameAr)),
+      DataCell(
+        Text(a.code),
+        onTap: () => context.go('/finance/accounts/${a.id}'),
+      ),
+      DataCell(
+        Padding(
+          padding: EdgeInsetsDirectional.only(start: depth * 20.0),
+          child: Row(
+            children: <Widget>[
+              if (hasChildren)
+                IconButton(
+                  tooltip: _expanded.contains(a.id)
+                      ? 'طي الحسابات الفرعية'
+                      : 'توسيع الحسابات الفرعية',
+                  constraints: const BoxConstraints.tightFor(
+                    width: 30,
+                    height: 30,
+                  ),
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    _expanded.contains(a.id)
+                        ? Icons.expand_more
+                        : Icons.chevron_left,
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() {
+                    _expanded.contains(a.id)
+                        ? _expanded.remove(a.id)
+                        : _expanded.add(a.id);
+                  }),
+                )
+              else
+                Icon(
+                  depth == 0
+                      ? Icons.account_tree_outlined
+                      : Icons.subdirectory_arrow_left,
+                  size: 17,
+                ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(child: Text(a.nameAr, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+        ),
+        onTap: () => context.go('/finance/accounts/${a.id}'),
+      ),
       DataCell(Text(_groupLabel(a.accountGroup))),
       DataCell(Text(a.normalBalance == 'debit' ? 'مدين' : 'دائن')),
       DataCell(
@@ -297,6 +478,8 @@ class _AccountsState extends State<FinancialAccountsScreen> {
           ),
         ),
       );
+    } else if (mounted && widget.accountId != null) {
+      _reloadDetail();
     }
   }
 
@@ -446,6 +629,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
                   }, id: current?.id);
                   if (ok && dialog.mounted) {
                     Navigator.pop(dialog);
+                    if (widget.accountId != null) _reloadDetail();
                   } else if (dialog.mounted) {
                     setDialog(
                       () => error =
@@ -463,6 +647,50 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     nameAr.dispose();
     nameEn.dispose();
   }
+}
+
+class _AccountTreeItem {
+  const _AccountTreeItem(this.account, this.depth, this.hasChildren);
+  final FinancialAccount account;
+  final int depth;
+  final bool hasChildren;
+}
+
+List<_AccountTreeItem> _hierarchy(
+  List<FinancialAccount> accounts,
+  Set<int> expanded,
+) {
+  final Map<int?, List<FinancialAccount>> children =
+      <int?, List<FinancialAccount>>{};
+  final Set<int> accountIds = accounts
+      .map((FinancialAccount account) => account.id)
+      .toSet();
+  for (final FinancialAccount account in accounts) {
+    final int? parentId =
+        account.parentAccountId != null &&
+            accountIds.contains(account.parentAccountId)
+        ? account.parentAccountId
+        : null;
+    children.putIfAbsent(parentId, () => <FinancialAccount>[]).add(account);
+  }
+  final List<_AccountTreeItem> output = <_AccountTreeItem>[];
+  void visit(FinancialAccount account, int depth, Set<int> ancestry) {
+    if (!ancestry.add(account.id)) return;
+    final List<FinancialAccount> descendants =
+        children[account.id] ?? const <FinancialAccount>[];
+    output.add(_AccountTreeItem(account, depth, descendants.isNotEmpty));
+    if (expanded.contains(account.id)) {
+      for (final FinancialAccount child in descendants) {
+        visit(child, depth + 1, Set<int>.from(ancestry));
+      }
+    }
+  }
+
+  for (final FinancialAccount root
+      in children[null] ?? const <FinancialAccount>[]) {
+    visit(root, 0, <int>{});
+  }
+  return output;
 }
 
 String _groupStatic(String group) => switch (group) {

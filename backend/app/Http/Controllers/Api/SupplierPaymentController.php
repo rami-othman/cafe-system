@@ -27,6 +27,8 @@ class SupplierPaymentController extends Controller
                 $q->where($column, $request->input($input));
             }
         }
+        if ($request->filled('from')) $q->whereDate('p.payment_date', '>=', $request->input('from'));
+        if ($request->filled('to')) $q->whereDate('p.payment_date', '<=', $request->input('to'));
 
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
         $paginator = $q->orderByDesc('p.payment_date')->orderByDesc('p.id')->paginate($this->perPage($request));

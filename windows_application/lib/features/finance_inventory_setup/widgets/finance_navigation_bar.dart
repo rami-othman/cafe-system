@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// The single Finance navigation bar used by the workspace and Finance detail
-/// routes.  It intentionally mirrors the approved RTL desktop order.
+import 'finance_design.dart';
+
+/// The only Finance tab bar. It is installed by the application shell, so
+/// Finance screens do not create competing local navigation.
 class FinanceNavigationBar extends StatelessWidget {
   const FinanceNavigationBar({super.key, required this.selected});
 
@@ -25,37 +27,45 @@ class FinanceNavigationBar extends StatelessWidget {
     _FinanceDestination(
       'reconciliation',
       'التسويات',
-      '/finance/reconciliations',
+      '/finance/reconciliation',
     ),
     _FinanceDestination(
       'journals',
       'القيود المحاسبية',
       '/finance/journal-entries',
     ),
-    _FinanceDestination('closing', 'الإغلاق اليومي', '/finance/daily-closings'),
+    _FinanceDestination('closing', 'الإغلاق اليومي', '/finance/daily-closing'),
+    _FinanceDestination('reports', 'التقارير المالية', '/finance/reports'),
+    _FinanceDestination('accounts', 'الحسابات', '/finance/accounts'),
     _FinanceDestination(
-      'reports',
-      'التقارير المالية',
-      '/finance/reports/general-ledger',
+      'periods',
+      'الفترات المالية',
+      '/finance/accounting-periods',
     ),
+    _FinanceDestination('settings', 'الإعدادات', '/finance/settings'),
   ];
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 52,
+    height: 54,
     decoration: const BoxDecoration(
-      color: Color(0xffFCFAF8),
-      border: Border(bottom: BorderSide(color: Color(0xffE8DED4))),
+      color: FinanceColors.workspace,
+      border: Border(bottom: BorderSide(color: FinanceColors.border)),
     ),
     child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      padding: const EdgeInsets.symmetric(
+        horizontal: FinanceSpace.sm,
+        vertical: 8,
+      ),
       child: Row(
         textDirection: TextDirection.rtl,
         children: _destinations
             .map(
               (_FinanceDestination destination) => Padding(
-                padding: const EdgeInsetsDirectional.only(start: 8),
+                padding: const EdgeInsetsDirectional.only(
+                  start: FinanceSpace.sm,
+                ),
                 child: _FinanceNavigationItem(
                   destination: destination,
                   selected: destination.id == selected,
@@ -70,7 +80,6 @@ class FinanceNavigationBar extends StatelessWidget {
 
 class _FinanceDestination {
   const _FinanceDestination(this.id, this.label, this.path);
-
   final String id;
   final String label;
   final String path;
@@ -81,31 +90,31 @@ class _FinanceNavigationItem extends StatelessWidget {
     required this.destination,
     required this.selected,
   });
-
   final _FinanceDestination destination;
   final bool selected;
 
   @override
   Widget build(BuildContext context) => Material(
-    color: selected ? const Color(0xff3D2518) : Colors.white,
-    borderRadius: BorderRadius.circular(10),
+    color: selected ? FinanceColors.primary : FinanceColors.card,
+    borderRadius: BorderRadius.circular(FinanceRadius.control),
     child: InkWell(
       onTap: () => context.go(destination.path),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(FinanceRadius.control),
       child: Container(
+        key: ValueKey<String>('finance-tab-${destination.id}'),
         height: 36,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           border: Border.all(
-            color: selected ? const Color(0xff3D2518) : const Color(0xffE8DED4),
+            color: selected ? FinanceColors.primary : FinanceColors.border,
           ),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(FinanceRadius.control),
         ),
         child: Text(
           destination.label,
           style: TextStyle(
-            color: selected ? Colors.white : const Color(0xff3D2518),
+            color: selected ? Colors.white : FinanceColors.primary,
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),

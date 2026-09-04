@@ -11,9 +11,10 @@ class FinanceSourceNavigation {
     if (source['available'] != true || source['id'] == null) return null;
     return switch (source['resourceKind']) {
       'order' || 'refund' => '/orders',
-      'expense' => '/finance/expenses',
+      'expense' => '/finance/expenses?expenseId=${source['id']}',
       'cash_transfer' => '/finance/cash-banks',
-      'supplier_invoice' || 'supplier_payment' => '/finance/suppliers',
+      'supplier_invoice' => '/finance/suppliers?invoiceId=${source['id']}',
+      'supplier_payment' => '/finance/suppliers?paymentId=${source['id']}',
       'inventory_movement' => '/inventory/movements',
       'journal' => '/finance/journal-entries/${source['id']}',
       _ => null,
