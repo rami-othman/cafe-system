@@ -12,8 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('DROP INDEX IF EXISTS payments_tenant_order_idempotency_unique');
-        DB::statement('DROP INDEX IF EXISTS refunds_tenant_order_idempotency_unique');
+        // PostgreSQL stores Laravel unique constraints as indexes, but the
+        // constraint must be dropped through ALTER TABLE when it owns one.
+        DB::statement('ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_tenant_order_idempotency_unique');
+        DB::statement('ALTER TABLE payment_refunds DROP CONSTRAINT IF EXISTS refunds_tenant_order_idempotency_unique');
     }
 
     /**

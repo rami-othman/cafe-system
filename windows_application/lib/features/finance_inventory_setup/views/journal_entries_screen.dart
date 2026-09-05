@@ -107,6 +107,7 @@ class _JournalState extends State<JournalEntriesScreen> {
                 width: 150,
                 child: DropdownButtonFormField<int?>(
                   initialValue: _branch,
+                  isExpanded: true,
                   hint: const Text('كل الفروع'),
                   items: <DropdownMenuItem<int?>>[
                     const DropdownMenuItem(

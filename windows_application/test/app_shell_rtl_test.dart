@@ -12,12 +12,13 @@ void main() {
 
       await tester.pumpWidget(
         const MaterialApp(
-          home: AppShell(
-            activeLabel: 'Inventory Management',
+          home: Directionality(
             textDirection: TextDirection.rtl,
-            sidebarWidth: 236,
-            topBar: SizedBox(height: 64),
-            child: SizedBox.expand(child: Text('Inventory content')),
+            child: AppShell(
+              activeLabel: 'Inventory',
+              topBar: SizedBox(height: 64),
+              child: SizedBox.expand(child: Text('Inventory content')),
+            ),
           ),
         ),
       );
@@ -25,7 +26,7 @@ void main() {
       final Rect sidebar = tester.getRect(find.byType(AppSidebar));
       final Rect content = tester.getRect(find.text('Inventory content'));
 
-      expect(sidebar.width, 236);
+      expect(sidebar.width, 240);
       expect(sidebar.left, greaterThan(content.left));
       expect(content.right, lessThanOrEqualTo(sidebar.left));
       expect(sidebar.right, closeTo(1440, 0.1));

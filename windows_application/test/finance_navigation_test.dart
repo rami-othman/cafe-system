@@ -1,10 +1,10 @@
-import 'package:windows_application/shared/widgets/app_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/shared/widgets/app_sidebar.dart';
 
 void main() {
   testWidgets('Finance is a first-class RTL sidebar destination', (
-    tester,
+    WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -13,19 +13,13 @@ void main() {
           child: SizedBox(
             width: 320,
             height: 900,
-            child: AppSidebar(
-              activeLabel: 'المالية',
-              textDirection: TextDirection.rtl,
-            ),
+            child: AppSidebar(activeLabel: 'Finance'),
           ),
         ),
       ),
     );
 
-    expect(find.text('المالية'), findsOneWidget);
-    expect(
-      find.byIcon(Icons.account_balance_wallet_outlined),
-      findsNWidgets(2),
-    );
+    expect(find.text('Finance'), findsOneWidget);
+    expect(find.byIcon(Icons.account_balance_wallet_outlined), findsOneWidget);
   });
 }

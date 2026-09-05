@@ -152,9 +152,8 @@ final GoRouter appRouter = GoRouter(
               : child,
         );
 
-        // The shell keeps only session-wide POS transaction state alive. Every
-        // mutable administrative feature is provided by its route below, so an
-        // unvisited module cannot issue a background request.
+        // POS and report cubits live at shell scope so the shell chrome can
+        // refresh them. Reports do not load until their route is mounted.
         return MultiBlocProvider(
           providers: <BlocProvider<dynamic>>[
             BlocProvider<PosCubit>(
@@ -163,13 +162,9 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<PosMenuSyncCubit>(
               create: (_) => serviceLocator<PosMenuSyncCubit>(),
             ),
-            if (isReports)
-              BlocProvider<DailyReportCubit>(
-                create: (BuildContext context) =>
-                    serviceLocator<DailyReportCubit>()..loadReport(
-                      branchId: context.read<PosCubit>().state.branchId,
-                    ),
-              ),
+            BlocProvider<DailyReportCubit>(
+              create: (_) => serviceLocator<DailyReportCubit>(),
+            ),
           ],
           child: shell,
         );
@@ -1171,8 +1166,20 @@ class _BranchFollowingOrders extends StatelessWidget {
 
 /// Reports have no independent branch selector. Their route-owned data always
 /// reloads from the same POS branch context used by the rest of the shell.
-class _BranchFollowingReport extends StatelessWidget {
+class _BranchFollowingReport extends StatefulWidget {
   const _BranchFollowingReport();
+
+  @override
+  State<_BranchFollowingReport> createState() => _BranchFollowingReportState();
+}
+
+class _BranchFollowingReportState extends State<_BranchFollowingReport> {
+  @override
+  void initState() {
+    super.initState();
+    final PosCubit pos = context.read<PosCubit>();
+    context.read<DailyReportCubit>().loadReport(branchId: pos.state.branchId);
+  }
 
   @override
   Widget build(BuildContext context) => BlocListener<PosCubit, PosState>(

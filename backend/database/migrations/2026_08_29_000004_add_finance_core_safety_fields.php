@@ -8,20 +8,33 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table): void {
-            $table->string('idempotency_key', 120)->nullable();
-            $table->unique(['tenant_id', 'idempotency_key'], 'orders_tenant_idempotency_unique');
-        });
+        if (! Schema::hasColumn('orders', 'idempotency_key')) {
+            Schema::table('orders', function (Blueprint $table): void {
+                $table->string('idempotency_key', 120)->nullable();
+                $table->unique(['tenant_id', 'idempotency_key'], 'orders_tenant_idempotency_unique');
+            });
+        }
 
-        Schema::table('payments', function (Blueprint $table): void {
-            $table->string('idempotency_key', 120)->nullable();
-            $table->unique(['tenant_id', 'idempotency_key'], 'payments_tenant_idempotency_unique');
-        });
+        // These columns may already exist when this migration is introduced
+        // after the later pre-auth hardening migration was applied. Do not
+        // recreate or remove that existing payment idempotency contract.
+        $paymentsAddedHere = false;
+        if (! Schema::hasColumn('payments', 'idempotency_key')) {
+            Schema::table('payments', function (Blueprint $table): void {
+                $table->string('idempotency_key', 120)->nullable();
+                $table->unique(['tenant_id', 'idempotency_key'], 'payments_tenant_idempotency_unique');
+            });
+            $paymentsAddedHere = true;
+        }
 
-        Schema::table('payment_refunds', function (Blueprint $table): void {
-            $table->string('idempotency_key', 120)->nullable();
-            $table->unique(['tenant_id', 'idempotency_key'], 'payment_refunds_tenant_idempotency_unique');
-        });
+        $refundsAddedHere = false;
+        if (! Schema::hasColumn('payment_refunds', 'idempotency_key')) {
+            Schema::table('payment_refunds', function (Blueprint $table): void {
+                $table->string('idempotency_key', 120)->nullable();
+                $table->unique(['tenant_id', 'idempotency_key'], 'payment_refunds_tenant_idempotency_unique');
+            });
+            $refundsAddedHere = true;
+        }
 
         Schema::table('journal_entries', function (Blueprint $table): void {
             $table->string('source_event', 80)->nullable();
@@ -29,15 +42,19 @@ return new class extends Migration
             $table->unique(['tenant_id', 'source_type', 'source_id', 'source_event'], 'journal_entries_source_event_unique');
         });
 
-        Schema::table('payment_refunds', function (Blueprint $table): void {
-            $table->dropUnique('payment_refunds_tenant_idempotency_unique');
-            $table->dropColumn('idempotency_key');
-        });
+        if ($refundsAddedHere) {
+            Schema::table('payment_refunds', function (Blueprint $table): void {
+                $table->dropUnique('payment_refunds_tenant_idempotency_unique');
+                $table->dropColumn('idempotency_key');
+            });
+        }
 
-        Schema::table('payments', function (Blueprint $table): void {
-            $table->dropUnique('payments_tenant_idempotency_unique');
-            $table->dropColumn('idempotency_key');
-        });
+        if ($paymentsAddedHere) {
+            Schema::table('payments', function (Blueprint $table): void {
+                $table->dropUnique('payments_tenant_idempotency_unique');
+                $table->dropColumn('idempotency_key');
+            });
+        }
     }
 
     public function down(): void
