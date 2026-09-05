@@ -59,9 +59,18 @@ class ManagementPageHeader extends StatelessWidget {
         );
       }
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(child: heading),
-          Wrap(spacing: AppSpacing.sm, children: actions),
+          const SizedBox(width: AppSpacing.lg),
+          Flexible(
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: actions,
+            ),
+          ),
         ],
       );
     },

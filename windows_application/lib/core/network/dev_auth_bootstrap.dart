@@ -24,7 +24,7 @@ Future<void> bootstrapDevAuthIfNeeded() async {
           'auth/login',
           data: <String, String>{
             'email': 'owner@cafe618.local',
-            'password': 'password',
+            'password': 'owner-local-dev',
             'deviceName': 'flutter-dev-bootstrap',
           },
         )
