@@ -4665,4 +4665,290 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authLogoutConfirmation =>
       'Are you sure you want to log out from this device?';
+
+  @override
+  String get navigationCafeConfiguration => 'Cafe Configuration';
+
+  @override
+  String get cafeConfigurationTitle => 'Cafe Configuration';
+
+  @override
+  String get cafeConfigurationOverview => 'Overview';
+
+  @override
+  String get cafeConfigurationProfile => 'Cafe Profile';
+
+  @override
+  String get cafeConfigurationBranches => 'Branches';
+
+  @override
+  String get cafeConfigurationTeamAccess => 'Team & Access';
+
+  @override
+  String get cafeConfigurationTax => 'Tax';
+
+  @override
+  String get cafeConfigurationOverviewSubtitle =>
+      'A concise summary of your cafe’s operational configuration.';
+
+  @override
+  String get cafeConfigurationProfileSubtitle =>
+      'Manage the core business information used across Cafe System.';
+
+  @override
+  String get cafeConfigurationBranchesSubtitle =>
+      'Create and manage the physical locations where your cafe operates.';
+
+  @override
+  String get cafeConfigurationCreateBranchSubtitle =>
+      'Add a new location where your cafe operates.';
+
+  @override
+  String get cafeConfigurationEditBranchSubtitle =>
+      'Update the details for this cafe location.';
+
+  @override
+  String get cafeConfigurationConfigured => 'Configured';
+
+  @override
+  String get cafeConfigurationTotal => 'total';
+
+  @override
+  String get cafeConfigurationNotAvailable => 'Not available';
+
+  @override
+  String get cafeConfigurationAvailablePhase2 => 'Available in Phase 2';
+
+  @override
+  String get cafeConfigurationCouldNotLoad =>
+      'Could not load configuration. Check your connection and try again.';
+
+  @override
+  String get cafeConfigurationBusinessInformation => 'Business information';
+
+  @override
+  String get cafeConfigurationCafeName => 'Cafe Name';
+
+  @override
+  String get cafeConfigurationEmail => 'Email';
+
+  @override
+  String get cafeConfigurationPhone => 'Phone';
+
+  @override
+  String get cafeConfigurationTimezone => 'Timezone';
+
+  @override
+  String get cafeConfigurationReadOnly => 'Read-only';
+
+  @override
+  String get cafeConfigurationCurrency => 'Currency';
+
+  @override
+  String get cafeConfigurationStatus => 'Status';
+
+  @override
+  String get cafeConfigurationReset => 'Reset';
+
+  @override
+  String get cafeConfigurationSaveChanges => 'Save Changes';
+
+  @override
+  String get cafeConfigurationProfileSaved => 'Cafe profile saved.';
+
+  @override
+  String get cafeConfigurationSaveFailed =>
+      'Could not save your changes. Your edits were kept.';
+
+  @override
+  String get cafeConfigurationAddBranch => 'Add Branch';
+
+  @override
+  String get cafeConfigurationCreateBranch => 'Create Branch';
+
+  @override
+  String get cafeConfigurationEditBranch => 'Edit Branch';
+
+  @override
+  String get cafeConfigurationBranchName => 'Branch Name';
+
+  @override
+  String get cafeConfigurationAddress => 'Address';
+
+  @override
+  String get cafeConfigurationActions => 'Actions';
+
+  @override
+  String get cafeConfigurationNoBranches => 'No branches yet';
+
+  @override
+  String get cafeConfigurationNoBranchesHelp =>
+      'Create your first cafe location to get started.';
+
+  @override
+  String get cafeConfigurationBranchCreated => 'Branch created.';
+
+  @override
+  String get cafeConfigurationBranchSaved => 'Branch saved.';
+
+  @override
+  String get cafeConfigurationTaxSummary => 'Cafe-wide exclusive tax';
+
+  @override
+  String get teamAccessSubtitle =>
+      'Manage Managers and Employees with access to your cafe.';
+
+  @override
+  String get teamAddMember => 'Add Team Member';
+
+  @override
+  String get teamSearch => 'Search team';
+
+  @override
+  String get teamRole => 'Role';
+
+  @override
+  String get teamName => 'Name';
+
+  @override
+  String get teamLogin => 'Login';
+
+  @override
+  String get teamDeactivated => 'Deactivated';
+
+  @override
+  String get teamArchived => 'Archived';
+
+  @override
+  String get teamProtected => 'Protected';
+
+  @override
+  String get teamAllBranches => 'All Branches';
+
+  @override
+  String get teamOwner => 'Owner';
+
+  @override
+  String get teamManager => 'Manager';
+
+  @override
+  String get teamEmployee => 'Employee';
+
+  @override
+  String get teamNoMembers => 'No Managers or Employees yet.';
+
+  @override
+  String get teamNoResults => 'No team members match these filters.';
+
+  @override
+  String get teamEditMember => 'Edit Team Member';
+
+  @override
+  String get teamUsername => 'Username';
+
+  @override
+  String get teamBranchAccess => 'Branch Access';
+
+  @override
+  String get teamActiveBranchesOnly => 'Only active branches can be assigned.';
+
+  @override
+  String get teamTemporaryPassword => 'Temporary Password';
+
+  @override
+  String get teamConfirmPassword => 'Confirm Temporary Password';
+
+  @override
+  String teamTemporaryPasswordMinimum(int count) {
+    return 'Use at least $count characters.';
+  }
+
+  @override
+  String get teamRoleChangePassword =>
+      'Changing the role requires a new temporary password and login reset.';
+
+  @override
+  String get teamCreate => 'Create';
+
+  @override
+  String get teamMemberCreated => 'Team member created';
+
+  @override
+  String get teamPasswordVisibleOnce =>
+      'This temporary password can only be viewed now.';
+
+  @override
+  String get teamCopy => 'Copy';
+
+  @override
+  String get teamResetPassword => 'Reset Password';
+
+  @override
+  String get teamResetPasswordExplanation =>
+      'Active sessions will be revoked. The user must change their password after next login.';
+
+  @override
+  String get teamPasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get teamDeactivate => 'Deactivate';
+
+  @override
+  String get teamActivate => 'Activate';
+
+  @override
+  String get teamArchive => 'Archive';
+
+  @override
+  String get teamDeactivateExplanation =>
+      'This user can no longer sign in. Historical activity remains.';
+
+  @override
+  String get teamActivateExplanation => 'This user can sign in again.';
+
+  @override
+  String get teamArchiveExplanation =>
+      'Historical records are preserved. Archived users cannot currently be restored.';
+
+  @override
+  String get teamConfirm => 'Confirm';
+
+  @override
+  String get teamMutationFailed =>
+      'Could not complete the request. Your changes were kept.';
+
+  @override
+  String get teamLoadFailed =>
+      'Could not load this section. Check your connection and try again.';
+
+  @override
+  String get taxSubtitle => 'Set the single tax rate used across your cafe.';
+
+  @override
+  String get taxRate => 'Tax rate';
+
+  @override
+  String get taxHelp => 'Enter a percentage from 0 through 100.';
+
+  @override
+  String get taxExplanation =>
+      'This cafe-wide tax is exclusive and applied after discounts. Changes apply to new orders; existing orders preserve their captured tax rate.';
+
+  @override
+  String get taxInvalid => 'Enter a valid percentage from 0 through 100.';
+
+  @override
+  String get taxSaved => 'Tax rate saved.';
+
+  @override
+  String get taxConfirm => 'Update tax rate?';
+
+  @override
+  String get taxCurrent => 'Current';
+
+  @override
+  String get taxNew => 'New';
+
+  @override
+  String get taxNewOrdersOnly => 'This applies to new orders.';
 }

@@ -39,6 +39,11 @@ import '../../features/auth/controllers/auth_session_cubit.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../features/auth/repositories/auth_session_storage.dart';
 import '../../features/auth/models/auth_session.dart';
+import '../../features/cafe_configuration/controllers/cafe_configuration_cubits.dart';
+import '../../features/cafe_configuration/controllers/cafe_configuration_overview_cubit.dart';
+import '../../features/cafe_configuration/controllers/tax_cubit.dart';
+import '../../features/cafe_configuration/controllers/team_cubit.dart';
+import '../../features/cafe_configuration/repositories/cafe_configuration_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -173,6 +178,44 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<MenuCatalogRepository>()) {
     serviceLocator.registerLazySingleton<MenuCatalogRepository>(
       () => BackendMenuCatalogRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<CafeConfigurationRepository>()) {
+    serviceLocator.registerLazySingleton<CafeConfigurationRepository>(
+      () => ApiCafeConfigurationRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<CafeProfileCubit>()) {
+    serviceLocator.registerFactory<CafeProfileCubit>(
+      () => CafeProfileCubit(serviceLocator<CafeConfigurationRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<CafeBranchesCubit>()) {
+    serviceLocator.registerFactory<CafeBranchesCubit>(
+      () => CafeBranchesCubit(serviceLocator<CafeConfigurationRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<BranchEditorCubit>()) {
+    serviceLocator.registerFactory<BranchEditorCubit>(
+      () => BranchEditorCubit(serviceLocator<CafeConfigurationRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<CafeConfigurationOverviewCubit>()) {
+    serviceLocator.registerFactory<CafeConfigurationOverviewCubit>(
+      () => CafeConfigurationOverviewCubit(
+        serviceLocator<CafeConfigurationRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<TeamCubit>()) {
+    serviceLocator.registerFactory<TeamCubit>(
+      () => TeamCubit(serviceLocator<CafeConfigurationRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<TaxCubit>()) {
+    serviceLocator.registerFactory<TaxCubit>(
+      () => TaxCubit(serviceLocator<CafeConfigurationRepository>()),
     );
   }
 

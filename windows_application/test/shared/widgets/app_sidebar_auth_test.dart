@@ -38,6 +38,28 @@ void main() {
     expect(find.text('Menu Management'), findsOneWidget);
     expect(find.text('Reports'), findsOneWidget);
   });
+
+  testWidgets('Owner sees Cafe Configuration', (WidgetTester tester) async {
+    await _pumpSidebar(tester, 'owner');
+
+    expect(find.text('Cafe Configuration'), findsOneWidget);
+  });
+
+  testWidgets('Manager does not see Cafe Configuration', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'manager');
+
+    expect(find.text('Cafe Configuration'), findsNothing);
+  });
+
+  testWidgets('Employee does not see Cafe Configuration', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'employee');
+
+    expect(find.text('Cafe Configuration'), findsNothing);
+  });
 }
 
 Future<void> _pumpSidebar(WidgetTester tester, String role) async {

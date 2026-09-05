@@ -32,6 +32,11 @@ class AppSidebar extends StatelessWidget {
       Icons.restaurant_menu_outlined,
       '/menu-management/products',
     ),
+    _SidebarDestination(
+      'cafeConfiguration',
+      Icons.tune_outlined,
+      '/cafe-configuration/overview',
+    ),
     _SidebarDestination('inventory', Icons.inventory_2_outlined),
     _SidebarDestination('reports', Icons.bar_chart_outlined, '/reports'),
   ];
@@ -40,8 +45,9 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final Iterable<_SidebarDestination> destinations = _destinations.where(
       (destination) =>
-          destination.id != 'menuManagement' ||
-          _canTemporarilyManageMenus(actorRole),
+          (destination.id != 'menuManagement' ||
+              _canTemporarilyManageMenus(actorRole)) &&
+          (destination.id != 'cafeConfiguration' || actorRole == 'owner'),
     );
     return Container(
       width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,
@@ -197,6 +203,7 @@ String _labelFor(BuildContext context, String id) {
     'customers' => l10n.navigationCustomers,
     'discounts' => l10n.navigationDiscounts,
     'menuManagement' => l10n.navigationMenuManagement,
+    'cafeConfiguration' => l10n.navigationCafeConfiguration,
     'inventory' => l10n.navigationInventory,
     'reports' => l10n.navigationReports,
     _ => l10n.commonUnknown,
@@ -228,6 +235,7 @@ String _englishLabel(String id) => switch (id) {
   'customers' => 'Customers',
   'discounts' => 'Discounts',
   'menuManagement' => 'Menu Management',
+  'cafeConfiguration' => 'Cafe Configuration',
   'inventory' => 'Inventory',
   'reports' => 'Reports',
   _ => '',

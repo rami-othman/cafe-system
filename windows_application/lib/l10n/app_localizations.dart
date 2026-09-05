@@ -8314,6 +8314,540 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to log out from this device?'**
   String get authLogoutConfirmation;
+
+  /// No description provided for @navigationCafeConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Configuration'**
+  String get navigationCafeConfiguration;
+
+  /// No description provided for @cafeConfigurationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Configuration'**
+  String get cafeConfigurationTitle;
+
+  /// No description provided for @cafeConfigurationOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get cafeConfigurationOverview;
+
+  /// No description provided for @cafeConfigurationProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Profile'**
+  String get cafeConfigurationProfile;
+
+  /// No description provided for @cafeConfigurationBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Branches'**
+  String get cafeConfigurationBranches;
+
+  /// No description provided for @cafeConfigurationTeamAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Team & Access'**
+  String get cafeConfigurationTeamAccess;
+
+  /// No description provided for @cafeConfigurationTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get cafeConfigurationTax;
+
+  /// No description provided for @cafeConfigurationOverviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A concise summary of your cafe’s operational configuration.'**
+  String get cafeConfigurationOverviewSubtitle;
+
+  /// No description provided for @cafeConfigurationProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage the core business information used across Cafe System.'**
+  String get cafeConfigurationProfileSubtitle;
+
+  /// No description provided for @cafeConfigurationBranchesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and manage the physical locations where your cafe operates.'**
+  String get cafeConfigurationBranchesSubtitle;
+
+  /// No description provided for @cafeConfigurationCreateBranchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a new location where your cafe operates.'**
+  String get cafeConfigurationCreateBranchSubtitle;
+
+  /// No description provided for @cafeConfigurationEditBranchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the details for this cafe location.'**
+  String get cafeConfigurationEditBranchSubtitle;
+
+  /// No description provided for @cafeConfigurationConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get cafeConfigurationConfigured;
+
+  /// No description provided for @cafeConfigurationTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'total'**
+  String get cafeConfigurationTotal;
+
+  /// No description provided for @cafeConfigurationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get cafeConfigurationNotAvailable;
+
+  /// No description provided for @cafeConfigurationAvailablePhase2.
+  ///
+  /// In en, this message translates to:
+  /// **'Available in Phase 2'**
+  String get cafeConfigurationAvailablePhase2;
+
+  /// No description provided for @cafeConfigurationCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load configuration. Check your connection and try again.'**
+  String get cafeConfigurationCouldNotLoad;
+
+  /// No description provided for @cafeConfigurationBusinessInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Business information'**
+  String get cafeConfigurationBusinessInformation;
+
+  /// No description provided for @cafeConfigurationCafeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Name'**
+  String get cafeConfigurationCafeName;
+
+  /// No description provided for @cafeConfigurationEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get cafeConfigurationEmail;
+
+  /// No description provided for @cafeConfigurationPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get cafeConfigurationPhone;
+
+  /// No description provided for @cafeConfigurationTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone'**
+  String get cafeConfigurationTimezone;
+
+  /// No description provided for @cafeConfigurationReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only'**
+  String get cafeConfigurationReadOnly;
+
+  /// No description provided for @cafeConfigurationCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get cafeConfigurationCurrency;
+
+  /// No description provided for @cafeConfigurationStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get cafeConfigurationStatus;
+
+  /// No description provided for @cafeConfigurationReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get cafeConfigurationReset;
+
+  /// No description provided for @cafeConfigurationSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get cafeConfigurationSaveChanges;
+
+  /// No description provided for @cafeConfigurationProfileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe profile saved.'**
+  String get cafeConfigurationProfileSaved;
+
+  /// No description provided for @cafeConfigurationSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your changes. Your edits were kept.'**
+  String get cafeConfigurationSaveFailed;
+
+  /// No description provided for @cafeConfigurationAddBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Branch'**
+  String get cafeConfigurationAddBranch;
+
+  /// No description provided for @cafeConfigurationCreateBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Branch'**
+  String get cafeConfigurationCreateBranch;
+
+  /// No description provided for @cafeConfigurationEditBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Branch'**
+  String get cafeConfigurationEditBranch;
+
+  /// No description provided for @cafeConfigurationBranchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch Name'**
+  String get cafeConfigurationBranchName;
+
+  /// No description provided for @cafeConfigurationAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get cafeConfigurationAddress;
+
+  /// No description provided for @cafeConfigurationActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get cafeConfigurationActions;
+
+  /// No description provided for @cafeConfigurationNoBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'No branches yet'**
+  String get cafeConfigurationNoBranches;
+
+  /// No description provided for @cafeConfigurationNoBranchesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first cafe location to get started.'**
+  String get cafeConfigurationNoBranchesHelp;
+
+  /// No description provided for @cafeConfigurationBranchCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch created.'**
+  String get cafeConfigurationBranchCreated;
+
+  /// No description provided for @cafeConfigurationBranchSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch saved.'**
+  String get cafeConfigurationBranchSaved;
+
+  /// No description provided for @cafeConfigurationTaxSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe-wide exclusive tax'**
+  String get cafeConfigurationTaxSummary;
+
+  /// No description provided for @teamAccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Managers and Employees with access to your cafe.'**
+  String get teamAccessSubtitle;
+
+  /// No description provided for @teamAddMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Team Member'**
+  String get teamAddMember;
+
+  /// No description provided for @teamSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search team'**
+  String get teamSearch;
+
+  /// No description provided for @teamRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get teamRole;
+
+  /// No description provided for @teamName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get teamName;
+
+  /// No description provided for @teamLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get teamLogin;
+
+  /// No description provided for @teamDeactivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivated'**
+  String get teamDeactivated;
+
+  /// No description provided for @teamArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get teamArchived;
+
+  /// No description provided for @teamProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected'**
+  String get teamProtected;
+
+  /// No description provided for @teamAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All Branches'**
+  String get teamAllBranches;
+
+  /// No description provided for @teamOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get teamOwner;
+
+  /// No description provided for @teamManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get teamManager;
+
+  /// No description provided for @teamEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee'**
+  String get teamEmployee;
+
+  /// No description provided for @teamNoMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'No Managers or Employees yet.'**
+  String get teamNoMembers;
+
+  /// No description provided for @teamNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No team members match these filters.'**
+  String get teamNoResults;
+
+  /// No description provided for @teamEditMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Team Member'**
+  String get teamEditMember;
+
+  /// No description provided for @teamUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get teamUsername;
+
+  /// No description provided for @teamBranchAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch Access'**
+  String get teamBranchAccess;
+
+  /// No description provided for @teamActiveBranchesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only active branches can be assigned.'**
+  String get teamActiveBranchesOnly;
+
+  /// No description provided for @teamTemporaryPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary Password'**
+  String get teamTemporaryPassword;
+
+  /// No description provided for @teamConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Temporary Password'**
+  String get teamConfirmPassword;
+
+  /// No description provided for @teamTemporaryPasswordMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least {count} characters.'**
+  String teamTemporaryPasswordMinimum(int count);
+
+  /// No description provided for @teamRoleChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the role requires a new temporary password and login reset.'**
+  String get teamRoleChangePassword;
+
+  /// No description provided for @teamCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get teamCreate;
+
+  /// No description provided for @teamMemberCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Team member created'**
+  String get teamMemberCreated;
+
+  /// No description provided for @teamPasswordVisibleOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'This temporary password can only be viewed now.'**
+  String get teamPasswordVisibleOnce;
+
+  /// No description provided for @teamCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get teamCopy;
+
+  /// No description provided for @teamResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get teamResetPassword;
+
+  /// No description provided for @teamResetPasswordExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Active sessions will be revoked. The user must change their password after next login.'**
+  String get teamResetPasswordExplanation;
+
+  /// No description provided for @teamPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get teamPasswordMismatch;
+
+  /// No description provided for @teamDeactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get teamDeactivate;
+
+  /// No description provided for @teamActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get teamActivate;
+
+  /// No description provided for @teamArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get teamArchive;
+
+  /// No description provided for @teamDeactivateExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This user can no longer sign in. Historical activity remains.'**
+  String get teamDeactivateExplanation;
+
+  /// No description provided for @teamActivateExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This user can sign in again.'**
+  String get teamActivateExplanation;
+
+  /// No description provided for @teamArchiveExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical records are preserved. Archived users cannot currently be restored.'**
+  String get teamArchiveExplanation;
+
+  /// No description provided for @teamConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get teamConfirm;
+
+  /// No description provided for @teamMutationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the request. Your changes were kept.'**
+  String get teamMutationFailed;
+
+  /// No description provided for @teamLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this section. Check your connection and try again.'**
+  String get teamLoadFailed;
+
+  /// No description provided for @taxSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the single tax rate used across your cafe.'**
+  String get taxSubtitle;
+
+  /// No description provided for @taxRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax rate'**
+  String get taxRate;
+
+  /// No description provided for @taxHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a percentage from 0 through 100.'**
+  String get taxHelp;
+
+  /// No description provided for @taxExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This cafe-wide tax is exclusive and applied after discounts. Changes apply to new orders; existing orders preserve their captured tax rate.'**
+  String get taxExplanation;
+
+  /// No description provided for @taxInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid percentage from 0 through 100.'**
+  String get taxInvalid;
+
+  /// No description provided for @taxSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax rate saved.'**
+  String get taxSaved;
+
+  /// No description provided for @taxConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Update tax rate?'**
+  String get taxConfirm;
+
+  /// No description provided for @taxCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get taxCurrent;
+
+  /// No description provided for @taxNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get taxNew;
+
+  /// No description provided for @taxNewOrdersOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This applies to new orders.'**
+  String get taxNewOrdersOnly;
 }
 
 class _AppLocalizationsDelegate
