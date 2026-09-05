@@ -20,6 +20,9 @@ use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
+use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
+use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
 use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\CustomerController;
@@ -89,6 +92,31 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('product-images/{tenant}/{filename}', [ProductCatalogController::class, 'showProductImage'])
         ->whereNumber('tenant');
+
+    // Administrative branch configuration is intentionally outside the
+    // operational branch.access middleware: Owners may view inactive branches
+    // here, while no inactive branch remains operationally usable.
+    Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
+        ->prefix('cafe-configuration/branches')
+        ->controller(CafeConfigurationBranchController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{branch}', 'show')->whereNumber('branch');
+            Route::put('{branch}', 'update')->whereNumber('branch');
+        });
+
+    // Tenant identity for these singleton configuration resources always comes
+    // from the authenticated opaque-token session, never from a route or body
+    // tenant identifier.
+    Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
+        ->prefix('cafe-configuration')
+        ->group(function (): void {
+            Route::get('profile', [CafeConfigurationProfileController::class, 'show']);
+            Route::put('profile', [CafeConfigurationProfileController::class, 'update']);
+            Route::get('tax', [CafeConfigurationTaxController::class, 'show']);
+            Route::put('tax', [CafeConfigurationTaxController::class, 'update']);
+        });
 
     // Tenant operational boundary. Tenant identity comes solely from the
     // opaque bearer token; X-Tenant-Id is legacy-only and is never authority

@@ -84,6 +84,16 @@ import '../features/menu_management/versions/controllers/published_version_cubit
 import '../features/menu_management/widgets/menu_module_navigation.dart';
 import '../features/menu_management/widgets/menu_module_scaffold.dart';
 import '../features/auth/views/settings_screen.dart';
+import '../features/auth/controllers/auth_session_cubit.dart';
+import '../features/cafe_configuration/controllers/cafe_configuration_cubits.dart';
+import '../features/cafe_configuration/controllers/cafe_configuration_overview_cubit.dart';
+import '../features/cafe_configuration/controllers/tax_cubit.dart';
+import '../features/cafe_configuration/controllers/team_cubit.dart';
+import '../features/cafe_configuration/repositories/cafe_configuration_repository.dart';
+import '../features/cafe_configuration/views/cafe_configuration_screens.dart';
+import '../features/cafe_configuration/views/team_tax_screens.dart';
+import '../features/cafe_configuration/widgets/cafe_configuration_navigation.dart';
+import '../features/cafe_configuration/widgets/cafe_configuration_scaffold.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../shared/widgets/app_top_bar.dart';
@@ -125,15 +135,18 @@ final GoRouter appRouter = GoRouter(
         final bool isMenuManagement = state.uri.path.startsWith(
           AppRoutes.menuManagement,
         );
+        final bool isCafeConfiguration = state.uri.path.startsWith(
+          AppRoutes.cafeConfiguration,
+        );
         final bool isReports = state.matchedLocation == AppRoutes.reports;
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
-          topBar: _topBarFor(state),
+          topBar: _topBarFor(context, state),
           onRefresh: state.uri.path == AppRoutes.pos || isReports
               ? _refreshActionFor(state)
               : null,
-          prioritizeContentWidth: isMenuManagement,
+          prioritizeContentWidth: isMenuManagement || isCafeConfiguration,
           child: isMenuManagement
               ? MenuModuleScaffold(
                   navigationSlot: MenuModuleNavigation(
@@ -146,6 +159,13 @@ final GoRouter appRouter = GoRouter(
                     AppSpacing.lg,
                     AppSpacing.xl,
                     0,
+                  ),
+                  child: child,
+                )
+              : isCafeConfiguration
+              ? CafeConfigurationScaffold(
+                  selected: CafeConfigurationDestination.forPath(
+                    state.uri.path,
                   ),
                   child: child,
                 )
@@ -1120,6 +1140,84 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
+          path: AppRoutes.cafeConfiguration,
+          redirect: (_, _) => AppRoutes.cafeConfigurationOverview,
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationOverview,
+          name: AppRouteNames.cafeConfigurationOverview,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) =>
+              BlocProvider<CafeConfigurationOverviewCubit>(
+                create: (_) =>
+                    serviceLocator<CafeConfigurationOverviewCubit>()..load(),
+                child: const CafeConfigurationOverviewScreen(),
+              ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationProfile,
+          name: AppRouteNames.cafeConfigurationProfile,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider<CafeProfileCubit>(
+            create: (_) => serviceLocator<CafeProfileCubit>()..load(),
+            child: const CafeProfileScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationBranches,
+          name: AppRouteNames.cafeConfigurationBranches,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider<CafeBranchesCubit>(
+            create: (_) => serviceLocator<CafeBranchesCubit>()..load(),
+            child: const BranchesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationTeam,
+          name: AppRouteNames.cafeConfigurationTeam,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider<TeamCubit>(
+            create: (_) => serviceLocator<TeamCubit>()..load(),
+            child: const TeamAccessScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationTax,
+          name: AppRouteNames.cafeConfigurationTax,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider<TaxCubit>(
+            create: (_) => serviceLocator<TaxCubit>()..load(),
+            child: const TaxScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationBranchCreate,
+          name: AppRouteNames.cafeConfigurationBranchCreate,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider<BranchEditorCubit>(
+            create: (_) => serviceLocator<BranchEditorCubit>()..initialize(),
+            child: const BranchEditorScreen(isEdit: false),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cafeConfigurationBranchEdit,
+          name: AppRouteNames.cafeConfigurationBranchEdit,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) {
+            final int? id = parsePositiveRouteId(
+              state.pathParameters['branchId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<BranchEditorCubit>(
+              create: (_) => BranchEditorCubit(
+                serviceLocator<CafeConfigurationRepository>(),
+                branchId: id,
+              )..initialize(),
+              child: const BranchEditorScreen(isEdit: true),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.pos,
           name: AppRouteNames.pos,
           builder: (context, state) => const PosScreen(),
@@ -1199,7 +1297,13 @@ Widget? _rightPanelFor(GoRouterState state) {
   };
 }
 
-Widget? _topBarFor(GoRouterState state) {
+Widget? _topBarFor(BuildContext context, GoRouterState state) {
+  if (state.uri.path.startsWith(AppRoutes.cafeConfiguration)) {
+    return AppTopBar(
+      showOperationalBranchTabs: false,
+      contextTitle: AppLocalizations.of(context).cafeConfigurationTitle,
+    );
+  }
   if (!state.uri.path.startsWith(AppRoutes.menuManagement)) return null;
   return AppTopBar(
     showOperationalBranchTabs: false,
@@ -1244,8 +1348,15 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
 }
 
 String _activeDestinationFor(GoRouterState state) {
-  if (state.uri.path.startsWith(AppRoutes.inventory)) return 'inventory';
-  if (state.uri.path.startsWith(AppRoutes.finance)) return 'finance';
+  if (state.uri.path.startsWith(AppRoutes.cafeConfiguration)) {
+    return 'cafeConfiguration';
+  }
+  if (state.uri.path.startsWith(AppRoutes.inventory)) {
+    return 'inventory';
+  }
+  if (state.uri.path.startsWith(AppRoutes.finance)) {
+    return 'finance';
+  }
   if (state.uri.path.startsWith(AppRoutes.menuManagement)) {
     return 'menuManagement';
   }
@@ -1265,6 +1376,18 @@ abstract final class AppRoutes {
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String settings = '/settings';
+  static const String cafeConfiguration = '/cafe-configuration';
+  static const String cafeConfigurationOverview =
+      '/cafe-configuration/overview';
+  static const String cafeConfigurationProfile = '/cafe-configuration/profile';
+  static const String cafeConfigurationBranches =
+      '/cafe-configuration/branches';
+  static const String cafeConfigurationTeam = '/cafe-configuration/team';
+  static const String cafeConfigurationTax = '/cafe-configuration/tax';
+  static const String cafeConfigurationBranchCreate =
+      '/cafe-configuration/branches/new';
+  static const String cafeConfigurationBranchEdit =
+      '/cafe-configuration/branches/:branchId/edit';
   static const String inventory = '/inventory';
   static const String finance = '/finance';
   static const String menuManagement = '/menu-management';
@@ -1384,6 +1507,15 @@ abstract final class AppRouteNames {
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
   static const String settings = 'settings';
+  static const String cafeConfigurationOverview = 'cafe-configuration-overview';
+  static const String cafeConfigurationProfile = 'cafe-configuration-profile';
+  static const String cafeConfigurationBranches = 'cafe-configuration-branches';
+  static const String cafeConfigurationTeam = 'cafe-configuration-team';
+  static const String cafeConfigurationTax = 'cafe-configuration-tax';
+  static const String cafeConfigurationBranchCreate =
+      'cafe-configuration-branch-create';
+  static const String cafeConfigurationBranchEdit =
+      'cafe-configuration-branch-edit';
   static const String inventory = 'inventory';
   static const String finance = 'finance';
   static const String menuManagementProducts = 'menu-management-products';
@@ -1471,3 +1603,8 @@ void _returnToRecipeWorkspace(
     ),
   );
 }
+
+String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState _) =>
+    serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner'
+    ? null
+    : AppRoutes.pos;
