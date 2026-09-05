@@ -5,6 +5,7 @@ import '../../../core/network/dio_api_client.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/daily_report_data.dart';
+import '../models/reports_overview.dart';
 
 class ReportsRepository {
   const ReportsRepository({this.apiClient});
@@ -27,6 +28,42 @@ class ReportsRepository {
       },
     );
     return _fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  Future<ReportsOverview> getOverview({
+    required DateTime from,
+    required DateTime to,
+    int? branchId,
+    required bool comparePrevious,
+  }) async {
+    if (apiClient == null) {
+      return ReportsOverview.fromJson(<String, dynamic>{
+        'period': <String, dynamic>{
+          'from': from.toIso8601String(),
+          'to': to.toIso8601String(),
+        },
+        'currency': 'SYP',
+        'branches': const <dynamic>[],
+        'selectedBranchId': branchId,
+        'kpis': const <String, dynamic>{},
+        'salesTrend': const <dynamic>[],
+        'branchComparison': const <dynamic>[],
+        'topProducts': const <dynamic>[],
+        'recentExceptions': const <dynamic>[],
+      });
+    }
+
+    final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+    final dynamic response = await apiClient!.get(
+      'reports/overview',
+      queryParameters: <String, dynamic>{
+        'from': dateFormat.format(from),
+        'to': dateFormat.format(to),
+        if (branchId != null) 'branch_id': branchId,
+        'compare_previous': comparePrevious,
+      },
+    );
+    return ReportsOverview.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
   DailyReportData _fromJson(Map<String, dynamic> json) {

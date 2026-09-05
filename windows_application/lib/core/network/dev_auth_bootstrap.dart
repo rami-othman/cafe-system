@@ -32,7 +32,7 @@ Future<void> bootstrapDevAuthIfNeeded() async {
 
     final String? token = result is Map ? result['token'] as String? : null;
     if (token != null && token.isNotEmpty) {
-      apiClient.setBearerToken(token);
+      apiClient.setAccessToken(token);
       debugPrint('Dev auth bootstrap: signed in as owner@cafe618.local.');
     }
   } catch (error) {

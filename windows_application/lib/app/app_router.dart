@@ -20,9 +20,29 @@ import '../features/pos/widgets/pos_cart_panel.dart';
 import '../features/reports/controllers/daily_report_cubit.dart';
 import '../features/reports/views/daily_operational_report_screen.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
+import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
+import '../features/finance_inventory_setup/views/daily_closing_screen.dart';
+import '../features/finance_inventory_setup/views/daily_closing_workspace_screen.dart';
+import '../features/finance_inventory_setup/views/expense_categories_screen.dart';
+import '../features/finance_inventory_setup/views/expenses_screen.dart';
 import '../features/finance_inventory_setup/views/finance_home_screen.dart';
+import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen.dart';
+import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
+import '../features/finance_inventory_setup/views/financial_reports_screen.dart';
+import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
+import '../features/finance_inventory_setup/views/payment_methods_screen.dart';
+import '../features/finance_inventory_setup/views/reconciliation_screen.dart';
+import '../features/finance_inventory_setup/views/reconciliation_workspace_screen.dart';
+import '../features/finance_inventory_setup/views/supplier_profile_screen.dart';
+import '../features/finance_inventory_setup/views/suppliers_screen.dart';
+import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
 import '../features/inventory/controllers/inventory_cubit.dart';
-import '../features/inventory/views/inventory_screens.dart';
+import '../features/inventory/views/inventory_items_screen.dart';
+import '../features/inventory/views/inventory_screens.dart'
+    hide InventoryItemsScreen, InventoryItemDetailsScreen, InventoryTransfersScreen;
+import '../features/inventory/views/inventory_workflow_screens.dart';
+import '../features/inventory/views/item_details_screen.dart';
+import '../features/inventory/views/item_form_screen.dart';
 import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../features/menu_management/controllers/product_catalog_cubit.dart';
 import '../features/menu_management/controllers/product_detail_cubit.dart';
@@ -822,11 +842,268 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.inventoryItemCreate,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const ItemFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryItems,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryItemsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryItemEdit,
+          builder: (context, state) {
+            final int? itemId = parsePositiveRouteId(
+              state.pathParameters['itemId'],
+            );
+            if (itemId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: ItemFormScreen(itemId: itemId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryItemDetail,
+          builder: (context, state) {
+            final int? itemId = parsePositiveRouteId(
+              state.pathParameters['itemId'],
+            );
+            if (itemId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: InventoryItemDetailsScreen(itemId: itemId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryBalances,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryBalancesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryMovementCreate,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryMovementCreateScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryMovements,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryMovementsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryCountDetail,
+          builder: (context, state) {
+            final int? countId = parsePositiveRouteId(
+              state.pathParameters['countId'],
+            );
+            if (countId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: InventoryCountDetailsScreen(countId: countId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryCounts,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryCountsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryTransferDetail,
+          builder: (context, state) {
+            final int? transferId = parsePositiveRouteId(
+              state.pathParameters['transferId'],
+            );
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: InventoryTransfersWorkspaceScreen(transferId: transferId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.inventoryTransfers,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryTransfersWorkspaceScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.barCheckTemplateDetail,
+          builder: (context, state) {
+            final int? templateId = parsePositiveRouteId(
+              state.pathParameters['templateId'],
+            );
+            if (templateId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: BarCheckTemplateEditorScreen(templateId: templateId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.barCheckTemplates,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const BarCheckTemplatesScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
             child: const FinanceHomeScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountsCanonical,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const FinancialAccountsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeJournalEntriesCanonical,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const JournalEntriesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeCashBanks,
+          builder: (context, state) => const CashBanksScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financePaymentMethods,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const PaymentMethodsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeExpenseCategories,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const ExpenseCategoriesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeExpenses,
+          builder: (context, state) => const ExpensesScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSuppliersDetail,
+          builder: (context, state) {
+            final int? supplierId = parsePositiveRouteId(
+              state.pathParameters['supplierId'],
+            );
+            if (supplierId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<FinanceSetupCubit>(
+              create: (_) => serviceLocator<FinanceSetupCubit>(),
+              child: SupplierProfileScreen(
+                supplierId: supplierId,
+                openInvoiceId: parsePositiveRouteId(
+                  state.uri.queryParameters['openInvoice'],
+                ),
+                openPaymentId: parsePositiveRouteId(
+                  state.uri.queryParameters['openPayment'],
+                ),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeSuppliers,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const SuppliersScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeWarehouses,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const WarehousesSetupScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSettings,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const FinanceSetupDashboardScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReportsCanonical,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: FinancialReportsScreen(
+              accountId: parsePositiveRouteId(
+                state.uri.queryParameters['accountId'],
+              ),
+              supplierId: parsePositiveRouteId(
+                state.uri.queryParameters['supplierId'],
+              ),
+              reportType: state.uri.queryParameters['type'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReconciliationDetail,
+          builder: (context, state) {
+            final int? reconciliationId = parsePositiveRouteId(
+              state.pathParameters['reconciliationId'],
+            );
+            if (reconciliationId == null) {
+              return const _InvalidCatalogRouteScreen();
+            }
+            return BlocProvider<FinanceSetupCubit>(
+              create: (_) => serviceLocator<FinanceSetupCubit>(),
+              child: ReconciliationWorkspaceScreen(
+                reconciliationId: reconciliationId,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeReconciliationCanonical,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const ReconciliationScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeDailyClosingDetail,
+          builder: (context, state) {
+            final int? closingId = parsePositiveRouteId(
+              state.pathParameters['closingId'],
+            );
+            if (closingId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<FinanceSetupCubit>(
+              create: (_) => serviceLocator<FinanceSetupCubit>(),
+              child: DailyClosingWorkspaceScreen(closingId: closingId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeDailyClosingCanonical,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const DailyClosingScreen(),
           ),
         ),
         GoRoute(
@@ -1042,6 +1319,55 @@ abstract final class AppRoutes {
       '/menu-management/products/:productId/availability';
   static const String menuManagementProductOperationalAvailability =
       '/menu-management/products/:productId/operational-availability';
+
+  static const String inventoryItems = '/inventory/items';
+  static const String inventoryItemCreate = '/inventory/items/create';
+  static const String inventoryItemDetail = '/inventory/items/:itemId';
+  static const String inventoryItemEdit = '/inventory/items/:itemId/edit';
+  static const String inventoryBalances = '/inventory/balances';
+  static const String inventoryMovements = '/inventory/movements';
+  static const String inventoryMovementCreate = '/inventory/movements/create';
+  static const String inventoryCounts = '/inventory/counts';
+  static const String inventoryCountDetail = '/inventory/counts/:countId';
+  static const String inventoryTransfers = '/inventory/transfers';
+  static const String inventoryTransferDetail =
+      '/inventory/transfers/:transferId';
+  static const String barCheckTemplates = '/inventory/bar-check-templates';
+  static const String barCheckTemplateDetail =
+      '/inventory/bar-check-templates/:templateId';
+
+  static String inventoryItemDetailPath(int itemId) =>
+      '/inventory/items/$itemId';
+  static String inventoryItemEditPath(int itemId) =>
+      '/inventory/items/$itemId/edit';
+  static String inventoryCountDetailPath(int countId) =>
+      '/inventory/counts/$countId';
+  static String inventoryTransferPath(int transferId) =>
+      '/inventory/transfers/$transferId';
+  static String barCheckTemplatePath(int templateId) =>
+      '/inventory/bar-check-templates/$templateId';
+
+  static const String financeAccountsCanonical = '/finance/accounts';
+  static const String financeJournalEntriesCanonical =
+      '/finance/journal-entries';
+  static const String financeCashBanks = '/finance/cash-banks';
+  static const String financePaymentMethods = '/finance/payment-methods';
+  static const String financeExpenses = '/finance/expenses';
+  static const String financeExpenseCategories =
+      '/finance/expense-categories';
+  static const String financeSuppliers = '/finance/suppliers';
+  static const String financeSuppliersDetail =
+      '/finance/suppliers/:supplierId';
+  static const String financeWarehouses = '/finance/warehouses';
+  static const String financeSettings = '/finance/settings';
+  static const String financeReportsCanonical = '/finance/reports';
+  static const String financeReconciliationCanonical =
+      '/finance/reconciliation';
+  static const String financeReconciliationDetail =
+      '/finance/reconciliation/:reconciliationId';
+  static const String financeDailyClosingCanonical = '/finance/daily-closing';
+  static const String financeDailyClosingDetail =
+      '/finance/daily-closing/:closingId';
 }
 
 abstract final class AppRouteNames {

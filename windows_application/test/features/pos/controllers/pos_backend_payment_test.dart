@@ -318,7 +318,6 @@ class _BackendPaymentRepository extends PosRepository {
     required String idempotencyKey,
     String? reference,
     required double totalDue,
-    String? idempotencyKey,
   }) async {
     payCalls += 1;
     lastIdempotencyKey = idempotencyKey;

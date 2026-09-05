@@ -33,7 +33,7 @@ class FinanceSetupRepository {
     Map<String, dynamic>? queryParameters,
   }) async {
     final Map<String, dynamic> response = Map<String, dynamic>.from(
-      await _api.getRaw(path, queryParameters: queryParameters) as Map,
+      await _api.getEnvelope(path, queryParameters: queryParameters) as Map,
     );
     final List<Map<String, dynamic>> rows = readMapList(response['data']);
     final Map<String, dynamic>? meta = response['meta'] is Map
