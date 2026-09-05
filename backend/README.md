@@ -182,6 +182,20 @@ docker compose exec -T backend php artisan test
 
 Do not treat old phase labels or historical test counts as current status.
 
+## Branch lifecycle and Cafe Configuration
+
+`GET /api/v1/branches` is an operational selector: it returns only active,
+non-deleted branches the authenticated actor can use. Owners retain implicit
+all-branch access only for active branches; Manager and Employee assignments
+also require an active branch. Deactivation preserves historical references and
+existing `user_branches` rows, but those rows no longer grant operational use.
+
+Owner-only branch administration is intentionally separate at
+`/api/v1/cafe-configuration/branches`. Its list returns all non-deleted
+same-tenant branches, including inactive branches, and supports only list,
+create, detail, and update of branch contact/location fields. Currency is
+server-controlled as `SYP`; lifecycle mutations are not exposed there.
+
 ## Auth Phase 1 — tenant identity and opaque sessions
 
 **Status: CLOSED.** On the exact closure worktree, the manually run full backend

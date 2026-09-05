@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
@@ -62,6 +63,19 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('product-images/{tenant}/{filename}', [ProductCatalogController::class, 'showProductImage'])
         ->whereNumber('tenant');
+
+    // Administrative branch configuration is intentionally outside the
+    // operational branch.access middleware: Owners may view inactive branches
+    // here, while no inactive branch remains operationally usable.
+    Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
+        ->prefix('cafe-configuration/branches')
+        ->controller(CafeConfigurationBranchController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{branch}', 'show')->whereNumber('branch');
+            Route::put('{branch}', 'update')->whereNumber('branch');
+        });
 
     // Tenant operational boundary. Tenant identity comes solely from the
     // opaque bearer token; X-Tenant-Id is legacy-only and is never authority
