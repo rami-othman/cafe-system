@@ -48,8 +48,8 @@ class AppShell extends StatelessWidget {
                 activeLabel: activeLabel,
                 isCollapsed: !isLarge,
                 actorRole: context
-                    .read<AuthSessionCubit>()
-                    .state
+                    .read<AuthSessionCubit?>()
+                    ?.state
                     .session
                     ?.user
                     .role,

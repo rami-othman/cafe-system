@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#EDE7DE;}
+  a{color:#6B4226;text-decoration:none;}
+  a:hover{color:#3B2417;text-decoration:underline;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#DCD3C6;border-radius:8px;}
+  @keyframes shimmer{0%{background-position:-200px 0;}100%{background-position:200px 0;}}
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.6"/><rect x="13" y="3.5" width="7.5" height="4.5" rx="1.6"/><rect x="13" y="10.5" width="7.5" height="10" rx="1.6"/><rect x="3.5" y="13.5" width="7.5" height="7" rx="1.6"/></symbol>
+<symbol id="i-pos" viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="1.8"/><path d="M3.5 10.5h17"/><path d="M7 14h3M7 16.5h1.5"/><path d="M9 6V4.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4.5V6"/></symbol>
+<symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2v-17Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><circle cx="17" cy="8.5" r="2.3"/><path d="M15 14.3c2.6.3 4.5 2.2 4.5 5.2"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M11.5 3.5H5.5a2 2 0 0 0-2 2v6l10.5 10.5a2 2 0 0 0 2.8 0l6-6a2 2 0 0 0 0-2.8L12.3 3.5Z"/><circle cx="8" cy="8" r="1.4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M6 3.5h12v17L12 18l-6 2.5v-17Z"/><path d="M8.5 8h7M8.5 11.5h7"/></symbol>
+<symbol id="i-inventory" viewBox="0 0 24 24"><path d="M4 7.5 12 3.5l8 4v9L12 20.5l-8-4Z"/><path d="M4 7.5 12 11.5l8-4"/><path d="M12 11.5v9"/></symbol>
+<symbol id="i-reports" viewBox="0 0 24 24"><path d="M5 20.5V10M12 20.5V4.5M19 20.5v-7"/><path d="M3.5 20.5h17"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M17.6 6.4l-1.6 1.6M8 16l-1.6 1.6M17.6 17.6 16 16M8 8 6.4 6.4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.5-4.5"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5v6l-4 2v-8Z"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 12.6-5.5M19.5 12a7.5 7.5 0 0 1-12.6 5.5"/><path d="M17.5 3.5v3.5H14M6.5 20.5V17H10"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10.5a6 6 0 0 1 12 0v4l1.7 3H4.3l1.7-3Z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.3" r="3.6"/><path d="M4.5 20c0-4 3.4-6.8 7.5-6.8s7.5 2.8 7.5 6.8"/></symbol>
+<symbol id="i-chevron-l" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+<symbol id="i-chevron-r" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-chevron-d" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16Z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4A1.3 1.3 0 0 1 14.5 4.8V7M7 7l1 13h8l1-13"/></symbol>
+<symbol id="i-in" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M8 11l4 4 4-4"/></symbol>
+<symbol id="i-out" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 17V7M8 13l4-4 4 4"/></symbol>
+<symbol id="i-waste" viewBox="0 0 24 24"><path d="M12 3.5 21 19.5H3Z"/><path d="M12 10v4M12 16.5v.1"/></symbol>
+<symbol id="i-adjust" viewBox="0 0 24 24"><path d="M5 5v14M12 5v14M19 5v14"/><circle cx="5" cy="9" r="1.8"/><circle cx="12" cy="15" r="1.8"/><circle cx="19" cy="7" r="1.8"/></symbol>
+<symbol id="i-transfer" viewBox="0 0 24 24"><path d="M4 8h13l-3-3.5M20 16H7l3 3.5"/></symbol>
+<symbol id="i-count" viewBox="0 0 24 24"><path d="M5 4.5h9.5v9.5H5Z"/><path d="M9.5 14V19h9.5V9.5H14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.2-6"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20H2.5Z"/><path d="M12 9.5v4.5M12 17v.1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.5l4 2.2"/></symbol>
+<symbol id="i-warehouse" viewBox="0 0 24 24"><path d="M3.5 10 12 4l8.5 6v10h-17Z"/><path d="M9.5 20v-6.5h5V20"/></symbol>
+<symbol id="i-coffee" viewBox="0 0 24 24"><path d="M5 8h11v6a5 5 0 0 1-5 5H9a4 4 0 0 1-4-4Z"/><path d="M16 9.5h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 4.5c0 1-1 1-1 2M12 4.5c0 1-1 1-1 2"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v13H7Z"/><path d="M14 3.5v4h4"/><path d="M9.5 12.5h5M9.5 15.5h5"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3.5 12.5h5l1.7 2.5h3.6l1.7-2.5h5"/><path d="M6 5.5h12l2 7v6h-16v-6Z"/></symbol>
+</defs>
+</svg>
+
+<div dir="rtl" style="font-family:'IBM Plex Sans Arabic',sans-serif;min-height:100vh;padding-bottom:60px;">
+
+  <div dir="ltr" style="position:sticky;top:0;z-index:50;background:#231005;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+    <span style="color:#C47A3A;font-size:12px;font-weight:700;margin-inline-end:8px">Cafe System 618 — Inventory</span>
+    <sc-for list="{{screens}}" as="s" hint-placeholder-count="7">
+      <button onClick="{{s.go}}" style="{{s.style}}">{{s.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="width:1440px;max-width:100%;margin:28px auto;background:#FAF7F2;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(59,36,23,.18);display:flex;height:900px;border:1px solid #E7E2DA">
+
+    <div style="width:236px;flex:none;background:#F0EDED;border-inline-start:1px solid #E7E2DA;display:flex;flex-direction:column;padding:28px 16px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 4px">
+        <div style="width:36px;height:36px;border-radius:8px;background:#C47A3A;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex:none">C</div>
+        <div style="min-width:0">
+          <div style="font-size:14px;font-weight:700;color:#231005;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cafe System 618</div>
+          <div style="font-size:10px;font-weight:700;color:#6B6B6B;letter-spacing:.3px;margin-top:2px">المركز التشغيلي</div>
+        </div>
+      </div>
+      <div style="height:36px"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;overflow:auto">
+        <sc-for list="{{navItems}}" as="n" hint-placeholder-count="9">
+          <div style="{{n.style}}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{n.iconColor}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"></use></svg>
+            <span style="font-size:13px;font-weight:{{n.fontWeight}};color:{{n.iconColor}}">{{n.label}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+
+      <div style="height:64px;flex:none;background:#FAF7F2;border-bottom:1px solid #E7E2DA;display:flex;align-items:center;padding:0 24px;gap:16px">
+        <div style="display:flex;flex:1;gap:4px;overflow:auto">
+          <sc-for list="{{branches}}" as="b" hint-placeholder-count="4">
+            <div onClick="{{b.select}}" style="height:64px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 14px;cursor:pointer;flex:none">
+              <div style="height:38px;display:flex;align-items:center;font-size:14px;font-weight:{{b.weight}};color:{{b.color}};white-space:nowrap">{{b.name}}</div>
+              <div style="height:2px;background:{{b.underline}};width:100%"></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(46,125,50,.12);border:1px solid rgba(46,125,50,.18);flex:none">
+          <div style="width:7px;height:7px;border-radius:50%;background:#2E7D32"></div>
+          <span style="font-size:11px;font-weight:700;color:#2E7D32">الوردية مفتوحة</span>
+        </div>
+        <div style="display:flex;gap:4px;flex:none">
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer" title="تحديث"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-refresh"></use></svg></div>
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer" title="الإشعارات"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"></use></svg></div>
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer" title="الحساب"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"></use></svg></div>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:auto;background:#FAF7F2;position:relative">
+
+        <sc-if value="{{isKit}}" hint-placeholder-val="{{true}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:24px">
+          <div>
+            <div style="font-size:22px;font-weight:700;color:#231005">دليل نظام التصميم</div>
+            <div style="font-size:13px;color:#6B6B6B;margin-top:4px">الألوان، الطباعة، المكونات والحالات المستخدمة عبر تطبيق كافيه سيستم 618</div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">الألوان</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap">
+              <sc-for list="{{colorSwatches}}" as="c" hint-placeholder-count="8">
+                <div style="width:150px;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden;background:#fff">
+                  <div style="height:64px;background:{{c.hex}}"></div>
+                  <div style="padding:10px 12px">
+                    <div style="font-size:12px;font-weight:700;color:#231005">{{c.name}}</div>
+                    <div style="font-size:11px;color:#6B6B6B;margin-top:2px;direction:ltr;text-align:right">{{c.hex}}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">الطباعة</div>
+            <div style="display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:20px">
+              <div style="font-size:28px;font-weight:700;color:#231005">عنوان رئيسي — إدارة المخزون</div>
+              <div style="font-size:15px;font-weight:500;color:#1B1B1C">نص أساسي — متابعة الكميات والحركات والتنبيهات التشغيلية لجميع الفروع بدقة وسهولة.</div>
+              <div style="font-size:12px;font-weight:500;color:#6B6B6B">نص توضيحي مساعد يظهر أسفل الحقول والبطاقات</div>
+              <div style="font-size:20px;font-weight:700;color:#231005;direction:ltr;text-align:right;font-variant-numeric:tabular-nums">1,248.500</div>
+              <div style="font-size:13px;font-weight:600;color:#50443F">نص الجدول — بن كولومبي محمص</div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">الأزرار</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button style="height:40px;padding:0 20px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">إجراء أساسي</button>
+              <button style="height:40px;padding:0 20px;border-radius:8px;background:#6B4226;color:#fff;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">إجراء ثانوي</button>
+              <button style="height:40px;padding:0 20px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">إجراء محدد</button>
+              <button style="height:40px;padding:0 20px;border-radius:8px;background:#C62828;color:#fff;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">حذف نهائي</button>
+              <div style="width:40px;height:40px;border-radius:8px;border:1px solid #E7E2DA;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-edit"></use></svg></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">الحقول والمرشحات</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <div style="width:220px;height:40px;background:#fff;border:1px solid #E7E2DA;border-radius:8px;display:flex;align-items:center;padding:0 12px;gap:8px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"></use></svg>
+                <span style="font-size:13px;color:#6B6B6B">بحث في المواد...</span>
+              </div>
+              <div style="width:170px;height:40px;background:#fff;border:1px solid #E7E2DA;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 12px">
+                <span style="font-size:13px;color:#1B1B1C">جميع الفئات</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chevron-d"></use></svg>
+              </div>
+              <div style="width:210px;height:40px;background:#fff;border:1px solid #E7E2DA;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 12px">
+                <span style="font-size:13px;color:#1B1B1C;direction:ltr">01/08 – 19/08</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"></use></svg>
+              </div>
+              <div style="width:40px;height:40px;border-radius:8px;border:1px solid #E7E2DA;display:flex;align-items:center;justify-content:center;background:#fff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-filter"></use></svg></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">بطاقة مؤشر أداء</div>
+            <div style="width:250px;background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:18px;box-shadow:0 2px 4px rgba(0,0,0,.04)">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:11px;font-weight:700;color:#6B6B6B">إجمالي قيمة المخزون</span>
+                <div style="width:32px;height:32px;border-radius:8px;background:#F4E7D3;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-warehouse"></use></svg></div>
+              </div>
+              <div style="font-size:24px;font-weight:700;color:#231005;margin-top:10px;direction:ltr;text-align:right">312,480 ر.س</div>
+              <div style="font-size:12px;font-weight:600;color:#2E7D32;margin-top:6px">+4.2% عن الفترة السابقة</div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">شارات الحالة</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{statusBadges}}" as="sb" hint-placeholder-count="6">
+                <span style="padding:5px 12px;border-radius:999px;font-size:11px;font-weight:700;background:{{sb.bg}};color:{{sb.fg}}">{{sb.label}}</span>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">جدول وحالات</div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 16px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:2">المادة</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">الكمية</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">الحالة</span>
+              </div>
+              <div style="height:56px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid #E7E2DA">
+                <span style="font-size:13px;color:#1B1B1C;flex:2;font-weight:600">بن كولومبي</span>
+                <span style="font-size:13px;color:#1B1B1C;flex:1;direction:ltr;text-align:right">42.5 كجم</span>
+                <span style="flex:1"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#E3F5E8;color:#2E7D32">متوفر</span></span>
+              </div>
+              <div style="height:56px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid #E7E2DA">
+                <div style="flex:2;height:14px;width:70%;border-radius:4px;background:linear-gradient(90deg,#F0EDED 25%,#E7E2DA 37%,#F0EDED 63%);background-size:400px 100%;animation:shimmer 1.4s infinite linear"></div>
+                <div style="flex:1;height:14px;width:40px;border-radius:4px;background:#F0EDED"></div>
+                <div style="flex:1;height:14px;width:60px;border-radius:4px;background:#F0EDED"></div>
+              </div>
+              <div style="padding:40px 0;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#B7ADA2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-inbox"></use></svg>
+                <span style="font-size:13px;color:#6B6B6B">لا توجد نتائج مطابقة</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:20px;flex-wrap:wrap">
+            <div style="width:340px;background:#fff;border:1px solid #E7E2DA;border-radius:16px;padding:22px;box-shadow:0 8px 24px rgba(0,0,0,.08)">
+              <div style="font-size:15px;font-weight:700;color:#231005">تأكيد حذف المادة</div>
+              <div style="font-size:13px;color:#50443F;margin-top:8px;line-height:1.6">هل أنت متأكد من حذف "سكر أبيض"؟ لا يمكن التراجع عن هذا الإجراء.</div>
+              <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-start">
+                <button style="height:36px;padding:0 16px;border-radius:8px;background:#C62828;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit">حذف</button>
+                <button style="height:36px;padding:0 16px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit">إلغاء</button>
+              </div>
+            </div>
+            <div style="width:340px;background:#FFF1F0;border:1px solid #FFD2CF;border-radius:12px;padding:16px;display:flex;gap:10px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><use href="#i-alert"></use></svg>
+              <div style="font-size:13px;color:#8A1F1F;line-height:1.6">تنبيه: 3 مواد وصلت إلى حد النفاد، يرجى مراجعة الطلبات العاجلة.</div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isDashboard}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:20px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:22px;font-weight:700;color:#231005">إدارة المخزون</div>
+              <div style="font-size:13px;color:#6B6B6B;margin-top:4px">متابعة المخزون والحركات والتنبيهات التشغيلية لجميع الفروع</div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button style="height:40px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">بدء جرد</button>
+              <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plus"></use></svg>إضافة حركة</button>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <div style="width:150px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">جميع الفروع</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:170px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">جميع المستودعات</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:190px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C;direction:ltr">01/08/2026 – 19/08/2026</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-clock"></use></svg></div>
+            <div style="flex:1;min-width:180px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">بحث عن مادة أو حركة...</span></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+            <sc-for list="{{dashboardKpis}}" as="k" hint-placeholder-count="4">
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:18px;box-shadow:0 2px 4px rgba(0,0,0,.04)">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-size:11px;font-weight:700;color:#6B6B6B">{{k.label}}</span>
+                  <div style="width:32px;height:32px;border-radius:8px;background:{{k.iconBg}};display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{k.iconColor}}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="{{k.icon}}"></use></svg></div>
+                </div>
+                <div style="font-size:23px;font-weight:700;color:#231005;margin-top:10px;direction:ltr;text-align:right">{{k.value}}</div>
+                <div style="font-size:12px;font-weight:600;color:{{k.trendColor}};margin-top:6px">{{k.trend}}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:16px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:20px">
+              <div style="font-size:14px;font-weight:700;color:#231005;margin-bottom:14px">قيمة المخزون حسب المستودع</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{warehouseValues}}" as="w" hint-placeholder-count="4">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#1B1B1C;font-weight:600">{{w.name}}</span><span style="color:#50443F;direction:ltr">{{w.value}}</span></div>
+                    <div style="height:8px;border-radius:4px;background:#F0EDED;overflow:hidden"><div style="height:100%;border-radius:4px;background:#C47A3A;width:{{w.pct}}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:20px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <span style="font-size:14px;font-weight:700;color:#231005">تنبيهات المخزون المنخفض</span>
+                <span style="font-size:11px;font-weight:700;background:#FFE6D1;color:#9B4D12;padding:4px 10px;border-radius:999px">4 مواد</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{lowStockAlerts}}" as="a" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FCF9F8;border:1px solid #F0EDED;border-radius:8px">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div style="width:8px;height:8px;border-radius:50%;background:#C47A3A;flex:none"></div>
+                      <div>
+                        <div style="font-size:13px;font-weight:600;color:#1B1B1C">{{a.name}}</div>
+                        <div style="font-size:11px;color:#6B6B6B;margin-top:2px">{{a.branch}}</div>
+                      </div>
+                    </div>
+                    <span style="font-size:12px;font-weight:700;color:#9B4D12;direction:ltr">{{a.qty}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden">
+            <div style="padding:16px 20px;font-size:14px;font-weight:700;color:#231005;border-bottom:1px solid #E7E2DA">أحدث حركات المخزون</div>
+            <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 20px">
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:2">المادة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">نوع الحركة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">الكمية</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">المستودع</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">الوقت</span>
+            </div>
+            <sc-for list="{{dashboardMovements}}" as="m" hint-placeholder-count="5">
+              <div style="height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid #E7E2DA">
+                <span style="font-size:13px;color:#1B1B1C;flex:2;font-weight:600">{{m.material}}</span>
+                <span style="flex:1.4"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{m.badgeBg}};color:{{m.badgeFg}}">{{m.type}}</span></span>
+                <span style="font-size:13px;color:#1B1B1C;flex:1;direction:ltr;text-align:right">{{m.qty}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1.4">{{m.warehouse}}</span>
+                <span style="font-size:12px;color:#6B6B6B;flex:1.4">{{m.time}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isMaterials}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:22px;font-weight:700;color:#231005">المواد المخزنية</div>
+              <div style="font-size:13px;color:#6B6B6B;margin-top:4px">إدارة المواد الخام والتغليف والمواد التشغيلية</div>
+            </div>
+            <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>إضافة مادة جديدة</button>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <div style="flex:1;min-width:220px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">بحث عن مادة أو SKU...</span></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">النوع</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">الفئة</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:150px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">حالة المخزون</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:110px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">الحالة</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden">
+            <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:2">المادة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">SKU</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">النوع</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">الوحدة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">الكمية المتاحة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">حد إعادة الطلب</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">متوسط التكلفة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2">حالة المخزون</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9;text-align:left">الإجراءات</span>
+            </div>
+            <sc-for list="{{materials}}" as="mt" hint-placeholder-count="5">
+              <div style="min-height:60px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                <div style="flex:2;display:flex;align-items:center;gap:10px">
+                  <div style="width:34px;height:34px;border-radius:8px;background:#F4E7D3;display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.6"><use href="#i-coffee"></use></svg></div>
+                  <span style="font-size:13px;font-weight:600;color:#1B1B1C" onClick="{{mt.open}}" style-hover="text-decoration:underline;cursor:pointer">{{mt.name}}</span>
+                </div>
+                <span style="font-size:12px;color:#6B6B6B;flex:1.1;direction:ltr;text-align:right">{{mt.sku}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1">{{mt.type}}</span>
+                <span style="font-size:13px;color:#50443F;flex:.8">{{mt.unit}}</span>
+                <span style="font-size:13px;color:#1B1B1C;flex:1.1;font-weight:600;direction:ltr;text-align:right">{{mt.qty}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1.1;direction:ltr;text-align:right">{{mt.reorder}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1;direction:ltr;text-align:right">{{mt.cost}}</span>
+                <span style="flex:1.2"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{mt.badgeBg}};color:{{mt.badgeFg}}">{{mt.status}}</span></span>
+                <span style="flex:.9;display:flex;justify-content:flex-end;gap:4px">
+                  <div style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer" onClick="{{mt.open}}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.7"><use href="#i-eye"></use></svg></div>
+                  <div style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.7"><use href="#i-edit"></use></svg></div>
+                  <div style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.7"><use href="#i-trash"></use></svg></div>
+                </span>
+              </div>
+            </sc-for>
+            <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;color:#6B6B6B">عرض 1 إلى 5 من 42 مادة</span>
+              <div style="display:flex;gap:6px">
+                <div style="width:30px;height:30px;border:1px solid #E7E2DA;border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-r"></use></svg></div>
+                <div style="width:30px;height:30px;border:1px solid #805437;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:center;font-size:12px;color:#805437;font-weight:700">1</div>
+                <div style="width:30px;height:30px;border:1px solid #E7E2DA;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#6B6B6B">2</div>
+                <div style="width:30px;height:30px;border:1px solid #E7E2DA;border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-l"></use></svg></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isDetail}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="font-size:12px;color:#6B6B6B;display:flex;align-items:center;gap:6px">
+            <span onClick="{{goInventory}}" style="cursor:pointer;color:#6B4226;font-weight:600">إدارة المخزون</span><span>/</span>
+            <span onClick="{{goMaterials}}" style="cursor:pointer;color:#6B4226;font-weight:600">المواد المخزنية</span><span>/</span>
+            <span style="color:#231005">بن كولومبي محمص</span>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;gap:14px;align-items:center">
+              <div style="width:56px;height:56px;border-radius:12px;background:#F4E7D3;display:flex;align-items:center;justify-content:center;flex:none"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.5"><use href="#i-coffee"></use></svg></div>
+              <div>
+                <div style="font-size:22px;font-weight:700;color:#231005">بن كولومبي محمص</div>
+                <div style="font-size:12px;color:#6B6B6B;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">
+                  <span>SKU: RM-1001</span><span>·</span><span>مادة خام</span><span>·</span><span>الوحدة: كجم</span><span>·</span>
+                  <span style="color:#2E7D32;font-weight:700">نشط</span><span>·</span><span>متوسط التكلفة: 68.00 ر.س</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button style="height:40px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">تعديل المادة</button>
+              <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">إضافة حركة</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">إجمالي الكمية</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px;direction:ltr;text-align:right">128.5 كجم</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">إجمالي القيمة</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px;direction:ltr;text-align:right">8,738 ر.س</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">الحد الأدنى</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px;direction:ltr;text-align:right">60 كجم</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">آخر حركة</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">قبل 3 ساعات</div></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden">
+            <div style="padding:16px 20px;font-size:14px;font-weight:700;color:#231005;border-bottom:1px solid #E7E2DA">أرصدة المستودعات</div>
+            <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 20px">
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">المستودع</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">الفرع</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">الكمية</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">المتاح</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">متوسط التكلفة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">القيمة</span>
+            </div>
+            <sc-for list="{{warehouseBalances}}" as="wb" hint-placeholder-count="3">
+              <div style="height:54px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid #E7E2DA">
+                <span style="font-size:13px;color:#1B1B1C;flex:1.4;font-weight:600">{{wb.warehouse}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1.4">{{wb.branch}}</span>
+                <span style="font-size:13px;color:#1B1B1C;flex:1;direction:ltr;text-align:right">{{wb.qty}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1;direction:ltr;text-align:right">{{wb.available}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1.1;direction:ltr;text-align:right">{{wb.cost}}</span>
+                <span style="font-size:13px;color:#1B1B1C;flex:1;font-weight:700;direction:ltr;text-align:right">{{wb.value}}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden">
+            <div style="padding:16px 20px;font-size:14px;font-weight:700;color:#231005;border-bottom:1px solid #E7E2DA">سجل الحركات الأخيرة</div>
+            <sc-for list="{{materialHistory}}" as="h" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #E7E2DA">
+                <div style="width:34px;height:34px;border-radius:8px;background:{{h.iconBg}};display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{h.iconColor}}" stroke-width="1.7"><use href="{{h.icon}}"></use></svg></div>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600;color:#1B1B1C">{{h.label}}</div>
+                  <div style="font-size:11px;color:#6B6B6B;margin-top:2px">{{h.time}}</div>
+                </div>
+                <span style="font-size:13px;font-weight:700;color:{{h.iconColor}};direction:ltr">{{h.qty}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isBalances}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:18px">
+          <div>
+            <div style="font-size:22px;font-weight:700;color:#231005">أرصدة المخازن</div>
+            <div style="font-size:13px;color:#6B6B6B;margin-top:4px">عرض الكميات والقيمة المتاحة داخل كل مستودع</div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+            <div style="width:40px;height:40px;border-radius:8px;background:#F4E7D3;display:flex;align-items:center;justify-content:center;flex:none"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.6"><use href="#i-warehouse"></use></svg></div>
+            <div style="flex:1">
+              <div style="font-size:11px;color:#6B6B6B;font-weight:700">المستودع المحدد</div>
+              <div style="font-size:16px;font-weight:700;color:#231005;margin-top:2px">بار الفرع الرئيسي</div>
+            </div>
+            <div style="width:220px;height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 14px;cursor:pointer"><span style="font-size:13px;color:#1B1B1C">تبديل المستودع</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">إجمالي الأصناف</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px;direction:ltr;text-align:right">18 صنف</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">قيمة المخزون</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px;direction:ltr;text-align:right">41,260 ر.س</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">مواد منخفضة المخزون</div><div style="font-size:21px;font-weight:700;color:#C47A3A;margin-top:8px;direction:ltr;text-align:right">3</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">مواد نفدت</div><div style="font-size:21px;font-weight:700;color:#C62828;margin-top:8px;direction:ltr;text-align:right">1</div></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <div style="flex:1;min-width:220px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">بحث في مواد هذا المستودع...</span></div>
+            <div style="width:150px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">حالة المخزون</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:hidden">
+            <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:2">المادة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">الكمية الفعلية</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">الكمية المتاحة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">متوسط التكلفة</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">القيمة الإجمالية</span>
+              <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2">حالة المخزون</span>
+            </div>
+            <sc-for list="{{warehouseStock}}" as="ws" hint-placeholder-count="5">
+              <div style="min-height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA;background:{{ws.rowBg}}">
+                <span style="font-size:13px;color:#1B1B1C;flex:2;font-weight:600">{{ws.name}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1;direction:ltr;text-align:right">{{ws.actual}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1;direction:ltr;text-align:right">{{ws.available}}</span>
+                <span style="font-size:13px;color:#50443F;flex:1;direction:ltr;text-align:right">{{ws.cost}}</span>
+                <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:1;direction:ltr;text-align:right">{{ws.value}}</span>
+                <span style="flex:1.2"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{ws.badgeBg}};color:{{ws.badgeFg}}">{{ws.status}}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isMovements}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:22px;font-weight:700;color:#231005">حركات المخزون</div>
+              <div style="font-size:13px;color:#6B6B6B;margin-top:4px">سجل كامل وغير قابل للتعديل لكل عمليات المخزون</div>
+            </div>
+            <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>إضافة حركة</button>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="width:190px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C;direction:ltr">01/08 – 19/08</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-clock"></use></svg></div>
+            <div style="width:140px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">المستودع</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">المادة</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:150px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">نوع الحركة</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">الموظف</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1180px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">التاريخ والوقت</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">المادة</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2">المستودع</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">نوع الحركة</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">الكمية</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">التكلفة</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">الموظف</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">المرجع</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.7;text-align:left">التفاصيل</span>
+              </div>
+              <sc-for list="{{movements}}" as="mv" hint-placeholder-count="6">
+                <div style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span style="font-size:12px;color:#50443F;flex:1.4;direction:ltr;text-align:right">{{mv.datetime}}</span>
+                  <span style="font-size:13px;color:#1B1B1C;flex:1.4;font-weight:600">{{mv.material}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.2">{{mv.warehouse}}</span>
+                  <span style="flex:1"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{mv.badgeBg}};color:{{mv.badgeFg}}">{{mv.type}}</span></span>
+                  <span style="font-size:13px;color:#1B1B1C;flex:.8;font-weight:600;direction:ltr;text-align:right">{{mv.qty}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9;direction:ltr;text-align:right">{{mv.cost}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.1">{{mv.employee}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1;direction:ltr;text-align:right">{{mv.ref}}</span>
+                  <span style="flex:.7;display:flex;justify-content:flex-end"><div style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.7"><use href="#i-eye"></use></svg></div></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isAddMovement}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 32px;display:flex;flex-direction:column;gap:20px;max-width:920px">
+          <div>
+            <div style="font-size:22px;font-weight:700;color:#231005">إضافة حركة مخزون</div>
+            <div style="font-size:13px;color:#6B6B6B;margin-top:4px">اختر نوع الحركة والمستودع والمادة ثم أدخل التفاصيل</div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#50443F;margin-bottom:10px">نوع الحركة</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+              <sc-for list="{{movementTypes}}" as="mtp" hint-placeholder-count="4">
+                <div onClick="{{mtp.select}}" style="cursor:pointer;border-radius:12px;padding:16px;border:1.5px solid {{mtp.border}};background:{{mtp.bg}};display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+                  <div style="width:36px;height:36px;border-radius:8px;background:{{mtp.iconBg}};display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{mtp.iconColor}}" stroke-width="1.7"><use href="{{mtp.icon}}"></use></svg></div>
+                  <span style="font-size:13px;font-weight:700;color:{{mtp.textColor}}">{{mtp.label}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">المستودع</div>
+              <div style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px"><span style="font-size:13px;color:#1B1B1C">بار الفرع الرئيسي</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">المادة</div>
+              <div style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#1B1B1C">بن كولومبي محمص</span></div>
+            </div>
+          </div>
+
+          <div style="background:#FCF9F8;border:1px solid #F0EDED;border-radius:12px;padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">الرصيد الحالي</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px;direction:ltr;text-align:right">62.5 كجم</div></div>
+            <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">الكمية المتاحة</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px;direction:ltr;text-align:right">58.0 كجم</div></div>
+            <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">الوحدة</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">كجم</div></div>
+            <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">متوسط التكلفة</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px;direction:ltr;text-align:right">68.00 ر.س</div></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">الكمية</div>
+              <input value="{{qty}}" onChange="{{setQty}}" style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;padding:0 14px;font-size:13px;font-family:inherit;color:#1B1B1C;width:100%;box-sizing:border-box;direction:ltr;text-align:right" placeholder="0.000"/>
+            </div>
+            <sc-if value="{{showUnitCost}}" hint-placeholder-val="{{true}}">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">تكلفة الوحدة</div>
+              <input style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;padding:0 14px;font-size:13px;font-family:inherit;color:#1B1B1C;width:100%;box-sizing:border-box;direction:ltr;text-align:right" placeholder="0.00 ر.س"/>
+            </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{showReason}}" hint-placeholder-val="{{false}}">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">سبب الحركة <span style="color:#C62828">*</span></div>
+            <div style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px"><span style="font-size:13px;color:#6B6B6B">اختر السبب...</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+          </sc-if>
+
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">ملاحظات</div>
+            <textarea style="min-height:70px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;padding:10px 14px;font-size:13px;font-family:inherit;color:#1B1B1C;width:100%;box-sizing:border-box;resize:vertical" placeholder="ملاحظات إضافية (اختياري)"></textarea>
+          </div>
+
+          <div style="background:#F4E7D3;border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#805437">الرصيد المتوقع بعد الحركة</div>
+              <div style="font-size:20px;font-weight:700;color:#231005;margin-top:4px;direction:ltr;text-align:right">{{expectedBalance}}</div>
+            </div>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.6"><use href="{{expectedIcon}}"></use></svg>
+          </div>
+
+          <div style="display:flex;justify-content:flex-start;gap:10px;padding-bottom:8px">
+            <button onClick="{{openConfirm}}" style="height:42px;padding:0 24px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">تأكيد الحركة</button>
+            <button style="height:42px;padding:0 24px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
+          </div>
+        </div>
+
+        <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;inset:0;background:rgba(35,16,5,.4);display:flex;align-items:center;justify-content:center;z-index:20">
+          <div style="width:400px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+            <div style="width:44px;height:44px;border-radius:50%;background:#FFF1F0;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.7"><use href="#i-alert"></use></svg></div>
+            <div style="font-size:16px;font-weight:700;color:#231005">تأكيد ترحيل الحركة</div>
+            <div style="font-size:13px;color:#50443F;margin-top:8px;line-height:1.7">سيتم ترحيل هذه الحركة على رصيد المستودع فورًا، ولا يمكن التراجع عنها بعد التأكيد. هل تريد المتابعة؟</div>
+            <div style="display:flex;gap:8px;margin-top:20px">
+              <button onClick="{{closeConfirm}}" style="height:38px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">تأكيد وترحيل</button>
+              <button onClick="{{closeConfirm}}" style="height:38px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">تراجع</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    screen: 'kit',
+    branch: 'main',
+    movementType: 'in',
+    confirmOpen: false,
+    qty: '',
+  };
+
+  go(screen) { this.setState({ screen }); }
+
+  renderVals() {
+    const screen = this.state.screen;
+    const screenDefs = [
+      ['kit', '1. دليل التصميم'],
+      ['dashboard', '2. لوحة المخزون'],
+      ['materials', '3. المواد المخزنية'],
+      ['detail', '4. تفاصيل المادة'],
+      ['balances', '5. أرصدة المخازن'],
+      ['movements', '6. الحركات'],
+      ['add', '7. إضافة حركة'],
+    ];
+    const screens = screenDefs.map(([id, label]) => ({
+      label,
+      go: () => this.go(id),
+      style: `padding:6px 12px;border-radius:6px;border:1px solid ${screen===id?'#C47A3A':'transparent'};background:${screen===id?'rgba(196,122,58,.15)':'transparent'};color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit`,
+    }));
+
+    const navDefs = [
+      ['dashboard-icon','#i-dashboard','لوحة التحكم'],
+      ['pos','#i-pos','نقطة البيع'],
+      ['orders','#i-orders','الطلبات'],
+      ['customers','#i-users','العملاء'],
+      ['discounts','#i-tag','الخصومات'],
+      ['menu','#i-menu','القائمة'],
+      ['inventory','#i-inventory','إدارة المخزون'],
+      ['reports','#i-reports','التقارير'],
+      ['settings','#i-settings','الإعدادات'],
+    ];
+    const navItems = navDefs.map(([key, icon, label]) => {
+      const active = key === 'inventory';
+      return {
+        icon, label, fontWeight: active ? 800 : 500,
+        iconColor: active ? '#794E31' : '#50443F',
+        style: `display:flex;align-items:center;gap:10px;height:44px;border-radius:8px;padding:0 12px;background:${active?'#FEC29E':'transparent'};cursor:pointer`,
+      };
+    });
+
+    const branchDefs = [['main','الفرع الرئيسي'],['downtown','وسط المدينة'],['mall','المول'],['airport','المطار']];
+    const branches = branchDefs.map(([id, name]) => {
+      const active = id === this.state.branch;
+      return {
+        name, select: () => this.setState({branch:id}),
+        weight: active ? 800 : 500,
+        color: active ? '#231005' : '#50443F',
+        underline: active ? '#231005' : 'transparent',
+      };
+    });
+
+    const colorSwatches = [
+      {name:'أساسي (Espresso)', hex:'#3B2417'},
+      {name:'ثانوي (Warm Brown)', hex:'#6B4226'},
+      {name:'تمييز (Caramel)', hex:'#C47A3A'},
+      {name:'محايد', hex:'#1F1F1F'},
+      {name:'الخلفية', hex:'#FAF7F2'},
+      {name:'نجاح', hex:'#2E7D32'},
+      {name:'تحذير', hex:'#C47A3A'},
+      {name:'خطر', hex:'#C62828'},
+    ];
+
+    const statusBadges = [
+      {label:'متوفر', bg:'#E3F5E8', fg:'#2E7D32'},
+      {label:'مخزون منخفض', bg:'#FFE6D1', fg:'#9B4D12'},
+      {label:'نفد المخزون', bg:'#FFE1DE', fg:'#C62828'},
+      {label:'نشط', bg:'#E3F5E8', fg:'#2E7D32'},
+      {label:'غير نشط', bg:'#F0EDED', fg:'#6B6B6B'},
+      {label:'قيد المراجعة', bg:'#E4EEFF', fg:'#1B5AAA'},
+    ];
+
+    const dashboardKpis = [
+      {label:'إجمالي قيمة المخزون', value:'312,480 ر.س', trend:'+4.2% عن الفترة السابقة', trendColor:'#2E7D32', icon:'#i-warehouse', iconBg:'#F4E7D3', iconColor:'#805437'},
+      {label:'مواد منخفضة المخزون', value:'7 مواد', trend:'راجع التنبيهات', trendColor:'#9B4D12', icon:'#i-alert', iconBg:'#FFE6D1', iconColor:'#9B4D12'},
+      {label:'مواد نفدت من المخزون', value:'2 مادة', trend:'يتطلب إجراء عاجل', trendColor:'#C62828', icon:'#i-x', iconBg:'#FFE1DE', iconColor:'#C62828'},
+      {label:'قيمة الهدر خلال الفترة', value:'1,940 ر.س', trend:'-1.1% عن الفترة السابقة', trendColor:'#2E7D32', icon:'#i-waste', iconBg:'#F0EDED', iconColor:'#50443F'},
+    ];
+
+    const warehouseValues = [
+      {name:'مستودع الفرع الرئيسي', value:'128,400 ر.س', pct:'82%'},
+      {name:'مستودع وسط المدينة', value:'76,150 ر.س', pct:'54%'},
+      {name:'مستودع المول', value:'64,930 ر.س', pct:'46%'},
+      {name:'مستودع المطار', value:'43,000 ر.س', pct:'30%'},
+    ];
+
+    const lowStockAlerts = [
+      {name:'شراب فانيلا', branch:'فرع المول', qty:'0.0 لتر'},
+      {name:'حليب كامل الدسم', branch:'الفرع الرئيسي', qty:'18.0 لتر'},
+      {name:'أكواب ورقية 12 أونصة', branch:'وسط المدينة', qty:'210 قطعة'},
+      {name:'شراب الكراميل', branch:'المطار', qty:'1.2 لتر'},
+    ];
+
+    const dashboardMovements = [
+      {material:'بن كولومبي', type:'إدخال', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', qty:'+50.0 كجم', warehouse:'الفرع الرئيسي', time:'قبل 20 دقيقة'},
+      {material:'حليب كامل الدسم', type:'إخراج', badgeBg:'#E4EEFF', badgeFg:'#1B5AAA', qty:'-8.0 لتر', warehouse:'وسط المدينة', time:'قبل 40 دقيقة'},
+      {material:'شراب فانيلا', type:'هدر', badgeBg:'#FFE1DE', badgeFg:'#C62828', qty:'-0.5 لتر', warehouse:'المول', time:'قبل ساعة'},
+      {material:'سكر أبيض', type:'تسوية', badgeBg:'#FFE6D1', badgeFg:'#9B4D12', qty:'-1.2 كجم', warehouse:'الفرع الرئيسي', time:'قبل 3 ساعات'},
+      {material:'أكواب ورقية', type:'تحويل', badgeBg:'#F0EDED', badgeFg:'#50443F', qty:'300 قطعة', warehouse:'المطار', time:'أمس'},
+    ];
+
+    const materials = [
+      {name:'بن كولومبي', sku:'RM-1001', type:'مادة خام', unit:'كجم', qty:'42.5', reorder:'20', cost:'68.00', status:'متوفر', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', open: () => this.go('detail')},
+      {name:'حليب كامل الدسم', sku:'RM-2044', type:'مادة خام', unit:'لتر', qty:'18.0', reorder:'25', cost:'6.50', status:'مخزون منخفض', badgeBg:'#FFE6D1', badgeFg:'#9B4D12', open: () => this.go('detail')},
+      {name:'أكواب ورقية (16 أونصة)', sku:'PK-3310', type:'تغليف', unit:'قطعة', qty:'1,200', reorder:'500', cost:'0.35', status:'متوفر', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', open: () => this.go('detail')},
+      {name:'شراب فانيلا', sku:'RM-4021', type:'مادة خام', unit:'لتر', qty:'0.0', reorder:'6', cost:'22.00', status:'نفد المخزون', badgeBg:'#FFE1DE', badgeFg:'#C62828', open: () => this.go('detail')},
+      {name:'سكر أبيض', sku:'RM-1075', type:'مادة خام', unit:'كجم', qty:'35.0', reorder:'15', cost:'4.20', status:'متوفر', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', open: () => this.go('detail')},
+    ];
+
+    const warehouseBalances = [
+      {warehouse:'المستودع الرئيسي', branch:'الفرع الرئيسي', qty:'62.5', available:'58.0', cost:'68.00', value:'4,250 ر.س'},
+      {warehouse:'مستودع وسط المدينة', branch:'فرع وسط المدينة', qty:'34.0', available:'34.0', cost:'68.00', value:'2,312 ر.س'},
+      {warehouse:'مستودع المول', branch:'فرع المول', qty:'32.0', available:'28.5', cost:'68.00', value:'2,176 ر.س'},
+    ];
+
+    const materialHistory = [
+      {label:'إدخال مخزون — 50.0 كجم', time:'أمس، 09:20 ص', qty:'+50.0', icon:'#i-in', iconBg:'#E3F5E8', iconColor:'#2E7D32'},
+      {label:'إخراج للتحضير — 12.5 كجم', time:'اليوم، 07:10 ص', qty:'-12.5', icon:'#i-out', iconBg:'#E4EEFF', iconColor:'#1B5AAA'},
+      {label:'تسوية جرد — 1.0 كجم', time:'قبل يومين', qty:'-1.0', icon:'#i-adjust', iconBg:'#FFE6D1', iconColor:'#9B4D12'},
+    ];
+
+    const warehouseStock = [
+      {name:'بن كولومبي', actual:'8.2', available:'7.5', cost:'68.00', value:'557.60 ر.س', status:'متوفر', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', rowBg:'#fff'},
+      {name:'حليب كامل الدسم', actual:'4.0', available:'4.0', cost:'6.50', value:'26.00 ر.س', status:'مخزون منخفض', badgeBg:'#FFE6D1', badgeFg:'#9B4D12', rowBg:'#FFF8F1'},
+      {name:'شراب فانيلا', actual:'0.0', available:'0.0', cost:'22.00', value:'0.00 ر.س', status:'نفد المخزون', badgeBg:'#FFE1DE', badgeFg:'#C62828', rowBg:'#FFF5F4'},
+      {name:'سكر أبيض', actual:'6.0', available:'6.0', cost:'4.20', value:'25.20 ر.س', status:'متوفر', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', rowBg:'#fff'},
+      {name:'أكواب ورقية', actual:'150', available:'150', cost:'0.35', value:'52.50 ر.س', status:'متوفر', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', rowBg:'#fff'},
+    ];
+
+    const movements = [
+      {datetime:'19/08 08:15', material:'بن كولومبي', warehouse:'الفرع الرئيسي', type:'إدخال', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', qty:'+50.0', cost:'3,400 ر.س', employee:'أحمد الشمري', ref:'PO-2291'},
+      {datetime:'19/08 07:40', material:'حليب كامل الدسم', warehouse:'وسط المدينة', type:'إخراج', badgeBg:'#E4EEFF', badgeFg:'#1B5AAA', qty:'-8.0', cost:'52 ر.س', employee:'سارة العتيبي', ref:'REQ-1187'},
+      {datetime:'18/08 19:05', material:'شراب فانيلا', warehouse:'المول', type:'هدر', badgeBg:'#FFE1DE', badgeFg:'#C62828', qty:'-0.5', cost:'11 ر.س', employee:'خالد المطيري', ref:'WST-0044'},
+      {datetime:'18/08 15:30', material:'سكر أبيض', warehouse:'الفرع الرئيسي', type:'تسوية', badgeBg:'#FFE6D1', badgeFg:'#9B4D12', qty:'-1.2', cost:'5 ر.س', employee:'منى القحطاني', ref:'ADJ-0098'},
+      {datetime:'18/08 12:00', material:'أكواب ورقية', warehouse:'المطار', type:'فرق جرد', badgeBg:'#F4E7D3', badgeFg:'#805437', qty:'-20', cost:'7 ر.س', employee:'فهد الدوسري', ref:'CNT-0231'},
+      {datetime:'17/08 10:12', material:'أكواب ورقية', warehouse:'المطار', type:'تحويل', badgeBg:'#F0EDED', badgeFg:'#50443F', qty:'300', cost:'—', employee:'نورة الحربي', ref:'TRF-0512'},
+    ];
+
+    const typeDefs = [
+      {id:'in', label:'إدخال مخزون', icon:'#i-in', color:'#2E7D32', bgSoft:'#E3F5E8'},
+      {id:'out', label:'إخراج مخزون', icon:'#i-out', color:'#1B5AAA', bgSoft:'#E4EEFF'},
+      {id:'waste', label:'هدر', icon:'#i-waste', color:'#C62828', bgSoft:'#FFE1DE'},
+      {id:'adjust', label:'تسوية', icon:'#i-adjust', color:'#9B4D12', bgSoft:'#FFE6D1'},
+    ];
+    const movementTypes = typeDefs.map(t => {
+      const active = t.id === this.state.movementType;
+      return {
+        label: t.label, icon: t.icon,
+        select: () => this.setState({movementType: t.id}),
+        border: active ? t.color : '#E7E2DA',
+        bg: active ? t.bgSoft : '#fff',
+        iconBg: t.bgSoft, iconColor: t.color,
+        textColor: active ? t.color : '#1B1B1C',
+      };
+    });
+
+    const qtyNum = parseFloat(this.state.qty) || 0;
+    const isOut = this.state.movementType === 'out' || this.state.movementType === 'waste';
+    const expected = isOut ? (62.5 - qtyNum) : (62.5 + qtyNum);
+    const expectedIcon = typeDefs.find(t => t.id === this.state.movementType).icon;
+
+    return {
+      screens, navItems, branches, colorSwatches, statusBadges,
+      dashboardKpis, warehouseValues, lowStockAlerts, dashboardMovements,
+      materials, warehouseBalances, materialHistory, warehouseStock, movements,
+      movementTypes,
+      isKit: screen === 'kit',
+      isDashboard: screen === 'dashboard',
+      isMaterials: screen === 'materials',
+      isDetail: screen === 'detail',
+      isBalances: screen === 'balances',
+      isMovements: screen === 'movements',
+      isAddMovement: screen === 'add',
+      goInventory: () => this.go('dashboard'),
+      goMaterials: () => this.go('materials'),
+      showUnitCost: this.state.movementType === 'in',
+      showReason: this.state.movementType === 'waste' || this.state.movementType === 'adjust',
+      qty: this.state.qty,
+      setQty: (e) => this.setState({qty: e.target.value}),
+      expectedBalance: `${expected.toFixed(1)} كجم`,
+      expectedIcon,
+      confirmOpen: this.state.confirmOpen,
+      openConfirm: () => this.setState({confirmOpen: true}),
+      closeConfirm: () => this.setState({confirmOpen: false}),
+    };
+  }
+}
+</script>
+</body>
+</html>

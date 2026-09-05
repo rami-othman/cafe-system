@@ -38,6 +38,14 @@ abstract final class AppSizes {
   static const double branchTabUnderlineWidth = 80;
   static const double shiftStatusDotSize = 6;
   static const double logoMarkSize = 32;
+  static const double inventorySidebarWidth = 236;
+  static const double inventoryTopBarHeight = 64;
+  static const double inventoryLogoMarkSize = 36;
+  static const double inventorySidebarVerticalPadding = 28;
+  static const double inventorySidebarHorizontalPadding = 16;
+  static const double inventoryContentVerticalPadding = 28;
+  static const double inventoryContentHorizontalPadding = 32;
+  static const double inventoryDesktopTableWidth = 1300;
   static const double topBarVeryCompactWidth = 420;
   static const double topBarCompactWidth = 620;
   static const double sidebarPinnedSettingsMinHeight = 620;

@@ -28,9 +28,14 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextStyle textStyle = AppTextStyles.buttonMedium.copyWith(
+      fontFamily: Directionality.of(context) == TextDirection.rtl
+          ? 'IBMPlexSansArabic'
+          : null,
+    );
     final Widget button = switch (variant) {
-      AppButtonVariant.outlined => _buildOutlinedButton(),
-      _ => _buildFilledButton(_filledColor, _filledForeground),
+      AppButtonVariant.outlined => _buildOutlinedButton(textStyle),
+      _ => _buildFilledButton(_filledColor, _filledForeground, textStyle),
     };
 
     if (isExpanded) {
@@ -40,14 +45,18 @@ class AppButton extends StatelessWidget {
     return button;
   }
 
-  Widget _buildFilledButton(Color backgroundColor, Color foregroundColor) {
+  Widget _buildFilledButton(
+    Color backgroundColor,
+    Color foregroundColor,
+    TextStyle textStyle,
+  ) {
     final ButtonStyle style = FilledButton.styleFrom(
       minimumSize: Size(0, minimumHeight),
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       disabledBackgroundColor: AppColors.border,
       disabledForegroundColor: AppColors.textMuted,
-      textStyle: AppTextStyles.buttonMedium,
+      textStyle: textStyle,
       padding: AppSpacing.horizontalXl,
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
     );
@@ -68,12 +77,12 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  Widget _buildOutlinedButton() {
+  Widget _buildOutlinedButton(TextStyle textStyle) {
     final ButtonStyle style = OutlinedButton.styleFrom(
       minimumSize: Size(0, minimumHeight),
       foregroundColor: AppColors.primary,
       disabledForegroundColor: AppColors.textMuted,
-      textStyle: AppTextStyles.buttonMedium,
+      textStyle: textStyle,
       padding: AppSpacing.horizontalXl,
       side: const BorderSide(color: AppColors.border),
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),

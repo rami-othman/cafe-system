@@ -59,3 +59,11 @@ List<Map<String, dynamic>> readMapList(dynamic value) {
       .map((Map<dynamic, dynamic> item) => Map<String, dynamic>.from(item))
       .toList(growable: false);
 }
+
+List<String> readStringList(dynamic value) {
+  if (value is! List) {
+    return const <String>[];
+  }
+
+  return value.map((dynamic item) => '$item').toList(growable: false);
+}

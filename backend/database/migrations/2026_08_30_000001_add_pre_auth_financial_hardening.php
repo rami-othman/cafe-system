@@ -48,28 +48,29 @@ return new class extends Migration
             ]);
         }
 
-        Schema::table('payments', function (Blueprint $table): void {
-            $table->string('idempotency_key', 120)->nullable()->after('status');
-            $table->string('idempotency_hash', 64)->nullable()->after('idempotency_key');
-            $table->unique(['tenant_id', 'order_id', 'idempotency_key'], 'payments_tenant_order_idempotency_unique');
-        });
+        // Finance owns the tenant-scoped key. MAIN adds the lifecycle hash.
+        if (! Schema::hasColumn('payments', 'idempotency_key')) {
+            Schema::table('payments', fn (Blueprint $table) => $table->string('idempotency_key', 120)->nullable()->after('status'));
+        }
+        if (! Schema::hasColumn('payments', 'idempotency_hash')) {
+            Schema::table('payments', fn (Blueprint $table) => $table->string('idempotency_hash', 64)->nullable()->after('idempotency_key'));
+        }
 
-        Schema::table('payment_refunds', function (Blueprint $table): void {
-            $table->string('idempotency_key', 120)->nullable()->after('status');
-            $table->string('idempotency_hash', 64)->nullable()->after('idempotency_key');
-            $table->unique(['tenant_id', 'order_id', 'idempotency_key'], 'refunds_tenant_order_idempotency_unique');
-        });
+        if (! Schema::hasColumn('payment_refunds', 'idempotency_key')) {
+            Schema::table('payment_refunds', fn (Blueprint $table) => $table->string('idempotency_key', 120)->nullable()->after('status'));
+        }
+        if (! Schema::hasColumn('payment_refunds', 'idempotency_hash')) {
+            Schema::table('payment_refunds', fn (Blueprint $table) => $table->string('idempotency_hash', 64)->nullable()->after('idempotency_key'));
+        }
     }
 
     public function down(): void
     {
         Schema::table('payment_refunds', function (Blueprint $table): void {
-            $table->dropUnique('refunds_tenant_order_idempotency_unique');
-            $table->dropColumn(['idempotency_key', 'idempotency_hash']);
+            $table->dropColumn('idempotency_hash');
         });
         Schema::table('payments', function (Blueprint $table): void {
-            $table->dropUnique('payments_tenant_order_idempotency_unique');
-            $table->dropColumn(['idempotency_key', 'idempotency_hash']);
+            $table->dropColumn('idempotency_hash');
         });
         Schema::dropIfExists('pos_number_counters');
     }

@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\AccountingPostingService;
+use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosNumberGenerator;
 use App\Support\TenantContext;
+use App\Support\Money;
+use App\Support\SalePaymentMethodResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +21,8 @@ class RefundController extends Controller
     public function __construct(
         private readonly OrderLifecyclePolicy $lifecycle,
         private readonly PosNumberGenerator $numbers,
+        private readonly AccountingPostingService $posting,
+        private readonly OperationalAuditService $audit,
     ) {}
 
     public function store(Request $request, int $order): JsonResponse
@@ -30,15 +36,15 @@ class RefundController extends Controller
         $hash = $this->payloadHash($data);
 
         $actorId = (int) $request->attributes->get('auth_user')->id;
-        $refund = DB::transaction(function () use ($tenantId, $order, $data, $hash, $actorId) {
+        $refund = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId) {
             $orderRow = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->lockForUpdate()->first();
             abort_if(! $orderRow, 404, 'Order not found.');
-            app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $orderRow->branch_id);
+            app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $orderRow->branch_id);
 
-            $existing = DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('order_id', $orderRow->id)
+            $existing = DB::table('payment_refunds')->where('tenant_id', $tenantId)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
             if ($existing) {
-                if (! hash_equals((string) $existing->idempotency_hash, $hash)) {
+                if ((int) $existing->order_id !== (int) $orderRow->id || ! hash_equals((string) $existing->idempotency_hash, $hash)) {
                     throw new OrderLifecycleException('REFUND_IDEMPOTENCY_CONFLICT', 'This refund key was already used for a different request.');
                 }
 
@@ -65,7 +71,7 @@ class RefundController extends Controller
             $now = now();
             $refundId = DB::table('payment_refunds')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'order_id' => $orderRow->id,
-                'payment_id' => $payment->id, 'refund_number' => $this->numbers->nextRefundNumber($tenantId),
+                'payment_id' => $payment->id, 'shift_id' => $payment->shift_id, 'refund_number' => $this->numbers->nextRefundNumber($tenantId),
                 'type' => $data['type'], 'amount' => $amount, 'reason' => $data['reason'],
                 'manager_notes' => $data['managerNotes'] ?? null, 'status' => 'completed',
                 'idempotency_key' => $data['idempotencyKey'], 'idempotency_hash' => $hash,
@@ -81,6 +87,28 @@ class RefundController extends Controller
                 'user_id' => $actorId, 'entity_type' => 'order', 'entity_id' => $orderRow->id,
                 'description' => "Refunded \${$amount} for {$data['reason']}.", 'created_at' => $now, 'updated_at' => $now,
             ]);
+
+            // A payment refund contains no item/restock detail, so it must
+            // reverse the financial settlement only. Creating stock movements
+            // here would invent an inventory event and risk double reversal.
+            $resolvedMethod = $payment->payment_method_id
+                ? SalePaymentMethodResolver::resolveById($tenantId, (int) $payment->payment_method_id)
+                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $payment->method);
+            if ($resolvedMethod !== null) {
+                $this->posting->postRefund($request, $tenantId, [
+                    'branchId' => $orderRow->branch_id,
+                    'sourceId' => $refundId,
+                    'sourceEvent' => 'PAYMENT_REFUNDED',
+                    'entryDate' => now()->toDateString(),
+                    'description' => "Refund — {$data['reason']}",
+                    'lines' => [
+                        ['accountCode' => '4020', 'debit' => Money::decimal(Money::cents($amount))],
+                        ['accountCode' => $resolvedMethod->accountCode, 'credit' => Money::decimal(Money::cents($amount))],
+                    ],
+                ], $actorId);
+            } else {
+                $this->audit->record($request, $tenantId, 'payment_refund.finance_posting_skipped', 'order', $orderRow->id, [], ['reason' => 'No active Finance mapping for the original payment method.'], $orderRow->branch_id, $actorId);
+            }
 
             return DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('id', $refundId)->first();
         }, 3);

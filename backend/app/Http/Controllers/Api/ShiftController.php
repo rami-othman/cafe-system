@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\ShiftCashSummaryService;
+use App\Support\Money;
 use App\Support\TenantContext;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +16,10 @@ use Illuminate\Validation\Rule;
 
 class ShiftController extends Controller
 {
+    public function __construct(
+        private readonly BarCheckTemplateService $barCheckTemplates,
+        private readonly ShiftCashSummaryService $cashSummary,
+    ) {}
     public function current(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
@@ -81,16 +88,26 @@ class ShiftController extends Controller
         app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $row->branch_id);
         abort_unless((int) $row->user_id === (int) $request->attributes->get('auth_user')->id, 403, 'Only the shift owner can close this shift.');
 
-        $cashPayments = (float) DB::table('payments')
+        $requiredTemplates = DB::table('bar_check_templates')
             ->where('tenant_id', $tenantId)
-            ->where('shift_id', $shift)
-            ->where('method', 'cash')
-            ->where('status', 'completed')
-            ->whereNull('deleted_at')
-            ->sum('amount');
+            ->where('branch_id', $row->branch_id)
+            ->where('is_active', true)
+            ->where('required_for_shift_close', true)
+            ->get();
+        $barCheckPending = $requiredTemplates->contains(function (object $template) use ($tenantId, $row): bool {
+            if (! $this->barCheckTemplates->isUsable($tenantId, $template)) {
+                return false;
+            }
 
-        $expectedCash = (float) $row->opening_cash + $cashPayments;
-        $cashDifference = round((float) $data['closingCash'] - $expectedCash, 2);
+            return ! DB::table('stock_counts')->where('tenant_id', $tenantId)->where('shift_id', $row->id)
+                ->where('bar_check_template_id', $template->id)->where('warehouse_id', $template->warehouse_id)
+                ->where('branch_id', $template->branch_id)->where('count_type', 'shift_check')->where('status', 'posted')->exists();
+        });
+        abort_if($barCheckPending, 422, 'Complete the required bar check before closing the shift.');
+
+        $summary = $this->cashSummary->summarize($tenantId, $row);
+        $expectedCash = $summary['expectedCash'];
+        $cashDifference = Money::decimal(Money::cents($data['closingCash']) - Money::cents($expectedCash));
 
         DB::table('shifts')->where('id', $shift)->update([
             'closing_cash' => $data['closingCash'],
