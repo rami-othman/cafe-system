@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\AccountingPostingService;
 use App\Services\DiscountEligibilityService;
+use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
+use App\Services\SaleConsumptionService;
 use App\Support\TenantContext;
+use App\Support\Money;
+use App\Support\SalePaymentMethodResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +25,16 @@ class PaymentController extends Controller
         private readonly OrderLifecyclePolicy $lifecycle,
         private readonly DiscountEligibilityService $discounts,
         private readonly PosPricingService $pricing,
+        private readonly AccountingPostingService $posting,
+        private readonly OperationalAuditService $audit,
+        private readonly SaleConsumptionService $consumption,
     ) {}
 
     public function summary(Request $request, int $order): JsonResponse
     {
         $data = $request->validate(['amountReceived' => ['nullable', 'numeric', 'min:0']]);
         $tenantId = TenantContext::id($request);
-        $row = $this->findOrder($tenantId, $order);
+        $row = $this->findOrder($request, $tenantId, $order);
         $itemCount = (float) DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->whereNull('deleted_at')->sum('quantity');
         $total = (float) $row->total;
         $received = array_key_exists('amountReceived', $data) ? (float) $data['amountReceived'] : $total;
@@ -43,6 +51,7 @@ class PaymentController extends Controller
     {
         $data = $request->validate([
             'method' => ['required', 'in:cash,card,wallet,split'],
+            'paymentMethodId' => ['nullable', 'integer'],
             'amount' => ['required', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string'], 'note' => ['nullable', 'string'],
             'idempotencyKey' => ['required', 'string', 'max:120'],
@@ -51,12 +60,12 @@ class PaymentController extends Controller
         $hash = $this->payloadHash($data);
 
         $actorId = (int) $request->attributes->get('auth_user')->id;
-        $result = DB::transaction(function () use ($tenantId, $order, $data, $hash, $actorId): array {
-            $row = $this->lockedOrder($tenantId, $order);
-            $existing = DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)
+        $result = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId): array {
+            $row = $this->lockedOrder($request, $tenantId, $order);
+            $existing = DB::table('payments')->where('tenant_id', $tenantId)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
             if ($existing) {
-                if (! hash_equals((string) $existing->idempotency_hash, $hash)) {
+                if ((int) $existing->order_id !== (int) $row->id || ! hash_equals((string) $existing->idempotency_hash, $hash)) {
                     throw new OrderLifecycleException('PAYMENT_IDEMPOTENCY_CONFLICT', 'This payment key was already used for a different request.');
                 }
 
@@ -78,12 +87,17 @@ class PaymentController extends Controller
                 throw ValidationException::withMessages(['amount' => 'Payment amount is less than order total.']);
             }
 
+            $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
+                ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
+                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
+
             $currency = (string) (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $row->branch_id)->whereNull('deleted_at')->value('currency') ?? 'SYP');
             $now = now();
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $row->branch_id, 'order_id' => $row->id,
                 'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $data['method'],
                 'amount' => $row->total, 'currency' => $currency, 'status' => 'completed',
+                'payment_method_id' => $resolvedMethod?->paymentMethodId,
                 'idempotency_key' => $data['idempotencyKey'], 'idempotency_hash' => $hash,
                 'reference_number' => $data['reference'] ?? null, 'notes' => $data['note'] ?? null,
                 'paid_at' => $now, 'created_at' => $now, 'updated_at' => $now,
@@ -93,26 +107,33 @@ class PaymentController extends Controller
                 'status' => 'paid', 'payment_status' => 'paid', 'closed_at' => $now, 'updated_at' => $now,
             ]);
 
+            $consumption = $this->consumption->consumeForOrder($request, $tenantId, $row, $paymentId, $actorId);
+            if ($resolvedMethod !== null) {
+                $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId);
+            } else {
+                $this->audit->record($request, $tenantId, 'pos_order.finance_posting_skipped', 'order', $row->id, [], ['reason' => 'No active Finance mapping for payment method.'], $row->branch_id, $actorId);
+            }
+
             return ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
         }, 3);
 
         return response()->json(['data' => $this->serializePayment($order, $result['payment'], $result['total'], $result['received'])]);
     }
 
-    private function lockedOrder(int $tenantId, int $order): object
+    private function lockedOrder(Request $request, int $tenantId, int $order): object
     {
         $row = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->lockForUpdate()->first();
         abort_if(! $row, 404, 'Order not found.');
-        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $row->branch_id);
+        app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $row->branch_id);
 
         return $row;
     }
 
-    private function findOrder(int $tenantId, int $order): object
+    private function findOrder(Request $request, int $tenantId, int $order): object
     {
         $row = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->whereNull('deleted_at')->first();
         abort_if(! $row, 404, 'Order not found.');
-        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $row->branch_id);
+        app(BranchAccessService::class)->authorizeRequestBranch($request, (int) $row->branch_id);
 
         return $row;
     }
@@ -147,8 +168,38 @@ class PaymentController extends Controller
     {
         return hash('sha256', json_encode([
             'method' => $data['method'], 'amount' => (string) $data['amount'],
+            'paymentMethodId' => $data['paymentMethodId'] ?? null,
             'reference' => $data['reference'] ?? null, 'note' => $data['note'] ?? null,
         ], JSON_THROW_ON_ERROR));
+    }
+
+    private function postSale(Request $request, int $tenantId, object $order, object $method, int $cogsCents, int $actorId): void
+    {
+        $subtotal = Money::cents($order->subtotal);
+        $discount = Money::cents($order->discount_total);
+        $tax = Money::cents($order->tax_total);
+        $total = Money::cents($order->total);
+        $lines = [['accountCode' => $method->accountCode, 'debit' => Money::decimal($total)]];
+        if ($discount > 0) {
+            $lines[] = ['accountCode' => '4010', 'debit' => Money::decimal($discount)];
+        }
+        $lines[] = ['accountCode' => '4000', 'credit' => Money::decimal($subtotal)];
+        if ($tax > 0) {
+            $lines[] = ['accountCode' => '2010', 'credit' => Money::decimal($tax)];
+        }
+        if ($cogsCents > 0) {
+            $lines[] = ['accountCode' => '5000', 'debit' => Money::decimal($cogsCents)];
+            $lines[] = ['accountCode' => '1100', 'credit' => Money::decimal($cogsCents)];
+        }
+
+        $this->posting->postSale($request, $tenantId, [
+            'branchId' => $order->branch_id,
+            'sourceId' => $order->id,
+            'sourceEvent' => 'POS_ORDER_PAID',
+            'entryDate' => now()->toDateString(),
+            'description' => "POS Sale — Order #{$order->order_number}",
+            'lines' => $lines,
+        ], $actorId);
     }
 
     private function quickAmounts(float $total): array

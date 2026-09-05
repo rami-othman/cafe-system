@@ -1,0 +1,6 @@
+{
+  "version": "0.2",
+  "ignoreRegExpList": [
+    "/[\\u0600-\\u06FF]+/g"
+  ]
+}

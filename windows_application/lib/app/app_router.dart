@@ -19,6 +19,11 @@ import '../features/pos/views/pos_screen.dart';
 import '../features/pos/widgets/pos_cart_panel.dart';
 import '../features/reports/controllers/daily_report_cubit.dart';
 import '../features/reports/views/daily_operational_report_screen.dart';
+import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
+import '../features/finance_inventory_setup/views/finance_home_screen.dart';
+import '../features/inventory/controllers/inventory_cubit.dart';
+import '../features/inventory/views/inventory_screens.dart';
+import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../features/menu_management/controllers/product_catalog_cubit.dart';
 import '../features/menu_management/controllers/product_detail_cubit.dart';
 import '../features/menu_management/controllers/product_lifecycle_cubit.dart';
@@ -806,6 +811,25 @@ final GoRouter appRouter = GoRouter(
           },
         ),
         GoRoute(
+          path: AppRoutes.inventory,
+          name: AppRouteNames.inventory,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<InventoryCubit>(create: (_) => serviceLocator<InventoryCubit>()),
+              BlocProvider<OperationalBranchCubit>(create: (_) => serviceLocator<OperationalBranchCubit>()..loadBranches()),
+            ],
+            child: const InventoryDashboardScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.finance,
+          name: AppRouteNames.finance,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const FinanceHomeScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
           builder: (context, state) => const _BranchFollowingReport(),
@@ -936,6 +960,8 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
 }
 
 String _activeDestinationFor(GoRouterState state) {
+  if (state.uri.path.startsWith(AppRoutes.inventory)) return 'inventory';
+  if (state.uri.path.startsWith(AppRoutes.finance)) return 'finance';
   if (state.uri.path.startsWith(AppRoutes.menuManagement)) {
     return 'menuManagement';
   }
@@ -955,6 +981,8 @@ abstract final class AppRoutes {
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String settings = '/settings';
+  static const String inventory = '/inventory';
+  static const String finance = '/finance';
   static const String menuManagement = '/menu-management';
   static const String menuManagementProducts = '/menu-management/products';
   static const String menuManagementModifiers = '/menu-management/modifiers';
@@ -1023,6 +1051,8 @@ abstract final class AppRouteNames {
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
   static const String settings = 'settings';
+  static const String inventory = 'inventory';
+  static const String finance = 'finance';
   static const String menuManagementProducts = 'menu-management-products';
   static const String menuManagementModifiers = 'menu-management-modifiers';
   static const String menuManagementMenus = 'menu-management-menus';

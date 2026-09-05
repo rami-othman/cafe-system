@@ -16,6 +16,7 @@ class DiscountSeeder extends Seeder
 
         $now = now();
         $discounts = [
+            ['Opening 10%', 'OPEN10', 'percentage', 10, 'Opening offer for all orders', 'Always Valid', null, 'active', 0, 0],
             ['Morning Rush 15%', 'MRNG15', 'percentage', 15, 'Min. 10 SYP spent', 'Oct 1 - Oct 31', '7:00 AM - 10:00 AM', 'active', 128, 192],
             ['Student Discount', null, 'fixed', 2, 'Requires Student ID tag', 'Always Valid', null, 'active', 164, 328],
             ['Holiday Special', 'HOLIDAY24', 'percentage', 20, 'Any pastry + drink', 'Dec 15 - Dec 31', null, 'scheduled', 0, 0, 'Desserts'],

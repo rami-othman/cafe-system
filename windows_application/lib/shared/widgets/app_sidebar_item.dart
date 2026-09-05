@@ -24,6 +24,7 @@ class AppSidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
     final Color foreground = isActive
         ? AppColors.navActiveText
         : AppColors.textSecondary;
@@ -66,6 +67,7 @@ class AppSidebarItem extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodySmall.copyWith(
                             color: foreground,
+                            fontFamily: isRtl ? 'IBMPlexSansArabic' : null,
                             fontWeight: isActive
                                 ? FontWeight.w800
                                 : FontWeight.w500,

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#EDE7DE;font-family:'IBM Plex Sans',sans-serif;}
+  a{color:#6B4226;text-decoration:none;}
+  a:hover{color:#3B2417;text-decoration:underline;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#DCD3C6;border-radius:8px;}
+  .dc-screen-button{padding:6px 12px;border-radius:6px;border:1px solid transparent;background:transparent;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .dc-screen-button--active{border-color:#C47A3A;background:rgba(196,122,58,.15);}
+  .dc-sidebar-item{display:flex;align-items:center;gap:10px;height:44px;border-radius:8px;padding:0 12px;background:transparent;cursor:pointer;}
+  .dc-sidebar-item--active{background:#FEC29E;}
+  .dc-sidebar-label{font-size:13px;font-weight:500;color:#50443F;}
+  .dc-sidebar-label--active{font-weight:800;color:#794E31;}
+  .dc-branch-label{height:38px;display:flex;align-items:center;font-size:14px;font-weight:500;color:#50443F;white-space:nowrap;}
+  .dc-branch-label--active{font-weight:800;color:#231005;}
+  .dc-branch-underline{height:2px;background:transparent;width:100%;}
+  .dc-branch-underline--active{background:#231005;}
+  .dc-inventory-tab{padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#6B6B6B;border-bottom:2px solid transparent;}
+  .dc-inventory-tab--active{font-weight:700;color:#231005;border-bottom-color:#C47A3A;}
+  .dc-variance-negative{color:#C62828;}
+  .dc-variance-positive{color:#2E7D32;}
+  .dc-variance-neutral{color:#6B6B6B;}
+  .dc-status-draft{background:#F0EDED;color:#6B6B6B;}
+  .dc-status-progress,.dc-status-dispatched{background:#E4EEFF;color:#1B5AAA;}
+  .dc-status-submitted,.dc-status-pending{background:#FFF3D6;color:#9B6A0C;}
+  .dc-status-posted,.dc-status-received{background:#E3F5E8;color:#2E7D32;}
+  .dc-status-approved{background:#F4E7D3;color:#805437;}
+  .dc-count-line{background:#fff;}
+  .dc-count-line--negative{background:#FFF5F4;}
+  .dc-count-line--positive{background:#F1F8F2;}
+  .dc-reason-required{color:#C62828;}
+  .dc-reason-neutral{color:#B7ADA2;}
+  .dc-reason-default{color:#50443F;}
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.6"/><rect x="13" y="3.5" width="7.5" height="4.5" rx="1.6"/><rect x="13" y="10.5" width="7.5" height="10" rx="1.6"/><rect x="3.5" y="13.5" width="7.5" height="7" rx="1.6"/></symbol>
+<symbol id="i-pos" viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="1.8"/><path d="M3.5 10.5h17"/><path d="M7 14h3M7 16.5h1.5"/></symbol>
+<symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2v-17Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><circle cx="17" cy="8.5" r="2.3"/><path d="M15 14.3c2.6.3 4.5 2.2 4.5 5.2"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M11.5 3.5H5.5a2 2 0 0 0-2 2v6l10.5 10.5a2 2 0 0 0 2.8 0l6-6a2 2 0 0 0 0-2.8L12.3 3.5Z"/><circle cx="8" cy="8" r="1.4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M6 3.5h12v17L12 18l-6 2.5v-17Z"/><path d="M8.5 8h7M8.5 11.5h7"/></symbol>
+<symbol id="i-inventory" viewBox="0 0 24 24"><path d="M4 7.5 12 3.5l8 4v9L12 20.5l-8-4Z"/><path d="M4 7.5 12 11.5l8-4"/><path d="M12 11.5v9"/></symbol>
+<symbol id="i-reports" viewBox="0 0 24 24"><path d="M5 20.5V10M12 20.5V4.5M19 20.5v-7"/><path d="M3.5 20.5h17"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M17.6 6.4l-1.6 1.6M8 16l-1.6 1.6M17.6 17.6 16 16M8 8 6.4 6.4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.5-4.5"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5v6l-4 2v-8Z"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 12.6-5.5M19.5 12a7.5 7.5 0 0 1-12.6 5.5"/><path d="M17.5 3.5v3.5H14M6.5 20.5V17H10"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10.5a6 6 0 0 1 12 0v4l1.7 3H4.3l1.7-3Z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.3" r="3.6"/><path d="M4.5 20c0-4 3.4-6.8 7.5-6.8s7.5 2.8 7.5 6.8"/></symbol>
+<symbol id="i-chevron-d" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+<symbol id="i-chevron-r" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+<symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="17" rx="1.6"/><path d="M9 4.5V3.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V4.5"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
+<symbol id="i-transfer" viewBox="0 0 24 24"><path d="M4 8h13l-3-3.5M20 16H7l3 3.5"/></symbol>
+<symbol id="i-warehouse" viewBox="0 0 24 24"><path d="M3.5 10 12 4l8.5 6v10h-17Z"/><path d="M9.5 20v-6.5h5V20"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20H2.5Z"/><path d="M12 9.5v4.5M12 17v.1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.2-6"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4A1.3 1.3 0 0 1 14.5 4.8V7M7 7l1 13h8l1-13"/></symbol>
+<symbol id="i-coffee" viewBox="0 0 24 24"><path d="M5 8h11v6a5 5 0 0 1-5 5H9a4 4 0 0 1-4-4Z"/><path d="M16 9.5h1.5a2.5 2.5 0 0 1 0 5H16"/></symbol>
+</defs>
+</svg>
+
+<div dir="ltr" style="font-family:'IBM Plex Sans',sans-serif;min-height:100vh;padding-bottom:60px;">
+
+  <div style="position:sticky;top:0;z-index:50;background:#231005;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+    <span style="color:#C47A3A;font-size:12px;font-weight:700;margin-right:8px">Cafe System 618 — Inventory (New)</span>
+    <sc-for list="{{screens}}" as="s" hint-placeholder-count="4">
+      <button onClick="{{s.go}}" class="{{s.className}}">{{s.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="width:1440px;max-width:100%;margin:28px auto;background:#FAF7F2;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(59,36,23,.18);display:flex;height:900px;border:1px solid #E7E2DA">
+
+    <div style="width:236px;flex:none;background:#F0EDED;border-right:1px solid #E7E2DA;display:flex;flex-direction:column;padding:28px 16px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 4px">
+        <div style="width:36px;height:36px;border-radius:8px;background:#C47A3A;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex:none">C</div>
+        <div style="min-width:0">
+          <div style="font-size:14px;font-weight:700;color:#231005;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cafe System 618</div>
+          <div style="font-size:10px;font-weight:700;color:#6B6B6B;letter-spacing:.3px;margin-top:2px">OPERATIONAL HUB</div>
+        </div>
+      </div>
+      <div style="height:36px"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;overflow:auto">
+        <sc-for list="{{navItems}}" as="n" hint-placeholder-count="9">
+          <div class="{{n.className}}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{n.iconColor}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"></use></svg>
+            <span class="{{n.labelClass}}">{{n.label}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+
+      <div style="height:64px;flex:none;background:#FAF7F2;border-bottom:1px solid #E7E2DA;display:flex;align-items:center;padding:0 24px;gap:16px">
+        <div style="display:flex;flex:1;gap:4px;overflow:auto">
+          <sc-for list="{{branches}}" as="b" hint-placeholder-count="4">
+            <div onClick="{{b.select}}" style="height:64px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 14px;cursor:pointer;flex:none">
+              <div class="{{b.labelClass}}">{{b.name}}</div>
+              <div class="{{b.underlineClass}}"></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(46,125,50,.12);border:1px solid rgba(46,125,50,.18);flex:none">
+          <div style="width:7px;height:7px;border-radius:50%;background:#2E7D32"></div>
+          <span style="font-size:11px;font-weight:700;color:#2E7D32">SHIFT OPEN</span>
+        </div>
+        <div style="display:flex;gap:4px;flex:none">
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7"><use href="#i-refresh"></use></svg></div>
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7"><use href="#i-bell"></use></svg></div>
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7"><use href="#i-user"></use></svg></div>
+        </div>
+      </div>
+
+      <div style="padding:20px 32px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="font-size:22px;font-weight:700;color:#231005">Inventory Management</div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:16px;border-bottom:1px solid #E7E2DA">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+            <div onClick="{{t.go}}" class="{{t.className}}">{{t.label}}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:auto;background:#FAF7F2">
+
+        <sc-if value="{{isExisting}}" hint-placeholder-val="{{false}}">
+        <div style="padding:60px 32px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#B7ADA2" stroke-width="1.5"><use href="#i-inventory"></use></svg>
+          <div style="font-size:13px;color:#6B6B6B;max-width:360px">This screen is part of the existing, approved Inventory Management module and is unchanged. See "Cafe618 Inventory Module".</div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isCountsList}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:#231005">Stock Counts</div>
+              <div style="font-size:13px;color:#6B6B6B;margin-top:4px">Create, review, and post physical stock counts by warehouse.</div>
+            </div>
+            <button onClick="{{openNewCount}}" style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>Start Stock Count</button>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="width:170px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Date Range</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Branch</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:150px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Warehouse</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Status</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:140px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Created By</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">DRAFT COUNTS</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">3</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">COUNTS IN PROGRESS</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">2</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">PENDING APPROVAL</div><div style="font-size:21px;font-weight:700;color:#9B4D12;margin-top:8px">1</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">POSTED VARIANCE VALUE</div><div style="font-size:21px;font-weight:700;color:#C62828;margin-top:8px">-$186.40</div></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1080px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Count Number</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Warehouse</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Count Date</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">Created By</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Items Counted</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Variance Value</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Status</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4;text-align:right">Actions</span>
+              </div>
+              <sc-for list="{{stockCounts}}" as="sc" hint-placeholder-count="5">
+                <div style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span onClick="{{sc.open}}" style="font-size:13px;color:#1B1B1C;flex:1;font-weight:600;cursor:pointer">{{sc.number}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.3">{{sc.warehouse}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{sc.date}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.1">{{sc.createdBy}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{sc.itemsCounted}}</span>
+                  <span class="{{sc.varianceClass}}" style="font-size:13px;font-weight:700;flex:1">{{sc.variance}}</span>
+                  <span style="flex:1"><span class="{{sc.statusClass}}" style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700">{{sc.status}}</span></span>
+                  <span style="flex:1.4;display:flex;justify-content:flex-end;gap:12px">
+                    <span onClick="{{sc.open}}" style="font-size:12px;font-weight:700;color:#6B4226;cursor:pointer">{{sc.primaryAction}}</span>
+                    <span style="font-size:12px;font-weight:700;color:#50443F;cursor:pointer">View</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isCountWorkspace}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 32px;display:flex;flex-direction:column;gap:16px">
+          <div style="font-size:12px;color:#6B6B6B;display:flex;align-items:center;gap:6px">
+            <span onClick="{{backToCounts}}" style="cursor:pointer;color:#6B4226;font-weight:600">Inventory Management</span><span>/</span>
+            <span onClick="{{backToCounts}}" style="cursor:pointer;color:#6B4226;font-weight:600">Stock Counts</span><span>/</span>
+            <span style="color:#231005">SC-1042</span>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
+            <div style="display:flex;flex-wrap:wrap;gap:22px">
+              <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">WAREHOUSE</div><div style="font-size:13px;color:#231005;font-weight:600;margin-top:4px">Main Warehouse</div></div>
+              <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">BRANCH</div><div style="font-size:13px;color:#231005;font-weight:600;margin-top:4px">Main Branch</div></div>
+              <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">COUNT DATE</div><div style="font-size:13px;color:#231005;font-weight:600;margin-top:4px">Aug 19, 2026</div></div>
+              <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">STATUS</div><div style="margin-top:4px"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#E4EEFF;color:#1B5AAA">In Progress</span></div></div>
+              <div><div style="font-size:11px;color:#6B6B6B;font-weight:700">CREATED BY</div><div style="font-size:13px;color:#231005;font-weight:600;margin-top:4px">Fahad Al-Dossari</div></div>
+            </div>
+            <span onClick="{{backToCounts}}" style="font-size:12px;font-weight:700;color:#6B4226;cursor:pointer">Cancel Count</span>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="flex:1;min-width:200px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">Search items...</span></div>
+            <div style="width:170px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Variance Status</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1080px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.5">Item</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">SKU</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.7">Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Expected</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Counted</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Variance</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Avg. Cost</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Variance Value</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Reason</span>
+              </div>
+              <sc-for list="{{countLines}}" as="cl" hint-placeholder-count="5">
+                <div class="{{cl.rowClass}}" style="min-height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span style="font-size:13px;color:#1B1B1C;flex:1.5;font-weight:600">{{cl.name}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1">{{cl.sku}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.7">{{cl.unit}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{cl.expected}}</span>
+                  <span style="flex:1"><input value="{{cl.counted}}" style="width:70px;height:32px;border:1px solid #E7E2DA;border-radius:6px;padding:0 8px;font-size:13px;font-family:inherit;background:#fff"/></span>
+                  <span class="{{cl.varianceClass}}" style="font-size:13px;font-weight:700;flex:.9">{{cl.varianceQty}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{cl.avgCost}}</span>
+                  <span class="{{cl.varianceClass}}" style="font-size:13px;font-weight:700;flex:1">{{cl.varianceValue}}</span>
+                  <span class="{{cl.reasonClass}}" style="flex:1.3;font-size:12px">{{cl.reason}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:0">
+            <span style="font-size:12px;color:#6B6B6B">Draft saved automatically · Last saved just now</span>
+            <div style="display:flex;gap:10px">
+              <button style="height:38px;padding:0 16px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Save Draft</button>
+              <button style="height:38px;padding:0 16px;border-radius:8px;background:#6B4226;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Submit for Approval</button>
+              <button onClick="{{openPostConfirm}}" style="height:38px;padding:0 16px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Approve &amp; Post</button>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{postConfirmOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;inset:0;background:rgba(35,16,5,.4);display:flex;align-items:center;justify-content:center;z-index:20">
+          <div style="width:420px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+            <div style="width:44px;height:44px;border-radius:50%;background:#FFF1F0;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.7"><use href="#i-alert"></use></svg></div>
+            <div style="font-size:16px;font-weight:700;color:#231005">Approve &amp; Post This Count?</div>
+            <div style="font-size:13px;color:#50443F;margin-top:8px;line-height:1.7">Posting will apply all counted variances to warehouse stock balances immediately. This action cannot be undone.</div>
+            <div style="display:flex;gap:8px;margin-top:20px">
+              <button onClick="{{closePostConfirm}}" style="height:38px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Approve &amp; Post</button>
+              <button onClick="{{closePostConfirm}}" style="height:38px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+        </sc-if>
+
+        <sc-if value="{{isTransfersList}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:#231005">Warehouse Transfers</div>
+              <div style="font-size:13px;color:#6B6B6B;margin-top:4px">Move inventory safely between the central warehouse, branch stores, bar, and kitchen locations.</div>
+            </div>
+            <button onClick="{{openNewTransfer}}" style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>Create Transfer</button>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="width:170px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Date Range</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:160px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Source Warehouse</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:175px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Destination Warehouse</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Branch</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Status</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">DRAFT TRANSFERS</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">2</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">PENDING APPROVAL</div><div style="font-size:21px;font-weight:700;color:#9B4D12;margin-top:8px">1</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">IN TRANSIT</div><div style="font-size:21px;font-weight:700;color:#1B5AAA;margin-top:8px">3</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">RECEIVED THIS PERIOD</div><div style="font-size:21px;font-weight:700;color:#2E7D32;margin-top:8px">6</div></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1260px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Transfer Number</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Source</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Destination</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Requested</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Dispatched</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Received</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.7">Items</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Total Value</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Status</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2;text-align:right">Actions</span>
+              </div>
+              <sc-for list="{{transfers}}" as="tr" hint-placeholder-count="5">
+                <div style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span onClick="{{tr.open}}" style="font-size:13px;color:#1B1B1C;flex:1;font-weight:600;cursor:pointer">{{tr.number}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.3">{{tr.source}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.3">{{tr.destination}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1">{{tr.requested}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1">{{tr.dispatched}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1">{{tr.received}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.7">{{tr.items}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{tr.value}}</span>
+                  <span style="flex:1"><span class="{{tr.statusClass}}" style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700">{{tr.status}}</span></span>
+                  <span style="flex:1.2;display:flex;justify-content:flex-end;gap:12px">
+                    <span onClick="{{tr.open}}" style="font-size:12px;font-weight:700;color:#6B4226;cursor:pointer">{{tr.primaryAction}}</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isTransferWorkspace}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 32px;display:flex;flex-direction:column;gap:16px">
+          <div style="font-size:12px;color:#6B6B6B;display:flex;align-items:center;gap:6px">
+            <span onClick="{{backToTransfers}}" style="cursor:pointer;color:#6B4226;font-weight:600">Inventory Management</span><span>/</span>
+            <span onClick="{{backToTransfers}}" style="cursor:pointer;color:#6B4226;font-weight:600">Warehouse Transfers</span><span>/</span>
+            <span style="color:#231005">{{transferHeaderTitle}}</span>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div style="font-size:18px;font-weight:700;color:#231005">{{transferHeaderTitle}}</div>
+            <span style="padding:5px 12px;border-radius:999px;font-size:11px;font-weight:700;background:#E4EEFF;color:#1B5AAA">Dispatched</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px">
+              <div style="font-size:11px;font-weight:700;color:#6B6B6B;margin-bottom:6px">SOURCE WAREHOUSE</div>
+              <div style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 14px"><span style="font-size:13px;color:#1B1B1C">Central Warehouse</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-warehouse"></use></svg></div>
+            </div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px">
+              <div style="font-size:11px;font-weight:700;color:#6B6B6B;margin-bottom:6px">DESTINATION WAREHOUSE</div>
+              <div style="height:42px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 14px"><span style="font-size:13px;color:#1B1B1C">Main Branch — Bar</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-warehouse"></use></svg></div>
+            </div>
+          </div>
+
+          <div style="height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;max-width:320px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">Add item to transfer...</span></div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1180px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">Item</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">SKU</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.7">Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Available at Source</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Requested</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Dispatched</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Received</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Unit Cost</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Total Value</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.5;text-align:right"></span>
+              </div>
+              <sc-for list="{{transferLines}}" as="tl" hint-placeholder-count="4">
+                <div style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span style="font-size:13px;color:#1B1B1C;flex:1.4;font-weight:600">{{tl.name}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1">{{tl.sku}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.7">{{tl.unit}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{tl.available}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{tl.requested}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{tl.dispatchedQty}}</span>
+                  <span style="flex:.9"><input value="{{tl.receivedQty}}" style="width:60px;height:32px;border:1px solid #E7E2DA;border-radius:6px;padding:0 8px;font-size:13px;font-family:inherit;background:#fff"/></span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{tl.unitCost}}</span>
+                  <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:1">{{tl.totalValue}}</span>
+                  <span style="flex:.5;display:flex;justify-content:flex-end"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B7ADA2" stroke-width="1.7"><use href="#i-trash"></use></svg></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#FFF8F1;border:1px solid #F4E0C7;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9B4D12" stroke-width="1.7" style="flex:none;margin-top:1px"><use href="#i-alert"></use></svg>
+            <div style="font-size:12px;color:#805437;line-height:1.6">Line 2 shows a shortage of 1.5 kg vs. dispatched quantity. A reason is required before this receipt can be posted.</div>
+          </div>
+
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#50443F;margin-bottom:6px">Notes</div>
+            <textarea style="min-height:64px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;padding:10px 14px;font-size:13px;font-family:inherit;color:#1B1B1C;width:100%;box-sizing:border-box;resize:vertical" placeholder="Optional notes about this transfer"></textarea>
+          </div>
+
+          <div style="background:#F4E7D3;border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <div><div style="font-size:11px;color:#805437;font-weight:700">ITEM COUNT</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">3 items</div></div>
+            <div><div style="font-size:11px;color:#805437;font-weight:700">TOTAL QUANTITY</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">64.5 units</div></div>
+            <div><div style="font-size:11px;color:#805437;font-weight:700">TOTAL VALUE</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">$1,284.60</div></div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:0">
+            <span onClick="{{backToTransfers}}" style="font-size:12px;font-weight:700;color:#C62828;cursor:pointer">Cancel Transfer</span>
+            <div style="display:flex;gap:10px">
+              <button style="height:38px;padding:0 16px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Save Draft</button>
+              <button onClick="{{openReceiveConfirm}}" style="height:38px;padding:0 16px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Receive Transfer</button>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{receiveConfirmOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;inset:0;background:rgba(35,16,5,.4);display:flex;align-items:center;justify-content:center;z-index:20">
+          <div style="width:420px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+            <div style="width:44px;height:44px;border-radius:50%;background:#FFF1F0;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.7"><use href="#i-alert"></use></svg></div>
+            <div style="font-size:16px;font-weight:700;color:#231005">Confirm Receipt</div>
+            <div style="font-size:13px;color:#50443F;margin-top:8px;line-height:1.7">This will post received quantities to the destination warehouse and record any shortage against the reason provided. This cannot be undone.</div>
+            <div style="display:flex;gap:8px;margin-top:20px">
+              <button onClick="{{closeReceiveConfirm}}" style="height:38px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Confirm Receipt</button>
+              <button onClick="{{closeReceiveConfirm}}" style="height:38px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    tab: 'counts',
+    view: 'list',
+    branch: 'main',
+    postConfirmOpen: false,
+    receiveConfirmOpen: false,
+  };
+
+  setTab(tab) { this.setState({ tab, view: 'list' }); }
+  setView(view) { this.setState({ view }); }
+
+  renderVals() {
+    const navDefs = [
+      ['dashboard-icon','#i-dashboard','Dashboard'],
+      ['pos','#i-pos','POS'],
+      ['orders','#i-orders','Orders'],
+      ['customers','#i-users','Customers'],
+      ['discounts','#i-tag','Discounts'],
+      ['menu','#i-menu','Menu'],
+      ['inventory','#i-inventory','Inventory Management'],
+      ['reports','#i-reports','Reports'],
+      ['settings','#i-settings','Settings'],
+    ];
+    const navItems = navDefs.map(([key, icon, label]) => {
+      const active = key === 'inventory';
+      return {
+        icon, label,
+        iconColor: active ? '#794E31' : '#50443F',
+        className: `dc-sidebar-item${active ? ' dc-sidebar-item--active' : ''}`,
+        labelClass: `dc-sidebar-label${active ? ' dc-sidebar-label--active' : ''}`,
+      };
+    });
+
+    const branchDefs = [['main','Main Branch'],['downtown','Downtown'],['mall','Mall'],['airport','Airport']];
+    const branches = branchDefs.map(([id, name]) => {
+      const active = id === this.state.branch;
+      return {
+        name, select: () => this.setState({branch:id}),
+        labelClass: `dc-branch-label${active ? ' dc-branch-label--active' : ''}`,
+        underlineClass: `dc-branch-underline${active ? ' dc-branch-underline--active' : ''}`,
+      };
+    });
+
+    const tabDefs = [
+      ['overview','Overview', true],
+      ['items','Inventory Items', true],
+      ['balances','Warehouse Balances', true],
+      ['movements','Inventory Movements', true],
+      ['counts','Stock Counts', false],
+      ['transfers','Warehouse Transfers', false],
+    ];
+    const tabs = tabDefs.map(([id, label, existing]) => {
+      const active = id === this.state.tab;
+      return {
+        label, go: () => this.setTab(id),
+        className: `dc-inventory-tab${active ? ' dc-inventory-tab--active' : ''}`,
+      };
+    });
+
+    const screenDefs = [
+      ['counts-list', 'Stock Counts', () => this.setState({tab:'counts', view:'list'})],
+      ['count-workspace', 'Count Workspace', () => this.setState({tab:'counts', view:'workspace'})],
+      ['transfers-list', 'Warehouse Transfers', () => this.setState({tab:'transfers', view:'list'})],
+      ['transfer-workspace', 'Transfer Workspace', () => this.setState({tab:'transfers', view:'workspace'})],
+    ];
+    const currentKey = this.state.tab === 'counts'
+      ? (this.state.view === 'list' ? 'counts-list' : 'count-workspace')
+      : (this.state.view === 'list' ? 'transfers-list' : 'transfer-workspace');
+    const screens = screenDefs.map(([id, label, go]) => ({
+      label, go,
+      className: `dc-screen-button${currentKey === id ? ' dc-screen-button--active' : ''}`,
+    }));
+
+    const isExisting = ['overview','items','balances','movements'].includes(this.state.tab);
+
+    return {
+      navItems, branches, tabs, screens,
+      isExisting,
+      isCountsList: this.state.tab === 'counts' && this.state.view === 'list',
+      isCountWorkspace: this.state.tab === 'counts' && this.state.view === 'workspace',
+      isTransfersList: this.state.tab === 'transfers' && this.state.view === 'list',
+      isTransferWorkspace: this.state.tab === 'transfers' && this.state.view === 'workspace',
+      openNewCount: () => this.setState({tab:'counts', view:'workspace'}),
+      backToCounts: () => this.setState({tab:'counts', view:'list'}),
+      openNewTransfer: () => this.setState({tab:'transfers', view:'workspace'}),
+      backToTransfers: () => this.setState({tab:'transfers', view:'list'}),
+      transferHeaderTitle: 'Transfer TR-0512',
+      postConfirmOpen: this.state.postConfirmOpen,
+      openPostConfirm: () => this.setState({postConfirmOpen:true}),
+      closePostConfirm: () => this.setState({postConfirmOpen:false}),
+      receiveConfirmOpen: this.state.receiveConfirmOpen,
+      openReceiveConfirm: () => this.setState({receiveConfirmOpen:true}),
+      closeReceiveConfirm: () => this.setState({receiveConfirmOpen:false}),
+
+      stockCounts: [
+        {number:'SC-1038', warehouse:'Main Warehouse', date:'Aug 12, 2026', createdBy:'Fahad Al-Dossari', itemsCounted:'—', variance:'—', varianceClass:'dc-variance-neutral', status:'Draft', statusClass:'dc-status-draft', primaryAction:'Continue Count', open: () => this.setState({tab:'counts', view:'workspace'})},
+        {number:'SC-1040', warehouse:'Downtown Warehouse', date:'Aug 14, 2026', createdBy:'Nora Al-Harbi', itemsCounted:'26', variance:'—', varianceClass:'dc-variance-neutral', status:'In Progress', statusClass:'dc-status-progress', primaryAction:'Continue Count', open: () => this.setState({tab:'counts', view:'workspace'})},
+        {number:'SC-1041', warehouse:'Mall Warehouse', date:'Aug 16, 2026', createdBy:'Sara Al-Otaibi', itemsCounted:'34', variance:'—', varianceClass:'dc-variance-neutral', status:'Submitted', statusClass:'dc-status-submitted', primaryAction:'Approve & Post', open: () => this.setState({tab:'counts', view:'workspace'})},
+        {number:'SC-1042', warehouse:'Main Warehouse', date:'Aug 19, 2026', createdBy:'Fahad Al-Dossari', itemsCounted:'41', variance:'-$186.40', varianceClass:'dc-variance-negative', status:'In Progress', statusClass:'dc-status-progress', primaryAction:'Continue Count', open: () => this.setState({tab:'counts', view:'workspace'})},
+        {number:'SC-1035', warehouse:'Airport Warehouse', date:'Aug 5, 2026', createdBy:'Khaled Al-Mutairi', itemsCounted:'22', variance:'+$14.20', varianceClass:'dc-variance-positive', status:'Posted', statusClass:'dc-status-posted', primaryAction:'View Details', open: () => this.setState({tab:'counts', view:'workspace'})},
+      ],
+      countLines: [
+        {name:'Colombian Coffee Beans', sku:'RM-1001', unit:'kg', expected:'62.5', counted:'58.0', varianceQty:'-4.5', varianceClass:'dc-variance-negative', avgCost:'$68.00', varianceValue:'-$306.00', reason:'Spillage during grinding', reasonClass:'dc-reason-default', rowClass:'dc-count-line dc-count-line--negative'},
+        {name:'Whole Milk', sku:'RM-2044', unit:'L', expected:'34.0', counted:'34.0', varianceQty:'0.0', varianceClass:'dc-variance-neutral', avgCost:'$6.50', varianceValue:'$0.00', reason:'—', reasonClass:'dc-reason-neutral', rowClass:'dc-count-line'},
+        {name:'Paper Cups (16oz)', sku:'PK-3310', unit:'pcs', expected:'1200', counted:'1225', varianceQty:'+25', varianceClass:'dc-variance-positive', avgCost:'$0.35', varianceValue:'+$8.75', reason:'Recount confirmed', reasonClass:'dc-reason-default', rowClass:'dc-count-line dc-count-line--positive'},
+        {name:'White Sugar', sku:'RM-1075', unit:'kg', expected:'35.0', counted:'34.6', varianceQty:'-0.4', varianceClass:'dc-variance-negative', avgCost:'$4.20', varianceValue:'-$1.68', reason:'Required', reasonClass:'dc-reason-required', rowClass:'dc-count-line dc-count-line--negative'},
+        {name:'Vanilla Syrup', sku:'RM-4021', unit:'L', expected:'6.0', counted:'6.0', varianceQty:'0.0', varianceClass:'dc-variance-neutral', avgCost:'$22.00', varianceValue:'$0.00', reason:'—', reasonClass:'dc-reason-neutral', rowClass:'dc-count-line'},
+      ],
+
+      transfers: [
+        {number:'TR-0508', source:'Central Warehouse', destination:'Downtown — Main Store', requested:'Aug 10', dispatched:'—', received:'—', items:6, value:'$842.00', status:'Draft', statusClass:'dc-status-draft', primaryAction:'Continue', open: () => this.setState({tab:'transfers', view:'workspace'})},
+        {number:'TR-0509', source:'Central Warehouse', destination:'Main Branch — Kitchen', requested:'Aug 12', dispatched:'—', received:'—', items:4, value:'$612.50', status:'Pending Approval', statusClass:'dc-status-pending', primaryAction:'Approve', open: () => this.setState({tab:'transfers', view:'workspace'})},
+        {number:'TR-0510', source:'Main Branch — Main Store', destination:'Main Branch — Bar', requested:'Aug 14', dispatched:'Aug 14', received:'—', items:3, value:'$328.40', status:'Approved', statusClass:'dc-status-approved', primaryAction:'Dispatch', open: () => this.setState({tab:'transfers', view:'workspace'})},
+        {number:'TR-0512', source:'Central Warehouse', destination:'Main Branch — Bar', requested:'Aug 15', dispatched:'Aug 16', received:'—', items:3, value:'$1,284.60', status:'Dispatched', statusClass:'dc-status-dispatched', primaryAction:'Receive', open: () => this.setState({tab:'transfers', view:'workspace'})},
+        {number:'TR-0503', source:'Central Warehouse', destination:'Mall Warehouse', requested:'Aug 9', dispatched:'Aug 9', received:'Aug 10', items:8, value:'$1,940.00', status:'Partially Received', statusClass:'dc-status-pending', primaryAction:'View', open: () => this.setState({tab:'transfers', view:'workspace'})},
+        {number:'TR-0498', source:'Central Warehouse', destination:'Airport Warehouse', requested:'Aug 5', dispatched:'Aug 5', received:'Aug 6', items:5, value:'$980.20', status:'Received', statusClass:'dc-status-received', primaryAction:'View', open: () => this.setState({tab:'transfers', view:'workspace'})},
+      ],
+      transferLines: [
+        {name:'Colombian Coffee Beans', sku:'RM-1001', unit:'kg', available:'210.0', requested:'40.0', dispatchedQty:'40.0', receivedQty:'38.5', unitCost:'$68.00', totalValue:'$2,720.00'},
+        {name:'Whole Milk', sku:'RM-2044', unit:'L', available:'96.0', requested:'20.0', dispatchedQty:'20.0', receivedQty:'20.0', unitCost:'$6.50', totalValue:'$130.00'},
+        {name:'Paper Cups (16oz)', sku:'PK-3310', unit:'pcs', available:'3200', requested:'4.5', dispatchedQty:'4.5', receivedQty:'4.5', unitCost:'$0.35', totalValue:'$1.58'},
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

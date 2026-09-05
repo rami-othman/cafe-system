@@ -20,9 +20,28 @@ use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\AccountingPeriodController;
+use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
+use App\Http\Controllers\Api\DailyClosingController;
+use App\Http\Controllers\Api\ExpenseCategoryController;
+use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\FinanceDashboardController;
+use App\Http\Controllers\Api\FinancialAccountController;
+use App\Http\Controllers\Api\FinancialLocationController;
+use App\Http\Controllers\Api\FinancialReconciliationController;
+use App\Http\Controllers\Api\FinancialReportController;
+use App\Http\Controllers\Api\FinancialSetupStatusController;
+use App\Http\Controllers\Api\FinancialTransactionController;
+use App\Http\Controllers\Api\FinanceApprovalRuleController;
+use App\Http\Controllers\Api\FinanceRolePermissionController;
+use App\Http\Controllers\Api\InventoryBalanceController;
+use App\Http\Controllers\Api\InventoryItemController;
+use App\Http\Controllers\Api\InventoryItemUnitConversionController;
+use App\Http\Controllers\Api\JournalEntryController;
+use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\EmployeeManagementController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\PaymentController;
@@ -31,9 +50,17 @@ use App\Http\Controllers\Api\PosOrderController;
 use App\Http\Controllers\Api\PosStateController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\RefundController;
+use App\Http\Controllers\Api\ReportsOverviewController;
 use App\Http\Controllers\Api\ShiftController;
+use App\Http\Controllers\Api\StockCountController;
+use App\Http\Controllers\Api\StockMovementController;
+use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\SupplierInvoiceController;
+use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\TenantRoleController;
+use App\Http\Controllers\Api\WarehouseController;
+use App\Http\Controllers\Api\WarehouseTransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -222,7 +249,8 @@ Route::prefix('v1')->group(function (): void {
         });
 
         Route::get('branches', [BranchController::class, 'index']);
-        Route::get('reports/daily', [DailyReportController::class, 'show']);
+        Route::get('reports/daily', [DailyReportController::class, 'show'])->middleware('finance.permission:finance.reports.view');
+        Route::get('reports/overview', [ReportsOverviewController::class, 'show'])->middleware('finance.permission:finance.reports.view');
 
         Route::get('shifts/current', [ShiftController::class, 'current']);
         Route::post('shifts/current', [ShiftController::class, 'open']);
@@ -265,5 +293,160 @@ Route::prefix('v1')->group(function (): void {
         Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
         Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
         Route::post('orders/{order}/refunds', [RefundController::class, 'store']);
+    });
+
+    // Inventory and Finance extend the authenticated operational boundary;
+    // branch.access remains outer policy and feature permissions are additive.
+    Route::middleware(['api.token', 'password.changed', 'branch.access'])->group(function (): void {
+        Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('inventory.permission:inventory.view');
+        Route::post('warehouses', [WarehouseController::class, 'store'])->middleware('inventory.permission:inventory.locations.manage');
+        Route::patch('warehouses/{warehouse}', [WarehouseController::class, 'update'])->middleware('inventory.permission:inventory.locations.manage');
+        Route::patch('warehouses/{warehouse}/status', [WarehouseController::class, 'status'])->middleware('inventory.permission:inventory.locations.manage');
+
+        Route::prefix('inventory')->group(function (): void {
+            Route::get('dashboard', [InventoryBalanceController::class, 'dashboard'])->middleware('inventory.permission:inventory.view');
+            Route::get('balances', [InventoryBalanceController::class, 'index'])->middleware('inventory.permission:inventory.view');
+            Route::get('items', [InventoryItemController::class, 'index'])->middleware('inventory.permission:inventory.view');
+            Route::post('items', [InventoryItemController::class, 'store'])->middleware('inventory.permission:inventory.items.manage');
+            Route::get('items/{item}', [InventoryItemController::class, 'show'])->middleware('inventory.permission:inventory.view');
+            Route::patch('items/{item}', [InventoryItemController::class, 'update'])->middleware('inventory.permission:inventory.items.manage');
+            Route::patch('items/{item}/status', [InventoryItemController::class, 'status'])->middleware('inventory.permission:inventory.items.manage');
+            Route::get('items/{item}/stock', [InventoryItemController::class, 'stock'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}/movements', [InventoryItemController::class, 'movements'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'index'])->middleware('inventory.permission:inventory.view');
+            Route::post('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'store'])->middleware('inventory.permission:inventory.items.manage');
+            Route::patch('items/{item}/unit-conversions/{conversion}', [InventoryItemUnitConversionController::class, 'update'])->middleware('inventory.permission:inventory.items.manage');
+            Route::get('units', [InventoryItemController::class, 'units'])->middleware('inventory.permission:inventory.view');
+            Route::get('conversion-items', [InventoryItemController::class, 'conversionItems'])->middleware('inventory.permission:inventory.view');
+            Route::get('movements', [StockMovementController::class, 'index'])->middleware('inventory.permission:inventory.view');
+            Route::post('movements', [StockMovementController::class, 'store'])->middleware('inventory.permission:inventory.adjustments.create');
+            Route::get('movements/{movement}', [StockMovementController::class, 'show'])->middleware('inventory.permission:inventory.view');
+            Route::get('counts', [StockCountController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
+            Route::post('counts', [StockCountController::class, 'store'])->middleware('inventory.permission:inventory.counts.create');
+            Route::get('counts/{count}', [StockCountController::class, 'show'])->middleware('inventory.permission:inventory.counts.view');
+            Route::put('counts/{count}/lines', [StockCountController::class, 'line'])->middleware('inventory.permission:inventory.counts.create');
+            Route::post('counts/{count}/lines/{item}/review', [StockCountController::class, 'reviewLine'])->middleware('inventory.permission:inventory.counts.post');
+            foreach (['start' => 'inventory.counts.create', 'submit' => 'inventory.counts.create', 'approve' => 'inventory.counts.post', 'post' => 'inventory.counts.post', 'cancel' => 'inventory.counts.create'] as $action => $permission) {
+                Route::post("counts/{count}/{$action}", [StockCountController::class, 'action'])->defaults('action', $action)->middleware("inventory.permission:{$permission}");
+            }
+            Route::get('bar-checks', [BarCheckController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
+            Route::post('bar-checks', [BarCheckController::class, 'start'])->middleware('inventory.permission:inventory.counts.create');
+            Route::get('bar-check-templates', [BarCheckController::class, 'templates'])->middleware('inventory.permission:inventory.counts.view');
+            Route::post('bar-check-templates', [BarCheckController::class, 'storeTemplate'])->middleware('inventory.permission:inventory.counts.create');
+            Route::get('bar-check-templates/{template}', [BarCheckController::class, 'showTemplate'])->middleware('inventory.permission:inventory.counts.view');
+            Route::patch('bar-check-templates/{template}', [BarCheckController::class, 'updateTemplate'])->middleware('inventory.permission:inventory.counts.create');
+            Route::get('transfers', [WarehouseTransferController::class, 'index'])->middleware('inventory.permission:inventory.transfers.view');
+            Route::post('transfers', [WarehouseTransferController::class, 'store'])->middleware('inventory.permission:inventory.transfers.create');
+            Route::get('transfers/{transfer}', [WarehouseTransferController::class, 'show'])->middleware('inventory.permission:inventory.transfers.view');
+            Route::patch('transfers/{transfer}', [WarehouseTransferController::class, 'update'])->middleware('inventory.permission:inventory.transfers.edit');
+            Route::post('transfers/{transfer}/receive', [WarehouseTransferController::class, 'receive'])->middleware('inventory.permission:inventory.transfers.receive');
+            foreach (['submit', 'approve', 'reject', 'dispatch', 'cancel'] as $action) {
+                Route::post("transfers/{transfer}/{$action}", [WarehouseTransferController::class, 'action'])->defaults('action', $action)->middleware('inventory.permission:inventory.transfers.'.($action === 'reject' ? 'approve' : $action));
+            }
+            Route::post('transfers/{transfer}/close-shortage', [WarehouseTransferController::class, 'action'])->defaults('action', 'close-shortage')->middleware('inventory.permission:inventory.transfers.receive');
+        });
+
+        Route::prefix('finance')->group(function (): void {
+            Route::get('dashboard', [FinanceDashboardController::class, 'show'])->middleware('finance.permission:finance.view');
+            Route::get('dashboard/trends', [FinanceDashboardController::class, 'trends'])->middleware('finance.permission:finance.view');
+            Route::get('dashboard/branches', [FinanceDashboardController::class, 'branches'])->middleware('finance.permission:finance.view');
+            Route::get('setup-status', [FinancialSetupStatusController::class, 'show'])->middleware('finance.permission:finance.settings.view');
+            Route::get('settings/approval-rules', [FinanceApprovalRuleController::class, 'index'])->middleware('finance.permission:finance.settings.view');
+            Route::post('settings/approval-rules', [FinanceApprovalRuleController::class, 'store'])->middleware('finance.permission:finance.settings.manage');
+            Route::patch('settings/approval-rules/{rule}', [FinanceApprovalRuleController::class, 'update'])->middleware('finance.permission:finance.settings.manage');
+            Route::get('settings/role-permissions', [FinanceRolePermissionController::class, 'index'])->middleware('finance.permission:finance.settings.view');
+            Route::get('settings/role-permissions/{role}', [FinanceRolePermissionController::class, 'show'])->middleware('finance.permission:finance.settings.view');
+            Route::put('settings/role-permissions/{role}', [FinanceRolePermissionController::class, 'replace'])->middleware('finance.permission:finance.settings.manage');
+            Route::get('reports', [FinancialReportController::class, 'index'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/profit-loss', [FinancialReportController::class, 'profitLoss'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/cash-flow', [FinancialReportController::class, 'cashFlow'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/trial-balance', [FinancialReportController::class, 'trialBalance'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/general-ledger', [FinancialReportController::class, 'generalLedger'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/supplier-aging', [FinancialReportController::class, 'supplierAging'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/supplier-statement', [FinancialReportController::class, 'supplierStatement'])->middleware('finance.permission:finance.reports.view');
+            Route::get('accounts', [FinancialAccountController::class, 'index'])->middleware('finance.permission:finance.accounts.view');
+            Route::post('accounts', [FinancialAccountController::class, 'store'])->middleware('finance.permission:finance.accounts.manage');
+            Route::patch('accounts/{account}/status', [FinancialAccountController::class, 'status'])->middleware('finance.permission:finance.accounts.manage');
+            Route::patch('accounts/{account}', [FinancialAccountController::class, 'update'])->middleware('finance.permission:finance.accounts.manage');
+            Route::get('accounts/{account}', [FinancialAccountController::class, 'show'])->middleware('finance.permission:finance.accounts.view');
+            Route::get('journal-entries', [JournalEntryController::class, 'index'])->middleware('finance.permission:finance.journals.view');
+            Route::post('journal-entries', [JournalEntryController::class, 'store'])->middleware('finance.permission:finance.journals.create');
+            Route::get('journal-entries/{entry}', [JournalEntryController::class, 'show'])->middleware('finance.permission:finance.journals.view');
+            Route::post('journal-entries/{entry}/post', [JournalEntryController::class, 'post'])->middleware('finance.permission:finance.journals.post');
+            Route::post('journal-entries/{entry}/reverse', [JournalEntryController::class, 'reverse'])->middleware('finance.permission:finance.journals.reverse');
+            Route::get('transactions/branches', [FinancialTransactionController::class, 'branches'])->middleware('finance.permission:finance.transactions.view');
+            Route::get('transactions/summary', [FinancialTransactionController::class, 'summary'])->middleware('finance.permission:finance.transactions.view');
+            Route::get('transactions', [FinancialTransactionController::class, 'index'])->middleware('finance.permission:finance.transactions.view');
+            Route::get('transactions/{transaction}', [FinancialTransactionController::class, 'show'])->middleware('finance.permission:finance.transactions.view');
+            foreach (['cash' => 'cash-accounts', 'bank' => 'bank-accounts'] as $kind => $uri) {
+                Route::get($uri, [FinancialLocationController::class, 'index'])->defaults('kind', $kind)->middleware('finance.permission:finance.cash_accounts.view');
+                Route::post($uri, [FinancialLocationController::class, 'store'])->defaults('kind', $kind)->middleware('finance.permission:finance.cash_accounts.manage');
+                Route::patch("{$uri}/{location}/status", [FinancialLocationController::class, 'status'])->defaults('kind', $kind)->middleware('finance.permission:finance.cash_accounts.manage');
+                Route::patch("{$uri}/{location}", [FinancialLocationController::class, 'update'])->defaults('kind', $kind)->middleware('finance.permission:finance.cash_accounts.manage');
+                Route::get("{$uri}/{location}", [FinancialLocationController::class, 'show'])->defaults('kind', $kind)->middleware('finance.permission:finance.cash_accounts.view');
+                Route::get("{$uri}/{location}/transactions", [FinancialLocationController::class, 'transactions'])->defaults('kind', $kind)->middleware('finance.permission:finance.cash_accounts.view');
+            }
+            Route::post('cash-transfers', [FinancialLocationController::class, 'transfer'])->middleware('finance.permission:finance.cash_transfer.create');
+            Route::post('cash-transfers/{transfer}/reverse', [FinancialLocationController::class, 'reverseTransfer'])->middleware('finance.permission:finance.cash_transfer.reverse');
+            Route::get('reconciliations', [FinancialReconciliationController::class, 'index'])->middleware('finance.permission:finance.reconciliation.view');
+            Route::post('reconciliations', [FinancialReconciliationController::class, 'store'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::get('reconciliations/{reconciliation}', [FinancialReconciliationController::class, 'show'])->middleware('finance.permission:finance.reconciliation.view');
+            Route::patch('reconciliations/{reconciliation}', [FinancialReconciliationController::class, 'update'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::get('reconciliations/{reconciliation}/system-transactions', [FinancialReconciliationController::class, 'systemTransactions'])->middleware('finance.permission:finance.reconciliation.view');
+            Route::get('reconciliations/{reconciliation}/suggestions', [FinancialReconciliationController::class, 'suggestions'])->middleware('finance.permission:finance.reconciliation.view');
+            Route::post('reconciliations/{reconciliation}/statement-lines', [FinancialReconciliationController::class, 'addLine'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::patch('reconciliations/{reconciliation}/statement-lines/{line}', [FinancialReconciliationController::class, 'updateLine'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::delete('reconciliations/{reconciliation}/statement-lines/{line}', [FinancialReconciliationController::class, 'deleteLine'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::post('reconciliations/{reconciliation}/matches', [FinancialReconciliationController::class, 'match'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::delete('reconciliations/{reconciliation}/matches/{match}', [FinancialReconciliationController::class, 'unmatch'])->middleware('finance.permission:finance.reconciliation.manage');
+            Route::post('reconciliations/{reconciliation}/complete', [FinancialReconciliationController::class, 'complete'])->middleware('finance.permission:finance.reconciliation.complete');
+            Route::get('payment-methods', [PaymentMethodController::class, 'index'])->middleware('finance.permission:finance.settings.view');
+            Route::post('payment-methods', [PaymentMethodController::class, 'store'])->middleware('finance.permission:finance.settings.manage');
+            Route::patch('payment-methods/{method}', [PaymentMethodController::class, 'update'])->middleware('finance.permission:finance.settings.manage');
+            Route::patch('payment-methods/{method}/status', [PaymentMethodController::class, 'status'])->middleware('finance.permission:finance.settings.manage');
+            Route::get('expense-categories', [ExpenseCategoryController::class, 'index'])->middleware('finance.permission:finance.settings.view');
+            Route::post('expense-categories', [ExpenseCategoryController::class, 'store'])->middleware('finance.permission:finance.settings.manage');
+            Route::patch('expense-categories/{category}', [ExpenseCategoryController::class, 'update'])->middleware('finance.permission:finance.settings.manage');
+            Route::patch('expense-categories/{category}/status', [ExpenseCategoryController::class, 'status'])->middleware('finance.permission:finance.settings.manage');
+            Route::get('expenses', [ExpenseController::class, 'index'])->middleware('finance.permission:finance.expenses.view');
+            Route::get('expenses/summary', [ExpenseController::class, 'summary'])->middleware('finance.permission:finance.expenses.view');
+            Route::get('expenses/branches', [ExpenseController::class, 'branches'])->middleware('finance.permission:finance.expenses.view');
+            Route::post('expenses', [ExpenseController::class, 'store'])->middleware('finance.permission:finance.expenses.create');
+            Route::get('expenses/{expense}', [ExpenseController::class, 'show'])->middleware('finance.permission:finance.expenses.view');
+            Route::patch('expenses/{expense}', [ExpenseController::class, 'update'])->middleware('finance.permission:finance.expenses.edit');
+            foreach (['submit', 'approve', 'reject'] as $action) {
+                Route::post("expenses/{expense}/{$action}", [ExpenseController::class, 'action'])->defaults('action', $action)->middleware("finance.permission:finance.expenses.{$action}");
+            }
+            Route::post('expenses/{expense}/pay', [ExpenseController::class, 'pay'])->middleware('finance.permission:finance.expenses.pay');
+            Route::post('expenses/{expense}/reverse', [ExpenseController::class, 'reverse'])->middleware('finance.permission:finance.expenses.reverse');
+            Route::get('suppliers', [SupplierController::class, 'index'])->middleware('finance.permission:finance.suppliers.view');
+            Route::post('suppliers', [SupplierController::class, 'store'])->middleware('finance.permission:finance.suppliers.manage');
+            Route::patch('suppliers/{supplier}/status', [SupplierController::class, 'status'])->middleware('finance.permission:finance.suppliers.manage');
+            Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->middleware('finance.permission:finance.suppliers.view');
+            Route::patch('suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('finance.permission:finance.suppliers.manage');
+            Route::get('suppliers/{supplier}/statement', [SupplierController::class, 'statement'])->middleware('finance.permission:finance.suppliers.view');
+            Route::get('supplier-invoices', [SupplierInvoiceController::class, 'index'])->middleware('finance.permission:finance.supplier_invoices.view');
+            Route::post('supplier-invoices', [SupplierInvoiceController::class, 'store'])->middleware('finance.permission:finance.supplier_invoices.create');
+            Route::get('supplier-invoices/{invoice}', [SupplierInvoiceController::class, 'show'])->middleware('finance.permission:finance.supplier_invoices.view');
+            Route::patch('supplier-invoices/{invoice}', [SupplierInvoiceController::class, 'update'])->middleware('finance.permission:finance.supplier_invoices.edit');
+            Route::post('supplier-invoices/{invoice}/post', [SupplierInvoiceController::class, 'post'])->middleware('finance.permission:finance.supplier_invoices.post');
+            Route::post('supplier-invoices/{invoice}/reverse', [SupplierInvoiceController::class, 'reverse'])->middleware('finance.permission:finance.supplier_invoices.reverse');
+            Route::get('supplier-payments', [SupplierPaymentController::class, 'index'])->middleware('finance.permission:finance.supplier_payments.view');
+            Route::post('supplier-payments', [SupplierPaymentController::class, 'store'])->middleware('finance.permission:finance.supplier_payments.create');
+            Route::get('supplier-payments/{payment}', [SupplierPaymentController::class, 'show'])->middleware('finance.permission:finance.supplier_payments.view');
+            Route::post('supplier-payments/{payment}/reverse', [SupplierPaymentController::class, 'reverse'])->middleware('finance.permission:finance.supplier_payments.reverse');
+            Route::get('daily-closing', [DailyClosingController::class, 'preview'])->middleware('finance.permission:finance.daily_closing.view');
+            Route::get('daily-closings', [DailyClosingController::class, 'index'])->middleware('finance.permission:finance.daily_closing.view');
+            Route::get('daily-closings/{closing}', [DailyClosingController::class, 'show'])->middleware('finance.permission:finance.daily_closing.view');
+            Route::patch('daily-closings/{closing}', [DailyClosingController::class, 'update'])->middleware('finance.permission:finance.daily_closing.manage');
+            Route::post('daily-closings/{closing}/close', [DailyClosingController::class, 'close'])->middleware('finance.permission:finance.daily_closing.close');
+            Route::get('accounting-periods', [AccountingPeriodController::class, 'index'])->middleware('finance.permission:finance.periods.view');
+            Route::post('accounting-periods', [AccountingPeriodController::class, 'store'])->middleware('finance.permission:finance.periods.manage');
+            Route::get('accounting-periods/{period}', [AccountingPeriodController::class, 'show'])->middleware('finance.permission:finance.periods.view');
+            Route::patch('accounting-periods/{period}', [AccountingPeriodController::class, 'update'])->middleware('finance.permission:finance.periods.manage');
+            Route::post('accounting-periods/{period}/close', [AccountingPeriodController::class, 'close'])->middleware('finance.permission:finance.periods.close');
+            Route::post('accounting-periods/{period}/lock', [AccountingPeriodController::class, 'lock'])->middleware('finance.permission:finance.periods.lock');
+        });
     });
 });
