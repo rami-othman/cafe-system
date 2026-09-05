@@ -13,7 +13,7 @@ class CanManageCafeConfiguration
 
     public function handle(Request $request, Closure $next): Response
     {
-        $this->policy->assertCanManageBranches($request->attributes->get('auth_user'));
+        $this->policy->assertCanManage($request->attributes->get('auth_user'));
 
         return $next($request);
     }

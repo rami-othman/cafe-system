@@ -196,6 +196,34 @@ same-tenant branches, including inactive branches, and supports only list,
 create, detail, and update of branch contact/location fields. Currency is
 server-controlled as `SYP`; lifecycle mutations are not exposed there.
 
+## Cafe Profile and Tax Configuration
+
+The Owner-only Cafe Configuration boundary also exposes the authenticated
+tenant singleton resources below. All four routes require the opaque-token
+session, a completed initial password change, and the `cafe.configuration`
+Owner policy. A request never supplies a Tenant ID.
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/v1/cafe-configuration/profile` | Read the Cafe Profile. |
+| `PUT` | `/api/v1/cafe-configuration/profile` | Update only `name`, `email`, `phone`, and `timezone`. |
+| `GET` | `/api/v1/cafe-configuration/tax` | Read the tenant-wide tax rate. |
+| `PUT` | `/api/v1/cafe-configuration/tax` | Update only the tenant-wide tax rate. |
+
+Profile reads include `name`, `email`, `phone`, `timezone`, read-only `currency`
+(`SYP`), and read-only `status`. They never expose or mutate `slug`, `plan`,
+`logo_url`, deletion metadata, or platform subscription data. Updating the Cafe
+contact email updates only `tenants.email`; it never changes any User login
+identity.
+
+Tax is a JSON numeric fraction stored in `tenants.tax_rate` as `decimal(8,6)`:
+the UI's **8%** is API input/output `0.08`. Valid values are `0` through `1`,
+with at most six decimal places; `8` is rejected rather than interpreted as
+8%. Tax remains exclusive. Each Order saves its tax rate at creation, so a
+later configuration change affects new Orders only and cannot recalculate an
+existing Order's tax or total snapshot. Cafe Profile, Tax, Branch, and Team
+operational audit trails remain intentionally deferred.
+
 ## Auth Phase 1 — tenant identity and opaque sessions
 
 **Status: CLOSED.** On the exact closure worktree, the manually run full backend

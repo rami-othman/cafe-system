@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
+use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
+use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
@@ -75,6 +77,18 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/', 'store');
             Route::get('{branch}', 'show')->whereNumber('branch');
             Route::put('{branch}', 'update')->whereNumber('branch');
+        });
+
+    // Tenant identity for these singleton configuration resources always comes
+    // from the authenticated opaque-token session, never from a route or body
+    // tenant identifier.
+    Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
+        ->prefix('cafe-configuration')
+        ->group(function (): void {
+            Route::get('profile', [CafeConfigurationProfileController::class, 'show']);
+            Route::put('profile', [CafeConfigurationProfileController::class, 'update']);
+            Route::get('tax', [CafeConfigurationTaxController::class, 'show']);
+            Route::put('tax', [CafeConfigurationTaxController::class, 'update']);
         });
 
     // Tenant operational boundary. Tenant identity comes solely from the

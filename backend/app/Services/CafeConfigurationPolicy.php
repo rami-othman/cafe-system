@@ -13,6 +13,11 @@ class CafeConfigurationPolicy
 {
     public function assertCanManageBranches(User $actor): void
     {
+        $this->assertCanManage($actor);
+    }
+
+    public function assertCanManage(User $actor): void
+    {
         if (! $actor->isOwner()) {
             throw new AuthorizationException('You are not allowed to manage cafe configuration.');
         }
