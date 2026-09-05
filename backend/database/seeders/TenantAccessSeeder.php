@@ -28,6 +28,7 @@ class TenantAccessSeeder extends Seeder
 
         $branchIds = [];
         foreach ([
+            ['name' => 'Main Branch', 'address' => 'Cafe System 618 Main Branch', 'phone' => '+963 11 555 0100'],
             ['name' => 'Downtown', 'address' => '123 Espresso Lane, Cityville', 'phone' => '+963 11 555 0101'],
             ['name' => 'Mall', 'address' => 'Level 2, City Mall', 'phone' => '+963 11 555 0102'],
             ['name' => 'Airport', 'address' => 'Departures Hall', 'phone' => '+963 11 555 0103'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\OrderLifecycleException;
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
@@ -10,6 +11,7 @@ use App\Services\OrderLifecyclePolicy;
 use App\Services\PosNumberGenerator;
 use App\Services\PosPricingService;
 use App\Services\TenantTaxService;
+use App\Support\IdempotencyFingerprint;
 use App\Support\TenantContext;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -87,12 +89,23 @@ class PosOrderController extends Controller
             'items.*.modifierOptionIds.*' => ['integer'],
             'items.*.note' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
+            'idempotencyKey' => ['nullable', 'string', 'max:120'],
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
-            $order = DB::transaction(function () use ($tenantId, $data, $actorId) {
+            $result = DB::transaction(function () use ($tenantId, $data, $actorId) {
+                $key = $data['idempotencyKey'] ?? null;
+                $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
+                if ($key && ($existing = DB::table('orders')->where('tenant_id', $tenantId)->where('idempotency_key', $key)->lockForUpdate()->first())) {
+                    if (! $existing->idempotency_fingerprint || ! hash_equals($existing->idempotency_fingerprint, $fingerprint)) {
+                        throw new OrderLifecycleException('ORDER_IDEMPOTENCY_CONFLICT', 'This order key was already used for a different request.');
+                    }
+
+                    return ['order' => $existing, 'replayed' => true];
+                }
+
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
                     : null;
@@ -112,6 +125,8 @@ class PosOrderController extends Controller
                     'payment_status' => 'unpaid',
                     'tax_rate' => $this->taxes->rateFor($tenantId),
                     'notes' => $data['note'] ?? null,
+                    'idempotency_key' => $key,
+                    'idempotency_fingerprint' => $fingerprint,
                     'opened_at' => $now,
                     'created_at' => $now,
                     'updated_at' => $now,
@@ -121,13 +136,13 @@ class PosOrderController extends Controller
                     $this->persistItem($tenantId, $orderId, $item, $snapshot);
                 }
 
-                return $this->pricing->recalculateOrder($tenantId, $orderId);
+                return ['order' => $this->pricing->recalculateOrder($tenantId, $orderId), 'replayed' => false];
             });
         } catch (UnsupportedMenuSnapshotSchemaException $exception) {
             return $this->unsupportedSnapshotResponse($exception);
         }
 
-        return response()->json(['data' => $this->serializeOrder($tenantId, $order)], 201);
+        return response()->json(['data' => $this->serializeOrder($tenantId, $result['order'])], $result['replayed'] ? 200 : 201);
     }
 
     public function show(Request $request, int $order): JsonResponse

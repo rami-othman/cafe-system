@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#EDE7DE;font-family:'IBM Plex Sans',sans-serif;}
+  a{color:#6B4226;text-decoration:none;}
+  a:hover{color:#3B2417;text-decoration:underline;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#DCD3C6;border-radius:8px;}
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.6"/><rect x="13" y="3.5" width="7.5" height="4.5" rx="1.6"/><rect x="13" y="10.5" width="7.5" height="10" rx="1.6"/><rect x="3.5" y="13.5" width="7.5" height="7" rx="1.6"/></symbol>
+<symbol id="i-pos" viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="1.8"/><path d="M3.5 10.5h17"/><path d="M7 14h3M7 16.5h1.5"/></symbol>
+<symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2v-17Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><circle cx="17" cy="8.5" r="2.3"/><path d="M15 14.3c2.6.3 4.5 2.2 4.5 5.2"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M11.5 3.5H5.5a2 2 0 0 0-2 2v6l10.5 10.5a2 2 0 0 0 2.8 0l6-6a2 2 0 0 0 0-2.8L12.3 3.5Z"/><circle cx="8" cy="8" r="1.4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M6 3.5h12v17L12 18l-6 2.5v-17Z"/><path d="M8.5 8h7M8.5 11.5h7"/></symbol>
+<symbol id="i-inventory" viewBox="0 0 24 24"><path d="M4 7.5 12 3.5l8 4v9L12 20.5l-8-4Z"/><path d="M4 7.5 12 11.5l8-4"/><path d="M12 11.5v9"/></symbol>
+<symbol id="i-reports" viewBox="0 0 24 24"><path d="M5 20.5V10M12 20.5V4.5M19 20.5v-7"/><path d="M3.5 20.5h17"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M17.6 6.4l-1.6 1.6M8 16l-1.6 1.6M17.6 17.6 16 16M8 8 6.4 6.4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.5-4.5"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 12.6-5.5M19.5 12a7.5 7.5 0 0 1-12.6 5.5"/><path d="M17.5 3.5v3.5H14M6.5 20.5V17H10"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10.5a6 6 0 0 1 12 0v4l1.7 3H4.3l1.7-3Z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.3" r="3.6"/><path d="M4.5 20c0-4 3.4-6.8 7.5-6.8s7.5 2.8 7.5 6.8"/></symbol>
+<symbol id="i-chevron-d" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16Z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4A1.3 1.3 0 0 1 14.5 4.8V7M7 7l1 13h8l1-13"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20H2.5Z"/><path d="M12 9.5v4.5M12 17v.1"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.2-6"/></symbol>
+<symbol id="i-coffee" viewBox="0 0 24 24"><path d="M5 8h11v6a5 5 0 0 1-5 5H9a4 4 0 0 1-4-4Z"/><path d="M16 9.5h1.5a2.5 2.5 0 0 1 0 5H16"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><rect x="2.5" y="7" width="12" height="9" rx="1.4"/><path d="M14.5 10h3.5l3 3v3h-6.5Z"/><circle cx="7" cy="18" r="1.7"/><circle cx="17" cy="18" r="1.7"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2v-17Z"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3.5v17M6 7.5h12M6 7.5 3.5 13a2.5 2.5 0 0 0 5 0ZM18 7.5 15.5 13a2.5 2.5 0 0 0 5 0Z"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M4 12h16"/></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M4 7.5 12 3.5l8 4v9L12 20.5l-8-4Z"/><path d="M4 7.5 12 11.5l8-4"/><path d="M12 11.5v9"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 6 .8-4.3 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.7l6-.8Z"/></symbol>
+<symbol id="i-warehouse" viewBox="0 0 24 24"><path d="M3.5 10 12 4l8.5 6v10h-17Z"/><path d="M9.5 20v-6.5h5V20"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5h9.5v15H5Z"/><path d="M14.5 6h4v13.5h-9.5"/></symbol>
+</defs>
+</svg>
+
+<div dir="ltr" style="font-family:'IBM Plex Sans',sans-serif;min-height:100vh;padding-bottom:60px;">
+
+  <div style="position:sticky;top:0;z-index:50;background:#231005;padding:10px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+    <span style="color:#C47A3A;font-size:12px;font-weight:700;margin-right:8px">Cafe System 618 — Inventory Operations</span>
+    <sc-for list="{{screens}}" as="s" hint-placeholder-count="8">
+      <button onClick="{{s.go}}" style="{{s.style}}">{{s.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="width:1440px;max-width:100%;margin:28px auto;background:#FAF7F2;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(59,36,23,.18);display:flex;height:900px;border:1px solid #E7E2DA">
+
+    <div style="width:236px;flex:none;background:#F0EDED;border-right:1px solid #E7E2DA;display:flex;flex-direction:column;padding:28px 16px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 4px">
+        <div style="width:36px;height:36px;border-radius:8px;background:#C47A3A;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex:none">C</div>
+        <div style="min-width:0">
+          <div style="font-size:14px;font-weight:700;color:#231005;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Cafe System 618</div>
+          <div style="font-size:10px;font-weight:700;color:#6B6B6B;letter-spacing:.3px;margin-top:2px">OPERATIONAL HUB</div>
+        </div>
+      </div>
+      <div style="height:36px"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;overflow:auto">
+        <sc-for list="{{navItems}}" as="n" hint-placeholder-count="9">
+          <div style="{{n.style}}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{n.iconColor}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="{{n.icon}}"></use></svg>
+            <span style="font-size:13px;font-weight:{{n.fontWeight}};color:{{n.iconColor}}">{{n.label}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+
+      <div style="height:64px;flex:none;background:#FAF7F2;border-bottom:1px solid #E7E2DA;display:flex;align-items:center;padding:0 24px;gap:16px">
+        <div style="display:flex;flex:1;gap:4px;overflow:auto">
+          <sc-for list="{{branches}}" as="b" hint-placeholder-count="4">
+            <div onClick="{{b.select}}" style="height:64px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 14px;cursor:pointer;flex:none">
+              <div style="height:38px;display:flex;align-items:center;font-size:14px;font-weight:{{b.weight}};color:{{b.color}};white-space:nowrap">{{b.name}}</div>
+              <div style="height:2px;background:{{b.underline}};width:100%"></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(46,125,50,.12);border:1px solid rgba(46,125,50,.18);flex:none">
+          <div style="width:7px;height:7px;border-radius:50%;background:#2E7D32"></div>
+          <span style="font-size:11px;font-weight:700;color:#2E7D32">SHIFT OPEN</span>
+        </div>
+        <div style="display:flex;gap:4px;flex:none">
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7"><use href="#i-refresh"></use></svg></div>
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7"><use href="#i-bell"></use></svg></div>
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3B2417" stroke-width="1.7"><use href="#i-user"></use></svg></div>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:auto;background:#FAF7F2;position:relative">
+
+        <sc-if value="{{isRecipesList}}" hint-placeholder-val="{{true}}">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div><div style="font-size:18px;font-weight:700;color:#231005">Recipes &amp; Product Costing</div><div style="font-size:13px;color:#6B6B6B;margin-top:4px">Manage product ingredients, recipe costs, and estimated profitability.</div></div>
+            <button onClick="{{openRecipeBuilder}}" style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>Create Recipe</button>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="flex:1;min-width:200px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">Search products...</span></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Branch</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Category</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Status</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">ACTIVE RECIPES</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">86</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">PRODUCTS MISSING RECIPES</div><div style="font-size:21px;font-weight:700;color:#C62828;margin-top:8px">7</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">AVERAGE GROSS MARGIN</div><div style="font-size:21px;font-weight:700;color:#2E7D32;margin-top:8px">64.2%</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">LOW AVAILABILITY RECIPES</div><div style="font-size:21px;font-weight:700;color:#9B4D12;margin-top:8px">4</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1180px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">Product</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Version</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2">Consumption Location</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Recipe Cost</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Selling Price</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Gross Profit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">Margin</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2">Status</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3;text-align:right">Actions</span>
+              </div>
+              <sc-for list="{{recipes}}" as="r" hint-placeholder-count="5">
+                <div style="min-height:58px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <div style="flex:1.4"><span style="font-size:13px;color:#1B1B1C;font-weight:600">{{r.product}}</span><sc-if value="{{r.warning}}" hint-placeholder-val="{{false}}"><div style="font-size:11px;color:#C62828;margin-top:2px">{{r.warning}}</div></sc-if></div>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{r.version}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.2">{{r.location}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{r.cost}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{r.price}}</span>
+                  <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:1">{{r.profit}}</span>
+                  <span style="font-size:13px;color:#2E7D32;font-weight:700;flex:.8">{{r.margin}}</span>
+                  <span style="flex:1.2"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{r.badgeBg}};color:{{r.badgeFg}}">{{r.status}}</span></span>
+                  <span style="flex:1.3;display:flex;justify-content:flex-end;gap:12px">
+                    <span style="font-size:12px;font-weight:700;color:#50443F;cursor:pointer">View</span>
+                    <span onClick="{{openRecipeBuilder}}" style="font-size:12px;font-weight:700;color:#6B4226;cursor:pointer">Edit</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isRecipeBuilder}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:18px;max-width:1000px">
+          <div style="font-size:12px;color:#6B6B6B;display:flex;align-items:center;gap:6px">
+            <span onClick="{{backToRecipes}}" style="cursor:pointer;color:#6B4226;font-weight:600">Inventory Management</span><span>/</span>
+            <span onClick="{{backToRecipes}}" style="cursor:pointer;color:#6B4226;font-weight:600">Recipes &amp; Product Costing</span><span>/</span>
+            <span style="color:#231005">Create Recipe</span>
+          </div>
+          <div style="font-size:18px;font-weight:700;color:#231005">Create Recipe</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Product</div><div style="height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Cappuccino</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div></div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Consumption Type</div><div style="display:flex;border:1px solid #E7E2DA;border-radius:8px;overflow:hidden;height:40px"><div style="flex:1;display:flex;align-items:center;justify-content:center;background:#3B2417;color:#fff;font-size:12px;font-weight:700">Bar</div><div style="flex:1;display:flex;align-items:center;justify-content:center;color:#50443F;font-size:12px;font-weight:700">Kitchen</div></div></div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Consumption Warehouse</div><div style="height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Main Branch — Bar</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div></div>
+          </div>
+          <div style="font-size:12px;color:#6B6B6B">Recipe Version: <span style="font-weight:700;color:#231005">v3 (draft)</span></div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:900px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.4">Ingredient</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">SKU</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.7">Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Available</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Required</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">Wastage %</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Avg. Cost</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Line Cost</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.4"></span>
+              </div>
+              <sc-for list="{{ingredientLines}}" as="ing" hint-placeholder-count="4">
+                <div style="height:52px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span style="font-size:13px;color:#1B1B1C;flex:1.4;font-weight:600">{{ing.name}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:.9">{{ing.sku}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.7">{{ing.unit}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{ing.available}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{ing.required}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.8">{{ing.wastage}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{ing.cost}}</span>
+                  <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:.9">{{ing.lineCost}}</span>
+                  <span style="flex:.4;display:flex;justify-content:flex-end"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B7ADA2" stroke-width="1.7"><use href="#i-trash"></use></svg></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:#6B4226;cursor:pointer;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B4226" stroke-width="2"><use href="#i-plus"></use></svg>Add Ingredient</div>
+
+          <div style="background:#F4E7D3;border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div><div style="font-size:11px;color:#805437;font-weight:700">TOTAL RECIPE COST</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">$1.62</div></div>
+            <div><div style="font-size:11px;color:#805437;font-weight:700">SELLING PRICE</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">$4.50</div></div>
+            <div><div style="font-size:11px;color:#805437;font-weight:700">GROSS PROFIT</div><div style="font-size:16px;font-weight:700;color:#231005;margin-top:4px">$2.88</div></div>
+            <div><div style="font-size:11px;color:#805437;font-weight:700">GROSS MARGIN</div><div style="font-size:16px;font-weight:700;color:#2E7D32;margin-top:4px">64.0%</div></div>
+          </div>
+
+          <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Notes</div><textarea style="min-height:60px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;padding:10px 14px;font-size:13px;font-family:inherit;color:#1B1B1C;width:100%;box-sizing:border-box;resize:vertical" placeholder="Optional preparation notes"></textarea></div>
+
+          <div style="background:#FFF8F1;border:1px solid #F4E0C7;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9B4D12" stroke-width="1.7" style="flex:none;margin-top:1px"><use href="#i-alert"></use></svg>
+            <div style="font-size:12px;color:#805437;line-height:1.6">Activating this recipe will create version 3. Past sales stay linked to the version active at the time of sale.</div>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button onClick="{{backToRecipes}}" style="height:40px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Cancel</button>
+            <button style="height:40px;padding:0 18px;border-radius:8px;background:#6B4226;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Save Draft</button>
+            <button onClick="{{backToRecipes}}" style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Activate Recipe</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isSuppliers}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;gap:20px;align-items:flex-start">
+          <div style="flex:1;display:flex;flex-direction:column;gap:18px;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+              <div><div style="font-size:18px;font-weight:700;color:#231005">Suppliers</div><div style="font-size:13px;color:#6B6B6B;margin-top:4px">Manage supplier profiles, purchasing activity, and outstanding balances.</div></div>
+              <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>Add Supplier</button>
+            </div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <div style="flex:1;min-width:180px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">Search suppliers...</span></div>
+              <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Status</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+              <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Category</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+              <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Branch</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">ACTIVE SUPPLIERS</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">18</div></div>
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">TOTAL PURCHASE VALUE</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">$84,600</div></div>
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">OUTSTANDING PAYABLES</div><div style="font-size:21px;font-weight:700;color:#C62828;margin-top:8px">$6,240</div></div>
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">BEST SUPPLIER RATING</div><div style="font-size:21px;font-weight:700;color:#2E7D32;margin-top:8px">4.9 / 5</div></div>
+            </div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+              <div style="min-width:1000px">
+                <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Supplier</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">Contact Person</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Phone</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">Categories</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Last Purchase</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Outstanding</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">Status</span>
+                  <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9;text-align:right">Actions</span>
+                </div>
+                <sc-for list="{{suppliers}}" as="sup" hint-placeholder-count="5">
+                  <div onClick="{{sup.select}}" style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA;cursor:pointer">
+                    <span style="font-size:13px;color:#1B1B1C;flex:1.3;font-weight:600">{{sup.name}}</span>
+                    <span style="font-size:13px;color:#50443F;flex:1.1">{{sup.contact}}</span>
+                    <span style="font-size:12px;color:#6B6B6B;flex:1">{{sup.phone}}</span>
+                    <span style="font-size:12px;color:#50443F;flex:1.1">{{sup.categories}}</span>
+                    <span style="font-size:12px;color:#6B6B6B;flex:.9">{{sup.lastPurchase}}</span>
+                    <span style="font-size:13px;color:#50443F;flex:1">{{sup.outstanding}}</span>
+                    <span style="flex:.8"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{sup.badgeBg}};color:{{sup.badgeFg}}">{{sup.status}}</span></span>
+                    <span style="flex:.9;display:flex;justify-content:flex-end"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.7"><use href="#i-eye"></use></svg></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="width:320px;flex:none;background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:10px;background:#F4E7D3;display:flex;align-items:center;justify-content:center;flex:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.6"><use href="#i-truck"></use></svg></div>
+              <div><div style="font-size:14px;font-weight:700;color:#231005">Anatolia Roasters</div><div style="font-size:12px;color:#6B6B6B;margin-top:2px">Coffee &amp; Beverage Ingredients</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#C47A3A" stroke="#C47A3A" stroke-width="1"><use href="#i-star"></use></svg><span style="font-size:12px;color:#50443F;font-weight:600">4.7 performance score</span></div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:8px">Recent Purchases</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#1B1B1C">PO-2291</span><span style="color:#50443F">$3,400</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#1B1B1C">PO-2265</span><span style="color:#50443F">$2,180</span></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:8px">Outstanding Invoices</div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#1B1B1C">INV-4471</span><span style="color:#C62828;font-weight:700">$1,120</span></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:8px">Supplied Items</div>
+              <div style="font-size:12px;color:#50443F">Colombian Coffee Beans, Espresso Blend, Vanilla Syrup</div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isPOList}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div><div style="font-size:18px;font-weight:700;color:#231005">Purchase Orders</div><div style="font-size:13px;color:#6B6B6B;margin-top:4px">Create, approve, receive, and monitor inventory purchases.</div></div>
+            <button onClick="{{openPOWorkspace}}" style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>Create Purchase Order</button>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="width:160px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Date Range</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Supplier</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Branch</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:150px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Warehouse</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Status</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">DRAFT ORDERS</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">4</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">PENDING APPROVAL</div><div style="font-size:21px;font-weight:700;color:#9B4D12;margin-top:8px">2</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">RECEIVED THIS PERIOD</div><div style="font-size:21px;font-weight:700;color:#2E7D32;margin-top:8px">11</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">OUTSTANDING AMOUNT</div><div style="font-size:21px;font-weight:700;color:#C62828;margin-top:8px">$9,860</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1240px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">PO Number</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.2">Supplier</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Destination</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Order Date</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Expected Delivery</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Total</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Payment</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.1">Status</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1;text-align:right">Actions</span>
+              </div>
+              <sc-for list="{{purchaseOrders}}" as="po" hint-placeholder-count="5">
+                <div style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span onClick="{{openPOWorkspace}}" style="font-size:13px;color:#1B1B1C;flex:.9;font-weight:600;cursor:pointer">{{po.number}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.2">{{po.supplier}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1.3">{{po.destination}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:.9">{{po.orderDate}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:1">{{po.expected}}</span>
+                  <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:.9">{{po.total}}</span>
+                  <span style="flex:1"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{po.payBg}};color:{{po.payFg}}">{{po.paymentStatus}}</span></span>
+                  <span style="flex:1.1"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:{{po.badgeBg}};color:{{po.badgeFg}}">{{po.status}}</span></span>
+                  <span style="flex:1;display:flex;justify-content:flex-end"><span onClick="{{openPOWorkspace}}" style="font-size:12px;font-weight:700;color:#6B4226;cursor:pointer">{{po.primaryAction}}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isPOWorkspace}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:16px">
+          <div style="font-size:12px;color:#6B6B6B;display:flex;align-items:center;gap:6px">
+            <span onClick="{{backToPO}}" style="cursor:pointer;color:#6B4226;font-weight:600">Inventory Management</span><span>/</span>
+            <span onClick="{{backToPO}}" style="cursor:pointer;color:#6B4226;font-weight:600">Purchase Orders</span><span>/</span>
+            <span style="color:#231005">PO-2298</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:18px;font-weight:700;color:#231005">Receive Purchase Order</div>
+            <span style="padding:5px 12px;border-radius:999px;font-size:11px;font-weight:700;background:#F4E7D3;color:#805437">Approved</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Supplier</div><div style="height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Anatolia Roasters</div></div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Destination Warehouse</div><div style="height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Central Warehouse</div></div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Order Date</div><div style="height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Aug 12, 2026</div></div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Expected Delivery</div><div style="height:40px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Aug 19, 2026</div></div>
+          </div>
+
+          <div style="height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 12px;max-width:320px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">Search item to add...</span></div>
+
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1240px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Item</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">SKU</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.6">Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Ordered</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Received</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9">Unit Price</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">Discount</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.7">Tax</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Total</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.4"></span>
+              </div>
+              <sc-for list="{{poLines}}" as="pl" hint-placeholder-count="4">
+                <div style="height:54px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA;background:{{pl.rowBg}}">
+                  <span style="font-size:13px;color:#1B1B1C;flex:1.3;font-weight:600">{{pl.name}}</span>
+                  <span style="font-size:12px;color:#6B6B6B;flex:.9">{{pl.sku}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.6">{{pl.unit}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{pl.ordered}}</span>
+                  <span style="flex:.9"><input value="{{pl.received}}" style="width:60px;height:32px;border:1px solid #E7E2DA;border-radius:6px;padding:0 8px;font-size:13px;font-family:inherit;background:#fff"/></span>
+                  <span style="font-size:13px;color:#50443F;flex:.9">{{pl.unitPrice}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.8">{{pl.discount}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:.7">{{pl.tax}}</span>
+                  <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:1">{{pl.total}}</span>
+                  <span style="flex:.4;display:flex;justify-content:flex-end"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B7ADA2" stroke-width="1.7"><use href="#i-trash"></use></svg></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#FFF1F0;border:1px solid #FFD2CF;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.7" style="flex:none;margin-top:1px"><use href="#i-alert"></use></svg>
+            <div style="font-size:12px;color:#8A1F1F;line-height:1.6">Espresso Blend shows a shortage of 2 kg against the ordered quantity. Confirm this before recording receipt.</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Notes &amp; Attachment</div><textarea style="min-height:70px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;padding:10px 14px;font-size:13px;font-family:inherit;color:#1B1B1C;width:100%;box-sizing:border-box;resize:vertical" placeholder="Delivery notes, attach invoice..."></textarea></div>
+            <div style="background:#F4E7D3;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#805437">Subtotal</span><span style="color:#231005;font-weight:600">$3,240.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#805437">Discount</span><span style="color:#231005;font-weight:600">-$60.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#805437">Tax</span><span style="color:#231005;font-weight:600">$220.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;border-top:1px solid #E9CFA1;padding-top:8px"><span style="color:#805437;font-weight:700">Grand Total</span><span style="color:#231005;font-weight:700">$3,400.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#805437">Paid</span><span style="color:#231005;font-weight:600">$2,000.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#C62828">Outstanding</span><span style="color:#C62828;font-weight:700">$1,400.00</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button onClick="{{backToPO}}" style="height:40px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Cancel</button>
+            <button style="height:40px;padding:0 18px;border-radius:8px;background:#6B4226;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Record Payment</button>
+            <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Receive Items</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isReorder}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;gap:20px;align-items:flex-start">
+          <div style="flex:1;display:flex;flex-direction:column;gap:18px;min-width:0">
+            <div><div style="font-size:18px;font-weight:700;color:#231005">Reorder Suggestions</div><div style="font-size:13px;color:#6B6B6B;margin-top:4px">Identify low-stock items and prepare replenishment actions before operations are affected.</div></div>
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Branch</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+              <div style="width:140px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Warehouse</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+              <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Category</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+              <div style="width:120px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Urgency</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+              <div style="width:130px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;justify-content:space-between;padding:0 12px"><span style="font-size:13px;color:#1B1B1C">Supplier</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-chevron-d"></use></svg></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">CRITICAL ITEMS</div><div style="font-size:21px;font-weight:700;color:#C62828;margin-top:8px">3</div></div>
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">LOW STOCK ITEMS</div><div style="font-size:21px;font-weight:700;color:#9B4D12;margin-top:8px">9</div></div>
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">ESTIMATED REORDER VALUE</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">$4,860</div></div>
+              <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:700;color:#6B6B6B">SUGGESTED PURCHASE ORDERS</div><div style="font-size:21px;font-weight:700;color:#231005;margin-top:8px">3</div></div>
+            </div>
+
+            <sc-for list="{{urgencyGroups}}" as="grp" hint-placeholder-count="3">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:8px;height:8px;border-radius:50%;background:{{grp.color}}"></div><span style="font-size:13px;font-weight:700;color:#231005">{{grp.label}}</span></div>
+                <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+                  <div style="min-width:1180px">
+                    <div style="height:40px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:1.3">Item</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:1.1">Warehouse</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:.9">Available</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:.9">Reorder Level</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:.9">Suggested Qty</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:.8">Cost</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:1">Est. Reorder Cost</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:1.1">Preferred Supplier</span>
+                      <span style="font-size:11px;font-weight:700;color:#3B2417;flex:1.3;text-align:right">Action</span>
+                    </div>
+                    <sc-for list="{{grp.items}}" as="it" hint-placeholder-count="2">
+                      <div style="height:52px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                        <span style="font-size:13px;color:#1B1B1C;flex:1.3;font-weight:600">{{it.name}}</span>
+                        <span style="font-size:12px;color:#50443F;flex:1.1">{{it.warehouse}}</span>
+                        <span style="font-size:13px;color:#50443F;flex:.9">{{it.available}}</span>
+                        <span style="font-size:13px;color:#50443F;flex:.9">{{it.reorderLevel}}</span>
+                        <span style="font-size:13px;color:#1B1B1C;font-weight:700;flex:.9">{{it.suggested}}</span>
+                        <span style="font-size:12px;color:#50443F;flex:.8">{{it.cost}}</span>
+                        <span style="font-size:13px;color:#231005;font-weight:600;flex:1">{{it.estCost}}</span>
+                        <span style="font-size:12px;color:#50443F;flex:1.1">{{it.supplier}}</span>
+                        <span style="flex:1.3;display:flex;justify-content:flex-end;gap:10px">
+                          <span style="font-size:11px;font-weight:700;color:#6B4226;cursor:pointer">Add to PO</span>
+                          <span style="font-size:11px;font-weight:700;color:#50443F;cursor:pointer">View</span>
+                          <span style="font-size:11px;font-weight:700;color:#B7ADA2;cursor:pointer">Dismiss</span>
+                        </span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="width:300px;flex:none;background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:13px;font-weight:700;color:#231005">Suggested Purchase Order</div>
+            <div style="font-size:11px;color:#6B6B6B">Grouped by Supplier</div>
+            <div style="border-bottom:1px solid #F0EDED;padding-bottom:10px">
+              <div style="font-size:12px;font-weight:700;color:#231005;margin-bottom:6px">Anatolia Roasters</div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#50443F"><span>Colombian Coffee Beans</span><span>40 kg</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#50443F"><span>Vanilla Syrup</span><span>12 L</span></div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#231005;margin-bottom:6px">Dairy Fresh Co.</div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#50443F"><span>Whole Milk</span><span>80 L</span></div>
+            </div>
+            <button style="height:38px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">Create Purchase Orders</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{isUnits}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div><div style="font-size:18px;font-weight:700;color:#231005">Units &amp; Conversions</div><div style="font-size:13px;color:#6B6B6B;margin-top:4px">Define purchasing, storage, and consumption units for accurate inventory calculations.</div></div>
+            <button onClick="{{openUnitDialog}}" style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-plus"></use></svg>Add Unit Conversion</button>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="flex:1;min-width:200px;height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#FAF7F2;display:flex;align-items:center;gap:8px;padding:0 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.8"><use href="#i-search"></use></svg><span style="font-size:13px;color:#6B6B6B">Search items...</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;overflow:auto">
+            <div style="min-width:1000px">
+              <div style="height:44px;background:#F4E7D3;display:flex;align-items:center;padding:0 18px">
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.3">Item</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Base Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Purchase Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1.6">Conversion</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:1">Consumption Unit</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.8">Status</span>
+                <span style="font-size:12px;font-weight:700;color:#3B2417;flex:.9;text-align:right">Actions</span>
+              </div>
+              <sc-for list="{{unitRows}}" as="u" hint-placeholder-count="3">
+                <div style="height:56px;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid #E7E2DA">
+                  <span style="font-size:13px;color:#1B1B1C;flex:1.3;font-weight:600">{{u.item}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{u.base}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{u.purchase}}</span>
+                  <span style="font-size:12px;color:#50443F;flex:1.6;direction:ltr">{{u.formula}}</span>
+                  <span style="font-size:13px;color:#50443F;flex:1">{{u.consumption}}</span>
+                  <span style="flex:.8"><span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:#E3F5E8;color:#2E7D32">Active</span></span>
+                  <span style="flex:.9;display:flex;justify-content:flex-end;gap:10px">
+                    <svg onClick="{{openUnitDialog}}" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="1.7" style="cursor:pointer"><use href="#i-edit"></use></svg>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{unitDialogOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute;inset:0;background:rgba(35,16,5,.4);display:flex;align-items:center;justify-content:center;z-index:20">
+          <div style="width:440px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:16px;font-weight:700;color:#231005">Add Unit Conversion</span><svg onClick="{{closeUnitDialog}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" stroke-width="2" style="cursor:pointer"><use href="#i-x"></use></svg></div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Item</div><div style="height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Paper Cups (16oz)</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Source Unit</div><div style="height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Carton</div></div>
+              <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Target Unit</div><div style="height:38px;border:1px solid #E7E2DA;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 12px;font-size:13px;color:#1B1B1C">Pack</div></div>
+            </div>
+            <div><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Conversion Factor</div><input value="20" style="height:38px;border:1px solid #E7E2DA;border-radius:8px;padding:0 12px;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box"/></div>
+            <div style="display:flex;gap:16px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#50443F"><input type="checkbox" checked/>Default purchase unit</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#50443F"><input type="checkbox"/>Default consumption unit</label>
+            </div>
+            <div style="background:#F4E7D3;border-radius:8px;padding:10px 12px;font-size:12px;color:#805437;font-weight:600;direction:ltr">1 Carton = 20 Packs = 1,000 Cups</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button onClick="{{closeUnitDialog}}" style="height:36px;padding:0 16px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Cancel</button>
+              <button onClick="{{closeUnitDialog}}" style="height:36px;padding:0 16px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Save Conversion</button>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+        </sc-if>
+
+        <sc-if value="{{isBarcode}}" hint-placeholder-val="{{false}}">
+        <div style="padding:24px 32px;display:flex;flex-direction:column;gap:18px">
+          <div><div style="font-size:18px;font-weight:700;color:#231005">Barcode Operations</div><div style="font-size:13px;color:#6B6B6B;margin-top:4px">Scan items to accelerate receiving, stock counts, and inventory lookup.</div></div>
+
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{scanModes}}" as="m" hint-placeholder-count="3">
+              <span onClick="{{m.select}}" style="{{m.style}}">{{m.label}}</span>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:start">
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px;align-items:center">
+              <div style="width:100%;height:64px;border:1.5px dashed #C47A3A;border-radius:10px;background:#FFF8F1;display:flex;align-items:center;gap:12px;padding:0 18px">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.6"><use href="#i-scan"></use></svg>
+                <span style="font-size:15px;color:#805437;font-weight:600">Scan or type barcode...</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:#2E7D32"></div><span style="font-size:12px;font-weight:700;color:#2E7D32">Ready to Scan</span></div>
+
+              <div style="width:100%;border-top:1px solid #F0EDED;padding-top:16px;display:flex;gap:14px;align-items:center">
+                <div style="width:48px;height:48px;border-radius:10px;background:#F4E7D3;display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.6"><use href="#i-coffee"></use></svg></div>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:700;color:#231005">Colombian Coffee Beans</div>
+                  <div style="font-size:12px;color:#6B6B6B;margin-top:2px">SKU: RM-1001 · Barcode: 8901234567</div>
+                </div>
+              </div>
+              <div style="width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <div style="background:#FCF9F8;border:1px solid #F0EDED;border-radius:8px;padding:10px"><div style="font-size:10px;color:#6B6B6B;font-weight:700">WAREHOUSE BALANCE</div><div style="font-size:14px;font-weight:700;color:#231005;margin-top:4px">62.5 kg</div></div>
+                <div style="background:#FCF9F8;border:1px solid #F0EDED;border-radius:8px;padding:10px"><div style="font-size:10px;color:#6B6B6B;font-weight:700">UNIT</div><div style="font-size:14px;font-weight:700;color:#231005;margin-top:4px">kg</div></div>
+                <div style="background:#FCF9F8;border:1px solid #F0EDED;border-radius:8px;padding:10px"><div style="font-size:10px;color:#6B6B6B;font-weight:700">LATEST COST</div><div style="font-size:14px;font-weight:700;color:#231005;margin-top:4px">$68.00</div></div>
+              </div>
+              <div style="width:100%;display:flex;gap:10px;align-items:flex-end">
+                <div style="flex:1"><div style="font-size:11px;font-weight:700;color:#50443F;margin-bottom:6px">Quantity</div><input value="10" style="height:40px;border:1px solid #E7E2DA;border-radius:8px;padding:0 12px;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box"/></div>
+                <button style="height:40px;padding:0 18px;border-radius:8px;background:#3B2417;color:#fff;border:none;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Update Quantity</button>
+                <button style="height:40px;padding:0 18px;border-radius:8px;background:transparent;color:#3B2417;border:1px solid #E7E2DA;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Continue Scanning</button>
+              </div>
+
+              <div style="width:100%;background:#FFF1F0;border:1px solid #FFD2CF;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.7" style="flex:none"><use href="#i-alert"></use></svg>
+                <span style="font-size:12px;color:#8A1F1F">Item Not Available in Selected Warehouse — choose Downtown Warehouse or add it here.</span>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #E7E2DA;border-radius:12px;padding:20px">
+              <div style="font-size:13px;font-weight:700;color:#231005;margin-bottom:14px">Recently Scanned</div>
+              <sc-for list="{{scanActivity}}" as="sa" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F0EDED">
+                  <div style="width:32px;height:32px;border-radius:8px;background:#F4E7D3;display:flex;align-items:center;justify-content:center;flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#805437" stroke-width="1.7"><use href="#i-package"></use></svg></div>
+                  <div style="flex:1">
+                    <div style="font-size:13px;font-weight:600;color:#1B1B1C">{{sa.name}}</div>
+                    <div style="font-size:11px;color:#6B6B6B;margin-top:2px">{{sa.time}} · {{sa.action}}</div>
+                  </div>
+                  <span style="font-size:13px;font-weight:700;color:#231005">{{sa.qty}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'recipes-list', branch: 'main', unitDialogOpen: false, scanMode: 'lookup' };
+
+  go(screen) { this.setState({ screen }); }
+
+  renderVals() {
+    const screen = this.state.screen;
+    const screenDefs = [
+      ['recipes-list', '1. Recipes'],
+      ['recipe-builder', '2. Recipe Builder'],
+      ['suppliers', '3. Suppliers'],
+      ['po-list', '4. Purchase Orders'],
+      ['po-workspace', '5. Receive PO'],
+      ['reorder', '6. Reorder Suggestions'],
+      ['units', '7. Units & Conversions'],
+      ['barcode', '8. Barcode Operations'],
+    ];
+    const screens = screenDefs.map(([id, label]) => ({
+      label,
+      go: () => this.go(id),
+      style: `padding:6px 12px;border-radius:6px;border:1px solid ${screen===id?'#C47A3A':'transparent'};background:${screen===id?'rgba(196,122,58,.15)':'transparent'};color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit`,
+    }));
+
+    const navDefs = [
+      ['dashboard-icon','#i-dashboard','Dashboard'],
+      ['pos','#i-pos','POS'],
+      ['orders','#i-orders','Orders'],
+      ['customers','#i-users','Customers'],
+      ['discounts','#i-tag','Discounts'],
+      ['menu','#i-menu','Menu'],
+      ['inventory','#i-inventory','Inventory Management'],
+      ['reports','#i-reports','Reports'],
+      ['settings','#i-settings','Settings'],
+    ];
+    const navItems = navDefs.map(([key, icon, label]) => {
+      const active = key === 'inventory';
+      return {
+        icon, label, fontWeight: active ? 800 : 500,
+        iconColor: active ? '#794E31' : '#50443F',
+        style: `display:flex;align-items:center;gap:10px;height:44px;border-radius:8px;padding:0 12px;background:${active?'#FEC29E':'transparent'};cursor:pointer`,
+      };
+    });
+
+    const branchDefs = [['main','Main Branch'],['downtown','Downtown'],['mall','Mall'],['airport','Airport']];
+    const branches = branchDefs.map(([id, name]) => {
+      const active = id === this.state.branch;
+      return {
+        name, select: () => this.setState({branch:id}),
+        weight: active ? 800 : 500,
+        color: active ? '#231005' : '#50443F',
+        underline: active ? '#231005' : 'transparent',
+      };
+    });
+
+    const scanModeDefs = [['lookup','Item Lookup'],['receive','Receive Purchase Order'],['count','Stock Count']];
+    const scanModes = scanModeDefs.map(([id,label]) => {
+      const active = id === this.state.scanMode;
+      return { label, select: () => this.setState({scanMode:id}),
+        style: `padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ${active?'#3B2417':'#E7E2DA'};background:${active?'#3B2417':'#fff'};color:${active?'#fff':'#50443F'}` };
+    });
+
+    return {
+      screens, navItems, branches, scanModes,
+      isRecipesList: screen === 'recipes-list',
+      isRecipeBuilder: screen === 'recipe-builder',
+      isSuppliers: screen === 'suppliers',
+      isPOList: screen === 'po-list',
+      isPOWorkspace: screen === 'po-workspace',
+      isReorder: screen === 'reorder',
+      isUnits: screen === 'units',
+      isBarcode: screen === 'barcode',
+      openRecipeBuilder: () => this.go('recipe-builder'),
+      backToRecipes: () => this.go('recipes-list'),
+      openPOWorkspace: () => this.go('po-workspace'),
+      backToPO: () => this.go('po-list'),
+      unitDialogOpen: this.state.unitDialogOpen,
+      openUnitDialog: () => this.setState({unitDialogOpen:true}),
+      closeUnitDialog: () => this.setState({unitDialogOpen:false}),
+
+      recipes: [
+        {product:'Cappuccino', version:'v2', location:'Main Branch — Bar', cost:'$1.62', price:'$4.50', profit:'$2.88', margin:'64.0%', status:'Active', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', warning:null},
+        {product:'Iced Latte', version:'v1', location:'Main Branch — Bar', cost:'$1.85', price:'$5.00', profit:'$3.15', margin:'63.0%', status:'Active', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', warning:null},
+        {product:'Club Sandwich', version:'—', location:'Main Branch — Kitchen', cost:'—', price:'$6.50', profit:'—', margin:'—', status:'Missing Recipe', badgeBg:'#FFE1DE', badgeFg:'#C62828', warning:'Missing Recipe'},
+        {product:'Cheesecake', version:'v1', location:'Downtown — Kitchen', cost:'$2.10', price:'$5.50', profit:'$3.40', margin:'61.8%', status:'Low Availability', badgeBg:'#FFE6D1', badgeFg:'#9B4D12', warning:'Insufficient Ingredients'},
+        {product:'Espresso', version:'v4', location:'Main Branch — Bar', cost:'$0.62', price:'$3.00', profit:'$2.38', margin:'79.3%', status:'Active', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', warning:null},
+      ],
+      ingredientLines: [
+        {name:'Espresso Blend', sku:'RM-1010', unit:'g', available:'12,400', required:'18', wastage:'2%', cost:'$0.068', lineCost:'$1.22'},
+        {name:'Whole Milk', sku:'RM-2044', unit:'ml', available:'96,000', required:'150', wastage:'1%', cost:'$0.0065', lineCost:'$0.97'},
+        {name:'Paper Cups (12oz)', sku:'PK-3305', unit:'pcs', available:'2,100', required:'1', wastage:'0%', cost:'$0.30', lineCost:'$0.30'},
+      ],
+
+      suppliers: [
+        {name:'Anatolia Roasters', contact:'Emre Yildiz', phone:'+90 532 000 1122', categories:'Coffee, Syrups', lastPurchase:'Aug 12', outstanding:'$1,120', status:'Active', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', select:()=>{}},
+        {name:'Dairy Fresh Co.', contact:'Lina Haddad', phone:'+962 79 555 2233', categories:'Dairy', lastPurchase:'Aug 15', outstanding:'$0', status:'Active', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', select:()=>{}},
+        {name:'PackWell Supplies', contact:'Omar Nasser', phone:'+971 50 111 4455', categories:'Packaging', lastPurchase:'Aug 8', outstanding:'$3,410', status:'Active', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', select:()=>{}},
+        {name:'Golden Farms', contact:'Rania Saleh', phone:'+962 77 220 9981', categories:'Bakery Ingredients', lastPurchase:'Jul 29', outstanding:'$1,710', status:'On Hold', badgeBg:'#FFE6D1', badgeFg:'#9B4D12', select:()=>{}},
+        {name:'Metro Beverage Distributors', contact:'Karim Aziz', phone:'+966 55 909 7712', categories:'Syrups, Sodas', lastPurchase:'May 3', outstanding:'$0', status:'Inactive', badgeBg:'#F0EDED', badgeFg:'#6B6B6B', select:()=>{}},
+      ],
+
+      purchaseOrders: [
+        {number:'PO-2298', supplier:'Anatolia Roasters', destination:'Central Warehouse', orderDate:'Aug 12', expected:'Aug 19', total:'$3,400.00', paymentStatus:'Partially Paid', payBg:'#FFF3D6', payFg:'#9B6A0C', status:'Approved', badgeBg:'#F4E7D3', badgeFg:'#805437', primaryAction:'Receive Items'},
+        {number:'PO-2295', supplier:'Dairy Fresh Co.', destination:'Main Branch — Bar', orderDate:'Aug 10', expected:'Aug 12', total:'$860.00', paymentStatus:'Paid', payBg:'#E3F5E8', payFg:'#2E7D32', status:'Received', badgeBg:'#E3F5E8', badgeFg:'#2E7D32', primaryAction:'View'},
+        {number:'PO-2291', supplier:'PackWell Supplies', destination:'Central Warehouse', orderDate:'Aug 6', expected:'Aug 14', total:'$3,410.00', paymentStatus:'Unpaid', payBg:'#FFE1DE', payFg:'#C62828', status:'Partially Received', badgeBg:'#FFF3D6', badgeFg:'#9B6A0C', primaryAction:'Receive Items'},
+        {number:'PO-2288', supplier:'Golden Farms', destination:'Downtown Warehouse', orderDate:'Jul 29', expected:'Aug 2', total:'$1,710.00', paymentStatus:'Unpaid', payBg:'#FFE1DE', payFg:'#C62828', status:'Pending Approval', badgeBg:'#FFF3D6', badgeFg:'#9B6A0C', primaryAction:'Approve'},
+        {number:'PO-2280', supplier:'Anatolia Roasters', destination:'Central Warehouse', orderDate:'Jul 20', expected:'Jul 27', total:'$2,180.00', paymentStatus:'Paid', payBg:'#E3F5E8', payFg:'#2E7D32', status:'Draft', badgeBg:'#F0EDED', badgeFg:'#6B6B6B', primaryAction:'Continue'},
+      ],
+      poLines: [
+        {name:'Colombian Coffee Beans', sku:'RM-1001', unit:'kg', ordered:'40.0', received:'40.0', unitPrice:'$68.00', discount:'$0', tax:'0%', total:'$2,720.00', rowBg:'#fff'},
+        {name:'Espresso Blend', sku:'RM-1010', unit:'kg', ordered:'10.0', received:'8.0', unitPrice:'$52.00', discount:'$60.00', tax:'0%', total:'$460.00', rowBg:'#FFF5F4'},
+        {name:'Vanilla Syrup', sku:'RM-4021', unit:'L', ordered:'12.0', received:'12.0', unitPrice:'$18.33', discount:'$0', tax:'0%', total:'$220.00', rowBg:'#fff'},
+      ],
+
+      urgencyGroups: [
+        {label:'Critical', color:'#C62828', items:[
+          {name:'Vanilla Syrup', warehouse:'Mall Warehouse', available:'0.0 L', reorderLevel:'6.0 L', suggested:'12.0 L', cost:'$22.00', estCost:'$264.00', supplier:'Anatolia Roasters'},
+          {name:'Whole Milk', warehouse:'Main Warehouse', available:'4.0 L', reorderLevel:'25.0 L', suggested:'80.0 L', cost:'$6.50', estCost:'$520.00', supplier:'Dairy Fresh Co.'},
+        ]},
+        {label:'High Priority', color:'#C47A3A', items:[
+          {name:'Paper Cups (16oz)', warehouse:'Downtown Warehouse', available:'210', reorderLevel:'500', suggested:'2,000', cost:'$0.35', estCost:'$700.00', supplier:'PackWell Supplies'},
+        ]},
+        {label:'Reorder Soon', color:'#9B4D12', items:[
+          {name:'White Sugar', warehouse:'Main Warehouse', available:'35.0 kg', reorderLevel:'15.0 kg', suggested:'25.0 kg', cost:'$4.20', estCost:'$105.00', supplier:'Golden Farms'},
+        ]},
+      ],
+
+      unitRows: [
+        {item:'Colombian Coffee Beans', base:'gram', purchase:'Bag', formula:'1 Bag = 1 kg = 1,000 g', consumption:'gram'},
+        {item:'Whole Milk', base:'ml', purchase:'Case', formula:'1 Case = 12 Bottles = 12,000 ml', consumption:'ml'},
+        {item:'Paper Cups (16oz)', base:'piece', purchase:'Carton', formula:'1 Carton = 20 Packs = 1,000 Cups', consumption:'piece'},
+      ],
+
+      scanActivity: [
+        {name:'Colombian Coffee Beans', time:'2 min ago', action:'Received', qty:'+10.0 kg'},
+        {name:'Whole Milk', time:'8 min ago', action:'Stock Count', qty:'34.0 L'},
+        {name:'Paper Cups (16oz)', time:'15 min ago', action:'Lookup', qty:'—'},
+        {name:'Vanilla Syrup', time:'22 min ago', action:'Received', qty:'+6.0 L'},
+        {name:'White Sugar', time:'1 hr ago', action:'Stock Count', qty:'35.0 kg'},
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

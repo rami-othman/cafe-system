@@ -99,7 +99,7 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         $this->postJson("/api/v1/orders/{$orderId}/pay", $payload, $this->headers($tenantId))
             ->assertOk()->assertJsonPath('data.payment.id', $existingId);
         $this->postJson("/api/v1/orders/{$orderId}/pay", [...$payload, 'method' => 'card'], $this->headers($tenantId))
-            ->assertUnprocessable()->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
+            ->assertStatus(409)->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
         $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
     }
 

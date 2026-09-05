@@ -6,11 +6,7 @@ class ApiConfig {
     defaultValue: 'http://localhost:8000/api/v1',
   );
 
-  /// Leave tenant resolution to the backend unless a deployment explicitly
-  /// supplies a tenant ID at build time. Database IDs are not stable across
-  /// fresh installs or reseeds.
-  static const int defaultTenantId = int.fromEnvironment(
-    'TENANT_ID',
-    defaultValue: 0,
-  );
+  /// Bearer tokens are issued by `/auth/login`; tenant and actor are derived
+  /// by Laravel from this token, never from frontend headers.
+  static const String apiToken = String.fromEnvironment('API_TOKEN');
 }

@@ -72,8 +72,7 @@ class PosApiSmokeTest extends TestCase
 
         $this->getJson('/api/v1/branches')
             ->assertOk()
-            ->assertJsonPath('data.0.name', 'Downtown')
-            ->assertJsonPath('data.0.currency', 'SYP');
+            ->assertJsonFragment(['name' => 'Downtown', 'currency' => 'SYP']);
 
         $shift = $this->postJson('/api/v1/shifts/current', [
             'branchId' => $branchId,
@@ -172,7 +171,7 @@ class PosApiSmokeTest extends TestCase
         $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
         $this->postJson("/api/v1/orders/{$orderId}/pay", [
             'method' => 'card', 'amount' => 30, 'idempotencyKey' => 'smoke-payment-1',
-        ])->assertUnprocessable()->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
+        ])->assertStatus(409)->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
         $this->patchJson("/api/v1/orders/{$orderId}", ['note' => 'late edit'])
             ->assertUnprocessable()->assertJsonPath('code', 'ORDER_NOT_EDITABLE');
 
@@ -201,7 +200,7 @@ class PosApiSmokeTest extends TestCase
             ->assertCreated()->assertJsonPath('data.amount', 5);
         $this->assertSame(1, DB::table('payment_refunds')->where('order_id', $orderId)->count());
         $this->postJson("/api/v1/orders/{$orderId}/refunds", array_merge($refundPayload, ['amount' => 6]))
-            ->assertUnprocessable()->assertJsonPath('code', 'REFUND_IDEMPOTENCY_CONFLICT');
+            ->assertStatus(409)->assertJsonPath('code', 'REFUND_IDEMPOTENCY_CONFLICT');
 
         $this->postJson("/api/v1/orders/{$orderId}/refunds", [
             'type' => 'full', 'reason' => 'Close remaining balance', 'idempotencyKey' => 'smoke-refund-2',

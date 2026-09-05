@@ -4,6 +4,8 @@ use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
 use App\Http\Middleware\CanManageCafeConfiguration;
+use App\Http\Middleware\EnsureInventoryPermission;
+use App\Http\Middleware\EnsureFinancePermission;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
 use App\Http\Middleware\EnsureBranchAccess;
@@ -45,6 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'cafe.configuration' => CanManageCafeConfiguration::class,
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
+            'inventory.permission' => EnsureInventoryPermission::class,
+            'finance.permission' => EnsureFinancePermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -56,7 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'message' => $exception->getMessage(),
                     'code' => $exception->domainCode,
-                ], 422);
+                ], str_ends_with($exception->domainCode, 'IDEMPOTENCY_CONFLICT') ? 409 : 422);
             }
         });
         $exceptions->render(function (DomainException $exception, Request $request) {

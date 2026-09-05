@@ -37,7 +37,8 @@ class AppSidebar extends StatelessWidget {
       Icons.tune_outlined,
       '/cafe-configuration/overview',
     ),
-    _SidebarDestination('inventory', Icons.inventory_2_outlined),
+    _SidebarDestination('inventory', Icons.inventory_2_outlined, '/inventory'),
+    _SidebarDestination('finance', Icons.account_balance_wallet_outlined, '/finance'),
     _SidebarDestination('reports', Icons.bar_chart_outlined, '/reports'),
   ];
 
@@ -205,6 +206,7 @@ String _labelFor(BuildContext context, String id) {
     'menuManagement' => l10n.navigationMenuManagement,
     'cafeConfiguration' => l10n.navigationCafeConfiguration,
     'inventory' => l10n.navigationInventory,
+    'finance' => 'Finance',
     'reports' => l10n.navigationReports,
     _ => l10n.commonUnknown,
   };
@@ -237,6 +239,7 @@ String _englishLabel(String id) => switch (id) {
   'menuManagement' => 'Menu Management',
   'cafeConfiguration' => 'Cafe Configuration',
   'inventory' => 'Inventory',
+  'finance' => 'Finance',
   'reports' => 'Reports',
   _ => '',
 };
