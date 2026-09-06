@@ -11,7 +11,7 @@ import 'package:windows_application/features/orders/controllers/orders_state.dar
 import 'package:windows_application/features/orders/models/order_summary.dart';
 import 'package:windows_application/features/orders/repositories/orders_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
-import 'package:windows_application/features/reports/models/daily_report_data.dart';
+import 'package:windows_application/features/reports/models/reports_overview.dart';
 import 'package:windows_application/features/reports/repositories/reports_repository.dart';
 
 void main() {
@@ -173,12 +173,27 @@ class _SpyReportsRepository extends ReportsRepository {
   int requests = 0;
 
   @override
-  Future<DailyReportData> getDailyReport({
-    DateTime? date,
+  Future<ReportsOverview> getOverview({
+    required DateTime from,
+    required DateTime to,
     int? branchId,
+    required bool comparePrevious,
   }) async {
     requests++;
-    return DailyReportData.mock();
+    return ReportsOverview.fromJson(<String, dynamic>{
+      'period': <String, dynamic>{
+        'from': from.toIso8601String(),
+        'to': to.toIso8601String(),
+      },
+      'currency': 'SYP',
+      'branches': const <dynamic>[],
+      'selectedBranchId': branchId,
+      'kpis': const <String, dynamic>{},
+      'salesTrend': const <dynamic>[],
+      'branchComparison': const <dynamic>[],
+      'topProducts': const <dynamic>[],
+      'recentExceptions': const <dynamic>[],
+    });
   }
 }
 

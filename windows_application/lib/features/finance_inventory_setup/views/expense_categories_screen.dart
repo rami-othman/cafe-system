@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
+import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 
 class ExpenseCategoriesScreen extends StatefulWidget {
@@ -52,11 +52,10 @@ class _ExpenseCategoriesScreenState extends State<ExpenseCategoriesScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => DesktopPageLayout(
-    child: Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        ManagementPageHeader(
+        FinancePageHeader(
           title: 'فئات المصروفات',
           subtitle: 'كل فئة مرتبطة بحساب مصروف فعّال في دليل الحسابات.',
           actions: <Widget>[
@@ -128,8 +127,7 @@ class _ExpenseCategoriesScreenState extends State<ExpenseCategoriesScreen> {
                 ),
         ),
       ],
-    ),
-  );
+    );
   Future<void> _form({ExpenseCategory? existing}) async {
     final code = TextEditingController(text: existing?.code ?? '');
     final name = TextEditingController(text: existing?.name ?? '');

@@ -1,48 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:windows_application/app/app.dart';
-import 'package:windows_application/app/app_router.dart';
-import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/reports/controllers/daily_report_cubit.dart';
 import 'package:windows_application/features/reports/views/daily_operational_report_screen.dart';
-import 'package:windows_application/l10n/app_localizations.dart';
-import 'package:windows_application/shared/widgets/app_sidebar.dart';
-import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
-import 'package:windows_application/shared/widgets/app_top_bar.dart';
+
+// DailyOperationalReportScreen is no longer wired to the /reports route
+// (ReportsOverviewScreen is canonical there, see reports_overview_screen_test
+// and app_router.dart) but the widget itself is kept for now, so these tests
+// exercise it directly instead of through the app router.
 
 void main() {
-  setUp(() async {
-    await serviceLocator.reset();
-    setupServiceLocator(useBackend: false);
-  });
-
-  tearDown(() => appRouter.go(AppRoutes.pos));
-
   testWidgets(
-    'Reports route renders the daily operational report and active sidebar item',
+    'renders the daily operational report header and actions',
     (WidgetTester tester) async {
-      appRouter.go(AppRoutes.reports);
-      await _pumpApp(tester);
+      await _pumpScreen(tester, DailyReportCubit()..loadReport());
 
       expect(find.text('Daily Operational Report'), findsOneWidget);
       expect(find.text('Today, Oct 24, 2023'), findsOneWidget);
       expect(find.text('Print'), findsOneWidget);
       expect(find.text('Export Report'), findsOneWidget);
-      expect(find.byTooltip(_refreshTooltip(tester)), findsOneWidget);
-      expect(_reportsSidebarItem(tester).isActive, isTrue);
-
-      await tester.tap(find.byTooltip(_refreshTooltip(tester)));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets('daily report renders all presentation data and peak bar', (
     WidgetTester tester,
   ) async {
-    appRouter.go(AppRoutes.reports);
-    await _pumpApp(tester);
+    await _pumpScreen(tester, DailyReportCubit()..loadReport());
 
     for (final String value in <String>[
       '4,250 SYP',
@@ -86,8 +69,8 @@ void main() {
   testWidgets('print and export actions show report action messages', (
     WidgetTester tester,
   ) async {
-    appRouter.go(AppRoutes.reports);
-    await _pumpApp(tester);
+    await _pumpScreen(tester, DailyReportCubit()..loadReport());
+
     await tester.tap(find.text('Print'));
     await tester.pump();
     expect(
@@ -106,14 +89,7 @@ void main() {
     WidgetTester tester,
   ) async {
     final DailyReportCubit cubit = DailyReportCubit()..showEmpty();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: BlocProvider<DailyReportCubit>.value(
-          value: cubit,
-          child: const DailyOperationalReportScreen(),
-        ),
-      ),
-    );
+    await _pumpScreen(tester, cubit, settle: false);
     expect(
       find.text('No report data is available for this date.'),
       findsOneWidget,
@@ -128,8 +104,7 @@ void main() {
   testWidgets(
     'report page scrolls and remains stable at desktop and narrow widths',
     (WidgetTester tester) async {
-      appRouter.go(AppRoutes.reports);
-      await _pumpApp(tester);
+      await _pumpScreen(tester, DailyReportCubit()..loadReport());
       await tester.drag(
         find.byKey(const Key('daily-report-scroll-view')),
         const Offset(0, -500),
@@ -144,27 +119,28 @@ void main() {
   );
 }
 
-Future<void> _pumpApp(WidgetTester tester) async {
+Future<void> _pumpScreen(
+  WidgetTester tester,
+  DailyReportCubit cubit, {
+  bool settle = true,
+}) async {
   tester.view.physicalSize = const Size(1280, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
-  await tester.pumpWidget(const App());
-  await tester.pumpAndSettle();
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: BlocProvider<DailyReportCubit>.value(
+          value: cubit,
+          child: const DailyOperationalReportScreen(),
+        ),
+      ),
+    ),
+  );
+  if (settle) {
+    await tester.pumpAndSettle();
+  }
 }
-
-AppSidebarItem _reportsSidebarItem(WidgetTester tester) {
-  final BuildContext sidebarContext = tester.element(find.byType(AppSidebar));
-  final String reportsLabel = AppLocalizations.of(
-    sidebarContext,
-  ).navigationReports;
-  return tester
-      .widgetList<AppSidebarItem>(find.byType(AppSidebarItem))
-      .singleWhere((AppSidebarItem item) => item.label == reportsLabel);
-}
-
-String _refreshTooltip(WidgetTester tester) => AppLocalizations.of(
-  tester.element(find.byType(AppTopBar)),
-).tooltipRefreshScreenData;

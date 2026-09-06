@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_router.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../pos/models/branch.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
@@ -96,12 +96,7 @@ class _CashBanksScreenState extends State<CashBanksScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'النقدية والبنوك',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'النقدية والبنوك',
         subtitle: 'إدارة الصناديق والحسابات البنكية ومتابعة الأرصدة والحركات',
         showContext: false,
@@ -130,9 +125,7 @@ class _CashBanksScreenState extends State<CashBanksScreen> {
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_cash == null && _error == null) {
@@ -167,7 +160,7 @@ class _CashBanksScreenState extends State<CashBanksScreen> {
                       'طريقة دفع غير مربوطة بحساب مالي — ${unlinked.map((PaymentMethodSetting m) => m.name).join('، ')}',
                   tone: FinanceTone.warning,
                   action: TextButton(
-                    onPressed: () => context.go('/finance/settings/payment-methods'),
+                    onPressed: () => context.go(AppRoutes.financePaymentMethods),
                     child: const Text('إعدادات المالية'),
                   ),
                 ),

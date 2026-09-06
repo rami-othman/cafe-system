@@ -2284,12 +2284,10 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
         )
         .toStringAsFixed(2);
 
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 6,
@@ -2403,15 +2401,12 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
                 return AppCard(
                   padding: AppSpacing.allMd,
                   child: constraints.maxWidth > 900
-                      ? Directionality(
-                          textDirection: ui.TextDirection.ltr,
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(child: filters),
-                              const SizedBox(width: AppSpacing.md),
-                              search,
-                            ],
-                          ),
+                      ? Row(
+                          children: <Widget>[
+                            Expanded(child: filters),
+                            const SizedBox(width: AppSpacing.md),
+                            search,
+                          ],
                         )
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2508,8 +2503,7 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
                 ],
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -5634,34 +5628,37 @@ class _DateRangeFilter extends StatelessWidget {
   final DateTimeRange range;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(8),
-    child: Container(
-      height: 40,
-      padding: AppSpacing.horizontalMd,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(8),
-        color: AppColors.surface,
+  Widget build(BuildContext context) {
+    final String locale = Localizations.localeOf(context).toLanguageTag();
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 40,
+        padding: AppSpacing.horizontalMd,
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(8),
+          color: AppColors.surface,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(
+              Icons.date_range_outlined,
+              size: 17,
+              color: AppColors.textMuted,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              '${DateFormat('MMM d', locale).format(range.start)} - ${DateFormat('MMM d, y', locale).format(range.end)}',
+              style: AppTextStyles.bodySmall,
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(
-            Icons.date_range_outlined,
-            size: 17,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            '${DateFormat('MMM d').format(range.start)} - ${DateFormat('MMM d, y').format(range.end)}',
-            style: AppTextStyles.bodySmall,
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }
 
 class _WarehouseDropdown extends StatelessWidget {

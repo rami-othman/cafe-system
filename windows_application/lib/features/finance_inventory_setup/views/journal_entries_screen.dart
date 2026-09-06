@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../controllers/finance_setup_state.dart';
+import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 import '../models/finance_setup_models.dart';
 
@@ -48,12 +48,11 @@ class _JournalState extends State<JournalEntriesScreen> {
   );
 
   @override
-  Widget build(BuildContext context) => DesktopPageLayout(
-    child: BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
+  Widget build(BuildContext context) => BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
       builder: (context, state) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          ManagementPageHeader(
+          FinancePageHeader(
             title: 'القيود المحاسبية',
             subtitle:
                 'القيود المُرحّلة لا تُعدّل؛ تصحيحها يكون بعكسها مع الاحتفاظ بالسجل.',
@@ -107,6 +106,7 @@ class _JournalState extends State<JournalEntriesScreen> {
                 width: 150,
                 child: DropdownButtonFormField<int?>(
                   initialValue: _branch,
+                  isExpanded: true,
                   hint: const Text('كل الفروع'),
                   items: <DropdownMenuItem<int?>>[
                     const DropdownMenuItem(
@@ -149,8 +149,7 @@ class _JournalState extends State<JournalEntriesScreen> {
           Expanded(child: _content(state)),
         ],
       ),
-    ),
-  );
+    );
 
   Widget _content(FinanceSetupState state) {
     if (state.isLoading && state.entries.isEmpty) {
@@ -245,6 +244,7 @@ class _JournalState extends State<JournalEntriesScreen> {
     width: 150,
     child: DropdownButtonFormField<String?>(
       initialValue: value,
+      isExpanded: true,
       hint: Text(hint),
       items: values
           .map(

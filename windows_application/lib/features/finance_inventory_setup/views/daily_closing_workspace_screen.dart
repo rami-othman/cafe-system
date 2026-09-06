@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
+import '../../../app/localization/localization_extensions.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
@@ -104,12 +104,7 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'الإغلاق اليومي',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'الإغلاق اليومي',
         subtitle: 'تفاصيل إغلاق اليوم التشغيلي',
         showContext: false,
@@ -121,9 +116,7 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_loading) return const FinanceLoadingState(label: 'جارٍ تحميل الإغلاق اليومي…');
@@ -143,7 +136,12 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
           FinanceEntityHeader(
             title: detail.businessDate,
             reference: '${detail.branchName} · ${detail.reference}',
-            actions: <Widget>[FinanceStatusBadgeCustom(label: dailyClosingReadinessLabel(state), tone: dailyClosingReadinessTone(state))],
+            actions: <Widget>[
+              FinanceStatusBadgeCustom(
+                label: dailyClosingReadinessLabel(context.l10n, state),
+                tone: dailyClosingReadinessTone(state),
+              ),
+            ],
           ),
           const SizedBox(height: FinanceSpace.lg),
           FinanceKpiGrid(
@@ -421,7 +419,12 @@ class _IssueRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Expanded(child: Text('• ${dailyClosingIssueLabel(issue)}', style: FinanceText.small)),
+          Expanded(
+            child: Text(
+              '• ${dailyClosingIssueLabel(context.l10n, issue)}',
+              style: FinanceText.small,
+            ),
+          ),
           if (route != null)
             TextButton(onPressed: () => onNavigate(route), child: const Text('عرض')),
         ],

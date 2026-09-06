@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_report_models.dart';
@@ -239,12 +238,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'التقارير المالية',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'التقارير المالية',
         subtitle: 'تقارير مالية تفصيلية مع تتبع كامل للحسابات والمصادر',
         showContext: false,
@@ -269,9 +263,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
             return _buildBody();
           },
         ),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() => SingleChildScrollView(
     child: Column(

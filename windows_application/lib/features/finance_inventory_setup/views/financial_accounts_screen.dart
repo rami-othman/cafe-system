@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../controllers/finance_setup_state.dart';
 import '../models/finance_setup_models.dart';
+import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 
 class FinancialAccountsScreen extends StatefulWidget {
@@ -47,17 +47,16 @@ class _AccountsState extends State<FinancialAccountsScreen> {
   );
 
   @override
-  Widget build(BuildContext context) => DesktopPageLayout(
-    child: widget.accountId == null
-        ? BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
-            builder: (context, state) {
-              final accounts = state.accounts;
-              final active = accounts.where((a) => a.isActive).length;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  ManagementPageHeader(
-                    title: 'دليل الحسابات',
+  Widget build(BuildContext context) => widget.accountId == null
+      ? BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
+          builder: (context, state) {
+            final accounts = state.accounts;
+            final active = accounts.where((a) => a.isActive).length;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                FinancePageHeader(
+                  title: 'دليل الحسابات',
                     subtitle:
                         'إدارة الحسابات الأساسية والهيكل المحاسبي ضمن نطاق المنشأة.',
                     actions: <Widget>[
@@ -159,8 +158,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
               );
             },
           )
-        : _accountDetail(),
-  );
+      : _accountDetail();
 
   Widget _accountDetail() => FutureBuilder<FinancialAccount>(
     future: _detailFuture,
@@ -325,7 +323,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     cells: <DataCell>[
       DataCell(
         Text(a.code),
-        onTap: () => context.go('/finance/accounts/${a.id}'),
+        onTap: () => context.go(AppRoutes.financeAccountDetailPath(a.id)),
       ),
       DataCell(
         Padding(
@@ -366,7 +364,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
             ],
           ),
         ),
-        onTap: () => context.go('/finance/accounts/${a.id}'),
+        onTap: () => context.go(AppRoutes.financeAccountDetailPath(a.id)),
       ),
       DataCell(Text(_groupLabel(a.accountGroup))),
       DataCell(Text(a.normalBalance == 'debit' ? 'مدين' : 'دائن')),
@@ -419,6 +417,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     width: 170,
     child: DropdownButtonFormField<String?>(
       initialValue: value,
+      isExpanded: true,
       hint: Text(hint),
       items: values
           .map(

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
@@ -126,12 +125,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
       .toList(growable: false);
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'الموردون والمستحقات',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'الموردون والمستحقات',
         subtitle: 'ملف المورد وحركاته المالية',
         showContext: false,
@@ -143,9 +137,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_loading) {

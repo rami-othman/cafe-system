@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
+import '../../../app/localization/localization_extensions.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
@@ -151,12 +151,7 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'الإغلاق اليومي',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'الإغلاق اليومي',
         subtitle: 'سجل الإغلاقات اليومية لكل فرع مع حالة التسوية والجاهزية',
         showContext: false,
@@ -173,9 +168,7 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_pageData == null && _error == null) {
@@ -383,7 +376,7 @@ class _DailyClosingTable extends StatelessWidget {
         Container(
           alignment: AlignmentDirectional.centerStart,
           child: FinanceStatusBadgeCustom(
-            label: dailyClosingReadinessLabel(state),
+            label: dailyClosingReadinessLabel(context.l10n, state),
             tone: dailyClosingReadinessTone(state),
           ),
         ),

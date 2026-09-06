@@ -199,7 +199,7 @@ String _labelFor(BuildContext context, String id) {
     'discounts' => l10n.navigationDiscounts,
     'menuManagement' => l10n.navigationMenuManagement,
     'inventory' => l10n.navigationInventory,
-    'finance' => 'Finance',
+    'finance' => l10n.navigationFinance,
     'reports' => l10n.navigationReports,
     _ => l10n.commonUnknown,
   };

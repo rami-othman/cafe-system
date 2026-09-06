@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import 'finance_components.dart';
 import 'finance_design.dart';
@@ -148,6 +149,7 @@ class _FinanceJournalDrawerBodyState extends State<FinanceJournalDrawerBody> {
                     children: <Widget>[
                       FinanceEntityHeader(
                         title: FinanceTransactionType.label(
+                          context.l10n,
                           source['normalizedType'] as String?,
                         ),
                         reference: '${detail['reference'] ?? ''}',

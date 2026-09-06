@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
+import 'localization/localization_extensions.dart';
 import 'menu_management_route_locations.dart';
 
 import '../core/services/service_locator.dart';
@@ -17,19 +18,25 @@ import '../features/pos/controllers/pos_state.dart';
 import '../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../features/pos/views/pos_screen.dart';
 import '../features/pos/widgets/pos_cart_panel.dart';
-import '../features/reports/controllers/daily_report_cubit.dart';
-import '../features/reports/views/daily_operational_report_screen.dart';
+import '../features/reports/controllers/reports_overview_cubit.dart';
+import '../features/reports/views/reports_overview_screen.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
 import '../features/finance_inventory_setup/views/daily_closing_screen.dart';
 import '../features/finance_inventory_setup/views/daily_closing_workspace_screen.dart';
 import '../features/finance_inventory_setup/views/expense_categories_screen.dart';
 import '../features/finance_inventory_setup/views/expenses_screen.dart';
-import '../features/finance_inventory_setup/views/finance_home_screen.dart';
 import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen.dart';
 import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
+import '../features/finance_inventory_setup/views/finance_operations_screen.dart';
+import '../features/finance_inventory_setup/views/finance_overview.dart';
+import '../features/finance_inventory_setup/views/finance_transactions.dart';
 import '../features/finance_inventory_setup/views/financial_reports_screen.dart';
 import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
+import '../features/finance_inventory_setup/widgets/finance_module_shell.dart';
+import '../features/finance_inventory_setup/widgets/finance_navigation_bar.dart'
+    show financeSectionLabel;
+import '../features/finance_inventory_setup/repositories/finance_setup_repository.dart';
 import '../features/finance_inventory_setup/views/payment_methods_screen.dart';
 import '../features/finance_inventory_setup/views/reconciliation_screen.dart';
 import '../features/finance_inventory_setup/views/reconciliation_workspace_screen.dart';
@@ -126,10 +133,11 @@ final GoRouter appRouter = GoRouter(
           AppRoutes.menuManagement,
         );
         final bool isReports = state.matchedLocation == AppRoutes.reports;
+        final bool isFinance = state.uri.path.startsWith(AppRoutes.finance);
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
-          topBar: _topBarFor(state),
+          topBar: _topBarFor(context, state),
           onRefresh: state.uri.path == AppRoutes.pos || isReports
               ? _refreshActionFor(state)
               : null,
@@ -149,12 +157,25 @@ final GoRouter appRouter = GoRouter(
                   ),
                   child: child,
                 )
+              : isFinance
+              ? FinanceModuleShell(
+                  currentSection: financeSectionLabel(
+                    context.l10n,
+                    _financeActiveTabFor(state.uri.path),
+                  ),
+                  selectedTab: _financeActiveTabFor(state.uri.path),
+                  child: child,
+                )
               : child,
         );
 
         // The shell keeps only session-wide POS transaction state alive. Every
         // mutable administrative feature is provided by its route below, so an
-        // unvisited module cannot issue a background request.
+        // unvisited module cannot issue a background request. This list must
+        // stay a fixed length: a conditional entry here previously caused the
+        // MultiBlocProvider's nested element chain to reshape on navigation,
+        // which could leave a BlocBuilder below querying its provider before
+        // the new chain finished mounting (ProviderNotFoundException).
         return MultiBlocProvider(
           providers: <BlocProvider<dynamic>>[
             BlocProvider<PosCubit>(
@@ -163,13 +184,6 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<PosMenuSyncCubit>(
               create: (_) => serviceLocator<PosMenuSyncCubit>(),
             ),
-            if (isReports)
-              BlocProvider<DailyReportCubit>(
-                create: (BuildContext context) =>
-                    serviceLocator<DailyReportCubit>()..loadReport(
-                      branchId: context.read<PosCubit>().state.branchId,
-                    ),
-              ),
           ],
           child: shell,
         );
@@ -966,8 +980,32 @@ final GoRouter appRouter = GoRouter(
           name: AppRouteNames.finance,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
-            child: const FinanceHomeScreen(),
+            child: FinanceOverview.fromRepository(
+              serviceLocator<FinanceSetupRepository>(),
+            ),
           ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeTransactions,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: FinanceTransactionsView.fromRepository(
+              serviceLocator<FinanceSetupRepository>(),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountDetail,
+          builder: (context, state) {
+            final int? accountId = parsePositiveRouteId(
+              state.pathParameters['accountId'],
+            );
+            if (accountId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<FinanceSetupCubit>(
+              create: (_) => serviceLocator<FinanceSetupCubit>(),
+              child: FinancialAccountsScreen(accountId: accountId),
+            );
+          },
         ),
         GoRoute(
           path: AppRoutes.financeAccountsCanonical,
@@ -977,11 +1015,42 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.financeJournalEntryDetail,
+          builder: (context, state) {
+            final int? entryId = parsePositiveRouteId(
+              state.pathParameters['entryId'],
+            );
+            if (entryId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<FinanceSetupCubit>(
+              create: (_) => serviceLocator<FinanceSetupCubit>(),
+              child: JournalEntriesScreen(initialEntryId: entryId),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.financeJournalEntriesCanonical,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
             child: const JournalEntriesScreen(),
           ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountingPeriodDetail,
+          builder: (context, state) {
+            final int? periodId = parsePositiveRouteId(
+              state.pathParameters['periodId'],
+            );
+            if (periodId == null) return const _InvalidCatalogRouteScreen();
+            return FinanceOperationScreen(
+              kind: FinanceOperationKind.period,
+              id: periodId,
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeAccountingPeriods,
+          builder: (context, state) =>
+              const FinanceOperationScreen(kind: FinanceOperationKind.period),
         ),
         GoRoute(
           path: AppRoutes.financeCashBanks,
@@ -1109,7 +1178,11 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
-          builder: (context, state) => const _BranchFollowingReport(),
+          builder: (context, state) => BlocProvider<ReportsOverviewCubit>(
+            create: (_) => serviceLocator<ReportsOverviewCubit>()
+              ..selectBranch(context.read<PosCubit>().state.branchId),
+            child: const _BranchFollowingReport(),
+          ),
         ),
         GoRoute(
           path: AppRoutes.discounts,
@@ -1179,9 +1252,9 @@ class _BranchFollowingReport extends StatelessWidget {
     listenWhen: (PosState previous, PosState current) =>
         previous.branchId != current.branchId,
     listener: (BuildContext context, PosState state) {
-      context.read<DailyReportCubit>().loadReport(branchId: state.branchId);
+      context.read<ReportsOverviewCubit>().selectBranch(state.branchId);
     },
-    child: const DailyOperationalReportScreen(),
+    child: const ReportsOverviewScreen(),
   );
 }
 
@@ -1192,7 +1265,25 @@ Widget? _rightPanelFor(GoRouterState state) {
   };
 }
 
-Widget? _topBarFor(GoRouterState state) {
+Widget? _topBarFor(BuildContext context, GoRouterState state) {
+  // Finance owns its module-level chrome (FinanceModuleShell: breadcrumb,
+  // notifications/profile, FinanceNavigationBar) — it must never inherit the
+  // POS-oriented default AppTopBar (branch tabs, ShiftStatusBadge).
+  if (state.uri.path.startsWith(AppRoutes.finance)) {
+    return const SizedBox.shrink();
+  }
+  // Reports has its own branch selector inside ReportsOverviewScreen and no
+  // shift context — it must not show POS branch tabs or ShiftStatusBadge,
+  // just the module label, reusing the exact same shell chrome as the rest
+  // of the app (same height/style, no bespoke "sub-app" look).
+  if (state.matchedLocation == AppRoutes.reports) {
+    return AppTopBar(
+      showOperationalBranchTabs: false,
+      showShiftStatus: false,
+      contextTitle: context.l10n.navigationReports,
+      onRefresh: _refreshActionFor(state),
+    );
+  }
   if (!state.uri.path.startsWith(AppRoutes.menuManagement)) return null;
   return AppTopBar(
     showOperationalBranchTabs: false,
@@ -1200,6 +1291,31 @@ Widget? _topBarFor(GoRouterState state) {
     // route-local refresh controls, so the shell-level button must not read a
     // provider outside its BuildContext.
   );
+}
+
+String _financeActiveTabFor(String path) {
+  if (path == AppRoutes.finance) return 'overview';
+  if (path.startsWith(AppRoutes.financeTransactions)) return 'transactions';
+  if (path.startsWith(AppRoutes.financeCashBanks)) return 'cashbanks';
+  if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
+  if (path.startsWith(AppRoutes.financeExpenses)) return 'expenses';
+  if (path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
+  if (path.startsWith(AppRoutes.financeReconciliationCanonical)) {
+    return 'reconciliation';
+  }
+  if (path.startsWith(AppRoutes.financeJournalEntriesCanonical)) {
+    return 'journals';
+  }
+  if (path.startsWith(AppRoutes.financeDailyClosingCanonical)) {
+    return 'closing';
+  }
+  if (path.startsWith(AppRoutes.financeReportsCanonical)) return 'reports';
+  if (path.startsWith(AppRoutes.financeAccountsCanonical)) return 'accounts';
+  if (path.startsWith(AppRoutes.financeAccountingPeriods)) return 'periods';
+  if (path.startsWith(AppRoutes.financePaymentMethods)) return 'settings';
+  if (path.startsWith(AppRoutes.financeWarehouses)) return 'settings';
+  if (path.startsWith(AppRoutes.financeSettings)) return 'settings';
+  return 'overview';
 }
 
 Future<void> Function(BuildContext context)? _refreshActionFor(
@@ -1221,9 +1337,7 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>
-      (BuildContext context) => context.read<DailyReportCubit>().loadReport(
-        branchId: context.read<PosCubit>().state.branchId,
-      ),
+      (BuildContext context) => context.read<ReportsOverviewCubit>().load(),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
     AppRoutes.menuManagementProducts =>
@@ -1346,10 +1460,24 @@ abstract final class AppRoutes {
       '/inventory/transfers/$transferId';
   static String barCheckTemplatePath(int templateId) =>
       '/inventory/bar-check-templates/$templateId';
+  static String financeAccountDetailPath(int accountId) =>
+      '/finance/accounts/$accountId';
+  static String financeJournalEntryDetailPath(int entryId) =>
+      '/finance/journal-entries/$entryId';
+  static String financeAccountingPeriodDetailPath(int periodId) =>
+      '/finance/accounting-periods/$periodId';
 
+  static const String financeTransactions = '/finance/transactions';
   static const String financeAccountsCanonical = '/finance/accounts';
+  static const String financeAccountDetail = '/finance/accounts/:accountId';
   static const String financeJournalEntriesCanonical =
       '/finance/journal-entries';
+  static const String financeJournalEntryDetail =
+      '/finance/journal-entries/:entryId';
+  static const String financeAccountingPeriods =
+      '/finance/accounting-periods';
+  static const String financeAccountingPeriodDetail =
+      '/finance/accounting-periods/:periodId';
   static const String financeCashBanks = '/finance/cash-banks';
   static const String financePaymentMethods = '/finance/payment-methods';
   static const String financeExpenses = '/finance/expenses';

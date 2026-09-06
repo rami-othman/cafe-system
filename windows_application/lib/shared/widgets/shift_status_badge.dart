@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/localization/localization_extensions.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
@@ -16,7 +17,9 @@ class ShiftStatusBadge extends StatelessWidget {
     final Color statusColor = isOpen
         ? AppColors.success
         : AppColors.textSecondary;
-    final String statusLabel = isOpen ? 'SHIFT OPEN' : 'SHIFT CLOSED';
+    final String statusLabel = isOpen
+        ? context.l10n.shiftStatusOpen
+        : context.l10n.shiftStatusClosed;
 
     return Container(
       padding: const EdgeInsets.symmetric(

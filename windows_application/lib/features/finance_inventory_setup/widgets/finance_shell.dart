@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import 'finance_design.dart';
+import 'finance_period.dart';
 
-/// Finance-only page frame. Navigation remains owned by [FinanceNavigationBar]
-/// in the application shell, so there is no duplicate local navigation.
+/// Per-page Finance header (title/subtitle/actions + optional global
+/// context bar). Module-level chrome (notifications/profile breadcrumb and
+/// [FinanceNavigationBar]) is owned once by `FinanceModuleShell`, mounted by
+/// the router — this widget must never duplicate that chrome, only page
+/// content, so each Finance screen calls it exactly once.
 class FinanceShell extends StatelessWidget {
   const FinanceShell({
     super.key,
-    required this.currentSection,
     required this.child,
     this.showContext = false,
     this.title = 'المالية',
     this.subtitle = 'مساحة عمل موحّدة لكل شاشات المالية',
     this.actions = const <Widget>[],
   });
-  final String currentSection;
   final String title;
   final String subtitle;
   final Widget child;
@@ -22,62 +25,31 @@ class FinanceShell extends StatelessWidget {
   final List<Widget> actions;
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: ColoredBox(
-      color: FinanceColors.workspace,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          FinanceSpace.pageX,
-          FinanceSpace.xl,
-          FinanceSpace.pageX,
-          28,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(
-                  child: Text(
-                    'المالية / $currentSection',
-                    style: FinanceText.small,
-                  ),
-                ),
-                const Icon(
-                  Icons.notifications_none,
-                  color: FinanceColors.primary,
-                ),
-                const SizedBox(width: FinanceSpace.md),
-                const Icon(Icons.person_outline, color: FinanceColors.primary),
+                Text(title, style: FinanceText.title),
+                const SizedBox(height: 4),
+                Text(subtitle, style: FinanceText.subtitle),
               ],
             ),
-            const SizedBox(height: FinanceSpace.xl),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(title, style: FinanceText.title),
-                      const SizedBox(height: 4),
-                      Text(subtitle, style: FinanceText.subtitle),
-                    ],
-                  ),
-                ),
-                ...actions,
-              ],
-            ),
-            if (showContext) ...<Widget>[
-              const SizedBox(height: FinanceSpace.lg),
-              const FinanceGlobalContext(),
-            ],
-            const SizedBox(height: FinanceSpace.lg),
-            Expanded(child: child),
-          ],
-        ),
+          ),
+          ...actions,
+        ],
       ),
-    ),
+      if (showContext) ...<Widget>[
+        const SizedBox(height: FinanceSpace.lg),
+        const FinanceGlobalContext(),
+      ],
+      const SizedBox(height: FinanceSpace.lg),
+      Expanded(child: child),
+    ],
   );
 }
 
@@ -93,7 +65,7 @@ class FinanceBranchOption {
 class FinanceGlobalContext extends StatelessWidget {
   const FinanceGlobalContext({
     super.key,
-    this.selectedPeriod = 'هذا الشهر',
+    this.selectedPeriod = FinancePeriod.thisMonth,
     this.onPeriod,
     this.branches = const <FinanceBranchOption>[],
     this.selectedBranchId,
@@ -130,10 +102,15 @@ class FinanceGlobalContext extends StatelessWidget {
       runSpacing: FinanceSpace.sm,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: <Widget>[
-        const Text('السياق العام', style: FinanceText.label),
-        ...<String>['اليوم', 'هذا الأسبوع', 'هذا الشهر', 'مخصص'].map(
+        Text(context.l10n.financeGlobalContextTitle, style: FinanceText.label),
+        ...<String>[
+          FinancePeriod.today,
+          FinancePeriod.thisWeek,
+          FinancePeriod.thisMonth,
+          FinancePeriod.custom,
+        ].map(
           (String value) => _ContextButton(
-            label: value,
+            label: FinancePeriod.label(context.l10n, value),
             selected: selectedPeriod == value,
             onTap: onPeriod == null ? null : () => onPeriod!(value),
           ),
@@ -162,14 +139,18 @@ class FinanceGlobalContext extends StatelessWidget {
                     : (int? id) =>
                           onBranch!(id == null || id == -1 ? null : id),
                 items: <DropdownMenuItem<int>>[
-                  const DropdownMenuItem<int>(
+                  DropdownMenuItem<int>(
                     value: -1,
-                    child: Text('الفرع: كل الفروع'),
+                    child: Text(context.l10n.financeGlobalContextBranchAll),
                   ),
                   ...branches.map(
                     (FinanceBranchOption branch) => DropdownMenuItem<int>(
                       value: branch.id,
-                      child: Text('الفرع: ${branch.name}'),
+                      child: Text(
+                        context.l10n.financeGlobalContextBranchNamed(
+                          branch.name,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -182,9 +163,9 @@ class FinanceGlobalContext extends StatelessWidget {
             onChanged: onCompareChanged,
             activeThumbColor: FinanceColors.primary,
           ),
-          const Text(
-            'مقارنة بالفترة السابقة',
-            style: TextStyle(
+          Text(
+            context.l10n.reportsOverviewComparePrevious,
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: FinanceColors.textSecondary,

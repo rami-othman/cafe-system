@@ -239,7 +239,7 @@ void main() {
             path: '/finance',
             builder: (_, _) => Scaffold(
               body: FinanceShell(
-                currentSection: 'الحركات المالية',
+                title: 'الحركات المالية',
                 child: view(loader: (_) async => _payload()),
               ),
             ),
@@ -315,7 +315,7 @@ void main() {
       await tester.pumpWidget(
         app(
           FinanceShell(
-            currentSection: 'الحركات المالية',
+            title: 'الحركات المالية',
             child: view(loader: (_) async => _payload()),
           ),
         ),

@@ -12,14 +12,12 @@ class ReportsOverviewState extends Equatable {
     this.branchId,
     this.comparePrevious = true,
     this.data,
-    this.errorMessage,
   });
   final ReportsOverviewStatus status;
   final DateTimeRange? range;
   final int? branchId;
   final bool comparePrevious;
   final ReportsOverview? data;
-  final String? errorMessage;
   ReportsOverviewState copyWith({
     ReportsOverviewStatus? status,
     DateTimeRange? range,
@@ -27,15 +25,12 @@ class ReportsOverviewState extends Equatable {
     bool clearBranch = false,
     bool? comparePrevious,
     ReportsOverview? data,
-    String? errorMessage,
-    bool clearError = false,
   }) => ReportsOverviewState(
     status: status ?? this.status,
     range: range ?? this.range,
     branchId: clearBranch ? null : branchId ?? this.branchId,
     comparePrevious: comparePrevious ?? this.comparePrevious,
     data: data ?? this.data,
-    errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
   );
   @override
   List<Object?> get props => <Object?>[
@@ -44,6 +39,5 @@ class ReportsOverviewState extends Equatable {
     branchId,
     comparePrevious,
     data,
-    errorMessage,
   ];
 }

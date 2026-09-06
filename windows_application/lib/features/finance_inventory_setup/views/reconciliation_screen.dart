@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
@@ -139,12 +138,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'التسويات',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'التسويات',
         subtitle: 'مطابقة الحركات في النظام مع كشوف الحسابات والنقدية الفعلية',
         showContext: false,
@@ -161,9 +155,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen> {
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_pageData == null && _error == null) {

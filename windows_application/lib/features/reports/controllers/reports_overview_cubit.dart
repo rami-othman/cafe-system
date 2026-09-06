@@ -19,11 +19,7 @@ class ReportsOverviewCubit extends Cubit<ReportsOverviewState> {
           end: now,
         );
     emit(
-      state.copyWith(
-        status: ReportsOverviewStatus.loading,
-        range: range,
-        clearError: true,
-      ),
+      state.copyWith(status: ReportsOverviewStatus.loading, range: range),
     );
     try {
       final data = await repository.getOverview(
@@ -34,12 +30,7 @@ class ReportsOverviewCubit extends Cubit<ReportsOverviewState> {
       );
       emit(state.copyWith(status: ReportsOverviewStatus.loaded, data: data));
     } catch (error) {
-      emit(
-        state.copyWith(
-          status: ReportsOverviewStatus.error,
-          errorMessage: error.toString(),
-        ),
-      );
+      emit(state.copyWith(status: ReportsOverviewStatus.error));
     }
   }
 

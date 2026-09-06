@@ -1,48 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/localization/localization_extensions.dart';
+import '../../../l10n/app_localizations.dart';
 import 'finance_design.dart';
 
 /// The only Finance tab bar. It is installed by the application shell, so
 /// Finance screens do not create competing local navigation.
+///
+/// Tab order and active-tab matching are driven by [_FinanceDestination.id]
+/// (a stable route identifier), never by the localized [label] text, so
+/// switching languages at runtime cannot desynchronize the selected tab.
 class FinanceNavigationBar extends StatelessWidget {
   const FinanceNavigationBar({super.key, required this.selected});
 
   final String selected;
 
   static const List<_FinanceDestination> _destinations = <_FinanceDestination>[
-    _FinanceDestination('overview', 'نظرة عامة', '/finance'),
-    _FinanceDestination(
-      'transactions',
-      'الحركات المالية',
-      '/finance?tab=transactions',
-    ),
-    _FinanceDestination('cashbanks', 'النقدية والبنوك', '/finance/cash-banks'),
-    _FinanceDestination('expenses', 'المصروفات', '/finance/expenses'),
-    _FinanceDestination(
-      'suppliers',
-      'الموردون والمستحقات',
-      '/finance/suppliers',
-    ),
-    _FinanceDestination(
-      'reconciliation',
-      'التسويات',
-      '/finance/reconciliation',
-    ),
-    _FinanceDestination(
-      'journals',
-      'القيود المحاسبية',
-      '/finance/journal-entries',
-    ),
-    _FinanceDestination('closing', 'الإغلاق اليومي', '/finance/daily-closing'),
-    _FinanceDestination('reports', 'التقارير المالية', '/finance/reports'),
-    _FinanceDestination('accounts', 'الحسابات', '/finance/accounts'),
-    _FinanceDestination(
-      'periods',
-      'الفترات المالية',
-      '/finance/accounting-periods',
-    ),
-    _FinanceDestination('settings', 'الإعدادات', '/finance/settings'),
+    _FinanceDestination('overview', '/finance'),
+    _FinanceDestination('transactions', '/finance/transactions'),
+    _FinanceDestination('cashbanks', '/finance/cash-banks'),
+    _FinanceDestination('expenses', '/finance/expenses'),
+    _FinanceDestination('suppliers', '/finance/suppliers'),
+    _FinanceDestination('reconciliation', '/finance/reconciliation'),
+    _FinanceDestination('journals', '/finance/journal-entries'),
+    _FinanceDestination('closing', '/finance/daily-closing'),
+    _FinanceDestination('reports', '/finance/reports'),
+    _FinanceDestination('accounts', '/finance/accounts'),
+    _FinanceDestination('periods', '/finance/accounting-periods'),
+    _FinanceDestination('settings', '/finance/settings'),
   ];
 
   @override
@@ -59,7 +45,6 @@ class FinanceNavigationBar extends StatelessWidget {
         vertical: 8,
       ),
       child: Row(
-        textDirection: TextDirection.rtl,
         children: _destinations
             .map(
               (_FinanceDestination destination) => Padding(
@@ -79,11 +64,26 @@ class FinanceNavigationBar extends StatelessWidget {
 }
 
 class _FinanceDestination {
-  const _FinanceDestination(this.id, this.label, this.path);
+  const _FinanceDestination(this.id, this.path);
   final String id;
-  final String label;
   final String path;
 }
+
+String financeSectionLabel(AppLocalizations l10n, String id) => switch (id) {
+  'overview' => l10n.financeSectionOverview,
+  'transactions' => l10n.financeSectionTransactions,
+  'cashbanks' => l10n.financeSectionCashBanks,
+  'expenses' => l10n.financeSectionExpenses,
+  'suppliers' => l10n.financeSectionSuppliers,
+  'reconciliation' => l10n.financeSectionReconciliation,
+  'journals' => l10n.financeSectionJournals,
+  'closing' => l10n.financeSectionClosing,
+  'reports' => l10n.financeSectionReports,
+  'accounts' => l10n.financeSectionAccounts,
+  'periods' => l10n.financeSectionPeriods,
+  'settings' => l10n.financeSectionSettings,
+  _ => l10n.financeSectionOverview,
+};
 
 class _FinanceNavigationItem extends StatelessWidget {
   const _FinanceNavigationItem({
@@ -112,7 +112,7 @@ class _FinanceNavigationItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(FinanceRadius.control),
         ),
         child: Text(
-          destination.label,
+          financeSectionLabel(context.l10n, destination.id),
           style: TextStyle(
             color: selected ? Colors.white : FinanceColors.primary,
             fontSize: 13,

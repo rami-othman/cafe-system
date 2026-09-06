@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
@@ -177,12 +176,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'الموردون والمستحقات',
+  Widget build(BuildContext context) => FinanceShell(
         title: 'الموردون والمستحقات',
         subtitle: 'رصيد المورد مستمد حصراً من الفواتير والدفعات المُرحّلة',
         showContext: false,
@@ -199,9 +193,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_pageData == null && _error == null) {

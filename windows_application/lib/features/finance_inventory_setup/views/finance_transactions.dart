@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
@@ -172,35 +173,41 @@ class _FinanceTransactionsViewState extends State<FinanceTransactionsView> {
     _dateFrom = DateTime(today.year, today.month);
     _dateTo = today;
     _load();
-    widget.branchesLoader().then((Map<String, dynamic> response) {
-      if (!mounted) return;
-      setState(
-        () => _branches = _list(response['branches'])
-            .map(
-              (Map<String, dynamic> row) => FinanceBranchOption(
-                id: _int(row['id']),
-                name: '${row['name'] ?? ''}',
-              ),
-            )
-            .toList(growable: false),
-      );
-    });
-    widget.accountsLoader().then((List<FinancialAccount> accounts) {
-      if (!mounted) return;
-      setState(
-        () => _accounts = accounts
-            .where((FinancialAccount account) => account.isActive)
-            .toList(growable: false),
-      );
-    });
-    widget.paymentMethodsLoader().then((List<PaymentMethodSetting> methods) {
-      if (!mounted) return;
-      setState(
-        () => _paymentMethods = methods
-            .where((PaymentMethodSetting method) => method.isActive)
-            .toList(growable: false),
-      );
-    });
+    widget.branchesLoader()
+        .then((Map<String, dynamic> response) {
+          if (!mounted) return;
+          setState(
+            () => _branches = _list(response['branches'])
+                .map(
+                  (Map<String, dynamic> row) => FinanceBranchOption(
+                    id: _int(row['id']),
+                    name: '${row['name'] ?? ''}',
+                  ),
+                )
+                .toList(growable: false),
+          );
+        })
+        .catchError((_) {});
+    widget.accountsLoader()
+        .then((List<FinancialAccount> accounts) {
+          if (!mounted) return;
+          setState(
+            () => _accounts = accounts
+                .where((FinancialAccount account) => account.isActive)
+                .toList(growable: false),
+          );
+        })
+        .catchError((_) {});
+    widget.paymentMethodsLoader()
+        .then((List<PaymentMethodSetting> methods) {
+          if (!mounted) return;
+          setState(
+            () => _paymentMethods = methods
+                .where((PaymentMethodSetting method) => method.isActive)
+                .toList(growable: false),
+          );
+        })
+        .catchError((_) {});
   }
 
   @override
@@ -537,7 +544,7 @@ class _FiltersBar extends StatelessWidget {
             .map(
               (String type) => DropdownMenuItem<String>(
                 value: type,
-                child: Text(FinanceTransactionType.label(type)),
+                child: Text(FinanceTransactionType.label(context.l10n, type)),
               ),
             )
             .toList(),
