@@ -10,7 +10,7 @@ class BranchAccessService
 {
     public function canAccessBranch(User $user, Branch $branch): bool
     {
-        if ((int) $user->tenant_id !== (int) $branch->tenant_id) {
+        if ((int) $user->tenant_id !== (int) $branch->tenant_id || $branch->trashed() || ! $branch->is_active) {
             return false;
         }
 
@@ -31,6 +31,7 @@ class BranchAccessService
         $branch = Branch::query()
             ->where('tenant_id', $user->tenant_id)
             ->whereNull('deleted_at')
+            ->where('is_active', true)
             ->find($branchId);
 
         abort_if(! $branch, 404, 'Branch not found.');
@@ -43,10 +44,10 @@ class BranchAccessService
     public function accessibleBranchIds(User $user): array
     {
         if ($user->isOwner()) {
-            return Branch::query()->where('tenant_id', $user->tenant_id)->whereNull('deleted_at')->pluck('id')->map(fn ($id) => (int) $id)->all();
+            return Branch::query()->where('tenant_id', $user->tenant_id)->whereNull('deleted_at')->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
 
-        return $user->branches()->whereNull('branches.deleted_at')->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
+        return $user->branches()->whereNull('branches.deleted_at')->where('branches.is_active', true)->pluck('branches.id')->map(fn ($id) => (int) $id)->all();
     }
 
     public function authorizeRequestBranch(Request $request, int $branchId): Branch

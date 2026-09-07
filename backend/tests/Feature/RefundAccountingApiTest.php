@@ -27,7 +27,8 @@ class RefundAccountingApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $orderId = $this->paidCashOrder($tenant, $headers, quantity: 2);
-        $paidTotal = (float) DB::table('orders')->where('id', $orderId)->value('total');
+        $order = DB::table('orders')->where('id', $orderId)->first();
+        $paidTotal = (float) $order->total;
         $drawerId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
         $balanceBefore = (float) $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->json('data.location.balance');
 
@@ -39,13 +40,13 @@ class RefundAccountingApiTest extends TestCase
         $this->assertNotNull($entry);
         $this->assertSame('posted', $entry->status);
         $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $entry->id)->get();
-        $this->assertCount(2, $lines);
+        $this->assertCount((float) $order->tax_total > 0 ? 3 : 2, $lines);
         $this->assertSame(round($paidTotal, 2), round((float) $lines->sum('debit'), 2));
         $this->assertSame(round($paidTotal, 2), round((float) $lines->sum('credit'), 2));
 
         $salesReturnsId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '4020')->value('id');
         $cashAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->value('id');
-        $this->assertSame(round($paidTotal, 2), round((float) $lines->firstWhere('financial_account_id', $salesReturnsId)->debit, 2));
+        $this->assertSame(round($paidTotal - (float) $order->tax_total, 2), round((float) $lines->firstWhere('financial_account_id', $salesReturnsId)->debit, 2));
         $this->assertSame(round($paidTotal, 2), round((float) $lines->firstWhere('financial_account_id', $cashAccountId)->credit, 2));
 
         $balanceAfter = (float) $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->json('data.location.balance');
@@ -113,6 +114,26 @@ class RefundAccountingApiTest extends TestCase
         $this->assertSame(1, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'payment_refund')->where('source_id', $first->json('data.id'))->count());
     }
 
+    public function test_refund_reverses_tax_from_the_order_snapshot_without_restocking_inventory(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        DB::table('tenants')->where('id', $tenant)->update(['tax_rate' => '0.100000']);
+        $orderId = $this->paidCashOrder($tenant, $headers, quantity: 1);
+        $order = DB::table('orders')->where('id', $orderId)->first();
+
+        $refund = $this->postJson("/api/v1/orders/{$orderId}/refunds", ['type' => 'full', 'reason' => 'Tax snapshot refund', 'idempotencyKey' => 'refund-tax-snapshot'], $headers)->assertCreated();
+        $entry = DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'payment_refund')->where('source_id', $refund->json('data.id'))->sole();
+        $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $entry->id)->get();
+        $salesReturns = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '4020')->value('id');
+        $taxPayable = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '2010')->value('id');
+
+        $this->assertSame((float) $order->subtotal, (float) $lines->firstWhere('financial_account_id', $salesReturns)->debit);
+        $this->assertSame((float) $order->tax_total, (float) $lines->firstWhere('financial_account_id', $taxPayable)->debit);
+        $this->assertSame((float) $order->total, (float) $lines->sum('credit'));
+    }
+
     public function test_refund_never_returns_inventory_and_original_payment_history_stays_immutable(): void
     {
         $this->seed();
@@ -120,11 +141,11 @@ class RefundAccountingApiTest extends TestCase
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
 
+        $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
         $itemId = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'مكون اختبار الاسترجاع', 'nameEn' => 'Refund Test Ingredient', 'sku' => 'REFUND-TEST-'.uniqid(),
-            'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => '2.0000', 'isActive' => true,
+            'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => '2.0000', 'warehouseIds' => [$warehouseId], 'isActive' => true,
         ], $headers)->assertCreated()->json('data.id');
-        $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
         $this->postJson('/api/v1/inventory/movements', ['warehouseId' => $warehouseId, 'itemId' => $itemId, 'type' => 'stock_in', 'quantity' => '10.000', 'unitCost' => '2.0000', 'reason' => 'Opening'], $headers)->assertCreated();
 
         $productId = (int) DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Refund Test Product', 'price' => '10.00', 'cost_price' => 0, 'is_active' => true, 'is_stock_tracked' => true, 'inventory_controlled' => false, 'consumption_type' => 'bar', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
@@ -163,6 +184,8 @@ class RefundAccountingApiTest extends TestCase
         $paymentAfter = DB::table('payments')->where('order_id', $orderId)->first();
         $this->assertSame($paymentBefore->amount, $paymentAfter->amount);
         $this->assertSame($paymentBefore->status, $paymentAfter->status);
+        $this->assertSame('4.00', DB::table('orders')->where('id', $orderId)->value('cogs_total'));
+        $this->assertSame(1, DB::table('sale_consumptions')->where('order_id', $orderId)->count());
     }
 
     private function paidCashOrder(int $tenant, array $headers, int $quantity): int

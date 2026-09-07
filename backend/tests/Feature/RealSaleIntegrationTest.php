@@ -65,6 +65,27 @@ class RealSaleIntegrationTest extends TestCase
         $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->count());
     }
 
+    public function test_published_sale_rejects_a_material_not_assigned_to_its_branch_main_warehouse(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        DB::table('inventory_item_warehouses')
+            ->where('tenant_id', $scenario['tenant'])
+            ->where('inventory_item_id', $scenario['materialId'])
+            ->where('warehouse_id', $scenario['warehouseId'])
+            ->delete();
+
+        $this->postJson("/api/v1/orders/{$scenario['orderId']}/pay", [
+            'method' => 'cash',
+            'amount' => $scenario['total'],
+            'idempotencyKey' => 'phase-three-unassigned-material',
+        ], $scenario['headers'])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.warehouseId.0', 'The inventory item is not assigned to the selected warehouse.');
+
+        $this->assertSame('unpaid', DB::table('orders')->where('id', $scenario['orderId'])->value('payment_status'));
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $scenario['tenant'])->where('type', 'sale_consumption')->count());
+    }
+
     public function test_owner_cafe_configuration_branch_creation_provisions_one_main_warehouse_and_existing_branches_can_be_repaired_idempotently(): void
     {
         $context = $this->tenantContext();
@@ -123,7 +144,10 @@ class RealSaleIntegrationTest extends TestCase
         $branchId = (int) $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'Downtown', 'timezone' => 'Asia/Damascus'], $headers)->assertCreated()->json('data.id');
         $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")->value('id');
 
-        $materialId = (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'Phase Three Beans', 'nameEn' => 'Phase Three Beans', 'sku' => 'P3-BEANS', 'itemType' => 'raw_material', 'unit' => 'g', 'minimumStock' => '0.000', 'reorderLevel' => '0.000', 'latestUnitCost' => '0.0200', 'isActive' => true], $headers)->assertCreated()->json('data.id');
+        $materialId = (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'Phase Three Beans', 'nameEn' => 'Phase Three Beans', 'sku' => 'P3-BEANS', 'itemType' => 'raw_material', 'unit' => 'g', 'minimumStock' => '0.000', 'reorderLevel' => '0.000', 'latestUnitCost' => '0.0200', 'warehouseIds' => [$warehouseId], 'isActive' => true], $headers)
+            ->assertCreated()
+            ->assertJsonPath('data.warehouseIds.0', $warehouseId)
+            ->json('data.id');
         $this->postJson("/api/v1/inventory/items/{$materialId}/unit-conversions", ['sourceUnit' => 'kg', 'targetUnit' => 'g', 'factor' => '1000.000000', 'isActive' => true], $headers)->assertCreated();
         $this->postJson('/api/v1/inventory/movements', ['warehouseId' => $warehouseId, 'branchId' => $branchId, 'itemId' => $materialId, 'type' => 'stock_in', 'quantity' => $openingStock, 'unit' => 'g', 'unitCost' => '0.0200', 'idempotencyKey' => 'phase-three-opening-stock'], $headers)->assertCreated();
 

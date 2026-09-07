@@ -57,7 +57,7 @@ final class FinancialTransactionQueryService
         if (! empty($filters['dateTo'])) $query->whereDate('entries.entry_date', '<=', $filters['dateTo']);
         if (! empty($filters['branchId'])) {
             FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $filters['branchId']);
-            $query->where(fn (Builder $branches) => $branches->where('entries.branch_id', $filters['branchId'])->orWhereNull('entries.branch_id'));
+            $query->where('entries.branch_id', $filters['branchId']);
         }
         if (! empty($filters['status'])) $query->where('entries.status', $filters['status']);
         if (! empty($filters['sourceType'])) $this->filterSourceType($query, $filters['sourceType']);
@@ -87,7 +87,7 @@ final class FinancialTransactionQueryService
             ->select('entries.*', 'branches.name as branch_name', 'creators.name as creator_name', 'reversal_entries.id as reversal_entry_id', 'reversal_entries.entry_number as reversal_entry_number', 'original_entries.entry_number as original_entry_number');
         $role = DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role');
         if ($role !== 'owner') {
-            $branchIds = DB::table('user_branches')->where('tenant_id', $tenantId)->where('user_id', $actorId)->pluck('branch_id')->all();
+            $branchIds = FinancialActor::operationalBranchIds($actorId, $tenantId);
             $query->where(fn (Builder $scope) => $scope->whereNull('entries.branch_id')->orWhereIn('entries.branch_id', $branchIds ?: [-1]));
         }
         return $query;

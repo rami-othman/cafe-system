@@ -37,17 +37,10 @@ class InventoryItemController extends Controller
             )
             ->where('tenant_id', $tenant)
             ->groupBy('inventory_item_id');
-        $allowedBranches = InventoryAccess::allowedBranchIds($request);
-        if ($allowedBranches !== null) {
-            $stockTotals->whereIn('warehouse_id', function ($warehouses) use ($tenant, $allowedBranches): void {
-                $warehouses->select('id')->from('warehouses')->where('tenant_id', $tenant)->where(function ($scope) use ($allowedBranches): void {
-                    $scope->whereNull('branch_id');
-                    if ($allowedBranches !== []) {
-                        $scope->orWhereIn('branch_id', $allowedBranches);
-                    }
-                });
-            });
-        }
+        $stockTotals->whereIn('warehouse_id', function ($warehouses) use ($tenant, $request): void {
+            $warehouses->select('id')->from('warehouses')->where('tenant_id', $tenant);
+            InventoryAccess::scopeWarehouseBranches($warehouses, $request, 'branch_id');
+        });
         if ($warehouseId) {
             $stockTotals->where('warehouse_id', $warehouseId);
         }
@@ -151,7 +144,7 @@ class InventoryItemController extends Controller
         // Branch users obtain branch-filtered stock and movement details from
         // the dedicated endpoints below. Do not expose tenant-wide detail
         // aggregates from this catalogue endpoint.
-        $detail = InventoryAccess::allowedBranchIds($request) === null;
+        $detail = InventoryAccess::actor($request)->isOwner();
 
         return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $item), $detail)]);
     }

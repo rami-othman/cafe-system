@@ -4,12 +4,11 @@ namespace App\Domain\Inventory;
 
 use App\Support\InventoryDecimal;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 final class BarCheckTemplateService
 {
-    public function __construct(private readonly UnitConversionResolver $conversions) {}
+    public function __construct(private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments) {}
 
     /** @return array{warehouse: object, lines: array<int, array>} */
     public function validate(int $tenantId, int $branchId, int $warehouseId, array $lines, bool $requiredForShiftClose): array
@@ -21,7 +20,7 @@ final class BarCheckTemplateService
         foreach ($lines as $order => $line) {
             $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line['itemId'])->where('is_active', true)->whereNull('deleted_at')->first();
             if (! $item) throw ValidationException::withMessages(['lines' => 'The template contains an inactive inventory item.']);
-            if (Schema::hasTable('inventory_item_warehouses') && ! DB::table('inventory_item_warehouses')->where('tenant_id', $tenantId)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $item->id)->exists()) throw ValidationException::withMessages(['lines' => 'Every template item must be assigned to the selected warehouse.']);
+            $this->assignments->assertAssigned($tenantId, (int) $item->id, $warehouseId, 'lines');
             $tolerance = InventoryDecimal::units($line['tolerance'] ?? '0', 'lines');
             $type = $line['toleranceType'] ?? 'quantity';
             if ($type === 'percentage' && $tolerance > 100000) throw ValidationException::withMessages(['lines' => 'Percentage tolerance cannot exceed 100%.']);

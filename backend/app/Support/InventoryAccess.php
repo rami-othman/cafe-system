@@ -5,7 +5,6 @@ namespace App\Support;
 use App\Models\User;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -89,36 +88,25 @@ final class InventoryAccess
     }
 
     /**
-     * Null means the actor has tenant-wide branch access. An empty array means
-     * the actor is not assigned to any branch and must see no branch warehouse.
-     * Central (branch-less) warehouses remain accessible to tenant managers.
+     * An empty array means the actor is not assigned to an active branch.
      *
-     * @return list<int>|null
+     * @return list<int>
      */
-    public static function allowedBranchIds(Request $request): ?array
+    public static function allowedBranchIds(Request $request): array
     {
         $actor = self::actor($request);
-        if ($actor->effectiveRoleCode() === 'owner') {
-            return null;
-        }
-
-        return DB::table('user_branches')
-            ->where('tenant_id', $actor->tenant_id)
-            ->where('user_id', $actor->id)
-            ->pluck('branch_id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
+        return app(\App\Services\BranchAccessService::class)->accessibleBranchIds($actor);
     }
 
     public static function scopeWarehouseBranches(Builder $query, Request $request, string $branchColumn): void
     {
         $branchIds = self::allowedBranchIds($request);
-        if ($branchIds === null) {
-            return;
-        }
-
-        $query->where(function (Builder $warehouses) use ($branchColumn, $branchIds): void {
-            $warehouses->whereNull($branchColumn);
+        $query->where(function (Builder $warehouses) use ($branchColumn, $branchIds, $request): void {
+            if (self::canAccessCentralWarehouse($request)) {
+                $warehouses->whereNull($branchColumn);
+            } else {
+                $warehouses->whereRaw('1 = 0');
+            }
             if ($branchIds !== []) {
                 $warehouses->orWhereIn($branchColumn, $branchIds);
             }
@@ -127,13 +115,24 @@ final class InventoryAccess
 
     public static function assertBranchAccess(Request $request, ?int $branchId): void
     {
+        if ($branchId === null) {
+            if (self::canAccessCentralWarehouse($request)) {
+                return;
+            }
+
+            throw new HttpException(403, 'Central warehouses are not available to this user.');
+        }
+
         $branchIds = self::allowedBranchIds($request);
-        if ($branchIds === null || $branchId === null) {
+        if (in_array($branchId, $branchIds, true)) {
             return;
         }
 
-        if (! in_array($branchId, $branchIds, true)) {
-            throw new HttpException(403, 'The selected branch is not assigned to this user.');
-        }
+        throw new HttpException(403, 'The selected branch is not assigned to this user.');
+    }
+
+    private static function canAccessCentralWarehouse(Request $request): bool
+    {
+        return in_array(self::actor($request)->effectiveRoleCode(), ['owner', 'manager'], true);
     }
 }

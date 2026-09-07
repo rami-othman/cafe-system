@@ -3,8 +3,8 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\BranchAccessService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 final class FinancialActor
@@ -32,14 +32,22 @@ final class FinancialActor
             return;
         }
 
-        $actor = User::query()->with('tenantRole')->where('tenant_id', $tenantId)->find($actorId);
-        if ($actor?->effectiveRoleCode() === 'owner') {
-            return;
+        app(BranchAccessService::class)->authorize(self::user($actorId, $tenantId), $branchId);
+    }
+
+    /** @return list<int> */
+    public static function operationalBranchIds(int $actorId, int $tenantId): array
+    {
+        return app(BranchAccessService::class)->accessibleBranchIds(self::user($actorId, $tenantId));
+    }
+
+    private static function user(int $actorId, int $tenantId): User
+    {
+        $actor = User::query()->with('tenantRole')->where('tenant_id', $tenantId)->where('id', $actorId)->where('is_active', true)->first();
+        if (! $actor) {
+            throw new HttpException(403, 'The selected user is not allowed for this tenant.');
         }
 
-        $allowed = DB::table('user_branches')->where('tenant_id', $tenantId)->where('user_id', $actorId)->where('branch_id', $branchId)->exists();
-        if (! $allowed) {
-            throw new HttpException(403, 'The selected branch is not assigned to this user.');
-        }
+        return $actor;
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Support\FinanceAccess;
+use App\Services\BranchAccessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -43,6 +44,37 @@ final class Phase12AuthorizationApiTest extends TestCase
         $this->postJson('/api/v1/finance/settings/approval-rules', $payload, $headers)->assertUnprocessable()->assertJsonValidationErrors('approvalRule');
         $this->postJson('/api/v1/finance/settings/approval-rules', $payload + ['branchId' => $branch, 'maxAmount' => '200.00'], $headers)->assertCreated()->assertJsonPath('data.branchId', $branch);
         $this->assertDatabaseHas('activity_logs', ['tenant_id' => $tenant, 'action' => 'finance_approval_rule.created']);
+    }
+
+    public function test_operational_branch_access_uses_active_assignments_and_ignores_tenant_headers(): void
+    {
+        $this->seed();
+        [$tenant, $owner] = $this->tenantAndOwner();
+        $active = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Active scope', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $inactive = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Inactive scope', 'is_active' => false, 'created_at' => now(), 'updated_at' => now()]);
+        $manager = $this->user($tenant, 'manager');
+        $employee = $this->user($tenant, 'employee');
+        foreach ([$manager, $employee] as $user) {
+            DB::table('user_branches')->insert(['tenant_id' => $tenant, 'user_id' => $user, 'branch_id' => $active, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('user_branches')->insert(['tenant_id' => $tenant, 'user_id' => $user, 'branch_id' => $inactive, 'created_at' => now(), 'updated_at' => now()]);
+        }
+
+        $access = app(BranchAccessService::class);
+        $this->assertContains($active, $access->accessibleBranchIds(\App\Models\User::findOrFail($owner)));
+        $this->assertNotContains($inactive, $access->accessibleBranchIds(\App\Models\User::findOrFail($owner)));
+        $this->assertSame([$active], $access->accessibleBranchIds(\App\Models\User::findOrFail($manager)));
+        $this->assertSame([$active], $access->accessibleBranchIds(\App\Models\User::findOrFail($employee)));
+
+        try {
+            $access->authorize(\App\Models\User::findOrFail($owner), $inactive);
+            $this->fail('Inactive branches must not be operational.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+            $this->assertSame(404, $exception->getStatusCode());
+        }
+
+        $otherTenant = (int) DB::table('tenants')->insertGetId(['name' => 'Other tenant', 'slug' => 'phase12-other', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        $foreign = (int) DB::table('branches')->insertGetId(['tenant_id' => $otherTenant, 'name' => 'Foreign branch', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $this->getJson('/api/v1/warehouses?branchId='.$foreign, array_merge($this->headers($tenant, $manager), ['X-Tenant-Id' => $otherTenant]))->assertNotFound();
     }
 
     private function tenantAndOwner(): array { $tenant = (int) DB::table('tenants')->orderBy('id')->value('id'); return [$tenant, (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id')]; }

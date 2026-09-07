@@ -74,8 +74,8 @@ class SaleAccountingApiTest extends TestCase
 
         $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '7.000']]);
         // Deliberately conflicting deprecated data: never a publication fixture.
-        $legacy = DB::table('recipes')->insertGetId(['tenant_id' => $tenant, 'product_id' => $product, 'name' => 'Ignored legacy recipe', 'version' => 99, 'is_active' => true, 'yield_quantity' => 1, 'yield_unit' => 'piece', 'created_at' => now(), 'updated_at' => now()]);
-        DB::table('recipe_lines')->insert(['tenant_id' => $tenant, 'recipe_id' => $legacy, 'inventory_item_id' => $beans['itemId'], 'quantity' => '50.000', 'unit' => 'kg', 'line_number' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        $legacy = DB::table('recipes')->insertGetId(['tenant_id' => $tenant, 'product_id' => $product, 'name' => 'Ignored legacy recipe', 'version' => 99, 'is_active' => true, 'yield_quantity' => '999.000', 'yield_unit' => 'batch', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('recipe_lines')->insert(['tenant_id' => $tenant, 'recipe_id' => $legacy, 'inventory_item_id' => $beans['itemId'], 'quantity' => '50.000', 'unit' => 'kg', 'wastage_percentage' => '99.999', 'line_number' => 1, 'created_at' => now(), 'updated_at' => now()]);
         $new = $this->publishedSnapshot($tenant, $branch, [$product]);
         $this->assertNotSame((int) $versionId, $new['versionId']);
 
@@ -100,6 +100,8 @@ class SaleAccountingApiTest extends TestCase
         $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '100.000');
         $product = $this->stockTrackedProduct($tenant, name: 'Test Latte', price: '10.00');
         $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '2.000']]);
+        DB::table('products')->where('id', $product)->update(['cost_price' => '999.00']);
+        DB::table('product_variants')->where('tenant_id', $tenant)->where('product_id', $product)->update(['cost_price' => '777.00']);
 
         $order = $this->createOrder($tenant, $branchId, $headers, $product, quantity: 3);
         $orderId = $order->json('data.id');
@@ -385,7 +387,7 @@ class SaleAccountingApiTest extends TestCase
         $this->assertSame('unpaid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
     }
 
-    public function test_product_inventory_settings_warehouse_override_takes_precedence_over_the_branch_main_fallback(): void
+    public function test_branch_main_is_the_v1_sale_route_even_when_a_legacy_product_setting_exists(): void
     {
         $this->seed();
         $tenant = $this->demoTenantId();
@@ -393,7 +395,8 @@ class SaleAccountingApiTest extends TestCase
         $branchId = $this->downtownBranchId($tenant);
         $barWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-BAR")->value('id');
 
-        $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '20.000', warehouseId: $barWarehouseId);
+        $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
+        $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '20.000', warehouseId: $mainWarehouseId);
         $product = $this->stockTrackedProduct($tenant, name: 'Bar Routed Item', price: '9.00');
         $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '1.000']]);
         DB::table('product_inventory_settings')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'branch_id' => $branchId, 'warehouse_id' => $barWarehouseId, 'created_at' => now(), 'updated_at' => now()]);
@@ -404,7 +407,7 @@ class SaleAccountingApiTest extends TestCase
         $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-warehouse-override-1'], $headers)->assertOk();
 
         $movement = DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->where('inventory_item_id', $beans['itemId'])->first();
-        $this->assertSame($barWarehouseId, (int) $movement->warehouse_id);
+        $this->assertSame($mainWarehouseId, (int) $movement->warehouse_id);
     }
 
     public function test_card_payment_method_debits_its_own_configured_account_not_cash(): void
@@ -494,7 +497,7 @@ class SaleAccountingApiTest extends TestCase
         $warehouseId ??= (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
         $itemId = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'حبوب اختبار', 'nameEn' => 'Test Beans '.uniqid(), 'sku' => 'SALE-TEST-'.uniqid(),
-            'itemType' => 'raw_material', 'unit' => $unit, 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => $unitCost, 'isActive' => true,
+            'itemType' => 'raw_material', 'unit' => $unit, 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => $unitCost, 'warehouseIds' => [$warehouseId], 'isActive' => true,
         ], $headers)->assertCreated()->json('data.id');
 
         $this->postJson('/api/v1/inventory/movements', [

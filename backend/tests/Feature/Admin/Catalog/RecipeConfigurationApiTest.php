@@ -178,6 +178,22 @@ class RecipeConfigurationApiTest extends TestCase
         $this->assertSame(0, $summary['recipeComponentCount']);
     }
 
+    public function test_only_consumable_inventory_types_can_be_configured_as_recipe_materials(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('material-eligibility');
+        $headers = $this->headers($tenant);
+        $rawMaterial = $this->material($tenant, 'ELIGIBLE', 'kilogram');
+        $service = $this->material($tenant, 'SERVICE', 'kilogram', 'service');
+        $nonStock = $this->material($tenant, 'NON-STOCK', 'kilogram', 'non_stock_item');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $rawMaterial, 'quantity' => '1', 'unitCode' => 'kg']]], $headers)->assertOk();
+        foreach ([$service, $nonStock] as $itemId) {
+            $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $itemId, 'quantity' => '1', 'unitCode' => 'kg']]], $headers)
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('components');
+        }
+    }
+
     public function test_resolver_uses_exact_add_remove_quantity_and_group_constraints(): void
     {
         [$tenant, $product, $variant, $group, $shot] = $this->recipeContext('resolver');
@@ -346,9 +362,9 @@ class RecipeConfigurationApiTest extends TestCase
         return [$tenant, $product, $variant, $group, $option];
     }
 
-    private function material(int $tenant, string $sku, string $unit): int
+    private function material(int $tenant, string $sku, string $unit, string $itemType = 'other'): int
     {
-        return DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => $sku, 'sku' => $sku, 'unit' => $unit, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        return DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => $sku, 'sku' => $sku, 'item_type' => $itemType, 'unit' => $unit, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
     }
 
     private function tenant(string $slug): int

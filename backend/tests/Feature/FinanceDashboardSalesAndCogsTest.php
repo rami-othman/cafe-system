@@ -29,10 +29,38 @@ class FinanceDashboardSalesAndCogsTest extends TestCase
 
         $data = $this->getJson("/api/v1/finance/dashboard?date_from=$date&date_to=$date&branch_id=$branch", $headers)->assertOk()->json('data');
         $breakdown = $data['kpis']['netSales']['breakdown'];
-        $this->assertSame('105.00', $breakdown['grossSales']); // subtotal + tax + service
+        $this->assertSame('100.00', $breakdown['grossSales']); // Tax is a liability, not revenue.
         $this->assertSame('10.00', $breakdown['discounts']);
         $this->assertSame('0.00', $breakdown['refunds']);
-        $this->assertSame('95.00', $breakdown['netSales']);
+        $this->assertSame('5.00', $breakdown['tax']);
+        $this->assertSame('90.00', $breakdown['netSales']);
+    }
+
+    public function test_profitability_uses_persisted_tax_snapshots_not_the_current_tenant_rate(): void
+    {
+        $this->seed();
+        $tenant = $this->tenantId();
+        $headers = $this->headers($tenant, 'owner', 'sales-tax-snapshot');
+        $branch = $this->branchId($tenant);
+        $date = '2030-04-01';
+
+        $order = (int) DB::table('orders')->insertGetId([
+            'tenant_id' => $tenant, 'branch_id' => $branch, 'order_number' => 'TAX-SNAPSHOT', 'type' => 'takeaway',
+            'status' => 'closed', 'payment_status' => 'paid', 'subtotal' => '100.00', 'discount_total' => '10.00',
+            'tax_total' => '5.00', 'tax_rate' => '0.055556', 'service_total' => '0.00', 'total' => '95.00',
+            'cogs_total' => '40.00', 'closed_at' => $date.' 12:00:00', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $payment = $this->makePayment($tenant, $branch, $order, '95.00', $date.' 12:00:00');
+        $this->makeRefund($tenant, $branch, $order, $payment, '19.00', $date.' 13:00:00');
+        DB::table('tenants')->where('id', $tenant)->update(['tax_rate' => '0.990000']);
+
+        $data = $this->getJson("/api/v1/finance/dashboard?date_from=$date&date_to=$date&branch_id=$branch", $headers)->assertOk()->json('data');
+        $breakdown = $data['kpis']['netSales']['breakdown'];
+        $this->assertSame('18.00', $breakdown['refunds']);
+        $this->assertSame('4.00', $breakdown['tax']);
+        $this->assertSame('72.00', $breakdown['netSales']);
+        $this->assertSame('32.00', $data['kpis']['grossProfit']['current']);
+        $this->assertSame(44.44, (float) $data['kpis']['grossProfit']['marginPercentage']);
     }
 
     public function test_refund_and_partial_refund_reduce_net_sales_once(): void

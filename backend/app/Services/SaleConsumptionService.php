@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Domain\Inventory\InventoryPostingService;
+use App\Domain\Inventory\RecipeMaterialEligibility;
 use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\PublishedMenuVersion;
 use App\Support\InventoryDecimal;
@@ -89,7 +90,7 @@ class SaleConsumptionService
                 throw ValidationException::withMessages(['productId' => "The sold variant for product #{$product->id} has no recipe components in its published menu snapshot."]);
             }
 
-            $warehouseId = $this->resolveWarehouse($tenantId, $product->id, (int) $order->branch_id);
+            $warehouseId = $this->resolveWarehouse($tenantId, (int) $order->branch_id);
             if ($warehouseId === null) {
                 throw ValidationException::withMessages(['productId' => "Product \"{$product->name}\" (#{$product->id}) has no active warehouse configured for branch #{$order->branch_id}. Configure Product Inventory Settings or a main branch warehouse."]);
             }
@@ -235,13 +236,15 @@ class SaleConsumptionService
     /** @return array{quantity: int, baseUnit: string} */
     private function canonicalLine(int $tenantId, array $line): array
     {
-        if (is_string($line['canonicalQuantity'] ?? null) && is_string($line['baseUnit'] ?? null)) {
-            return ['quantity' => InventoryDecimal::units($line['canonicalQuantity']), 'baseUnit' => $line['baseUnit']];
-        }
-
         $material = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line['materialId'])->whereNull('deleted_at')->first();
         if (! $material) {
             throw ValidationException::withMessages(['productId' => 'A published recipe material is unavailable.']);
+        }
+        if (! RecipeMaterialEligibility::allows($material)) {
+            throw ValidationException::withMessages(['productId' => 'A published recipe material is ineligible for recipe consumption.']);
+        }
+        if (is_string($line['canonicalQuantity'] ?? null) && is_string($line['baseUnit'] ?? null)) {
+            return ['quantity' => InventoryDecimal::units($line['canonicalQuantity']), 'baseUnit' => $line['baseUnit']];
         }
 
         $canonical = $this->conversions->resolveRecipe($tenantId, $material, $line['quantity'], $line['unitCode']);
@@ -266,23 +269,12 @@ class SaleConsumptionService
 
     /**
      * Resolves which warehouse a product's inventory is consumed from for a
-     * given branch: an explicit product_inventory_settings mapping first,
-     * falling back to the branch's main warehouse (the same
-     * "BR-{branchId}-MAIN" convention FinancialSetupService already creates
-     * for every branch) — not a second, invented resolution scheme.
+     * given branch: the provisioned branch main warehouse. Product inventory
+     * settings are not yet a validated operational routing surface, so v1
+     * treats them as non-authoritative rather than inventing a second route.
      */
-    private function resolveWarehouse(int $tenantId, int $productId, int $branchId): ?int
+    private function resolveWarehouse(int $tenantId, int $branchId): ?int
     {
-        $configuredId = DB::table('product_inventory_settings')
-            ->where('tenant_id', $tenantId)->where('product_id', $productId)->where('branch_id', $branchId)
-            ->value('warehouse_id');
-
-        if ($configuredId !== null) {
-            $active = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $configuredId)->where('is_active', true)->whereNull('deleted_at')->exists();
-
-            return $active ? (int) $configuredId : null;
-        }
-
         $fallbackId = DB::table('warehouses')
             ->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")
             ->where('is_active', true)->whereNull('deleted_at')->value('id');

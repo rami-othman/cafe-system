@@ -19,6 +19,7 @@ final class InventoryPostingService
         private readonly OperationalAuditService $audit,
         private readonly UnitConversionResolver $conversions,
         private readonly InventoryAccountingMapper $accounting,
+        private readonly InventoryWarehouseAssignment $assignments,
     ) {}
 
     public function post(Request $request, int $tenantId, array $data, ?int $actorId): MovementPostingResult
@@ -38,6 +39,7 @@ final class InventoryPostingService
                 $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $data['warehouseId'])->where('is_active', true)->whereNull('deleted_at')->lockForUpdate()->first();
                 $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $data['itemId'])->whereNull('deleted_at')->first();
                 if (! $warehouse || ! $item) throw ValidationException::withMessages(['warehouseId' => 'The warehouse or item does not belong to the current tenant.']);
+                $this->assignments->assertAssigned($tenantId, (int) $item->id, (int) $warehouse->id);
                 if (WarehousePresentation::isLegacy($warehouse->code)) throw ValidationException::withMessages(['warehouseId' => 'Legacy warehouses are read-only and cannot receive new movements.']);
                 if (! empty($data['branchId']) && (int) $data['branchId'] !== (int) $warehouse->branch_id) throw ValidationException::withMessages(['branchId' => 'The selected branch does not match the warehouse.']);
                 FinancialActor::assertBranchAccess($actorId, $tenantId, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
@@ -86,6 +88,7 @@ final class InventoryPostingService
     public function adjustReservation(int $tenantId, int $warehouseId, int $itemId, int $delta): void
     {
         DB::transaction(function () use ($tenantId, $warehouseId, $itemId, $delta): void {
+            $this->assignments->assertAssigned($tenantId, $itemId, $warehouseId, 'lines');
             $balance = DB::table('stock_balances')->where(['tenant_id' => $tenantId, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $itemId])->lockForUpdate()->first();
             if (! $balance) throw ValidationException::withMessages(['lines' => 'No stock balance exists for this transfer item.']);
             $onHand = InventoryDecimal::units($balance->quantity_on_hand);
