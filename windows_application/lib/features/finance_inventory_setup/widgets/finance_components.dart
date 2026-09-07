@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
+import '../../../l10n/app_localizations.dart';
 import 'finance_design.dart';
 
 class FinancePageHeader extends StatelessWidget {
@@ -143,32 +145,60 @@ class FinanceStatusBadge extends StatelessWidget {
 
   final String status;
 
-  static ({String label, FinanceTone tone}) resolve(String value) {
+  static ({String label, FinanceTone tone}) resolve(
+    AppLocalizations l10n,
+    String value,
+  ) {
     switch (value.trim().toLowerCase()) {
       case 'approved':
-        return (label: 'معتمد', tone: FinanceTone.success);
+        return (label: l10n.financeStatusApproved, tone: FinanceTone.success);
       case 'paid':
       case 'posted':
       case 'closed':
       case 'active':
       case 'matched':
-        return (label: 'مكتمل', tone: FinanceTone.success);
+        return (
+          label: l10n.financeStatusCompleted,
+          tone: FinanceTone.success,
+        );
       case 'pending_approval':
-        return (label: 'بانتظار الموافقة', tone: FinanceTone.warning);
+        return (
+          label: l10n.financeStatusPendingApproval,
+          tone: FinanceTone.warning,
+        );
       case 'pending':
       case 'draft':
       case 'open':
       case 'unpaid':
       case 'in_progress':
-        return (label: 'قيد المراجعة', tone: FinanceTone.warning);
+        return (
+          label: l10n.financeStatusPendingReview,
+          tone: FinanceTone.warning,
+        );
       case 'rejected':
       case 'cancelled':
       case 'overdue':
       case 'failed':
       case 'void':
-        return (label: 'مرفوض', tone: FinanceTone.danger);
+        return (label: l10n.financeStatusRejected, tone: FinanceTone.danger);
       case 'reversed':
-        return (label: 'معكوس', tone: FinanceTone.neutral);
+        return (label: l10n.financeStatusReversed, tone: FinanceTone.neutral);
+      case 'partially_paid':
+        return (
+          label: l10n.financeStatusPartiallyPaid,
+          tone: FinanceTone.warning,
+        );
+      case 'inactive':
+        return (label: l10n.financeStatusInactive, tone: FinanceTone.neutral);
+      case 'locked':
+        return (label: l10n.financeStatusLocked, tone: FinanceTone.neutral);
+      case 'unmatched':
+        return (
+          label: l10n.financeStatusUnmatched,
+          tone: FinanceTone.warning,
+        );
+      case 'current':
+        return (label: l10n.financeStatusCurrent, tone: FinanceTone.success);
       default:
         return (label: value, tone: FinanceTone.neutral);
     }
@@ -176,7 +206,7 @@ class FinanceStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolved = resolve(status);
+    final resolved = resolve(context.l10n, status);
     return FinanceStatusBadgeCustom(label: resolved.label, tone: resolved.tone);
   }
 }
@@ -226,7 +256,10 @@ class FinanceFilterBar extends StatelessWidget {
       children: <Widget>[
         ...children,
         if (onReset != null)
-          TextButton(onPressed: onReset, child: const Text('إعادة تعيين')),
+          TextButton(
+            onPressed: onReset,
+            child: Text(context.l10n.financeFiltersReset),
+          ),
       ],
     ),
   );
@@ -452,7 +485,7 @@ class FinanceReadinessPanel extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('الجاهزية التشغيلية', style: FinanceText.page),
+        Text(context.l10n.financeReadinessPanelTitle, style: FinanceText.page),
         const SizedBox(height: FinanceSpace.sm),
         ...items.map(
           (String item) => Padding(
@@ -566,8 +599,8 @@ class FinanceJournalDrawer extends StatelessWidget {
 }
 
 class FinanceLoadingState extends StatelessWidget {
-  const FinanceLoadingState({super.key, this.label = 'جارٍ تحميل البيانات…'});
-  final String label;
+  const FinanceLoadingState({super.key, this.label});
+  final String? label;
   @override
   Widget build(BuildContext context) => Center(
     child: Column(
@@ -575,19 +608,18 @@ class FinanceLoadingState extends StatelessWidget {
       children: <Widget>[
         const CircularProgressIndicator(color: FinanceColors.brown),
         const SizedBox(height: FinanceSpace.md),
-        Text(label, style: FinanceText.subtitle),
+        Text(
+          label ?? context.l10n.financeLoadingDefaultLabel,
+          style: FinanceText.subtitle,
+        ),
       ],
     ),
   );
 }
 
 class FinanceEmptyState extends StatelessWidget {
-  const FinanceEmptyState({
-    super.key,
-    this.message = 'لا توجد بيانات لعرضها',
-    this.action,
-  });
-  final String message;
+  const FinanceEmptyState({super.key, this.message, this.action});
+  final String? message;
   final Widget? action;
   @override
   Widget build(BuildContext context) => Center(
@@ -596,7 +628,10 @@ class FinanceEmptyState extends StatelessWidget {
       children: <Widget>[
         const Icon(Icons.inbox_outlined, color: FinanceColors.muted, size: 36),
         const SizedBox(height: FinanceSpace.sm),
-        Text(message, style: FinanceText.subtitle),
+        Text(
+          message ?? context.l10n.financeEmptyDefaultMessage,
+          style: FinanceText.subtitle,
+        ),
         if (action != null) ...<Widget>[
           const SizedBox(height: FinanceSpace.sm),
           action!,
@@ -616,10 +651,18 @@ class FinanceErrorState extends StatelessWidget {
     tone: FinanceTone.danger,
     action: onRetry == null
         ? null
-        : TextButton(onPressed: onRetry, child: const Text('إعادة المحاولة')),
+        : TextButton(
+            onPressed: onRetry,
+            child: Text(context.l10n.commonRetry),
+          ),
   );
 }
 
+/// Intentional local Directionality override: a monetary amount is a digit
+/// sequence with a currency code, not prose — it stays LTR in both app
+/// directions so digit grouping/decimals read correctly, per the numeric
+/// exception carved out for Finance (see FinanceReference below for the
+/// matching case for codes/references).
 class FinanceAmount extends StatelessWidget {
   const FinanceAmount({super.key, required this.value, this.currency = 'SYP', this.color});
   final String value;
@@ -638,6 +681,9 @@ class FinanceAmount extends StatelessWidget {
   );
 }
 
+/// Intentional local Directionality override: journal/invoice/account
+/// reference codes (e.g. "JV-2026-001") stay LTR in both app directions so
+/// the code reads left-to-right instead of being bidi-reordered.
 class FinanceReference extends StatelessWidget {
   const FinanceReference({super.key, required this.reference});
   final String reference;
@@ -677,18 +723,21 @@ class FinanceAccountImpactPreview extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('الأثر المحاسبي المتوقع', style: FinanceText.label),
+        Text(
+          context.l10n.financeExpectedAccountingImpact,
+          style: FinanceText.label,
+        ),
         const SizedBox(height: FinanceSpace.sm),
         _ImpactRow(
           label: toLabel ?? '—',
-          side: 'مدين',
+          side: context.l10n.financeTermDebit,
           tone: FinanceTone.success,
           amount: amount,
         ),
         const SizedBox(height: 4),
         _ImpactRow(
           label: fromLabel ?? '—',
-          side: 'دائن',
+          side: context.l10n.financeTermCredit,
           tone: FinanceTone.warning,
           amount: amount,
         ),

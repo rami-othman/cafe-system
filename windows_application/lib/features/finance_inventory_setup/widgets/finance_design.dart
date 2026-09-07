@@ -36,23 +36,42 @@ abstract final class FinanceRadius {
 }
 
 abstract final class FinanceText {
+  /// Source-matched Arabic RTL typography for the Finance module, mirroring
+  /// the `IBMPlexSansArabic` choice already made for Inventory (see
+  /// `core/theme/inventory_text_styles.dart`) rather than the global app
+  /// font (`AppTextStyles.fontFamily` = Manrope), which is correct for the
+  /// LTR-oriented POS/Orders/Menu Management modules but not for Finance.
+  static const String fontFamily = 'IBMPlexSansArabic';
+
   static const title = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 22,
     fontWeight: FontWeight.w700,
     color: FinanceColors.ink,
   );
   static const page = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 19,
     fontWeight: FontWeight.w700,
     color: FinanceColors.ink,
   );
   static const subtitle = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 12.5,
     color: FinanceColors.supporting,
   );
-  static const body = TextStyle(fontSize: 13, color: FinanceColors.ink);
-  static const small = TextStyle(fontSize: 11.5, color: FinanceColors.muted);
+  static const body = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 13,
+    color: FinanceColors.ink,
+  );
+  static const small = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 11.5,
+    color: FinanceColors.muted,
+  );
   static const label = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 11,
     fontWeight: FontWeight.w700,
     color: FinanceColors.muted,

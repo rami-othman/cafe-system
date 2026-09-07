@@ -30,7 +30,8 @@ Future<void> bootstrapDevAuthIfNeeded() async {
         )
         .timeout(const Duration(seconds: 5));
 
-    final String? token = result is Map ? result['token'] as String? : null;
+    final String? token =
+        result is Map ? result['accessToken'] as String? : null;
     if (token != null && token.isNotEmpty) {
       apiClient.setAccessToken(token);
       debugPrint('Dev auth bootstrap: signed in as owner@cafe618.local.');

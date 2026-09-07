@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Navigation is driven by the backend's `resourceKind` contract, not by
-/// display labels. New source types remain safe: unavailable sources are shown
-/// without an inert action, while known resource kinds reuse their feature.
+import '../../../app/localization/localization_extensions.dart';
+
+/// Navigation is driven solely by backend resource identifiers.
 class FinanceSourceNavigation {
   const FinanceSourceNavigation._();
 
@@ -39,6 +39,7 @@ class FinanceSourceNavigation {
 
 class FinanceSourceNavigationActions extends StatelessWidget {
   const FinanceSourceNavigationActions({super.key, required this.data});
+
   final Map<String, dynamic> data;
 
   @override
@@ -47,12 +48,8 @@ class FinanceSourceNavigationActions extends StatelessWidget {
         ? Map<String, dynamic>.from(data['source'] as Map)
         : const <String, dynamic>{};
     final String? sourcePath = FinanceSourceNavigation.destination(source);
-    final String? journalPath = FinanceSourceNavigation.journalDestination(
-      data,
-    );
-    final String? reversalPath = FinanceSourceNavigation.reversalDestination(
-      data,
-    );
+    final String? journalPath = FinanceSourceNavigation.journalDestination(data);
+    final String? reversalPath = FinanceSourceNavigation.reversalDestination(data);
     if (sourcePath == null && journalPath == null && reversalPath == null) {
       return const SizedBox.shrink();
     }
@@ -64,19 +61,19 @@ class FinanceSourceNavigationActions extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => context.go(sourcePath),
             icon: const Icon(Icons.open_in_new, size: 17),
-            label: const Text('عرض المصدر'),
+            label: Text(context.l10n.financeSourceActionViewSource),
           ),
         if (journalPath != null)
           OutlinedButton.icon(
             onPressed: () => context.go(journalPath),
             icon: const Icon(Icons.menu_book_outlined, size: 17),
-            label: const Text('عرض القيد'),
+            label: Text(context.l10n.financeSourceActionViewJournal),
           ),
         if (reversalPath != null)
           OutlinedButton.icon(
             onPressed: () => context.go(reversalPath),
             icon: const Icon(Icons.undo_outlined, size: 17),
-            label: const Text('القيد المرتبط'),
+            label: Text(context.l10n.financeSourceActionRelatedJournal),
           ),
       ],
     );

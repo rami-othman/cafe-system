@@ -13,6 +13,7 @@ import '../../features/pos/repositories/pos_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
+import '../../features/reports/controllers/reports_overview_cubit.dart';
 import '../../features/reports/repositories/reports_repository.dart';
 import '../../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../../features/finance_inventory_setup/repositories/finance_setup_repository.dart';
@@ -179,6 +180,19 @@ void setupServiceLocator({bool useBackend = true}) {
     }
     serviceLocator.registerFactory<DailyReportCubit>(
       () => DailyReportCubit(repository: serviceLocator<ReportsRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ReportsOverviewCubit>()) {
+    if (!serviceLocator.isRegistered<ReportsRepository>()) {
+      serviceLocator.registerLazySingleton<ReportsRepository>(
+        () => ReportsRepository(
+          apiClient: useBackend ? serviceLocator<DioApiClient>() : null,
+        ),
+      );
+    }
+    serviceLocator.registerFactory<ReportsOverviewCubit>(
+      () => ReportsOverviewCubit(repository: serviceLocator<ReportsRepository>()),
     );
   }
 

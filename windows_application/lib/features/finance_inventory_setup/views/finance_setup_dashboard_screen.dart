@@ -6,11 +6,11 @@ import '../../../app/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../controllers/finance_setup_state.dart';
+import '../widgets/finance_components.dart';
 
 class FinanceSetupDashboardScreen extends StatefulWidget {
   const FinanceSetupDashboardScreen({super.key});
@@ -27,10 +27,8 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      child: BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
+  Widget build(BuildContext context) =>
+      BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
         builder: (context, state) {
           final status = state.status;
           if (status == null) {
@@ -47,7 +45,7 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                ManagementPageHeader(
+                FinancePageHeader(
                   title: 'إعداد النظام المالي والمخزني',
                   subtitle:
                       'تابع جاهزية الأساسيات قبل تشغيل عمليات المخزون والمالية.',
@@ -229,22 +227,11 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                Text(
-                  'جاهزية التكاملات المستقبلية',
-                  style: AppTextStyles.titleMedium,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                const Text(
-                  'النقد والبنوك، المصروفات، نقاط البيع، الموردون، محاسبة المخزون، التسويات والتقارير المالية: مؤجلة للمراحل التالية ولا توجد إعدادات صورية لها.',
-                ),
               ],
             ),
           );
         },
-      ),
-    ),
-  );
+      );
 }
 
 class _Readiness extends StatelessWidget {

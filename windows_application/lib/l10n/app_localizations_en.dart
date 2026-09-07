@@ -190,6 +190,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationInventory => 'Inventory';
 
   @override
+  String get navigationFinance => 'Finance';
+
+  @override
   String get navigationReports => 'Reports';
 
   @override
@@ -197,6 +200,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get operationalHub => 'OPERATIONAL HUB';
+
+  @override
+  String get shiftStatusOpen => 'SHIFT OPEN';
+
+  @override
+  String get shiftStatusClosed => 'SHIFT CLOSED';
 
   @override
   String get tooltipCart => 'Cart';
@@ -4665,6 +4674,1123 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authLogoutConfirmation =>
       'Are you sure you want to log out from this device?';
+
+  @override
+  String get reportsOverviewTitle => 'Reports Overview';
+
+  @override
+  String get reportsOverviewSubtitle =>
+      'Track sales, profitability, cash, inventory, and branch performance from one place.';
+
+  @override
+  String get reportsOverviewDateRange => 'Date range';
+
+  @override
+  String get reportsOverviewComparePrevious => 'vs. Previous Period';
+
+  @override
+  String get reportsOverviewExport => 'Export';
+
+  @override
+  String get reportsOverviewExportTooltip =>
+      'Available in detailed report screens';
+
+  @override
+  String get reportsOverviewAllBranches => 'All branches';
+
+  @override
+  String get reportsOverviewKpiNetSales => 'Net Sales';
+
+  @override
+  String get reportsOverviewKpiGrossProfit => 'Gross Profit';
+
+  @override
+  String get reportsOverviewKpiGrossMargin => 'Gross Margin';
+
+  @override
+  String get reportsOverviewKpiTotalExpenses => 'Total Expenses';
+
+  @override
+  String get reportsOverviewKpiNetProfit => 'Net Profit';
+
+  @override
+  String get reportsOverviewNotAvailableYet => 'Not available yet';
+
+  @override
+  String get reportsOverviewComparisonUnavailable => 'Comparison unavailable';
+
+  @override
+  String reportsOverviewDeltaPercent(String value) {
+    return '$value vs prev.';
+  }
+
+  @override
+  String reportsOverviewDeltaPoints(String value) {
+    return '$value pts vs prev.';
+  }
+
+  @override
+  String get reportsOverviewSalesTrendTitle => 'Sales Trend';
+
+  @override
+  String get reportsOverviewNoSalesData => 'No sales recorded for this period.';
+
+  @override
+  String get reportsOverviewBranchComparisonTitle => 'Branch Comparison';
+
+  @override
+  String get reportsOverviewChooseAllBranches =>
+      'Choose all branches to compare performance.';
+
+  @override
+  String get reportsOverviewTopProductsTitle => 'Top Products';
+
+  @override
+  String get reportsOverviewNoProductsSold =>
+      'No products were sold for this period.';
+
+  @override
+  String get reportsOverviewProductPerformanceComingNext =>
+      'Product Performance report is coming next.';
+
+  @override
+  String get reportsOverviewExceptionsTitle => 'Recent Exceptions';
+
+  @override
+  String get reportsOverviewNoExceptions =>
+      'No operational exceptions found for this period.';
+
+  @override
+  String get reportsOverviewBrowseByCategory => 'Browse by Category';
+
+  @override
+  String get reportsOverviewComingNext => 'Coming next';
+
+  @override
+  String get reportsOverviewCategorySalesProfitability =>
+      'Sales & Profitability';
+
+  @override
+  String get reportsOverviewCategoryCashShifts => 'Cash & Shifts';
+
+  @override
+  String get reportsOverviewCategoryExpenses => 'Expenses';
+
+  @override
+  String get reportsOverviewCategoryPurchasingSuppliers =>
+      'Purchasing & Suppliers';
+
+  @override
+  String get reportsOverviewCategoryFinancialReports => 'Financial Reports';
+
+  @override
+  String get reportsOverviewCategoryCustomReportBuilder =>
+      'Custom Report Builder';
+
+  @override
+  String get reportsOverviewErrorDefault => 'The overview could not be loaded.';
+
+  @override
+  String get reportsOverviewRelativeCurrent => 'Current';
+
+  @override
+  String reportsOverviewMinutesAgo(int m) {
+    return '${m}m ago';
+  }
+
+  @override
+  String reportsOverviewHoursAgo(int h) {
+    return '${h}h ago';
+  }
+
+  @override
+  String get financeSectionOverview => 'Overview';
+
+  @override
+  String get financeSectionTransactions => 'Financial Transactions';
+
+  @override
+  String get financeSectionCashBanks => 'Cash & Banks';
+
+  @override
+  String get financeSectionExpenses => 'Expenses';
+
+  @override
+  String get financeSectionSuppliers => 'Suppliers & Payables';
+
+  @override
+  String get financeSectionReconciliation => 'Reconciliation';
+
+  @override
+  String get financeSectionJournals => 'Journal Entries';
+
+  @override
+  String get financeSectionClosing => 'Daily Closing';
+
+  @override
+  String get financeSectionReports => 'Financial Reports';
+
+  @override
+  String get financeSectionAccounts => 'Chart of Accounts';
+
+  @override
+  String get financeSectionPeriods => 'Accounting Periods';
+
+  @override
+  String get financeSectionSettings => 'Finance Settings';
+
+  @override
+  String financeBreadcrumb(String module, String section) {
+    return '$module / $section';
+  }
+
+  @override
+  String get financeStatusApproved => 'Approved';
+
+  @override
+  String get financeStatusCompleted => 'Completed';
+
+  @override
+  String get financeStatusPendingApproval => 'Pending Approval';
+
+  @override
+  String get financeStatusPendingReview => 'Pending Review';
+
+  @override
+  String get financeStatusRejected => 'Rejected';
+
+  @override
+  String get financeStatusReversed => 'Reversed';
+
+  @override
+  String get financeStatusPartiallyPaid => 'Partially Paid';
+
+  @override
+  String get financeStatusInactive => 'Inactive';
+
+  @override
+  String get financeStatusLocked => 'Locked';
+
+  @override
+  String get financeStatusUnmatched => 'Unmatched';
+
+  @override
+  String get financeStatusCurrent => 'Current';
+
+  @override
+  String get financeTermDebit => 'Debit';
+
+  @override
+  String get financeTermCredit => 'Credit';
+
+  @override
+  String get financeTermBalance => 'Balance';
+
+  @override
+  String get financeTermOpeningBalance => 'Opening Balance';
+
+  @override
+  String get financeTermClosingBalance => 'Closing Balance';
+
+  @override
+  String get financeTermRunningBalance => 'Running Balance';
+
+  @override
+  String get financeTermRevenue => 'Revenue';
+
+  @override
+  String get financeTermCogs => 'COGS';
+
+  @override
+  String get financeTermGrossProfit => 'Gross Profit';
+
+  @override
+  String get financeTermOperatingExpenses => 'Operating Expenses';
+
+  @override
+  String get financeTermOperatingProfit => 'Operating Profit';
+
+  @override
+  String get financeTermAssets => 'Assets';
+
+  @override
+  String get financeTermLiabilities => 'Liabilities';
+
+  @override
+  String get financeTermEquity => 'Equity';
+
+  @override
+  String get financeTermAccountsPayable => 'Accounts Payable';
+
+  @override
+  String get financeTermGeneralLedger => 'General Ledger';
+
+  @override
+  String get financeTermTrialBalance => 'Trial Balance';
+
+  @override
+  String get financeTermProfitLoss => 'Profit & Loss';
+
+  @override
+  String get financeTermBalanceSheet => 'Balance Sheet';
+
+  @override
+  String get financeTermCashFlow => 'Cash Flow';
+
+  @override
+  String get financeFiltersReset => 'Reset';
+
+  @override
+  String get financeReadinessPanelTitle => 'Operational Readiness';
+
+  @override
+  String get financeLoadingDefaultLabel => 'Loading data…';
+
+  @override
+  String get financeEmptyDefaultMessage => 'No data to display';
+
+  @override
+  String get financeExpectedAccountingImpact => 'Expected Accounting Impact';
+
+  @override
+  String get financeExpenseScreenTitle => 'Expenses';
+
+  @override
+  String get financeExpenseScreenSubtitle =>
+      'Record and track the approval of operating expenses';
+
+  @override
+  String get financeExpenseAddAction => 'Add Expense';
+
+  @override
+  String get financeExpenseLoadingLabel => 'Loading expenses…';
+
+  @override
+  String get financeExpenseLoadErrorMessage =>
+      'Couldn\'t load expenses. The error is not treated as zero.';
+
+  @override
+  String get financeExpenseFilterStatusLabel => 'Status';
+
+  @override
+  String get financeExpenseFilterCategoryLabel => 'Category';
+
+  @override
+  String get financeExpenseSearchHint => 'Search by description or reference…';
+
+  @override
+  String get financeExpenseDateRangePickerHelp => 'Select a financial period';
+
+  @override
+  String get financeExpenseFilterRefreshError =>
+      'Couldn\'t refresh expenses for these filters. Showing the last loaded data.';
+
+  @override
+  String get financeExpenseEmptyPeriod =>
+      'No expenses recorded for the selected period';
+
+  @override
+  String get financeExpenseEmptyFiltered =>
+      'No expenses match the selected filters';
+
+  @override
+  String get financeExpenseEmptyResetAction => 'Reset Filters';
+
+  @override
+  String get financeExpenseKpiTotalAmount => 'Total Expenses';
+
+  @override
+  String get financeExpenseKpiRejectedAmount => 'Rejected';
+
+  @override
+  String get financeExpenseKpiAverageAmount => 'Average Expense';
+
+  @override
+  String get financeExpenseColumnDate => 'Date';
+
+  @override
+  String get financeExpenseColumnReference => 'Reference';
+
+  @override
+  String get financeExpenseColumnDescription => 'Description';
+
+  @override
+  String get financeExpenseColumnBranch => 'Branch';
+
+  @override
+  String get financeExpenseColumnAmount => 'Amount';
+
+  @override
+  String get financeExpenseBranchGeneralFallback => 'General';
+
+  @override
+  String get financeExpenseBranchGeneralOption => 'General (All Branches)';
+
+  @override
+  String get financeExpenseAllBranchesLabel => 'All Branches';
+
+  @override
+  String financeExpenseSubmittedBy(String name) {
+    return 'Submitted by $name';
+  }
+
+  @override
+  String get financeExpenseReversedNote =>
+      'This expense has been reversed. Use the buttons below to view the original entry and the reversal entry.';
+
+  @override
+  String get financeExpenseSubmissionDateLabel => 'Submission Date';
+
+  @override
+  String get financeExpenseLedgerAccountLabel => 'Ledger Account';
+
+  @override
+  String get financeExpensePreTaxAmountLabel => 'Amount Before Tax';
+
+  @override
+  String get financeExpenseTaxLabel => 'Tax';
+
+  @override
+  String get financeExpenseNotesLabel => 'Notes';
+
+  @override
+  String get financeExpenseNotesOptionalLabel => 'Notes (Optional)';
+
+  @override
+  String get financeExpensePaymentMethodLabel => 'Payment Method';
+
+  @override
+  String get financeExpensePaymentAccountLabel => 'Payment Account';
+
+  @override
+  String get financeExpenseApprovedAtLabel => 'Approved At';
+
+  @override
+  String get financeExpensePaidAtLabel => 'Paid At';
+
+  @override
+  String get financeExpenseActionSubmit => 'Submit for Approval';
+
+  @override
+  String get financeExpenseActionApprove => 'Approve';
+
+  @override
+  String get financeExpenseActionReject => 'Reject';
+
+  @override
+  String get financeExpenseActionPay => 'Record Payment';
+
+  @override
+  String get financeExpenseActionReverse => 'Reverse Expense';
+
+  @override
+  String get financeExpenseViewJournalAction => 'View Journal Entry';
+
+  @override
+  String get financeExpenseViewReversalJournalAction => 'View Reversal Entry';
+
+  @override
+  String get financeExpenseRejectDialogTitle => 'Reject Expense';
+
+  @override
+  String get financeExpenseRejectReasonLabel => 'Rejection Reason';
+
+  @override
+  String get financeExpensePaymentValidationError =>
+      'Choose a payment method and an active cash or bank account.';
+
+  @override
+  String financeExpensePaymentDialogTitle(String reference) {
+    return 'Pay $reference';
+  }
+
+  @override
+  String get financeExpensePaymentPostAction => 'Post Payment';
+
+  @override
+  String get financeExpensePaymentLoadingOptions => 'Loading payment options…';
+
+  @override
+  String get financeExpenseNoPaymentOptionsMessage =>
+      'No active payment method or cash/bank account. Add one from Finance settings first.';
+
+  @override
+  String financeExpensePaymentAmountLine(String amount) {
+    return 'Amount: $amount';
+  }
+
+  @override
+  String get financeExpenseCashBankAccountLabel => 'Cash/Bank Account';
+
+  @override
+  String get financeExpenseFormValidationError =>
+      'Enter a valid amount, category, and description.';
+
+  @override
+  String get financeExpenseEditDialogTitle => 'Edit Expense';
+
+  @override
+  String get financeExpenseFieldBranchOptional => 'Branch (Optional)';
+
+  @override
+  String get financeExpenseTotalLabel => 'Total';
+
+  @override
+  String get financeExpenseCategoryScreenTitle => 'Expense Categories';
+
+  @override
+  String get financeExpenseCategoryScreenSubtitle =>
+      'Every category is linked to an active expense account in the chart of accounts.';
+
+  @override
+  String get financeExpenseCategoryAddAction => 'Add Category';
+
+  @override
+  String get financeExpenseCategoryEmptyMessage =>
+      'No expense categories configured.';
+
+  @override
+  String get financeExpenseCategoryCodeLabel => 'Code';
+
+  @override
+  String get financeExpenseCategoryNameLabel => 'Name';
+
+  @override
+  String get financeExpenseCategoryAccountLabel => 'Expense Account';
+
+  @override
+  String get financeExpenseCategoryColumnStatus => 'Status';
+
+  @override
+  String get financeExpenseCategoryColumnAction => 'Action';
+
+  @override
+  String get financeExpenseCategorySortOrderLabel => 'Sort Order (Optional)';
+
+  @override
+  String get financeExpenseCategoryValidationError =>
+      'Enter a valid code and name.';
+
+  @override
+  String get financeExpenseCategoryEditDialogTitle => 'Edit Category';
+
+  @override
+  String get financeExpenseCategoryDeactivateDialogTitle =>
+      'Deactivate Category';
+
+  @override
+  String get financeExpenseCategoryActivateDialogTitle => 'Activate Category';
+
+  @override
+  String financeExpenseCategoryDeactivateConfirm(String name) {
+    return 'Deactivate category \"$name\"? It will no longer appear when creating a new expense.';
+  }
+
+  @override
+  String financeExpenseCategoryActivateConfirm(String name) {
+    return 'Activate category \"$name\"?';
+  }
+
+  @override
+  String get financeExpenseCategoryDeactivateAction => 'Deactivate';
+
+  @override
+  String get financeExpenseCategoryActivateAction => 'Activate';
+
+  @override
+  String get financePeriodToday => 'Today';
+
+  @override
+  String get financePeriodThisWeek => 'This Week';
+
+  @override
+  String get financePeriodThisMonth => 'This Month';
+
+  @override
+  String get financePeriodCustom => 'Custom';
+
+  @override
+  String get financeGlobalContextTitle => 'Overall Context';
+
+  @override
+  String get financeGlobalContextBranchAll => 'Branch: All Branches';
+
+  @override
+  String financeGlobalContextBranchNamed(String name) {
+    return 'Branch: $name';
+  }
+
+  @override
+  String get financeSupplierListSubtitle =>
+      'The supplier balance is derived exclusively from posted invoices and payments';
+
+  @override
+  String get financeSupplierAddAction => 'Add Supplier';
+
+  @override
+  String get financeSupplierListLoading => 'Loading suppliers…';
+
+  @override
+  String get financeSupplierListLoadError =>
+      'Could not load suppliers. The error is not being disregarded.';
+
+  @override
+  String get financeSupplierStatusLabel => 'Status';
+
+  @override
+  String get financeSupplierSearchHint => 'Supplier name or code…';
+
+  @override
+  String get financeSupplierFilterRefreshError =>
+      'Could not refresh suppliers for these filters. Showing the last loaded data.';
+
+  @override
+  String get financeSupplierEmptyFiltered =>
+      'No suppliers match the selected filters';
+
+  @override
+  String get financeSupplierEmptyNone => 'No suppliers registered yet';
+
+  @override
+  String get financeSupplierResetFiltersAction => 'Reset Filters';
+
+  @override
+  String get financeSupplierKpiTotalOutstanding => 'Total Payables';
+
+  @override
+  String get financeSupplierKpiOverdueLabel => 'Overdue Payments';
+
+  @override
+  String get financeSupplierKpiActiveCount => 'Active Suppliers';
+
+  @override
+  String get financeSupplierKpiAvgPaymentTerms => 'Average Payment Terms';
+
+  @override
+  String financeSupplierDaysUnit(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get financeSupplierColumnSupplier => 'Supplier';
+
+  @override
+  String get financeSupplierOutstandingBalanceLabel => 'Outstanding Balance';
+
+  @override
+  String get financeSupplierOverdueLabel => 'Overdue';
+
+  @override
+  String get financeSupplierColumnOpenInvoices => 'Open Invoices';
+
+  @override
+  String get financeSupplierColumnLastInvoice => 'Last Invoice';
+
+  @override
+  String get financeSupplierEditAction => 'Edit Supplier';
+
+  @override
+  String get financeSupplierNameRequired => 'Enter the supplier name.';
+
+  @override
+  String get financeSupplierFieldName => 'Name';
+
+  @override
+  String get financeSupplierFieldPhone => 'Phone';
+
+  @override
+  String get financeSupplierFieldEmail => 'Email';
+
+  @override
+  String get financeSupplierFieldAddress => 'Address';
+
+  @override
+  String get financeSupplierFieldContactPerson => 'Contact Person';
+
+  @override
+  String get financeSupplierFieldTaxNumber => 'Tax Number';
+
+  @override
+  String get financeSupplierFieldPaymentTermsDays => 'Payment Terms (Days)';
+
+  @override
+  String get financeSupplierFieldNotes => 'Notes';
+
+  @override
+  String get financeSupplierInactiveBadge => 'Inactive';
+
+  @override
+  String get financeSupplierProfileSubtitle =>
+      'Supplier profile and financial activity';
+
+  @override
+  String get financeSupplierBackToList => 'Back to Suppliers';
+
+  @override
+  String get financeSupplierProfileLoading => 'Loading supplier profile…';
+
+  @override
+  String financeSupplierProfileLoadError(String error) {
+    return 'Could not load the supplier profile. $error';
+  }
+
+  @override
+  String get financeSupplierNotFound =>
+      'Could not find the requested supplier.';
+
+  @override
+  String financeSupplierPaymentTermsWithDays(int days) {
+    return 'Payment terms $days days';
+  }
+
+  @override
+  String get financeSupplierStatementAction => 'Supplier Statement';
+
+  @override
+  String get financeSupplierNewInvoiceAction => 'New Invoice';
+
+  @override
+  String get financeSupplierNewPaymentAction => 'New Payment';
+
+  @override
+  String get financeSupplierKpiTotalInvoiced => 'Total Invoiced';
+
+  @override
+  String get financeSupplierKpiTotalPaid => 'Total Paid';
+
+  @override
+  String get financeSupplierTabInvoices => 'Invoices';
+
+  @override
+  String get financeSupplierTabPayments => 'Payments';
+
+  @override
+  String get financeSupplierTabStatement => 'Statement';
+
+  @override
+  String get financeSupplierNoInvoices => 'No invoices for this supplier yet';
+
+  @override
+  String get financeSupplierColumnReference => 'Reference';
+
+  @override
+  String get financeSupplierColumnDate => 'Date';
+
+  @override
+  String get financeSupplierColumnDueDate => 'Due';
+
+  @override
+  String get financeSupplierTotalLabel => 'Total';
+
+  @override
+  String get financeSupplierColumnRemaining => 'Remaining';
+
+  @override
+  String get financeSupplierViewJournalAction => 'View Journal Entry';
+
+  @override
+  String get financeSupplierNoPayments => 'No payments for this supplier yet';
+
+  @override
+  String get financeSupplierColumnAmount => 'Amount';
+
+  @override
+  String get financeSupplierColumnPaymentMethod => 'Payment Method';
+
+  @override
+  String get financeSupplierNoStatementLines => 'No statement activity yet';
+
+  @override
+  String get financeSupplierKpiTotalPayments => 'Total Payments';
+
+  @override
+  String get financeSupplierColumnType => 'Type';
+
+  @override
+  String get financeSupplierTypeInvoice => 'Invoice';
+
+  @override
+  String get financeSupplierTypePayment => 'Payment';
+
+  @override
+  String get financeSupplierReverseInvoiceTitle => 'Reverse Invoice';
+
+  @override
+  String financeSupplierReverseInvoiceMessage(String reference) {
+    return 'A reversing entry will be created for invoice $reference. This action cannot be undone.';
+  }
+
+  @override
+  String financeSupplierPostInvoiceError(String error) {
+    return 'Could not post the invoice: $error';
+  }
+
+  @override
+  String financeSupplierReverseInvoiceError(String error) {
+    return 'Could not reverse the invoice: $error';
+  }
+
+  @override
+  String get financeSupplierReversePaymentTitle => 'Reverse Payment';
+
+  @override
+  String financeSupplierReversePaymentMessage(String reference) {
+    return 'A reversing entry will be created and the balances of invoices linked to payment $reference will be restored. This action cannot be undone.';
+  }
+
+  @override
+  String financeSupplierReversePaymentError(String error) {
+    return 'Could not reverse the payment: $error';
+  }
+
+  @override
+  String get financeSupplierConfirmAction => 'Confirm';
+
+  @override
+  String get financeSupplierInvoiceNumberSubtotalRequired =>
+      'Enter an invoice number and a valid subtotal.';
+
+  @override
+  String get financeSupplierExpenseCategoryRequired =>
+      'Select an expense category.';
+
+  @override
+  String get financeSupplierDebitAccountRequired => 'Select the debit account.';
+
+  @override
+  String financeSupplierInvoiceDialogTitleWithRef(String reference) {
+    return 'Invoice $reference';
+  }
+
+  @override
+  String get financeSupplierInvoiceLockedMessage =>
+      'The invoice is posted and cannot be edited. Use the reverse action if needed.';
+
+  @override
+  String get financeSupplierNewInvoiceDialogTitle => 'New Supplier Invoice';
+
+  @override
+  String financeSupplierEditInvoiceDialogTitle(String reference) {
+    return 'Edit invoice $reference';
+  }
+
+  @override
+  String get financeSupplierSaveAsDraftAction => 'Save as Draft';
+
+  @override
+  String get financeSupplierLoadingOptions => 'Loading options…';
+
+  @override
+  String get financeSupplierFieldBranchOptional => 'Branch (Optional)';
+
+  @override
+  String get financeSupplierGeneralOption => 'General';
+
+  @override
+  String get financeSupplierFieldSupplierInvoiceNumber =>
+      'Supplier Invoice Number';
+
+  @override
+  String get financeSupplierFieldInvoiceDate => 'Invoice Date';
+
+  @override
+  String get financeSupplierFieldDueDate => 'Due Date';
+
+  @override
+  String get financeSupplierFieldInvoiceType => 'Invoice Type';
+
+  @override
+  String get financeSupplierInvoiceTypeExpense => 'Expense';
+
+  @override
+  String get financeSupplierInvoiceTypeInventory =>
+      'Inventory (accounting liability only, does not create stock quantity)';
+
+  @override
+  String get financeSupplierInvoiceTypeOther => 'Other';
+
+  @override
+  String get financeSupplierFieldExpenseCategory => 'Expense Category';
+
+  @override
+  String get financeSupplierFieldDebitAccount => 'Debit Account';
+
+  @override
+  String get financeSupplierFieldSubtotal => 'Subtotal';
+
+  @override
+  String get financeSupplierFieldTax => 'Tax';
+
+  @override
+  String get financeSupplierFieldDescription => 'Description';
+
+  @override
+  String get financeSupplierInvoiceDetailTitle => 'Supplier Invoice';
+
+  @override
+  String get financeSupplierPostAction => 'Post';
+
+  @override
+  String get financeSupplierReverseAction => 'Reverse';
+
+  @override
+  String get financeSupplierFieldBranch => 'Branch';
+
+  @override
+  String get financeSupplierPaymentDetailTitle => 'Supplier Payment';
+
+  @override
+  String get financeSupplierFieldPaymentDate => 'Payment Date';
+
+  @override
+  String get financeSupplierFieldCashBankAccount => 'Cash/Bank Account';
+
+  @override
+  String get financeSupplierFieldExternalReference => 'External Reference';
+
+  @override
+  String get financeSupplierPaymentAllocationTitle =>
+      'Payment Allocation to Invoices';
+
+  @override
+  String get financeSupplierColumnInvoice => 'Invoice';
+
+  @override
+  String get financeSupplierPaymentMethodLocationRequired =>
+      'Select a payment method and an active cash or bank account.';
+
+  @override
+  String get financeSupplierPaymentAmountRequired =>
+      'Enter a valid payment amount greater than zero.';
+
+  @override
+  String get financeSupplierAllocationRequired =>
+      'Allocate an amount to at least one invoice.';
+
+  @override
+  String financeSupplierAllocationExceedsRemaining(String reference) {
+    return 'The allocation for $reference exceeds its remaining balance.';
+  }
+
+  @override
+  String financeSupplierAllocationMustMatchPayment(String remaining) {
+    return 'The total allocations must exactly equal the payment amount. Unallocated remaining: $remaining';
+  }
+
+  @override
+  String get financeSupplierNewPaymentDialogTitle => 'New Supplier Payment';
+
+  @override
+  String get financeSupplierPostPaymentAction => 'Post Payment';
+
+  @override
+  String get financeSupplierLoadingPaymentOptions => 'Loading payment options…';
+
+  @override
+  String get financeSupplierNoPaymentMethodOrAccount =>
+      'No active payment method or cash/bank account. Add one from Finance Settings first.';
+
+  @override
+  String get financeSupplierFieldCashBankSource => 'Cash/Bank Account (Source)';
+
+  @override
+  String get financeSupplierFieldPaymentAmount => 'Payment Amount';
+
+  @override
+  String get financeSupplierFieldExternalReferenceOptional =>
+      'External Reference (Optional)';
+
+  @override
+  String get financeSupplierFieldNotesOptional => 'Notes (Optional)';
+
+  @override
+  String get financeSupplierAllocationOpenInvoicesTitle =>
+      'Payment Allocation to Open Invoices';
+
+  @override
+  String financeSupplierInvoiceRemainingLabel(
+    String reference,
+    String remaining,
+  ) {
+    return '$reference — remaining $remaining';
+  }
+
+  @override
+  String get financeSupplierFieldAllocation => 'Allocation';
+
+  @override
+  String get financeSupplierAllocatedAmountLabel => 'Allocated Amount';
+
+  @override
+  String get financeSupplierUnallocatedRemainingLabel =>
+      'Unallocated Remaining';
+
+  @override
+  String get financeSupplierOverdueBadge => 'Overdue';
+
+  @override
+  String get financeWarehouseTitle => 'Warehouse Setup';
+
+  @override
+  String get financeWarehouseSubtitle =>
+      'Manage operational warehouses and their branch assignments.';
+
+  @override
+  String get financeWarehouseAdd => 'Add Warehouse';
+
+  @override
+  String get financeWarehouseEmpty => 'No warehouses have been added yet.';
+
+  @override
+  String get financeWarehouseAllBranches => 'All Branches';
+
+  @override
+  String get financeWarehouseAllStatuses => 'All Statuses';
+
+  @override
+  String get financeWarehouseName => 'Warehouse';
+
+  @override
+  String get financeWarehouseCode => 'Code';
+
+  @override
+  String get financeWarehouseType => 'Type';
+
+  @override
+  String get financeWarehouseBranch => 'Branch';
+
+  @override
+  String get financeWarehouseEdit => 'Edit Warehouse';
+
+  @override
+  String get financeWarehouseCentral => 'Central';
+
+  @override
+  String get financeWarehouseBranchType => 'Branch';
+
+  @override
+  String get financeTransactionSale => 'Sale';
+
+  @override
+  String get financeTransactionRefund => 'Refund';
+
+  @override
+  String get financeTransactionExpense => 'Expense';
+
+  @override
+  String get financeTransactionCashTransfer => 'Cash Transfer';
+
+  @override
+  String get financeTransactionSupplierInvoice => 'Supplier Invoice';
+
+  @override
+  String get financeTransactionSupplierPayment => 'Supplier Payment';
+
+  @override
+  String get financeTransactionInventoryWaste => 'Inventory Waste';
+
+  @override
+  String get financeTransactionStockCountVariance => 'Stock Count Variance';
+
+  @override
+  String get financeTransactionInventoryMovement => 'Inventory Movement';
+
+  @override
+  String get financeTransactionManualJournal => 'Manual Journal';
+
+  @override
+  String get financeTransactionReversalJournal => 'Reversal Journal';
+
+  @override
+  String get financeTransactionJournalEntry => 'Journal Entry';
+
+  @override
+  String get financeStatusReady => 'Ready';
+
+  @override
+  String get financeStatusWarning => 'Warning';
+
+  @override
+  String get financeStatusBlocked => 'Blocked';
+
+  @override
+  String get financeStatusActive => 'Active';
+
+  @override
+  String get financeWarehouseUnassignedBranch => 'Unassigned';
+
+  @override
+  String get financeStatusClosed => 'Closed';
+
+  @override
+  String financeDailyClosingIssueOpenShifts(int count) {
+    return 'There are $count open shifts that must be closed.';
+  }
+
+  @override
+  String financeDailyClosingIssuePendingExpenseApproval(int count) {
+    return 'There are $count expenses awaiting approval.';
+  }
+
+  @override
+  String get financeDailyClosingIssueMissingActualCash =>
+      'Actual cash has not been entered yet.';
+
+  @override
+  String financeDailyClosingIssueCashDifference(String amount) {
+    return 'There is a cash difference of $amount.';
+  }
+
+  @override
+  String financeDailyClosingIssueDraftJournals(int count) {
+    return 'There are $count draft journal entries for today.';
+  }
+
+  @override
+  String financeDailyClosingIssueUnpostedInventoryEvent(int count) {
+    return 'There are $count inventory movements without accounting posting.';
+  }
+
+  @override
+  String get financeDailyClosingIssueCashReconciliationIncomplete =>
+      'Cash reconciliation is incomplete for today.';
+
+  @override
+  String get financeDailyClosingIssueCardReconciliationIncomplete =>
+      'Card reconciliation is incomplete for today.';
+
+  @override
+  String get financeDailyClosingIssueBankReconciliationIncomplete =>
+      'Bank reconciliation is incomplete for today.';
+
+  @override
+  String get financeDailyClosingIssueUnknown =>
+      'A daily-closing requirement needs attention.';
+
+  @override
+  String financePaginationRange(int start, int end, int total) {
+    return 'Showing $start–$end of $total';
+  }
+
+  @override
+  String get financePaginationPrevious => 'Previous';
+
+  @override
+  String financePaginationPage(int current, int last) {
+    return 'Page $current of $last';
+  }
+
+  @override
+  String get financePaginationNext => 'Next';
+
+  @override
+  String get financeSourceActionViewSource => 'View Source';
+
+  @override
+  String get financeSourceActionViewJournal => 'View Journal Entry';
+
+  @override
+  String get financeSourceActionRelatedJournal => 'Related Journal Entry';
 
   @override
   String get navigationCafeConfiguration => 'Cafe Configuration';

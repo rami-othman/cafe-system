@@ -206,7 +206,7 @@ String _labelFor(BuildContext context, String id) {
     'menuManagement' => l10n.navigationMenuManagement,
     'cafeConfiguration' => l10n.navigationCafeConfiguration,
     'inventory' => l10n.navigationInventory,
-    'finance' => 'Finance',
+    'finance' => l10n.navigationFinance,
     'reports' => l10n.navigationReports,
     _ => l10n.commonUnknown,
   };

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_report_models.dart';
@@ -22,7 +21,12 @@ import '../widgets/finance_source_navigation.dart';
 /// journal/source/account/supplier reference into real navigation. It never
 /// recomputes a balance, a running total, or an integrity signal.
 class FinancialReportsScreen extends StatefulWidget {
-  const FinancialReportsScreen({super.key, this.accountId, this.supplierId, this.reportType});
+  const FinancialReportsScreen({
+    super.key,
+    this.accountId,
+    this.supplierId,
+    this.reportType,
+  });
   final int? accountId;
   final int? supplierId;
   final String? reportType;
@@ -60,6 +64,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   bool _includeZero = false;
 
   dynamic _report;
+  String _reportType = 'profit-loss';
   bool _loading = false;
   Object? _error;
   int _requestId = 0;
@@ -67,7 +72,8 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   List<Supplier> _suppliers = const <Supplier>[];
   List<Branch> _branches = const <Branch>[];
 
-  FinanceSetupRepository get _repository => context.read<FinanceSetupCubit>().repository;
+  FinanceSetupRepository get _repository =>
+      context.read<FinanceSetupCubit>().repository;
 
   @override
   void initState() {
@@ -76,24 +82,31 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
     _accountId = widget.accountId;
     _supplierId = widget.supplierId;
     _type = widget.reportType ?? _type;
+    _reportType = _type;
     final DateTime now = DateTime.now();
     _from = DateTime(now.year, now.month).toIso8601String().substring(0, 10);
     _to = now.toIso8601String().substring(0, 10);
-    _setup = Future.wait<dynamic>(<Future<dynamic>>[
-      _repo.getAccounts(status: 'active'),
-      _repo.getBranches(),
-      _repo.getSuppliers(),
-    ]).then((List<dynamic> results) {
-      setState(() {
-        _accounts = results[0] as List<FinancialAccount>;
-        _branches = results[1] as List<Branch>;
-        _suppliers = results[2] as List<Supplier>;
-        _accountId ??= _type == 'general-ledger' && _accounts.isNotEmpty ? _accounts.first.id : _accountId;
-        _supplierId ??= _type == 'supplier-statement' && _suppliers.isNotEmpty ? _suppliers.first.id : _supplierId;
-      });
-      _load();
-      return results;
-    });
+    _setup =
+        Future.wait<dynamic>(<Future<dynamic>>[
+          _repo.getAccounts(status: 'active'),
+          _repo.getBranches(),
+          _repo.getSuppliers(),
+        ]).then((List<dynamic> results) {
+          setState(() {
+            _accounts = results[0] as List<FinancialAccount>;
+            _branches = results[1] as List<Branch>;
+            _suppliers = results[2] as List<Supplier>;
+            _accountId ??= _type == 'general-ledger' && _accounts.isNotEmpty
+                ? _accounts.first.id
+                : _accountId;
+            _supplierId ??=
+                _type == 'supplier-statement' && _suppliers.isNotEmpty
+                ? _suppliers.first.id
+                : _supplierId;
+          });
+          _load();
+          return results;
+        });
   }
 
   Map<String, dynamic> get _baseFilters => <String, dynamic>{
@@ -122,6 +135,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
       return;
     }
     final int requestId = ++_requestId;
+    final String requestType = _type;
     setState(() {
       _loading = true;
       _error = null;
@@ -129,25 +143,38 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
     try {
       final dynamic result = await switch (_type) {
         'profit-loss' => _repo.getProfitAndLoss(filters: _baseFilters),
-        'balance-sheet' => _repo.getBalanceSheet(filters: <String, dynamic>{..._baseFilters, 'asOfDate': _to}),
+        'balance-sheet' => _repo.getBalanceSheet(
+          filters: <String, dynamic>{..._baseFilters, 'asOfDate': _to},
+        ),
         'cash-flow' => _repo.getCashFlow(filters: _baseFilters),
         'trial-balance' => _repo.getTrialBalance(
-          filters: <String, dynamic>{..._baseFilters, 'includeZero': _includeZero},
+          filters: <String, dynamic>{
+            ..._baseFilters,
+            'includeZero': _includeZero,
+          },
         ),
         'general-ledger' => _repo.getGeneralLedgerReport(
           filters: <String, dynamic>{..._baseFilters, 'accountId': _accountId},
         ),
         'supplier-aging' => _repo.getSupplierAging(
-          filters: <String, dynamic>{..._baseFilters, 'asOfDate': _to, if (_supplierId != null) 'supplierId': _supplierId},
+          filters: <String, dynamic>{
+            ..._baseFilters,
+            'asOfDate': _to,
+            if (_supplierId != null) 'supplierId': _supplierId,
+          },
         ),
         'supplier-statement' => _repo.getSupplierStatementReport(
-          filters: <String, dynamic>{..._baseFilters, 'supplierId': _supplierId},
+          filters: <String, dynamic>{
+            ..._baseFilters,
+            'supplierId': _supplierId,
+          },
         ),
         _ => Future<dynamic>.value(),
       };
       if (!mounted || requestId != _requestId) return;
       setState(() {
         _report = result;
+        _reportType = requestType;
         _loading = false;
       });
     } catch (error) {
@@ -162,8 +189,12 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   void _selectType(String type) {
     setState(() {
       _type = type;
-      if (type == 'general-ledger') _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
-      if (type == 'supplier-statement') _supplierId ??= _suppliers.isNotEmpty ? _suppliers.first.id : null;
+      if (type == 'general-ledger') {
+        _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
+      }
+      if (type == 'supplier-statement') {
+        _supplierId ??= _suppliers.isNotEmpty ? _suppliers.first.id : null;
+      }
     });
     _load();
   }
@@ -214,7 +245,8 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
         alignment: AlignmentDirectional.centerEnd,
         child: FinanceJournalDrawer(
           child: FinanceJournalDrawerBody(
-            loader: () => _repo.getFinanceMap('finance/transactions/$journalId'),
+            loader: () =>
+                _repo.getFinanceMap('finance/transactions/$journalId'),
             onNavigate: (String path) {
               Navigator.of(dialogContext).pop();
               context.go(path);
@@ -222,10 +254,19 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
           ),
         ),
       ),
-      transitionBuilder: (BuildContext context, Animation<double> animation, _, Widget child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(animation),
-        child: child,
-      ),
+      transitionBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            _,
+            Widget child,
+          ) => SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
     );
   }
 
@@ -239,37 +280,32 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'التقارير المالية',
-        title: 'التقارير المالية',
-        subtitle: 'تقارير مالية تفصيلية مع تتبع كامل للحسابات والمصادر',
-        showContext: false,
-        child: FutureBuilder<List<dynamic>>(
-          future: _setup,
-          builder: (BuildContext context, AsyncSnapshot<List<dynamic>> setup) {
-            if (setup.connectionState != ConnectionState.done) {
-              return const FinanceLoadingState(label: 'جارٍ تحميل بيانات التقارير…');
-            }
-            if (setup.hasError) {
-              return FinanceErrorState(
-                message: 'تعذّر تحميل بيانات الإعداد.',
-                onRetry: () => setState(() {
-                  _setup = Future.wait<dynamic>(<Future<dynamic>>[
-                    _repo.getAccounts(status: 'active'),
-                    _repo.getBranches(),
-                    _repo.getSuppliers(),
-                  ]);
-                }),
-              );
-            }
-            return _buildBody();
-          },
-        ),
-      ),
+  Widget build(BuildContext context) => FinanceShell(
+    title: 'التقارير المالية',
+    subtitle: 'تقارير مالية تفصيلية مع تتبع كامل للحسابات والمصادر',
+    showContext: false,
+    child: FutureBuilder<List<dynamic>>(
+      future: _setup,
+      builder: (BuildContext context, AsyncSnapshot<List<dynamic>> setup) {
+        if (setup.connectionState != ConnectionState.done) {
+          return const FinanceLoadingState(
+            label: 'جارٍ تحميل بيانات التقارير…',
+          );
+        }
+        if (setup.hasError) {
+          return FinanceErrorState(
+            message: 'تعذّر تحميل بيانات الإعداد.',
+            onRetry: () => setState(() {
+              _setup = Future.wait<dynamic>(<Future<dynamic>>[
+                _repo.getAccounts(status: 'active'),
+                _repo.getBranches(),
+                _repo.getSuppliers(),
+              ]);
+            }),
+          );
+        }
+        return _buildBody();
+      },
     ),
   );
 
@@ -308,7 +344,10 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
           _ChipPicker(
             label: 'الحساب:',
             items: _accounts
-                .map((FinancialAccount a) => _ChipItem(id: a.id, label: '${a.code} — ${a.nameAr}'))
+                .map(
+                  (FinancialAccount a) =>
+                      _ChipItem(id: a.id, label: '${a.code} — ${a.nameAr}'),
+                )
                 .toList(),
             selectedId: _accountId,
             onSelected: (int id) {
@@ -320,7 +359,12 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
           _ChipPicker(
             label: 'المورد:',
             items: _suppliers
-                .map((Supplier s) => _ChipItem(id: s.id, label: '${s.supplierNumber} — ${s.name}'))
+                .map(
+                  (Supplier s) => _ChipItem(
+                    id: s.id,
+                    label: '${s.supplierNumber} — ${s.name}',
+                  ),
+                )
                 .toList(),
             selectedId: _supplierId,
             onSelected: (int id) {
@@ -328,7 +372,8 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
               _load();
             },
           ),
-        if (_type == 'general-ledger' || _type == 'supplier-statement') const SizedBox(height: FinanceSpace.lg),
+        if (_type == 'general-ledger' || _type == 'supplier-statement')
+          const SizedBox(height: FinanceSpace.lg),
         _body(),
       ],
     ),
@@ -342,16 +387,28 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
       return const FinanceEmptyState(message: 'اختر مورداً لعرض كشف الحساب.');
     }
     if (_report == null && _error != null) {
-      return FinanceErrorState(message: 'تعذّر تحميل التقرير. $_error', onRetry: _load);
+      return FinanceErrorState(
+        message: 'تعذّر تحميل التقرير. $_error',
+        onRetry: _load,
+      );
     }
     if (_report == null) {
       return const FinanceLoadingState(label: 'جارٍ تحميل التقرير…');
     }
     final dynamic report = _report;
-    final Widget content = switch (_type) {
-      'profit-loss' => _ProfitAndLossView(report: report as ProfitAndLossReport, onDrillAccount: _drillToGeneralLedger),
-      'balance-sheet' => _BalanceSheetView(report: report as BalanceSheetReport, onDrillAccount: _drillToGeneralLedger),
-      'cash-flow' => _CashFlowView(report: report as CashFlowReport, onOpenJournal: _openJournalDrawer),
+    final Widget content = switch (_reportType) {
+      'profit-loss' => _ProfitAndLossView(
+        report: report as ProfitAndLossReport,
+        onDrillAccount: _drillToGeneralLedger,
+      ),
+      'balance-sheet' => _BalanceSheetView(
+        report: report as BalanceSheetReport,
+        onDrillAccount: _drillToGeneralLedger,
+      ),
+      'cash-flow' => _CashFlowView(
+        report: report as CashFlowReport,
+        onOpenJournal: _openJournalDrawer,
+      ),
       'trial-balance' => _TrialBalanceView(
         report: report as TrialBalanceReport,
         includeZero: _includeZero,
@@ -361,11 +418,18 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
         },
         onDrillAccount: _drillToGeneralLedger,
       ),
-      'general-ledger' => _GeneralLedgerView(report: report as GeneralLedgerReport, onOpenJournal: _openJournalDrawer),
-      'supplier-aging' => _SupplierAgingView(report: report as SupplierAgingReport, onOpenStatement: _drillToSupplierStatement),
+      'general-ledger' => _GeneralLedgerView(
+        report: report as GeneralLedgerReport,
+        onOpenJournal: _openJournalDrawer,
+      ),
+      'supplier-aging' => _SupplierAgingView(
+        report: report as SupplierAgingReport,
+        onOpenStatement: _drillToSupplierStatement,
+      ),
       'supplier-statement' => _SupplierStatementView(
         report: report as SupplierStatementReport,
-        onOpenProfile: () => context.go('${AppRoutes.financeSuppliers}/$_supplierId'),
+        onOpenProfile: () =>
+            context.go('${AppRoutes.financeSuppliers}/$_supplierId'),
         onNavigateSource: _navigateSource,
       ),
       _ => const SizedBox.shrink(),
@@ -378,18 +442,28 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
           FinanceAlertBanner(
             message: 'تعذّر تحديث التقرير لهذه الفلاتر. يُعرض آخر تقرير محمّل.',
             tone: FinanceTone.warning,
-            action: TextButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+            action: TextButton(
+              onPressed: _load,
+              child: const Text('إعادة المحاولة'),
+            ),
           ),
           const SizedBox(height: FinanceSpace.md),
         ],
-        Opacity(opacity: _loading ? 0.6 : 1, child: IgnorePointer(ignoring: _loading, child: content)),
+        Opacity(
+          opacity: _loading ? 0.6 : 1,
+          child: IgnorePointer(ignoring: _loading, child: content),
+        ),
       ],
     );
   }
 }
 
 class _SelectorChip extends StatelessWidget {
-  const _SelectorChip({required this.label, required this.selected, required this.onTap});
+  const _SelectorChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -403,7 +477,9 @@ class _SelectorChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          border: Border.all(color: selected ? FinanceColors.primary : FinanceColors.border),
+          border: Border.all(
+            color: selected ? FinanceColors.primary : FinanceColors.border,
+          ),
           borderRadius: BorderRadius.circular(FinanceRadius.control),
         ),
         child: Text(
@@ -425,7 +501,12 @@ class _ChipItem {
 }
 
 class _ChipPicker extends StatelessWidget {
-  const _ChipPicker({required this.label, required this.items, required this.selectedId, required this.onSelected});
+  const _ChipPicker({
+    required this.label,
+    required this.items,
+    required this.selectedId,
+    required this.onSelected,
+  });
   final String label;
   final List<_ChipItem> items;
   final int? selectedId;
@@ -472,8 +553,16 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FinanceFilterBar(
     children: <Widget>[
-      OutlinedButton.icon(onPressed: onPickFrom, icon: const Icon(Icons.date_range, size: 16), label: Text('من: $from')),
-      OutlinedButton.icon(onPressed: onPickTo, icon: const Icon(Icons.date_range, size: 16), label: Text('إلى: $to')),
+      OutlinedButton.icon(
+        onPressed: onPickFrom,
+        icon: const Icon(Icons.date_range, size: 16),
+        label: Text('من: $from'),
+      ),
+      OutlinedButton.icon(
+        onPressed: onPickTo,
+        icon: const Icon(Icons.date_range, size: 16),
+        label: Text('إلى: $to'),
+      ),
       Container(
         height: 34,
         constraints: const BoxConstraints(minWidth: 150),
@@ -492,8 +581,16 @@ class _FilterBar extends StatelessWidget {
             isDense: true,
             onChanged: onBranchChanged,
             items: <DropdownMenuItem<int?>>[
-              const DropdownMenuItem<int?>(value: null, child: Text('الفرع: الكل')),
-              ...branches.map((Branch b) => DropdownMenuItem<int?>(value: b.id, child: Text('الفرع: ${b.name}'))),
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('الفرع: الكل'),
+              ),
+              ...branches.map(
+                (Branch b) => DropdownMenuItem<int?>(
+                  value: b.id,
+                  child: Text('الفرع: ${b.name}'),
+                ),
+              ),
             ],
           ),
         ),
@@ -507,12 +604,19 @@ class _IntegrityBanner extends StatelessWidget {
   final bool healthy;
   final String message;
   @override
-  Widget build(BuildContext context) =>
-      FinanceAlertBanner(message: message, tone: healthy ? FinanceTone.success : FinanceTone.danger);
+  Widget build(BuildContext context) => FinanceAlertBanner(
+    message: message,
+    tone: healthy ? FinanceTone.success : FinanceTone.danger,
+  );
 }
 
 class _HierarchyRow {
-  const _HierarchyRow({required this.cells, this.bold = false, this.indent = false, this.onTap});
+  const _HierarchyRow({
+    required this.cells,
+    this.bold = false,
+    this.indent = false,
+    this.onTap,
+  });
   final List<Widget> cells;
   final bool bold;
   final bool indent;
@@ -533,9 +637,13 @@ class _HierarchyTable extends StatelessWidget {
           (_HierarchyRow row) => row.cells
               .map(
                 (Widget cell) => Padding(
-                  padding: row.indent ? const EdgeInsetsDirectional.only(start: FinanceSpace.lg) : EdgeInsets.zero,
+                  padding: row.indent
+                      ? const EdgeInsetsDirectional.only(start: FinanceSpace.lg)
+                      : EdgeInsets.zero,
                   child: DefaultTextStyle.merge(
-                    style: TextStyle(fontWeight: row.bold ? FontWeight.w700 : FontWeight.w400),
+                    style: TextStyle(
+                      fontWeight: row.bold ? FontWeight.w700 : FontWeight.w400,
+                    ),
                     child: cell,
                   ),
                 ),
@@ -555,7 +663,10 @@ Widget _ltrText(String value, {Color? color}) => Directionality(
 );
 
 class _ProfitAndLossView extends StatelessWidget {
-  const _ProfitAndLossView({required this.report, required this.onDrillAccount});
+  const _ProfitAndLossView({
+    required this.report,
+    required this.onDrillAccount,
+  });
   final ProfitAndLossReport report;
   final ValueChanged<int> onDrillAccount;
 
@@ -569,14 +680,20 @@ class _ProfitAndLossView extends StatelessWidget {
     final List<_HierarchyRow> rows = <_HierarchyRow>[
       _groupHeaderRow('الإيرادات'),
       ...report.revenue.map(_accountRow),
-      _totalRow('صافي الإيرادات', report.totalRevenue, comparisonKey: 'revenue'),
+      _totalRow(
+        'صافي الإيرادات',
+        report.totalRevenue,
+        comparisonKey: 'revenue',
+      ),
       _groupHeaderRow('تكلفة البضاعة المباعة'),
       ...report.costOfSales.map(_accountRow),
       _totalRow(
         'مجمل الربح',
         report.grossProfit,
         comparisonKey: 'grossProfit',
-        color: _amount(report.grossProfit) >= 0 ? FinanceColors.success : FinanceColors.danger,
+        color: _amount(report.grossProfit) >= 0
+            ? FinanceColors.success
+            : FinanceColors.danger,
       ),
       _groupHeaderRow('المصروفات التشغيلية'),
       ...report.operatingExpenses.map(_accountRow),
@@ -584,7 +701,9 @@ class _ProfitAndLossView extends StatelessWidget {
         'صافي الربح التشغيلي',
         report.netOperatingProfit,
         comparisonKey: 'netOperatingProfit',
-        color: _amount(report.netOperatingProfit) >= 0 ? FinanceColors.success : FinanceColors.danger,
+        color: _amount(report.netOperatingProfit) >= 0
+            ? FinanceColors.success
+            : FinanceColors.danger,
       ),
     ];
     return Column(
@@ -593,8 +712,20 @@ class _ProfitAndLossView extends StatelessWidget {
         FinanceKpiGrid(
           items: <FinanceKpiData>[
             FinanceKpiData(label: 'صافي الإيرادات', value: report.totalRevenue),
-            FinanceKpiData(label: 'مجمل الربح', value: report.grossProfit, tone: _amount(report.grossProfit) >= 0 ? FinanceTone.success : FinanceTone.danger),
-            FinanceKpiData(label: 'صافي الربح التشغيلي', value: report.netOperatingProfit, tone: _amount(report.netOperatingProfit) >= 0 ? FinanceTone.success : FinanceTone.danger),
+            FinanceKpiData(
+              label: 'مجمل الربح',
+              value: report.grossProfit,
+              tone: _amount(report.grossProfit) >= 0
+                  ? FinanceTone.success
+                  : FinanceTone.danger,
+            ),
+            FinanceKpiData(
+              label: 'صافي الربح التشغيلي',
+              value: report.netOperatingProfit,
+              tone: _amount(report.netOperatingProfit) >= 0
+                  ? FinanceTone.success
+                  : FinanceTone.danger,
+            ),
           ],
         ),
         const SizedBox(height: FinanceSpace.md),
@@ -606,7 +737,12 @@ class _ProfitAndLossView extends StatelessWidget {
         ),
         const SizedBox(height: FinanceSpace.lg),
         _HierarchyTable(
-          headers: const <String>['البند', 'الفترة الحالية', 'الفترة السابقة', 'التغير %'],
+          headers: const <String>[
+            'البند',
+            'الفترة الحالية',
+            'الفترة السابقة',
+            'التغير %',
+          ],
           rows: rows,
         ),
       ],
@@ -626,27 +762,43 @@ class _ProfitAndLossView extends StatelessWidget {
 
   _HierarchyRow _groupHeaderRow(String label) => _HierarchyRow(
     cells: <Widget>[
-      Text(label, style: FinanceText.body.copyWith(fontWeight: FontWeight.w700, color: FinanceColors.ink)),
+      Text(
+        label,
+        style: FinanceText.body.copyWith(
+          fontWeight: FontWeight.w700,
+          color: FinanceColors.ink,
+        ),
+      ),
       const SizedBox(),
       const SizedBox(),
       const SizedBox(),
     ],
   );
 
-  _HierarchyRow _totalRow(String label, String value, {String? comparisonKey, Color? color}) {
-    final ReportComparisonValue? cmp = comparisonKey == null ? null : report.comparison?[comparisonKey];
+  _HierarchyRow _totalRow(
+    String label,
+    String value, {
+    String? comparisonKey,
+    Color? color,
+  }) {
+    final ReportComparisonValue? cmp = comparisonKey == null
+        ? null
+        : report.comparison?[comparisonKey];
     return _HierarchyRow(
       bold: true,
       cells: <Widget>[
         Text(label),
         FinanceAmount(value: value, color: color),
         cmp == null ? _ltrText('—') : FinanceAmount(value: cmp.previous),
-        _ltrText(cmp?.percentageChange != null ? '${cmp!.percentageChange}%' : '—'),
+        _ltrText(
+          cmp?.percentageChange != null ? '${cmp!.percentageChange}%' : '—',
+        ),
       ],
     );
   }
 
-  double _amount(String value) => double.tryParse(value.replaceAll(',', '')) ?? 0;
+  double _amount(String value) =>
+      double.tryParse(value.replaceAll(',', '')) ?? 0;
 }
 
 class _BalanceSheetView extends StatelessWidget {
@@ -656,15 +808,33 @@ class _BalanceSheetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _HierarchyRow group(String title) =>
-        _HierarchyRow(cells: <Widget>[Text(title, style: FinanceText.body.copyWith(fontWeight: FontWeight.w700, color: FinanceColors.ink)), const SizedBox()]);
+    _HierarchyRow group(String title) => _HierarchyRow(
+      cells: <Widget>[
+        Text(
+          title,
+          style: FinanceText.body.copyWith(
+            fontWeight: FontWeight.w700,
+            color: FinanceColors.ink,
+          ),
+        ),
+        const SizedBox(),
+      ],
+    );
     _HierarchyRow account(ReportAccountRow r) => _HierarchyRow(
       indent: true,
       onTap: () => onDrillAccount(r.id),
-      cells: <Widget>[Text(r.name, style: FinanceText.body), FinanceAmount(value: r.normalisedBalance ?? '0.00')],
+      cells: <Widget>[
+        Text(r.name, style: FinanceText.body),
+        FinanceAmount(value: r.normalisedBalance ?? '0.00'),
+      ],
     );
-    _HierarchyRow total(String label, String value) =>
-        _HierarchyRow(bold: true, cells: <Widget>[Text(label), FinanceAmount(value: value)]);
+    _HierarchyRow total(String label, String value) => _HierarchyRow(
+      bold: true,
+      cells: <Widget>[
+        Text(label),
+        FinanceAmount(value: value),
+      ],
+    );
 
     final List<_HierarchyRow> rows = <_HierarchyRow>[
       group('الأصول'),
@@ -675,7 +845,13 @@ class _BalanceSheetView extends StatelessWidget {
       total('إجمالي الالتزامات', report.totalLiabilities),
       group('حقوق الملكية'),
       ...report.equity.map(account),
-      _HierarchyRow(indent: true, cells: <Widget>[const Text('أرباح الفترة الحالية (غير مقفلة)'), FinanceAmount(value: report.currentPeriodEarnings)]),
+      _HierarchyRow(
+        indent: true,
+        cells: <Widget>[
+          const Text('أرباح الفترة الحالية (غير مقفلة)'),
+          FinanceAmount(value: report.currentPeriodEarnings),
+        ],
+      ),
       total('إجمالي حقوق الملكية', report.totalEquity),
     ];
 
@@ -685,8 +861,14 @@ class _BalanceSheetView extends StatelessWidget {
         FinanceKpiGrid(
           items: <FinanceKpiData>[
             FinanceKpiData(label: 'إجمالي الأصول', value: report.totalAssets),
-            FinanceKpiData(label: 'إجمالي الالتزامات', value: report.totalLiabilities),
-            FinanceKpiData(label: 'إجمالي حقوق الملكية', value: report.totalEquity),
+            FinanceKpiData(
+              label: 'إجمالي الالتزامات',
+              value: report.totalLiabilities,
+            ),
+            FinanceKpiData(
+              label: 'إجمالي حقوق الملكية',
+              value: report.totalEquity,
+            ),
           ],
         ),
         const SizedBox(height: FinanceSpace.md),
@@ -712,27 +894,63 @@ class _CashFlowView extends StatelessWidget {
   Widget build(BuildContext context) {
     _HierarchyRow group(String title, String amount) => _HierarchyRow(
       bold: true,
-      cells: <Widget>[Text(title, style: FinanceText.body.copyWith(color: FinanceColors.ink)), FinanceAmount(value: amount)],
+      cells: <Widget>[
+        Text(title, style: FinanceText.body.copyWith(color: FinanceColors.ink)),
+        FinanceAmount(value: amount),
+      ],
     );
     _HierarchyRow item(CashFlowItem i) => _HierarchyRow(
       indent: true,
       onTap: () => onOpenJournal(i.journalId),
-      cells: <Widget>[Text('${i.reference} — ${i.date}', style: FinanceText.body), FinanceAmount(value: i.amount)],
+      cells: <Widget>[
+        Text('${i.reference} — ${i.date}', style: FinanceText.body),
+        FinanceAmount(value: i.amount),
+      ],
     );
-    double sum(List<CashFlowItem> items) =>
-        items.fold<double>(0, (double s, CashFlowItem i) => s + (double.tryParse(i.amount.replaceAll(',', '')) ?? 0));
+    double sum(List<CashFlowItem> items) => items.fold<double>(
+      0,
+      (double s, CashFlowItem i) =>
+          s + (double.tryParse(i.amount.replaceAll(',', '')) ?? 0),
+    );
     final List<_HierarchyRow> rows = <_HierarchyRow>[
-      _HierarchyRow(bold: true, cells: <Widget>[const Text('النقد والبنوك — افتتاحي'), FinanceAmount(value: report.openingCashBanks)]),
+      _HierarchyRow(
+        bold: true,
+        cells: <Widget>[
+          const Text('النقد والبنوك — افتتاحي'),
+          FinanceAmount(value: report.openingCashBanks),
+        ],
+      ),
       group('الأنشطة التشغيلية', sum(report.operating).toStringAsFixed(2)),
       ...report.operating.map(item),
       group('الأنشطة الاستثمارية', sum(report.investing).toStringAsFixed(2)),
       ...report.investing.map(item),
       group('الأنشطة التمويلية', sum(report.financing).toStringAsFixed(2)),
       ...report.financing.map(item),
-      _HierarchyRow(bold: true, cells: <Widget>[const Text('صافي التدفق النقدي'), FinanceAmount(value: report.netCashFlow, color: FinanceColors.success)]),
-      _HierarchyRow(bold: true, cells: <Widget>[Text('النقد والبنوك — ختامي', style: FinanceText.body.copyWith(color: FinanceColors.ink)), FinanceAmount(value: report.closingCashBanks)]),
+      _HierarchyRow(
+        bold: true,
+        cells: <Widget>[
+          const Text('صافي التدفق النقدي'),
+          FinanceAmount(
+            value: report.netCashFlow,
+            color: FinanceColors.success,
+          ),
+        ],
+      ),
+      _HierarchyRow(
+        bold: true,
+        cells: <Widget>[
+          Text(
+            'النقد والبنوك — ختامي',
+            style: FinanceText.body.copyWith(color: FinanceColors.ink),
+          ),
+          FinanceAmount(value: report.closingCashBanks),
+        ],
+      ),
       if (report.internalTransfer.isNotEmpty)
-        group('تحويلات داخلية (لا تُحسب ضمن التدفق الخارجي)', sum(report.internalTransfer).toStringAsFixed(2)),
+        group(
+          'تحويلات داخلية (لا تُحسب ضمن التدفق الخارجي)',
+          sum(report.internalTransfer).toStringAsFixed(2),
+        ),
       if (report.unclassified.isNotEmpty) ...<_HierarchyRow>[
         group('غير مصنّف', sum(report.unclassified).toStringAsFixed(2)),
         ...report.unclassified.map(item),
@@ -744,9 +962,19 @@ class _CashFlowView extends StatelessWidget {
       children: <Widget>[
         FinanceKpiGrid(
           items: <FinanceKpiData>[
-            FinanceKpiData(label: 'النقد الافتتاحي', value: report.openingCashBanks),
-            FinanceKpiData(label: 'صافي التدفق النقدي', value: report.netCashFlow, tone: FinanceTone.success),
-            FinanceKpiData(label: 'النقد الختامي', value: report.closingCashBanks),
+            FinanceKpiData(
+              label: 'النقد الافتتاحي',
+              value: report.openingCashBanks,
+            ),
+            FinanceKpiData(
+              label: 'صافي التدفق النقدي',
+              value: report.netCashFlow,
+              tone: FinanceTone.success,
+            ),
+            FinanceKpiData(
+              label: 'النقد الختامي',
+              value: report.closingCashBanks,
+            ),
           ],
         ),
         const SizedBox(height: FinanceSpace.md),
@@ -783,7 +1011,11 @@ class _TrialBalanceView extends StatelessWidget {
         items: <FinanceKpiData>[
           FinanceKpiData(label: 'إجمالي مدين', value: report.totalDebit),
           FinanceKpiData(label: 'إجمالي دائن', value: report.totalCredit),
-          FinanceKpiData(label: 'الفرق', value: report.difference, tone: report.balanced ? FinanceTone.success : FinanceTone.danger),
+          FinanceKpiData(
+            label: 'الفرق',
+            value: report.difference,
+            tone: report.balanced ? FinanceTone.success : FinanceTone.danger,
+          ),
         ],
       ),
       const SizedBox(height: FinanceSpace.md),
@@ -798,9 +1030,14 @@ class _TrialBalanceView extends StatelessWidget {
         onPressed: onToggleZero,
         style: OutlinedButton.styleFrom(
           backgroundColor: includeZero ? FinanceColors.accent : Colors.white,
-          foregroundColor: includeZero ? Colors.white : FinanceColors.supporting,
+          foregroundColor: includeZero
+              ? Colors.white
+              : FinanceColors.supporting,
         ),
-        icon: Icon(includeZero ? Icons.check_box : Icons.check_box_outline_blank, size: 18),
+        icon: Icon(
+          includeZero ? Icons.check_box : Icons.check_box_outline_blank,
+          size: 18,
+        ),
         label: const Text('إظهار الحسابات ذات الرصيد صفر'),
       ),
       const SizedBox(height: FinanceSpace.lg),
@@ -815,10 +1052,19 @@ class _TrialBalanceView extends StatelessWidget {
               .map(
                 (ReportAccountRow a) => <Widget>[
                   _ltrText(a.code, color: FinanceColors.supporting),
-                  Text(a.name, style: FinanceText.body.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    a.name,
+                    style: FinanceText.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   Text(a.group, style: FinanceText.body),
-                  a.closingDebit == null ? _ltrText('—') : FinanceAmount(value: a.closingDebit!),
-                  a.closingCredit == null ? _ltrText('—') : FinanceAmount(value: a.closingCredit!),
+                  a.closingDebit == null
+                      ? _ltrText('—')
+                      : FinanceAmount(value: a.closingDebit!),
+                  a.closingCredit == null
+                      ? _ltrText('—')
+                      : FinanceAmount(value: a.closingCredit!),
                 ],
               )
               .toList(),
@@ -834,26 +1080,48 @@ class _GeneralLedgerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double net = (double.tryParse(report.closingBalance.replaceAll(',', '')) ?? 0) -
+    final double net =
+        (double.tryParse(report.closingBalance.replaceAll(',', '')) ?? 0) -
         (double.tryParse(report.openingBalance.replaceAll(',', '')) ?? 0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         FinanceKpiGrid(
           items: <FinanceKpiData>[
-            FinanceKpiData(label: 'الرصيد الافتتاحي', value: report.openingBalance),
-            FinanceKpiData(label: 'الحركة الصافية', value: net.toStringAsFixed(2), tone: net >= 0 ? FinanceTone.success : FinanceTone.danger),
-            FinanceKpiData(label: 'الرصيد الختامي', value: report.closingBalance),
+            FinanceKpiData(
+              label: 'الرصيد الافتتاحي',
+              value: report.openingBalance,
+            ),
+            FinanceKpiData(
+              label: 'الحركة الصافية',
+              value: net.toStringAsFixed(2),
+              tone: net >= 0 ? FinanceTone.success : FinanceTone.danger,
+            ),
+            FinanceKpiData(
+              label: 'الرصيد الختامي',
+              value: report.closingBalance,
+            ),
           ],
         ),
         const SizedBox(height: FinanceSpace.lg),
         if (report.lines.isEmpty)
-          const FinanceEmptyState(message: 'لا توجد حركات على هذا الحساب خلال الفترة المحددة.')
+          const FinanceEmptyState(
+            message: 'لا توجد حركات على هذا الحساب خلال الفترة المحددة.',
+          )
         else
           FinanceTable(
             minWidth: 1200,
-            headers: const <String>['التاريخ', 'رقم القيد', 'المصدر', 'الوصف', 'مدين', 'دائن', 'الرصيد الجاري'],
-            onRowTap: (int index) => onOpenJournal(report.lines[index].journalId),
+            headers: const <String>[
+              'التاريخ',
+              'رقم القيد',
+              'المصدر',
+              'الوصف',
+              'مدين',
+              'دائن',
+              'الرصيد الجاري',
+            ],
+            onRowTap: (int index) =>
+                onOpenJournal(report.lines[index].journalId),
             rows: report.lines
                 .map(
                   (GeneralLedgerLine line) => <Widget>[
@@ -861,8 +1129,12 @@ class _GeneralLedgerView extends StatelessWidget {
                     FinanceReference(reference: line.journalReference),
                     Text(line.sourceType ?? '—', style: FinanceText.body),
                     Text(line.description, style: FinanceText.body),
-                    line.debit == '0.00' ? _ltrText('—') : FinanceAmount(value: line.debit),
-                    line.credit == '0.00' ? _ltrText('—') : FinanceAmount(value: line.credit),
+                    line.debit == '0.00'
+                        ? _ltrText('—')
+                        : FinanceAmount(value: line.debit),
+                    line.credit == '0.00'
+                        ? _ltrText('—')
+                        : FinanceAmount(value: line.credit),
                     FinanceAmount(value: line.runningBalance),
                   ],
                 )
@@ -874,46 +1146,96 @@ class _GeneralLedgerView extends StatelessWidget {
 }
 
 class _SupplierAgingView extends StatelessWidget {
-  const _SupplierAgingView({required this.report, required this.onOpenStatement});
+  const _SupplierAgingView({
+    required this.report,
+    required this.onOpenStatement,
+  });
   final SupplierAgingReport report;
   final ValueChanged<int> onOpenStatement;
 
   @override
   Widget build(BuildContext context) {
     final int overdueCount = report.suppliers
-        .where((SupplierAgingRow s) => _amt(s.totalOutstanding) - _amt(s.current) > 0)
+        .where(
+          (SupplierAgingRow s) =>
+              _amt(s.totalOutstanding) - _amt(s.current) > 0,
+        )
         .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         FinanceKpiGrid(
           items: <FinanceKpiData>[
-            FinanceKpiData(label: 'إجمالي المستحقات', value: report.totalOutstanding),
+            FinanceKpiData(
+              label: 'إجمالي المستحقات',
+              value: report.totalOutstanding,
+            ),
             FinanceKpiData(
               label: 'إجمالي المتأخر',
-              value: (_amt(report.totalOutstanding) - _amt(report.totalCurrent)).toStringAsFixed(2),
-              tone: (_amt(report.totalOutstanding) - _amt(report.totalCurrent)) > 0 ? FinanceTone.danger : FinanceTone.success,
+              value: (_amt(report.totalOutstanding) - _amt(report.totalCurrent))
+                  .toStringAsFixed(2),
+              tone:
+                  (_amt(report.totalOutstanding) - _amt(report.totalCurrent)) >
+                      0
+                  ? FinanceTone.danger
+                  : FinanceTone.success,
             ),
             FinanceKpiData(label: 'موردون متأخرون', value: '$overdueCount'),
           ],
         ),
         const SizedBox(height: FinanceSpace.lg),
         if (report.suppliers.isEmpty)
-          const FinanceEmptyState(message: 'لا توجد مستحقات موردين قائمة كما في هذا التاريخ.')
+          const FinanceEmptyState(
+            message: 'لا توجد مستحقات موردين قائمة كما في هذا التاريخ.',
+          )
         else
           FinanceTable(
             minWidth: 1100,
-            headers: const <String>['المورد', 'الحالي', '1-30', '31-60', '61-90', '+90', 'إجمالي المستحق'],
-            onRowTap: (int index) => onOpenStatement(report.suppliers[index].supplierId),
+            headers: const <String>[
+              'المورد',
+              'الحالي',
+              '1-30',
+              '31-60',
+              '61-90',
+              '+90',
+              'إجمالي المستحق',
+            ],
+            onRowTap: (int index) =>
+                onOpenStatement(report.suppliers[index].supplierId),
             rows: report.suppliers
                 .map(
                   (SupplierAgingRow s) => <Widget>[
-                    Text(s.supplierName, style: FinanceText.body.copyWith(fontWeight: FontWeight.w600)),
+                    Text(
+                      s.supplierName,
+                      style: FinanceText.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     FinanceAmount(value: s.current),
-                    FinanceAmount(value: s.days1To30, color: _amt(s.days1To30) > 0 ? FinanceColors.accent : null),
-                    FinanceAmount(value: s.days31To60, color: _amt(s.days31To60) > 0 ? FinanceColors.accent : null),
-                    FinanceAmount(value: s.days61To90, color: _amt(s.days61To90) > 0 ? FinanceColors.danger : null),
-                    FinanceAmount(value: s.days90Plus, color: _amt(s.days90Plus) > 0 ? FinanceColors.danger : null),
+                    FinanceAmount(
+                      value: s.days1To30,
+                      color: _amt(s.days1To30) > 0
+                          ? FinanceColors.accent
+                          : null,
+                    ),
+                    FinanceAmount(
+                      value: s.days31To60,
+                      color: _amt(s.days31To60) > 0
+                          ? FinanceColors.accent
+                          : null,
+                    ),
+                    FinanceAmount(
+                      value: s.days61To90,
+                      color: _amt(s.days61To90) > 0
+                          ? FinanceColors.danger
+                          : null,
+                    ),
+                    FinanceAmount(
+                      value: s.days90Plus,
+                      color: _amt(s.days90Plus) > 0
+                          ? FinanceColors.danger
+                          : null,
+                    ),
                     FinanceAmount(value: s.totalOutstanding),
                   ],
                 )
@@ -927,15 +1249,21 @@ class _SupplierAgingView extends StatelessWidget {
 }
 
 class _SupplierStatementView extends StatelessWidget {
-  const _SupplierStatementView({required this.report, required this.onOpenProfile, required this.onNavigateSource});
+  const _SupplierStatementView({
+    required this.report,
+    required this.onOpenProfile,
+    required this.onNavigateSource,
+  });
   final SupplierStatementReport report;
   final VoidCallback onOpenProfile;
-  final void Function({required String resourceKind, required int? id}) onNavigateSource;
+  final void Function({required String resourceKind, required int? id})
+  onNavigateSource;
 
   @override
   Widget build(BuildContext context) {
     final double net =
-        (double.tryParse(report.closingBalance.replaceAll(',', '')) ?? 0) - (double.tryParse(report.openingBalance.replaceAll(',', '')) ?? 0);
+        (double.tryParse(report.closingBalance.replaceAll(',', '')) ?? 0) -
+        (double.tryParse(report.openingBalance.replaceAll(',', '')) ?? 0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -950,33 +1278,68 @@ class _SupplierStatementView extends StatelessWidget {
         const SizedBox(height: FinanceSpace.sm),
         FinanceKpiGrid(
           items: <FinanceKpiData>[
-            FinanceKpiData(label: 'الرصيد الافتتاحي', value: report.openingBalance),
-            FinanceKpiData(label: 'صافي الحركة', value: net.toStringAsFixed(2), tone: net > 0 ? FinanceTone.danger : FinanceTone.success),
-            FinanceKpiData(label: 'الرصيد الختامي', value: report.closingBalance),
+            FinanceKpiData(
+              label: 'الرصيد الافتتاحي',
+              value: report.openingBalance,
+            ),
+            FinanceKpiData(
+              label: 'صافي الحركة',
+              value: net.toStringAsFixed(2),
+              tone: net > 0 ? FinanceTone.danger : FinanceTone.success,
+            ),
+            FinanceKpiData(
+              label: 'الرصيد الختامي',
+              value: report.closingBalance,
+            ),
           ],
         ),
         const SizedBox(height: FinanceSpace.lg),
         if (report.lines.isEmpty)
-          const FinanceEmptyState(message: 'لا توجد حركات لهذا المورد خلال الفترة المحددة.')
+          const FinanceEmptyState(
+            message: 'لا توجد حركات لهذا المورد خلال الفترة المحددة.',
+          )
         else
           FinanceTable(
             minWidth: 1000,
-            headers: const <String>['التاريخ', 'النوع', 'المرجع', 'زيادة (فاتورة)', 'دفعة', 'الرصيد الجاري'],
+            headers: const <String>[
+              'التاريخ',
+              'النوع',
+              'المرجع',
+              'زيادة (فاتورة)',
+              'دفعة',
+              'الرصيد الجاري',
+            ],
             onRowTap: (int index) {
               final SupplierStatementReportLine line = report.lines[index];
-              if (line.resourceKind != null) onNavigateSource(resourceKind: line.resourceKind!, id: line.resourceId);
+              if (line.resourceKind != null) {
+                onNavigateSource(
+                  resourceKind: line.resourceKind!,
+                  id: line.resourceId,
+                );
+              }
             },
             rows: report.lines
                 .map(
                   (SupplierStatementReportLine line) => <Widget>[
                     Text(line.date, style: FinanceText.body),
                     FinanceStatusBadgeCustom(
-                      label: line.type == 'supplier_invoice' ? 'فاتورة' : 'دفعة',
-                      tone: line.type == 'supplier_invoice' ? FinanceTone.neutral : FinanceTone.success,
+                      label: line.type == 'supplier_invoice'
+                          ? 'فاتورة'
+                          : 'دفعة',
+                      tone: line.type == 'supplier_invoice'
+                          ? FinanceTone.neutral
+                          : FinanceTone.success,
                     ),
                     FinanceReference(reference: line.reference),
-                    line.debit == '0.00' ? _ltrText('—') : FinanceAmount(value: line.debit),
-                    line.credit == '0.00' ? _ltrText('—') : FinanceAmount(value: line.credit, color: FinanceColors.success),
+                    line.debit == '0.00'
+                        ? _ltrText('—')
+                        : FinanceAmount(value: line.debit),
+                    line.credit == '0.00'
+                        ? _ltrText('—')
+                        : FinanceAmount(
+                            value: line.credit,
+                            color: FinanceColors.success,
+                          ),
                     FinanceAmount(value: line.runningOutstanding),
                   ],
                 )

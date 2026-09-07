@@ -18,14 +18,20 @@ class DatabaseSeeder extends Seeder
             InventorySeeder::class,
             DiscountSeeder::class,
             LoyaltySeeder::class,
-            PosDemoSeeder::class,
         ]);
 
-        // The connected Finance scenario is development data only. It uses
-        // the same posting services as the application, so it is kept after
-        // the core catalog and POS seeders it depends on.
-        if (app()->environment(['local', 'development', 'testing'])) {
+        // Connected operational scenarios are development data only. They
+        // use production posting flows and stable idempotency keys; the old
+        // PosDemoSeeder wrote payments/refunds directly and is intentionally
+        // not part of the runnable demo command.
+        // Test cases opt into these richer scenarios explicitly.  Keeping the
+        // base test seed deterministic prevents operational demo totals from
+        // leaking into unrelated report assertions.
+        if (app()->environment(['local', 'development'])) {
             $this->call(FinanceOperationsDemoSeeder::class);
+            $this->call(Cafe618InventoryOperationsDemoSeeder::class);
+            $this->call(Cafe618PosSalesDemoSeeder::class);
+            $this->call(Cafe618FinanceOperationsDemoSeeder::class);
         }
     }
 }

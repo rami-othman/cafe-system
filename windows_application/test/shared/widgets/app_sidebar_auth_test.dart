@@ -63,6 +63,17 @@ void main() {
 }
 
 Future<void> _pumpSidebar(WidgetTester tester, String role) async {
+  // Explicit, tall-enough surface: the default test surface is too short to
+  // mount every sidebar item's Element (ListView/Sliver virtualization only
+  // builds what's within the viewport + cache extent) now that the owner
+  // role's item count grew with Cafe Configuration — without this, `find`
+  // can miss items pushed past the cache extent, not because they're absent.
+  tester.view.physicalSize = const Size(1280, 900);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(

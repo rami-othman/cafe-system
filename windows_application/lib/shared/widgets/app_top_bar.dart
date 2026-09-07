@@ -19,12 +19,14 @@ class AppTopBar extends StatefulWidget {
     this.showCartButton = false,
     this.onRefresh,
     this.showOperationalBranchTabs = true,
+    this.showShiftStatus = true,
     this.contextTitle,
   });
 
   final bool showCartButton;
   final Future<void> Function(BuildContext context)? onRefresh;
   final bool showOperationalBranchTabs;
+  final bool showShiftStatus;
   final String? contextTitle;
 
   @override
@@ -69,7 +71,7 @@ class _AppTopBarState extends State<AppTopBar> {
         final EdgeInsets padding = isVeryCompact
             ? AppSpacing.horizontalSm
             : AppSpacing.horizontalXl;
-        final bool showShiftBadge = !isVeryCompact;
+        final bool showShiftBadge = !isVeryCompact && widget.showShiftStatus;
         final bool showOptionalIcons = !isCompact;
 
         return Container(

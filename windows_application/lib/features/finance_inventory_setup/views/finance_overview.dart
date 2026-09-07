@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_router.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../repositories/finance_setup_repository.dart';
 import '../widgets/finance_components.dart';
@@ -304,6 +305,19 @@ class _OverviewBody extends StatelessWidget {
       FinanceTone tone = FinanceTone.neutral,
     }) {
       final Map<String, dynamic> item = _map(kpis[key]);
+      // grossProfit/operatingProfit carry a `reliable` flag from the backend
+      // (false when COGS is not recorded for every paid order in range) —
+      // never present a computed number as if it were exact in that case.
+      final bool reliable = item['reliable'] != false;
+      if (!reliable) {
+        return FinanceKpiData(
+          label: label,
+          value: 'التكلفة غير متاحة لكل الطلبات',
+          tone: FinanceTone.neutral,
+          icon: icon,
+          onTap: route == null ? null : () => context.go(route),
+        );
+      }
       final String value =
           '${item['current'] ?? item['total'] ?? item['outstanding'] ?? '0.00'}';
       final String? trend = comparison && item['percentageChange'] != null
@@ -331,7 +345,7 @@ class _OverviewBody extends StatelessWidget {
         'netSales',
         'صافي المبيعات',
         Icons.receipt_long_outlined,
-        route: '/finance?tab=transactions',
+        route: AppRoutes.financeTransactions,
       ),
       card(
         'grossProfit',
@@ -736,12 +750,12 @@ _AlertPresentation _alertPresentation(String code) => switch (code) {
   'RECONCILIATION_INCOMPLETE' => const _AlertPresentation(
     'تسوية نقدية غير مكتملة',
     'تحتاج المطابقة إلى إكمال',
-    '/finance/reconciliations',
+    AppRoutes.financeReconciliationCanonical,
   ),
   'DAILY_CLOSING_BLOCKED' => const _AlertPresentation(
     'إغلاق يومي متعثر',
     'توجد متطلبات تمنع الإغلاق',
-    '/finance/daily-closings',
+    AppRoutes.financeDailyClosingCanonical,
   ),
   'DRAFT_JOURNAL_ENTRIES' => const _AlertPresentation(
     'قيود مسودة',
