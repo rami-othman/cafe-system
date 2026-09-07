@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/localization/localization_extensions.dart';
 import 'finance_design.dart';
 import 'finance_navigation_bar.dart';
 
 /// The single Finance module frame, mounted once by the router for every
 /// `/finance/*` route. Owns everything that must never be duplicated per
-/// page: the workspace background, the notifications/profile row, the
-/// breadcrumb, and the one [FinanceNavigationBar] instance. Screens
-/// underneath provide only their own content (optionally via [FinanceShell]
-/// for a page title/actions row) — never another copy of this chrome.
+/// page: the workspace background and the one [FinanceNavigationBar]
+/// instance. The shared [AppTopBar] (mounted once by [AppShell]) owns
+/// notifications/profile/branch context, so this shell never duplicates
+/// them. Screens underneath provide only their own content (optionally via
+/// [FinanceShell] for a page title/actions row) — never another copy of
+/// this chrome.
 ///
 /// Direction follows the ambient (locale-driven) [Directionality] from
 /// [MaterialApp] — Arabic renders RTL, English renders LTR. Nothing here
@@ -18,12 +19,10 @@ import 'finance_navigation_bar.dart';
 class FinanceModuleShell extends StatelessWidget {
   const FinanceModuleShell({
     super.key,
-    required this.currentSection,
     required this.selectedTab,
     required this.child,
   });
 
-  final String currentSection;
   final String selectedTab;
   final Widget child;
 
@@ -32,34 +31,6 @@ class FinanceModuleShell extends StatelessWidget {
     color: FinanceColors.workspace,
     child: Column(
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            FinanceSpace.pageX,
-            FinanceSpace.md,
-            FinanceSpace.pageX,
-            0,
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  context.l10n.financeBreadcrumb(
-                    context.l10n.navigationFinance,
-                    currentSection,
-                  ),
-                  style: FinanceText.small,
-                ),
-              ),
-              const Icon(
-                Icons.notifications_none,
-                color: FinanceColors.primary,
-              ),
-              const SizedBox(width: FinanceSpace.md),
-              const Icon(Icons.person_outline, color: FinanceColors.primary),
-            ],
-          ),
-        ),
-        const SizedBox(height: FinanceSpace.md),
         FinanceNavigationBar(selected: selectedTab),
         Expanded(
           child: Padding(

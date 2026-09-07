@@ -26,10 +26,12 @@ class DailyClosingWorkspaceScreen extends StatefulWidget {
   final int closingId;
 
   @override
-  State<DailyClosingWorkspaceScreen> createState() => _DailyClosingWorkspaceScreenState();
+  State<DailyClosingWorkspaceScreen> createState() =>
+      _DailyClosingWorkspaceScreenState();
 }
 
-class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScreen> {
+class _DailyClosingWorkspaceScreenState
+    extends State<DailyClosingWorkspaceScreen> {
   DailyClosingDetail? _detail;
   bool _loading = true;
   Object? _error;
@@ -42,7 +44,8 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
   bool _updatingCash = false;
   bool _closing = false;
 
-  FinanceSetupRepository get _repository => context.read<FinanceSetupCubit>().repository;
+  FinanceSetupRepository get _repository =>
+      context.read<FinanceSetupCubit>().repository;
 
   @override
   void initState() {
@@ -56,7 +59,9 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
       _error = null;
     });
     try {
-      final DailyClosingDetail detail = await _repository.getDailyClosing(widget.closingId);
+      final DailyClosingDetail detail = await _repository.getDailyClosing(
+        widget.closingId,
+      );
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -84,10 +89,11 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
         'to': detail.businessDate,
         'perPage': 100,
       };
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _repository.getExpenses(filters: filters),
-        _repository.getSupplierPayments(filters: filters),
-      ]);
+      final List<dynamic> results =
+          await Future.wait<dynamic>(<Future<dynamic>>[
+            _repository.getExpenses(filters: filters),
+            _repository.getSupplierPayments(filters: filters),
+          ]);
       if (!mounted) return;
       setState(() {
         _expenses = results[0] as List<ExpenseRecord>;
@@ -105,28 +111,40 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
 
   @override
   Widget build(BuildContext context) => FinanceShell(
-        title: 'الإغلاق اليومي',
-        subtitle: 'تفاصيل إغلاق اليوم التشغيلي',
-        showContext: false,
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'العودة إلى الإغلاق اليومي',
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: () => context.go(AppRoutes.financeDailyClosingCanonical),
-          ),
-        ],
-        child: _buildBody(),
-      );
+    title: 'الإغلاق اليومي',
+    subtitle: 'تفاصيل إغلاق اليوم التشغيلي',
+    showContext: false,
+    actions: <Widget>[
+      IconButton(
+        tooltip: 'العودة إلى الإغلاق اليومي',
+        icon: const Icon(Icons.arrow_forward),
+        onPressed: () => context.go(AppRoutes.financeDailyClosingCanonical),
+      ),
+    ],
+    child: _buildBody(),
+  );
 
   Widget _buildBody() {
-    if (_loading) return const FinanceLoadingState(label: 'جارٍ تحميل الإغلاق اليومي…');
+    if (_loading) {
+      return const FinanceLoadingState(label: 'جارٍ تحميل الإغلاق اليومي…');
+    }
     if (_error != null) {
-      return FinanceErrorState(message: 'تعذّر تحميل الإغلاق اليومي. $_error', onRetry: _load);
+      return FinanceErrorState(
+        message: 'تعذّر تحميل الإغلاق اليومي. $_error',
+        onRetry: _load,
+      );
     }
     final DailyClosingDetail? detail = _detail;
-    if (detail == null) return const FinanceErrorState(message: 'تعذّر إيجاد الإغلاق اليومي المطلوب.');
+    if (detail == null) {
+      return const FinanceErrorState(
+        message: 'تعذّر إيجاد الإغلاق اليومي المطلوب.',
+      );
+    }
 
-    final DailyClosingReadinessState state = dailyClosingReadinessState(detail.readiness, detail.warnings.length);
+    final DailyClosingReadinessState state = dailyClosingReadinessState(
+      detail.readiness,
+      detail.warnings.length,
+    );
     final bool closed = detail.isClosed;
 
     return SingleChildScrollView(
@@ -146,17 +164,38 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
           const SizedBox(height: FinanceSpace.lg),
           FinanceKpiGrid(
             items: <FinanceKpiData>[
-              FinanceKpiData(label: 'صافي المبيعات', value: detail.sales.netSales),
-              FinanceKpiData(label: 'المرتجعات', value: detail.sales.refunds, tone: FinanceTone.danger),
-              FinanceKpiData(label: 'النقد المتوقع', value: detail.cash.expectedCash),
-              FinanceKpiData(label: 'النقد الفعلي', value: detail.cash.actualCash ?? '—'),
+              FinanceKpiData(
+                label: 'صافي المبيعات',
+                value: detail.sales.netSales,
+              ),
+              FinanceKpiData(
+                label: 'المرتجعات',
+                value: detail.sales.refunds,
+                tone: FinanceTone.danger,
+              ),
+              FinanceKpiData(
+                label: 'النقد المتوقع',
+                value: detail.cash.expectedCash,
+              ),
+              FinanceKpiData(
+                label: 'النقد الفعلي',
+                value: detail.cash.actualCash ?? '—',
+              ),
               FinanceKpiData(
                 label: 'فرق الصندوق',
                 value: detail.cash.difference ?? '—',
-                tone: detail.cash.differenceState == 'balanced' ? FinanceTone.success : FinanceTone.danger,
+                tone: detail.cash.differenceState == 'balanced'
+                    ? FinanceTone.success
+                    : FinanceTone.danger,
               ),
-              FinanceKpiData(label: 'المصروفات المرتبطة', value: '${_expenses.length}'),
-              FinanceKpiData(label: 'دفعات الموردين', value: '${_supplierPayments.length}'),
+              FinanceKpiData(
+                label: 'المصروفات المرتبطة',
+                value: '${_expenses.length}',
+              ),
+              FinanceKpiData(
+                label: 'دفعات الموردين',
+                value: '${_supplierPayments.length}',
+              ),
             ],
           ),
           const SizedBox(height: FinanceSpace.lg),
@@ -167,7 +206,11 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
                   'تم إغلاق هذا اليوم في ${detail.closedAt ?? '—'} — صافي المبيعات ${detail.sales.netSales}، النقد المتوقع ${detail.cash.expectedCash}، الفعلي ${detail.cash.actualCash ?? '—'}، الفرق ${detail.cash.difference ?? '—'}.',
             )
           else
-            _ReadinessPanel(detail: detail, state: state, onNavigate: (String path) => context.go(path)),
+            _ReadinessPanel(
+              detail: detail,
+              state: state,
+              onNavigate: (String path) => context.go(path),
+            ),
           const SizedBox(height: FinanceSpace.lg),
           if (!closed)
             Align(
@@ -184,7 +227,12 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
           Text('ملخص المبيعات', style: FinanceText.page),
           const SizedBox(height: FinanceSpace.sm),
           FinanceTable(
-            headers: const <String>['الإجمالي', 'الخصومات', 'المرتجعات', 'صافي المبيعات'],
+            headers: const <String>[
+              'الإجمالي',
+              'الخصومات',
+              'المرتجعات',
+              'صافي المبيعات',
+            ],
             minWidth: 700,
             rows: <List<Widget>>[
               <Widget>[
@@ -194,7 +242,10 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
                   detail.sales.refunds,
                   style: FinanceText.body.copyWith(color: FinanceColors.danger),
                 ),
-                Text(detail.sales.netSales, style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  detail.sales.netSales,
+                  style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
+                ),
               ],
             ],
           ),
@@ -217,7 +268,8 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
             error: _relatedError,
             expenses: _expenses,
             onRetry: () => _loadRelated(detail),
-            onOpen: (ExpenseRecord e) => context.go('/finance/expenses?expenseId=${e.id}'),
+            onOpen: (ExpenseRecord e) =>
+                context.go('/finance/expenses?expenseId=${e.id}'),
           ),
           const SizedBox(height: FinanceSpace.lg),
           Text('دفعات الموردين', style: FinanceText.page),
@@ -227,7 +279,8 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
             error: _relatedError,
             payments: _supplierPayments,
             onRetry: () => _loadRelated(detail),
-            onOpen: (SupplierPayment p) => context.go('/finance/suppliers?paymentId=${p.id}'),
+            onOpen: (SupplierPayment p) =>
+                context.go('/finance/suppliers?paymentId=${p.id}'),
           ),
           const SizedBox(height: FinanceSpace.lg),
           Text('الأثر المالي للمخزون', style: FinanceText.page),
@@ -235,8 +288,14 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
           _InventoryImpactSection(
             operations: detail.operations,
             issues: <DailyClosingIssue>[
-              ...detail.blockers.where((DailyClosingIssue i) => i.code == 'UNPOSTED_INVENTORY_FINANCIAL_EVENT'),
-              ...detail.warnings.where((DailyClosingIssue i) => i.code == 'UNPOSTED_INVENTORY_FINANCIAL_EVENT'),
+              ...detail.blockers.where(
+                (DailyClosingIssue i) =>
+                    i.code == 'UNPOSTED_INVENTORY_FINANCIAL_EVENT',
+              ),
+              ...detail.warnings.where(
+                (DailyClosingIssue i) =>
+                    i.code == 'UNPOSTED_INVENTORY_FINANCIAL_EVENT',
+              ),
             ],
             onOpenInventory: () => context.go('/inventory/movements'),
           ),
@@ -244,9 +303,15 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
             const SizedBox(height: FinanceSpace.lg),
             Text('نشاط بعد الإغلاق', style: FinanceText.page),
             const SizedBox(height: FinanceSpace.sm),
-            FinanceAlertBanner(tone: FinanceTone.warning, message: 'تم تسجيل نشاط مالي بعد الإغلاق'),
+            FinanceAlertBanner(
+              tone: FinanceTone.warning,
+              message: 'تم تسجيل نشاط مالي بعد الإغلاق',
+            ),
             const SizedBox(height: FinanceSpace.sm),
-            _LateActivityTable(items: detail.lateActivity, onOpenJournal: _openJournalDrawer),
+            _LateActivityTable(
+              items: detail.lateActivity,
+              onOpenJournal: _openJournalDrawer,
+            ),
           ],
           const SizedBox(height: FinanceSpace.xl),
           if (!closed)
@@ -268,14 +333,16 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
     if (detail == null) return;
     final String? value = await showDialog<String>(
       context: context,
-      builder: (BuildContext dialog) => _ActualCashDialog(expectedCash: detail.cash.expectedCash),
+      builder: (BuildContext dialog) =>
+          _ActualCashDialog(expectedCash: detail.cash.expectedCash),
     );
     if (value == null) return;
     setState(() => _updatingCash = true);
     try {
-      final DailyClosingDetail updated = await _repository.updateDailyClosing(widget.closingId, <String, dynamic>{
-        'actualCash': value,
-      });
+      final DailyClosingDetail updated = await _repository.updateDailyClosing(
+        widget.closingId,
+        <String, dynamic>{'actualCash': value},
+      );
       if (!mounted) return;
       setState(() {
         _detail = updated;
@@ -309,10 +376,16 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
               : 'كل الفحوصات جاهزة. بعد الإغلاق تصبح اللقطة للقراءة فقط ولا يمكن التراجع.',
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(dialog, false), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('إلغاء'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialog, true),
-            style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FinanceColors.primary,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('تأكيد الإغلاق'),
           ),
         ],
@@ -321,7 +394,10 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
     if (confirmed != true || !mounted) return;
     setState(() => _closing = true);
     try {
-      final DailyClosingDetail closed = await _repository.closeDailyClosing(widget.closingId, const <String, dynamic>{});
+      final DailyClosingDetail closed = await _repository.closeDailyClosing(
+        widget.closingId,
+        const <String, dynamic>{},
+      );
       if (!mounted) return;
       setState(() {
         _detail = closed;
@@ -345,7 +421,8 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
         alignment: AlignmentDirectional.centerEnd,
         child: FinanceJournalDrawer(
           child: FinanceJournalDrawerBody(
-            loader: () => _repository.getFinanceMap('finance/transactions/$journalId'),
+            loader: () =>
+                _repository.getFinanceMap('finance/transactions/$journalId'),
             onNavigate: (String path) {
               Navigator.of(dialogContext).pop();
               context.go(path);
@@ -353,20 +430,35 @@ class _DailyClosingWorkspaceScreenState extends State<DailyClosingWorkspaceScree
           ),
         ),
       ),
-      transitionBuilder: (BuildContext context, Animation<double> animation, _, Widget child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(animation),
-        child: child,
-      ),
+      transitionBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            _,
+            Widget child,
+          ) => SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
     );
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
 class _ReadinessPanel extends StatelessWidget {
-  const _ReadinessPanel({required this.detail, required this.state, required this.onNavigate});
+  const _ReadinessPanel({
+    required this.detail,
+    required this.state,
+    required this.onNavigate,
+  });
   final DailyClosingDetail detail;
   final DailyClosingReadinessState state;
   final ValueChanged<String> onNavigate;
@@ -390,15 +482,24 @@ class _ReadinessPanel extends StatelessWidget {
                 : state == DailyClosingReadinessState.warning
                 ? 'جاهزة مع وجود تحذيرات'
                 : 'جاهزة للإغلاق',
-            style: FinanceText.body.copyWith(fontWeight: FontWeight.w700, color: colors.foreground),
+            style: FinanceText.body.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colors.foreground,
+            ),
           ),
           if (detail.blockers.isNotEmpty) ...<Widget>[
             const SizedBox(height: FinanceSpace.sm),
-            ...detail.blockers.map((DailyClosingIssue issue) => _IssueRow(issue: issue, onNavigate: onNavigate)),
+            ...detail.blockers.map(
+              (DailyClosingIssue issue) =>
+                  _IssueRow(issue: issue, onNavigate: onNavigate),
+            ),
           ],
           if (detail.warnings.isNotEmpty) ...<Widget>[
             const SizedBox(height: FinanceSpace.sm),
-            ...detail.warnings.map((DailyClosingIssue issue) => _IssueRow(issue: issue, onNavigate: onNavigate)),
+            ...detail.warnings.map(
+              (DailyClosingIssue issue) =>
+                  _IssueRow(issue: issue, onNavigate: onNavigate),
+            ),
           ],
         ],
       ),
@@ -426,7 +527,10 @@ class _IssueRow extends StatelessWidget {
             ),
           ),
           if (route != null)
-            TextButton(onPressed: () => onNavigate(route), child: const Text('عرض')),
+            TextButton(
+              onPressed: () => onNavigate(route),
+              child: const Text('عرض'),
+            ),
         ],
       ),
     );
@@ -459,7 +563,9 @@ class _PaymentBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const FinanceEmptyState(message: 'لا توجد مدفوعات مسجّلة لهذا اليوم');
+      return const FinanceEmptyState(
+        message: 'لا توجد مدفوعات مسجّلة لهذا اليوم',
+      );
     }
     return FinanceTable(
       headers: const <String>['طريقة الدفع', 'الإجمالي', 'المرتجع', 'الصافي'],
@@ -467,9 +573,15 @@ class _PaymentBreakdown extends StatelessWidget {
       rows: rows
           .map(
             (Map<String, dynamic> row) => <Widget>[
-              Text('${row['method'] ?? '—'}', style: FinanceText.body.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                '${row['method'] ?? '—'}',
+                style: FinanceText.body.copyWith(fontWeight: FontWeight.w600),
+              ),
               FinanceAmount(value: '${row['gross'] ?? '0.00'}'),
-              Text('${row['refunded'] ?? '0.00'}', style: FinanceText.body.copyWith(color: FinanceColors.danger)),
+              Text(
+                '${row['refunded'] ?? '0.00'}',
+                style: FinanceText.body.copyWith(color: FinanceColors.danger),
+              ),
               Text(
                 '${row['net'] ?? '0.00'}',
                 style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
@@ -482,14 +594,19 @@ class _PaymentBreakdown extends StatelessWidget {
 }
 
 class _ReconciliationStatus extends StatelessWidget {
-  const _ReconciliationStatus({required this.reconciliation, required this.onOpen});
+  const _ReconciliationStatus({
+    required this.reconciliation,
+    required this.onOpen,
+  });
   final DailyClosingReconciliationSummary reconciliation;
   final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     if (!reconciliation.required_) {
-      return const FinanceEmptyState(message: 'لا توجد تسويات مطلوبة لهذا اليوم.');
+      return const FinanceEmptyState(
+        message: 'لا توجد تسويات مطلوبة لهذا اليوم.',
+      );
     }
     return Container(
       padding: const EdgeInsets.all(FinanceSpace.lg),
@@ -508,7 +625,10 @@ class _ReconciliationStatus extends StatelessWidget {
               style: FinanceText.body,
             ),
           ),
-          OutlinedButton(onPressed: onOpen, child: const Text('مراجعة التسويات')),
+          OutlinedButton(
+            onPressed: onOpen,
+            child: const Text('مراجعة التسويات'),
+          ),
         ],
       ),
     );
@@ -531,9 +651,23 @@ class _ExpensesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const SizedBox(height: 96, child: FinanceLoadingState(label: 'جارٍ تحميل المصروفات…'));
-    if (error != null) return FinanceErrorState(message: 'تعذّر تحميل المصروفات.', onRetry: onRetry);
-    if (expenses.isEmpty) return const FinanceEmptyState(message: 'لا توجد مصروفات مرتبطة بهذا اليوم.');
+    if (loading) {
+      return const SizedBox(
+        height: 96,
+        child: FinanceLoadingState(label: 'جارٍ تحميل المصروفات…'),
+      );
+    }
+    if (error != null) {
+      return FinanceErrorState(
+        message: 'تعذّر تحميل المصروفات.',
+        onRetry: onRetry,
+      );
+    }
+    if (expenses.isEmpty) {
+      return const FinanceEmptyState(
+        message: 'لا توجد مصروفات مرتبطة بهذا اليوم.',
+      );
+    }
     return FinanceTable(
       headers: const <String>['المرجع', 'الوصف', 'الفئة', 'المبلغ', 'الحالة'],
       minWidth: 900,
@@ -569,9 +703,23 @@ class _SupplierPaymentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const SizedBox(height: 96, child: FinanceLoadingState(label: 'جارٍ تحميل دفعات الموردين…'));
-    if (error != null) return FinanceErrorState(message: 'تعذّر تحميل دفعات الموردين.', onRetry: onRetry);
-    if (payments.isEmpty) return const FinanceEmptyState(message: 'لا توجد دفعات موردين مرتبطة بهذا اليوم.');
+    if (loading) {
+      return const SizedBox(
+        height: 96,
+        child: FinanceLoadingState(label: 'جارٍ تحميل دفعات الموردين…'),
+      );
+    }
+    if (error != null) {
+      return FinanceErrorState(
+        message: 'تعذّر تحميل دفعات الموردين.',
+        onRetry: onRetry,
+      );
+    }
+    if (payments.isEmpty) {
+      return const FinanceEmptyState(
+        message: 'لا توجد دفعات موردين مرتبطة بهذا اليوم.',
+      );
+    }
     return FinanceTable(
       headers: const <String>['المورد', 'المرجع', 'المبلغ', 'مصدر الدفع'],
       minWidth: 800,
@@ -579,7 +727,10 @@ class _SupplierPaymentsSection extends StatelessWidget {
       rows: payments
           .map(
             (SupplierPayment p) => <Widget>[
-              Text(p.supplierName, style: FinanceText.body.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                p.supplierName,
+                style: FinanceText.body.copyWith(fontWeight: FontWeight.w600),
+              ),
               FinanceReference(reference: p.paymentNumber),
               FinanceAmount(value: p.amount),
               Text(p.financialLocationName, style: FinanceText.body),
@@ -591,7 +742,11 @@ class _SupplierPaymentsSection extends StatelessWidget {
 }
 
 class _InventoryImpactSection extends StatelessWidget {
-  const _InventoryImpactSection({required this.operations, required this.issues, required this.onOpenInventory});
+  const _InventoryImpactSection({
+    required this.operations,
+    required this.issues,
+    required this.onOpenInventory,
+  });
   final DailyClosingOperations operations;
   final List<DailyClosingIssue> issues;
   final VoidCallback onOpenInventory;
@@ -656,7 +811,11 @@ class _LateActivityTable extends StatelessWidget {
 }
 
 class _CloseOperationalBar extends StatelessWidget {
-  const _CloseOperationalBar({required this.detail, required this.closing, required this.onClose});
+  const _CloseOperationalBar({
+    required this.detail,
+    required this.closing,
+    required this.onClose,
+  });
   final DailyClosingDetail detail;
   final bool closing;
   final VoidCallback onClose;
@@ -669,15 +828,27 @@ class _CloseOperationalBar extends StatelessWidget {
     children: <Widget>[
       Text(
         detail.canClose
-            ? (detail.warnings.isNotEmpty ? 'يمكن إغلاق اليوم مع وجود تحذيرات غير حاجبة.' : 'كل الفحوصات جاهزة — يمكن إغلاق اليوم.')
+            ? (detail.warnings.isNotEmpty
+                  ? 'يمكن إغلاق اليوم مع وجود تحذيرات غير حاجبة.'
+                  : 'كل الفحوصات جاهزة — يمكن إغلاق اليوم.')
             : 'لا يمكن إغلاق اليوم — يوجد حاجز يجب حسمه أعلاه.',
         style: FinanceText.body,
       ),
       ElevatedButton(
         onPressed: detail.canClose && !closing ? onClose : null,
-        style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: FinanceColors.primary,
+          foregroundColor: Colors.white,
+        ),
         child: closing
-            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
             : const Text('إغلاق اليوم'),
       ),
     ],
@@ -689,7 +860,8 @@ class _ClosedNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const FinanceAlertBanner(
     tone: FinanceTone.neutral,
-    message: 'هذا الإغلاق مغلق — اللقطة للقراءة فقط ولا يمكن تعديل أي قيمة فيها.',
+    message:
+        'هذا الإغلاق مغلق — اللقطة للقراءة فقط ولا يمكن تعديل أي قيمة فيها.',
   );
 }
 
@@ -710,7 +882,8 @@ class _ActualCashDialogState extends State<_ActualCashDialog> {
     super.dispose();
   }
 
-  double get _expected => double.tryParse(widget.expectedCash.replaceAll(',', '')) ?? 0;
+  double get _expected =>
+      double.tryParse(widget.expectedCash.replaceAll(',', '')) ?? 0;
   double? get _actual => double.tryParse(_controller.text.trim());
 
   void _submit() {
@@ -728,10 +901,16 @@ class _ActualCashDialogState extends State<_ActualCashDialog> {
     return FinanceDialogShell(
       title: 'تحديث النقد الفعلي',
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('إلغاء'),
+        ),
         ElevatedButton(
           onPressed: _submit,
-          style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.primary,
+            foregroundColor: Colors.white,
+          ),
           child: const Text('حفظ'),
         ),
       ],
@@ -750,7 +929,9 @@ class _ActualCashDialogState extends State<_ActualCashDialog> {
               controller: _controller,
               autofocus: true,
               onChanged: (_) => setState(() {}),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(labelText: 'النقد الفعلي'),
             ),
             if (diff != null) ...<Widget>[
@@ -758,13 +939,18 @@ class _ActualCashDialogState extends State<_ActualCashDialog> {
               Text(
                 'الفرق المتوقع (لأغراض العرض فقط): ${diff.toStringAsFixed(2)}',
                 style: FinanceText.small.copyWith(
-                  color: diff.abs() < 0.005 ? FinanceColors.success : FinanceColors.danger,
+                  color: diff.abs() < 0.005
+                      ? FinanceColors.success
+                      : FinanceColors.danger,
                 ),
               ),
             ],
             if (_error != null) ...<Widget>[
               const SizedBox(height: FinanceSpace.sm),
-              Text(_error!, style: const TextStyle(color: FinanceColors.danger)),
+              Text(
+                _error!,
+                style: const TextStyle(color: FinanceColors.danger),
+              ),
             ],
           ],
         ),

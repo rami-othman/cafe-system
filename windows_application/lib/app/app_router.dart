@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
-import 'localization/localization_extensions.dart';
 import 'menu_management_route_locations.dart';
 
 import '../core/services/service_locator.dart';
@@ -34,8 +33,6 @@ import '../features/finance_inventory_setup/views/finance_transactions.dart';
 import '../features/finance_inventory_setup/views/financial_reports_screen.dart';
 import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
 import '../features/finance_inventory_setup/widgets/finance_module_shell.dart';
-import '../features/finance_inventory_setup/widgets/finance_navigation_bar.dart'
-    show financeSectionLabel;
 import '../features/finance_inventory_setup/repositories/finance_setup_repository.dart';
 import '../features/finance_inventory_setup/views/payment_methods_screen.dart';
 import '../features/finance_inventory_setup/views/reconciliation_screen.dart';
@@ -44,9 +41,13 @@ import '../features/finance_inventory_setup/views/supplier_profile_screen.dart';
 import '../features/finance_inventory_setup/views/suppliers_screen.dart';
 import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
 import '../features/inventory/controllers/inventory_cubit.dart';
+import '../features/inventory/widgets/inventory_module_shell.dart';
 import '../features/inventory/views/inventory_items_screen.dart';
 import '../features/inventory/views/inventory_screens.dart'
-    hide InventoryItemsScreen, InventoryItemDetailsScreen, InventoryTransfersScreen;
+    hide
+        InventoryItemsScreen,
+        InventoryItemDetailsScreen,
+        InventoryTransfersScreen;
 import '../features/inventory/views/inventory_workflow_screens.dart';
 import '../features/inventory/views/item_details_screen.dart';
 import '../features/inventory/views/item_form_screen.dart';
@@ -93,7 +94,6 @@ import '../features/menu_management/widgets/menu_module_scaffold.dart';
 import '../features/auth/views/settings_screen.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
-import '../shared/widgets/app_top_bar.dart';
 import 'app_shell.dart';
 
 Page<void> _materialEffectPage(
@@ -134,10 +134,11 @@ final GoRouter appRouter = GoRouter(
         );
         final bool isReports = state.matchedLocation == AppRoutes.reports;
         final bool isFinance = state.uri.path.startsWith(AppRoutes.finance);
+        final bool isInventory = state.uri.path.startsWith(AppRoutes.inventory);
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
-          topBar: _topBarFor(context, state),
+          topBar: null,
           onRefresh: state.uri.path == AppRoutes.pos || isReports
               ? _refreshActionFor(state)
               : null,
@@ -159,11 +160,12 @@ final GoRouter appRouter = GoRouter(
                 )
               : isFinance
               ? FinanceModuleShell(
-                  currentSection: financeSectionLabel(
-                    context.l10n,
-                    _financeActiveTabFor(state.uri.path),
-                  ),
                   selectedTab: _financeActiveTabFor(state.uri.path),
+                  child: child,
+                )
+              : isInventory
+              ? InventoryModuleShell(
+                  selectedTab: _inventoryActiveTabFor(state.uri.path),
                   child: child,
                 )
               : child,
@@ -849,8 +851,13 @@ final GoRouter appRouter = GoRouter(
           name: AppRouteNames.inventory,
           builder: (context, state) => MultiBlocProvider(
             providers: <BlocProvider<dynamic>>[
-              BlocProvider<InventoryCubit>(create: (_) => serviceLocator<InventoryCubit>()),
-              BlocProvider<OperationalBranchCubit>(create: (_) => serviceLocator<OperationalBranchCubit>()..loadBranches()),
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+              BlocProvider<OperationalBranchCubit>(
+                create: (_) =>
+                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
+              ),
             ],
             child: const InventoryDashboardScreen(),
           ),
@@ -897,22 +904,46 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: AppRoutes.inventoryBalances,
-          builder: (context, state) => BlocProvider<InventoryCubit>(
-            create: (_) => serviceLocator<InventoryCubit>(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+              BlocProvider<OperationalBranchCubit>(
+                create: (_) =>
+                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
+              ),
+            ],
             child: const InventoryBalancesScreen(),
           ),
         ),
         GoRoute(
           path: AppRoutes.inventoryMovementCreate,
-          builder: (context, state) => BlocProvider<InventoryCubit>(
-            create: (_) => serviceLocator<InventoryCubit>(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+              BlocProvider<OperationalBranchCubit>(
+                create: (_) =>
+                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
+              ),
+            ],
             child: const InventoryMovementCreateScreen(),
           ),
         ),
         GoRoute(
           path: AppRoutes.inventoryMovements,
-          builder: (context, state) => BlocProvider<InventoryCubit>(
-            create: (_) => serviceLocator<InventoryCubit>(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+              BlocProvider<OperationalBranchCubit>(
+                create: (_) =>
+                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
+              ),
+            ],
             child: const InventoryMovementsScreen(),
           ),
         ),
@@ -931,8 +962,16 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: AppRoutes.inventoryCounts,
-          builder: (context, state) => BlocProvider<InventoryCubit>(
-            create: (_) => serviceLocator<InventoryCubit>(),
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+              BlocProvider<OperationalBranchCubit>(
+                create: (_) =>
+                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
+              ),
+            ],
             child: const InventoryCountsScreen(),
           ),
         ),
@@ -1179,8 +1218,9 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
           builder: (context, state) => BlocProvider<ReportsOverviewCubit>(
-            create: (_) => serviceLocator<ReportsOverviewCubit>()
-              ..selectBranch(context.read<PosCubit>().state.branchId),
+            create: (_) =>
+                serviceLocator<ReportsOverviewCubit>()
+                  ..selectBranch(context.read<PosCubit>().state.branchId),
             child: const _BranchFollowingReport(),
           ),
         ),
@@ -1265,34 +1305,6 @@ Widget? _rightPanelFor(GoRouterState state) {
   };
 }
 
-Widget? _topBarFor(BuildContext context, GoRouterState state) {
-  // Finance owns its module-level chrome (FinanceModuleShell: breadcrumb,
-  // notifications/profile, FinanceNavigationBar) — it must never inherit the
-  // POS-oriented default AppTopBar (branch tabs, ShiftStatusBadge).
-  if (state.uri.path.startsWith(AppRoutes.finance)) {
-    return const SizedBox.shrink();
-  }
-  // Reports has its own branch selector inside ReportsOverviewScreen and no
-  // shift context — it must not show POS branch tabs or ShiftStatusBadge,
-  // just the module label, reusing the exact same shell chrome as the rest
-  // of the app (same height/style, no bespoke "sub-app" look).
-  if (state.matchedLocation == AppRoutes.reports) {
-    return AppTopBar(
-      showOperationalBranchTabs: false,
-      showShiftStatus: false,
-      contextTitle: context.l10n.navigationReports,
-      onRefresh: _refreshActionFor(state),
-    );
-  }
-  if (!state.uri.path.startsWith(AppRoutes.menuManagement)) return null;
-  return AppTopBar(
-    showOperationalBranchTabs: false,
-    // Menu routes own their Cubits below the shell. Their views already have
-    // route-local refresh controls, so the shell-level button must not read a
-    // provider outside its BuildContext.
-  );
-}
-
 String _financeActiveTabFor(String path) {
   if (path == AppRoutes.finance) return 'overview';
   if (path.startsWith(AppRoutes.financeTransactions)) return 'transactions';
@@ -1315,6 +1327,16 @@ String _financeActiveTabFor(String path) {
   if (path.startsWith(AppRoutes.financePaymentMethods)) return 'settings';
   if (path.startsWith(AppRoutes.financeWarehouses)) return 'settings';
   if (path.startsWith(AppRoutes.financeSettings)) return 'settings';
+  return 'overview';
+}
+
+String _inventoryActiveTabFor(String path) {
+  if (path.startsWith(AppRoutes.inventoryItems)) return 'items';
+  if (path.startsWith(AppRoutes.inventoryBalances)) return 'balances';
+  if (path.startsWith(AppRoutes.inventoryMovements)) return 'movements';
+  if (path.startsWith(AppRoutes.inventoryCounts)) return 'counts';
+  if (path.startsWith(AppRoutes.inventoryTransfers)) return 'transfers';
+  if (path.startsWith(AppRoutes.barCheckTemplates)) return 'barChecks';
   return 'overview';
 }
 
@@ -1474,18 +1496,15 @@ abstract final class AppRoutes {
       '/finance/journal-entries';
   static const String financeJournalEntryDetail =
       '/finance/journal-entries/:entryId';
-  static const String financeAccountingPeriods =
-      '/finance/accounting-periods';
+  static const String financeAccountingPeriods = '/finance/accounting-periods';
   static const String financeAccountingPeriodDetail =
       '/finance/accounting-periods/:periodId';
   static const String financeCashBanks = '/finance/cash-banks';
   static const String financePaymentMethods = '/finance/payment-methods';
   static const String financeExpenses = '/finance/expenses';
-  static const String financeExpenseCategories =
-      '/finance/expense-categories';
+  static const String financeExpenseCategories = '/finance/expense-categories';
   static const String financeSuppliers = '/finance/suppliers';
-  static const String financeSuppliersDetail =
-      '/finance/suppliers/:supplierId';
+  static const String financeSuppliersDetail = '/finance/suppliers/:supplierId';
   static const String financeWarehouses = '/finance/warehouses';
   static const String financeSettings = '/finance/settings';
   static const String financeReportsCanonical = '/finance/reports';

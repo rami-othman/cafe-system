@@ -7,6 +7,7 @@ import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import 'package:windows_application/features/finance_inventory_setup/repositories/finance_setup_repository.dart';
 import 'package:windows_application/features/finance_inventory_setup/views/daily_closing_workspace_screen.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('blocked day renders blockers with a working "view" action', (WidgetTester tester) async {
@@ -15,7 +16,7 @@ void main() {
     await _pump(tester, router);
 
     expect(find.text('محظورة عن الإغلاق'), findsOneWidget);
-    expect(find.textContaining('يوجد 2 مصروف بانتظار الاعتماد'), findsOneWidget);
+    expect(find.textContaining('يوجد 2 مصروفات بانتظار الاعتماد'), findsOneWidget);
     expect(find.widgetWithText(ElevatedButton, 'إغلاق اليوم').first, findsOneWidget);
     final ElevatedButton closeButton = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'إغلاق اليوم').last);
     expect(closeButton.onPressed, isNull);
@@ -160,7 +161,14 @@ void main() {
     for (final double width in <double>[1280, 1366, 1440, 1600, 1920]) {
       final GoRouter router = _router(backend, 1);
       await tester.binding.setSurfaceSize(Size(width, 1000));
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
+      );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'width $width');
     }
@@ -214,7 +222,14 @@ Widget _wired(_FakeBackend backend, Widget child) {
 Future<void> _pump(WidgetTester tester, GoRouter router) async {
   await tester.binding.setSurfaceSize(const Size(1600, 1600));
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+  await tester.pumpWidget(
+    MaterialApp.router(
+      routerConfig: router,
+      locale: const Locale('ar'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+    ),
+  );
   await tester.pumpAndSettle();
 }
 

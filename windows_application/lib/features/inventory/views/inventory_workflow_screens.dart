@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,102 +26,243 @@ class BarCheckTemplatesScreen extends StatefulWidget {
 }
 
 class _BarCheckTemplatesScreenState extends State<BarCheckTemplatesScreen> {
+  final TextEditingController _search = TextEditingController();
+  String _status = '';
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<InventoryCubit>().loadBarCheckTemplates(),
-    );
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    Future<void>.microtask(cubit.loadBarCheckTemplates);
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<BarCheckTemplate> _filtered(List<BarCheckTemplate> templates) {
+    final String query = _search.text.trim().toLowerCase();
+    return templates.where((BarCheckTemplate template) {
+      final bool matchesQuery =
+          query.isEmpty ||
+          template.name.toLowerCase().contains(query) ||
+          (template.branchName ?? '').toLowerCase().contains(query) ||
+          (template.warehouseName ?? '').toLowerCase().contains(query);
+      final bool matchesStatus =
+          _status.isEmpty || (_status == 'active') == template.active;
+      return matchesQuery && matchesStatus;
+    }).toList(growable: false);
   }
 
   @override
   Widget build(BuildContext context) => _InventoryWorkflowPage(
     child: BlocBuilder<InventoryCubit, InventoryState>(
-      builder: (_, state) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          ManagementPageHeader(
-            title: 'قوالب فحص البار',
-            subtitle: 'إعداد عناصر فحص البار لكل فرع ومستودع.',
-            actions: <Widget>[
-              AppButton(
-                label: 'قالب جديد',
-                icon: Icons.add,
-                onPressed: state.warehouses.isEmpty
-                    ? null
-                    : () => _create(context, state.warehouses),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Expanded(
-            child: state.loading && state.barCheckTemplates.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : state.error != null && state.barCheckTemplates.isEmpty
-                ? ManagementMessage(
-                    message: state.error!,
-                    error: true,
-                    onRetry: () =>
-                        context.read<InventoryCubit>().loadBarCheckTemplates(),
-                  )
-                : state.barCheckTemplates.isEmpty
-                ? const ManagementMessage(
-                    message: 'لا توجد قوالب فحص بار بعد. أنشئ قالباً للبدء.',
-                  )
-                : ManagementTableShell(
-                    child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(
-                        AppColors.menuTableHeader,
-                      ),
-                      columns: const <DataColumn>[
-                        DataColumn(label: Text('القالب')),
-                        DataColumn(label: Text('الفرع')),
-                        DataColumn(label: Text('مستودع البار')),
-                        DataColumn(label: Text('الحالة')),
-                        DataColumn(label: Text('إغلاق الشفت')),
-                        DataColumn(label: Text('')),
-                      ],
-                      rows: state.barCheckTemplates
-                          .map(
-                            (BarCheckTemplate template) => DataRow(
-                              cells: <DataCell>[
-                                DataCell(Text(template.name)),
-                                DataCell(Text(template.branchName ?? '—')),
-                                DataCell(Text(template.warehouseName ?? '—')),
-                                DataCell(
-                                  ManagementBadge(
-                                    label: template.active ? 'نشط' : 'غير نشط',
-                                    tone: template.active
-                                        ? ManagementTone.success
-                                        : ManagementTone.neutral,
-                                  ),
-                                ),
-                                DataCell(
-                                  Text(
-                                    template.requiredForShiftClose
-                                        ? 'مطلوب'
-                                        : 'غير مطلوب',
-                                  ),
-                                ),
-                                DataCell(
-                                  TextButton(
-                                    onPressed: () => context.go(
-                                      AppRoutes.barCheckTemplatePath(
-                                        template.id,
-                                      ),
-                                    ),
-                                    child: const Text('فتح'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                          .toList(),
+      builder: (_, state) {
+        final List<BarCheckTemplate> rows = _filtered(
+          state.barCheckTemplates,
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            ManagementPageHeader(
+              title: 'قوالب فحص البار',
+              subtitle: 'إعداد عناصر فحص البار لكل فرع ومستودع.',
+              actions: <Widget>[
+                AppButton(
+                  label: 'قالب جديد',
+                  icon: Icons.add,
+                  onPressed: state.warehouses.isEmpty
+                      ? null
+                      : () => _create(context, state.warehouses),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            ManagementFilterBar(
+              children: <Widget>[
+                SizedBox(
+                  width: 260,
+                  child: TextField(
+                    controller: _search,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'البحث في القوالب',
+                      isDense: true,
+                      border: OutlineInputBorder(),
                     ),
+                    onChanged: (String _) => setState(() {}),
                   ),
-          ),
-        ],
-      ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _status,
+                    decoration: const InputDecoration(
+                      labelText: 'الحالة',
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const <DropdownMenuItem<String>>[
+                      DropdownMenuItem<String>(
+                        value: '',
+                        child: Text('كل الحالات'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'active',
+                        child: Text('نشط'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'inactive',
+                        child: Text('غير نشط'),
+                      ),
+                    ],
+                    onChanged: (String? value) =>
+                        setState(() => _status = value ?? ''),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'تطبيق المرشحات',
+                  onPressed: () => setState(() {}),
+                  icon: const Icon(Icons.filter_alt_outlined),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final List<Widget> cards = <Widget>[
+                  ManagementKpiCard(
+                    label: 'إجمالي القوالب',
+                    value: '${state.barCheckTemplates.length}',
+                    icon: Icons.fact_check_outlined,
+                  ),
+                  ManagementKpiCard(
+                    label: 'نشط',
+                    value:
+                        '${state.barCheckTemplates.where((BarCheckTemplate t) => t.active).length}',
+                    icon: Icons.check_circle_outline,
+                    color: AppColors.discountGreenBadge,
+                  ),
+                  ManagementKpiCard(
+                    label: 'غير نشط',
+                    value:
+                        '${state.barCheckTemplates.where((BarCheckTemplate t) => !t.active).length}',
+                    icon: Icons.pause_circle_outline,
+                    color: AppColors.surfaceAlt,
+                  ),
+                  ManagementKpiCard(
+                    label: 'مطلوب لإغلاق الشفت',
+                    value:
+                        '${state.barCheckTemplates.where((BarCheckTemplate t) => t.requiredForShiftClose).length}',
+                    icon: Icons.warning_amber_outlined,
+                    color: AppColors.discountOrangeBadge,
+                  ),
+                ];
+                if (constraints.maxWidth < 760) {
+                  return Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: cards
+                        .map(
+                          (Widget card) => SizedBox(
+                            width: constraints.maxWidth,
+                            child: card,
+                          ),
+                        )
+                        .toList(),
+                  );
+                }
+                return Row(
+                  children: cards
+                      .expand(
+                        (Widget card) => <Widget>[
+                          Expanded(child: card),
+                          const SizedBox(width: AppSpacing.md),
+                        ],
+                      )
+                      .take(cards.length * 2 - 1)
+                      .toList(),
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Expanded(
+              child: state.loading && state.barCheckTemplates.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.error != null && state.barCheckTemplates.isEmpty
+                  ? ManagementMessage(
+                      message: state.error!,
+                      error: true,
+                      onRetry: () => context
+                          .read<InventoryCubit>()
+                          .loadBarCheckTemplates(),
+                    )
+                  : rows.isEmpty
+                  ? ManagementMessage(
+                      message: state.barCheckTemplates.isEmpty
+                          ? 'لا توجد قوالب فحص بار بعد. أنشئ قالباً للبدء.'
+                          : 'لا توجد قوالب مطابقة للمرشحات المحددة.',
+                    )
+                  : ManagementTableShell(
+                      child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(
+                          AppColors.menuTableHeader,
+                        ),
+                        columns: const <DataColumn>[
+                          DataColumn(label: Text('القالب')),
+                          DataColumn(label: Text('الفرع')),
+                          DataColumn(label: Text('مستودع البار')),
+                          DataColumn(label: Text('الحالة')),
+                          DataColumn(label: Text('إغلاق الشفت')),
+                          DataColumn(label: Text('')),
+                        ],
+                        rows: rows
+                            .map(
+                              (BarCheckTemplate template) => DataRow(
+                                cells: <DataCell>[
+                                  DataCell(Text(template.name)),
+                                  DataCell(Text(template.branchName ?? '—')),
+                                  DataCell(
+                                    Text(template.warehouseName ?? '—'),
+                                  ),
+                                  DataCell(
+                                    ManagementBadge(
+                                      label: template.active
+                                          ? 'نشط'
+                                          : 'غير نشط',
+                                      tone: template.active
+                                          ? ManagementTone.success
+                                          : ManagementTone.neutral,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      template.requiredForShiftClose
+                                          ? 'مطلوب'
+                                          : 'غير مطلوب',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    TextButton(
+                                      onPressed: () => context.go(
+                                        AppRoutes.barCheckTemplatePath(
+                                          template.id,
+                                        ),
+                                      ),
+                                      child: const Text('فتح'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
     ),
   );
   Future<void> _create(
@@ -140,14 +283,15 @@ class _BarCheckTemplatesScreenState extends State<BarCheckTemplatesScreen> {
       'lines': const <dynamic>[],
     });
     if (!context.mounted) return;
-    if (saved && cubit.state.selectedBarCheckTemplate != null)
+    if (saved && cubit.state.selectedBarCheckTemplate != null) {
       context.go(
         AppRoutes.barCheckTemplatePath(
           cubit.state.selectedBarCheckTemplate!.id,
         ),
       );
-    else
+    } else {
       _message(context, cubit.state.error ?? 'تعذر إنشاء القالب', error: true);
+    }
   }
 }
 
@@ -172,15 +316,15 @@ class _BarCheckTemplateEditorScreenState
   @override
   void initState() {
     super.initState();
+    final InventoryCubit cubit = context.read<InventoryCubit>();
     Future<void>.microtask(() async {
-      final c = context.read<InventoryCubit>();
-      await c.loadBarCheckTemplate(widget.templateId);
+      await cubit.loadBarCheckTemplate(widget.templateId);
       if (!mounted) return;
-      await c.loadBarCheckTemplates();
+      await cubit.loadBarCheckTemplates();
       if (!mounted) return;
-      final template = c.state.selectedBarCheckTemplate;
+      final template = cubit.state.selectedBarCheckTemplate;
       if (template != null) {
-        await c.loadBarCheckTemplateItems(template.warehouseId);
+        await cubit.loadBarCheckTemplateItems(template.warehouseId);
       }
     });
   }
@@ -212,9 +356,10 @@ class _BarCheckTemplateEditorScreenState
       builder: (_, state) {
         _sync(state.selectedBarCheckTemplate);
         final template = state.selectedBarCheckTemplate;
-        if (state.loading && template == null)
+        if (state.loading && template == null) {
           return const Center(child: CircularProgressIndicator());
-        if (template == null)
+        }
+        if (template == null) {
           return ManagementMessage(
             message: state.error ?? 'تعذر تحميل قالب الفحص.',
             error: true,
@@ -222,6 +367,7 @@ class _BarCheckTemplateEditorScreenState
               widget.templateId,
             ),
           );
+        }
         final available = state.items
             .where(
               (item) =>
@@ -276,7 +422,9 @@ class _BarCheckTemplateEditorScreenState
                   SizedBox(
                     width: 210,
                     child: DropdownButtonFormField<int>(
-                      value: branches.containsKey(_branchId) ? _branchId : null,
+                      initialValue: branches.containsKey(_branchId)
+                          ? _branchId
+                          : null,
                       decoration: const InputDecoration(
                         labelText: 'الفرع',
                         border: OutlineInputBorder(),
@@ -298,16 +446,16 @@ class _BarCheckTemplateEditorScreenState
                           _branchId = branchId;
                           _warehouseId = nextWarehouse.id;
                         });
-                        context.read<InventoryCubit>().loadBarCheckTemplateItems(
-                          nextWarehouse.id,
-                        );
+                        context
+                            .read<InventoryCubit>()
+                            .loadBarCheckTemplateItems(nextWarehouse.id);
                       },
                     ),
                   ),
                   SizedBox(
                     width: 250,
                     child: DropdownButtonFormField<int>(
-                      value:
+                      initialValue:
                           branchWarehouses.any(
                             (warehouse) => warehouse.id == _warehouseId,
                           )
@@ -326,8 +474,9 @@ class _BarCheckTemplateEditorScreenState
                           )
                           .toList(),
                       onChanged: (warehouseId) {
-                        if (warehouseId != null)
+                        if (warehouseId != null) {
                           setState(() => _warehouseId = warehouseId);
+                        }
                         if (warehouseId != null) {
                           context
                               .read<InventoryCubit>()
@@ -363,14 +512,17 @@ class _BarCheckTemplateEditorScreenState
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  if (_search.text.isNotEmpty && available.isNotEmpty) ...<Widget>[
+                  if (_search.text.isNotEmpty &&
+                      available.isNotEmpty) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
                     SizedBox(
                       height: 176,
                       child: Scrollbar(
                         child: ListView.builder(
                           padding: EdgeInsets.zero,
-                          itemCount: available.length > 6 ? 6 : available.length,
+                          itemCount: available.length > 6
+                              ? 6
+                              : available.length,
                           itemBuilder: (BuildContext context, int index) {
                             final item = available[index];
                             return ListTile(
@@ -561,22 +713,26 @@ class _InventoryTransfersWorkspaceScreenState
     extends State<InventoryTransfersWorkspaceScreen> {
   WarehouseTransfer? _transfer;
   final TextEditingController _notes = TextEditingController();
+  final TextEditingController _search = TextEditingController();
   final Map<int, TextEditingController> _quantities =
       <int, TextEditingController>{};
   final Map<int, TextEditingController> _received =
       <int, TextEditingController>{};
   String _itemSearch = '';
+  String? _statusFilter;
+  Timer? _searchDebounce;
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => context.read<InventoryCubit>().loadTransfers(),
-    );
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    Future<void>.microtask(cubit.loadTransfers);
   }
 
   @override
   void dispose() {
     _notes.dispose();
+    _search.dispose();
+    _searchDebounce?.cancel();
     for (final c in <TextEditingController>[
       ..._quantities.values,
       ..._received.values,
@@ -585,6 +741,11 @@ class _InventoryTransfersWorkspaceScreenState
     }
     super.dispose();
   }
+
+  void _loadTransfers() => context.read<InventoryCubit>().loadTransfers(
+    search: _search.text.trim().isEmpty ? null : _search.text.trim(),
+    status: _statusFilter,
+  );
 
   void _sync(WarehouseTransfer? value) {
     if (value == null || _transfer?.id == value.id) return;
@@ -606,8 +767,9 @@ class _InventoryTransfersWorkspaceScreenState
   Widget build(BuildContext context) => _InventoryWorkflowPage(
     child: BlocBuilder<InventoryCubit, InventoryState>(
       builder: (_, state) {
-        if (widget.transferId == null && _transfer == null)
+        if (widget.transferId == null && _transfer == null) {
           return _list(context, state);
+        }
         if (widget.transferId != null &&
             state.selectedTransfer?.id != widget.transferId) {
           WidgetsBinding.instance.addPostFrameCallback(
@@ -637,6 +799,120 @@ class _InventoryTransfersWorkspaceScreenState
                 : () => _newTransfer(context, state.warehouses),
           ),
         ],
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      ManagementFilterBar(
+        children: <Widget>[
+          SizedBox(
+            width: 260,
+            child: TextField(
+              controller: _search,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'البحث برقم التحويل أو المستودع',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (String _) {
+                _searchDebounce?.cancel();
+                _searchDebounce = Timer(
+                  const Duration(milliseconds: 350),
+                  _loadTransfers,
+                );
+              },
+              onSubmitted: (_) => _loadTransfers(),
+            ),
+          ),
+          SizedBox(
+            width: 220,
+            child: DropdownButtonFormField<String?>(
+              initialValue: _statusFilter,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'الحالة',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              items: <DropdownMenuItem<String?>>[
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('كل الحالات'),
+                ),
+                ...TransferStatus.values.map(
+                  (TransferStatus status) => DropdownMenuItem<String?>(
+                    value: status.value,
+                    child: Text(
+                      status.arabicLabel,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: (String? value) {
+                setState(() => _statusFilter = value);
+                _loadTransfers();
+              },
+            ),
+          ),
+          IconButton(
+            tooltip: 'تطبيق المرشحات',
+            onPressed: _loadTransfers,
+            icon: const Icon(Icons.filter_alt_outlined),
+          ),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final List<Widget> cards = <Widget>[
+            ManagementKpiCard(
+              label: 'مسودات',
+              value: '${state.transferMeta.kpis['draft'] ?? 0}',
+              icon: Icons.edit_note_outlined,
+            ),
+            ManagementKpiCard(
+              label: 'بانتظار الاعتماد',
+              value: '${state.transferMeta.kpis['submitted'] ?? 0}',
+              icon: Icons.hourglass_bottom_outlined,
+              color: AppColors.discountOrangeBadge,
+            ),
+            ManagementKpiCard(
+              label: 'قيد النقل',
+              value: '${state.transferMeta.kpis['inTransit'] ?? 0}',
+              icon: Icons.local_shipping_outlined,
+              color: AppColors.discountBlueBadge,
+            ),
+            ManagementKpiCard(
+              label: 'مستلمة',
+              value: '${state.transferMeta.kpis['received'] ?? 0}',
+              icon: Icons.check_circle_outline,
+              color: AppColors.discountGreenBadge,
+            ),
+          ];
+          if (constraints.maxWidth < 760) {
+            return Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
+              children: cards
+                  .map(
+                    (Widget card) =>
+                        SizedBox(width: constraints.maxWidth, child: card),
+                  )
+                  .toList(),
+            );
+          }
+          return Row(
+            children: cards
+                .expand(
+                  (Widget card) => <Widget>[
+                    Expanded(child: card),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
+                )
+                .take(cards.length * 2 - 1)
+                .toList(),
+          );
+        },
       ),
       const SizedBox(height: AppSpacing.lg),
       Expanded(
@@ -965,10 +1241,11 @@ class _InventoryTransfersWorkspaceScreenState
       'destinationWarehouseId': selection.destination.id,
     });
     if (!context.mounted) return;
-    if (saved && c.state.selectedTransfer != null)
+    if (saved && c.state.selectedTransfer != null) {
       context.go(AppRoutes.inventoryTransferPath(c.state.selectedTransfer!.id));
-    else
+    } else {
       _message(context, c.state.error ?? 'تعذر إنشاء التحويل', error: true);
+    }
   }
 
   Future<void> _addLine(InventoryItem item) async {
@@ -1030,18 +1307,21 @@ class _InventoryTransfersWorkspaceScreenState
             .state
             .selectedTransfer,
       );
-      if (context != null) _message(context, 'تم حفظ المسودة.');
-    } else
+      if (context != null && context.mounted) {
+        _message(context, 'تم حفظ المسودة.');
+      }
+    } else {
       _message(
         this.context,
         this.context.read<InventoryCubit>().state.error ?? 'تعذر حفظ المسودة',
         error: true,
       );
+    }
   }
 
   Future<void> _submit(BuildContext context) async {
     await _saveDraft(context);
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
     await _action(context, 'submit');
   }
 
@@ -1050,11 +1330,12 @@ class _InventoryTransfersWorkspaceScreenState
       _transfer!.id,
       action,
     );
-    if (!mounted) return;
-    if (ok)
+    if (!mounted || !context.mounted) return;
+    if (ok) {
       setState(
         () => _transfer = context.read<InventoryCubit>().state.selectedTransfer,
       );
+    }
     _message(
       context,
       ok
@@ -1080,11 +1361,12 @@ class _InventoryTransfersWorkspaceScreenState
           'idempotencyKey': 'desktop-${DateTime.now().microsecondsSinceEpoch}',
           'lines': lines,
         });
-    if (!mounted) return;
-    if (ok)
+    if (!mounted || !context.mounted) return;
+    if (ok) {
       setState(
         () => _transfer = context.read<InventoryCubit>().state.selectedTransfer,
       );
+    }
     _message(
       context,
       ok
@@ -1132,7 +1414,7 @@ class _NewBarTemplateDialogState extends State<_NewBarTemplateDialog> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           DropdownButtonFormField<WarehouseLocation>(
-            value: _warehouse,
+            initialValue: _warehouse,
             isExpanded: true,
             items: widget.warehouses
                 .map(
@@ -1198,7 +1480,7 @@ class _TransferLocationsDialogState extends State<_TransferLocationsDialog> {
       WarehouseLocation value,
       ValueChanged<WarehouseLocation?> change,
     ) => DropdownButtonFormField<WarehouseLocation>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       items: widget.warehouses
           .map((w) => DropdownMenuItem(value: w, child: Text(w.displayName)))

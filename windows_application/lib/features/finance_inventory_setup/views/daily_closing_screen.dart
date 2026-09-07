@@ -39,7 +39,8 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
   bool _loading = false;
   int _requestId = 0;
 
-  FinanceSetupRepository get _repository => context.read<FinanceSetupCubit>().repository;
+  FinanceSetupRepository get _repository =>
+      context.read<FinanceSetupCubit>().repository;
 
   @override
   void initState() {
@@ -70,9 +71,8 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
     final int requestId = ++_requestId;
     setState(() => _loading = true);
     try {
-      final FinancePage<DailyClosingListItem> page = await _repository.getDailyClosings(
-        filters: _parameters,
-      );
+      final FinancePage<DailyClosingListItem> page = await _repository
+          .getDailyClosings(filters: _parameters);
       if (!mounted || requestId != _requestId) return;
       setState(() {
         _pageData = page;
@@ -107,7 +107,8 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
   Future<void> _pickDate({required bool isTo}) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.tryParse((isTo ? _to : _from) ?? '') ?? DateTime.now(),
+      initialDate:
+          DateTime.tryParse((isTo ? _to : _from) ?? '') ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
@@ -143,42 +144,49 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
   Future<void> _openDayDialog() async {
     final DailyClosingDetail? opened = await showDialog<DailyClosingDetail>(
       context: context,
-      builder: (BuildContext dialog) => _OpenDayDialog(repository: _repository, branches: _branches),
+      builder: (BuildContext dialog) =>
+          _OpenDayDialog(repository: _repository, branches: _branches),
     );
     if (opened == null || !mounted) return;
     await _load();
-    if (mounted) context.go('${AppRoutes.financeDailyClosingCanonical}/${opened.id}');
+    if (mounted) {
+      context.go('${AppRoutes.financeDailyClosingCanonical}/${opened.id}');
+    }
   }
 
   @override
   Widget build(BuildContext context) => FinanceShell(
-        title: 'الإغلاق اليومي',
-        subtitle: 'سجل الإغلاقات اليومية لكل فرع مع حالة التسوية والجاهزية',
-        showContext: false,
-        actions: <Widget>[
-          ElevatedButton.icon(
-            onPressed: _openDayDialog,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(0, 36),
-              backgroundColor: FinanceColors.primary,
-              foregroundColor: Colors.white,
-            ),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('فتح إغلاق يوم'),
-          ),
-        ],
-        child: _buildBody(),
-      );
+    title: 'الإغلاق اليومي',
+    subtitle: 'سجل الإغلاقات اليومية لكل فرع مع حالة التسوية والجاهزية',
+    showContext: false,
+    actions: <Widget>[
+      ElevatedButton.icon(
+        onPressed: _openDayDialog,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(0, 36),
+          backgroundColor: FinanceColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        icon: const Icon(Icons.add, size: 18),
+        label: const Text('فتح إغلاق يوم'),
+      ),
+    ],
+    child: _buildBody(),
+  );
 
   Widget _buildBody() {
     if (_pageData == null && _error == null) {
       return const FinanceLoadingState(label: 'جارٍ تحميل الإغلاقات اليومية…');
     }
     if (_pageData == null) {
-      return FinanceErrorState(message: 'تعذّر تحميل الإغلاقات اليومية.', onRetry: _load);
+      return FinanceErrorState(
+        message: 'تعذّر تحميل الإغلاقات اليومية.',
+        onRetry: _load,
+      );
     }
     final FinancePage<DailyClosingListItem> page = _pageData!;
-    final bool hasFilters = _branchId != null || _status != null || _from != null || _to != null;
+    final bool hasFilters =
+        _branchId != null || _status != null || _from != null || _to != null;
     return SingleChildScrollView(
       child: Opacity(
         opacity: _loading ? 0.6 : 1,
@@ -192,7 +200,11 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
               FinanceFilterBar(
                 onReset: hasFilters ? _clearFilters : null,
                 children: <Widget>[
-                  _BranchDropdown(branches: _branches, value: _branchId, onChanged: _applyBranch),
+                  _BranchDropdown(
+                    branches: _branches,
+                    value: _branchId,
+                    onChanged: _applyBranch,
+                  ),
                   _StatusDropdown(value: _status, onChanged: _applyStatus),
                   OutlinedButton.icon(
                     onPressed: () => _pickDate(isTo: false),
@@ -209,9 +221,13 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
               const SizedBox(height: FinanceSpace.lg),
               if (_error != null) ...<Widget>[
                 FinanceAlertBanner(
-                  message: 'تعذّر تحديث القائمة لهذه الفلاتر. تُعرض آخر بيانات محمّلة.',
+                  message:
+                      'تعذّر تحديث القائمة لهذه الفلاتر. تُعرض آخر بيانات محمّلة.',
                   tone: FinanceTone.warning,
-                  action: TextButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+                  action: TextButton(
+                    onPressed: _load,
+                    child: const Text('إعادة المحاولة'),
+                  ),
                 ),
                 const SizedBox(height: FinanceSpace.md),
               ],
@@ -223,15 +239,19 @@ class _DailyClosingScreenState extends State<DailyClosingScreen> {
                         ? 'لا توجد إغلاقات مطابقة للفلاتر المحددة'
                         : 'لا توجد إغلاقات يومية مسجلة بعد',
                     action: hasFilters
-                        ? TextButton(onPressed: _clearFilters, child: const Text('إعادة تعيين الفلاتر'))
+                        ? TextButton(
+                            onPressed: _clearFilters,
+                            child: const Text('إعادة تعيين الفلاتر'),
+                          )
                         : null,
                   ),
                 )
               else ...<Widget>[
                 _DailyClosingTable(
                   rows: page.items,
-                  onOpen: (DailyClosingListItem item) =>
-                      context.go('${AppRoutes.financeDailyClosingCanonical}/${item.id}'),
+                  onOpen: (DailyClosingListItem item) => context.go(
+                    '${AppRoutes.financeDailyClosingCanonical}/${item.id}',
+                  ),
                 ),
                 FinancePagination(meta: page.meta, onPageChanged: _changePage),
               ],
@@ -249,15 +269,29 @@ class _SummaryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int open = items.where((DailyClosingListItem d) => d.status != 'closed').length;
+    final int open = items
+        .where((DailyClosingListItem d) => d.status != 'closed')
+        .length;
     final int closed = items.length - open;
     final int needsAttention = items
-        .where((DailyClosingListItem d) => d.status != 'closed' && d.readiness == 'blocked')
+        .where(
+          (DailyClosingListItem d) =>
+              d.status != 'closed' && d.readiness == 'blocked',
+        )
         .length;
     return FinanceKpiGrid(
       items: <FinanceKpiData>[
-        FinanceKpiData(label: 'أيام مفتوحة', value: '$open', icon: Icons.lock_open_outlined),
-        FinanceKpiData(label: 'أيام مغلقة', value: '$closed', icon: Icons.lock_outline, tone: FinanceTone.success),
+        FinanceKpiData(
+          label: 'أيام مفتوحة',
+          value: '$open',
+          icon: Icons.lock_open_outlined,
+        ),
+        FinanceKpiData(
+          label: 'أيام مغلقة',
+          value: '$closed',
+          icon: Icons.lock_outline,
+          tone: FinanceTone.success,
+        ),
         FinanceKpiData(
           label: 'أيام بحاجة معالجة',
           value: '$needsAttention',
@@ -270,7 +304,11 @@ class _SummaryGrid extends StatelessWidget {
 }
 
 class _BranchDropdown extends StatelessWidget {
-  const _BranchDropdown({required this.branches, required this.value, required this.onChanged});
+  const _BranchDropdown({
+    required this.branches,
+    required this.value,
+    required this.onChanged,
+  });
   final List<Branch> branches;
   final int? value;
   final ValueChanged<int?> onChanged;
@@ -296,7 +334,10 @@ class _BranchDropdown extends StatelessWidget {
         items: <DropdownMenuItem<int?>>[
           const DropdownMenuItem<int?>(value: null, child: Text('الفرع: الكل')),
           ...branches.map(
-            (Branch branch) => DropdownMenuItem<int?>(value: branch.id, child: Text('الفرع: ${branch.name}')),
+            (Branch branch) => DropdownMenuItem<int?>(
+              value: branch.id,
+              child: Text('الفرع: ${branch.name}'),
+            ),
           ),
         ],
       ),
@@ -358,7 +399,10 @@ class _DailyClosingTable extends StatelessWidget {
     minWidth: 1300,
     onRowTap: (int index) => onOpen(rows[index]),
     rows: rows.map((DailyClosingListItem d) {
-      final DailyClosingReadinessState state = dailyClosingReadinessState(d.readiness, d.warningsCount);
+      final DailyClosingReadinessState state = dailyClosingReadinessState(
+        d.readiness,
+        d.warningsCount,
+      );
       final bool balanced = d.difference == null || _isZero(d.difference!);
       return <Widget>[
         Text(d.businessDate, style: FinanceText.body),
@@ -384,7 +428,9 @@ class _DailyClosingTable extends StatelessWidget {
           alignment: AlignmentDirectional.centerStart,
           child: FinanceStatusBadgeCustom(
             label: d.status == 'closed' ? 'مغلق' : 'غير مغلق',
-            tone: d.status == 'closed' ? FinanceTone.success : FinanceTone.neutral,
+            tone: d.status == 'closed'
+                ? FinanceTone.success
+                : FinanceTone.neutral,
           ),
         ),
         Text(d.closedAt ?? '—', style: FinanceText.body),
@@ -392,7 +438,8 @@ class _DailyClosingTable extends StatelessWidget {
     }).toList(),
   );
 
-  bool _isZero(String value) => (double.tryParse(value.replaceAll(',', '')) ?? 0).abs() < 0.005;
+  bool _isZero(String value) =>
+      (double.tryParse(value.replaceAll(',', '')) ?? 0).abs() < 0.005;
 }
 
 class _OpenDayDialog extends StatefulWidget {
@@ -423,7 +470,9 @@ class _OpenDayDialogState extends State<_OpenDayDialog> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
-    if (picked != null) setState(() => _date = picked.toIso8601String().substring(0, 10));
+    if (picked != null) {
+      setState(() => _date = picked.toIso8601String().substring(0, 10));
+    }
   }
 
   Future<void> _submit() async {
@@ -436,10 +485,8 @@ class _OpenDayDialogState extends State<_OpenDayDialog> {
       _error = null;
     });
     try {
-      final DailyClosingDetail detail = await widget.repository.getDailyClosingPreview(
-        branchId: _branchId!,
-        date: _date,
-      );
+      final DailyClosingDetail detail = await widget.repository
+          .getDailyClosingPreview(branchId: _branchId!, date: _date);
       if (mounted) Navigator.of(context).pop(detail);
     } catch (error) {
       if (mounted) {
@@ -455,15 +502,24 @@ class _OpenDayDialogState extends State<_OpenDayDialog> {
   Widget build(BuildContext context) => FinanceDialogShell(
     title: 'فتح إغلاق يوم',
     actions: <Widget>[
-      TextButton(onPressed: _submitting ? null : () => Navigator.pop(context), child: const Text('إلغاء')),
+      TextButton(
+        onPressed: _submitting ? null : () => Navigator.pop(context),
+        child: const Text('إلغاء'),
+      ),
       ElevatedButton(
         onPressed: _submitting ? null : _submit,
-        style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: FinanceColors.primary,
+          foregroundColor: Colors.white,
+        ),
         child: _submitting
             ? const SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : const Text('فتح'),
       ),
@@ -479,14 +535,22 @@ class _OpenDayDialogState extends State<_OpenDayDialog> {
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'الفرع'),
             items: widget.branches
-                .map((Branch b) => DropdownMenuItem<int?>(value: b.id, child: Text(b.name, overflow: TextOverflow.ellipsis)))
+                .map(
+                  (Branch b) => DropdownMenuItem<int?>(
+                    value: b.id,
+                    child: Text(b.name, overflow: TextOverflow.ellipsis),
+                  ),
+                )
                 .toList(),
             onChanged: (int? v) => setState(() => _branchId = v),
           ),
           const SizedBox(height: FinanceSpace.md),
           InkWell(
             onTap: _pickDate,
-            child: InputDecorator(decoration: const InputDecoration(labelText: 'التاريخ'), child: Text(_date)),
+            child: InputDecorator(
+              decoration: const InputDecoration(labelText: 'التاريخ'),
+              child: Text(_date),
+            ),
           ),
           if (_error != null) ...<Widget>[
             const SizedBox(height: FinanceSpace.sm),
