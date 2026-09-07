@@ -177,9 +177,17 @@ class MenuPublishingApiTest extends TestCase
     public function test_schema_v3_recipe_snapshot_is_immutable_ordered_and_recipe_only_change_versions_it(): void
     {
         [$tenant, $branch, , $product, $variant] = $this->graph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true, 'inventory_controlled' => false]);
+        $this->publish($tenant, $branch)->assertUnprocessable()->assertJsonValidationErrors('publish');
+        $this->assertStringContainsString('VARIANT_RECIPE_MISSING', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
+        $this->assertSame(0, DB::table('published_menu_versions')->count());
         $beans = $this->material($tenant, 'BEANS', 'kilogram');
         $milk = $this->material($tenant, 'MILK', 'liter');
+        $this->conversion($tenant, $beans, 'gram', 'kilogram', '0.001000');
+        $this->conversion($tenant, $milk, 'milliliter', 'liter', '0.001000');
         $recipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        $this->publish($tenant, $branch)->assertUnprocessable()->assertJsonValidationErrors('publish');
+        $this->assertStringContainsString('VARIANT_RECIPE_EMPTY', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
         DB::table('variant_recipe_components')->insert([
             ['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $milk, 'quantity' => '250', 'unit_code' => 'ml', 'sort_order' => 2, 'created_at' => now(), 'updated_at' => now()],
             ['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $beans, 'quantity' => '18', 'unit_code' => 'g', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
@@ -205,6 +213,23 @@ class MenuPublishingApiTest extends TestCase
         DB::table('variant_recipe_components')->where('variant_recipe_id', $recipe)->where('inventory_item_id', $beans)->update(['quantity' => '20']);
         $two = $this->publish($tenant, $branch)->assertOk()->assertJsonPath('data.version.versionNumber', 2)->json('data.version');
         $this->assertNotSame($one['checksum'], $two['checksum']);
+        $this->assertEquals($payload, json_decode((string) DB::table('published_menu_versions')->where('id', $one['id'])->value('payload_json'), true));
+    }
+
+    public function test_publish_rejects_missing_inventory_conversion_and_unrepresentable_canonical_precision(): void
+    {
+        [$tenant, $branch, , $product, $variant] = $this->graph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+        $material = $this->material($tenant, 'PRECISION-G', 'gram');
+        $recipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert(['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $material, 'quantity' => '0.001', 'unit_code' => 'kg', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->publish($tenant, $branch)->assertUnprocessable();
+        $this->assertStringContainsString('RECIPE_COMPONENT_CONVERSION_INVALID', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
+
+        $this->conversion($tenant, $material, 'kilogram', 'gram', '0.500000');
+        $this->publish($tenant, $branch)->assertUnprocessable();
+        $this->assertStringContainsString('RECIPE_COMPONENT_CONVERSION_INVALID', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
     }
 
     private function publish(int $tenant, int $branch)
@@ -254,5 +279,10 @@ class MenuPublishingApiTest extends TestCase
     private function material(int $tenant, string $sku, string $unit): int
     {
         return DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => $sku, 'sku' => $sku, 'unit' => $unit, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    private function conversion(int $tenant, int $item, string $source, string $target, string $factor): void
+    {
+        DB::table('inventory_item_unit_conversions')->insert(['tenant_id' => $tenant, 'inventory_item_id' => $item, 'source_unit' => $source, 'target_unit' => $target, 'factor' => $factor, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
     }
 }

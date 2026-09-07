@@ -3,6 +3,7 @@
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
+use App\Http\Middleware\CanManageCafeConfiguration;
 use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsureFinancePermission;
 use App\Http\Middleware\CanManageEmployees;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.permission' => EnsurePlatformPermission::class,
             'password.changed' => RequireChangedPassword::class,
             'employees.manage' => CanManageEmployees::class,
+            'cafe.configuration' => CanManageCafeConfiguration::class,
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,

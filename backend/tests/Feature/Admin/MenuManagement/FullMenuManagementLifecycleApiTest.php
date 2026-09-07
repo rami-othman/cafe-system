@@ -66,6 +66,9 @@ class FullMenuManagementLifecycleApiTest extends TestCase
         $beans = $this->material($tenant, 'Espresso Beans', 'BEANS', 'kilogram');
         $milk = $this->material($tenant, 'Regular Milk', 'MILK', 'liter');
         $oatMilk = $this->material($tenant, 'Oat Milk', 'OAT-MILK', 'liter');
+        $this->conversion($tenant, $beans, 'gram', 'kilogram', '0.001000');
+        $this->conversion($tenant, $milk, 'milliliter', 'liter', '0.001000');
+        $this->conversion($tenant, $oatMilk, 'milliliter', 'liter', '0.001000');
         foreach ([
             $small => ['beans' => '16', 'milk' => '200'],
             $medium => ['beans' => '18', 'milk' => '250'],
@@ -350,6 +353,20 @@ class FullMenuManagementLifecycleApiTest extends TestCase
             'name' => $name,
             'sku' => $sku,
             'unit' => $unit,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function conversion(int $tenant, int $item, string $source, string $target, string $factor): void
+    {
+        DB::table('inventory_item_unit_conversions')->insert([
+            'tenant_id' => $tenant,
+            'inventory_item_id' => $item,
+            'source_unit' => $source,
+            'target_unit' => $target,
+            'factor' => $factor,
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),

@@ -182,6 +182,54 @@ docker compose exec -T backend php artisan test
 
 Do not treat old phase labels or historical test counts as current status.
 
+## Integration hardening Phase 1: stock and recipe contracts
+
+`products.is_stock_tracked` is the sole runtime stock-control flag. False means
+no recipe consumption and valid zero COGS; true requires a nonempty variant
+recipe under existing Menu validation and a schema-v3 published recipe at payment.
+The flag is read from the Product at payment; recipe components and selected
+modifier adjustments are read exclusively from the order's pinned published version.
+
+Authoring uses `variant_recipes`, `variant_recipe_components`,
+`modifier_option_recipe_profiles`, and `modifier_option_recipe_profile_components`.
+The production path is `RecipeConfigurationService` -> Menu validation ->
+`MenuPublishingService` / `PublishedMenuSnapshotBuilder` -> immutable version ->
+`PublishedMenuOrderResolver` / `PosOrderController` (version on the order, variant
+and placement on its items) -> `PaymentController` -> `SaleConsumptionService` ->
+`InventoryPostingService` -> order/item COGS -> Finance sale journal.
+Payment never resolves a live recipe, including for superseded pinned versions.
+
+Deprecated compatibility schema remains intact:
+
+- `products.inventory_controlled`: retained data only; it cannot enable or disable
+  consumption. There is no synchronization or automatic backfill over Menu's flag.
+- `recipes` / `recipe_lines`: retained legacy data only, with no production recipe
+  reads or authoring writes. Do not build new APIs or seed recipes into these tables.
+- Legacy `recipe_id` columns on sale consumptions/order items remain for historical
+  compatibility. New consumption writes null; the pinned published version identifies
+  the recipe used.
+
+The pre-edit audit found the duplicate flag gate only in `SaleConsumptionService`.
+Menu catalog writes/resources and publication validation already used
+`is_stock_tracked`. Sale/refund accounting fixtures and `FinanceOperationsDemoSeeder`
+used the duplicate recipe tables; these now use canonical Menu recipe structures and
+the production snapshot builder. Legacy migrations remain unchanged. The only test
+inserting legacy recipes deliberately creates conflicting data to prove it is ignored.
+
+A read-only audit of the local development database on 2026-09-06 found 10 products
+with both flags false, 3 with only `is_stock_tracked` true, and no legacy recipes/lines.
+Older accounting fixtures had the reverse mismatch and have been corrected. No
+forward migration is needed: preserving the existing canonical flag avoids guessing
+whether a false Menu value was intentional. Legacy values are retained for review
+on other deployments; they must never silently override Menu configuration.
+No historical order or published payload is rewritten.
+
+Focused accounting tests use snapshot-builder fixtures, including deliberately
+incomplete recipes to verify payment rollback. They do not claim full publication
+integration; the full Publish-to-Payment test remains Phase 3. Unit conversion
+unification, material aggregation, precision normalization, and consumption
+idempotency remain Phase 2.
+
 ## Auth Phase 1 — tenant identity and opaque sessions
 
 **Status: CLOSED.** On the exact closure worktree, the manually run full backend

@@ -2,6 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Branch;
+use App\Models\ProductVariant;
+use App\Services\Catalog\RecipeConfigurationService;
+use App\Services\Menu\PublishedMenuSnapshotBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -123,9 +127,10 @@ class RefundAccountingApiTest extends TestCase
         $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
         $this->postJson('/api/v1/inventory/movements', ['warehouseId' => $warehouseId, 'itemId' => $itemId, 'type' => 'stock_in', 'quantity' => '10.000', 'unitCost' => '2.0000', 'reason' => 'Opening'], $headers)->assertCreated();
 
-        $productId = (int) DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Refund Test Product', 'price' => '10.00', 'cost_price' => 0, 'is_active' => true, 'is_stock_tracked' => false, 'inventory_controlled' => true, 'consumption_type' => 'bar', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
-        $recipeId = (int) DB::table('recipes')->insertGetId(['tenant_id' => $tenant, 'product_id' => $productId, 'name' => 'Refund Test Recipe', 'version' => 1, 'is_active' => true, 'yield_quantity' => 1, 'yield_unit' => 'piece', 'created_at' => now(), 'updated_at' => now()]);
-        DB::table('recipe_lines')->insert(['tenant_id' => $tenant, 'recipe_id' => $recipeId, 'inventory_item_id' => $itemId, 'quantity' => '2.000', 'unit' => 'kg', 'wastage_percentage' => 0, 'line_number' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        $productId = (int) DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Refund Test Product', 'price' => '10.00', 'cost_price' => 0, 'is_active' => true, 'is_stock_tracked' => true, 'inventory_controlled' => false, 'consumption_type' => 'bar', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $variant = ProductVariant::create(['tenant_id' => $tenant, 'product_id' => $productId, 'name' => 'Regular', 'base_price' => '10.00', 'is_default' => true, 'is_active' => true]);
+        app(RecipeConfigurationService::class)->replaceRecipe($variant,
+            [['materialId' => $itemId, 'quantity' => '2.000', 'unitCode' => 'kg']]);
 
         $shiftId = $this->openShift($tenant, $branchId, $headers);
         $snapshot = $this->publishedSnapshot($tenant, $branchId, [$productId]);
@@ -200,9 +205,9 @@ class RefundAccountingApiTest extends TestCase
     }
 
     /**
-     * Builds the minimal schema-v3 snapshot needed for an inventory-controlled product.
+     * Builds a payment fixture from canonical Menu recipes using the production snapshot builder.
      *
-     * @param list<int> $productIds
+     * @param  list<int>  $productIds
      * @return array{versionId:int, placements:array<int,int>, variants:array<int,int>}
      */
     private function publishedSnapshot(int $tenant, int $branchId, array $productIds): array
@@ -214,7 +219,6 @@ class RefundAccountingApiTest extends TestCase
 
         $menuId = DB::table('menus')->insertGetId(['tenant_id' => $tenant, 'name' => 'Refund accounting '.uniqid(), 'status' => 'published', 'created_at' => $now, 'updated_at' => $now]);
         $sectionId = DB::table('menu_sections')->insertGetId(['tenant_id' => $tenant, 'menu_id' => $menuId, 'name' => 'Published refunds', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
-        $products = [];
         $placements = [];
         $variants = [];
         foreach ($productIds as $productId) {
@@ -236,19 +240,14 @@ class RefundAccountingApiTest extends TestCase
             ]);
             $placements[$productId] = $placementId;
             $variants[$productId] = (int) $variant->id;
-            $baseRecipe = DB::table('recipes')->where('tenant_id', $tenant)->where('product_id', $productId)->where('is_active', true)->orderByDesc('version')->first();
-            $components = $baseRecipe === null ? [] : DB::table('recipe_lines')->where('recipe_id', $baseRecipe->id)->orderBy('line_number')->get()
-                ->map(fn (object $line) => ['materialId' => (int) $line->inventory_item_id, 'quantity' => (string) $line->quantity, 'unitCode' => (string) $line->unit, 'sortOrder' => (int) $line->line_number])->all();
-            $products[] = ['placementId' => $placementId, 'productId' => $productId, 'name' => ['default' => $product->name], 'isVisible' => true,
-                'productAvailabilityRules' => [], 'variants' => [['id' => $variant->id, 'name' => ['default' => $variant->name], 'effectivePrice' => (string) $product->price,
-                    'baseRecipe' => $components, 'modifierRecipeAdjustments' => []]], 'modifierGroups' => []];
+
         }
 
         $publicationId = DB::table('menu_publications')->insertGetId(['tenant_id' => $tenant, 'status' => 'published', 'published_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         $versionId = DB::table('published_menu_versions')->insertGetId([
             'tenant_id' => $tenant, 'menu_publication_id' => $publicationId, 'branch_id' => $branchId, 'channel' => 'pos',
             'version_number' => (int) DB::table('published_menu_versions')->where('tenant_id', $tenant)->where('branch_id', $branchId)->where('channel', 'pos')->max('version_number') + 1,
-            'payload_json' => json_encode(['context' => ['schemaVersion' => 3], 'menus' => [['id' => 1, 'availabilityRules' => [], 'sections' => [['id' => 1, 'products' => $products]]]]]),
+            'payload_json' => json_encode(app(PublishedMenuSnapshotBuilder::class)->build($tenant, Branch::findOrFail($branchId), 'pos', [$menuId])),
             'checksum' => hash('sha256', uniqid('refund-accounting-', true)), 'status' => 'current', 'published_at' => $now, 'created_at' => $now, 'updated_at' => $now,
         ]);
 

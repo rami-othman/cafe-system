@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Domain\Inventory\InventoryPostingService;
+use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\PublishedMenuVersion;
+use App\Support\InventoryDecimal;
 use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ use Illuminate\Validation\ValidationException;
  * Inventory remains the sole source of truth for consumed quantity, WAC, and
  * movement cost (see InventoryPostingService). This service never computes a
  * cost itself — it only decides *whether* a product consumes inventory (via
- * products.inventory_controlled) and, if so, *what* it consumes (via the
+ * products.is_stock_tracked) and, if so, *what* it consumes (via the
  * order's immutable published-menu snapshot) and *where from* (via product_inventory_settings,
  * falling back to the branch's main warehouse). The actual balance/WAC math
  * is delegated entirely to InventoryPostingService::post().
@@ -31,6 +33,7 @@ class SaleConsumptionService
 {
     public function __construct(
         private readonly InventoryPostingService $posting,
+        private readonly UnitConversionResolver $conversions,
     ) {}
 
     /**
@@ -53,10 +56,12 @@ class SaleConsumptionService
                 ? DB::table('products')->where('tenant_id', $tenantId)->where('id', $item->product_id)->first()
                 : null;
 
-            if (! $product || ! $product->inventory_controlled) {
+            // inventory_controlled is deprecated legacy data, never a runtime gate.
+            if (! $product || ! $product->is_stock_tracked) {
                 // Non-inventory / service item or a custom line with no product
                 // link: VALID_ZERO_COGS — a deliberate zero, not "unavailable".
                 $this->snapshotItem($tenantId, $item, 0, null);
+
                 continue;
             }
 
@@ -68,6 +73,7 @@ class SaleConsumptionService
                 // payment retry that somehow re-entered this path). Reuse the
                 // recorded cost rather than consuming stock a second time.
                 $orderCogsCents += Money::cents($existing->cogs_total);
+
                 continue;
             }
 
@@ -88,25 +94,33 @@ class SaleConsumptionService
                 throw ValidationException::withMessages(['productId' => "Product \"{$product->name}\" (#{$product->id}) has no active warehouse configured for branch #{$order->branch_id}. Configure Product Inventory Settings or a main branch warehouse."]);
             }
 
-            $soldQuantity = (float) $item->quantity;
+            $soldQuantity = InventoryDecimal::units($item->quantity);
             $itemCogsCents = 0;
+            $consumptions = [];
 
             foreach ($lines as $line) {
-                $consumeQuantity = round((float) $line['quantity'] * $soldQuantity, 3);
-                if ($consumeQuantity <= 0) {
+                $canonical = $this->canonicalLine($tenantId, $line);
+                $quantity = InventoryDecimal::applyFactor($canonical['quantity'], $soldQuantity * 1000);
+                $key = (int) $line['materialId'];
+                $consumptions[$key] ??= ['materialId' => $key, 'baseUnit' => $canonical['baseUnit'], 'quantity' => 0];
+                $consumptions[$key]['quantity'] += $line['direction'] * $quantity;
+            }
+
+            foreach ($consumptions as $consumption) {
+                if ($consumption['quantity'] <= 0) {
                     continue;
                 }
 
                 $result = $this->posting->post($request, $tenantId, [
                     'warehouseId' => $warehouseId,
-                    'itemId' => $line['materialId'],
+                    'itemId' => $consumption['materialId'],
                     'type' => 'sale_consumption',
-                    'quantity' => number_format($consumeQuantity, 3, '.', ''),
-                    'unit' => $line['unitCode'],
+                    'quantity' => InventoryDecimal::quantity($consumption['quantity']),
+                    'unit' => $consumption['baseUnit'],
                     'branchId' => $order->branch_id,
                     'referenceType' => 'order_item',
                     'referenceId' => $item->id,
-                    'idempotencyKey' => "sale-consumption-{$tenantId}-{$item->id}-{$line['materialId']}",
+                    'idempotencyKey' => "sale-consumption-{$tenantId}-{$item->id}-{$consumption['materialId']}",
                 ], $actorId);
 
                 $movementCost = DB::table('stock_movements')->where('id', $result->movementId)->value('total_cost');
@@ -161,7 +175,7 @@ class SaleConsumptionService
     }
 
     /**
-     * @return list<array{materialId: int, quantity: float, unitCode: string}>
+     * @return list<array{materialId: int, quantity: string, unitCode: string, canonicalQuantity?: string, baseUnit?: string, direction: int}>
      */
     private function componentsForItem(int $tenantId, array $snapshot, object $item): array
     {
@@ -194,13 +208,13 @@ class SaleConsumptionService
         $add = function (array $component, int $direction = 1, int $multiplier = 1) use (&$components): void {
             $materialId = (int) ($component['materialId'] ?? 0);
             $unit = (string) ($component['unitCode'] ?? '');
-            $quantity = (float) ($component['quantity'] ?? 0) * $direction * $multiplier;
-            if ($materialId <= 0 || $unit === '' || $quantity == 0.0) {
+            $quantity = (string) ($component['quantity'] ?? '');
+            if ($materialId <= 0 || $unit === '' || $quantity === '') {
                 return;
             }
-            $key = $materialId.':'.$unit;
-            $components[$key] ??= ['materialId' => $materialId, 'quantity' => 0.0, 'unitCode' => $unit];
-            $components[$key]['quantity'] += $quantity;
+            for ($i = 0; $i < $multiplier; $i++) {
+                $components[] = ['materialId' => $materialId, 'quantity' => $quantity, 'unitCode' => $unit, 'canonicalQuantity' => $component['canonicalQuantity'] ?? null, 'baseUnit' => $component['baseUnit'] ?? null, 'direction' => $direction];
+            }
         };
         foreach ($variant['baseRecipe'] ?? [] as $component) {
             $add($component);
@@ -215,7 +229,24 @@ class SaleConsumptionService
             }
         }
 
-        return array_values(array_filter($components, fn (array $component) => $component['quantity'] > 0));
+        return $components;
+    }
+
+    /** @return array{quantity: int, baseUnit: string} */
+    private function canonicalLine(int $tenantId, array $line): array
+    {
+        if (is_string($line['canonicalQuantity'] ?? null) && is_string($line['baseUnit'] ?? null)) {
+            return ['quantity' => InventoryDecimal::units($line['canonicalQuantity']), 'baseUnit' => $line['baseUnit']];
+        }
+
+        $material = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line['materialId'])->whereNull('deleted_at')->first();
+        if (! $material) {
+            throw ValidationException::withMessages(['productId' => 'A published recipe material is unavailable.']);
+        }
+
+        $canonical = $this->conversions->resolveRecipe($tenantId, $material, $line['quantity'], $line['unitCode']);
+
+        return ['quantity' => $canonical['baseQuantity'], 'baseUnit' => $canonical['baseUnit']];
     }
 
     private function snapshotItem(int $tenantId, object $item, int $cogsTotalCents, ?int $recipeId): void
