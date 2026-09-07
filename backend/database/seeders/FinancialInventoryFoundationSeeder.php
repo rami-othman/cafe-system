@@ -11,6 +11,9 @@ class FinancialInventoryFoundationSeeder extends Seeder
     public function run(): void
     {
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        if (! $tenantId) {
+            throw new \RuntimeException('FinancialInventoryFoundationSeeder requires the cafe-618 tenant to exist. Run TenantAccessSeeder first.');
+        }
         $managerId = (int) DB::table('users')->where('tenant_id', $tenantId)->where('email', 'manager@cafe618.local')->value('id');
         app(FinancialSetupService::class)->ensureForTenant($tenantId, null, $managerId);
 
