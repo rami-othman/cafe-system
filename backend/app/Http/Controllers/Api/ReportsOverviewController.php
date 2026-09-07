@@ -69,17 +69,14 @@ class ReportsOverviewController extends Controller
 
     private function availableBranches(Request $request, int $tenantId): Collection
     {
-        $query = DB::table('branches')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at');
         $user = $request->attributes->get('auth_user');
         if (is_array($user)) {
             $user = User::query()->with('tenantRole')->where('tenant_id', $tenantId)->find((int) ($user['id'] ?? 0));
         }
         abort_unless($user instanceof User, 401, 'Unauthenticated.');
-        if ($user instanceof User && $user->effectiveRoleCode() !== 'owner') {
-            $query->whereIn('id', DB::table('user_branches')->where('tenant_id', $tenantId)->where('user_id', (int) $user->id)->select('branch_id'));
-        }
-
-        return $query->orderBy('name')->get(['id', 'name', 'currency']);
+        return DB::table('branches')->where('tenant_id', $tenantId)
+            ->whereIn('id', app(\App\Services\BranchAccessService::class)->accessibleBranchIds($user))
+            ->orderBy('name')->get(['id', 'name', 'currency']);
     }
 
     /** @return array{netSales: float, cogs: float, expenses: float, cogsAvailable: bool, expensesAvailable: bool} */

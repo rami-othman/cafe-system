@@ -131,6 +131,7 @@ class MenuValidationApiTest extends TestCase
             [$tenant, $branch, $menu, $product, $variant] = $this->menuGraph($caseTenant);
             DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
             $material = DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => "Beans $slug", 'sku' => "BEANS-$slug", 'unit' => 'kilogram', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('inventory_item_unit_conversions')->insert(['tenant_id' => $tenant, 'inventory_item_id' => $material, 'source_unit' => 'gram', 'target_unit' => 'kilogram', 'factor' => '0.001000', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
             $headers = $this->headers($tenant);
             $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $material, 'quantity' => '10', 'unitCode' => 'g']]], $headers)->assertOk();
             $selected = [];

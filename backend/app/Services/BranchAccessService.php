@@ -10,7 +10,7 @@ class BranchAccessService
 {
     public function canAccessBranch(User $user, Branch $branch): bool
     {
-        if ((int) $user->tenant_id !== (int) $branch->tenant_id) {
+        if ((int) $user->tenant_id !== (int) $branch->tenant_id || $branch->trashed() || ! $branch->is_active) {
             return false;
         }
 

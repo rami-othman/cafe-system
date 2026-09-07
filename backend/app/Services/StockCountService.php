@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Domain\Inventory\InventoryPostingService;
+use App\Domain\Inventory\InventoryWarehouseAssignment;
 use App\Domain\Inventory\UnitConversionResolver;
 use App\Support\FinancialActor;
 use App\Support\InventoryDecimal;
@@ -16,6 +17,7 @@ class StockCountService
 {
     public function __construct(
         private readonly InventoryPostingService $posting,
+        private readonly InventoryWarehouseAssignment $assignments,
         private readonly UnitConversionResolver $conversions,
         private readonly OperationalAuditService $audit,
     ) {}
@@ -166,7 +168,7 @@ class StockCountService
     private function assertItemAssigned(int $tenantId, int $warehouseId, ?object $item, string $field): void
     {
         if (! $item || ! $item->is_active || $item->deleted_at !== null) throw ValidationException::withMessages([$field => 'The template contains an inactive inventory item.']);
-        if (Schema::hasTable('inventory_item_warehouses') && ! DB::table('inventory_item_warehouses')->where('tenant_id', $tenantId)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $item->id)->exists()) throw ValidationException::withMessages([$field => 'Every template item must be assigned to its bar warehouse.']);
+        $this->assignments->assertAssigned($tenantId, (int) $item->id, $warehouseId, $field);
     }
 
     private function warehouse(int $tenantId, int $warehouseId): object { $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->first(); abort_unless($warehouse, 404, 'Warehouse not found.'); if (WarehousePresentation::isLegacy($warehouse->code)) throw ValidationException::withMessages(['warehouseId' => 'Legacy warehouses are read-only and cannot be counted.']); return $warehouse; }

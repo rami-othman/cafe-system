@@ -2,6 +2,7 @@
 
 namespace App\Services\Menu;
 
+use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\Branch;
 use App\Models\Menu;
 use App\Models\Product;
@@ -9,13 +10,14 @@ use App\Models\ProductVariant;
 use App\Services\Catalog\MaterialCatalogService;
 use App\Services\Catalog\ProductVariantPriceResolver;
 use App\Services\Catalog\RecipeConfigurationService;
+use App\Support\InventoryDecimal;
 
 /** Builds the static source of truth for a published menu version. */
 class PublishedMenuSnapshotBuilder
 {
     private const SCHEMA_VERSION = 3;
 
-    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials) {}
+    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials, private readonly UnitConversionResolver $conversions) {}
 
     public function build(int $tenantId, Branch $branch, string $channel, array $menuIds): array
     {
@@ -94,8 +96,12 @@ class PublishedMenuSnapshotBuilder
     private function recipeComponent(int $tenantId, object $component, bool $hasOperation = false): array
     {
         $material = $this->materials->material($tenantId, $component->inventory_item_id);
+        if (! $material) {
+            throw new \LogicException('Published recipes require an inventory material.');
+        }
+        $canonical = $this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code);
 
-        return ['materialId' => $component->inventory_item_id, 'materialName' => $material?->name, 'materialSku' => $material?->sku, 'quantity' => rtrim(rtrim((string) $component->quantity, '0'), '.'), 'unitCode' => $component->unit_code, 'sortOrder' => $component->sort_order] + ($hasOperation ? ['operation' => $component->operation] : []);
+        return ['materialId' => $component->inventory_item_id, 'materialName' => $material->name, 'materialSku' => $material->sku, 'quantity' => rtrim(rtrim((string) $component->quantity, '0'), '.'), 'unitCode' => $component->unit_code, 'canonicalQuantity' => InventoryDecimal::quantity($canonical['baseQuantity']), 'baseUnit' => $canonical['baseUnit'], 'sortOrder' => $component->sort_order] + ($hasOperation ? ['operation' => $component->operation] : []);
     }
 
     private function localized(object $entity, string $field): array

@@ -23,7 +23,7 @@ class FinancialLocationController extends Controller
         $actorId = FinancialActor::id($request, $tenantId);
         $query = DB::table('financial_locations as locations')->join('financial_accounts as accounts', 'accounts.id', '=', 'locations.financial_account_id')->leftJoin('branches', 'branches.id', '=', 'locations.branch_id')->where('locations.tenant_id', $tenantId)->where('locations.kind', $kind)->select('locations.*', 'accounts.code as account_code', 'accounts.name_ar as account_name_ar', 'accounts.normal_balance', 'branches.name as branch_name');
         if (DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role') !== 'owner') {
-            $branchIds = DB::table('user_branches')->where('tenant_id', $tenantId)->where('user_id', $actorId)->pluck('branch_id');
+            $branchIds = FinancialActor::operationalBranchIds($actorId, $tenantId);
             $query->where(fn ($q) => $q->whereNull('locations.branch_id')->orWhereIn('locations.branch_id', $branchIds));
         }
         if ($request->filled('status')) $query->where('locations.is_active', $request->query('status') === 'active');

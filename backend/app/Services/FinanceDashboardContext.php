@@ -69,12 +69,6 @@ final class FinanceDashboardContext
 
     private function authorizedBranches(int $tenantId, int $actorId): Collection
     {
-        $query = DB::table('branches')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at');
-        $role = DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role');
-        if ($role !== 'owner') {
-            $query->whereIn('id', DB::table('user_branches')->where('tenant_id', $tenantId)->where('user_id', $actorId)->select('branch_id'));
-        }
-
-        return $query->orderBy('name')->get(['id', 'name', 'currency', 'timezone']);
+        return DB::table('branches')->where('tenant_id', $tenantId)->whereIn('id', FinancialActor::operationalBranchIds($actorId, $tenantId))->orderBy('name')->get(['id', 'name', 'currency', 'timezone']);
     }
 }

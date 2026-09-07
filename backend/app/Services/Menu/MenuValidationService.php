@@ -2,6 +2,7 @@
 
 namespace App\Services\Menu;
 
+use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\Branch;
 use App\Models\Menu;
 use App\Models\Product;
@@ -11,8 +12,6 @@ use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\ProductAvailabilityResolver;
 use App\Services\Catalog\ProductVariantPriceResolver;
 use App\Services\Catalog\RecipeConfigurationService;
-use App\Services\Catalog\RecipeUnitRegistry;
-use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -23,7 +22,7 @@ class MenuValidationService
 
     private array $duplicateBarcodes = [];
 
-    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly ProductAvailabilityResolver $scheduled, private readonly OperationalAvailabilityResolver $operational, private readonly RecipeConfigurationService $recipes, private readonly RecipeUnitRegistry $units, private readonly MaterialCatalogService $materials) {}
+    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly ProductAvailabilityResolver $scheduled, private readonly OperationalAvailabilityResolver $operational, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials, private readonly UnitConversionResolver $conversions) {}
 
     public function menu(int $tenantId, int $menuId): Menu
     {
@@ -274,24 +273,12 @@ class MenuValidationService
 
                 continue;
             }
-            $materialUnit = $this->units->inventoryUnit($material->unit);
-            if (! $materialUnit) {
-                $this->issue($result, 'RECIPE_COMPONENT_MATERIAL_UNIT_UNMAPPED', 'error', 'A recipe component material has no mapped canonical unit.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
-
-                continue;
-            }
             try {
-                $quantity = BigDecimal::of((string) $component->quantity);
-                if ($quantity->isLessThanOrEqualTo(BigDecimal::zero())) {
+                if ($this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'] <= 0) {
                     throw new \InvalidArgumentException('non-positive');
                 }
             } catch (\Throwable) {
-                $this->issue($result, 'RECIPE_COMPONENT_QUANTITY_INVALID', 'error', 'A recipe component quantity must be positive.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
-
-                continue;
-            }
-            if (! $this->units->compatible($materialUnit, $component->unit_code)) {
-                $this->issue($result, 'RECIPE_COMPONENT_UNIT_INVALID', 'error', 'A recipe component unit is not compatible with its material.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+                $this->issue($result, 'RECIPE_COMPONENT_CONVERSION_INVALID', 'error', 'A recipe component cannot be converted to its material inventory base unit at supported precision.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
             }
         }
     }
@@ -352,18 +339,19 @@ class MenuValidationService
         $base = [];
         foreach ($variant->recipe?->components ?? [] as $component) {
             try {
-                $normalized = $this->units->normalize((string) $component->quantity, $component->unit_code);
-                $base[$component->inventory_item_id] = BigDecimal::of($normalized['quantity']);
+                $material = $this->materials->material($tenantId, $component->inventory_item_id);
+                if ($material) {
+                    $base[$component->inventory_item_id] = $this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'];
+                }
             } catch (\Throwable) {
                 // The base-component validator reports the underlying configuration issue.
             }
         }
         foreach ($profile->components as $component) {
             $material = $this->materials->material($tenantId, $component->inventory_item_id);
-            $materialUnit = $material ? $this->units->inventoryUnit($material->unit) : null;
             try {
-                $quantity = BigDecimal::of((string) $component->quantity);
-                $valid = $material && $material->is_active && ! $material->deleted_at && $materialUnit && $quantity->isGreaterThan(BigDecimal::zero()) && $this->units->compatible($materialUnit, $component->unit_code) && in_array($component->operation, ['add', 'remove'], true);
+                $quantity = $material ? $this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'] : 0;
+                $valid = $material && $material->is_active && ! $material->deleted_at && $quantity > 0 && in_array($component->operation, ['add', 'remove'], true);
             } catch (\Throwable) {
                 $valid = false;
             }
@@ -380,9 +368,7 @@ class MenuValidationService
 
                 continue;
             }
-            $normalized = $this->units->normalize((string) $component->quantity, $component->unit_code);
-            $remove = BigDecimal::of($normalized['quantity']);
-            if (! isset($base[$component->inventory_item_id]) || $remove->isGreaterThan($base[$component->inventory_item_id])) {
+            if (! isset($base[$component->inventory_item_id]) || $quantity > $base[$component->inventory_item_id]) {
                 $this->issue($result, 'MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE', 'error', 'A modifier REMOVE adjustment exceeds the variant base recipe.', 'modifier_option', $option->id, $menu->id, $section->id, $placement->id, ['variantId' => $variant->id, 'materialId' => $component->inventory_item_id]);
             }
         }
@@ -394,8 +380,10 @@ class MenuValidationService
         $base = [];
         foreach ($variant->recipe->components as $component) {
             try {
-                $n = $this->units->normalize($component->quantity, $component->unit_code);
-                $base[$component->inventory_item_id] = BigDecimal::of($n['quantity']);
+                $material = $this->materials->material($product->tenant_id, $component->inventory_item_id);
+                if ($material) {
+                    $base[$component->inventory_item_id] = $this->conversions->resolveRecipe($product->tenant_id, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'];
+                }
             } catch (\Throwable) {
                 continue;
             }
@@ -414,23 +402,29 @@ class MenuValidationService
                 $profile = $this->recipes->effective($option, $product->id, $variant->id);
                 foreach ($profile?->components ?? [] as $component) {
                     if ($component->operation === 'remove') {
-                        $n = $this->units->normalize($component->quantity, $component->unit_code);
-                        $perMaterial[$component->inventory_item_id][] = BigDecimal::of($n['quantity']);
+                        try {
+                            $material = $this->materials->material($product->tenant_id, $component->inventory_item_id);
+                            if ($material) {
+                                $perMaterial[$component->inventory_item_id][] = $this->conversions->resolveRecipe($product->tenant_id, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'];
+                            }
+                        } catch (\Throwable) {
+                            // The profile validator reports the underlying conversion issue.
+                        }
                     }
                 }
             }
             $take = $group->selection_type === 'single' ? 1 : (int) ($group->pivot->max_selections_override ?? $group->max_selections);
             foreach ($perMaterial as $materialId => $values) {
-                usort($values, fn ($a, $b) => $b->compareTo($a));
-                $sum = BigDecimal::zero();
+                rsort($values, SORT_NUMERIC);
+                $sum = 0;
                 foreach (array_slice($values, 0, $take) as $value) {
-                    $sum = $sum->plus($value);
-                } $max[$materialId] = ($max[$materialId] ?? BigDecimal::zero())->plus($sum);
+                    $sum += $value;
+                } $max[$materialId] = ($max[$materialId] ?? 0) + $sum;
             }
         }
         foreach ($max as $materialId => $remove) {
-            if (isset($base[$materialId]) && $remove->isGreaterThan($base[$materialId])) {
-                $this->issue($result, 'MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE', 'error', 'Simultaneously selectable modifier removes can exceed the variant base recipe.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $materialId, 'baseQuantity' => $base[$materialId]->__toString(), 'maximumRemove' => $remove->__toString()]);
+            if (isset($base[$materialId]) && $remove > $base[$materialId]) {
+                $this->issue($result, 'MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE', 'error', 'Simultaneously selectable modifier removes can exceed the variant base recipe.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $materialId, 'baseQuantity' => $base[$materialId], 'maximumRemove' => $remove]);
             }
         }
     }

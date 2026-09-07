@@ -23,7 +23,7 @@ class SupplierInvoiceController extends Controller
         $actor = FinancialActor::id($request, $tenant);
         $q = $this->rows($tenant);
         if (DB::table('users')->where('tenant_id', $tenant)->where('id', $actor)->value('role') !== 'owner') {
-            $q->where(fn ($scope) => $scope->whereIn('i.branch_id', DB::table('user_branches')->where('tenant_id', $tenant)->where('user_id', $actor)->select('branch_id'))->orWhereNull('i.branch_id'));
+            $q->where(fn ($scope) => $scope->whereIn('i.branch_id', FinancialActor::operationalBranchIds($actor, $tenant))->orWhereNull('i.branch_id'));
         }
         foreach (['supplierId' => 'i.supplier_id', 'branchId' => 'i.branch_id', 'status' => 'i.status', 'invoiceType' => 'i.invoice_type'] as $input => $column) {
             if ($request->filled($input)) {

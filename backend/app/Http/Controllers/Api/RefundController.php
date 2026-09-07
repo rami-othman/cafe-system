@@ -11,6 +11,7 @@ use App\Services\OrderLifecyclePolicy;
 use App\Services\PosNumberGenerator;
 use App\Support\TenantContext;
 use App\Support\Money;
+use App\Support\RefundTaxAllocation;
 use App\Support\SalePaymentMethodResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -91,6 +92,13 @@ class RefundController extends Controller
             // A payment refund contains no item/restock detail, so it must
             // reverse the financial settlement only. Creating stock movements
             // here would invent an inventory event and risk double reversal.
+            $amountCents = Money::cents((string) $amount);
+            $taxCents = RefundTaxAllocation::taxCents(
+                Money::cents($orderRow->total),
+                Money::cents($orderRow->tax_total),
+                Money::cents((string) $alreadyRefunded),
+                $amountCents,
+            );
             $resolvedMethod = $payment->payment_method_id
                 ? SalePaymentMethodResolver::resolveById($tenantId, (int) $payment->payment_method_id)
                 : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $payment->method);
@@ -101,10 +109,11 @@ class RefundController extends Controller
                     'sourceEvent' => 'PAYMENT_REFUNDED',
                     'entryDate' => now()->toDateString(),
                     'description' => "Refund — {$data['reason']}",
-                    'lines' => [
-                        ['accountCode' => '4020', 'debit' => Money::decimal(Money::cents($amount))],
-                        ['accountCode' => $resolvedMethod->accountCode, 'credit' => Money::decimal(Money::cents($amount))],
-                    ],
+                    'lines' => array_values(array_filter([
+                        $amountCents > $taxCents ? ['accountCode' => '4020', 'debit' => Money::decimal($amountCents - $taxCents)] : null,
+                        $taxCents > 0 ? ['accountCode' => '2010', 'debit' => Money::decimal($taxCents)] : null,
+                        ['accountCode' => $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)],
+                    ])),
                 ], $actorId);
             } else {
                 $this->audit->record($request, $tenantId, 'payment_refund.finance_posting_skipped', 'order', $orderRow->id, [], ['reason' => 'No active Finance mapping for the original payment method.'], $orderRow->branch_id, $actorId);

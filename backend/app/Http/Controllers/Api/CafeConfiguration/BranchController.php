@@ -7,6 +7,11 @@ use App\Http\Requests\CafeConfiguration\StoreBranchRequest;
 use App\Http\Requests\CafeConfiguration\UpdateBranchRequest;
 use App\Http\Resources\CafeConfiguration\BranchResource;
 use App\Models\Branch;
+use App\Services\FinancialSetupService;
+use App\Support\TenantContext;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,14 +29,20 @@ class BranchController extends Controller
         )->response();
     }
 
-    public function store(StoreBranchRequest $request): JsonResponse
+    public function store(StoreBranchRequest $request, FinancialSetupService $financialSetup): JsonResponse
     {
-        $branch = Branch::query()->create([
-            ...$request->validated(),
-            'tenant_id' => TenantContext::id($request),
-            'currency' => 'SYP',
-            'is_active' => true,
-        ]);
+        $tenantId = TenantContext::id($request);
+        $branch = DB::transaction(function () use ($request, $tenantId, $financialSetup): Branch {
+            $branch = Branch::query()->create([
+                ...$request->validated(),
+                'tenant_id' => $tenantId,
+                'currency' => 'SYP',
+                'is_active' => true,
+            ]);
+            $financialSetup->ensureBranchMainWarehouse($tenantId, $branch->id, $request->attributes->get('auth_user')->id);
+
+            return $branch;
+        });
 
         return (new BranchResource($branch))->response()->setStatusCode(201);
     }
