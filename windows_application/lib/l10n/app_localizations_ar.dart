@@ -5788,4 +5788,286 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get financeSourceActionRelatedJournal => 'القيد المرتبط';
+
+  @override
+  String get navigationCafeConfiguration => 'إعدادات المقهى';
+
+  @override
+  String get cafeConfigurationTitle => 'إعدادات المقهى';
+
+  @override
+  String get cafeConfigurationOverview => 'نظرة عامة';
+
+  @override
+  String get cafeConfigurationProfile => 'ملف المقهى';
+
+  @override
+  String get cafeConfigurationBranches => 'الفروع';
+
+  @override
+  String get cafeConfigurationTeamAccess => 'الفريق والوصول';
+
+  @override
+  String get cafeConfigurationTax => 'الضريبة';
+
+  @override
+  String get cafeConfigurationOverviewSubtitle => 'ملخص موجز لإعدادات التشغيل.';
+
+  @override
+  String get cafeConfigurationProfileSubtitle =>
+      'أدر معلومات الأعمال الأساسية المستخدمة عبر النظام.';
+
+  @override
+  String get cafeConfigurationBranchesSubtitle =>
+      'أنشئ وأدر المواقع الفعلية التي يعمل فيها مقهاك.';
+
+  @override
+  String get cafeConfigurationCreateBranchSubtitle =>
+      'أضف موقعًا جديدًا يعمل فيه مقهاك.';
+
+  @override
+  String get cafeConfigurationEditBranchSubtitle => 'حدّث تفاصيل موقع المقهى.';
+
+  @override
+  String get cafeConfigurationConfigured => 'مُعد';
+
+  @override
+  String get cafeConfigurationTotal => 'إجمالي';
+
+  @override
+  String get cafeConfigurationNotAvailable => 'غير متاح';
+
+  @override
+  String get cafeConfigurationAvailablePhase2 => 'متاح في المرحلة 2';
+
+  @override
+  String get cafeConfigurationCouldNotLoad =>
+      'تعذر تحميل الإعدادات. تحقق من الاتصال وحاول مجددًا.';
+
+  @override
+  String get cafeConfigurationBusinessInformation => 'معلومات العمل';
+
+  @override
+  String get cafeConfigurationCafeName => 'اسم المقهى';
+
+  @override
+  String get cafeConfigurationEmail => 'البريد الإلكتروني';
+
+  @override
+  String get cafeConfigurationPhone => 'الهاتف';
+
+  @override
+  String get cafeConfigurationTimezone => 'المنطقة الزمنية';
+
+  @override
+  String get cafeConfigurationReadOnly => 'للعرض فقط';
+
+  @override
+  String get cafeConfigurationCurrency => 'العملة';
+
+  @override
+  String get cafeConfigurationStatus => 'الحالة';
+
+  @override
+  String get cafeConfigurationReset => 'إعادة ضبط';
+
+  @override
+  String get cafeConfigurationSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get cafeConfigurationProfileSaved => 'تم حفظ ملف المقهى.';
+
+  @override
+  String get cafeConfigurationSaveFailed =>
+      'تعذر حفظ التغييرات. تم الاحتفاظ بتعديلاتك.';
+
+  @override
+  String get cafeConfigurationAddBranch => 'إضافة فرع';
+
+  @override
+  String get cafeConfigurationCreateBranch => 'إنشاء فرع';
+
+  @override
+  String get cafeConfigurationEditBranch => 'تعديل الفرع';
+
+  @override
+  String get cafeConfigurationBranchName => 'اسم الفرع';
+
+  @override
+  String get cafeConfigurationAddress => 'العنوان';
+
+  @override
+  String get cafeConfigurationActions => 'الإجراءات';
+
+  @override
+  String get cafeConfigurationNoBranches => 'لا توجد فروع بعد';
+
+  @override
+  String get cafeConfigurationNoBranchesHelp => 'أنشئ أول موقع لمقهاك للبدء.';
+
+  @override
+  String get cafeConfigurationBranchCreated => 'تم إنشاء الفرع.';
+
+  @override
+  String get cafeConfigurationBranchSaved => 'تم حفظ الفرع.';
+
+  @override
+  String get cafeConfigurationTaxSummary => 'ضريبة حصرية على مستوى المقهى';
+
+  @override
+  String get teamAccessSubtitle =>
+      'أدِر المديرين والموظفين الذين لديهم وصول إلى مقهاك.';
+
+  @override
+  String get teamAddMember => 'إضافة عضو فريق';
+
+  @override
+  String get teamSearch => 'ابحث في الفريق';
+
+  @override
+  String get teamRole => 'الدور';
+
+  @override
+  String get teamName => 'الاسم';
+
+  @override
+  String get teamLogin => 'تسجيل الدخول';
+
+  @override
+  String get teamDeactivated => 'معطّل';
+
+  @override
+  String get teamArchived => 'مؤرشف';
+
+  @override
+  String get teamProtected => 'محمي';
+
+  @override
+  String get teamAllBranches => 'كل الفروع';
+
+  @override
+  String get teamOwner => 'المالك';
+
+  @override
+  String get teamManager => 'مدير';
+
+  @override
+  String get teamEmployee => 'موظف';
+
+  @override
+  String get teamNoMembers => 'لا يوجد مديرون أو موظفون بعد.';
+
+  @override
+  String get teamNoResults => 'لا تطابق أي أعضاء مع عوامل التصفية.';
+
+  @override
+  String get teamEditMember => 'تعديل عضو الفريق';
+
+  @override
+  String get teamUsername => 'اسم المستخدم';
+
+  @override
+  String get teamBranchAccess => 'وصول الفروع';
+
+  @override
+  String get teamActiveBranchesOnly => 'يمكن تعيين الفروع النشطة فقط.';
+
+  @override
+  String get teamTemporaryPassword => 'كلمة مرور مؤقتة';
+
+  @override
+  String get teamConfirmPassword => 'تأكيد كلمة المرور المؤقتة';
+
+  @override
+  String teamTemporaryPasswordMinimum(int count) {
+    return 'استخدم ما لا يقل عن $count محارف.';
+  }
+
+  @override
+  String get teamRoleChangePassword =>
+      'تغيير الدور يتطلب كلمة مرور مؤقتة جديدة وإعادة ضبط تسجيل الدخول.';
+
+  @override
+  String get teamCreate => 'إنشاء';
+
+  @override
+  String get teamMemberCreated => 'تم إنشاء عضو الفريق';
+
+  @override
+  String get teamPasswordVisibleOnce =>
+      'يمكن عرض كلمة المرور المؤقتة هذه المرة فقط.';
+
+  @override
+  String get teamCopy => 'نسخ';
+
+  @override
+  String get teamResetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get teamResetPasswordExplanation =>
+      'سيتم إلغاء الجلسات النشطة. يجب على المستخدم تغيير كلمة المرور بعد تسجيل الدخول القادم.';
+
+  @override
+  String get teamPasswordMismatch => 'كلمتا المرور غير متطابقتين.';
+
+  @override
+  String get teamDeactivate => 'إلغاء التفعيل';
+
+  @override
+  String get teamActivate => 'تفعيل';
+
+  @override
+  String get teamArchive => 'أرشفة';
+
+  @override
+  String get teamDeactivateExplanation =>
+      'لن يتمكن هذا المستخدم من تسجيل الدخول. تبقى النشاطات التاريخية محتفظة.';
+
+  @override
+  String get teamActivateExplanation => 'يمكن لهذا المريد تسجيل الدخول مجددًا.';
+
+  @override
+  String get teamArchiveExplanation =>
+      'يتم الاحتفاظ بالسجلات التاريخية. لا يمكن استعادة المستخدمين المؤرشفين حاليًا.';
+
+  @override
+  String get teamConfirm => 'تأكيد';
+
+  @override
+  String get teamMutationFailed => 'تعذر إتمام الطلب. تم الاحتفاظ بتعديلاتك.';
+
+  @override
+  String get teamLoadFailed =>
+      'تعذر تحميل هذا القسم. تحقق من الاتصال وحاول مجددًا.';
+
+  @override
+  String get taxSubtitle => 'حدد معدل الضريبة الواحد المستخدم عبر مقهاك.';
+
+  @override
+  String get taxRate => 'معدل الضريبة';
+
+  @override
+  String get taxHelp => 'أدخل نسبة مئوية من 0 إلى 100.';
+
+  @override
+  String get taxExplanation =>
+      'هذه ضريبة حصرية على مستوى المقهى وتُطبق بعد الخصومات. تُطبق التغييرات على الطلبات الجديدة، وتحتفظ الطلبات الحالية بمعدلها المحفوظ.';
+
+  @override
+  String get taxInvalid => 'أدخل نسبة مئوية صحيحة من 0 إلى 100.';
+
+  @override
+  String get taxSaved => 'تم حفظ معدل الضريبة.';
+
+  @override
+  String get taxConfirm => 'تحديث معدل الضريبة؟';
+
+  @override
+  String get taxCurrent => 'الحالي';
+
+  @override
+  String get taxNew => 'الجديد';
+
+  @override
+  String get taxNewOrdersOnly => 'يُطبق هذا على الطلبات الجديدة.';
 }

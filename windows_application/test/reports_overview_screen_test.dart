@@ -34,22 +34,21 @@ void main() {
     expect(_reportsSidebarItem(tester, 'Reports').isActive, isTrue);
   });
 
-  testWidgets('Reports module header shows the English label with no POS chrome', (
+  testWidgets('Reports module header shows the shared POS chrome', (
     WidgetTester tester,
   ) async {
     appRouter.go(AppRoutes.reports);
     await _pumpApp(tester);
 
     expect(find.byType(AppTopBar), findsOneWidget);
-    // "Reports" appears twice by design: the sidebar nav item and the
-    // module-level top bar title — the same pattern Menu Management already
-    // uses, not duplicated chrome (one is navigation, one is a page label).
+    // "Reports" appears once, as the sidebar nav item — the shared top bar
+    // now shows POS branch tabs instead of a static module label, the same
+    // chrome every other module renders (see app_router.dart's _topBarFor).
     expect(find.text('Reports'), findsWidgets);
-    expect(find.byType(ShiftStatusBadge), findsNothing);
-    // Only one branch context control: the Reports-owned selector. No POS
-    // branch tab for the fake "Downtown" branch supplied by the offline
-    // PosCubit fixture should leak into the top bar.
-    expect(find.text('Downtown'), findsNothing);
+    expect(find.byType(ShiftStatusBadge), findsOneWidget);
+    // The offline PosCubit fixture supplies exactly one branch ("Downtown"),
+    // which now surfaces as the shared top bar's branch tab.
+    expect(find.text('Downtown'), findsOneWidget);
   });
 
   testWidgets('Reports module header shows the Arabic label under RTL', (

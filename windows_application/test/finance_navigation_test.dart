@@ -1,7 +1,7 @@
-import 'package:windows_application/l10n/app_localizations.dart';
-import 'package:windows_application/shared/widgets/app_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
+import 'package:windows_application/shared/widgets/app_sidebar.dart';
 
 void main() {
   test('Finance has a real Arabic navigation label', () async {

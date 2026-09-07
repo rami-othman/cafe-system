@@ -146,12 +146,11 @@ void main() {
   });
 
   testWidgets(
-    'Finance module shell renders the breadcrumb and nav exactly once',
+    'Finance module shell renders the navigation bar exactly once',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         app(
           const FinanceModuleShell(
-            currentSection: 'نظرة عامة',
             selectedTab: 'overview',
             child: FinanceShell(
               title: 'نظرة عامة',
@@ -161,13 +160,7 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
-      expect(
-        find.text(_ar.financeBreadcrumb(_ar.navigationFinance, 'نظرة عامة')),
-        findsOneWidget,
-      );
       expect(find.byType(FinanceNavigationBar), findsOneWidget);
-      expect(find.byIcon(Icons.notifications_none), findsOneWidget);
-      expect(find.byIcon(Icons.person_outline), findsOneWidget);
     },
   );
 
@@ -177,7 +170,6 @@ void main() {
       await tester.pumpWidget(
         app(
           const FinanceModuleShell(
-            currentSection: 'Overview',
             selectedTab: 'overview',
             child: FinanceShell(title: 'Overview', child: FinanceEmptyState()),
           ),
@@ -185,10 +177,6 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
-      expect(
-        find.text(_en.financeBreadcrumb(_en.navigationFinance, 'Overview')),
-        findsOneWidget,
-      );
       expect(find.text(_en.financeSectionExpenses), findsOneWidget);
       expect(find.text(_ar.financeSectionExpenses), findsNothing);
       expect(

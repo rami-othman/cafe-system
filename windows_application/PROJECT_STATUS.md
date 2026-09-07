@@ -38,6 +38,9 @@ attribution, and full operational route authorization remain deferred.
 
 ## Current delivery state
 
+- Maintenance: the Cafe Configuration create-branch route resolves a
+  route-scoped `BranchEditorCubit` through the service locator.
+
 Menu Management Admin is **COMPLETE through Publish / Versions**:
 
 - Batch 8 — Pricing & Availability: **COMPLETE**
@@ -184,6 +187,16 @@ future work and it is not part of Batch 12.
 - The Flutter Windows app uses feature-based Cubit architecture. The Product
   Workspace remains the canonical Product parent.
 - Phase 4K architecture cleanup and broader localization migration remain deferred.
+
+## Cafe Configuration Flutter Phase 2
+
+- Owner-only Cafe Configuration now includes Team & Access and Tax alongside
+  Overview, Cafe Profile, and Branches.
+- Team & Access uses the existing paginated employees and roles APIs, supports
+  Manager/Employee creation and editing, protected Owner rows, lifecycle
+  actions, password reset, and active-branch assignment rules.
+- Tax uses the tenant-wide fractional API contract while presenting percentages
+  to the Owner. Overview now reports live team, tax, profile, and branch data.
 
 ## Batch 12 status
 

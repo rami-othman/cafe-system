@@ -153,18 +153,20 @@ void main() {
   );
 
   testWidgets(
-    'finance shell shows no POS shift badge and Reports shell shows no shift badge either',
+    'finance shell and Reports shell both show the shared POS shift badge',
     (WidgetTester tester) async {
-      // Finance and Reports both replace the default AppTopBar, so the shift
-      // badge (and its localization) is exercised on Inventory above; here
-      // we only confirm neither module accidentally inherits it.
+      // Finance, Reports, Menu Management, and Inventory all render the
+      // exact same shared AppTopBar (see app_router.dart's _topBarFor), so
+      // the shift badge (and its localization) is not module-specific — it
+      // is exercised in depth on Inventory above; here we only confirm
+      // Finance and Reports render it too, rather than a bespoke chrome.
       appRouter.go(AppRoutes.finance);
       await _pumpApp(tester);
-      expect(find.byType(ShiftStatusBadge), findsNothing);
+      expect(find.byType(ShiftStatusBadge), findsOneWidget);
 
       appRouter.go(AppRoutes.reports);
       await _pumpApp(tester);
-      expect(find.byType(ShiftStatusBadge), findsNothing);
+      expect(find.byType(ShiftStatusBadge), findsOneWidget);
     },
   );
 }

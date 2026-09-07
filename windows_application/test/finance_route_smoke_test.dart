@@ -26,13 +26,15 @@ import 'package:windows_application/shared/widgets/shift_status_badge.dart';
 // intended screen (AppRoutes / app_router.dart), and that the Finance module
 // shell (finance_module_shell.dart) is structurally sound: exactly one
 // FinanceNavigationBar, the correct active tab per route (including detail
-// routes keeping their parent tab selected), no POS AppTopBar chrome
-// (branch tabs / ShiftStatusBadge), and no duplicated notification/profile
-// icons. FinanceSetupRepository has no offline branch, so these screens hit
-// real (failing, in this sandbox) network calls and some emit pre-existing,
-// unrelated layout-overflow warnings at this viewport size — out of scope
-// for a routing/shell test, so rendering errors are swallowed; only the
-// structural assertions below can fail this file.
+// routes keeping their parent tab selected), and the shared AppTopBar (POS
+// branch tabs, ShiftStatusBadge, and exactly one notifications/profile icon
+// pair) — the same shell chrome every other module renders, mounted by
+// AppShell rather than duplicated per module. FinanceSetupRepository has no
+// offline branch, so these screens hit real (failing, in this sandbox)
+// network calls and some emit pre-existing, unrelated layout-overflow
+// warnings at this viewport size — out of scope for a routing/shell test, so
+// rendering errors are swallowed; only the structural assertions below can
+// fail this file.
 //
 // Inventory routes were intentionally not added to this file: a trial run
 // surfaced pre-existing uncaught-exception leaks in InventoryRepository
@@ -182,25 +184,26 @@ void main() {
         reason: '$path must keep "$tab" active in FinanceNavigationBar',
       );
 
-      // Finance owns its own chrome: no POS top bar (branch tabs / shift
-      // badge), and exactly one notifications/profile icon pair.
+      // Finance renders the same shared shell chrome as every other module:
+      // exactly one AppTopBar (POS branch tabs / shift badge), and exactly
+      // one notifications/profile icon pair.
       expect(
         find.byType(AppTopBar),
-        findsNothing,
-        reason: '$path must not show the POS AppTopBar',
+        findsOneWidget,
+        reason: '$path must show the shared AppTopBar exactly once',
       );
       expect(
         find.byType(ShiftStatusBadge),
-        findsNothing,
-        reason: '$path must not show the POS ShiftStatusBadge',
+        findsOneWidget,
+        reason: '$path must show the ShiftStatusBadge exactly once',
       );
       expect(
-        find.byIcon(Icons.notifications_none),
+        find.byIcon(Icons.notifications_none_outlined),
         findsOneWidget,
         reason: '$path must show exactly one notifications icon',
       );
       expect(
-        find.byIcon(Icons.person_outline),
+        find.byIcon(Icons.account_circle_outlined),
         findsOneWidget,
         reason: '$path must show exactly one profile icon',
       );

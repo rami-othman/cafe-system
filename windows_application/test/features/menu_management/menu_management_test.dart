@@ -424,7 +424,10 @@ void main() {
       await tester.tap(find.text('Menu Management'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('menu-module-navigation')), findsOneWidget);
-      expect(find.text('Downtown'), findsNothing);
+      // Menu Management now renders the shared AppTopBar (see
+      // app_router.dart's _topBarFor), so the offline fixture's one POS
+      // branch ("Downtown") surfaces as the top bar's branch tab.
+      expect(find.text('Downtown'), findsOneWidget);
       expect(find.byType(ChoiceChip), findsNothing);
       expect(find.text('Products'), findsWidgets);
       expect(
