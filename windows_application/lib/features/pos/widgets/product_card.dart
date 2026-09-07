@@ -54,7 +54,10 @@ class _ProductVisual extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: AppSizes.productCardImageHeight,
+      // Keep the visual area within the fixed grid card height.  The former
+      // 100px value left long two-line product names one pixel short on
+      // Windows text metrics, producing a visible RenderFlex overflow.
+      height: AppSizes.productVisualHeight,
       width: double.infinity,
       color: product.isAvailable
           ? AppColors.productVisualBackground
