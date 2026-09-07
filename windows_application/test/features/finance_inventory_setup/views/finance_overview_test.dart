@@ -41,6 +41,39 @@ void main() {
   });
 
   testWidgets(
+    'shows gross profit as unavailable instead of a fabricated number when COGS is incomplete',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        app(
+          FinanceOverview(
+            loader: (_) async {
+              final FinanceOverviewPayload payload = _payload();
+              final Map<String, dynamic> kpis = Map<String, dynamic>.from(
+                payload.dashboard['kpis'] as Map,
+              );
+              kpis['grossProfit'] = <String, dynamic>{
+                'current': '70000.00',
+                'reliable': false,
+              };
+              return FinanceOverviewPayload(
+                dashboard: <String, dynamic>{
+                  ...payload.dashboard,
+                  'kpis': kpis,
+                },
+                trends: payload.trends,
+                branches: payload.branches,
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('التكلفة غير متاحة لكل الطلبات'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'shows loading, error and retry without treating errors as zero',
     (WidgetTester tester) async {
       final Completer<FinanceOverviewPayload> loading =
@@ -193,7 +226,7 @@ void main() {
       await tester.pumpWidget(
         app(
           FinanceShell(
-            currentSection: 'نظرة عامة',
+            title: 'نظرة عامة',
             child: FinanceOverview(loader: data),
           ),
         ),

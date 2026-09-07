@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../controllers/reports_overview_cubit.dart';
@@ -46,9 +48,7 @@ class ReportsOverviewScreen extends StatelessWidget {
                     const _OverviewSkeleton()
                   else
                     _ErrorState(
-                      message:
-                          state.errorMessage ??
-                          'The overview could not be loaded.',
+                      message: context.l10n.reportsOverviewErrorDefault,
                       onRetry: cubit.load,
                     ),
                   if (state.data != null &&
@@ -83,7 +83,7 @@ class _Header extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => _pickRange(context),
             icon: const Icon(Icons.date_range_outlined, size: 18),
-            label: Text(_rangeLabel),
+            label: Text(_rangeLabel(context)),
           ),
           _BranchSelector(
             branches: state.data?.branches ?? const <dynamic>[],
@@ -91,7 +91,7 @@ class _Header extends StatelessWidget {
             onChanged: cubit.selectBranch,
           ),
           FilterChip(
-            label: const Text('vs. Previous Period'),
+            label: Text(context.l10n.reportsOverviewComparePrevious),
             selected: state.comparePrevious,
             onSelected: cubit.toggleComparison,
             selectedColor: AppColors.discountIconBackground,
@@ -99,11 +99,11 @@ class _Header extends StatelessWidget {
             side: const BorderSide(color: AppColors.border),
           ),
           Tooltip(
-            message: 'Available in detailed report screens',
+            message: context.l10n.reportsOverviewExportTooltip,
             child: OutlinedButton.icon(
               onPressed: null,
-              icon: Icon(Icons.file_download_outlined, size: 18),
-              label: Text('Export'),
+              icon: const Icon(Icons.file_download_outlined, size: 18),
+              label: Text(context.l10n.reportsOverviewExport),
             ),
           ),
         ],
@@ -112,7 +112,7 @@ class _Header extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                _TitleBlock(),
+                const _TitleBlock(),
                 const SizedBox(height: AppSpacing.lg),
                 actions,
               ],
@@ -120,7 +120,7 @@ class _Header extends StatelessWidget {
           : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(child: _TitleBlock()),
+                const Expanded(child: _TitleBlock()),
                 const SizedBox(width: AppSpacing.lg),
                 Flexible(child: actions),
               ],
@@ -128,10 +128,13 @@ class _Header extends StatelessWidget {
     },
   );
 
-  String get _rangeLabel {
+  String _rangeLabel(BuildContext context) {
     final range = state.range;
-    if (range == null) return 'Date range';
-    final formatter = DateFormat('MMM d');
+    if (range == null) return context.l10n.reportsOverviewDateRange;
+    final formatter = DateFormat(
+      'MMM d',
+      Localizations.localeOf(context).toLanguageTag(),
+    );
     return '${formatter.format(range.start)} – ${formatter.format(range.end)}';
   }
 
@@ -148,14 +151,18 @@ class _Header extends StatelessWidget {
 }
 
 class _TitleBlock extends StatelessWidget {
+  const _TitleBlock();
   @override
-  Widget build(BuildContext context) => const Column(
+  Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      Text('Reports Overview', style: AppTextStyles.headlineLarge),
-      SizedBox(height: AppSpacing.xs),
       Text(
-        'Track sales, profitability, cash, inventory, and branch performance from one place.',
+        context.l10n.reportsOverviewTitle,
+        style: AppTextStyles.headlineLarge,
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        context.l10n.reportsOverviewSubtitle,
         style: AppTextStyles.bodyMedium,
       ),
     ],
@@ -172,34 +179,44 @@ class _BranchSelector extends StatelessWidget {
   final int? selectedBranchId;
   final ValueChanged<int?> onChanged;
   @override
-  Widget build(BuildContext context) => Container(
-    height: 40,
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-    decoration: BoxDecoration(
-      border: Border.all(color: AppColors.border),
-      borderRadius: AppRadius.control,
-      color: AppColors.surface,
-    ),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<int?>(
-        value: selectedBranchId,
-        hint: const Text('All branches'),
-        items: <DropdownMenuItem<int?>>[
-          const DropdownMenuItem<int?>(
-            value: null,
-            child: Text('All branches'),
-          ),
-          ...branches.map(
-            (dynamic branch) => DropdownMenuItem<int?>(
-              value: branch.id as int,
-              child: Text(branch.name as String),
-            ),
-          ),
-        ],
-        onChanged: onChanged,
+  Widget build(BuildContext context) {
+    // The selected branch id can outlive the loaded branch list (e.g. the
+    // POS branch context is applied before an offline/empty overview
+    // response arrives), and DropdownButton asserts if its value has no
+    // matching item.
+    final bool hasMatchingBranch = branches.any(
+      (dynamic branch) => branch.id == selectedBranchId,
+    );
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadius.control,
+        color: AppColors.surface,
       ),
-    ),
-  );
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          value: hasMatchingBranch ? selectedBranchId : null,
+          isExpanded: false,
+          hint: Text(context.l10n.reportsOverviewAllBranches),
+          items: <DropdownMenuItem<int?>>[
+            DropdownMenuItem<int?>(
+              value: null,
+              child: Text(context.l10n.reportsOverviewAllBranches),
+            ),
+            ...branches.map(
+              (dynamic branch) => DropdownMenuItem<int?>(
+                value: branch.id as int,
+                child: Text(branch.name as String),
+              ),
+            ),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
 }
 
 class _OverviewContent extends StatelessWidget {
@@ -247,7 +264,10 @@ class _OverviewContent extends StatelessWidget {
       const SizedBox(height: AppSpacing.xxl),
       _ExceptionsCard(items: data.recentExceptions),
       const SizedBox(height: AppSpacing.xxl),
-      const Text('Browse by Category', style: AppTextStyles.titleMedium),
+      Text(
+        context.l10n.reportsOverviewBrowseByCategory,
+        style: AppTextStyles.titleMedium,
+      ),
       const SizedBox(height: AppSpacing.md),
       const _BrowseCategories(),
     ],
@@ -263,31 +283,31 @@ class _KpiGrid extends StatelessWidget {
     final items =
         <({String label, IconData icon, ReportMetric metric, bool percent})>[
           (
-            label: 'Net Sales',
+            label: context.l10n.reportsOverviewKpiNetSales,
             icon: Icons.payments_outlined,
             metric: kpis.netSales,
             percent: false,
           ),
           (
-            label: 'Gross Profit',
+            label: context.l10n.reportsOverviewKpiGrossProfit,
             icon: Icons.trending_up_outlined,
             metric: kpis.grossProfit,
             percent: false,
           ),
           (
-            label: 'Gross Margin',
+            label: context.l10n.reportsOverviewKpiGrossMargin,
             icon: Icons.pie_chart_outline,
             metric: kpis.grossMargin,
             percent: true,
           ),
           (
-            label: 'Total Expenses',
+            label: context.l10n.reportsOverviewKpiTotalExpenses,
             icon: Icons.receipt_long_outlined,
             metric: kpis.totalExpenses,
             percent: false,
           ),
           (
-            label: 'Net Profit',
+            label: context.l10n.reportsOverviewKpiNetProfit,
             icon: Icons.account_balance_wallet_outlined,
             metric: kpis.netProfit,
             percent: false,
@@ -332,8 +352,12 @@ class _KpiCard extends StatelessWidget {
     final deltaText = delta == null
         ? null
         : item.percent
-        ? '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} pts vs prev.'
-        : '${delta >= 0 ? '+' : ''}${_percentage(delta, metric.previousValue!)} vs prev.';
+        ? context.l10n.reportsOverviewDeltaPoints(
+            '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}',
+          )
+        : context.l10n.reportsOverviewDeltaPercent(
+            '${delta >= 0 ? '+' : ''}${_percentage(delta, metric.previousValue!)}',
+          );
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,14 +383,18 @@ class _KpiCard extends StatelessWidget {
             Text(
               item.percent
                   ? '${metric.value!.toStringAsFixed(1)}%'
-                  : _money(metric.value!, currency),
+                  : CurrencyFormatter.formatForContext(
+                      context,
+                      metric.value!,
+                      currencyCode: currency,
+                    ),
               style: AppTextStyles.titleLarge,
             )
           else
             Tooltip(
               message: metric.reason,
-              child: const Text(
-                'Not available yet',
+              child: Text(
+                context.l10n.reportsOverviewNotAvailableYet,
                 style: AppTextStyles.titleMedium,
               ),
             ),
@@ -389,8 +417,8 @@ class _KpiCard extends StatelessWidget {
               ],
             )
           else
-            const Text(
-              'Comparison unavailable',
+            Text(
+              context.l10n.reportsOverviewComparisonUnavailable,
               style: AppTextStyles.labelSmall,
             ),
         ],
@@ -411,17 +439,17 @@ class _SalesTrendCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
-          'Sales Trend — Last 14 Days',
+        Text(
+          context.l10n.reportsOverviewSalesTrendTitle,
           style: AppTextStyles.titleMedium,
         ),
         const SizedBox(height: AppSpacing.lg),
         if (points.every((point) => point.netSales == 0))
-          const SizedBox(
+          SizedBox(
             height: 200,
             child: Center(
               child: Text(
-                'No sales recorded for this period.',
+                context.l10n.reportsOverviewNoSalesData,
                 style: AppTextStyles.bodyMedium,
               ),
             ),
@@ -441,61 +469,74 @@ class _TrendChart extends StatelessWidget {
   final List<SalesTrendPoint> points;
   final String currency;
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (BuildContext context, BoxConstraints constraints) {
-      final max = points
-          .map((point) => point.netSales)
-          .reduce((a, b) => a > b ? a : b);
-      const padding = 18.0;
-      return Stack(
-        children: <Widget>[
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _TrendPainter(points: points, max: max),
-            ),
-          ),
-          ...points.asMap().entries.map((entry) {
-            final index = entry.key;
-            final point = entry.value;
-            final left =
-                padding +
-                index *
-                    ((constraints.maxWidth - padding * 2) /
-                        (points.length - 1));
-            final top =
-                12 + (1 - point.netSales / max) * (constraints.maxHeight - 48);
-            return Positioned(
-              left: left - 7,
-              top: top - 7,
-              child: Tooltip(
-                message:
-                    '${DateFormat('MMM d').format(point.date)}\n${_money(point.netSales, currency)}',
-                child: const SizedBox(width: 14, height: 14),
+  Widget build(BuildContext context) {
+    final String locale = Localizations.localeOf(context).toLanguageTag();
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final max = points
+            .map((point) => point.netSales)
+            .reduce((a, b) => a > b ? a : b);
+        const padding = 18.0;
+        // The chart paints time chronologically left-to-right in raw pixel
+        // coordinates regardless of app text direction; forcing LTR here
+        // keeps the first/last date labels aligned with the line they
+        // describe under RTL instead of Row mirroring them to the wrong end.
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _TrendPainter(points: points, max: max),
+                ),
               ),
-            );
-          }),
-          Positioned(
-            left: padding,
-            right: padding,
-            bottom: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(
-                  DateFormat('MMM d').format(points.first.date),
-                  style: AppTextStyles.labelSmall,
+              ...points.asMap().entries.map((entry) {
+                final index = entry.key;
+                final point = entry.value;
+                final left =
+                    padding +
+                    index *
+                        ((constraints.maxWidth - padding * 2) /
+                            (points.length - 1));
+                final top =
+                    12 +
+                    (1 - point.netSales / max) * (constraints.maxHeight - 48);
+                return Positioned(
+                  left: left - 7,
+                  top: top - 7,
+                  child: Tooltip(
+                    message:
+                        '${DateFormat('MMM d', locale).format(point.date)}\n${CurrencyFormatter.formatForContext(context, point.netSales, currencyCode: currency)}',
+                    child: const SizedBox(width: 14, height: 14),
+                  ),
+                );
+              }),
+              Positioned(
+                left: padding,
+                right: padding,
+                bottom: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(
+                      key: const Key('trend-chart-start-label'),
+                      DateFormat('MMM d', locale).format(points.first.date),
+                      style: AppTextStyles.labelSmall,
+                    ),
+                    Text(
+                      key: const Key('trend-chart-end-label'),
+                      DateFormat('MMM d', locale).format(points.last.date),
+                      style: AppTextStyles.labelSmall,
+                    ),
+                  ],
                 ),
-                Text(
-                  DateFormat('MMM d').format(points.last.date),
-                  style: AppTextStyles.labelSmall,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      );
-    },
-  );
+        );
+      },
+    );
+  }
 }
 
 class _TrendPainter extends CustomPainter {
@@ -568,12 +609,13 @@ class _BranchComparisonCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('Branch Comparison', style: AppTextStyles.titleMedium),
+        Text(
+          context.l10n.reportsOverviewBranchComparisonTitle,
+          style: AppTextStyles.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.lg),
         if (items.isEmpty)
-          const _InlineEmpty(
-            message: 'Choose all branches to compare performance.',
-          )
+          _InlineEmpty(message: context.l10n.reportsOverviewChooseAllBranches)
         else
           ...items.map(
             (item) => _BranchBar(
@@ -612,7 +654,11 @@ class _BranchBar extends StatelessWidget {
             children: <Widget>[
               Expanded(child: Text(item.name, style: AppTextStyles.labelLarge)),
               Text(
-                _money(item.netSales, currency),
+                CurrencyFormatter.formatForContext(
+                  context,
+                  item.netSales,
+                  currencyCode: currency,
+                ),
                 style: AppTextStyles.labelMedium,
               ),
             ],
@@ -642,14 +688,17 @@ class _TopProductsCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('Top Products', style: AppTextStyles.titleMedium),
+        Text(
+          context.l10n.reportsOverviewTopProductsTitle,
+          style: AppTextStyles.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.lg),
         if (items.isEmpty)
-          const _InlineEmpty(message: 'No products were sold for this period.')
+          _InlineEmpty(message: context.l10n.reportsOverviewNoProductsSold)
         else
           ...items.asMap().entries.map(
             (entry) => Tooltip(
-              message: 'Product Performance report is coming next.',
+              message: context.l10n.reportsOverviewProductPerformanceComingNext,
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 dense: true,
@@ -664,7 +713,11 @@ class _TopProductsCard extends StatelessWidget {
                 ),
                 title: Text(entry.value.name, style: AppTextStyles.labelLarge),
                 trailing: Text(
-                  _money(entry.value.netSales, currency),
+                  CurrencyFormatter.formatForContext(
+                    context,
+                    entry.value.netSales,
+                    currencyCode: currency,
+                  ),
                   style: AppTextStyles.labelMedium,
                 ),
               ),
@@ -683,12 +736,13 @@ class _ExceptionsCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text('Recent Exceptions', style: AppTextStyles.titleMedium),
+        Text(
+          context.l10n.reportsOverviewExceptionsTitle,
+          style: AppTextStyles.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.lg),
         if (items.isEmpty)
-          const _InlineEmpty(
-            message: 'No operational exceptions found for this period.',
-          )
+          _InlineEmpty(message: context.l10n.reportsOverviewNoExceptions)
         else
           ...items.map(
             (item) => Padding(
@@ -712,7 +766,7 @@ class _ExceptionsCard extends StatelessWidget {
                         Text(item.description, style: AppTextStyles.labelLarge),
                         const SizedBox(height: 2),
                         Text(
-                          '${item.branch} • ${_relativeTime(item.occurredAt)}',
+                          '${item.branch} • ${_relativeTime(context, item.occurredAt)}',
                           style: AppTextStyles.labelSmall,
                         ),
                       ],
@@ -731,14 +785,35 @@ class _BrowseCategories extends StatelessWidget {
   const _BrowseCategories();
   @override
   Widget build(BuildContext context) {
-    const items = <({String title, IconData icon})>[
-      (title: 'Sales & Profitability', icon: Icons.payments_outlined),
-      (title: 'Cash & Shifts', icon: Icons.point_of_sale_outlined),
-      (title: 'Inventory', icon: Icons.inventory_2_outlined),
-      (title: 'Expenses', icon: Icons.receipt_long_outlined),
-      (title: 'Purchasing & Suppliers', icon: Icons.local_shipping_outlined),
-      (title: 'Financial Reports', icon: Icons.account_balance_outlined),
-      (title: 'Custom Report Builder', icon: Icons.tune_outlined),
+    final items = <({String title, IconData icon})>[
+      (
+        title: context.l10n.reportsOverviewCategorySalesProfitability,
+        icon: Icons.payments_outlined,
+      ),
+      (
+        title: context.l10n.reportsOverviewCategoryCashShifts,
+        icon: Icons.point_of_sale_outlined,
+      ),
+      (
+        title: context.l10n.navigationInventory,
+        icon: Icons.inventory_2_outlined,
+      ),
+      (
+        title: context.l10n.reportsOverviewCategoryExpenses,
+        icon: Icons.receipt_long_outlined,
+      ),
+      (
+        title: context.l10n.reportsOverviewCategoryPurchasingSuppliers,
+        icon: Icons.local_shipping_outlined,
+      ),
+      (
+        title: context.l10n.reportsOverviewCategoryFinancialReports,
+        icon: Icons.account_balance_outlined,
+      ),
+      (
+        title: context.l10n.reportsOverviewCategoryCustomReportBuilder,
+        icon: Icons.tune_outlined,
+      ),
     ];
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) =>
@@ -785,7 +860,10 @@ class _ComingNext extends StatelessWidget {
       color: AppColors.discountIconBackground,
       borderRadius: AppRadius.pillRadius,
     ),
-    child: const Text('Coming next', style: AppTextStyles.labelSmall),
+    child: Text(
+      context.l10n.reportsOverviewComingNext,
+      style: AppTextStyles.labelSmall,
+    ),
   );
 }
 
@@ -864,7 +942,7 @@ class _ErrorState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_outlined),
-              label: const Text('Retry'),
+              label: Text(context.l10n.commonRetry),
             ),
           ],
         ),
@@ -873,14 +951,19 @@ class _ErrorState extends StatelessWidget {
   );
 }
 
-String _money(double value, String currency) =>
-    NumberFormat.currency(symbol: '$currency ', decimalDigits: 2).format(value);
-String _relativeTime(DateTime? date) {
-  if (date == null) return 'Current';
+String _relativeTime(BuildContext context, DateTime? date) {
+  if (date == null) return context.l10n.reportsOverviewRelativeCurrent;
   final difference = DateTime.now().difference(date.toLocal());
   if (difference.inMinutes < 60) {
-    return '${difference.inMinutes.clamp(1, 59)}m ago';
+    return context.l10n.reportsOverviewMinutesAgo(
+      difference.inMinutes.clamp(1, 59),
+    );
   }
-  if (difference.inHours < 24) return '${difference.inHours}h ago';
-  return DateFormat('MMM d').format(date);
+  if (difference.inHours < 24) {
+    return context.l10n.reportsOverviewHoursAgo(difference.inHours);
+  }
+  return DateFormat(
+    'MMM d',
+    Localizations.localeOf(context).toLanguageTag(),
+  ).format(date);
 }

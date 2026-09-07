@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../controllers/finance_setup_state.dart';
 import '../models/finance_setup_models.dart';
+import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 
 class FinancialAccountsScreen extends StatefulWidget {
@@ -47,17 +47,16 @@ class _AccountsState extends State<FinancialAccountsScreen> {
   );
 
   @override
-  Widget build(BuildContext context) => DesktopPageLayout(
-    child: widget.accountId == null
-        ? BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
-            builder: (context, state) {
-              final accounts = state.accounts;
-              final active = accounts.where((a) => a.isActive).length;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  ManagementPageHeader(
-                    title: 'دليل الحسابات',
+  Widget build(BuildContext context) => widget.accountId == null
+      ? BlocBuilder<FinanceSetupCubit, FinanceSetupState>(
+          builder: (context, state) {
+            final accounts = state.accounts;
+            final active = accounts.where((a) => a.isActive).length;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                FinancePageHeader(
+                  title: 'دليل الحسابات',
                     subtitle:
                         'إدارة الحسابات الأساسية والهيكل المحاسبي ضمن نطاق المنشأة.',
                     actions: <Widget>[
@@ -69,32 +68,58 @@ class _AccountsState extends State<FinancialAccountsScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Wrap(
-                    spacing: AppSpacing.md,
-                    runSpacing: AppSpacing.md,
-                    children: <Widget>[
-                      ManagementKpiCard(
-                        label: 'إجمالي الحسابات',
-                        value: '${accounts.length}',
-                        icon: Icons.account_tree_outlined,
-                      ),
-                      ManagementKpiCard(
-                        label: 'الحسابات النشطة',
-                        value: '$active',
-                        icon: Icons.check_circle_outline,
-                      ),
-                      ManagementKpiCard(
-                        label: 'غير النشطة',
-                        value: '${accounts.length - active}',
-                        icon: Icons.pause_circle_outline,
-                      ),
-                      ManagementKpiCard(
-                        label: 'حسابات النظام',
-                        value:
-                            '${accounts.where((a) => a.isSystemProtected).length}',
-                        icon: Icons.lock_outline,
-                      ),
-                    ],
+                  LayoutBuilder(
+                    builder:
+                        (BuildContext context, BoxConstraints constraints) {
+                          final List<Widget> cards = <Widget>[
+                            ManagementKpiCard(
+                              label: 'إجمالي الحسابات',
+                              value: '${accounts.length}',
+                              icon: Icons.account_tree_outlined,
+                            ),
+                            ManagementKpiCard(
+                              label: 'الحسابات النشطة',
+                              value: '$active',
+                              icon: Icons.check_circle_outline,
+                            ),
+                            ManagementKpiCard(
+                              label: 'غير النشطة',
+                              value: '${accounts.length - active}',
+                              icon: Icons.pause_circle_outline,
+                            ),
+                            ManagementKpiCard(
+                              label: 'حسابات النظام',
+                              value:
+                                  '${accounts.where((a) => a.isSystemProtected).length}',
+                              icon: Icons.lock_outline,
+                            ),
+                          ];
+                          if (constraints.maxWidth < 760) {
+                            return Wrap(
+                              spacing: AppSpacing.md,
+                              runSpacing: AppSpacing.md,
+                              children: cards
+                                  .map(
+                                    (Widget card) => SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: card,
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          }
+                          return Row(
+                            children: cards
+                                .expand(
+                                  (Widget card) => <Widget>[
+                                    Expanded(child: card),
+                                    const SizedBox(width: AppSpacing.md),
+                                  ],
+                                )
+                                .take(cards.length * 2 - 1)
+                                .toList(),
+                          );
+                        },
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   ManagementFilterBar(
@@ -159,8 +184,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
               );
             },
           )
-        : _accountDetail(),
-  );
+      : _accountDetail();
 
   Widget _accountDetail() => FutureBuilder<FinancialAccount>(
     future: _detailFuture,
@@ -325,7 +349,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     cells: <DataCell>[
       DataCell(
         Text(a.code),
-        onTap: () => context.go('/finance/accounts/${a.id}'),
+        onTap: () => context.go(AppRoutes.financeAccountDetailPath(a.id)),
       ),
       DataCell(
         Padding(
@@ -366,7 +390,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
             ],
           ),
         ),
-        onTap: () => context.go('/finance/accounts/${a.id}'),
+        onTap: () => context.go(AppRoutes.financeAccountDetailPath(a.id)),
       ),
       DataCell(Text(_groupLabel(a.accountGroup))),
       DataCell(Text(a.normalBalance == 'debit' ? 'مدين' : 'دائن')),
@@ -419,6 +443,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     width: 170,
     child: DropdownButtonFormField<String?>(
       initialValue: value,
+      isExpanded: true,
       hint: Text(hint),
       items: values
           .map(

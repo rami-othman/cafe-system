@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
 import '../widgets/finance_components.dart';
@@ -54,14 +54,17 @@ class ExpensesQuery {
   };
 }
 
-const Map<String, String> _kStatusLabels = <String, String>{
-  'draft': 'مسودة',
-  'pending_approval': 'بانتظار الموافقة',
-  'approved': 'معتمد',
-  'paid': 'مدفوع',
-  'rejected': 'مرفوض',
-  'reversed': 'معكوس',
-};
+/// Statuses selectable in the expenses status filter. Their display labels
+/// come from the shared [FinanceStatusBadge.resolve] resolver so filter text
+/// always matches the status badges shown in the table and detail dialog.
+const List<String> _kFilterableStatuses = <String>[
+  'draft',
+  'pending_approval',
+  'approved',
+  'paid',
+  'rejected',
+  'reversed',
+];
 
 /// Canonical Financial Expenses screen (`/finance/expenses`). Laravel
 /// supplies every summary total, filtered page, allowed-action list, and
@@ -103,25 +106,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     _dateFrom = DateTime(today.year, today.month);
     _dateTo = today;
     _load();
-    _repository.getFinanceMap('finance/expenses/branches').then((
-      Map<String, dynamic> response,
-    ) {
-      if (!mounted) return;
-      setState(
-        () => _branches = _list(response['branches'])
-            .map(
-              (Map<String, dynamic> row) => FinanceBranchOption(
-                id: _int(row['id']),
-                name: '${row['name'] ?? ''}',
-              ),
-            )
-            .toList(growable: false),
-      );
-    });
-    _repository.getExpenseCategories().then((List<ExpenseCategory> categories) {
-      if (!mounted) return;
-      setState(() => _categories = categories);
-    });
+    _repository
+        .getFinanceMap('finance/expenses/branches')
+        .then((Map<String, dynamic> response) {
+          if (!mounted) return;
+          setState(
+            () => _branches = _list(response['branches'])
+                .map(
+                  (Map<String, dynamic> row) => FinanceBranchOption(
+                    id: _int(row['id']),
+                    name: '${row['name'] ?? ''}',
+                  ),
+                )
+                .toList(growable: false),
+          );
+        })
+        .catchError((_) {});
+    _repository
+        .getExpenseCategories()
+        .then((List<ExpenseCategory> categories) {
+          if (!mounted) return;
+          setState(() => _categories = categories);
+        })
+        .catchError((_) {});
   }
 
   @override
@@ -193,13 +200,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   Future<void> _applyPeriod(String period) async {
+    // NOTE: 'مخصص' here is the shared FinancePeriod state-identifier (not a
+    // display string) coming from FinanceGlobalContext/FinancePeriod, which
+    // is being refactored separately to a locale-invariant key — left as-is
+    // per that in-flight change.
     if (period == 'مخصص') {
       final DateTimeRange? range = await showDateRangePicker(
         context: context,
         firstDate: DateTime(2020),
         lastDate: DateTime(_dateTo.year + 1),
         initialDateRange: DateTimeRange(start: _dateFrom, end: _dateTo),
-        helpText: 'اختيار فترة مالية',
+        helpText: context.l10n.financeExpenseDateRangePickerHelp,
       );
       if (range == null || !mounted) return;
       setState(() {
@@ -346,14 +357,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'المصروفات',
-        title: 'المصروفات',
-        subtitle: 'تسجيل ومتابعة اعتماد المصروفات التشغيلية',
+  Widget build(BuildContext context) => FinanceShell(
+        title: context.l10n.financeExpenseScreenTitle,
+        subtitle: context.l10n.financeExpenseScreenSubtitle,
         showContext: false,
         actions: <Widget>[
           ElevatedButton.icon(
@@ -367,21 +373,19 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               disabledBackgroundColor: FinanceColors.disabled,
             ),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('إضافة مصروف'),
+            label: Text(context.l10n.financeExpenseAddAction),
           ),
         ],
         child: _buildBody(),
-      ),
-    ),
-  );
+      );
 
   Widget _buildBody() {
     if (_pageData == null && _error == null) {
-      return const FinanceLoadingState(label: 'جارٍ تحميل المصروفات…');
+      return FinanceLoadingState(label: context.l10n.financeExpenseLoadingLabel);
     }
     if (_pageData == null) {
       return FinanceErrorState(
-        message: 'تعذّر تحميل المصروفات. لم يتم اعتبار الخطأ صفراً.',
+        message: context.l10n.financeExpenseLoadErrorMessage,
         onRetry: _load,
       );
     }
@@ -409,13 +413,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 onReset: _filters.isEmpty ? null : _clearFilters,
                 children: <Widget>[
                   _FilterDropdown<String>(
-                    label: 'الحالة',
+                    label: context.l10n.financeExpenseFilterStatusLabel,
                     value: _filters.status,
-                    items: _kStatusLabels.entries
+                    items: _kFilterableStatuses
                         .map(
-                          (MapEntry<String, String> e) => DropdownMenuItem<String>(
-                            value: e.key,
-                            child: Text(e.value),
+                          (String status) => DropdownMenuItem<String>(
+                            value: status,
+                            child: Text(
+                              FinanceStatusBadge.resolve(context.l10n, status).label,
+                            ),
                           ),
                         )
                         .toList(),
@@ -428,7 +434,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                   ),
                   _FilterDropdown<int>(
-                    label: 'الفئة',
+                    label: context.l10n.financeExpenseFilterCategoryLabel,
                     value: _filters.categoryId,
                     items: _categories
                         .map(
@@ -455,7 +461,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       style: FinanceText.body,
                       decoration: InputDecoration(
                         isDense: true,
-                        hintText: 'بحث بالوصف أو المرجع…',
+                        hintText: context.l10n.financeExpenseSearchHint,
                         prefixIcon: const Icon(Icons.search, size: 18),
                         filled: true,
                         fillColor: FinanceColors.workspace,
@@ -474,9 +480,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               const SizedBox(height: FinanceSpace.lg),
               if (_error != null) ...<Widget>[
                 FinanceAlertBanner(
-                  message: 'تعذّر تحديث المصروفات لهذه الفلاتر. تُعرض آخر بيانات محمّلة.',
+                  message: context.l10n.financeExpenseFilterRefreshError,
                   tone: FinanceTone.warning,
-                  action: TextButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+                  action: TextButton(onPressed: _load, child: Text(context.l10n.commonRetry)),
                 ),
                 const SizedBox(height: FinanceSpace.md),
               ],
@@ -485,13 +491,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   height: 220,
                   child: FinanceEmptyState(
                     message: _filters.isEmpty
-                        ? 'لا توجد مصروفات مسجلة للفترة المحددة'
-                        : 'لا توجد مصروفات مطابقة للفلاتر المحددة',
+                        ? context.l10n.financeExpenseEmptyPeriod
+                        : context.l10n.financeExpenseEmptyFiltered,
                     action: _filters.isEmpty
                         ? null
                         : TextButton(
                             onPressed: _clearFilters,
-                            child: const Text('إعادة تعيين الفلاتر'),
+                            child: Text(context.l10n.financeExpenseEmptyResetAction),
                           ),
                   ),
                 )
@@ -515,24 +521,24 @@ class _SummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) => FinanceKpiGrid(
     items: <FinanceKpiData>[
       FinanceKpiData(
-        label: 'إجمالي المصروفات',
+        label: context.l10n.financeExpenseKpiTotalAmount,
         value: _money(summary['totalAmount']),
         icon: Icons.receipt_long_outlined,
       ),
       FinanceKpiData(
-        label: 'بانتظار الموافقة',
+        label: context.l10n.financeStatusPendingApproval,
         value: _money(summary['pendingApprovalAmount']),
         icon: Icons.pending_actions_outlined,
         tone: FinanceTone.warning,
       ),
       FinanceKpiData(
-        label: 'مرفوضة',
+        label: context.l10n.financeExpenseKpiRejectedAmount,
         value: _money(summary['rejectedAmount']),
         icon: Icons.block_outlined,
         tone: FinanceTone.danger,
       ),
       FinanceKpiData(
-        label: 'متوسط المصروف',
+        label: context.l10n.financeExpenseKpiAverageAmount,
         value: _money(summary['averageAmount']),
         icon: Icons.calculate_outlined,
       ),
@@ -571,7 +577,7 @@ class _FilterDropdown<T> extends StatelessWidget {
         isDense: true,
         onChanged: onChanged,
         items: <DropdownMenuItem<T>>[
-          DropdownMenuItem<T>(value: null, child: Text('$label: الكل')),
+          DropdownMenuItem<T>(value: null, child: Text('$label: ${context.l10n.commonAll}')),
           ...items,
         ],
       ),
@@ -586,14 +592,14 @@ class _ExpensesTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FinanceTable(
-    headers: const <String>[
-      'التاريخ',
-      'المرجع',
-      'الوصف',
-      'الفئة',
-      'الفرع',
-      'المبلغ',
-      'الحالة',
+    headers: <String>[
+      context.l10n.financeExpenseColumnDate,
+      context.l10n.financeExpenseColumnReference,
+      context.l10n.financeExpenseColumnDescription,
+      context.l10n.financeExpenseFilterCategoryLabel,
+      context.l10n.financeExpenseColumnBranch,
+      context.l10n.financeExpenseColumnAmount,
+      context.l10n.financeExpenseFilterStatusLabel,
     ],
     minWidth: 1080,
     onRowTap: (int index) => onOpen(rows[index]),
@@ -604,7 +610,10 @@ class _ExpensesTable extends StatelessWidget {
             FinanceReference(reference: e.expenseNumber),
             Text(e.description, style: FinanceText.body),
             Text(e.expenseCategoryName, style: FinanceText.small),
-            Text(e.branchName ?? 'عام', style: FinanceText.small),
+            Text(
+              e.branchName ?? context.l10n.financeExpenseBranchGeneralFallback,
+              style: FinanceText.small,
+            ),
             FinanceAmount(value: e.totalAmount),
             FinanceStatusBadge(status: e.status),
           ],
@@ -704,23 +713,23 @@ class _ExpenseDetailDialogState extends State<_ExpenseDetailDialog> {
       context: context,
       builder: (BuildContext dialog) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setDialogState) => AlertDialog(
-          title: const Text('رفض المصروف'),
+          title: Text(context.l10n.financeExpenseRejectDialogTitle),
           content: TextField(
             controller: reason,
             autofocus: true,
             onChanged: (_) => setDialogState(() {}),
-            decoration: const InputDecoration(labelText: 'سبب الرفض'),
+            decoration: InputDecoration(labelText: context.l10n.financeExpenseRejectReasonLabel),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialog, false),
-              child: const Text('إلغاء'),
+              child: Text(context.l10n.commonCancel),
             ),
             TextButton(
               onPressed: reason.text.trim().isEmpty
                   ? null
                   : () => Navigator.pop(dialog, true),
-              child: const Text('رفض'),
+              child: Text(context.l10n.financeExpenseActionReject),
             ),
           ],
         ),
@@ -764,7 +773,7 @@ class _ExpenseDetailDialogState extends State<_ExpenseDetailDialog> {
     final String? note = e.status == 'rejected'
         ? e.rejectionReason
         : e.status == 'reversed'
-        ? 'تم عكس هذا المصروف. استخدم الأزرار أدناه لعرض القيد الأصلي وقيد العكس.'
+        ? context.l10n.financeExpenseReversedNote
         : null;
 
     return Dialog(
@@ -786,7 +795,7 @@ class _ExpenseDetailDialogState extends State<_ExpenseDetailDialog> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'إغلاق',
+                      tooltip: context.l10n.commonClose,
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close),
                     ),
@@ -795,8 +804,11 @@ class _ExpenseDetailDialogState extends State<_ExpenseDetailDialog> {
                 const SizedBox(height: FinanceSpace.md),
                 FinanceEntityHeader(
                   title: e.expenseCategoryName,
-                  reference:
-                      '${e.branchName ?? 'كل الفروع'}${e.createdByName != null ? ' · قدّمه ${e.createdByName}' : ''}',
+                  reference: <String>[
+                    e.branchName ?? context.l10n.financeExpenseAllBranchesLabel,
+                    if (e.createdByName != null)
+                      context.l10n.financeExpenseSubmittedBy(e.createdByName!),
+                  ].join(' · '),
                   status: e.status,
                 ),
                 if (note != null && note.isNotEmpty) ...<Widget>[

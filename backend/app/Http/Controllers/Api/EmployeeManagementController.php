@@ -43,9 +43,19 @@ class EmployeeManagementController extends Controller
             $query->whereHas('tenantRole', fn (Builder $query) => $query->where('code', $data['role']));
         }
         if ($data['branchId'] ?? null) {
-            $query->whereHas('branches', fn (Builder $query) => $query->where('branches.id', $data['branchId'])->where('branches.tenant_id', $tenantId));
+            // Owners deliberately have no user_branches pivots: their access is
+            // implicit for every active branch. Keep them visible when an owner
+            // filters Team & Access by branch rather than modelling fake pivots.
+            $query->where(fn (Builder $query) => $query
+                ->where('role', 'owner')
+                ->orWhereHas('branches', fn (Builder $branches) => $branches
+                    ->where('branches.id', $data['branchId'])
+                    ->where('branches.tenant_id', $tenantId)));
         }
-        $page = $query->orderBy('id')->paginate($data['perPage'] ?? 20, ['*'], 'page', $data['page'] ?? 1);
+        $page = $query
+            ->orderByRaw("CASE WHEN role = 'owner' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->paginate($data['perPage'] ?? 20, ['*'], 'page', $data['page'] ?? 1);
 
         return response()->json(['data' => collect($page->items())->map(fn (User $user) => $this->resource($user))->values(), 'meta' => [
             'currentPage' => $page->currentPage(), 'lastPage' => $page->lastPage(), 'perPage' => $page->perPage(), 'total' => $page->total(),

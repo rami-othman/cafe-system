@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
+import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
@@ -44,11 +44,10 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => DesktopPageLayout(
-    child: Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        ManagementPageHeader(
+        FinancePageHeader(
           title: 'طرق الدفع',
           subtitle:
               'تهيئة طرق الدفع ومطابقتها بحسابات الأستاذ دون ربط تلقائي مع نقاط البيع.',
@@ -125,8 +124,7 @@ class _PaymentMethodsState extends State<PaymentMethodsScreen> {
                 ),
         ),
       ],
-    ),
-  );
+    );
   Future<void> _form({PaymentMethodSetting? existing}) async {
     final cubit = context.read<FinanceSetupCubit>();
     await cubit.loadAccounts();

@@ -10,6 +10,7 @@ import 'package:windows_application/features/finance_inventory_setup/models/fina
 import 'package:windows_application/features/finance_inventory_setup/repositories/finance_setup_repository.dart';
 import 'package:windows_application/features/finance_inventory_setup/views/expenses_screen.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_pagination.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   tearDown(() async {
@@ -17,6 +18,9 @@ void main() {
   });
 
   Widget app(Widget child) => MaterialApp(
+    locale: const Locale('ar'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(body: child),
@@ -128,7 +132,7 @@ void main() {
 
       await tester.tap(find.text('الحالة: الكل'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('مسودة').last);
+      await tester.tap(find.text('قيد المراجعة').last);
       await tester.pumpAndSettle();
       expect(queries.last['status'], 'draft');
       expect(queries.last['branchId'], 2, reason: 'branch context is preserved');
@@ -295,7 +299,14 @@ void main() {
     );
     await tester.binding.setSurfaceSize(const Size(1440, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('صيانة القهوة'));
@@ -330,7 +341,14 @@ void main() {
     );
     await tester.binding.setSurfaceSize(const Size(1440, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('EXP-000001 — August rent'), findsOneWidget);

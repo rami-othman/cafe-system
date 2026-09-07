@@ -65,6 +65,20 @@ class AuthPhaseTwoEmployeeManagementTest extends TestCase
         $this->assertFalse($owner->fresh()->trashed());
     }
 
+    public function test_owner_matches_branch_filter_without_branch_pivots(): void
+    {
+        [$tenant, $branch] = $this->managerContext();
+        $owner = $this->user($tenant, 'owner', 'OwnerPassword');
+
+        $this->assertSame([], $owner->branches()->pluck('branches.id')->all());
+        $this->withToken($this->loginEmail($owner, 'OwnerPassword'))
+            ->getJson("/api/v1/employees?branchId={$branch->id}")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $owner->id)
+            ->assertJsonPath('data.0.allBranches', true)
+            ->assertJsonPath('data.0.isProtectedOwner', true);
+    }
+
     public function test_role_changes_revoke_sessions_and_cross_tenant_branches_are_atomic(): void
     {
         [$tenant, $branch, $manager] = $this->managerContext();

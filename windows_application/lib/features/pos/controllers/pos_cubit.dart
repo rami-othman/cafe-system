@@ -41,6 +41,8 @@ class PosCubit extends Cubit<PosState> {
   final PosRepository repository;
   Future<void> _cartMutationQueue = Future<void>.value();
   int _queuedCartMutations = 0;
+  int? _paymentIdempotencyOrderId;
+  String? _paymentIdempotencyKey;
   int _receiptRequestGeneration = 0;
   int _productDetailRequestVersion = 0;
   int _branchLoadGeneration = 0;
@@ -624,12 +626,22 @@ class PosCubit extends Cubit<PosState> {
       );
     }
 
+    if (_paymentIdempotencyOrderId != orderId) {
+      _paymentIdempotencyOrderId = orderId;
+      _paymentIdempotencyKey = null;
+    }
+    // A retry after a definite failure must reuse the same idempotency key
+    // for this order — the backend dedupes a replayed /pay request by this
+    // key, so a fresh key per attempt would defeat double-charge protection.
+    final String idempotencyKey =
+        _paymentIdempotencyKey ??= _operationKey('payment');
+
     try {
       final PaymentResult payment = await repository.payOrder(
         orderId: orderId,
         method: requestedPayment.method.apiValue,
         amount: requestedPayment.amountReceived,
-        idempotencyKey: _operationKey('payment'),
+        idempotencyKey: idempotencyKey,
         totalDue: totalDue,
       );
       if (isClosed) {
@@ -1144,6 +1156,8 @@ class PosCubit extends Cubit<PosState> {
     if (isClosed) {
       return;
     }
+    _paymentIdempotencyOrderId = null;
+    _paymentIdempotencyKey = null;
     _completeConfirmedOrder(orderId: orderId, payment: payment);
     await _loadReceipt(orderId);
   }

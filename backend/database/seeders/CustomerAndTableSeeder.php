@@ -10,7 +10,13 @@ class CustomerAndTableSeeder extends Seeder
     public function run(): void
     {
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        if (! $tenantId) {
+            throw new \RuntimeException('CustomerAndTableSeeder requires the cafe-618 tenant to exist. Run TenantAccessSeeder first.');
+        }
         $branchId = (int) DB::table('branches')->where('tenant_id', $tenantId)->where('name', 'Downtown')->value('id');
+        if (! $branchId) {
+            throw new \RuntimeException('CustomerAndTableSeeder requires the Downtown branch to exist for tenant '.$tenantId.'. Run TenantAccessSeeder first.');
+        }
         $now = now();
 
         foreach (range(1, 8) as $number) {

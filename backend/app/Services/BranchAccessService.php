@@ -14,6 +14,13 @@ class BranchAccessService
             return false;
         }
 
+        // This service defines operational access. Inactive branches retain
+        // their historical records, but may not be selected or used for new
+        // tenant operations by any role, including the implicit Owner scope.
+        if ($branch->trashed() || ! $branch->is_active) {
+            return false;
+        }
+
         if ($user->isOwner()) {
             return true;
         }

@@ -16,6 +16,13 @@ final class DailyClosingReconciliationPolicy
 {
     public function __construct(private readonly BusinessDayRangeResolver $days) {}
 
+    /**
+     * Per-request memo of cash account ids, keyed by "tenant:branch" — these
+     * don't vary by date, but evaluate() is called once per open/closed
+     * daily-closing row (i.e. once per date) for the same branch.
+     */
+    private static array $cashAccountsCache = [];
+
     public function evaluate(int $tenant, int $branch, string $date, array $summary): array
     {
         $blockers = [];
@@ -67,9 +74,14 @@ final class DailyClosingReconciliationPolicy
 
     private function cashAccounts(int $tenant, int $branch): Collection
     {
-        return DB::table('financial_locations')->where('tenant_id', $tenant)->where('kind', 'cash')->where('is_active', true)
-            ->where(fn ($q) => $q->where('branch_id', $branch)->orWhereNull('branch_id'))
-            ->pluck('financial_account_id');
+        $key = $tenant.':'.$branch;
+        if (! isset(self::$cashAccountsCache[$key])) {
+            self::$cashAccountsCache[$key] = DB::table('financial_locations')->where('tenant_id', $tenant)->where('kind', 'cash')->where('is_active', true)
+                ->where(fn ($q) => $q->where('branch_id', $branch)->orWhereNull('branch_id'))
+                ->pluck('financial_account_id');
+        }
+
+        return self::$cashAccountsCache[$key];
     }
 
     private function cardAccountsWithActivity(int $tenant, int $branch, string $date): array

@@ -440,6 +440,12 @@ abstract class AppLocalizations {
   /// **'Inventory'**
   String get navigationInventory;
 
+  /// No description provided for @navigationFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get navigationFinance;
+
   /// No description provided for @navigationReports.
   ///
   /// In en, this message translates to:
@@ -457,6 +463,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OPERATIONAL HUB'**
   String get operationalHub;
+
+  /// No description provided for @shiftStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'SHIFT OPEN'**
+  String get shiftStatusOpen;
+
+  /// No description provided for @shiftStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'SHIFT CLOSED'**
+  String get shiftStatusClosed;
 
   /// No description provided for @tooltipCart.
   ///
@@ -8314,6 +8332,2553 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to log out from this device?'**
   String get authLogoutConfirmation;
+
+  /// No description provided for @reportsOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Overview'**
+  String get reportsOverviewTitle;
+
+  /// No description provided for @reportsOverviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track sales, profitability, cash, inventory, and branch performance from one place.'**
+  String get reportsOverviewSubtitle;
+
+  /// No description provided for @reportsOverviewDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get reportsOverviewDateRange;
+
+  /// No description provided for @reportsOverviewComparePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'vs. Previous Period'**
+  String get reportsOverviewComparePrevious;
+
+  /// No description provided for @reportsOverviewExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get reportsOverviewExport;
+
+  /// No description provided for @reportsOverviewExportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Available in detailed report screens'**
+  String get reportsOverviewExportTooltip;
+
+  /// No description provided for @reportsOverviewAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All branches'**
+  String get reportsOverviewAllBranches;
+
+  /// No description provided for @reportsOverviewKpiNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Sales'**
+  String get reportsOverviewKpiNetSales;
+
+  /// No description provided for @reportsOverviewKpiGrossProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross Profit'**
+  String get reportsOverviewKpiGrossProfit;
+
+  /// No description provided for @reportsOverviewKpiGrossMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross Margin'**
+  String get reportsOverviewKpiGrossMargin;
+
+  /// No description provided for @reportsOverviewKpiTotalExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Expenses'**
+  String get reportsOverviewKpiTotalExpenses;
+
+  /// No description provided for @reportsOverviewKpiNetProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Profit'**
+  String get reportsOverviewKpiNetProfit;
+
+  /// No description provided for @reportsOverviewNotAvailableYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available yet'**
+  String get reportsOverviewNotAvailableYet;
+
+  /// No description provided for @reportsOverviewComparisonUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comparison unavailable'**
+  String get reportsOverviewComparisonUnavailable;
+
+  /// No description provided for @reportsOverviewDeltaPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} vs prev.'**
+  String reportsOverviewDeltaPercent(String value);
+
+  /// No description provided for @reportsOverviewDeltaPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} pts vs prev.'**
+  String reportsOverviewDeltaPoints(String value);
+
+  /// No description provided for @reportsOverviewSalesTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Trend'**
+  String get reportsOverviewSalesTrendTitle;
+
+  /// No description provided for @reportsOverviewNoSalesData.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales recorded for this period.'**
+  String get reportsOverviewNoSalesData;
+
+  /// No description provided for @reportsOverviewBranchComparisonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch Comparison'**
+  String get reportsOverviewBranchComparisonTitle;
+
+  /// No description provided for @reportsOverviewChooseAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose all branches to compare performance.'**
+  String get reportsOverviewChooseAllBranches;
+
+  /// No description provided for @reportsOverviewTopProductsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Products'**
+  String get reportsOverviewTopProductsTitle;
+
+  /// No description provided for @reportsOverviewNoProductsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'No products were sold for this period.'**
+  String get reportsOverviewNoProductsSold;
+
+  /// No description provided for @reportsOverviewProductPerformanceComingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Performance report is coming next.'**
+  String get reportsOverviewProductPerformanceComingNext;
+
+  /// No description provided for @reportsOverviewExceptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Exceptions'**
+  String get reportsOverviewExceptionsTitle;
+
+  /// No description provided for @reportsOverviewNoExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No operational exceptions found for this period.'**
+  String get reportsOverviewNoExceptions;
+
+  /// No description provided for @reportsOverviewBrowseByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse by Category'**
+  String get reportsOverviewBrowseByCategory;
+
+  /// No description provided for @reportsOverviewComingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming next'**
+  String get reportsOverviewComingNext;
+
+  /// No description provided for @reportsOverviewCategorySalesProfitability.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales & Profitability'**
+  String get reportsOverviewCategorySalesProfitability;
+
+  /// No description provided for @reportsOverviewCategoryCashShifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash & Shifts'**
+  String get reportsOverviewCategoryCashShifts;
+
+  /// No description provided for @reportsOverviewCategoryExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get reportsOverviewCategoryExpenses;
+
+  /// No description provided for @reportsOverviewCategoryPurchasingSuppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchasing & Suppliers'**
+  String get reportsOverviewCategoryPurchasingSuppliers;
+
+  /// No description provided for @reportsOverviewCategoryFinancialReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Reports'**
+  String get reportsOverviewCategoryFinancialReports;
+
+  /// No description provided for @reportsOverviewCategoryCustomReportBuilder.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Report Builder'**
+  String get reportsOverviewCategoryCustomReportBuilder;
+
+  /// No description provided for @reportsOverviewErrorDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'The overview could not be loaded.'**
+  String get reportsOverviewErrorDefault;
+
+  /// No description provided for @reportsOverviewRelativeCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get reportsOverviewRelativeCurrent;
+
+  /// No description provided for @reportsOverviewMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{m}m ago'**
+  String reportsOverviewMinutesAgo(int m);
+
+  /// No description provided for @reportsOverviewHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h ago'**
+  String reportsOverviewHoursAgo(int h);
+
+  /// No description provided for @financeSectionOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get financeSectionOverview;
+
+  /// No description provided for @financeSectionTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Transactions'**
+  String get financeSectionTransactions;
+
+  /// No description provided for @financeSectionCashBanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash & Banks'**
+  String get financeSectionCashBanks;
+
+  /// No description provided for @financeSectionExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get financeSectionExpenses;
+
+  /// No description provided for @financeSectionSuppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers & Payables'**
+  String get financeSectionSuppliers;
+
+  /// No description provided for @financeSectionReconciliation.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconciliation'**
+  String get financeSectionReconciliation;
+
+  /// No description provided for @financeSectionJournals.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal Entries'**
+  String get financeSectionJournals;
+
+  /// No description provided for @financeSectionClosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Closing'**
+  String get financeSectionClosing;
+
+  /// No description provided for @financeSectionReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Reports'**
+  String get financeSectionReports;
+
+  /// No description provided for @financeSectionAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart of Accounts'**
+  String get financeSectionAccounts;
+
+  /// No description provided for @financeSectionPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounting Periods'**
+  String get financeSectionPeriods;
+
+  /// No description provided for @financeSectionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance Settings'**
+  String get financeSectionSettings;
+
+  /// No description provided for @financeBreadcrumb.
+  ///
+  /// In en, this message translates to:
+  /// **'{module} / {section}'**
+  String financeBreadcrumb(String module, String section);
+
+  /// No description provided for @financeStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get financeStatusApproved;
+
+  /// No description provided for @financeStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get financeStatusCompleted;
+
+  /// No description provided for @financeStatusPendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Approval'**
+  String get financeStatusPendingApproval;
+
+  /// No description provided for @financeStatusPendingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Review'**
+  String get financeStatusPendingReview;
+
+  /// No description provided for @financeStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get financeStatusRejected;
+
+  /// No description provided for @financeStatusReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversed'**
+  String get financeStatusReversed;
+
+  /// No description provided for @financeStatusPartiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially Paid'**
+  String get financeStatusPartiallyPaid;
+
+  /// No description provided for @financeStatusInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get financeStatusInactive;
+
+  /// No description provided for @financeStatusLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get financeStatusLocked;
+
+  /// No description provided for @financeStatusUnmatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmatched'**
+  String get financeStatusUnmatched;
+
+  /// No description provided for @financeStatusCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get financeStatusCurrent;
+
+  /// No description provided for @financeTermDebit.
+  ///
+  /// In en, this message translates to:
+  /// **'Debit'**
+  String get financeTermDebit;
+
+  /// No description provided for @financeTermCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get financeTermCredit;
+
+  /// No description provided for @financeTermBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get financeTermBalance;
+
+  /// No description provided for @financeTermOpeningBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening Balance'**
+  String get financeTermOpeningBalance;
+
+  /// No description provided for @financeTermClosingBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing Balance'**
+  String get financeTermClosingBalance;
+
+  /// No description provided for @financeTermRunningBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Running Balance'**
+  String get financeTermRunningBalance;
+
+  /// No description provided for @financeTermRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get financeTermRevenue;
+
+  /// No description provided for @financeTermCogs.
+  ///
+  /// In en, this message translates to:
+  /// **'COGS'**
+  String get financeTermCogs;
+
+  /// No description provided for @financeTermGrossProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross Profit'**
+  String get financeTermGrossProfit;
+
+  /// No description provided for @financeTermOperatingExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Operating Expenses'**
+  String get financeTermOperatingExpenses;
+
+  /// No description provided for @financeTermOperatingProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Operating Profit'**
+  String get financeTermOperatingProfit;
+
+  /// No description provided for @financeTermAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get financeTermAssets;
+
+  /// No description provided for @financeTermLiabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get financeTermLiabilities;
+
+  /// No description provided for @financeTermEquity.
+  ///
+  /// In en, this message translates to:
+  /// **'Equity'**
+  String get financeTermEquity;
+
+  /// No description provided for @financeTermAccountsPayable.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts Payable'**
+  String get financeTermAccountsPayable;
+
+  /// No description provided for @financeTermGeneralLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'General Ledger'**
+  String get financeTermGeneralLedger;
+
+  /// No description provided for @financeTermTrialBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial Balance'**
+  String get financeTermTrialBalance;
+
+  /// No description provided for @financeTermProfitLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit & Loss'**
+  String get financeTermProfitLoss;
+
+  /// No description provided for @financeTermBalanceSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance Sheet'**
+  String get financeTermBalanceSheet;
+
+  /// No description provided for @financeTermCashFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Flow'**
+  String get financeTermCashFlow;
+
+  /// No description provided for @financeFiltersReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get financeFiltersReset;
+
+  /// No description provided for @financeReadinessPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational Readiness'**
+  String get financeReadinessPanelTitle;
+
+  /// No description provided for @financeLoadingDefaultLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading data…'**
+  String get financeLoadingDefaultLabel;
+
+  /// No description provided for @financeEmptyDefaultMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No data to display'**
+  String get financeEmptyDefaultMessage;
+
+  /// No description provided for @financeExpectedAccountingImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected Accounting Impact'**
+  String get financeExpectedAccountingImpact;
+
+  /// No description provided for @financeExpenseScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get financeExpenseScreenTitle;
+
+  /// No description provided for @financeExpenseScreenSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record and track the approval of operating expenses'**
+  String get financeExpenseScreenSubtitle;
+
+  /// No description provided for @financeExpenseAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Expense'**
+  String get financeExpenseAddAction;
+
+  /// No description provided for @financeExpenseLoadingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading expenses…'**
+  String get financeExpenseLoadingLabel;
+
+  /// No description provided for @financeExpenseLoadErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load expenses. The error is not treated as zero.'**
+  String get financeExpenseLoadErrorMessage;
+
+  /// No description provided for @financeExpenseFilterStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get financeExpenseFilterStatusLabel;
+
+  /// No description provided for @financeExpenseFilterCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get financeExpenseFilterCategoryLabel;
+
+  /// No description provided for @financeExpenseSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by description or reference…'**
+  String get financeExpenseSearchHint;
+
+  /// No description provided for @financeExpenseDateRangePickerHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a financial period'**
+  String get financeExpenseDateRangePickerHelp;
+
+  /// No description provided for @financeExpenseFilterRefreshError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh expenses for these filters. Showing the last loaded data.'**
+  String get financeExpenseFilterRefreshError;
+
+  /// No description provided for @financeExpenseEmptyPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses recorded for the selected period'**
+  String get financeExpenseEmptyPeriod;
+
+  /// No description provided for @financeExpenseEmptyFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses match the selected filters'**
+  String get financeExpenseEmptyFiltered;
+
+  /// No description provided for @financeExpenseEmptyResetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Filters'**
+  String get financeExpenseEmptyResetAction;
+
+  /// No description provided for @financeExpenseKpiTotalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Expenses'**
+  String get financeExpenseKpiTotalAmount;
+
+  /// No description provided for @financeExpenseKpiRejectedAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get financeExpenseKpiRejectedAmount;
+
+  /// No description provided for @financeExpenseKpiAverageAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Expense'**
+  String get financeExpenseKpiAverageAmount;
+
+  /// No description provided for @financeExpenseColumnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get financeExpenseColumnDate;
+
+  /// No description provided for @financeExpenseColumnReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get financeExpenseColumnReference;
+
+  /// No description provided for @financeExpenseColumnDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get financeExpenseColumnDescription;
+
+  /// No description provided for @financeExpenseColumnBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get financeExpenseColumnBranch;
+
+  /// No description provided for @financeExpenseColumnAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get financeExpenseColumnAmount;
+
+  /// No description provided for @financeExpenseBranchGeneralFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get financeExpenseBranchGeneralFallback;
+
+  /// No description provided for @financeExpenseBranchGeneralOption.
+  ///
+  /// In en, this message translates to:
+  /// **'General (All Branches)'**
+  String get financeExpenseBranchGeneralOption;
+
+  /// No description provided for @financeExpenseAllBranchesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All Branches'**
+  String get financeExpenseAllBranchesLabel;
+
+  /// No description provided for @financeExpenseSubmittedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted by {name}'**
+  String financeExpenseSubmittedBy(String name);
+
+  /// No description provided for @financeExpenseReversedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This expense has been reversed. Use the buttons below to view the original entry and the reversal entry.'**
+  String get financeExpenseReversedNote;
+
+  /// No description provided for @financeExpenseSubmissionDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission Date'**
+  String get financeExpenseSubmissionDateLabel;
+
+  /// No description provided for @financeExpenseLedgerAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger Account'**
+  String get financeExpenseLedgerAccountLabel;
+
+  /// No description provided for @financeExpensePreTaxAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount Before Tax'**
+  String get financeExpensePreTaxAmountLabel;
+
+  /// No description provided for @financeExpenseTaxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get financeExpenseTaxLabel;
+
+  /// No description provided for @financeExpenseNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get financeExpenseNotesLabel;
+
+  /// No description provided for @financeExpenseNotesOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (Optional)'**
+  String get financeExpenseNotesOptionalLabel;
+
+  /// No description provided for @financeExpensePaymentMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get financeExpensePaymentMethodLabel;
+
+  /// No description provided for @financeExpensePaymentAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Account'**
+  String get financeExpensePaymentAccountLabel;
+
+  /// No description provided for @financeExpenseApprovedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved At'**
+  String get financeExpenseApprovedAtLabel;
+
+  /// No description provided for @financeExpensePaidAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid At'**
+  String get financeExpensePaidAtLabel;
+
+  /// No description provided for @financeExpenseActionSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit for Approval'**
+  String get financeExpenseActionSubmit;
+
+  /// No description provided for @financeExpenseActionApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get financeExpenseActionApprove;
+
+  /// No description provided for @financeExpenseActionReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get financeExpenseActionReject;
+
+  /// No description provided for @financeExpenseActionPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Payment'**
+  String get financeExpenseActionPay;
+
+  /// No description provided for @financeExpenseActionReverse.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse Expense'**
+  String get financeExpenseActionReverse;
+
+  /// No description provided for @financeExpenseViewJournalAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View Journal Entry'**
+  String get financeExpenseViewJournalAction;
+
+  /// No description provided for @financeExpenseViewReversalJournalAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View Reversal Entry'**
+  String get financeExpenseViewReversalJournalAction;
+
+  /// No description provided for @financeExpenseRejectDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject Expense'**
+  String get financeExpenseRejectDialogTitle;
+
+  /// No description provided for @financeExpenseRejectReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejection Reason'**
+  String get financeExpenseRejectReasonLabel;
+
+  /// No description provided for @financeExpensePaymentValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a payment method and an active cash or bank account.'**
+  String get financeExpensePaymentValidationError;
+
+  /// No description provided for @financeExpensePaymentDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {reference}'**
+  String financeExpensePaymentDialogTitle(String reference);
+
+  /// No description provided for @financeExpensePaymentPostAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Post Payment'**
+  String get financeExpensePaymentPostAction;
+
+  /// No description provided for @financeExpensePaymentLoadingOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading payment options…'**
+  String get financeExpensePaymentLoadingOptions;
+
+  /// No description provided for @financeExpenseNoPaymentOptionsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No active payment method or cash/bank account. Add one from Finance settings first.'**
+  String get financeExpenseNoPaymentOptionsMessage;
+
+  /// No description provided for @financeExpensePaymentAmountLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount: {amount}'**
+  String financeExpensePaymentAmountLine(String amount);
+
+  /// No description provided for @financeExpenseCashBankAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash/Bank Account'**
+  String get financeExpenseCashBankAccountLabel;
+
+  /// No description provided for @financeExpenseFormValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount, category, and description.'**
+  String get financeExpenseFormValidationError;
+
+  /// No description provided for @financeExpenseEditDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Expense'**
+  String get financeExpenseEditDialogTitle;
+
+  /// No description provided for @financeExpenseFieldBranchOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch (Optional)'**
+  String get financeExpenseFieldBranchOptional;
+
+  /// No description provided for @financeExpenseTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get financeExpenseTotalLabel;
+
+  /// No description provided for @financeExpenseCategoryScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense Categories'**
+  String get financeExpenseCategoryScreenTitle;
+
+  /// No description provided for @financeExpenseCategoryScreenSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Every category is linked to an active expense account in the chart of accounts.'**
+  String get financeExpenseCategoryScreenSubtitle;
+
+  /// No description provided for @financeExpenseCategoryAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get financeExpenseCategoryAddAction;
+
+  /// No description provided for @financeExpenseCategoryEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No expense categories configured.'**
+  String get financeExpenseCategoryEmptyMessage;
+
+  /// No description provided for @financeExpenseCategoryCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get financeExpenseCategoryCodeLabel;
+
+  /// No description provided for @financeExpenseCategoryNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get financeExpenseCategoryNameLabel;
+
+  /// No description provided for @financeExpenseCategoryAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense Account'**
+  String get financeExpenseCategoryAccountLabel;
+
+  /// No description provided for @financeExpenseCategoryColumnStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get financeExpenseCategoryColumnStatus;
+
+  /// No description provided for @financeExpenseCategoryColumnAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Action'**
+  String get financeExpenseCategoryColumnAction;
+
+  /// No description provided for @financeExpenseCategorySortOrderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Order (Optional)'**
+  String get financeExpenseCategorySortOrderLabel;
+
+  /// No description provided for @financeExpenseCategoryValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid code and name.'**
+  String get financeExpenseCategoryValidationError;
+
+  /// No description provided for @financeExpenseCategoryEditDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Category'**
+  String get financeExpenseCategoryEditDialogTitle;
+
+  /// No description provided for @financeExpenseCategoryDeactivateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate Category'**
+  String get financeExpenseCategoryDeactivateDialogTitle;
+
+  /// No description provided for @financeExpenseCategoryActivateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Category'**
+  String get financeExpenseCategoryActivateDialogTitle;
+
+  /// No description provided for @financeExpenseCategoryDeactivateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate category \"{name}\"? It will no longer appear when creating a new expense.'**
+  String financeExpenseCategoryDeactivateConfirm(String name);
+
+  /// No description provided for @financeExpenseCategoryActivateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate category \"{name}\"?'**
+  String financeExpenseCategoryActivateConfirm(String name);
+
+  /// No description provided for @financeExpenseCategoryDeactivateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get financeExpenseCategoryDeactivateAction;
+
+  /// No description provided for @financeExpenseCategoryActivateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get financeExpenseCategoryActivateAction;
+
+  /// No description provided for @financePeriodToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get financePeriodToday;
+
+  /// No description provided for @financePeriodThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This Week'**
+  String get financePeriodThisWeek;
+
+  /// No description provided for @financePeriodThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This Month'**
+  String get financePeriodThisMonth;
+
+  /// No description provided for @financePeriodCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get financePeriodCustom;
+
+  /// No description provided for @financeGlobalContextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall Context'**
+  String get financeGlobalContextTitle;
+
+  /// No description provided for @financeGlobalContextBranchAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch: All Branches'**
+  String get financeGlobalContextBranchAll;
+
+  /// No description provided for @financeGlobalContextBranchNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch: {name}'**
+  String financeGlobalContextBranchNamed(String name);
+
+  /// No description provided for @financeSupplierListSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The supplier balance is derived exclusively from posted invoices and payments'**
+  String get financeSupplierListSubtitle;
+
+  /// No description provided for @financeSupplierAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Supplier'**
+  String get financeSupplierAddAction;
+
+  /// No description provided for @financeSupplierListLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading suppliers…'**
+  String get financeSupplierListLoading;
+
+  /// No description provided for @financeSupplierListLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suppliers. The error is not being disregarded.'**
+  String get financeSupplierListLoadError;
+
+  /// No description provided for @financeSupplierStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get financeSupplierStatusLabel;
+
+  /// No description provided for @financeSupplierSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier name or code…'**
+  String get financeSupplierSearchHint;
+
+  /// No description provided for @financeSupplierFilterRefreshError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh suppliers for these filters. Showing the last loaded data.'**
+  String get financeSupplierFilterRefreshError;
+
+  /// No description provided for @financeSupplierEmptyFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'No suppliers match the selected filters'**
+  String get financeSupplierEmptyFiltered;
+
+  /// No description provided for @financeSupplierEmptyNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No suppliers registered yet'**
+  String get financeSupplierEmptyNone;
+
+  /// No description provided for @financeSupplierResetFiltersAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Filters'**
+  String get financeSupplierResetFiltersAction;
+
+  /// No description provided for @financeSupplierKpiTotalOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Payables'**
+  String get financeSupplierKpiTotalOutstanding;
+
+  /// No description provided for @financeSupplierKpiOverdueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue Payments'**
+  String get financeSupplierKpiOverdueLabel;
+
+  /// No description provided for @financeSupplierKpiActiveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Suppliers'**
+  String get financeSupplierKpiActiveCount;
+
+  /// No description provided for @financeSupplierKpiAvgPaymentTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Payment Terms'**
+  String get financeSupplierKpiAvgPaymentTerms;
+
+  /// No description provided for @financeSupplierDaysUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String financeSupplierDaysUnit(int days);
+
+  /// No description provided for @financeSupplierColumnSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get financeSupplierColumnSupplier;
+
+  /// No description provided for @financeSupplierOutstandingBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding Balance'**
+  String get financeSupplierOutstandingBalanceLabel;
+
+  /// No description provided for @financeSupplierOverdueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get financeSupplierOverdueLabel;
+
+  /// No description provided for @financeSupplierColumnOpenInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Invoices'**
+  String get financeSupplierColumnOpenInvoices;
+
+  /// No description provided for @financeSupplierColumnLastInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Invoice'**
+  String get financeSupplierColumnLastInvoice;
+
+  /// No description provided for @financeSupplierEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Supplier'**
+  String get financeSupplierEditAction;
+
+  /// No description provided for @financeSupplierNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the supplier name.'**
+  String get financeSupplierNameRequired;
+
+  /// No description provided for @financeSupplierFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get financeSupplierFieldName;
+
+  /// No description provided for @financeSupplierFieldPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get financeSupplierFieldPhone;
+
+  /// No description provided for @financeSupplierFieldEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get financeSupplierFieldEmail;
+
+  /// No description provided for @financeSupplierFieldAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get financeSupplierFieldAddress;
+
+  /// No description provided for @financeSupplierFieldContactPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Person'**
+  String get financeSupplierFieldContactPerson;
+
+  /// No description provided for @financeSupplierFieldTaxNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax Number'**
+  String get financeSupplierFieldTaxNumber;
+
+  /// No description provided for @financeSupplierFieldPaymentTermsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Terms (Days)'**
+  String get financeSupplierFieldPaymentTermsDays;
+
+  /// No description provided for @financeSupplierFieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get financeSupplierFieldNotes;
+
+  /// No description provided for @financeSupplierInactiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get financeSupplierInactiveBadge;
+
+  /// No description provided for @financeSupplierProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier profile and financial activity'**
+  String get financeSupplierProfileSubtitle;
+
+  /// No description provided for @financeSupplierBackToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Suppliers'**
+  String get financeSupplierBackToList;
+
+  /// No description provided for @financeSupplierProfileLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading supplier profile…'**
+  String get financeSupplierProfileLoading;
+
+  /// No description provided for @financeSupplierProfileLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the supplier profile. {error}'**
+  String financeSupplierProfileLoadError(String error);
+
+  /// No description provided for @financeSupplierNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find the requested supplier.'**
+  String get financeSupplierNotFound;
+
+  /// No description provided for @financeSupplierPaymentTermsWithDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment terms {days} days'**
+  String financeSupplierPaymentTermsWithDays(int days);
+
+  /// No description provided for @financeSupplierStatementAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Statement'**
+  String get financeSupplierStatementAction;
+
+  /// No description provided for @financeSupplierNewInvoiceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Invoice'**
+  String get financeSupplierNewInvoiceAction;
+
+  /// No description provided for @financeSupplierNewPaymentAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Payment'**
+  String get financeSupplierNewPaymentAction;
+
+  /// No description provided for @financeSupplierKpiTotalInvoiced.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Invoiced'**
+  String get financeSupplierKpiTotalInvoiced;
+
+  /// No description provided for @financeSupplierKpiTotalPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Paid'**
+  String get financeSupplierKpiTotalPaid;
+
+  /// No description provided for @financeSupplierTabInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get financeSupplierTabInvoices;
+
+  /// No description provided for @financeSupplierTabPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get financeSupplierTabPayments;
+
+  /// No description provided for @financeSupplierTabStatement.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement'**
+  String get financeSupplierTabStatement;
+
+  /// No description provided for @financeSupplierNoInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices for this supplier yet'**
+  String get financeSupplierNoInvoices;
+
+  /// No description provided for @financeSupplierColumnReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get financeSupplierColumnReference;
+
+  /// No description provided for @financeSupplierColumnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get financeSupplierColumnDate;
+
+  /// No description provided for @financeSupplierColumnDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get financeSupplierColumnDueDate;
+
+  /// No description provided for @financeSupplierTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get financeSupplierTotalLabel;
+
+  /// No description provided for @financeSupplierColumnRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get financeSupplierColumnRemaining;
+
+  /// No description provided for @financeSupplierViewJournalAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View Journal Entry'**
+  String get financeSupplierViewJournalAction;
+
+  /// No description provided for @financeSupplierNoPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments for this supplier yet'**
+  String get financeSupplierNoPayments;
+
+  /// No description provided for @financeSupplierColumnAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get financeSupplierColumnAmount;
+
+  /// No description provided for @financeSupplierColumnPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get financeSupplierColumnPaymentMethod;
+
+  /// No description provided for @financeSupplierNoStatementLines.
+  ///
+  /// In en, this message translates to:
+  /// **'No statement activity yet'**
+  String get financeSupplierNoStatementLines;
+
+  /// No description provided for @financeSupplierKpiTotalPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Payments'**
+  String get financeSupplierKpiTotalPayments;
+
+  /// No description provided for @financeSupplierColumnType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get financeSupplierColumnType;
+
+  /// No description provided for @financeSupplierTypeInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get financeSupplierTypeInvoice;
+
+  /// No description provided for @financeSupplierTypePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get financeSupplierTypePayment;
+
+  /// No description provided for @financeSupplierReverseInvoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse Invoice'**
+  String get financeSupplierReverseInvoiceTitle;
+
+  /// No description provided for @financeSupplierReverseInvoiceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A reversing entry will be created for invoice {reference}. This action cannot be undone.'**
+  String financeSupplierReverseInvoiceMessage(String reference);
+
+  /// No description provided for @financeSupplierPostInvoiceError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not post the invoice: {error}'**
+  String financeSupplierPostInvoiceError(String error);
+
+  /// No description provided for @financeSupplierReverseInvoiceError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reverse the invoice: {error}'**
+  String financeSupplierReverseInvoiceError(String error);
+
+  /// No description provided for @financeSupplierReversePaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse Payment'**
+  String get financeSupplierReversePaymentTitle;
+
+  /// No description provided for @financeSupplierReversePaymentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A reversing entry will be created and the balances of invoices linked to payment {reference} will be restored. This action cannot be undone.'**
+  String financeSupplierReversePaymentMessage(String reference);
+
+  /// No description provided for @financeSupplierReversePaymentError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reverse the payment: {error}'**
+  String financeSupplierReversePaymentError(String error);
+
+  /// No description provided for @financeSupplierConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get financeSupplierConfirmAction;
+
+  /// No description provided for @financeSupplierInvoiceNumberSubtotalRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an invoice number and a valid subtotal.'**
+  String get financeSupplierInvoiceNumberSubtotalRequired;
+
+  /// No description provided for @financeSupplierExpenseCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an expense category.'**
+  String get financeSupplierExpenseCategoryRequired;
+
+  /// No description provided for @financeSupplierDebitAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the debit account.'**
+  String get financeSupplierDebitAccountRequired;
+
+  /// No description provided for @financeSupplierInvoiceDialogTitleWithRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice {reference}'**
+  String financeSupplierInvoiceDialogTitleWithRef(String reference);
+
+  /// No description provided for @financeSupplierInvoiceLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The invoice is posted and cannot be edited. Use the reverse action if needed.'**
+  String get financeSupplierInvoiceLockedMessage;
+
+  /// No description provided for @financeSupplierNewInvoiceDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Supplier Invoice'**
+  String get financeSupplierNewInvoiceDialogTitle;
+
+  /// No description provided for @financeSupplierEditInvoiceDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit invoice {reference}'**
+  String financeSupplierEditInvoiceDialogTitle(String reference);
+
+  /// No description provided for @financeSupplierSaveAsDraftAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Draft'**
+  String get financeSupplierSaveAsDraftAction;
+
+  /// No description provided for @financeSupplierLoadingOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading options…'**
+  String get financeSupplierLoadingOptions;
+
+  /// No description provided for @financeSupplierFieldBranchOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch (Optional)'**
+  String get financeSupplierFieldBranchOptional;
+
+  /// No description provided for @financeSupplierGeneralOption.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get financeSupplierGeneralOption;
+
+  /// No description provided for @financeSupplierFieldSupplierInvoiceNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Invoice Number'**
+  String get financeSupplierFieldSupplierInvoiceNumber;
+
+  /// No description provided for @financeSupplierFieldInvoiceDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Date'**
+  String get financeSupplierFieldInvoiceDate;
+
+  /// No description provided for @financeSupplierFieldDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Date'**
+  String get financeSupplierFieldDueDate;
+
+  /// No description provided for @financeSupplierFieldInvoiceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice Type'**
+  String get financeSupplierFieldInvoiceType;
+
+  /// No description provided for @financeSupplierInvoiceTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get financeSupplierInvoiceTypeExpense;
+
+  /// No description provided for @financeSupplierInvoiceTypeInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory (accounting liability only, does not create stock quantity)'**
+  String get financeSupplierInvoiceTypeInventory;
+
+  /// No description provided for @financeSupplierInvoiceTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get financeSupplierInvoiceTypeOther;
+
+  /// No description provided for @financeSupplierFieldExpenseCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense Category'**
+  String get financeSupplierFieldExpenseCategory;
+
+  /// No description provided for @financeSupplierFieldDebitAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Debit Account'**
+  String get financeSupplierFieldDebitAccount;
+
+  /// No description provided for @financeSupplierFieldSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get financeSupplierFieldSubtotal;
+
+  /// No description provided for @financeSupplierFieldTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get financeSupplierFieldTax;
+
+  /// No description provided for @financeSupplierFieldDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get financeSupplierFieldDescription;
+
+  /// No description provided for @financeSupplierInvoiceDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Invoice'**
+  String get financeSupplierInvoiceDetailTitle;
+
+  /// No description provided for @financeSupplierPostAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get financeSupplierPostAction;
+
+  /// No description provided for @financeSupplierReverseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse'**
+  String get financeSupplierReverseAction;
+
+  /// No description provided for @financeSupplierFieldBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get financeSupplierFieldBranch;
+
+  /// No description provided for @financeSupplierPaymentDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Payment'**
+  String get financeSupplierPaymentDetailTitle;
+
+  /// No description provided for @financeSupplierFieldPaymentDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Date'**
+  String get financeSupplierFieldPaymentDate;
+
+  /// No description provided for @financeSupplierFieldCashBankAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash/Bank Account'**
+  String get financeSupplierFieldCashBankAccount;
+
+  /// No description provided for @financeSupplierFieldExternalReference.
+  ///
+  /// In en, this message translates to:
+  /// **'External Reference'**
+  String get financeSupplierFieldExternalReference;
+
+  /// No description provided for @financeSupplierPaymentAllocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Allocation to Invoices'**
+  String get financeSupplierPaymentAllocationTitle;
+
+  /// No description provided for @financeSupplierColumnInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get financeSupplierColumnInvoice;
+
+  /// No description provided for @financeSupplierPaymentMethodLocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a payment method and an active cash or bank account.'**
+  String get financeSupplierPaymentMethodLocationRequired;
+
+  /// No description provided for @financeSupplierPaymentAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid payment amount greater than zero.'**
+  String get financeSupplierPaymentAmountRequired;
+
+  /// No description provided for @financeSupplierAllocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocate an amount to at least one invoice.'**
+  String get financeSupplierAllocationRequired;
+
+  /// No description provided for @financeSupplierAllocationExceedsRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'The allocation for {reference} exceeds its remaining balance.'**
+  String financeSupplierAllocationExceedsRemaining(String reference);
+
+  /// No description provided for @financeSupplierAllocationMustMatchPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'The total allocations must exactly equal the payment amount. Unallocated remaining: {remaining}'**
+  String financeSupplierAllocationMustMatchPayment(String remaining);
+
+  /// No description provided for @financeSupplierNewPaymentDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Supplier Payment'**
+  String get financeSupplierNewPaymentDialogTitle;
+
+  /// No description provided for @financeSupplierPostPaymentAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Post Payment'**
+  String get financeSupplierPostPaymentAction;
+
+  /// No description provided for @financeSupplierLoadingPaymentOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading payment options…'**
+  String get financeSupplierLoadingPaymentOptions;
+
+  /// No description provided for @financeSupplierNoPaymentMethodOrAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'No active payment method or cash/bank account. Add one from Finance Settings first.'**
+  String get financeSupplierNoPaymentMethodOrAccount;
+
+  /// No description provided for @financeSupplierFieldCashBankSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash/Bank Account (Source)'**
+  String get financeSupplierFieldCashBankSource;
+
+  /// No description provided for @financeSupplierFieldPaymentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Amount'**
+  String get financeSupplierFieldPaymentAmount;
+
+  /// No description provided for @financeSupplierFieldExternalReferenceOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'External Reference (Optional)'**
+  String get financeSupplierFieldExternalReferenceOptional;
+
+  /// No description provided for @financeSupplierFieldNotesOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (Optional)'**
+  String get financeSupplierFieldNotesOptional;
+
+  /// No description provided for @financeSupplierAllocationOpenInvoicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Allocation to Open Invoices'**
+  String get financeSupplierAllocationOpenInvoicesTitle;
+
+  /// No description provided for @financeSupplierInvoiceRemainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{reference} — remaining {remaining}'**
+  String financeSupplierInvoiceRemainingLabel(
+    String reference,
+    String remaining,
+  );
+
+  /// No description provided for @financeSupplierFieldAllocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get financeSupplierFieldAllocation;
+
+  /// No description provided for @financeSupplierAllocatedAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated Amount'**
+  String get financeSupplierAllocatedAmountLabel;
+
+  /// No description provided for @financeSupplierUnallocatedRemainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unallocated Remaining'**
+  String get financeSupplierUnallocatedRemainingLabel;
+
+  /// No description provided for @financeSupplierOverdueBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get financeSupplierOverdueBadge;
+
+  /// No description provided for @financeWarehouseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse Setup'**
+  String get financeWarehouseTitle;
+
+  /// No description provided for @financeWarehouseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage operational warehouses and their branch assignments.'**
+  String get financeWarehouseSubtitle;
+
+  /// No description provided for @financeWarehouseAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Warehouse'**
+  String get financeWarehouseAdd;
+
+  /// No description provided for @financeWarehouseEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No warehouses have been added yet.'**
+  String get financeWarehouseEmpty;
+
+  /// No description provided for @financeWarehouseAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All Branches'**
+  String get financeWarehouseAllBranches;
+
+  /// No description provided for @financeWarehouseAllStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All Statuses'**
+  String get financeWarehouseAllStatuses;
+
+  /// No description provided for @financeWarehouseName.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse'**
+  String get financeWarehouseName;
+
+  /// No description provided for @financeWarehouseCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get financeWarehouseCode;
+
+  /// No description provided for @financeWarehouseType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get financeWarehouseType;
+
+  /// No description provided for @financeWarehouseBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get financeWarehouseBranch;
+
+  /// No description provided for @financeWarehouseEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Warehouse'**
+  String get financeWarehouseEdit;
+
+  /// No description provided for @financeWarehouseCentral.
+  ///
+  /// In en, this message translates to:
+  /// **'Central'**
+  String get financeWarehouseCentral;
+
+  /// No description provided for @financeWarehouseBranchType.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get financeWarehouseBranchType;
+
+  /// No description provided for @financeTransactionSale.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale'**
+  String get financeTransactionSale;
+
+  /// No description provided for @financeTransactionRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get financeTransactionRefund;
+
+  /// No description provided for @financeTransactionExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get financeTransactionExpense;
+
+  /// No description provided for @financeTransactionCashTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Transfer'**
+  String get financeTransactionCashTransfer;
+
+  /// No description provided for @financeTransactionSupplierInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Invoice'**
+  String get financeTransactionSupplierInvoice;
+
+  /// No description provided for @financeTransactionSupplierPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Payment'**
+  String get financeTransactionSupplierPayment;
+
+  /// No description provided for @financeTransactionInventoryWaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory Waste'**
+  String get financeTransactionInventoryWaste;
+
+  /// No description provided for @financeTransactionStockCountVariance.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock Count Variance'**
+  String get financeTransactionStockCountVariance;
+
+  /// No description provided for @financeTransactionInventoryMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory Movement'**
+  String get financeTransactionInventoryMovement;
+
+  /// No description provided for @financeTransactionManualJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Journal'**
+  String get financeTransactionManualJournal;
+
+  /// No description provided for @financeTransactionReversalJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversal Journal'**
+  String get financeTransactionReversalJournal;
+
+  /// No description provided for @financeTransactionJournalEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal Entry'**
+  String get financeTransactionJournalEntry;
+
+  /// No description provided for @financeStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get financeStatusReady;
+
+  /// No description provided for @financeStatusWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get financeStatusWarning;
+
+  /// No description provided for @financeStatusBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get financeStatusBlocked;
+
+  /// No description provided for @financeStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get financeStatusActive;
+
+  /// No description provided for @financeWarehouseUnassignedBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get financeWarehouseUnassignedBranch;
+
+  /// No description provided for @financeStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get financeStatusClosed;
+
+  /// No description provided for @financeDailyClosingIssueOpenShifts.
+  ///
+  /// In en, this message translates to:
+  /// **'There are {count} open shifts that must be closed.'**
+  String financeDailyClosingIssueOpenShifts(int count);
+
+  /// No description provided for @financeDailyClosingIssuePendingExpenseApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'There are {count} expenses awaiting approval.'**
+  String financeDailyClosingIssuePendingExpenseApproval(int count);
+
+  /// No description provided for @financeDailyClosingIssueMissingActualCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual cash has not been entered yet.'**
+  String get financeDailyClosingIssueMissingActualCash;
+
+  /// No description provided for @financeDailyClosingIssueCashDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'There is a cash difference of {amount}.'**
+  String financeDailyClosingIssueCashDifference(String amount);
+
+  /// No description provided for @financeDailyClosingIssueDraftJournals.
+  ///
+  /// In en, this message translates to:
+  /// **'There are {count} draft journal entries for today.'**
+  String financeDailyClosingIssueDraftJournals(int count);
+
+  /// No description provided for @financeDailyClosingIssueUnpostedInventoryEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'There are {count} inventory movements without accounting posting.'**
+  String financeDailyClosingIssueUnpostedInventoryEvent(int count);
+
+  /// No description provided for @financeDailyClosingIssueCashReconciliationIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash reconciliation is incomplete for today.'**
+  String get financeDailyClosingIssueCashReconciliationIncomplete;
+
+  /// No description provided for @financeDailyClosingIssueCardReconciliationIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Card reconciliation is incomplete for today.'**
+  String get financeDailyClosingIssueCardReconciliationIncomplete;
+
+  /// No description provided for @financeDailyClosingIssueBankReconciliationIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank reconciliation is incomplete for today.'**
+  String get financeDailyClosingIssueBankReconciliationIncomplete;
+
+  /// No description provided for @financeDailyClosingIssueUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'A daily-closing requirement needs attention.'**
+  String get financeDailyClosingIssueUnknown;
+
+  /// No description provided for @financePaginationRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {start}–{end} of {total}'**
+  String financePaginationRange(int start, int end, int total);
+
+  /// No description provided for @financePaginationPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get financePaginationPrevious;
+
+  /// No description provided for @financePaginationPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {last}'**
+  String financePaginationPage(int current, int last);
+
+  /// No description provided for @financePaginationNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get financePaginationNext;
+
+  /// No description provided for @financeSourceActionViewSource.
+  ///
+  /// In en, this message translates to:
+  /// **'View Source'**
+  String get financeSourceActionViewSource;
+
+  /// No description provided for @financeSourceActionViewJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'View Journal Entry'**
+  String get financeSourceActionViewJournal;
+
+  /// No description provided for @financeSourceActionRelatedJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Journal Entry'**
+  String get financeSourceActionRelatedJournal;
+
+  /// No description provided for @navigationCafeConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Configuration'**
+  String get navigationCafeConfiguration;
+
+  /// No description provided for @cafeConfigurationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Configuration'**
+  String get cafeConfigurationTitle;
+
+  /// No description provided for @cafeConfigurationOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get cafeConfigurationOverview;
+
+  /// No description provided for @cafeConfigurationProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Profile'**
+  String get cafeConfigurationProfile;
+
+  /// No description provided for @cafeConfigurationBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Branches'**
+  String get cafeConfigurationBranches;
+
+  /// No description provided for @cafeConfigurationTeamAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Team & Access'**
+  String get cafeConfigurationTeamAccess;
+
+  /// No description provided for @cafeConfigurationTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get cafeConfigurationTax;
+
+  /// No description provided for @cafeConfigurationOverviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A concise summary of your cafe’s operational configuration.'**
+  String get cafeConfigurationOverviewSubtitle;
+
+  /// No description provided for @cafeConfigurationProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage the core business information used across Cafe System.'**
+  String get cafeConfigurationProfileSubtitle;
+
+  /// No description provided for @cafeConfigurationBranchesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and manage the physical locations where your cafe operates.'**
+  String get cafeConfigurationBranchesSubtitle;
+
+  /// No description provided for @cafeConfigurationCreateBranchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a new location where your cafe operates.'**
+  String get cafeConfigurationCreateBranchSubtitle;
+
+  /// No description provided for @cafeConfigurationEditBranchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the details for this cafe location.'**
+  String get cafeConfigurationEditBranchSubtitle;
+
+  /// No description provided for @cafeConfigurationConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get cafeConfigurationConfigured;
+
+  /// No description provided for @cafeConfigurationTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'total'**
+  String get cafeConfigurationTotal;
+
+  /// No description provided for @cafeConfigurationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get cafeConfigurationNotAvailable;
+
+  /// No description provided for @cafeConfigurationAvailablePhase2.
+  ///
+  /// In en, this message translates to:
+  /// **'Available in Phase 2'**
+  String get cafeConfigurationAvailablePhase2;
+
+  /// No description provided for @cafeConfigurationCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load configuration. Check your connection and try again.'**
+  String get cafeConfigurationCouldNotLoad;
+
+  /// No description provided for @cafeConfigurationBusinessInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Business information'**
+  String get cafeConfigurationBusinessInformation;
+
+  /// No description provided for @cafeConfigurationCafeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe Name'**
+  String get cafeConfigurationCafeName;
+
+  /// No description provided for @cafeConfigurationEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get cafeConfigurationEmail;
+
+  /// No description provided for @cafeConfigurationPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get cafeConfigurationPhone;
+
+  /// No description provided for @cafeConfigurationTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone'**
+  String get cafeConfigurationTimezone;
+
+  /// No description provided for @cafeConfigurationReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only'**
+  String get cafeConfigurationReadOnly;
+
+  /// No description provided for @cafeConfigurationCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get cafeConfigurationCurrency;
+
+  /// No description provided for @cafeConfigurationStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get cafeConfigurationStatus;
+
+  /// No description provided for @cafeConfigurationReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get cafeConfigurationReset;
+
+  /// No description provided for @cafeConfigurationSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get cafeConfigurationSaveChanges;
+
+  /// No description provided for @cafeConfigurationProfileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe profile saved.'**
+  String get cafeConfigurationProfileSaved;
+
+  /// No description provided for @cafeConfigurationSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your changes. Your edits were kept.'**
+  String get cafeConfigurationSaveFailed;
+
+  /// No description provided for @cafeConfigurationAddBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Branch'**
+  String get cafeConfigurationAddBranch;
+
+  /// No description provided for @cafeConfigurationCreateBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Branch'**
+  String get cafeConfigurationCreateBranch;
+
+  /// No description provided for @cafeConfigurationEditBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Branch'**
+  String get cafeConfigurationEditBranch;
+
+  /// No description provided for @cafeConfigurationBranchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch Name'**
+  String get cafeConfigurationBranchName;
+
+  /// No description provided for @cafeConfigurationAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get cafeConfigurationAddress;
+
+  /// No description provided for @cafeConfigurationActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get cafeConfigurationActions;
+
+  /// No description provided for @cafeConfigurationNoBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'No branches yet'**
+  String get cafeConfigurationNoBranches;
+
+  /// No description provided for @cafeConfigurationNoBranchesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first cafe location to get started.'**
+  String get cafeConfigurationNoBranchesHelp;
+
+  /// No description provided for @cafeConfigurationBranchCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch created.'**
+  String get cafeConfigurationBranchCreated;
+
+  /// No description provided for @cafeConfigurationBranchSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch saved.'**
+  String get cafeConfigurationBranchSaved;
+
+  /// No description provided for @cafeConfigurationTaxSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe-wide exclusive tax'**
+  String get cafeConfigurationTaxSummary;
+
+  /// No description provided for @teamAccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Managers and Employees with access to your cafe.'**
+  String get teamAccessSubtitle;
+
+  /// No description provided for @teamAddMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Team Member'**
+  String get teamAddMember;
+
+  /// No description provided for @teamSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search team'**
+  String get teamSearch;
+
+  /// No description provided for @teamRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get teamRole;
+
+  /// No description provided for @teamName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get teamName;
+
+  /// No description provided for @teamLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get teamLogin;
+
+  /// No description provided for @teamDeactivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivated'**
+  String get teamDeactivated;
+
+  /// No description provided for @teamArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get teamArchived;
+
+  /// No description provided for @teamProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected'**
+  String get teamProtected;
+
+  /// No description provided for @teamAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All Branches'**
+  String get teamAllBranches;
+
+  /// No description provided for @teamOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get teamOwner;
+
+  /// No description provided for @teamManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Manager'**
+  String get teamManager;
+
+  /// No description provided for @teamEmployee.
+  ///
+  /// In en, this message translates to:
+  /// **'Employee'**
+  String get teamEmployee;
+
+  /// No description provided for @teamNoMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'No Managers or Employees yet.'**
+  String get teamNoMembers;
+
+  /// No description provided for @teamNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No team members match these filters.'**
+  String get teamNoResults;
+
+  /// No description provided for @teamEditMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Team Member'**
+  String get teamEditMember;
+
+  /// No description provided for @teamUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get teamUsername;
+
+  /// No description provided for @teamBranchAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch Access'**
+  String get teamBranchAccess;
+
+  /// No description provided for @teamActiveBranchesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only active branches can be assigned.'**
+  String get teamActiveBranchesOnly;
+
+  /// No description provided for @teamTemporaryPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary Password'**
+  String get teamTemporaryPassword;
+
+  /// No description provided for @teamConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Temporary Password'**
+  String get teamConfirmPassword;
+
+  /// No description provided for @teamTemporaryPasswordMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least {count} characters.'**
+  String teamTemporaryPasswordMinimum(int count);
+
+  /// No description provided for @teamRoleChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the role requires a new temporary password and login reset.'**
+  String get teamRoleChangePassword;
+
+  /// No description provided for @teamCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get teamCreate;
+
+  /// No description provided for @teamMemberCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Team member created'**
+  String get teamMemberCreated;
+
+  /// No description provided for @teamPasswordVisibleOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'This temporary password can only be viewed now.'**
+  String get teamPasswordVisibleOnce;
+
+  /// No description provided for @teamCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get teamCopy;
+
+  /// No description provided for @teamResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get teamResetPassword;
+
+  /// No description provided for @teamResetPasswordExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Active sessions will be revoked. The user must change their password after next login.'**
+  String get teamResetPasswordExplanation;
+
+  /// No description provided for @teamPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get teamPasswordMismatch;
+
+  /// No description provided for @teamDeactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get teamDeactivate;
+
+  /// No description provided for @teamActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get teamActivate;
+
+  /// No description provided for @teamArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get teamArchive;
+
+  /// No description provided for @teamDeactivateExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This user can no longer sign in. Historical activity remains.'**
+  String get teamDeactivateExplanation;
+
+  /// No description provided for @teamActivateExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This user can sign in again.'**
+  String get teamActivateExplanation;
+
+  /// No description provided for @teamArchiveExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical records are preserved. Archived users cannot currently be restored.'**
+  String get teamArchiveExplanation;
+
+  /// No description provided for @teamConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get teamConfirm;
+
+  /// No description provided for @teamMutationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the request. Your changes were kept.'**
+  String get teamMutationFailed;
+
+  /// No description provided for @teamLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this section. Check your connection and try again.'**
+  String get teamLoadFailed;
+
+  /// No description provided for @taxSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the single tax rate used across your cafe.'**
+  String get taxSubtitle;
+
+  /// No description provided for @taxRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax rate'**
+  String get taxRate;
+
+  /// No description provided for @taxHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a percentage from 0 through 100.'**
+  String get taxHelp;
+
+  /// No description provided for @taxExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This cafe-wide tax is exclusive and applied after discounts. Changes apply to new orders; existing orders preserve their captured tax rate.'**
+  String get taxExplanation;
+
+  /// No description provided for @taxInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid percentage from 0 through 100.'**
+  String get taxInvalid;
+
+  /// No description provided for @taxSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax rate saved.'**
+  String get taxSaved;
+
+  /// No description provided for @taxConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Update tax rate?'**
+  String get taxConfirm;
+
+  /// No description provided for @taxCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get taxCurrent;
+
+  /// No description provided for @taxNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get taxNew;
+
+  /// No description provided for @taxNewOrdersOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This applies to new orders.'**
+  String get taxNewOrdersOnly;
 }
 
 class _AppLocalizationsDelegate

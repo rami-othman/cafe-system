@@ -20,6 +20,11 @@ use App\Http\Controllers\Api\Admin\Menu\MenuValidationController;
 use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
+use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
+use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
+use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
@@ -91,8 +96,9 @@ Route::prefix('v1')->group(function (): void {
     Route::get('product-images/{tenant}/{filename}', [ProductCatalogController::class, 'showProductImage'])
         ->whereNumber('tenant');
 
-    // Cafe configuration is outside operational branch access so owners can
-    // administer inactive branches without making them operationally usable.
+    // Administrative branch configuration is intentionally outside the
+    // operational branch.access middleware: Owners may view inactive branches
+    // here, while no inactive branch remains operationally usable.
     Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
         ->prefix('cafe-configuration/branches')
         ->controller(CafeConfigurationBranchController::class)

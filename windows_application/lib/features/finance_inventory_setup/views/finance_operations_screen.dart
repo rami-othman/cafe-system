@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_router.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../repositories/finance_setup_repository.dart';
 import '../widgets/finance_pagination.dart';
 
@@ -54,27 +54,19 @@ class _FinanceOperationScreenState extends State<FinanceOperationScreen> {
   };
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      child: FutureBuilder<dynamic>(
-        future: _future,
-        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _Failure(
-              message: snapshot.error.toString(),
-              retry: _refresh,
-            );
-          }
-          return widget.id == null
-              ? _list(snapshot.data as FinancePage<Map<String, dynamic>>)
-              : _detail(snapshot.data);
-        },
-      ),
-    ),
+  Widget build(BuildContext context) => FutureBuilder<dynamic>(
+    future: _future,
+    builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return _Failure(message: snapshot.error.toString(), retry: _refresh);
+      }
+      return widget.id == null
+          ? _list(snapshot.data as FinancePage<Map<String, dynamic>>)
+          : _detail(snapshot.data);
+    },
   );
 
   Widget _list(FinancePage<Map<String, dynamic>> page) {
@@ -239,7 +231,7 @@ class _Title extends StatelessWidget {
         ),
       ),
       IconButton(
-        onPressed: () => context.go('/finance?tab=overview'),
+        onPressed: () => context.go(AppRoutes.finance),
         icon: const Icon(Icons.home_outlined),
       ),
       IconButton(onPressed: onRefresh, icon: const Icon(Icons.refresh)),
@@ -385,10 +377,10 @@ class _IssueRow extends StatelessWidget {
     final int? count = item['count'] is int ? item['count'] as int : null;
     final String? destination = switch (code) {
       'DRAFT_JOURNALS' ||
-      'UNBALANCED_POSTED_JOURNALS' => '/finance/journal-entries',
-      'OPEN_DAILY_CLOSINGS' => '/finance/daily-closings',
-      'FAILED_MANDATORY_FINANCIAL_POSTINGS' => '/inventory/movements',
-      'LATE_FINANCIAL_ACTIVITY' => '/finance/journal-entries',
+      'UNBALANCED_POSTED_JOURNALS' => AppRoutes.financeJournalEntriesCanonical,
+      'OPEN_DAILY_CLOSINGS' => AppRoutes.financeDailyClosingCanonical,
+      'FAILED_MANDATORY_FINANCIAL_POSTINGS' => AppRoutes.inventoryMovements,
+      'LATE_FINANCIAL_ACTIVITY' => AppRoutes.financeJournalEntriesCanonical,
       _ => null,
     };
     return Padding(

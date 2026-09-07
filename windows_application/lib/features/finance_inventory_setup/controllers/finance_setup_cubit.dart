@@ -17,15 +17,14 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
   });
 
   Future<void> loadWarehouses({String? search}) => _load(() async {
-    final Future<List<WarehouseLocation>> warehousesFuture = repository
-        .getWarehouses(search: search);
-    final Future<List<Branch>> branchesFuture = repository.getBranches();
-    final List<WarehouseLocation> warehouses = await warehousesFuture;
-    final List<Branch> branches = await branchesFuture;
+    final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
+      repository.getWarehouses(search: search),
+      repository.getBranches(),
+    ]);
     emit(
       state.copyWith(
-        warehouses: warehouses,
-        branches: branches,
+        warehouses: results[0] as List<WarehouseLocation>,
+        branches: results[1] as List<Branch>,
         clearError: true,
       ),
     );
@@ -54,26 +53,23 @@ class FinanceSetupCubit extends Cubit<FinanceSetupState> {
     String? from,
     String? to,
   }) => _load(() async {
-    final Future<List<JournalEntry>> entriesFuture = repository
-        .getJournalEntries(
-          search: search,
-          status: status,
-          sourceType: sourceType,
-          branchId: branchId,
-          from: from,
-          to: to,
-        );
-    final Future<List<FinancialAccount>> accountsFuture = repository
-        .getAccounts();
-    final Future<List<Branch>> branchesFuture = repository.getBranches();
-    final List<JournalEntry> entries = await entriesFuture;
-    final List<FinancialAccount> accounts = await accountsFuture;
-    final List<Branch> branches = await branchesFuture;
+    final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
+      repository.getJournalEntries(
+        search: search,
+        status: status,
+        sourceType: sourceType,
+        branchId: branchId,
+        from: from,
+        to: to,
+      ),
+      repository.getAccounts(),
+      repository.getBranches(),
+    ]);
     emit(
       state.copyWith(
-        entries: entries,
-        accounts: accounts,
-        branches: branches,
+        entries: results[0] as List<JournalEntry>,
+        accounts: results[1] as List<FinancialAccount>,
+        branches: results[2] as List<Branch>,
         clearError: true,
       ),
     );

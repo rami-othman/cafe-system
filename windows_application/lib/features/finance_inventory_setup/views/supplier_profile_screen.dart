@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
-import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
@@ -73,16 +72,18 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
       _error = null;
     });
     try {
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _repository.getSupplier(widget.supplierId),
-        _repository.getSupplierInvoices(
-          filters: <String, dynamic>{'supplierId': widget.supplierId},
-        ),
-        _repository.getSupplierPayments(
-          filters: <String, dynamic>{'supplierId': widget.supplierId},
-        ),
-        _repository.getSupplierStatement(widget.supplierId),
-      ]);
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          _repository.getSupplier(widget.supplierId),
+          _repository.getSupplierInvoices(
+            filters: <String, dynamic>{'supplierId': widget.supplierId},
+          ),
+          _repository.getSupplierPayments(
+            filters: <String, dynamic>{'supplierId': widget.supplierId},
+          ),
+          _repository.getSupplierStatement(widget.supplierId),
+        ],
+      );
       if (!mounted) return;
       setState(() {
         _supplier = results[0] as Supplier;
@@ -126,25 +127,18 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
       .toList(growable: false);
 
   @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: DesktopPageLayout(
-      padding: EdgeInsets.zero,
-      child: FinanceShell(
-        currentSection: 'الموردون والمستحقات',
-        title: 'الموردون والمستحقات',
-        subtitle: 'ملف المورد وحركاته المالية',
-        showContext: false,
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'العودة إلى الموردين',
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: () => context.go(AppRoutes.financeSuppliers),
-          ),
-        ],
-        child: _buildBody(),
+  Widget build(BuildContext context) => FinanceShell(
+    title: 'الموردون والمستحقات',
+    subtitle: 'ملف المورد وحركاته المالية',
+    showContext: false,
+    actions: <Widget>[
+      IconButton(
+        tooltip: 'العودة إلى الموردين',
+        icon: const Icon(Icons.arrow_forward),
+        onPressed: () => context.go(AppRoutes.financeSuppliers),
       ),
-    ),
+    ],
+    child: _buildBody(),
   );
 
   Widget _buildBody() {
@@ -152,7 +146,10 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
       return const FinanceLoadingState(label: 'جارٍ تحميل ملف المورد…');
     }
     if (_error != null) {
-      return FinanceErrorState(message: 'تعذّر تحميل ملف المورد. $_error', onRetry: _load);
+      return FinanceErrorState(
+        message: 'تعذّر تحميل ملف المورد. $_error',
+        onRetry: _load,
+      );
     }
     final Supplier? supplier = _supplier;
     if (supplier == null) {
@@ -164,7 +161,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
         children: <Widget>[
           FinanceEntityHeader(
             title: supplier.name,
-            reference: '${supplier.supplierNumber} · مهلة السداد ${supplier.paymentTermsDays} يوم',
+            reference:
+                '${supplier.supplierNumber} · مهلة السداد ${supplier.paymentTermsDays} يوم',
             actions: <Widget>[
               SupplierActiveBadge(active: supplier.isActive),
               const SizedBox(width: FinanceSpace.sm),
@@ -179,7 +177,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
               ),
               const SizedBox(width: FinanceSpace.sm),
               ElevatedButton(
-                onPressed: _eligibleForPayment.isEmpty ? null : _openPaymentForm,
+                onPressed: _eligibleForPayment.isEmpty
+                    ? null
+                    : _openPaymentForm,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: FinanceColors.primary,
                   foregroundColor: Colors.white,
@@ -230,7 +230,11 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
             height: 560,
             child: TabBarView(
               controller: _tabs,
-              children: <Widget>[_invoicesTab(), _paymentsTab(), _statementTab()],
+              children: <Widget>[
+                _invoicesTab(),
+                _paymentsTab(),
+                _statementTab(),
+              ],
             ),
           ),
         ],
@@ -245,7 +249,15 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
     return SingleChildScrollView(
       child: FinanceTable(
         minWidth: 1100,
-        headers: const <String>['المرجع', 'التاريخ', 'الاستحقاق', 'الإجمالي', 'المتبقي', 'الحالة', ''],
+        headers: const <String>[
+          'المرجع',
+          'التاريخ',
+          'الاستحقاق',
+          'الإجمالي',
+          'المتبقي',
+          'الحالة',
+          '',
+        ],
         onRowTap: (int index) => _openInvoiceDetail(_invoices[index]),
         rows: _invoices.map((SupplierInvoice x) {
           return <Widget>[
@@ -286,7 +298,14 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
     return SingleChildScrollView(
       child: FinanceTable(
         minWidth: 1000,
-        headers: const <String>['المرجع', 'التاريخ', 'المبلغ', 'طريقة الدفع', 'الحالة', ''],
+        headers: const <String>[
+          'المرجع',
+          'التاريخ',
+          'المبلغ',
+          'طريقة الدفع',
+          'الحالة',
+          '',
+        ],
         onRowTap: (int index) => _openPaymentDetail(_payments[index]),
         rows: _payments.map((SupplierPayment x) {
           return <Widget>[
@@ -313,7 +332,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
 
   Widget _statementTab() {
     if (_statement.isEmpty) {
-      return const FinanceEmptyState(message: 'لا توجد حركات في كشف الحساب بعد');
+      return const FinanceEmptyState(
+        message: 'لا توجد حركات في كشف الحساب بعد',
+      );
     }
     final double totalInvoices = _statement.fold<double>(
       0,
@@ -332,23 +353,48 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
             items: <FinanceKpiData>[
               const FinanceKpiData(label: 'الرصيد الافتتاحي', value: '0.00'),
               FinanceKpiData(label: 'الرصيد الختامي', value: _money(closing)),
-              FinanceKpiData(label: 'إجمالي الفواتير', value: _money(totalInvoices)),
-              FinanceKpiData(label: 'إجمالي المدفوعات', value: _money(totalPayments)),
+              FinanceKpiData(
+                label: 'إجمالي الفواتير',
+                value: _money(totalInvoices),
+              ),
+              FinanceKpiData(
+                label: 'إجمالي المدفوعات',
+                value: _money(totalPayments),
+              ),
             ],
           ),
           const SizedBox(height: FinanceSpace.md),
           FinanceTable(
             minWidth: 900,
-            headers: const <String>['التاريخ', 'النوع', 'المرجع', 'فاتورة', 'دفعة', 'الرصيد التراكمي'],
+            headers: const <String>[
+              'التاريخ',
+              'النوع',
+              'المرجع',
+              'فاتورة',
+              'دفعة',
+              'الرصيد التراكمي',
+            ],
             onRowTap: (int index) => _openStatementLine(_statement[index]),
             rows: _statement.map((SupplierStatementLine x) {
               return <Widget>[
                 Text(x.date, style: FinanceText.body),
-                Text(x.type == 'invoice' ? 'فاتورة' : 'دفعة', style: FinanceText.body),
+                Text(
+                  x.type == 'invoice' ? 'فاتورة' : 'دفعة',
+                  style: FinanceText.body,
+                ),
                 FinanceReference(reference: x.reference),
-                Text(x.credit == '0.00' ? '—' : x.credit, style: FinanceText.body),
-                Text(x.debit == '0.00' ? '—' : x.debit, style: FinanceText.body),
-                Text(x.runningBalance, style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  x.credit == '0.00' ? '—' : x.credit,
+                  style: FinanceText.body,
+                ),
+                Text(
+                  x.debit == '0.00' ? '—' : x.debit,
+                  style: FinanceText.body,
+                ),
+                Text(
+                  x.runningBalance,
+                  style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
+                ),
               ];
             }).toList(),
           ),
@@ -390,7 +436,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
         alignment: AlignmentDirectional.centerEnd,
         child: FinanceJournalDrawer(
           child: FinanceJournalDrawerBody(
-            loader: () => _repository.getFinanceMap('finance/transactions/$journalEntryId'),
+            loader: () => _repository.getFinanceMap(
+              'finance/transactions/$journalEntryId',
+            ),
             onNavigate: (String path) {
               Navigator.of(dialogContext).pop();
               context.go(path);
@@ -398,9 +446,17 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
           ),
         ),
       ),
-      transitionBuilder: (BuildContext context, Animation<double> animation, _, Widget child) =>
-          SlideTransition(
-            position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(animation),
+      transitionBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            _,
+            Widget child,
+          ) => SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(animation),
             child: child,
           ),
     );
@@ -462,7 +518,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
   Future<void> _openPaymentDetail(SupplierPayment payment) async {
     final Object? action = await showDialog<Object>(
       context: context,
-      builder: (BuildContext dialog) => _PaymentDetailDialog(payment: payment, invoices: _invoices),
+      builder: (BuildContext dialog) =>
+          _PaymentDetailDialog(payment: payment, invoices: _invoices),
     );
     if (action == 'reverse') {
       final bool? confirmed = await _confirm(
@@ -506,7 +563,10 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
       title: Text(title),
       content: Text(message),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.pop(dialog, false), child: const Text('إلغاء')),
+        TextButton(
+          onPressed: () => Navigator.pop(dialog, false),
+          child: const Text('إلغاء'),
+        ),
         ElevatedButton(
           onPressed: () => Navigator.pop(dialog, true),
           style: ElevatedButton.styleFrom(
@@ -520,12 +580,18 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
   );
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
 class _InvoiceFormDialog extends StatefulWidget {
-  const _InvoiceFormDialog({required this.supplierId, required this.current, required this.repository});
+  const _InvoiceFormDialog({
+    required this.supplierId,
+    required this.current,
+    required this.repository,
+  });
   final int supplierId;
   final SupplierInvoice? current;
   final FinanceSetupRepository repository;
@@ -554,7 +620,8 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
   String? _error;
   bool _submitting = false;
 
-  bool get _editingLocked => widget.current != null && widget.current!.status != 'draft';
+  bool get _editingLocked =>
+      widget.current != null && widget.current!.status != 'draft';
 
   @override
   void initState() {
@@ -565,9 +632,15 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
     _categoryId = current?.expenseCategoryId;
     _debitAccountId = current?.debitAccountId;
     _number = TextEditingController(text: current?.invoiceNumber);
-    _invoiceDate = current?.invoiceDate ?? DateTime.now().toIso8601String().substring(0, 10);
-    _dueDate = current?.dueDate ??
-        DateTime.now().add(const Duration(days: 30)).toIso8601String().substring(0, 10);
+    _invoiceDate =
+        current?.invoiceDate ??
+        DateTime.now().toIso8601String().substring(0, 10);
+    _dueDate =
+        current?.dueDate ??
+        DateTime.now()
+            .add(const Duration(days: 30))
+            .toIso8601String()
+            .substring(0, 10);
     _subtotal = TextEditingController(text: current?.subtotal);
     _tax = TextEditingController(text: current?.taxAmount ?? '0.00');
     _description = TextEditingController(text: current?.description);
@@ -577,11 +650,12 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
 
   Future<void> _loadOptions() async {
     try {
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        widget.repository.getExpenseCategories(),
-        widget.repository.getAccounts(status: 'active'),
-        widget.repository.getBranches(),
-      ]);
+      final List<dynamic> results =
+          await Future.wait<dynamic>(<Future<dynamic>>[
+            widget.repository.getExpenseCategories(),
+            widget.repository.getAccounts(status: 'active'),
+            widget.repository.getBranches(),
+          ]);
       if (!mounted) return;
       setState(() {
         _categories = (results[0] as List<ExpenseCategory>)
@@ -591,7 +665,11 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
             .where(
               (FinancialAccount a) =>
                   a.isActive &&
-                  <String>['expenses', 'assets', 'cost_of_sales'].contains(a.accountGroup) &&
+                  <String>[
+                    'expenses',
+                    'assets',
+                    'cost_of_sales',
+                  ].contains(a.accountGroup) &&
                   a.code != '1100',
             )
             .toList(growable: false);
@@ -621,7 +699,8 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
   }
 
   Future<void> _pickDate(bool isDue) async {
-    final DateTime seed = DateTime.tryParse(isDue ? _dueDate : _invoiceDate) ?? DateTime.now();
+    final DateTime seed =
+        DateTime.tryParse(isDue ? _dueDate : _invoiceDate) ?? DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: seed,
@@ -668,10 +747,13 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
         if (_type == 'other') 'debitAccountId': _debitAccountId,
         'subtotal': _subtotal.text.trim(),
         'taxAmount': _tax.text.trim().isEmpty ? '0.00' : _tax.text.trim(),
-        'description': _description.text.trim().isEmpty ? null : _description.text.trim(),
+        'description': _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
         'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
         if (widget.current == null)
-          'idempotencyKey': 'supplier-invoice-${DateTime.now().microsecondsSinceEpoch}',
+          'idempotencyKey':
+              'supplier-invoice-${DateTime.now().microsecondsSinceEpoch}',
       }, id: widget.current?.id);
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
@@ -684,24 +766,34 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
     }
   }
 
-  bool _isMoney(String value) => RegExp(r'^\d+(?:\.\d{1,2})?$').hasMatch(value.trim());
+  bool _isMoney(String value) =>
+      RegExp(r'^\d+(?:\.\d{1,2})?$').hasMatch(value.trim());
 
   @override
   Widget build(BuildContext context) {
     if (_editingLocked) {
       return FinanceDialogShell(
         title: 'فاتورة ${widget.current!.internalReference}',
-        actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: const Text('إغلاق'))],
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
+          ),
+        ],
         child: const FinanceAlertBanner(
-          message: 'الفاتورة مُرحّلة ولا يمكن تعديلها. استخدم إجراء العكس إن لزم.',
+          message:
+              'الفاتورة مُرحّلة ولا يمكن تعديلها. استخدم إجراء العكس إن لزم.',
           tone: FinanceTone.warning,
         ),
       );
     }
-    final double total = (double.tryParse(_subtotal.text.trim()) ?? 0) +
+    final double total =
+        (double.tryParse(_subtotal.text.trim()) ?? 0) +
         (double.tryParse(_tax.text.trim()) ?? 0);
     return FinanceDialogShell(
-      title: widget.current == null ? 'فاتورة مورد جديدة' : 'تعديل فاتورة ${widget.current!.internalReference}',
+      title: widget.current == null
+          ? 'فاتورة مورد جديدة'
+          : 'تعديل فاتورة ${widget.current!.internalReference}',
       actions: <Widget>[
         TextButton(
           onPressed: _submitting ? null : () => Navigator.pop(context, false),
@@ -709,18 +801,27 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
         ),
         ElevatedButton(
           onPressed: _submitting || _loadingOptions ? null : _submit,
-          style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.primary,
+            foregroundColor: Colors.white,
+          ),
           child: _submitting
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Text('حفظ كمسودة'),
         ),
       ],
       child: _loadingOptions
-          ? const SizedBox(height: 160, child: FinanceLoadingState(label: 'جارٍ تحميل الخيارات…'))
+          ? const SizedBox(
+              height: 160,
+              child: FinanceLoadingState(label: 'جارٍ تحميل الخيارات…'),
+            )
           : SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -729,9 +830,14 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                   DropdownButtonFormField<int?>(
                     initialValue: _branchId,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'الفرع (اختياري)'),
+                    decoration: const InputDecoration(
+                      labelText: 'الفرع (اختياري)',
+                    ),
                     items: <DropdownMenuItem<int?>>[
-                      const DropdownMenuItem<int?>(value: null, child: Text('عام')),
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('عام'),
+                      ),
                       ..._branches.map(
                         (Branch b) => DropdownMenuItem<int?>(
                           value: b.id,
@@ -744,13 +850,17 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                   const SizedBox(height: FinanceSpace.md),
                   TextField(
                     controller: _number,
-                    decoration: const InputDecoration(labelText: 'رقم فاتورة المورد'),
+                    decoration: const InputDecoration(
+                      labelText: 'رقم فاتورة المورد',
+                    ),
                   ),
                   const SizedBox(height: FinanceSpace.md),
                   InkWell(
                     onTap: () => _pickDate(false),
                     child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'تاريخ الفاتورة'),
+                      decoration: const InputDecoration(
+                        labelText: 'تاريخ الفاتورة',
+                      ),
                       child: Text(_invoiceDate),
                     ),
                   ),
@@ -758,7 +868,9 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                   InkWell(
                     onTap: () => _pickDate(true),
                     child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'تاريخ الاستحقاق'),
+                      decoration: const InputDecoration(
+                        labelText: 'تاريخ الاستحقاق',
+                      ),
                       child: Text(_dueDate),
                     ),
                   ),
@@ -766,9 +878,14 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                   DropdownButtonFormField<String>(
                     initialValue: _type,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'نوع الفاتورة'),
+                    decoration: const InputDecoration(
+                      labelText: 'نوع الفاتورة',
+                    ),
                     items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(value: 'expense', child: Text('مصروف')),
+                      DropdownMenuItem<String>(
+                        value: 'expense',
+                        child: Text('مصروف'),
+                      ),
                       DropdownMenuItem<String>(
                         value: 'inventory',
                         child: Text(
@@ -776,7 +893,10 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      DropdownMenuItem<String>(value: 'other', child: Text('أخرى')),
+                      DropdownMenuItem<String>(
+                        value: 'other',
+                        child: Text('أخرى'),
+                      ),
                     ],
                     onChanged: (String? v) => setState(() => _type = v!),
                   ),
@@ -785,12 +905,17 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                     DropdownButtonFormField<int?>(
                       initialValue: _categoryId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'فئة المصروف'),
+                      decoration: const InputDecoration(
+                        labelText: 'فئة المصروف',
+                      ),
                       items: _categories
                           .map(
                             (ExpenseCategory c) => DropdownMenuItem<int?>(
                               value: c.id,
-                              child: Text('${c.code} - ${c.name}', overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                '${c.code} - ${c.name}',
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           )
                           .toList(),
@@ -802,29 +927,41 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                     DropdownButtonFormField<int?>(
                       initialValue: _debitAccountId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'الحساب المدين'),
+                      decoration: const InputDecoration(
+                        labelText: 'الحساب المدين',
+                      ),
                       items: _accounts
                           .map(
                             (FinancialAccount a) => DropdownMenuItem<int?>(
                               value: a.id,
-                              child: Text('${a.code} - ${a.nameAr}', overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                '${a.code} - ${a.nameAr}',
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           )
                           .toList(),
-                      onChanged: (int? v) => setState(() => _debitAccountId = v),
+                      onChanged: (int? v) =>
+                          setState(() => _debitAccountId = v),
                     ),
                   ],
                   const SizedBox(height: FinanceSpace.md),
                   TextField(
                     controller: _subtotal,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(labelText: 'الإجمالي الفرعي'),
+                    decoration: const InputDecoration(
+                      labelText: 'الإجمالي الفرعي',
+                    ),
                   ),
                   const SizedBox(height: FinanceSpace.md),
                   TextField(
                     controller: _tax,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) => setState(() {}),
                     decoration: const InputDecoration(labelText: 'الضريبة'),
                   ),
@@ -839,10 +976,16 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                     decoration: const InputDecoration(labelText: 'الوصف'),
                   ),
                   const SizedBox(height: FinanceSpace.md),
-                  TextField(controller: _notes, decoration: const InputDecoration(labelText: 'ملاحظات')),
+                  TextField(
+                    controller: _notes,
+                    decoration: const InputDecoration(labelText: 'ملاحظات'),
+                  ),
                   if (_error != null) ...<Widget>[
                     const SizedBox(height: FinanceSpace.sm),
-                    Text(_error!, style: const TextStyle(color: FinanceColors.danger)),
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: FinanceColors.danger),
+                    ),
                   ],
                 ],
               ),
@@ -872,16 +1015,24 @@ class _InvoiceDetailDialog extends StatelessWidget {
       if (invoice.allowedActions.contains('post'))
         ElevatedButton(
           onPressed: () => Navigator.pop(context, 'post'),
-          style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.primary,
+            foregroundColor: Colors.white,
+          ),
           child: const Text('ترحيل'),
         ),
       if (invoice.allowedActions.contains('reverse'))
         OutlinedButton(
           onPressed: () => Navigator.pop(context, 'reverse'),
-          style: OutlinedButton.styleFrom(foregroundColor: FinanceColors.danger),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: FinanceColors.danger,
+          ),
           child: const Text('عكس'),
         ),
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('إغلاق')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إغلاق'),
+      ),
     ],
     child: SingleChildScrollView(
       child: Column(
@@ -912,8 +1063,10 @@ class _InvoiceDetailDialog extends StatelessWidget {
               FinanceInfoItem('الضريبة', invoice.taxAmount),
               FinanceInfoItem('الإجمالي', invoice.totalAmount),
               FinanceInfoItem('المتبقي', invoice.remainingAmount),
-              if (invoice.description != null) FinanceInfoItem('الوصف', invoice.description!),
-              if (invoice.notes != null) FinanceInfoItem('ملاحظات', invoice.notes!),
+              if (invoice.description != null)
+                FinanceInfoItem('الوصف', invoice.description!),
+              if (invoice.notes != null)
+                FinanceInfoItem('ملاحظات', invoice.notes!),
             ],
           ),
         ],
@@ -939,10 +1092,15 @@ class _PaymentDetailDialog extends StatelessWidget {
       if (payment.allowedActions.contains('reverse'))
         OutlinedButton(
           onPressed: () => Navigator.pop(context, 'reverse'),
-          style: OutlinedButton.styleFrom(foregroundColor: FinanceColors.danger),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: FinanceColors.danger,
+          ),
           child: const Text('عكس'),
         ),
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('إغلاق')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إغلاق'),
+      ),
     ],
     child: SingleChildScrollView(
       child: Column(
@@ -960,14 +1118,21 @@ class _PaymentDetailDialog extends StatelessWidget {
               FinanceInfoItem('تاريخ الدفع', payment.paymentDate),
               FinanceInfoItem('المبلغ', payment.amount),
               FinanceInfoItem('طريقة الدفع', payment.paymentMethodName),
-              FinanceInfoItem('الحساب النقدي/البنكي', payment.financialLocationName),
+              FinanceInfoItem(
+                'الحساب النقدي/البنكي',
+                payment.financialLocationName,
+              ),
               if (payment.externalReference != null)
                 FinanceInfoItem('مرجع خارجي', payment.externalReference!),
-              if (payment.notes != null) FinanceInfoItem('ملاحظات', payment.notes!),
+              if (payment.notes != null)
+                FinanceInfoItem('ملاحظات', payment.notes!),
             ],
           ),
           const SizedBox(height: FinanceSpace.lg),
-          Text('توزيع الدفعة على الفواتير', style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'توزيع الدفعة على الفواتير',
+            style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: FinanceSpace.sm),
           FinanceTable(
             minWidth: 400,
@@ -1018,9 +1183,11 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
   final TextEditingController _amount = TextEditingController();
   final TextEditingController _reference = TextEditingController();
   final TextEditingController _notes = TextEditingController();
-  late final Map<int, TextEditingController> _allocations = <int, TextEditingController>{
-    for (final SupplierInvoice inv in widget.eligibleInvoices) inv.id: TextEditingController(),
-  };
+  late final Map<int, TextEditingController> _allocations =
+      <int, TextEditingController>{
+        for (final SupplierInvoice inv in widget.eligibleInvoices)
+          inv.id: TextEditingController(),
+      };
   String? _error;
   bool _submitting = false;
 
@@ -1032,11 +1199,12 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
 
   Future<void> _loadOptions() async {
     try {
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        widget.repository.getPaymentMethods(),
-        widget.repository.getFinancialLocations('cash'),
-        widget.repository.getFinancialLocations('bank'),
-      ]);
+      final List<dynamic> results =
+          await Future.wait<dynamic>(<Future<dynamic>>[
+            widget.repository.getPaymentMethods(),
+            widget.repository.getFinancialLocations('cash'),
+            widget.repository.getFinancialLocations('bank'),
+          ]);
       if (!mounted) return;
       setState(() {
         _methods = (results[0] as List<PaymentMethodSetting>)
@@ -1074,7 +1242,8 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
   double get _paymentAmount => double.tryParse(_amount.text.trim()) ?? 0;
   double get _allocatedAmount => _allocations.values.fold<double>(
     0,
-    (double sum, TextEditingController c) => sum + (double.tryParse(c.text.trim()) ?? 0),
+    (double sum, TextEditingController c) =>
+        sum + (double.tryParse(c.text.trim()) ?? 0),
   );
   double get _remainingUnallocated => _paymentAmount - _allocatedAmount;
 
@@ -1085,7 +1254,9 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
-    if (picked != null) setState(() => _date = picked.toIso8601String().substring(0, 10));
+    if (picked != null) {
+      setState(() => _date = picked.toIso8601String().substring(0, 10));
+    }
   }
 
   Future<void> _submit() async {
@@ -1098,10 +1269,12 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
       return;
     }
     final List<MapEntry<int, double>> allocations = _allocations.entries
-        .map((MapEntry<int, TextEditingController> e) => MapEntry<int, double>(
-              e.key,
-              double.tryParse(e.value.text.trim()) ?? 0,
-            ))
+        .map(
+          (MapEntry<int, TextEditingController> e) => MapEntry<int, double>(
+            e.key,
+            double.tryParse(e.value.text.trim()) ?? 0,
+          ),
+        )
         .where((MapEntry<int, double> e) => e.value > 0)
         .toList();
     if (allocations.isEmpty) {
@@ -1109,14 +1282,22 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
       return;
     }
     for (final MapEntry<int, double> a in allocations) {
-      final SupplierInvoice invoice = widget.eligibleInvoices.firstWhere((SupplierInvoice x) => x.id == a.key);
+      final SupplierInvoice invoice = widget.eligibleInvoices.firstWhere(
+        (SupplierInvoice x) => x.id == a.key,
+      );
       if (a.value > _amount2(invoice.remainingAmount) + 0.0001) {
-        setState(() => _error = 'تخصيص ${invoice.internalReference} يتجاوز المتبقي عليها.');
+        setState(
+          () => _error =
+              'تخصيص ${invoice.internalReference} يتجاوز المتبقي عليها.',
+        );
         return;
       }
     }
     if ((_remainingUnallocated).abs() > 0.0001) {
-      setState(() => _error = 'يجب أن يساوي إجمالي التخصيصات مبلغ الدفعة تماماً. المتبقي غير المخصص: ${_remainingUnallocated.toStringAsFixed(2)}');
+      setState(
+        () => _error =
+            'يجب أن يساوي إجمالي التخصيصات مبلغ الدفعة تماماً. المتبقي غير المخصص: ${_remainingUnallocated.toStringAsFixed(2)}',
+      );
       return;
     }
     setState(() {
@@ -1130,14 +1311,19 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
         'amount': _paymentAmount.toStringAsFixed(2),
         'paymentMethodId': _methodId,
         'financialLocationId': _locationId,
-        'externalReference': _reference.text.trim().isEmpty ? null : _reference.text.trim(),
+        'externalReference': _reference.text.trim().isEmpty
+            ? null
+            : _reference.text.trim(),
         'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-        'idempotencyKey': 'supplier-payment-${DateTime.now().microsecondsSinceEpoch}',
+        'idempotencyKey':
+            'supplier-payment-${DateTime.now().microsecondsSinceEpoch}',
         'allocations': allocations
-            .map((MapEntry<int, double> a) => <String, dynamic>{
-                  'invoiceId': a.key,
-                  'amount': a.value.toStringAsFixed(2),
-                })
+            .map(
+              (MapEntry<int, double> a) => <String, dynamic>{
+                'invoiceId': a.key,
+                'amount': a.value.toStringAsFixed(2),
+              },
+            )
             .toList(),
       });
       if (mounted) Navigator.of(context).pop(true);
@@ -1155,8 +1341,11 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final FinancialLocation? location =
-        _locationId == null ? null : _locations.where((FinancialLocation l) => l.id == _locationId).firstOrNull;
+    final FinancialLocation? location = _locationId == null
+        ? null
+        : _locations
+              .where((FinancialLocation l) => l.id == _locationId)
+              .firstOrNull;
     return FinanceDialogShell(
       title: 'دفعة مورد جديدة',
       actions: <Widget>[
@@ -1166,21 +1355,31 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
         ),
         ElevatedButton(
           onPressed: _submitting || _loadingOptions ? null : _submit,
-          style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.primary,
+            foregroundColor: Colors.white,
+          ),
           child: _submitting
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Text('ترحيل الدفعة'),
         ),
       ],
       child: _loadingOptions
-          ? const SizedBox(height: 160, child: FinanceLoadingState(label: 'جارٍ تحميل خيارات الدفع…'))
+          ? const SizedBox(
+              height: 160,
+              child: FinanceLoadingState(label: 'جارٍ تحميل خيارات الدفع…'),
+            )
           : (_methods.isEmpty || _locations.isEmpty)
           ? const FinanceAlertBanner(
-              message: 'لا توجد طريقة دفع أو حساب نقدي/بنكي نشط. أضف واحداً من إعدادات المالية أولاً.',
+              message:
+                  'لا توجد طريقة دفع أو حساب نقدي/بنكي نشط. أضف واحداً من إعدادات المالية أولاً.',
               tone: FinanceTone.warning,
             )
           : SizedBox(
@@ -1193,12 +1392,17 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                     DropdownButtonFormField<int>(
                       initialValue: _methodId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'طريقة الدفع'),
+                      decoration: const InputDecoration(
+                        labelText: 'طريقة الدفع',
+                      ),
                       items: _methods
                           .map(
                             (PaymentMethodSetting m) => DropdownMenuItem<int>(
                               value: m.id,
-                              child: Text(m.name, overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                m.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           )
                           .toList(),
@@ -1208,12 +1412,17 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                     DropdownButtonFormField<int>(
                       initialValue: _locationId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'الحساب النقدي/البنكي (المصدر)'),
+                      decoration: const InputDecoration(
+                        labelText: 'الحساب النقدي/البنكي (المصدر)',
+                      ),
                       items: _locations
                           .map(
                             (FinancialLocation l) => DropdownMenuItem<int>(
                               value: l.id,
-                              child: Text(l.name, overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                l.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           )
                           .toList(),
@@ -1223,26 +1432,44 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                     InkWell(
                       onTap: _pickDate,
                       child: InputDecorator(
-                        decoration: const InputDecoration(labelText: 'تاريخ الدفع'),
+                        decoration: const InputDecoration(
+                          labelText: 'تاريخ الدفع',
+                        ),
                         child: Text(_date),
                       ),
                     ),
                     const SizedBox(height: FinanceSpace.md),
                     TextField(
                       controller: _amount,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(labelText: 'مبلغ الدفعة'),
+                      decoration: const InputDecoration(
+                        labelText: 'مبلغ الدفعة',
+                      ),
                     ),
                     const SizedBox(height: FinanceSpace.md),
                     TextField(
                       controller: _reference,
-                      decoration: const InputDecoration(labelText: 'مرجع خارجي (اختياري)'),
+                      decoration: const InputDecoration(
+                        labelText: 'مرجع خارجي (اختياري)',
+                      ),
                     ),
                     const SizedBox(height: FinanceSpace.md),
-                    TextField(controller: _notes, decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)')),
+                    TextField(
+                      controller: _notes,
+                      decoration: const InputDecoration(
+                        labelText: 'ملاحظات (اختياري)',
+                      ),
+                    ),
                     const SizedBox(height: FinanceSpace.lg),
-                    Text('توزيع الدفعة على الفواتير المفتوحة', style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'توزيع الدفعة على الفواتير المفتوحة',
+                      style: FinanceText.body.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: FinanceSpace.sm),
                     ...widget.eligibleInvoices.map(
                       (SupplierInvoice inv) => Padding(
@@ -1260,9 +1487,14 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                               width: 120,
                               child: TextField(
                                 controller: _allocations[inv.id],
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                                 onChanged: (_) => setState(() {}),
-                                decoration: const InputDecoration(labelText: 'تخصيص'),
+                                decoration: const InputDecoration(
+                                  labelText: 'تخصيص',
+                                ),
                               ),
                             ),
                           ],
@@ -1270,8 +1502,14 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                       ),
                     ),
                     const Divider(),
-                    _AllocationSummaryRow(label: 'مبلغ الدفعة', value: _paymentAmount),
-                    _AllocationSummaryRow(label: 'المبلغ المخصص', value: _allocatedAmount),
+                    _AllocationSummaryRow(
+                      label: 'مبلغ الدفعة',
+                      value: _paymentAmount,
+                    ),
+                    _AllocationSummaryRow(
+                      label: 'المبلغ المخصص',
+                      value: _allocatedAmount,
+                    ),
                     _AllocationSummaryRow(
                       label: 'المتبقي غير المخصص',
                       value: _remainingUnallocated,
@@ -1287,7 +1525,10 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                     ],
                     if (_error != null) ...<Widget>[
                       const SizedBox(height: FinanceSpace.sm),
-                      Text(_error!, style: const TextStyle(color: FinanceColors.danger)),
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: FinanceColors.danger),
+                      ),
                     ],
                   ],
                 ),
@@ -1314,14 +1555,21 @@ class _OverdueBadge extends StatelessWidget {
       ),
       child: Text(
         'متأخر',
-        style: FinanceText.small.copyWith(color: colors.foreground, fontWeight: FontWeight.w700),
+        style: FinanceText.small.copyWith(
+          color: colors.foreground,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
 class _AllocationSummaryRow extends StatelessWidget {
-  const _AllocationSummaryRow({required this.label, required this.value, this.danger = false});
+  const _AllocationSummaryRow({
+    required this.label,
+    required this.value,
+    this.danger = false,
+  });
   final String label;
   final double value;
   final bool danger;
@@ -1345,6 +1593,7 @@ class _AllocationSummaryRow extends StatelessWidget {
   );
 }
 
-double _amount(dynamic value) =>
-    value is num ? value.toDouble() : double.tryParse('${value ?? 0}'.replaceAll(',', '')) ?? 0;
+double _amount(dynamic value) => value is num
+    ? value.toDouble()
+    : double.tryParse('${value ?? 0}'.replaceAll(',', '')) ?? 0;
 String _money(dynamic value) => _amount(value).toStringAsFixed(2);

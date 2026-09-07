@@ -59,7 +59,7 @@ class ReportsRepository {
       queryParameters: <String, dynamic>{
         'from': dateFormat.format(from),
         'to': dateFormat.format(to),
-        if (branchId != null) 'branch_id': branchId,
+        'branch_id': ?branchId,
         'compare_previous': comparePrevious,
       },
     );

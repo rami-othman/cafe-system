@@ -71,6 +71,10 @@ class FinancialSetupService
 
     public function ensureForTenant(int $tenantId, ?int $initialBranchId = null, ?int $actorId = null): void
     {
+        if (! DB::table('tenants')->where('id', $tenantId)->exists()) {
+            throw new \RuntimeException("FinancialSetupService::ensureForTenant called with unknown tenant_id [{$tenantId}]. Ensure the tenant is created and committed before seeding its financial accounts.");
+        }
+
         DB::transaction(function () use ($tenantId, $initialBranchId, $actorId): void {
             $now = now();
             foreach ($this->defaultAccounts() as $account) {

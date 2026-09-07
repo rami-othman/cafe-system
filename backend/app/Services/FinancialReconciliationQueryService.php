@@ -40,7 +40,7 @@ final class FinancialReconciliationQueryService
         foreach ($context['scopeBranchIds'] as $branchId) {
             for ($date = CarbonImmutable::parse($context['dateFrom']); $date->lte(CarbonImmutable::parse($context['dateTo'])); $date = $date->addDay()) {
                 $businessDate = $date->toDateString();
-                $summary = $this->dailyClosingSummary->summarize($tenant, (int) $branchId, $businessDate);
+                $summary = $this->dailyClosingSummary->summarize($tenant, (int) $branchId, $businessDate, includeBreakdown: false);
                 $policy = $this->dailyClosingPolicy->evaluate($tenant, (int) $branchId, $businessDate, $summary);
                 foreach ($policy['accounts'] as $requirement) {
                     $type = $requirement['kind'];
