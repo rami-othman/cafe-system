@@ -32,12 +32,6 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
   final TextEditingController _description = TextEditingController();
   final TextEditingController _minimum = TextEditingController(text: '0.000');
   final TextEditingController _reorder = TextEditingController(text: '0.000');
-  final TextEditingController _averageCost = TextEditingController(
-    text: '0.0000',
-  );
-  final TextEditingController _lastPurchaseCost = TextEditingController(
-    text: '0.0000',
-  );
   final TextEditingController _supplier = TextEditingController();
   final TextEditingController _purchaseFactor = TextEditingController(
     text: '1',
@@ -77,8 +71,6 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
       _description,
       _minimum,
       _reorder,
-      _averageCost,
-      _lastPurchaseCost,
       _supplier,
       _purchaseFactor,
       _consumptionFactor,
@@ -98,8 +90,6 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
     _description.text = item.notes;
     _minimum.text = item.minimumStock;
     _reorder.text = item.reorderLevel;
-    _averageCost.text = item.cost;
-    _lastPurchaseCost.text = item.lastPurchaseCost;
     _supplier.text = item.preferredSupplierName;
     _type = item.itemType;
     _baseUnit = item.unit;
@@ -275,18 +265,15 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                   ),
                 ),
                 _section(
-                  title: 'معلومات التكلفة',
+                  title: 'إعدادات الشراء',
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      _row(<Widget>[
-                        _field(_averageCost, 'متوسط التكلفة', number: true),
-                        _field(
-                          _lastPurchaseCost,
-                          'آخر تكلفة شراء',
-                          number: true,
-                        ),
-                      ]),
                       _field(_supplier, 'المورد المفضل'),
+                      const Text(
+                        'تُدخل الكمية وسعر الشراء عند استلام التوريد. '
+                        'ويحسب النظام متوسط التكلفة والرصيد تلقائيًا.',
+                      ),
                     ],
                   ),
                 ),
@@ -348,8 +335,6 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
           'consumptionConversionFactor': _consumptionFactor.text.trim(),
           'minimumStock': _minimum.text.trim(),
           'reorderLevel': _reorder.text.trim(),
-          'latestUnitCost': _averageCost.text.trim(),
-          'lastPurchaseCost': _lastPurchaseCost.text.trim(),
           'preferredSupplierName': _supplier.text.trim(),
           'trackExpiry': _trackExpiry,
           'trackBatch': _trackBatch,

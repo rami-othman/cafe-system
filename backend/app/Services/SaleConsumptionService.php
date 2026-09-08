@@ -16,7 +16,11 @@ use Illuminate\Validation\ValidationException;
  * Inventory remains the sole source of truth for consumed quantity, WAC, and
  * movement cost (see InventoryPostingService). This service never computes a
  * cost itself — it only decides *whether* a product consumes inventory (via
- * products.inventory_controlled) and, if so, *what* it consumes (via the
+ * products.is_stock_tracked, the single canonical "Track Inventory" flag —
+ * see CatalogProductService, which keeps the legacy products.inventory_controlled
+ * column mirrored to it on every write; that legacy column is still consulted
+ * here as a read-only safety net so a row that predates the backfill migration
+ * is never silently disabled) and, if so, *what* it consumes (via the
  * order's immutable published-menu snapshot) and *where from* (via product_inventory_settings,
  * falling back to the branch's main warehouse). The actual balance/WAC math
  * is delegated entirely to InventoryPostingService::post().
@@ -53,10 +57,11 @@ class SaleConsumptionService
                 ? DB::table('products')->where('tenant_id', $tenantId)->where('id', $item->product_id)->first()
                 : null;
 
-            if (! $product || ! $product->inventory_controlled) {
+            if (! $product || ! $this->isTracked($product)) {
                 // Non-inventory / service item or a custom line with no product
                 // link: VALID_ZERO_COGS — a deliberate zero, not "unavailable".
                 $this->snapshotItem($tenantId, $item, 0, null);
+
                 continue;
             }
 
@@ -68,6 +73,7 @@ class SaleConsumptionService
                 // payment retry that somehow re-entered this path). Reuse the
                 // recorded cost rather than consuming stock a second time.
                 $orderCogsCents += Money::cents($existing->cogs_total);
+
                 continue;
             }
 
@@ -143,6 +149,19 @@ class SaleConsumptionService
         ]);
 
         return ['cogsTotalCents' => $orderCogsCents, 'anyInventoryControlled' => $anyInventoryControlled];
+    }
+
+    /**
+     * Canonical tracking check: `is_stock_tracked` is authoritative;
+     * `inventory_controlled` is consulted only as a legacy safety net (see
+     * class docblock) and is never itself sufficient to enable tracking that
+     * `is_stock_tracked` disagrees with going the other way — both columns are
+     * kept in sync by CatalogProductService, so the OR only ever matters for
+     * rows written before that sync existed.
+     */
+    private function isTracked(object $product): bool
+    {
+        return (bool) $product->is_stock_tracked || (bool) $product->inventory_controlled;
     }
 
     /** @return array<string, mixed>|null */

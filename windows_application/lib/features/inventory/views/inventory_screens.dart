@@ -1463,7 +1463,7 @@ class _InventoryMovementCreateState
                         spacing: AppSpacing.md,
                         runSpacing: AppSpacing.md,
                         children:
-                            <String>['stock_in', 'waste', 'adjustment_out']
+                            <String>['stock_in', 'waste']
                                 .map(
                                   (String type) => _MovementTypeCard(
                                     type: type,

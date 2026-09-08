@@ -54,7 +54,7 @@ class _InventoryItemsScreenState extends State<InventoryItemsScreen> {
         children: <Widget>[
           ManagementPageHeader(
             title: 'المواد المخزنية',
-            subtitle: 'إدارة أصناف المقهى وتكلفتها وقواعد توفرها في المخازن.',
+            subtitle: 'إدارة تعريف أصناف المقهى وقواعد توفرها في المخازن.',
             actions: <Widget>[
               AppButton(
                 label: 'إضافة مادة',

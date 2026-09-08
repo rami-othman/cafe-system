@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Inventory\InventoryReconciliationService;
 use Database\Seeders\FinancialInventoryFoundationSeeder;
 use Database\Seeders\InventoryCenterSeeder;
 use Database\Seeders\InventorySeeder;
@@ -9,7 +10,6 @@ use Database\Seeders\SuperAdminSeeder;
 use Database\Seeders\TenantAccessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use App\Domain\Inventory\InventoryReconciliationService;
 use Tests\TestCase;
 
 class InventoryCenterApiTest extends TestCase
@@ -165,6 +165,56 @@ class InventoryCenterApiTest extends TestCase
             ->assertJsonPath('data.meta.total', 2);
     }
 
+    public function test_catalog_definition_starts_without_cost_or_quantity_and_receiving_sets_them(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $headers = $this->headers($tenant);
+        $item = (int) $this->postJson('/api/v1/inventory/items', [
+            'nameAr' => 'Purchase-driven item',
+            'nameEn' => 'Purchase-driven item',
+            'sku' => 'PURCHASE-DRIVEN-ITEM',
+            'itemType' => 'raw_material',
+            'unit' => 'kilogram',
+            'minimumStock' => '1.000',
+            'reorderLevel' => '1.000',
+            'isActive' => true,
+        ], $headers)
+            ->assertCreated()
+            ->assertJsonPath('data.latestUnitCost', '0.0000')
+            ->assertJsonPath('data.totalQuantity', '0.000')
+            ->json('data.id');
+
+        $this->postJson(
+            '/api/v1/inventory/movements',
+            $this->movement($item, $this->warehouse($tenant), 'stock_in', '8.000', '3.2500'),
+            $headers,
+        )->assertCreated();
+
+        $this->getJson('/api/v1/inventory/items/'.$item, $headers)
+            ->assertOk()
+            ->assertJsonPath('data.latestUnitCost', '3.2500')
+            ->assertJsonPath('data.lastPurchaseCost', '3.2500')
+            ->assertJsonPath('data.totalQuantity', '8.000')
+            ->assertJsonPath('data.stockByWarehouse.0.averageUnitCost', '3.2500');
+
+        // Saving master-data changes must not overwrite a purchase-derived
+        // cost when the catalogue form does not submit a cost field.
+        $this->patchJson('/api/v1/inventory/items/'.$item, [
+            'nameAr' => 'Purchase-driven item renamed',
+            'nameEn' => 'Purchase-driven item renamed',
+            'sku' => 'PURCHASE-DRIVEN-ITEM',
+            'itemType' => 'raw_material',
+            'unit' => 'kilogram',
+            'minimumStock' => '2.000',
+            'reorderLevel' => '2.000',
+            'isActive' => true,
+        ], $headers)
+            ->assertOk()
+            ->assertJsonPath('data.latestUnitCost', '3.2500')
+            ->assertJsonPath('data.lastPurchaseCost', '3.2500');
+    }
+
     public function test_inventory_is_strictly_tenant_scoped_and_rejects_foreign_warehouse(): void
     {
         $this->seed();
@@ -209,6 +259,40 @@ class InventoryCenterApiTest extends TestCase
         $movement = $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'waste', '1.000', null, 'تلف'), $this->headers($tenant))->assertCreated();
         $this->patchJson('/api/v1/inventory/movements/'.$movement->json('data.id'), [], $this->headers($tenant))->assertMethodNotAllowed();
         $this->deleteJson('/api/v1/inventory/movements/'.$movement->json('data.id'), [], $this->headers($tenant))->assertMethodNotAllowed();
+    }
+
+    public function test_adjustment_in_and_out_are_rejected_before_any_balance_or_journal_change(): void
+    {
+        // adjustment_in/adjustment_out remain a legal movement type at the
+        // domain level, but InventoryAccountingMapper has no configured
+        // accounting treatment for them — previously the API accepted the
+        // request, wrote the balance/quantity change, and only then failed
+        // deep inside posting, leaving an inconsistent partial write. The API
+        // now rejects both cleanly up front instead.
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $item = $this->createItem($tenant);
+        $warehouse = $this->warehouse($tenant);
+        $headers = $this->headers($tenant);
+        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'stock_in', '10.000', '2.0000'), $headers)->assertCreated();
+        $before = DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $warehouse)->where('inventory_item_id', $item)->value('quantity_on_hand');
+
+        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'adjustment_in', '1.000', '2.0000', 'تسوية'), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('type');
+        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'adjustment_out', '1.000', null, 'تسوية'), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('type');
+
+        $after = DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $warehouse)->where('inventory_item_id', $item)->value('quantity_on_hand');
+        $this->assertSame($before, $after, 'A rejected adjustment must never change the stock balance.');
+        // No adjustment_in/adjustment_out row was ever created for this item,
+        // so no journal entry could exist for it either — a journal always
+        // requires a persisted stock_movements row as its source.
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $tenant)->whereIn('type', ['adjustment_in', 'adjustment_out'])->count());
+
+        // The still-supported movement types on this same tenant/warehouse
+        // remain fully functional and correctly balanced.
+        $stockIn = $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse, 'stock_in', '1.000', '2.0000'), $headers)->assertCreated()->json('data');
+        $this->assertSame('11.000', $stockIn['quantityAfter']);
     }
 
     public function test_stock_count_requires_approval_posts_variance_once_and_dashboard_reports_alerts(): void
@@ -671,7 +755,9 @@ class InventoryCenterApiTest extends TestCase
         $warehouse = $this->isolatedWarehouse($tenant);
         $first = $this->createItem($tenant);
         $second = (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'Second count item', 'nameEn' => 'Second count item', 'sku' => 'COUNT-SECOND', 'itemType' => 'raw_material', 'unit' => 'kilogram', 'minimumStock' => '0.000', 'reorderLevel' => '0.000', 'latestUnitCost' => '1.0000', 'isActive' => true], $headers)->assertCreated()->json('data.id');
-        foreach ([$first, $second] as $item) $this->assignItemToWarehouse($tenant, $item, $warehouse);
+        foreach ([$first, $second] as $item) {
+            $this->assignItemToWarehouse($tenant, $item, $warehouse);
+        }
         $this->postJson('/api/v1/inventory/movements', $this->movement($first, $warehouse, 'stock_in', '10.000'), $headers)->assertCreated();
         $count = (int) $this->postJson('/api/v1/inventory/counts', ['warehouseId' => $warehouse, 'countDate' => '2026-08-27'], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/inventory/counts/$count/start", [], $headers)->assertOk();
@@ -717,7 +803,9 @@ class InventoryCenterApiTest extends TestCase
         $this->assertCount(2, $warehouses);
         [$source, $destination] = [(int) $warehouses[0], (int) $warehouses[1]];
         $item = $this->createItem($tenant);
-        foreach ([$source, $destination] as $warehouse) DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);
+        foreach ([$source, $destination] as $warehouse) {
+            DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);
+        }
         $this->postJson('/api/v1/inventory/movements', $this->movement($item, $source, 'stock_in', '10.000'), $headers)->assertCreated();
         $transfer = (int) $this->postJson('/api/v1/inventory/transfers', ['sourceWarehouseId' => $source, 'destinationWarehouseId' => $destination, 'idempotencyKey' => 'transfer-create-1', 'lines' => [['itemId' => $item, 'requestedQuantity' => '8.000', 'unit' => 'kilogram']]], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/inventory/transfers/$transfer/submit", ['idempotencyKey' => 'transfer-submit-1'], $headers)->assertOk();
@@ -739,10 +827,15 @@ class InventoryCenterApiTest extends TestCase
 
     public function test_transfer_multiple_receipts_reconcile_source_destination_and_transit(): void
     {
-        $this->seed(); $tenant = $this->tenant('cafe-618'); $headers = $this->headers($tenant);
-        $warehouses = DB::table('warehouses')->where('tenant_id', $tenant)->where('is_active', true)->limit(2)->pluck('id')->values(); [$source, $destination] = [(int) $warehouses[0], (int) $warehouses[1]];
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $headers = $this->headers($tenant);
+        $warehouses = DB::table('warehouses')->where('tenant_id', $tenant)->where('is_active', true)->limit(2)->pluck('id')->values();
+        [$source, $destination] = [(int) $warehouses[0], (int) $warehouses[1]];
         $item = $this->createItem($tenant);
-        foreach ([$source, $destination] as $warehouse) DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);
+        foreach ([$source, $destination] as $warehouse) {
+            DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);
+        }
         $this->postJson('/api/v1/inventory/movements', $this->movement($item, $source, 'stock_in', '100.000'), $headers)->assertCreated();
         $this->postJson('/api/v1/inventory/movements', $this->movement($item, $destination, 'stock_in', '20.000'), $headers)->assertCreated();
         $transfer = (int) $this->postJson('/api/v1/inventory/transfers', ['sourceWarehouseId' => $source, 'destinationWarehouseId' => $destination, 'idempotencyKey' => 'multi-create', 'lines' => [['itemId' => $item, 'requestedQuantity' => '100.000', 'unit' => 'kilogram']]], $headers)->assertCreated()->json('data.id');
@@ -750,7 +843,9 @@ class InventoryCenterApiTest extends TestCase
         $this->postJson("/api/v1/inventory/transfers/$transfer/approve", ['idempotencyKey' => 'multi-approve'], $headers)->assertOk();
         $this->assertDatabaseHas('stock_balances', ['tenant_id' => $tenant, 'warehouse_id' => $source, 'inventory_item_id' => $item, 'quantity_on_hand' => '100.000', 'reserved_quantity' => '100.000']);
         $this->postJson("/api/v1/inventory/transfers/$transfer/dispatch", ['idempotencyKey' => 'multi-dispatch'], $headers)->assertOk();
-        foreach ([['40.000', 'multi-r1'], ['30.000', 'multi-r2'], ['30.000', 'multi-r3']] as [$quantity, $key]) $this->postJson("/api/v1/inventory/transfers/$transfer/receive", ['idempotencyKey' => $key, 'lines' => [['itemId' => $item, 'receivedQuantity' => $quantity, 'unit' => 'kilogram', 'discrepancyReason' => $quantity === '30.000' ? 'Partial receipt' : 'Partial receipt']]], $headers)->assertOk();
+        foreach ([['40.000', 'multi-r1'], ['30.000', 'multi-r2'], ['30.000', 'multi-r3']] as [$quantity, $key]) {
+            $this->postJson("/api/v1/inventory/transfers/$transfer/receive", ['idempotencyKey' => $key, 'lines' => [['itemId' => $item, 'receivedQuantity' => $quantity, 'unit' => 'kilogram', 'discrepancyReason' => $quantity === '30.000' ? 'Partial receipt' : 'Partial receipt']]], $headers)->assertOk();
+        }
         $line = (int) DB::table('warehouse_transfer_lines')->where('warehouse_transfer_id', $transfer)->value('id');
         $this->assertDatabaseHas('warehouse_transfers', ['id' => $transfer, 'status' => 'received']);
         $this->assertDatabaseHas('stock_balances', ['tenant_id' => $tenant, 'warehouse_id' => $source, 'inventory_item_id' => $item, 'quantity_on_hand' => '0.000', 'reserved_quantity' => '0.000']);

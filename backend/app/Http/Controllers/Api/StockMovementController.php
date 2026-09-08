@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Inventory\InventoryAccountingMapper;
+use App\Domain\Inventory\InventoryPostingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StockMovementRequest;
-use App\Domain\Inventory\InventoryPostingService;
-use App\Domain\Inventory\InventoryAccountingMapper;
 use App\Support\FinancialActor;
 use App\Support\InventoryAccess;
 use App\Support\InventoryDecimal;
@@ -44,7 +44,17 @@ class StockMovementController extends Controller
     public function store(StockMovementRequest $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        if (! in_array($request->validated('type'), ['stock_in', 'stock_out', 'adjustment_in', 'adjustment_out', 'waste'], true)) {
+        // adjustment_in/adjustment_out remain valid movement types at the
+        // domain level, but InventoryAccountingMapper has no configured
+        // accounting treatment for them (deliberately — see its own
+        // "Manual adjustment accounting treatment is not configured" branch),
+        // so posting one here would always fail after a balance/quantity
+        // change had already been written. Reject them before that happens
+        // until a real adjustment account mapping is defined.
+        if (in_array($request->validated('type'), ['adjustment_in', 'adjustment_out'], true)) {
+            throw ValidationException::withMessages(['type' => 'تسويات المخزون اليدوية غير مفعّلة حالياً لعدم تحديد حساباتها المحاسبية.']);
+        }
+        if (! in_array($request->validated('type'), ['stock_in', 'stock_out', 'waste'], true)) {
             throw ValidationException::withMessages(['type' => 'هذه الحركة تُنشأ من سير عمل النظام فقط.']);
         }
         $result = $this->movements->post($request, $tenant, $request->validated(), FinancialActor::id($request, $tenant));

@@ -108,7 +108,14 @@ class CatalogProductService
         if ($type === 'combo') {
             throw ValidationException::withMessages(['productType' => 'Combo products are not available in this phase.']);
         }
-        $payload = ['name' => $data['name'], 'name_ar' => $data['nameAr'] ?? null, 'name_en' => $data['nameEn'] ?? null, 'description' => $data['description'] ?? null, 'description_ar' => $data['descriptionAr'] ?? null, 'description_en' => $data['descriptionEn'] ?? null, 'image_url' => $data['imageUrl'] ?? null, 'category_id' => $data['categoryId'] ?? null, 'reporting_category_id' => $data['reportingCategoryId'] ?? null, 'kitchen_station_id' => $data['kitchenStationId'] ?? null, 'product_type' => $type, 'preparation_time_minutes' => $data['preparationTimeMinutes'] ?? null, 'is_stock_tracked' => $data['isStockTracked'] ?? false, 'sort_order' => $data['sortOrder'] ?? 0];
+        // `is_stock_tracked` is the single canonical tracking flag the user
+        // configures ("Track Inventory"). `inventory_controlled` is a legacy
+        // column SaleConsumptionService historically gated consumption on and
+        // that no application write path ever set — every normal create/update
+        // now keeps it mirrored to the canonical value so the two can never
+        // disagree again for a product written through this service.
+        $isStockTracked = $data['isStockTracked'] ?? false;
+        $payload = ['name' => $data['name'], 'name_ar' => $data['nameAr'] ?? null, 'name_en' => $data['nameEn'] ?? null, 'description' => $data['description'] ?? null, 'description_ar' => $data['descriptionAr'] ?? null, 'description_en' => $data['descriptionEn'] ?? null, 'image_url' => $data['imageUrl'] ?? null, 'category_id' => $data['categoryId'] ?? null, 'reporting_category_id' => $data['reportingCategoryId'] ?? null, 'kitchen_station_id' => $data['kitchenStationId'] ?? null, 'product_type' => $type, 'preparation_time_minutes' => $data['preparationTimeMinutes'] ?? null, 'is_stock_tracked' => $isStockTracked, 'inventory_controlled' => $isStockTracked, 'sort_order' => $data['sortOrder'] ?? 0];
 
         return $create
             ? $payload + ['is_active' => $data['isActive'] ?? true]
