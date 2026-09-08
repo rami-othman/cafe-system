@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\Money;
+use App\Support\RefundTaxAllocation;
 use App\Support\SafeMath;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -87,16 +88,17 @@ final class FinanceTrendQueryService
             ->whereNull('deleted_at')->whereBetween('closed_at', [$range['start'], $range['end']])
             ->get(['closed_at', 'subtotal', 'discount_total', 'tax_total', 'service_total', 'cogs_total']);
 
-        $refunds = DB::table('payment_refunds')->where('tenant_id', $context['tenantId'])
-            ->whereIn('branch_id', $context['scopeBranchIds'])->where('status', 'completed')
-            ->whereBetween('refunded_at', [$range['start'], $range['end']])->get(['refunded_at', 'amount']);
+        $refunds = DB::table('payment_refunds as refunds')->join('orders', 'orders.id', '=', 'refunds.order_id')
+            ->where('refunds.tenant_id', $context['tenantId'])->whereIn('refunds.branch_id', $context['scopeBranchIds'])->where('refunds.status', 'completed')
+            ->where('refunds.refunded_at', '<=', $range['end'])->orderBy('refunds.order_id')->orderBy('refunds.refunded_at')->orderBy('refunds.id')
+            ->get(['refunds.order_id', 'refunds.refunded_at', 'refunds.amount', 'orders.total as order_total', 'orders.tax_total']);
 
         $days = [];
         $blank = fn () => ['netSalesCents' => 0, 'cogsCents' => 0, 'orderCount' => 0, 'missingCogs' => 0];
         foreach ($orders as $order) {
             $date = Carbon::parse($order->closed_at)->setTimezone($timezone)->toDateString();
             $days[$date] ??= $blank();
-            $net = Money::cents($order->subtotal ?: '0') + Money::cents($order->tax_total ?: '0') + Money::cents($order->service_total ?: '0') - Money::cents($order->discount_total ?: '0');
+            $net = Money::cents($order->subtotal ?: '0') - Money::cents($order->discount_total ?: '0');
             $days[$date]['netSalesCents'] += $net;
             $days[$date]['orderCount']++;
             if ($order->cogs_total === null) {
@@ -105,10 +107,18 @@ final class FinanceTrendQueryService
                 $days[$date]['cogsCents'] += Money::cents($order->cogs_total);
             }
         }
+        $refundedByOrder = [];
         foreach ($refunds as $refund) {
+            $before = $refundedByOrder[$refund->order_id] ?? 0;
+            $amount = Money::cents($refund->amount);
+            $tax = RefundTaxAllocation::taxCents(Money::cents($refund->order_total), Money::cents($refund->tax_total), $before, $amount);
+            $refundedByOrder[$refund->order_id] = $before + $amount;
+            if ($refund->refunded_at < $range['start']) {
+                continue;
+            }
             $date = Carbon::parse($refund->refunded_at)->setTimezone($timezone)->toDateString();
             $days[$date] ??= $blank();
-            $days[$date]['netSalesCents'] -= Money::cents($refund->amount);
+            $days[$date]['netSalesCents'] -= $amount - $tax;
         }
 
         return $days;

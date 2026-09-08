@@ -63,7 +63,7 @@ class ExpenseController extends Controller
     private function filtered(Request $request, int $tenant, int $actor, array $context)
     {
         $query = $this->rows($tenant);
-        if ($context['role'] !== 'owner') $query->where(fn ($q) => $q->whereIn('e.branch_id', DB::table('user_branches')->where('tenant_id', $tenant)->where('user_id', $actor)->select('branch_id'))->orWhereNull('e.branch_id'));
+        if ($context['role'] !== 'owner') $query->where(fn ($q) => $q->whereIn('e.branch_id', FinancialActor::operationalBranchIds($actor, $tenant))->orWhereNull('e.branch_id'));
         foreach (['branchId' => 'e.branch_id', 'expenseCategoryId' => 'e.expense_category_id', 'status' => 'e.status', 'paymentStatus' => 'e.payment_status', 'paymentMethodId' => 'e.payment_method_id'] as $input => $column) if ($request->filled($input)) $query->where($column, $request->input($input));
         if ($request->filled('from')) $query->whereDate('e.expense_date', '>=', $request->input('from')); if ($request->filled('to')) $query->whereDate('e.expense_date', '<=', $request->input('to'));
         if ($request->filled('search')) { $like = '%'.strtolower($request->input('search')).'%'; $query->where(fn ($q) => $q->whereRaw('LOWER(e.expense_number) LIKE ?', [$like])->orWhereRaw('LOWER(e.description) LIKE ?', [$like])); }

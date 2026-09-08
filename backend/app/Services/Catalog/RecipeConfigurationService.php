@@ -3,6 +3,7 @@
 namespace App\Services\Catalog;
 
 use App\Domain\Menu\Enums\MenuAuditAction;
+use App\Domain\Inventory\RecipeMaterialEligibility;
 use App\Models\ModifierOption;
 use App\Models\ModifierOptionRecipeProfile;
 use App\Models\Product;
@@ -229,8 +230,8 @@ class RecipeConfigurationService
                 throw ValidationException::withMessages(['components' => 'Duplicate or invalid material component.']);
             }$seen[$id.':'.$op] = true;
             $m = $this->materials->material($tenant, $id);
-            if (! $m || ! $m->is_active || $m->deleted_at || ! $this->materials->resource($m)['configurationAvailable']) {
-                throw ValidationException::withMessages(['components' => 'Material is unavailable or has an unmapped unit.']);
+            if (! $m || ! $m->is_active || $m->deleted_at || ! RecipeMaterialEligibility::allows($m) || ! $this->materials->resource($m)['configurationAvailable']) {
+                throw ValidationException::withMessages(['components' => 'Material is unavailable, ineligible for recipe consumption, or has an unmapped unit.']);
             } $q = (string) ($c['quantity'] ?? '');
             try {
                 $quantity = BigDecimal::of($q);

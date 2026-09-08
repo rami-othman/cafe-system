@@ -23,7 +23,7 @@ class JournalEntryController extends Controller
         $tenantId = TenantContext::id($request);
         $actorId = FinancialActor::id($request, $tenantId);
         $query = DB::table('journal_entries as entries')->leftJoin('branches', 'branches.id', '=', 'entries.branch_id')->where('entries.tenant_id', $tenantId)->select('entries.*', 'branches.name as branch_name');
-        if (DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role') !== 'owner') $query->where(fn (Builder $scope) => $scope->whereIn('entries.branch_id', DB::table('user_branches')->where('tenant_id', $tenantId)->where('user_id', $actorId)->select('branch_id'))->orWhereNull('entries.branch_id'));
+        if (DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role') !== 'owner') $query->where(fn (Builder $scope) => $scope->whereIn('entries.branch_id', FinancialActor::operationalBranchIds($actorId, $tenantId))->orWhereNull('entries.branch_id'));
         foreach (['status' => 'entries.status', 'sourceType' => 'entries.source_type', 'branchId' => 'entries.branch_id'] as $parameter => $column) {
             if ($request->filled($parameter)) {
                 $query->where($column, $request->query($parameter));

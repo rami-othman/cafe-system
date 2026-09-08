@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog;
 
+use App\Domain\Inventory\RecipeMaterialEligibility;
 use Illuminate\Support\Facades\DB;
 
 class MaterialCatalogService
@@ -42,6 +43,8 @@ class MaterialCatalogService
     {
         $unit = $this->units->inventoryUnit($m->unit);
 
-        return ['id' => (int) $m->id, 'name' => $m->name, 'sku' => $m->sku, 'unitCode' => $unit, 'unitFamily' => $unit ? $this->units->family($unit) : null, 'isActive' => (bool) $m->is_active, 'archivedAt' => $m->deleted_at, 'configurationAvailable' => $unit !== null && $m->deleted_at === null && (bool) $m->is_active, 'unavailabilityReason' => $unit ? null : 'unit_unmapped'];
+        $eligible = RecipeMaterialEligibility::allows($m);
+
+        return ['id' => (int) $m->id, 'name' => $m->name, 'sku' => $m->sku, 'unitCode' => $unit, 'unitFamily' => $unit ? $this->units->family($unit) : null, 'isActive' => (bool) $m->is_active, 'archivedAt' => $m->deleted_at, 'configurationAvailable' => $unit !== null && $eligible && $m->deleted_at === null && (bool) $m->is_active, 'unavailabilityReason' => ! $eligible ? 'item_type_ineligible' : ($unit ? null : 'unit_unmapped')];
     }
 }

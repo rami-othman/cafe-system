@@ -3,24 +3,23 @@
 namespace App\Domain\Inventory;
 
 use App\Services\OperationalAuditService;
-use App\Support\FinancialActor;
 use App\Support\InventoryDecimal;
+use App\Support\InventoryAccess;
 use App\Support\WarehousePresentation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 final class WarehouseTransferService
 {
-    public function __construct(private readonly InventoryPostingService $posting, private readonly UnitConversionResolver $conversions, private readonly OperationalAuditService $audit, private readonly TransferTransitLedger $transit) {}
+    public function __construct(private readonly InventoryPostingService $posting, private readonly UnitConversionResolver $conversions, private readonly OperationalAuditService $audit, private readonly TransferTransitLedger $transit, private readonly InventoryWarehouseAssignment $assignments) {}
 
     public function create(Request $request, int $tenant, array $data, ?int $actor): int
     {
         if (($key = $data['idempotencyKey'] ?? null) && ($existing = DB::table('warehouse_transfers')->where('tenant_id', $tenant)->where('idempotency_key', $key)->value('id'))) return (int) $existing;
         return DB::transaction(function () use ($request, $tenant, $data, $actor, $key): int {
             if ($key && ($existing = DB::table('warehouse_transfers')->where('tenant_id', $tenant)->where('idempotency_key', $key)->lockForUpdate()->value('id'))) return (int) $existing;
-            [$source, $destination] = $this->warehouses($tenant, (int) $data['sourceWarehouseId'], (int) $data['destinationWarehouseId'], $actor);
+            [$source, $destination] = $this->warehouses($request, $tenant, (int) $data['sourceWarehouseId'], (int) $data['destinationWarehouseId']);
             $id = (int) DB::table('warehouse_transfers')->insertGetId(['tenant_id' => $tenant, 'source_warehouse_id' => $source->id, 'destination_warehouse_id' => $destination->id, 'status' => 'draft', 'idempotency_key' => $key, 'notes' => $data['notes'] ?? null, 'created_by' => $actor, 'created_at' => now(), 'updated_at' => now()]);
             $this->replaceLines($tenant, $id, $source->id, $destination->id, $data['lines'] ?? []);
             $this->audit($request, $tenant, 'create', $id, $source->branch_id, $actor); return $id;
@@ -31,7 +30,7 @@ final class WarehouseTransferService
     {
         DB::transaction(function () use ($request, $tenant, $id, $data, $actor): void {
             $row = $this->row($tenant, $id, true); $this->status($row, 'draft');
-            [$source, $destination] = $this->warehouses($tenant, (int) ($data['sourceWarehouseId'] ?? $row->source_warehouse_id), (int) ($data['destinationWarehouseId'] ?? $row->destination_warehouse_id), $actor);
+            [$source, $destination] = $this->warehouses($request, $tenant, (int) ($data['sourceWarehouseId'] ?? $row->source_warehouse_id), (int) ($data['destinationWarehouseId'] ?? $row->destination_warehouse_id));
             DB::table('warehouse_transfers')->where('id', $id)->update(['source_warehouse_id' => $source->id, 'destination_warehouse_id' => $destination->id, 'notes' => array_key_exists('notes', $data) ? $data['notes'] : $row->notes, 'updated_at' => now()]);
             if (array_key_exists('lines', $data)) $this->replaceLines($tenant, $id, $source->id, $destination->id, $data['lines']);
             $this->audit($request, $tenant, 'update', $id, $source->branch_id, $actor);
@@ -41,7 +40,7 @@ final class WarehouseTransferService
     public function action(Request $request, int $tenant, int $id, string $action, array $data, ?int $actor): void
     {
         DB::transaction(function () use ($request, $tenant, $id, $action, $data, $actor): void {
-            $row = $this->row($tenant, $id, true); [$source, $destination] = $this->warehouses($tenant, (int) $row->source_warehouse_id, (int) $row->destination_warehouse_id, $actor);
+            $row = $this->row($tenant, $id, true); [$source, $destination] = $this->warehouses($request, $tenant, (int) $row->source_warehouse_id, (int) $row->destination_warehouse_id);
             if ($this->operationExists($tenant, $id, $action, $data['idempotencyKey'] ?? null)) return;
             if ($action === 'submit') {
                 $this->status($row, 'draft'); if (!DB::table('warehouse_transfer_lines')->where('warehouse_transfer_id', $id)->exists()) throw ValidationException::withMessages(['lines' => 'Add at least one line before submitting.']);
@@ -77,7 +76,7 @@ final class WarehouseTransferService
     {
         DB::transaction(function () use ($request, $tenant, $id, $data, $actor): void {
             $row = $this->row($tenant, $id, true); if (DB::table('warehouse_transfer_receipts')->where('warehouse_transfer_id', $id)->where('idempotency_key', $data['idempotencyKey'])->exists()) return; if (!in_array($row->status, ['dispatched', 'partially_received'], true)) throw ValidationException::withMessages(['status' => 'This transfer is not ready to receive.']);
-            [$source, $destination] = $this->warehouses($tenant, (int) $row->source_warehouse_id, (int) $row->destination_warehouse_id, $actor);
+            [$source, $destination] = $this->warehouses($request, $tenant, (int) $row->source_warehouse_id, (int) $row->destination_warehouse_id);
             $receiptId = (int) DB::table('warehouse_transfer_receipts')->insertGetId(['tenant_id' => $tenant, 'warehouse_transfer_id' => $id, 'idempotency_key' => $data['idempotencyKey'], 'received_by' => $actor, 'created_at' => now(), 'updated_at' => now()]);
             foreach ($data['lines'] as $input) {
                 $line = DB::table('warehouse_transfer_lines')->where('warehouse_transfer_id', $id)->where('inventory_item_id', $input['itemId'])->lockForUpdate()->first(); if (!$line) throw ValidationException::withMessages(['lines' => 'The received item is not part of this transfer.']);
@@ -94,8 +93,8 @@ final class WarehouseTransferService
     }
 
     private function replaceLines(int $tenant, int $transfer, int $source, int $destination, array $lines): void { DB::table('warehouse_transfer_lines')->where('warehouse_transfer_id', $transfer)->delete(); foreach ($lines as $line) { $item = $this->item($tenant, $line['itemId'], $source, $destination); $resolved = $this->conversions->resolve($tenant, $item, $line['requestedQuantity'], $line['unit'] ?? null); if ($resolved['baseQuantity'] <= 0) throw ValidationException::withMessages(['lines' => 'Requested quantity must be greater than zero.']); DB::table('warehouse_transfer_lines')->insert(['tenant_id'=>$tenant,'warehouse_transfer_id'=>$transfer,'inventory_item_id'=>$item->id,'unit'=>$resolved['inputUnit'],'requested_quantity'=>InventoryDecimal::quantity($resolved['baseQuantity']),'requested_base_quantity'=>InventoryDecimal::quantity($resolved['baseQuantity']),'requested_conversion_factor'=>InventoryDecimal::conversionFactor($resolved['factor']),'unit_cost'=>InventoryDecimal::unitCost(InventoryDecimal::cost($item->latest_unit_cost)),'created_at'=>now(),'updated_at'=>now()]); } }
-    private function warehouses(int $tenant, int $source, int $destination, ?int $actor): array { if ($source === $destination) throw ValidationException::withMessages(['destinationWarehouseId'=>'Source and destination warehouses must differ.']); $rows=DB::table('warehouses')->where('tenant_id',$tenant)->whereIn('id',[$source,$destination])->where('is_active',true)->whereNull('deleted_at')->get()->keyBy('id'); if($rows->count()!==2||WarehousePresentation::isLegacy($rows[$source]->code)||WarehousePresentation::isLegacy($rows[$destination]->code)) throw ValidationException::withMessages(['sourceWarehouseId'=>'Select active current-tenant warehouses.']); FinancialActor::assertBranchAccess($actor,$tenant,$rows[$source]->branch_id?(int)$rows[$source]->branch_id:null); FinancialActor::assertBranchAccess($actor,$tenant,$rows[$destination]->branch_id?(int)$rows[$destination]->branch_id:null); return [$rows[$source],$rows[$destination]]; }
-    private function item(int $tenant,int $id,int $source,int $destination): object { $item=DB::table('inventory_items')->where('tenant_id',$tenant)->where('id',$id)->where('is_active',true)->whereNull('deleted_at')->first(); if(!$item) throw ValidationException::withMessages(['lines'=>'A transfer item is inactive or unavailable.']); if(Schema::hasTable('inventory_item_warehouses') && (!DB::table('inventory_item_warehouses')->where('tenant_id',$tenant)->where('inventory_item_id',$id)->where('warehouse_id',$source)->exists() || !DB::table('inventory_item_warehouses')->where('tenant_id',$tenant)->where('inventory_item_id',$id)->where('warehouse_id',$destination)->exists())) throw ValidationException::withMessages(['lines'=>'Each item must be assigned to both source and destination warehouses.']); return $item; }
+    private function warehouses(Request $request, int $tenant, int $source, int $destination): array { if ($source === $destination) throw ValidationException::withMessages(['destinationWarehouseId'=>'Source and destination warehouses must differ.']); $rows=DB::table('warehouses')->where('tenant_id',$tenant)->whereIn('id',[$source,$destination])->where('is_active',true)->whereNull('deleted_at')->get()->keyBy('id'); if($rows->count()!==2||WarehousePresentation::isLegacy($rows[$source]->code)||WarehousePresentation::isLegacy($rows[$destination]->code)) throw ValidationException::withMessages(['sourceWarehouseId'=>'Select active current-tenant warehouses.']); InventoryAccess::assertBranchAccess($request,$rows[$source]->branch_id?(int)$rows[$source]->branch_id:null); InventoryAccess::assertBranchAccess($request,$rows[$destination]->branch_id?(int)$rows[$destination]->branch_id:null); return [$rows[$source],$rows[$destination]]; }
+    private function item(int $tenant,int $id,int $source,int $destination): object { $item=DB::table('inventory_items')->where('tenant_id',$tenant)->where('id',$id)->where('is_active',true)->whereNull('deleted_at')->first(); if(!$item) throw ValidationException::withMessages(['lines'=>'A transfer item is inactive or unavailable.']); $this->assignments->assertAssigned($tenant, $id, $source, 'lines'); $this->assignments->assertAssigned($tenant, $id, $destination, 'lines'); return $item; }
     private function release(int $tenant,int $warehouse,int $id): void { foreach($this->lines($id,true) as $line){$amount=InventoryDecimal::units($line->reserved_quantity);if($amount>0){$this->posting->adjustReservation($tenant,$warehouse,$line->inventory_item_id,-$amount);DB::table('warehouse_transfer_lines')->where('id',$line->id)->update(['reserved_quantity'=>'0.000','updated_at'=>now()]);}} }
     private function operationExists(int $tenant,int $id,string $operation,?string $key): bool { return $key !== null && DB::table('warehouse_transfer_operations')->where('tenant_id',$tenant)->where('warehouse_transfer_id',$id)->where('operation',$operation)->where('idempotency_key',$key)->exists(); }
     private function recordOperation(int $tenant,int $id,string $operation,string $key,?int $actor): void { DB::table('warehouse_transfer_operations')->insert(['tenant_id'=>$tenant,'warehouse_transfer_id'=>$id,'operation'=>$operation,'idempotency_key'=>$key,'created_by'=>$actor,'created_at'=>now(),'updated_at'=>now()]); }

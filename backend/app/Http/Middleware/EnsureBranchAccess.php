@@ -69,12 +69,16 @@ class EnsureBranchAccess
 
     private function authorizeSameTenantBranch(Request $request, int $branchId): void
     {
+        // Warehouse writes defer foreign IDs to their tenant-scoped validator
+        // (422); warehouse reads remain an operational scope (404).
+        if ($request->is('api/v1/inventory/*') || $request->is('api/v1/finance/*') || ($request->is('api/v1/warehouses*') && $request->isMethod('GET'))) {
+            $this->branches->authorizeRequestBranch($request, $branchId);
+
+            return;
+        }
+
         $user = $request->attributes->get('auth_user');
         $branch = Branch::query()->find($branchId);
-
-        // Let the route's tenant-scoped validation report foreign, archived,
-        // or absent IDs uniformly. For a same-tenant branch, this middleware
-        // is authoritative: an unassigned user receives 403.
         if ($branch && $user && (int) $branch->tenant_id === (int) $user->tenant_id) {
             $this->branches->authorizeRequestBranch($request, $branchId);
         }

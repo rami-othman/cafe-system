@@ -19,35 +19,35 @@ use App\Http\Controllers\Api\Admin\Menu\MenuValidationController;
 use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\BranchController;
-use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
 use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
 use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
 use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\BarCheckController;
+use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DailyClosingController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
-use App\Http\Controllers\Api\DailyClosingController;
+use App\Http\Controllers\Api\EmployeeManagementController;
 use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\FinanceApprovalRuleController;
 use App\Http\Controllers\Api\FinanceDashboardController;
+use App\Http\Controllers\Api\FinanceRolePermissionController;
 use App\Http\Controllers\Api\FinancialAccountController;
 use App\Http\Controllers\Api\FinancialLocationController;
 use App\Http\Controllers\Api\FinancialReconciliationController;
 use App\Http\Controllers\Api\FinancialReportController;
 use App\Http\Controllers\Api\FinancialSetupStatusController;
 use App\Http\Controllers\Api\FinancialTransactionController;
-use App\Http\Controllers\Api\FinanceApprovalRuleController;
-use App\Http\Controllers\Api\FinanceRolePermissionController;
 use App\Http\Controllers\Api\InventoryBalanceController;
 use App\Http\Controllers\Api\InventoryItemController;
 use App\Http\Controllers\Api\InventoryItemUnitConversionController;
 use App\Http\Controllers\Api\JournalEntryController;
-use App\Http\Controllers\Api\PaymentMethodController;
-use App\Http\Controllers\Api\EmployeeManagementController;
 use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\PosMenuSyncController;
 use App\Http\Controllers\Api\PosOrderController;
 use App\Http\Controllers\Api\PosStateController;
@@ -105,10 +105,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{branch}', 'show')->whereNumber('branch');
             Route::put('{branch}', 'update')->whereNumber('branch');
         });
-
-    // Tenant identity for these singleton configuration resources always comes
-    // from the authenticated opaque-token session, never from a route or body
-    // tenant identifier.
+    
     Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
         ->prefix('cafe-configuration')
         ->group(function (): void {

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Support\BranchScope;
 use App\Support\Money;
+use App\Support\RefundTaxAllocation;
 use App\Support\SafeMath;
 use Illuminate\Support\Facades\DB;
 
@@ -35,13 +36,14 @@ final class FinanceKpiQueryService
             ->selectRaw('COALESCE(SUM(subtotal),0) subtotal, COALESCE(SUM(discount_total),0) discounts, COALESCE(SUM(tax_total),0) tax, COALESCE(SUM(service_total),0) service, COALESCE(SUM(cogs_total),0) cogs, COUNT(*) order_count, SUM(CASE WHEN cogs_total IS NULL THEN 1 ELSE 0 END) missing_cogs')
             ->first();
 
-        $refundsCents = Money::cents(DB::table('payment_refunds')->where('tenant_id', $context['tenantId'])
-            ->whereIn('branch_id', $context['scopeBranchIds'])->where('status', 'completed')
-            ->whereBetween('refunded_at', [$range['start'], $range['end']])->sum('amount') ?: '0');
+        [$refundsCents, $refundTaxCents] = $this->refundRevenueAndTax($context, $range['start'], $range['end']);
 
-        $grossCents = Money::cents($orders->subtotal ?: '0') + Money::cents($orders->tax ?: '0') + Money::cents($orders->service ?: '0');
+        // Tax is a customer liability (2010), never revenue. `subtotal` is
+        // the same pre-discount revenue credited to 4000 by PaymentController.
+        $grossCents = Money::cents($orders->subtotal ?: '0');
         $discountsCents = Money::cents($orders->discounts ?: '0');
         $netSalesCents = $grossCents - $discountsCents - $refundsCents;
+        $taxCents = Money::cents($orders->tax ?: '0') - $refundTaxCents;
 
         $orderCount = (int) $orders->order_count;
         $uncovered = (int) $orders->missing_cogs;
@@ -53,13 +55,40 @@ final class FinanceKpiQueryService
 
         return [
             'netSalesCents' => $netSalesCents,
-            'netSales' => ['grossSales' => Money::decimal($grossCents), 'discounts' => Money::decimal($discountsCents), 'refunds' => Money::decimal($refundsCents), 'netSales' => Money::decimal($netSalesCents)],
+            'netSales' => ['grossSales' => Money::decimal($grossCents), 'discounts' => Money::decimal($discountsCents), 'refunds' => Money::decimal($refundsCents), 'tax' => Money::decimal($taxCents), 'netSales' => Money::decimal($netSalesCents)],
             'cogsCents' => $cogsCents,
             'cogs' => ['amount' => Money::decimal($cogsCents), 'coverageStatus' => $coverageStatus, 'coveredSalesCount' => $covered, 'uncoveredSalesCount' => $uncovered, 'coveragePercentage' => $orderCount === 0 ? null : SafeMath::ratioPercentage($covered, $orderCount)],
             'grossProfitCents' => $grossProfitCents,
             'grossProfitReliable' => $reliable,
             'grossProfit' => ['amount' => Money::decimal($grossProfitCents), 'reliable' => $reliable, 'marginPercentage' => $reliable ? SafeMath::ratioPercentage($grossProfitCents, $netSalesCents) : null],
         ];
+    }
+
+    /** @return array{0: int, 1: int} Tax-exclusive refund revenue and tax-liability reversal for the period. */
+    private function refundRevenueAndTax(array $context, string $start, string $end): array
+    {
+        $rows = DB::table('payment_refunds as refunds')
+            ->join('orders', 'orders.id', '=', 'refunds.order_id')
+            ->where('refunds.tenant_id', $context['tenantId'])->whereIn('refunds.branch_id', $context['scopeBranchIds'])
+            ->where('refunds.status', 'completed')->where('refunds.refunded_at', '<=', $end)
+            ->orderBy('refunds.order_id')->orderBy('refunds.refunded_at')->orderBy('refunds.id')
+            ->get(['refunds.id', 'refunds.order_id', 'refunds.amount', 'refunds.refunded_at', 'orders.total as order_total', 'orders.tax_total']);
+
+        $revenueCents = 0;
+        $taxCents = 0;
+        $refundedByOrder = [];
+        foreach ($rows as $row) {
+            $before = $refundedByOrder[$row->order_id] ?? 0;
+            $amount = Money::cents($row->amount);
+            $refundTax = RefundTaxAllocation::taxCents(Money::cents($row->order_total), Money::cents($row->tax_total), $before, $amount);
+            $refundedByOrder[$row->order_id] = $before + $amount;
+            if ($row->refunded_at >= $start) {
+                $revenueCents += $amount - $refundTax;
+                $taxCents += $refundTax;
+            }
+        }
+
+        return [$revenueCents, $taxCents];
     }
 
     /** Accounting-effective Operating Expenses: posted ledger activity against expenses-group accounts only (never cost_of_sales/waste). */

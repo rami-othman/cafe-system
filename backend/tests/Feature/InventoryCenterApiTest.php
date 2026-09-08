@@ -638,6 +638,49 @@ class InventoryCenterApiTest extends TestCase
         $this->assertDatabaseHas('stock_balances', ['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '7.000']);
     }
 
+    public function test_direct_posting_rejects_an_item_not_assigned_to_the_warehouse(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $warehouse = $this->warehouse($tenant);
+        $item = (int) $this->postJson('/api/v1/inventory/items', [
+            'nameAr' => 'Unassigned material', 'nameEn' => 'Unassigned material', 'sku' => 'UNASSIGNED-ITEM',
+            'itemType' => 'raw_material', 'unit' => 'kilogram', 'minimumStock' => '0.000',
+            'reorderLevel' => '0.000', 'latestUnitCost' => '1.0000', 'isActive' => true,
+        ], $this->headers($tenant))->assertCreated()->json('data.id');
+
+        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $warehouse), $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('warehouseId');
+        $this->assertDatabaseMissing('stock_balances', ['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item]);
+    }
+
+    public function test_base_unit_change_is_locked_by_current_recipe_references_but_not_unreferenced_items(): void
+    {
+        $this->seed();
+        $tenant = $this->tenant('cafe-618');
+        $item = (int) DB::table('inventory_items')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'Recipe material', 'name_ar' => 'Recipe material', 'name_en' => 'Recipe material',
+            'sku' => 'RECIPE-UNIT-LOCK', 'catalog_identity' => 'recipe-unit-lock', 'item_type' => 'raw_material',
+            'unit' => 'kilogram', 'minimum_stock' => '0.000', 'reorder_level' => '0.000', 'cost_per_unit' => '0.0000',
+            'latest_unit_cost' => '0.0000', 'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $category = DB::table('categories')->insertGetId(['tenant_id' => $tenant, 'name' => 'Recipe unit test', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $product = DB::table('products')->insertGetId(['tenant_id' => $tenant, 'category_id' => $category, 'name' => 'Recipe unit product', 'price' => 1, 'is_active' => true, 'is_stock_tracked' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $variant = DB::table('product_variants')->insertGetId(['tenant_id' => $tenant, 'product_id' => $product, 'name' => 'Regular', 'base_price' => 1, 'is_default' => true, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $recipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert(['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $item, 'quantity' => '1.000000', 'unit_code' => 'kg', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+
+        $payload = ['nameAr' => 'Recipe material', 'nameEn' => 'Recipe material', 'sku' => 'RECIPE-UNIT-LOCK', 'itemType' => 'raw_material', 'unit' => 'liter', 'minimumStock' => '0.000', 'reorderLevel' => '0.000', 'latestUnitCost' => '0.0000', 'isActive' => true];
+        $this->patchJson("/api/v1/inventory/items/$item", $payload, $this->headers($tenant))->assertUnprocessable()->assertJsonValidationErrors('unit');
+        $this->assertSame('kilogram', DB::table('inventory_items')->where('id', $item)->value('unit'));
+        $this->assertSame('kg', DB::table('variant_recipe_components')->where('inventory_item_id', $item)->value('unit_code'));
+
+        $unreferenced = $this->createItem($tenant);
+        $payload['sku'] = 'TEST-ITEM';
+        $this->patchJson("/api/v1/inventory/items/$unreferenced", $payload, $this->headers($tenant))->assertOk()->assertJsonPath('data.unit', 'liter');
+    }
+
     public function test_inventory_numeric_api_contracts_use_fixed_precision_strings(): void
     {
         $this->seed();
@@ -736,6 +779,7 @@ class InventoryCenterApiTest extends TestCase
         $warehouse = $this->isolatedWarehouse($tenant);
         $first = $this->createItem($tenant);
         $second = (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'Second material', 'nameEn' => 'Second material', 'sku' => 'SECOND-ITEM', 'itemType' => 'raw_material', 'unit' => 'kilogram', 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => '1.0000', 'isActive' => true], $this->headers($tenant))->assertCreated()->json('data.id');
+        foreach ([$first, $second] as $item) $this->assignItemToWarehouse($tenant, $item, $warehouse);
         $this->postJson('/api/v1/inventory/movements', $this->movement($first, $warehouse, 'stock_in', '4.000'), $this->headers($tenant))->assertCreated();
         $this->postJson('/api/v1/inventory/movements', $this->movement($second, $warehouse, 'stock_in', '6.000'), $this->headers($tenant))->assertCreated();
         DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $warehouse)->where('inventory_item_id', $second)->update(['quantity_on_hand' => '5.000']);
@@ -923,7 +967,7 @@ class InventoryCenterApiTest extends TestCase
 
     private function createItem(int $tenant): int
     {
-        return (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'مادة اختبار', 'nameEn' => 'Test material', 'sku' => 'TEST-ITEM', 'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '20.000', 'reorderLevel' => '20.000', 'latestUnitCost' => '1.0000', 'isActive' => true], $this->headers($tenant))->assertCreated()->json('data.id');
+        return (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'مادة اختبار', 'nameEn' => 'Test material', 'sku' => 'TEST-ITEM', 'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '20.000', 'reorderLevel' => '20.000', 'latestUnitCost' => '1.0000', 'warehouseIds' => [$this->warehouse($tenant)], 'isActive' => true], $this->headers($tenant))->assertCreated()->json('data.id');
     }
 
     private function movement(int $item, int $warehouse, string $type = 'stock_in', string $quantity = '10.000', ?string $cost = '2.0000', ?string $reason = 'اختبار'): array

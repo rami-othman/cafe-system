@@ -5,35 +5,33 @@
 Orders are draft/unpaid until `POST /api/v1/orders/{order}/pay` succeeds. The
 current controller creates a completed payment and changes the order to `paid`
 inside one transaction; this is the sole consumption trigger. Cart, held,
-unpaid and cancelled orders never affect stock. Existing refunds are
-amount-based: a full refund can reverse all consumed ingredients, while a
-partial refund remains financial-only until item-level refund quantities exist.
+unpaid and cancelled orders never affect stock. Refunds are amount-based
+financial reversals only: neither full nor partial refunds return inventory
+until an explicit item-aware return-to-stock operation exists.
 
 ## Model and versioning
 
-Recipes belong to a tenant and product and have immutable versions. A line has
-one tenant-scoped inventory item, required quantity per yield and optional
-wastage. Product inventory settings indicate inventory control, bar/kitchen
-consumption, and optional per-branch warehouse mappings. Sales snapshots retain
-recipe version, ingredient cost, COGS and profit on order and order-item rows;
-later recipes or costs never rewrite them.
+Canonical Menu variant/modifier recipes belong to the published Menu snapshot.
+The legacy `recipes`/`recipe_lines` tables and their yield/wastage fields remain
+only for compatibility and do not participate in Menu publication, payment,
+consumption, WAC, or COGS. Sales snapshots retain realized WAC COGS; manual
+product/variant `cost_price` remains a non-authoritative reference estimate.
 
 ## Consumption and reversal
 
 At payment, a service locks the order and checks an idempotent consumption
-record. It resolves explicit branch mapping, otherwise active branch bar or
-kitchen warehouse (never central), validates every ingredient availability,
-then posts per-ingredient `sale_consumption` movements through the inventory
-ledger in the same database transaction. On a full completed refund it emits
-one idempotent `return_in` movement per original consumption at its historical
-unit cost. Partial amount-only refunds create no stock return.
+record. It resolves the branch's `BR-{branchId}-MAIN` warehouse, validates the
+published Menu components, then posts per-ingredient `sale_consumption`
+movements through the inventory ledger in the same database transaction.
+Refunds do not create stock movements or alter historical consumption/COGS.
 
 ## Costing
 
 Each consumption uses the warehouse weighted average at the exact locked time.
-Order-item COGS is the ingredient total; order COGS is their sum. Net sales is
-the paid sale total minus completed refunds. Gross profit is net sales minus
-COGS; discounts affect net sales only, never recipe quantities.
+Order-item COGS is the ingredient total; order COGS is their sum. Tax is a
+customer liability, not revenue: net revenue is subtotal minus discounts and
+tax-exclusive refunds. Gross profit is net revenue minus realized COGS;
+discounts affect revenue only, never recipe quantities.
 
 ## API and Flutter map
 

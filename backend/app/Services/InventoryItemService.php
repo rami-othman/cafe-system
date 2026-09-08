@@ -17,12 +17,9 @@ class InventoryItemService
     {
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $itemId): int {
             $before = $itemId ? $this->find($tenantId, $itemId) : null;
-            if ($before && $before->unit !== $data['unit'] && (
-                DB::table('stock_movements')->where('tenant_id', $tenantId)->where('inventory_item_id', $itemId)->exists()
-                || DB::table('inventory_item_unit_conversions')->where('tenant_id', $tenantId)->where('inventory_item_id', $itemId)->exists()
-            )) {
+            if ($before && $before->unit !== $data['unit'] && $this->baseUnitIsLocked($tenantId, $itemId)) {
                 throw ValidationException::withMessages([
-                    'unit' => 'The base unit cannot change after stock history or unit conversions exist.',
+                    'unit' => 'The base unit cannot change after stock history, unit conversions, or active recipe references exist.',
                 ]);
             }
             $payload = $this->payload($data, $actorId) + ['updated_at' => now()];
@@ -137,5 +134,13 @@ class InventoryItemService
                 ],
             );
         }
+    }
+
+    private function baseUnitIsLocked(int $tenantId, int $itemId): bool
+    {
+        return DB::table('stock_movements')->where('tenant_id', $tenantId)->where('inventory_item_id', $itemId)->exists()
+            || DB::table('inventory_item_unit_conversions')->where('tenant_id', $tenantId)->where('inventory_item_id', $itemId)->exists()
+            || DB::table('variant_recipe_components')->where('tenant_id', $tenantId)->where('inventory_item_id', $itemId)->exists()
+            || DB::table('modifier_option_recipe_profile_components')->where('tenant_id', $tenantId)->where('inventory_item_id', $itemId)->exists();
     }
 }
