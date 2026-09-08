@@ -441,7 +441,10 @@ class _EffectEditorState extends State<_EffectEditor> {
     final RecipeMaterial? material = widget.state.materials.firstWhereOrNull(
       (m) => m.id == component.materialId,
     );
-    final List<String> units = compatibleRecipeUnits(material?.unitCode);
+    final List<String> units = material?.allowedRecipeUnits ?? const <String>[];
+    final List<String> visibleUnits = units.contains(component.unitCode)
+        ? units
+        : <String>[component.unitCode, ...units];
     return Container(
       key: Key('effect-row-${operation}-${component.materialId}'),
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -518,19 +521,18 @@ class _EffectEditorState extends State<_EffectEditor> {
             ),
           ),
           SizedBox(
-            width: 90,
+            width: 120,
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: DropdownButtonFormField<String>(
                 key: Key('adjustment-unit-$operation-$index'),
-                value: units.contains(component.unitCode)
-                    ? component.unitCode
-                    : null,
+                value: component.unitCode,
+                isExpanded: true,
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context).unit,
                   isDense: true,
                 ),
-                items: units
+                items: visibleUnits
                     .map(
                       (unit) => DropdownMenuItem<String>(
                         value: unit,

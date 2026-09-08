@@ -16,6 +16,11 @@ final class InventoryUnitCatalog
         return array_keys(self::UNITS);
     }
 
+    public static function isKnown(?string $unit): bool
+    {
+        return array_key_exists(self::normalize($unit), self::UNITS);
+    }
+
     public static function normalize(?string $unit): string
     {
         $value = mb_strtolower(trim((string) $unit));

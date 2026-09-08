@@ -33,6 +33,137 @@ class RecipeConfigurationApiTest extends TestCase
         $this->getJson('/api/v1/admin/catalog/materials', $this->headers($tenant))->assertOk()->assertJsonFragment(['id' => $id, 'configurationAvailable' => false, 'unavailabilityReason' => 'unit_unmapped']);
     }
 
+    public function test_base_unit_recipe_saves_without_an_inventory_conversion(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('base-unit-recipe');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '18.125', 'unitCode' => 'g']],
+        ], $this->headers($tenant))->assertOk();
+    }
+
+    public function test_recipe_save_rejects_a_recipe_unit_without_an_active_inventory_conversion(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('missing-conversion');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '1', 'unitCode' => 'kg']],
+        ], $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['components.0.unitCode' => 'No active Inventory conversion exists from kilogram to gram.']);
+    }
+
+    public function test_recipe_save_rejects_inactive_and_invalid_inventory_conversions(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('inactive-invalid-conversion');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+        $payload = ['components' => [['materialId' => $material, 'quantity' => '1', 'unitCode' => 'kg']]];
+        $this->conversion($tenant, $material, 'kilogram', 'gram', '1000.000000', false);
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $payload, $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['components.0.unitCode' => 'No active Inventory conversion exists from kilogram to gram.']);
+
+        DB::table('inventory_item_unit_conversions')->where('tenant_id', $tenant)->where('inventory_item_id', $material)->update(['is_active' => true, 'factor' => '0.000000']);
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $payload, $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['components.0.unitCode' => 'The active Inventory conversion from kilogram to gram is invalid.']);
+    }
+
+    public function test_recipe_save_accepts_active_mass_and_volume_inventory_conversions(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('active-conversions');
+        $beans = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+        $milk = $this->rawMaterial($tenant, 'MILK', 'milliliter');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $milk, 'quantity' => '0.250', 'unitCode' => 'l']],
+        ], $this->headers($tenant))->assertUnprocessable()
+            ->assertJsonValidationErrors(['components.0.unitCode' => 'No active Inventory conversion exists from liter to milliliter.']);
+
+        $this->conversion($tenant, $beans, 'kilogram', 'gram', '1000.000000');
+        $this->conversion($tenant, $milk, 'liter', 'milliliter', '1000.000000');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [
+                ['materialId' => $beans, 'quantity' => '0.018', 'unitCode' => 'kg'],
+                ['materialId' => $milk, 'quantity' => '0.250', 'unitCode' => 'l'],
+            ],
+        ], $this->headers($tenant))->assertOk();
+    }
+
+    public function test_recipe_save_rejects_a_converted_quantity_that_is_not_representable_at_inventory_precision(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('conversion-precision');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+        $this->conversion($tenant, $material, 'kilogram', 'gram', '0.500000');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '0.001', 'unitCode' => 'kg']],
+        ], $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['components.0.quantity' => 'Converted quantity cannot be represented at Inventory 3-decimal precision.']);
+    }
+
+    public function test_modifier_recipe_save_enforces_the_same_inventory_conversion_contract(): void
+    {
+        [$tenant, , , , $option] = $this->recipeContext('modifier-conversion');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+        $payload = ['components' => [['materialId' => $material, 'operation' => 'add', 'quantity' => '0.018', 'unitCode' => 'kg']]];
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $payload, $this->headers($tenant))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('components.0.unitCode');
+
+        $this->conversion($tenant, $material, 'kilogram', 'gram', '1000.000000');
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $payload, $this->headers($tenant))->assertOk();
+    }
+
+    public function test_material_catalog_exposes_only_base_and_active_inventory_recipe_units(): void
+    {
+        $tenant = $this->tenant('allowed-recipe-units');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+        $this->conversion($tenant, $material, 'kilogram', 'gram', '1000.000000');
+        $this->conversion($tenant, $material, 'liter', 'gram', '1.000000', false);
+        $this->conversion($tenant, $material, 'milliliter', 'kilogram', '1.000000');
+
+        $this->getJson('/api/v1/admin/catalog/materials', $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $material)
+            ->assertJsonPath('data.0.allowedRecipeUnits', ['g', 'kg']);
+    }
+
+    public function test_material_catalog_keeps_a_valid_inventory_count_base_unit_available_for_recipes(): void
+    {
+        $tenant = $this->tenant('inventory-count-base-unit');
+        $material = $this->rawMaterial($tenant, 'TEA-BAG', 'bag');
+
+        $this->getJson('/api/v1/admin/catalog/materials', $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $material)
+            ->assertJsonPath('data.0.unitCode', 'bag')
+            ->assertJsonPath('data.0.allowedRecipeUnits', ['bag'])
+            ->assertJsonPath('data.0.configurationAvailable', true);
+    }
+
+    public function test_recipe_resolution_uses_the_inventory_conversion_factor_not_recipe_unit_family_scaling(): void
+    {
+        [$tenant, , $variant] = $this->recipeContext('inventory-factor-resolution');
+        $material = $this->rawMaterial($tenant, 'GROUND-COFFEE', 'gram');
+        $this->conversion($tenant, $material, 'kilogram', 'gram', '0.500000');
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '2', 'unitCode' => 'kg']],
+        ], $this->headers($tenant))->assertOk();
+
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => []], $this->headers($tenant))
+            ->assertOk()
+            ->assertJsonPath('data.components.0.quantity', '1')
+            ->assertJsonPath('data.components.0.unitCode', 'g');
+    }
+
     public function test_nearest_profile_fully_replaces_inheritance_and_empty_override_suppresses_it(): void
     {
         [$tenant, $product, $variant, $group, $option] = $this->recipeContext('inheritance');
@@ -364,7 +495,40 @@ class RecipeConfigurationApiTest extends TestCase
 
     private function material(int $tenant, string $sku, string $unit, string $itemType = 'other'): int
     {
+        $inventoryUnit = match ($unit) {
+            'kilogram' => 'gram',
+            'liter' => 'milliliter',
+            default => $unit,
+        };
+        $id = $this->rawMaterial($tenant, $sku, $inventoryUnit, $itemType);
+
+        if ($unit === 'kilogram') {
+            $this->conversion($tenant, $id, 'kilogram', 'gram', '1000.000000');
+        }
+        if ($unit === 'liter') {
+            $this->conversion($tenant, $id, 'liter', 'milliliter', '1000.000000');
+        }
+
+        return $id;
+    }
+
+    private function rawMaterial(int $tenant, string $sku, string $unit, string $itemType = 'other'): int
+    {
         return DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => $sku, 'sku' => $sku, 'item_type' => $itemType, 'unit' => $unit, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    private function conversion(int $tenant, int $material, string $source, string $target, string $factor, bool $active = true): void
+    {
+        DB::table('inventory_item_unit_conversions')->insert([
+            'tenant_id' => $tenant,
+            'inventory_item_id' => $material,
+            'source_unit' => $source,
+            'target_unit' => $target,
+            'factor' => $factor,
+            'is_active' => $active,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function tenant(string $slug): int

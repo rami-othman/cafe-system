@@ -40,7 +40,7 @@ final class UnitConversionResolver
                 ->multipliedBy(InventoryDecimal::conversionFactor($resolved['factor']))
                 ->toScale(3, RoundingMode::UNNECESSARY);
         } catch (\Throwable) {
-            throw ValidationException::withMessages(['quantity' => 'The converted quantity exceeds the supported base-unit precision.']);
+            throw ValidationException::withMessages(['quantity' => 'Converted quantity cannot be represented at Inventory 3-decimal precision.']);
         }
 
         return $resolved + ['baseQuantity' => InventoryDecimal::units((string) $baseQuantity)];
@@ -52,6 +52,13 @@ final class UnitConversionResolver
         $baseUnit = InventoryUnitCatalog::normalize($item->unit);
         $inputUnit = $unit === null || trim($unit) === '' ? $baseUnit : InventoryUnitCatalog::normalize($unit);
 
+        if (! InventoryUnitCatalog::isKnown($baseUnit)) {
+            throw ValidationException::withMessages(['unit' => 'The Inventory material base unit is unsupported.']);
+        }
+        if (! InventoryUnitCatalog::isKnown($inputUnit)) {
+            throw ValidationException::withMessages(['unit' => 'The recipe unit is not an Inventory unit.']);
+        }
+
         if ($inputUnit === $baseUnit) {
             return ['inputUnit' => $inputUnit, 'baseUnit' => $baseUnit, 'factor' => 1000000];
         }
@@ -60,12 +67,16 @@ final class UnitConversionResolver
             ->where('tenant_id', $tenantId)->where('inventory_item_id', $item->id)
             ->where('source_unit', $inputUnit)->where('target_unit', $baseUnit)->where('is_active', true)->first();
         if (! $conversion) {
-            throw ValidationException::withMessages(['unit' => 'No active conversion exists from the entered unit to this item\'s base unit.']);
+            throw ValidationException::withMessages(['unit' => "No active Inventory conversion exists from $inputUnit to $baseUnit."]);
         }
 
-        $factor = InventoryDecimal::factor($conversion->factor);
+        try {
+            $factor = InventoryDecimal::factor($conversion->factor);
+        } catch (ValidationException) {
+            throw ValidationException::withMessages(['unit' => "The active Inventory conversion from $inputUnit to $baseUnit is invalid."]);
+        }
         if ($factor <= 0) {
-            throw ValidationException::withMessages(['unit' => 'The active unit conversion is invalid.']);
+            throw ValidationException::withMessages(['unit' => "The active Inventory conversion from $inputUnit to $baseUnit is invalid."]);
         }
 
         return ['inputUnit' => $inputUnit, 'baseUnit' => $baseUnit, 'factor' => $factor];

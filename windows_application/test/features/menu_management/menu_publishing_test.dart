@@ -77,6 +77,38 @@ void main() {
   );
 
   test(
+    'verify again clears stale validation until the latest response arrives',
+    () async {
+      final _PublishingRepository repository = _PublishingRepository();
+      final Completer<MenuValidationResult> latest =
+          Completer<MenuValidationResult>();
+      var calls = 0;
+      repository.validationLoader = (_) {
+        calls++;
+        return calls == 1
+            ? Future<MenuValidationResult>.value(_validation(canPublish: false))
+            : latest.future;
+      };
+      final MenuReviewCubit cubit = MenuReviewCubit(repository: repository);
+
+      await cubit.load();
+      expect(cubit.state.validation?.canPublish, isFalse);
+
+      unawaited(cubit.validate());
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.validationStatus, ReviewRequestStatus.loading);
+      expect(cubit.state.validation, isNull);
+
+      latest.complete(_validation(canPublish: true));
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.validationStatus, ReviewRequestStatus.loaded);
+      expect(cubit.state.validation?.canPublish, isTrue);
+      await cubit.close();
+    },
+  );
+
+  test(
     'preview controls do not discard current Version for the same scope',
     () async {
       final _PublishingRepository repository = _PublishingRepository();

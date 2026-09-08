@@ -153,6 +153,7 @@ class _RecipeRepository extends MenuCatalogRepository {
   @override
   Future<List<RecipeMaterial>> listRecipeMaterials({
     String search = '',
+    bool includeUnavailable = false,
   }) async => const <RecipeMaterial>[
     RecipeMaterial(
       id: 1,
