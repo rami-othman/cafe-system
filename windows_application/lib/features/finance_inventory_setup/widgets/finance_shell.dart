@@ -97,81 +97,97 @@ class FinanceGlobalContext extends StatelessWidget {
       border: Border.all(color: FinanceColors.border),
       borderRadius: BorderRadius.circular(FinanceRadius.card),
     ),
-    child: Wrap(
-      spacing: FinanceSpace.sm,
-      runSpacing: FinanceSpace.sm,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(context.l10n.financeGlobalContextTitle, style: FinanceText.label),
-        ...<String>[
-          FinancePeriod.today,
-          FinancePeriod.thisWeek,
-          FinancePeriod.thisMonth,
-          FinancePeriod.custom,
-        ].map(
-          (String value) => _ContextButton(
-            label: FinancePeriod.label(context.l10n, value),
-            selected: selectedPeriod == value,
-            onTap: onPeriod == null ? null : () => onPeriod!(value),
-          ),
+        const SizedBox(height: FinanceSpace.sm),
+        // A Row gives the period controls their intrinsic widths and keeps
+        // them adjacent, rather than letting the surrounding context layout
+        // assign each control a complete line.
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final String value in <String>[
+              FinancePeriod.today,
+              FinancePeriod.thisWeek,
+              FinancePeriod.thisMonth,
+              FinancePeriod.custom,
+            ]) ...<Widget>[
+              _ContextButton(
+                label: FinancePeriod.label(context.l10n, value),
+                selected: selectedPeriod == value,
+                onTap: onPeriod == null ? null : () => onPeriod!(value),
+              ),
+              if (value != FinancePeriod.custom)
+                const SizedBox(width: FinanceSpace.sm),
+            ],
+          ],
         ),
-        const SizedBox(
-          width: 1,
-          height: 22,
-          child: ColoredBox(color: FinanceColors.border),
-        ),
-        if (branches.isNotEmpty)
-          Container(
-            height: 34,
-            padding: const EdgeInsetsDirectional.only(start: FinanceSpace.sm),
-            decoration: BoxDecoration(
-              color: FinanceColors.workspace,
-              border: Border.all(color: FinanceColors.border),
-              borderRadius: BorderRadius.circular(FinanceRadius.control),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<int>(
-                value: selectedBranchId ?? -1,
-                icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                style: FinanceText.body,
-                onChanged: onBranch == null
-                    ? null
-                    : (int? id) =>
-                          onBranch!(id == null || id == -1 ? null : id),
-                items: <DropdownMenuItem<int>>[
-                  DropdownMenuItem<int>(
-                    value: -1,
-                    child: Text(context.l10n.financeGlobalContextBranchAll),
-                  ),
-                  ...branches.map(
-                    (FinanceBranchOption branch) => DropdownMenuItem<int>(
-                      value: branch.id,
-                      child: Text(
-                        context.l10n.financeGlobalContextBranchNamed(
-                          branch.name,
+        const SizedBox(height: FinanceSpace.sm),
+        Wrap(
+          spacing: FinanceSpace.sm,
+          runSpacing: FinanceSpace.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            if (branches.isNotEmpty)
+              Container(
+                height: 34,
+                padding: const EdgeInsetsDirectional.only(
+                  start: FinanceSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: FinanceColors.workspace,
+                  border: Border.all(color: FinanceColors.border),
+                  borderRadius: BorderRadius.circular(FinanceRadius.control),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: selectedBranchId ?? -1,
+                    icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                    style: FinanceText.body,
+                    onChanged: onBranch == null
+                        ? null
+                        : (int? id) =>
+                              onBranch!(id == null || id == -1 ? null : id),
+                    items: <DropdownMenuItem<int>>[
+                      DropdownMenuItem<int>(
+                        value: -1,
+                        child: Text(
+                          context.l10n.financeGlobalContextBranchAll,
                         ),
                       ),
-                    ),
+                      ...branches.map(
+                        (FinanceBranchOption branch) => DropdownMenuItem<int>(
+                          value: branch.id,
+                          child: Text(
+                            context.l10n.financeGlobalContextBranchNamed(
+                              branch.name,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        if (showCompare) ...<Widget>[
-          Switch.adaptive(
-            value: compareEnabled,
-            onChanged: onCompareChanged,
-            activeThumbColor: FinanceColors.primary,
-          ),
-          Text(
-            context.l10n.reportsOverviewComparePrevious,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: FinanceColors.textSecondary,
-            ),
-          ),
-        ],
+            if (showCompare) ...<Widget>[
+              Switch.adaptive(
+                value: compareEnabled,
+                onChanged: onCompareChanged,
+                activeThumbColor: FinanceColors.primary,
+              ),
+              Text(
+                context.l10n.reportsOverviewComparePrevious,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: FinanceColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
       ],
     ),
   );

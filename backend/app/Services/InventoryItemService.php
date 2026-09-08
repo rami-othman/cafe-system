@@ -75,19 +75,31 @@ class InventoryItemService
 
     private function payload(array $data, ?int $actorId): array
     {
-        $cost = InventoryDecimal::cost($data['latestUnitCost'] ?? $data['costPerUnit'] ?? '0');
-        $lastPurchaseCost = array_key_exists('lastPurchaseCost', $data)
-            ? InventoryDecimal::cost($data['lastPurchaseCost'], 'lastPurchaseCost')
-            : $cost;
-
         $sku = trim((string) ($data['sku'] ?? '')) ?: null;
         $nameAr = trim($data['nameAr']);
         $nameEn = trim((string) ($data['nameEn'] ?? '')) ?: null;
         $unit = trim($data['unit']);
 
-        $payload = ['name' => $nameAr, 'name_ar' => $nameAr, 'name_en' => $nameEn, 'sku' => $sku, 'barcode' => trim((string) ($data['barcode'] ?? '')) ?: null, 'catalog_identity' => InventoryCatalogIdentity::forValues($sku, $nameEn ?: $nameAr, $unit, $data['itemType']), 'item_type' => $data['itemType'], 'category' => trim((string) ($data['category'] ?? '')) ?: null, 'unit' => $unit, 'minimum_stock' => InventoryDecimal::quantity(InventoryDecimal::units($data['minimumStock'] ?? '0')), 'reorder_level' => InventoryDecimal::quantity(InventoryDecimal::units($data['reorderLevel'] ?? $data['minimumStock'] ?? '0')), 'cost_per_unit' => InventoryDecimal::unitCost($cost), 'latest_unit_cost' => InventoryDecimal::unitCost($cost), 'is_active' => $data['isActive'], 'notes' => $data['notes'] ?? null, 'updated_by' => $actorId];
+        $payload = ['name' => $nameAr, 'name_ar' => $nameAr, 'name_en' => $nameEn, 'sku' => $sku, 'barcode' => trim((string) ($data['barcode'] ?? '')) ?: null, 'catalog_identity' => InventoryCatalogIdentity::forValues($sku, $nameEn ?: $nameAr, $unit, $data['itemType']), 'item_type' => $data['itemType'], 'category' => trim((string) ($data['category'] ?? '')) ?: null, 'unit' => $unit, 'minimum_stock' => InventoryDecimal::quantity(InventoryDecimal::units($data['minimumStock'] ?? '0')), 'reorder_level' => InventoryDecimal::quantity(InventoryDecimal::units($data['reorderLevel'] ?? $data['minimumStock'] ?? '0')), 'is_active' => $data['isActive'], 'notes' => $data['notes'] ?? null, 'updated_by' => $actorId];
+        // Cost is a result of receiving stock, not an attribute edited with
+        // the item definition.  Omit it when the catalogue form does not
+        // send a value so normal item edits cannot reset the running cost.
+        // The conditional support keeps older API clients and fixtures
+        // compatible while they migrate to purchase receiving.
+        if (array_key_exists('latestUnitCost', $data) || array_key_exists('costPerUnit', $data)) {
+            $cost = InventoryDecimal::cost($data['latestUnitCost'] ?? $data['costPerUnit']);
+            $payload += [
+                'cost_per_unit' => InventoryDecimal::unitCost($cost),
+                'latest_unit_cost' => InventoryDecimal::unitCost($cost),
+            ];
+        }
         if (Schema::hasColumn('inventory_items', 'purchase_unit')) {
-            $payload += ['purchase_unit' => trim((string) ($data['purchaseUnit'] ?? '')) ?: null, 'consumption_unit' => trim((string) ($data['consumptionUnit'] ?? '')) ?: null, 'last_purchase_cost' => InventoryDecimal::unitCost($lastPurchaseCost), 'preferred_supplier_name' => trim((string) ($data['preferredSupplierName'] ?? '')) ?: null, 'track_expiry' => (bool) ($data['trackExpiry'] ?? false), 'track_batch' => (bool) ($data['trackBatch'] ?? false)];
+            $payload += ['purchase_unit' => trim((string) ($data['purchaseUnit'] ?? '')) ?: null, 'consumption_unit' => trim((string) ($data['consumptionUnit'] ?? '')) ?: null, 'preferred_supplier_name' => trim((string) ($data['preferredSupplierName'] ?? '')) ?: null, 'track_expiry' => (bool) ($data['trackExpiry'] ?? false), 'track_batch' => (bool) ($data['trackBatch'] ?? false)];
+            if (array_key_exists('lastPurchaseCost', $data)) {
+                $payload['last_purchase_cost'] = InventoryDecimal::unitCost(
+                    InventoryDecimal::cost($data['lastPurchaseCost'], 'lastPurchaseCost'),
+                );
+            }
         }
         return $payload;
     }

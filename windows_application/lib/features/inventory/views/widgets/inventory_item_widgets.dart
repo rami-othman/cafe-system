@@ -169,7 +169,7 @@ class ItemTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ManagementTableShell(
-    minWidth: 1170,
+    minWidth: 900,
     verticalScroll: true,
     child: DataTable(
       headingRowColor: const WidgetStatePropertyAll<Color>(
@@ -180,8 +180,6 @@ class ItemTable extends StatelessWidget {
         DataColumn(label: Text('الفئة')),
         DataColumn(label: Text('النوع')),
         DataColumn(label: Text('الوحدة الأساسية')),
-        DataColumn(label: Text('متوسط التكلفة'), numeric: true),
-        DataColumn(label: Text('الكمية الحالية'), numeric: true),
         DataColumn(label: Text('الحالة')),
         DataColumn(label: Text('آخر تحديث')),
         DataColumn(label: Text('الإجراءات')),
@@ -207,12 +205,6 @@ class ItemTable extends StatelessWidget {
                 DataCell(Text(item.category.isEmpty ? '—' : item.category)),
                 DataCell(Text(inventoryItemTypeLabel(item.itemType))),
                 DataCell(Text(inventoryUnitLabel(item.unit))),
-                DataCell(Text(inventoryMoney(item.cost))),
-                DataCell(
-                  Text(
-                    '${inventoryNumber(item.availableQuantity, digits: 3)} ${inventoryUnitLabel(item.unit)}',
-                  ),
-                ),
                 DataCell(ItemStatusBadge(status: item.stockStatus)),
                 DataCell(Text(_date(item.lastUpdatedAt))),
                 DataCell(

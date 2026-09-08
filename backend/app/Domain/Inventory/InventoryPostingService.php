@@ -71,7 +71,17 @@ final class InventoryPostingService
                 $now = now();
 
                 DB::table('stock_balances')->where('id', $balance->id)->update(['quantity_on_hand' => InventoryDecimal::quantity($after), 'average_unit_cost' => InventoryDecimal::unitCost($average), 'last_movement_at' => $now, 'updated_at' => $now]);
-                DB::table('inventory_items')->where('id', $item->id)->update(['latest_unit_cost' => InventoryDecimal::unitCost($incoming ? $inputCost : $average), 'cost_per_unit' => InventoryDecimal::unitCost($incoming ? $inputCost : $average), 'updated_at' => $now]);
+                $itemUpdate = [
+                    'latest_unit_cost' => InventoryDecimal::unitCost($incoming ? $inputCost : $average),
+                    'cost_per_unit' => InventoryDecimal::unitCost($incoming ? $inputCost : $average),
+                    'updated_at' => $now,
+                ];
+                // `stock_in` is the purchase-receiving movement. It is the
+                // authoritative place to record the most recent buy price.
+                if ($data['type'] === 'stock_in') {
+                    $itemUpdate['last_purchase_cost'] = InventoryDecimal::unitCost($inputCost);
+                }
+                DB::table('inventory_items')->where('id', $item->id)->update($itemUpdate);
                 $id = (int) DB::table('stock_movements')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'] ?? $warehouse->branch_id, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $item->id, 'type' => $data['type'], 'quantity' => InventoryDecimal::quantity($quantity), 'input_unit' => $converted['inputUnit'], 'conversion_factor' => InventoryDecimal::conversionFactor($converted['factor']), 'base_quantity' => InventoryDecimal::quantity($quantity), 'idempotency_key' => $key, 'quantity_in' => InventoryDecimal::quantity($incoming ? $quantity : 0), 'quantity_out' => InventoryDecimal::quantity($incoming ? 0 : $quantity), 'quantity_before' => InventoryDecimal::quantity($before), 'quantity_after' => InventoryDecimal::quantity($after), 'unit_cost' => InventoryDecimal::unitCost($cost), 'total_cost' => InventoryDecimal::totalCost($quantity, $cost), 'reason' => $data['reason'] ?? null, 'reference_type' => $data['referenceType'] ?? null, 'reference_id' => $data['referenceId'] ?? null, 'created_by' => $actorId, 'occurred_at' => $data['occurredAt'] ?? $now, 'created_at' => $now, 'updated_at' => $now]);
                 $movement = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('id', $id)->first();
                 $impact = $this->accounting->postForFinalMovement($request, $tenantId, $movement, $actorId);
