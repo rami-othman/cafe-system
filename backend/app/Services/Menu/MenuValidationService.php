@@ -12,6 +12,7 @@ use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\ProductAvailabilityResolver;
 use App\Services\Catalog\ProductVariantPriceResolver;
 use App\Services\Catalog\RecipeConfigurationService;
+use App\Support\InventoryUnitCatalog;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -269,7 +270,8 @@ class MenuValidationService
         foreach ($variant->recipe?->components ?? [] as $component) {
             $material = $this->materials->material($tenantId, $component->inventory_item_id);
             if (! $material || ! $material->is_active || $material->deleted_at) {
-                $this->issue($result, 'RECIPE_COMPONENT_MATERIAL_UNAVAILABLE', 'error', 'A recipe component material is archived, inactive, or unavailable.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+                $unavailable = $this->unavailableMaterialFailure($material, $component);
+                $this->issue($result, 'RECIPE_COMPONENT_MATERIAL_UNAVAILABLE', 'error', $unavailable['conversionReason'], 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id] + $unavailable);
 
                 continue;
             }
@@ -277,8 +279,9 @@ class MenuValidationService
                 if ($this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'] <= 0) {
                     throw new \InvalidArgumentException('non-positive');
                 }
-            } catch (\Throwable) {
-                $this->issue($result, 'RECIPE_COMPONENT_CONVERSION_INVALID', 'error', 'A recipe component cannot be converted to its material inventory base unit at supported precision.', 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id]);
+            } catch (\Throwable $exception) {
+                $conversion = $this->conversionFailure($material, $component, $exception);
+                $this->issue($result, 'RECIPE_COMPONENT_CONVERSION_INVALID', 'error', $conversion['conversionReason'], 'variant', $variant->id, $menu->id, $section->id, $placement->id, ['materialId' => $component->inventory_item_id] + $conversion);
             }
         }
     }
@@ -349,14 +352,19 @@ class MenuValidationService
         }
         foreach ($profile->components as $component) {
             $material = $this->materials->material($tenantId, $component->inventory_item_id);
+            $exception = null;
             try {
                 $quantity = $material ? $this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'] : 0;
                 $valid = $material && $material->is_active && ! $material->deleted_at && $quantity > 0 && in_array($component->operation, ['add', 'remove'], true);
-            } catch (\Throwable) {
+            } catch (\Throwable $exception) {
                 $valid = false;
             }
             if (! $valid) {
-                $this->issue($result, 'MODIFIER_RECIPE_PROFILE_INVALID', 'error', 'An effective modifier recipe profile has an invalid component.', 'modifier_option', $option->id, $menu->id, $section->id, $placement->id, ['variantId' => $variant->id, 'materialId' => $component->inventory_item_id]);
+                $failure = ! $material || ! $material->is_active || $material->deleted_at
+                    ? $this->unavailableMaterialFailure($material, $component)
+                    : (isset($exception) ? $this->conversionFailure($material, $component, $exception) : []);
+                $message = $failure['conversionReason'] ?? 'An effective modifier recipe profile has an invalid component.';
+                $this->issue($result, 'MODIFIER_RECIPE_PROFILE_INVALID', 'error', $message, 'modifier_option', $option->id, $menu->id, $section->id, $placement->id, ['variantId' => $variant->id, 'materialId' => $component->inventory_item_id] + $failure);
 
                 continue;
             }
@@ -432,6 +440,40 @@ class MenuValidationService
     private function issue(MenuValidationResult $result, string $code, string $severity, string $message, string $type, ?int $entityId, int $menuId, ?int $sectionId = null, ?int $placementId = null, array $metadata = []): void
     {
         $result->add(new MenuValidationIssue($code, $severity, $message, $type, $entityId, $menuId, $sectionId, $placementId, $metadata));
+    }
+
+    /** @return array{materialName:string, recipeQuantity:string, recipeUnit:string, inventoryBaseUnit:string, conversionReason:string} */
+    private function conversionFailure(object $material, object $component, \Throwable $exception): array
+    {
+        $reason = $exception instanceof ValidationException
+            ? (string) collect($exception->errors())->flatten()->first()
+            : 'Converted recipe quantity must be positive.';
+
+        return [
+            'materialName' => (string) $material->name,
+            'recipeQuantity' => (string) $component->quantity,
+            'recipeUnit' => (string) $component->unit_code,
+            'inventoryBaseUnit' => InventoryUnitCatalog::normalize($material->unit),
+            'conversionReason' => $reason,
+        ];
+    }
+
+    /** @return array{materialName:string, recipeQuantity:string, recipeUnit:string, inventoryBaseUnit:string, conversionReason:string} */
+    private function unavailableMaterialFailure(?object $material, object $component): array
+    {
+        $reason = ! $material
+            ? 'Inventory material no longer exists. Replace this recipe component with an available Inventory material.'
+            : ($material->deleted_at
+                ? 'Inventory material is archived. Restore it or replace this recipe component with an available Inventory material.'
+                : 'Inventory material is inactive. Re-enable it or replace this recipe component with an available Inventory material.');
+
+        return [
+            'materialName' => $material ? (string) $material->name : 'Unknown Inventory material',
+            'recipeQuantity' => (string) $component->quantity,
+            'recipeUnit' => (string) $component->unit_code,
+            'inventoryBaseUnit' => $material ? InventoryUnitCatalog::normalize($material->unit) : 'unknown',
+            'conversionReason' => $reason,
+        ];
     }
 
     private function value(mixed $value): mixed

@@ -66,6 +66,173 @@ void main() {
     expect(find.text('Add Material'), findsOneWidget);
   });
 
+  testWidgets('base recipe tolerates duplicate material IDs', (tester) async {
+    final repository = _RecipeViewRepository(duplicateFirstMaterial: true);
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<VariantRecipeCubit>(
+          create: (_) => VariantRecipeCubit(repository),
+          child: const VariantRecipeScreen(variantId: 7),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final materialField = tester.widget<DropdownButton<int>>(
+      find.byType(DropdownButton<int>),
+    );
+    expect(
+      materialField.items!
+          .where((DropdownMenuItem<int> item) => item.value == 1),
+      hasLength(1),
+    );
+  });
+
+  testWidgets(
+    'base recipe preserves an inactive selected material exactly once',
+    (tester) async {
+      final repository = _RecipeViewRepository(
+        selectedMaterialIsUnavailable: true,
+      );
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<VariantRecipeCubit>(
+            create: (_) => VariantRecipeCubit(repository),
+            child: const VariantRecipeScreen(variantId: 7),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final materialField = tester.widget<DropdownButton<int>>(
+        find.byType(DropdownButton<int>),
+      );
+      expect(materialField.value, 1);
+      expect(
+        materialField.items!
+            .where((DropdownMenuItem<int> item) => item.value == 1),
+        hasLength(1),
+      );
+    },
+  );
+
+  test('recipe material normalizes duplicate allowed recipe units', () {
+    final material = RecipeMaterial.fromJson(<String, dynamic>{
+      'id': 1,
+      'name': 'Beans',
+      'unitCode': 'g',
+      'allowedRecipeUnits': <String>[' g ', 'G', 'kg', 'kg '],
+      'configurationAvailable': true,
+    });
+
+    expect(material.allowedRecipeUnits, <String>['g', 'kg']);
+  });
+
+  testWidgets('base recipe renders duplicate allowed units only once', (
+    tester,
+  ) async {
+    final repository = _RecipeViewRepository(
+      firstMaterialAllowedRecipeUnits: const <String>['g', 'g', 'kg'],
+    );
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<VariantRecipeCubit>(
+          create: (_) => VariantRecipeCubit(repository),
+          child: const VariantRecipeScreen(variantId: 7),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final unitField = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>),
+    );
+    expect(
+      unitField.items!
+          .where((DropdownMenuItem<String> item) => item.value == 'g'),
+      hasLength(1),
+    );
+  });
+
+  testWidgets('base recipe changes material and saves the new selection', (
+    tester,
+  ) async {
+    final repository = _RecipeViewRepository();
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<VariantRecipeCubit>(
+          create: (_) => VariantRecipeCubit(repository),
+          child: const VariantRecipeScreen(variantId: 7),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Milk').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save recipe'));
+    await tester.pumpAndSettle();
+
+    expect(repository.lastSavedComponents!.single.materialId, 2);
+    expect(repository.lastSavedComponents!.single.unitCode, 'ml');
+  });
+
+  testWidgets('base recipe changes unit and saves the new selection', (tester) async {
+    final repository = _RecipeViewRepository(
+      firstMaterialAllowedRecipeUnits: const <String>['g', 'kg'],
+    );
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<VariantRecipeCubit>(
+          create: (_) => VariantRecipeCubit(repository),
+          child: const VariantRecipeScreen(variantId: 7),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('kg').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save recipe'));
+    await tester.pumpAndSettle();
+
+    expect(repository.lastSavedComponents!.single.unitCode, 'kg');
+  });
+
+  testWidgets(
+    'base recipe keeps an invalid stored unit visible while offering authorized replacements',
+    (tester) async {
+      final repository = _RecipeViewRepository(
+        firstMaterialAllowedRecipeUnits: const <String>['kg'],
+      );
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<VariantRecipeCubit>(
+            create: (_) => VariantRecipeCubit(repository),
+            child: const VariantRecipeScreen(variantId: 7),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final unitField = tester.widget<DropdownButton<String>>(
+        find.byType(DropdownButton<String>),
+      );
+      expect(unitField.value, 'g');
+      expect(
+        unitField.items!.map((DropdownMenuItem<String> item) => item.value),
+        containsAllInOrder(<String>['g', 'kg']),
+      );
+    },
+  );
+
   testWidgets(
     'base recipe can remove every component and save an empty recipe',
     (tester) async {
@@ -454,10 +621,16 @@ class _RecipeViewRepository extends MenuCatalogRepository {
     this.materialName = 'Beans',
     this.arabicContext = false,
     this.failContext = false,
+    this.firstMaterialAllowedRecipeUnits = const <String>['g'],
+    this.duplicateFirstMaterial = false,
+    this.selectedMaterialIsUnavailable = false,
   });
   final String materialName;
   final bool arabicContext;
   final bool failContext;
+  final List<String> firstMaterialAllowedRecipeUnits;
+  final bool duplicateFirstMaterial;
+  final bool selectedMaterialIsUnavailable;
   List<RecipeComponent>? lastSavedComponents;
   final VariantRecipe _recipe = const VariantRecipe(
     variantId: 7,
@@ -472,17 +645,29 @@ class _RecipeViewRepository extends MenuCatalogRepository {
   @override
   Future<List<RecipeMaterial>> listRecipeMaterials({
     String search = '',
+    bool includeUnavailable = false,
   }) async => <RecipeMaterial>[
-    RecipeMaterial(
-      id: 1,
-      name: materialName,
-      unitCode: 'g',
-      configurationAvailable: true,
-    ),
+    if (!selectedMaterialIsUnavailable || includeUnavailable)
+      RecipeMaterial(
+        id: 1,
+        name: materialName,
+        unitCode: 'g',
+        allowedRecipeUnits: firstMaterialAllowedRecipeUnits,
+        configurationAvailable: !selectedMaterialIsUnavailable,
+      ),
+    if (duplicateFirstMaterial)
+      RecipeMaterial(
+        id: 1,
+        name: materialName,
+        unitCode: 'g',
+        allowedRecipeUnits: firstMaterialAllowedRecipeUnits,
+        configurationAvailable: true,
+      ),
     RecipeMaterial(
       id: 2,
       name: 'Milk',
       unitCode: 'ml',
+      allowedRecipeUnits: const <String>['ml', 'l'],
       configurationAvailable: true,
     ),
     RecipeMaterial(

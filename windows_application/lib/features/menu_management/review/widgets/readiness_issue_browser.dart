@@ -432,6 +432,8 @@ class _IssueRow extends StatelessWidget {
     final ReadinessIssueAction action = ValidationIssuePresentation.actionFor(
       issue,
     );
+    final List<String> metadataLines =
+        ValidationIssuePresentation.metadataLines(issue);
     final Color color = severity == ValidationSeverity.error
         ? AppColors.danger
         : severity == ValidationSeverity.warning
@@ -469,6 +471,24 @@ class _IssueRow extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
+              if (metadataLines.isNotEmpty) ...<Widget>[
+                const SizedBox(height: AppSpacing.xs),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: metadataLines
+                        .map(
+                          (String line) => Text(
+                            line,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
               const SizedBox(height: 2),
               Text(
                 _issueContext(context.l10n, issue),

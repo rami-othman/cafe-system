@@ -4,6 +4,8 @@ namespace App\Services\Catalog;
 
 use App\Domain\Menu\Enums\MenuAuditAction;
 use App\Domain\Inventory\RecipeMaterialEligibility;
+use App\Domain\Inventory\UnitConversionResolver;
+use App\Support\InventoryUnitCatalog;
 use App\Models\ModifierOption;
 use App\Models\ModifierOptionRecipeProfile;
 use App\Models\Product;
@@ -15,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class RecipeConfigurationService
 {
-    public function __construct(private readonly MaterialCatalogService $materials, private readonly RecipeUnitRegistry $units, private readonly CatalogAuditService $audit) {}
+    public function __construct(private readonly MaterialCatalogService $materials, private readonly RecipeUnitRegistry $units, private readonly UnitConversionResolver $conversions, private readonly CatalogAuditService $audit) {}
 
     public function recipe(ProductVariant $variant): array
     {
@@ -240,13 +242,28 @@ class RecipeConfigurationService
             }
             if (! preg_match('/^\d+(\.\d{1,6})?$/', $q) || $quantity->isLessThanOrEqualTo(BigDecimal::zero())) {
                 throw ValidationException::withMessages(['components' => 'Quantity must be a positive decimal with at most six places.']);
-            } $u = $c['unitCode'] ?? '';
-            $mu = $this->units->inventoryUnit($m->unit);
-            if (! $this->units->compatible($mu, $u)) {
-                throw ValidationException::withMessages(['components' => 'Recipe unit is incompatible with the material.']);
-            } if ($operations && ! in_array($op, ['add', 'remove'], true)) {
+            }
+            $u = (string) ($c['unitCode'] ?? '');
+            if (! InventoryUnitCatalog::isKnown($u)) {
+                throw ValidationException::withMessages(["components.$i.unitCode" => 'Recipe unit is not an Inventory unit.']);
+            }
+            $this->validateInventoryConversion($tenant, $m, $q, $u, $i);
+            if ($operations && ! in_array($op, ['add', 'remove'], true)) {
                 throw ValidationException::withMessages(['components' => 'Operation must be add or remove.']);
             }
+        }
+    }
+
+    private function validateInventoryConversion(int $tenant, object $material, string $quantity, string $unit, int $index): void
+    {
+        try {
+            $this->conversions->resolveRecipe($tenant, $material, $quantity, $unit);
+        } catch (ValidationException $exception) {
+            $errors = $exception->errors();
+            $field = array_key_exists('quantity', $errors) ? 'quantity' : 'unitCode';
+            $message = (string) collect($errors)->flatten()->first();
+
+            throw ValidationException::withMessages(["components.$index.$field" => $message]);
         }
     }
 

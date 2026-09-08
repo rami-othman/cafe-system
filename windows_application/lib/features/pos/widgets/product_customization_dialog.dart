@@ -98,12 +98,14 @@ class _ProductCustomizationDialogState
   final Set<ProductModifierOption> _selectedAddOns = <ProductModifierOption>{};
   String _sweetness = '100%';
   final Map<int, Set<int>> _backendSelections = <int, Set<int>>{};
+  int? _selectedPublishedVariantId;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _instructionsController = TextEditingController();
+    _selectedPublishedVariantId = _initialPublishedVariantId;
     _initializeBackendSelections();
   }
 
@@ -117,6 +119,8 @@ class _ProductCustomizationDialogState
     final List<SelectedModifier> selectedModifiers = _selectedModifiers();
     final List<String> backendModifierLabels = _selectedBackendLabels();
     final bool published = widget.product.isPublishedRuntime;
+    final PosPublishedVariant? selectedPublishedVariant =
+        _selectedPublishedVariant;
     final double publishedModifierTotal = _activeDetail == null
         ? 0
         : _activeDetail!.modifierGroups.fold<double>(
@@ -147,17 +151,57 @@ class _ProductCustomizationDialogState
       specialInstructions: _instructionsController.text,
       selectedModifiers: selectedModifiers,
       backendModifierLabels: backendModifierLabels,
-      publishedVariantId: published ? widget.product.defaultVariantId : null,
+      publishedVariantId: published ? selectedPublishedVariant?.id : null,
       publishedModifierOptionIds: published
           ? selectedModifiers
                 .map((SelectedModifier modifier) => modifier.optionId)
                 .toList(growable: false)
           : const <int>[],
       publishedUnitPrice: published
-          ? widget.product.price + publishedModifierTotal
+          ? _publishedVariantPrice(selectedPublishedVariant) +
+                publishedModifierTotal
           : null,
     );
   }
+
+  List<PosPublishedVariant> get _sellablePublishedVariants {
+    if (!widget.product.isPublishedRuntime) {
+      return const <PosPublishedVariant>[];
+    }
+
+    return widget.product.variants
+        .where(
+          (PosPublishedVariant variant) =>
+              widget.product.sellableVariantIds.contains(variant.id),
+        )
+        .toList(growable: false);
+  }
+
+  int? get _initialPublishedVariantId {
+    final List<PosPublishedVariant> variants = _sellablePublishedVariants;
+    final int? defaultVariantId = widget.product.defaultVariantId;
+    if (defaultVariantId != null &&
+        variants.any(
+          (PosPublishedVariant variant) => variant.id == defaultVariantId,
+        )) {
+      return defaultVariantId;
+    }
+
+    return variants.isEmpty ? null : variants.first.id;
+  }
+
+  PosPublishedVariant? get _selectedPublishedVariant {
+    final int? selectedId = _selectedPublishedVariantId;
+    if (selectedId == null) return null;
+
+    for (final PosPublishedVariant variant in _sellablePublishedVariants) {
+      if (variant.id == selectedId) return variant;
+    }
+    return null;
+  }
+
+  double _publishedVariantPrice(PosPublishedVariant? variant) =>
+      variant?.effectivePrice ?? widget.product.price;
 
   BackendProductDetail? get _activeDetail =>
       widget.productDetail ?? _runtimeProductDetail;
@@ -365,6 +409,7 @@ class _ProductCustomizationDialogState
             constraints.maxWidth < AppSizes.customizationDialogStackBreakpoint;
         final Widget productColumn = _ProductInfoColumn(
           product: widget.product,
+          selectedVariant: _selectedPublishedVariant,
           quantity: _quantity,
           total: customization.totalPrice,
           onDecrease: () {
@@ -408,8 +453,14 @@ class _ProductCustomizationDialogState
             ? modifiers
             : _BackendModifiersColumn(
                 detail: detail,
+                publishedVariants: _sellablePublishedVariants,
+                selectedPublishedVariantId: _selectedPublishedVariantId,
+                currencyCode: widget.product.currencyCode,
                 selections: _backendSelections,
                 instructionsController: _instructionsController,
+                onPublishedVariantSelected: (int variantId) {
+                  setState(() => _selectedPublishedVariantId = variantId);
+                },
                 onOptionToggled: _toggleBackendOption,
               );
 
@@ -449,14 +500,22 @@ class _ProductCustomizationDialogState
 class _BackendModifiersColumn extends StatelessWidget {
   const _BackendModifiersColumn({
     required this.detail,
+    required this.publishedVariants,
+    required this.selectedPublishedVariantId,
+    required this.currencyCode,
     required this.selections,
     required this.instructionsController,
+    required this.onPublishedVariantSelected,
     required this.onOptionToggled,
   });
 
   final BackendProductDetail detail;
+  final List<PosPublishedVariant> publishedVariants;
+  final int? selectedPublishedVariantId;
+  final String? currencyCode;
   final Map<int, Set<int>> selections;
   final TextEditingController instructionsController;
+  final ValueChanged<int> onPublishedVariantSelected;
   final void Function(ModifierGroup group, ModifierOption option)
   onOptionToggled;
 
@@ -469,6 +528,24 @@ class _BackendModifiersColumn extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            if (publishedVariants.length > 1) ...<Widget>[
+              CustomizationSection(
+                title: 'Variant',
+                trailing: const _RequiredLabel(),
+                child: _SelectionCard(
+                  children: <Widget>[
+                    for (final PosPublishedVariant variant in publishedVariants)
+                      _PublishedVariantRow(
+                        variant: variant,
+                        isSelected: variant.id == selectedPublishedVariantId,
+                        currencyCode: currencyCode,
+                        onTap: () => onPublishedVariantSelected(variant.id),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+            ],
             for (final ModifierGroup group
                 in detail.modifierGroups) ...<Widget>[
               CustomizationSection(
@@ -495,6 +572,68 @@ class _BackendModifiersColumn extends StatelessWidget {
               child: _InstructionsField(controller: instructionsController),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PublishedVariantRow extends StatelessWidget {
+  const _PublishedVariantRow({
+    required this.variant,
+    required this.isSelected,
+    required this.currencyCode,
+    required this.onTap,
+  });
+
+  final PosPublishedVariant variant;
+  final bool isSelected;
+  final String? currencyCode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final String languageCode = Localizations.localeOf(context).languageCode;
+    return InkWell(
+      key: ValueKey<String>('published-variant-${variant.id}'),
+      onTap: onTap,
+      child: SizedBox(
+        height: AppSizes.customizationRowHeight,
+        child: Padding(
+          padding: AppSpacing.horizontalLg,
+          child: Row(
+            children: <Widget>[
+              Icon(
+                isSelected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: 18,
+                color: isSelected ? AppColors.tertiary : AppColors.textMuted,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  variant.name.resolve(languageCode),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                CurrencyFormatter.formatForContext(
+                  context,
+                  variant.effectivePrice ?? variant.basePrice ?? 0,
+                  currencyCode: currencyCode ?? 'SYP',
+                ),
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -604,6 +743,7 @@ class _DialogHeader extends StatelessWidget {
 class _ProductInfoColumn extends StatelessWidget {
   const _ProductInfoColumn({
     required this.product,
+    required this.selectedVariant,
     required this.quantity,
     required this.total,
     required this.onDecrease,
@@ -611,6 +751,7 @@ class _ProductInfoColumn extends StatelessWidget {
   });
 
   final PosProduct product;
+  final PosPublishedVariant? selectedVariant;
   final int quantity;
   final double total;
   final VoidCallback onDecrease;
@@ -618,6 +759,13 @@ class _ProductInfoColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String selectedVariantName = selectedVariant?.name.resolve(
+          Localizations.localeOf(context).languageCode,
+        ) ??
+        product.size;
+    final double selectedVariantPrice =
+        selectedVariant?.effectivePrice ?? product.price;
+
     return ColoredBox(
       color: AppColors.surfaceAlt,
       child: SingleChildScrollView(
@@ -686,7 +834,8 @@ class _ProductInfoColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              '${product.size} base - ${CurrencyFormatter.format(product.price)}',
+              '$selectedVariantName base - '
+              '${CurrencyFormatter.formatForContext(context, selectedVariantPrice, currencyCode: product.currencyCode ?? 'SYP')}',
               style: AppTextStyles.labelMedium.copyWith(
                 color: AppColors.textSecondary,
               ),

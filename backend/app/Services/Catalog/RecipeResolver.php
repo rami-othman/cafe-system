@@ -2,13 +2,15 @@
 
 namespace App\Services\Catalog;
 
+use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\ProductVariant;
-use Brick\Math\BigDecimal;
+use App\Support\InventoryDecimal;
+use App\Support\InventoryUnitCatalog;
 use Illuminate\Validation\ValidationException;
 
 class RecipeResolver
 {
-    public function __construct(private readonly RecipeConfigurationService $configuration, private readonly MaterialCatalogService $materials, private readonly RecipeUnitRegistry $units) {}
+    public function __construct(private readonly RecipeConfigurationService $configuration, private readonly MaterialCatalogService $materials, private readonly RecipeUnitRegistry $units, private readonly UnitConversionResolver $conversions) {}
 
     public function resolve(ProductVariant $variant, array $selected): array
     {
@@ -27,15 +29,12 @@ class RecipeResolver
         $meta = [];
         foreach ($base as $c) {
             $material = $materials[$c['materialId']] ?? null;
-            if (! $material || ! $material->is_active || $material->deleted_at || ! $this->units->inventoryUnit($material->unit)) {
+            if (! $material || ! $material->is_active || $material->deleted_at || ! InventoryUnitCatalog::isKnown($material->unit)) {
                 throw ValidationException::withMessages(['recipe' => 'Base recipe material is unavailable or has an unmapped unit.']);
             }
-            if (! $this->units->compatible($this->units->inventoryUnit($material->unit), $c['unitCode'])) {
-                throw ValidationException::withMessages(['recipe' => 'Base recipe unit is incompatible with its material.']);
-            }
-            $n = $this->units->normalize($c['quantity'], $c['unitCode']);
-            $amounts[$c['materialId']] = BigDecimal::of($n['quantity']);
-            $meta[$c['materialId']] = [$n['unitCode'], $n['family']];
+            $canonical = $this->conversions->resolveRecipe($variant->tenant_id, $material, $c['quantity'], $c['unitCode']);
+            $amounts[$c['materialId']] = $canonical['baseQuantity'];
+            $meta[$c['materialId']] = [$this->units->inventoryUnit($material->unit), $this->units->family($this->units->inventoryUnit($material->unit))];
         }
         $options = $groups->flatMap(fn ($group) => $group->options)->keyBy('id');
         $seen = [];
@@ -74,19 +73,17 @@ class RecipeResolver
             $profile = $profiles[$o->id] ?? null;
             foreach ($profile?->components ?? [] as $c) {
                 $material = $materials[$c->inventory_item_id] ?? null;
-                if (! $material || ! $material->is_active || $material->deleted_at || ! $this->units->inventoryUnit($material->unit)) {
+                if (! $material || ! $material->is_active || $material->deleted_at || ! InventoryUnitCatalog::isKnown($material->unit)) {
                     throw ValidationException::withMessages(['recipe' => 'Modifier recipe material is unavailable or has an unmapped unit.']);
-                }
-                $n = $this->units->normalize($c->quantity, $c->unit_code);
-                if (! $this->units->compatible($this->units->inventoryUnit($material->unit), $c->unit_code)) {
-                    throw ValidationException::withMessages(['recipe' => 'Modifier recipe unit is incompatible with its material.']);
                 }
                 if ($c->operation === 'remove' && $q !== 1) {
                     throw ValidationException::withMessages(['selectedOptions' => 'REMOVE cannot be repeated.']);
                 }
-                $value = BigDecimal::of($n['quantity'])->multipliedBy($q);
+                $canonical = $this->conversions->resolveRecipe($variant->tenant_id, $material, (string) $c->quantity, $c->unit_code);
+                $value = $canonical['baseQuantity'] * $q;
                 $effects[] = ['materialId' => $c->inventory_item_id, 'operation' => $c->operation, 'value' => $value];
-                $meta[$c->inventory_item_id] = [$n['unitCode'], $n['family']];
+                $baseUnit = $this->units->inventoryUnit($material->unit);
+                $meta[$c->inventory_item_id] = [$baseUnit, $this->units->family($baseUnit)];
             }
         }
         foreach ($groups as $group) {
@@ -106,25 +103,25 @@ class RecipeResolver
         $adds = [];
         foreach ($effects as $effect) {
             $bucket = $effect['operation'] === 'remove' ? 'removes' : 'adds';
-            ${$bucket}[$effect['materialId']] = (${$bucket}[$effect['materialId']] ?? BigDecimal::zero())->plus($effect['value']);
+            ${$bucket}[$effect['materialId']] = (${$bucket}[$effect['materialId']] ?? 0) + $effect['value'];
         }
         foreach ($removes as $materialId => $value) {
-            if ($value->isGreaterThan($amounts[$materialId] ?? BigDecimal::zero())) {
+            if ($value > ($amounts[$materialId] ?? 0)) {
                 throw ValidationException::withMessages(['selectedOptions' => 'Modifier REMOVE exceeds the Variant base recipe.']);
             }
-            $amounts[$materialId] = ($amounts[$materialId] ?? BigDecimal::zero())->minus($value);
+            $amounts[$materialId] = ($amounts[$materialId] ?? 0) - $value;
         }
         foreach ($adds as $materialId => $value) {
-            $amounts[$materialId] = ($amounts[$materialId] ?? BigDecimal::zero())->plus($value);
+            $amounts[$materialId] = ($amounts[$materialId] ?? 0) + $value;
         }
         ksort($amounts);
         $rows = [];
         foreach ($amounts as $id => $amount) {
-            if (! $amount->isZero()) {
+            if ($amount !== 0) {
                 $m = $materials[$id] ?? null;
                 if (! $m || ! $m->is_active || $m->deleted_at) {
                     throw ValidationException::withMessages(['recipe' => 'Recipe material is unavailable.']);
-                }$rows[] = ['materialId' => $id, 'name' => $m->name, 'sku' => $m->sku, 'quantity' => $this->units->quantityString($amount), 'unitCode' => $meta[$id][0]];
+                }$rows[] = ['materialId' => $id, 'name' => $m->name, 'sku' => $m->sku, 'quantity' => $this->units->quantityString(InventoryDecimal::quantity($amount)), 'unitCode' => $meta[$id][0]];
             }
         }
 

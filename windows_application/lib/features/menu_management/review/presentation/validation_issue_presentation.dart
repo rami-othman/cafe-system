@@ -35,6 +35,29 @@ class ValidationIssuePresentation {
   static bool isKnown(ValidationIssue issue) =>
       _categories.containsKey(issue.code);
 
+  static List<String> metadataLines(ValidationIssue issue) {
+    final Map<String, dynamic> metadata = issue.metadata;
+    final String materialName = metadata['materialName']?.toString() ?? '';
+    final String materialId = metadata['materialId']?.toString() ?? '';
+    final String quantity = metadata['recipeQuantity']?.toString() ?? '';
+    final String recipeUnit = metadata['recipeUnit']?.toString() ?? '';
+    final String baseUnit = metadata['inventoryBaseUnit']?.toString() ?? '';
+    final String reason = metadata['conversionReason']?.toString() ?? '';
+
+    return <String>[
+      if (materialName.isNotEmpty)
+        'Material: ' +
+            materialName +
+            (materialId.isEmpty ? '' : ' (ID ' + materialId + ')'),
+      if (quantity.isNotEmpty || recipeUnit.isNotEmpty)
+        'Recipe quantity: ' +
+            quantity +
+            (recipeUnit.isEmpty ? '' : ' ' + recipeUnit),
+      if (baseUnit.isNotEmpty) 'Inventory base unit: ' + baseUnit,
+      if (reason.isNotEmpty) 'Reason: ' + reason,
+    ];
+  }
+
   /// Only returns a destination when the current route can honestly provide
   /// it from fields supplied by the backend issue itself.
   static ReadinessIssueAction actionFor(ValidationIssue issue) {
@@ -93,6 +116,8 @@ class ValidationIssuePresentation {
     'RECIPE_COMPONENT_QUANTITY_INVALID':
         ReadinessIssueCategory.recipesMaterials,
     'RECIPE_COMPONENT_UNIT_INVALID': ReadinessIssueCategory.recipesMaterials,
+    'RECIPE_COMPONENT_CONVERSION_INVALID':
+        ReadinessIssueCategory.recipesMaterials,
     'MODIFIER_GROUP_TENANT_MISMATCH': ReadinessIssueCategory.modifiers,
     'MODIFIER_GROUP_ARCHIVED': ReadinessIssueCategory.modifiers,
     'MODIFIER_GROUP_NO_ACTIVE_OPTION': ReadinessIssueCategory.modifiers,

@@ -6,6 +6,7 @@ class RecipeMaterial {
     required this.name,
     this.sku,
     this.unitCode,
+    this.allowedRecipeUnits = const <String>[],
     required this.configurationAvailable,
     this.unavailabilityReason,
   });
@@ -16,6 +17,11 @@ class RecipeMaterial {
     unitCode: readString(json['unitCode']).isEmpty
         ? null
         : readString(json['unitCode']),
+    allowedRecipeUnits: normalizeRecipeUnitCodes(
+      (json['allowedRecipeUnits'] as List? ?? const <Object>[]).map(
+        (Object? value) => readString(value),
+      ),
+    ),
     configurationAvailable: readBool(json['configurationAvailable']),
     unavailabilityReason: readString(json['unavailabilityReason']).isEmpty
         ? null
@@ -25,8 +31,18 @@ class RecipeMaterial {
   final String name;
   final String? sku;
   final String? unitCode;
+  final List<String> allowedRecipeUnits;
   final bool configurationAvailable;
   final String? unavailabilityReason;
+}
+
+List<String> normalizeRecipeUnitCodes(Iterable<String> unitCodes) {
+  final Set<String> normalized = <String>{};
+  for (final String unitCode in unitCodes) {
+    final String value = unitCode.trim().toLowerCase();
+    if (value.isNotEmpty) normalized.add(value);
+  }
+  return normalized.toList(growable: false);
 }
 
 class RecipeComponent {
@@ -74,17 +90,6 @@ class RecipeComponent {
         if (includeOperation) 'operation': operation,
       };
 }
-
-const Map<String, List<String>> recipeCompatibleUnits = <String, List<String>>{
-  'g': <String>['g', 'kg'],
-  'kg': <String>['g', 'kg'],
-  'ml': <String>['ml', 'l'],
-  'l': <String>['ml', 'l'],
-  'pc': <String>['pc'],
-};
-
-List<String> compatibleRecipeUnits(String? materialUnit) =>
-    recipeCompatibleUnits[materialUnit] ?? const <String>[];
 
 class VariantRecipe {
   const VariantRecipe({required this.variantId, required this.components});
