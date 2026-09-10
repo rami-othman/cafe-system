@@ -200,6 +200,48 @@ future work and it is not part of Batch 12.
 
 ## Batch 12 status
 
+## Reports Overview UI
+
+- The existing `/reports` Cubit/repository-backed overview now follows the
+  Reports Overview reference hierarchy with RTL-aware controls, polished
+  loading/error/empty states, and truthful branch/product data presentation.
+- Financial Reports reuses its canonical `/finance/reports` screen; remaining
+  detailed report categories are visibly pending rather than dead links.
+
+## Sales & Profitability Report UI
+
+- Added the route-scoped `/reports/sales-profitability` report with typed
+  presentation models, Cubit filter/view/sort state, responsive Arabic-first
+  report sections, and a deliberately endpoint-free repository for this UI
+  phase.
+- The Reports Overview Sales & Profitability category is now active; Inventory,
+  Expenses, Purchasing & Suppliers, and Custom Report Builder remain pending.
+
+## Cash & Shifts Report UI
+
+- Added the route-scoped `/reports/cash-shifts` report with typed
+  presentation models, Cubit filter state, responsive Arabic-first report
+  sections, and a deliberately endpoint-free repository for this UI phase.
+- The Reports Overview Cash & Shifts category is now active.  It remains a
+  read-only analytics destination; shift, payment, and closing operations stay
+  in their canonical operational modules.
+
+## Inventory Report UI
+
+- Added the route-scoped `/reports/inventory` read-only analytics report with
+  typed inventory presentation models, filter state, responsive Arabic-first
+  sections, and an endpoint-free repository during this UI phase.
+- The Reports Overview Inventory category is now active. Expenses, Purchasing
+  & Suppliers, and Custom Report Builder remain pending.
+
+## Reports Demo Data
+
+- `Cafe618ReportsDemoSeeder` prepares idempotent Cafe 618 development data for
+  report work: POS sales, cash/card payments, refunds, shifts, cash transfers,
+  reconciliations, daily closings, and overview history. It is limited to
+  local, development, and testing environments and is included in local
+  `DatabaseSeeder` runs.
+
 - 12A ✅ Runtime Contract
 - 12B ✅ Backend POS Runtime Sync API
 - 12C ✅ Snapshot-Aware Order Contract

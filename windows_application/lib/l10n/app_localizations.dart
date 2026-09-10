@@ -98,6 +98,312 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @inventoryReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get inventoryReportTitle;
+
+  /// No description provided for @inventoryReportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze inventory value, availability, movements, waste, and count variances across locations.'**
+  String get inventoryReportSubtitle;
+
+  /// No description provided for @inventoryReportAllLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'All locations'**
+  String get inventoryReportAllLocations;
+
+  /// No description provided for @inventoryReportAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get inventoryReportAllCategories;
+
+  /// No description provided for @inventoryReportExportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Export will be enabled after this report is connected to a data source.'**
+  String get inventoryReportExportTooltip;
+
+  /// No description provided for @inventoryReportCurrentValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Current inventory value'**
+  String get inventoryReportCurrentValue;
+
+  /// No description provided for @inventoryReportLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low-stock items'**
+  String get inventoryReportLowStock;
+
+  /// No description provided for @inventoryReportOutOfStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out-of-stock items'**
+  String get inventoryReportOutOfStock;
+
+  /// No description provided for @inventoryReportWasteValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Waste value'**
+  String get inventoryReportWasteValue;
+
+  /// No description provided for @inventoryReportCountVariance.
+  ///
+  /// In en, this message translates to:
+  /// **'Count variances'**
+  String get inventoryReportCountVariance;
+
+  /// No description provided for @inventoryReportConsumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Total consumption'**
+  String get inventoryReportConsumption;
+
+  /// No description provided for @inventoryReportReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock received'**
+  String get inventoryReportReceived;
+
+  /// No description provided for @inventoryReportTransfers.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers'**
+  String get inventoryReportTransfers;
+
+  /// No description provided for @inventoryReportValueByLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory value by location'**
+  String get inventoryReportValueByLocation;
+
+  /// No description provided for @inventoryReportMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory movement'**
+  String get inventoryReportMovement;
+
+  /// No description provided for @inventoryReportHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock health'**
+  String get inventoryReportHealth;
+
+  /// No description provided for @inventoryReportLowOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Low and out-of-stock items'**
+  String get inventoryReportLowOut;
+
+  /// No description provided for @inventoryReportConsumptionAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Consumption analysis'**
+  String get inventoryReportConsumptionAnalysis;
+
+  /// No description provided for @inventoryReportWasteAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Waste analysis'**
+  String get inventoryReportWasteAnalysis;
+
+  /// No description provided for @inventoryReportVariance.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock-count variances'**
+  String get inventoryReportVariance;
+
+  /// No description provided for @inventoryReportLocationComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Location comparison'**
+  String get inventoryReportLocationComparison;
+
+  /// No description provided for @inventoryReportExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory exceptions'**
+  String get inventoryReportExceptions;
+
+  /// No description provided for @inventoryReportItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get inventoryReportItem;
+
+  /// No description provided for @inventoryReportCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get inventoryReportCategory;
+
+  /// No description provided for @inventoryReportLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get inventoryReportLocation;
+
+  /// No description provided for @inventoryReportAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available quantity'**
+  String get inventoryReportAvailable;
+
+  /// No description provided for @inventoryReportMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum level'**
+  String get inventoryReportMinimum;
+
+  /// No description provided for @inventoryReportUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get inventoryReportUnit;
+
+  /// No description provided for @inventoryReportStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get inventoryReportStatus;
+
+  /// No description provided for @inventoryReportQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get inventoryReportQuantity;
+
+  /// No description provided for @inventoryReportValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get inventoryReportValue;
+
+  /// No description provided for @inventoryReportReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get inventoryReportReason;
+
+  /// No description provided for @inventoryReportExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected'**
+  String get inventoryReportExpected;
+
+  /// No description provided for @inventoryReportCounted.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted'**
+  String get inventoryReportCounted;
+
+  /// No description provided for @inventoryReportDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get inventoryReportDifference;
+
+  /// No description provided for @inventoryReportVarianceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Variance value'**
+  String get inventoryReportVarianceValue;
+
+  /// No description provided for @inventoryReportItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get inventoryReportItems;
+
+  /// No description provided for @inventoryReportAvailableStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get inventoryReportAvailableStatus;
+
+  /// No description provided for @inventoryReportLowStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get inventoryReportLowStatus;
+
+  /// No description provided for @inventoryReportOutStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of stock'**
+  String get inventoryReportOutStatus;
+
+  /// No description provided for @inventoryReportOverstockStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Overstock'**
+  String get inventoryReportOverstockStatus;
+
+  /// No description provided for @inventoryReportMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched'**
+  String get inventoryReportMatched;
+
+  /// No description provided for @inventoryReportShortage.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortage'**
+  String get inventoryReportShortage;
+
+  /// No description provided for @inventoryReportOverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Overage'**
+  String get inventoryReportOverage;
+
+  /// No description provided for @inventoryReportNoLocations.
+  ///
+  /// In en, this message translates to:
+  /// **'There are not enough locations to compare.'**
+  String get inventoryReportNoLocations;
+
+  /// No description provided for @inventoryReportNoMovements.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no inventory movements for the selected period.'**
+  String get inventoryReportNoMovements;
+
+  /// No description provided for @inventoryReportNoLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no low-stock items for the current filters.'**
+  String get inventoryReportNoLowStock;
+
+  /// No description provided for @inventoryReportNoWaste.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no waste movements for the selected period.'**
+  String get inventoryReportNoWaste;
+
+  /// No description provided for @inventoryReportNoVariance.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no stock-count variances for the selected period.'**
+  String get inventoryReportNoVariance;
+
+  /// No description provided for @inventoryReportNoExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no inventory exceptions requiring review.'**
+  String get inventoryReportNoExceptions;
+
+  /// No description provided for @inventoryReportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load the Inventory report.'**
+  String get inventoryReportError;
+
   /// The application name.
   ///
   /// In en, this message translates to:
@@ -8405,6 +8711,36 @@ abstract class AppLocalizations {
   /// **'Net Profit'**
   String get reportsOverviewKpiNetProfit;
 
+  /// No description provided for @reportsOverviewKpiInfoNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Total sales after discounts and refunds, before tax.'**
+  String get reportsOverviewKpiInfoNetSales;
+
+  /// No description provided for @reportsOverviewKpiInfoGrossProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales minus the cost of goods sold.'**
+  String get reportsOverviewKpiInfoGrossProfit;
+
+  /// No description provided for @reportsOverviewKpiInfoGrossMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross profit as a percentage of net sales.'**
+  String get reportsOverviewKpiInfoGrossMargin;
+
+  /// No description provided for @reportsOverviewKpiInfoTotalExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Operating expenses recorded for the selected period.'**
+  String get reportsOverviewKpiInfoTotalExpenses;
+
+  /// No description provided for @reportsOverviewKpiInfoNetProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross profit minus total expenses.'**
+  String get reportsOverviewKpiInfoNetProfit;
+
   /// No description provided for @reportsOverviewNotAvailableYet.
   ///
   /// In en, this message translates to:
@@ -8446,6 +8782,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Branch Comparison'**
   String get reportsOverviewBranchComparisonTitle;
+
+  /// No description provided for @reportsOverviewBranchColumnBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get reportsOverviewBranchColumnBranch;
+
+  /// No description provided for @reportsOverviewBranchColumnNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales'**
+  String get reportsOverviewBranchColumnNetSales;
 
   /// No description provided for @reportsOverviewChooseAllBranches.
   ///
@@ -8507,6 +8855,12 @@ abstract class AppLocalizations {
   /// **'Cash & Shifts'**
   String get reportsOverviewCategoryCashShifts;
 
+  /// No description provided for @reportsOverviewCategoryInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get reportsOverviewCategoryInventory;
+
   /// No description provided for @reportsOverviewCategoryExpenses.
   ///
   /// In en, this message translates to:
@@ -8531,6 +8885,12 @@ abstract class AppLocalizations {
   /// **'Custom Report Builder'**
   String get reportsOverviewCategoryCustomReportBuilder;
 
+  /// No description provided for @reportsOverviewFinancialReportsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Financial Reports center'**
+  String get reportsOverviewFinancialReportsTooltip;
+
   /// No description provided for @reportsOverviewErrorDefault.
   ///
   /// In en, this message translates to:
@@ -8554,6 +8914,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{h}h ago'**
   String reportsOverviewHoursAgo(int h);
+
+  /// No description provided for @salesProfitabilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales & Profitability'**
+  String get salesProfitabilityTitle;
+
+  /// No description provided for @salesProfitabilitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze sales, profit, discounts, refunds, and product and branch performance.'**
+  String get salesProfitabilitySubtitle;
+
+  /// No description provided for @salesProfitabilityBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports Overview'**
+  String get salesProfitabilityBack;
+
+  /// No description provided for @salesProfitabilityGroupBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by'**
+  String get salesProfitabilityGroupBy;
+
+  /// No description provided for @salesProfitabilityDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get salesProfitabilityDaily;
+
+  /// No description provided for @salesProfitabilityWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get salesProfitabilityWeekly;
+
+  /// No description provided for @salesProfitabilityMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get salesProfitabilityMonthly;
+
+  /// No description provided for @salesProfitabilityExportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Export will be enabled after the report is connected to a data source.'**
+  String get salesProfitabilityExportTooltip;
+
+  /// No description provided for @salesProfitabilityGrossSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross Sales'**
+  String get salesProfitabilityGrossSales;
+
+  /// No description provided for @salesProfitabilityNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Sales'**
+  String get salesProfitabilityNetSales;
+
+  /// No description provided for @salesProfitabilityDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts'**
+  String get salesProfitabilityDiscounts;
+
+  /// No description provided for @salesProfitabilityRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunds'**
+  String get salesProfitabilityRefunds;
+
+  /// No description provided for @salesProfitabilityCogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost of Goods Sold (COGS)'**
+  String get salesProfitabilityCogs;
+
+  /// No description provided for @salesProfitabilityGrossProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross Profit'**
+  String get salesProfitabilityGrossProfit;
+
+  /// No description provided for @salesProfitabilityGrossMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross Margin %'**
+  String get salesProfitabilityGrossMargin;
+
+  /// No description provided for @salesProfitabilityAverageOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Order Value'**
+  String get salesProfitabilityAverageOrder;
+
+  /// No description provided for @salesProfitabilityTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales & Profit Trend'**
+  String get salesProfitabilityTrend;
+
+  /// No description provided for @salesProfitabilitySalesByHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales by Hour'**
+  String get salesProfitabilitySalesByHour;
+
+  /// No description provided for @salesProfitabilitySalesByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales by Category'**
+  String get salesProfitabilitySalesByCategory;
+
+  /// No description provided for @salesProfitabilityBranchPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch Performance'**
+  String get salesProfitabilityBranchPerformance;
+
+  /// No description provided for @salesProfitabilityProductPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Performance'**
+  String get salesProfitabilityProductPerformance;
+
+  /// No description provided for @salesProfitabilityTopSelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Selling'**
+  String get salesProfitabilityTopSelling;
+
+  /// No description provided for @salesProfitabilityMostProfitable.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Profitable'**
+  String get salesProfitabilityMostProfitable;
+
+  /// No description provided for @salesProfitabilityUnderperforming.
+  ///
+  /// In en, this message translates to:
+  /// **'Underperforming'**
+  String get salesProfitabilityUnderperforming;
+
+  /// No description provided for @salesProfitabilityPeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Peak: {value}'**
+  String salesProfitabilityPeak(String value);
+
+  /// No description provided for @salesProfitabilityNoTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales and profit trend is available for this period.'**
+  String get salesProfitabilityNoTrend;
+
+  /// No description provided for @salesProfitabilityNoHourly.
+  ///
+  /// In en, this message translates to:
+  /// **'No hourly sales are available for this period.'**
+  String get salesProfitabilityNoHourly;
+
+  /// No description provided for @salesProfitabilityNoCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No category sales are available for this period.'**
+  String get salesProfitabilityNoCategories;
+
+  /// No description provided for @salesProfitabilityNoBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose all branches to compare performance.'**
+  String get salesProfitabilityNoBranches;
+
+  /// No description provided for @salesProfitabilityNoProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'No product performance is available for this period.'**
+  String get salesProfitabilityNoProducts;
+
+  /// No description provided for @salesProfitabilityUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available yet'**
+  String get salesProfitabilityUnavailable;
+
+  /// No description provided for @salesProfitabilityError.
+  ///
+  /// In en, this message translates to:
+  /// **'This report could not be loaded.'**
+  String get salesProfitabilityError;
+
+  /// No description provided for @salesProfitabilityProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get salesProfitabilityProduct;
+
+  /// No description provided for @salesProfitabilityCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get salesProfitabilityCategory;
+
+  /// No description provided for @salesProfitabilityQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity sold'**
+  String get salesProfitabilityQuantity;
+
+  /// No description provided for @salesProfitabilityOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get salesProfitabilityOrders;
+
+  /// No description provided for @salesProfitabilityMargin.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get salesProfitabilityMargin;
+
+  /// No description provided for @cashShiftsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash & Shifts'**
+  String get cashShiftsTitle;
+
+  /// No description provided for @cashShiftsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor shift performance, cash movement, payment methods, and drawer differences.'**
+  String get cashShiftsSubtitle;
+
+  /// No description provided for @cashShiftsAllEmployees.
+  ///
+  /// In en, this message translates to:
+  /// **'All employees'**
+  String get cashShiftsAllEmployees;
+
+  /// No description provided for @cashShiftsTotalSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Sales'**
+  String get cashShiftsTotalSales;
+
+  /// No description provided for @cashShiftsExpectedCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected Cash'**
+  String get cashShiftsExpectedCash;
+
+  /// No description provided for @cashShiftsActualCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual Cash'**
+  String get cashShiftsActualCash;
+
+  /// No description provided for @cashShiftsDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Difference'**
+  String get cashShiftsDifference;
+
+  /// No description provided for @cashShiftsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed Shifts'**
+  String get cashShiftsClosed;
+
+  /// No description provided for @cashShiftsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Shifts'**
+  String get cashShiftsOpen;
+
+  /// No description provided for @cashShiftsAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Shift Sales'**
+  String get cashShiftsAverage;
+
+  /// No description provided for @cashShiftsReconciliation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Reconciliation'**
+  String get cashShiftsReconciliation;
+
+  /// No description provided for @cashShiftsMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched'**
+  String get cashShiftsMatched;
+
+  /// No description provided for @cashShiftsMinor.
+  ///
+  /// In en, this message translates to:
+  /// **'Minor difference'**
+  String get cashShiftsMinor;
+
+  /// No description provided for @cashShiftsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference needs review'**
+  String get cashShiftsReview;
+
+  /// No description provided for @cashShiftsShortage.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortage'**
+  String get cashShiftsShortage;
+
+  /// No description provided for @cashShiftsOverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Overage'**
+  String get cashShiftsOverage;
+
+  /// No description provided for @cashShiftsPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift Performance'**
+  String get cashShiftsPerformance;
+
+  /// No description provided for @cashShiftsPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method Breakdown'**
+  String get cashShiftsPayments;
+
+  /// No description provided for @cashShiftsTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift Sales Trend'**
+  String get cashShiftsTrend;
+
+  /// No description provided for @cashShiftsTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Performing Shifts'**
+  String get cashShiftsTop;
+
+  /// No description provided for @cashShiftsExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Exceptions'**
+  String get cashShiftsExceptions;
+
+  /// No description provided for @cashShiftsNoShifts.
+  ///
+  /// In en, this message translates to:
+  /// **'No shifts exist for the selected period.'**
+  String get cashShiftsNoShifts;
+
+  /// No description provided for @cashShiftsNoPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment-method data exists for the selected period.'**
+  String get cashShiftsNoPayments;
+
+  /// No description provided for @cashShiftsNoExceptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No cash differences need review.'**
+  String get cashShiftsNoExceptions;
+
+  /// No description provided for @cashShiftsNoTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'No shift-sales trend is available for this period.'**
+  String get cashShiftsNoTrend;
+
+  /// No description provided for @cashShiftsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash & Shifts report could not be loaded.'**
+  String get cashShiftsError;
+
+  /// No description provided for @cashShiftsExportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Export will be enabled after the report is connected to a data source.'**
+  String get cashShiftsExportTooltip;
 
   /// No description provided for @financeSectionOverview.
   ///
@@ -10879,6 +11623,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This applies to new orders.'**
   String get taxNewOrdersOnly;
+
+  /// No description provided for @expensesReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get expensesReportTitle;
+
+  /// No description provided for @expensesReportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze operating expenses by category, branch, and time period.'**
+  String get expensesReportSubtitle;
+
+  /// No description provided for @expensesReportAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get expensesReportAllCategories;
+
+  /// No description provided for @expensesReportAllStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All statuses'**
+  String get expensesReportAllStatuses;
+
+  /// No description provided for @expensesReportExportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Export will be enabled after this report is connected to a data source.'**
+  String get expensesReportExportTooltip;
+
+  /// No description provided for @expensesReportTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total expenses'**
+  String get expensesReportTotal;
+
+  /// No description provided for @expensesReportPosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted expenses'**
+  String get expensesReportPosted;
+
+  /// No description provided for @expensesReportPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending expenses'**
+  String get expensesReportPending;
+
+  /// No description provided for @expensesReportAverageDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Average daily expense'**
+  String get expensesReportAverageDaily;
+
+  /// No description provided for @expensesReportRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense-to-net-sales ratio'**
+  String get expensesReportRatio;
+
+  /// No description provided for @expensesReportLargestCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest expense category'**
+  String get expensesReportLargestCategory;
+
+  /// No description provided for @expensesReportTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses trend'**
+  String get expensesReportTrend;
+
+  /// No description provided for @expensesReportByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses by category'**
+  String get expensesReportByCategory;
+
+  /// No description provided for @expensesReportLargest.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest expenses'**
+  String get expensesReportLargest;
+
+  /// No description provided for @expensesReportBranchComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch expense comparison'**
+  String get expensesReportBranchComparison;
+
+  /// No description provided for @expensesReportPeriodComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Period comparison'**
+  String get expensesReportPeriodComparison;
+
+  /// No description provided for @expensesReportTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense table'**
+  String get expensesReportTable;
+
+  /// No description provided for @expensesReportDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get expensesReportDate;
+
+  /// No description provided for @expensesReportExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expensesReportExpense;
+
+  /// No description provided for @expensesReportCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get expensesReportCategory;
+
+  /// No description provided for @expensesReportBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get expensesReportBranch;
+
+  /// No description provided for @expensesReportPayee.
+  ///
+  /// In en, this message translates to:
+  /// **'Payee'**
+  String get expensesReportPayee;
+
+  /// No description provided for @expensesReportPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get expensesReportPaymentMethod;
+
+  /// No description provided for @expensesReportAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get expensesReportAmount;
+
+  /// No description provided for @expensesReportStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get expensesReportStatus;
+
+  /// No description provided for @expensesReportNetSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales'**
+  String get expensesReportNetSales;
+
+  /// No description provided for @expensesReportExpenseSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense / sales'**
+  String get expensesReportExpenseSales;
+
+  /// No description provided for @expensesReportCompanyWide.
+  ///
+  /// In en, this message translates to:
+  /// **'Company-wide'**
+  String get expensesReportCompanyWide;
+
+  /// No description provided for @expensesReportUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get expensesReportUnavailable;
+
+  /// No description provided for @expensesReportNoExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no expenses in the selected period.'**
+  String get expensesReportNoExpenses;
+
+  /// No description provided for @expensesReportNoCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no expense data by category.'**
+  String get expensesReportNoCategories;
+
+  /// No description provided for @expensesReportNoBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'There is not enough data to compare branches.'**
+  String get expensesReportNoBranches;
+
+  /// No description provided for @expensesReportNoLargest.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no expenses to display.'**
+  String get expensesReportNoLargest;
+
+  /// No description provided for @expensesReportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load the Expenses report.'**
+  String get expensesReportError;
+
+  /// No description provided for @expensesReportCurrentPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Current period'**
+  String get expensesReportCurrentPeriod;
+
+  /// No description provided for @expensesReportPreviousPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period'**
+  String get expensesReportPreviousPeriod;
+
+  /// No description provided for @expensesReportDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get expensesReportDifference;
+
+  /// No description provided for @expensesReportDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get expensesReportDraft;
+
+  /// No description provided for @expensesReportPendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending approval'**
+  String get expensesReportPendingApproval;
+
+  /// No description provided for @expensesReportApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get expensesReportApproved;
+
+  /// No description provided for @expensesReportPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get expensesReportPaid;
+
+  /// No description provided for @expensesReportRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get expensesReportRejected;
+
+  /// No description provided for @expensesReportReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reversed'**
+  String get expensesReportReversed;
+
+  /// No description provided for @expensesReportComparisonUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comparison unavailable'**
+  String get expensesReportComparisonUnavailable;
+
+  /// No description provided for @expensesReportPercentOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'of total'**
+  String get expensesReportPercentOfTotal;
 }
 
 class _AppLocalizationsDelegate

@@ -14,9 +14,23 @@ import '../../../shared/widgets/app_card.dart';
 import '../controllers/reports_overview_cubit.dart';
 import '../controllers/reports_overview_state.dart';
 import '../models/reports_overview.dart';
+import '../widgets/reports_overview_components.dart';
 
 class ReportsOverviewScreen extends StatelessWidget {
-  const ReportsOverviewScreen({super.key});
+  const ReportsOverviewScreen({
+    super.key,
+    this.onOpenSalesProfitability,
+    this.onOpenCashShifts,
+    this.onOpenInventory,
+    this.onOpenExpenses,
+    this.onOpenFinancialReports,
+  });
+
+  final VoidCallback? onOpenSalesProfitability;
+  final VoidCallback? onOpenCashShifts;
+  final VoidCallback? onOpenInventory;
+  final VoidCallback? onOpenExpenses;
+  final VoidCallback? onOpenFinancialReports;
 
   @override
   Widget build(
@@ -43,6 +57,11 @@ class ReportsOverviewScreen extends StatelessWidget {
                     _OverviewContent(
                       data: state.data!,
                       onBranchTap: cubit.selectBranch,
+                      onOpenSalesProfitability: onOpenSalesProfitability,
+                      onOpenCashShifts: onOpenCashShifts,
+                      onOpenInventory: onOpenInventory,
+                      onOpenExpenses: onOpenExpenses,
+                      onOpenFinancialReports: onOpenFinancialReports,
                     )
                   else if (state.status == ReportsOverviewStatus.loading)
                     const _OverviewSkeleton()
@@ -220,9 +239,22 @@ class _BranchSelector extends StatelessWidget {
 }
 
 class _OverviewContent extends StatelessWidget {
-  const _OverviewContent({required this.data, required this.onBranchTap});
+  const _OverviewContent({
+    required this.data,
+    required this.onBranchTap,
+    required this.onOpenSalesProfitability,
+    required this.onOpenCashShifts,
+    required this.onOpenInventory,
+    required this.onOpenExpenses,
+    required this.onOpenFinancialReports,
+  });
   final ReportsOverview data;
   final ValueChanged<int?> onBranchTap;
+  final VoidCallback? onOpenSalesProfitability;
+  final VoidCallback? onOpenCashShifts;
+  final VoidCallback? onOpenInventory;
+  final VoidCallback? onOpenExpenses;
+  final VoidCallback? onOpenFinancialReports;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,45 +263,51 @@ class _OverviewContent extends StatelessWidget {
       const SizedBox(height: AppSpacing.xxl),
       _SalesTrendCard(points: data.salesTrend, currency: data.currency),
       const SizedBox(height: AppSpacing.xxl),
+      _BranchComparisonCard(
+        items: data.branchComparison,
+        currency: data.currency,
+        onTap: onBranchTap,
+      ),
+      const SizedBox(height: AppSpacing.xxl),
       LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           final stack = constraints.maxWidth < 950;
-          final branch = _BranchComparisonCard(
-            items: data.branchComparison,
-            currency: data.currency,
-            onTap: onBranchTap,
-          );
           final products = _TopProductsCard(
             items: data.topProducts,
             currency: data.currency,
           );
+          final exceptions = _ExceptionsCard(items: data.recentExceptions);
           return stack
               ? Column(
                   children: <Widget>[
-                    branch,
-                    const SizedBox(height: AppSpacing.xxl),
                     products,
+                    const SizedBox(height: AppSpacing.xxl),
+                    exceptions,
                   ],
                 )
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Expanded(flex: 6, child: branch),
+                    Expanded(child: products),
                     const SizedBox(width: AppSpacing.xxl),
-                    Expanded(flex: 4, child: products),
+                    Expanded(child: exceptions),
                   ],
                 );
         },
       ),
-      const SizedBox(height: AppSpacing.xxl),
-      _ExceptionsCard(items: data.recentExceptions),
       const SizedBox(height: AppSpacing.xxl),
       Text(
         context.l10n.reportsOverviewBrowseByCategory,
         style: AppTextStyles.titleMedium,
       ),
       const SizedBox(height: AppSpacing.md),
-      const _BrowseCategories(),
+      _BrowseCategories(
+        onOpenSalesProfitability: onOpenSalesProfitability,
+        onOpenCashShifts: onOpenCashShifts,
+        onOpenInventory: onOpenInventory,
+        onOpenExpenses: onOpenExpenses,
+        onOpenFinancialReports: onOpenFinancialReports,
+      ),
     ],
   );
 }
@@ -281,36 +319,55 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items =
-        <({String label, IconData icon, ReportMetric metric, bool percent})>[
+        <
+          ({
+            String label,
+            String info,
+            IconData icon,
+            ReportMetric metric,
+            bool percent,
+            bool increaseIsGood,
+          })
+        >[
           (
             label: context.l10n.reportsOverviewKpiNetSales,
+            info: context.l10n.reportsOverviewKpiInfoNetSales,
             icon: Icons.payments_outlined,
             metric: kpis.netSales,
             percent: false,
+            increaseIsGood: true,
           ),
           (
             label: context.l10n.reportsOverviewKpiGrossProfit,
+            info: context.l10n.reportsOverviewKpiInfoGrossProfit,
             icon: Icons.trending_up_outlined,
             metric: kpis.grossProfit,
             percent: false,
+            increaseIsGood: true,
           ),
           (
             label: context.l10n.reportsOverviewKpiGrossMargin,
+            info: context.l10n.reportsOverviewKpiInfoGrossMargin,
             icon: Icons.pie_chart_outline,
             metric: kpis.grossMargin,
             percent: true,
+            increaseIsGood: true,
           ),
           (
             label: context.l10n.reportsOverviewKpiTotalExpenses,
+            info: context.l10n.reportsOverviewKpiInfoTotalExpenses,
             icon: Icons.receipt_long_outlined,
             metric: kpis.totalExpenses,
             percent: false,
+            increaseIsGood: false,
           ),
           (
             label: context.l10n.reportsOverviewKpiNetProfit,
+            info: context.l10n.reportsOverviewKpiInfoNetProfit,
             icon: Icons.account_balance_wallet_outlined,
             metric: kpis.netProfit,
             percent: false,
+            increaseIsGood: true,
           ),
         ];
     return LayoutBuilder(
@@ -340,7 +397,15 @@ class _KpiGrid extends StatelessWidget {
 
 class _KpiCard extends StatelessWidget {
   const _KpiCard({required this.item, required this.currency});
-  final ({String label, IconData icon, ReportMetric metric, bool percent}) item;
+  final ({
+    String label,
+    String info,
+    IconData icon,
+    ReportMetric metric,
+    bool percent,
+    bool increaseIsGood,
+  })
+  item;
   final String currency;
   @override
   Widget build(BuildContext context) {
@@ -348,7 +413,10 @@ class _KpiCard extends StatelessWidget {
     final delta = metric.value != null && metric.previousValue != null
         ? metric.value! - metric.previousValue!
         : null;
-    final positive = delta == null || delta >= 0;
+    final bool isIncrease = delta == null || delta >= 0;
+    final bool favorable = delta == null
+        ? true
+        : isIncrease == item.increaseIsGood;
     final deltaText = delta == null
         ? null
         : item.percent
@@ -375,6 +443,14 @@ class _KpiCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(item.label, style: AppTextStyles.labelMedium),
+              ),
+              Tooltip(
+                message: item.info,
+                child: const Icon(
+                  Icons.info_outline,
+                  size: 15,
+                  color: AppColors.textMuted,
+                ),
               ),
             ],
           ),
@@ -403,15 +479,15 @@ class _KpiCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 Icon(
-                  positive ? Icons.arrow_upward : Icons.arrow_downward,
+                  isIncrease ? Icons.arrow_upward : Icons.arrow_downward,
                   size: 14,
-                  color: positive ? AppColors.success : AppColors.danger,
+                  color: favorable ? AppColors.success : AppColors.danger,
                 ),
                 const SizedBox(width: 3),
                 Text(
                   deltaText,
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: positive ? AppColors.success : AppColors.danger,
+                    color: favorable ? AppColors.success : AppColors.danger,
                   ),
                 ),
               ],
@@ -435,17 +511,10 @@ class _SalesTrendCard extends StatelessWidget {
   final List<SalesTrendPoint> points;
   final String currency;
   @override
-  Widget build(BuildContext context) => AppCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          context.l10n.reportsOverviewSalesTrendTitle,
-          style: AppTextStyles.titleMedium,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        if (points.every((point) => point.netSales == 0))
-          SizedBox(
+  Widget build(BuildContext context) => ReportsOverviewSectionCard(
+    title: context.l10n.reportsOverviewSalesTrendTitle,
+    child: points.length < 2 || points.every((point) => point.netSales <= 0)
+        ? SizedBox(
             height: 200,
             child: Center(
               child: Text(
@@ -454,13 +523,10 @@ class _SalesTrendCard extends StatelessWidget {
               ),
             ),
           )
-        else
-          SizedBox(
+        : SizedBox(
             height: 230,
             child: _TrendChart(points: points, currency: currency),
           ),
-      ],
-    ),
   );
 }
 
@@ -473,9 +539,11 @@ class _TrendChart extends StatelessWidget {
     final String locale = Localizations.localeOf(context).toLanguageTag();
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final max = points
+        final double max = points
             .map((point) => point.netSales)
-            .reduce((a, b) => a > b ? a : b);
+            .reduce((a, b) => a > b ? a : b)
+            .clamp(1, double.infinity)
+            .toDouble();
         const padding = 18.0;
         // The chart paints time chronologically left-to-right in raw pixel
         // coordinates regardless of app text direction; forcing LTR here
@@ -486,8 +554,10 @@ class _TrendChart extends StatelessWidget {
           child: Stack(
             children: <Widget>[
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _TrendPainter(points: points, max: max),
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: _TrendPainter(points: points, max: max),
+                  ),
                 ),
               ),
               ...points.asMap().entries.map((entry) {
@@ -605,28 +675,45 @@ class _BranchComparisonCard extends StatelessWidget {
   final String currency;
   final ValueChanged<int?> onTap;
   @override
-  Widget build(BuildContext context) => AppCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          context.l10n.reportsOverviewBranchComparisonTitle,
-          style: AppTextStyles.titleMedium,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        if (items.isEmpty)
-          _InlineEmpty(message: context.l10n.reportsOverviewChooseAllBranches)
-        else
-          ...items.map(
-            (item) => _BranchBar(
-              item: item,
-              maximum: items.first.netSales,
-              currency: currency,
-              onTap: () => onTap(item.id),
-            ),
+  Widget build(BuildContext context) => ReportsOverviewSectionCard(
+    title: context.l10n.reportsOverviewBranchComparisonTitle,
+    child: items.isEmpty
+        ? _InlineEmpty(message: context.l10n.reportsOverviewChooseAllBranches)
+        : Column(
+            children: <Widget>[
+              Container(
+                padding: AppSpacing.allSm,
+                decoration: const BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: AppRadius.control,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        context.l10n.reportsOverviewBranchColumnBranch,
+                        style: AppTextStyles.labelSmall,
+                      ),
+                    ),
+                    Text(
+                      context.l10n.reportsOverviewBranchColumnNetSales,
+                      style: AppTextStyles.labelSmall,
+                    ),
+                  ],
+                ),
+              ),
+              ...items.map(
+                (item) => _BranchBar(
+                  item: item,
+                  maximum: items
+                      .map((entry) => entry.netSales)
+                      .reduce((a, b) => a > b ? a : b),
+                  currency: currency,
+                  onTap: () => onTap(item.id),
+                ),
+              ),
+            ],
           ),
-      ],
-    ),
   );
 }
 
@@ -667,7 +754,9 @@ class _BranchBar extends StatelessWidget {
           ClipRRect(
             borderRadius: AppRadius.pillRadius,
             child: LinearProgressIndicator(
-              value: maximum == 0 ? 0 : item.netSales / maximum,
+              value: maximum <= 0
+                  ? 0
+                  : (item.netSales / maximum).clamp(0, 1).toDouble(),
               minHeight: 8,
               color: AppColors.tertiary,
               backgroundColor: AppColors.discountIconBackground,
@@ -732,15 +821,11 @@ class _ExceptionsCard extends StatelessWidget {
   const _ExceptionsCard({required this.items});
   final List<ReportException> items;
   @override
-  Widget build(BuildContext context) => AppCard(
+  Widget build(BuildContext context) => ReportsOverviewSectionCard(
+    title: context.l10n.reportsOverviewExceptionsTitle,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          context.l10n.reportsOverviewExceptionsTitle,
-          style: AppTextStyles.titleMedium,
-        ),
-        const SizedBox(height: AppSpacing.lg),
         if (items.isEmpty)
           _InlineEmpty(message: context.l10n.reportsOverviewNoExceptions)
         else
@@ -753,9 +838,13 @@ class _ExceptionsCard extends StatelessWidget {
                   Icon(
                     item.severity == 'critical'
                         ? Icons.error_outline
+                        : item.severity == 'info'
+                        ? Icons.info_outline
                         : Icons.warning_amber_outlined,
                     color: item.severity == 'critical'
                         ? AppColors.danger
+                        : item.severity == 'info'
+                        ? AppColors.info
                         : AppColors.warning,
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -782,39 +871,67 @@ class _ExceptionsCard extends StatelessWidget {
 }
 
 class _BrowseCategories extends StatelessWidget {
-  const _BrowseCategories();
+  const _BrowseCategories({
+    required this.onOpenSalesProfitability,
+    required this.onOpenCashShifts,
+    required this.onOpenInventory,
+    required this.onOpenExpenses,
+    required this.onOpenFinancialReports,
+  });
+
+  final VoidCallback? onOpenSalesProfitability;
+  final VoidCallback? onOpenCashShifts;
+  final VoidCallback? onOpenInventory;
+  final VoidCallback? onOpenExpenses;
+  final VoidCallback? onOpenFinancialReports;
+
   @override
   Widget build(BuildContext context) {
-    final items = <({String title, IconData icon})>[
-      (
-        title: context.l10n.reportsOverviewCategorySalesProfitability,
-        icon: Icons.payments_outlined,
-      ),
-      (
-        title: context.l10n.reportsOverviewCategoryCashShifts,
-        icon: Icons.point_of_sale_outlined,
-      ),
-      (
-        title: context.l10n.navigationInventory,
-        icon: Icons.inventory_2_outlined,
-      ),
-      (
-        title: context.l10n.reportsOverviewCategoryExpenses,
-        icon: Icons.receipt_long_outlined,
-      ),
-      (
-        title: context.l10n.reportsOverviewCategoryPurchasingSuppliers,
-        icon: Icons.local_shipping_outlined,
-      ),
-      (
-        title: context.l10n.reportsOverviewCategoryFinancialReports,
-        icon: Icons.account_balance_outlined,
-      ),
-      (
-        title: context.l10n.reportsOverviewCategoryCustomReportBuilder,
-        icon: Icons.tune_outlined,
-      ),
-    ];
+    final items =
+        <({String title, IconData icon, bool available, VoidCallback? onTap})>[
+          (
+            title: context.l10n.reportsOverviewCategorySalesProfitability,
+            icon: Icons.payments_outlined,
+            available: true,
+            onTap: onOpenSalesProfitability,
+          ),
+          (
+            title: context.l10n.reportsOverviewCategoryCashShifts,
+            icon: Icons.point_of_sale_outlined,
+            available: true,
+            onTap: onOpenCashShifts,
+          ),
+          (
+            title: context.l10n.reportsOverviewCategoryInventory,
+            icon: Icons.inventory_2_outlined,
+            available: true,
+            onTap: onOpenInventory,
+          ),
+          (
+            title: context.l10n.reportsOverviewCategoryExpenses,
+            icon: Icons.receipt_long_outlined,
+            available: true,
+            onTap: onOpenExpenses,
+          ),
+          (
+            title: context.l10n.reportsOverviewCategoryPurchasingSuppliers,
+            icon: Icons.local_shipping_outlined,
+            available: false,
+            onTap: null,
+          ),
+          (
+            title: context.l10n.reportsOverviewCategoryFinancialReports,
+            icon: Icons.account_balance_outlined,
+            available: true,
+            onTap: onOpenFinancialReports,
+          ),
+          (
+            title: context.l10n.reportsOverviewCategoryCustomReportBuilder,
+            icon: Icons.tune_outlined,
+            available: false,
+            onTap: null,
+          ),
+        ];
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) =>
           GridView.builder(
@@ -831,21 +948,38 @@ class _BrowseCategories extends StatelessWidget {
               crossAxisSpacing: AppSpacing.md,
               mainAxisSpacing: AppSpacing.md,
             ),
-            itemBuilder: (BuildContext context, int index) => AppCard(
-              child: Row(
-                children: <Widget>[
-                  Icon(items[index].icon, color: AppColors.secondary),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      items[index].title,
-                      style: AppTextStyles.labelLarge,
-                    ),
+            itemBuilder: (BuildContext context, int index) {
+              final item = items[index];
+              return Tooltip(
+                message: item.available
+                    ? context.l10n.reportsOverviewFinancialReportsTooltip
+                    : context.l10n.reportsOverviewComingNext,
+                child: AppCard(
+                  key: Key('report-category-$index'),
+                  onTap: item.available ? item.onTap : null,
+                  child: Row(
+                    children: <Widget>[
+                      Icon(item.icon, color: AppColors.secondary),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: AppTextStyles.labelLarge,
+                        ),
+                      ),
+                      if (item.available)
+                        const Icon(
+                          Icons.arrow_forward,
+                          size: 20,
+                          color: AppColors.tertiary,
+                        )
+                      else
+                        const _ComingNext(),
+                    ],
                   ),
-                  const _ComingNext(),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
     );
   }
@@ -882,36 +1016,33 @@ class _OverviewSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: <Widget>[
-      const _Skeleton(height: 150),
-      const SizedBox(height: AppSpacing.xxl),
-      const _Skeleton(height: 280),
-      const SizedBox(height: AppSpacing.xxl),
-      const _Skeleton(height: 240),
-    ],
-  );
-}
-
-class _Skeleton extends StatelessWidget {
-  const _Skeleton({required this.height});
-  final double height;
-  @override
-  Widget build(BuildContext context) => Container(
-    height: height,
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      border: Border.all(color: AppColors.border),
-      borderRadius: AppRadius.card,
-    ),
-    child: const Padding(
-      padding: AppSpacing.allLg,
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: FractionallySizedBox(
-          widthFactor: .38,
-          child: LinearProgressIndicator(color: AppColors.border),
-        ),
+      LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final int columns = constraints.maxWidth > 1320
+              ? 5
+              : constraints.maxWidth > 900
+              ? 3
+              : 1;
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 5,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: AppSpacing.md,
+              crossAxisSpacing: AppSpacing.md,
+              mainAxisExtent: 150,
+            ),
+            itemBuilder: (_, _) =>
+                const ReportsOverviewSkeletonCard(height: 150),
+          );
+        },
       ),
-    ),
+      const SizedBox(height: AppSpacing.xxl),
+      const ReportsOverviewSkeletonCard(height: 280),
+      const SizedBox(height: AppSpacing.xxl),
+      const ReportsOverviewSkeletonCard(height: 240),
+    ],
   );
 }
 

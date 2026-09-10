@@ -19,7 +19,16 @@ import '../features/pos/views/pos_screen.dart';
 import '../features/pos/widgets/pos_cart_panel.dart';
 import '../features/reports/controllers/daily_report_cubit.dart';
 import '../features/reports/controllers/reports_overview_cubit.dart';
+import '../features/reports/controllers/sales_profitability_cubit.dart';
+import '../features/reports/controllers/cash_shifts_cubit.dart';
+import '../features/reports/controllers/inventory_report_cubit.dart';
+import '../features/reports/controllers/expenses_report_cubit.dart';
+import '../features/reports/widgets/deferred_report_loader.dart';
 import '../features/reports/views/reports_overview_screen.dart';
+import '../features/reports/views/sales_profitability_screen.dart';
+import '../features/reports/views/cash_shifts_screen.dart';
+import '../features/reports/views/inventory_report_screen.dart';
+import '../features/reports/views/expenses_report_screen.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
 import '../features/finance_inventory_setup/views/daily_closing_screen.dart';
@@ -147,7 +156,7 @@ final GoRouter appRouter = GoRouter(
         final bool isCafeConfiguration = state.uri.path.startsWith(
           AppRoutes.cafeConfiguration,
         );
-        final bool isReports = state.matchedLocation == AppRoutes.reports;
+        final bool isReports = state.uri.path.startsWith(AppRoutes.reports);
         final bool isFinance = state.uri.path.startsWith(AppRoutes.finance);
         final bool isInventory = state.uri.path.startsWith(AppRoutes.inventory);
         final AppShell shell = AppShell(
@@ -1243,10 +1252,73 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.reports,
           name: AppRouteNames.reports,
           builder: (context, state) => BlocProvider<ReportsOverviewCubit>(
-            create: (_) =>
-                serviceLocator<ReportsOverviewCubit>()
-                  ..selectBranch(context.read<PosCubit>().state.branchId),
-            child: const _BranchFollowingReport(),
+            create: (_) => serviceLocator<ReportsOverviewCubit>(),
+            child: Builder(
+              builder: (context) => DeferredReportLoader(
+                load: () {
+                  final cubit = context.read<ReportsOverviewCubit>();
+                  final branchId = context.read<PosCubit>().state.branchId;
+                  return branchId == null ? cubit.load() : cubit.selectBranch(branchId);
+                },
+                child: const _BranchFollowingReport(),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.reportsSalesProfitability,
+          builder: (context, state) => BlocProvider<SalesProfitabilityCubit>(
+            create: (_) => serviceLocator<SalesProfitabilityCubit>(),
+            child: Builder(
+              builder: (context) => DeferredReportLoader(
+                load: () => context.read<SalesProfitabilityCubit>().load(),
+                child: SalesProfitabilityScreen(
+                  onBack: () => context.go(AppRoutes.reports),
+                ),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.reportsCashShifts,
+          builder: (context, state) => BlocProvider<CashShiftsCubit>(
+            create: (_) => serviceLocator<CashShiftsCubit>(),
+            child: Builder(
+              builder: (context) => DeferredReportLoader(
+                load: () => context.read<CashShiftsCubit>().load(),
+                child: CashShiftsScreen(
+                  onBack: () => context.go(AppRoutes.reports),
+                ),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.reportsInventory,
+          builder: (context, state) => BlocProvider<InventoryReportCubit>(
+            create: (_) => serviceLocator<InventoryReportCubit>(),
+            child: Builder(
+              builder: (context) => DeferredReportLoader(
+                load: () => context.read<InventoryReportCubit>().load(),
+                child: InventoryReportScreen(
+                  onBack: () => context.go(AppRoutes.reports),
+                ),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.reportsExpenses,
+          builder: (context, state) => BlocProvider<ExpensesReportCubit>(
+            create: (_) => serviceLocator<ExpensesReportCubit>(),
+            child: Builder(
+              builder: (context) => DeferredReportLoader(
+                load: () => context.read<ExpensesReportCubit>().load(),
+                child: ExpensesReportScreen(
+                  onBack: () => context.go(AppRoutes.reports),
+                ),
+              ),
+            ),
           ),
         ),
         GoRoute(
@@ -1385,8 +1457,8 @@ class _BranchFollowingOrders extends StatelessWidget {
   );
 }
 
-/// Reports have no independent branch selector. Their route-owned data always
-/// reloads from the same POS branch context used by the rest of the shell.
+/// Reports begin in the shared POS branch context and stay synchronized when
+/// that global context changes; the overview retains its own branch filter.
 class _BranchFollowingReport extends StatefulWidget {
   const _BranchFollowingReport();
 
@@ -1409,7 +1481,15 @@ class _BranchFollowingReportState extends State<_BranchFollowingReport> {
     listener: (BuildContext context, PosState state) {
       context.read<ReportsOverviewCubit>().selectBranch(state.branchId);
     },
-    child: const ReportsOverviewScreen(),
+    child: ReportsOverviewScreen(
+      onOpenSalesProfitability: () =>
+          context.go(AppRoutes.reportsSalesProfitability),
+      onOpenCashShifts: () => context.go(AppRoutes.reportsCashShifts),
+      onOpenInventory: () => context.go(AppRoutes.reportsInventory),
+      onOpenExpenses: () => context.go(AppRoutes.reportsExpenses),
+      onOpenFinancialReports: () =>
+          context.go(AppRoutes.financeReportsCanonical),
+    ),
   );
 }
 
@@ -1489,7 +1569,7 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>
-      (BuildContext context) => context.read<ReportsOverviewCubit>().load(),
+      (BuildContext context) => context.read<ReportsOverviewCubit>().load(force: true),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
     AppRoutes.menuManagementProducts =>
@@ -1518,7 +1598,7 @@ String _activeDestinationFor(GoRouterState state) {
   return switch (state.matchedLocation) {
     AppRoutes.discounts || AppRoutes.discountCreate => 'discounts',
     AppRoutes.orders => 'orders',
-    AppRoutes.reports => 'reports',
+    _ when state.uri.path.startsWith(AppRoutes.reports) => 'reports',
     AppRoutes.settings => 'settings',
     _ => 'pos',
   };
@@ -1528,6 +1608,11 @@ abstract final class AppRoutes {
   static const String pos = '/';
   static const String orders = '/orders';
   static const String reports = '/reports';
+  static const String reportsSalesProfitability =
+      '/reports/sales-profitability';
+  static const String reportsCashShifts = '/reports/cash-shifts';
+  static const String reportsInventory = '/reports/inventory';
+  static const String reportsExpenses = '/reports/expenses';
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String settings = '/settings';
