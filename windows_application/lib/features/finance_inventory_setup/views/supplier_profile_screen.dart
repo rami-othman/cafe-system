@@ -605,7 +605,9 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
   List<ExpenseCategory> _categories = const <ExpenseCategory>[];
   List<FinancialAccount> _accounts = const <FinancialAccount>[];
   List<Branch> _branches = const <Branch>[];
+  List<_InvoiceTypeOption> _types = const <_InvoiceTypeOption>[];
 
+  int? _typeId;
   late String _type;
   int? _branchId;
   int? _categoryId;
@@ -627,7 +629,8 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
   void initState() {
     super.initState();
     final SupplierInvoice? current = widget.current;
-    _type = current?.invoiceType ?? 'expense';
+    _type = current?.postingBehavior ?? current?.invoiceType ?? 'expense';
+    _typeId = current?.invoiceTypeId;
     _branchId = current?.branchId;
     _categoryId = current?.expenseCategoryId;
     _debitAccountId = current?.debitAccountId;
@@ -655,6 +658,10 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
             widget.repository.getExpenseCategories(),
             widget.repository.getAccounts(status: 'active'),
             widget.repository.getBranches(),
+            widget.repository.getFinanceList(
+              'finance/invoice-types',
+              queryParameters: const <String, dynamic>{'activeOnly': true},
+            ),
           ]);
       if (!mounted) return;
       setState(() {
@@ -674,6 +681,16 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
             )
             .toList(growable: false);
         _branches = results[2] as List<Branch>;
+        _types = (results[3] as List<Map<String, dynamic>>)
+            .map(_InvoiceTypeOption.fromJson)
+            .toList(growable: false);
+        if (_types.isNotEmpty) {
+          final _InvoiceTypeOption selected = _types.any((x) => x.id == _typeId)
+              ? _types.firstWhere((x) => x.id == _typeId)
+              : _types.first;
+          _typeId = selected.id;
+          _type = selected.postingBehavior;
+        }
         _categoryId ??= _categories.isEmpty ? null : _categories.first.id;
         _debitAccountId ??= _accounts.isEmpty ? null : _accounts.first.id;
         _loadingOptions = false;
@@ -723,6 +740,10 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
       setState(() => _error = 'أدخل رقم فاتورة ومبلغاً فرعياً صالحاً.');
       return;
     }
+    if (_typeId == null) {
+      setState(() => _error = 'اختر نوع فاتورة مُعدّاً.');
+      return;
+    }
     if (_type == 'expense' && _categoryId == null) {
       setState(() => _error = 'اختر فئة مصروف.');
       return;
@@ -742,7 +763,7 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
         'invoiceNumber': _number.text.trim(),
         'invoiceDate': _invoiceDate,
         'dueDate': _dueDate,
-        'invoiceType': _type,
+        'invoiceTypeId': _typeId,
         if (_type == 'expense') 'expenseCategoryId': _categoryId,
         if (_type == 'other') 'debitAccountId': _debitAccountId,
         'subtotal': _subtotal.text.trim(),
@@ -875,30 +896,32 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                     ),
                   ),
                   const SizedBox(height: FinanceSpace.md),
-                  DropdownButtonFormField<String>(
-                    initialValue: _type,
+                  DropdownButtonFormField<int>(
+                    value: _typeId,
                     isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'نوع الفاتورة',
                     ),
-                    items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(
-                        value: 'expense',
-                        child: Text('مصروف'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'inventory',
-                        child: Text(
-                          'مخزون (التزام محاسبي فقط، لا يُنشئ كمية)',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'other',
-                        child: Text('أخرى'),
-                      ),
-                    ],
-                    onChanged: (String? v) => setState(() => _type = v!),
+                    items: _types
+                        .map(
+                          (_InvoiceTypeOption type) => DropdownMenuItem<int>(
+                            value: type.id,
+                            child: Text(
+                              '${type.groupName} — ${type.name}${type.isPostable ? '' : ' (تجريبية غير قابلة للترحيل)'}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (int? id) {
+                      final _InvoiceTypeOption type = _types.firstWhere(
+                        (_InvoiceTypeOption x) => x.id == id,
+                      );
+                      setState(() {
+                        _typeId = id;
+                        _type = type.postingBehavior;
+                      });
+                    },
                   ),
                   if (_type == 'expense') ...<Widget>[
                     const SizedBox(height: FinanceSpace.md),
@@ -994,6 +1017,30 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
   }
 }
 
+class _InvoiceTypeOption {
+  const _InvoiceTypeOption({
+    required this.id,
+    required this.groupName,
+    required this.name,
+    required this.postingBehavior,
+    required this.isPostable,
+  });
+  final int id;
+  final String groupName;
+  final String name;
+  final String postingBehavior;
+  final bool isPostable;
+
+  factory _InvoiceTypeOption.fromJson(Map<String, dynamic> json) =>
+      _InvoiceTypeOption(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        groupName: '${json['groupName'] ?? ''}',
+        name: '${json['name'] ?? ''}',
+        postingBehavior: '${json['postingBehavior'] ?? 'other'}',
+        isPostable: json['isPostable'] == true,
+      );
+}
+
 class _InvoiceDetailDialog extends StatelessWidget {
   const _InvoiceDetailDialog({required this.invoice});
   final SupplierInvoice invoice;
@@ -1051,6 +1098,12 @@ class _InvoiceDetailDialog extends StatelessWidget {
               FinanceInfoItem('الفرع', invoice.branchName ?? 'عام'),
               FinanceInfoItem('تاريخ الفاتورة', invoice.invoiceDate),
               FinanceInfoItem('تاريخ الاستحقاق', invoice.dueDate),
+              FinanceInfoItem(
+                'نوع الفاتورة',
+                invoice.invoiceTypeName ?? invoice.invoiceType,
+              ),
+              if (invoice.invoiceGroupName != null)
+                FinanceInfoItem('المجموعة', invoice.invoiceGroupName!),
               FinanceInfoItem(
                 'الحساب المدين',
                 invoice.debitAccountCode == null

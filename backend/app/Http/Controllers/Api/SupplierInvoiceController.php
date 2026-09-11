@@ -96,9 +96,11 @@ class SupplierInvoiceController extends Controller
             'invoiceNumber' => ['required', 'string', 'max:80'],
             'invoiceDate' => ['required', 'date'],
             'dueDate' => ['required', 'date'],
-            'invoiceType' => ['required', 'in:expense,inventory,other'],
-            'expenseCategoryId' => ['nullable', 'integer', 'required_if:invoiceType,expense'],
-            'debitAccountId' => ['nullable', 'integer', 'required_if:invoiceType,other'],
+            // invoiceType remains accepted for older clients; new clients select a configured type.
+            'invoiceTypeId' => ['nullable', 'integer', 'required_without:invoiceType'],
+            'invoiceType' => ['nullable', 'in:expense,inventory,other'],
+            'expenseCategoryId' => ['nullable', 'integer'],
+            'debitAccountId' => ['nullable', 'integer'],
             'subtotal' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'taxAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -114,8 +116,10 @@ class SupplierInvoiceController extends Controller
             ->join('financial_accounts as a', 'a.id', '=', 'i.debit_account_id')
             ->leftJoin('branches as b', 'b.id', '=', 'i.branch_id')
             ->leftJoin('expense_categories as c', 'c.id', '=', 'i.expense_category_id')
+            ->leftJoin('invoice_types as t', 't.id', '=', 'i.invoice_type_id')
+            ->leftJoin('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
             ->where('i.tenant_id', $tenant)->whereNull('i.deleted_at')
-            ->select('i.*', 's.name as supplier_name', 's.supplier_number', 'a.code as debit_account_code', 'a.name_ar as debit_account_name', 'b.name as branch_name', 'c.name as expense_category_name');
+            ->select('i.*', 's.name as supplier_name', 's.supplier_number', 'a.code as debit_account_code', 'a.name_ar as debit_account_name', 'b.name as branch_name', 'c.name as expense_category_name', 't.name as configured_type_name', 't.posting_behavior as configured_posting_behavior', 't.is_postable as configured_is_postable', 'g.name as invoice_group_name');
     }
 
     private function one(int $tenant, int $id, Request $request): array
@@ -133,7 +137,7 @@ class SupplierInvoiceController extends Controller
         $can = fn (string $permission): bool => isset($permissions[$permission]);
         $actions = [];
         if ($row->status === 'draft' && $can('finance.supplier_invoices.edit')) $actions[] = 'edit';
-        if ($row->status === 'draft' && $can('finance.supplier_invoices.post')) $actions[] = 'post';
+        if ($row->status === 'draft' && $row->configured_is_postable && $can('finance.supplier_invoices.post')) $actions[] = 'post';
         if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) $actions[] = 'reverse';
         return $actions;
     }
@@ -155,6 +159,11 @@ class SupplierInvoiceController extends Controller
             'invoiceDate' => $row->invoice_date,
             'dueDate' => $row->due_date,
             'invoiceType' => $row->invoice_type,
+            'invoiceTypeId' => $row->invoice_type_id ? (int) $row->invoice_type_id : null,
+            'invoiceTypeName' => $row->configured_type_name,
+            'invoiceGroupName' => $row->invoice_group_name,
+            'postingBehavior' => $row->configured_posting_behavior ?? $row->invoice_type,
+            'isPostable' => $row->invoice_type_id ? (bool) $row->configured_is_postable : true,
             'expenseCategoryId' => $row->expense_category_id ? (int) $row->expense_category_id : null,
             'expenseCategoryName' => $row->expense_category_name,
             'debitAccountId' => (int) $row->debit_account_id,

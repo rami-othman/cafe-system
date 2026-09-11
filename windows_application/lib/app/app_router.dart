@@ -36,12 +36,14 @@ import '../features/finance_inventory_setup/views/daily_closing_workspace_screen
 import '../features/finance_inventory_setup/views/expense_categories_screen.dart';
 import '../features/finance_inventory_setup/views/expenses_screen.dart';
 import '../features/finance_inventory_setup/views/finance_setup_dashboard_screen.dart';
+import '../features/finance_inventory_setup/views/invoice_type_catalog_screen.dart';
 import '../features/finance_inventory_setup/views/financial_accounts_screen.dart';
 import '../features/finance_inventory_setup/views/finance_operations_screen.dart';
 import '../features/finance_inventory_setup/views/finance_overview.dart';
 import '../features/finance_inventory_setup/views/finance_transactions.dart';
 import '../features/finance_inventory_setup/views/financial_reports_screen.dart';
 import '../features/finance_inventory_setup/views/journal_entries_screen.dart';
+import '../features/finance_inventory_setup/views/vouchers_screen.dart';
 import '../features/finance_inventory_setup/widgets/finance_module_shell.dart';
 import '../features/finance_inventory_setup/repositories/finance_setup_repository.dart';
 import '../features/finance_inventory_setup/views/payment_methods_screen.dart';
@@ -1088,6 +1090,13 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.financeVouchers,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const VouchersScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.financeJournalEntryDetail,
           builder: (context, state) {
             final int? entryId = parsePositiveRouteId(
@@ -1180,6 +1189,13 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
             child: const WarehousesSetupScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeInvoiceTypes,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const InvoiceTypeCatalogScreen(),
           ),
         ),
         GoRoute(
@@ -1513,6 +1529,7 @@ String _financeActiveTabFor(String path) {
   if (path.startsWith(AppRoutes.financeJournalEntriesCanonical)) {
     return 'journals';
   }
+  if (path.startsWith(AppRoutes.financeVouchers)) return 'vouchers';
   if (path.startsWith(AppRoutes.financeDailyClosingCanonical)) {
     return 'closing';
   }
@@ -1724,6 +1741,7 @@ abstract final class AppRoutes {
       '/finance/accounting-periods/$periodId';
 
   static const String financeTransactions = '/finance/transactions';
+  static const String financeVouchers = '/finance/vouchers';
   static const String financeAccountsCanonical = '/finance/accounts';
   static const String financeAccountDetail = '/finance/accounts/:accountId';
   static const String financeJournalEntriesCanonical =
@@ -1737,6 +1755,7 @@ abstract final class AppRoutes {
   static const String financePaymentMethods = '/finance/payment-methods';
   static const String financeExpenses = '/finance/expenses';
   static const String financeExpenseCategories = '/finance/expense-categories';
+  static const String financeInvoiceTypes = '/finance/invoice-types';
   static const String financeSuppliers = '/finance/suppliers';
   static const String financeSuppliersDetail = '/finance/suppliers/:supplierId';
   static const String financeWarehouses = '/finance/warehouses';

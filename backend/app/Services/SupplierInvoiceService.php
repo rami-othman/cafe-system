@@ -41,6 +41,7 @@ class SupplierInvoiceService
 
                 return $existing;
             }
+            $data = $this->withResolvedType($tenantId, $data);
             $this->assertSupplierAndBranch($tenantId, $data, $actorId);
             $debitAccountId = $this->resolveDebitAccount($tenantId, $data);
             [$subtotal, $tax] = $this->money($data);
@@ -71,6 +72,7 @@ class SupplierInvoiceService
             if ($before->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only draft supplier invoices can be edited.']);
             }
+            $data = $this->withResolvedType($tenantId, $data);
             $this->assertSupplierAndBranch($tenantId, $data, $actorId);
             $debitAccountId = $this->resolveDebitAccount($tenantId, $data);
             [$subtotal, $tax] = $this->money($data);
@@ -103,6 +105,10 @@ class SupplierInvoiceService
             }
             if ($invoice->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only a draft supplier invoice can be posted.']);
+            }
+            $type = $this->typeForInvoice($tenantId, $invoice);
+            if (! $type->is_active || ! $type->group_is_active || ! $type->is_postable || $type->posting_behavior === 'none') {
+                throw ValidationException::withMessages(['invoiceTypeId' => 'This invoice type is non-financial and cannot be posted.']);
             }
 
             $debitAccount = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $invoice->debit_account_id)->where('is_active', true)->whereNull('deleted_at')->lockForUpdate()->first();
@@ -222,6 +228,7 @@ class SupplierInvoiceService
             'invoice_date' => $data['invoiceDate'],
             'due_date' => $data['dueDate'],
             'invoice_type' => $data['invoiceType'],
+            'invoice_type_id' => $data['invoiceTypeId'],
             'expense_category_id' => $data['invoiceType'] === 'expense' ? (int) $data['expenseCategoryId'] : null,
             'debit_account_id' => $debitAccountId,
             'subtotal' => Money::decimal($subtotal),
@@ -270,7 +277,33 @@ class SupplierInvoiceService
             return (int) $account->id;
         }
 
+        if ($type === 'none') {
+            $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1100')->where('is_active', true)->whereNull('deleted_at')->first();
+            if (! $account) throw ValidationException::withMessages(['invoiceTypeId' => 'A non-financial invoice requires the active Inventory Asset system account.']);
+            return (int) $account->id;
+        }
+
         throw ValidationException::withMessages(['invoiceType' => 'Invoice type must be expense, inventory, or other.']);
+    }
+
+    private function withResolvedType(int $tenantId, array $data): array
+    {
+        $query = DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
+            ->where('t.tenant_id', $tenantId)->where('g.tenant_id', $tenantId)->where('t.is_active', true)->where('g.is_active', true);
+        if (! empty($data['invoiceTypeId'])) $query->where('t.id', (int) $data['invoiceTypeId']);
+        else $query->where('t.code', $data['invoiceType'] ?? '');
+        $type = $query->select('t.*', 'g.is_active as group_is_active')->first();
+        if (! $type) throw ValidationException::withMessages(['invoiceTypeId' => 'Select an active configured invoice type.']);
+        return array_merge($data, ['invoiceTypeId' => (int) $type->id, 'invoiceType' => $type->posting_behavior]);
+    }
+
+    private function typeForInvoice(int $tenantId, object $invoice): object
+    {
+        $type = DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
+            ->where('t.tenant_id', $tenantId)->where('t.id', $invoice->invoice_type_id)
+            ->select('t.*', 'g.is_active as group_is_active')->lockForUpdate()->first();
+        if (! $type) throw ValidationException::withMessages(['invoiceTypeId' => 'This invoice type no longer exists.']);
+        return $type;
     }
 
     private function assertSupplierAndBranch(int $tenantId, array $data, ?int $actorId): void
