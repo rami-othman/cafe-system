@@ -76,17 +76,20 @@ class InvoiceTypeCatalogController extends Controller
         $data = $request->validate([
             'groupId' => ['required', 'integer'], 'code' => ['required', 'string', 'max:40', 'regex:/^[a-z0-9_-]+$/', Rule::unique('invoice_types', 'code')->where('tenant_id', $tenant)->ignore($ignore)],
             'name' => ['required', 'string', 'max:120'], 'postingBehavior' => ['required', Rule::in(['expense', 'inventory', 'other', 'none'])],
-            'isPostable' => ['required', 'boolean'], 'isActive' => ['sometimes', 'boolean'],
+            'isPostable' => ['required', 'boolean'], 'isActive' => ['sometimes', 'boolean'], 'isPurchase' => ['sometimes', 'boolean'],
         ]);
         abort_unless(DB::table('invoice_groups')->where('tenant_id', $tenant)->where('id', $data['groupId'])->exists(), 422, 'Select a group belonging to this tenant.');
         if ($data['postingBehavior'] === 'none' && $data['isPostable']) abort(422, 'A non-financial invoice type cannot be postable.');
         $active = array_key_exists('isActive', $data)
             ? (bool) $data['isActive']
             : ($ignore ? (bool) DB::table('invoice_types')->where('tenant_id', $tenant)->where('id', $ignore)->value('is_active') : true);
-        return ['invoice_group_id' => $data['groupId'], 'code' => $data['code'], 'name' => $data['name'], 'posting_behavior' => $data['postingBehavior'], 'is_postable' => $data['isPostable'], 'is_active' => $active];
+        $isPurchase = array_key_exists('isPurchase', $data)
+            ? (bool) $data['isPurchase']
+            : ($ignore ? (bool) DB::table('invoice_types')->where('tenant_id', $tenant)->where('id', $ignore)->value('is_purchase') : $data['postingBehavior'] !== 'none');
+        return ['invoice_group_id' => $data['groupId'], 'code' => $data['code'], 'name' => $data['name'], 'posting_behavior' => $data['postingBehavior'], 'is_postable' => $data['isPostable'], 'is_active' => $active, 'is_purchase' => $isPurchase];
     }
 
     private function group(object $row): array { return ['id' => (int) $row->id, 'code' => $row->code, 'name' => $row->name, 'description' => $row->description, 'isActive' => (bool) $row->is_active]; }
     private function typeRow(int $tenant, int $id): array { return $this->type(DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')->where('t.tenant_id', $tenant)->where('t.id', $id)->select('t.*', 'g.code as group_code', 'g.name as group_name', 'g.is_active as group_is_active')->first()); }
-    private function type(object $row): array { return ['id' => (int) $row->id, 'groupId' => (int) $row->invoice_group_id, 'groupCode' => $row->group_code, 'groupName' => $row->group_name, 'code' => $row->code, 'name' => $row->name, 'postingBehavior' => $row->posting_behavior, 'isPostable' => (bool) $row->is_postable, 'isActive' => (bool) $row->is_active, 'groupIsActive' => (bool) $row->group_is_active]; }
+    private function type(object $row): array { return ['id' => (int) $row->id, 'groupId' => (int) $row->invoice_group_id, 'groupCode' => $row->group_code, 'groupName' => $row->group_name, 'code' => $row->code, 'name' => $row->name, 'postingBehavior' => $row->posting_behavior, 'isPostable' => (bool) $row->is_postable, 'isActive' => (bool) $row->is_active, 'isPurchase' => (bool) $row->is_purchase, 'groupIsActive' => (bool) $row->group_is_active]; }
 }

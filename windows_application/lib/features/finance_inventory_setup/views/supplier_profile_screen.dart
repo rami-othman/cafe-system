@@ -172,7 +172,13 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
               ),
               const SizedBox(width: FinanceSpace.sm),
               OutlinedButton(
-                onPressed: () => _openInvoiceForm(),
+                // Creating a new invoice always goes through the Purchasing
+                // line-item screen now — there is only one creation path.
+                // Editing an existing header-only invoice from this list
+                // (below) still uses the legacy dialog, unchanged.
+                onPressed: () => context.go(
+                  '${AppRoutes.financePurchasesNew}?supplierId=${widget.supplierId}',
+                ),
                 child: const Text('فاتورة جديدة'),
               ),
               const SizedBox(width: FinanceSpace.sm),

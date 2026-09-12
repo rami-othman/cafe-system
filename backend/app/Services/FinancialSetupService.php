@@ -85,12 +85,53 @@ class FinancialSetupService
             }
 
             $this->ensureCashAndBankDefaults($tenantId, $actorId);
+            $this->ensureDefaultInvoiceTypes($tenantId);
 
             $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
                 $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
             }
         });
+    }
+
+    /**
+     * Pre-existing gap fixed here: `invoice_groups`/`invoice_types` were
+     * only ever backfilled once, by the migration that introduced them, for
+     * tenants that already existed at that moment (see
+     * 2026_09_10_000019_create_invoice_type_catalog). No seeder or service
+     * carried that forward for tenants provisioned afterwards, so every
+     * supplier invoice attempt for a new tenant failed
+     * ("Select an active configured invoice type.") — this is what
+     * SupplierInvoiceService::withResolvedType() requires to exist. This
+     * mirrors the migration's own seed data exactly (same codes, names, and
+     * posting behaviors) via the same idempotent updateOrInsert pattern used
+     * everywhere else in this method.
+     */
+    private function ensureDefaultInvoiceTypes(int $tenantId): void
+    {
+        $now = now();
+        DB::table('invoice_groups')->updateOrInsert(
+            ['tenant_id' => $tenantId, 'code' => 'accounting'],
+            ['name' => 'فواتير محاسبية', 'description' => 'فواتير يمكن ترحيلها إلى القيود المحاسبية.', 'is_active' => true, 'updated_at' => $now, 'created_at' => $now],
+        );
+        DB::table('invoice_groups')->updateOrInsert(
+            ['tenant_id' => $tenantId, 'code' => 'test'],
+            ['name' => 'فواتير تجريبية', 'description' => 'للتجارب والتوثيق فقط؛ لا تنشئ قيوداً محاسبية.', 'is_active' => true, 'updated_at' => $now, 'created_at' => $now],
+        );
+        $accountingGroupId = (int) DB::table('invoice_groups')->where('tenant_id', $tenantId)->where('code', 'accounting')->value('id');
+        $testGroupId = (int) DB::table('invoice_groups')->where('tenant_id', $tenantId)->where('code', 'test')->value('id');
+
+        foreach ([
+            ['code' => 'expense', 'name' => 'مصروف', 'posting_behavior' => 'expense', 'is_postable' => true, 'is_purchase' => true, 'group' => $accountingGroupId],
+            ['code' => 'inventory', 'name' => 'مخزون', 'posting_behavior' => 'inventory', 'is_postable' => true, 'is_purchase' => true, 'group' => $accountingGroupId],
+            ['code' => 'other', 'name' => 'أخرى', 'posting_behavior' => 'other', 'is_postable' => true, 'is_purchase' => true, 'group' => $accountingGroupId],
+            ['code' => 'test', 'name' => 'فاتورة تجريبية', 'posting_behavior' => 'none', 'is_postable' => false, 'is_purchase' => false, 'group' => $testGroupId],
+        ] as $type) {
+            DB::table('invoice_types')->updateOrInsert(
+                ['tenant_id' => $tenantId, 'code' => $type['code']],
+                ['invoice_group_id' => $type['group'], 'name' => $type['name'], 'posting_behavior' => $type['posting_behavior'], 'is_postable' => $type['is_postable'], 'is_purchase' => $type['is_purchase'], 'is_active' => true, 'updated_at' => $now, 'created_at' => $now],
+            );
+        }
     }
 
     /** Creates configuration only; balances remain entirely journal-derived. */

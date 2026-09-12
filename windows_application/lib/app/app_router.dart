@@ -51,6 +51,12 @@ import '../features/finance_inventory_setup/views/reconciliation_screen.dart';
 import '../features/finance_inventory_setup/views/reconciliation_workspace_screen.dart';
 import '../features/finance_inventory_setup/views/supplier_profile_screen.dart';
 import '../features/finance_inventory_setup/views/suppliers_screen.dart';
+import '../features/purchasing/controllers/purchasing_cubit.dart';
+import '../features/purchasing/views/goods_receipt_detail_screen.dart';
+import '../features/purchasing/views/goods_receipt_form_screen.dart';
+import '../features/purchasing/views/purchase_invoice_detail_screen.dart';
+import '../features/purchasing/views/purchase_invoice_form_screen.dart';
+import '../features/purchasing/views/purchasing_center_screen.dart';
 import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
 import '../features/inventory/controllers/inventory_cubit.dart';
 import '../features/inventory/widgets/inventory_module_shell.dart';
@@ -1157,6 +1163,98 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const ExpensesScreen(),
         ),
         GoRoute(
+          path: AppRoutes.financePurchases,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<PurchasingCubit>(
+                create: (_) => serviceLocator<PurchasingCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
+            ],
+            child: const PurchasingCenterScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financePurchasesNew,
+          builder: (context, state) {
+            final int? supplierId = parsePositiveRouteId(
+              state.uri.queryParameters['supplierId'],
+            );
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<PurchasingCubit>(
+                  create: (_) => serviceLocator<PurchasingCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
+              ],
+              child: PurchaseInvoiceFormScreen(preselectedSupplierId: supplierId),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/finance/purchases/:purchaseId/edit',
+          builder: (context, state) {
+            final int? purchaseId = parsePositiveRouteId(
+              state.pathParameters['purchaseId'],
+            );
+            if (purchaseId == null) return const _InvalidCatalogRouteScreen();
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<PurchasingCubit>(
+                  create: (_) => serviceLocator<PurchasingCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
+              ],
+              child: PurchaseInvoiceFormScreen(editId: purchaseId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financePurchasesDetail,
+          builder: (context, state) {
+            final int? purchaseId = parsePositiveRouteId(
+              state.pathParameters['purchaseId'],
+            );
+            if (purchaseId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<PurchasingCubit>(
+              create: (_) => serviceLocator<PurchasingCubit>(),
+              child: PurchaseInvoiceDetailScreen(purchaseId: purchaseId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financePurchasesReceive,
+          builder: (context, state) {
+            final int? purchaseId = parsePositiveRouteId(
+              state.pathParameters['purchaseId'],
+            );
+            if (purchaseId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<PurchasingCubit>(
+              create: (_) => serviceLocator<PurchasingCubit>(),
+              child: GoodsReceiptFormScreen(purchaseId: purchaseId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financePurchaseReceiptsDetail,
+          builder: (context, state) {
+            final int? receiptId = parsePositiveRouteId(
+              state.pathParameters['receiptId'],
+            );
+            if (receiptId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<PurchasingCubit>(
+              create: (_) => serviceLocator<PurchasingCubit>(),
+              child: GoodsReceiptDetailScreen(receiptId: receiptId),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.financeSuppliersDetail,
           builder: (context, state) {
             final int? supplierId = parsePositiveRouteId(
@@ -1522,6 +1620,8 @@ String _financeActiveTabFor(String path) {
   if (path.startsWith(AppRoutes.financeCashBanks)) return 'cashbanks';
   if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
   if (path.startsWith(AppRoutes.financeExpenses)) return 'expenses';
+  if (path.startsWith(AppRoutes.financePurchases)) return 'purchases';
+  if (path.startsWith(AppRoutes.financePurchaseReceipts)) return 'purchases';
   if (path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
   if (path.startsWith(AppRoutes.financeReconciliationCanonical)) {
     return 'reconciliation';
@@ -1756,6 +1856,14 @@ abstract final class AppRoutes {
   static const String financeExpenses = '/finance/expenses';
   static const String financeExpenseCategories = '/finance/expense-categories';
   static const String financeInvoiceTypes = '/finance/invoice-types';
+  static const String financePurchases = '/finance/purchases';
+  static const String financePurchasesNew = '/finance/purchases/new';
+  static const String financePurchasesDetail = '/finance/purchases/:purchaseId';
+  static const String financePurchasesReceive =
+      '/finance/purchases/:purchaseId/receive';
+  static const String financePurchaseReceipts = '/finance/purchase-receipts';
+  static const String financePurchaseReceiptsDetail =
+      '/finance/purchase-receipts/:receiptId';
   static const String financeSuppliers = '/finance/suppliers';
   static const String financeSuppliersDetail = '/finance/suppliers/:supplierId';
   static const String financeWarehouses = '/finance/warehouses';
