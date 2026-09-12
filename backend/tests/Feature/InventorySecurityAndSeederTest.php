@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\Catalog\RecipeUnitRegistry;
 use Database\Seeders\FinancialInventoryFoundationSeeder;
 use Database\Seeders\InventorySeeder;
 use Database\Seeders\SuperAdminSeeder;
@@ -28,6 +29,32 @@ class InventorySecurityAndSeederTest extends TestCase
         $this->assertGreaterThan(0, DB::table('inventory_items')->where('tenant_id', $tenant)->count());
         $this->assertGreaterThan(0, DB::table('stock_balances')->where('tenant_id', $tenant)->count());
         $this->assertGreaterThan(0, DB::table('stock_counts')->where('tenant_id', $tenant)->count());
+    }
+
+    public function test_provided_materials_seed_with_zero_stock_and_are_recipe_compatible(): void
+    {
+        $this->seed(SuperAdminSeeder::class);
+        $this->seed(TenantAccessSeeder::class);
+        $this->seed(FinancialInventoryFoundationSeeder::class);
+        $this->seed(InventorySeeder::class);
+
+        $tenant = $this->tenant('cafe-618');
+        $material = DB::table('inventory_items')
+            ->where('tenant_id', $tenant)
+            ->where('sku', 'MAT-11101')
+            ->first();
+
+        $this->assertNotNull($material);
+        $this->assertSame('سيرب بطيخ', $material->name);
+        $this->assertSame('سيربات وصوصات', $material->category);
+        $this->assertSame('milliliter', $material->unit);
+        $this->assertSame('raw_material', $material->item_type);
+        $this->assertSame('0.000', (string) $material->minimum_stock);
+        $this->assertSame('0.0000', (string) $material->latest_unit_cost);
+        $this->assertDatabaseMissing('stock_movements', ['inventory_item_id' => $material->id]);
+        $this->assertSame(1, DB::table('inventory_items')->where('tenant_id', $tenant)->where('name', 'سيرب بطيخ')->count());
+        $this->assertGreaterThan(0, DB::table('inventory_item_warehouses')->where('tenant_id', $tenant)->where('inventory_item_id', $material->id)->count());
+        $this->assertSame('pc', app(RecipeUnitRegistry::class)->inventoryUnit('box'));
     }
 
     public function test_unauthenticated_inventory_reads_and_writes_are_rejected(): void

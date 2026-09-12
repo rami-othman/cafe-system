@@ -9,7 +9,7 @@ class RecipeUnitRegistry
 {
     private const UNITS = ['g' => ['mass', 'g', '1'], 'kg' => ['mass', 'g', '1000'], 'ml' => ['volume', 'ml', '1'], 'l' => ['volume', 'ml', '1000'], 'pc' => ['count', 'pc', '1']];
 
-    private const INVENTORY = ['g' => 'g', 'gram' => 'g', 'grams' => 'g', 'kg' => 'kg', 'kilogram' => 'kg', 'kilograms' => 'kg', 'ml' => 'ml', 'milliliter' => 'ml', 'milliliters' => 'ml', 'l' => 'l', 'liter' => 'l', 'litre' => 'l', 'liters' => 'l', 'litres' => 'l', 'pc' => 'pc', 'piece' => 'pc', 'pieces' => 'pc'];
+    private const INVENTORY = ['g' => 'g', 'gram' => 'g', 'grams' => 'g', 'kg' => 'kg', 'kilogram' => 'kg', 'kilograms' => 'kg', 'ml' => 'ml', 'milliliter' => 'ml', 'milliliters' => 'ml', 'l' => 'l', 'liter' => 'l', 'litre' => 'l', 'liters' => 'l', 'litres' => 'l', 'pc' => 'pc', 'piece' => 'pc', 'pieces' => 'pc', 'pack' => 'pc', 'box' => 'pc', 'carton' => 'pc', 'bag' => 'pc', 'bottle' => 'pc', 'can' => 'pc'];
 
     public function inventoryUnit(?string $unit): ?string
     {
