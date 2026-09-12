@@ -155,6 +155,21 @@ class AccountingPostingService
         return $this->post($request, $tenantId, [...$data, 'sourceType' => 'supplier_payment'], $actorId);
     }
 
+    public function postCustomerPayment(Request $request, int $tenantId, array $data, ?int $actorId): int
+    {
+        return $this->post($request, $tenantId, [...$data, 'sourceType' => 'customer_payment'], $actorId);
+    }
+
+    public function postSalesCreditNote(Request $request, int $tenantId, array $data, ?int $actorId): int
+    {
+        return $this->post($request, $tenantId, [...$data, 'sourceType' => 'sales_credit_note'], $actorId);
+    }
+
+    public function postCustomerRefund(Request $request, int $tenantId, array $data, ?int $actorId): int
+    {
+        return $this->post($request, $tenantId, [...$data, 'sourceType' => 'customer_refund'], $actorId);
+    }
+
     public function postInventoryAdjustment(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
         return $this->post($request, $tenantId, [...$data, 'sourceType' => 'stock_count_variance'], $actorId);

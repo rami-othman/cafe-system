@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             MenuCatalogSeeder::class,
             ProductModifierSeeder::class,
             CustomerAndTableSeeder::class,
+            SalesPhaseOneDemoSeeder::class,
             InventorySeeder::class,
             DiscountSeeder::class,
             LoyaltySeeder::class,
@@ -29,6 +30,9 @@ class DatabaseSeeder extends Seeder
         // leaking into unrelated report assertions.
         if (app()->environment(['local', 'development'])) {
             $this->call(FinanceOperationsDemoSeeder::class);
+            $this->call(SalesPhaseTwoDemoSeeder::class);
+            $this->call(SalesPhaseThreeDemoSeeder::class);
+            $this->call(SalesPhaseFourDemoSeeder::class);
             $this->call(Cafe618InventoryOperationsDemoSeeder::class);
             $this->call(Cafe618ReportsDemoSeeder::class);
         }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Domain\Inventory\InventoryPostingService;
 use App\Domain\Inventory\RecipeMaterialEligibility;
 use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\PublishedMenuVersion;
@@ -38,7 +37,7 @@ use Illuminate\Validation\ValidationException;
 class SaleConsumptionService
 {
     public function __construct(
-        private readonly InventoryPostingService $posting,
+        private readonly SalesInventoryMovementService $movements,
         private readonly UnitConversionResolver $conversions,
     ) {}
 
@@ -111,26 +110,8 @@ class SaleConsumptionService
                 $consumptions[$key]['quantity'] += $line['direction'] * $quantity;
             }
 
-            foreach ($consumptions as $consumption) {
-                if ($consumption['quantity'] <= 0) {
-                    continue;
-                }
-
-                $result = $this->posting->post($request, $tenantId, [
-                    'warehouseId' => $warehouseId,
-                    'itemId' => $consumption['materialId'],
-                    'type' => 'sale_consumption',
-                    'quantity' => InventoryDecimal::quantity($consumption['quantity']),
-                    'unit' => $consumption['baseUnit'],
-                    'branchId' => $order->branch_id,
-                    'referenceType' => 'order_item',
-                    'referenceId' => $item->id,
-                    'idempotencyKey' => "sale-consumption-{$tenantId}-{$item->id}-{$consumption['materialId']}",
-                ], $actorId);
-
-                $movementCost = DB::table('stock_movements')->where('id', $result->movementId)->value('total_cost');
-                $itemCogsCents += Money::cents($movementCost ?? '0');
-            }
+            $movementResult = $this->movements->consume($request, $tenantId, (int) $order->branch_id, $warehouseId, 'order_item', (int) $item->id, array_values($consumptions), $actorId);
+            $itemCogsCents += $movementResult['cogsCents'];
 
             $now = now();
             DB::table('sale_consumptions')->insert([
