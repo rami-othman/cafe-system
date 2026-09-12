@@ -137,8 +137,8 @@ class FullMenuManagementLifecycleApiTest extends TestCase
             ],
         ], $headers)->assertOk();
         $simulated = collect($simulation->json('data.components'))->keyBy('materialId');
-        $this->assertSame('54', $simulated[$beans]['quantity']);
-        $this->assertSame('250', $simulated[$oatMilk]['quantity']);
+        $this->assertSame('0.054', $simulated[$beans]['quantity']);
+        $this->assertSame('0.25', $simulated[$oatMilk]['quantity']);
         $this->assertArrayNotHasKey($milk, $simulated->all());
 
         $menu = $this->postJson('/api/v1/admin/menus', [

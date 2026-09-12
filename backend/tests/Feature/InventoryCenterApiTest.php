@@ -178,6 +178,7 @@ class InventoryCenterApiTest extends TestCase
             'unit' => 'kilogram',
             'minimumStock' => '1.000',
             'reorderLevel' => '1.000',
+            'warehouseIds' => [$this->warehouse($tenant)],
             'isActive' => true,
         ], $headers)
             ->assertCreated()

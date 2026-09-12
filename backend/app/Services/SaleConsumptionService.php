@@ -166,15 +166,12 @@ class SaleConsumptionService
 
     /**
      * Canonical tracking check: `is_stock_tracked` is authoritative;
-     * `inventory_controlled` is consulted only as a legacy safety net (see
-     * class docblock) and is never itself sufficient to enable tracking that
-     * `is_stock_tracked` disagrees with going the other way — both columns are
-     * kept in sync by CatalogProductService, so the OR only ever matters for
-     * rows written before that sync existed.
+     * `inventory_controlled` is a legacy mirror and must never override an
+     * explicit false value in the authoritative column.
      */
     private function isTracked(object $product): bool
     {
-        return (bool) $product->is_stock_tracked || (bool) $product->inventory_controlled;
+        return (bool) $product->is_stock_tracked;
     }
 
     /** @return array<string, mixed>|null */

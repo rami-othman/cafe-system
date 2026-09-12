@@ -55,7 +55,7 @@ class DiscountRuntimeEligibilityTest extends TestCase
     public function test_customer_payment_and_usage_limits_are_revalidated_when_paid_without_double_consumption(): void
     {
         $scope = $this->scope();
-        $customer = DB::table('customers')->insertGetId(['tenant_id' => $scope['tenant'], 'name' => 'VIP', 'total_spent' => 1000, 'visits_count' => 3, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $customer = DB::table('customers')->insertGetId(['tenant_id' => $scope['tenant'], 'name' => 'VIP', 'customer_number' => 'C-000001', 'normalized_name' => 'vip', 'total_spent' => 1000, 'visits_count' => 3, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         DB::table('orders')->where('id', $scope['order'])->update(['customer_id' => $customer]);
         $discount = $this->discount($scope, [
             'customer_eligibility' => 'VIP', 'payment_method' => 'card', 'usage_limit' => 1, 'usage_limit_per_customer' => 1,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\Admin\Catalog\CatalogReferenceController;
 use App\Http\Controllers\Api\Admin\Catalog\ModifierCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\OperationalAvailabilityController;
@@ -7,6 +8,9 @@ use App\Http\Controllers\Api\Admin\Catalog\ProductAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
 use App\Http\Controllers\Api\Admin\Catalog\RecipeConfigurationController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerGroupController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerManagementController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerRolePermissionController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentScopeController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
@@ -19,13 +23,14 @@ use App\Http\Controllers\Api\Admin\Menu\MenuValidationController;
 use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
-use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
-use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
+use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
+use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
+use App\Http\Controllers\Api\CustomerCapabilityController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\CustomerGroupLookupController;
 use App\Http\Controllers\Api\DailyClosingController;
 use App\Http\Controllers\Api\DailyReportController;
 use App\Http\Controllers\Api\DiscountController;
@@ -105,7 +110,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{branch}', 'show')->whereNumber('branch');
             Route::put('{branch}', 'update')->whereNumber('branch');
         });
-    
+
     Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
         ->prefix('cafe-configuration')
         ->group(function (): void {
@@ -113,6 +118,49 @@ Route::prefix('v1')->group(function (): void {
             Route::put('profile', [CafeConfigurationProfileController::class, 'update']);
             Route::get('tax', [CafeConfigurationTaxController::class, 'show']);
             Route::put('tax', [CafeConfigurationTaxController::class, 'update']);
+        });
+
+    Route::middleware(['api.token', 'password.changed'])
+        ->prefix('admin/customer-management/role-permissions')
+        ->controller(CustomerRolePermissionController::class)
+        ->group(function (): void {
+            Route::middleware('customer.permission:customer.permission')->group(function (): void {
+                Route::get('manager', 'show');
+                Route::put('manager', 'replace');
+            });
+        });
+
+    Route::middleware(['api.token', 'password.changed'])
+        ->get('customer-management/capabilities', [CustomerCapabilityController::class, 'show']);
+
+    Route::middleware(['api.token', 'password.changed', 'customer.permission:customer.manage'])
+        ->prefix('admin/customer-management/customers')
+        ->controller(CustomerManagementController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{customer}', 'show')->whereNumber('customer');
+            Route::put('{customer}', 'update')->whereNumber('customer');
+            Route::post('{customer}/activate', 'activate')->whereNumber('customer');
+            Route::post('{customer}/deactivate', 'deactivate')->whereNumber('customer');
+            Route::post('{customer}/archive', 'archive')->whereNumber('customer');
+            Route::post('{customer}/restore', 'restore')->whereNumber('customer');
+        });
+
+    Route::middleware(['api.token', 'password.changed', 'customer.permission:customer.manage'])
+        ->prefix('admin/customer-management/customer-groups')
+        ->controller(CustomerGroupController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{group}', 'show')->whereNumber('group');
+            Route::put('{group}', 'update')->whereNumber('group');
+            Route::post('{group}/archive', 'archive')->whereNumber('group');
+            Route::post('{group}/restore', 'restore')->whereNumber('group');
+            Route::get('{group}/members', 'members')->whereNumber('group');
+            Route::get('{group}/eligible-members', 'eligibleMembers')->whereNumber('group');
+            Route::post('{group}/members', 'addMembers')->whereNumber('group');
+            Route::delete('{group}/members/{customer}', 'removeMember')->whereNumber(['group', 'customer']);
         });
 
     // Tenant operational boundary. Tenant identity comes solely from the
@@ -288,7 +336,10 @@ Route::prefix('v1')->group(function (): void {
         Route::get('menu/products/{product}', [MenuController::class, 'product']);
         Route::get('pos/menu-sync', [PosMenuSyncController::class, 'show']);
 
-        Route::get('customers', [CustomerController::class, 'index']);
+        Route::get('customers', [CustomerController::class, 'index'])->middleware('customer.permission:customer.lookup');
+        Route::post('customers/quick-create', [CustomerController::class, 'storeQuick'])->middleware('customer.permission:customer.quick_create');
+        Route::put('customers/{customer}/groups', [CustomerController::class, 'syncGroups'])->whereNumber('customer')->middleware('customer.permission:customer.memberships');
+        Route::get('customer-groups', [CustomerGroupLookupController::class, 'index'])->middleware('customer.permission:customer.memberships');
         Route::get('tables', [TableController::class, 'index']);
         Route::get('pos/state', [PosStateController::class, 'show']);
         Route::get('discounts/available', [DiscountController::class, 'available']);

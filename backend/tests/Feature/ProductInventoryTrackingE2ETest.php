@@ -138,7 +138,7 @@ class ProductInventoryTrackingE2ETest extends TestCase
         $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
         $itemId = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'حبوب اختبار', 'nameEn' => 'E2E Test Beans '.uniqid(), 'sku' => 'E2E-TEST-'.uniqid(),
-            'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => $unitCost, 'isActive' => true,
+            'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => $unitCost, 'warehouseIds' => [$warehouseId], 'isActive' => true,
         ], $headers)->assertCreated()->json('data.id');
 
         $this->postJson('/api/v1/inventory/movements', [

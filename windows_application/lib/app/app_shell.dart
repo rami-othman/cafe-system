@@ -6,6 +6,8 @@ import '../core/theme/app_colors.dart';
 import '../core/utils/responsive.dart';
 import '../shared/widgets/app_sidebar.dart';
 import '../features/auth/controllers/auth_session_cubit.dart';
+import '../features/auth/models/auth_session.dart';
+import '../features/customer_management/models/customer_management_access.dart';
 import '../shared/widgets/app_top_bar.dart';
 
 class AppShell extends StatelessWidget {
@@ -28,6 +30,10 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AuthSession? session = context
+        .select<AuthSessionCubit?, AuthSession?>(
+          (AuthSessionCubit? cubit) => cubit?.state.session,
+        );
     return Scaffold(
       backgroundColor: AppColors.shellBackground,
       body: LayoutBuilder(
@@ -47,12 +53,8 @@ class AppShell extends StatelessWidget {
               AppSidebar(
                 activeLabel: activeLabel,
                 isCollapsed: !isLarge,
-                actorRole: context
-                    .read<AuthSessionCubit?>()
-                    ?.state
-                    .session
-                    ?.user
-                    .role,
+                actorRole: session?.user.role,
+                canManageCustomers: CustomerManagementAccess.allows(session),
               ),
               Expanded(
                 child: Column(

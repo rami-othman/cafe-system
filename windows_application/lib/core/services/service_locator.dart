@@ -52,6 +52,7 @@ import '../../features/cafe_configuration/controllers/cafe_configuration_overvie
 import '../../features/cafe_configuration/controllers/tax_cubit.dart';
 import '../../features/cafe_configuration/controllers/team_cubit.dart';
 import '../../features/cafe_configuration/repositories/cafe_configuration_repository.dart';
+import '../../features/customer_management/repositories/customer_management_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -240,6 +241,11 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<CafeConfigurationRepository>()) {
     serviceLocator.registerLazySingleton<CafeConfigurationRepository>(
       () => ApiCafeConfigurationRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<CustomerManagementRepository>()) {
+    serviceLocator.registerLazySingleton<CustomerManagementRepository>(
+      () => ApiCustomerManagementRepository(serviceLocator<DioApiClient>()),
     );
   }
   if (!serviceLocator.isRegistered<CafeProfileCubit>()) {

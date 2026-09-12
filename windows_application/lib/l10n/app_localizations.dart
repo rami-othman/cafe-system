@@ -10879,6 +10879,816 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This applies to new orders.'**
   String get taxNewOrdersOnly;
+
+  /// No description provided for @customerManagementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Management'**
+  String get customerManagementTitle;
+
+  /// No description provided for @customerManagementCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get customerManagementCustomers;
+
+  /// No description provided for @customerManagementGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Groups'**
+  String get customerManagementGroups;
+
+  /// No description provided for @customerManagementCreateCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'New Customer'**
+  String get customerManagementCreateCustomer;
+
+  /// No description provided for @customerManagementCreateGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'New Group'**
+  String get customerManagementCreateGroup;
+
+  /// No description provided for @customerManagementSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get customerManagementSearch;
+
+  /// No description provided for @customerManagementActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get customerManagementActive;
+
+  /// No description provided for @customerManagementInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get customerManagementInactive;
+
+  /// No description provided for @customerManagementArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get customerManagementArchived;
+
+  /// No description provided for @customerManagementAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get customerManagementAll;
+
+  /// No description provided for @customerManagementNoPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'No phone'**
+  String get customerManagementNoPhone;
+
+  /// No description provided for @customerManagementNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get customerManagementNotAvailable;
+
+  /// No description provided for @customerManagementValueSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **' · '**
+  String get customerManagementValueSeparator;
+
+  /// No description provided for @customerManagementLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading customer information…'**
+  String get customerManagementLoading;
+
+  /// No description provided for @customerManagementEmptyCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers yet.'**
+  String get customerManagementEmptyCustomers;
+
+  /// No description provided for @customerManagementEmptyGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'No customer groups yet.'**
+  String get customerManagementEmptyGroups;
+
+  /// No description provided for @customerManagementNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching results.'**
+  String get customerManagementNoResults;
+
+  /// No description provided for @customerManagementRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get customerManagementRetry;
+
+  /// No description provided for @customerManagementClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get customerManagementClearFilters;
+
+  /// No description provided for @customerManagementAccessDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have access to Customer Management.'**
+  String get customerManagementAccessDenied;
+
+  /// No description provided for @customerManagementNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested record was not found.'**
+  String get customerManagementNotFound;
+
+  /// No description provided for @customerManagementCustomerNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer number'**
+  String get customerManagementCustomerNumber;
+
+  /// No description provided for @customerManagementName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get customerManagementName;
+
+  /// No description provided for @customerManagementPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get customerManagementPhone;
+
+  /// No description provided for @customerManagementGroupsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get customerManagementGroupsLabel;
+
+  /// No description provided for @customerManagementStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get customerManagementStatus;
+
+  /// No description provided for @customerManagementEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get customerManagementEmail;
+
+  /// No description provided for @customerManagementBirthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth date'**
+  String get customerManagementBirthDate;
+
+  /// No description provided for @customerManagementNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get customerManagementNotes;
+
+  /// No description provided for @customerManagementPrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get customerManagementPrimary;
+
+  /// No description provided for @customerManagementMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get customerManagementMembers;
+
+  /// No description provided for @customerManagementMemberCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Members: {count}'**
+  String customerManagementMemberCount(int count);
+
+  /// No description provided for @customerManagementPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get customerManagementPreviousPage;
+
+  /// No description provided for @customerManagementNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get customerManagementNextPage;
+
+  /// No description provided for @customerManagementPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String customerManagementPage(int page, int total);
+
+  /// No description provided for @customerManagementView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get customerManagementView;
+
+  /// No description provided for @customerManagementEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get customerManagementEdit;
+
+  /// No description provided for @customerManagementSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get customerManagementSave;
+
+  /// No description provided for @customerManagementCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get customerManagementCancel;
+
+  /// No description provided for @customerManagementActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get customerManagementActivate;
+
+  /// No description provided for @customerManagementDeactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get customerManagementDeactivate;
+
+  /// No description provided for @customerManagementArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get customerManagementArchive;
+
+  /// No description provided for @customerManagementRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get customerManagementRestore;
+
+  /// No description provided for @customerManagementConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get customerManagementConfirm;
+
+  /// No description provided for @customerManagementDiscardChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved changes?'**
+  String get customerManagementDiscardChanges;
+
+  /// No description provided for @customerManagementChangesKept.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes were kept.'**
+  String get customerManagementChangesKept;
+
+  /// No description provided for @customerManagementRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The request could not be completed.'**
+  String get customerManagementRequestFailed;
+
+  /// No description provided for @customerManagementValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the highlighted fields.'**
+  String get customerManagementValidationFailed;
+
+  /// No description provided for @customerManagementAddMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Add members'**
+  String get customerManagementAddMembers;
+
+  /// No description provided for @customerManagementRemoveMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get customerManagementRemoveMember;
+
+  /// No description provided for @customerManagementRemoveMemberConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {customer} from {group}?'**
+  String customerManagementRemoveMemberConfirm(Object customer, Object group);
+
+  /// No description provided for @customerManagementCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Customer'**
+  String get customerManagementCreateTitle;
+
+  /// No description provided for @customerManagementEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Customer'**
+  String get customerManagementEditTitle;
+
+  /// No description provided for @customerManagementCustomerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer name'**
+  String get customerManagementCustomerName;
+
+  /// No description provided for @customerManagementAddPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add phone'**
+  String get customerManagementAddPhone;
+
+  /// No description provided for @customerManagementRemovePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove phone'**
+  String get customerManagementRemovePhone;
+
+  /// No description provided for @customerManagementPhoneType.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone type'**
+  String get customerManagementPhoneType;
+
+  /// No description provided for @customerManagementPhoneMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile'**
+  String get customerManagementPhoneMobile;
+
+  /// No description provided for @customerManagementPhoneHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get customerManagementPhoneHome;
+
+  /// No description provided for @customerManagementPhoneWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get customerManagementPhoneWork;
+
+  /// No description provided for @customerManagementPhoneOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get customerManagementPhoneOther;
+
+  /// No description provided for @customerManagementSelectGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get customerManagementSelectGroups;
+
+  /// No description provided for @customerManagementActiveGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Active groups'**
+  String get customerManagementActiveGroups;
+
+  /// No description provided for @customerManagementArchivedGroupRetained.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived group retained'**
+  String get customerManagementArchivedGroupRetained;
+
+  /// No description provided for @customerManagementDateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get customerManagementDateHint;
+
+  /// No description provided for @customerManagementStay.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get customerManagementStay;
+
+  /// No description provided for @customerManagementLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get customerManagementLeave;
+
+  /// No description provided for @customerManagementRequiredName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a customer name.'**
+  String get customerManagementRequiredName;
+
+  /// No description provided for @customerManagementPrimaryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one primary phone.'**
+  String get customerManagementPrimaryRequired;
+
+  /// No description provided for @customerManagementNoActiveGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'No active groups available.'**
+  String get customerManagementNoActiveGroups;
+
+  /// No description provided for @customerManagementDeactivateConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate {name}?'**
+  String customerManagementDeactivateConfirm(Object name);
+
+  /// No description provided for @customerManagementDeactivateConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer will no longer be available for new operational use. Historical records remain preserved.'**
+  String get customerManagementDeactivateConsequence;
+
+  /// No description provided for @customerManagementArchiveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive {name}?'**
+  String customerManagementArchiveConfirm(Object name);
+
+  /// No description provided for @customerManagementArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer will be archived without deleting historical records. It can be restored later.'**
+  String get customerManagementArchiveConsequence;
+
+  /// No description provided for @customerManagementRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore {name}?'**
+  String customerManagementRestoreConfirm(Object name);
+
+  /// No description provided for @customerManagementRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer will be restored as Inactive. Activate it separately before new operational use.'**
+  String get customerManagementRestoreConsequence;
+
+  /// No description provided for @customerManagementMutationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your customer was not changed. You can retry safely.'**
+  String get customerManagementMutationFailed;
+
+  /// No description provided for @cmvpCustomersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage customer records, phones, groups, and lifecycle state.'**
+  String get cmvpCustomersDescription;
+
+  /// No description provided for @cmvpGroupsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize customer groups and their bounded memberships.'**
+  String get cmvpGroupsDescription;
+
+  /// No description provided for @cmvpCustomerDetailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the authoritative customer information and memberships.'**
+  String get cmvpCustomerDetailDescription;
+
+  /// No description provided for @cmvpCustomerFormDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the customer information managed by the server.'**
+  String get cmvpCustomerFormDescription;
+
+  /// No description provided for @cmvpGroupDetailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the group identity, lifecycle, and current members.'**
+  String get cmvpGroupDetailDescription;
+
+  /// No description provided for @cmvpGroupFormDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create or rename a customer group.'**
+  String get cmvpGroupFormDescription;
+
+  /// No description provided for @cmvpBreadcrumbCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get cmvpBreadcrumbCustomers;
+
+  /// No description provided for @cmvpBreadcrumbGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Groups'**
+  String get cmvpBreadcrumbGroups;
+
+  /// No description provided for @cmvpBreadcrumbDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get cmvpBreadcrumbDetails;
+
+  /// No description provided for @cmvpBreadcrumbEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get cmvpBreadcrumbEdit;
+
+  /// No description provided for @cmvpBreadcrumbCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get cmvpBreadcrumbCreate;
+
+  /// No description provided for @cmvpCustomersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No customers} =1{1 customer} other{{count} customers}}'**
+  String cmvpCustomersCount(int count);
+
+  /// No description provided for @cmvpGroupsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No groups} =1{1 group} other{{count} groups}}'**
+  String cmvpGroupsCount(int count);
+
+  /// No description provided for @cmvpMembersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No members} =1{1 member} other{{count} members}}'**
+  String cmvpMembersCount(int count);
+
+  /// No description provided for @cmvpMoreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get cmvpMoreActions;
+
+  /// No description provided for @cmvpOpenActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Open row actions'**
+  String get cmvpOpenActions;
+
+  /// No description provided for @cmvpSelectRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Select row'**
+  String get cmvpSelectRow;
+
+  /// No description provided for @cmvpRemoveGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove group'**
+  String get cmvpRemoveGroup;
+
+  /// No description provided for @cmvpInformationSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer information'**
+  String get cmvpInformationSection;
+
+  /// No description provided for @cmvpPhoneSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone numbers'**
+  String get cmvpPhoneSection;
+
+  /// No description provided for @cmvpGroupsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer groups'**
+  String get cmvpGroupsSection;
+
+  /// No description provided for @cmvpNotesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get cmvpNotesSection;
+
+  /// No description provided for @cmvpLifecycleSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifecycle'**
+  String get cmvpLifecycleSection;
+
+  /// No description provided for @cmvpGeneratedNumberHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer number is generated by the server.'**
+  String get cmvpGeneratedNumberHint;
+
+  /// No description provided for @cmvpCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get cmvpCreatedAt;
+
+  /// No description provided for @cmvpAbsenceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available'**
+  String get cmvpAbsenceValue;
+
+  /// No description provided for @cmvpManageGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage groups'**
+  String get cmvpManageGroups;
+
+  /// No description provided for @cmvpGroupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get cmvpGroupName;
+
+  /// No description provided for @cmvpMemberSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search members'**
+  String get cmvpMemberSearch;
+
+  /// No description provided for @cmvpNoMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'No members in this group.'**
+  String get cmvpNoMembers;
+
+  /// No description provided for @cmvpNoCandidates.
+  ///
+  /// In en, this message translates to:
+  /// **'No eligible customers found.'**
+  String get cmvpNoCandidates;
+
+  /// No description provided for @cmvpCandidateSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search eligible customers'**
+  String get cmvpCandidateSearch;
+
+  /// No description provided for @cmvpSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Add members} =1{Add 1 member} other{Add {count} members}}'**
+  String cmvpSelectedCount(int count);
+
+  /// No description provided for @cmvpAddMembersDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add members'**
+  String get cmvpAddMembersDialogTitle;
+
+  /// No description provided for @cmvpConfirmRemoveMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get cmvpConfirmRemoveMember;
+
+  /// No description provided for @cmvpLoadingCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading customers'**
+  String get cmvpLoadingCustomers;
+
+  /// No description provided for @cmvpLoadingGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading customer groups'**
+  String get cmvpLoadingGroups;
+
+  /// No description provided for @cmvpLoadingRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading record'**
+  String get cmvpLoadingRecord;
+
+  /// No description provided for @cmvpForbiddenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access unavailable'**
+  String get cmvpForbiddenTitle;
+
+  /// No description provided for @cmvpNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record not found'**
+  String get cmvpNotFoundTitle;
+
+  /// No description provided for @cmvpRetryableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this view'**
+  String get cmvpRetryableTitle;
+
+  /// No description provided for @cmvpNoResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching results'**
+  String get cmvpNoResultsTitle;
+
+  /// No description provided for @cmvpEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get cmvpEmptyTitle;
+
+  /// No description provided for @cmvpStateLoadingSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Management content is loading'**
+  String get cmvpStateLoadingSemantics;
+
+  /// No description provided for @cmvpRetryableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get cmvpRetryableMessage;
+
+  /// No description provided for @cmvpNoResultsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try changing the search or clearing the filters.'**
+  String get cmvpNoResultsMessage;
+
+  /// No description provided for @cmvpEmptyCustomersMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the first customer to begin.'**
+  String get cmvpEmptyCustomersMessage;
+
+  /// No description provided for @cmvpEmptyGroupsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the first group to begin.'**
+  String get cmvpEmptyGroupsMessage;
+
+  /// No description provided for @cmvpForbiddenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to view this content.'**
+  String get cmvpForbiddenMessage;
+
+  /// No description provided for @cmvpNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested record is no longer available.'**
+  String get cmvpNotFoundMessage;
+
+  /// No description provided for @cmvpSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get cmvpSubmitting;
+
+  /// No description provided for @cmvpAddingMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding members'**
+  String get cmvpAddingMembers;
+
+  /// No description provided for @cmvpRemovingMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing member'**
+  String get cmvpRemovingMember;
+
+  /// No description provided for @cmvpDiscardChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your unsaved changes will be lost.'**
+  String get cmvpDiscardChangesMessage;
+
+  /// No description provided for @cmvpDialogCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cmvpDialogCancel;
+
+  /// No description provided for @cmvpDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get cmvpDialogConfirm;
+
+  /// No description provided for @cmvpMemberRemoveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'This member will be removed from the group.'**
+  String get cmvpMemberRemoveConsequence;
+
+  /// No description provided for @cmvpGroupLifecycleMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The group will remain available in historical records.'**
+  String get cmvpGroupLifecycleMessage;
 }
 
 class _AppLocalizationsDelegate

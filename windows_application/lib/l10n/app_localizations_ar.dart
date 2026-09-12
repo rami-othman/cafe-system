@@ -6070,4 +6070,482 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get taxNewOrdersOnly => 'يُطبق هذا على الطلبات الجديدة.';
+
+  @override
+  String get customerManagementTitle => 'إدارة العملاء';
+
+  @override
+  String get customerManagementCustomers => 'العملاء';
+
+  @override
+  String get customerManagementGroups => 'مجموعات العملاء';
+
+  @override
+  String get customerManagementCreateCustomer => 'عميل جديد';
+
+  @override
+  String get customerManagementCreateGroup => 'مجموعة جديدة';
+
+  @override
+  String get customerManagementSearch => 'بحث';
+
+  @override
+  String get customerManagementActive => 'نشط';
+
+  @override
+  String get customerManagementInactive => 'غير نشط';
+
+  @override
+  String get customerManagementArchived => 'مؤرشف';
+
+  @override
+  String get customerManagementAll => 'الكل';
+
+  @override
+  String get customerManagementNoPhone => 'لا يوجد هاتف';
+
+  @override
+  String get customerManagementNotAvailable => 'غير متاح';
+
+  @override
+  String get customerManagementValueSeparator => ' · ';
+
+  @override
+  String get customerManagementLoading => 'جار تحميل معلومات العملاء…';
+
+  @override
+  String get customerManagementEmptyCustomers => 'لا يوجد عملاء بعد.';
+
+  @override
+  String get customerManagementEmptyGroups => 'لا توجد مجموعات عملاء بعد.';
+
+  @override
+  String get customerManagementNoResults => 'لا توجد نتائج مطابقة.';
+
+  @override
+  String get customerManagementRetry => 'إعادة المحاولة';
+
+  @override
+  String get customerManagementClearFilters => 'مسح عوامل التصفية';
+
+  @override
+  String get customerManagementAccessDenied =>
+      'ليس لديك صلاحية الوصول إلى إدارة العملاء.';
+
+  @override
+  String get customerManagementNotFound => 'لم يتم العثور على السجل المطلوب.';
+
+  @override
+  String get customerManagementCustomerNumber => 'رقم العميل';
+
+  @override
+  String get customerManagementName => 'الاسم';
+
+  @override
+  String get customerManagementPhone => 'الهاتف';
+
+  @override
+  String get customerManagementGroupsLabel => 'المجموعات';
+
+  @override
+  String get customerManagementStatus => 'الحالة';
+
+  @override
+  String get customerManagementEmail => 'البريد الإلكتروني';
+
+  @override
+  String get customerManagementBirthDate => 'تاريخ الميلاد';
+
+  @override
+  String get customerManagementNotes => 'ملاحظات';
+
+  @override
+  String get customerManagementPrimary => 'أساسي';
+
+  @override
+  String get customerManagementMembers => 'الأعضاء';
+
+  @override
+  String customerManagementMemberCount(int count) {
+    return 'الأعضاء: $count';
+  }
+
+  @override
+  String get customerManagementPreviousPage => 'الصفحة السابقة';
+
+  @override
+  String get customerManagementNextPage => 'الصفحة التالية';
+
+  @override
+  String customerManagementPage(int page, int total) {
+    return 'الصفحة $page من $total';
+  }
+
+  @override
+  String get customerManagementView => 'عرض';
+
+  @override
+  String get customerManagementEdit => 'تعديل';
+
+  @override
+  String get customerManagementSave => 'حفظ';
+
+  @override
+  String get customerManagementCancel => 'إلغاء';
+
+  @override
+  String get customerManagementActivate => 'تفعيل';
+
+  @override
+  String get customerManagementDeactivate => 'إلغاء التفعيل';
+
+  @override
+  String get customerManagementArchive => 'أرشفة';
+
+  @override
+  String get customerManagementRestore => 'استعادة';
+
+  @override
+  String get customerManagementConfirm => 'تأكيد';
+
+  @override
+  String get customerManagementDiscardChanges =>
+      'تجاهل التغييرات غير المحفوظة؟';
+
+  @override
+  String get customerManagementChangesKept => 'تم الاحتفاظ بتغييراتك.';
+
+  @override
+  String get customerManagementRequestFailed => 'تعذر إتمام الطلب.';
+
+  @override
+  String get customerManagementValidationFailed => 'راجع الحقول المميزة.';
+
+  @override
+  String get customerManagementAddMembers => 'إضافة أعضاء';
+
+  @override
+  String get customerManagementRemoveMember => 'إزالة العضو';
+
+  @override
+  String customerManagementRemoveMemberConfirm(Object customer, Object group) {
+    return 'إزالة $customer من $group؟';
+  }
+
+  @override
+  String get customerManagementCreateTitle => 'عميل جديد';
+
+  @override
+  String get customerManagementEditTitle => 'تعديل العميل';
+
+  @override
+  String get customerManagementCustomerName => 'اسم العميل';
+
+  @override
+  String get customerManagementAddPhone => 'إضافة هاتف';
+
+  @override
+  String get customerManagementRemovePhone => 'إزالة الهاتف';
+
+  @override
+  String get customerManagementPhoneType => 'نوع الهاتف';
+
+  @override
+  String get customerManagementPhoneMobile => 'محمول';
+
+  @override
+  String get customerManagementPhoneHome => 'منزلي';
+
+  @override
+  String get customerManagementPhoneWork => 'عمل';
+
+  @override
+  String get customerManagementPhoneOther => 'أخرى';
+
+  @override
+  String get customerManagementSelectGroups => 'المجموعات';
+
+  @override
+  String get customerManagementActiveGroups => 'المجموعات النشطة';
+
+  @override
+  String get customerManagementArchivedGroupRetained =>
+      'المجموعة المؤرشفة محفوظة';
+
+  @override
+  String get customerManagementDateHint => 'YYYY-MM-DD';
+
+  @override
+  String get customerManagementStay => 'البقاء في التعديل';
+
+  @override
+  String get customerManagementLeave => 'مغادرة';
+
+  @override
+  String get customerManagementRequiredName => 'أدخل اسم العميل.';
+
+  @override
+  String get customerManagementPrimaryRequired => 'اختر هاتفاً أساسياً واحداً.';
+
+  @override
+  String get customerManagementNoActiveGroups => 'لا توجد مجموعات نشطة.';
+
+  @override
+  String customerManagementDeactivateConfirm(Object name) {
+    return 'إلغاء تنشيط $name؟';
+  }
+
+  @override
+  String get customerManagementDeactivateConsequence =>
+      'لن يعود هذا العميل متاحاً للاستخدام التشغيلي الجديد. تبقى السجلات التاريخية محفوظة.';
+
+  @override
+  String customerManagementArchiveConfirm(Object name) {
+    return 'أرشفة $name؟';
+  }
+
+  @override
+  String get customerManagementArchiveConsequence =>
+      'سيتم أرشفة هذا العميل دون حذف السجلات التاريخية. يمكن استعادته لاحقاً.';
+
+  @override
+  String customerManagementRestoreConfirm(Object name) {
+    return 'استعادة $name؟';
+  }
+
+  @override
+  String get customerManagementRestoreConsequence =>
+      'سيتم استعادة هذا العميل بحالة غير نشط. قم بتنشيطه بشكل منفصل قبل الاستخدام التشغيلي الجديد.';
+
+  @override
+  String get customerManagementMutationFailed =>
+      'لم يتم تغيير العميل. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get cmvpCustomersDescription =>
+      'إدارة سجلات العملاء وهواتفهم ومجموعاتهم وحالة دورة حياتهم.';
+
+  @override
+  String get cmvpGroupsDescription =>
+      'تنظيم مجموعات العملاء وعضوياتها المحدودة.';
+
+  @override
+  String get cmvpCustomerDetailDescription =>
+      'مراجعة معلومات العميل وعضوياته المعتمدة من الخادم.';
+
+  @override
+  String get cmvpCustomerFormDescription =>
+      'إدخال معلومات العميل التي يديرها الخادم.';
+
+  @override
+  String get cmvpGroupDetailDescription =>
+      'مراجعة هوية المجموعة وحالتها وأعضائها الحاليين.';
+
+  @override
+  String get cmvpGroupFormDescription => 'إنشاء مجموعة عملاء أو إعادة تسميتها.';
+
+  @override
+  String get cmvpBreadcrumbCustomers => 'العملاء';
+
+  @override
+  String get cmvpBreadcrumbGroups => 'مجموعات العملاء';
+
+  @override
+  String get cmvpBreadcrumbDetails => 'التفاصيل';
+
+  @override
+  String get cmvpBreadcrumbEdit => 'تعديل';
+
+  @override
+  String get cmvpBreadcrumbCreate => 'جديد';
+
+  @override
+  String cmvpCustomersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عميل',
+      many: '$count عميلاً',
+      few: '$count عملاء',
+      two: 'عميلان',
+      one: 'عميل واحد',
+      zero: 'لا يوجد عملاء',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpGroupsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مجموعة',
+      many: '$count مجموعة',
+      few: '$count مجموعات',
+      two: 'مجموعتان',
+      one: 'مجموعة واحدة',
+      zero: 'لا توجد مجموعات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عضو',
+      many: '$count عضواً',
+      few: '$count أعضاء',
+      two: 'عضوان',
+      one: 'عضو واحد',
+      zero: 'لا يوجد أعضاء',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpMoreActions => 'إجراءات إضافية';
+
+  @override
+  String get cmvpOpenActions => 'فتح إجراءات الصف';
+
+  @override
+  String get cmvpSelectRow => 'تحديد الصف';
+
+  @override
+  String get cmvpRemoveGroup => 'إزالة المجموعة';
+
+  @override
+  String get cmvpInformationSection => 'معلومات العميل';
+
+  @override
+  String get cmvpPhoneSection => 'أرقام الهواتف';
+
+  @override
+  String get cmvpGroupsSection => 'مجموعات العملاء';
+
+  @override
+  String get cmvpNotesSection => 'ملاحظات';
+
+  @override
+  String get cmvpLifecycleSection => 'دورة الحياة';
+
+  @override
+  String get cmvpGeneratedNumberHint => 'يتم إنشاء رقم العميل من الخادم.';
+
+  @override
+  String get cmvpCreatedAt => 'تاريخ الإنشاء';
+
+  @override
+  String get cmvpAbsenceValue => 'غير متاح';
+
+  @override
+  String get cmvpManageGroups => 'إدارة المجموعات';
+
+  @override
+  String get cmvpGroupName => 'اسم المجموعة';
+
+  @override
+  String get cmvpMemberSearch => 'البحث في الأعضاء';
+
+  @override
+  String get cmvpNoMembers => 'لا يوجد أعضاء في هذه المجموعة.';
+
+  @override
+  String get cmvpNoCandidates => 'لم يتم العثور على عملاء مؤهلين.';
+
+  @override
+  String get cmvpCandidateSearch => 'البحث في العملاء المؤهلين';
+
+  @override
+  String cmvpSelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'إضافة $count عضو',
+      many: 'إضافة $count عضواً',
+      few: 'إضافة $count أعضاء',
+      two: 'إضافة عضوين',
+      one: 'إضافة عضو واحد',
+      zero: 'إضافة أعضاء',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpAddMembersDialogTitle => 'إضافة أعضاء';
+
+  @override
+  String get cmvpConfirmRemoveMember => 'إزالة العضو';
+
+  @override
+  String get cmvpLoadingCustomers => 'جار تحميل العملاء';
+
+  @override
+  String get cmvpLoadingGroups => 'جار تحميل مجموعات العملاء';
+
+  @override
+  String get cmvpLoadingRecord => 'جار تحميل السجل';
+
+  @override
+  String get cmvpForbiddenTitle => 'الوصول غير متاح';
+
+  @override
+  String get cmvpNotFoundTitle => 'لم يتم العثور على السجل';
+
+  @override
+  String get cmvpRetryableTitle => 'تعذر تحميل هذا العرض';
+
+  @override
+  String get cmvpNoResultsTitle => 'لا توجد نتائج مطابقة';
+
+  @override
+  String get cmvpEmptyTitle => 'لا توجد بيانات بعد';
+
+  @override
+  String get cmvpStateLoadingSemantics => 'جار تحميل محتوى إدارة العملاء';
+
+  @override
+  String get cmvpRetryableMessage => 'تحقق من الاتصال ثم حاول مرة أخرى.';
+
+  @override
+  String get cmvpNoResultsMessage => 'حاول تغيير البحث أو مسح عوامل التصفية.';
+
+  @override
+  String get cmvpEmptyCustomersMessage => 'أضف العميل الأول للبدء.';
+
+  @override
+  String get cmvpEmptyGroupsMessage => 'أنشئ المجموعة الأولى للبدء.';
+
+  @override
+  String get cmvpForbiddenMessage => 'ليس لديك صلاحية عرض هذا المحتوى.';
+
+  @override
+  String get cmvpNotFoundMessage => 'السجل المطلوب لم يعد متاحاً.';
+
+  @override
+  String get cmvpSubmitting => 'جار الحفظ';
+
+  @override
+  String get cmvpAddingMembers => 'جار إضافة الأعضاء';
+
+  @override
+  String get cmvpRemovingMember => 'جار إزالة العضو';
+
+  @override
+  String get cmvpDiscardChangesMessage => 'ستفقد التغييرات غير المحفوظة.';
+
+  @override
+  String get cmvpDialogCancel => 'إلغاء';
+
+  @override
+  String get cmvpDialogConfirm => 'تأكيد';
+
+  @override
+  String get cmvpMemberRemoveConsequence => 'ستتم إزالة هذا العضو من المجموعة.';
+
+  @override
+  String get cmvpGroupLifecycleMessage =>
+      'ستبقى المجموعة متاحة في السجلات التاريخية.';
 }

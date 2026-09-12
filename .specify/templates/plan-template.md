@@ -40,7 +40,24 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Tenant and authorization**: Identify tenant-owned resources, authenticated tenant
+  context, backend permissions, Super Admin separation, and shared branch-access use.
+- **Domain authority and scope**: Name the authoritative domain/service for every
+  changed rule; identify cross-domain contracts and exclude adjacent-domain expansion.
+- **History and data safety**: Explain snapshot/posted-record immutability, lifecycle
+  preservation, import reconciliation, and forward-compatible migration treatment.
+- **Exact semantics**: Define decimal scales/rounding, tax treatment, conversions,
+  authoritative IANA timezone, transaction boundaries, concurrency, and idempotency.
+- **Contracts and scale**: Assess API compatibility and migration, backend validation,
+  bounded pagination/search/filtering, and real backend-state error behavior.
+- **UX and platforms**: Address Arabic/English localization, RTL/LTR behavior, reuse of
+  the application shell/design system, and Windows/Web support.
+- **Verification and scope**: Plan focused and integration tests, static checks,
+  `git diff --check`, broader regression checkpoints, documentation updates, and an
+  unrelated-change exclusion review.
+
+Each item MUST be answered with evidence or marked `N/A` with a concrete reason.
+Unresolved violations block implementation and MUST be recorded below.
 
 ## Project Structure
 

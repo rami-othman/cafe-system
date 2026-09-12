@@ -129,3 +129,26 @@
 - [Assumption about scope boundaries, e.g., "Mobile support is out of scope for v1"]
 - [Assumption about data/environment, e.g., "Existing authentication system will be reused"]
 - [Dependency on existing system/service, e.g., "Requires access to the existing user profile API"]
+
+## Constitutional Alignment *(mandatory)*
+
+<!--
+  Describe the feature's impact on each category below. Use N/A only with a concrete
+  reason. Requirements belong in this specification; do not defer business rules to
+  the Flutter client or implementation plan.
+-->
+
+- **Tenant, authorization, and branch access**: [tenant-owned resources, backend
+  permissions, Super Admin separation, shared operational branch-access behavior]
+- **Domain authority and boundaries**: [owning domain/service and explicit exclusions
+  or cross-domain contracts]
+- **History, lifecycle, and data evolution**: [immutable records/snapshots, archive or
+  restore behavior, import integrity, migration compatibility]
+- **Exact semantics and time**: [decimal scale/rounding, tax/conversion treatment,
+  authoritative IANA timezone]
+- **API, state, and scale**: [backend validation, compatibility/versioning, real state
+  and errors, pagination/search/filtering]
+- **Localization and platforms**: [Arabic/English, RTL/LTR, Windows/Web, existing UX
+  shell and design system]
+- **Transactions, retries, and verification**: [atomicity, idempotency/concurrency,
+  focused and integration regression coverage]

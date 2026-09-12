@@ -42,6 +42,10 @@ class AuthPhaseOneTest extends TestCase
             ->assertJsonPath('data.branchAccess.branchIds.0', $branch->id);
 
         $token = $ownerResponse->json('data.accessToken');
+        $ownerResponse->assertJsonPath('data.capabilities.customer.manage', true);
+        $this->withToken($token)->getJson('/api/v1/auth/me')
+            ->assertOk()
+            ->assertJsonPath('data.capabilities.customer.manage', true);
         $this->assertNotEmpty($token);
         $this->assertDatabaseMissing('api_tokens', ['token_hash' => $token]);
         $this->assertDatabaseHas('api_tokens', ['token_hash' => hash('sha256', $token), 'user_id' => $owner->id]);

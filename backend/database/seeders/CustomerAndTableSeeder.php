@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Customer\CustomerNameNormalizer;
+use App\Domain\Customer\CustomerNumberGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -40,16 +42,21 @@ class CustomerAndTableSeeder extends Seeder
             ['name' => 'Jane Williams', 'phone' => '+1 (555) 781-2245', 'email' => 'jane.williams@example.com', 'total_spent' => 50, 'visits_count' => 2],
             ['name' => 'Eleanor Shellstrop', 'phone' => '+1 (555) 123-4567', 'email' => 'eleanor@example.com', 'total_spent' => 780, 'visits_count' => 15],
         ] as $customer) {
-            DB::table('customers')->insert([
-                'tenant_id' => $tenantId,
-                'name' => $customer['name'],
-                'phone' => $customer['phone'],
-                'email' => $customer['email'],
-                'total_spent' => $customer['total_spent'],
-                'visits_count' => $customer['visits_count'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            DB::transaction(function () use ($customer, $tenantId, $now): void {
+                $name = CustomerNameNormalizer::normalize($customer['name']);
+                DB::table('customers')->insert([
+                    'tenant_id' => $tenantId,
+                    'name' => $name['displayName'],
+                    'normalized_name' => $name['normalizedName'],
+                    'customer_number' => app(CustomerNumberGenerator::class)->next($tenantId),
+                    'phone' => $customer['phone'],
+                    'email' => $customer['email'],
+                    'total_spent' => $customer['total_spent'],
+                    'visits_count' => $customer['visits_count'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            });
         }
     }
 }
