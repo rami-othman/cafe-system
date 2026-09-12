@@ -1,5 +1,11 @@
 # CURRENT AUTHORITATIVE STATUS
 
+- Inventory catalogue: the 184 supplied material definitions from
+  المواد_مض2بوط.xlsx are represented as active raw materials without opening
+  stock, costs, or reorder thresholds. Exact existing names are retained
+  rather than duplicated; all other names, categories, and units are preserved
+  and available to product recipe configuration.
+
 Cafe System 618 has a Laravel backend in `backend` and a Flutter Windows client
 in `windows_application`. Tenant isolation is backend-authoritative. The test
 suite is guarded to use `cafe_system_618_testing`.
