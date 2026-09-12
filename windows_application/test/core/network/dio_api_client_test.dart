@@ -2,10 +2,18 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/core/config/api_config.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
 
 void main() {
+  test(
+    'desktop default API base URL targets the running local Laravel API',
+    () {
+      expect(ApiConfig.baseUrl, 'http://localhost:8000/api/v1');
+    },
+  );
+
   test(
     'maps closed backend connection to a safe typed network error',
     () async {

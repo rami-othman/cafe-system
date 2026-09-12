@@ -76,7 +76,7 @@ class VariantRecipeCubit extends Cubit<VariantRecipeState> {
     try {
       final List<dynamic> result = await Future.wait<dynamic>(<Future<dynamic>>[
         _repository.getVariantRecipe(variantId),
-        _repository.listRecipeMaterials(),
+        _repository.listRecipeMaterials(includeUnavailable: true),
         if (productId != null)
           _repository.getProduct(productId, includeArchived: true),
         if (productId != null)

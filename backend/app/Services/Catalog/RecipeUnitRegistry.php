@@ -7,9 +7,9 @@ use Illuminate\Validation\ValidationException;
 
 class RecipeUnitRegistry
 {
-    private const UNITS = ['g' => ['mass', 'g', '1'], 'kg' => ['mass', 'g', '1000'], 'ml' => ['volume', 'ml', '1'], 'l' => ['volume', 'ml', '1000'], 'pc' => ['count', 'pc', '1']];
+    private const UNITS = ['g' => ['mass', 'g', '1'], 'kg' => ['mass', 'g', '1000'], 'ml' => ['volume', 'ml', '1'], 'l' => ['volume', 'ml', '1000'], 'pc' => ['count', 'pc', '1'], 'pack' => ['count', 'pack', '1'], 'box' => ['count', 'box', '1'], 'carton' => ['count', 'carton', '1'], 'bag' => ['count', 'bag', '1'], 'bottle' => ['count', 'bottle', '1'], 'can' => ['count', 'can', '1']];
 
-    private const INVENTORY = ['g' => 'g', 'gram' => 'g', 'grams' => 'g', 'kg' => 'kg', 'kilogram' => 'kg', 'kilograms' => 'kg', 'ml' => 'ml', 'milliliter' => 'ml', 'milliliters' => 'ml', 'l' => 'l', 'liter' => 'l', 'litre' => 'l', 'liters' => 'l', 'litres' => 'l', 'pc' => 'pc', 'piece' => 'pc', 'pieces' => 'pc', 'pack' => 'pc', 'box' => 'pc', 'carton' => 'pc', 'bag' => 'pc', 'bottle' => 'pc', 'can' => 'pc'];
+    private const INVENTORY = ['g' => 'g', 'gram' => 'g', 'grams' => 'g', 'kg' => 'kg', 'kilogram' => 'kg', 'kilograms' => 'kg', 'ml' => 'ml', 'milliliter' => 'ml', 'milliliters' => 'ml', 'l' => 'l', 'liter' => 'l', 'litre' => 'l', 'liters' => 'l', 'litres' => 'l', 'pc' => 'pc', 'piece' => 'pc', 'pieces' => 'pc', 'pack' => 'pack', 'box' => 'box', 'carton' => 'carton', 'bag' => 'bag', 'bottle' => 'bottle', 'can' => 'can'];
 
     public function inventoryUnit(?string $unit): ?string
     {

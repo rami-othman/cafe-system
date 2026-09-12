@@ -1157,10 +1157,19 @@ class _EditableRecipeRow extends StatelessWidget {
   final VoidCallback onRemove;
   @override
   Widget build(BuildContext context) {
-    final material = materials.firstWhereOrNull(
+    final Set<int> materialIds = <int>{};
+    final List<RecipeMaterial> uniqueMaterials = materials
+        .where((material) => materialIds.add(material.id))
+        .toList(growable: false);
+    final material = uniqueMaterials.firstWhereOrNull(
       (m) => m.id == component.materialId,
     );
-    final units = compatibleRecipeUnits(material?.unitCode);
+    final List<String> units = normalizeRecipeUnitCodes(
+      material?.allowedRecipeUnits ?? const <String>[],
+    );
+    final List<String> visibleUnits = units.contains(component.unitCode)
+        ? units
+        : <String>[component.unitCode, ...units];
     return Container(
       key: Key('recipe-row-$index'),
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -1184,7 +1193,7 @@ class _EditableRecipeRow extends StatelessWidget {
                 labelText: AppLocalizations.of(context).material,
                 isDense: true,
               ),
-              items: materials
+              items: uniqueMaterials
                   .map(
                     (m) => DropdownMenuItem<int>(
                       value: m.id,
@@ -1197,7 +1206,7 @@ class _EditableRecipeRow extends StatelessWidget {
                   ? null
                   : (id) {
                       if (id == null) return;
-                      final selected = materials.firstWhereOrNull(
+                      final selected = uniqueMaterials.firstWhereOrNull(
                         (m) => m.id == id,
                       );
                       if (selected?.unitCode != null) {
@@ -1237,18 +1246,17 @@ class _EditableRecipeRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 90,
+            width: 120,
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: DropdownButtonFormField<String>(
-                value: units.contains(component.unitCode)
-                    ? component.unitCode
-                    : null,
+                value: component.unitCode,
+                isExpanded: true,
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context).unit,
                   isDense: true,
                 ),
-                items: units
+                items: visibleUnits
                     .map(
                       (unit) => DropdownMenuItem<String>(
                         value: unit,

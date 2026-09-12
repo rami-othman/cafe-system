@@ -27,7 +27,10 @@ import '../catalog_setup/models/catalog_setup_models.dart';
 import '../recipes/models/recipe_models.dart';
 
 abstract class MenuCatalogRepository {
-  Future<List<RecipeMaterial>> listRecipeMaterials({String search = ''}) =>
+  Future<List<RecipeMaterial>> listRecipeMaterials({
+    String search = '',
+    bool includeUnavailable = false,
+  }) =>
       throw UnsupportedError('Recipes are not configured.');
   Future<VariantRecipe> getVariantRecipe(int variantId) =>
       throw UnsupportedError('Recipes are not configured.');
@@ -376,19 +379,28 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
 
   final DioApiClient _apiClient;
   @override
-  Future<List<RecipeMaterial>> listRecipeMaterials({String search = ''}) async {
+  Future<List<RecipeMaterial>> listRecipeMaterials({
+    String search = '',
+    bool includeUnavailable = false,
+  }) async {
+    final Map<String, dynamic> queryParameters = <String, dynamic>{
+      if (includeUnavailable) 'status': 'all',
+      if (search.trim().isNotEmpty) 'search': search.trim(),
+    };
     final dynamic body = await _apiClient.get(
       'admin/catalog/materials',
-      queryParameters: search.trim().isEmpty
-          ? null
-          : <String, dynamic>{'search': search.trim()},
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
     );
     if (body is! List)
       throw const FormatException('Invalid materials response.');
-    return body
-        .whereType<Map>()
-        .map((item) => RecipeMaterial.fromJson(Map<String, dynamic>.from(item)))
-        .toList(growable: false);
+    final Map<int, RecipeMaterial> materialsById = <int, RecipeMaterial>{};
+    for (final Map item in body.whereType<Map>()) {
+      final RecipeMaterial material = RecipeMaterial.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+      materialsById.putIfAbsent(material.id, () => material);
+    }
+    return materialsById.values.toList(growable: false);
   }
 
   @override

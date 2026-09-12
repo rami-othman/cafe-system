@@ -54,7 +54,22 @@ class InventorySecurityAndSeederTest extends TestCase
         $this->assertDatabaseMissing('stock_movements', ['inventory_item_id' => $material->id]);
         $this->assertSame(1, DB::table('inventory_items')->where('tenant_id', $tenant)->where('name', 'سيرب بطيخ')->count());
         $this->assertGreaterThan(0, DB::table('inventory_item_warehouses')->where('tenant_id', $tenant)->where('inventory_item_id', $material->id)->count());
-        $this->assertSame('pc', app(RecipeUnitRegistry::class)->inventoryUnit('box'));
+        $units = app(RecipeUnitRegistry::class);
+        foreach ([
+            'g' => 'g',
+            'kg' => 'kg',
+            'ml' => 'ml',
+            'l' => 'l',
+            'pc' => 'pc',
+            'pack' => 'pack',
+            'box' => 'box',
+            'carton' => 'carton',
+            'bag' => 'bag',
+            'bottle' => 'bottle',
+            'can' => 'can',
+        ] as $inventoryUnit => $recipeUnit) {
+            $this->assertSame($recipeUnit, $units->inventoryUnit($inventoryUnit));
+        }
     }
 
     public function test_unauthenticated_inventory_reads_and_writes_are_rejected(): void

@@ -121,6 +121,44 @@ void main() {
       );
     });
 
+    test(
+      'recipe conversion issues preserve backend details in Recipes and Materials',
+      () {
+        final issue = _issue(
+          code: 'RECIPE_COMPONENT_CONVERSION_INVALID',
+          severity: 'error',
+          message:
+              'Converted quantity cannot be represented at Inventory 3-decimal precision.',
+          metadata: <String, dynamic>{
+            'materialId': 7,
+            'materialName': 'Coffee Beans',
+            'recipeQuantity': '0.001000',
+            'recipeUnit': 'kg',
+            'inventoryBaseUnit': 'gram',
+            'conversionReason':
+                'Converted quantity cannot be represented at Inventory 3-decimal precision.',
+          },
+        );
+
+        expect(issue.code, 'RECIPE_COMPONENT_CONVERSION_INVALID');
+        expect(issue.severity, 'error');
+        expect(
+          issue.message,
+          'Converted quantity cannot be represented at Inventory 3-decimal precision.',
+        );
+        expect(
+          ValidationIssuePresentation.categoryFor(issue),
+          ReadinessIssueCategory.recipesMaterials,
+        );
+        expect(ValidationIssuePresentation.metadataLines(issue), <String>[
+          'Material: Coffee Beans (ID 7)',
+          'Recipe quantity: 0.001000 kg',
+          'Inventory base unit: gram',
+          'Reason: Converted quantity cannot be represented at Inventory 3-decimal precision.',
+        ]);
+      },
+    );
+
     test('scope no-menu is excluded from ordinary groups', () {
       final noMenu = _issue(code: 'NO_ASSIGNED_MENU', entityType: 'scope');
       expect(_filter(<ValidationIssue>[noMenu]), isEmpty);
@@ -191,6 +229,7 @@ ValidationIssue _issue({
   int? entityId,
   int menuId = 0,
   String message = 'Backend message',
+  Map<String, dynamic> metadata = const <String, dynamic>{},
 }) => ValidationIssue(
   code: code,
   severity: severity,
@@ -198,6 +237,7 @@ ValidationIssue _issue({
   entityType: entityType,
   entityId: entityId,
   menuId: menuId,
+  metadata: metadata,
 );
 
 class _NoRequestRepository extends BackendMenuCatalogRepository {

@@ -53,6 +53,12 @@ Menu Management Admin is **COMPLETE through Publish / Versions**:
 - Batch 9 — Menus & Composition: **COMPLETE**
 - Batch 10 — Assignments & Schedules: **COMPLETE**
 - Batch 11 — Review & Publish: **COMPLETE**
+- Menu ↔ Inventory validation hardening: **COMPLETE** — recipe writes,
+  resolution, publishing, and Review & Publish now use the Inventory conversion
+  contract; existing invalid rows remain visible with actionable diagnostics.
+- Recipe editor dropdown resilience: existing recipes load inactive/archived
+  current materials as one disabled selection; material IDs and allowed recipe
+  unit codes are normalized before dropdown items are built.
 
 The implemented flow covers Catalog, modifiers, recipes/material configuration,
 menus/sections/placements, exact Branch + Sales Channel assignments and schedules,
@@ -68,6 +74,10 @@ order, not request order. Historical payloads remain immutable and rollback copi
 the selected historical payload unchanged.
 
 ## Current POS boundary
+
+- Published POS variant selection: COMPLETE. The customization dialog presents
+  every sellable runtime variant, defaults to the published default, and
+  submits the selected immutable variant ID with its effective price.
 
 - Phase 12A — Runtime Contract: **COMPLETE**
 - Phase 12B — Backend POS Runtime Sync API: **COMPLETE**

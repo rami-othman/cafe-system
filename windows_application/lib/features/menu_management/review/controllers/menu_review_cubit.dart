@@ -386,6 +386,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
     emit(
       state.copyWith(
         validationStatus: ReviewRequestStatus.loading,
+        clearValidation: true,
         clearValidationError: true,
       ),
     );
@@ -409,6 +410,7 @@ class MenuReviewCubit extends Cubit<MenuReviewState> {
       emit(
         state.copyWith(
           validationStatus: ReviewRequestStatus.failure,
+          clearValidation: true,
           validationError: _message(error),
         ),
       );

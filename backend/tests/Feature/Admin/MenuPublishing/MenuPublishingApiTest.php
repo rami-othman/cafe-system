@@ -225,11 +225,75 @@ class MenuPublishingApiTest extends TestCase
         DB::table('variant_recipe_components')->insert(['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $material, 'quantity' => '0.001', 'unit_code' => 'kg', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
 
         $this->publish($tenant, $branch)->assertUnprocessable();
-        $this->assertStringContainsString('RECIPE_COMPONENT_CONVERSION_INVALID', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
+        $firstValidation = json_decode((string) DB::table('menu_publications')->latest('id')->value('validation_result'), true, 512, JSON_THROW_ON_ERROR);
+        $firstIssue = collect($firstValidation['errors'])->firstWhere('code', 'RECIPE_COMPONENT_CONVERSION_INVALID');
+        $this->assertSame('error', $firstIssue['severity']);
+        $this->assertSame('No active Inventory conversion exists from kilogram to gram.', $firstIssue['message']);
+        $this->assertSame([
+            'materialId' => $material,
+            'materialName' => 'PRECISION-G',
+            'recipeQuantity' => '0.001000',
+            'recipeUnit' => 'kg',
+            'inventoryBaseUnit' => 'gram',
+            'conversionReason' => 'No active Inventory conversion exists from kilogram to gram.',
+        ], $firstIssue['metadata']);
 
         $this->conversion($tenant, $material, 'kilogram', 'gram', '0.500000');
         $this->publish($tenant, $branch)->assertUnprocessable();
-        $this->assertStringContainsString('RECIPE_COMPONENT_CONVERSION_INVALID', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
+        $secondValidation = (string) DB::table('menu_publications')->latest('id')->value('validation_result');
+        $this->assertStringContainsString('RECIPE_COMPONENT_CONVERSION_INVALID', $secondValidation);
+        $this->assertStringContainsString('Converted quantity cannot be represented at Inventory 3-decimal precision.', $secondValidation);
+    }
+
+    public function test_publish_blocks_an_existing_inactive_recipe_material_with_actionable_component_metadata(): void
+    {
+        [$tenant, $branch, , $product, $variant] = $this->graph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+        $material = $this->material($tenant, 'INACTIVE-BEANS', 'gram');
+        $recipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert(['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $material, 'quantity' => '18.000000', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('inventory_items')->where('id', $material)->update(['is_active' => false]);
+
+        $this->publish($tenant, $branch)->assertUnprocessable();
+
+        $validation = json_decode((string) DB::table('menu_publications')->latest('id')->value('validation_result'), true, 512, JSON_THROW_ON_ERROR);
+        $issue = collect($validation['errors'])->firstWhere('code', 'RECIPE_COMPONENT_MATERIAL_UNAVAILABLE');
+        $this->assertSame('error', $issue['severity']);
+        $this->assertSame([
+            'materialId' => $material,
+            'materialName' => 'INACTIVE-BEANS',
+            'recipeQuantity' => '18.000000',
+            'recipeUnit' => 'g',
+            'inventoryBaseUnit' => 'gram',
+            'conversionReason' => 'Inventory material is inactive. Re-enable it or replace this recipe component with an available Inventory material.',
+        ], $issue['metadata']);
+    }
+
+    public function test_publish_blocks_an_existing_inactive_modifier_recipe_material_with_actionable_component_metadata(): void
+    {
+        [$tenant, $branch, , $product, $variant] = $this->graph();
+        $material = $this->material($tenant, 'INACTIVE-MODIFIER-BEANS', 'gram');
+        DB::table('inventory_items')->where('id', $material)->update(['is_active' => false]);
+        $group = DB::table('modifier_groups')->insertGetId(['tenant_id' => $tenant, 'name' => 'Extras', 'selection_type' => 'single', 'max_selections' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $option = DB::table('modifier_options')->insertGetId(['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Extra Beans', 'is_active' => true, 'is_available' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_modifier_group')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'modifier_group_id' => $group, 'created_at' => now(), 'updated_at' => now()]);
+        $profile = DB::table('modifier_option_recipe_profiles')->insertGetId(['tenant_id' => $tenant, 'modifier_option_id' => $option, 'scope_type' => 'global', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('modifier_option_recipe_profile_components')->insert(['tenant_id' => $tenant, 'modifier_option_recipe_profile_id' => $profile, 'inventory_item_id' => $material, 'operation' => 'add', 'quantity' => '12.000000', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->publish($tenant, $branch)->assertUnprocessable();
+
+        $validation = json_decode((string) DB::table('menu_publications')->latest('id')->value('validation_result'), true, 512, JSON_THROW_ON_ERROR);
+        $issue = collect($validation['errors'])->firstWhere('code', 'MODIFIER_RECIPE_PROFILE_INVALID');
+        $this->assertSame('error', $issue['severity']);
+        $this->assertSame([
+            'variantId' => $variant,
+            'materialId' => $material,
+            'materialName' => 'INACTIVE-MODIFIER-BEANS',
+            'recipeQuantity' => '12.000000',
+            'recipeUnit' => 'g',
+            'inventoryBaseUnit' => 'gram',
+            'conversionReason' => 'Inventory material is inactive. Re-enable it or replace this recipe component with an available Inventory material.',
+        ], $issue['metadata']);
     }
 
     private function publish(int $tenant, int $branch)
