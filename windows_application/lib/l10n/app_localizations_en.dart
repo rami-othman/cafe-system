@@ -9,6 +9,167 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get inventoryReportTitle => 'Inventory';
+
+  @override
+  String get inventoryReportSubtitle =>
+      'Analyze inventory value, availability, movements, waste, and count variances across locations.';
+
+  @override
+  String get inventoryReportAllLocations => 'All locations';
+
+  @override
+  String get inventoryReportAllCategories => 'All categories';
+
+  @override
+  String get inventoryReportExportTooltip =>
+      'Export will be enabled after this report is connected to a data source.';
+
+  @override
+  String get inventoryReportCurrentValue => 'Current inventory value';
+
+  @override
+  String get inventoryReportLowStock => 'Low-stock items';
+
+  @override
+  String get inventoryReportOutOfStock => 'Out-of-stock items';
+
+  @override
+  String get inventoryReportWasteValue => 'Waste value';
+
+  @override
+  String get inventoryReportCountVariance => 'Count variances';
+
+  @override
+  String get inventoryReportConsumption => 'Total consumption';
+
+  @override
+  String get inventoryReportReceived => 'Stock received';
+
+  @override
+  String get inventoryReportTransfers => 'Transfers';
+
+  @override
+  String get inventoryReportValueByLocation => 'Inventory value by location';
+
+  @override
+  String get inventoryReportMovement => 'Inventory movement';
+
+  @override
+  String get inventoryReportHealth => 'Stock health';
+
+  @override
+  String get inventoryReportLowOut => 'Low and out-of-stock items';
+
+  @override
+  String get inventoryReportConsumptionAnalysis => 'Consumption analysis';
+
+  @override
+  String get inventoryReportWasteAnalysis => 'Waste analysis';
+
+  @override
+  String get inventoryReportVariance => 'Stock-count variances';
+
+  @override
+  String get inventoryReportLocationComparison => 'Location comparison';
+
+  @override
+  String get inventoryReportExceptions => 'Inventory exceptions';
+
+  @override
+  String get inventoryReportItem => 'Item';
+
+  @override
+  String get inventoryReportCategory => 'Category';
+
+  @override
+  String get inventoryReportLocation => 'Location';
+
+  @override
+  String get inventoryReportAvailable => 'Available quantity';
+
+  @override
+  String get inventoryReportMinimum => 'Minimum level';
+
+  @override
+  String get inventoryReportUnit => 'Unit';
+
+  @override
+  String get inventoryReportStatus => 'Status';
+
+  @override
+  String get inventoryReportQuantity => 'Quantity';
+
+  @override
+  String get inventoryReportValue => 'Value';
+
+  @override
+  String get inventoryReportReason => 'Reason';
+
+  @override
+  String get inventoryReportExpected => 'Expected';
+
+  @override
+  String get inventoryReportCounted => 'Counted';
+
+  @override
+  String get inventoryReportDifference => 'Difference';
+
+  @override
+  String get inventoryReportVarianceValue => 'Variance value';
+
+  @override
+  String get inventoryReportItems => 'Items';
+
+  @override
+  String get inventoryReportAvailableStatus => 'Available';
+
+  @override
+  String get inventoryReportLowStatus => 'Low stock';
+
+  @override
+  String get inventoryReportOutStatus => 'Out of stock';
+
+  @override
+  String get inventoryReportOverstockStatus => 'Overstock';
+
+  @override
+  String get inventoryReportMatched => 'Matched';
+
+  @override
+  String get inventoryReportShortage => 'Shortage';
+
+  @override
+  String get inventoryReportOverage => 'Overage';
+
+  @override
+  String get inventoryReportNoLocations =>
+      'There are not enough locations to compare.';
+
+  @override
+  String get inventoryReportNoMovements =>
+      'There are no inventory movements for the selected period.';
+
+  @override
+  String get inventoryReportNoLowStock =>
+      'There are no low-stock items for the current filters.';
+
+  @override
+  String get inventoryReportNoWaste =>
+      'There are no waste movements for the selected period.';
+
+  @override
+  String get inventoryReportNoVariance =>
+      'There are no stock-count variances for the selected period.';
+
+  @override
+  String get inventoryReportNoExceptions =>
+      'There are no inventory exceptions requiring review.';
+
+  @override
+  String get inventoryReportError => 'Unable to load the Inventory report.';
+
+  @override
   String get appName => 'Cafe System 618';
 
   @override
@@ -4714,6 +4875,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsOverviewKpiNetProfit => 'Net Profit';
 
   @override
+  String get reportsOverviewKpiInfoNetSales =>
+      'Total sales after discounts and refunds, before tax.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossProfit =>
+      'Net sales minus the cost of goods sold.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossMargin =>
+      'Gross profit as a percentage of net sales.';
+
+  @override
+  String get reportsOverviewKpiInfoTotalExpenses =>
+      'Operating expenses recorded for the selected period.';
+
+  @override
+  String get reportsOverviewKpiInfoNetProfit =>
+      'Gross profit minus total expenses.';
+
+  @override
   String get reportsOverviewNotAvailableYet => 'Not available yet';
 
   @override
@@ -4737,6 +4918,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsOverviewBranchComparisonTitle => 'Branch Comparison';
+
+  @override
+  String get reportsOverviewBranchColumnBranch => 'Branch';
+
+  @override
+  String get reportsOverviewBranchColumnNetSales => 'Net sales';
 
   @override
   String get reportsOverviewChooseAllBranches =>
@@ -4774,6 +4961,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsOverviewCategoryCashShifts => 'Cash & Shifts';
 
   @override
+  String get reportsOverviewCategoryInventory => 'Inventory';
+
+  @override
   String get reportsOverviewCategoryExpenses => 'Expenses';
 
   @override
@@ -4786,6 +4976,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reportsOverviewCategoryCustomReportBuilder =>
       'Custom Report Builder';
+
+  @override
+  String get reportsOverviewFinancialReportsTooltip =>
+      'Open the Financial Reports center';
 
   @override
   String get reportsOverviewErrorDefault => 'The overview could not be loaded.';
@@ -4802,6 +4996,211 @@ class AppLocalizationsEn extends AppLocalizations {
   String reportsOverviewHoursAgo(int h) {
     return '${h}h ago';
   }
+
+  @override
+  String get salesProfitabilityTitle => 'Sales & Profitability';
+
+  @override
+  String get salesProfitabilitySubtitle =>
+      'Analyze sales, profit, discounts, refunds, and product and branch performance.';
+
+  @override
+  String get salesProfitabilityBack => 'Reports Overview';
+
+  @override
+  String get salesProfitabilityGroupBy => 'Group by';
+
+  @override
+  String get salesProfitabilityDaily => 'Daily';
+
+  @override
+  String get salesProfitabilityWeekly => 'Weekly';
+
+  @override
+  String get salesProfitabilityMonthly => 'Monthly';
+
+  @override
+  String get salesProfitabilityExportTooltip =>
+      'Export will be enabled after the report is connected to a data source.';
+
+  @override
+  String get salesProfitabilityGrossSales => 'Gross Sales';
+
+  @override
+  String get salesProfitabilityNetSales => 'Net Sales';
+
+  @override
+  String get salesProfitabilityDiscounts => 'Discounts';
+
+  @override
+  String get salesProfitabilityRefunds => 'Refunds';
+
+  @override
+  String get salesProfitabilityCogs => 'Cost of Goods Sold (COGS)';
+
+  @override
+  String get salesProfitabilityGrossProfit => 'Gross Profit';
+
+  @override
+  String get salesProfitabilityGrossMargin => 'Gross Margin %';
+
+  @override
+  String get salesProfitabilityAverageOrder => 'Average Order Value';
+
+  @override
+  String get salesProfitabilityTrend => 'Sales & Profit Trend';
+
+  @override
+  String get salesProfitabilitySalesByHour => 'Sales by Hour';
+
+  @override
+  String get salesProfitabilitySalesByCategory => 'Sales by Category';
+
+  @override
+  String get salesProfitabilityBranchPerformance => 'Branch Performance';
+
+  @override
+  String get salesProfitabilityProductPerformance => 'Product Performance';
+
+  @override
+  String get salesProfitabilityTopSelling => 'Top Selling';
+
+  @override
+  String get salesProfitabilityMostProfitable => 'Most Profitable';
+
+  @override
+  String get salesProfitabilityUnderperforming => 'Underperforming';
+
+  @override
+  String salesProfitabilityPeak(String value) {
+    return 'Peak: $value';
+  }
+
+  @override
+  String get salesProfitabilityNoTrend =>
+      'No sales and profit trend is available for this period.';
+
+  @override
+  String get salesProfitabilityNoHourly =>
+      'No hourly sales are available for this period.';
+
+  @override
+  String get salesProfitabilityNoCategories =>
+      'No category sales are available for this period.';
+
+  @override
+  String get salesProfitabilityNoBranches =>
+      'Choose all branches to compare performance.';
+
+  @override
+  String get salesProfitabilityNoProducts =>
+      'No product performance is available for this period.';
+
+  @override
+  String get salesProfitabilityUnavailable => 'Not available yet';
+
+  @override
+  String get salesProfitabilityError => 'This report could not be loaded.';
+
+  @override
+  String get salesProfitabilityProduct => 'Product';
+
+  @override
+  String get salesProfitabilityCategory => 'Category';
+
+  @override
+  String get salesProfitabilityQuantity => 'Quantity sold';
+
+  @override
+  String get salesProfitabilityOrders => 'Orders';
+
+  @override
+  String get salesProfitabilityMargin => 'Margin';
+
+  @override
+  String get cashShiftsTitle => 'Cash & Shifts';
+
+  @override
+  String get cashShiftsSubtitle =>
+      'Monitor shift performance, cash movement, payment methods, and drawer differences.';
+
+  @override
+  String get cashShiftsAllEmployees => 'All employees';
+
+  @override
+  String get cashShiftsTotalSales => 'Total Sales';
+
+  @override
+  String get cashShiftsExpectedCash => 'Expected Cash';
+
+  @override
+  String get cashShiftsActualCash => 'Actual Cash';
+
+  @override
+  String get cashShiftsDifference => 'Cash Difference';
+
+  @override
+  String get cashShiftsClosed => 'Closed Shifts';
+
+  @override
+  String get cashShiftsOpen => 'Open Shifts';
+
+  @override
+  String get cashShiftsAverage => 'Average Shift Sales';
+
+  @override
+  String get cashShiftsReconciliation => 'Cash Reconciliation';
+
+  @override
+  String get cashShiftsMatched => 'Matched';
+
+  @override
+  String get cashShiftsMinor => 'Minor difference';
+
+  @override
+  String get cashShiftsReview => 'Difference needs review';
+
+  @override
+  String get cashShiftsShortage => 'Shortage';
+
+  @override
+  String get cashShiftsOverage => 'Overage';
+
+  @override
+  String get cashShiftsPerformance => 'Shift Performance';
+
+  @override
+  String get cashShiftsPayments => 'Payment Method Breakdown';
+
+  @override
+  String get cashShiftsTrend => 'Shift Sales Trend';
+
+  @override
+  String get cashShiftsTop => 'Best Performing Shifts';
+
+  @override
+  String get cashShiftsExceptions => 'Exceptions';
+
+  @override
+  String get cashShiftsNoShifts => 'No shifts exist for the selected period.';
+
+  @override
+  String get cashShiftsNoPayments =>
+      'No payment-method data exists for the selected period.';
+
+  @override
+  String get cashShiftsNoExceptions => 'No cash differences need review.';
+
+  @override
+  String get cashShiftsNoTrend =>
+      'No shift-sales trend is available for this period.';
+
+  @override
+  String get cashShiftsError => 'Cash & Shifts report could not be loaded.';
+
+  @override
+  String get cashShiftsExportTooltip =>
+      'Export will be enabled after the report is connected to a data source.';
 
   @override
   String get financeSectionOverview => 'Overview';
@@ -6077,4 +6476,144 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxNewOrdersOnly => 'This applies to new orders.';
+
+  @override
+  String get expensesReportTitle => 'Expenses';
+
+  @override
+  String get expensesReportSubtitle =>
+      'Analyze operating expenses by category, branch, and time period.';
+
+  @override
+  String get expensesReportAllCategories => 'All categories';
+
+  @override
+  String get expensesReportAllStatuses => 'All statuses';
+
+  @override
+  String get expensesReportExportTooltip =>
+      'Export will be enabled after this report is connected to a data source.';
+
+  @override
+  String get expensesReportTotal => 'Total expenses';
+
+  @override
+  String get expensesReportPosted => 'Posted expenses';
+
+  @override
+  String get expensesReportPending => 'Pending expenses';
+
+  @override
+  String get expensesReportAverageDaily => 'Average daily expense';
+
+  @override
+  String get expensesReportRatio => 'Expense-to-net-sales ratio';
+
+  @override
+  String get expensesReportLargestCategory => 'Largest expense category';
+
+  @override
+  String get expensesReportTrend => 'Expenses trend';
+
+  @override
+  String get expensesReportByCategory => 'Expenses by category';
+
+  @override
+  String get expensesReportLargest => 'Largest expenses';
+
+  @override
+  String get expensesReportBranchComparison => 'Branch expense comparison';
+
+  @override
+  String get expensesReportPeriodComparison => 'Period comparison';
+
+  @override
+  String get expensesReportTable => 'Expense table';
+
+  @override
+  String get expensesReportDate => 'Date';
+
+  @override
+  String get expensesReportExpense => 'Expense';
+
+  @override
+  String get expensesReportCategory => 'Category';
+
+  @override
+  String get expensesReportBranch => 'Branch';
+
+  @override
+  String get expensesReportPayee => 'Payee';
+
+  @override
+  String get expensesReportPaymentMethod => 'Payment method';
+
+  @override
+  String get expensesReportAmount => 'Amount';
+
+  @override
+  String get expensesReportStatus => 'Status';
+
+  @override
+  String get expensesReportNetSales => 'Net sales';
+
+  @override
+  String get expensesReportExpenseSales => 'Expense / sales';
+
+  @override
+  String get expensesReportCompanyWide => 'Company-wide';
+
+  @override
+  String get expensesReportUnavailable => 'Unavailable';
+
+  @override
+  String get expensesReportNoExpenses =>
+      'There are no expenses in the selected period.';
+
+  @override
+  String get expensesReportNoCategories =>
+      'There is no expense data by category.';
+
+  @override
+  String get expensesReportNoBranches =>
+      'There is not enough data to compare branches.';
+
+  @override
+  String get expensesReportNoLargest => 'There are no expenses to display.';
+
+  @override
+  String get expensesReportError => 'Unable to load the Expenses report.';
+
+  @override
+  String get expensesReportCurrentPeriod => 'Current period';
+
+  @override
+  String get expensesReportPreviousPeriod => 'Previous period';
+
+  @override
+  String get expensesReportDifference => 'Difference';
+
+  @override
+  String get expensesReportDraft => 'Draft';
+
+  @override
+  String get expensesReportPendingApproval => 'Pending approval';
+
+  @override
+  String get expensesReportApproved => 'Approved';
+
+  @override
+  String get expensesReportPaid => 'Paid';
+
+  @override
+  String get expensesReportRejected => 'Rejected';
+
+  @override
+  String get expensesReportReversed => 'Reversed';
+
+  @override
+  String get expensesReportComparisonUnavailable => 'Comparison unavailable';
+
+  @override
+  String get expensesReportPercentOfTotal => 'of total';
 }

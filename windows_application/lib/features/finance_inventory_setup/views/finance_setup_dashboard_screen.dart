@@ -70,6 +70,13 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                           context.go(AppRoutes.financeExpenseCategories),
                     ),
                     AppButton(
+                      label: 'مجموعات وأنواع الفواتير',
+                      icon: Icons.receipt_long_outlined,
+                      variant: AppButtonVariant.outlined,
+                      onPressed: () =>
+                          context.go(AppRoutes.financeInvoiceTypes),
+                    ),
+                    AppButton(
                       label: 'طرق الدفع',
                       icon: Icons.credit_card_outlined,
                       variant: AppButtonVariant.outlined,

@@ -96,14 +96,29 @@ class SupplierInvoiceController extends Controller
             'invoiceNumber' => ['required', 'string', 'max:80'],
             'invoiceDate' => ['required', 'date'],
             'dueDate' => ['required', 'date'],
-            'invoiceType' => ['required', 'in:expense,inventory,other'],
-            'expenseCategoryId' => ['nullable', 'integer', 'required_if:invoiceType,expense'],
-            'debitAccountId' => ['nullable', 'integer', 'required_if:invoiceType,other'],
-            'subtotal' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
+            // invoiceType remains accepted for older clients; new clients select a configured type.
+            'invoiceTypeId' => ['nullable', 'integer', 'required_without:invoiceType'],
+            'invoiceType' => ['nullable', 'in:expense,inventory,other'],
+            'expenseCategoryId' => ['nullable', 'integer'],
+            'debitAccountId' => ['nullable', 'integer'],
+            // Required only for the legacy header-only path — when `lines` is
+            // present the server derives subtotal/taxAmount from the lines
+            // and ignores these two (see SupplierInvoiceService::buildLines).
+            'subtotal' => ['required_without:lines', 'regex:/^\d+(\.\d{1,2})?$/'],
             'taxAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'description' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['nullable', 'string', 'max:120'],
+            'lines' => ['nullable', 'array', 'min:1'],
+            'lines.*.lineType' => ['required_with:lines', 'in:inventory,expense,asset,other'],
+            'lines.*.description' => ['required_with:lines', 'string', 'max:500'],
+            'lines.*.inventoryItemId' => ['nullable', 'integer'],
+            'lines.*.purchaseUnit' => ['nullable', 'string', 'max:40'],
+            'lines.*.quantity' => ['nullable', 'regex:/^\d+(\.\d{1,3})?$/'],
+            'lines.*.unitPrice' => ['required_with:lines', 'regex:/^\d+(\.\d{1,4})?$/'],
+            'lines.*.discountAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'lines.*.taxAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'lines.*.warehouseId' => ['nullable', 'integer'],
         ]);
     }
 
@@ -114,8 +129,10 @@ class SupplierInvoiceController extends Controller
             ->join('financial_accounts as a', 'a.id', '=', 'i.debit_account_id')
             ->leftJoin('branches as b', 'b.id', '=', 'i.branch_id')
             ->leftJoin('expense_categories as c', 'c.id', '=', 'i.expense_category_id')
+            ->leftJoin('invoice_types as t', 't.id', '=', 'i.invoice_type_id')
+            ->leftJoin('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
             ->where('i.tenant_id', $tenant)->whereNull('i.deleted_at')
-            ->select('i.*', 's.name as supplier_name', 's.supplier_number', 'a.code as debit_account_code', 'a.name_ar as debit_account_name', 'b.name as branch_name', 'c.name as expense_category_name');
+            ->select('i.*', 's.name as supplier_name', 's.supplier_number', 'a.code as debit_account_code', 'a.name_ar as debit_account_name', 'b.name as branch_name', 'c.name as expense_category_name', 't.name as configured_type_name', 't.posting_behavior as configured_posting_behavior', 't.is_postable as configured_is_postable', 'g.name as invoice_group_name');
     }
 
     private function one(int $tenant, int $id, Request $request): array
@@ -125,7 +142,33 @@ class SupplierInvoiceController extends Controller
         $actor = FinancialActor::id($request, $tenant);
         FinancialActor::assertBranchAccess($actor, $tenant, $row->branch_id ? (int) $row->branch_id : null);
 
-        return $this->serialize($row) + ['allowedActions' => $this->actions($row, array_fill_keys(FinanceAccess::capabilities($request), true))];
+        return $this->serialize($row)
+            + ['lines' => $this->serializeLines($this->invoices->lines($tenant, $id))]
+            + ['allowedActions' => $this->actions($row, array_fill_keys(FinanceAccess::capabilities($request), true))];
+    }
+
+    /** @param array<int, object> $lines */
+    private function serializeLines(array $lines): array
+    {
+        return array_map(fn (object $l): array => [
+            'id' => (int) $l->id,
+            'lineNumber' => (int) $l->line_number,
+            'lineType' => $l->line_type,
+            'description' => $l->description,
+            'inventoryItemId' => $l->inventory_item_id ? (int) $l->inventory_item_id : null,
+            'inventoryItemName' => $l->inventory_item_name,
+            'purchaseUnit' => $l->purchase_unit,
+            'baseUnit' => $l->inventory_item_base_unit,
+            'quantity' => $l->quantity,
+            'conversionFactor' => $l->conversion_factor,
+            'baseQuantity' => $l->base_quantity,
+            'unitPrice' => $l->unit_price,
+            'discountAmount' => $l->discount_amount,
+            'taxAmount' => $l->tax_amount,
+            'lineTotal' => $l->line_total,
+            'warehouseId' => $l->warehouse_id ? (int) $l->warehouse_id : null,
+            'receivedQuantity' => $l->received_quantity,
+        ], $lines);
     }
 
     private function actions(object $row, array $permissions): array
@@ -133,7 +176,7 @@ class SupplierInvoiceController extends Controller
         $can = fn (string $permission): bool => isset($permissions[$permission]);
         $actions = [];
         if ($row->status === 'draft' && $can('finance.supplier_invoices.edit')) $actions[] = 'edit';
-        if ($row->status === 'draft' && $can('finance.supplier_invoices.post')) $actions[] = 'post';
+        if ($row->status === 'draft' && $row->configured_is_postable && $can('finance.supplier_invoices.post')) $actions[] = 'post';
         if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) $actions[] = 'reverse';
         return $actions;
     }
@@ -155,6 +198,11 @@ class SupplierInvoiceController extends Controller
             'invoiceDate' => $row->invoice_date,
             'dueDate' => $row->due_date,
             'invoiceType' => $row->invoice_type,
+            'invoiceTypeId' => $row->invoice_type_id ? (int) $row->invoice_type_id : null,
+            'invoiceTypeName' => $row->configured_type_name,
+            'invoiceGroupName' => $row->invoice_group_name,
+            'postingBehavior' => $row->configured_posting_behavior ?? $row->invoice_type,
+            'isPostable' => $row->invoice_type_id ? (bool) $row->configured_is_postable : true,
             'expenseCategoryId' => $row->expense_category_id ? (int) $row->expense_category_id : null,
             'expenseCategoryName' => $row->expense_category_name,
             'debitAccountId' => (int) $row->debit_account_id,

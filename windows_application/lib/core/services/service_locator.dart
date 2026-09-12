@@ -14,9 +14,19 @@ import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
 import '../../features/reports/controllers/reports_overview_cubit.dart';
+import '../../features/reports/controllers/sales_profitability_cubit.dart';
+import '../../features/reports/controllers/cash_shifts_cubit.dart';
+import '../../features/reports/controllers/inventory_report_cubit.dart';
+import '../../features/reports/controllers/expenses_report_cubit.dart';
 import '../../features/reports/repositories/reports_repository.dart';
+import '../../features/reports/repositories/sales_profitability_repository.dart';
+import '../../features/reports/repositories/cash_shifts_repository.dart';
+import '../../features/reports/repositories/inventory_report_repository.dart';
+import '../../features/reports/repositories/expenses_report_repository.dart';
 import '../../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../../features/finance_inventory_setup/repositories/finance_setup_repository.dart';
+import '../../features/purchasing/controllers/purchasing_cubit.dart';
+import '../../features/purchasing/repositories/purchasing_repository.dart';
 import '../../features/inventory/controllers/inventory_cubit.dart';
 import '../../features/inventory/repositories/inventory_repository.dart';
 import '../../features/operational_context/controllers/operational_branch_cubit.dart';
@@ -192,7 +202,55 @@ void setupServiceLocator({bool useBackend = true}) {
       );
     }
     serviceLocator.registerFactory<ReportsOverviewCubit>(
-      () => ReportsOverviewCubit(repository: serviceLocator<ReportsRepository>()),
+      () =>
+          ReportsOverviewCubit(repository: serviceLocator<ReportsRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<SalesProfitabilityRepository>()) {
+    serviceLocator.registerLazySingleton<SalesProfitabilityRepository>(
+      SalesProfitabilityRepository.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<SalesProfitabilityCubit>()) {
+    serviceLocator.registerFactory<SalesProfitabilityCubit>(
+      () => SalesProfitabilityCubit(
+        repository: serviceLocator<SalesProfitabilityRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<CashShiftsRepository>()) {
+    serviceLocator.registerLazySingleton<CashShiftsRepository>(
+      CashShiftsRepository.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<CashShiftsCubit>()) {
+    serviceLocator.registerFactory<CashShiftsCubit>(
+      () => CashShiftsCubit(repository: serviceLocator<CashShiftsRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<InventoryReportRepository>()) {
+    serviceLocator.registerLazySingleton<InventoryReportRepository>(
+      InventoryReportRepository.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<InventoryReportCubit>()) {
+    serviceLocator.registerFactory<InventoryReportCubit>(
+      () => InventoryReportCubit(
+        repository: serviceLocator<InventoryReportRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ExpensesReportRepository>()) {
+    serviceLocator.registerLazySingleton<ExpensesReportRepository>(
+      ExpensesReportRepository.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<ExpensesReportCubit>()) {
+    serviceLocator.registerFactory<ExpensesReportCubit>(
+      () => ExpensesReportCubit(
+        repository: serviceLocator<ExpensesReportRepository>(),
+      ),
     );
   }
 
@@ -203,7 +261,21 @@ void setupServiceLocator({bool useBackend = true}) {
   }
   if (!serviceLocator.isRegistered<FinanceSetupCubit>()) {
     serviceLocator.registerFactory<FinanceSetupCubit>(
-      () => FinanceSetupCubit(repository: serviceLocator<FinanceSetupRepository>()),
+      () => FinanceSetupCubit(
+        repository: serviceLocator<FinanceSetupRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<PurchasingRepository>()) {
+    serviceLocator.registerLazySingleton<PurchasingRepository>(
+      () => PurchasingRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<PurchasingCubit>()) {
+    serviceLocator.registerFactory<PurchasingCubit>(
+      () => PurchasingCubit(
+        repository: serviceLocator<PurchasingRepository>(),
+      ),
     );
   }
   if (!serviceLocator.isRegistered<InventoryRepository>()) {
@@ -219,7 +291,9 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<OperationalBranchReader>()) {
     serviceLocator.registerLazySingleton<OperationalBranchReader>(
       () => useBackend
-          ? OperationalBranchRepository(apiClient: serviceLocator<DioApiClient>())
+          ? OperationalBranchRepository(
+              apiClient: serviceLocator<DioApiClient>(),
+            )
           : const FakeOperationalBranchRepository(),
     );
   }

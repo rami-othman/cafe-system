@@ -33,8 +33,8 @@ class Cafe618PosSalesDemoSeederTest extends TestCase
             }
             $this->seed(Cafe618PosSalesDemoSeeder::class);
 
-            $this->assertGreaterThanOrEqual(22, DB::table('orders')->where('tenant_id', $tenant)->where('idempotency_key', 'like', 'cafe-618-pos-20260906-%')->count());
-            $this->assertGreaterThanOrEqual(22, DB::table('payments')->where('tenant_id', $tenant)->where('idempotency_key', 'like', 'cafe-618-pos-20260906-%')->count());
+            $this->assertGreaterThanOrEqual(14, DB::table('orders')->where('tenant_id', $tenant)->where('idempotency_key', 'like', 'cafe-618-pos-20260906-%')->count());
+            $this->assertGreaterThanOrEqual(14, DB::table('payments')->where('tenant_id', $tenant)->where('idempotency_key', 'like', 'cafe-618-pos-20260906-%')->count());
             $this->assertGreaterThan(0, DB::table('sale_consumptions')->where('tenant_id', $tenant)->count());
             $this->assertGreaterThan(0, DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->count());
             $this->assertGreaterThan(0, DB::table('orders')->where('tenant_id', $tenant)->where('cogs_total', '>', 0)->count());

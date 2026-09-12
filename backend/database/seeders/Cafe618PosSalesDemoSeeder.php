@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ShiftController;
 use App\Models\User;
 use App\Services\FinancialSetupService;
 use App\Services\ShiftCashSummaryService;
+use App\Services\StockCountService;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -284,8 +285,45 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
         if (! $shift || $shift->status !== 'open') {
             return;
         }
+        $this->completeRequiredBarChecks($shift);
         $expected = app(ShiftCashSummaryService::class)->summarize($this->tenantId, $shift)['expectedCash'];
         app(ShiftController::class)->close($this->request('/api/v1/shifts/'.$shiftId.'/close', ['closingCash' => $expected, 'note' => $shift->notes]), $shiftId);
+    }
+
+    private function completeRequiredBarChecks(object $shift): void
+    {
+        $counts = app(StockCountService::class);
+        $templates = DB::table('bar_check_templates')
+            ->where('tenant_id', $this->tenantId)
+            ->where('branch_id', $shift->branch_id)
+            ->where('is_active', true)
+            ->where('required_for_shift_close', true)
+            ->get();
+
+        foreach ($templates as $template) {
+            $countId = $counts->startBarCheck(
+                $this->request('/api/v1/bar-checks', []),
+                $this->tenantId,
+                (int) $shift->id,
+                (int) $template->warehouse_id,
+                $this->ownerId,
+            );
+            $count = DB::table('stock_counts')->where('id', $countId)->first();
+            if (! $count || $count->status === 'posted') {
+                continue;
+            }
+            foreach (DB::table('stock_count_lines')->where('stock_count_id', $countId)->get() as $line) {
+                $counts->upsertLine($this->tenantId, $countId, [
+                    'itemId' => (int) $line->inventory_item_id,
+                    'countedQuantity' => (string) $line->expected_quantity,
+                    'unit' => (string) $line->entered_unit,
+                ], $this->ownerId);
+            }
+            $request = $this->request('/api/v1/bar-checks/'.$countId, []);
+            $counts->transition($request, $this->tenantId, $countId, 'submit', $this->ownerId);
+            $counts->transition($request, $this->tenantId, $countId, 'approve', $this->ownerId);
+            $counts->transition($request, $this->tenantId, $countId, 'post', $this->ownerId);
+        }
     }
 
     private function ensureCardPaymentMethod(): void
@@ -311,6 +349,22 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
     /** @return list<int> */
     private function saleDays(): array
     {
-        return [59, 56, 53, 50, 47, 44, 41, 38, 35, 32, 29, 26, 23, 20, 17, 14, 11, 8, 6, 4, 2, 0];
+        // Demo activity must never post into an accounting period that a
+        // local operator already closed or locked. A rolling two-week window
+        // is enough to populate every operational report while keeping a
+        // rerun safe in an established development database.
+        return collect(range(0, 13))
+            ->filter(function (int $daysAgo): bool {
+                $date = $this->today->copy()->subDays($daysAgo)->toDateString();
+
+                return ! DB::table('accounting_periods')
+                    ->where('tenant_id', $this->tenantId)
+                    ->whereDate('start_date', '<=', $date)
+                    ->whereDate('end_date', '>=', $date)
+                    ->whereIn('status', ['closed', 'locked'])
+                    ->exists();
+            })
+            ->values()
+            ->all();
     }
 }

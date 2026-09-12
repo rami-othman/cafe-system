@@ -3,6 +3,7 @@ import '../../pos/models/branch.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/finance_report_models.dart';
 import '../models/finance_setup_models.dart';
+import '../models/finance_voucher.dart';
 import '../widgets/finance_pagination.dart';
 
 class FinanceSetupRepository {
@@ -419,6 +420,11 @@ class FinanceSetupRepository {
   Future<void> reverseSupplierInvoice(int id) =>
       _api.post('finance/supplier-invoices/$id/reverse');
 
+  Future<void> createInvoiceGroup(Map<String, dynamic> payload) =>
+      _api.post('finance/invoice-groups', data: payload);
+  Future<void> createInvoiceType(Map<String, dynamic> payload) =>
+      _api.post('finance/invoice-types', data: payload);
+
   Future<List<SupplierPayment>> getSupplierPayments({
     Map<String, dynamic>? filters,
   }) async => readMapList(
@@ -434,6 +440,18 @@ class FinanceSetupRepository {
       _api.post('finance/supplier-payments', data: payload);
   Future<void> reverseSupplierPayment(int id) =>
       _api.post('finance/supplier-payments/$id/reverse');
+
+  Future<List<FinanceVoucher>> getVouchers({Map<String, dynamic>? filters}) async =>
+      readMapList(await _api.get('finance/vouchers', queryParameters: filters))
+          .map(FinanceVoucher.fromJson).toList(growable: false);
+  Future<FinanceVoucher> getVoucher(int id) async => FinanceVoucher.fromJson(
+      Map<String, dynamic>.from(await _api.get('finance/vouchers/$id') as Map));
+  Future<FinanceVoucher> createVoucher(Map<String, dynamic> payload) async => FinanceVoucher.fromJson(
+      Map<String, dynamic>.from(await _api.post('finance/vouchers', data: payload) as Map));
+  Future<FinanceVoucher> postVoucher(int id) async => FinanceVoucher.fromJson(
+      Map<String, dynamic>.from(await _api.post('finance/vouchers/$id/post') as Map));
+  Future<FinanceVoucher> reverseVoucher(int id, String reason) async => FinanceVoucher.fromJson(
+      Map<String, dynamic>.from(await _api.post('finance/vouchers/$id/reverse', data: <String, dynamic>{'reason': reason}) as Map));
 
   Future<ProfitAndLossReport> getProfitAndLoss({
     Map<String, dynamic>? filters,

@@ -9,6 +9,166 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get inventoryReportTitle => 'المخزون';
+
+  @override
+  String get inventoryReportSubtitle =>
+      'تحليل قيمة المخزون ومستويات التوفر والحركات والهدر وفروقات الجرد عبر المواقع.';
+
+  @override
+  String get inventoryReportAllLocations => 'كل المواقع';
+
+  @override
+  String get inventoryReportAllCategories => 'كل الفئات';
+
+  @override
+  String get inventoryReportExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get inventoryReportCurrentValue => 'قيمة المخزون الحالية';
+
+  @override
+  String get inventoryReportLowStock => 'أصناف منخفضة المخزون';
+
+  @override
+  String get inventoryReportOutOfStock => 'أصناف نافدة';
+
+  @override
+  String get inventoryReportWasteValue => 'قيمة الهدر';
+
+  @override
+  String get inventoryReportCountVariance => 'فروقات الجرد';
+
+  @override
+  String get inventoryReportConsumption => 'إجمالي الاستهلاك';
+
+  @override
+  String get inventoryReportReceived => 'المخزون المستلم';
+
+  @override
+  String get inventoryReportTransfers => 'التحويلات';
+
+  @override
+  String get inventoryReportValueByLocation => 'قيمة المخزون حسب الموقع';
+
+  @override
+  String get inventoryReportMovement => 'حركة المخزون';
+
+  @override
+  String get inventoryReportHealth => 'حالة المخزون';
+
+  @override
+  String get inventoryReportLowOut => 'أصناف منخفضة ونافدة المخزون';
+
+  @override
+  String get inventoryReportConsumptionAnalysis => 'تحليل الاستهلاك';
+
+  @override
+  String get inventoryReportWasteAnalysis => 'تحليل الهدر';
+
+  @override
+  String get inventoryReportVariance => 'فروقات الجرد';
+
+  @override
+  String get inventoryReportLocationComparison => 'مقارنة المواقع';
+
+  @override
+  String get inventoryReportExceptions => 'استثناءات المخزون';
+
+  @override
+  String get inventoryReportItem => 'الصنف';
+
+  @override
+  String get inventoryReportCategory => 'الفئة';
+
+  @override
+  String get inventoryReportLocation => 'الموقع';
+
+  @override
+  String get inventoryReportAvailable => 'الكمية المتوفرة';
+
+  @override
+  String get inventoryReportMinimum => 'الحد الأدنى';
+
+  @override
+  String get inventoryReportUnit => 'الوحدة';
+
+  @override
+  String get inventoryReportStatus => 'الحالة';
+
+  @override
+  String get inventoryReportQuantity => 'الكمية';
+
+  @override
+  String get inventoryReportValue => 'القيمة';
+
+  @override
+  String get inventoryReportReason => 'السبب';
+
+  @override
+  String get inventoryReportExpected => 'المتوقع';
+
+  @override
+  String get inventoryReportCounted => 'المعدود';
+
+  @override
+  String get inventoryReportDifference => 'الفرق';
+
+  @override
+  String get inventoryReportVarianceValue => 'قيمة الفرق';
+
+  @override
+  String get inventoryReportItems => 'الأصناف';
+
+  @override
+  String get inventoryReportAvailableStatus => 'متوفر';
+
+  @override
+  String get inventoryReportLowStatus => 'مخزون منخفض';
+
+  @override
+  String get inventoryReportOutStatus => 'نافد';
+
+  @override
+  String get inventoryReportOverstockStatus => 'مخزون زائد';
+
+  @override
+  String get inventoryReportMatched => 'مطابق';
+
+  @override
+  String get inventoryReportShortage => 'عجز';
+
+  @override
+  String get inventoryReportOverage => 'زيادة';
+
+  @override
+  String get inventoryReportNoLocations =>
+      'لا توجد مواقع كافية لإجراء المقارنة.';
+
+  @override
+  String get inventoryReportNoMovements =>
+      'لا توجد حركات مخزون ضمن الفترة المحددة.';
+
+  @override
+  String get inventoryReportNoLowStock =>
+      'لا توجد أصناف منخفضة المخزون ضمن الفلاتر الحالية.';
+
+  @override
+  String get inventoryReportNoWaste => 'لا توجد حركات هدر ضمن الفترة المحددة.';
+
+  @override
+  String get inventoryReportNoVariance =>
+      'لا توجد فروقات جرد ضمن الفترة المحددة.';
+
+  @override
+  String get inventoryReportNoExceptions =>
+      'لا توجد استثناءات مخزون تحتاج إلى مراجعة.';
+
+  @override
+  String get inventoryReportError => 'تعذّر تحميل تقرير المخزون.';
+
+  @override
   String get appName => 'نظام كافيه 618';
 
   @override
@@ -4713,6 +4873,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reportsOverviewKpiNetProfit => 'صافي الربح';
 
   @override
+  String get reportsOverviewKpiInfoNetSales =>
+      'إجمالي المبيعات بعد الخصومات والاستردادات، قبل الضريبة.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossProfit =>
+      'صافي المبيعات مطروحاً منه تكلفة البضاعة المباعة.';
+
+  @override
+  String get reportsOverviewKpiInfoGrossMargin =>
+      'إجمالي الربح كنسبة من صافي المبيعات.';
+
+  @override
+  String get reportsOverviewKpiInfoTotalExpenses =>
+      'المصروفات التشغيلية المسجلة لهذه الفترة.';
+
+  @override
+  String get reportsOverviewKpiInfoNetProfit =>
+      'إجمالي الربح مطروحاً منه إجمالي المصروفات.';
+
+  @override
   String get reportsOverviewNotAvailableYet => 'غير متاح بعد';
 
   @override
@@ -4736,6 +4916,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reportsOverviewBranchComparisonTitle => 'مقارنة الفروع';
+
+  @override
+  String get reportsOverviewBranchColumnBranch => 'الفرع';
+
+  @override
+  String get reportsOverviewBranchColumnNetSales => 'صافي المبيعات';
 
   @override
   String get reportsOverviewChooseAllBranches =>
@@ -4772,6 +4958,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reportsOverviewCategoryCashShifts => 'النقدية والورديات';
 
   @override
+  String get reportsOverviewCategoryInventory => 'المخزون';
+
+  @override
   String get reportsOverviewCategoryExpenses => 'المصروفات';
 
   @override
@@ -4784,6 +4973,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get reportsOverviewCategoryCustomReportBuilder =>
       'أداة إنشاء تقارير مخصصة';
+
+  @override
+  String get reportsOverviewFinancialReportsTooltip =>
+      'فتح مركز التقارير المالية';
 
   @override
   String get reportsOverviewErrorDefault => 'تعذّر تحميل النظرة العامة.';
@@ -4800,6 +4993,210 @@ class AppLocalizationsAr extends AppLocalizations {
   String reportsOverviewHoursAgo(int h) {
     return 'قبل $h س';
   }
+
+  @override
+  String get salesProfitabilityTitle => 'المبيعات والربحية';
+
+  @override
+  String get salesProfitabilitySubtitle =>
+      'تحليل المبيعات والأرباح والخصومات والمرتجعات وأداء المنتجات والفروع.';
+
+  @override
+  String get salesProfitabilityBack => 'نظرة عامة على التقارير';
+
+  @override
+  String get salesProfitabilityGroupBy => 'التجميع';
+
+  @override
+  String get salesProfitabilityDaily => 'يومي';
+
+  @override
+  String get salesProfitabilityWeekly => 'أسبوعي';
+
+  @override
+  String get salesProfitabilityMonthly => 'شهري';
+
+  @override
+  String get salesProfitabilityExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get salesProfitabilityGrossSales => 'إجمالي المبيعات';
+
+  @override
+  String get salesProfitabilityNetSales => 'صافي المبيعات';
+
+  @override
+  String get salesProfitabilityDiscounts => 'الخصومات';
+
+  @override
+  String get salesProfitabilityRefunds => 'المرتجعات';
+
+  @override
+  String get salesProfitabilityCogs => 'تكلفة البضاعة المباعة COGS';
+
+  @override
+  String get salesProfitabilityGrossProfit => 'إجمالي الربح';
+
+  @override
+  String get salesProfitabilityGrossMargin => 'هامش الربح %';
+
+  @override
+  String get salesProfitabilityAverageOrder => 'متوسط قيمة الطلب';
+
+  @override
+  String get salesProfitabilityTrend => 'اتجاه المبيعات والأرباح';
+
+  @override
+  String get salesProfitabilitySalesByHour => 'المبيعات بالساعة';
+
+  @override
+  String get salesProfitabilitySalesByCategory => 'المبيعات حسب الفئة';
+
+  @override
+  String get salesProfitabilityBranchPerformance => 'أداء الفروع';
+
+  @override
+  String get salesProfitabilityProductPerformance => 'أداء المنتجات';
+
+  @override
+  String get salesProfitabilityTopSelling => 'الأكثر مبيعاً';
+
+  @override
+  String get salesProfitabilityMostProfitable => 'الأكثر ربحية';
+
+  @override
+  String get salesProfitabilityUnderperforming => 'الأقل أداءً';
+
+  @override
+  String salesProfitabilityPeak(String value) {
+    return 'الأعلى: $value';
+  }
+
+  @override
+  String get salesProfitabilityNoTrend =>
+      'لا تتوفر بيانات لاتجاه المبيعات والأرباح لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityNoHourly =>
+      'لا تتوفر بيانات مبيعات حسب الساعة لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityNoCategories =>
+      'لا تتوفر بيانات مبيعات حسب الفئة لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityNoBranches => 'اختر كل الفروع لمقارنة الأداء.';
+
+  @override
+  String get salesProfitabilityNoProducts =>
+      'لا تتوفر بيانات أداء المنتجات لهذه الفترة.';
+
+  @override
+  String get salesProfitabilityUnavailable => 'غير متاح بعد';
+
+  @override
+  String get salesProfitabilityError => 'تعذّر تحميل هذا التقرير.';
+
+  @override
+  String get salesProfitabilityProduct => 'المنتج';
+
+  @override
+  String get salesProfitabilityCategory => 'الفئة';
+
+  @override
+  String get salesProfitabilityQuantity => 'الكمية المباعة';
+
+  @override
+  String get salesProfitabilityOrders => 'الطلبات';
+
+  @override
+  String get salesProfitabilityMargin => 'الهامش';
+
+  @override
+  String get cashShiftsTitle => 'النقدية والورديات';
+
+  @override
+  String get cashShiftsSubtitle =>
+      'متابعة أداء الورديات، حركة النقدية، طرق الدفع وفروقات الصندوق.';
+
+  @override
+  String get cashShiftsAllEmployees => 'كل الموظفين';
+
+  @override
+  String get cashShiftsTotalSales => 'إجمالي المبيعات';
+
+  @override
+  String get cashShiftsExpectedCash => 'النقد المتوقع';
+
+  @override
+  String get cashShiftsActualCash => 'النقد الفعلي';
+
+  @override
+  String get cashShiftsDifference => 'فرق الصندوق';
+
+  @override
+  String get cashShiftsClosed => 'الورديات المغلقة';
+
+  @override
+  String get cashShiftsOpen => 'الورديات المفتوحة';
+
+  @override
+  String get cashShiftsAverage => 'متوسط مبيعات الوردية';
+
+  @override
+  String get cashShiftsReconciliation => 'مطابقة النقدية';
+
+  @override
+  String get cashShiftsMatched => 'مطابق';
+
+  @override
+  String get cashShiftsMinor => 'فرق بسيط';
+
+  @override
+  String get cashShiftsReview => 'فرق يحتاج مراجعة';
+
+  @override
+  String get cashShiftsShortage => 'عجز';
+
+  @override
+  String get cashShiftsOverage => 'زيادة';
+
+  @override
+  String get cashShiftsPerformance => 'أداء الورديات';
+
+  @override
+  String get cashShiftsPayments => 'توزيع طرق الدفع';
+
+  @override
+  String get cashShiftsTrend => 'اتجاه مبيعات الورديات';
+
+  @override
+  String get cashShiftsTop => 'أفضل الورديات أداءً';
+
+  @override
+  String get cashShiftsExceptions => 'الاستثناءات';
+
+  @override
+  String get cashShiftsNoShifts => 'لا توجد ورديات ضمن الفترة المحددة.';
+
+  @override
+  String get cashShiftsNoPayments =>
+      'لا توجد بيانات لطرق الدفع ضمن الفترة المحددة.';
+
+  @override
+  String get cashShiftsNoExceptions => 'لا توجد فروقات نقدية تحتاج إلى مراجعة.';
+
+  @override
+  String get cashShiftsNoTrend =>
+      'لا تتوفر بيانات لاتجاه مبيعات الورديات لهذه الفترة.';
+
+  @override
+  String get cashShiftsError => 'تعذّر تحميل تقرير النقدية والورديات.';
+
+  @override
+  String get cashShiftsExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
 
   @override
   String get financeSectionOverview => 'نظرة عامة';
@@ -6070,4 +6467,141 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get taxNewOrdersOnly => 'يُطبق هذا على الطلبات الجديدة.';
+
+  @override
+  String get expensesReportTitle => 'المصروفات';
+
+  @override
+  String get expensesReportSubtitle =>
+      'تحليل المصروفات التشغيلية حسب الفئة والفرع والفترة الزمنية.';
+
+  @override
+  String get expensesReportAllCategories => 'كل الفئات';
+
+  @override
+  String get expensesReportAllStatuses => 'كل الحالات';
+
+  @override
+  String get expensesReportExportTooltip =>
+      'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
+
+  @override
+  String get expensesReportTotal => 'إجمالي المصروفات';
+
+  @override
+  String get expensesReportPosted => 'المصروفات المرحلة';
+
+  @override
+  String get expensesReportPending => 'المصروفات المعلقة';
+
+  @override
+  String get expensesReportAverageDaily => 'متوسط المصروف اليومي';
+
+  @override
+  String get expensesReportRatio => 'نسبة المصروفات إلى صافي المبيعات';
+
+  @override
+  String get expensesReportLargestCategory => 'أكبر فئة مصروفات';
+
+  @override
+  String get expensesReportTrend => 'اتجاه المصروفات';
+
+  @override
+  String get expensesReportByCategory => 'المصروفات حسب الفئة';
+
+  @override
+  String get expensesReportLargest => 'أكبر المصروفات';
+
+  @override
+  String get expensesReportBranchComparison => 'مقارنة مصروفات الفروع';
+
+  @override
+  String get expensesReportPeriodComparison => 'مقارنة بالفترة السابقة';
+
+  @override
+  String get expensesReportTable => 'جدول المصروفات';
+
+  @override
+  String get expensesReportDate => 'التاريخ';
+
+  @override
+  String get expensesReportExpense => 'المصروف';
+
+  @override
+  String get expensesReportCategory => 'الفئة';
+
+  @override
+  String get expensesReportBranch => 'الفرع';
+
+  @override
+  String get expensesReportPayee => 'المستفيد';
+
+  @override
+  String get expensesReportPaymentMethod => 'طريقة الدفع';
+
+  @override
+  String get expensesReportAmount => 'المبلغ';
+
+  @override
+  String get expensesReportStatus => 'الحالة';
+
+  @override
+  String get expensesReportNetSales => 'صافي المبيعات';
+
+  @override
+  String get expensesReportExpenseSales => 'المصروفات / المبيعات';
+
+  @override
+  String get expensesReportCompanyWide => 'على مستوى الشركة';
+
+  @override
+  String get expensesReportUnavailable => 'غير متاح';
+
+  @override
+  String get expensesReportNoExpenses => 'لا توجد مصروفات ضمن الفترة المحددة.';
+
+  @override
+  String get expensesReportNoCategories => 'لا توجد بيانات مصروفات حسب الفئة.';
+
+  @override
+  String get expensesReportNoBranches => 'لا توجد بيانات كافية لمقارنة الفروع.';
+
+  @override
+  String get expensesReportNoLargest => 'لا توجد مصروفات لعرضها.';
+
+  @override
+  String get expensesReportError => 'تعذّر تحميل تقرير المصروفات.';
+
+  @override
+  String get expensesReportCurrentPeriod => 'الفترة الحالية';
+
+  @override
+  String get expensesReportPreviousPeriod => 'الفترة السابقة';
+
+  @override
+  String get expensesReportDifference => 'الفرق';
+
+  @override
+  String get expensesReportDraft => 'مسودة';
+
+  @override
+  String get expensesReportPendingApproval => 'معلّق للاعتماد';
+
+  @override
+  String get expensesReportApproved => 'معتمد';
+
+  @override
+  String get expensesReportPaid => 'مدفوع';
+
+  @override
+  String get expensesReportRejected => 'مرفوض';
+
+  @override
+  String get expensesReportReversed => 'معكوس';
+
+  @override
+  String get expensesReportComparisonUnavailable => 'المقارنة غير متاحة';
+
+  @override
+  String get expensesReportPercentOfTotal => 'من الإجمالي';
 }

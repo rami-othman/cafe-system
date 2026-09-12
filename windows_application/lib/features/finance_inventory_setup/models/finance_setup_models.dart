@@ -694,6 +694,11 @@ class SupplierInvoice {
     required this.status,
     required this.isOverdue,
     this.branchId,
+    this.invoiceTypeId,
+    this.invoiceTypeName,
+    this.invoiceGroupName,
+    this.postingBehavior,
+    this.isPostable = true,
     this.branchName,
     this.expenseCategoryId,
     this.expenseCategoryName,
@@ -717,6 +722,11 @@ class SupplierInvoice {
   final String invoiceDate;
   final String dueDate;
   final String invoiceType;
+  final int? invoiceTypeId;
+  final String? invoiceTypeName;
+  final String? invoiceGroupName;
+  final String? postingBehavior;
+  final bool isPostable;
   final int? expenseCategoryId;
   final String? expenseCategoryName;
   final int? debitAccountId;
@@ -748,6 +758,19 @@ class SupplierInvoice {
         invoiceDate: readString(json['invoiceDate']),
         dueDate: readString(json['dueDate']),
         invoiceType: readString(json['invoiceType']),
+        invoiceTypeId: readInt(json['invoiceTypeId']),
+        invoiceTypeName: readString(json['invoiceTypeName']).isEmpty
+            ? null
+            : readString(json['invoiceTypeName']),
+        invoiceGroupName: readString(json['invoiceGroupName']).isEmpty
+            ? null
+            : readString(json['invoiceGroupName']),
+        postingBehavior: readString(json['postingBehavior']).isEmpty
+            ? null
+            : readString(json['postingBehavior']),
+        isPostable: json['isPostable'] == null
+            ? true
+            : readBool(json['isPostable']),
         expenseCategoryId: readInt(json['expenseCategoryId']),
         expenseCategoryName: readString(json['expenseCategoryName']).isEmpty
             ? null
