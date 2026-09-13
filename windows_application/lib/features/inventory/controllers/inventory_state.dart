@@ -38,6 +38,7 @@ class InventoryState extends Equatable {
     this.countLineSaveStatus = InventoryCountLineSaveStatus.idle,
     this.countLineSaveError,
     this.warehouses = const <WarehouseLocation>[],
+    this.stockCountWarehouses = const <WarehouseLocation>[],
     this.itemMovements = const <InventoryMovement>[],
     this.barCheckTemplates = const <BarCheckTemplate>[],
     this.selectedBarCheckTemplate,
@@ -77,6 +78,12 @@ class InventoryState extends Equatable {
   final InventoryCountLineSaveStatus countLineSaveStatus;
   final String? countLineSaveError;
   final List<WarehouseLocation> warehouses;
+  /// The permission-filtered subset of warehouses the current actor may
+  /// start a stock count in (loadCounts' `accessibleForStockCount: true`
+  /// fetch) - kept separate from [warehouses] so the Stock Counts screen's
+  /// dropdown never gets silently swapped for the plain "all active
+  /// warehouses" list another loader last populated, or vice versa.
+  final List<WarehouseLocation> stockCountWarehouses;
   final List<InventoryMovement> itemMovements;
   final List<BarCheckTemplate> barCheckTemplates;
   final BarCheckTemplate? selectedBarCheckTemplate;
@@ -119,6 +126,7 @@ class InventoryState extends Equatable {
     String? countLineSaveError,
     bool clearCountLineSaveError = false,
     List<WarehouseLocation>? warehouses,
+    List<WarehouseLocation>? stockCountWarehouses,
     List<InventoryMovement>? itemMovements,
     List<BarCheckTemplate>? barCheckTemplates,
     BarCheckTemplate? selectedBarCheckTemplate,
@@ -164,6 +172,7 @@ class InventoryState extends Equatable {
         ? null
         : countLineSaveError ?? this.countLineSaveError,
     warehouses: warehouses ?? this.warehouses,
+    stockCountWarehouses: stockCountWarehouses ?? this.stockCountWarehouses,
     itemMovements: itemMovements ?? this.itemMovements,
     barCheckTemplates: barCheckTemplates ?? this.barCheckTemplates,
     selectedBarCheckTemplate: selectedBarCheckTemplate ?? this.selectedBarCheckTemplate,
@@ -205,6 +214,7 @@ class InventoryState extends Equatable {
     countLineSaveStatus,
     countLineSaveError,
     warehouses,
+    stockCountWarehouses,
     itemMovements,
     barCheckTemplates,
     selectedBarCheckTemplate,

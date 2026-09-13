@@ -41,7 +41,10 @@ final class SalePaymentMethodResolver
      */
     public static function resolveByLegacyMethod(int $tenantId, string $method): ?object
     {
-        return self::lookup($tenantId, fn ($query) => $query->where('pm.code', strtoupper($method)));
+        return self::lookup($tenantId, fn ($query) => $query
+            ->where('pm.type', $method)
+            ->orderBy('pm.sort_order')
+            ->orderBy('pm.id'));
     }
 
     /**

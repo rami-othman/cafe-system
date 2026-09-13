@@ -152,7 +152,11 @@ class _SalesCreditNoteDetailScreenState extends State<SalesCreditNoteDetailScree
       ));
       if (approved != true) return;
       await cubit.repository.postCreditNote(n.id, 'cn-post-${n.id}-${DateTime.now().microsecondsSinceEpoch}');
-      if (mounted) { await load(); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم ترحيل الإشعار الدائن بنجاح.'))); }
+      if (mounted) {
+        await load();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم ترحيل الإشعار الدائن بنجاح.')));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعذر معاينة/ترحيل الإشعار: $e')));
     }

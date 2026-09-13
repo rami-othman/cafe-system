@@ -6,6 +6,7 @@ use App\Support\Money;
 use App\Support\RefundTaxAllocation;
 use App\Support\SafeMath;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * The single authoritative operational (non-GL) sales union: POS orders +
@@ -140,17 +141,21 @@ final class SalesReportingQueryService
             ->selectRaw('i.product_id, i.product_name, SUM(i.quantity) quantity, SUM(i.total) gross, SUM(i.discount_total) discounts, COALESCE(SUM(i.cogs_total),0) cogs')
             ->groupBy('i.product_id', 'i.product_name')->get();
 
-        $manual = DB::table('sales_invoice_lines as l')->join('sales_invoices as inv', 'inv.id', '=', 'l.sales_invoice_id')
-            ->where('inv.tenant_id', $tenantId)->whereIn('inv.branch_id', $branchIds)->where('inv.status', 'posted')
-            ->whereBetween('inv.invoice_date', [$dateFrom, $dateTo])
-            ->selectRaw('l.product_id, l.product_name, SUM(l.quantity) quantity, SUM(l.subtotal + l.discount_total) gross, SUM(l.discount_total) discounts, COALESCE(SUM(l.cogs_total),0) cogs')
-            ->groupBy('l.product_id', 'l.product_name')->get();
+        $manual = Schema::hasTable('sales_invoice_lines') && Schema::hasTable('sales_invoices')
+            ? DB::table('sales_invoice_lines as l')->join('sales_invoices as inv', 'inv.id', '=', 'l.sales_invoice_id')
+                ->where('inv.tenant_id', $tenantId)->whereIn('inv.branch_id', $branchIds)->where('inv.status', 'posted')
+                ->whereBetween('inv.invoice_date', [$dateFrom, $dateTo])
+                ->selectRaw('l.product_id, l.product_name, SUM(l.quantity) quantity, SUM(l.subtotal + l.discount_total) gross, SUM(l.discount_total) discounts, COALESCE(SUM(l.cogs_total),0) cogs')
+                ->groupBy('l.product_id', 'l.product_name')->get()
+            : collect();
 
-        $credit = DB::table('sales_credit_note_lines as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
-            ->where('n.tenant_id', $tenantId)->whereIn('n.branch_id', $branchIds)->where('n.status', 'posted')
-            ->whereBetween('n.credit_date', [$dateFrom, $dateTo])
-            ->selectRaw('l.product_id, l.product_name, SUM(l.quantity) quantity, SUM(l.subtotal) net, COALESCE(SUM(l.cogs_total),0) cogs')
-            ->groupBy('l.product_id', 'l.product_name')->get();
+        $credit = Schema::hasTable('sales_credit_note_lines') && Schema::hasTable('sales_credit_notes')
+            ? DB::table('sales_credit_note_lines as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
+                ->where('n.tenant_id', $tenantId)->whereIn('n.branch_id', $branchIds)->where('n.status', 'posted')
+                ->whereBetween('n.credit_date', [$dateFrom, $dateTo])
+                ->selectRaw('l.product_id, l.product_name, SUM(l.quantity) quantity, SUM(l.subtotal) net, COALESCE(SUM(l.cogs_total),0) cogs')
+                ->groupBy('l.product_id', 'l.product_name')->get()
+            : collect();
 
         $rows = [];
         $key = fn (object $r): string => $r->product_id !== null ? 'id:'.$r->product_id : 'name:'.$r->product_name;
@@ -229,9 +234,17 @@ final class SalesReportingQueryService
         return [$revenueCents, $taxCents];
     }
 
-    /** @return array{grossCents:int,discountsCents:int,taxCents:int,netCents:int,cogsCents:int} Posted Manual Sales Invoices, dated by invoice_date. */
+    /**
+     * @return array{grossCents:int,discountsCents:int,taxCents:int,netCents:int,cogsCents:int} Posted Manual Sales
+     * Invoices, dated by invoice_date. Zeroed out (rather than erroring) when the Sales Invoice tables are not yet
+     * migrated in this environment, so the Finance Dashboard degrades to POS-only totals instead of a 500.
+     */
     private function manualInvoiceComponents(int $tenantId, array $branchIds, string $dateFrom, string $dateTo): array
     {
+        if (! Schema::hasTable('sales_invoices') || ! Schema::hasTable('sales_invoice_lines')) {
+            return ['grossCents' => 0, 'discountsCents' => 0, 'taxCents' => 0, 'netCents' => 0, 'cogsCents' => 0];
+        }
+
         $header = DB::table('sales_invoices')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('invoice_date', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(subtotal),0) subtotal, COALESCE(SUM(discount_total),0) discounts, COALESCE(SUM(tax_total),0) tax')->first();
@@ -246,9 +259,17 @@ final class SalesReportingQueryService
         return ['grossCents' => $netCents + $discountsCents, 'discountsCents' => $discountsCents, 'taxCents' => Money::cents($header->tax ?: '0'), 'netCents' => $netCents, 'cogsCents' => Money::cents($cogs ?: '0')];
     }
 
-    /** @return array{netCents:int,taxCents:int,cogsCents:int} Posted Sales Credit Notes, dated by credit_date — reduces manual-invoice revenue exactly once (never a second reduction from the resulting Customer Refund). */
+    /**
+     * @return array{netCents:int,taxCents:int,cogsCents:int} Posted Sales Credit Notes, dated by credit_date —
+     * reduces manual-invoice revenue exactly once (never a second reduction from the resulting Customer Refund).
+     * Zeroed out when the Sales Credit Note tables are not yet migrated, for the same reason as manualInvoiceComponents().
+     */
     private function creditNoteComponents(int $tenantId, array $branchIds, string $dateFrom, string $dateTo): array
     {
+        if (! Schema::hasTable('sales_credit_notes') || ! Schema::hasTable('sales_credit_note_lines')) {
+            return ['netCents' => 0, 'taxCents' => 0, 'cogsCents' => 0];
+        }
+
         $header = DB::table('sales_credit_notes')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('credit_date', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(subtotal),0) subtotal, COALESCE(SUM(tax_total),0) tax')->first();

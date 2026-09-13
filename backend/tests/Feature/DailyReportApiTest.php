@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\FinancialSetupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,14 @@ class DailyReportApiTest extends TestCase
             $tenantId = $this->demoTenantId();
             $headers = $this->headers($tenantId);
             $branchId = $this->downtownBranchId($tenantId);
+            app(FinancialSetupService::class)->ensureForTenant(
+                $tenantId,
+                $branchId,
+                (int) DB::table('users')
+                    ->where('tenant_id', $tenantId)
+                    ->where('role', 'owner')
+                    ->value('id'),
+            );
 
             $product = DB::table('products')->where('tenant_id', $tenantId)->where('name', 'Cappuccino')->first();
             $snapshot = $this->publishedSnapshot($tenantId, $branchId, $product->id);

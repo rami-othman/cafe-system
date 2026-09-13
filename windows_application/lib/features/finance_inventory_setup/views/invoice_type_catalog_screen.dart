@@ -144,10 +144,10 @@ class _InvoiceTypeCatalogScreenState extends State<InvoiceTypeCatalogScreen> {
     await showDialog<void>(context: context, builder: (BuildContext dialog) => StatefulBuilder(builder: (BuildContext context, StateSetter setDialogState) => AlertDialog(
       title: const Text('نوع فاتورة جديد'),
       content: SizedBox(width: 440, child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-        DropdownButtonFormField<int>(value: groupId, isExpanded: true, decoration: const InputDecoration(labelText: 'المجموعة'), items: _groups.map((g) => DropdownMenuItem<int>(value: (g['id'] as num).toInt(), child: Text('${g['name']}'))).toList(), onChanged: (v) => setDialogState(() => groupId = v!)),
+        DropdownButtonFormField<int>(initialValue: groupId, isExpanded: true, decoration: const InputDecoration(labelText: 'المجموعة'), items: _groups.map((g) => DropdownMenuItem<int>(value: (g['id'] as num).toInt(), child: Text('${g['name']}'))).toList(), onChanged: (v) => setDialogState(() => groupId = v!)),
         TextField(controller: code, decoration: const InputDecoration(labelText: 'الرمز الإنجليزي (مثال: supplier-service)'),),
         TextField(controller: name, decoration: const InputDecoration(labelText: 'اسم النوع'),),
-        DropdownButtonFormField<String>(value: behavior, decoration: const InputDecoration(labelText: 'السلوك المحاسبي'), items: const <DropdownMenuItem<String>>[
+        DropdownButtonFormField<String>(initialValue: behavior, decoration: const InputDecoration(labelText: 'السلوك المحاسبي'), items: const <DropdownMenuItem<String>>[
           DropdownMenuItem(value: 'expense', child: Text('مصروف — يطلب فئة مصروف')),
           DropdownMenuItem(value: 'inventory', child: Text('مخزون — حساب المخزون')),
           DropdownMenuItem(value: 'other', child: Text('أخرى — يطلب الحساب المدين')),

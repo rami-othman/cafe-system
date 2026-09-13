@@ -12,10 +12,12 @@ class PaymentMethodSelector extends StatelessWidget {
     super.key,
     required this.selectedMethod,
     required this.onMethodSelected,
+    required this.methods,
   });
 
   final PaymentMethod selectedMethod;
   final ValueChanged<PaymentMethod> onMethodSelected;
+  final List<PaymentMethod> methods;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class PaymentMethodSelector extends StatelessWidget {
         final int columns = constraints.maxWidth < 360 ? 2 : 4;
 
         return GridView.builder(
-          itemCount: PaymentMethod.values.length,
+          itemCount: methods.length,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -34,7 +36,7 @@ class PaymentMethodSelector extends StatelessWidget {
             mainAxisSpacing: AppSpacing.sm,
           ),
           itemBuilder: (BuildContext context, int index) {
-            final PaymentMethod method = PaymentMethod.values[index];
+            final PaymentMethod method = methods[index];
             return _PaymentMethodCard(
               method: method,
               isSelected: method == selectedMethod,

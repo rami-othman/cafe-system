@@ -43,7 +43,9 @@ php artisan config:clear
 php artisan config:cache
 php artisan view:cache
 
-if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+if [ "${APP_ENV:-production}" = "staging" ] || [ "${APP_ENV:-production}" = "production" ]; then
+    php artisan migrate --force
+elif [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     php artisan migrate --force
 fi
 
