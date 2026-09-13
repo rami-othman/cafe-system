@@ -57,6 +57,13 @@ class InventoryCubit extends Cubit<InventoryState> {
     }
   }
 
+  int _itemsRequestId = 0;
+
+  // Filters can change faster than the network responds (e.g. rapid clicks
+  // through the stock-status dropdown). Each call claims a request id and
+  // only applies its outcome - success, error, or the final loading:false -
+  // if it is still the most recently issued call, so a slow, superseded
+  // response can never clobber a newer one or fight over the loading flag.
   Future<void> loadItems({
     String? search,
     String? type,
@@ -65,35 +72,56 @@ class InventoryCubit extends Cubit<InventoryState> {
     String? stockStatus,
     int? warehouseId,
     int page = 1,
-  }) => _load(() async {
-    final Future<InventoryItemsPage> itemsFuture = repository.itemsPage(
-      search: search,
-      type: type,
-      category: category,
-      status: status,
-      stockStatus: stockStatus,
-      warehouseId: warehouseId,
-      page: page,
-    );
-    final Future<List<InventoryUnit>> unitsFuture = repository.units();
-    final Future<List<WarehouseLocation>> warehousesFuture = repository
-        .warehouses();
-    final InventoryItemsPage result = await itemsFuture;
-    final List<InventoryUnit> units = await unitsFuture;
-    final List<WarehouseLocation> warehouses = await warehousesFuture;
-    emit(
-      state.copyWith(
-        items: result.items,
-        units: units,
-        itemsPage: result.currentPage,
-        itemsLastPage: result.lastPage,
-        itemsTotal: result.total,
-        itemCategories: result.categories,
-        warehouses: warehouses,
-        clearError: true,
-      ),
-    );
-  });
+  }) async {
+    final int requestId = ++_itemsRequestId;
+    bool isCurrent() => requestId == _itemsRequestId;
+
+    emit(state.copyWith(loading: true, clearError: true));
+    try {
+      // Future.wait ensures every request is awaited together. Awaiting each
+      // future one at a time (as separate statements) means that if the
+      // first one throws, the others are abandoned mid-flight; if they later
+      // fail too, their errors have no listener and surface as unhandled
+      // exceptions instead of the caught error below.
+      final List<dynamic> results = await Future.wait(<Future<dynamic>>[
+        repository.itemsPage(
+          search: search,
+          type: type,
+          category: category,
+          status: status,
+          stockStatus: stockStatus,
+          warehouseId: warehouseId,
+          page: page,
+        ),
+        repository.units(),
+        repository.warehouses(),
+      ]);
+      if (!isCurrent()) return;
+      final InventoryItemsPage result = results[0] as InventoryItemsPage;
+      final List<InventoryUnit> units = results[1] as List<InventoryUnit>;
+      final List<WarehouseLocation> warehouses =
+          results[2] as List<WarehouseLocation>;
+      emit(
+        state.copyWith(
+          items: result.items,
+          units: units,
+          itemsPage: result.currentPage,
+          itemsLastPage: result.lastPage,
+          itemsTotal: result.total,
+          itemCategories: result.categories,
+          warehouses: warehouses,
+          clearError: true,
+        ),
+      );
+    } catch (error) {
+      if (!isCurrent()) return;
+      emit(state.copyWith(error: error.toString()));
+    } finally {
+      if (isCurrent()) {
+        emit(state.copyWith(loading: false));
+      }
+    }
+  }
   Future<void> loadBalances({
     int? warehouseId,
     String? search,
