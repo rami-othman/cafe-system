@@ -156,6 +156,26 @@ class DailyClosingReconciliationTest extends TestCase
         $this->assertContains('BANK_RECONCILIATION_INCOMPLETE', array_column($preview['warnings'], 'code'));
     }
 
+    /** Phase 5: a bank-settled Customer Payment/Refund on a day with no other bank activity must still surface bank-reconciliation coverage. */
+    public function test_customer_payment_and_refund_bank_activity_surface_the_bank_reconciliation_warning(): void
+    {
+        $this->seed();
+        $tenant = $this->tenantId();
+        $headers = $this->headers($tenant, 'owner', 'recon-customer-bank');
+        $branch = $this->branchId($tenant);
+        $date = '2030-04-09';
+        $bankLocationId = $this->locationId($tenant, 'BANK');
+        $bankAccountId = (int) DB::table('financial_locations')->where('id', $bankLocationId)->value('financial_account_id');
+        $paymentMethodId = (int) DB::table('payment_methods')->insertGetId(['tenant_id' => $tenant, 'code' => 'DC-BANKTRF', 'name' => 'Bank Transfer', 'type' => 'bank_transfer', 'financial_account_id' => $bankAccountId, 'financial_location_id' => $bankLocationId, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $customerId = (int) DB::table('customers')->insertGetId(['tenant_id' => $tenant, 'name' => 'Recon Customer', 'customer_number' => 'DC-CUST-1', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        DB::table('customer_payments')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'customer_id' => $customerId, 'payment_number' => 'DC-CR-1', 'payment_date' => $date, 'amount' => '50.00', 'payment_method_id' => $paymentMethodId, 'financial_location_id' => $bankLocationId, 'status' => 'posted', 'created_at' => now(), 'updated_at' => now()]);
+
+        $preview = $this->getJson("/api/v1/finance/daily-closing?branchId=$branch&date=$date", $headers)->assertOk()->json('data');
+        $this->assertNotContains('BANK_RECONCILIATION_INCOMPLETE', array_column($preview['blockers'], 'code'), 'Bank stays warning-only, never a blocker.');
+        $this->assertContains('BANK_RECONCILIATION_INCOMPLETE', array_column($preview['warnings'], 'code'), 'A Customer Payment is the ONLY bank activity that day, yet it must still be surfaced for reconciliation.');
+    }
+
     public function test_reconciliation_summary_counts_are_exposed_on_preview(): void
     {
         $this->seed();

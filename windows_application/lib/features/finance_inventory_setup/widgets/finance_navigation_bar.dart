@@ -39,6 +39,7 @@ class FinanceNavigationBar extends StatelessWidget {
       '/finance/purchases',
       Icons.shopping_cart_outlined,
     ),
+    _FinanceDestination('sales', '/finance/sales', Icons.point_of_sale_outlined),
     _FinanceDestination(
       'suppliers',
       '/finance/suppliers',
@@ -120,6 +121,7 @@ String financeSectionLabel(AppLocalizations l10n, String id) => switch (id) {
   'cashbanks' => l10n.financeSectionCashBanks,
   'expenses' => l10n.financeSectionExpenses,
   'purchases' => 'المشتريات',
+  'sales' => 'المبيعات',
   'suppliers' => l10n.financeSectionSuppliers,
   'reconciliation' => l10n.financeSectionReconciliation,
   'journals' => l10n.financeSectionJournals,

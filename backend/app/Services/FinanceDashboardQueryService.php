@@ -31,16 +31,22 @@ final class FinanceDashboardQueryService
         $currentExpenses = $this->kpi->operatingExpenses($context, $context['dateFrom'], $context['dateTo']);
         $currentCashBanks = $this->kpi->cashBanks($context, $context['dateTo']);
         $currentPayables = $this->kpi->supplierPayables($context['tenantId'], $context['dateTo']);
+        $currentReceivables = $this->kpi->customerReceivables($context, $context['dateTo']);
+        $currentCustomerCredit = $this->kpi->customerCredit($context['tenantId'], $context['dateTo']);
 
         $comparison = null;
         $comparisonExpenses = null;
         $comparisonCashBanks = null;
         $comparisonPayables = null;
+        $comparisonReceivables = null;
+        $comparisonCustomerCredit = null;
         if ($context['comparisonFrom'] !== null) {
             $comparison = $this->kpi->salesAndProfit($context, $context['comparisonFrom'], $context['comparisonTo']);
             $comparisonExpenses = $this->kpi->operatingExpenses($context, $context['comparisonFrom'], $context['comparisonTo']);
             $comparisonCashBanks = $this->kpi->cashBanks($context, $context['comparisonTo']);
             $comparisonPayables = $this->kpi->supplierPayables($context['tenantId'], $context['comparisonTo']);
+            $comparisonReceivables = $this->kpi->customerReceivables($context, $context['comparisonTo']);
+            $comparisonCustomerCredit = $this->kpi->customerCredit($context['tenantId'], $context['comparisonTo']);
         }
 
         $operatingProfitCents = $current['grossProfitCents'] - $currentExpenses['amountCents'];
@@ -54,6 +60,8 @@ final class FinanceDashboardQueryService
             'operatingProfit' => [...$this->change($operatingProfitCents, $comparisonOperatingProfitCents), 'reliable' => $operatingProfitReliable, 'marginPercentage' => $operatingProfitReliable ? SafeMath::ratioPercentage($operatingProfitCents, $current['netSalesCents']) : null],
             'cashBanks' => $this->balanceKpi($currentCashBanks['total'], $comparisonCashBanks['total'] ?? null) + ['cash' => $currentCashBanks['cash'], 'banks' => $currentCashBanks['banks'], 'total' => $currentCashBanks['total'], 'asOfDate' => $currentCashBanks['asOfDate'], 'accounts' => $currentCashBanks['accounts']],
             'supplierPayables' => $this->balanceKpi($currentPayables['outstanding'], $comparisonPayables['outstanding'] ?? null, 'outstanding') + $currentPayables,
+            'accountsReceivable' => $this->balanceKpi($currentReceivables['outstanding'], $comparisonReceivables['outstanding'] ?? null, 'outstanding') + $currentReceivables,
+            'customerCredit' => $this->balanceKpi($currentCustomerCredit['balance'], $comparisonCustomerCredit['balance'] ?? null, 'balance') + $currentCustomerCredit,
         ];
 
         $reconciliation = $this->reconciliations->summaryForFinanceContext($context['tenantId'], $context['actorId'], $context);
@@ -65,6 +73,7 @@ final class FinanceDashboardQueryService
             'expenses' => 'complete',
             'cashBanks' => 'complete',
             'payables' => 'complete',
+            'receivables' => 'complete',
             'hasBlockingFinancialIntegrityIssue' => collect($alerts)->contains(fn (array $alert) => $alert['severity'] === 'critical'),
         ];
 

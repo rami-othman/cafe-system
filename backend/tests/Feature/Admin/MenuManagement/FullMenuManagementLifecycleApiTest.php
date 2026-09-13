@@ -137,8 +137,15 @@ class FullMenuManagementLifecycleApiTest extends TestCase
             ],
         ], $headers)->assertOk();
         $simulated = collect($simulation->json('data.components'))->keyBy('materialId');
-        $this->assertSame('54', $simulated[$beans]['quantity']);
-        $this->assertSame('250', $simulated[$oatMilk]['quantity']);
+        // RecipeResolver reports quantities in the material's own canonical/base
+        // unit (kilogram for beans, liter for oat milk) — never the recipe-entry
+        // unit (gram/milliliter) — matching how inventory/COGS track stock
+        // everywhere else. Base 18g + 2 extra shots * 18g = 54g = 0.054 kilogram;
+        // the 250ml oat-milk substitution = 0.25 liter.
+        $this->assertSame('0.054', $simulated[$beans]['quantity']);
+        $this->assertSame('kg', $simulated[$beans]['unitCode']);
+        $this->assertSame('0.25', $simulated[$oatMilk]['quantity']);
+        $this->assertSame('l', $simulated[$oatMilk]['unitCode']);
         $this->assertArrayNotHasKey($milk, $simulated->all());
 
         $menu = $this->postJson('/api/v1/admin/menus', [

@@ -14,6 +14,7 @@ use App\Services\SaleConsumptionService;
 use App\Support\TenantContext;
 use App\Support\Money;
 use App\Support\SalePaymentMethodResolver;
+use App\Support\PaymentPerformanceProbe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class PaymentController extends Controller
         private readonly AccountingPostingService $posting,
         private readonly OperationalAuditService $audit,
         private readonly SaleConsumptionService $consumption,
+        private readonly PaymentPerformanceProbe $performance,
     ) {}
 
     public function summary(Request $request, int $order): JsonResponse
@@ -49,6 +51,7 @@ class PaymentController extends Controller
 
     public function pay(Request $request, int $order): JsonResponse
     {
+        $this->performance->controllerStarted();
         $data = $request->validate([
             'method' => ['required', 'in:cash,card,wallet,split'],
             'paymentMethodId' => ['nullable', 'integer'],
@@ -60,8 +63,10 @@ class PaymentController extends Controller
         $hash = $this->payloadHash($data);
 
         $actorId = (int) $request->attributes->get('auth_user')->id;
-        $result = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId): array {
-            $row = $this->lockedOrder($request, $tenantId, $order);
+        $transactionStarted = microtime(true);
+        $closureEndedAt = null;
+        $result = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId, &$closureEndedAt): array {
+            $row = $this->performance->measure('order locking', fn () => $this->lockedOrder($request, $tenantId, $order));
             $existing = DB::table('payments')->where('tenant_id', $tenantId)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
             if ($existing) {
@@ -73,7 +78,7 @@ class PaymentController extends Controller
             }
 
             $this->lifecycle->assertPayable($row);
-            $this->assertActorHasOpenShift($tenantId, $row, $actorId);
+            $this->performance->measure('shift validation', fn () => $this->assertActorHasOpenShift($tenantId, $row, $actorId));
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
@@ -93,6 +98,7 @@ class PaymentController extends Controller
 
             $currency = (string) (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $row->branch_id)->whereNull('deleted_at')->value('currency') ?? 'SYP');
             $now = now();
+            $persistenceStarted = $this->performance->start('payment persistence');
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $row->branch_id, 'order_id' => $row->id,
                 'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $data['method'],
@@ -106,16 +112,20 @@ class PaymentController extends Controller
             DB::table('orders')->where('tenant_id', $tenantId)->where('id', $row->id)->update([
                 'status' => 'paid', 'payment_status' => 'paid', 'closed_at' => $now, 'updated_at' => $now,
             ]);
+            $this->performance->stop('payment persistence', $persistenceStarted);
 
             $consumption = $this->consumption->consumeForOrder($request, $tenantId, $row, $paymentId, $actorId);
             if ($resolvedMethod !== null) {
-                $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId);
+                $this->performance->measure('accounting posting', fn () => $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId));
             } else {
                 $this->audit->record($request, $tenantId, 'pos_order.finance_posting_skipped', 'order', $row->id, [], ['reason' => 'No active Finance mapping for payment method.'], $row->branch_id, $actorId);
             }
 
-            return ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
+            $answer = ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
+            $closureEndedAt = microtime(true);
+            return $answer;
         }, 3);
+        $this->performance->stop('transaction commit', $closureEndedAt ?? $transactionStarted);
 
         return response()->json(['data' => $this->serializePayment($order, $result['payment'], $result['total'], $result['received'])]);
     }

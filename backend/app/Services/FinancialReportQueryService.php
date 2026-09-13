@@ -18,6 +18,8 @@ final class FinancialReportQueryService
         private readonly FinancialReportContext $contexts,
         private readonly SupplierPayableQueryService $payables,
         private readonly InventoryAccountingMapper $inventoryMapper,
+        private readonly CustomerReceivableQueryService $receivables,
+        private readonly CustomerCreditQueryService $customerCredit,
     ) {}
 
     public function context(int $tenant, int $actor, array $filters): array { return $this->contexts->resolve($tenant, $actor, $filters); }
@@ -99,7 +101,7 @@ final class FinancialReportQueryService
         if ($cashAccounts === []) return ['dateFrom' => $ctx['dateFrom'], 'dateTo' => $ctx['dateTo'], 'sections' => [], 'openingCashBanks' => '0.00', 'closingCashBanks' => '0.00', 'netCashFlow' => '0.00', 'integrity' => ['reconciled' => true, 'difference' => '0.00', 'unclassified' => '0.00']];
         $rows = $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->where('lines.tenant_id', $ctx['tenantId'])->whereIn('lines.financial_account_id', $cashAccounts)->whereBetween('entries.entry_date', [$ctx['dateFrom'], $ctx['dateTo']])->groupBy('entries.id', 'entries.entry_date', 'entries.entry_number', 'entries.source_type', 'entries.source_id')->selectRaw('entries.id, entries.entry_date, entries.entry_number, entries.source_type, entries.source_id, SUM(lines.debit) debit, SUM(lines.credit) credit')->get();
         $sections = ['operating' => [], 'investing' => [], 'financing' => [], 'internal_transfer' => [], 'unclassified' => []]; $net = 0; $unclassified = 0;
-        foreach ($rows as $row) { $amount = Money::cents($row->debit) - Money::cents($row->credit); $kind = match ($row->source_type) { 'pos_order' => 'operating', 'payment_refund', 'expense', 'supplier_payment' => 'operating', 'cash_transfer' => 'internal_transfer', default => 'unclassified' }; $item = ['journalId' => (int) $row->id, 'reference' => $row->entry_number, 'date' => $row->entry_date, 'sourceType' => $row->source_type, 'amount' => Money::decimal($amount)]; $sections[$kind][] = $item; if ($kind !== 'internal_transfer') $net += $amount; if ($kind === 'unclassified') $unclassified += abs($amount); }
+        foreach ($rows as $row) { $amount = Money::cents($row->debit) - Money::cents($row->credit); $kind = match ($row->source_type) { 'pos_order' => 'operating', 'payment_refund', 'expense', 'supplier_payment', 'customer_payment', 'customer_refund' => 'operating', 'cash_transfer' => 'internal_transfer', default => 'unclassified' }; $item = ['journalId' => (int) $row->id, 'reference' => $row->entry_number, 'date' => $row->entry_date, 'sourceType' => $row->source_type, 'amount' => Money::decimal($amount)]; $sections[$kind][] = $item; if ($kind !== 'internal_transfer') $net += $amount; if ($kind === 'unclassified') $unclassified += abs($amount); }
         $difference = $opening + $net - $closing;
         return ['dateFrom' => $ctx['dateFrom'], 'dateTo' => $ctx['dateTo'], 'sections' => $sections, 'openingCashBanks' => Money::decimal($opening), 'closingCashBanks' => Money::decimal($closing), 'netCashFlow' => Money::decimal($net), 'integrity' => ['reconciled' => $difference === 0, 'difference' => Money::decimal($difference), 'unclassified' => Money::decimal($unclassified)]];
     }
@@ -127,6 +129,61 @@ final class FinancialReportQueryService
         usort($events, fn (array $a, array $b) => [$a['date'], $a['type'], $a['id']] <=> [$b['date'], $b['type'], $b['id']]); $running = $opening;
         $lines = array_map(function (array $event) use (&$running): array { $running += $event['debitCents'] - $event['creditCents']; return ['date' => $event['date'], 'type' => $event['type'], 'reference' => $event['reference'], 'description' => $event['description'], 'debit' => Money::decimal($event['debitCents']), 'credit' => Money::decimal($event['creditCents']), 'runningOutstanding' => Money::decimal($running), 'drillDown' => ['resourceKind' => $event['resourceKind'], 'id' => $event['id'], 'reference' => $event['reference']]]; }, $events);
         return ['supplierId' => $supplierId, 'dateFrom' => $ctx['dateFrom'], 'dateTo' => $ctx['dateTo'], 'openingBalance' => Money::decimal($opening), 'lines' => $lines, 'closingBalance' => Money::decimal($running)];
+    }
+
+    public function customerAging(array $ctx, string $asOf, ?int $customerId = null): array
+    {
+        if ($customerId && ! DB::table('customers')->where('tenant_id', $ctx['tenantId'])->where('id', $customerId)->exists()) throw ValidationException::withMessages(['customerId' => 'Customer was not found for this tenant.']);
+        $invoices = $this->receivables->invoicesAsOf($ctx['tenantId'], $asOf, $ctx['branchId'], $ctx['authorizedBranchIds'], $customerId); $buckets = ['current' => 0, 'days1To30' => 0, 'days31To60' => 0, 'days61To90' => 0, 'days90Plus' => 0]; $customers = [];
+        foreach ($invoices as $invoice) { if ($invoice['remainingCents'] <= 0) continue; $age = max(0, now()->parse($asOf)->diffInDays(now()->parse($invoice['dueDate']), false) * -1); $key = $invoice['dueDate'] >= $asOf ? 'current' : ($age <= 30 ? 'days1To30' : ($age <= 60 ? 'days31To60' : ($age <= 90 ? 'days61To90' : 'days90Plus'))); $id = $invoice['customerId']; if (! isset($customers[$id])) $customers[$id] = ['customer' => ['id' => $id, 'name' => $invoice['customerName']], 'current' => 0, 'days1To30' => 0, 'days31To60' => 0, 'days61To90' => 0, 'days90Plus' => 0, 'totalOutstanding' => 0]; $customers[$id][$key] += $invoice['remainingCents']; $customers[$id]['totalOutstanding'] += $invoice['remainingCents']; $buckets[$key] += $invoice['remainingCents']; }
+        $format = fn (array $row): array => collect($row)->map(fn ($v, $k) => is_int($v) ? Money::decimal($v) : $v)->all(); return ['asOfDate' => $asOf, 'customers' => collect(array_map($format, $customers))->sortByDesc('totalOutstanding')->values()->all(), 'totals' => $format($buckets + ['totalOutstanding' => array_sum($buckets)])];
+    }
+
+    /**
+     * Chronological customer statement combining the AR subledger and the
+     * unapplied-customer-credit subledger into one net-balance view (docs
+     * spec §10/§30): a Sales Invoice or a Customer Refund is a debit
+     * (increases what the customer owes us, or reduces what we owe them);
+     * a Customer Payment or a Credit Note is a credit. A Credit Note's full
+     * `total` — not just its AR-reduction portion — is credited here,
+     * because the unapplied-credit remainder still reduces the *net*
+     * balance (it becomes a liability we owe the customer). This is the
+     * exact mechanism that reconciles the closing balance to
+     * `AR outstanding - customer credit balance` as of dateTo.
+     */
+    public function customerStatement(array $ctx, int $customerId): array
+    {
+        if (! DB::table('customers')->where('tenant_id', $ctx['tenantId'])->where('id', $customerId)->exists()) throw ValidationException::withMessages(['customerId' => 'Customer was not found for this tenant.']);
+        $before = now()->parse($ctx['dateFrom'])->subDay()->toDateString();
+        $openingAr = array_sum(array_column($this->receivables->invoicesAsOf($ctx['tenantId'], $before, $ctx['branchId'], $ctx['authorizedBranchIds'], $customerId), 'remainingCents'));
+        $openingCredit = $this->customerCredit->balanceCentsAsOf($ctx['tenantId'], $customerId, $before);
+        $opening = $openingAr - $openingCredit;
+        $events = [];
+
+        $invoices = DB::table('sales_invoices')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
+            ->whereBetween('invoice_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        if ($ctx['branchId'] !== null) $invoices->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $invoices->whereIn('branch_id', $ctx['authorizedBranchIds']);
+        foreach ($invoices->get(['id', 'invoice_number', 'invoice_date', 'total']) as $invoice) $events[] = ['date' => $invoice->invoice_date, 'type' => 'sales_invoice', 'reference' => $invoice->invoice_number, 'description' => 'Sales invoice', 'debitCents' => Money::cents($invoice->total), 'creditCents' => 0, 'resourceKind' => 'sales_invoice', 'id' => (int) $invoice->id];
+
+        $payments = DB::table('customer_payments')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
+            ->whereBetween('payment_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        if ($ctx['branchId'] !== null) $payments->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $payments->whereIn('branch_id', $ctx['authorizedBranchIds']);
+        foreach ($payments->get(['id', 'payment_number', 'payment_date', 'amount']) as $payment) $events[] = ['date' => $payment->payment_date, 'type' => 'customer_payment', 'reference' => $payment->payment_number, 'description' => 'Customer payment', 'debitCents' => 0, 'creditCents' => Money::cents($payment->amount), 'resourceKind' => 'customer_payment', 'id' => (int) $payment->id];
+
+        $creditNotes = DB::table('sales_credit_notes')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
+            ->whereBetween('credit_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        if ($ctx['branchId'] !== null) $creditNotes->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $creditNotes->whereIn('branch_id', $ctx['authorizedBranchIds']);
+        foreach ($creditNotes->get(['id', 'credit_note_number', 'credit_date', 'total']) as $note) $events[] = ['date' => $note->credit_date, 'type' => 'sales_credit_note', 'reference' => $note->credit_note_number, 'description' => 'Credit note', 'debitCents' => 0, 'creditCents' => Money::cents($note->total), 'resourceKind' => 'sales_credit_note', 'id' => (int) $note->id];
+
+        $refunds = DB::table('customer_refunds')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
+            ->whereBetween('refund_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        if ($ctx['branchId'] !== null) $refunds->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $refunds->whereIn('branch_id', $ctx['authorizedBranchIds']);
+        foreach ($refunds->get(['id', 'refund_number', 'refund_date', 'amount']) as $refund) $events[] = ['date' => $refund->refund_date, 'type' => 'customer_refund', 'reference' => $refund->refund_number, 'description' => 'Customer refund', 'debitCents' => Money::cents($refund->amount), 'creditCents' => 0, 'resourceKind' => 'customer_refund', 'id' => (int) $refund->id];
+
+        usort($events, fn (array $a, array $b) => [$a['date'], $a['type'], $a['id']] <=> [$b['date'], $b['type'], $b['id']]); $running = $opening;
+        $lines = array_map(function (array $event) use (&$running): array { $running += $event['debitCents'] - $event['creditCents']; return ['date' => $event['date'], 'type' => $event['type'], 'reference' => $event['reference'], 'description' => $event['description'], 'debit' => Money::decimal($event['debitCents']), 'credit' => Money::decimal($event['creditCents']), 'runningBalance' => Money::decimal($running), 'drillDown' => ['resourceKind' => $event['resourceKind'], 'id' => $event['id'], 'reference' => $event['reference']]]; }, $events);
+
+        return ['customerId' => $customerId, 'dateFrom' => $ctx['dateFrom'], 'dateTo' => $ctx['dateTo'], 'openingBalance' => Money::decimal($opening), 'lines' => $lines, 'closingBalance' => Money::decimal($running)];
     }
 
     private function profitAndLossRange(array $ctx, string $from, string $to): array { $rows = $this->accountRows($ctx, $from, $to, false); $sections = ['revenue' => [], 'costOfSales' => [], 'operatingExpenses' => []]; $totals = ['revenue' => 0, 'costOfSales' => 0, 'operatingExpenses' => 0]; foreach ($rows as $row) { $key = match ($row['group']) { 'revenue' => 'revenue', 'cost_of_sales' => 'costOfSales', 'expenses', 'expense' => 'operatingExpenses', default => null }; if (! $key) continue; $amount = $this->incomeStatementAmount($row); $row['normalisedCents'] = $amount; $row['normalisedBalance'] = Money::decimal($amount); $sections[$key][] = $row; $totals[$key] += $amount; } $totals['grossProfit'] = $totals['revenue'] - $totals['costOfSales']; $totals['netOperatingProfit'] = $totals['grossProfit'] - $totals['operatingExpenses']; return ['dateFrom' => $from, 'dateTo' => $to, 'sections' => array_map(fn ($rows) => array_map(fn ($r) => $this->withoutCents($r), $rows), $sections), 'totals' => $this->decimalMap($totals)]; }

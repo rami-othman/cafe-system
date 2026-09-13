@@ -5,12 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:windows_application/features/finance_inventory_setup/views/finance_overview.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_shell.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   Future<FinanceOverviewPayload> data(FinanceOverviewQuery _) async =>
       _payload();
 
   Widget app(Widget child) => MaterialApp(
+    locale: const Locale('ar'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(body: child),
@@ -172,7 +176,14 @@ void main() {
         ),
       ],
     );
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
     await tester.pumpAndSettle();
     final Finder expenses = find
         .ancestor(
@@ -203,7 +214,14 @@ void main() {
         ],
       );
       await tester.binding.setSurfaceSize(const Size(1440, 1200));
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
+      );
       await tester.pumpAndSettle();
       final Finder row = find.text('مصاريف تشغيل');
       await tester.ensureVisible(row);

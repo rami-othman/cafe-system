@@ -5045,6 +5045,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get salesProfitabilityAverageOrder => 'متوسط قيمة الطلب';
 
   @override
+  String get salesProfitabilityCashCollected => 'المحصّل نقداً';
+
+  @override
+  String get salesProfitabilityBankCollected => 'المحصّل عبر البنك';
+
+  @override
+  String get salesProfitabilitySalesBySource => 'المبيعات حسب المصدر';
+
+  @override
+  String get salesProfitabilityNoSalesBySource =>
+      'لا تتوفر بيانات مبيعات حسب المصدر لهذه الفترة.';
+
+  @override
   String get salesProfitabilityTrend => 'اتجاه المبيعات والأرباح';
 
   @override

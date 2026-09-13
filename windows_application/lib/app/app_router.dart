@@ -57,6 +57,9 @@ import '../features/purchasing/views/goods_receipt_form_screen.dart';
 import '../features/purchasing/views/purchase_invoice_detail_screen.dart';
 import '../features/purchasing/views/purchase_invoice_form_screen.dart';
 import '../features/purchasing/views/purchasing_center_screen.dart';
+import '../features/sales/controllers/sales_cubit.dart';
+import '../features/sales/views/sales_credit_note_screens.dart';
+import '../features/sales/views/sales_screens.dart';
 import '../features/finance_inventory_setup/views/warehouses_setup_screen.dart';
 import '../features/inventory/controllers/inventory_cubit.dart';
 import '../features/inventory/widgets/inventory_module_shell.dart';
@@ -1177,6 +1180,103 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.financeSales,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+            ],
+            child: const SalesCenterScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeCustomersReceivables,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+            ],
+            child: const CustomerReceivablesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSalesNew,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+            ],
+            child: const SalesInvoiceFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/finance/sales/:salesId/edit',
+          builder: (context, state) {
+            final int? id = parsePositiveRouteId(state.pathParameters['salesId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              ],
+              child: SalesInvoiceFormScreen(id: id),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeSalesDetail,
+          builder: (context, state) {
+            final int? id = parsePositiveRouteId(state.pathParameters['salesId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              ],
+              child: SalesInvoiceDetailScreen(id: id),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeSalesCreditNotes,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+            ],
+            child: const SalesCreditNotesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeSalesCreditNoteNew,
+          builder: (context, state) {
+            final int? invoiceId = parsePositiveRouteId(state.uri.queryParameters['invoiceId']);
+            final String customerName = state.uri.queryParameters['customerName'] ?? '';
+            if (invoiceId == null) return const _InvalidCatalogRouteScreen();
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              ],
+              child: CreateCreditNoteScreen(invoiceId: invoiceId, customerName: customerName),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.financeSalesCreditNoteDetail,
+          builder: (context, state) {
+            final int? id = parsePositiveRouteId(state.pathParameters['creditNoteId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
+                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              ],
+              child: SalesCreditNoteDetailScreen(id: id),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.financePurchasesNew,
           builder: (context, state) {
             final int? supplierId = parsePositiveRouteId(
@@ -1621,6 +1721,7 @@ String _financeActiveTabFor(String path) {
   if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
   if (path.startsWith(AppRoutes.financeExpenses)) return 'expenses';
   if (path.startsWith(AppRoutes.financePurchases)) return 'purchases';
+  if (path.startsWith(AppRoutes.financeSales) || path.startsWith(AppRoutes.financeCustomersReceivables)) return 'sales';
   if (path.startsWith(AppRoutes.financePurchaseReceipts)) return 'purchases';
   if (path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
   if (path.startsWith(AppRoutes.financeReconciliationCanonical)) {
@@ -1857,6 +1958,13 @@ abstract final class AppRoutes {
   static const String financeExpenseCategories = '/finance/expense-categories';
   static const String financeInvoiceTypes = '/finance/invoice-types';
   static const String financePurchases = '/finance/purchases';
+  static const String financeSales = '/finance/sales';
+  static const String financeSalesNew = '/finance/sales/new';
+  static const String financeSalesDetail = '/finance/sales/:salesId';
+  static const String financeCustomersReceivables = '/finance/customers-receivables';
+  static const String financeSalesCreditNotes = '/finance/sales/credit-notes';
+  static const String financeSalesCreditNoteNew = '/finance/sales/credit-notes/new';
+  static const String financeSalesCreditNoteDetail = '/finance/sales/credit-notes/:creditNoteId';
   static const String financePurchasesNew = '/finance/purchases/new';
   static const String financePurchasesDetail = '/finance/purchases/:purchaseId';
   static const String financePurchasesReceive =

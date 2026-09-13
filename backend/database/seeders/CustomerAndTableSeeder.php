@@ -34,7 +34,6 @@ class CustomerAndTableSeeder extends Seeder
         }
 
         foreach ([
-            ['name' => 'Walk-in Customer', 'phone' => null, 'email' => null, 'total_spent' => 0, 'visits_count' => 0],
             ['name' => 'Jane Doe', 'phone' => '+1 (555) 019-8234', 'email' => 'jane@example.com', 'total_spent' => 1450, 'visits_count' => 24],
             ['name' => 'Janet Smith', 'phone' => '+1 (555) 542-9901', 'email' => 'janet@example.com', 'total_spent' => 320, 'visits_count' => 8],
             ['name' => 'Jane Williams', 'phone' => '+1 (555) 781-2245', 'email' => 'jane.williams@example.com', 'total_spent' => 50, 'visits_count' => 2],

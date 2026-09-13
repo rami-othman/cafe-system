@@ -9011,6 +9011,30 @@ abstract class AppLocalizations {
   /// **'Average Order Value'**
   String get salesProfitabilityAverageOrder;
 
+  /// No description provided for @salesProfitabilityCashCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Collected'**
+  String get salesProfitabilityCashCollected;
+
+  /// No description provided for @salesProfitabilityBankCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Collected'**
+  String get salesProfitabilityBankCollected;
+
+  /// No description provided for @salesProfitabilitySalesBySource.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales by Source'**
+  String get salesProfitabilitySalesBySource;
+
+  /// No description provided for @salesProfitabilityNoSalesBySource.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales-by-source data is available for this period.'**
+  String get salesProfitabilityNoSalesBySource;
+
   /// No description provided for @salesProfitabilityTrend.
   ///
   /// In en, this message translates to:

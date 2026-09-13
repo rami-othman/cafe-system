@@ -35,7 +35,7 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->seed();
         $tenantId = $this->demoTenantId();
         $this->seed(FinancialInventoryFoundationSeeder::class);
-        $this->assertSame(20, DB::table('financial_accounts')->where('tenant_id', $tenantId)->count());
+        $this->assertSame(22, DB::table('financial_accounts')->where('tenant_id', $tenantId)->count());
 
         $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000']), $this->headers($tenantId))->assertCreated();
         $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000', 'nameAr' => 'حساب مكرر']), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('code');
@@ -192,7 +192,7 @@ class FinancialInventoryFoundationApiTest extends TestCase
 
         $this->getJson('/api/v1/finance/journal-entries?search=manual&status=draft', $this->headers($tenantId))->assertOk()->assertJsonCount(1, 'data');
         $this->getJson('/api/v1/finance/setup-status', $this->headers($tenantId))->assertOk()
-            ->assertJsonPath('data.accountCount', 20)
+            ->assertJsonPath('data.accountCount', 22)
             ->assertJsonPath('data.journalCount', $beforeCount + 1)
             ->assertJsonPath('data.draftJournalCount', $beforeDraftCount + 1)
             ->assertJsonPath('data.journalReversalReady', true);
