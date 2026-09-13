@@ -69,6 +69,7 @@ use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplierInvoiceController;
 use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\SalesInvoiceController;
+use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\TenantRoleController;
 use App\Http\Controllers\Api\WarehouseController;
@@ -399,6 +400,9 @@ Route::prefix('v1')->group(function (): void {
             Route::get('reports/general-ledger', [FinancialReportController::class, 'generalLedger'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/supplier-aging', [FinancialReportController::class, 'supplierAging'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/supplier-statement', [FinancialReportController::class, 'supplierStatement'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/customer-aging', [FinancialReportController::class, 'customerAging'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/customer-statement', [FinancialReportController::class, 'customerStatement'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/sales-profitability', [SalesReportController::class, 'salesProfitability'])->middleware('finance.permission:finance.reports.view');
             Route::get('accounts', [FinancialAccountController::class, 'index'])->middleware('finance.permission:finance.accounts.view');
             Route::post('accounts', [FinancialAccountController::class, 'store'])->middleware('finance.permission:finance.accounts.manage');
             Route::patch('accounts/{account}/status', [FinancialAccountController::class, 'status'])->middleware('finance.permission:finance.accounts.manage');

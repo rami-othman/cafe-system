@@ -59,7 +59,14 @@ class FinancialReportsAndPeriodsTest extends TestCase
     {
         $this->seed(); $tenant = $this->tenantId(); $branch = $this->branchId($tenant); $headers = $this->headers($tenant, 'owner', 'report-cash-ap'); $date = now()->toDateString();
         $this->journal($tenant, $branch, $date, [['1010', '50.00', '0.00'], ['4000', '0.00', '50.00']], 'pos_order', 10);
-        $cash = $this->getJson("/api/v1/finance/reports/cash-flow?dateFrom=$date&dateTo=$date", $headers)->assertOk()->json('data'); $this->assertSame('50.00', $cash['netCashFlow']); $this->assertTrue($cash['integrity']['reconciled']);
+        // Phase 5: a Customer Payment (Dr cash) and a Customer Refund (Cr cash) must classify as
+        // operating cash flow, not fall into `unclassified` and corrupt the integrity check.
+        $this->journal($tenant, $branch, $date, [['1010', '30.00', '0.00'], ['1200', '0.00', '30.00']], 'customer_payment', 20);
+        $this->journal($tenant, $branch, $date, [['1010', '0.00', '10.00'], ['2020', '10.00', '0.00']], 'customer_refund', 21);
+        $cash = $this->getJson("/api/v1/finance/reports/cash-flow?dateFrom=$date&dateTo=$date", $headers)->assertOk()->json('data');
+        $this->assertSame('70.00', $cash['netCashFlow'], 'Phase 5: 50 pos_order + 30 customer_payment - 10 customer_refund.');
+        $this->assertTrue($cash['integrity']['reconciled']); $this->assertSame('0.00', $cash['integrity']['unclassified']);
+        $this->assertCount(0, $cash['sections']['unclassified']); $this->assertCount(3, $cash['sections']['operating']);
         $supplier = $this->supplierId($tenant); $invoice = $this->makeSupplierInvoice($tenant, $branch, $supplier, '80.00', now()->subDays(40)->toDateString()); DB::table('supplier_invoices')->where('id', $invoice)->update(['due_date' => now()->subDays(35)->toDateString()]);
         $aging = $this->getJson('/api/v1/finance/reports/supplier-aging?asOfDate='.$date, $headers)->assertOk()->json('data'); $this->assertSame('80.00', $aging['totals']['days31To60']);
         $statement = $this->getJson("/api/v1/finance/reports/supplier-statement?supplierId=$supplier&dateFrom=".now()->subDays(50)->toDateString()."&dateTo=$date", $headers)->assertOk()->json('data'); $this->assertSame('80.00', $statement['closingBalance']);

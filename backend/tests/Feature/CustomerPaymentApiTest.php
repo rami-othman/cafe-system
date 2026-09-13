@@ -310,6 +310,25 @@ class CustomerPaymentApiTest extends TestCase
         $this->assertSame('225.00', collect($overview->json('data'))->firstWhere('customerId', $s['customer'])['outstanding']);
     }
 
+    /** Regression proof for the postedInvoice()/invoice() dueDate fix above: a real due-date boundary still flips paymentStatus to 'overdue' exactly when it should, so pinning a far-future dueDate elsewhere never masks genuine overdue detection. */
+    public function test_payment_status_is_overdue_only_once_the_due_date_has_actually_passed(): void
+    {
+        $s = $this->scenario();
+        [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
+
+        $notYetDue = $this->postedInvoiceWithDueDate($s, '100.00', now()->addDay()->toDateString());
+        $this->getJson("/api/v1/finance/sales-invoices/{$notYetDue}", $s['headers'])->assertOk()->assertJsonPath('data.paymentStatus', 'unpaid')->assertJsonPath('data.isOverdue', false);
+        $this->postJson('/api/v1/finance/customer-payments', [
+            'branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => now()->toDateString(), 'amount' => '40.00',
+            'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'overdue-check-partial-1',
+            'allocations' => [['invoiceId' => $notYetDue, 'amount' => '40.00']],
+        ], $s['headers'])->assertCreated();
+        $this->getJson("/api/v1/finance/sales-invoices/{$notYetDue}", $s['headers'])->assertOk()->assertJsonPath('data.paymentStatus', 'partial')->assertJsonPath('data.isOverdue', false);
+
+        $pastDue = $this->postedInvoiceWithDueDate($s, '100.00', now()->subDay()->toDateString());
+        $this->getJson("/api/v1/finance/sales-invoices/{$pastDue}", $s['headers'])->assertOk()->assertJsonPath('data.paymentStatus', 'overdue')->assertJsonPath('data.isOverdue', true);
+    }
+
     public function test_immediate_payment_ux_posts_invoice_and_collects_in_one_outer_transaction(): void
     {
         $s = $this->scenario();
@@ -428,10 +447,11 @@ class CustomerPaymentApiTest extends TestCase
         return (int) DB::table('products')->insertGetId(['tenant_id' => $s['tenant'], 'name' => 'Service '.$suffix, 'name_ar' => 'خدمة', 'sku' => "SVC-{$suffix}", 'price' => $price, 'is_active' => true, 'is_stock_tracked' => false, 'inventory_controlled' => false, 'created_at' => now(), 'updated_at' => now()]);
     }
 
+    /** dueDate is pinned far in the future (relative to now(), never a fixed calendar date) so paymentStatus assertions ('unpaid'/'partial'/'paid') never spuriously flip to 'overdue' as real time passes invoiceDate — none of this file's tests are about overdue labeling (see postedInvoiceWithDueDate() for that). */
     private function postedInvoice(array $s, string $total, ?int $customerId = null): int
     {
         $product = $this->productPriced($s, $total);
-        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $customerId ?? $s['customer'], 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $customerId ?? $s['customer'], 'invoiceDate' => '2026-09-12', 'dueDate' => now()->addYear()->toDateString(), 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'invoice-post-'.uniqid()], $s['headers'])->assertOk();
 
         return (int) $invoice;

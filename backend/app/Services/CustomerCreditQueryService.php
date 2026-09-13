@@ -35,4 +35,34 @@ final class CustomerCreditQueryService
     {
         return Money::decimal($this->balanceCents($tenantId, $customerId));
     }
+
+    /**
+     * Credit balance as of a past business date, for aging/statement
+     * snapshots — joins each ledger row to its originating document's own
+     * business date (credit_date for a grant, refund_date for a
+     * consumption) rather than `created_at`, since posting and the
+     * document's business date can differ.
+     */
+    public function balanceCentsAsOf(int $tenantId, int $customerId, string $asOfDate): int
+    {
+        $grants = DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
+            ->where('l.tenant_id', $tenantId)->where('l.customer_id', $customerId)->whereDate('n.credit_date', '<=', $asOfDate)
+            ->sum('l.amount') ?: '0';
+        $consumptions = DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
+            ->where('l.tenant_id', $tenantId)->where('l.customer_id', $customerId)->whereDate('r.refund_date', '<=', $asOfDate)
+            ->sum('l.amount') ?: '0';
+
+        return Money::cents($grants) + Money::cents($consumptions);
+    }
+
+    /** Tenant-wide unapplied customer credit as of a cutoff date, for the Finance Dashboard tile. */
+    public function totalBalanceCentsAsOf(int $tenantId, string $asOfDate): int
+    {
+        $grants = DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
+            ->where('l.tenant_id', $tenantId)->whereDate('n.credit_date', '<=', $asOfDate)->sum('l.amount') ?: '0';
+        $consumptions = DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
+            ->where('l.tenant_id', $tenantId)->whereDate('r.refund_date', '<=', $asOfDate)->sum('l.amount') ?: '0';
+
+        return Money::cents($grants) + Money::cents($consumptions);
+    }
 }

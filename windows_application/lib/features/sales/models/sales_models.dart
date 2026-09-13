@@ -43,8 +43,16 @@ class SalesInvoice {
 }
 
 class SalesInvoicePage {
-  const SalesInvoicePage({required this.items, required this.currentPage, required this.lastPage, required this.total, required this.draftCount, required this.draftTotal});
-  final List<SalesInvoice> items; final int currentPage; final int lastPage; final int total; final int draftCount; final String draftTotal;
+  const SalesInvoicePage({required this.items, required this.currentPage, required this.lastPage, required this.total, required this.draftCount, required this.draftTotal, this.financialSummary});
+  final List<SalesInvoice> items; final int currentPage; final int lastPage; final int total; final int draftCount; final String draftTotal; final SalesCenterFinancialSummary? financialSummary;
+}
+
+/// Phase 5 Sales Center KPI strip — fixed to the current calendar month
+/// (this screen has no date-range filter of its own; §16).
+class SalesCenterFinancialSummary {
+  const SalesCenterFinancialSummary({required this.periodFrom, required this.periodTo, required this.netSales, required this.postedInvoicesCount, required this.outstandingAr, required this.collectedTotal, required this.creditNotesTotal});
+  final String periodFrom; final String periodTo; final String netSales; final int postedInvoicesCount; final String outstandingAr; final String collectedTotal; final String creditNotesTotal;
+  factory SalesCenterFinancialSummary.fromJson(Map<String, dynamic> j) => SalesCenterFinancialSummary(periodFrom: readString(j['periodFrom']), periodTo: readString(j['periodTo']), netSales: readString(j['netSales'], fallback: '0.00'), postedInvoicesCount: readInt(j['postedInvoicesCount']) ?? 0, outstandingAr: readString(j['outstandingAr'], fallback: '0.00'), collectedTotal: readString(j['collectedTotal'], fallback: '0.00'), creditNotesTotal: readString(j['creditNotesTotal'], fallback: '0.00'));
 }
 
 /// One open (remaining > 0) posted invoice, as returned by the customer
@@ -62,7 +70,25 @@ class CustomerReceivablesSummary {
   factory CustomerReceivablesSummary.fromJson(Map<String, dynamic> j) { final c = j['customer'] is Map ? Map<String, dynamic>.from(j['customer'] as Map) : const <String, dynamic>{}; return CustomerReceivablesSummary(customerId: readInt(c['id']) ?? 0, customerName: readString(c['name']), outstanding: readString(j['outstanding'], fallback: '0.00'), openInvoices: readMapList(j['openInvoices']).map(OpenReceivableInvoice.fromJson).toList(growable: false)); }
 }
 
-/// §33 minimal customer/AR overview row — no aging suite.
+/// Phase 5 AR overview KPI strip — total/current/overdue outstanding, total
+/// unapplied customer credit, and invoice counts by derived payment status.
+class CustomerArOverviewSummary {
+  const CustomerArOverviewSummary({required this.totalOutstanding, required this.currentOutstanding, required this.overdueOutstanding, required this.totalCustomerCredit, required this.paidCount, required this.partialCount, required this.unpaidCount});
+  final String totalOutstanding; final String currentOutstanding; final String overdueOutstanding; final String totalCustomerCredit; final int paidCount; final int partialCount; final int unpaidCount;
+  factory CustomerArOverviewSummary.fromJson(Map<String, dynamic> j) { final counts = j['invoiceCounts'] is Map ? Map<String, dynamic>.from(j['invoiceCounts'] as Map) : const <String, dynamic>{}; return CustomerArOverviewSummary(totalOutstanding: readString(j['totalOutstanding'], fallback: '0.00'), currentOutstanding: readString(j['currentOutstanding'], fallback: '0.00'), overdueOutstanding: readString(j['overdueOutstanding'], fallback: '0.00'), totalCustomerCredit: readString(j['totalCustomerCredit'], fallback: '0.00'), paidCount: readInt(counts['paid']) ?? 0, partialCount: readInt(counts['partial']) ?? 0, unpaidCount: readInt(counts['unpaid']) ?? 0); }
+  static const empty = CustomerArOverviewSummary(totalOutstanding: '0.00', currentOutstanding: '0.00', overdueOutstanding: '0.00', totalCustomerCredit: '0.00', paidCount: 0, partialCount: 0, unpaidCount: 0);
+}
+
+/// Phase 5 AR aging bucket totals (`finance/reports/customer-aging`'s `totals` block).
+class CustomerArAgingTotals {
+  const CustomerArAgingTotals({required this.current, required this.days1To30, required this.days31To60, required this.days61To90, required this.days90Plus, required this.totalOutstanding});
+  final String current; final String days1To30; final String days31To60; final String days61To90; final String days90Plus; final String totalOutstanding;
+  factory CustomerArAgingTotals.fromJson(Map<String, dynamic> j) => CustomerArAgingTotals(current: readString(j['current'], fallback: '0.00'), days1To30: readString(j['days1To30'], fallback: '0.00'), days31To60: readString(j['days31To60'], fallback: '0.00'), days61To90: readString(j['days61To90'], fallback: '0.00'), days90Plus: readString(j['days90Plus'], fallback: '0.00'), totalOutstanding: readString(j['totalOutstanding'], fallback: '0.00'));
+  static const empty = CustomerArAgingTotals(current: '0.00', days1To30: '0.00', days31To60: '0.00', days61To90: '0.00', days90Plus: '0.00', totalOutstanding: '0.00');
+}
+
+/// §33 minimal customer/AR overview row. Aging buckets/summary live in
+/// [CustomerArAgingTotals]/[CustomerArOverviewSummary] (Phase 5).
 class CustomerReceivableOverviewRow {
   const CustomerReceivableOverviewRow({required this.customerId, required this.customerName, required this.customerNumber, required this.invoiceCount, required this.totalInvoiced, required this.totalPaid, required this.outstanding});
   final int customerId; final String customerName; final String customerNumber; final int invoiceCount; final String totalInvoiced; final String totalPaid; final String outstanding;

@@ -7,6 +7,7 @@ use App\Domain\Inventory\UnitConversionResolver;
 use App\Models\PublishedMenuVersion;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
+use App\Support\PaymentPerformanceProbe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +40,7 @@ class SaleConsumptionService
     public function __construct(
         private readonly SalesInventoryMovementService $movements,
         private readonly UnitConversionResolver $conversions,
+        private readonly PaymentPerformanceProbe $performance,
     ) {}
 
     /**
@@ -46,15 +48,15 @@ class SaleConsumptionService
      */
     public function consumeForOrder(Request $request, int $tenantId, object $order, ?int $paymentId, ?int $actorId): array
     {
-        $items = DB::table('order_items')
+        $items = $this->performance->measure('recipe loading', fn () => DB::table('order_items')
             ->where('tenant_id', $tenantId)
             ->where('order_id', $order->id)
             ->whereNull('deleted_at')
-            ->get();
+            ->get());
 
         $orderCogsCents = 0;
         $anyInventoryControlled = false;
-        $snapshot = $this->publishedSnapshot($tenantId, $order);
+        $snapshot = $this->performance->measure('recipe loading', fn () => $this->publishedSnapshot($tenantId, $order));
 
         foreach ($items as $item) {
             $product = $item->product_id
@@ -88,6 +90,7 @@ class SaleConsumptionService
             if ($snapshot === null || (int) ($snapshot['context']['schemaVersion'] ?? 0) < 3 || empty($item->product_variant_id) || empty($item->menu_item_placement_id)) {
                 throw ValidationException::withMessages(['productId' => "Inventory-controlled product #{$product->id} must be paid from a schema-v3 published menu snapshot."]);
             }
+            $recipeStarted = $this->performance->start('recipe loading');
             $lines = $this->componentsForItem($tenantId, $snapshot, $item);
             if ($lines === []) {
                 throw ValidationException::withMessages(['productId' => "The sold variant for product #{$product->id} has no recipe components in its published menu snapshot."]);
@@ -110,9 +113,12 @@ class SaleConsumptionService
                 $consumptions[$key]['quantity'] += $line['direction'] * $quantity;
             }
 
-            $movementResult = $this->movements->consume($request, $tenantId, (int) $order->branch_id, $warehouseId, 'order_item', (int) $item->id, array_values($consumptions), $actorId);
+            $this->performance->stop('recipe loading', $recipeStarted);
+
+            $movementResult = $this->performance->measure('inventory consumption', fn () => $this->movements->consume($request, $tenantId, (int) $order->branch_id, $warehouseId, 'order_item', (int) $item->id, array_values($consumptions), $actorId));
             $itemCogsCents += $movementResult['cogsCents'];
 
+            $cogsStarted = $this->performance->start('COGS');
             $now = now();
             DB::table('sale_consumptions')->insert([
                 'tenant_id' => $tenantId,
@@ -131,16 +137,19 @@ class SaleConsumptionService
 
             $this->snapshotItem($tenantId, $item, $itemCogsCents, null);
             $orderCogsCents += $itemCogsCents;
+            $this->performance->stop('COGS', $cogsStarted);
         }
 
         $totalCents = Money::cents($order->total);
         $grossProfitCents = $totalCents - $orderCogsCents;
+        $cogsStarted = $this->performance->start('COGS');
         DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order->id)->update([
             'cogs_total' => Money::decimal($orderCogsCents),
             'gross_profit' => Money::decimal($grossProfitCents),
             'gross_margin_percentage' => $totalCents > 0 ? round(($grossProfitCents / $totalCents) * 100, 4) : 0,
             'updated_at' => now(),
         ]);
+        $this->performance->stop('COGS', $cogsStarted);
 
         return ['cogsTotalCents' => $orderCogsCents, 'anyInventoryControlled' => $anyInventoryControlled];
     }

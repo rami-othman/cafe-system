@@ -119,8 +119,9 @@ final class CustomerPaymentController extends Controller
     {
         $tenant = TenantContext::id($request);
         $actor = FinancialActor::id($request, $tenant);
+        $branchIds = FinancialActor::operationalBranchIds($actor, $tenant);
 
-        return response()->json(['data' => $this->receivables->customerOverview($tenant, FinancialActor::operationalBranchIds($actor, $tenant))]);
+        return response()->json(['data' => $this->receivables->customerOverview($tenant, $branchIds), 'summary' => $this->receivables->summary($tenant, $branchIds)]);
     }
 
     /** Outstanding posted invoices for one customer — feeds "Register Payment from Customer" (§30) and the invoice-preselected flow (§29). */

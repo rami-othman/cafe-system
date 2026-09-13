@@ -308,6 +308,13 @@ class _ReportContent extends StatelessWidget {
         },
       ),
       const SizedBox(height: AppSpacing.xxl),
+      _CategoryCard(
+        items: data.salesBySource,
+        currency: data.currency,
+        title: context.l10n.salesProfitabilitySalesBySource,
+        emptyMessage: context.l10n.salesProfitabilityNoSalesBySource,
+      ),
+      const SizedBox(height: AppSpacing.xxl),
       _BranchCard(
         items: state.branchId == null
             ? data.branchPerformance
@@ -389,6 +396,20 @@ class _KpiGrid extends StatelessWidget {
             label: context.l10n.salesProfitabilityAverageOrder,
             icon: Icons.receipt_long_outlined,
             metric: kpis.averageOrderValue,
+            higherIsGood: true,
+            percent: false,
+          ),
+          (
+            label: context.l10n.salesProfitabilityCashCollected,
+            icon: Icons.payments,
+            metric: kpis.cashCollected,
+            higherIsGood: true,
+            percent: false,
+          ),
+          (
+            label: context.l10n.salesProfitabilityBankCollected,
+            icon: Icons.account_balance_outlined,
+            metric: kpis.bankCollected,
             higherIsGood: true,
             percent: false,
           ),
@@ -763,14 +784,23 @@ class _HourlyCard extends StatelessWidget {
 }
 
 class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.items, required this.currency});
+  const _CategoryCard({
+    required this.items,
+    required this.currency,
+    this.title,
+    this.emptyMessage,
+  });
   final List<CategorySalesRow> items;
   final String currency;
+  final String? title;
+  final String? emptyMessage;
   @override
   Widget build(BuildContext context) => ReportsOverviewSectionCard(
-    title: context.l10n.salesProfitabilitySalesByCategory,
+    title: title ?? context.l10n.salesProfitabilitySalesByCategory,
     child: items.isEmpty
-        ? _InlineEmpty(message: context.l10n.salesProfitabilityNoCategories)
+        ? _InlineEmpty(
+            message: emptyMessage ?? context.l10n.salesProfitabilityNoCategories,
+          )
         : Column(
             children: <Widget>[
               for (final item in items)

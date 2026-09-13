@@ -28,6 +28,7 @@ class SalesProfitabilityReport extends Equatable {
     required this.categorySales,
     required this.branchPerformance,
     required this.products,
+    this.salesBySource = const <CategorySalesRow>[],
   });
 
   factory SalesProfitabilityReport.empty() => SalesProfitabilityReport(
@@ -41,6 +42,7 @@ class SalesProfitabilityReport extends Equatable {
     categorySales: const <CategorySalesRow>[],
     branchPerformance: const <BranchPerformanceRow>[],
     products: const <ProductPerformanceRow>[],
+    salesBySource: const <CategorySalesRow>[],
   );
 
   final String currency;
@@ -53,6 +55,7 @@ class SalesProfitabilityReport extends Equatable {
   final List<CategorySalesRow> categorySales;
   final List<BranchPerformanceRow> branchPerformance;
   final List<ProductPerformanceRow> products;
+  final List<CategorySalesRow> salesBySource;
 
   List<SalesProfitTrendPoint> trendFor(SalesProfitabilityGrouping grouping) =>
       switch (grouping) {
@@ -73,6 +76,7 @@ class SalesProfitabilityReport extends Equatable {
     categorySales,
     branchPerformance,
     products,
+    salesBySource,
   ];
 }
 
@@ -94,6 +98,8 @@ class SalesProfitabilityKpis extends Equatable {
     required this.grossProfit,
     required this.grossMargin,
     required this.averageOrderValue,
+    this.cashCollected = const SalesProfitabilityMetric.unavailable(),
+    this.bankCollected = const SalesProfitabilityMetric.unavailable(),
   });
   const SalesProfitabilityKpis.empty()
     : grossSales = const SalesProfitabilityMetric.unavailable(),
@@ -103,7 +109,9 @@ class SalesProfitabilityKpis extends Equatable {
       cogs = const SalesProfitabilityMetric.unavailable(),
       grossProfit = const SalesProfitabilityMetric.unavailable(),
       grossMargin = const SalesProfitabilityMetric.unavailable(),
-      averageOrderValue = const SalesProfitabilityMetric.unavailable();
+      averageOrderValue = const SalesProfitabilityMetric.unavailable(),
+      cashCollected = const SalesProfitabilityMetric.unavailable(),
+      bankCollected = const SalesProfitabilityMetric.unavailable();
   final SalesProfitabilityMetric grossSales;
   final SalesProfitabilityMetric netSales;
   final SalesProfitabilityMetric discounts;
@@ -112,6 +120,8 @@ class SalesProfitabilityKpis extends Equatable {
   final SalesProfitabilityMetric grossProfit;
   final SalesProfitabilityMetric grossMargin;
   final SalesProfitabilityMetric averageOrderValue;
+  final SalesProfitabilityMetric cashCollected;
+  final SalesProfitabilityMetric bankCollected;
   @override
   List<Object?> get props => <Object?>[
     grossSales,
@@ -122,6 +132,8 @@ class SalesProfitabilityKpis extends Equatable {
     grossProfit,
     grossMargin,
     averageOrderValue,
+    cashCollected,
+    bankCollected,
   ];
 }
 

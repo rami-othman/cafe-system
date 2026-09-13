@@ -237,6 +237,131 @@ final class CustomerReceivableQueryService
         return Money::decimal($totalCents);
     }
 
+    /**
+     * Historical invoice-level AR evidence for aging and statement reports,
+     * mirroring SupplierPayableQueryService::invoicesAsOf() for AP. Only a
+     * `posted` invoice ever carries AR, and Sales Invoices are never
+     * reversed after posting (Phase 2), so — unlike the supplier side —
+     * there is no posting/reversal-journal join here: eligibility keys off
+     * `invoice_date` directly, exactly matching the journal's own
+     * `entry_date` (SalesInvoicePostingService posts with
+     * `entryDate: $invoice->invoice_date`), never the wall-clock
+     * `posted_at` timestamp of the click that posted it. Live allocations
+     * are reduced by whatever `customer_payment_allocation_history`
+     * proves was still applied as of $asOfDate but has since been reversed
+     * (CustomerPaymentService::reverse() logs exactly that pair).
+     */
+    public function invoicesAsOf(int $tenantId, string $asOfDate, ?int $branchId = null, array $authorizedBranchIds = [], ?int $customerId = null): array
+    {
+        $query = DB::table('sales_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
+            ->where('i.tenant_id', $tenantId)->where('i.status', 'posted')->whereDate('i.invoice_date', '<=', $asOfDate)
+            ->when($customerId, fn ($q) => $q->where('i.customer_id', $customerId));
+        if ($branchId !== null) {
+            $query->where('i.branch_id', $branchId);
+        } elseif ($authorizedBranchIds !== []) {
+            $query->whereIn('i.branch_id', $authorizedBranchIds);
+        }
+        $invoices = $query->get(['i.id', 'i.customer_id', 'i.branch_id', 'i.invoice_number', 'i.invoice_date', 'i.due_date', 'i.total', 'i.posted_at', 'c.name as customer_name']);
+        if ($invoices->isEmpty()) {
+            return [];
+        }
+        $ids = $invoices->pluck('id');
+        $live = DB::table('customer_payment_allocations as a')->join('customer_payments as p', 'p.id', '=', 'a.customer_payment_id')
+            ->where('a.tenant_id', $tenantId)->whereIn('a.sales_invoice_id', $ids)->whereDate('p.payment_date', '<=', $asOfDate)
+            ->selectRaw('a.sales_invoice_id, SUM(a.amount) as total')->groupBy('a.sales_invoice_id')->pluck('total', 'sales_invoice_id');
+        $history = DB::table('customer_payment_allocation_history')->where('tenant_id', $tenantId)->whereIn('sales_invoice_id', $ids)
+            ->whereDate('payment_date', '<=', $asOfDate)->where('reversed_at', '>', $asOfDate.' 23:59:59')
+            ->selectRaw('sales_invoice_id, SUM(amount) as total')->groupBy('sales_invoice_id')->pluck('total', 'sales_invoice_id');
+        $credited = DB::table('sales_credit_notes')->where('tenant_id', $tenantId)->where('status', 'posted')->whereIn('original_sales_invoice_id', $ids)
+            ->whereDate('credit_date', '<=', $asOfDate)
+            ->selectRaw('original_sales_invoice_id, SUM(ar_reduction_amount) as total')->groupBy('original_sales_invoice_id')->pluck('total', 'original_sales_invoice_id');
+
+        return $invoices->map(function (object $invoice) use ($live, $history, $credited): array {
+            $remaining = Money::cents($invoice->total) - Money::cents($live[$invoice->id] ?? '0') - Money::cents($history[$invoice->id] ?? '0') - Money::cents($credited[$invoice->id] ?? '0');
+
+            return [
+                'id' => (int) $invoice->id,
+                'customerId' => (int) $invoice->customer_id,
+                'customerName' => $invoice->customer_name,
+                'branchId' => $invoice->branch_id ? (int) $invoice->branch_id : null,
+                'reference' => $invoice->invoice_number,
+                'invoiceDate' => $invoice->invoice_date,
+                // Matches the journal's own entry_date exactly (SalesInvoicePostingService
+                // posts with `entryDate: $invoice->invoice_date`) — never the wall-clock
+                // `posted_at` timestamp, which can differ when a user posts today against
+                // an earlier, still-open business date.
+                'postedDate' => $invoice->invoice_date,
+                'dueDate' => $invoice->due_date ?? $invoice->invoice_date,
+                'totalCents' => Money::cents($invoice->total),
+                'remainingCents' => $remaining,
+            ];
+        })->all();
+    }
+
+    /**
+     * AR overview KPI strip: total outstanding, current-vs-overdue split,
+     * total unapplied customer credit, and invoice counts by derived
+     * payment status — for the Finance Dashboard / AR summary tile.
+     */
+    public function summary(int $tenantId, ?array $branchIds = null): array
+    {
+        $today = now()->toDateString();
+        $invoices = DB::table('sales_invoices')->where('tenant_id', $tenantId)->whereIn('status', self::OPEN_STATUSES)
+            ->when($branchIds !== null, fn ($q) => $q->whereIn('branch_id', $branchIds))
+            ->get(['id', 'customer_id', 'due_date', 'total']);
+        if ($invoices->isEmpty()) {
+            return ['totalOutstanding' => '0.00', 'currentOutstanding' => '0.00', 'overdueOutstanding' => '0.00', 'totalCustomerCredit' => '0.00', 'invoiceCounts' => ['paid' => 0, 'partial' => 0, 'unpaid' => 0]];
+        }
+        $ids = $invoices->pluck('id')->all();
+        $allocated = $this->allocatedCentsForInvoices($tenantId, $ids);
+        $creditedAr = $this->creditedArCentsForInvoices($tenantId, $ids);
+        $totalOutstanding = 0; $currentOutstanding = 0; $overdueOutstanding = 0; $counts = ['paid' => 0, 'partial' => 0, 'unpaid' => 0];
+        foreach ($invoices as $invoice) {
+            $totalCents = Money::cents($invoice->total);
+            $remaining = $totalCents - ($allocated[$invoice->id] ?? 0) - ($creditedAr[$invoice->id] ?? 0);
+            $counts[$this->paymentStatus($totalCents, $remaining)]++;
+            if ($remaining <= 0) {
+                continue;
+            }
+            $totalOutstanding += $remaining;
+            if ($invoice->due_date !== null && $invoice->due_date < $today) {
+                $overdueOutstanding += $remaining;
+            } else {
+                $currentOutstanding += $remaining;
+            }
+        }
+        $customerIds = $invoices->pluck('customer_id')->unique();
+        $totalCredit = DB::table('customer_credit_ledger')->where('tenant_id', $tenantId)->whereIn('customer_id', $customerIds)->sum('amount') ?: '0';
+
+        return [
+            'totalOutstanding' => Money::decimal($totalOutstanding),
+            'currentOutstanding' => Money::decimal($currentOutstanding),
+            'overdueOutstanding' => Money::decimal($overdueOutstanding),
+            'totalCustomerCredit' => Money::decimal(max(0, Money::cents($totalCredit))),
+            'invoiceCounts' => $counts,
+        ];
+    }
+
+    /** Balance-style AR snapshot as of a cutoff date, mirroring SupplierPayableQueryService::snapshotAsOf() — for the Finance Dashboard AR KPI tile. */
+    public function snapshotAsOf(int $tenantId, string $asOfDate, ?array $branchIds = null): array
+    {
+        $invoices = $this->invoicesAsOf($tenantId, $asOfDate, null, $branchIds ?? []);
+        $outstanding = 0; $overdue = 0; $openCount = 0; $overdueCount = 0;
+        foreach ($invoices as $invoice) {
+            if ($invoice['remainingCents'] <= 0) {
+                continue;
+            }
+            $outstanding += $invoice['remainingCents'];
+            $openCount++;
+            if ($invoice['dueDate'] !== null && $invoice['dueDate'] < $asOfDate) {
+                $overdue += $invoice['remainingCents'];
+                $overdueCount++;
+            }
+        }
+
+        return ['outstanding' => Money::decimal($outstanding), 'overdue' => Money::decimal($overdue), 'openInvoiceCount' => $openCount, 'overdueInvoiceCount' => $overdueCount];
+    }
+
     public function openInvoiceCount(int $tenantId, ?int $customerId = null): int
     {
         $invoices = DB::table('sales_invoices')->where('tenant_id', $tenantId)->whereIn('status', self::OPEN_STATUSES)

@@ -211,7 +211,9 @@ void setupServiceLocator({bool useBackend = true}) {
 
   if (!serviceLocator.isRegistered<SalesProfitabilityRepository>()) {
     serviceLocator.registerLazySingleton<SalesProfitabilityRepository>(
-      SalesProfitabilityRepository.new,
+      () => SalesProfitabilityRepository(
+        apiClient: useBackend ? serviceLocator<DioApiClient>() : null,
+      ),
     );
   }
   if (!serviceLocator.isRegistered<SalesProfitabilityCubit>()) {

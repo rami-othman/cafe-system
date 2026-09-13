@@ -11,6 +11,7 @@ use App\Http\Middleware\CanManageMenuManagement;
 use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\RequireChangedPassword;
+use App\Http\Middleware\MeasurePaymentPerformance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(MeasurePaymentPerformance::class);
         $middleware->trustProxies(
             // This runs before the configuration repository exists. Render
             // supplies this as a process environment variable, which remains

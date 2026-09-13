@@ -18,7 +18,12 @@ use Illuminate\Support\Facades\DB;
  */
 final class FinanceKpiQueryService
 {
-    public function __construct(private readonly SupplierPayableQueryService $payables) {}
+    public function __construct(
+        private readonly SupplierPayableQueryService $payables,
+        private readonly SalesReportingQueryService $salesReporting,
+        private readonly CustomerReceivableQueryService $receivables,
+        private readonly CustomerCreditQueryService $customerCredit,
+    ) {}
 
     /**
      * Net Sales + COGS/Gross Profit for one period, in a single orders-table
@@ -42,14 +47,27 @@ final class FinanceKpiQueryService
         // the same pre-discount revenue credited to 4000 by PaymentController.
         $grossCents = Money::cents($orders->subtotal ?: '0');
         $discountsCents = Money::cents($orders->discounts ?: '0');
-        $netSalesCents = $grossCents - $discountsCents - $refundsCents;
+        $posNetSalesCents = $grossCents - $discountsCents - $refundsCents;
         $taxCents = Money::cents($orders->tax ?: '0') - $refundTaxCents;
+        $posCogsCents = Money::cents($orders->cogs ?: '0');
+
+        // Manual Sales Invoices (Phase 2), net of posted Sales Credit Notes
+        // (Phase 4), are entirely absent from `orders` — union them in here
+        // exactly once, via the same authoritative service the Sales &
+        // Profitability report uses, so this KPI is never POS-only (docs/sales
+        // ADR-09). Customer Payments/Refunds never appear: they settle AR,
+        // they never touch Revenue.
+        $manual = $this->salesReporting->manualInvoiceNetOfCreditNotes($context['tenantId'], $context['scopeBranchIds'], $dateFrom, $dateTo);
+        $grossCents += $manual['grossCents'];
+        $discountsCents += $manual['discountsCents'];
+        $netSalesCents = $posNetSalesCents + $manual['netCents'];
+        $taxCents += $manual['taxCents'];
+        $cogsCents = $posCogsCents + $manual['cogsCents'];
 
         $orderCount = (int) $orders->order_count;
         $uncovered = (int) $orders->missing_cogs;
         $covered = $orderCount - $uncovered;
         $coverageStatus = $orderCount === 0 || $uncovered === 0 ? 'complete' : ($covered === 0 ? 'unavailable' : 'partial');
-        $cogsCents = Money::cents($orders->cogs ?: '0');
         $grossProfitCents = $netSalesCents - $cogsCents;
         $reliable = $coverageStatus === 'complete';
 
@@ -164,6 +182,25 @@ final class FinanceKpiQueryService
             'asOfDate' => $asOfDate,
             'scope' => 'tenant',
         ];
+    }
+
+    /**
+     * Customer Accounts Receivable, branch-scoped (unlike supplierPayables()
+     * above — AR has a real per-invoice branch_id and every other Sales
+     * report in this phase is branch-filterable, so there is no reason to
+     * force it tenant-wide the way AP was policy-frozen).
+     */
+    public function customerReceivables(array $context, string $asOfDate): array
+    {
+        $snapshot = $this->receivables->snapshotAsOf($context['tenantId'], $asOfDate, $context['scopeBranchIds']);
+
+        return $snapshot + ['asOfDate' => $asOfDate, 'scope' => 'branch'];
+    }
+
+    /** Tenant-wide unapplied Customer Credit balance (a liability we owe customers, never revenue) — parallel to customerReceivables() above. */
+    public function customerCredit(int $tenantId, string $asOfDate): array
+    {
+        return ['balance' => Money::decimal(max(0, $this->customerCredit->totalBalanceCentsAsOf($tenantId, $asOfDate))), 'asOfDate' => $asOfDate, 'scope' => 'tenant'];
     }
 
     /** Operating expenses grouped by real Expense Category (the `expenses` domain's own canonical categorization). */

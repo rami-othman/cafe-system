@@ -7,6 +7,7 @@ use App\Services\CustomerReceivableQueryService;
 use App\Services\OperationalAuditService;
 use App\Services\SalesInvoiceService;
 use App\Services\SalesInvoicePostingService;
+use App\Services\SalesReportingQueryService;
 use App\Support\FinanceAccess;
 use App\Support\FinancialActor;
 use App\Support\Money;
@@ -17,13 +18,14 @@ use Illuminate\Support\Facades\DB;
 
 final class SalesInvoiceController extends Controller
 {
-    public function __construct(private readonly SalesInvoiceService $invoices, private readonly SalesInvoicePostingService $posting, private readonly CustomerReceivableQueryService $receivables, private readonly OperationalAuditService $audit) {}
+    public function __construct(private readonly SalesInvoiceService $invoices, private readonly SalesInvoicePostingService $posting, private readonly CustomerReceivableQueryService $receivables, private readonly OperationalAuditService $audit, private readonly SalesReportingQueryService $salesReporting) {}
 
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request); $actor = FinancialActor::id($request, $tenant);
         if ($request->filled('branchId')) FinancialActor::assertBranchAccess($actor, $tenant, (int) $request->input('branchId'));
-        $q = $this->rows($tenant)->whereIn('i.branch_id', FinancialActor::operationalBranchIds($actor, $tenant));
+        $branchIds = FinancialActor::operationalBranchIds($actor, $tenant);
+        $q = $this->rows($tenant)->whereIn('i.branch_id', $branchIds);
         foreach (['customerId' => 'i.customer_id', 'branchId' => 'i.branch_id', 'status' => 'i.status'] as $input => $column) if ($request->filled($input)) $q->where($column, $request->input($input));
         if ($request->filled('from')) $q->whereDate('i.invoice_date', '>=', $request->input('from'));
         if ($request->filled('to')) $q->whereDate('i.invoice_date', '<=', $request->input('to'));
@@ -40,7 +42,37 @@ final class SalesInvoiceController extends Controller
 
             return $this->serialize($row, $allocated[$id] ?? null, $creditedAr[$id] ?? 0, $creditedTotal[$id] ?? 0) + ['allowedActions' => $this->actions($row, $permissions, $allocated[$id] ?? null, $creditedAr[$id] ?? 0)];
         })->values();
-        return response()->json(['data' => $rows, 'meta' => $this->meta($p), 'summary' => ['draftInvoiceCount' => (int) $summary->count, 'draftInvoiceTotal' => Money::decimal(Money::cents($summary->total))]]);
+        return response()->json(['data' => $rows, 'meta' => $this->meta($p), 'summary' => ['draftInvoiceCount' => (int) $summary->count, 'draftInvoiceTotal' => Money::decimal(Money::cents($summary->total))] + $this->financialSummary($tenant, $branchIds)]);
+    }
+
+    /**
+     * Sales Center's truthful financial KPI strip (docs spec §16): fixed to
+     * the current calendar month, since this screen has no date-range
+     * filter — a fixed, clearly-labeled period carries no "stale total
+     * under an active filter" risk. `outstandingAr` is a balance snapshot
+     * (as-of today), correctly not scoped to the month.
+     */
+    private function financialSummary(int $tenant, array $branchIds): array
+    {
+        $from = now()->startOfMonth()->toDateString(); $to = now()->toDateString();
+        $netSalesCents = DB::table('sales_invoices')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('invoice_date', [$from, $to])->sum('subtotal');
+        $postedCount = DB::table('sales_invoices')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('invoice_date', [$from, $to])->count();
+        $collectedCents = DB::table('customer_payments')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('payment_date', [$from, $to])->sum('amount');
+        $creditNotesCents = DB::table('sales_credit_notes')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('credit_date', [$from, $to])->sum('total');
+        $outstanding = $this->receivables->snapshotAsOf($tenant, $to, $branchIds);
+
+        return ['financialSummary' => [
+            'periodFrom' => $from, 'periodTo' => $to,
+            'netSales' => Money::decimal(Money::cents($netSalesCents ?: '0')),
+            'postedInvoicesCount' => (int) $postedCount,
+            'outstandingAr' => $outstanding['outstanding'],
+            'collectedTotal' => Money::decimal(Money::cents($collectedCents ?: '0')),
+            'creditNotesTotal' => Money::decimal(Money::cents($creditNotesCents ?: '0')),
+        ]];
     }
 
     public function store(Request $request): JsonResponse

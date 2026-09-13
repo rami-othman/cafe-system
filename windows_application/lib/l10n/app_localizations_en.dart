@@ -5048,6 +5048,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get salesProfitabilityAverageOrder => 'Average Order Value';
 
   @override
+  String get salesProfitabilityCashCollected => 'Cash Collected';
+
+  @override
+  String get salesProfitabilityBankCollected => 'Bank Collected';
+
+  @override
+  String get salesProfitabilitySalesBySource => 'Sales by Source';
+
+  @override
+  String get salesProfitabilityNoSalesBySource =>
+      'No sales-by-source data is available for this period.';
+
+  @override
   String get salesProfitabilityTrend => 'Sales & Profit Trend';
 
   @override
