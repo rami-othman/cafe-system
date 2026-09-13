@@ -30,7 +30,7 @@ final class SalesInvoiceController extends Controller
         if ($request->filled('from')) $q->whereDate('i.invoice_date', '>=', $request->input('from'));
         if ($request->filled('to')) $q->whereDate('i.invoice_date', '<=', $request->input('to'));
         if ($request->filled('search')) { $like = '%'.strtolower($request->input('search')).'%'; $q->where(fn ($x) => $x->whereRaw('LOWER(i.invoice_number) LIKE ?', [$like])->orWhereRaw('LOWER(c.name) LIKE ?', [$like])->orWhereRaw('LOWER(COALESCE(i.reference, \'\')) LIKE ?', [$like])); }
-        $summary = (clone $q)->where('i.status', 'draft')->selectRaw('COUNT(*) as count, COALESCE(SUM(i.total), 0) as total')->first();
+        $summary = (clone $q)->where('i.status', 'draft')->select(DB::raw('COUNT(*) as count, COALESCE(SUM(i.total), 0) as total'))->first();
         $p = $q->orderByDesc('i.invoice_date')->orderByDesc('i.id')->paginate($this->perPage($request)); $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
         $items = collect($p->items());
         $postedIds = $items->where('status', 'posted')->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
