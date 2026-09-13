@@ -231,6 +231,12 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<DailyReportCubit>(
               create: (_) => serviceLocator<DailyReportCubit>(),
             ),
+            // One lazy operational-branch context owns every Inventory route.
+            // Route-local copies previously left InventoryModuleShell outside
+            // the provider and also allowed shell/page branch state to diverge.
+            BlocProvider<OperationalBranchCubit>(
+              create: (_) => serviceLocator<OperationalBranchCubit>(),
+            ),
           ],
           child: shell,
         );
@@ -899,10 +905,6 @@ final GoRouter appRouter = GoRouter(
               BlocProvider<InventoryCubit>(
                 create: (_) => serviceLocator<InventoryCubit>(),
               ),
-              BlocProvider<OperationalBranchCubit>(
-                create: (_) =>
-                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
-              ),
             ],
             child: const InventoryDashboardScreen(),
           ),
@@ -954,10 +956,6 @@ final GoRouter appRouter = GoRouter(
               BlocProvider<InventoryCubit>(
                 create: (_) => serviceLocator<InventoryCubit>(),
               ),
-              BlocProvider<OperationalBranchCubit>(
-                create: (_) =>
-                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
-              ),
             ],
             child: const InventoryBalancesScreen(),
           ),
@@ -969,10 +967,6 @@ final GoRouter appRouter = GoRouter(
               BlocProvider<InventoryCubit>(
                 create: (_) => serviceLocator<InventoryCubit>(),
               ),
-              BlocProvider<OperationalBranchCubit>(
-                create: (_) =>
-                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
-              ),
             ],
             child: const InventoryMovementCreateScreen(),
           ),
@@ -983,10 +977,6 @@ final GoRouter appRouter = GoRouter(
             providers: <BlocProvider<dynamic>>[
               BlocProvider<InventoryCubit>(
                 create: (_) => serviceLocator<InventoryCubit>(),
-              ),
-              BlocProvider<OperationalBranchCubit>(
-                create: (_) =>
-                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
               ),
             ],
             child: const InventoryMovementsScreen(),
@@ -1011,10 +1001,6 @@ final GoRouter appRouter = GoRouter(
             providers: <BlocProvider<dynamic>>[
               BlocProvider<InventoryCubit>(
                 create: (_) => serviceLocator<InventoryCubit>(),
-              ),
-              BlocProvider<OperationalBranchCubit>(
-                create: (_) =>
-                    serviceLocator<OperationalBranchCubit>()..loadBranches(),
               ),
             ],
             child: const InventoryCountsScreen(),
@@ -1472,7 +1458,7 @@ final GoRouter appRouter = GoRouter(
                 load: () {
                   final cubit = context.read<ReportsOverviewCubit>();
                   final branchId = context.read<PosCubit>().state.branchId;
-                  return branchId == null ? cubit.load() : cubit.selectBranch(branchId);
+                  return cubit.selectBranch(branchId);
                 },
                 child: const _BranchFollowingReport(),
               ),

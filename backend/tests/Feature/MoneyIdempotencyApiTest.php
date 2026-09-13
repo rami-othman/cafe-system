@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use App\Services\FinancialSetupService;
 use Tests\TestCase;
 
 /**
@@ -235,8 +236,9 @@ class MoneyIdempotencyApiTest extends TestCase
             return $tenantId;
         }
         $tenantId = (int) DB::table('tenants')->insertGetId(['name' => 'Idempotency Tenant B', 'slug' => 'idempotency-tenant-b', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
-        DB::table('branches')->insert(['tenant_id' => $tenantId, 'name' => 'Branch B', 'currency' => 'SYP', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
-        DB::table('users')->insert(['tenant_id' => $tenantId, 'name' => 'Owner B', 'email' => 'owner-b@example.test', 'password' => bcrypt('password'), 'role' => 'owner', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $branchId = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenantId, 'name' => 'Branch B', 'currency' => 'SYP', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $ownerId = (int) DB::table('users')->insertGetId(['tenant_id' => $tenantId, 'name' => 'Owner B', 'email' => 'owner-b@example.test', 'password' => bcrypt('password'), 'role' => 'owner', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        app(FinancialSetupService::class)->ensureForTenant($tenantId, $branchId, $ownerId);
 
         return $tenantId;
     }

@@ -9,10 +9,10 @@ import '../../../core/theme/inventory_text_styles.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
-import '../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../controllers/inventory_cubit.dart';
 import '../controllers/inventory_state.dart';
 import '../models/inventory_models.dart';
+import '../widgets/warehouse_dropdown.dart';
 import 'widgets/inventory_item_widgets.dart';
 
 class InventoryItemsScreen extends StatefulWidget {
@@ -41,64 +41,67 @@ class _InventoryItemsScreenState extends State<InventoryItemsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => DesktopPageLayout(
-    padding: const EdgeInsetsDirectional.fromSTEB(
-      AppSizes.inventoryContentHorizontalPadding,
-      AppSizes.inventoryContentVerticalPadding,
-      AppSizes.inventoryContentHorizontalPadding,
-      AppSizes.inventoryContentVerticalPadding,
-    ),
-    child: BlocBuilder<InventoryCubit, InventoryState>(
-      builder: (BuildContext context, InventoryState state) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          ManagementPageHeader(
-            title: 'المواد المخزنية',
-            subtitle: 'إدارة تعريف أصناف المقهى وقواعد توفرها في المخازن.',
-            actions: <Widget>[
-              AppButton(
-                label: 'إضافة مادة',
-                icon: Icons.add,
-                onPressed: () => context.go(AppRoutes.inventoryItemCreate),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          ItemFilters(
-            searchController: _search,
-            category: _category,
-            type: _type,
-            stockStatus: _stockStatus,
-            warehouseId: _warehouseId,
-            categories: state.itemCategories,
-            warehouses: state.warehouses
-                .map(
-                  (WarehouseLocation item) =>
-                      (id: item.id, name: item.displayName),
-                )
-                .toList(growable: false),
-            onSearch: (_) => _load(),
-            onCategoryChanged: (String value) {
-              setState(() => _category = value);
-              _load();
-            },
-            onTypeChanged: (String value) {
-              setState(() => _type = value);
-              _load();
-            },
-            onStatusChanged: (String value) {
-              setState(() => _stockStatus = value);
-              _load();
-            },
-            onWarehouseChanged: (int? value) {
-              setState(() => _warehouseId = value);
-              _load();
-            },
-            onClear: _clear,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Expanded(child: _body(state)),
-        ],
+  Widget build(BuildContext context) => BranchChangeReload(
+    onBranchChanged: () {
+      // A warehouse picked under the previous branch can never belong to
+      // the newly active one - reset to "all warehouses" and reload.
+      setState(() => _warehouseId = null);
+      _load();
+    },
+    child: DesktopPageLayout(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSizes.inventoryContentHorizontalPadding,
+        AppSizes.inventoryContentVerticalPadding,
+        AppSizes.inventoryContentHorizontalPadding,
+        AppSizes.inventoryContentVerticalPadding,
+      ),
+      child: BlocBuilder<InventoryCubit, InventoryState>(
+        builder: (BuildContext context, InventoryState state) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            ManagementPageHeader(
+              title: 'المواد المخزنية',
+              subtitle: 'إدارة تعريف أصناف المقهى وقواعد توفرها في المخازن.',
+              actions: <Widget>[
+                AppButton(
+                  label: 'إضافة مادة',
+                  icon: Icons.add,
+                  onPressed: () => context.go(AppRoutes.inventoryItemCreate),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            ItemFilters(
+              searchController: _search,
+              category: _category,
+              type: _type,
+              stockStatus: _stockStatus,
+              warehouseId: _warehouseId,
+              categories: state.itemCategories,
+              warehouses: state.warehouses,
+              onSearch: (_) => _load(),
+              onCategoryChanged: (String value) {
+                setState(() => _category = value);
+                _load();
+              },
+              onTypeChanged: (String value) {
+                setState(() => _type = value);
+                _load();
+              },
+              onStatusChanged: (String value) {
+                setState(() => _stockStatus = value);
+                _load();
+              },
+              onWarehouseChanged: (int? value) {
+                setState(() => _warehouseId = value);
+                _load();
+              },
+              onClear: _clear,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Expanded(child: _body(state)),
+          ],
+        ),
       ),
     ),
   );
@@ -160,6 +163,7 @@ class _InventoryItemsScreenState extends State<InventoryItemsScreen> {
   }
 
   void _load([int page = 1]) => context.read<InventoryCubit>().loadItems(
+    branchId: activeInventoryBranchId(context),
     search: _search.text.trim(),
     type: _type,
     category: _category,

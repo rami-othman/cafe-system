@@ -1397,7 +1397,11 @@ class _NewBarTemplateDialog extends StatefulWidget {
 }
 
 class _NewBarTemplateDialogState extends State<_NewBarTemplateDialog> {
-  late WarehouseLocation _warehouse = widget.warehouses.first;
+  // Keyed by id, not the WarehouseLocation object itself: two warehouses can
+  // share a display name, and an object without value equality only matches
+  // its dropdown item by instance identity - fragile the moment the list is
+  // rebuilt from a fresh fetch rather than reused verbatim.
+  late int _warehouseId = widget.warehouses.first.id;
   final TextEditingController _name = TextEditingController();
   @override
   void dispose() {
@@ -1413,15 +1417,16 @@ class _NewBarTemplateDialogState extends State<_NewBarTemplateDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          DropdownButtonFormField<WarehouseLocation>(
-            initialValue: _warehouse,
+          DropdownButtonFormField<int>(
+            initialValue: _warehouseId,
             isExpanded: true,
             items: widget.warehouses
                 .map(
-                  (w) => DropdownMenuItem(value: w, child: Text(w.displayName)),
+                  (w) =>
+                      DropdownMenuItem(value: w.id, child: Text(w.displayName)),
                 )
                 .toList(),
-            onChanged: (w) => setState(() => _warehouse = w!),
+            onChanged: (id) => setState(() => _warehouseId = id!),
             decoration: const InputDecoration(
               labelText: 'مستودع البار',
               border: OutlineInputBorder(),
@@ -1447,7 +1452,10 @@ class _NewBarTemplateDialogState extends State<_NewBarTemplateDialog> {
         label: 'إنشاء القالب',
         onPressed: () => Navigator.pop(
           context,
-          _NewBarTemplate(_warehouse, _name.text.trim()),
+          _NewBarTemplate(
+            widget.warehouses.firstWhere((w) => w.id == _warehouseId),
+            _name.text.trim(),
+          ),
         ),
       ),
     ],
@@ -1469,21 +1477,22 @@ class _TransferLocationsDialog extends StatefulWidget {
 }
 
 class _TransferLocationsDialogState extends State<_TransferLocationsDialog> {
-  late WarehouseLocation _source = widget.warehouses.first;
-  late WarehouseLocation _destination = widget.warehouses.firstWhere(
-    (w) => w.id != _source.id,
-  );
+  // Keyed by id for the same reason as _NewBarTemplateDialogState above.
+  late int _sourceId = widget.warehouses.first.id;
+  late int _destinationId = widget.warehouses
+      .firstWhere((w) => w.id != _sourceId)
+      .id;
   @override
   Widget build(BuildContext context) {
     Widget select(
       String label,
-      WarehouseLocation value,
-      ValueChanged<WarehouseLocation?> change,
-    ) => DropdownButtonFormField<WarehouseLocation>(
+      int value,
+      ValueChanged<int?> change,
+    ) => DropdownButtonFormField<int>(
       initialValue: value,
       isExpanded: true,
       items: widget.warehouses
-          .map((w) => DropdownMenuItem(value: w, child: Text(w.displayName)))
+          .map((w) => DropdownMenuItem(value: w.id, child: Text(w.displayName)))
           .toList(),
       onChanged: change,
       decoration: InputDecoration(
@@ -1500,14 +1509,14 @@ class _TransferLocationsDialogState extends State<_TransferLocationsDialog> {
           children: <Widget>[
             select(
               'المستودع المصدر',
-              _source,
-              (v) => setState(() => _source = v!),
+              _sourceId,
+              (v) => setState(() => _sourceId = v!),
             ),
             const SizedBox(height: AppSpacing.md),
             select(
               'المستودع الوجهة',
-              _destination,
-              (v) => setState(() => _destination = v!),
+              _destinationId,
+              (v) => setState(() => _destinationId = v!),
             ),
           ],
         ),
@@ -1519,11 +1528,16 @@ class _TransferLocationsDialogState extends State<_TransferLocationsDialog> {
         ),
         AppButton(
           label: 'إنشاء',
-          onPressed: _source.id == _destination.id
+          onPressed: _sourceId == _destinationId
               ? null
               : () => Navigator.pop(
                   context,
-                  _TransferLocations(_source, _destination),
+                  _TransferLocations(
+                    widget.warehouses.firstWhere((w) => w.id == _sourceId),
+                    widget.warehouses.firstWhere(
+                      (w) => w.id == _destinationId,
+                    ),
+                  ),
                 ),
         ),
       ],

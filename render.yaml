@@ -21,7 +21,7 @@ services:
       - key: TRUSTED_PROXIES
         value: "*"
       - key: RUN_MIGRATIONS
-        value: "false"
+        value: "true"
       - key: PRODUCT_IMAGE_DISK
         value: supabase-product-images
       - key: SUPABASE_STORAGE_REGION

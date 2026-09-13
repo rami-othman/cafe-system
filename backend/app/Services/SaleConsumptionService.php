@@ -8,6 +8,7 @@ use App\Models\PublishedMenuVersion;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
 use App\Support\PaymentPerformanceProbe;
+use App\Exceptions\OrderLifecycleException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -98,7 +99,7 @@ class SaleConsumptionService
 
             $warehouseId = $this->resolveWarehouse($tenantId, (int) $order->branch_id);
             if ($warehouseId === null) {
-                throw ValidationException::withMessages(['productId' => "Product \"{$product->name}\" (#{$product->id}) has no active warehouse configured for branch #{$order->branch_id}. Configure Product Inventory Settings or a main branch warehouse."]);
+                throw new OrderLifecycleException('WAREHOUSE_NOT_CONFIGURED', "No active branch-main warehouse is configured for order branch #{$order->branch_id}.");
             }
 
             $soldQuantity = InventoryDecimal::units($item->quantity);
@@ -164,7 +165,7 @@ class SaleConsumptionService
      */
     private function isTracked(object $product): bool
     {
-        return (bool) $product->is_stock_tracked || (bool) $product->inventory_controlled;
+        return (bool) $product->is_stock_tracked;
     }
 
     /** @return array<string, mixed>|null */
@@ -282,10 +283,22 @@ class SaleConsumptionService
      */
     private function resolveWarehouse(int $tenantId, int $branchId): ?int
     {
-        $fallbackId = DB::table('warehouses')
+        $warehouses = DB::table('warehouses')
+            ->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('type', 'branch_main')
+            ->where('is_active', true)->whereNull('deleted_at')->orderBy('id')->get(['id', 'code']);
+        if ($warehouses->count() > 1) {
+            throw new OrderLifecycleException('WAREHOUSE_CONFIGURATION_AMBIGUOUS', "Multiple active branch-main warehouses are configured for order branch #{$branchId}.");
+        }
+        if ($warehouses->count() === 1) {
+            return (int) $warehouses->first()->id;
+        }
+
+        // Backward compatibility for pre-type data. The repair command reports
+        // this state so it can be normalized without blocking an existing site.
+        $legacyId = DB::table('warehouses')
             ->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")
             ->where('is_active', true)->whereNull('deleted_at')->value('id');
 
-        return $fallbackId !== null ? (int) $fallbackId : null;
+        return $legacyId !== null ? (int) $legacyId : null;
     }
 }

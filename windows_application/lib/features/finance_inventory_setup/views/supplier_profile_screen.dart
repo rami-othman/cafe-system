@@ -903,7 +903,7 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                   ),
                   const SizedBox(height: FinanceSpace.md),
                   DropdownButtonFormField<int>(
-                    value: _typeId,
+                    initialValue: _typeId,
                     isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'نوع الفاتورة',

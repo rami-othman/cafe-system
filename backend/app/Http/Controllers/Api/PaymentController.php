@@ -40,12 +40,19 @@ class PaymentController extends Controller
         $itemCount = (float) DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->whereNull('deleted_at')->sum('quantity');
         $total = (float) $row->total;
         $received = array_key_exists('amountReceived', $data) ? (float) $data['amountReceived'] : $total;
+        $methods = DB::table('payment_methods as pm')
+            ->join('financial_accounts as accounts', 'accounts.id', '=', 'pm.financial_account_id')
+            ->where('pm.tenant_id', $tenantId)->where('pm.is_active', true)
+            ->where('accounts.tenant_id', $tenantId)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')
+            ->whereIn('pm.type', ['cash', 'card'])
+            ->orderBy('pm.sort_order')->orderBy('pm.id')->pluck('pm.type')
+            ->unique()->values();
 
         return response()->json(['data' => [
             'orderId' => $row->id, 'orderNumber' => $row->order_number, 'totalDue' => $total,
             'itemCount' => $itemCount, 'amountReceived' => $received,
             'changeDue' => round(max(0, $received - $total), 2),
-            'methods' => ['cash', 'card', 'wallet', 'split'], 'quickAmounts' => $this->quickAmounts($total),
+            'methods' => $methods, 'quickAmounts' => $this->quickAmounts($total),
         ]]);
     }
 
@@ -95,6 +102,9 @@ class PaymentController extends Controller
             $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
                 ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
                 : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
+            if ($resolvedMethod === null) {
+                throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
+            }
 
             $currency = (string) (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $row->branch_id)->whereNull('deleted_at')->value('currency') ?? 'SYP');
             $now = now();
@@ -115,11 +125,7 @@ class PaymentController extends Controller
             $this->performance->stop('payment persistence', $persistenceStarted);
 
             $consumption = $this->consumption->consumeForOrder($request, $tenantId, $row, $paymentId, $actorId);
-            if ($resolvedMethod !== null) {
-                $this->performance->measure('accounting posting', fn () => $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId));
-            } else {
-                $this->audit->record($request, $tenantId, 'pos_order.finance_posting_skipped', 'order', $row->id, [], ['reason' => 'No active Finance mapping for payment method.'], $row->branch_id, $actorId);
-            }
+            $this->performance->measure('accounting posting', fn () => $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId));
 
             $answer = ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
             $closureEndedAt = microtime(true);

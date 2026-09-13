@@ -267,3 +267,27 @@ future work and it is not part of Batch 12.
 - 12G ✅ Legacy Cutover / Final Regression
 
 **BATCH 12 — COMPLETE**
+
+## Inventory warehouse context audit
+
+- Inventory list requests now carry both the active operational `branchId` and
+  the selected `warehouseId`; Laravel applies and validates both scopes for
+  balances, items, movements, counts, and the dashboard.
+- Warehouse selectors use one active/legacy/branch rule, retain central
+  warehouses, clear stale selections on branch changes, and reload the owning
+  screen immediately.
+- Inventory Cubit loaders use latest-request-wins guards so a slow response for
+  a previous warehouse cannot replace newer data. Stock-count warehouse
+  options remain isolated from the general warehouse list.
+- Focused Flutter warehouse-context tests and the backend
+  `InventoryCenterApiTest` suite pass.
+
+## Inventory branch provider repair
+
+- The operational branch Cubit now has one lazy, shell-wide provider above all
+  Inventory routes. Route-local duplicates were removed so the module frame,
+  warehouse selectors, and routed page always observe the same branch state.
+- `InventoryModuleShell` initializes that context from the authoritative POS
+  branch and follows later top-navigation branch changes.
+- Static analysis is clean, and the provider/synchronization regression test
+  plus all warehouse dropdown widget tests pass (5 tests).

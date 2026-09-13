@@ -22,12 +22,14 @@ class PaymentDialog extends StatefulWidget {
     required this.totalDue,
     required this.itemCount,
     this.onSubmit,
+    this.availableMethods = PaymentMethod.values,
   });
 
   final double totalDue;
   final int itemCount;
   final Future<PaymentCompletionStatus> Function(PaymentResult result)?
   onSubmit;
+  final List<PaymentMethod> availableMethods;
 
   @override
   State<PaymentDialog> createState() => _PaymentDialogState();
@@ -47,6 +49,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
       text: _formatAmount(widget.totalDue),
     );
     _amountFocusNode = FocusNode();
+    if (!widget.availableMethods.contains(_selectedMethod) &&
+        widget.availableMethods.isNotEmpty) {
+      _selectedMethod = widget.availableMethods.first;
+    }
   }
 
   @override
@@ -315,6 +321,7 @@ class _PaymentBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         PaymentMethodSelector(
           selectedMethod: state._selectedMethod,
+          methods: state.widget.availableMethods,
           onMethodSelected: state._selectMethod,
         ),
         const SizedBox(height: AppSpacing.xl),

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Services\FinancialSetupService;
+
 use App\Models\Branch;
 use App\Models\Tenant;
 use App\Models\User;
@@ -115,6 +117,7 @@ class AuthPhaseFourOperationalCutoverTest extends TestCase
     public function test_payment_requires_the_authenticated_users_open_shift_for_the_order_branch(): void
     {
         [$tenant, $branch, $owner] = $this->tenantBranchUser('payment-shift', 'owner');
+        app(FinancialSetupService::class)->ensureForTenant((int) $tenant->id, (int) $branch->id, (int) $owner->id);
         $otherBranch = Branch::query()->create([
             'tenant_id' => $tenant->id, 'name' => 'Other Branch', 'timezone' => 'UTC',
             'currency' => 'SYP', 'is_active' => true,
