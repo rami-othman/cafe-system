@@ -52,9 +52,12 @@ class TenantTaxAndValidationTest extends TestCase
         foreach (['branchId', 'shiftId', 'tableId', 'customerId'] as $field) {
             $payload = $this->orderPayload($tenantA);
             $payload[$field] = $tenantB[$field];
-            $this->postJson('/api/v1/orders', $payload, $headers)
-                ->assertUnprocessable()
-                ->assertJsonValidationErrors($field);
+            $response = $this->postJson('/api/v1/orders', $payload, $headers)->assertUnprocessable();
+            if ($field === 'customerId') {
+                $response->assertJsonPath('code', 'CUSTOMER_NOT_OPERATIONALLY_ELIGIBLE');
+            } else {
+                $response->assertJsonValidationErrors($field);
+            }
         }
 
         $payload = $this->orderPayload($tenantA);
@@ -94,7 +97,7 @@ class TenantTaxAndValidationTest extends TestCase
             'tenant_id' => $tenantId, 'branch_id' => $branchId, 'name' => 'Table 1', 'created_at' => $now, 'updated_at' => $now,
         ]);
         $customerId = DB::table('customers')->insertGetId([
-            'tenant_id' => $tenantId, 'name' => 'Customer', 'created_at' => $now, 'updated_at' => $now,
+            'tenant_id' => $tenantId, 'name' => 'Customer', 'customer_number' => 'C-000001', 'normalized_name' => 'customer', 'created_at' => $now, 'updated_at' => $now,
         ]);
         $shiftId = DB::table('shifts')->insertGetId([
             'tenant_id' => $tenantId, 'branch_id' => $branchId, 'user_id' => $userId, 'status' => 'open',

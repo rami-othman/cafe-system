@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
+import 'package:windows_application/features/auth/models/auth_session.dart';
+import 'package:windows_application/features/auth/repositories/auth_session_storage.dart';
 import 'package:windows_application/shared/widgets/app_sidebar.dart';
 import 'package:windows_application/shared/widgets/shift_status_badge.dart';
 
@@ -45,9 +47,27 @@ const List<String> _englishShellLabels = <String>[
   'Settings',
 ];
 
+final AuthSession _bilingualTestSession = AuthSession(
+  accessToken: 'test-session-token',
+  user: const AuthUser(
+    id: 1,
+    name: 'Granted Test Manager',
+    role: 'manager',
+    email: 'manager@example.test',
+  ),
+  tenant: const AuthTenant(id: 1, name: 'Test Cafe'),
+  mustChangePassword: false,
+  lastValidatedAt: DateTime.utc(2026, 9, 11),
+  offlineSessionMaxAgeSeconds: 43200,
+  customerManagementAllowed: true,
+);
+
 void main() {
   setUp(() async {
     await serviceLocator.reset();
+    serviceLocator.registerLazySingleton<AuthSessionStorage>(
+      () => MemoryAuthSessionStorage(_bilingualTestSession),
+    );
     setupServiceLocator(useBackend: false);
   });
 
@@ -86,7 +106,8 @@ void main() {
         expect(
           find.text(label),
           findsNothing,
-          reason: '$path leaked the English shell label "$label" in Arabic mode',
+          reason:
+              '$path leaked the English shell label "$label" in Arabic mode',
         );
       }
       expect(
@@ -112,7 +133,8 @@ void main() {
         expect(
           find.text(label),
           findsNothing,
-          reason: '$path leaked the Arabic shell label "$label" in English mode',
+          reason:
+              '$path leaked the Arabic shell label "$label" in English mode',
         );
       }
       expect(

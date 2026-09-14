@@ -1,0 +1,12 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e2]: جارٍ توجيهك إلى تسجيل الدخول…
+  - generic [ref=f2e7] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=f2e8]
+    - generic [ref=f2e12]:
+      - button "Open issues overlay" [ref=f2e13]:
+        - generic [ref=f2e14]:
+          - generic [aria-hidden] [ref=f2e15]: "0"
+          - generic [ref=f2e16]: "1"
+        - generic [ref=f2e17]: Issue
+      - button "Collapse issues badge" [ref=f2e18]
+  - alert [ref=f2e21]

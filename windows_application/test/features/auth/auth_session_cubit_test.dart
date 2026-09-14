@@ -101,6 +101,28 @@ void main() {
     expect(cubit.state.status, AuthSessionStatus.authenticated);
   });
 
+  test(
+    'successful auth/me refresh replaces and persists missing legacy capability',
+    () async {
+      final _MemoryStorage storage = _MemoryStorage(
+        _legacySessionWithoutCapability(role: 'owner'),
+      );
+      final AuthSessionCubit cubit = _cubit(
+        storage: storage,
+        repository: _FakeRepository(
+          meSession: _session(role: 'owner', customerManagementAllowed: true),
+        ),
+        now: () => now,
+      );
+
+      await cubit.restore();
+
+      expect(cubit.state.status, AuthSessionStatus.authenticated);
+      expect(cubit.state.session?.customerManagementAllowed, isTrue);
+      expect((await storage.read())?.customerManagementAllowed, isTrue);
+    },
+  );
+
   test('invalid session and protected 401 both return to login', () async {
     final _MemoryStorage storage = _MemoryStorage(_session());
     final _FakeRepository repository = _FakeRepository(
@@ -133,7 +155,9 @@ void main() {
     );
     final AuthSessionCubit valid = _cubit(
       storage: _MemoryStorage(
-        _session(lastValidatedAt: now.subtract(const Duration(hours: 11))),
+        _legacySessionWithoutCapability(
+          lastValidatedAt: now.subtract(const Duration(hours: 11)),
+        ),
       ),
       repository: offline,
       now: () => now,
@@ -150,6 +174,7 @@ void main() {
     await expired.restore();
 
     expect(valid.state.status, AuthSessionStatus.authenticated);
+    expect(valid.state.session?.customerManagementAllowed, isFalse);
     expect(expired.state.status, AuthSessionStatus.unauthenticated);
     expect(expired.state.message, AuthMessage.offlineSessionExpired);
   });
@@ -169,19 +194,29 @@ AuthSessionCubit _cubit({
 AuthSession _session({
   bool mustChangePassword = false,
   DateTime? lastValidatedAt,
+  String role = 'manager',
+  bool customerManagementAllowed = false,
 }) => AuthSession(
   accessToken: 'opaque-token',
-  user: const AuthUser(
-    id: 7,
-    name: 'Rami',
-    role: 'manager',
-    email: 'manager@test',
-  ),
+  user: AuthUser(id: 7, name: 'Rami', role: role, email: 'manager@test'),
   tenant: const AuthTenant(id: 4, name: 'Cafe 618'),
   mustChangePassword: mustChangePassword,
   lastValidatedAt: lastValidatedAt ?? DateTime.utc(2026, 9, 1, 10),
   offlineSessionMaxAgeSeconds: 43200,
+  customerManagementAllowed: customerManagementAllowed,
 );
+
+AuthSession _legacySessionWithoutCapability({
+  String role = 'manager',
+  DateTime? lastValidatedAt,
+}) {
+  final Map<String, dynamic> metadata = _session(
+    role: role,
+    lastValidatedAt: lastValidatedAt,
+    customerManagementAllowed: true,
+  ).toStorageJson()..remove('capabilities');
+  return AuthSession.fromStorage('opaque-token', metadata);
+}
 
 class _MemoryStorage implements AuthSessionStorage {
   _MemoryStorage([this.session]);
@@ -197,10 +232,16 @@ class _MemoryStorage implements AuthSessionStorage {
 }
 
 class _FakeRepository implements AuthRepository {
-  _FakeRepository({this.loginSession, this.loginError, this.meError});
+  _FakeRepository({
+    this.loginSession,
+    this.loginError,
+    this.meError,
+    this.meSession,
+  });
   final AuthSession? loginSession;
   final ApiException? loginError;
   final ApiException? meError;
+  final AuthSession? meSession;
   int changePasswordCalls = 0;
   @override
   Future<void> changePassword({
@@ -224,6 +265,6 @@ class _FakeRepository implements AuthRepository {
   @override
   Future<AuthSession> me(AuthSession cachedSession) async {
     if (meError != null) throw meError!;
-    return cachedSession;
+    return meSession ?? cachedSession;
   }
 }

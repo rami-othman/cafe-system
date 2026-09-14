@@ -20,9 +20,9 @@ class LoyaltySeeder extends Seeder
                 default => 'new',
             };
 
-            DB::table('loyalty_accounts')->insert([
-                'tenant_id' => $tenantId,
-                'customer_id' => $customer->id,
+            DB::table('loyalty_accounts')->updateOrInsert([
+                'tenant_id' => $tenantId, 'customer_id' => $customer->id,
+            ], [
                 'points_balance' => $points,
                 'lifetime_points' => $points,
                 'tier' => $tier,
@@ -30,12 +30,13 @@ class LoyaltySeeder extends Seeder
                 'updated_at' => $now,
             ]);
 
-            DB::table('loyalty_transactions')->insert([
+            DB::table('loyalty_transactions')->updateOrInsert([
                 'tenant_id' => $tenantId,
                 'customer_id' => $customer->id,
                 'type' => 'earn',
-                'points' => $points,
                 'description' => 'Imported demo loyalty balance',
+            ], [
+                'points' => $points,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

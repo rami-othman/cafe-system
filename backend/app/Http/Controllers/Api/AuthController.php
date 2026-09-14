@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Customer\CustomerAccess;
 use App\Http\Controllers\Controller;
 use App\Models\ApiToken;
 use App\Models\Tenant;
@@ -16,6 +17,8 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     private const OFFLINE_SESSION_MAX_AGE_SECONDS = 43200;
+
+    public function __construct(private readonly CustomerAccess $customerAccess) {}
 
     public function login(Request $request, TenantOperationalPolicy $tenantPolicy): JsonResponse
     {
@@ -125,6 +128,7 @@ class AuthController extends Controller
             'mustChangePassword' => $user->must_change_password,
             'user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'username' => $user->username, 'status' => $user->is_active ? 'active' : 'deactivated', 'role' => $user->effectiveRoleCode()],
             'tenant' => ['id' => $tenant->id, 'name' => $tenant->name, 'status' => $tenant->status],
+            'capabilities' => ['customer' => ['manage' => $this->customerAccess->allowsUser($user, 'customer.manage')]],
             'session' => ['id' => $token->id, 'deviceName' => $token->name, 'authenticatedAt' => $token->created_at?->toIso8601String(), 'lastValidatedAt' => now()->toIso8601String(), 'expiresAt' => $token->expires_at?->toIso8601String(), 'offlineSessionMaxAgeSeconds' => self::OFFLINE_SESSION_MAX_AGE_SECONDS],
             'branchAccess' => ['allBranches' => $user->isOwner(), 'branchIds' => $user->isOwner() ? [] : $user->branches()->pluck('branches.id')->values()],
         ];

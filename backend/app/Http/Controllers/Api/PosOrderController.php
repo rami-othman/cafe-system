@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exceptions\OrderLifecycleException;
+use App\Domain\Customer\CustomerOperationalEligibility;
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
@@ -28,6 +29,7 @@ class PosOrderController extends Controller
         private readonly PublishedMenuOrderResolver $publishedOrders,
         private readonly OrderLifecyclePolicy $lifecycle,
         private readonly PosNumberGenerator $numbers,
+        private readonly CustomerOperationalEligibility $customerEligibility,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -73,7 +75,7 @@ class PosOrderController extends Controller
             'shiftId' => ['nullable', 'integer', $this->tenantExists('shifts', $tenantId)],
             'orderType' => ['required', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
-            'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
+            'customerId' => ['nullable', 'integer'],
             'publishedMenuVersionId' => ['nullable', 'integer'],
             'items' => ['required', 'array', 'min:1'],
             // Product identity belongs to the snapshot on the versioned path;
@@ -106,6 +108,7 @@ class PosOrderController extends Controller
                     return ['order' => $existing, 'replayed' => true];
                 }
 
+                $this->customerEligibility->assert($tenantId, $data['customerId'] ?? null);
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
                     : null;
@@ -160,7 +163,7 @@ class PosOrderController extends Controller
         $data = $request->validate([
             'orderType' => ['sometimes', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
-            'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
+            'customerId' => ['nullable', 'integer'],
             'note' => ['nullable', 'string'],
         ]);
 
@@ -186,6 +189,7 @@ class PosOrderController extends Controller
 
         DB::transaction(function () use ($tenantId, $order, $updates): void {
             $this->lifecycle->assertMutable($this->lockedOrder($tenantId, $order));
+            $this->customerEligibility->assert($tenantId, array_key_exists('customer_id', $updates) ? $updates['customer_id'] : null);
             DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update($updates);
             $this->pricing->recalculateOrder($tenantId, $order);
         });

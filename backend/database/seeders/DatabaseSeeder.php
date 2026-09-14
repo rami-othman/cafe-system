@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
         // base test seed deterministic prevents operational demo totals from
         // leaking into unrelated report assertions.
         if (app()->environment(['local', 'development'])) {
+            $this->call(CustomerOrderHistoryDemoSeeder::class);
             $this->call(FinanceOperationsDemoSeeder::class);
             $this->call(SalesPhaseTwoDemoSeeder::class);
             $this->call(SalesPhaseThreeDemoSeeder::class);

@@ -57,6 +57,7 @@ class AuthSession {
     required this.mustChangePassword,
     required this.lastValidatedAt,
     required this.offlineSessionMaxAgeSeconds,
+    this.customerManagementAllowed = false,
     this.expiresAt,
   });
 
@@ -66,22 +67,31 @@ class AuthSession {
   final bool mustChangePassword;
   final DateTime lastValidatedAt;
   final int offlineSessionMaxAgeSeconds;
+
+  /// Server-authoritative capability. Legacy session metadata intentionally
+  /// defaults closed until it is refreshed from the authenticated API.
+  final bool customerManagementAllowed;
   final DateTime? expiresAt;
 
   bool canRestoreOffline(DateTime now) => !now.isAfter(
     lastValidatedAt.add(Duration(seconds: offlineSessionMaxAgeSeconds)),
   );
 
-  AuthSession copyWith({bool? mustChangePassword, DateTime? lastValidatedAt}) =>
-      AuthSession(
-        accessToken: accessToken,
-        user: user,
-        tenant: tenant,
-        mustChangePassword: mustChangePassword ?? this.mustChangePassword,
-        lastValidatedAt: lastValidatedAt ?? this.lastValidatedAt,
-        offlineSessionMaxAgeSeconds: offlineSessionMaxAgeSeconds,
-        expiresAt: expiresAt,
-      );
+  AuthSession copyWith({
+    bool? mustChangePassword,
+    DateTime? lastValidatedAt,
+    bool? customerManagementAllowed,
+  }) => AuthSession(
+    accessToken: accessToken,
+    user: user,
+    tenant: tenant,
+    mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+    lastValidatedAt: lastValidatedAt ?? this.lastValidatedAt,
+    offlineSessionMaxAgeSeconds: offlineSessionMaxAgeSeconds,
+    customerManagementAllowed:
+        customerManagementAllowed ?? this.customerManagementAllowed,
+    expiresAt: expiresAt,
+  );
 
   factory AuthSession.fromApi(Map<String, dynamic> json) {
     final Map<String, dynamic> session = _map(json['session']);
@@ -95,6 +105,7 @@ class AuthSession {
           DateTime.now(),
       offlineSessionMaxAgeSeconds:
           (session['offlineSessionMaxAgeSeconds'] as num?)?.toInt() ?? 43200,
+      customerManagementAllowed: _customerManagementAllowed(json),
       expiresAt: DateTime.tryParse(session['expiresAt'] as String? ?? ''),
     );
   }
@@ -108,6 +119,7 @@ class AuthSession {
         lastValidatedAt: DateTime.parse(json['lastValidatedAt'] as String),
         offlineSessionMaxAgeSeconds:
             (json['offlineSessionMaxAgeSeconds'] as num?)?.toInt() ?? 43200,
+        customerManagementAllowed: _customerManagementAllowed(json),
         expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? ''),
       );
 
@@ -117,6 +129,9 @@ class AuthSession {
     'mustChangePassword': mustChangePassword,
     'lastValidatedAt': lastValidatedAt.toUtc().toIso8601String(),
     'offlineSessionMaxAgeSeconds': offlineSessionMaxAgeSeconds,
+    'capabilities': <String, dynamic>{
+      'customer': <String, dynamic>{'manage': customerManagementAllowed},
+    },
     'expiresAt': expiresAt?.toUtc().toIso8601String(),
   };
 
@@ -128,3 +143,6 @@ Map<String, dynamic> _map(dynamic value) => value is Map<String, dynamic>
     : value is Map
     ? value.cast<String, dynamic>()
     : <String, dynamic>{};
+
+bool _customerManagementAllowed(Map<String, dynamic> json) =>
+    _map(_map(json['capabilities'])['customer'])['manage'] == true;
