@@ -46,15 +46,11 @@ class ValidationIssuePresentation {
 
     return <String>[
       if (materialName.isNotEmpty)
-        'Material: ' +
-            materialName +
-            (materialId.isEmpty ? '' : ' (ID ' + materialId + ')'),
+        'Material: $materialName${materialId.isEmpty ? '' : ' (ID $materialId)'}',
       if (quantity.isNotEmpty || recipeUnit.isNotEmpty)
-        'Recipe quantity: ' +
-            quantity +
-            (recipeUnit.isEmpty ? '' : ' ' + recipeUnit),
-      if (baseUnit.isNotEmpty) 'Inventory base unit: ' + baseUnit,
-      if (reason.isNotEmpty) 'Reason: ' + reason,
+        'Recipe quantity: $quantity${recipeUnit.isEmpty ? '' : ' $recipeUnit'}',
+      if (baseUnit.isNotEmpty) 'Inventory base unit: $baseUnit',
+      if (reason.isNotEmpty) 'Reason: $reason',
     ];
   }
 

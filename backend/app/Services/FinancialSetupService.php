@@ -50,10 +50,12 @@ class FinancialSetupService
             ['code' => '1020', 'name_ar' => 'الخزنة الرئيسية', 'name_en' => 'Main Safe', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1030', 'name_ar' => 'الحساب البنكي', 'name_en' => 'Bank Account', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1100', 'name_ar' => 'أصل المخزون', 'name_en' => 'Inventory Asset', 'account_group' => 'assets', 'normal_balance' => 'debit'],
+            ['code' => '1200', 'name_ar' => 'الذمم المدينة', 'name_en' => 'Accounts Receivable', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1500', 'name_ar' => 'الأصول الثابتة', 'name_en' => 'Fixed Assets', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1590', 'name_ar' => 'مجمع الإهلاك', 'name_en' => 'Accumulated Depreciation', 'account_group' => 'assets', 'normal_balance' => 'credit'],
             ['code' => '2000', 'name_ar' => 'الحسابات الدائنة', 'name_en' => 'Accounts Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
             ['code' => '2010', 'name_ar' => 'ضريبة المبيعات المستحقة', 'name_en' => 'Sales Tax Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
+            ['code' => '2020', 'name_ar' => 'أرصدة دائنة للعملاء', 'name_en' => 'Customer Credit Balance', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
             ['code' => '3000', 'name_ar' => 'حقوق الملكية', 'name_en' => 'Equity', 'account_group' => 'equity', 'normal_balance' => 'credit'],
             ['code' => '4000', 'name_ar' => 'إيرادات المبيعات', 'name_en' => 'Sales Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '4010', 'name_ar' => 'الخصومات الممنوحة', 'name_en' => 'Discounts Given', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
@@ -85,12 +87,91 @@ class FinancialSetupService
             }
 
             $this->ensureCashAndBankDefaults($tenantId, $actorId);
+            $this->ensureSalesDefaults($tenantId, $actorId);
+            $this->ensureDefaultInvoiceTypes($tenantId);
 
             $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
                 $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
             }
         });
+    }
+
+    /** Establishes only tenant configuration and the single protected cash customer; it does not post anything. */
+    private function ensureSalesDefaults(int $tenantId, ?int $actorId): void
+    {
+        $now = now();
+        $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1200')->first();
+        if (! $account || $account->account_group !== 'assets' || $account->normal_balance !== 'debit') {
+            throw new \RuntimeException("Tenant {$tenantId} requires account 1200 as an asset account with debit normal balance.");
+        }
+        // A tenant may later deliberately remap AR through finance settings;
+        // setup establishes the safe default but must never overwrite that choice.
+        if (! DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', 'sales.accounts_receivable')->exists()) {
+            DB::table('sales_account_mappings')->insert([
+                'tenant_id' => $tenantId, 'mapping_key' => 'sales.accounts_receivable', 'financial_account_id' => $account->id,
+                'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
+        foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020'] as $key => $code) {
+            if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) continue;
+            $accountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', $code)->value('id');
+            if ($accountId) DB::table('sales_account_mappings')->insert(['tenant_id' => $tenantId, 'mapping_key' => $key, 'financial_account_id' => $accountId, 'created_at' => $now, 'updated_at' => $now]);
+        }
+
+        $walkIn = DB::table('customers')->where('tenant_id', $tenantId)->where('is_walk_in', true)->first();
+        if (! $walkIn) {
+            DB::table('customers')->insert([
+                'tenant_id' => $tenantId, 'customer_number' => 'CASH-CUSTOMER', 'name' => 'Cash / Walk-in Customer',
+                'customer_type' => 'walk_in', 'default_credit_terms_days' => 0, 'total_spent' => 0, 'visits_count' => 0,
+                'is_active' => true, 'is_walk_in' => true, 'is_system_protected' => true, 'created_by' => $actorId,
+                'updated_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+            return;
+        }
+        DB::table('customers')->where('id', $walkIn->id)->update([
+            'is_active' => true, 'is_system_protected' => true, 'updated_by' => $actorId, 'updated_at' => $now,
+        ]);
+    }
+
+    /**
+     * Pre-existing gap fixed here: `invoice_groups`/`invoice_types` were
+     * only ever backfilled once, by the migration that introduced them, for
+     * tenants that already existed at that moment (see
+     * 2026_09_10_000019_create_invoice_type_catalog). No seeder or service
+     * carried that forward for tenants provisioned afterwards, so every
+     * supplier invoice attempt for a new tenant failed
+     * ("Select an active configured invoice type.") — this is what
+     * SupplierInvoiceService::withResolvedType() requires to exist. This
+     * mirrors the migration's own seed data exactly (same codes, names, and
+     * posting behaviors) via the same idempotent updateOrInsert pattern used
+     * everywhere else in this method.
+     */
+    private function ensureDefaultInvoiceTypes(int $tenantId): void
+    {
+        $now = now();
+        DB::table('invoice_groups')->updateOrInsert(
+            ['tenant_id' => $tenantId, 'code' => 'accounting'],
+            ['name' => 'فواتير محاسبية', 'description' => 'فواتير يمكن ترحيلها إلى القيود المحاسبية.', 'is_active' => true, 'updated_at' => $now, 'created_at' => $now],
+        );
+        DB::table('invoice_groups')->updateOrInsert(
+            ['tenant_id' => $tenantId, 'code' => 'test'],
+            ['name' => 'فواتير تجريبية', 'description' => 'للتجارب والتوثيق فقط؛ لا تنشئ قيوداً محاسبية.', 'is_active' => true, 'updated_at' => $now, 'created_at' => $now],
+        );
+        $accountingGroupId = (int) DB::table('invoice_groups')->where('tenant_id', $tenantId)->where('code', 'accounting')->value('id');
+        $testGroupId = (int) DB::table('invoice_groups')->where('tenant_id', $tenantId)->where('code', 'test')->value('id');
+
+        foreach ([
+            ['code' => 'expense', 'name' => 'مصروف', 'posting_behavior' => 'expense', 'is_postable' => true, 'is_purchase' => true, 'group' => $accountingGroupId],
+            ['code' => 'inventory', 'name' => 'مخزون', 'posting_behavior' => 'inventory', 'is_postable' => true, 'is_purchase' => true, 'group' => $accountingGroupId],
+            ['code' => 'other', 'name' => 'أخرى', 'posting_behavior' => 'other', 'is_postable' => true, 'is_purchase' => true, 'group' => $accountingGroupId],
+            ['code' => 'test', 'name' => 'فاتورة تجريبية', 'posting_behavior' => 'none', 'is_postable' => false, 'is_purchase' => false, 'group' => $testGroupId],
+        ] as $type) {
+            DB::table('invoice_types')->updateOrInsert(
+                ['tenant_id' => $tenantId, 'code' => $type['code']],
+                ['invoice_group_id' => $type['group'], 'name' => $type['name'], 'posting_behavior' => $type['posting_behavior'], 'is_postable' => $type['is_postable'], 'is_purchase' => $type['is_purchase'], 'is_active' => true, 'updated_at' => $now, 'created_at' => $now],
+            );
+        }
     }
 
     /** Creates configuration only; balances remain entirely journal-derived. */

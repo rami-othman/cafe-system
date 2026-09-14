@@ -9,9 +9,11 @@ class DailyReportCubit extends Cubit<DailyReportState> {
       super(const DailyReportState());
 
   final ReportsRepository _repository;
+  int _requestVersion = 0;
 
   Future<void> loadReport({DateTime? date, int? branchId}) async {
     final DateTime? selectedDate = date ?? state.selectedDate;
+    final int request = ++_requestVersion;
     emit(
       state.copyWith(
         status: DailyReportStatus.loading,
@@ -23,6 +25,7 @@ class DailyReportCubit extends Cubit<DailyReportState> {
         date: selectedDate,
         branchId: branchId,
       );
+      if (request != _requestVersion || isClosed) return;
       final DateTime? reportDate = selectedDate ?? report.reportDate;
       emit(
         state.copyWith(
@@ -37,6 +40,7 @@ class DailyReportCubit extends Cubit<DailyReportState> {
         ),
       );
     } catch (error) {
+      if (request != _requestVersion || isClosed) return;
       emit(
         state.copyWith(
           status: DailyReportStatus.error,

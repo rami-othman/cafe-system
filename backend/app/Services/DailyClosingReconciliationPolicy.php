@@ -107,7 +107,15 @@ final class DailyClosingReconciliationPolicy
             ->where('p.tenant_id', $tenant)->where('p.branch_id', $branch)->where('p.status', 'posted')->where('l.kind', 'bank')
             ->whereDate('p.payment_date', $day)->pluck('l.financial_account_id');
 
-        return $expenseBank->merge($supplierBank)->unique()->values()->all();
+        $customerPaymentBank = DB::table('customer_payments as p')->join('financial_locations as l', 'l.id', '=', 'p.financial_location_id')
+            ->where('p.tenant_id', $tenant)->where('p.branch_id', $branch)->where('p.status', 'posted')->where('l.kind', 'bank')
+            ->whereDate('p.payment_date', $day)->pluck('l.financial_account_id');
+
+        $customerRefundBank = DB::table('customer_refunds as r')->join('financial_locations as l', 'l.id', '=', 'r.financial_location_id')
+            ->where('r.tenant_id', $tenant)->where('r.branch_id', $branch)->where('r.status', 'posted')->where('l.kind', 'bank')
+            ->whereDate('r.refund_date', $day)->pluck('l.financial_account_id');
+
+        return $expenseBank->merge($supplierBank)->merge($customerPaymentBank)->merge($customerRefundBank)->unique()->values()->all();
     }
 
     private function completed(int $tenant, string $type, string $date, Collection $accountIds): bool

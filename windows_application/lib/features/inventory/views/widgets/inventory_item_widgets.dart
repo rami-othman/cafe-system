@@ -4,7 +4,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/inventory_text_styles.dart';
 import '../../../../core/utils/backend_datetime.dart';
 import '../../../../shared/widgets/management_ui.dart';
+import '../../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../../models/inventory_models.dart';
+import '../../widgets/warehouse_dropdown.dart';
 
 String inventoryItemTypeLabel(String type) => switch (type) {
   'stock_item' => 'صنف مخزني',
@@ -70,7 +72,7 @@ class ItemFilters extends StatelessWidget {
   final String stockStatus;
   final int? warehouseId;
   final List<String> categories;
-  final List<({int id, String name})> warehouses;
+  final List<WarehouseLocation> warehouses;
   final ValueChanged<String> onSearch;
   final ValueChanged<String> onCategoryChanged;
   final ValueChanged<String> onTypeChanged;
@@ -126,26 +128,12 @@ class ItemFilters extends StatelessWidget {
         },
         onChanged: onStatusChanged,
       ),
-      SizedBox(
+      WarehouseDropdown(
+        value: warehouseId,
+        warehouses: warehouses,
+        allLabel: 'كل المخازن',
         width: 190,
-        child: DropdownButtonFormField<int?>(
-          initialValue: warehouseId,
-          isExpanded: true,
-          decoration: const InputDecoration(labelText: 'المخزن'),
-          items: <DropdownMenuItem<int?>>[
-            const DropdownMenuItem<int?>(
-              value: null,
-              child: Text('كل المخازن'),
-            ),
-            ...warehouses.map(
-              (({int id, String name}) warehouse) => DropdownMenuItem<int?>(
-                value: warehouse.id,
-                child: Text(warehouse.name, overflow: TextOverflow.ellipsis),
-              ),
-            ),
-          ],
-          onChanged: onWarehouseChanged,
-        ),
+        onChanged: onWarehouseChanged,
       ),
       TextButton.icon(
         onPressed: onClear,

@@ -15,7 +15,9 @@ import '../models/available_discount.dart';
 import '../models/cart_item.dart';
 import '../models/customer.dart';
 import '../models/order_type.dart';
+import '../models/payment_method.dart';
 import '../models/payment_result.dart';
+import '../models/payment_summary.dart';
 import 'cart_customer_selector.dart';
 import 'cart_item_tile.dart';
 import 'discount_dialog.dart';
@@ -200,9 +202,10 @@ class PosCartPanel extends StatelessWidget {
       return;
     }
 
+    PaymentSummary? summary;
     if (state.currentOrderId != null) {
       try {
-        await cubit.repository.getPaymentSummary(
+        summary = await cubit.repository.getPaymentSummary(
           orderId: state.currentOrderId!,
           amountReceived: state.total,
         );
@@ -220,6 +223,32 @@ class PosCartPanel extends StatelessWidget {
       return;
     }
 
+    final List<PaymentMethod> availableMethods;
+    if (state.currentOrderId != null) {
+      // Order already exists on the backend: the summary is authoritative,
+      // so an empty methods list means Finance truly has nothing usable.
+      availableMethods = (summary?.methods ?? const <String>[])
+          .map((String value) => _paymentMethodForApiValue(value))
+          .whereType<PaymentMethod>()
+          .toList(growable: false);
+      if (availableMethods.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا توجد طريقة دفع فعّالة مرتبطة بحساب مالي.'),
+          ),
+        );
+        return;
+      }
+    } else {
+      // No backend order yet (published-menu carts create it at payment
+      // time), so there is nothing to query. Offer the standard methods and
+      // let the server reject an invalid one when the order is submitted.
+      availableMethods = const <PaymentMethod>[
+        PaymentMethod.cash,
+        PaymentMethod.card,
+      ];
+    }
+
     final PaymentResult? result = await showDialog<PaymentResult>(
       context: context,
       barrierDismissible: true,
@@ -228,6 +257,7 @@ class PosCartPanel extends StatelessWidget {
         return PaymentDialog(
           totalDue: state.total,
           itemCount: state.totalItems,
+          availableMethods: availableMethods,
           onSubmit: cubit.completeLocalPayment,
         );
       },
@@ -235,6 +265,13 @@ class PosCartPanel extends StatelessWidget {
 
     if (!context.mounted || result == null) return;
   }
+}
+
+PaymentMethod? _paymentMethodForApiValue(String value) {
+  for (final PaymentMethod method in PaymentMethod.values) {
+    if (method.apiValue == value) return method;
+  }
+  return null;
 }
 
 class _OrderControls extends StatelessWidget {

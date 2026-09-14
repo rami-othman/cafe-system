@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             MenuCatalogSeeder::class,
             ProductModifierSeeder::class,
             CustomerAndTableSeeder::class,
+            SalesPhaseOneDemoSeeder::class,
             InventorySeeder::class,
             DiscountSeeder::class,
             LoyaltySeeder::class,
@@ -30,9 +31,11 @@ class DatabaseSeeder extends Seeder
         if (app()->environment(['local', 'development'])) {
             $this->call(CustomerOrderHistoryDemoSeeder::class);
             $this->call(FinanceOperationsDemoSeeder::class);
+            $this->call(SalesPhaseTwoDemoSeeder::class);
+            $this->call(SalesPhaseThreeDemoSeeder::class);
+            $this->call(SalesPhaseFourDemoSeeder::class);
             $this->call(Cafe618InventoryOperationsDemoSeeder::class);
-            $this->call(Cafe618PosSalesDemoSeeder::class);
-            $this->call(Cafe618FinanceOperationsDemoSeeder::class);
+            $this->call(Cafe618ReportsDemoSeeder::class);
         }
     }
 }

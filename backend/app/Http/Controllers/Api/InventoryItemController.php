@@ -24,9 +24,25 @@ class InventoryItemController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $branchId = $request->filled('branchId') ? (int) $request->query('branchId') : null;
         $warehouseId = $request->filled('warehouseId') ? (int) $request->query('warehouseId') : null;
-        if ($warehouseId && ! DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->exists()) {
-            abort(422, 'The selected warehouse is not available.');
+        if ($branchId) {
+            abort_unless(DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->whereNull('deleted_at')->exists(), 404);
+            InventoryAccess::assertBranchAccess($request, $branchId);
+        }
+        if ($warehouseId) {
+            $warehouse = DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->first();
+            if (! $warehouse) {
+                abort(422, 'The selected warehouse is not available.');
+            }
+            // Tenant ownership alone is not enough: a branch-restricted actor
+            // must not be able to pull another branch's items (with names/SKUs
+            // visible, just zeroed stock) by requesting its warehouseId directly.
+            InventoryAccess::assertBranchAccess($request, $warehouse->branch_id);
+            if ($branchId && $warehouse->branch_id !== null && (int) $warehouse->branch_id !== $branchId) {
+                abort(422, 'The selected warehouse does not belong to the selected branch.');
+            }
+            if ($warehouse->branch_id === null) $branchId = null;
         }
         $stockTotals = DB::table('stock_balances')
             ->select(
@@ -37,9 +53,10 @@ class InventoryItemController extends Controller
             )
             ->where('tenant_id', $tenant)
             ->groupBy('inventory_item_id');
-        $stockTotals->whereIn('warehouse_id', function ($warehouses) use ($tenant, $request): void {
+        $stockTotals->whereIn('warehouse_id', function ($warehouses) use ($tenant, $request, $branchId): void {
             $warehouses->select('id')->from('warehouses')->where('tenant_id', $tenant);
             InventoryAccess::scopeWarehouseBranches($warehouses, $request, 'branch_id');
+            if ($branchId) $warehouses->where('branch_id', $branchId);
         });
         if ($warehouseId) {
             $stockTotals->where('warehouse_id', $warehouseId);

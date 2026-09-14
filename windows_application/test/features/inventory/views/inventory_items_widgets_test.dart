@@ -1,7 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/features/finance_inventory_setup/models/finance_setup_models.dart';
 import 'package:windows_application/features/inventory/models/inventory_models.dart';
 import 'package:windows_application/features/inventory/views/widgets/inventory_item_widgets.dart';
+import 'package:windows_application/features/operational_context/controllers/operational_branch_cubit.dart';
+import 'package:windows_application/features/operational_context/repositories/operational_branch_repository.dart';
+import 'package:windows_application/features/pos/models/branch.dart';
+
+class _FakeOperationalBranchCubit extends OperationalBranchCubit {
+  _FakeOperationalBranchCubit(int? selectedBranchId)
+    : super(repository: const _NoopBranchReader()) {
+    emit(state.copyWith(selectedBranchId: selectedBranchId));
+  }
+}
+
+class _NoopBranchReader implements OperationalBranchReader {
+  const _NoopBranchReader();
+  @override
+  Future<List<Branch>> getActiveBranches() async => const <Branch>[];
+}
 
 void main() {
   testWidgets('renders item filters and server-status badges in RTL', (
@@ -11,33 +29,50 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final TextEditingController search = TextEditingController();
     addTearDown(search.dispose);
+    final _FakeOperationalBranchCubit branchCubit = _FakeOperationalBranchCubit(
+      1,
+    );
+    addTearDown(branchCubit.close);
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Directionality(
-          textDirection: TextDirection.rtl,
-          child: Scaffold(
-            body: Column(
-              children: <Widget>[
-                ItemFilters(
-                  searchController: search,
-                  category: '',
-                  type: 'packaging',
-                  stockStatus: 'low_stock',
-                  warehouseId: null,
-                  categories: const <String>['Dairy'],
-                  warehouses: const <({int id, String name})>[
-                    (id: 1, name: 'المخزن الرئيسي'),
-                  ],
-                  onSearch: (_) {},
-                  onCategoryChanged: (_) {},
-                  onTypeChanged: (_) {},
-                  onStatusChanged: (_) {},
-                  onWarehouseChanged: (_) {},
-                  onClear: () {},
-                ),
-                const ItemStatusBadge(status: 'out_of_stock'),
-              ],
+        home: BlocProvider<OperationalBranchCubit>.value(
+          value: branchCubit,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              body: Column(
+                children: <Widget>[
+                  ItemFilters(
+                    searchController: search,
+                    category: '',
+                    type: 'packaging',
+                    stockStatus: 'low_stock',
+                    warehouseId: null,
+                    categories: const <String>['Dairy'],
+                    warehouses: const <WarehouseLocation>[
+                      WarehouseLocation(
+                        id: 1,
+                        branchId: 1,
+                        name: 'main',
+                        displayName: 'المخزن الرئيسي',
+                        code: 'MAIN',
+                        type: 'main_store',
+                        typeLabel: 'مخزن رئيسي',
+                        isActive: true,
+                        isLegacy: false,
+                      ),
+                    ],
+                    onSearch: (_) {},
+                    onCategoryChanged: (_) {},
+                    onTypeChanged: (_) {},
+                    onStatusChanged: (_) {},
+                    onWarehouseChanged: (_) {},
+                    onClear: () {},
+                  ),
+                  const ItemStatusBadge(status: 'out_of_stock'),
+                ],
+              ),
             ),
           ),
         ),

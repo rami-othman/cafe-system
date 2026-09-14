@@ -14,6 +14,7 @@ use App\Services\SaleConsumptionService;
 use App\Support\TenantContext;
 use App\Support\Money;
 use App\Support\SalePaymentMethodResolver;
+use App\Support\PaymentPerformanceProbe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class PaymentController extends Controller
         private readonly AccountingPostingService $posting,
         private readonly OperationalAuditService $audit,
         private readonly SaleConsumptionService $consumption,
+        private readonly PaymentPerformanceProbe $performance,
     ) {}
 
     public function summary(Request $request, int $order): JsonResponse
@@ -38,17 +40,25 @@ class PaymentController extends Controller
         $itemCount = (float) DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->whereNull('deleted_at')->sum('quantity');
         $total = (float) $row->total;
         $received = array_key_exists('amountReceived', $data) ? (float) $data['amountReceived'] : $total;
+        $methods = DB::table('payment_methods as pm')
+            ->join('financial_accounts as accounts', 'accounts.id', '=', 'pm.financial_account_id')
+            ->where('pm.tenant_id', $tenantId)->where('pm.is_active', true)
+            ->where('accounts.tenant_id', $tenantId)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')
+            ->whereIn('pm.type', ['cash', 'card'])
+            ->orderBy('pm.sort_order')->orderBy('pm.id')->pluck('pm.type')
+            ->unique()->values();
 
         return response()->json(['data' => [
             'orderId' => $row->id, 'orderNumber' => $row->order_number, 'totalDue' => $total,
             'itemCount' => $itemCount, 'amountReceived' => $received,
             'changeDue' => round(max(0, $received - $total), 2),
-            'methods' => ['cash', 'card', 'wallet', 'split'], 'quickAmounts' => $this->quickAmounts($total),
+            'methods' => $methods, 'quickAmounts' => $this->quickAmounts($total),
         ]]);
     }
 
     public function pay(Request $request, int $order): JsonResponse
     {
+        $this->performance->controllerStarted();
         $data = $request->validate([
             'method' => ['required', 'in:cash,card,wallet,split'],
             'paymentMethodId' => ['nullable', 'integer'],
@@ -60,8 +70,10 @@ class PaymentController extends Controller
         $hash = $this->payloadHash($data);
 
         $actorId = (int) $request->attributes->get('auth_user')->id;
-        $result = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId): array {
-            $row = $this->lockedOrder($request, $tenantId, $order);
+        $transactionStarted = microtime(true);
+        $closureEndedAt = null;
+        $result = DB::transaction(function () use ($request, $tenantId, $order, $data, $hash, $actorId, &$closureEndedAt): array {
+            $row = $this->performance->measure('order locking', fn () => $this->lockedOrder($request, $tenantId, $order));
             $existing = DB::table('payments')->where('tenant_id', $tenantId)
                 ->where('idempotency_key', $data['idempotencyKey'])->first();
             if ($existing) {
@@ -73,7 +85,7 @@ class PaymentController extends Controller
             }
 
             $this->lifecycle->assertPayable($row);
-            $this->assertActorHasOpenShift($tenantId, $row, $actorId);
+            $this->performance->measure('shift validation', fn () => $this->assertActorHasOpenShift($tenantId, $row, $actorId));
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
@@ -90,9 +102,13 @@ class PaymentController extends Controller
             $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
                 ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
                 : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
+            if ($resolvedMethod === null) {
+                throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
+            }
 
             $currency = (string) (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $row->branch_id)->whereNull('deleted_at')->value('currency') ?? 'SYP');
             $now = now();
+            $persistenceStarted = $this->performance->start('payment persistence');
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $row->branch_id, 'order_id' => $row->id,
                 'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $data['method'],
@@ -106,16 +122,16 @@ class PaymentController extends Controller
             DB::table('orders')->where('tenant_id', $tenantId)->where('id', $row->id)->update([
                 'status' => 'paid', 'payment_status' => 'paid', 'closed_at' => $now, 'updated_at' => $now,
             ]);
+            $this->performance->stop('payment persistence', $persistenceStarted);
 
             $consumption = $this->consumption->consumeForOrder($request, $tenantId, $row, $paymentId, $actorId);
-            if ($resolvedMethod !== null) {
-                $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId);
-            } else {
-                $this->audit->record($request, $tenantId, 'pos_order.finance_posting_skipped', 'order', $row->id, [], ['reason' => 'No active Finance mapping for payment method.'], $row->branch_id, $actorId);
-            }
+            $this->performance->measure('accounting posting', fn () => $this->postSale($request, $tenantId, $row, $resolvedMethod, $consumption['cogsTotalCents'], $actorId));
 
-            return ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
+            $answer = ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
+            $closureEndedAt = microtime(true);
+            return $answer;
         }, 3);
+        $this->performance->stop('transaction commit', $closureEndedAt ?? $transactionStarted);
 
         return response()->json(['data' => $this->serializePayment($order, $result['payment'], $result['total'], $result['received'])]);
     }

@@ -6,6 +6,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use App\Support\PaymentPerformanceProbe;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(PaymentPerformanceProbe::class, fn () => new PaymentPerformanceProbe());
     }
 
     /**

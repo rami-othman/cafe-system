@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Domain\Inventory\InventoryPostingService;
 use App\Domain\Inventory\WarehouseTransferService;
+use App\Domain\Purchasing\PurchaseReceivingService;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PosOrderController;
 use App\Http\Controllers\Api\RefundController;
@@ -64,15 +65,18 @@ final class FinanceOperationsDemoSeeder extends Seeder
         [$central, $branchWarehouse] = $this->warehouses($tenant, $branchA);
         $beans = $this->item($tenant, $owner, 'DEMO-BEANS', 'Arabica Coffee Beans', 'kg');
         $milk = $this->item($tenant, $owner, 'DEMO-MILK', 'Fresh Milk', 'liter');
+        $packaging = $this->item($tenant, $owner, 'DEMO-PACKAGING', 'Takeaway Cups & Lids', 'piece');
         $this->assignItem($tenant, $beans, $central);
         $this->assignItem($tenant, $beans, $branchWarehouse);
         $this->assignItem($tenant, $milk, $branchWarehouse);
+        $this->assignItem($tenant, $packaging, $central);
         $this->inventory($request, $tenant, $owner, $central, $branchWarehouse, $beans, $milk, $branchA);
 
         [$product, $variant, $placement, $version] = $this->coffeeProduct($tenant, $owner, $branchA, $branchWarehouse, $beans, $milk);
         $this->saleAndRefund($tenant, $owner, $branchA, $product, $variant, $placement, $version);
         $this->expenses($request, $tenant, $owner, $branchA);
         $this->accountsPayable($request, $tenant, $owner, $branchA);
+        $this->purchasingLineItems($request, $tenant, $owner, $branchA, $central, $branchWarehouse, $beans, $milk, $packaging);
         $this->cashTransfer($request, $tenant, $owner, $branchA);
         $this->reconcileAndClose($request, $tenant, $owner, $branchA);
         $this->closePeriod($request, $tenant, $owner);
@@ -317,6 +321,78 @@ final class FinanceOperationsDemoSeeder extends Seeder
         $this->postedInvoice($request, $tenant, $owner, ['branchId' => $branch, 'supplierId' => $supplierB, 'invoiceNumber' => 'DEMO-DAIRY-OVERDUE-2026-07', 'invoiceDate' => '2026-07-02', 'dueDate' => '2026-07-12', 'invoiceType' => 'inventory', 'subtotal' => '75.00', 'idempotencyKey' => 'finance-demo-ap-overdue']);
     }
 
+    /**
+     * Purchasing Phase 1 line-item purchase invoices, through the exact same
+     * SupplierInvoiceService the header-only invoices above use, PLUS Phase 2
+     * Goods Receipts through PurchaseReceivingService — never a raw insert
+     * into stock_balances/stock_movements. Three receipt-status scenarios,
+     * matching the Phase 2 implementation plan's seed data section exactly:
+     * beans fully received across two receipts (multiple + partial receiving
+     * proven together), milk left partially received, packaging left
+     * completely unreceived.
+     */
+    private function purchasingLineItems(Request $request, int $tenant, int $owner, int $branch, int $warehouse, int $milkWarehouse, int $beans, int $milk, int $packaging): void
+    {
+        $bankMethod = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'BANK')->value('id');
+        $bankLocation = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'BANK')->value('id');
+
+        $beanSupplier = $this->supplier($request, $tenant, $owner, 'Demo Bean Roasters', 'beans-demo@supplier.local');
+        $beansInvoice = $this->postedInvoice($request, $tenant, $owner, [
+            'branchId' => $branch, 'supplierId' => $beanSupplier, 'invoiceNumber' => 'DEMO-BEANS-LINES-2026-08', 'invoiceDate' => '2026-08-15', 'dueDate' => '2026-09-14',
+            'invoiceType' => 'inventory',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Arabica coffee beans', 'inventoryItemId' => $beans, 'purchaseUnit' => 'kg', 'quantity' => '10.000', 'unitPrice' => '17.5000', 'warehouseId' => $warehouse]],
+            'idempotencyKey' => 'finance-demo-purchase-beans-lines',
+        ]);
+        // Fully received, across two Goods Receipts — proves multiple
+        // receipts + partial receiving reconciling to fully_received.
+        $this->receiveInvoice($request, $tenant, $owner, $beansInvoice, '2026-08-16', '6.000', 'finance-demo-grn-beans-1');
+        $this->receiveInvoice($request, $tenant, $owner, $beansInvoice, '2026-08-19', '4.000', 'finance-demo-grn-beans-2');
+
+        $dairySupplier = $this->supplier($request, $tenant, $owner, 'Demo Dairy & Bakery', 'dairy-demo@supplier.local');
+        $milkInvoice = $this->postedInvoice($request, $tenant, $owner, [
+            'branchId' => $branch, 'supplierId' => $dairySupplier, 'invoiceNumber' => 'DEMO-MILK-LINES-2026-08', 'invoiceDate' => '2026-08-18', 'dueDate' => '2026-09-17',
+            'invoiceType' => 'inventory',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Fresh milk delivery', 'inventoryItemId' => $milk, 'purchaseUnit' => 'liter', 'quantity' => '20.000', 'unitPrice' => '2.2500', 'warehouseId' => $milkWarehouse]],
+            'idempotencyKey' => 'finance-demo-purchase-milk-lines',
+        ]);
+        $this->payment($request, $tenant, $owner, $branch, $dairySupplier, $milkInvoice->id, '20.00', '2026-08-20', $bankMethod, $bankLocation, 'finance-demo-purchase-milk-lines-payment');
+        // Partially received on purpose — demonstrates receipt_status is
+        // completely independent of payment_status (this invoice is already
+        // fully paid above, yet only partially received here).
+        $this->receiveInvoice($request, $tenant, $owner, $milkInvoice, '2026-08-19', '12.000', 'finance-demo-grn-milk-1');
+
+        $packagingSupplier = $this->supplier($request, $tenant, $owner, 'Demo Packaging Supplies', 'packaging-demo@supplier.local');
+        // Intentionally left unreceived (receipt_status stays not_received)
+        // — proves a posted inventory invoice with zero Goods Receipts is a
+        // normal, valid state, not an error.
+        $this->postedInvoice($request, $tenant, $owner, [
+            'branchId' => $branch, 'supplierId' => $packagingSupplier, 'invoiceNumber' => 'DEMO-PKG-LINES-2026-08', 'invoiceDate' => '2026-08-22', 'dueDate' => '2026-09-21',
+            'invoiceType' => 'inventory',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Takeaway cups and lids', 'inventoryItemId' => $packaging, 'purchaseUnit' => 'piece', 'quantity' => '500.000', 'unitPrice' => '0.3000', 'warehouseId' => $warehouse]],
+            'idempotencyKey' => 'finance-demo-purchase-packaging-lines',
+        ]);
+
+        $utilities = (int) DB::table('expense_categories')->where('tenant_id', $tenant)->where('code', 'DEMO-UTILITIES')->value('id');
+        $internetSupplier = $this->supplier($request, $tenant, $owner, 'Demo Telecom Provider', 'telecom-demo@supplier.local');
+        $this->postedInvoice($request, $tenant, $owner, [
+            'branchId' => $branch, 'supplierId' => $internetSupplier, 'invoiceNumber' => 'DEMO-NET-LINES-2026-08', 'invoiceDate' => '2026-08-05', 'dueDate' => '2026-09-04',
+            'invoiceType' => 'expense', 'expenseCategoryId' => $utilities,
+            'lines' => [['lineType' => 'expense', 'description' => 'Monthly internet service', 'quantity' => '1', 'unitPrice' => '35.00']],
+            'idempotencyKey' => 'finance-demo-purchase-internet-lines',
+        ]);
+
+        $maintenanceAccount = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '6130')->value('id');
+        DB::table('expense_categories')->updateOrInsert(['tenant_id' => $tenant, 'code' => 'DEMO-MAINTENANCE'], ['name' => 'Demo Maintenance', 'financial_account_id' => $maintenanceAccount, 'is_active' => true, 'sort_order' => 2, 'created_by' => $owner, 'updated_by' => $owner, 'created_at' => now(), 'updated_at' => now()]);
+        $maintenanceCategory = (int) DB::table('expense_categories')->where('tenant_id', $tenant)->where('code', 'DEMO-MAINTENANCE')->value('id');
+        $maintenanceSupplier = $this->supplier($request, $tenant, $owner, 'Demo Equipment Services', 'equipment-demo@supplier.local');
+        $this->postedInvoice($request, $tenant, $owner, [
+            'branchId' => $branch, 'supplierId' => $maintenanceSupplier, 'invoiceNumber' => 'DEMO-MAINT-LINES-2026-08', 'invoiceDate' => '2026-08-10', 'dueDate' => '2026-09-09',
+            'invoiceType' => 'expense', 'expenseCategoryId' => $maintenanceCategory,
+            'lines' => [['lineType' => 'expense', 'description' => 'Espresso machine service visit', 'quantity' => '1', 'unitPrice' => '60.00']],
+            'idempotencyKey' => 'finance-demo-purchase-maintenance-lines',
+        ]);
+    }
+
     private function cashTransfer(Request $request, int $tenant, int $owner, int $branch): void
     {
         app(CashTransferService::class)->create($request, $tenant, ['branchId' => $branch, 'fromFinancialLocationId' => DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id'), 'toFinancialLocationId' => DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'BANK')->value('id'), 'amount' => '25.00', 'transferDate' => '2026-07-26', 'description' => 'Demo cash banking transfer', 'idempotencyKey' => 'finance-demo-cash-bank-transfer'], $owner);
@@ -328,6 +404,24 @@ final class FinanceOperationsDemoSeeder extends Seeder
         $id = DB::table('suppliers')->where('tenant_id', $tenant)->where('email', $email)->value('id');
 
         return $id ? (int) $id : app(SupplierService::class)->create($request, $tenant, ['name' => $name, 'email' => $email, 'paymentTermsDays' => 30], $owner);
+    }
+
+    /**
+     * Purchasing Phase 2 — creates and immediately posts a Goods Receipt
+     * against a single-line inventory purchase invoice, exclusively through
+     * PurchaseReceivingService (which itself calls InventoryPostingService).
+     * Never a raw insert into stock_balances/stock_movements/purchase_receipts.
+     */
+    private function receiveInvoice(Request $request, int $tenant, int $owner, object $invoice, string $receiptDate, string $quantity, string $idempotencyKey): void
+    {
+        $lineId = (int) DB::table('supplier_invoice_lines')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoice->id)->value('id');
+        $service = app(PurchaseReceivingService::class);
+        $receipt = $service->create($request, $tenant, $invoice->id, [
+            'receiptDate' => $receiptDate,
+            'idempotencyKey' => $idempotencyKey,
+            'lines' => [['supplierInvoiceLineId' => $lineId, 'quantity' => $quantity]],
+        ], $owner);
+        $service->post($request, $tenant, $receipt->id, ['idempotencyKey' => $idempotencyKey.'-post'], $owner);
     }
 
     private function postedInvoice(Request $request, int $tenant, int $owner, array $data): object

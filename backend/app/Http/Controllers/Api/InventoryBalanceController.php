@@ -17,11 +17,29 @@ class InventoryBalanceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $filters = $request->validate([
+            'branchId' => ['nullable', 'integer'],
+            'warehouseId' => ['nullable', 'integer'],
+        ]);
+        $branchId = isset($filters['branchId']) ? (int) $filters['branchId'] : null;
+        $warehouseId = isset($filters['warehouseId']) ? (int) $filters['warehouseId'] : null;
+        if ($branchId) {
+            abort_unless(DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->whereNull('deleted_at')->exists(), 404);
+            InventoryAccess::assertBranchAccess($request, $branchId);
+        }
+        if ($warehouseId) {
+            $warehouseBranchId = DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->whereNull('deleted_at')->value('branch_id');
+            abort_if($warehouseBranchId === null && ! DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->whereNull('deleted_at')->exists(), 404);
+            InventoryAccess::assertBranchAccess($request, $warehouseBranchId ? (int) $warehouseBranchId : null);
+            if ($branchId && $warehouseBranchId !== null && (int) $warehouseBranchId !== $branchId) {
+                abort(422, 'The selected warehouse does not belong to the selected branch.');
+            }
+            if ($warehouseBranchId === null) $branchId = null;
+        }
         $query = DB::table('stock_balances as balances')->join('inventory_items as items', 'items.id', '=', 'balances.inventory_item_id')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('items.is_active', true)->whereNull('items.deleted_at')->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%')->select('balances.*', 'items.name_ar', 'items.name_en', 'items.sku', 'items.unit', 'items.minimum_stock', 'items.reorder_level', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name');
         InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
-        if ($request->filled('warehouseId')) {
-            $query->where('balances.warehouse_id', $request->query('warehouseId'));
-        }
+        if ($branchId) $query->where('warehouses.branch_id', $branchId);
+        if ($warehouseId) $query->where('balances.warehouse_id', $warehouseId);
         if ($request->filled('search')) {
             $like = '%'.strtolower($request->query('search')).'%';
             $query->where(fn (Builder $q) => $q->whereRaw('LOWER(items.name_ar) LIKE ?', [$like])->orWhereRaw('LOWER(items.name_en) LIKE ?', [$like])->orWhereRaw('LOWER(items.sku) LIKE ?', [$like]));
@@ -65,9 +83,10 @@ class InventoryBalanceController extends Controller
         if ($warehouseId && ! DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->where('code', 'not like', 'LEGACY-%')->exists()) {
             abort(422, 'The selected warehouse is not available.');
         }
-        if ($warehouseId && $branchId && ! DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->where('branch_id', $branchId)->exists()) {
+        if ($warehouseId && $branchId && DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->whereNotNull('branch_id')->where('branch_id', '<>', $branchId)->exists()) {
             abort(422, 'The selected warehouse does not belong to the selected branch.');
         }
+        if ($warehouseId && DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->whereNull('branch_id')->exists()) $branchId = null;
         $from = $filters['from'] ?? now()->startOfMonth()->toDateString();
         $to = $filters['to'] ?? now()->toDateString();
         $movementType = $filters['movement_type'] ?? null;

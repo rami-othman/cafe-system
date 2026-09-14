@@ -13,10 +13,12 @@ use App\Http\Middleware\EnsureFinancePermission;
 use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\RequireChangedPassword;
+use App\Http\Middleware\MeasurePaymentPerformance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
@@ -30,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(MeasurePaymentPerformance::class);
         $middleware->trustProxies(
             // This runs before the configuration repository exists. Render
             // supplies this as a process environment variable, which remains
@@ -75,5 +78,17 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*')) {
                 return response()->json(['message' => $exception->getMessage(), 'code' => 'DOMAIN_RULE_VIOLATION'], 422);
             }
+        });
+        $exceptions->render(function (ValidationException $exception, Request $request) {
+            if (! $request->is('api/v1/orders/*/pay')) return null;
+            $errors = $exception->errors();
+            $code = match (true) {
+                isset($errors['shiftId']) => 'NO_OPEN_SHIFT',
+                isset($errors['paymentMethodId']) => 'PAYMENT_METHOD_INVALID',
+                isset($errors['lines']) => 'ACCOUNTING_CONFIGURATION_MISSING',
+                isset($errors['quantity']), isset($errors['warehouseId']) => 'INSUFFICIENT_STOCK',
+                default => 'PAYMENT_VALIDATION_FAILED',
+            };
+            return response()->json(['message' => $exception->getMessage(), 'code' => $code, 'errors' => $errors], 422);
         });
     })->create();

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/branding/brand_header.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AuthCard extends StatelessWidget {
   const AuthCard({
@@ -54,10 +56,10 @@ class AuthCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    const Center(child: _BrandMark()),
+                    const Center(child: BrandLogo(compact: false, size: 118)),
                     const SizedBox(height: AppSpacing.xl),
                     Text(
-                      'Cafe System 618',
+                      AppLocalizations.of(context).appName,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.headlineMedium,
                     ),
@@ -82,29 +84,6 @@ class AuthCard extends StatelessWidget {
         ),
       ],
     ),
-  );
-}
-
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 54,
-    height: 54,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: AppColors.primary,
-      borderRadius: AppRadius.control,
-      boxShadow: const <BoxShadow>[
-        BoxShadow(
-          color: Color(0x263B2417),
-          blurRadius: 14,
-          offset: Offset(0, 6),
-        ),
-      ],
-    ),
-    child: const Icon(Icons.local_cafe_outlined, color: AppColors.textInverse),
   );
 }
 

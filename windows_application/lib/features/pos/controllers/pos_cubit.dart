@@ -633,8 +633,9 @@ class PosCubit extends Cubit<PosState> {
     // A retry after a definite failure must reuse the same idempotency key
     // for this order — the backend dedupes a replayed /pay request by this
     // key, so a fresh key per attempt would defeat double-charge protection.
-    final String idempotencyKey =
-        _paymentIdempotencyKey ??= _operationKey('payment');
+    final String idempotencyKey = _paymentIdempotencyKey ??= _operationKey(
+      'payment',
+    );
 
     try {
       final PaymentResult payment = await repository.payOrder(
@@ -1290,6 +1291,24 @@ class PosCubit extends Cubit<PosState> {
 
   String _messageFor(Object error) {
     if (error is ApiException) {
+      final String? expected = switch (error.code) {
+        'NO_OPEN_SHIFT' =>
+          'لا توجد وردية مفتوحة صالحة لهذا الطلب. افتح وردية ثم أعد المحاولة.',
+        'WAREHOUSE_NOT_CONFIGURED' => 'لا يوجد مستودع رئيسي فعّال لفرع الطلب.',
+        'WAREHOUSE_CONFIGURATION_AMBIGUOUS' =>
+          'إعداد مستودع الفرع غير صالح. يوجد أكثر من مستودع رئيسي.',
+        'ACCOUNTING_CONFIGURATION_MISSING' =>
+          'إعدادات الحسابات المطلوبة لإتمام الدفع غير مكتملة.',
+        'INSUFFICIENT_STOCK' => 'المخزون غير كافٍ لإتمام عملية البيع.',
+        'PAYMENT_METHOD_INVALID' =>
+          'طريقة الدفع غير فعّالة أو غير مرتبطة بحساب مالي صالح.',
+        'PAYMENT_ALREADY_COMPLETED' ||
+        'ORDER_ALREADY_PAID' => 'تم دفع هذا الطلب مسبقاً.',
+        'PAYMENT_IDEMPOTENCY_CONFLICT' =>
+          'تعارض في محاولة الدفع. حدّث الطلب قبل إعادة المحاولة.',
+        _ => null,
+      };
+      if (expected != null) return expected;
       if (error.validationErrors?.isNotEmpty ?? false) {
         return error.validationErrors!.values.first.first;
       }

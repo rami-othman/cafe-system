@@ -43,6 +43,10 @@ class FinanceTransactionTypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = financeTone(FinanceTransactionType.badgeTone(normalizedType));
+    // Localizations.of (not the generated AppLocalizations.of, which force-unwraps)
+    // so a host that forgot to register AppLocalizations.delegate renders the raw
+    // source-type code instead of crashing the whole widget tree.
+    final AppLocalizations? l10n = Localizations.of<AppLocalizations>(context, AppLocalizations);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
@@ -51,7 +55,9 @@ class FinanceTransactionTypeBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(FinanceRadius.pill),
       ),
       child: Text(
-        FinanceTransactionType.label(AppLocalizations.of(context), normalizedType),
+        l10n == null
+            ? (normalizedType ?? '—')
+            : FinanceTransactionType.label(l10n, normalizedType),
         style: FinanceText.small.copyWith(
           color: colors.foreground,
           fontWeight: FontWeight.w700,
@@ -72,7 +78,7 @@ class FinanceReversalBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final colors = financeTone(FinanceTone.warning);
-    final AppLocalizations l10n = AppLocalizations.of(context);
+    final AppLocalizations? l10n = Localizations.of<AppLocalizations>(context, AppLocalizations);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
@@ -81,9 +87,11 @@ class FinanceReversalBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(FinanceRadius.pill),
       ),
       child: Text(
-        state == 'reversal_entry'
-            ? l10n.financeTransactionReversalJournal
-            : l10n.financeStatusReversed,
+        l10n == null
+            ? state
+            : (state == 'reversal_entry'
+                  ? l10n.financeTransactionReversalJournal
+                  : l10n.financeStatusReversed),
         style: FinanceText.small.copyWith(
           color: colors.foreground,
           fontWeight: FontWeight.w700,

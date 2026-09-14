@@ -248,4 +248,32 @@ class FinanceDashboardSalesAndCogsTest extends TestCase
         $unreliable = $this->getJson("/api/v1/finance/dashboard?date_from=$date&date_to=$date&branch_id=$branch", $headers)->assertOk()->json('data');
         $this->assertFalse($unreliable['kpis']['operatingProfit']['reliable']);
     }
+
+    /** Phase 5: Net Sales/Gross Profit/COGS must union POS with posted Manual Sales Invoices — never POS-only. */
+    public function test_net_sales_and_cogs_union_pos_with_posted_manual_sales_invoices(): void
+    {
+        $this->seed();
+        $tenant = $this->tenantId();
+        $headers = $this->headers($tenant, 'owner', 'sales-union');
+        $branch = $this->branchId($tenant);
+        $date = '2030-04-11';
+
+        $order = $this->makeOrder($tenant, $branch, '100.00', $date.' 10:00:00');
+        DB::table('orders')->where('id', $order)->update(['cogs_total' => '30.00']);
+        $this->makePayment($tenant, $branch, $order, '100.00', $date.' 10:00:00');
+
+        $customerId = (int) DB::table('customers')->insertGetId(['tenant_id' => $tenant, 'name' => 'Union Customer', 'customer_number' => 'FD-CUST-1', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $productId = (int) DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Consulting', 'name_ar' => 'استشارة', 'sku' => 'FD-SVC-1', 'price' => '50.00', 'is_active' => true, 'is_stock_tracked' => false, 'inventory_controlled' => false, 'created_at' => now(), 'updated_at' => now()]);
+        $invoiceId = (int) DB::table('sales_invoices')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'customer_id' => $customerId, 'invoice_number' => 'FD-SI-1', 'invoice_date' => $date, 'currency_code' => 'SYP', 'status' => 'posted', 'tax_rate' => '0.000000', 'subtotal' => '50.00', 'discount_total' => '0.00', 'tax_total' => '0.00', 'total' => '50.00', 'posted_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('sales_invoice_lines')->insert(['tenant_id' => $tenant, 'sales_invoice_id' => $invoiceId, 'product_id' => $productId, 'line_number' => 1, 'product_name' => 'Consulting', 'quantity' => '1.000', 'unit_price' => '50.00', 'discount_total' => '0.00', 'tax_rate' => '0.000000', 'tax_total' => '0.00', 'subtotal' => '50.00', 'total' => '50.00', 'cogs_total' => '10.00', 'created_at' => now(), 'updated_at' => now()]);
+
+        $data = $this->getJson("/api/v1/finance/dashboard?date_from=$date&date_to=$date&branch_id=$branch", $headers)->assertOk()->json('data');
+        $this->assertSame('150.00', $data['kpis']['netSales']['current'], 'Union: 100 POS + 50 manual invoice.');
+        $this->assertSame('40.00', $data['kpis']['grossProfit']['cogs']['amount'], 'Union: 30 POS + 10 manual invoice COGS.');
+        $this->assertSame('110.00', $data['kpis']['grossProfit']['current'], '150 net sales - 40 cogs.');
+        $this->assertArrayHasKey('accountsReceivable', $data['kpis'], 'Phase 5 AR KPI tile must be present.');
+        $this->assertSame('50.00', $data['kpis']['accountsReceivable']['outstanding']);
+        $this->assertArrayHasKey('customerCredit', $data['kpis'], 'Phase 5 Customer Credit KPI tile must be present.');
+        $this->assertSame('0.00', $data['kpis']['customerCredit']['balance']);
+    }
 }

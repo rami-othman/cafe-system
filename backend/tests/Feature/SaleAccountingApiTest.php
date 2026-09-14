@@ -396,6 +396,7 @@ class SaleAccountingApiTest extends TestCase
         $barWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-BAR")->value('id');
 
         $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
+        DB::table('warehouses')->where('id', $mainWarehouseId)->update(['code' => 'DOWNTOWN-PRIMARY']);
         $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '20.000', warehouseId: $mainWarehouseId);
         $product = $this->stockTrackedProduct($tenant, name: 'Bar Routed Item', price: '9.00');
         $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '1.000']]);
@@ -452,7 +453,7 @@ class SaleAccountingApiTest extends TestCase
         $this->assertSame('unpaid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
     }
 
-    public function test_an_unconfigured_legacy_payment_method_still_completes_the_sale_without_posting(): void
+    public function test_an_unconfigured_payment_method_is_rejected_and_the_sale_remains_atomic(): void
     {
         $this->seed();
         $tenant = $this->demoTenantId();
@@ -466,11 +467,11 @@ class SaleAccountingApiTest extends TestCase
         $totals = $order->json('data.totals');
 
         $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'wallet', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-unmapped-1'], $headers)
-            ->assertOk()->assertJsonPath('data.payment.status', 'completed');
+            ->assertUnprocessable()->assertJsonPath('code', 'PAYMENT_METHOD_INVALID');
 
-        $this->assertSame('paid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
+        $this->assertSame('unpaid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
+        $this->assertSame(0, DB::table('payments')->where('tenant_id', $tenant)->where('order_id', $orderId)->count());
         $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->count());
-        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $tenant, 'action' => 'pos_order.finance_posting_skipped', 'entity_id' => $orderId]);
     }
 
     public function test_cash_sale_moves_the_cash_drawer_ledger_balance(): void

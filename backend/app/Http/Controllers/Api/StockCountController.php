@@ -23,6 +23,12 @@ class StockCountController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $filters = $request->validate([
+            'branchId' => ['nullable', 'integer'],
+            'warehouseId' => ['nullable', 'integer'],
+        ]);
+        $branchId = isset($filters['branchId']) ? (int) $filters['branchId'] : null;
+        $warehouseId = isset($filters['warehouseId']) ? (int) $filters['warehouseId'] : null;
         $lineTotals = DB::table('stock_count_lines')
             ->selectRaw('stock_count_id, COUNT(*) as total_items, SUM(CASE WHEN counted_at IS NOT NULL THEN 1 ELSE 0 END) as counted_items, SUM(CASE WHEN variance_quantity <> 0 THEN 1 ELSE 0 END) as variance_items, COALESCE(SUM(variance_quantity * average_unit_cost), 0) as variance_value')
             ->groupBy('stock_count_id');
@@ -35,6 +41,13 @@ class StockCountController extends Controller
             ->where('warehouses.code', 'not like', 'LEGACY-%')
             ->select('counts.*', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'branches.name as branch_name', 'creator.name as creator_name', 'line_totals.total_items', 'line_totals.counted_items', 'line_totals.variance_items', 'line_totals.variance_value');
         InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
+        if ($branchId) InventoryAccess::assertBranchAccess($request, $branchId);
+        if ($warehouseId) {
+            $warehouseBranchId = DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->value('branch_id');
+            InventoryAccess::assertBranchAccess($request, $warehouseBranchId ? (int) $warehouseBranchId : null);
+            if ($branchId && $warehouseBranchId !== null && (int) $warehouseBranchId !== $branchId) abort(422, 'The selected warehouse does not belong to the selected branch.');
+            if ($warehouseBranchId === null) $branchId = null;
+        }
         foreach (['status' => 'counts.status', 'warehouseId' => 'counts.warehouse_id', 'countType' => 'counts.count_type', 'branchId' => 'warehouses.branch_id'] as $key => $column) {
             if ($request->filled($key)) {
                 $query->where($column, $request->query($key));

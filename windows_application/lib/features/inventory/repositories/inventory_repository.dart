@@ -46,6 +46,7 @@ class InventoryRepository {
     String? category,
     String? status,
     int? warehouseId,
+    int? branchId,
     bool activeOnly = false,
   }) async => (await itemsPage(
     search: search,
@@ -63,6 +64,7 @@ class InventoryRepository {
     String? status,
     String? stockStatus,
     int? warehouseId,
+    int? branchId,
     int page = 1,
     int perPage = 25,
   }) async => InventoryItemsPage.fromJson(
@@ -79,6 +81,7 @@ class InventoryRepository {
               if (stockStatus != null && stockStatus.isNotEmpty)
                 'stockStatus': stockStatus,
               if (warehouseId case final int value) 'warehouseId': value,
+              if (branchId case final int value) 'branchId': value,
             },
           )
           as Map,
@@ -108,6 +111,7 @@ class InventoryRepository {
   ).map(InventoryMovement.fromJson).toList(growable: false);
 
   Future<List<InventoryBalance>> balances({
+    int? branchId,
     int? warehouseId,
     String? search,
     String? stockStatus,
@@ -116,6 +120,7 @@ class InventoryRepository {
       'inventory/balances',
       queryParameters: <String, dynamic>{
         'perPage': 100,
+        if (branchId case final int value) 'branchId': value,
         if (warehouseId case final int value) 'warehouseId': value,
         if (search != null && search.isNotEmpty) 'search': search,
         if (stockStatus == 'low') 'lowStock': 'true',
@@ -124,17 +129,20 @@ class InventoryRepository {
     ),
   ).map(InventoryBalance.fromJson).toList(growable: false);
   Future<List<InventoryMovement>> movements({
+    int? branchId,
     int? warehouseId,
     int? itemId,
     String? type,
   }) async => (await movementsPage(
     warehouseId: warehouseId,
+    branchId: branchId,
     itemId: itemId,
     type: type,
     perPage: 100,
   )).movements;
 
   Future<InventoryMovementsPage> movementsPage({
+    int? branchId,
     int? warehouseId,
     int? itemId,
     String? type,
@@ -147,6 +155,7 @@ class InventoryRepository {
             queryParameters: <String, dynamic>{
               'page': page,
               'perPage': perPage,
+              if (branchId case final int value) 'branchId': value,
               if (warehouseId case final int value) 'warehouseId': value,
               if (itemId case final int value) 'itemId': value,
               if (type != null && type.isNotEmpty) 'type': type,
@@ -156,17 +165,20 @@ class InventoryRepository {
     ),
   );
   Future<List<InventoryCount>> counts({
+    int? branchId,
     String? status,
     int? warehouseId,
     String? countType,
   }) async => (await countsPage(
     status: status,
+    branchId: branchId,
     warehouseId: warehouseId,
     countType: countType,
     perPage: 100,
   )).items;
 
   Future<InventoryCountsPage> countsPage({
+    int? branchId,
     String? status,
     int? warehouseId,
     String? countType,
@@ -183,6 +195,7 @@ class InventoryRepository {
             queryParameters: <String, dynamic>{
               'page': page,
               'perPage': perPage,
+              if (branchId case final int value) 'branchId': value,
               if (status != null && status.isNotEmpty) 'status': status,
               if (warehouseId case final int value) 'warehouseId': value,
               if (countType != null && countType.isNotEmpty)

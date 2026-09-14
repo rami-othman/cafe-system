@@ -6,6 +6,7 @@ import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/reports/models/reports_overview.dart';
 import 'package:windows_application/features/reports/repositories/reports_repository.dart';
 import 'package:windows_application/features/reports/views/reports_overview_screen.dart';
+import 'package:windows_application/features/finance_inventory_setup/views/financial_reports_screen.dart';
 import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 import 'package:windows_application/shared/widgets/app_top_bar.dart';
 import 'package:windows_application/shared/widgets/shift_status_badge.dart';
@@ -18,21 +19,22 @@ void main() {
 
   tearDown(() => appRouter.go(AppRoutes.pos));
 
-  testWidgets('Reports route resolves to ReportsOverviewScreen and keeps the sidebar active', (
-    WidgetTester tester,
-  ) async {
-    appRouter.go(AppRoutes.reports);
-    await _pumpApp(tester);
+  testWidgets(
+    'Reports route resolves to ReportsOverviewScreen and keeps the sidebar active',
+    (WidgetTester tester) async {
+      appRouter.go(AppRoutes.reports);
+      await _pumpApp(tester);
 
-    expect(find.byType(ReportsOverviewScreen), findsOneWidget);
-    expect(find.text('Reports Overview'), findsOneWidget);
-    expect(find.text('vs. Previous Period'), findsOneWidget);
-    expect(
-      find.byTooltip('Available in detailed report screens'),
-      findsOneWidget,
-    );
-    expect(_reportsSidebarItem(tester, 'Reports').isActive, isTrue);
-  });
+      expect(find.byType(ReportsOverviewScreen), findsOneWidget);
+      expect(find.text('Reports Overview'), findsOneWidget);
+      expect(find.text('vs. Previous Period'), findsOneWidget);
+      expect(
+        find.byTooltip('Available in detailed report screens'),
+        findsWidgets,
+      );
+      expect(_reportsSidebarItem(tester, 'Reports').isActive, isTrue);
+    },
+  );
 
   testWidgets('Reports module header shows the shared POS chrome', (
     WidgetTester tester,
@@ -73,53 +75,84 @@ void main() {
     expect(find.text('All branches'), findsNothing);
   });
 
-  testWidgets('Reports reacts to runtime language switching without re-navigating', (
+  testWidgets(
+    'Reports reacts to runtime language switching without re-navigating',
+    (WidgetTester tester) async {
+      appRouter.go(AppRoutes.reports);
+      await _pumpApp(tester);
+      expect(find.text('Reports Overview'), findsOneWidget);
+      expect(
+        Directionality.of(tester.element(find.byType(AppTopBar))),
+        TextDirection.ltr,
+      );
+
+      await _switchLanguage(tester, 'العربية');
+      expect(find.text('نظرة عامة على التقارير'), findsOneWidget);
+      expect(find.text('Reports Overview'), findsNothing);
+      expect(
+        Directionality.of(tester.element(find.byType(AppTopBar))),
+        TextDirection.rtl,
+      );
+
+      await _switchLanguage(tester, 'English');
+      expect(find.text('Reports Overview'), findsOneWidget);
+      expect(find.text('نظرة عامة على التقارير'), findsNothing);
+      expect(
+        Directionality.of(tester.element(find.byType(AppTopBar))),
+        TextDirection.ltr,
+      );
+    },
+  );
+
+  testWidgets(
+    'empty-state messaging renders when there is no data for the period',
+    (WidgetTester tester) async {
+      appRouter.go(AppRoutes.reports);
+      await _pumpApp(tester);
+
+      // useBackend:false returns a real, successful but empty overview.
+      expect(
+        find.text('Choose all branches to compare performance.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('No products were sold for this period.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('No operational exceptions found for this period.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('only the implemented Financial Reports category navigates', (
     WidgetTester tester,
   ) async {
     appRouter.go(AppRoutes.reports);
     await _pumpApp(tester);
-    expect(find.text('Reports Overview'), findsOneWidget);
-    expect(
-      Directionality.of(tester.element(find.byType(AppTopBar))),
-      TextDirection.ltr,
-    );
 
-    await _switchLanguage(tester, 'العربية');
-    expect(find.text('نظرة عامة على التقارير'), findsOneWidget);
-    expect(find.text('Reports Overview'), findsNothing);
-    expect(
-      Directionality.of(tester.element(find.byType(AppTopBar))),
-      TextDirection.rtl,
-    );
+    final Finder financialCategory = find.byKey(const Key('report-category-5'));
+    await tester.ensureVisible(financialCategory);
+    await tester.tap(financialCategory);
+    await tester.pumpAndSettle();
 
-    await _switchLanguage(tester, 'English');
-    expect(find.text('Reports Overview'), findsOneWidget);
-    expect(find.text('نظرة عامة على التقارير'), findsNothing);
-    expect(
-      Directionality.of(tester.element(find.byType(AppTopBar))),
-      TextDirection.ltr,
-    );
+    expect(find.byType(FinancialReportsScreen), findsOneWidget);
   });
 
-  testWidgets('empty-state messaging renders when there is no data for the period', (
+  testWidgets('pending purchasing category does not create dead navigation', (
     WidgetTester tester,
   ) async {
     appRouter.go(AppRoutes.reports);
     await _pumpApp(tester);
 
-    // useBackend:false returns a real, successful but empty overview.
-    expect(
-      find.text('Choose all branches to compare performance.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('No products were sold for this period.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('No operational exceptions found for this period.'),
-      findsOneWidget,
-    );
+    final Finder pendingCategory = find.byKey(const Key('report-category-4'));
+    await tester.ensureVisible(pendingCategory);
+    await tester.tap(pendingCategory);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ReportsOverviewScreen), findsOneWidget);
+    expect(find.byType(FinancialReportsScreen), findsNothing);
   });
 
   testWidgets(
@@ -153,76 +186,79 @@ void main() {
     },
   );
 
-  testWidgets('fixed module header stays visible while report content scrolls', (
-    WidgetTester tester,
-  ) async {
-    appRouter.go(AppRoutes.reports);
-    await _pumpApp(tester);
+  testWidgets(
+    'fixed module header stays visible while report content scrolls',
+    (WidgetTester tester) async {
+      appRouter.go(AppRoutes.reports);
+      await _pumpApp(tester);
 
-    final Offset before = tester.getTopLeft(find.byType(AppTopBar));
-    await tester.drag(
-      find.byKey(const Key('reports-overview-scroll-view')),
-      const Offset(0, -600),
-    );
-    await tester.pumpAndSettle();
-    final Offset after = tester.getTopLeft(find.byType(AppTopBar));
+      final Offset before = tester.getTopLeft(find.byType(AppTopBar));
+      await tester.drag(
+        find.byKey(const Key('reports-overview-scroll-view')),
+        const Offset(0, -600),
+      );
+      await tester.pumpAndSettle();
+      final Offset after = tester.getTopLeft(find.byType(AppTopBar));
 
-    expect(after, before);
-    expect(find.byType(AppTopBar), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(after, before);
+      expect(find.byType(AppTopBar), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('overview has a retryable backend error state and Retry actually reloads', (
-    WidgetTester tester,
-  ) async {
-    // The offline/demo repository (useBackend: false) succeeds with an
-    // empty overview rather than failing, so the error state has to be
-    // triggered by a repository that actually throws.
-    final _FailingReportsRepository repository = _FailingReportsRepository();
-    serviceLocator.unregister<ReportsRepository>();
-    serviceLocator.registerLazySingleton<ReportsRepository>(() => repository);
+  testWidgets(
+    'overview has a retryable backend error state and Retry actually reloads',
+    (WidgetTester tester) async {
+      // The offline/demo repository (useBackend: false) succeeds with an
+      // empty overview rather than failing, so the error state has to be
+      // triggered by a repository that actually throws.
+      final _FailingReportsRepository repository = _FailingReportsRepository();
+      serviceLocator.unregister<ReportsRepository>();
+      serviceLocator.registerLazySingleton<ReportsRepository>(() => repository);
 
-    appRouter.go(AppRoutes.reports);
-    await _pumpApp(tester);
+      appRouter.go(AppRoutes.reports);
+      await _pumpApp(tester);
 
-    // The raw exception text must never reach the UI: only the localized
-    // error message is shown, in either language.
-    expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('The overview could not be loaded.'), findsOneWidget);
-    expect(find.textContaining('Backend is not reachable'), findsNothing);
+      // The raw exception text must never reach the UI: only the localized
+      // error message is shown, in either language.
+      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('The overview could not be loaded.'), findsOneWidget);
+      expect(find.textContaining('Backend is not reachable'), findsNothing);
 
-    repository.shouldFail = false;
-    await tester.tap(find.text('Retry'));
-    await tester.pumpAndSettle();
+      repository.shouldFail = false;
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Retry'), findsNothing);
-    expect(find.text('The overview could not be loaded.'), findsNothing);
-    expect(find.text('Reports Overview'), findsOneWidget);
-  });
+      expect(find.text('Retry'), findsNothing);
+      expect(find.text('The overview could not be loaded.'), findsNothing);
+      expect(find.text('Reports Overview'), findsOneWidget);
+    },
+  );
 
-  testWidgets('overview error state is localized in Arabic with no English leakage', (
-    WidgetTester tester,
-  ) async {
-    final _FailingReportsRepository repository = _FailingReportsRepository();
-    serviceLocator.unregister<ReportsRepository>();
-    serviceLocator.registerLazySingleton<ReportsRepository>(() => repository);
+  testWidgets(
+    'overview error state is localized in Arabic with no English leakage',
+    (WidgetTester tester) async {
+      final _FailingReportsRepository repository = _FailingReportsRepository();
+      serviceLocator.unregister<ReportsRepository>();
+      serviceLocator.registerLazySingleton<ReportsRepository>(() => repository);
 
-    appRouter.go(AppRoutes.reports);
-    await _pumpApp(tester);
-    await _switchLanguage(tester, 'العربية');
+      appRouter.go(AppRoutes.reports);
+      await _pumpApp(tester);
+      await _switchLanguage(tester, 'العربية');
 
-    expect(find.text('إعادة المحاولة'), findsOneWidget);
-    expect(find.text('تعذّر تحميل النظرة العامة.'), findsOneWidget);
-    expect(find.text('Retry'), findsNothing);
-    expect(find.textContaining('Backend is not reachable'), findsNothing);
+      expect(find.text('إعادة المحاولة'), findsOneWidget);
+      expect(find.text('تعذّر تحميل النظرة العامة.'), findsOneWidget);
+      expect(find.text('Retry'), findsNothing);
+      expect(find.textContaining('Backend is not reachable'), findsNothing);
 
-    repository.shouldFail = false;
-    await tester.tap(find.text('إعادة المحاولة'));
-    await tester.pumpAndSettle();
+      repository.shouldFail = false;
+      await tester.tap(find.text('إعادة المحاولة'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('إعادة المحاولة'), findsNothing);
-    expect(find.text('نظرة عامة على التقارير'), findsOneWidget);
-  });
+      expect(find.text('إعادة المحاولة'), findsNothing);
+      expect(find.text('نظرة عامة على التقارير'), findsOneWidget);
+    },
+  );
 
   for (final double width in <double>[1280, 1366, 1440, 1600, 1920]) {
     testWidgets('remains overflow-free in English at $width', (
@@ -310,7 +346,10 @@ class _TrendReportsRepository extends ReportsRepository {
   });
 }
 
-Future<void> _pumpApp(WidgetTester tester, {Size size = const Size(1280, 800)}) async {
+Future<void> _pumpApp(
+  WidgetTester tester, {
+  Size size = const Size(1280, 800),
+}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(() {

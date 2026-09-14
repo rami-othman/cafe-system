@@ -7,6 +7,7 @@ import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import 'package:windows_application/features/finance_inventory_setup/repositories/finance_setup_repository.dart';
 import 'package:windows_application/features/finance_inventory_setup/views/daily_closing_screen.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('loads real daily closings and renders KPIs and a table row', (WidgetTester tester) async {
@@ -19,7 +20,11 @@ void main() {
     expect(find.text('DC-001'), findsNothing); // reference isn't rendered in the table, date/branch is
     expect(find.text('2026-09-01'), findsOneWidget);
     expect(find.text('Downtown'), findsOneWidget);
-    expect(find.text('محظورة'), findsOneWidget);
+    // Matches app_ar.arb's actual `financeStatusBlocked` string — this
+    // assertion was never previously exercised (a missing AppLocalizations
+    // delegate in this test's MaterialApp made pumpAndSettle() throw before
+    // reaching it), which is how the wrong grammatical form went unnoticed.
+    expect(find.text('محظور'), findsOneWidget);
     expect(find.text('غير مغلق'), findsOneWidget);
   });
 
@@ -118,6 +123,9 @@ Future<void> _pumpScreen(WidgetTester tester, _FakeBackend backend) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
+      locale: const Locale('ar'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Directionality(textDirection: TextDirection.rtl, child: _wired(backend, const DailyClosingScreen())),
     ),
   );

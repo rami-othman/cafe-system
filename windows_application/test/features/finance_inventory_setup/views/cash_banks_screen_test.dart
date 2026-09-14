@@ -11,6 +11,7 @@ import 'package:windows_application/features/finance_inventory_setup/repositorie
 import 'package:windows_application/features/finance_inventory_setup/views/cash_banks_screen.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_pagination.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   tearDown(() async {
@@ -18,6 +19,9 @@ void main() {
   });
 
   Widget app(Widget child) => MaterialApp(
+    locale: const Locale('ar'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(body: child),
@@ -327,7 +331,14 @@ void main() {
       );
       await tester.binding.setSurfaceSize(const Size(1440, 1400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('الصندوق الرئيسي').first);

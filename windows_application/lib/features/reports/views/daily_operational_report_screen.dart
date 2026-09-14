@@ -8,7 +8,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_empty_state.dart';
-import '../../../shared/widgets/app_loading.dart';
 import '../../pos/controllers/pos_cubit.dart';
 import '../controllers/daily_report_cubit.dart';
 import '../controllers/daily_report_state.dart';
@@ -17,6 +16,7 @@ import '../widgets/report_analytics_cards.dart';
 import '../widgets/report_header.dart';
 import '../widgets/report_kpi_grid.dart';
 import '../widgets/report_tables.dart';
+import '../widgets/reports_overview_components.dart';
 
 class DailyOperationalReportScreen extends StatelessWidget {
   const DailyOperationalReportScreen({super.key});
@@ -25,59 +25,57 @@ class DailyOperationalReportScreen extends StatelessWidget {
   Widget build(BuildContext context) =>
       BlocBuilder<DailyReportCubit, DailyReportState>(
         builder: (BuildContext context, DailyReportState state) {
+          final DailyReportCubit cubit = context.read<DailyReportCubit>();
           return DesktopPageLayout(
             padding: EdgeInsets.zero,
-            child: switch (state.status) {
-              DailyReportStatus.loading => const AppLoading(),
-              DailyReportStatus.empty => const AppEmptyState(
-                message: 'No report data is available for this date.',
-                icon: Icons.bar_chart_outlined,
+            child: SingleChildScrollView(
+              key: const Key('daily-report-scroll-view'),
+              padding: AppSpacing.allXxl,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSizes.ordersContentMaxWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      ReportHeader(
+                        dateLabel: state.dateLabel,
+                        onDateTap: () => _chooseDate(context, cubit),
+                        onPrint: () => _showMessage(context, 'Print the report from your system print dialog.'),
+                        onExport: () => _showMessage(context, 'Report data is loaded from the current branch and date.'),
+                      ),
+                      const SizedBox(height: AppSpacing.xxl),
+                      if (state.data != null) _ReportBody(data: state.data!)
+                      else if (state.status == DailyReportStatus.loading)
+                        const _DailySkeleton()
+                      else if (state.status == DailyReportStatus.empty)
+                        const AppEmptyState(
+                          message: 'No report data is available for this date.',
+                          icon: Icons.bar_chart_outlined,
+                        )
+                      else
+                        _ReportError(
+                          message: state.errorMessage ?? 'The report could not be loaded.',
+                        ),
+                    ],
+                  ),
+                ),
               ),
-              DailyReportStatus.error => _ReportError(
-                message:
-                    state.errorMessage ?? 'The report could not be loaded.',
-              ),
-              DailyReportStatus.loaded => _ReportContent(
-                data: state.data!,
-                dateLabel: state.dateLabel,
-              ),
-            },
+            ),
           );
         },
       );
 }
 
-class _ReportContent extends StatelessWidget {
-  const _ReportContent({required this.data, required this.dateLabel});
+class _ReportBody extends StatelessWidget {
+  const _ReportBody({required this.data});
   final DailyReportData data;
-  final String dateLabel;
   @override
   Widget build(BuildContext context) {
-    final DailyReportCubit cubit = context.read<DailyReportCubit>();
-    return SingleChildScrollView(
-      key: const Key('daily-report-scroll-view'),
-      padding: AppSpacing.allXxl,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: AppSizes.ordersContentMaxWidth,
-          ),
-          child: Column(
+    return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              ReportHeader(
-                dateLabel: dateLabel,
-                onDateTap: () => _chooseDate(context, cubit),
-                onPrint: () => _showMessage(
-                  context,
-                  'Print the report from your system print dialog.',
-                ),
-                onExport: () => _showMessage(
-                  context,
-                  'Report data is loaded from the current branch and date.',
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
               ReportKpiGrid(items: data.kpis),
               const SizedBox(height: AppSpacing.xxl),
               HourlySalesChart(points: data.hourlySales),
@@ -100,28 +98,41 @@ class _ReportContent extends StatelessWidget {
                 onViewAll: () => context.go(AppRoutes.orders),
               ),
             ],
-          ),
-        ),
-      ),
     );
   }
 
-  Future<void> _chooseDate(BuildContext context, DailyReportCubit cubit) async {
-    final DateTime? date = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-    );
-    if (date != null && context.mounted) {
-      cubit.selectDate(date, branchId: context.read<PosCubit>().state.branchId);
-    }
-  }
+}
 
-  void _showMessage(BuildContext context, String message) =>
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(message)));
+Future<void> _chooseDate(BuildContext context, DailyReportCubit cubit) async {
+  final DateTime? date = await showDatePicker(
+    context: context,
+    initialDate: DateTime.now(),
+    firstDate: DateTime(2020),
+    lastDate: DateTime(2030),
+  );
+  if (date != null && context.mounted) {
+    cubit.selectDate(date, branchId: context.read<PosCubit>().state.branchId);
+  }
+}
+
+void _showMessage(BuildContext context, String message) =>
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
+
+class _DailySkeleton extends StatelessWidget {
+  const _DailySkeleton();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+        children: <Widget>[
+          ReportsOverviewSkeletonCard(height: 150),
+          SizedBox(height: AppSpacing.xxl),
+          ReportsOverviewSkeletonCard(height: 220),
+          SizedBox(height: AppSpacing.xxl),
+          ReportsOverviewSkeletonCard(height: 260),
+        ],
+      );
 }
 
 class _PairedSections extends StatelessWidget {

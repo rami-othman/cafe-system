@@ -1,5 +1,11 @@
 # CURRENT AUTHORITATIVE STATUS
 
+- Inventory catalogue: the 184 supplied material definitions from
+  المواد_مض2بوط.xlsx are represented as active raw materials without opening
+  stock, costs, or reorder thresholds. Exact existing names are retained
+  rather than duplicated; all other names, categories, and units are preserved
+  and available to product recipe configuration.
+
 Cafe System 618 has a Laravel backend in `backend` and a Flutter Windows client
 in `windows_application`. Tenant isolation is backend-authoritative. The test
 suite is guarded to use `cafe_system_618_testing`.
@@ -210,6 +216,48 @@ future work and it is not part of Batch 12.
 
 ## Batch 12 status
 
+## Reports Overview UI
+
+- The existing `/reports` Cubit/repository-backed overview now follows the
+  Reports Overview reference hierarchy with RTL-aware controls, polished
+  loading/error/empty states, and truthful branch/product data presentation.
+- Financial Reports reuses its canonical `/finance/reports` screen; remaining
+  detailed report categories are visibly pending rather than dead links.
+
+## Sales & Profitability Report UI
+
+- Added the route-scoped `/reports/sales-profitability` report with typed
+  presentation models, Cubit filter/view/sort state, responsive Arabic-first
+  report sections, and a deliberately endpoint-free repository for this UI
+  phase.
+- The Reports Overview Sales & Profitability category is now active; Inventory,
+  Expenses, Purchasing & Suppliers, and Custom Report Builder remain pending.
+
+## Cash & Shifts Report UI
+
+- Added the route-scoped `/reports/cash-shifts` report with typed
+  presentation models, Cubit filter state, responsive Arabic-first report
+  sections, and a deliberately endpoint-free repository for this UI phase.
+- The Reports Overview Cash & Shifts category is now active.  It remains a
+  read-only analytics destination; shift, payment, and closing operations stay
+  in their canonical operational modules.
+
+## Inventory Report UI
+
+- Added the route-scoped `/reports/inventory` read-only analytics report with
+  typed inventory presentation models, filter state, responsive Arabic-first
+  sections, and an endpoint-free repository during this UI phase.
+- The Reports Overview Inventory category is now active. Expenses, Purchasing
+  & Suppliers, and Custom Report Builder remain pending.
+
+## Reports Demo Data
+
+- `Cafe618ReportsDemoSeeder` prepares idempotent Cafe 618 development data for
+  report work: POS sales, cash/card payments, refunds, shifts, cash transfers,
+  reconciliations, daily closings, and overview history. It is limited to
+  local, development, and testing environments and is included in local
+  `DatabaseSeeder` runs.
+
 - 12A ✅ Runtime Contract
 - 12B ✅ Backend POS Runtime Sync API
 - 12C ✅ Snapshot-Aware Order Contract
@@ -219,3 +267,42 @@ future work and it is not part of Batch 12.
 - 12G ✅ Legacy Cutover / Final Regression
 
 **BATCH 12 — COMPLETE**
+
+## Inventory warehouse context audit
+
+- Inventory list requests now carry both the active operational `branchId` and
+  the selected `warehouseId`; Laravel applies and validates both scopes for
+  balances, items, movements, counts, and the dashboard.
+- Warehouse selectors use one active/legacy/branch rule, retain central
+  warehouses, clear stale selections on branch changes, and reload the owning
+  screen immediately.
+- Inventory Cubit loaders use latest-request-wins guards so a slow response for
+  a previous warehouse cannot replace newer data. Stock-count warehouse
+  options remain isolated from the general warehouse list.
+- Focused Flutter warehouse-context tests and the backend
+  `InventoryCenterApiTest` suite pass.
+
+## Inventory branch provider repair
+
+- The operational branch Cubit now has one lazy, shell-wide provider above all
+  Inventory routes. Route-local duplicates were removed so the module frame,
+  warehouse selectors, and routed page always observe the same branch state.
+- `InventoryModuleShell` initializes that context from the authoritative POS
+  branch and follows later top-navigation branch changes.
+- Static analysis is clean, and the provider/synchronization regression test
+  plus all warehouse dropdown widget tests pass (5 tests).
+
+## Cafe 618 branding integration
+
+- Added a centralized, role-aware brand identity resolver. Cashiers see the
+  authoritative active branch name; managers and owners retain the general
+  Cafe System 618 identity. Missing or stale branch context falls back safely
+  and never guesses a branch.
+- Replaced scattered shell, authentication, splash, and receipt branding with
+  reusable logo/header widgets backed by bundled transparent assets.
+- Web metadata, favicon/PWA icons, Windows executable resources, and runtime
+  browser/native window titles now use the same centralized identity.
+- Added regression coverage for role rules, branch switching, logout/re-login,
+  long Arabic names, image fitting, and the Inventory branch-provider scope.
+- Dart static analysis and focused branding/provider tests pass. The Windows
+  debug runner builds successfully with the branded icon and title channel.
