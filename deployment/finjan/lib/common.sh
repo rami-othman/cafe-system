@@ -125,3 +125,43 @@ dns_resolves_to_this_host() {
   local domain="$1"
   command -v dig >/dev/null 2>&1 && dig +short A "$domain" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
 }
+
+install_cron_line() {
+  # install_cron_line USER MATCH_PATTERN CRON_LINE
+  #
+  # Idempotently replaces any existing crontab line for USER that contains
+  # the fixed string MATCH_PATTERN with exactly one copy of CRON_LINE,
+  # leaving every other line untouched. Used instead of the tempting
+  # one-liner `(crontab -l | grep -v PATTERN; echo LINE) | crontab -` because
+  # that pipes two commands that both have entirely normal non-zero exit
+  # codes straight into a pipefail-checked pipeline:
+  #   - `crontab -l` exits 1 whenever USER has no crontab yet (true on every
+  #     fresh system user, e.g. a first install).
+  #   - `grep -v` exits 1 whenever it selects zero lines (true whenever the
+  #     existing crontab contains ONLY a previous MATCH_PATTERN line, e.g.
+  #     any re-run).
+  # Under `set -euo pipefail` (every script in this package), either of those
+  # ordinary conditions kills the pipeline and aborts the calling script
+  # before the new line is ever written — confirmed on a real VPS run, where
+  # install.sh exited silently mid "scheduler cron" step. Both are captured
+  # here explicitly with `|| true`, and the result is written to a temp file
+  # and installed with a plain `crontab file` (not a pipe), so a genuine
+  # crontab-install failure still aborts normally.
+  local user="$1" match_pattern="$2" cron_line="$3"
+  local existing other_lines tmp
+
+  existing="$(crontab -u "$user" -l 2>/dev/null || true)"
+  other_lines="$(printf '%s' "$existing" | grep -vF "$match_pattern" || true)"
+
+  tmp="$(mktemp)"
+  trap 'rm -f "$tmp"' RETURN
+  {
+    # Only emit $other_lines if non-empty, so a fresh/all-matching crontab
+    # doesn't end up with a stray leading blank line.
+    [[ -n "$other_lines" ]] && printf '%s\n' "$other_lines"
+    printf '%s\n' "$cron_line"
+  } > "$tmp"
+  crontab -u "$user" "$tmp"
+  rm -f "$tmp"
+  trap - RETURN
+}

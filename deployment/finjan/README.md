@@ -25,8 +25,12 @@ sudo bash deployment/finjan/verify-cutover.sh
 
 (This repo was committed from a Windows checkout, so the `.sh` files may not
 carry the executable bit in Git — every command above invokes them via
-`bash <script>` regardless, and `install.sh` restores the bit for you anyway,
-so this doesn't require any action on your part.)
+`bash <script>` regardless, so this doesn't require any action on your part.
+`install.sh` deliberately does **not** `chmod +x` these files itself: doing
+so on a Linux checkout flips their tracked mode and dirties the worktree,
+which then blocks `git checkout` for a future deploy/rollback. If you want
+them directly executable, run `chmod +x deployment/finjan/*.sh` yourself,
+once, outside of any script.)
 
 Point DNS (`api` and `admin` A records → `46.224.139.32`) as early as you like —
 `install.sh` checks for it and configures HTTPS automatically once it resolves.
@@ -210,11 +214,15 @@ the distributable app; it is never uploaded to this VPS or the Linux web root.
 
 Every script in this directory passes `bash -n` (syntax check) and was
 reviewed against `shellcheck` where available in the authoring environment.
-See `LINT_REPORT.md` for the exact commands run and their output, including a
-`tr | head` SIGPIPE bug found on a real VPS run and the runtime regression
-test (`lib/test-random-secret.sh`) added to catch that class of bug going
-forward — run it any time `lib/common.sh` changes:
+See `LINT_REPORT.md` for the exact commands run and their output, including
+two rounds of real-VPS bugs found after initial delivery (a `tr | head`
+SIGPIPE crash, a scheduler-cron `set -e` abort, a worktree-dirtying `chmod`,
+and an unnecessary DB-password re-prompt on re-run) and the regression tests
+added to catch each class of bug going forward — run any of them any time
+`lib/common.sh` or `install.sh` changes:
 
 ```bash
 bash deployment/finjan/lib/test-random-secret.sh
+bash deployment/finjan/lib/test-scheduler-cron.sh
+bash deployment/finjan/lib/test-clean-worktree.sh
 ```

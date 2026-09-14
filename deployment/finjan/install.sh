@@ -19,18 +19,29 @@ source "${SCRIPT_DIR}/lib/common.sh"
 
 require_root
 
-# This repo may have been committed from a Windows checkout (core.fileMode=false),
-# which drops the executable bit on .sh files even though every invocation in
-# this package uses `bash <script>` rather than `./<script>` (so it never blocks
-# anything) — restore it anyway so a operator running a script directly, or a
-# future tool that shells out to it, doesn't hit a confusing permission error.
-chmod +x "${SCRIPT_DIR}"/*.sh 2>/dev/null || true
+# NOTE: this package intentionally never `chmod +x`'s its own tracked .sh
+# files. This repo may have been committed from a Windows checkout
+# (core.fileMode=false), so the executable bit may be missing here — but
+# every invocation anywhere in this package uses `bash <script>`, never
+# `./<script>`, so the bit is never required. Setting it on a Linux VPS
+# (where core.fileMode normally defaults to true) would flip each file's
+# tracked mode from 100644 to 100755, which `git status` reports as a
+# worktree modification — that then blocks a later
+# `git checkout <other-commit>` for future deploys/rollbacks until the
+# operator manually discards or commits the mode-only change. If you ever
+# want a script directly executable (`./install.sh`), run
+# `chmod +x deployment/finjan/*.sh` yourself, once, outside of this script.
 
 log_info "Repo root detected as: ${REPO_ROOT}"
 [[ -f "${REPO_ROOT}/backend/composer.json" ]] || fatal "backend/composer.json not found under ${REPO_ROOT} — is this script running from inside the cafe-system repo?"
 
 DEPLOYED_COMMIT="$(cd "${REPO_ROOT}" && git rev-parse HEAD)"
 log_info "Repository is currently checked out at commit: ${DEPLOYED_COMMIT}"
+
+# Known this early (rather than only at step 16-18, where it's written) so
+# earlier steps can decide whether they actually need to ask for anything
+# that only ever gets used to populate a *new* .env file — see step 10-11.
+ENV_FILE="${BACKEND_DIR}/.env"
 
 # =============================================================================
 # 1. Detect Ubuntu version
@@ -175,8 +186,17 @@ DB_APP_USER="${DB_APP_USER:-cafe618_app}"
 DB_USER_EXISTS="$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_APP_USER}'" || true)"
 if [[ "$DB_USER_EXISTS" == "1" ]]; then
   log_ok "PostgreSQL role '${DB_APP_USER}' already exists — leaving its password untouched."
-  if [[ -z "${DB_APP_PASSWORD:-}" ]]; then
-    prompt_secret DB_APP_PASSWORD "Enter the EXISTING password for PostgreSQL role '${DB_APP_USER}' (needed to write backend/.env, not to change it)"
+  # DB_APP_PASSWORD is only ever used below to populate a brand-new
+  # backend/.env (step 16-18) — if that file already exists it's left
+  # untouched entirely, so the password already living inside it (mode 640,
+  # never read back or printed by this script) is never needed here. Only
+  # ask for it in the one case where it's actually required: the role
+  # pre-exists (so we don't know its password) AND .env does not yet exist
+  # (so something still needs to go on its DB_PASSWORD= line).
+  if [[ -f "$ENV_FILE" ]]; then
+    log_info "backend/.env already exists too, so the existing DB password isn't needed here — it stays wherever it already is."
+  elif [[ -z "${DB_APP_PASSWORD:-}" ]]; then
+    prompt_secret DB_APP_PASSWORD "Enter the EXISTING password for PostgreSQL role '${DB_APP_USER}' (needed once, to write a new backend/.env)"
   fi
 else
   if [[ -z "${DB_APP_PASSWORD:-}" ]]; then
@@ -245,7 +265,6 @@ fi
 # 16-18. Production backend/.env (secrets prompted, never printed)
 # =============================================================================
 log_info "== Step 16-18/27: backend/.env =="
-ENV_FILE="${BACKEND_DIR}/.env"
 if [[ -f "$ENV_FILE" ]]; then
   log_warn "backend/.env already exists. Leaving it untouched. Delete it first if you want install.sh to regenerate it from scratch."
 else
@@ -390,9 +409,16 @@ log_ok "Supervisor queue-worker config installed but NOT started (autostart=fals
 # =============================================================================
 log_info "== Step 22/27: scheduler cron =="
 CRON_LINE="* * * * * cd ${BACKEND_DIR} && php artisan schedule:run >> /var/log/cafe618/scheduler.log 2>&1"
-( crontab -u "$APP_LINUX_USER" -l 2>/dev/null | grep -vF "artisan schedule:run" ; echo "$CRON_LINE" ) | crontab -u "$APP_LINUX_USER" -
+# See install_cron_line() in lib/common.sh for why this needs to be a real
+# function rather than the tempting `(crontab -l | grep -v ...; echo LINE) |
+# crontab -` one-liner: that pipeline aborted the whole script under
+# set -euo pipefail on a fresh system user (no crontab yet) or on a re-run
+# (nothing left after filtering out the old line) — both entirely normal,
+# neither an error.
+install_cron_line "$APP_LINUX_USER" "artisan schedule:run" "$CRON_LINE"
+
 touch /var/log/cafe618/scheduler.log && chown "$APP_LINUX_USER:$APP_LINUX_GROUP" /var/log/cafe618/scheduler.log
-log_ok "Installed 'php artisan schedule:run' cron entry for ${APP_LINUX_USER} (currently a documented no-op — see FINDINGS.md)."
+log_ok "Installed exactly one 'php artisan schedule:run' cron entry for ${APP_LINUX_USER} (currently a documented no-op — see FINDINGS.md)."
 
 # =============================================================================
 # 23. Next.js build + systemd service
@@ -449,7 +475,13 @@ THIS_VPS_IP="46.224.139.32"
 SSL_READY=true
 for domain in api.cafesystemsyria.com admin.cafesystemsyria.com; do
   if dns_resolves_to_this_host "$domain"; then
-    RESOLVED_IP="$(dig +short A "$domain" | tail -1)"
+    # `|| true`: dns_resolves_to_this_host just proved a valid A record exists,
+    # so this second dig call succeeding too is the overwhelmingly normal
+    # case — but a rare transient resolver hiccup here shouldn't be able to
+    # abort the whole installer this late (steps 1-25 already made real
+    # changes); an empty RESOLVED_IP correctly falls into the existing "not
+    # ready yet, skip SSL, re-run later" branch below either way.
+    RESOLVED_IP="$(dig +short A "$domain" | tail -1 || true)"
     if [[ "$RESOLVED_IP" == "$THIS_VPS_IP" ]]; then
       log_ok "${domain} resolves to ${THIS_VPS_IP} — ready for Certbot."
     else

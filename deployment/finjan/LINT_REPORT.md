@@ -224,5 +224,175 @@ an error-severity-only pass, `-S error`) across all 11 scripts (10 original +
 the new test) after this fix — same accepted findings as the original lint
 pass (SC2015/SC2024/SC2034/SC1090/SC1091, all previously reviewed above),
 **zero new findings, zero error-severity findings.**
+
+## Post-delivery fix round 2: Step 22 scheduler-cron crash, git worktree dirtying, unnecessary DB-password re-prompt
+
+Also found on a real (fresh) VPS run, all three in the same session.
+
+### 2a. `install.sh` Step 22 (scheduler cron) — another `set -e`/pipefail abort
+
+**Symptom:** `install.sh` reached `== Step 22/27: scheduler cron ==` and
+exited silently back to the shell prompt.
+
+**Root cause:** the original one-liner was
+
+```bash
+( crontab -u "$APP_LINUX_USER" -l 2>/dev/null | grep -vF "artisan schedule:run" ; echo "$CRON_LINE" ) | crontab -u "$APP_LINUX_USER" -
+```
+
+`crontab -l` exits 1 on a brand-new system user with no crontab yet (true on
+every fresh install), and `grep -v` exits 1 whenever it selects zero lines
+(true whenever the existing crontab contains *only* a previous
+`schedule:run` entry, i.e. on a re-run). Both are entirely normal, not
+errors — but they sit inside a raw pipeline/subshell under this script's
+`set -euo pipefail`, so either one aborted the subshell before
+`echo "$CRON_LINE"` ever ran, exactly as diagnosed.
+
+**Fix:** extracted a new `install_cron_line()` helper into `lib/common.sh`
+(shared, testable in isolation — see below) that captures each step's result
+explicitly with `|| true` before deciding what to write, and writes the
+final crontab from a temp file (`crontab -u "$user" "$tmp"`) rather than
+piping into `crontab -`, so a genuine crontab-install failure still aborts
+normally. `install.sh`'s Step 22 is now a single call:
+`install_cron_line "$APP_LINUX_USER" "artisan schedule:run" "$CRON_LINE"`.
+
+**New regression test:** `lib/test-scheduler-cron.sh` runs
+`install_cron_line()` against a **real** `crontab` binary (not a mock),
+covering exactly the scenarios above plus idempotency:
+
+| Scenario | Result |
+|---|---|
+| No existing crontab at all | 1 line written (the scheduler entry) |
+| Only the scheduler entry exists (re-run) | still exactly 1 line |
+| Unrelated entries + a scheduler entry | unrelated entries kept, exactly 1 scheduler line |
+| 5 repeated calls in a row | unrelated entries still intact, still exactly 1 scheduler line |
+| Unrelated-only crontab (no scheduler line yet) | scheduler line added, unrelated kept |
+
+All 5/5 passed. Run it any time `install_cron_line()` or Step 22 changes:
+
+```bash
+bash deployment/finjan/lib/test-scheduler-cron.sh
+```
+
+(It manages `crontab` for the invoking user — or `$TEST_CRON_USER` — and
+restores whatever crontab existed before the test ran, via a `trap ... EXIT`,
+even on failure.)
+
+### 2b. `install.sh` was dirtying the git worktree
+
+**Symptom (reported directly, not yet hit as a live failure):** the
+`chmod +x "${SCRIPT_DIR}"/*.sh` line added in the previous fix round (to
+work around this repo's `.sh` files lacking the executable bit on a Windows
+checkout) flips each tracked file's mode from `100644` to `100755` on a
+Linux checkout, where `core.fileMode` normally defaults to `true` — unlike
+the Windows checkout this repo was originally committed from, where it's
+`false`. `git status` then reports every script as modified, which blocks a
+later `git checkout <other-commit>` (needed for `deploy.sh`/`rollback.sh`)
+until an operator manually discards or commits that mode-only change.
+
+**Fix:** removed the `chmod +x` call entirely. It was never actually
+required — every invocation anywhere in this package uses `bash <script>`,
+never `./<script>` (re-confirmed by grep across the whole package) — so
+there was nothing to "fix" at runtime in the first place; it only existed as
+an over-eager defensive measure that turned out to cause the exact class of
+problem it was trying to prevent. `install.sh` and `README.md` now document
+this explicitly so it doesn't get silently re-added later.
+
+**New regression test:** `lib/test-clean-worktree.sh` — a static grep guard
+(scoped to real code lines, not comments, in the actual deployment scripts)
+asserting no `chmod +x ... *.sh` call exists anywhere in this package, plus
+a live check that builds a disposable throwaway git repo, records every
+tracked file's mode and `git status`, exercises the same repo-root-detection
+logic `install.sh` runs on startup, and asserts both are byte-for-byte
+unchanged afterward. Verified the guard actually catches a regression (not
+just a no-op pattern) by temporarily reintroducing the old `chmod +x` line
+into a scratch copy and confirming the test fails against it, then confirmed
+it passes clean against the real, fixed `install.sh`. Run it any time
+`install.sh`'s startup section changes:
+
+```bash
+bash deployment/finjan/lib/test-clean-worktree.sh
+```
+
+### 2c. Unnecessary DB-password re-prompt when `.env` already exists
+
+**Symptom:** on a re-run where `backend/.env` already exists (and is
+correctly left untouched per Step 16-18's existing idempotency), Step 10-11
+still unconditionally prompted the operator to re-enter the PostgreSQL app
+role's existing password — even though that value is never read back out of
+`backend/.env` and was about to be completely unused for the rest of the
+run.
+
+**Root cause:** `DB_APP_PASSWORD` is used in exactly one place in the whole
+package — populating a **brand-new** `backend/.env`'s `DB_PASSWORD=` line at
+Step 16-18. The Step 10-11 "role already exists" branch prompted for it
+unconditionally whenever the Postgres role pre-existed, without checking
+whether `.env` (the only consumer) was even going to be written this run.
+
+**Fix:** moved the `ENV_FILE="${BACKEND_DIR}/.env"` definition up to the top
+of the script (previously only defined at Step 16-18, too late for Step
+10-11 to see it) and restructured Step 10-11's "role already exists" branch:
+
+```bash
+if [[ -f "$ENV_FILE" ]]; then
+  log_info "backend/.env already exists too, so the existing DB password isn't needed here — it stays wherever it already is."
+elif [[ -z "${DB_APP_PASSWORD:-}" ]]; then
+  prompt_secret DB_APP_PASSWORD "Enter the EXISTING password for PostgreSQL role '${DB_APP_USER}' (needed once, to write a new backend/.env)"
+fi
+```
+
+Now the prompt fires only in the one case where it's genuinely needed: the
+role pre-exists (so this script doesn't know its password) **and**
+`backend/.env` does not yet exist (so something still has to go on its
+`DB_PASSWORD=` line). Every other combination — including the common re-run
+case where both already exist — asks for nothing. The password is still
+never printed or logged anywhere (`prompt_secret` uses `read -s`, same as
+before), and no code path reads it back out of an existing `.env` file
+(never needed to, since that branch now never touches `.env` at all).
+
+### Audit of Steps 23-27 for legitimate non-zero exit codes (not just SIGPIPE)
+
+Went through every command in Steps 23-27 that could plausibly return
+non-zero under normal/expected conditions, given `install.sh` runs with
+`set -euo pipefail` active throughout (no `set +e` override anywhere in this
+script, unlike `health-check.sh`/`verify-cutover.sh`):
+
+| Location | Risk considered | Verdict |
+|---|---|---|
+| Step 23: `[[ -d "${ADMIN_DIR}/public" ]] && cp -r ...` | `cp` only conditionally needed (not every Next.js app ships a `public/` dir) | Safe as written — confirmed empirically that `[[ cond ]] && cmd` as a standalone statement does **not** trigger `set -e` when `cond` is false (only the *last* command in an AND-OR list is subject to `-e`; earlier ones, including a false test that short-circuits the rest, are exempt). No change. |
+| Step 23: `NODE_BIN="$(command -v node)"` | `command -v` fails if Node is missing | Intentional hard-fail — Node being genuinely absent at this point is a real problem worth aborting on, not a false positive. No change. |
+| Step 24: `systemctl enable ... \|\| true` | — | Already guarded. No change. |
+| Step 25: firewall rules, `if ! ufw status \| grep -q "Status: active"; then` | `grep -q` finding nothing (UFW not yet enabled) is the expected first-run case | Already safe — inside an `if`/`!` context, both fully exempt from `set -e` regardless of match/no-match. No change. |
+| Step 26: `if dns_resolves_to_this_host "$domain"; then` | DNS not resolving yet is the expected pre-DNS-cutover case | Already safe — `if`-context exemption. No change. |
+| Step 26: `RESOLVED_IP="$(dig +short A "$domain" \| tail -1)"` | a transient resolver hiccup on this *second* `dig` call (right after `dns_resolves_to_this_host` already proved an A record exists) | **Hardened defensively**: wrapped as `\|\| true`. Not a guaranteed-every-run condition like the others in this table, but a rare transient failure here shouldn't be able to abort the *entire* installer this late (Steps 1-25 already made real system changes) when an empty `RESOLVED_IP` already correctly falls into the existing "not ready yet, skip SSL, re-run later" branch. |
+| Step 26: `certbot --nginx ... \|\| log_warn ...` | Certbot failing (rate limits, network) | Already guarded. No change. |
+| Step 26: `systemctl list-timers \| grep -qi certbot && log_ok ... \|\| log_warn ...` | classic `A && B \|\| C` (SC2015) | Already reviewed and accepted in the original lint pass — `log_ok`/`log_warn` can't themselves fail in a way that falls through. No change. |
+| Step 27: `bash health-check.sh \|\| log_warn ...` | health checks legitimately failing pre-DNS/SSL | Already guarded. No change. |
+| (Step 10-11, re-checked while touching this area) `PG_CONF="$(sudo -u postgres psql ... \| xargs)"` | `psql` failing | Intentional hard-fail — Postgres not responding at this point (after `systemctl enable --now postgresql` already ran) is a real problem worth surfacing. No change. |
+
+Net result: **one** additional defensive hardening applied (the second `dig`
+call in Step 26); everything else in Steps 23-27 was already either
+correctly exempt from `set -e` by construction (`if`/`&&`-short-circuit
+contexts) or intentionally fatal on a genuine failure, not a misdiagnosed
+normal condition.
+
+### Full verification after this round
+
+- `bash -n` on all 13 scripts (10 original + 3 test scripts): all pass.
+- `lib/test-random-secret.sh`: 1,800/1,800 pass (unaffected by this round's
+  changes, re-run to confirm no regression).
+- `lib/test-scheduler-cron.sh`: 5/5 scenarios pass against a real `crontab`.
+- `lib/test-clean-worktree.sh`: static guard + live git-repo check both pass;
+  guard verified to actually fail against a reintroduced copy of the old bug.
+- `shellcheck -x -f gcc` across all 13 scripts: same previously-accepted
+  findings (SC2015/SC2024/SC2034/SC1090/SC1091) plus two new, equally benign
+  ones from the two new test scripts' `trap`-registered cleanup functions —
+  `SC2317` ("command appears unreachable"), a well-known shellcheck
+  limitation when a function is only ever called indirectly via `trap`, not
+  a real defect (confirmed both functions run correctly — the crontab
+  restoration in `test-scheduler-cron.sh` and the temp-dir cleanup in
+  `test-clean-worktree.sh` were observed firing on every test run above).
+- `shellcheck -x -S error` (error-severity only): **zero findings**, same as
+  every prior round.
 </content>
 </invoke>
