@@ -6285,6 +6285,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get customerManagementRequiredName => 'أدخل اسم العميل.';
 
   @override
+  String get customerManagementRequiredPhone => 'أدخل رقم هاتف.';
+
+  @override
   String get customerManagementPrimaryRequired => 'اختر هاتفاً أساسياً واحداً.';
 
   @override
@@ -6548,4 +6551,90 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get cmvpGroupLifecycleMessage =>
       'ستبقى المجموعة متاحة في السجلات التاريخية.';
+
+  @override
+  String get cmvpOrders => 'الطلبات';
+
+  @override
+  String get cmvpOrderHistory => 'طلبات العميل';
+
+  @override
+  String get cmvpFromDate => 'من تاريخ';
+
+  @override
+  String get cmvpToDate => 'إلى تاريخ';
+
+  @override
+  String get cmvpBranch => 'الفرع';
+
+  @override
+  String get cmvpAllBranches => 'كل الفروع';
+
+  @override
+  String get cmvpOrderStatus => 'حالة الطلب';
+
+  @override
+  String get cmvpPaymentStatus => 'حالة الدفع';
+
+  @override
+  String get cmvpOrderNumber => 'رقم الطلب';
+
+  @override
+  String get cmvpOrderDateTime => 'التاريخ والوقت';
+
+  @override
+  String get cmvpOrderTotal => 'الإجمالي';
+
+  @override
+  String get cmvpOrderStatusCompleted => 'مكتمل';
+
+  @override
+  String get cmvpOrderStatusHeld => 'قيد التحضير';
+
+  @override
+  String get cmvpOrderStatusCancelled => 'ملغي';
+
+  @override
+  String get cmvpOrderStatusDraft => 'مسودة';
+
+  @override
+  String get cmvpPaymentStatusPaid => 'مدفوع';
+
+  @override
+  String get cmvpPaymentStatusUnpaid => 'غير مدفوع';
+
+  @override
+  String get cmvpPaymentStatusPartiallyRefunded => 'مسترد جزئياً';
+
+  @override
+  String get cmvpPaymentStatusRefunded => 'مسترد';
+
+  @override
+  String get cmvpNoOrders => 'لا توجد طلبات.';
+
+  @override
+  String cmvpOrdersShowing(int start, int end, int total) {
+    return 'عرض $start–$end من $total';
+  }
+
+  @override
+  String get cmvpOverview => 'نظرة عامة';
+
+  @override
+  String get cmvpTotalOrders => 'إجمالي الطلبات';
+
+  @override
+  String get cmvpTotalSpending => 'إجمالي الإنفاق';
+
+  @override
+  String get cmvpAverageOrderValue => 'متوسط قيمة الطلب';
+
+  @override
+  String get cmvpLastVisit => 'آخر زيارة';
+
+  @override
+  String get cmvpRecentOrders => 'آخر الطلبات';
+
+  @override
+  String get cmvpViewAllOrders => 'عرض جميع الطلبات';
 }

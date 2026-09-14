@@ -20,7 +20,7 @@ class StoreCustomerRequest extends FormRequest
             'birthDate' => ['nullable', 'date_format:Y-m-d'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'isActive' => ['sometimes', 'boolean'],
-            'phones' => ['sometimes', 'array'],
+            'phones' => ['required', 'array', 'min:1'],
             'phones.*' => ['required', 'array'],
             'phones.*.rawNumber' => ['required', 'string', 'max:50'],
             'phones.*.type' => ['sometimes', 'string', 'max:30'],

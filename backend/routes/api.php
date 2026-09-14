@@ -139,7 +139,9 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get('/', 'index');
             Route::post('/', 'store');
+            Route::get('{customer}/overview', 'overview')->whereNumber('customer');
             Route::get('{customer}', 'show')->whereNumber('customer');
+            Route::get('{customer}/orders', 'orders')->whereNumber('customer');
             Route::put('{customer}', 'update')->whereNumber('customer');
             Route::post('{customer}/activate', 'activate')->whereNumber('customer');
             Route::post('{customer}/deactivate', 'deactivate')->whereNumber('customer');

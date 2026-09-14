@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/customer_management/controllers/customer_group_form_cubit.dart';
 import 'package:windows_application/features/customer_management/controllers/customer_group_form_state.dart';
@@ -40,9 +42,25 @@ void main() {
 
       expect(cubit.state.status, CustomerGroupFormStatus.success);
       expect(cubit.state.savedGroup?.id, 8);
-      await cubit.close();
-    },
+    await cubit.close();
+  },
   );
+
+  test('coalesces duplicate create submits while the first request is pending', () async {
+    final _PendingFormRepository repository = _PendingFormRepository();
+    final CustomerGroupFormCubit cubit = CustomerGroupFormCubit(repository)
+      ..initializeCreate()
+      ..setName('VIP');
+
+    final Future<void> first = cubit.submit();
+    final Future<void> second = cubit.submit();
+
+    expect(repository.createCalls, 1);
+    repository.complete();
+    await Future.wait<void>(<Future<void>>[first, second]);
+    expect(cubit.state.savedGroup?.id, 41);
+    await cubit.close();
+  });
 }
 
 class _FormRepository implements CustomerManagementRepository {
@@ -63,6 +81,29 @@ class _FormRepository implements CustomerManagementRepository {
       ),
     );
   }
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _PendingFormRepository implements CustomerManagementRepository {
+  final Completer<CustomerGroup> _result = Completer<CustomerGroup>();
+  int createCalls = 0;
+
+  @override
+  Future<CustomerGroup> createGroup(GroupDraft draft) {
+    createCalls++;
+    return _result.future;
+  }
+
+  void complete() => _result.complete(
+    const CustomerGroup(
+      id: 41,
+      name: 'VIP',
+      lifecycle: CustomerLifecycle.active,
+      memberCount: 0,
+    ),
+  );
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

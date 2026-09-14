@@ -8,12 +8,10 @@ import '../controllers/customer_detail_cubit.dart';
 import '../controllers/customer_detail_state.dart';
 import '../models/customer_models.dart';
 import '../repositories/customer_management_repository.dart';
-import '../widgets/customer_bidi_value.dart';
 import '../widgets/customer_detail_sections.dart';
-import '../widgets/customer_lifecycle_badge.dart';
 import '../widgets/customer_lifecycle_actions.dart';
-import '../widgets/customer_management_page_header.dart';
 import '../widgets/customer_management_state_panel.dart';
+import '../widgets/customer_management_visual_tokens.dart';
 
 class CustomerDetailScreen extends StatefulWidget {
   const CustomerDetailScreen({
@@ -73,6 +71,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             onRefresh: context.read<CustomerDetailCubit>().refresh,
             child: _CustomerProfile(
               customer: customer,
+              overview: state.overview,
               lifecycleRepository: widget.lifecycleRepository,
               onCustomerReplaced: context.read<CustomerDetailCubit>().replace,
             ),
@@ -95,28 +94,28 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 class _CustomerProfile extends StatelessWidget {
   const _CustomerProfile({
     required this.customer,
+    this.overview,
     this.lifecycleRepository,
     this.onCustomerReplaced,
   });
   final Customer customer;
+  final CustomerOverview? overview;
   final CustomerManagementRepository? lifecycleRepository;
   final ValueChanged<Customer>? onCustomerReplaced;
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     return ListView(
-      padding: const EdgeInsets.all(24),
+      key: const Key('customer-detail-scroll'),
+      padding: CustomerManagementVisualTokens.pagePadding,
       children: <Widget>[
-        CustomerManagementPageHeader(
-          title: customer.name,
-          description: l10n.cmvpCustomerDetailDescription,
-          breadcrumbs: <String>[
-            l10n.cmvpBreadcrumbCustomers,
-            l10n.cmvpBreadcrumbDetails,
-            customer.name,
-          ],
-          identity: CustomerBidiValue(value: customer.customerNumber),
-          status: CustomerLifecycleBadge(lifecycle: customer.lifecycle),
+        CustomerDetailHeader(
+          customer: customer,
+          selectedTab: CustomerDetailTab.overview,
+          onOverviewPressed: () {},
+          onOrdersPressed: () => context.go(
+            CustomerManagementRouteLocations.customerOrdersPath(customer.id),
+          ),
           actions: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -130,18 +129,29 @@ class _CustomerProfile extends StatelessWidget {
                       : (Customer value) async => onCustomerReplaced!(value),
                 ),
               if (customer.allowedActions.contains('update'))
-                IconButton(
-                  tooltip: l10n.customerManagementEdit,
-                  onPressed: () => context.go(
-                    CustomerManagementRouteLocations.editCustomer(customer.id),
+                SizedBox(
+                  height: CustomerManagementVisualTokens.minimumInteractiveSize,
+                  child: FilledButton.icon(
+                    onPressed: () => context.go(
+                      CustomerManagementRouteLocations.editCustomer(
+                        customer.id,
+                      ),
+                    ),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(l10n.customerManagementEdit),
                   ),
-                  icon: const Icon(Icons.edit_outlined),
                 ),
             ],
           ),
         ),
-        const Divider(height: 32),
-        CustomerDetailSections(customer: customer),
+        const SizedBox(height: 4),
+        CustomerDetailSections(
+          customer: customer,
+          overview: overview,
+          onViewAllOrders: () => context.go(
+            CustomerManagementRouteLocations.customerOrdersPath(customer.id),
+          ),
+        ),
       ],
     );
   }

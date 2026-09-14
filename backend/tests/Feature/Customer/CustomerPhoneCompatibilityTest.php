@@ -34,8 +34,8 @@ class CustomerPhoneCompatibilityTest extends TestCase
         $this->assertSame('091234568', collect($updated)->firstWhere('isPrimary', true)['rawNumber']);
         $this->assertDatabaseHas('customers', ['id' => $id, 'phone' => '091234568']);
 
-        $this->withToken($token)->putJson('/api/v1/admin/customer-management/customers/'.$id, ['phones' => []])->assertOk()->assertJsonCount(0, 'data.phones');
-        $this->assertDatabaseHas('customers', ['id' => $id, 'phone' => null]);
+        $this->withToken($token)->putJson('/api/v1/admin/customer-management/customers/'.$id, ['phones' => []])->assertUnprocessable()->assertJsonValidationErrors('phones');
+        $this->assertDatabaseHas('customers', ['id' => $id, 'phone' => '091234568']);
     }
 
     public function test_duplicate_normalized_phone_in_one_collection_rolls_back_but_shared_phone_across_customers_is_allowed(): void

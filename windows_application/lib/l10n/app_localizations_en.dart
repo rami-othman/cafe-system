@@ -6294,6 +6294,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerManagementRequiredName => 'Enter a customer name.';
 
   @override
+  String get customerManagementRequiredPhone => 'Enter a phone number.';
+
+  @override
   String get customerManagementPrimaryRequired => 'Select one primary phone.';
 
   @override
@@ -6551,4 +6554,90 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cmvpGroupLifecycleMessage =>
       'The group will remain available in historical records.';
+
+  @override
+  String get cmvpOrders => 'Orders';
+
+  @override
+  String get cmvpOrderHistory => 'Customer orders';
+
+  @override
+  String get cmvpFromDate => 'From date';
+
+  @override
+  String get cmvpToDate => 'To date';
+
+  @override
+  String get cmvpBranch => 'Branch';
+
+  @override
+  String get cmvpAllBranches => 'All branches';
+
+  @override
+  String get cmvpOrderStatus => 'Order status';
+
+  @override
+  String get cmvpPaymentStatus => 'Payment status';
+
+  @override
+  String get cmvpOrderNumber => 'Order number';
+
+  @override
+  String get cmvpOrderDateTime => 'Date and time';
+
+  @override
+  String get cmvpOrderTotal => 'Total';
+
+  @override
+  String get cmvpOrderStatusCompleted => 'Completed';
+
+  @override
+  String get cmvpOrderStatusHeld => 'Held';
+
+  @override
+  String get cmvpOrderStatusCancelled => 'Cancelled';
+
+  @override
+  String get cmvpOrderStatusDraft => 'Draft';
+
+  @override
+  String get cmvpPaymentStatusPaid => 'Paid';
+
+  @override
+  String get cmvpPaymentStatusUnpaid => 'Unpaid';
+
+  @override
+  String get cmvpPaymentStatusPartiallyRefunded => 'Partially refunded';
+
+  @override
+  String get cmvpPaymentStatusRefunded => 'Refunded';
+
+  @override
+  String get cmvpNoOrders => 'No orders found.';
+
+  @override
+  String cmvpOrdersShowing(int start, int end, int total) {
+    return 'Showing $start–$end of $total';
+  }
+
+  @override
+  String get cmvpOverview => 'Overview';
+
+  @override
+  String get cmvpTotalOrders => 'Total orders';
+
+  @override
+  String get cmvpTotalSpending => 'Total spending';
+
+  @override
+  String get cmvpAverageOrderValue => 'Average order value';
+
+  @override
+  String get cmvpLastVisit => 'Last visit';
+
+  @override
+  String get cmvpRecentOrders => 'Recent orders';
+
+  @override
+  String get cmvpViewAllOrders => 'View all orders';
 }

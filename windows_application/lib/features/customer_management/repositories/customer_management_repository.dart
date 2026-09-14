@@ -1,4 +1,5 @@
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/network/api_exception.dart';
 import '../models/customer_drafts.dart';
 import '../models/customer_group_models.dart';
 import '../models/customer_models.dart';
@@ -7,13 +8,22 @@ import '../models/customer_queries.dart';
 abstract interface class CustomerManagementRepository {
   static const Set<String> contractPaths = <String>{
     'customer-management/capabilities',
+    'branches',
     'admin/customer-management/customers',
+    'admin/customer-management/customers/{customer}/overview',
+    'admin/customer-management/customers/{customer}/orders',
     'admin/customer-management/customer-groups',
   };
 
   Future<bool> fetchCustomerManagementCapability();
   Future<CustomerPage<Customer>> listCustomers(CustomerListQuery query);
   Future<Customer> getCustomer(int customerId);
+  Future<CustomerOverview> getCustomerOverview(int customerId);
+  Future<List<CustomerOrderBranch>> listPermittedOrderBranches();
+  Future<CustomerPage<CustomerOrder>> listCustomerOrders(
+    int customerId,
+    CustomerOrderQuery query,
+  );
   Future<Customer> createCustomer(CustomerDraft draft);
   Future<Customer> updateCustomer(int customerId, CustomerDraft draft);
   Future<Customer> changeCustomerLifecycle(int customerId, String action);
@@ -57,6 +67,64 @@ class ApiCustomerManagementRepository implements CustomerManagementRepository {
   @override
   Future<Customer> getCustomer(int customerId) => _customer(
     _apiClient.get('admin/customer-management/customers/${_id(customerId)}'),
+  );
+
+  @override
+  Future<CustomerOverview> getCustomerOverview(int customerId) async {
+    try {
+      return CustomerOverview.fromJson(
+        _map(
+          await _apiClient.get(
+            'admin/customer-management/customers/${_id(customerId)}/overview',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      // A running backend may still have the pre-overview route set. Keep the
+      // established detail route usable in that narrow compatibility case;
+      // a truly missing customer still throws from getCustomer below.
+      if (error.statusCode != 404) rethrow;
+      final Customer customer = await getCustomer(customerId);
+      final CustomerPage<CustomerOrder> recent = await listCustomerOrders(
+        customerId,
+        const CustomerOrderQuery(perPage: 5),
+      );
+      return CustomerOverview(
+        customer: customer,
+        summary: CustomerOrderSummary(
+          totalOrders: recent.meta.total,
+          lastOrderAt: recent.items.isEmpty
+              ? null
+              : recent.items.first.createdAt,
+        ),
+        recentOrders: recent.items,
+      );
+    }
+  }
+
+  @override
+  Future<List<CustomerOrderBranch>> listPermittedOrderBranches() async {
+    final dynamic data = await _apiClient.get('branches');
+    if (data is! List) {
+      throw const FormatException('Expected permitted branch list.');
+    }
+    return data
+        .map((dynamic value) => CustomerOrderBranch.fromJson(_map(value)))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<CustomerPage<CustomerOrder>> listCustomerOrders(
+    int customerId,
+    CustomerOrderQuery query,
+  ) async => CustomerPage<CustomerOrder>.fromEnvelope(
+    _map(
+      await _apiClient.getEnvelope(
+        'admin/customer-management/customers/${_id(customerId)}/orders',
+        queryParameters: query.toQueryParameters(),
+      ),
+    ),
+    CustomerOrder.fromJson,
   );
 
   @override

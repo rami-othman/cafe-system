@@ -11288,6 +11288,12 @@ abstract class AppLocalizations {
   /// **'Enter a customer name.'**
   String get customerManagementRequiredName;
 
+  /// No description provided for @customerManagementRequiredPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a phone number.'**
+  String get customerManagementRequiredPhone;
+
   /// No description provided for @customerManagementPrimaryRequired.
   ///
   /// In en, this message translates to:
@@ -11689,6 +11695,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The group will remain available in historical records.'**
   String get cmvpGroupLifecycleMessage;
+
+  /// No description provided for @cmvpOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get cmvpOrders;
+
+  /// No description provided for @cmvpOrderHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer orders'**
+  String get cmvpOrderHistory;
+
+  /// No description provided for @cmvpFromDate.
+  ///
+  /// In en, this message translates to:
+  /// **'From date'**
+  String get cmvpFromDate;
+
+  /// No description provided for @cmvpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'To date'**
+  String get cmvpToDate;
+
+  /// No description provided for @cmvpBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get cmvpBranch;
+
+  /// No description provided for @cmvpAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All branches'**
+  String get cmvpAllBranches;
+
+  /// No description provided for @cmvpOrderStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Order status'**
+  String get cmvpOrderStatus;
+
+  /// No description provided for @cmvpPaymentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment status'**
+  String get cmvpPaymentStatus;
+
+  /// No description provided for @cmvpOrderNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order number'**
+  String get cmvpOrderNumber;
+
+  /// No description provided for @cmvpOrderDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date and time'**
+  String get cmvpOrderDateTime;
+
+  /// No description provided for @cmvpOrderTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get cmvpOrderTotal;
+
+  /// No description provided for @cmvpOrderStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get cmvpOrderStatusCompleted;
+
+  /// No description provided for @cmvpOrderStatusHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Held'**
+  String get cmvpOrderStatusHeld;
+
+  /// No description provided for @cmvpOrderStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cmvpOrderStatusCancelled;
+
+  /// No description provided for @cmvpOrderStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get cmvpOrderStatusDraft;
+
+  /// No description provided for @cmvpPaymentStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get cmvpPaymentStatusPaid;
+
+  /// No description provided for @cmvpPaymentStatusUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get cmvpPaymentStatusUnpaid;
+
+  /// No description provided for @cmvpPaymentStatusPartiallyRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially refunded'**
+  String get cmvpPaymentStatusPartiallyRefunded;
+
+  /// No description provided for @cmvpPaymentStatusRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get cmvpPaymentStatusRefunded;
+
+  /// No description provided for @cmvpNoOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders found.'**
+  String get cmvpNoOrders;
+
+  /// No description provided for @cmvpOrdersShowing.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {start}–{end} of {total}'**
+  String cmvpOrdersShowing(int start, int end, int total);
+
+  /// No description provided for @cmvpOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get cmvpOverview;
+
+  /// No description provided for @cmvpTotalOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Total orders'**
+  String get cmvpTotalOrders;
+
+  /// No description provided for @cmvpTotalSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spending'**
+  String get cmvpTotalSpending;
+
+  /// No description provided for @cmvpAverageOrderValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Average order value'**
+  String get cmvpAverageOrderValue;
+
+  /// No description provided for @cmvpLastVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Last visit'**
+  String get cmvpLastVisit;
+
+  /// No description provided for @cmvpRecentOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent orders'**
+  String get cmvpRecentOrders;
+
+  /// No description provided for @cmvpViewAllOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'View all orders'**
+  String get cmvpViewAllOrders;
 }
 
 class _AppLocalizationsDelegate

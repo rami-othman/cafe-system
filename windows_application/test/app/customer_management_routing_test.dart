@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
@@ -11,9 +13,11 @@ import 'package:windows_application/features/customer_management/widgets/custome
 import 'package:windows_application/features/customer_management/models/customer_group_models.dart';
 import 'package:windows_application/features/customer_management/models/customer_models.dart';
 import 'package:windows_application/features/customer_management/models/customer_queries.dart';
+import 'package:windows_application/features/customer_management/controllers/customer_group_list_cubit.dart';
 import 'package:windows_application/features/customer_management/repositories/customer_management_repository.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/features/customer_management/views/customer_group_list_screen.dart';
+import 'package:windows_application/features/customer_management/views/customer_group_form_screen.dart';
 
 void main() {
   tearDown(() async {
@@ -143,7 +147,7 @@ void main() {
         _RouteExpectation(
           path: CustomerManagementRouteLocations.group(3),
           title: 'VIP',
-          description: l10n.cmvpGroupDetailDescription,
+          description: '',
           breadcrumb: 'VIP',
           groupsSelected: true,
         ),
@@ -166,6 +170,13 @@ void main() {
         if (route.path == CustomerManagementRouteLocations.groups) {
           expect(find.byType(CustomerGroupListScreen), findsOneWidget);
         }
+        if (route.path == CustomerManagementRouteLocations.groupCreate) {
+          expect(find.byType(CustomerGroupListScreen), findsOneWidget);
+          expect(
+            find.byKey(const Key('customer-group-create-dialog')),
+            findsOneWidget,
+          );
+        }
         final CustomerManagementModuleTabs tabs = tester.widget(
           find.byType(CustomerManagementModuleTabs),
         );
@@ -176,11 +187,214 @@ void main() {
           reason: 'route ${route.path} should expose its page header',
         );
         expect(find.text(route.title), findsWidgets);
-        expect(find.text(route.description), findsWidgets);
-        expect(find.text(route.breadcrumb), findsWidgets);
+        if (route.description.isEmpty) {
+          expect(find.text(l10n.cmvpGroupDetailDescription), findsNothing);
+        } else {
+          expect(find.text(route.description), findsWidgets);
+        }
+        if (route.path != CustomerManagementRouteLocations.groupCreate) {
+          expect(find.text(route.breadcrumb), findsWidgets);
+        }
       }
     },
   );
+
+  testWidgets('direct create route loads its mounted group list once', (
+    WidgetTester tester,
+  ) async {
+    final _ModalRouterRepository repository = _ModalRouterRepository();
+    await _configureAuthenticatedApp(
+      canManageCustomers: true,
+      repository: repository,
+    );
+    appRouter.go(CustomerManagementRouteLocations.groupCreate);
+
+    await _pumpApp(tester);
+
+    expect(find.byType(CustomerGroupListScreen), findsOneWidget);
+    expect(find.byType(CustomerGroupFormScreen), findsOneWidget);
+    expect(repository.groupRequests, 1);
+  });
+
+  testWidgets(
+    'clean create modal dismisses by Cancel, Escape, backdrop, and Back',
+    (WidgetTester tester) async {
+      final _ModalRouterRepository repository = _ModalRouterRepository();
+      await _configureAuthenticatedApp(
+        canManageCustomers: true,
+        repository: repository,
+      );
+      appRouter.go(CustomerManagementRouteLocations.groups);
+      await _pumpApp(tester);
+
+      for (final Future<void> Function(WidgetTester) dismiss
+          in <Future<void> Function(WidgetTester)>[
+            (tester) async =>
+                tester.tap(find.byKey(const Key('customer-group-form-cancel'))),
+            (tester) async => tester.sendKeyEvent(LogicalKeyboardKey.escape),
+            (tester) async => tester.tapAt(const Offset(8, 8)),
+            (tester) async => appRouter.pop(),
+          ]) {
+        await tester.tap(find.byKey(const Key('customer-group-create')));
+        await tester.pumpAndSettle();
+        expect(find.byType(CustomerGroupFormScreen), findsOneWidget);
+        for (int index = 0; index < 4; index++) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        }
+        expect(
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorWidgetOfExactType<Dialog>(),
+          isNotNull,
+          reason: 'tab traversal must remain inside the create modal',
+        );
+        await dismiss(tester);
+        await tester.pumpAndSettle();
+        expect(find.byType(CustomerGroupFormScreen), findsNothing);
+        expect(find.byType(CustomerGroupListScreen), findsOneWidget);
+        expect(repository.groupRequests, 1);
+        expect(
+          Focus.of(
+            tester.element(find.byKey(const Key('customer-group-create'))),
+          ).hasFocus,
+          isTrue,
+        );
+      }
+    },
+  );
+
+  testWidgets(
+    'dirty create modal retains its draft on Keep Editing and leaves on Back',
+    (WidgetTester tester) async {
+      await _configureAuthenticatedApp(
+        canManageCustomers: true,
+        repository: _ModalRouterRepository(),
+      );
+      appRouter.go(CustomerManagementRouteLocations.groups);
+      await _pumpApp(tester);
+      await tester.tap(find.byKey(const Key('customer-group-create')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('customer-group-name')),
+        'VIP',
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('Discard unsaved changes?'), findsOneWidget);
+      await tester.tap(find.text('Keep editing'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerGroupFormScreen), findsOneWidget);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(
+                of: find.byKey(const Key('customer-group-name')),
+                matching: find.byType(EditableText),
+              ),
+            )
+            .controller
+            .text,
+        'VIP',
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard unsaved changes?'), findsOneWidget);
+      await tester.tap(find.text('Leave'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerGroupFormScreen), findsNothing);
+      expect(find.byType(CustomerGroupListScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'create dialog retains the mounted group list criteria, page, and scroll',
+    (WidgetTester tester) async {
+      final _RetainedListRepository repository = _RetainedListRepository();
+      await _configureAuthenticatedApp(
+        canManageCustomers: true,
+        repository: repository,
+      );
+      appRouter.go(CustomerManagementRouteLocations.groups);
+      await _pumpApp(tester);
+
+      await tester.enterText(find.byType(TextField).first, 'VIP');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('customer-group-status-active')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Next page'));
+      await tester.pumpAndSettle();
+
+      final ScrollableState listScroll = tester.state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byKey(const Key('customer-group-list-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      listScroll.position.jumpTo(24);
+      await tester.pump();
+      final CustomerGroupListCubit mountedCubit =
+          BlocProvider.of<CustomerGroupListCubit>(
+            tester.element(find.byType(CustomerGroupListScreen)),
+          );
+      final int requestsBeforeDialog = repository.groupRequests;
+
+      await tester.tap(find.byKey(const Key('customer-group-create')));
+      await tester.pumpAndSettle();
+      expect(
+        BlocProvider.of<CustomerGroupListCubit>(
+          tester.element(find.byType(CustomerGroupListScreen)),
+        ),
+        same(mountedCubit),
+      );
+      expect(repository.groupRequests, requestsBeforeDialog);
+
+      await tester.tap(find.byKey(const Key('customer-group-form-cancel')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomerGroupFormScreen), findsNothing);
+      expect(find.text('VIP'), findsWidgets);
+      expect(find.text('Active'), findsWidgets);
+      expect(find.text('Page 2 of 2'), findsOneWidget);
+      expect(listScroll.position.pixels, 24);
+
+      await tester.tap(find.byKey(const Key('customer-group-create')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('customer-group-name')),
+        'Draft',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Keep editing'));
+      await tester.pumpAndSettle();
+      expect(repository.groupRequests, requestsBeforeDialog);
+      expect(listScroll.position.pixels, 24);
+    },
+  );
+
+  testWidgets('create success navigates with the backend returned group id', (
+    WidgetTester tester,
+  ) async {
+    await _configureAuthenticatedApp(
+      canManageCustomers: true,
+      repository: _ModalRouterRepository(createId: 41),
+    );
+    appRouter.go(CustomerManagementRouteLocations.groups);
+    await _pumpApp(tester);
+    await tester.tap(find.byKey(const Key('customer-group-create')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('customer-group-name')), 'VIP');
+    await tester.tap(find.byKey(const Key('customer-group-save')));
+    await tester.pumpAndSettle();
+
+    expect(
+      appRouter.state.uri.path,
+      CustomerManagementRouteLocations.group(41),
+    );
+  });
 }
 
 Future<void> _configureAuthenticatedApp({
@@ -285,6 +499,14 @@ class _RouterRepository implements CustomerManagementRepository {
   Future<Customer> getCustomer(int id) async => _customer;
 
   @override
+  Future<CustomerOverview> getCustomerOverview(int id) async =>
+      const CustomerOverview(
+        customer: _customer,
+        summary: CustomerOrderSummary(totalOrders: 0),
+        recentOrders: <CustomerOrder>[],
+      );
+
+  @override
   Future<CustomerGroup> getGroup(int id) async => _group;
 
   @override
@@ -308,4 +530,85 @@ class _RouterRepository implements CustomerManagementRepository {
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _ModalRouterRepository implements CustomerManagementRepository {
+  _ModalRouterRepository({this.createId});
+
+  final int? createId;
+  int groupRequests = 0;
+
+  static const CustomerGroup _group = CustomerGroup(
+    id: 3,
+    name: 'VIP',
+    lifecycle: CustomerLifecycle.active,
+    memberCount: 1,
+  );
+
+  static const CustomerPageMeta _meta = CustomerPageMeta(
+    currentPage: 1,
+    lastPage: 1,
+    perPage: 25,
+    total: 1,
+  );
+
+  @override
+  Future<CustomerPage<CustomerGroup>> listGroups(
+    CustomerGroupListQuery query,
+  ) async {
+    groupRequests++;
+    return const CustomerPage<CustomerGroup>(
+      items: <CustomerGroup>[_group],
+      meta: _meta,
+    );
+  }
+
+  @override
+  Future<CustomerGroup> createGroup(_) async => CustomerGroup(
+    id: createId ?? 3,
+    name: 'VIP',
+    lifecycle: CustomerLifecycle.active,
+    memberCount: 0,
+  );
+
+  @override
+  Future<CustomerGroup> getGroup(int id) async => CustomerGroup(
+    id: id,
+    name: 'VIP',
+    lifecycle: CustomerLifecycle.active,
+    memberCount: 1,
+  );
+
+  @override
+  Future<CustomerPage<Customer>> listGroupMembers(int groupId, _) async =>
+      const CustomerPage<Customer>(items: <Customer>[], meta: _meta);
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _RetainedListRepository extends _ModalRouterRepository {
+  @override
+  Future<CustomerPage<CustomerGroup>> listGroups(
+    CustomerGroupListQuery query,
+  ) async {
+    groupRequests++;
+    return CustomerPage<CustomerGroup>(
+      items: List<CustomerGroup>.generate(
+        40,
+        (int index) => CustomerGroup(
+          id: query.page * 100 + index,
+          name: 'VIP ${query.page}-$index',
+          lifecycle: CustomerLifecycle.active,
+          memberCount: index + 1,
+        ),
+      ),
+      meta: CustomerPageMeta(
+        currentPage: query.page,
+        lastPage: 2,
+        perPage: 25,
+        total: 40,
+      ),
+    );
+  }
 }

@@ -88,6 +88,14 @@ class _RaceRepository implements CustomerManagementRepository {
       detailResponse?.future ?? Future<Customer>.value(_customer);
 
   @override
+  Future<CustomerOverview> getCustomerOverview(int id) async =>
+      CustomerOverview(
+        customer: await getCustomer(id),
+        summary: const CustomerOrderSummary(totalOrders: 0),
+        recentOrders: const <CustomerOrder>[],
+      );
+
+  @override
   Future<CustomerPage<Customer>> listEligibleMembers(
     int groupId,
     CustomerGroupListQuery query,

@@ -104,6 +104,21 @@ class CustomerManagementGoldenFixtures {
 
 class _GoldenRepository implements CustomerManagementRepository {
   @override
+  Future<List<CustomerOrderBranch>> listPermittedOrderBranches() async =>
+      const <CustomerOrderBranch>[
+        CustomerOrderBranch(id: 1, name: 'Main Branch'),
+      ];
+
+  @override
+  Future<CustomerPage<CustomerOrder>> listCustomerOrders(
+    int customerId,
+    CustomerOrderQuery query,
+  ) async => const CustomerPage<CustomerOrder>(
+    items: <CustomerOrder>[],
+    meta: CustomerPageMeta(currentPage: 1, lastPage: 1, perPage: 25, total: 0),
+  );
+
+  @override
   Future<CustomerPage<Customer>> listCustomers(CustomerListQuery query) async =>
       const CustomerPage<Customer>(
         items: <Customer>[_customer, _secondCustomer],
@@ -117,6 +132,14 @@ class _GoldenRepository implements CustomerManagementRepository {
 
   @override
   Future<Customer> getCustomer(int customerId) async => _customer;
+
+  @override
+  Future<CustomerOverview> getCustomerOverview(int customerId) async =>
+      const CustomerOverview(
+        customer: _customer,
+        summary: CustomerOrderSummary(totalOrders: 0),
+        recentOrders: <CustomerOrder>[],
+      );
 
   @override
   Future<Customer> createCustomer(CustomerDraft draft) async => _customer;

@@ -43,11 +43,11 @@ class CustomerManagementPageHeader extends StatelessWidget {
       final Widget actionsSlot = actionWidgets.isEmpty
           ? const SizedBox.shrink()
           : Align(
-              alignment: AlignmentDirectional.topStart,
+              alignment: AlignmentDirectional.topEnd,
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                alignment: WrapAlignment.start,
+                alignment: WrapAlignment.end,
                 children: actionWidgets,
               ),
             );

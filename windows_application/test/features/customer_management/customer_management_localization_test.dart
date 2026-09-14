@@ -30,8 +30,8 @@ void main() {
     expect(find.text('محمول'), findsOneWidget);
     expect(find.text('mobile'), findsNothing);
     expect(find.byType(Directionality), findsWidgets);
-    expect(find.text('C-000007'), findsWidgets);
-    expect(find.text('+963 9 123'), findsWidgets);
+    expect(find.text('\u2066C-000007\u2069'), findsWidgets);
+    expect(find.text('\u2066+963 9 123\u2069'), findsWidgets);
   });
 }
 
@@ -53,6 +53,14 @@ class _Repository implements CustomerManagementRepository {
     groups: <CustomerGroupSummary>[],
     allowedActions: <String>{},
   );
+
+  @override
+  Future<CustomerOverview> getCustomerOverview(int customerId) async =>
+      CustomerOverview(
+        customer: await getCustomer(customerId),
+        summary: const CustomerOrderSummary(totalOrders: 0),
+        recentOrders: const <CustomerOrder>[],
+      );
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

@@ -34,7 +34,13 @@ abstract final class CustomerManagementGoldenHarness {
     final FontLoader arabic = FontLoader('IBMPlexSansArabic')
       ..addFont(rootBundle.load('assets/fonts/IBMPlexSansArabic-Regular.ttf'))
       ..addFont(rootBundle.load('assets/fonts/IBMPlexSansArabic-SemiBold.ttf'));
-    await Future.wait<void>(<Future<void>>[manrope.load(), arabic.load()]);
+    final FontLoader materialIcons = FontLoader('MaterialIcons')
+      ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+    await Future.wait<void>(<Future<void>>[
+      manrope.load(),
+      arabic.load(),
+      materialIcons.load(),
+    ]);
   }
 
   static Widget wrap(

@@ -12,7 +12,7 @@ import 'package:windows_application/features/customer_management/repositories/cu
 
 void main() {
   test(
-    'initializes a create draft with zero phones and no generated identity',
+    'initializes a create draft with one required primary phone and no generated identity',
     () {
       final CustomerFormCubit cubit = CustomerFormCubit(_FormRepository());
 
@@ -21,7 +21,9 @@ void main() {
       expect(cubit.state.status, CustomerFormStatus.ready);
       expect(cubit.state.isCreate, isTrue);
       expect(cubit.state.customerNumber, isNull);
-      expect(cubit.state.draft.phones, isEmpty);
+      expect(cubit.state.draft.phones, hasLength(1));
+      expect(cubit.state.draft.phones.single.isPrimary, isTrue);
+      expect(cubit.state.draft.phones.single.rawNumber, isEmpty);
       expect(cubit.state.draft.isReadyToSubmit, isFalse);
     },
   );
@@ -144,6 +146,19 @@ void main() {
     },
   );
 
+  test('rejects a name-only customer without calling the repository', () async {
+    final _FormRepository repository = _FormRepository();
+    final CustomerFormCubit cubit = CustomerFormCubit(repository);
+    cubit.initializeCreate();
+    cubit.updateDraft(const CustomerDraft(name: 'Ada'));
+
+    await cubit.submit();
+
+    expect(cubit.state.status, CustomerFormStatus.failure);
+    expect(cubit.state.fieldErrors['phones'], <String>['required']);
+    expect(repository.createCalls, 0);
+  });
+
   test('maps nested backend validation and retains all draft values', () async {
     final _FormRepository repository = _FormRepository(
       submitError: const ApiException(
@@ -190,7 +205,19 @@ void main() {
       final _FormRepository repository = _FormRepository(deferSubmit: true);
       final CustomerFormCubit cubit = CustomerFormCubit(repository);
       cubit.initializeCreate();
-      cubit.updateDraft(const CustomerDraft(name: 'Ada'));
+      cubit.updateDraft(
+        const CustomerDraft(
+          name: 'Ada',
+          phones: <CustomerPhoneDraft>[
+            CustomerPhoneDraft(
+              rowId: 'phone-1',
+              rawNumber: '091234567',
+              type: 'mobile',
+              isPrimary: true,
+            ),
+          ],
+        ),
+      );
 
       final Future<void> first = cubit.submit();
       final Future<void> second = cubit.submit();

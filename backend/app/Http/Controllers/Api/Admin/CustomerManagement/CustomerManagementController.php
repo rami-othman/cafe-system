@@ -4,17 +4,19 @@ namespace App\Http\Controllers\Api\Admin\CustomerManagement;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\ListCustomersRequest;
+use App\Http\Requests\Customer\ListCustomerOrdersRequest;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Http\Resources\Customer\CustomerManagementResource;
 use App\Services\Customer\CustomerQueryService;
+use App\Services\Customer\CustomerOrderHistoryQueryService;
 use App\Services\Customer\CustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CustomerManagementController extends Controller
 {
-    public function __construct(private readonly CustomerService $customers, private readonly CustomerQueryService $queryService) {}
+    public function __construct(private readonly CustomerService $customers, private readonly CustomerQueryService $queryService, private readonly CustomerOrderHistoryQueryService $orders) {}
 
     public function index(ListCustomersRequest $request): JsonResponse
     {
@@ -31,6 +33,23 @@ class CustomerManagementController extends Controller
     public function show(Request $request, int $customer): CustomerManagementResource
     {
         return new CustomerManagementResource($this->customers->findForAdmin($request, $customer));
+    }
+
+    public function overview(Request $request, int $customer): JsonResponse
+    {
+        $record = $this->customers->findForAdmin($request, $customer);
+        $overview = $this->orders->overview($request, $record->id);
+
+        return response()->json(['data' => [
+            'customer' => (new CustomerManagementResource($record))->resolve($request),
+            ...$overview,
+        ]]);
+    }
+
+    public function orders(ListCustomerOrdersRequest $request, int $customer): JsonResponse
+    {
+        $page = $this->orders->paginate($request, $customer, $request->validated());
+        return response()->json(['data' => $page->getCollection()->map(fn ($order) => $this->orders->serialize($order))->values(), 'meta' => ['currentPage' => $page->currentPage(), 'lastPage' => $page->lastPage(), 'perPage' => $page->perPage(), 'total' => $page->total()]]);
     }
 
     public function update(UpdateCustomerRequest $request, int $customer): CustomerManagementResource

@@ -54,7 +54,12 @@ class CustomerDraft extends Equatable {
   bool get hasExactlyOnePrimary =>
       phones.where((CustomerPhoneDraft phone) => phone.isPrimary).length == 1;
   bool get isReadyToSubmit =>
-      name.trim().isNotEmpty && (phones.isEmpty || hasExactlyOnePrimary);
+      name.trim().isNotEmpty &&
+      phones.isNotEmpty &&
+      phones.every(
+        (CustomerPhoneDraft phone) => phone.rawNumber.trim().isNotEmpty,
+      ) &&
+      hasExactlyOnePrimary;
 
   CustomerDraft copyWith({
     String? name,

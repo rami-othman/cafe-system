@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,6 +10,8 @@ import '../models/customer_models.dart';
 import '../repositories/customer_management_repository.dart';
 import 'customer_confirmation_dialog.dart';
 import 'customer_lifecycle_badge.dart';
+import 'customer_management_overflow_menu.dart';
+import 'customer_management_visual_tokens.dart';
 
 class CustomerLifecycleActions extends StatefulWidget {
   const CustomerLifecycleActions({
@@ -15,6 +19,8 @@ class CustomerLifecycleActions extends StatefulWidget {
     required this.repository,
     required this.customer,
     this.showBadge = true,
+    this.compact = false,
+    this.compactActions = const <CustomerManagementMenuEntry>[],
     this.onCustomerReplaced,
     this.onCollectionsRefresh,
   });
@@ -22,6 +28,8 @@ class CustomerLifecycleActions extends StatefulWidget {
   final CustomerManagementRepository repository;
   final Customer customer;
   final bool showBadge;
+  final bool compact;
+  final List<CustomerManagementMenuEntry> compactActions;
   final Future<void> Function(Customer customer)? onCustomerReplaced;
   final Future<void> Function()? onCollectionsRefresh;
 
@@ -80,6 +88,9 @@ class _CustomerLifecycleActionsState extends State<CustomerLifecycleActions> {
         },
         builder: (BuildContext context, CustomerLifecycleState state) {
           final AppLocalizations l10n = AppLocalizations.of(context);
+          if (widget.compact) {
+            return _buildCompact(context, state, l10n);
+          }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -168,7 +179,78 @@ class _CustomerLifecycleActionsState extends State<CustomerLifecycleActions> {
         false;
     if (confirmed && mounted) await _cubit.perform(action);
   }
+
+  Widget _buildCompact(
+    BuildContext context,
+    CustomerLifecycleState state,
+    AppLocalizations l10n,
+  ) {
+    final List<CustomerManagementMenuEntry> actions =
+        <CustomerManagementMenuEntry>[
+          ...widget.compactActions,
+          for (final String action in _visibleActions(state.customer))
+            CustomerManagementMenuEntry(
+              label: _label(l10n, action),
+              icon: _actionIcon(action),
+              destructive: action == 'archive',
+              enabled: !state.isSubmitting,
+              onPressed: () => unawaited(_selectAction(context, action)),
+            ),
+        ];
+    final bool includesEdit = widget.compactActions.any(
+      (CustomerManagementMenuEntry entry) =>
+          entry.label == l10n.customerManagementEdit,
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        CustomerManagementOverflowMenu(
+          actions: actions,
+          tooltip: includesEdit
+              ? l10n.customerManagementEdit
+              : l10n.cmvpOpenActions,
+          semanticLabel: l10n.cmvpOpenActions,
+        ),
+        if (state.status == CustomerLifecycleStatus.failure)
+          Semantics(
+            liveRegion: true,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                l10n.customerManagementRequestFailed,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontFamilyFallback:
+                      CustomerManagementVisualTokens.fontFamilyFallback,
+                ),
+              ),
+            ),
+          ),
+        if (state.status == CustomerLifecycleStatus.success)
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _label(l10n, state.customer.lifecycle.name),
+              style: const TextStyle(
+                fontSize: 11,
+                fontFamilyFallback:
+                    CustomerManagementVisualTokens.fontFamilyFallback,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
+
+IconData _actionIcon(String action) => switch (action) {
+  'activate' => Icons.play_arrow_outlined,
+  'deactivate' => Icons.pause_circle_outline,
+  'archive' => Icons.archive_outlined,
+  'restore' => Icons.restore_outlined,
+  _ => Icons.more_horiz,
+};
 
 List<String> _visibleActions(Customer customer) {
   final Set<String> valid = switch (customer.lifecycle) {

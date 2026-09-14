@@ -17,6 +17,7 @@ class CustomerRoutePermissionMapTest extends TestCase
             'GET api/v1/admin/customer-management/customers' => 'customer.manage',
             'POST api/v1/admin/customer-management/customers' => 'customer.manage',
             'GET api/v1/admin/customer-management/customers/{customer}' => 'customer.manage',
+            'GET api/v1/admin/customer-management/customers/{customer}/orders' => 'customer.manage',
             'PUT api/v1/admin/customer-management/customers/{customer}' => 'customer.manage',
             'POST api/v1/admin/customer-management/customers/{customer}/activate' => 'customer.manage',
             'POST api/v1/admin/customer-management/customers/{customer}/deactivate' => 'customer.manage',

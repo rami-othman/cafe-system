@@ -104,6 +104,16 @@ class _DetailRepository implements CustomerManagementRepository {
     return completer.future;
   }
 
+  @override
+  Future<CustomerOverview> getCustomerOverview(int customerId) async {
+    final Customer customer = await getCustomer(customerId);
+    return CustomerOverview(
+      customer: customer,
+      summary: const CustomerOrderSummary(totalOrders: 0),
+      recentOrders: const <CustomerOrder>[],
+    );
+  }
+
   void complete(int id) {
     final _PendingDetail pending = _pending.firstWhere(
       (_PendingDetail request) => request.id == id,

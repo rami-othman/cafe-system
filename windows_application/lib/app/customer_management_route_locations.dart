@@ -2,6 +2,7 @@ abstract final class CustomerManagementRouteLocations {
   static const String customers = '/customers';
   static const String customerCreate = '/customers/new';
   static const String customerDetail = '/customers/:customerId';
+  static const String customerOrders = '/customers/:customerId/orders';
   static const String customerEdit = '/customers/:customerId/edit';
   static const String groups = '/customers/groups';
   static const String groupCreate = '/customers/groups/new';
@@ -9,6 +10,7 @@ abstract final class CustomerManagementRouteLocations {
   static const String groupEdit = '/customers/groups/:groupId/edit';
 
   static String customer(int customerId) => '$customers/${_id(customerId)}';
+  static String customerOrdersPath(int customerId) => '${customer(customerId)}/orders';
   static String editCustomer(int customerId) => '${customer(customerId)}/edit';
   static String group(int groupId) => '$groups/${_id(groupId)}';
   static String editGroup(int groupId) => '${group(groupId)}/edit';

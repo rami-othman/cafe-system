@@ -20,7 +20,18 @@ class CustomerFormCubit extends Cubit<CustomerFormState> {
 
   void initializeCreate() {
     _generation++;
-    const CustomerDraft draft = CustomerDraft(name: '');
+    _newPhoneSequence = 1;
+    const CustomerDraft draft = CustomerDraft(
+      name: '',
+      phones: <CustomerPhoneDraft>[
+        CustomerPhoneDraft(
+          rowId: 'phone-new-0',
+          rawNumber: '',
+          type: 'mobile',
+          isPrimary: true,
+        ),
+      ],
+    );
     emit(
       const CustomerFormState(
         status: CustomerFormStatus.ready,
@@ -260,6 +271,14 @@ class CustomerFormCubit extends Cubit<CustomerFormState> {
     final Map<String, List<String>> errors = <String, List<String>>{};
     if (draft.name.trim().isEmpty) {
       errors['name'] = const <String>['required'];
+    }
+    if (draft.phones.isEmpty) {
+      errors['phones'] = const <String>['required'];
+    }
+    for (int index = 0; index < draft.phones.length; index++) {
+      if (draft.phones[index].rawNumber.trim().isEmpty) {
+        errors['phones.$index.rawNumber'] = const <String>['required'];
+      }
     }
     if (draft.phones.isNotEmpty && !draft.hasExactlyOnePrimary) {
       errors['phones'] = const <String>['primaryRequired'];

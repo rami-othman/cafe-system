@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/features/customer_management/models/customer_drafts.dart';
 import 'package:windows_application/features/customer_management/models/customer_failure.dart';
+import 'package:windows_application/features/customer_management/models/customer_models.dart';
 import 'package:windows_application/features/customer_management/models/customer_queries.dart';
 import 'package:windows_application/features/customer_management/repositories/customer_management_repository.dart';
 
@@ -134,6 +135,97 @@ void main() {
         ),
         isTrue,
       );
+    },
+  );
+
+  test('parses the bounded authoritative customer overview contract', () async {
+    final _ScriptedAdapter adapter = _ScriptedAdapter(<_Reply>[
+      _Reply.ok(<String, dynamic>{
+        'data': <String, dynamic>{
+          'customer': _customerJson(),
+          'summary': <String, dynamic>{
+            'totalOrders': 2,
+            'totalSpending': <String, dynamic>{
+              'amount': '31.50',
+              'currency': 'SYP',
+            },
+            'averageOrderValue': <String, dynamic>{
+              'amount': '15.75',
+              'currency': 'SYP',
+            },
+            'lastOrderAt': '2026-09-08T12:00:00.000000Z',
+          },
+          'recentOrders': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 9,
+              'orderNumber': 'ORD-9',
+              'branch': <String, dynamic>{'id': 1, 'name': 'Main'},
+              'createdAt': '2026-09-08T12:00:00.000000Z',
+              'status': 'paid',
+              'paymentStatus': 'paid',
+              'total': <String, dynamic>{'amount': '20.50', 'currency': 'SYP'},
+            },
+          ],
+        },
+      }),
+    ]);
+
+    final CustomerOverview overview = await _repository(
+      adapter,
+    ).getCustomerOverview(1);
+
+    expect(overview.summary.totalSpending?.amount, '31.50');
+    expect(overview.recentOrders.single.orderNumber, 'ORD-9');
+    expect(
+      adapter.requests.single.path,
+      'admin/customer-management/customers/1/overview',
+    );
+  });
+
+  test(
+    'falls back to existing real detail and bounded orders on overview 404',
+    () async {
+      final _ScriptedAdapter adapter = _ScriptedAdapter(<_Reply>[
+        _Reply.status(404, <String, dynamic>{'message': 'Not found'}),
+        _Reply.ok(<String, dynamic>{'data': _customerJson()}),
+        _Reply.ok(<String, dynamic>{
+          'data': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 9,
+              'orderNumber': 'ORD-9',
+              'branch': <String, dynamic>{'id': 1, 'name': 'Main'},
+              'createdAt': '2026-09-08T12:00:00.000000Z',
+              'status': 'paid',
+              'paymentStatus': 'paid',
+              'total': <String, dynamic>{'amount': '20.50', 'currency': 'SYP'},
+            },
+          ],
+          'meta': <String, dynamic>{
+            'currentPage': 1,
+            'lastPage': 1,
+            'perPage': 5,
+            'total': 1,
+          },
+        }),
+      ]);
+
+      final CustomerOverview overview = await _repository(
+        adapter,
+      ).getCustomerOverview(1);
+
+      expect(overview.customer.id, 1);
+      expect(overview.summary.totalOrders, 1);
+      expect(overview.summary.totalSpending, isNull);
+      expect(overview.recentOrders.single.orderNumber, 'ORD-9');
+      expect(adapter.requests.map((request) => request.path), <String>[
+        'admin/customer-management/customers/1/overview',
+        'admin/customer-management/customers/1',
+        'admin/customer-management/customers/1/orders',
+      ]);
+      expect(adapter.requests.last.queryParameters, <String, dynamic>{
+        'page': 1,
+        'perPage': 5,
+      });
     },
   );
 

@@ -50,7 +50,7 @@ void main() {
     },
   );
 
-  test('requires an explicit primary only when phones exist', () {
+  test('requires one nonblank primary phone alongside the customer name', () {
     const CustomerDraft noPhone = CustomerDraft(name: 'No Phone');
     const CustomerDraft noPrimary = CustomerDraft(
       name: 'Missing Primary',
@@ -64,7 +64,7 @@ void main() {
       ],
     );
 
-    expect(noPhone.isReadyToSubmit, isTrue);
+    expect(noPhone.isReadyToSubmit, isFalse);
     expect(noPrimary.isReadyToSubmit, isFalse);
     expect(noPhone.toJson()['phones'], isEmpty);
   });

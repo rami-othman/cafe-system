@@ -2937,6 +2937,7 @@
   "customerManagementStay": "Keep editing",
   "customerManagementLeave": "Leave",
   "customerManagementRequiredName": "Enter a customer name.",
+  "customerManagementRequiredPhone": "Enter a phone number.",
   "customerManagementPrimaryRequired": "Select one primary phone.",
   "customerManagementNoActiveGroups": "No active groups available.",
   "customerManagementDeactivateConfirm": "Deactivate {name}?",
@@ -3011,4 +3012,33 @@
   "cmvpDialogConfirm": "Confirm",
   "cmvpMemberRemoveConsequence": "This member will be removed from the group.",
   "cmvpGroupLifecycleMessage": "The group will remain available in historical records."
+  ,"cmvpOrders": "Orders"
+  ,"cmvpOrderHistory": "Customer orders"
+  ,"cmvpFromDate": "From date"
+  ,"cmvpToDate": "To date"
+  ,"cmvpBranch": "Branch"
+  ,"cmvpAllBranches": "All branches"
+  ,"cmvpOrderStatus": "Order status"
+  ,"cmvpPaymentStatus": "Payment status"
+  ,"cmvpOrderNumber": "Order number"
+  ,"cmvpOrderDateTime": "Date and time"
+  ,"cmvpOrderTotal": "Total"
+  ,"cmvpOrderStatusCompleted": "Completed"
+  ,"cmvpOrderStatusHeld": "Held"
+  ,"cmvpOrderStatusCancelled": "Cancelled"
+  ,"cmvpOrderStatusDraft": "Draft"
+  ,"cmvpPaymentStatusPaid": "Paid"
+  ,"cmvpPaymentStatusUnpaid": "Unpaid"
+  ,"cmvpPaymentStatusPartiallyRefunded": "Partially refunded"
+  ,"cmvpPaymentStatusRefunded": "Refunded"
+  ,"cmvpNoOrders": "No orders found."
+  ,"cmvpOrdersShowing": "Showing {start}–{end} of {total}"
+  ,"@cmvpOrdersShowing": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}}
+  ,"cmvpOverview": "Overview"
+  ,"cmvpTotalOrders": "Total orders"
+  ,"cmvpTotalSpending": "Total spending"
+  ,"cmvpAverageOrderValue": "Average order value"
+  ,"cmvpLastVisit": "Last visit"
+  ,"cmvpRecentOrders": "Recent orders"
+  ,"cmvpViewAllOrders": "View all orders"
 }

@@ -2663,6 +2663,7 @@
   "customerManagementStay": "البقاء في التعديل",
   "customerManagementLeave": "مغادرة",
   "customerManagementRequiredName": "أدخل اسم العميل.",
+  "customerManagementRequiredPhone": "أدخل رقم هاتف.",
   "customerManagementPrimaryRequired": "اختر هاتفاً أساسياً واحداً.",
   "customerManagementNoActiveGroups": "لا توجد مجموعات نشطة.",
   "cmvpCustomersDescription": "إدارة سجلات العملاء وهواتفهم ومجموعاتهم وحالة دورة حياتهم.",
@@ -2727,4 +2728,33 @@
   "cmvpDialogConfirm": "تأكيد",
   "cmvpMemberRemoveConsequence": "ستتم إزالة هذا العضو من المجموعة.",
   "cmvpGroupLifecycleMessage": "ستبقى المجموعة متاحة في السجلات التاريخية."
+  ,"cmvpOrders": "الطلبات"
+  ,"cmvpOrderHistory": "طلبات العميل"
+  ,"cmvpFromDate": "من تاريخ"
+  ,"cmvpToDate": "إلى تاريخ"
+  ,"cmvpBranch": "الفرع"
+  ,"cmvpAllBranches": "كل الفروع"
+  ,"cmvpOrderStatus": "حالة الطلب"
+  ,"cmvpPaymentStatus": "حالة الدفع"
+  ,"cmvpOrderNumber": "رقم الطلب"
+  ,"cmvpOrderDateTime": "التاريخ والوقت"
+  ,"cmvpOrderTotal": "الإجمالي"
+  ,"cmvpOrderStatusCompleted": "مكتمل"
+  ,"cmvpOrderStatusHeld": "قيد التحضير"
+  ,"cmvpOrderStatusCancelled": "ملغي"
+  ,"cmvpOrderStatusDraft": "مسودة"
+  ,"cmvpPaymentStatusPaid": "مدفوع"
+  ,"cmvpPaymentStatusUnpaid": "غير مدفوع"
+  ,"cmvpPaymentStatusPartiallyRefunded": "مسترد جزئياً"
+  ,"cmvpPaymentStatusRefunded": "مسترد"
+  ,"cmvpNoOrders": "لا توجد طلبات."
+  ,"cmvpOrdersShowing": "عرض {start}–{end} من {total}"
+  ,"@cmvpOrdersShowing": {"placeholders": {"start": {"type": "int"}, "end": {"type": "int"}, "total": {"type": "int"}}}
+  ,"cmvpOverview": "نظرة عامة"
+  ,"cmvpTotalOrders": "إجمالي الطلبات"
+  ,"cmvpTotalSpending": "إجمالي الإنفاق"
+  ,"cmvpAverageOrderValue": "متوسط قيمة الطلب"
+  ,"cmvpLastVisit": "آخر زيارة"
+  ,"cmvpRecentOrders": "آخر الطلبات"
+  ,"cmvpViewAllOrders": "عرض جميع الطلبات"
 }

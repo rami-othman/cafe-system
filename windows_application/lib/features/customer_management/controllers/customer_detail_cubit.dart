@@ -19,16 +19,20 @@ class CustomerDetailCubit extends Cubit<CustomerDetailState> {
         status: CustomerDetailStatus.loading,
         customerId: customerId,
         customer: customerId == state.customerId ? state.customer : null,
+        overview: customerId == state.customerId ? state.overview : null,
       ),
     );
     try {
-      final Customer customer = await _repository.getCustomer(customerId);
+      final CustomerOverview overview = await _repository.getCustomerOverview(
+        customerId,
+      );
       if (isClosed || generation != _generation) return;
       emit(
         CustomerDetailState(
           status: CustomerDetailStatus.success,
           customerId: customerId,
-          customer: customer,
+          customer: overview.customer,
+          overview: overview,
         ),
       );
     } catch (error) {
@@ -38,6 +42,7 @@ class CustomerDetailCubit extends Cubit<CustomerDetailState> {
           status: CustomerDetailStatus.failure,
           customerId: customerId,
           customer: customerId == state.customerId ? state.customer : null,
+          overview: customerId == state.customerId ? state.overview : null,
           failure: CustomerFailure.fromError(error),
         ),
       );

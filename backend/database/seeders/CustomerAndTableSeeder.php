@@ -22,11 +22,10 @@ class CustomerAndTableSeeder extends Seeder
         $now = now();
 
         foreach (range(1, 8) as $number) {
-            DB::table('cafe_tables')->insert([
-                'tenant_id' => $tenantId,
-                'branch_id' => $branchId,
+            DB::table('cafe_tables')->updateOrInsert([
+                'tenant_id' => $tenantId, 'branch_id' => $branchId, 'code' => "T{$number}",
+            ], [
                 'name' => "Table {$number}",
-                'code' => "T{$number}",
                 'seats' => $number <= 4 ? 2 : 4,
                 'status' => $number === 8 ? 'reserved' : 'available',
                 'sort_order' => $number,
@@ -44,17 +43,24 @@ class CustomerAndTableSeeder extends Seeder
         ] as $customer) {
             DB::transaction(function () use ($customer, $tenantId, $now): void {
                 $name = CustomerNameNormalizer::normalize($customer['name']);
-                DB::table('customers')->insert([
-                    'tenant_id' => $tenantId,
+                $existing = DB::table('customers')->where('tenant_id', $tenantId)->where('normalized_name', $name['normalizedName'])->first(['id']);
+                $values = [
                     'name' => $name['displayName'],
                     'normalized_name' => $name['normalizedName'],
-                    'customer_number' => app(CustomerNumberGenerator::class)->next($tenantId),
                     'phone' => $customer['phone'],
                     'email' => $customer['email'],
                     'total_spent' => $customer['total_spent'],
                     'visits_count' => $customer['visits_count'],
-                    'created_at' => $now,
                     'updated_at' => $now,
+                ];
+                if ($existing) {
+                    DB::table('customers')->where('id', $existing->id)->update($values);
+                    return;
+                }
+                DB::table('customers')->insert($values + [
+                    'tenant_id' => $tenantId,
+                    'customer_number' => app(CustomerNumberGenerator::class)->next($tenantId),
+                    'created_at' => $now,
                 ]);
             });
         }

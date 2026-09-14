@@ -11,13 +11,13 @@ class CustomerManagementApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authorized_admin_can_create_name_only_customer_and_update_profile(): void
+    public function test_authorized_admin_can_create_customer_with_a_phone_and_update_profile(): void
     {
         $tenant = $this->tenant('management');
         $owner = $this->user($tenant, 'owner');
         $token = $this->authenticateTenantUser($tenant, $owner);
 
-        $created = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customers', ['name' => '  Maria   Haddad  '])->assertCreated();
+        $created = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customers', ['name' => '  Maria   Haddad  ', 'phones' => [['rawNumber' => '091234567', 'isPrimary' => true]]])->assertCreated();
         $created->assertJsonPath('data.name', 'Maria Haddad')->assertJsonPath('data.customerNumber', 'C-000001')->assertJsonPath('data.status', 'active');
         $id = $created->json('data.id');
         $this->assertNotNull($created->json('data.createdAt'));
@@ -25,7 +25,7 @@ class CustomerManagementApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/v1/admin/customer-management/customers/'.$id)->assertOk()->assertJsonPath('data.customerNumber', 'C-000001');
         $this->withToken($token)->putJson('/api/v1/admin/customer-management/customers/'.$id, ['name' => 'Maria Updated', 'email' => 'maria@example.test', 'birthDate' => '1990-01-02', 'notes' => 'Preferred customer'])->assertOk()->assertJsonPath('data.name', 'Maria Updated')->assertJsonPath('data.customerNumber', 'C-000001');
-        $this->assertDatabaseHas('customers', ['id' => $id, 'tenant_id' => $tenant, 'customer_number' => 'C-000001', 'phone' => null]);
+        $this->assertDatabaseHas('customers', ['id' => $id, 'tenant_id' => $tenant, 'customer_number' => 'C-000001', 'phone' => '091234567']);
         $audit = DB::table('activity_logs')->where('tenant_id', $tenant)->where('entity_type', 'customer')->latest('id')->first();
         $this->assertNotNull($audit);
         $this->assertStringNotContainsString('maria@example.test', (string) $audit->after_state);
@@ -42,6 +42,17 @@ class CustomerManagementApiTest extends TestCase
         $this->assertSame(0, DB::table('customers')->where('tenant_id', $tenant)->count());
     }
 
+    public function test_customer_phone_is_required_for_creation_and_cannot_be_cleared(): void
+    {
+        $tenant = $this->tenant('required-phone');
+        $token = $this->authenticateTenantUser($tenant, $this->user($tenant, 'owner'));
+
+        $this->withToken($token)->postJson('/api/v1/admin/customer-management/customers', ['name' => 'No Phone'])->assertUnprocessable()->assertJsonValidationErrors('phones');
+        $created = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customers', ['name' => 'Has Phone', 'phones' => [['rawNumber' => '091234567', 'isPrimary' => true]]])->assertCreated();
+
+        $this->withToken($token)->putJson('/api/v1/admin/customer-management/customers/'.$created->json('data.id'), ['phones' => []])->assertUnprocessable()->assertJsonValidationErrors('phones');
+    }
+
     public function test_create_and_update_replace_supplied_active_group_memberships_atomically(): void
     {
         $tenant = $this->tenant('aggregate-memberships');
@@ -49,7 +60,7 @@ class CustomerManagementApiTest extends TestCase
         $firstGroup = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customer-groups', ['name' => 'First'])->assertCreated()->json('data.id');
         $secondGroup = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customer-groups', ['name' => 'Second'])->assertCreated()->json('data.id');
 
-        $customer = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customers', ['name' => 'Grouped', 'groupIds' => [$firstGroup]])->assertCreated()->json('data.id');
+        $customer = $this->withToken($token)->postJson('/api/v1/admin/customer-management/customers', ['name' => 'Grouped', 'phones' => [['rawNumber' => '091234567', 'isPrimary' => true]], 'groupIds' => [$firstGroup]])->assertCreated()->json('data.id');
         $this->assertDatabaseHas('customer_group_memberships', ['tenant_id' => $tenant, 'customer_id' => $customer, 'customer_group_id' => $firstGroup]);
 
         $this->withToken($token)->putJson('/api/v1/admin/customer-management/customers/'.$customer, ['groupIds' => [$secondGroup]])->assertOk();

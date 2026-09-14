@@ -7,10 +7,8 @@ import '../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../l10n/app_localizations.dart';
 import '../controllers/customer_form_cubit.dart';
 import '../controllers/customer_form_state.dart';
-import '../models/customer_models.dart';
 import '../repositories/customer_management_repository.dart';
 import '../widgets/customer_form_sections.dart';
-import '../widgets/customer_lifecycle_actions.dart';
 import '../widgets/customer_management_page_header.dart';
 import '../widgets/customer_management_state_panel.dart';
 import '../widgets/customer_management_surface.dart';
@@ -71,135 +69,104 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocConsumer<CustomerFormCubit, CustomerFormState>(
-    listener: (BuildContext context, CustomerFormState state) {
-      final int? savedId = state.savedCustomer?.id;
-      if (state.status == CustomerFormStatus.success && savedId != null) {
-        context.go(CustomerManagementRouteLocations.customer(savedId));
-      }
-    },
-    builder: (BuildContext context, CustomerFormState state) {
-      final CustomerFormCubit cubit = context.read<CustomerFormCubit>();
-      if (state.status == CustomerFormStatus.loading) {
-        return const CustomerManagementStatePanel(
-          loadingGeometry: CustomerManagementLoadingGeometry.form,
-        );
-      }
-      if (state.status == CustomerFormStatus.failure &&
-          state.customerId != null &&
-          state.customerNumber == null) {
-        return CustomerManagementStatePanel(
-          failure: state.failure,
-          onRetry: () => cubit.loadForEdit(state.customerId!),
-        );
-      }
-      final AppLocalizations l10n = AppLocalizations.of(context);
-      return PopScope<void>(
-        canPop: !state.isDirty,
-        onPopInvokedWithResult: (bool didPop, _) async {
-          if (didPop) return;
-          if (await _canLeave(context) && context.mounted) {
-            context.go(CustomerManagementRouteLocations.customers);
+  Widget build(BuildContext context) =>
+      BlocConsumer<CustomerFormCubit, CustomerFormState>(
+        listener: (BuildContext context, CustomerFormState state) {
+          final int? savedId = state.savedCustomer?.id;
+          if (state.status == CustomerFormStatus.success && savedId != null) {
+            context.go(CustomerManagementRouteLocations.customer(savedId));
           }
         },
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        CustomerManagementPageHeader(
-                          title: state.isCreate
-                              ? l10n.customerManagementCreateTitle
-                              : l10n.customerManagementEditTitle,
-                          description: l10n.cmvpCustomerFormDescription,
-                          breadcrumbs: <String>[
-                            l10n.cmvpBreadcrumbCustomers,
-                            state.isCreate
-                                ? l10n.cmvpBreadcrumbCreate
-                                : l10n.cmvpBreadcrumbEdit,
+        builder: (BuildContext context, CustomerFormState state) {
+          final CustomerFormCubit cubit = context.read<CustomerFormCubit>();
+          if (state.status == CustomerFormStatus.loading) {
+            return const CustomerManagementStatePanel(
+              loadingGeometry: CustomerManagementLoadingGeometry.form,
+            );
+          }
+          if (state.status == CustomerFormStatus.failure &&
+              state.customerId != null &&
+              state.customerNumber == null) {
+            return CustomerManagementStatePanel(
+              failure: state.failure,
+              onRetry: () => cubit.loadForEdit(state.customerId!),
+            );
+          }
+          final AppLocalizations l10n = AppLocalizations.of(context);
+          return PopScope<void>(
+            canPop: !state.isDirty,
+            onPopInvokedWithResult: (bool didPop, _) async {
+              if (didPop) return;
+              if (await _canLeave(context) && context.mounted) {
+                context.go(CustomerManagementRouteLocations.customers);
+              }
+            },
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Align(
+                      alignment: AlignmentDirectional.topStart,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 680),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            CustomerManagementPageHeader(
+                              title: state.isCreate
+                                  ? l10n.customerManagementCreateTitle
+                                  : l10n.customerManagementEditTitle,
+                              description: l10n.cmvpCustomerFormDescription,
+                              breadcrumbs: <String>[
+                                l10n.cmvpBreadcrumbCustomers,
+                                state.isCreate
+                                    ? l10n.cmvpBreadcrumbCreate
+                                    : l10n.cmvpBreadcrumbEdit,
+                              ],
+                            ),
+                            if (state.fieldErrors.isNotEmpty) ...<Widget>[
+                              const SizedBox(height: 12),
+                              Text(
+                                l10n.customerManagementValidationFailed,
+                                key: const Key('customer-form-general-error'),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 4),
+                            Expanded(
+                              child: CustomerManagementSurface(
+                                key: const Key('customer-form-surface'),
+                                expandBody: true,
+                                body: SingleChildScrollView(
+                                  padding: const EdgeInsets.all(20),
+                                  child: CustomerFormSections(
+                                    state: state,
+                                    cubit: cubit,
+                                    lifecycleRepository:
+                                        widget.lifecycleRepository,
+                                  ),
+                                ),
+                                footer: _FormFooter(
+                                  state: state,
+                                  onCancel: () => _leaveToList(context),
+                                  onSave: cubit.submit,
+                                ),
+                              ),
+                            ),
                           ],
-                          actions:
-                              widget.lifecycleRepository != null &&
-                                  state.loadedCustomer != null
-                              ? CustomerLifecycleActions(
-                                  repository: widget.lifecycleRepository!,
-                                  customer: state.loadedCustomer!,
-                                  onCustomerReplaced: (Customer value) async =>
-                                      cubit.replaceCustomerLifecycle(value),
-                                )
-                              : null,
                         ),
-                        if (state.fieldErrors.isNotEmpty) ...<Widget>[
-                          const SizedBox(height: 12),
-                          Text(
-                            l10n.customerManagementValidationFailed,
-                            key: const Key('customer-form-general-error'),
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        CustomerManagementSurface(
-                          key: const Key('customer-form-surface'),
-                          readable: true,
-                          body: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: CustomerFormSections(
-                              state: state,
-                              cubit: cubit,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    TextButton(
-                      key: const Key('customer-form-cancel'),
-                      onPressed: () => _leaveToList(context),
-                      child: Text(l10n.customerManagementCancel),
-                    ),
-                    const SizedBox(width: 12),
-                    FilledButton(
-                      key: const Key('customer-form-save'),
-                      onPressed: state.status == CustomerFormStatus.submitting
-                          ? null
-                          : cubit.submit,
-                      child: state.status == CustomerFormStatus.submitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l10n.customerManagementSave),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       );
-    },
-  );
 
   Future<void> _leaveToList(BuildContext context) async {
     if (UnsavedNavigationScope.maybeOf(context) != null) {
@@ -209,6 +176,51 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     if (await _canLeave(context) && context.mounted) {
       context.go(CustomerManagementRouteLocations.customers);
     }
+  }
+}
+
+class _FormFooter extends StatelessWidget {
+  const _FormFooter({
+    required this.state,
+    required this.onCancel,
+    required this.onSave,
+  });
+
+  final CustomerFormState state;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return SafeArea(
+      top: false,
+      child: Row(
+        key: const Key('customer-form-footer'),
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          TextButton(
+            key: const Key('customer-form-cancel'),
+            onPressed: onCancel,
+            child: Text(l10n.customerManagementCancel),
+          ),
+          const SizedBox(width: 12),
+          FilledButton(
+            key: const Key('customer-form-save'),
+            onPressed: state.status == CustomerFormStatus.submitting
+                ? null
+                : onSave,
+            child: state.status == CustomerFormStatus.submitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(l10n.customerManagementSave),
+          ),
+        ],
+      ),
+    );
   }
 }
 
