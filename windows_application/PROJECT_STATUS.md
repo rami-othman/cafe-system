@@ -291,3 +291,18 @@ future work and it is not part of Batch 12.
   branch and follows later top-navigation branch changes.
 - Static analysis is clean, and the provider/synchronization regression test
   plus all warehouse dropdown widget tests pass (5 tests).
+
+## Cafe 618 branding integration
+
+- Added a centralized, role-aware brand identity resolver. Cashiers see the
+  authoritative active branch name; managers and owners retain the general
+  Cafe System 618 identity. Missing or stale branch context falls back safely
+  and never guesses a branch.
+- Replaced scattered shell, authentication, splash, and receipt branding with
+  reusable logo/header widgets backed by bundled transparent assets.
+- Web metadata, favicon/PWA icons, Windows executable resources, and runtime
+  browser/native window titles now use the same centralized identity.
+- Added regression coverage for role rules, branch switching, logout/re-login,
+  long Arabic names, image fitting, and the Inventory branch-provider scope.
+- Dart static analysis and focused branding/provider tests pass. The Windows
+  debug runner builds successfully with the branded icon and title channel.

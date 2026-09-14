@@ -234,7 +234,19 @@ class _PaymentDialogState extends State<PaymentDialog> {
     }
 
     setState(() => _isSubmitting = true);
-    final PaymentCompletionStatus status = await widget.onSubmit!(result);
+    PaymentCompletionStatus status;
+    try {
+      status = await widget.onSubmit!(result);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment failed: $error')),
+      );
+      return;
+    }
     if (!mounted) {
       return;
     }

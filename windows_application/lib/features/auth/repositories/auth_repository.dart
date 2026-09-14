@@ -1,3 +1,4 @@
+import '../../../core/branding/app_brand.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../models/auth_session.dart';
 
@@ -31,7 +32,7 @@ class ApiAuthRepository implements AuthRepository {
       else
         'username': trimmedIdentifier,
       'password': password,
-      'deviceName': 'Cafe System 618 Windows',
+      'deviceName': '${AppBrand.systemNameEn} Windows',
     };
     final dynamic data = await _apiClient.post(
       'auth/login',
