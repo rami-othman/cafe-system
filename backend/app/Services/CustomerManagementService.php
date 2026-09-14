@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Customer\CustomerNameNormalizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -12,10 +13,12 @@ final class CustomerManagementService
         return DB::transaction(function () use ($tenantId, $actorId, $data): object {
             DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
             $next = (int) DB::table('customers')->where('tenant_id', $tenantId)->count() + 1;
+            $normalizedName = CustomerNameNormalizer::normalize($data['name']);
             $id = DB::table('customers')->insertGetId([
                 'tenant_id' => $tenantId,
                 'customer_number' => sprintf('CUS-%06d', $next),
                 'name' => $data['name'], 'customer_type' => 'registered',
+                'normalized_name' => $normalizedName['normalizedName'],
                 'phone' => $data['phone'] ?? null, 'email' => $data['email'] ?? null,
                 'tax_number' => $data['taxNumber'] ?? null,
                 'default_credit_terms_days' => $data['defaultCreditTermsDays'] ?? 0,
@@ -36,6 +39,9 @@ final class CustomerManagementService
         $values = [];
         foreach (['name' => 'name', 'phone' => 'phone', 'email' => 'email', 'taxNumber' => 'tax_number', 'notes' => 'notes', 'defaultCreditTermsDays' => 'default_credit_terms_days', 'isActive' => 'is_active'] as $input => $column) {
             if (array_key_exists($input, $data)) $values[$column] = $data[$input];
+        }
+        if (array_key_exists('name', $data)) {
+            $values['normalized_name'] = CustomerNameNormalizer::normalize($data['name'])['normalizedName'];
         }
         if ($values !== []) DB::table('customers')->where('tenant_id', $tenantId)->where('id', $customerId)->update($values + ['updated_by' => $actorId, 'updated_at' => now()]);
         return $this->find($tenantId, $customerId);

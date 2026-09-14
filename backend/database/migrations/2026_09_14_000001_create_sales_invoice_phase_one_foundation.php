@@ -10,7 +10,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table): void {
-            $table->string('customer_number', 64)->nullable()->after('tenant_id');
             $table->string('customer_type', 32)->default('registered')->after('name');
             $table->string('tax_number', 128)->nullable()->after('email');
             $table->unsignedInteger('default_credit_terms_days')->default(0)->after('tax_number');
@@ -18,7 +17,6 @@ return new class extends Migration
             $table->boolean('is_system_protected')->default(false)->after('is_walk_in');
             $table->foreignId('created_by')->nullable()->after('is_system_protected')->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->after('created_by')->constrained('users')->nullOnDelete();
-            $table->unique(['tenant_id', 'customer_number'], 'customers_tenant_customer_number_unique');
             $table->index(['tenant_id', 'is_active'], 'customers_tenant_active_index');
         });
 
@@ -120,7 +118,7 @@ return new class extends Migration
             );
             if (! DB::table('customers')->where('tenant_id', $tenant->id)->where('is_walk_in', true)->exists()) {
                 DB::table('customers')->insert([
-                    'tenant_id' => $tenant->id, 'customer_number' => 'CASH-CUSTOMER', 'name' => 'عميل نقدي', 'customer_type' => 'walk_in',
+                    'tenant_id' => $tenant->id, 'customer_number' => 'CASH-CUSTOMER', 'name' => 'عميل نقدي', 'normalized_name' => 'عميل نقدي', 'customer_type' => 'walk_in',
                     'default_credit_terms_days' => 0, 'is_active' => true, 'is_walk_in' => true, 'is_system_protected' => true,
                     'total_spent' => 0, 'visits_count' => 0, 'created_at' => $now, 'updated_at' => $now,
                 ]);
@@ -135,11 +133,10 @@ return new class extends Migration
         Schema::dropIfExists('sales_invoices');
         Schema::dropIfExists('sales_account_mappings');
         Schema::table('customers', function (Blueprint $table): void {
-            $table->dropUnique('customers_tenant_customer_number_unique');
             $table->dropIndex('customers_tenant_active_index');
             $table->dropConstrainedForeignId('updated_by');
             $table->dropConstrainedForeignId('created_by');
-            $table->dropColumn(['customer_number', 'customer_type', 'tax_number', 'default_credit_terms_days', 'is_walk_in', 'is_system_protected']);
+            $table->dropColumn(['customer_type', 'tax_number', 'default_credit_terms_days', 'is_walk_in', 'is_system_protected']);
         });
     }
 };
