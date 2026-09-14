@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_constants.dart';
+import '../../core/branding/app_brand.dart';
+import '../../core/branding/brand_header.dart';
 import '../../core/navigation/unsaved_navigation_guard.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
-import '../../core/theme/app_text_styles.dart';
 import '../../l10n/app_localizations.dart';
 import 'app_sidebar_item.dart';
 
@@ -15,11 +14,13 @@ class AppSidebar extends StatelessWidget {
     required this.activeLabel,
     this.isCollapsed = false,
     this.actorRole,
+    this.brandIdentity,
   });
 
   final String activeLabel;
   final bool isCollapsed;
   final String? actorRole;
+  final BrandIdentity? brandIdentity;
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
     _SidebarDestination('dashboard', Icons.dashboard_outlined),
@@ -38,7 +39,11 @@ class AppSidebar extends StatelessWidget {
       '/cafe-configuration/overview',
     ),
     _SidebarDestination('inventory', Icons.inventory_2_outlined, '/inventory'),
-    _SidebarDestination('finance', Icons.account_balance_wallet_outlined, '/finance'),
+    _SidebarDestination(
+      'finance',
+      Icons.account_balance_wallet_outlined,
+      '/finance',
+    ),
     _SidebarDestination('reports', Icons.bar_chart_outlined, '/reports'),
   ];
 
@@ -76,7 +81,17 @@ class AppSidebar extends StatelessWidget {
                   ? CrossAxisAlignment.center
                   : CrossAxisAlignment.start,
               children: <Widget>[
-                _LogoBlock(isCollapsed: isCollapsed),
+                _LogoBlock(
+                  isCollapsed: isCollapsed,
+                  identity:
+                      brandIdentity ??
+                      BrandIdentity(
+                        displayName: _appName(context),
+                        subtitle: _operationalHub(context),
+                        windowTitle: _appName(context),
+                        isCashier: false,
+                      ),
+                ),
                 const SizedBox(height: AppSpacing.xxxl),
                 Expanded(
                   child: ListView(
@@ -130,64 +145,17 @@ bool _canTemporarilyManageMenus(String? role) =>
     role == 'owner' || role == 'manager' || role == null;
 
 class _LogoBlock extends StatelessWidget {
-  const _LogoBlock({required this.isCollapsed});
+  const _LogoBlock({required this.isCollapsed, required this.identity});
 
   final bool isCollapsed;
+  final BrandIdentity identity;
 
   @override
   Widget build(BuildContext context) {
-    final Widget mark = Container(
-      width: AppSizes.logoMarkSize,
-      height: AppSizes.logoMarkSize,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.tertiary,
-        borderRadius: AppRadius.control,
-      ),
-      child: Text(
-        'C',
-        style: AppTextStyles.titleMedium.copyWith(color: AppColors.textInverse),
-      ),
-    );
-
     if (isCollapsed) {
-      return Center(child: mark);
+      return Center(child: BrandHeader(identity: identity, compact: true));
     }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        mark,
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                _appName(context),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                _operationalHub(context),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 10,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    return BrandHeader(identity: identity);
   }
 }
 
@@ -221,7 +189,7 @@ String _settingsLabel(BuildContext context) =>
 
 String _appName(BuildContext context) =>
     Localizations.of<AppLocalizations>(context, AppLocalizations)?.appName ??
-    AppConstants.appName;
+    AppBrand.systemNameEn;
 
 String _operationalHub(BuildContext context) =>
     Localizations.of<AppLocalizations>(

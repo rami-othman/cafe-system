@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/branding/brand_header.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_sizes.dart';
@@ -140,23 +142,7 @@ class _ReceiptLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Color(0xFFF4E7D3),
-        ),
-        child: SizedBox(
-          width: 34,
-          height: 34,
-          child: Icon(
-            Icons.local_cafe_outlined,
-            size: 19,
-            color: AppColors.primary,
-          ),
-        ),
-      ),
-    );
+    return const Center(child: BrandLogo(size: 34));
   }
 }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/branding/app_brand.dart';
+import '../core/branding/app_title_service.dart';
 import 'localization/app_locale_cubit.dart';
 import 'localization/app_locale_state.dart';
 import '../core/theme/app_theme.dart';
@@ -57,6 +59,9 @@ class _AppState extends State<App> {
   }
 
   Widget _buildApp(AppLocaleState locale, AuthSessionState auth) {
+    final String generalTitle = locale.locale.languageCode == 'ar'
+        ? AppBrand.systemNameAr
+        : AppBrand.systemNameEn;
     final Widget home = switch (auth.status) {
       AuthSessionStatus.restoring ||
       AuthSessionStatus.submitting => const AuthSplashScreen(),
@@ -66,7 +71,7 @@ class _AppState extends State<App> {
     };
     if (auth.status == AuthSessionStatus.authenticated) {
       return MaterialApp.router(
-        title: 'Cafe System 618',
+        title: generalTitle,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         locale: locale.locale,
@@ -75,8 +80,9 @@ class _AppState extends State<App> {
         routerConfig: appRouter,
       );
     }
+    setApplicationTitle(generalTitle);
     return MaterialApp(
-      title: 'Cafe System 618',
+      title: generalTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       locale: locale.locale,
