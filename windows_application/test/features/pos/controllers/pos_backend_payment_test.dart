@@ -28,17 +28,7 @@ void main() {
   setUp(() async {
     repository = _BackendPaymentRepository();
     cubit = PosCubit(repository: repository);
-    await cubit.loadInitialData();
-    cubit.selectCustomer(
-      const Customer(
-        id: 'customer-1',
-        name: 'Ada Cashier',
-        phone: '123',
-        tier: 'REGULAR',
-        points: 0,
-      ),
-    );
-    await cubit.addCustomizedProductToCart(_customization());
+    await _preparePaymentCubit(cubit);
   });
 
   tearDown(() => cubit.close());
@@ -62,6 +52,17 @@ void main() {
       expect(cubit.state.isPaymentSubmitting, isFalse);
     },
   );
+
+  test('payment generates a non-empty idempotency key', () async {
+    expect(
+      await cubit.completeBackendPayment(_payment()),
+      PaymentCompletionStatus.completed,
+    );
+
+    expect(repository.payCalls, 1);
+    expect(repository.lastIdempotencyKey, isNotNull);
+    expect(repository.lastIdempotencyKey, isNotEmpty);
+  });
 
   test('definite payment failure keeps the order and allows retry', () async {
     repository.payError = const ApiException(
@@ -91,6 +92,24 @@ void main() {
     // key — the backend dedupes a replayed /pay request by this key, so a
     // different value on retry would defeat the double-charge protection.
     expect(repository.lastIdempotencyKey, keyFromFirstAttempt);
+  });
+
+  test('local pre-request failure clears payment submitting state', () async {
+    final PosCubit preRequestCubit = PosCubit(
+      repository: repository,
+      operationKeyGenerator: (String _) =>
+          throw StateError('Request preparation failed'),
+    );
+    addTearDown(preRequestCubit.close);
+    await _preparePaymentCubit(preRequestCubit);
+
+    expect(
+      await preRequestCubit.completeBackendPayment(_payment()),
+      PaymentCompletionStatus.retryableFailure,
+    );
+
+    expect(repository.payCalls, 0);
+    expect(preRequestCubit.state.isPaymentSubmitting, isFalse);
   });
 
   test(
@@ -216,6 +235,20 @@ void main() {
       expect(repository.payCalls, 1);
     },
   );
+}
+
+Future<void> _preparePaymentCubit(PosCubit cubit) async {
+  await cubit.loadInitialData();
+  cubit.selectCustomer(
+    const Customer(
+      id: 'customer-1',
+      name: 'Ada Cashier',
+      phone: '123',
+      tier: 'REGULAR',
+      points: 0,
+    ),
+  );
+  await cubit.addCustomizedProductToCart(_customization());
 }
 
 PaymentResult _payment() => const PaymentResult(

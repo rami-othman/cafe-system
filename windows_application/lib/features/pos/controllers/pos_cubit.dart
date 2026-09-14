@@ -27,18 +27,22 @@ import 'pos_state.dart';
 enum PaymentCompletionStatus { completed, retryableFailure, uncertain }
 
 class PosCubit extends Cubit<PosState> {
-  PosCubit({required this.repository})
-    : super(
-        PosState(
-          isBackendMode: repository.usesBackend,
-          // Until the POS sync flow is mounted, retain legacy direct-cubit
-          // behavior. PosScreen immediately replaces this with API-derived
-          // reachability for real backend sessions.
-          isBackendReachable: true,
-        ),
-      );
+  PosCubit({
+    required this.repository,
+    String Function(String operation)? operationKeyGenerator,
+  }) : _operationKeyGenerator = operationKeyGenerator ?? _defaultOperationKey,
+       super(
+         PosState(
+           isBackendMode: repository.usesBackend,
+           // Until the POS sync flow is mounted, retain legacy direct-cubit
+           // behavior. PosScreen immediately replaces this with API-derived
+           // reachability for real backend sessions.
+           isBackendReachable: true,
+         ),
+       );
 
   final PosRepository repository;
+  final String Function(String operation) _operationKeyGenerator;
   Future<void> _cartMutationQueue = Future<void>.value();
   int _queuedCartMutations = 0;
   int? _paymentIdempotencyOrderId;
@@ -626,18 +630,17 @@ class PosCubit extends Cubit<PosState> {
       );
     }
 
-    if (_paymentIdempotencyOrderId != orderId) {
-      _paymentIdempotencyOrderId = orderId;
-      _paymentIdempotencyKey = null;
-    }
-    // A retry after a definite failure must reuse the same idempotency key
-    // for this order — the backend dedupes a replayed /pay request by this
-    // key, so a fresh key per attempt would defeat double-charge protection.
-    final String idempotencyKey = _paymentIdempotencyKey ??= _operationKey(
-      'payment',
-    );
-
     try {
+      if (_paymentIdempotencyOrderId != orderId) {
+        _paymentIdempotencyOrderId = orderId;
+        _paymentIdempotencyKey = null;
+      }
+      // A retry after a definite failure must reuse the same idempotency key
+      // for this order — the backend dedupes a replayed /pay request by this
+      // key, so a fresh key per attempt would defeat double-charge protection.
+      final String idempotencyKey = _paymentIdempotencyKey ??= _operationKey(
+        'payment',
+      );
       final PaymentResult payment = await repository.payOrder(
         orderId: orderId,
         method: requestedPayment.method.apiValue,
@@ -1278,8 +1281,10 @@ class PosCubit extends Cubit<PosState> {
     return error is! ApiException || error.statusCode == null;
   }
 
-  String _operationKey(String operation) {
-    final int random = Random.secure().nextInt(1 << 32);
+  String _operationKey(String operation) => _operationKeyGenerator(operation);
+
+  static String _defaultOperationKey(String operation) {
+    final int random = Random.secure().nextInt(0x100000000);
     return '$operation-${DateTime.now().microsecondsSinceEpoch}-${random.toRadixString(16)}';
   }
 
