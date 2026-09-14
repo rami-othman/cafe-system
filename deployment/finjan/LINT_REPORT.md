@@ -145,5 +145,84 @@ before any of the checks above were run for the last time:
    Removed entirely in favor of shipping HTTP-only vhosts and letting the
    standard `certbot --nginx` plugin add HTTPS in place — safer than a
    hand-rolled, untestable text transform on a production Nginx config.
+
+## Post-delivery fix: `random_secret()` SIGPIPE crash (found on a real VPS run)
+
+Static analysis and the checks above did not catch this one — it only showed
+up running `install.sh` for real, which is exactly the gap a runtime test now
+closes.
+
+**Symptom:** `install.sh` exited silently at `== Step 10-11/27: PostgreSQL app
+user + database ==`, with no error message.
+
+**Root cause:** `lib/common.sh`'s `random_secret()` was:
+
+```bash
+tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${1:-32}"
+```
+
+`/dev/urandom` is an infinite stream. `head -c N` exits the instant it has
+read its N bytes, closing its end of the pipe. `tr` is still trying to write
+more filtered bytes into that now-closed pipe, so it's killed by `SIGPIPE`
+(exit status 141). Every script in this package runs `set -euo pipefail`, so
+`pipefail` promotes that 141 to the whole pipeline's exit status, and `set -e`
+then aborts the script — at `DB_APP_PASSWORD="$(random_secret 32)"` in
+`install.sh`, with nothing printed to stderr because SIGPIPE termination is
+silent. Reproduced directly in this environment:
+
+```
+$ bash -c 'set -euo pipefail; tr -dc "A-Za-z0-9" </dev/urandom | head -c 32'
+$ echo $?
+141
+```
+
+**Fix:** replaced the pipeline with a single `openssl rand -hex` call (no
+pipe, so no early-exiting downstream consumer to SIGPIPE anything):
+
+```bash
+random_secret() {
+  local len="${1:-32}"
+  command -v openssl >/dev/null 2>&1 || fatal "openssl is required to generate secrets but was not found on PATH."
+  local hex
+  hex="$(openssl rand -hex "$(( (len + 1) / 2 ))")"
+  printf '%s' "${hex:0:len}"
+}
+```
+
+Character set changed from mixed-case alphanumeric (62 symbols) to lowercase
+hex (16 symbols); at the lengths this package actually requests (20, 24, 32),
+that's still 80–128 bits of entropy — cryptographically strong, well above
+what's needed for a generated database or admin password. `install.sh`'s
+other secret-generation call, `openssl rand -base64 32` for `APP_KEY`
+(line ~255), was already pipe-free and was not affected.
+
+**Audit of every other script for the same class of bug** (an early-exiting
+consumer — chiefly `head`, or `-m`-less `grep` piped into one — SIGPIPE-ing an
+upstream producer under active `set -e`/`pipefail`):
+
+| Location | Pattern | Verdict |
+|---|---|---|
+| `lib/common.sh` `random_secret()` | `tr </dev/urandom \| head -c N` | **Confirmed bug — fixed above.** |
+| `install.sh` (`listen_addresses` check) | `grep "^..." "$PG_CONF" \| head -1` | Latent risk: safe today because that file normally has one matching line, but would SIGPIPE `grep` (and abort `install.sh`, which runs with active `set -e`/`pipefail`) if it ever had two. Fixed: replaced with `grep -m1 "^..." "$PG_CONF"` — no pipe, grep stops itself after the first match. |
+| `verify-cutover.sh` (latest migration report) | `find ... \| sort -rn \| head -1 \| cut ...` | Not actually exploitable — this script does `set +e` right after sourcing `common.sh`, so even a non-zero pipeline status can't abort it — but the same early-exit shape, so tidied for consistency: reordered to `sort -n \| tail -1`, which must consume the whole stream before it can emit anything, so `sort` always finishes writing normally. |
+| `backup.sh` (retention pruning) | `find ... \| sort -rn \| tail -n "+K" \| cut ...` | Safe as originally written — `tail -n +K` reads to end-of-input before producing output, so it never lets `sort` see a closed pipe early. No change. |
+| `health-check.sh` / `migrate-database.sh` / `restore-backup.sh` / `verify-cutover.sh` — assorted `echo "$x" \| tr -d '[:space:]'`, `df \| tail -1 \| awk ... \| tr -d '%'`, `dig ... \| tail -1` | `tr`/`awk`/`cut` here are pure line-by-line filters (no truncation), and every `tail` (unlike `head`) must read its entire input before it can emit the last line — none of these let a downstream command exit before an upstream one finishes writing. No change. |
+| `install.sh` (`APP_KEY` generation) | `openssl rand -base64 32` | Already a single command, no pipe. No change. |
+
+**New regression test:** `lib/test-random-secret.sh` calls `random_secret()`
+1,800 times (9 lengths × 200 runs) under the exact `set -euo pipefail` mode
+every script in this package uses, and asserts each result is alphanumeric
+and exactly the requested length. Run it any time this file changes:
+
+```bash
+bash deployment/finjan/lib/test-random-secret.sh
+```
+
+Result as of this fix: **1,800/1,800 calls passed, 0 SIGPIPE/pipefail
+aborts.** Re-ran `bash -n` and `shellcheck -x` (both plain `-f gcc` output and
+an error-severity-only pass, `-S error`) across all 11 scripts (10 original +
+the new test) after this fix — same accepted findings as the original lint
+pass (SC2015/SC2024/SC2034/SC1090/SC1091, all previously reviewed above),
+**zero new findings, zero error-severity findings.**
 </content>
 </invoke>

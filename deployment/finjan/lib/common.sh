@@ -61,8 +61,24 @@ prompt_value() {
 }
 
 random_secret() {
-  # 32 bytes, URL-safe-ish, no shell-special characters.
-  tr -dc 'A-Za-z0-9' </dev/urandom | head -c "${1:-32}"
+  # Cryptographically random alphanumeric string, $1 characters (default 32).
+  #
+  # Previously this piped /dev/urandom through `tr -dc | head -c N`. /dev/urandom
+  # is an infinite stream, so `head -c N` exits the instant it has its N bytes —
+  # which SIGPIPEs `tr` while it's still writing. `tr`'s resulting exit status
+  # (141) becomes the pipeline's status under `set -o pipefail`, and every
+  # script in this package runs with `set -euo pipefail`, so that non-zero
+  # status silently killed the calling script (observed on a real VPS run:
+  # install.sh exited mid "PostgreSQL app user + database" step, right at
+  # `DB_APP_PASSWORD="$(random_secret 32)"`, with no error printed because
+  # SIGPIPE termination doesn't write anything to stderr). `openssl rand` runs
+  # as a single command with no pipe, so there's no early-exiting downstream
+  # consumer to trigger this.
+  local len="${1:-32}"
+  command -v openssl >/dev/null 2>&1 || fatal "openssl is required to generate secrets but was not found on PATH."
+  local hex
+  hex="$(openssl rand -hex "$(( (len + 1) / 2 ))")"
+  printf '%s' "${hex:0:len}"
 }
 
 pkg_installed() {

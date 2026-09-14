@@ -58,7 +58,11 @@ sudo -u "$APP_LINUX_USER" php "${BACKEND_DIR}/artisan" --version >/dev/null 2>&1
 
 step "Database consistency vs migration report"
 if ls "${BACKUP_ROOT}"/migration/migration-report-*.txt >/dev/null 2>&1; then
-  LATEST_REPORT="$(find "${BACKUP_ROOT}/migration" -maxdepth 1 -name 'migration-report-*.txt' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2-)"
+  # sort ascending + tail -1 (not `sort -rn | head -1`): tail must consume the
+  # whole stream before it can emit the last line, so sort always finishes
+  # writing normally; `head -1` would let it exit as soon as the first line
+  # arrives, SIGPIPE-ing sort while more lines are still queued behind it.
+  LATEST_REPORT="$(find "${BACKUP_ROOT}/migration" -maxdepth 1 -name 'migration-report-*.txt' -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)"
   pass "Found migration report: ${LATEST_REPORT}"
   log_info "Re-checking the same row counts now:"
   for t in tenants branches orders order_items products customers users payments invoices; do

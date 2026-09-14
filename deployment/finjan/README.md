@@ -210,4 +210,11 @@ the distributable app; it is never uploaded to this VPS or the Linux web root.
 
 Every script in this directory passes `bash -n` (syntax check) and was
 reviewed against `shellcheck` where available in the authoring environment.
-See `LINT_REPORT.md` for the exact commands run and their output.
+See `LINT_REPORT.md` for the exact commands run and their output, including a
+`tr | head` SIGPIPE bug found on a real VPS run and the runtime regression
+test (`lib/test-random-secret.sh`) added to catch that class of bug going
+forward — run it any time `lib/common.sh` changes:
+
+```bash
+bash deployment/finjan/lib/test-random-secret.sh
+```

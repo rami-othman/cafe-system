@@ -154,7 +154,10 @@ systemctl enable --now postgresql >/dev/null 2>&1 || true
 # customized listen_addresses to something else on purpose.
 PG_CONF="$(sudo -u postgres psql -tAc "SHOW config_file;" 2>/dev/null | xargs)"
 if [[ -n "$PG_CONF" ]] && grep -q "^listen_addresses" "$PG_CONF" 2>/dev/null; then
-  CURRENT_LISTEN="$(grep "^listen_addresses" "$PG_CONF" | head -1)"
+  # -m1 (not `grep ... | head -1`): grep stops itself after the first match and
+  # exits 0, so there's no separate consumer that can close the pipe early and
+  # SIGPIPE grep if postgresql.conf ever has more than one matching line.
+  CURRENT_LISTEN="$(grep -m1 "^listen_addresses" "$PG_CONF")"
   log_info "PostgreSQL listen_addresses: ${CURRENT_LISTEN}"
 else
   log_info "PostgreSQL listen_addresses left at compiled-in default (localhost) — not modified."
