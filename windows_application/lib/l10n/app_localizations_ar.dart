@@ -7047,7 +7047,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cmvpViewAllOrders => 'عرض جميع الطلبات';
-  
+
   @override
   String get expensesReportTitle => 'المصروفات';
 

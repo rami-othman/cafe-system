@@ -12631,6 +12631,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View all orders'**
   String get cmvpViewAllOrders;
+
   /// No description provided for @expensesReportTitle.
   ///
   /// In en, this message translates to:

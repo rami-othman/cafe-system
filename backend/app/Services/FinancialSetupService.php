@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Customer\CustomerNameNormalizer;
 use Illuminate\Support\Facades\DB;
 
 class FinancialSetupService
@@ -121,8 +122,10 @@ class FinancialSetupService
 
         $walkIn = DB::table('customers')->where('tenant_id', $tenantId)->where('is_walk_in', true)->first();
         if (! $walkIn) {
+            $name = CustomerNameNormalizer::normalize('Cash / Walk-in Customer');
             DB::table('customers')->insert([
                 'tenant_id' => $tenantId, 'customer_number' => 'CASH-CUSTOMER', 'name' => 'Cash / Walk-in Customer',
+                'normalized_name' => $name['normalizedName'],
                 'customer_type' => 'walk_in', 'default_credit_terms_days' => 0, 'total_spent' => 0, 'visits_count' => 0,
                 'is_active' => true, 'is_walk_in' => true, 'is_system_protected' => true, 'created_by' => $actorId,
                 'updated_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
