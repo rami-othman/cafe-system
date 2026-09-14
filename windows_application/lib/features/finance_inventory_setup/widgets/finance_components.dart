@@ -184,6 +184,7 @@ class FinanceStatusBadge extends StatelessWidget {
       case 'reversed':
         return (label: l10n.financeStatusReversed, tone: FinanceTone.neutral);
       case 'partially_paid':
+      case 'partial':
         return (
           label: l10n.financeStatusPartiallyPaid,
           tone: FinanceTone.warning,
