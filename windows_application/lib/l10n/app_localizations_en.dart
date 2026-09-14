@@ -7052,7 +7052,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cmvpViewAllOrders => 'View all orders';
-  
+
   @override
   String get expensesReportTitle => 'Expenses';
 
