@@ -12,6 +12,160 @@ class RealSaleIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_payment_summary_blocks_an_inventory_sale_without_an_active_branch_main_warehouse(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        DB::table('warehouses')
+            ->where('tenant_id', $scenario['tenant'])
+            ->where('branch_id', DB::table('orders')->where('id', $scenario['orderId'])->value('branch_id'))
+            ->update(['is_active' => false]);
+
+        $summary = $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
+            ->assertOk()
+            ->json('data');
+
+        $this->assertFalse($summary['canPay']);
+        $this->assertSame('WAREHOUSE_NOT_CONFIGURED', $summary['blockerCode']);
+        $this->assertSame(
+            'No active branch-main warehouse is configured. Configure one before paying.',
+            $summary['blockedReason'],
+        );
+    }
+
+    public function test_payment_summary_blocks_an_inventory_sale_with_ambiguous_branch_main_warehouses(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        $branchId = (int) DB::table('orders')->where('id', $scenario['orderId'])->value('branch_id');
+        DB::table('warehouses')->insert([
+            'tenant_id' => $scenario['tenant'],
+            'branch_id' => $branchId,
+            'name' => 'Duplicate Main Store',
+            'code' => 'DUPLICATE-MAIN-'.str()->random(8),
+            'type' => 'branch_main',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $summary = $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
+            ->assertOk()
+            ->json('data');
+
+        $this->assertFalse($summary['canPay']);
+        $this->assertSame('WAREHOUSE_CONFIGURATION_AMBIGUOUS', $summary['blockerCode']);
+        $this->assertSame(
+            'Multiple active branch-main warehouses are configured. Keep exactly one active main warehouse for this branch before paying.',
+            $summary['blockedReason'],
+        );
+    }
+
+    public function test_payment_summary_does_not_require_a_warehouse_for_an_untracked_order(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        DB::table('products')->where('tenant_id', $scenario['tenant'])->where('id', $scenario['productId'])->update([
+            'is_stock_tracked' => false,
+        ]);
+        DB::table('warehouses')
+            ->where('tenant_id', $scenario['tenant'])
+            ->where('branch_id', DB::table('orders')->where('id', $scenario['orderId'])->value('branch_id'))
+            ->update(['is_active' => false]);
+
+        $summary = $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
+            ->assertOk()
+            ->json('data');
+
+        $this->assertTrue($summary['canPay']);
+        $this->assertNull($summary['blockerCode']);
+        $this->assertNull($summary['blockedReason']);
+    }
+
+    public function test_payment_summary_remains_payable_with_one_configured_branch_main_warehouse_and_has_no_side_effects(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        $orderBefore = (array) DB::table('orders')->where('id', $scenario['orderId'])->first();
+        $countsBefore = [
+            'payments' => DB::table('payments')->where('tenant_id', $scenario['tenant'])->count(),
+            'movements' => DB::table('stock_movements')->where('tenant_id', $scenario['tenant'])->count(),
+            'consumptions' => DB::table('sale_consumptions')->where('tenant_id', $scenario['tenant'])->count(),
+            'journals' => DB::table('journal_entries')->where('tenant_id', $scenario['tenant'])->count(),
+        ];
+
+        $summary = $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
+            ->assertOk()
+            ->json('data');
+
+        $this->assertTrue($summary['canPay']);
+        $this->assertNull($summary['blockerCode']);
+        $this->assertNull($summary['blockedReason']);
+        $this->assertSame($orderBefore, (array) DB::table('orders')->where('id', $scenario['orderId'])->first());
+        $this->assertSame($countsBefore, [
+            'payments' => DB::table('payments')->where('tenant_id', $scenario['tenant'])->count(),
+            'movements' => DB::table('stock_movements')->where('tenant_id', $scenario['tenant'])->count(),
+            'consumptions' => DB::table('sale_consumptions')->where('tenant_id', $scenario['tenant'])->count(),
+            'journals' => DB::table('journal_entries')->where('tenant_id', $scenario['tenant'])->count(),
+        ]);
+    }
+
+    public function test_payment_still_rejects_an_invalid_warehouse_configuration_at_apply_time(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        DB::table('warehouses')
+            ->where('tenant_id', $scenario['tenant'])
+            ->where('branch_id', DB::table('orders')->where('id', $scenario['orderId'])->value('branch_id'))
+            ->update(['is_active' => false]);
+
+        $this->postJson("/api/v1/orders/{$scenario['orderId']}/pay", [
+            'method' => 'cash',
+            'amount' => $scenario['total'],
+            'idempotencyKey' => 'preflight-apply-time',
+        ], $scenario['headers'])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'WAREHOUSE_NOT_CONFIGURED');
+
+        $this->assertSame('unpaid', DB::table('orders')->where('id', $scenario['orderId'])->value('payment_status'));
+        $this->assertSame(0, DB::table('payments')->where('tenant_id', $scenario['tenant'])->where('order_id', $scenario['orderId'])->count());
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $scenario['tenant'])->where('type', 'sale_consumption')->count());
+        $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $scenario['tenant'])->where('source_id', $scenario['orderId'])->count());
+    }
+
+    public function test_payment_preflight_is_scoped_to_the_order_tenant_and_branch(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        $branchId = (int) DB::table('orders')->where('id', $scenario['orderId'])->value('branch_id');
+        $otherBranch = (int) $this->postJson('/api/v1/cafe-configuration/branches', [
+            'name' => 'Other Branch',
+            'timezone' => 'Asia/Damascus',
+        ], $scenario['headers'])->assertCreated()->json('data.id');
+        DB::table('warehouses')->insert([
+            'tenant_id' => $scenario['tenant'],
+            'branch_id' => $otherBranch,
+            'name' => 'Other Branch Duplicate',
+            'code' => 'OTHER-DUPLICATE-'.str()->random(8),
+            'type' => 'branch_main',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $foreignTenant = $this->tenantContext();
+        DB::table('warehouses')->insert([
+            'tenant_id' => $foreignTenant['tenant'],
+            'branch_id' => $branchId,
+            'name' => 'Foreign Tenant Main Store',
+            'code' => 'FOREIGN-MAIN-'.str()->random(8),
+            'type' => 'branch_main',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $summary = $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
+            ->assertOk()
+            ->json('data');
+
+        $this->assertTrue($summary['canPay']);
+        $this->assertNull($summary['blockerCode']);
+    }
+
     public function test_real_recipe_publish_order_payment_consumes_canonical_inventory_and_is_idempotent(): void
     {
         $scenario = $this->publishedOrderScenario('1000.000');

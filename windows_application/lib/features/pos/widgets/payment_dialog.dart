@@ -23,6 +23,7 @@ class PaymentDialog extends StatefulWidget {
     required this.itemCount,
     this.onSubmit,
     this.availableMethods = PaymentMethod.values,
+    this.orderNumber,
   });
 
   final double totalDue;
@@ -30,6 +31,7 @@ class PaymentDialog extends StatefulWidget {
   final Future<PaymentCompletionStatus> Function(PaymentResult result)?
   onSubmit;
   final List<PaymentMethod> availableMethods;
+  final String? orderNumber;
 
   @override
   State<PaymentDialog> createState() => _PaymentDialogState();
@@ -152,6 +154,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       _PaymentHeader(
+                        orderNumber: widget.orderNumber,
                         onClose: _isSubmitting
                             ? null
                             : () => Navigator.of(context).pop(),
@@ -242,9 +245,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
         return;
       }
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment failed: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Payment failed: $error')));
       return;
     }
     if (!mounted) {
@@ -260,8 +263,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
 }
 
 class _PaymentHeader extends StatelessWidget {
-  const _PaymentHeader({required this.onClose});
+  const _PaymentHeader({required this.orderNumber, required this.onClose});
 
+  final String? orderNumber;
   final VoidCallback? onClose;
 
   @override
@@ -292,7 +296,7 @@ class _PaymentHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Order #618-42',
+                  'Order ${orderNumber ?? '#618-42'}',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,

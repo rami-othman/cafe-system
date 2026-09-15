@@ -50,6 +50,9 @@ class PosCubit extends Cubit<PosState> {
   int _receiptRequestGeneration = 0;
   int _productDetailRequestVersion = 0;
   int _branchLoadGeneration = 0;
+  int _existingOrderRequestVersion = 0;
+  Future<bool>? _inFlightExistingOrder;
+  int? _inFlightExistingOrderId;
 
   static const String connectionRequiredMessage =
       'pos.connectionRequiredToCompleteOrder';
@@ -553,6 +556,147 @@ class PosCubit extends Cubit<PosState> {
     );
   }
 
+  Future<bool> loadExistingOrder(int orderId, {bool allowReplace = false}) {
+    if (orderId <= 0 || !repository.usesBackend || isClosed) {
+      return Future<bool>.value(false);
+    }
+    if (_inFlightExistingOrder != null) {
+      return _inFlightExistingOrderId == orderId
+          ? _inFlightExistingOrder!
+          : Future<bool>.value(false);
+    }
+    if (state.isCartMutationInProgress ||
+        state.isPaymentSubmitting ||
+        state.uncertainPaymentMessage != null) {
+      return Future<bool>.value(false);
+    }
+    final bool hasDifferentContext =
+        state.currentOrderId != null && state.currentOrderId != orderId;
+    final bool hasLocalCart =
+        state.hasCartItems &&
+        !(state.currentOrderId == orderId && !hasDifferentContext);
+    if ((hasDifferentContext || hasLocalCart) && !allowReplace) {
+      emit(
+        state.copyWith(
+          cartMutationError:
+              'The current POS cart has unsaved changes. Confirm replacement before resuming another order.',
+        ),
+      );
+      return Future<bool>.value(false);
+    }
+
+    final int requestVersion = ++_existingOrderRequestVersion;
+    final int expectedBranchId = state.branchId;
+    final int? expectedCurrentOrderId = state.currentOrderId;
+    final List<CartItem> expectedCartItems = state.cartItems;
+    emit(
+      state.copyWith(
+        isCartMutationInProgress: true,
+        clearCartMutationError: true,
+      ),
+    );
+
+    final Future<bool> request = _loadExistingOrder(
+      orderId: orderId,
+      requestVersion: requestVersion,
+      expectedBranchId: expectedBranchId,
+      expectedCurrentOrderId: expectedCurrentOrderId,
+      expectedCartItems: expectedCartItems,
+    );
+    _inFlightExistingOrder = request;
+    _inFlightExistingOrderId = orderId;
+    request.whenComplete(() {
+      if (identical(_inFlightExistingOrder, request)) {
+        _inFlightExistingOrder = null;
+        _inFlightExistingOrderId = null;
+      }
+    });
+    return request;
+  }
+
+  Future<bool> _loadExistingOrder({
+    required int orderId,
+    required int requestVersion,
+    required int expectedBranchId,
+    required int? expectedCurrentOrderId,
+    required List<CartItem> expectedCartItems,
+  }) async {
+    try {
+      final BackendOrder order = await repository.getOrder(orderId);
+      if (!_isCurrentExistingOrderRequest(
+        requestVersion: requestVersion,
+        expectedBranchId: expectedBranchId,
+        expectedCurrentOrderId: expectedCurrentOrderId,
+        expectedCartItems: expectedCartItems,
+      )) {
+        return false;
+      }
+      if (order.id != orderId || order.branchId != expectedBranchId) {
+        throw const ApiException(
+          message: 'This order is not available in the selected branch.',
+        );
+      }
+      if (order.canResume == false) {
+        throw ApiException(
+          message: order.resumeBlockedReason ??
+              'This order cannot be safely resumed into POS.',
+        );
+      }
+      if (order.status.toLowerCase() != 'held' ||
+          order.paymentStatus.toLowerCase() != 'unpaid') {
+        throw const ApiException(
+          message: 'Only an unpaid held order can be resumed.',
+        );
+      }
+
+      _emitBackendOrder(order);
+      emit(
+        state.copyWith(
+          isCartMutationInProgress: false,
+          clearCartMutationError: true,
+        ),
+      );
+      return true;
+    } catch (error) {
+      if (!_isCurrentExistingOrderRequest(
+        requestVersion: requestVersion,
+        expectedBranchId: expectedBranchId,
+        expectedCurrentOrderId: expectedCurrentOrderId,
+        expectedCartItems: expectedCartItems,
+      )) {
+        return false;
+      }
+      emit(
+        state.copyWith(
+          isCartMutationInProgress: false,
+          cartMutationError: _messageFor(error),
+        ),
+      );
+      return false;
+    }
+  }
+
+  bool _isCurrentExistingOrderRequest({
+    required int requestVersion,
+    required int expectedBranchId,
+    required int? expectedCurrentOrderId,
+    required List<CartItem> expectedCartItems,
+  }) {
+    return !isClosed &&
+        requestVersion == _existingOrderRequestVersion &&
+        state.branchId == expectedBranchId &&
+        state.currentOrderId == expectedCurrentOrderId &&
+        identical(state.cartItems, expectedCartItems);
+  }
+
+  /// Clears only the POS context that points at the cancelled backend order.
+  /// It never calls DELETE; OrdersCubit already confirmed that operation.
+  void clearCancelledOrderContext(int orderId) {
+    if (!isClosed && state.currentOrderId == orderId) {
+      _clearCurrentOrderState();
+    }
+  }
+
   void _clearCurrentOrderState() {
     emit(
       state.copyWith(
@@ -560,6 +704,8 @@ class PosCubit extends Cubit<PosState> {
         orderType: OrderType.dineIn,
         clearAppliedDiscount: true,
         clearSelectedCustomer: true,
+        clearTable: true,
+        clearOrderNote: true,
         clearCurrentOrderId: true,
         clearBackendTotals: true,
       ),
@@ -1059,7 +1205,12 @@ class PosCubit extends Cubit<PosState> {
 
   void _emitBackendOrder(BackendOrder order) {
     final List<CartItem> cartItems = order.items
-        .map(_cartItemFromBackend)
+        .map(
+          (BackendOrderItem item) => _cartItemFromBackend(
+            item,
+            publishedMenuVersionId: order.publishedMenuVersionId,
+          ),
+        )
         .toList(growable: false);
 
     emit(
@@ -1073,6 +1224,12 @@ class PosCubit extends Cubit<PosState> {
         orderType: orderTypeFromApi(order.orderType),
         selectedCustomer: _customerFromBackendOrder(order),
         clearSelectedCustomer: order.customerId == null,
+        tableId: order.tableId,
+        tableName: order.tableName,
+        tableCode: order.tableCode,
+        orderNote: order.note,
+        clearTable: order.tableId == null,
+        clearOrderNote: order.note == null,
         appliedDiscount: _discountFromBackend(order),
         backendSubtotal: order.totals.subtotal,
         backendDiscountTotal: order.totals.discountTotal,
@@ -1103,7 +1260,10 @@ class PosCubit extends Cubit<PosState> {
     );
   }
 
-  CartItem _cartItemFromBackend(BackendOrderItem item) {
+  CartItem _cartItemFromBackend(
+    BackendOrderItem item, {
+    required int? publishedMenuVersionId,
+  }) {
     final PosProduct product = state.products.firstWhere(
       (PosProduct product) => product.backendId == item.productId,
       orElse: () => PosProduct(
@@ -1121,7 +1281,7 @@ class PosCubit extends Cubit<PosState> {
       id: item.id.toString(),
       backendItemId: item.id,
       backendProductId: item.productId,
-      publishedMenuVersionId: state.publishedMenuVersionId,
+      publishedMenuVersionId: publishedMenuVersionId,
       placementId: item.placementId,
       variantId: item.variantId,
       modifierOptionIds: item.selectedModifiers
