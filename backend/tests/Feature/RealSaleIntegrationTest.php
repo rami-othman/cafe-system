@@ -241,6 +241,27 @@ class RealSaleIntegrationTest extends TestCase
         $this->assertSame('5.00', $lines[(int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1100')->value('id')]->credit);
     }
 
+    public function test_legacy_unpaid_order_is_bound_to_the_effective_main_warehouse_when_paid(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        DB::table('orders')->where('id', $scenario['orderId'])->update(['warehouse_id' => null]);
+
+        $this->postJson("/api/v1/orders/{$scenario['orderId']}/pay", [
+            'method' => 'cash',
+            'amount' => $scenario['total'],
+            'idempotencyKey' => 'legacy-order-warehouse-bind',
+        ], $scenario['headers'])->assertOk();
+
+        $this->assertSame(
+            $scenario['warehouseId'],
+            (int) DB::table('orders')->where('id', $scenario['orderId'])->value('warehouse_id'),
+        );
+        $this->assertSame(
+            $scenario['warehouseId'],
+            (int) DB::table('stock_movements')->where('tenant_id', $scenario['tenant'])->where('type', 'sale_consumption')->value('warehouse_id'),
+        );
+    }
+
     /**
      * The tenant off-switch for the policy above: with
      * allow_negative_stock_on_sale explicitly disabled, POS sale consumption

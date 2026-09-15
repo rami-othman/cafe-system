@@ -181,24 +181,41 @@ class SaleConsumptionService
         }
 
         try {
-            if ($this->resolveWarehouse($tenantId, (int) $order->branch_id) !== null) {
-                return null;
-            }
-        } catch (OrderLifecycleException $exception) {
-            if ($exception->domainCode === 'WAREHOUSE_CONFIGURATION_AMBIGUOUS') {
-                return [
-                    'code' => $exception->domainCode,
-                    'reason' => 'Multiple active branch-main warehouses are configured. Keep exactly one active main warehouse for this branch before paying.',
-                ];
+            if ($order->warehouse_id !== null) {
+                $this->posWarehouses->assertEligible($tenantId, (int) $order->branch_id, (int) $order->warehouse_id);
+            } else {
+                // Legacy unpaid orders predate the immutable warehouse
+                // snapshot. Payment will bind this same resolution atomically
+                // before it creates any financial or inventory records.
+                $this->posWarehouses->forBranch($tenantId, (int) $order->branch_id);
             }
 
-            throw $exception;
+            return null;
+        } catch (OrderLifecycleException $exception) {
+            return ['code' => $exception->domainCode, 'reason' => $exception->getMessage()];
+        }
+    }
+
+    /**
+     * Gives an unpaid legacy order its one immutable warehouse snapshot.
+     * This is intentionally called only while the payment transaction holds
+     * the order lock, before payment/inventory/accounting side effects.
+     */
+    public function bindLegacyOrderWarehouse(int $tenantId, object $order): object
+    {
+        if ($order->warehouse_id !== null) {
+            return $order;
         }
 
-        return [
-            'code' => 'WAREHOUSE_NOT_CONFIGURED',
-            'reason' => 'No active branch-main warehouse is configured. Configure one before paying.',
-        ];
+        $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $order->branch_id);
+        DB::table('orders')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $order->id)
+            ->whereNull('warehouse_id')
+            ->update(['warehouse_id' => $warehouse->id, 'updated_at' => now()]);
+        $order->warehouse_id = $warehouse->id;
+
+        return $order;
     }
 
     /**

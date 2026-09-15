@@ -134,6 +134,7 @@ class PaymentController extends Controller
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
+            $row = $this->consumption->bindLegacyOrderWarehouse($tenantId, $row);
             // Apply-time deliberately defers tender validation. Payment is the
             // authoritative second stage, including revalidation after a
             // manager changes a policy or its schedule expires.
