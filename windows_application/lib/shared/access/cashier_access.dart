@@ -20,10 +20,30 @@ class CashierAccess {
   /// own shift-close/bar-check flow, and personal Settings) are rejected.
   static bool allowsPath(String path, String? role) {
     if (!isCashier(role)) return true;
+    if (path == '/finance') return true;
+    if (path.startsWith('/finance/')) return allowsFinancePath(path);
     if (_allowedExactPaths.contains(path)) return true;
     return _allowedPathPrefixes.any(
       (String prefix) => path == prefix || path.startsWith('$prefix/'),
     );
+  }
+
+  /// The cashier Finance workspace deliberately has only four destinations.
+  /// Keep this separate from the generic prefix list so a deep link cannot
+  /// reach a full-finance page merely because the Finance sidebar item exists.
+  static bool allowsFinancePath(String path) {
+    if (path == '/finance/receipt-vouchers' ||
+        path == '/finance/payment-vouchers') {
+      return true;
+    }
+    if (path == '/finance/purchases' ||
+        path.startsWith('/finance/purchases/') ||
+        path.startsWith('/finance/purchase-receipts/')) {
+      return true;
+    }
+    return path != '/finance/sales/credit-notes' &&
+        !path.startsWith('/finance/sales/credit-notes/') &&
+        (path == '/finance/sales' || path.startsWith('/finance/sales/'));
   }
 
   static const Set<String> _allowedModuleIds = <String>{
@@ -31,6 +51,7 @@ class CashierAccess {
     'orders',
     'customers',
     'discounts',
+    'finance',
   };
 
   static const Set<String> _allowedExactPaths = <String>{'/', '/settings'};

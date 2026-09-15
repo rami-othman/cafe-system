@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\FinanceRolePermissionController;
 use App\Http\Controllers\Api\FinancialAccountController;
 use App\Http\Controllers\Api\FinancialLocationController;
 use App\Http\Controllers\Api\FinanceDocumentController;
+use App\Http\Controllers\Api\CashierFinanceOptionsController;
 use App\Http\Controllers\Api\FinancialReconciliationController;
 use App\Http\Controllers\Api\FinancialReportController;
 use App\Http\Controllers\Api\FinancialSetupStatusController;
@@ -481,6 +482,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('cash-transfers', [FinancialLocationController::class, 'transfer'])->middleware('finance.permission:finance.cash_transfer.create');
             Route::post('cash-transfers/{transfer}/reverse', [FinancialLocationController::class, 'reverseTransfer'])->middleware('finance.permission:finance.cash_transfer.reverse');
             Route::get('vouchers', [FinanceDocumentController::class, 'index'])->middleware('finance.permission:finance.vouchers.view');
+            Route::get('cashier/voucher-options', [CashierFinanceOptionsController::class, 'vouchers'])->middleware('finance.permission:finance.vouchers.create');
             Route::post('vouchers', [FinanceDocumentController::class, 'store'])->middleware('finance.permission:finance.vouchers.create');
             Route::get('vouchers/{document}', [FinanceDocumentController::class, 'show'])->middleware('finance.permission:finance.vouchers.view');
             Route::post('vouchers/{document}/post', [FinanceDocumentController::class, 'post'])->middleware('finance.permission:finance.vouchers.post');

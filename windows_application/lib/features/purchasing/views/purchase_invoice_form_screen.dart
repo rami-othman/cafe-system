@@ -112,8 +112,18 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
         _financeCubit.repository.getFinancePage('finance/suppliers', queryParameters: const <String, dynamic>{'perPage': 200}),
         _financeCubit.repository.getBranches(),
-        _financeCubit.repository.getExpenseCategories(),
-        _financeCubit.repository.getAccounts(),
+        // Cashiers are not allowed to browse Finance Settings or the chart
+        // of accounts. Inventory purchase lines do not require either list;
+        // leave non-inventory account/category selection unavailable rather
+        // than failing the entire permitted purchasing workflow with 403.
+        _optionalReferenceData<List<ExpenseCategory>>(
+          _financeCubit.repository.getExpenseCategories(),
+          const <ExpenseCategory>[],
+        ),
+        _optionalReferenceData<List<FinancialAccount>>(
+          _financeCubit.repository.getAccounts(),
+          const <FinancialAccount>[],
+        ),
         if (_isEdit) _cubit.repository.getPurchase(widget.editId!),
       ]);
       if (!mounted) return;
@@ -144,6 +154,14 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         _error = '$error';
         _loadingReferenceData = false;
       });
+    }
+  }
+
+  Future<T> _optionalReferenceData<T>(Future<T> request, T fallback) async {
+    try {
+      return await request;
+    } catch (_) {
+      return fallback;
     }
   }
 

@@ -1240,11 +1240,30 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
+          redirect: (_, __) => CashierAccess.isCashier(
+                    serviceLocator<AuthSessionCubit>().state.session?.user.role,
+                  )
+              ? AppRoutes.financeReceiptVouchers
+              : null,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+                child: FinanceOverview.fromRepository(
+                  serviceLocator<FinanceSetupRepository>(),
+                ),
+              ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReceiptVouchers,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
-            child: FinanceOverview.fromRepository(
-              serviceLocator<FinanceSetupRepository>(),
-            ),
+            child: const VouchersScreen(initialType: 'receipt'),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financePaymentVouchers,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const VouchersScreen(initialType: 'payment'),
           ),
         ),
         GoRoute(
@@ -1913,6 +1932,8 @@ Widget? _rightPanelFor(GoRouterState state) {
 
 String _financeActiveTabFor(String path) {
   if (path == AppRoutes.finance) return 'overview';
+  if (path == AppRoutes.financeReceiptVouchers) return 'receipt-vouchers';
+  if (path == AppRoutes.financePaymentVouchers) return 'payment-vouchers';
   if (path.startsWith(AppRoutes.financeTransactions)) return 'transactions';
   if (path.startsWith(AppRoutes.financeCashBanks)) return 'cashbanks';
   if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
@@ -2049,6 +2070,8 @@ abstract final class AppRoutes {
       '/cafe-configuration/branches/:branchId/edit';
   static const String inventory = '/inventory';
   static const String finance = '/finance';
+  static const String financeReceiptVouchers = '/finance/receipt-vouchers';
+  static const String financePaymentVouchers = '/finance/payment-vouchers';
   static const String menuManagement = '/menu-management';
   static const String menuManagementProducts = '/menu-management/products';
   static const String menuManagementModifiers = '/menu-management/modifiers';

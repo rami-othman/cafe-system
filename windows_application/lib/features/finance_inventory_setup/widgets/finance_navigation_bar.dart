@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/localization/localization_extensions.dart';
+import '../../../core/services/service_locator.dart';
+import '../../../features/auth/controllers/auth_session_cubit.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/access/cashier_access.dart';
 import 'finance_design.dart';
 
 /// The only Finance tab bar. It is installed by the application shell, so
@@ -78,8 +81,33 @@ class FinanceNavigationBar extends StatelessWidget {
     ),
   ];
 
+  static const List<_FinanceDestination> _cashierDestinations =
+      <_FinanceDestination>[
+        _FinanceDestination(
+          'receipt-vouchers',
+          '/finance/receipt-vouchers',
+          Icons.add_circle_outline,
+        ),
+        _FinanceDestination(
+          'payment-vouchers',
+          '/finance/payment-vouchers',
+          Icons.remove_circle_outline,
+        ),
+        _FinanceDestination(
+          'purchases',
+          '/finance/purchases',
+          Icons.shopping_cart_outlined,
+        ),
+        _FinanceDestination('sales', '/finance/sales', Icons.point_of_sale_outlined),
+      ];
+
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final String? role = serviceLocator<AuthSessionCubit>().state.session?.user.role;
+    final List<_FinanceDestination> destinations = CashierAccess.isCashier(role)
+        ? _cashierDestinations
+        : _destinations;
+    return Container(
     color: FinanceColors.workspace,
     child: DecoratedBox(
       decoration: const BoxDecoration(
@@ -93,7 +121,7 @@ class FinanceNavigationBar extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: _destinations
+          children: destinations
               .map(
                 (_FinanceDestination destination) => _FinanceNavigationItem(
                   destination: destination,
@@ -105,6 +133,7 @@ class FinanceNavigationBar extends StatelessWidget {
       ),
     ),
   );
+  }
 }
 
 class _FinanceDestination {
@@ -115,6 +144,8 @@ class _FinanceDestination {
 }
 
 String financeSectionLabel(AppLocalizations l10n, String id) => switch (id) {
+  'receipt-vouchers' => 'سند قبض',
+  'payment-vouchers' => 'سند دفع',
   'overview' => l10n.financeSectionOverview,
   'transactions' => l10n.financeSectionTransactions,
   'vouchers' => 'السندات والقيود',
