@@ -25,9 +25,11 @@ class OrderLifecyclePolicy
         return $order->status === 'draft' && $order->payment_status === 'unpaid';
     }
 
-    public function canCancel(object $order): bool
+    public function canCancel(object $order, bool $hasCompletedPayment = false): bool
     {
-        return in_array($order->status, ['draft', 'held'], true) && $order->payment_status === 'unpaid';
+        return ! $hasCompletedPayment
+            && in_array($order->status, ['draft', 'held'], true)
+            && $order->payment_status === 'unpaid';
     }
 
     public function canPay(object $order): bool
@@ -61,9 +63,9 @@ class OrderLifecyclePolicy
         }
     }
 
-    public function assertCancellable(object $order): void
+    public function assertCancellable(object $order, bool $hasCompletedPayment = false): void
     {
-        if (! $this->canCancel($order)) {
+        if (! $this->canCancel($order, $hasCompletedPayment)) {
             throw new OrderLifecycleException('ORDER_NOT_EDITABLE', 'Paid or closed orders cannot be cancelled.');
         }
     }

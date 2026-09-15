@@ -8,6 +8,7 @@ import 'package:windows_application/features/discounts/models/discount_upsert_re
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
 import 'package:windows_application/features/orders/controllers/orders_state.dart';
+import 'package:windows_application/features/orders/models/order_page.dart';
 import 'package:windows_application/features/orders/models/order_summary.dart';
 import 'package:windows_application/features/orders/repositories/orders_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
@@ -130,12 +131,18 @@ class _SpyOrdersRepository extends OrdersRepository {
   }
 
   @override
-  Future<List<OrderSummary>> getOrders({
+  Future<OrderPage> getOrders({
     required int branchId,
     OrdersFilter? filter,
+    int page = 1,
+    int perPage = 25,
   }) async {
     requests++;
-    return const <OrderSummary>[];
+    return OrderPage.fromOrders(
+      const <OrderSummary>[],
+      page: page,
+      perPage: perPage,
+    );
   }
 }
 

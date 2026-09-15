@@ -18,15 +18,13 @@ class OrderSummaryCard extends StatelessWidget {
     required this.onPay,
     required this.onResume,
     required this.onCancel,
-    required this.onComplete,
   });
 
   final OrderSummary order;
   final VoidCallback onDetails;
-  final VoidCallback onPay;
-  final VoidCallback onResume;
-  final VoidCallback onCancel;
-  final VoidCallback onComplete;
+  final VoidCallback? onPay;
+  final VoidCallback? onResume;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +84,7 @@ class OrderSummaryCard extends StatelessWidget {
               _MetaLabel(
                 icon: Icons.receipt_long_outlined,
                 label:
-                    '${order.itemCount} ${order.itemCount == 1 ? 'Item' : 'Items'}',
+                    '${_quantityLabel(order.itemCount)} ${order.itemCount == 1 ? 'Item' : 'Items'}',
               ),
               const SizedBox(width: AppSpacing.lg),
               _MetaLabel(icon: Icons.schedule_outlined, label: order.timeAgo),
@@ -101,12 +99,17 @@ class OrderSummaryCard extends StatelessWidget {
             onPay: onPay,
             onResume: onResume,
             onCancel: onCancel,
-            onComplete: onComplete,
           ),
         ],
       ),
     );
   }
+}
+
+String _quantityLabel(double quantity) {
+  return quantity == quantity.roundToDouble()
+      ? quantity.toInt().toString()
+      : quantity.toString();
 }
 
 class _MetaLabel extends StatelessWidget {

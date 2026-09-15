@@ -160,6 +160,48 @@ class SaleConsumptionService
     }
 
     /**
+     * Read-only payment preflight for the warehouse configuration required by
+     * this order's authoritative sale-consumption path.
+     *
+     * @return array{code: string, reason: string}|null
+     */
+    public function preflightWarehouseConfiguration(int $tenantId, object $order): ?array
+    {
+        $requiresInventory = DB::table('order_items')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->where('order_items.tenant_id', $tenantId)
+            ->where('products.tenant_id', $tenantId)
+            ->where('order_items.order_id', $order->id)
+            ->whereNull('order_items.deleted_at')
+            ->where('products.is_stock_tracked', true)
+            ->exists();
+
+        if (! $requiresInventory) {
+            return null;
+        }
+
+        try {
+            if ($this->resolveWarehouse($tenantId, (int) $order->branch_id) !== null) {
+                return null;
+            }
+        } catch (OrderLifecycleException $exception) {
+            if ($exception->domainCode === 'WAREHOUSE_CONFIGURATION_AMBIGUOUS') {
+                return [
+                    'code' => $exception->domainCode,
+                    'reason' => 'Multiple active branch-main warehouses are configured. Keep exactly one active main warehouse for this branch before paying.',
+                ];
+            }
+
+            throw $exception;
+        }
+
+        return [
+            'code' => 'WAREHOUSE_NOT_CONFIGURED',
+            'reason' => 'No active branch-main warehouse is configured. Configure one before paying.',
+        ];
+    }
+
+    /**
      * Canonical tracking check: `is_stock_tracked` is authoritative;
      * `inventory_controlled` is a legacy mirror and must never override an
      * explicit false value in the authoritative column.

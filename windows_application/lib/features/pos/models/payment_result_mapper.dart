@@ -33,5 +33,15 @@ PaymentResult paymentResultFromJson(
             fallback: readString(json['paymentStatus']),
           ).trim(),
     paymentId: readInt(payment['id']) ?? readInt(json['paymentId']),
+    reference:
+        readString(
+          payment['reference'],
+          fallback: readString(json['reference']),
+        ).trim().isEmpty
+        ? null
+        : readString(
+            payment['reference'],
+            fallback: readString(json['reference']),
+          ).trim(),
   );
 }

@@ -1,6 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
+import 'package:windows_application/features/orders/controllers/orders_cubit.dart';
+import 'package:windows_application/features/orders/controllers/orders_state.dart';
+import 'package:windows_application/features/orders/models/order_page.dart';
+import 'package:windows_application/features/orders/models/order_status.dart';
+import 'package:windows_application/features/orders/models/order_summary.dart';
+import 'package:windows_application/features/orders/models/order_summary_item.dart';
+import 'package:windows_application/features/orders/models/order_type.dart';
+import 'package:windows_application/features/orders/repositories/orders_repository.dart';
+import 'package:windows_application/features/orders/views/orders_screen.dart';
+import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 
 void main() {
@@ -43,7 +56,7 @@ void main() {
 
     expect(
       find.text('Resume held order will be connected to POS later.'),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.tap(find.text('POS'));
@@ -120,7 +133,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Refund amount cannot exceed order total.'),
+      find.text('Refund amount cannot exceed refundable balance.'),
       findsOneWidget,
     );
     final ElevatedButton button = tester.widget<ElevatedButton>(
@@ -156,6 +169,153 @@ void main() {
     expect(find.text('Refunded'), findsWidgets);
     expect(find.text('Refund recorded.'), findsOneWidget);
   });
+
+  testWidgets(
+    'renders authoritative count, preview, page indicator, and boundaries',
+    (WidgetTester tester) async {
+      final _WidgetOrdersRepository repository = _WidgetOrdersRepository();
+      final OrdersCubit cubit = OrdersCubit(repository: repository);
+      addTearDown(cubit.close);
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<OrdersCubit>.value(
+            value: cubit,
+            child: const OrdersScreen(),
+          ),
+        ),
+      );
+      await cubit.loadOrders();
+      await tester.pumpAndSettle();
+
+      expect(find.text('7 Items'), findsOneWidget);
+      expect(find.text('1.5x Latte'), findsOneWidget);
+      expect(find.text('Page 1 of 2'), findsOneWidget);
+      final OutlinedButton previous = tester.widget<OutlinedButton>(
+        find.byKey(const ValueKey<String>('ordersPreviousPage')),
+      );
+      expect(previous.onPressed, isNull);
+
+      await tester.tap(find.byKey(const ValueKey<String>('ordersNextPage')));
+      await tester.pump();
+      expect(repository.pageRequests, <int>[1, 2]);
+      expect(cubit.state.isPageLoading, isTrue);
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const ValueKey<String>('ordersNextPage')),
+            )
+            .onPressed,
+        isNull,
+      );
+
+      repository.completePageTwo();
+      await tester.pumpAndSettle();
+      expect(find.text('Page 2 of 2'), findsOneWidget);
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const ValueKey<String>('ordersNextPage')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const ValueKey<String>('ordersPreviousPage')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    },
+  );
+}
+
+class _WidgetOrdersRepository extends OrdersRepository {
+  final List<int> pageRequests = <int>[];
+  final Completer<OrderPage> pageTwo = Completer<OrderPage>();
+
+  @override
+  Future<List<Branch>> getBranches() async => const <Branch>[
+    Branch(
+      id: 1,
+      name: 'Downtown',
+      currency: 'SYP',
+      timezone: 'Asia/Damascus',
+      isActive: true,
+    ),
+  ];
+
+  @override
+  Future<OrderPage> getOrders({
+    required int branchId,
+    OrdersFilter? filter,
+    int page = 1,
+    int perPage = 25,
+  }) {
+    pageRequests.add(page);
+    if (page == 2) {
+      return pageTwo.future;
+    }
+    return Future<OrderPage>.value(
+      const OrderPage(
+        orders: <OrderSummary>[
+          OrderSummary(
+            id: '7',
+            backendId: 7,
+            displayNumber: '#ORD-007',
+            type: OrderSummaryType.takeaway,
+            customerName: 'Widget Customer',
+            status: OrderStatus.preparing,
+            itemCount: 7,
+            timeAgo: 'Just now',
+            items: <OrderSummaryItem>[
+              OrderSummaryItem(quantity: 1.5, name: 'Latte', total: 4.5),
+            ],
+            total: 12.5,
+          ),
+        ],
+        currentPage: 1,
+        lastPage: 2,
+        perPage: 1,
+        total: 2,
+      ),
+    );
+  }
+
+  void completePageTwo() {
+    pageTwo.complete(
+      const OrderPage(
+        orders: <OrderSummary>[
+          OrderSummary(
+            id: '8',
+            backendId: 8,
+            displayNumber: '#ORD-008',
+            type: OrderSummaryType.takeaway,
+            customerName: 'Second Widget Customer',
+            status: OrderStatus.preparing,
+            itemCount: 1,
+            timeAgo: 'Just now',
+            items: <OrderSummaryItem>[
+              OrderSummaryItem(quantity: 1, name: 'Espresso', total: 2),
+            ],
+            total: 2,
+          ),
+        ],
+        currentPage: 2,
+        lastPage: 2,
+        perPage: 1,
+        total: 2,
+      ),
+    );
+  }
 }
 
 Future<void> _setupTestLocator() async {

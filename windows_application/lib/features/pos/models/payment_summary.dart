@@ -12,6 +12,12 @@ class PaymentSummary extends Equatable {
     required this.changeDue,
     required this.methods,
     required this.quickAmounts,
+    this.outstandingAmount,
+    this.orderStatus = 'draft',
+    this.paymentStatus = 'unpaid',
+    this.canPay = true,
+    this.blockerCode,
+    this.blockedReason,
   });
 
   factory PaymentSummary.fromJson(Map<String, dynamic> json) {
@@ -28,6 +34,19 @@ class PaymentSummary extends Equatable {
       quickAmounts: (json['quickAmounts'] as List? ?? const <Object?>[])
           .map(readDouble)
           .toList(growable: false),
+      outstandingAmount: readDouble(
+        json['outstandingAmount'],
+        fallback: readDouble(json['totalDue']),
+      ),
+      orderStatus: readString(json['orderStatus'], fallback: 'draft'),
+      paymentStatus: readString(json['paymentStatus'], fallback: 'unpaid'),
+      canPay: readBool(json['canPay'], fallback: true),
+      blockerCode: readString(json['blockerCode']).trim().isEmpty
+          ? null
+          : readString(json['blockerCode']).trim(),
+      blockedReason: readString(json['blockedReason']).trim().isEmpty
+          ? null
+          : readString(json['blockedReason']).trim(),
     );
   }
 
@@ -39,6 +58,14 @@ class PaymentSummary extends Equatable {
   final double changeDue;
   final List<String> methods;
   final List<double> quickAmounts;
+  final double? outstandingAmount;
+  final String orderStatus;
+  final String paymentStatus;
+  final bool canPay;
+  final String? blockerCode;
+  final String? blockedReason;
+
+  double get amountDue => outstandingAmount ?? totalDue;
 
   @override
   List<Object?> get props => <Object?>[
@@ -50,5 +77,11 @@ class PaymentSummary extends Equatable {
     changeDue,
     methods,
     quickAmounts,
+    outstandingAmount,
+    orderStatus,
+    paymentStatus,
+    canPay,
+    blockerCode,
+    blockedReason,
   ];
 }

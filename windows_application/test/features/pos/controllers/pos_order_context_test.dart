@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
@@ -92,6 +94,128 @@ void main() {
     expect(cubit.state.isCartMutationInProgress, isFalse);
     expect(cubit.state.cartMutationError, 'Type unavailable.');
   });
+
+  test(
+    'loads one authoritative held order and preserves its backend context',
+    () async {
+      repository.existingOrder = _heldOrder();
+
+      final bool loaded = await cubit.loadExistingOrder(42);
+
+      expect(loaded, isTrue);
+      expect(repository.getOrderCalls, 1);
+      expect(cubit.state.currentOrderId, 42);
+      expect(cubit.state.publishedMenuVersionId, 19);
+      expect(cubit.state.cartItems.single.backendItemId, 77);
+      expect(cubit.state.cartItems.single.publishedMenuVersionId, 19);
+      expect(cubit.state.cartItems.single.quantity, 2);
+      expect(cubit.state.backendTotal, 8.5);
+      expect(cubit.state.tableId, 12);
+      expect(cubit.state.tableName, 'Table 12');
+      expect(cubit.state.tableCode, 'T12');
+      expect(cubit.state.orderNote, 'Extra hot');
+      expect(cubit.state.isCartMutationInProgress, isFalse);
+    },
+  );
+
+  test('duplicate existing-order loads coalesce to one GET', () async {
+    repository.existingOrder = _heldOrder();
+    final Completer<BackendOrder> pending = Completer<BackendOrder>();
+    repository.existingOrderFuture = pending.future;
+
+    final Future<bool> first = cubit.loadExistingOrder(42);
+    final Future<bool> duplicate = cubit.loadExistingOrder(42);
+
+    expect(identical(first, duplicate), isTrue);
+    expect(repository.getOrderCalls, 1);
+    expect(repository.createRequest, isNull);
+    pending.complete(_heldOrder());
+    expect(await first, isTrue);
+  });
+
+  test(
+    'does not overwrite a non-empty cart without explicit replacement',
+    () async {
+      cubit.addProductToCart(_customization().product);
+      repository.existingOrder = _heldOrder();
+
+      expect(await cubit.loadExistingOrder(42), isFalse);
+      expect(repository.getOrderCalls, 0);
+      expect(cubit.state.currentOrderId, isNull);
+      expect(cubit.state.cartItems, hasLength(1));
+
+      expect(await cubit.loadExistingOrder(42, allowReplace: true), isTrue);
+      expect(cubit.state.currentOrderId, 42);
+    },
+  );
+
+  test('stale existing-order response cannot replace a changed cart', () async {
+    repository.existingOrder = _heldOrder();
+    final Completer<BackendOrder> pending = Completer<BackendOrder>();
+    repository.existingOrderFuture = pending.future;
+
+    final Future<bool> load = cubit.loadExistingOrder(42);
+    cubit.addProductToCart(_customization().product);
+    pending.complete(_heldOrder());
+
+    expect(await load, isFalse);
+    expect(cubit.state.currentOrderId, isNull);
+    expect(cubit.state.cartItems, hasLength(1));
+  });
+
+  test('paid or non-held backend orders cannot be loaded into POS', () async {
+    repository.existingOrder = _heldOrder().copyWithForTest(
+      status: 'draft',
+      paymentStatus: 'unpaid',
+    );
+    expect(await cubit.loadExistingOrder(42), isFalse);
+    expect(cubit.state.currentOrderId, isNull);
+
+    repository.existingOrder = _heldOrder().copyWithForTest(
+      status: 'held',
+      paymentStatus: 'paid',
+    );
+    expect(await cubit.loadExistingOrder(42), isFalse);
+    expect(cubit.state.currentOrderId, isNull);
+  });
+
+  test(
+    'unsupported published snapshot fails without opening an editable cart',
+    () async {
+      repository.existingOrder = _heldOrder().copyWithForTest(
+        canResume: false,
+        resumeBlockerCode: 'UNSUPPORTED_MENU_SNAPSHOT_SCHEMA',
+        resumeBlockedReason:
+            'This historical order cannot be resumed because its pinned menu snapshot is unsupported.',
+      );
+
+      expect(await cubit.loadExistingOrder(42), isFalse);
+      expect(cubit.state.currentOrderId, isNull);
+      expect(cubit.state.cartItems, isEmpty);
+      expect(cubit.state.cartMutationError, contains('snapshot is unsupported'));
+      expect(repository.getOrderCalls, 1);
+    },
+  );
+
+  test('confirmed cancellation clears the matching POS order context', () async {
+    repository.existingOrder = _heldOrder();
+    expect(await cubit.loadExistingOrder(42), isTrue);
+
+    cubit.clearCancelledOrderContext(42);
+
+    expect(cubit.state.currentOrderId, isNull);
+    expect(cubit.state.cartItems, isEmpty);
+  });
+
+  test('cancellation does not clear a different newer POS order context', () async {
+    repository.existingOrder = _heldOrder();
+    expect(await cubit.loadExistingOrder(42), isTrue);
+
+    cubit.clearCancelledOrderContext(99);
+
+    expect(cubit.state.currentOrderId, 42);
+    expect(cubit.state.cartItems, isNotEmpty);
+  });
 }
 
 ProductCustomization _customization() => ProductCustomization(
@@ -129,6 +253,10 @@ class _OrderContextRepository extends PosRepository {
   CreateOrderRequest? createRequest;
   final List<_ContextRequest> contextRequests = <_ContextRequest>[];
   Object? contextError;
+  Object? existingOrderError;
+  BackendOrder? existingOrder;
+  Future<BackendOrder>? existingOrderFuture;
+  int getOrderCalls = 0;
   int? _customerId;
   String _orderType = 'dine_in';
 
@@ -174,6 +302,21 @@ class _OrderContextRepository extends PosRepository {
     _customerId = request.customerId;
     _orderType = request.orderType.apiValue;
     return _order();
+  }
+
+  @override
+  Future<BackendOrder> getOrder(int orderId) async {
+    getOrderCalls++;
+    if (existingOrderError != null) {
+      throw existingOrderError!;
+    }
+    if (existingOrderFuture != null) {
+      return existingOrderFuture!;
+    }
+    if (existingOrder == null) {
+      throw const ApiException(message: 'Order not found.');
+    }
+    return existingOrder!;
   }
 
   @override
@@ -234,6 +377,76 @@ class _OrderContextRepository extends PosRepository {
       customerName: customer?.name,
       customerPhone: customer?.phone,
       tableId: null,
+      note: null,
+    );
+  }
+}
+
+BackendOrder _heldOrder() => BackendOrder(
+  id: 42,
+  orderNumber: '618-42',
+  branchId: 1,
+  shiftId: 1,
+  orderType: 'takeaway',
+  status: 'held',
+  paymentStatus: 'unpaid',
+  publishedMenuVersionId: 19,
+  items: const <BackendOrderItem>[
+    BackendOrderItem(
+      id: 77,
+      productId: 4,
+      name: 'Americano',
+      quantity: 2,
+      unitPrice: 4.25,
+      lineTotal: 8.5,
+      modifiers: <BackendOrderItemModifier>[],
+    ),
+  ],
+  totals: const BackendOrderTotals(
+    subtotal: 8.5,
+    discountTotal: 0,
+    taxTotal: 0,
+    total: 8.5,
+  ),
+  tableId: 12,
+  tableName: 'Table 12',
+  tableCode: 'T12',
+  note: 'Extra hot',
+);
+
+extension on BackendOrder {
+  BackendOrder copyWithForTest({
+    String? status,
+    String? paymentStatus,
+    bool? canResume,
+    String? resumeBlockerCode,
+    String? resumeBlockedReason,
+  }) {
+    return BackendOrder(
+      id: id,
+      orderNumber: orderNumber,
+      branchId: branchId,
+      shiftId: shiftId,
+      orderType: orderType,
+      status: status ?? this.status,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      items: items,
+      totals: totals,
+      discountName: discountName,
+      discountType: discountType,
+      discountValue: discountValue,
+      discountAmount: discountAmount,
+      customerId: customerId,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      tableId: tableId,
+      tableName: tableName,
+      tableCode: tableCode,
+      note: note,
+      publishedMenuVersionId: publishedMenuVersionId,
+      canResume: canResume ?? this.canResume,
+      resumeBlockerCode: resumeBlockerCode ?? this.resumeBlockerCode,
+      resumeBlockedReason: resumeBlockedReason ?? this.resumeBlockedReason,
     );
   }
 }

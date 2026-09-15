@@ -79,7 +79,7 @@ class _OrderItemLine extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: Text(
-            '${item.quantity}x ${item.name}',
+            '${_quantityLabel(item.quantity)}x ${item.name}',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.bodySmall.copyWith(
@@ -99,4 +99,10 @@ class _OrderItemLine extends StatelessWidget {
       ],
     );
   }
+}
+
+String _quantityLabel(double quantity) {
+  return quantity == quantity.roundToDouble()
+      ? quantity.toInt().toString()
+      : quantity.toString();
 }
