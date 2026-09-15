@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../core/config/tax_config.dart';
 import 'order_payment_summary.dart';
+import 'order_refund.dart';
 import 'order_status.dart';
 import 'order_timeline_event.dart';
 
@@ -23,9 +24,18 @@ class OrderDetail extends Equatable {
     required this.total,
     required this.payment,
     required this.timeline,
+    this.paymentStatus = 'unpaid',
+    this.payments = const <OrderPaymentSummary>[],
     this.isRefunded = false,
     this.refundedAmount = 0,
     this.refundedAt,
+    this.refundableAmount = 0,
+    this.refunds = const <OrderRefund>[],
+    this.branchId,
+    this.publishedMenuVersionId,
+    this.serverCanResume,
+    this.resumeBlockerCode,
+    this.resumeBlockedReason,
   });
 
   final String id;
@@ -44,19 +54,71 @@ class OrderDetail extends Equatable {
   final double total;
   final OrderPaymentSummary payment;
   final List<OrderTimelineEvent> timeline;
+  final String paymentStatus;
+  final List<OrderPaymentSummary> payments;
   final bool isRefunded;
   final double refundedAmount;
   final DateTime? refundedAt;
+  final double refundableAmount;
+  final List<OrderRefund> refunds;
+  final int? branchId;
+  final int? publishedMenuVersionId;
+  final bool? serverCanResume;
+  final String? resumeBlockerCode;
+  final String? resumeBlockedReason;
 
   bool get hasCustomer => customerName.trim().isNotEmpty;
 
   bool get hasRefund => refundedAmount > 0;
+
+  // The backend only exposes a positive balance for a completed settlement.
+  // Payment labels are translated presentation data, not refund authority.
+  bool get canRefund => refundableAmount > 0;
+
+  bool get canPay {
+    return paymentStatus.toLowerCase() == 'unpaid' &&
+        (status == OrderStatus.preparing || status == OrderStatus.held) &&
+        total > 0;
+  }
+
+  bool get hasCompletedPayment {
+    final List<OrderPaymentSummary> recordedPayments = payments.isEmpty
+        ? <OrderPaymentSummary>[payment]
+        : payments;
+    return recordedPayments.any(
+      (OrderPaymentSummary item) => item.hasPayment && item.isCompleted,
+    );
+  }
+
+  bool get canResume {
+    if (serverCanResume != null) {
+      return serverCanResume!;
+    }
+    return status == OrderStatus.held &&
+        paymentStatus.toLowerCase() == 'unpaid' &&
+        !hasCompletedPayment;
+  }
+
+  bool get canCancel {
+    return (status == OrderStatus.preparing || status == OrderStatus.held) &&
+        paymentStatus.toLowerCase() == 'unpaid' &&
+        !hasCompletedPayment;
+  }
 
   OrderDetail copyWith({
     OrderStatus? status,
     bool? isRefunded,
     double? refundedAmount,
     DateTime? refundedAt,
+    double? refundableAmount,
+    List<OrderRefund>? refunds,
+    String? paymentStatus,
+    List<OrderPaymentSummary>? payments,
+    int? branchId,
+    int? publishedMenuVersionId,
+    bool? serverCanResume,
+    String? resumeBlockerCode,
+    String? resumeBlockedReason,
   }) {
     return OrderDetail(
       id: id,
@@ -75,9 +137,19 @@ class OrderDetail extends Equatable {
       total: total,
       payment: payment,
       timeline: timeline,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      payments: payments ?? this.payments,
       isRefunded: isRefunded ?? this.isRefunded,
       refundedAmount: refundedAmount ?? this.refundedAmount,
       refundedAt: refundedAt ?? this.refundedAt,
+      refundableAmount: refundableAmount ?? this.refundableAmount,
+      refunds: refunds ?? this.refunds,
+      branchId: branchId ?? this.branchId,
+      publishedMenuVersionId:
+          publishedMenuVersionId ?? this.publishedMenuVersionId,
+      serverCanResume: serverCanResume ?? this.serverCanResume,
+      resumeBlockerCode: resumeBlockerCode ?? this.resumeBlockerCode,
+      resumeBlockedReason: resumeBlockedReason ?? this.resumeBlockedReason,
     );
   }
 
@@ -99,9 +171,18 @@ class OrderDetail extends Equatable {
     total,
     payment,
     timeline,
+    paymentStatus,
+    payments,
     isRefunded,
     refundedAmount,
     refundedAt,
+    refundableAmount,
+    refunds,
+    branchId,
+    publishedMenuVersionId,
+    serverCanResume,
+    resumeBlockerCode,
+    resumeBlockedReason,
   ];
 }
 

@@ -129,6 +129,49 @@ void main() {
     );
   });
 
+  testWidgets('uncertain completion closes without re-enabling confirmation', (
+    WidgetTester tester,
+  ) async {
+    int submissions = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (BuildContext context) {
+            return Scaffold(
+              body: FilledButton(
+                onPressed: () async {
+                  await showDialog<void>(
+                    context: context,
+                    builder: (BuildContext dialogContext) {
+                      return PaymentDialog(
+                        totalDue: 24.5,
+                        itemCount: 3,
+                        onSubmit: (_) async {
+                          submissions++;
+                          return PaymentCompletionStatus.uncertain;
+                        },
+                      );
+                    },
+                  );
+                },
+                child: const Text('Open Payment'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Payment'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm Payment'));
+    await tester.pumpAndSettle();
+
+    expect(submissions, 1);
+    expect(find.byType(PaymentDialog), findsNothing);
+  });
+
   testWidgets('payment dialog does not overflow in compact layouts', (
     WidgetTester tester,
   ) async {

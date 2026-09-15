@@ -39,6 +39,10 @@ class PosState extends Equatable {
     this.taxRate = TaxConfig.defaultTaxRate,
     this.shiftId,
     this.currentOrderId,
+    this.tableId,
+    this.tableName,
+    this.tableCode,
+    this.orderNote,
     this.publishedMenuVersionId,
     this.isBackendMode = false,
     this.isBackendReachable = true,
@@ -84,6 +88,10 @@ class PosState extends Equatable {
   final double taxRate;
   final int? shiftId;
   final int? currentOrderId;
+  final int? tableId;
+  final String? tableName;
+  final String? tableCode;
+  final String? orderNote;
 
   /// Remains null for every legacy Catalog session. 12E will pin this from a
   /// published runtime menu before creating snapshot-aware orders.
@@ -202,6 +210,10 @@ class PosState extends Equatable {
     double? taxRate,
     int? shiftId,
     int? currentOrderId,
+    int? tableId,
+    String? tableName,
+    String? tableCode,
+    String? orderNote,
     int? publishedMenuVersionId,
     bool? isBackendMode,
     bool? isBackendReachable,
@@ -231,6 +243,8 @@ class PosState extends Equatable {
     bool clearShiftId = false,
     bool clearCurrentOrderId = false,
     bool clearBackendTotals = false,
+    bool clearTable = false,
+    bool clearOrderNote = false,
   }) {
     return PosState(
       branches: branches ?? this.branches,
@@ -281,6 +295,18 @@ class PosState extends Equatable {
       currentOrderId: clearCurrentOrderId
           ? null
           : currentOrderId ?? this.currentOrderId,
+      tableId: clearTable || clearCurrentOrderId
+          ? null
+          : tableId ?? this.tableId,
+      tableName: clearTable || clearCurrentOrderId
+          ? null
+          : tableName ?? this.tableName,
+      tableCode: clearTable || clearCurrentOrderId
+          ? null
+          : tableCode ?? this.tableCode,
+      orderNote: clearOrderNote || clearCurrentOrderId
+          ? null
+          : orderNote ?? this.orderNote,
       publishedMenuVersionId: clearCurrentOrderId
           ? null
           : publishedMenuVersionId ?? this.publishedMenuVersionId,
@@ -342,6 +368,10 @@ class PosState extends Equatable {
     taxRate,
     shiftId,
     currentOrderId,
+    tableId,
+    tableName,
+    tableCode,
+    orderNote,
     publishedMenuVersionId,
     isBackendMode,
     isBackendReachable,

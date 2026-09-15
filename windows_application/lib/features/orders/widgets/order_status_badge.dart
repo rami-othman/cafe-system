@@ -63,6 +63,12 @@ class OrderStatusBadge extends StatelessWidget {
         foreground: AppColors.orderReadyText,
         icon: Icons.check_circle_outline,
       ),
+      OrderStatus.paid => const _BadgeStyle(
+        background: AppColors.orderCompletedBadge,
+        border: AppColors.orderCompletedBorder,
+        foreground: AppColors.orderCompletedText,
+        icon: Icons.payment_outlined,
+      ),
       OrderStatus.completed => const _BadgeStyle(
         background: AppColors.orderCompletedBadge,
         border: AppColors.orderCompletedBorder,

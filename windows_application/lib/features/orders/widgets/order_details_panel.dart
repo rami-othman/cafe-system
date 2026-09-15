@@ -19,6 +19,9 @@ class OrderDetailsPanel extends StatelessWidget {
     required this.onPrint,
     required this.onCopy,
     required this.onRefund,
+    this.onPay,
+    this.onResume,
+    this.onCancel,
   });
 
   final OrderDetail detail;
@@ -26,6 +29,9 @@ class OrderDetailsPanel extends StatelessWidget {
   final VoidCallback onPrint;
   final VoidCallback onCopy;
   final VoidCallback onRefund;
+  final VoidCallback? onPay;
+  final VoidCallback? onResume;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +69,9 @@ class OrderDetailsPanel extends StatelessWidget {
                     onPrint: onPrint,
                     onCopy: onCopy,
                     onRefund: onRefund,
+                    onPay: onPay,
+                    onResume: onResume,
+                    onCancel: onCancel,
                   ),
                   Expanded(
                     child: SingleChildScrollView(

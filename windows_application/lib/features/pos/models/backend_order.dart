@@ -25,7 +25,11 @@ class BackendOrder extends Equatable {
     this.tableId,
     this.tableName,
     this.tableCode,
+    this.note,
     this.publishedMenuVersionId,
+    this.canResume,
+    this.resumeBlockerCode,
+    this.resumeBlockedReason,
   });
 
   factory BackendOrder.fromJson(Map<String, dynamic> json) {
@@ -73,7 +77,19 @@ class BackendOrder extends Equatable {
       tableCode: readString((json['table'] as Map?)?['code']).isEmpty
           ? null
           : readString((json['table'] as Map?)?['code']),
+      note: readString(json['note']).trim().isEmpty
+          ? null
+          : readString(json['note']).trim(),
       publishedMenuVersionId: readInt(json['publishedMenuVersionId']),
+      canResume: json.containsKey('canResume')
+          ? readBool(json['canResume'])
+          : null,
+      resumeBlockerCode: json.containsKey('resumeBlockerCode')
+          ? readString(json['resumeBlockerCode']).trim()
+          : null,
+      resumeBlockedReason: json.containsKey('resumeBlockedReason')
+          ? readString(json['resumeBlockedReason']).trim()
+          : null,
     );
   }
 
@@ -96,7 +112,11 @@ class BackendOrder extends Equatable {
   final int? tableId;
   final String? tableName;
   final String? tableCode;
+  final String? note;
   final int? publishedMenuVersionId;
+  final bool? canResume;
+  final String? resumeBlockerCode;
+  final String? resumeBlockedReason;
 
   @override
   List<Object?> get props => <Object?>[
@@ -119,6 +139,10 @@ class BackendOrder extends Equatable {
     tableId,
     tableName,
     tableCode,
+    note,
     publishedMenuVersionId,
+    canResume,
+    resumeBlockerCode,
+    resumeBlockedReason,
   ];
 }

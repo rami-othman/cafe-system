@@ -15,6 +15,7 @@ class OrderSummary extends Equatable {
     required this.items,
     required this.total,
     this.backendId,
+    this.paymentStatus = 'unpaid',
     String? displayNumber,
   }) : displayNumber = displayNumber ?? '#$id';
 
@@ -24,12 +25,32 @@ class OrderSummary extends Equatable {
   final OrderSummaryType type;
   final String customerName;
   final OrderStatus status;
-  final int itemCount;
+
+  /// Sum of quantities on non-deleted order lines, not the preview length.
+  final double itemCount;
   final String timeAgo;
   final List<OrderSummaryItem> items;
   final double total;
+  final String paymentStatus;
 
-  OrderSummary copyWith({OrderStatus? status}) {
+  bool get canPay {
+    final String normalizedPaymentStatus = paymentStatus.toLowerCase();
+    return normalizedPaymentStatus == 'unpaid' &&
+        (status == OrderStatus.preparing || status == OrderStatus.held) &&
+        total > 0;
+  }
+
+  bool get canResume {
+    return status == OrderStatus.held &&
+        paymentStatus.toLowerCase() == 'unpaid';
+  }
+
+  bool get canCancel {
+    return (status == OrderStatus.preparing || status == OrderStatus.held) &&
+        paymentStatus.toLowerCase() == 'unpaid';
+  }
+
+  OrderSummary copyWith({OrderStatus? status, String? paymentStatus}) {
     return OrderSummary(
       id: id,
       backendId: backendId,
@@ -41,6 +62,7 @@ class OrderSummary extends Equatable {
       timeAgo: timeAgo,
       items: items,
       total: total,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
     );
   }
 
@@ -56,5 +78,6 @@ class OrderSummary extends Equatable {
     timeAgo,
     items,
     total,
+    paymentStatus,
   ];
 }

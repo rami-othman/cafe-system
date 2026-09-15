@@ -10,6 +10,7 @@ class PaymentResult extends Equatable {
     required this.changeDue,
     this.status,
     this.paymentId,
+    this.reference,
   });
 
   final PaymentMethod method;
@@ -18,6 +19,7 @@ class PaymentResult extends Equatable {
   final double changeDue;
   final String? status;
   final int? paymentId;
+  final String? reference;
 
   @override
   List<Object?> get props => <Object?>[
@@ -27,5 +29,6 @@ class PaymentResult extends Equatable {
     changeDue,
     status,
     paymentId,
+    reference,
   ];
 }
