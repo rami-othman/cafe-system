@@ -75,6 +75,8 @@ class CafeConfigurationBranch {
     required this.currency,
     required this.isActive,
     this.posInventoryWarehouseId,
+    this.effectivePosInventoryWarehouseId,
+    this.posInventoryWarehouseSource = 'not_configured',
     this.availablePosWarehouses = const <BranchWarehouseOption>[],
   });
 
@@ -86,6 +88,8 @@ class CafeConfigurationBranch {
   final String currency;
   final bool isActive;
   final int? posInventoryWarehouseId;
+  final int? effectivePosInventoryWarehouseId;
+  final String posInventoryWarehouseSource;
   final List<BranchWarehouseOption> availablePosWarehouses;
 
   factory CafeConfigurationBranch.fromJson(
@@ -99,6 +103,10 @@ class CafeConfigurationBranch {
     currency: json['currency'] as String? ?? '',
     isActive: json['isActive'] == true,
     posInventoryWarehouseId: (json['posInventoryWarehouseId'] as num?)?.toInt(),
+    effectivePosInventoryWarehouseId:
+        (json['effectivePosInventoryWarehouseId'] as num?)?.toInt(),
+    posInventoryWarehouseSource:
+        json['posInventoryWarehouseSource'] as String? ?? 'not_configured',
     availablePosWarehouses:
         (json['availablePosWarehouses'] as List? ?? const <dynamic>[])
             .whereType<Map>()
@@ -111,13 +119,19 @@ class CafeConfigurationBranch {
 }
 
 class BranchWarehouseOption {
-  const BranchWarehouseOption({required this.id, required this.name});
+  const BranchWarehouseOption({
+    required this.id,
+    required this.name,
+    required this.type,
+  });
   final int id;
   final String name;
+  final String type;
   factory BranchWarehouseOption.fromJson(Map<String, dynamic> json) =>
       BranchWarehouseOption(
         id: (json['id'] as num).toInt(),
         name: json['name'] as String? ?? '',
+        type: json['type'] as String? ?? '',
       );
 }
 
@@ -166,8 +180,7 @@ class BranchDraft {
     'address': address.trim().isEmpty ? null : address.trim(),
     'phone': phone.trim().isEmpty ? null : phone.trim(),
     'timezone': timezone,
-    if (posInventoryWarehouseId != null)
-      'posInventoryWarehouseId': posInventoryWarehouseId,
+    'posInventoryWarehouseId': posInventoryWarehouseId,
   };
 }
 

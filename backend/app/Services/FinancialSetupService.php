@@ -98,7 +98,6 @@ class FinancialSetupService
             $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
                 $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
-                $this->ensureBranchPosWarehouse($tenantId, $initialBranchId, $actorId);
             }
         });
     }

@@ -782,6 +782,96 @@ abstract class AppLocalizations {
   /// **'SHIFT CLOSED'**
   String get shiftStatusClosed;
 
+  /// No description provided for @shiftCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Shift'**
+  String get shiftCloseTitle;
+
+  /// No description provided for @shiftCloseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Count the cash in your register and close your shift.'**
+  String get shiftCloseSubtitle;
+
+  /// No description provided for @shiftCloseClosingCashLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing cash'**
+  String get shiftCloseClosingCashLabel;
+
+  /// No description provided for @shiftCloseNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get shiftCloseNoteLabel;
+
+  /// No description provided for @shiftCloseSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Shift'**
+  String get shiftCloseSubmit;
+
+  /// No description provided for @shiftCloseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift closed.'**
+  String get shiftCloseSuccess;
+
+  /// No description provided for @shiftCloseRedirectingToBarCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'A bar check is required before you can close this shift.'**
+  String get shiftCloseRedirectingToBarCheck;
+
+  /// No description provided for @barCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar Check'**
+  String get barCheckTitle;
+
+  /// No description provided for @barCheckSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Count each item, then submit to continue closing your shift.'**
+  String get barCheckSubtitle;
+
+  /// No description provided for @barCheckExpectedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected'**
+  String get barCheckExpectedLabel;
+
+  /// No description provided for @barCheckCountedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted'**
+  String get barCheckCountedLabel;
+
+  /// No description provided for @barCheckReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for variance'**
+  String get barCheckReasonLabel;
+
+  /// No description provided for @barCheckSubmitAndClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Bar Check'**
+  String get barCheckSubmitAndClose;
+
+  /// No description provided for @barCheckPendingManagerReview.
+  ///
+  /// In en, this message translates to:
+  /// **'A manager needs to review a variance on this count before it can be completed. Ask a manager to review it, then try again.'**
+  String get barCheckPendingManagerReview;
+
+  /// No description provided for @barCheckAllLinesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Count every item before submitting.'**
+  String get barCheckAllLinesRequired;
+
   /// No description provided for @tooltipCart.
   ///
   /// In en, this message translates to:

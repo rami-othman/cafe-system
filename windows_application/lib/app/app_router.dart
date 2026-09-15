@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/app_localizations.dart';
 import 'menu_management_route_locations.dart';
 import 'customer_management_route_locations.dart';
+import 'shift_close_route_locations.dart';
 
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
@@ -30,6 +31,11 @@ import '../features/reports/views/sales_profitability_screen.dart';
 import '../features/reports/views/cash_shifts_screen.dart';
 import '../features/reports/views/inventory_report_screen.dart';
 import '../features/reports/views/expenses_report_screen.dart';
+import '../features/shift_close/controllers/bar_check_cubit.dart';
+import '../features/shift_close/controllers/shift_close_cubit.dart';
+import '../features/shift_close/views/bar_check_screen.dart';
+import '../features/shift_close/views/shift_close_screen.dart';
+import '../shared/access/cashier_access.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
 import '../features/finance_inventory_setup/views/daily_closing_screen.dart';
@@ -200,6 +206,7 @@ Page<void> _materialEffectPage(
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: AppRoutes.pos,
+  redirect: _cashierAccessRedirect,
   routes: <RouteBase>[
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
@@ -1720,6 +1727,25 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
+          path: AppRoutes.shiftClose,
+          name: AppRouteNames.shiftClose,
+          builder: (context, state) => BlocProvider<ShiftCloseCubit>(
+            create: (_) => serviceLocator<ShiftCloseCubit>(),
+            child: const ShiftCloseScreen(),
+          ),
+        ),
+        GoRoute(
+          path: BarCheckScreen.routePath,
+          name: BarCheckScreen.routeName,
+          builder: (context, state) {
+            final BarCheckScreenArgs args = state.extra as BarCheckScreenArgs;
+            return BlocProvider<BarCheckCubit>(
+              create: (_) => serviceLocator<BarCheckCubit>(),
+              child: BarCheckScreen(args: args),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.cafeConfiguration,
           redirect: (_, _) => AppRoutes.cafeConfigurationOverview,
         ),
@@ -2008,6 +2034,7 @@ abstract final class AppRoutes {
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String settings = '/settings';
+  static const String shiftClose = ShiftCloseRouteLocations.shiftClose;
   static const String cafeConfiguration = '/cafe-configuration';
   static const String cafeConfigurationOverview =
       '/cafe-configuration/overview';
@@ -2167,6 +2194,7 @@ abstract final class AppRouteNames {
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
   static const String settings = 'settings';
+  static const String shiftClose = 'shift-close';
   static const String cafeConfigurationOverview = 'cafe-configuration-overview';
   static const String cafeConfigurationProfile = 'cafe-configuration-profile';
   static const String cafeConfigurationBranches = 'cafe-configuration-branches';
@@ -2263,6 +2291,19 @@ void _returnToRecipeWorkspace(
     ),
   );
 }
+
+/// Centralized route guard: a cashier's bearer token is fine-grained on the
+/// backend (see BarCheckAccess/InventoryAccess), but the client must not
+/// even offer navigation into a module the cashier cannot use. This single
+/// top-level check covers every route so cashier restrictions cannot be
+/// bypassed by a direct URL/deep link, without scattering per-route checks.
+String? _cashierAccessRedirect(BuildContext _, GoRouterState state) =>
+    CashierAccess.allowsPath(
+      state.uri.path,
+      serviceLocator<AuthSessionCubit>().state.session?.user.role,
+    )
+    ? null
+    : AppRoutes.pos;
 
 String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState _) =>
     serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner'

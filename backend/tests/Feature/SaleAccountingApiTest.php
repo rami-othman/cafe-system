@@ -7,6 +7,7 @@ use App\Models\ModifierOption;
 use App\Models\ProductVariant;
 use App\Services\Catalog\RecipeConfigurationService;
 use App\Services\Menu\PublishedMenuSnapshotBuilder;
+use App\Services\PosInventoryWarehouseResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -538,7 +539,7 @@ class SaleAccountingApiTest extends TestCase
 
     private function stockIn(int $tenant, int $branchId, array $headers, string $unitCost, string $quantity, ?int $warehouseId = null, string $unit = 'kg'): array
     {
-        $warehouseId ??= (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->value('pos_inventory_warehouse_id');
+        $warehouseId ??= (int) app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $branchId)->id;
         $itemId = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'حبوب اختبار', 'nameEn' => 'Test Beans '.uniqid(), 'sku' => 'SALE-TEST-'.uniqid(),
             'itemType' => 'raw_material', 'unit' => $unit, 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => $unitCost, 'warehouseIds' => [$warehouseId], 'isActive' => true,

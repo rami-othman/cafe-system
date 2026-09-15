@@ -66,6 +66,10 @@ class BarCheckController extends Controller
         $tenant = TenantContext::id($request);
         $query = DB::table('stock_counts as counts')->join('shifts', 'shifts.id', '=', 'counts.shift_id')->join('warehouses', 'warehouses.id', '=', 'counts.warehouse_id')->join('branches', 'branches.id', '=', 'counts.branch_id')->leftJoin('bar_check_templates as templates', 'templates.id', '=', 'counts.bar_check_template_id')->where('counts.tenant_id', $tenant)->where('counts.count_type', 'shift_check')->when($request->filled('status'), fn ($q) => $q->where('counts.status', $request->query('status')))->when($request->filled('warehouseId'), fn ($q) => $q->where('counts.warehouse_id', $request->integer('warehouseId')))->orderByDesc('counts.id');
         InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
+        $actor = InventoryAccess::actor($request);
+        if ($actor->effectiveRoleCode() === 'employee') {
+            $query->where('shifts.user_id', $actor->id);
+        }
         $rows = $query->get(['counts.*', 'branches.name as branch_name', 'warehouses.name as warehouse_name', 'templates.name as template_name', 'shifts.opened_at']);
         return response()->json(['data' => $rows->map(fn (object $row) => ['stockCountId' => (int) $row->id, 'shiftId' => (int) $row->shift_id, 'branchName' => $row->branch_name, 'warehouseName' => $row->warehouse_name, 'templateName' => $row->template_name, 'status' => $row->status, 'openedAt' => $row->opened_at])->values()]);
     }

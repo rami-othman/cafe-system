@@ -411,17 +411,17 @@ Route::prefix('v1')->group(function (): void {
             Route::get('movements/{movement}', [StockMovementController::class, 'show'])->middleware('inventory.permission:inventory.view');
             Route::get('counts', [StockCountController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
             Route::post('counts', [StockCountController::class, 'store'])->middleware('inventory.permission:inventory.counts.create');
-            Route::get('counts/{count}', [StockCountController::class, 'show'])->middleware('inventory.permission:inventory.counts.view');
-            Route::put('counts/{count}/lines', [StockCountController::class, 'line'])->middleware('inventory.permission:inventory.counts.create');
+            Route::get('counts/{count}', [StockCountController::class, 'show'])->middleware('barcheck.permission:count,inventory.counts.view');
+            Route::put('counts/{count}/lines', [StockCountController::class, 'line'])->middleware('barcheck.permission:count,inventory.counts.create');
             Route::post('counts/{count}/lines/{item}/review', [StockCountController::class, 'reviewLine'])->middleware('inventory.permission:inventory.counts.post');
             foreach (['start' => 'inventory.counts.create', 'submit' => 'inventory.counts.create', 'approve' => 'inventory.counts.post', 'post' => 'inventory.counts.post', 'cancel' => 'inventory.counts.create'] as $action => $permission) {
-                Route::post("counts/{count}/{$action}", [StockCountController::class, 'action'])->defaults('action', $action)->middleware("inventory.permission:{$permission}");
+                Route::post("counts/{count}/{$action}", [StockCountController::class, 'action'])->defaults('action', $action)->middleware("barcheck.permission:count,{$permission}");
             }
-            Route::get('bar-checks', [BarCheckController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
-            Route::post('bar-checks', [BarCheckController::class, 'start'])->middleware('inventory.permission:inventory.counts.create');
-            Route::get('bar-check-templates', [BarCheckController::class, 'templates'])->middleware('inventory.permission:inventory.counts.view');
+            Route::get('bar-checks', [BarCheckController::class, 'index'])->middleware('barcheck.permission:index,inventory.counts.view');
+            Route::post('bar-checks', [BarCheckController::class, 'start'])->middleware('barcheck.permission:start,inventory.counts.create');
+            Route::get('bar-check-templates', [BarCheckController::class, 'templates'])->middleware('barcheck.permission:templates,inventory.counts.view');
             Route::post('bar-check-templates', [BarCheckController::class, 'storeTemplate'])->middleware('inventory.permission:inventory.counts.create');
-            Route::get('bar-check-templates/{template}', [BarCheckController::class, 'showTemplate'])->middleware('inventory.permission:inventory.counts.view');
+            Route::get('bar-check-templates/{template}', [BarCheckController::class, 'showTemplate'])->middleware('barcheck.permission:templates,inventory.counts.view');
             Route::patch('bar-check-templates/{template}', [BarCheckController::class, 'updateTemplate'])->middleware('inventory.permission:inventory.counts.create');
             Route::get('transfers', [WarehouseTransferController::class, 'index'])->middleware('inventory.permission:inventory.transfers.view');
             Route::post('transfers', [WarehouseTransferController::class, 'store'])->middleware('inventory.permission:inventory.transfers.create');
