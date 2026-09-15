@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -74,7 +76,6 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
 
   List<Supplier> _suppliers = const <Supplier>[];
   List<Branch> _branches = const <Branch>[];
-  List<InventoryItem> _items = const <InventoryItem>[];
   List<ExpenseCategory> _expenseCategories = const <ExpenseCategory>[];
   List<FinancialAccount> _accounts = const <FinancialAccount>[];
   PurchaseInvoice? _editing;
@@ -111,26 +112,29 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
         _financeCubit.repository.getFinancePage('finance/suppliers', queryParameters: const <String, dynamic>{'perPage': 200}),
         _financeCubit.repository.getBranches(),
-        serviceLocator<InventoryRepository>().items(activeOnly: true),
         _financeCubit.repository.getExpenseCategories(),
         _financeCubit.repository.getAccounts(),
         if (_isEdit) _cubit.repository.getPurchase(widget.editId!),
       ]);
       if (!mounted) return;
       final dynamic suppliersPage = results[0];
+      final PurchaseInvoice? editing = _isEdit ? results[4] as PurchaseInvoice : null;
+      final Map<int, InventoryItem> editingItemsById = editing == null
+          ? const <int, InventoryItem>{}
+          : await _resolveLineItems(editing);
+      if (!mounted) return;
       setState(() {
         _suppliers = (suppliersPage.items as List<dynamic>)
             .map((dynamic j) => Supplier.fromJson(Map<String, dynamic>.from(j as Map)))
             .toList(growable: false);
         _branches = results[1] as List<Branch>;
-        _items = results[2] as List<InventoryItem>;
-        _expenseCategories = results[3] as List<ExpenseCategory>;
-        _accounts = (results[4] as List<FinancialAccount>)
+        _expenseCategories = results[2] as List<ExpenseCategory>;
+        _accounts = (results[3] as List<FinancialAccount>)
             .where((FinancialAccount a) => a.accountGroup == 'assets' && a.code != '1100')
             .toList(growable: false);
-        if (_isEdit) {
-          _editing = results[5] as PurchaseInvoice;
-          _applyEditingData(_editing!);
+        if (editing != null) {
+          _editing = editing;
+          _applyEditingData(editing, editingItemsById);
         }
         _loadingReferenceData = false;
       });
@@ -143,7 +147,27 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     }
   }
 
-  void _applyEditingData(PurchaseInvoice p) {
+  /// Existing invoice lines reference an [InventoryItem] only by id — the item
+  /// itself may be well beyond whatever page a picker search happens to be
+  /// on, so it's fetched directly by id instead of matched against a
+  /// preloaded list.
+  Future<Map<int, InventoryItem>> _resolveLineItems(PurchaseInvoice p) async {
+    final Set<int> ids = p.lines
+        .where((PurchaseInvoiceLine l) => l.lineType == 'inventory' && l.inventoryItemId != null)
+        .map((PurchaseInvoiceLine l) => l.inventoryItemId!)
+        .toSet();
+    if (ids.isEmpty) return const <int, InventoryItem>{};
+
+    final InventoryRepository repository = serviceLocator<InventoryRepository>();
+    final List<InventoryItem> items = await Future.wait(
+      ids.map((int id) => repository.item(id)),
+    );
+    return <int, InventoryItem>{
+      for (final InventoryItem item in items) item.id: item,
+    };
+  }
+
+  void _applyEditingData(PurchaseInvoice p, Map<int, InventoryItem> itemsById) {
     _invoiceNumber.text = p.invoiceNumber;
     _notes.text = p.notes ?? '';
     _invoiceDate = DateTime.tryParse(p.invoiceDate) ?? _invoiceDate;
@@ -168,9 +192,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 draft.tax.text = l.taxAmount;
                 draft.warehouseId = l.warehouseId;
                 if (l.inventoryItemId != null) {
-                  final Iterable<InventoryItem> match =
-                      _items.where((InventoryItem i) => i.id == l.inventoryItemId);
-                  draft.item = match.isEmpty ? null : match.first;
+                  draft.item = itemsById[l.inventoryItemId];
                 }
                 return draft;
               }),
@@ -403,7 +425,6 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 padding: const EdgeInsets.only(bottom: FinanceSpace.sm),
                 child: _LineEditorRow(
                   draft: _lines[index],
-                  items: _items,
                   onRemove: _lines.length > 1 ? () => _removeLine(index) : null,
                   onChanged: () => setState(() {}),
                 ),
@@ -557,14 +578,25 @@ class _HeaderSection extends StatelessWidget {
 class _LineEditorRow extends StatelessWidget {
   const _LineEditorRow({
     required this.draft,
-    required this.items,
     required this.onRemove,
     required this.onChanged,
   });
   final _LineDraft draft;
-  final List<InventoryItem> items;
   final VoidCallback? onRemove;
   final VoidCallback onChanged;
+
+  Future<void> _pickItem(BuildContext context) async {
+    final InventoryItem? selected = await showDialog<InventoryItem>(
+      context: context,
+      builder: (BuildContext context) => const _InventoryItemSearchDialog(),
+    );
+    if (selected == null) return;
+    draft.item = selected;
+    if (draft.purchaseUnit.text.trim().isEmpty) {
+      draft.purchaseUnit.text = selected.purchaseUnit.isNotEmpty ? selected.purchaseUnit : selected.unit;
+    }
+    onChanged();
+  }
 
   @override
   Widget build(BuildContext context) => Container(
@@ -582,25 +614,25 @@ class _LineEditorRow extends StatelessWidget {
         if (draft.lineType == 'inventory')
           SizedBox(
             width: 220,
-            child: DropdownButtonFormField<InventoryItem>(
-              initialValue: draft.item,
-              isExpanded: true,
+            child: InputDecorator(
               decoration: const InputDecoration(labelText: 'الصنف', isDense: true),
-              items: items
-                  .map(
-                    (InventoryItem i) => DropdownMenuItem<InventoryItem>(
-                      value: i,
-                      child: Text(i.name, overflow: TextOverflow.ellipsis),
+              child: InkWell(
+                onTap: () => _pickItem(context),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        draft.item?.name ?? 'اختر صنفاً...',
+                        overflow: TextOverflow.ellipsis,
+                        style: draft.item == null
+                            ? const TextStyle(color: FinanceColors.muted)
+                            : null,
+                      ),
                     ),
-                  )
-                  .toList(growable: false),
-              onChanged: (InventoryItem? i) {
-                draft.item = i;
-                if (i != null && draft.purchaseUnit.text.trim().isEmpty) {
-                  draft.purchaseUnit.text = i.purchaseUnit.isNotEmpty ? i.purchaseUnit : i.unit;
-                }
-                onChanged();
-              },
+                    const Icon(Icons.search, size: 16),
+                  ],
+                ),
+              ),
             ),
           )
         else
@@ -649,4 +681,167 @@ class _LineEditorRow extends StatelessWidget {
         decoration: InputDecoration(labelText: label, isDense: true),
         onChanged: (_) => onChanged(),
       );
+}
+
+/// Server-side searchable, paginated inventory item picker for a Purchase
+/// Invoice line. Replaces a preloaded single-page dropdown (which silently
+/// hid any item beyond the first 100) with a debounced search against the
+/// backend's real pagination, matching the pattern already used by
+/// `InventoryCubit` for the main Inventory Items screen.
+class _InventoryItemSearchDialog extends StatefulWidget {
+  const _InventoryItemSearchDialog();
+
+  @override
+  State<_InventoryItemSearchDialog> createState() => _InventoryItemSearchDialogState();
+}
+
+class _InventoryItemSearchDialogState extends State<_InventoryItemSearchDialog> {
+  final TextEditingController _search = TextEditingController();
+  final ScrollController _scroll = ScrollController();
+  final InventoryRepository _repository = serviceLocator<InventoryRepository>();
+  Timer? _debounce;
+  List<InventoryItem> _results = const <InventoryItem>[];
+  int _page = 1;
+  int _lastPage = 1;
+  bool _loading = true;
+  bool _loadingMore = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_loading || _loadingMore || _page >= _lastPage) return;
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 80) {
+      _load(page: _page + 1, append: true);
+    }
+  }
+
+  void _onQueryChanged(String _) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () => _load());
+  }
+
+  Future<void> _load({int page = 1, bool append = false}) async {
+    setState(() {
+      if (append) {
+        _loadingMore = true;
+      } else {
+        _loading = true;
+      }
+      _error = null;
+    });
+    try {
+      final InventoryItemsPage result = await _repository.itemsPage(
+        search: _search.text.trim().isEmpty ? null : _search.text.trim(),
+        status: 'active',
+        page: page,
+        perPage: 25,
+      );
+      if (!mounted) return;
+      setState(() {
+        _page = result.currentPage;
+        _lastPage = result.lastPage;
+        _results = append ? <InventoryItem>[..._results, ...result.items] : result.items;
+        _loading = false;
+        _loadingMore = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$error';
+        _loading = false;
+        _loadingMore = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('اختر صنفاً'),
+    content: SizedBox(
+      width: 420,
+      height: 480,
+      child: Column(
+        children: <Widget>[
+          TextField(
+            controller: _search,
+            autofocus: true,
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              hintText: 'ابحث بالاسم أو الرمز...',
+              isDense: true,
+            ),
+            onChanged: _onQueryChanged,
+          ),
+          const SizedBox(height: FinanceSpace.sm),
+          Expanded(child: _body()),
+        ],
+      ),
+    ),
+    actions: <Widget>[
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('إلغاء'),
+      ),
+    ],
+  );
+
+  Widget _body() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(_error!, style: FinanceText.body.copyWith(color: FinanceColors.danger)),
+            const SizedBox(height: FinanceSpace.sm),
+            TextButton(onPressed: () => _load(), child: const Text('إعادة المحاولة')),
+          ],
+        ),
+      );
+    }
+    if (_results.isEmpty) {
+      return Center(
+        child: Text('لا توجد أصناف مطابقة.', style: FinanceText.body.copyWith(color: FinanceColors.muted)),
+      );
+    }
+    return ListView.separated(
+      controller: _scroll,
+      itemCount: _results.length + (_page < _lastPage ? 1 : 0),
+      separatorBuilder: (BuildContext context, int index) => const Divider(height: 1),
+      itemBuilder: (BuildContext context, int index) {
+        if (index >= _results.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: FinanceSpace.sm),
+            child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+          );
+        }
+        final InventoryItem item = _results[index];
+        return ListTile(
+          dense: true,
+          title: Text(item.name),
+          subtitle: Text(
+            item.sku.isNotEmpty ? '${item.sku} · ${item.unit}' : item.unit,
+            style: FinanceText.body.copyWith(color: FinanceColors.muted, fontSize: 12),
+          ),
+          onTap: () => Navigator.of(context).pop(item),
+        );
+      },
+    );
+  }
 }

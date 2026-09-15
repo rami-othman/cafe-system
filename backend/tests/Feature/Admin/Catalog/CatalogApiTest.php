@@ -374,6 +374,65 @@ class CatalogApiTest extends TestCase
         $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", ['groups' => [['modifierGroupId' => $foreignGroupId, 'sortOrder' => 0]]], $this->headers($tenantId))->assertUnprocessable();
     }
 
+    public function test_product_can_save_an_explicitly_empty_modifier_group_replacement(): void
+    {
+        $tenantId = $this->tenant('empty-product-modifiers');
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Espresso',
+            'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+
+        $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", [
+            'groups' => [],
+        ], $this->headers($tenantId))->assertOk()->assertExactJson(['data' => []]);
+
+        $this->assertDatabaseMissing('product_modifier_group', ['product_id' => $productId]);
+    }
+
+    public function test_empty_modifier_group_replacement_detaches_assignments_without_deleting_definitions(): void
+    {
+        $tenantId = $this->tenant('clear-product-modifiers');
+        $headers = $this->headers($tenantId);
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Americano',
+            'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]],
+        ], $headers)->assertCreated()->json('data.id');
+        $groupIds = [];
+        foreach (['Milk', 'Extras'] as $index => $name) {
+            $groupIds[] = $this->postJson('/api/v1/admin/catalog/modifier-groups', [
+                'name' => $name,
+                'selectionType' => 'single',
+                'minSelections' => 0,
+                'maxSelections' => 1,
+                'options' => [['name' => "Option {$index}", 'isActive' => true]],
+            ], $headers)->assertCreated()->json('data.id');
+        }
+        $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", ['groups' => [
+            ['modifierGroupId' => $groupIds[0], 'sortOrder' => 0],
+            ['modifierGroupId' => $groupIds[1], 'sortOrder' => 1],
+        ]], $headers)->assertOk()->assertJsonCount(2, 'data');
+
+        $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", ['groups' => []], $headers)
+            ->assertOk()->assertExactJson(['data' => []]);
+
+        $this->assertDatabaseMissing('product_modifier_group', ['product_id' => $productId]);
+        foreach ($groupIds as $groupId) {
+            $this->assertDatabaseHas('modifier_groups', ['id' => $groupId, 'tenant_id' => $tenantId]);
+        }
+    }
+
+    public function test_modifier_group_replacement_requires_the_groups_key_even_when_empty_is_allowed(): void
+    {
+        $tenantId = $this->tenant('missing-product-modifiers-key');
+        $productId = $this->postJson('/api/v1/admin/catalog/products', [
+            'name' => 'Cortado',
+            'variants' => [['name' => 'Regular', 'basePrice' => 3, 'isDefault' => true, 'isActive' => true]],
+        ], $this->headers($tenantId))->assertCreated()->json('data.id');
+
+        $this->putJson("/api/v1/admin/catalog/products/{$productId}/modifier-groups", [], $this->headers($tenantId))
+            ->assertUnprocessable()->assertJsonValidationErrors('groups');
+    }
+
     private function tenant(string $slug): int
     {
         return DB::table('tenants')->insertGetId(['name' => ucfirst($slug), 'slug' => $slug, 'created_at' => now(), 'updated_at' => now()]);

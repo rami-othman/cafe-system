@@ -34,7 +34,11 @@ class FinancialSetupService
             ->where('methods.tenant_id', $tenantId)->where('methods.is_active', true)
             ->where(function ($query): void {
                 $query->whereNull('accounts.id')->orWhere('accounts.is_active', false)
-                    ->orWhere(function ($location): void { $location->whereNotNull('methods.financial_location_id')->where(function ($q): void { $q->whereNull('locations.id')->orWhere('locations.is_active', false); }); });
+                    ->orWhere(function ($location): void {
+                        $location->whereNotNull('methods.financial_location_id')->where(function ($q): void {
+                            $q->whereNull('locations.id')->orWhere('locations.is_active', false);
+                        });
+                    });
             })->get(['methods.code']);
         if ($invalidMethods->isNotEmpty()) {
             $issues[] = ['code' => 'PAYMENT_DESTINATION_INVALID', 'severity' => 'warning', 'paymentMethodCodes' => $invalidMethods->pluck('code')->values()->all()];
@@ -94,6 +98,7 @@ class FinancialSetupService
             $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
                 $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
+                $this->ensureBranchPosWarehouse($tenantId, $initialBranchId, $actorId);
             }
         });
     }
@@ -115,9 +120,13 @@ class FinancialSetupService
             ]);
         }
         foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020'] as $key => $code) {
-            if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) continue;
+            if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) {
+                continue;
+            }
             $accountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', $code)->value('id');
-            if ($accountId) DB::table('sales_account_mappings')->insert(['tenant_id' => $tenantId, 'mapping_key' => $key, 'financial_account_id' => $accountId, 'created_at' => $now, 'updated_at' => $now]);
+            if ($accountId) {
+                DB::table('sales_account_mappings')->insert(['tenant_id' => $tenantId, 'mapping_key' => $key, 'financial_account_id' => $accountId, 'created_at' => $now, 'updated_at' => $now]);
+            }
         }
 
         $walkIn = DB::table('customers')->where('tenant_id', $tenantId)->where('is_walk_in', true)->first();
@@ -130,6 +139,7 @@ class FinancialSetupService
                 'is_active' => true, 'is_walk_in' => true, 'is_system_protected' => true, 'created_by' => $actorId,
                 'updated_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
             ]);
+
             return;
         }
         DB::table('customers')->where('id', $walkIn->id)->update([
@@ -188,11 +198,15 @@ class FinancialSetupService
             ['code' => 'BANK', 'name' => 'Bank', 'kind' => 'bank', 'type' => 'bank', 'accountCode' => '1030'],
         ] as $location) {
             $accountId = $accounts[$location['accountCode']] ?? null;
-            if (! $accountId) continue;
+            if (! $accountId) {
+                continue;
+            }
             DB::table('financial_locations')->updateOrInsert(['tenant_id' => $tenantId, 'code' => $location['code']], ['branch_id' => null, 'financial_account_id' => $accountId, 'name' => $location['name'], 'kind' => $location['kind'], 'type' => $location['type'], 'bank_name' => null, 'masked_reference' => null, 'is_active' => true, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
         }
         $drawerId = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'CASH-DRAWER')->value('id');
-        if ($drawerId && isset($accounts['1010'])) DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => $drawerId, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+        if ($drawerId && isset($accounts['1010'])) {
+            DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => $drawerId, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+        }
     }
 
     public function ensureCentralWarehouse(int $tenantId, ?int $actorId = null): void
@@ -252,5 +266,25 @@ class FinancialSetupService
                 'notes' => 'Primary operational warehouse for '.$branch->name.'.',
                 'updated_at' => $now,
             ]);
+    }
+
+    public function ensureBranchPosWarehouse(int $tenantId, int $branchId, ?int $actorId = null): void
+    {
+        $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->first();
+        if (! $branch) {
+            return;
+        }
+        $now = now();
+        DB::table('warehouses')->updateOrInsert(
+            ['tenant_id' => $tenantId, 'code' => 'BR-'.$branchId.'-BAR'],
+            ['branch_id' => $branchId, 'name' => $branch->name.' — Bar', 'type' => 'bar', 'is_active' => true,
+                'notes' => 'POS inventory consumption warehouse for '.$branch->name.'.', 'updated_by' => $actorId,
+                'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now],
+        );
+        $warehouseId = DB::table('warehouses')->where('tenant_id', $tenantId)->where('code', 'BR-'.$branchId.'-BAR')->value('id');
+        DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->update([
+            'pos_inventory_warehouse_id' => $warehouseId,
+            'updated_at' => $now,
+        ]);
     }
 }

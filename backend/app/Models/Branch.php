@@ -24,6 +24,16 @@ class Branch extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function posInventoryWarehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'pos_inventory_warehouse_id');
+    }
+
+    public function warehouses(): HasMany
+    {
+        return $this->hasMany(Warehouse::class);
+    }
+
     public function menuAssignments(): HasMany
     {
         return $this->hasMany(MenuAssignment::class);

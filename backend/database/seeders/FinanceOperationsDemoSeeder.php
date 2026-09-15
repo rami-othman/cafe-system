@@ -60,6 +60,7 @@ final class FinanceOperationsDemoSeeder extends Seeder
         $request = $this->request($tenant, $owner);
         app(FinancialSetupService::class)->ensureForTenant($tenant, $branchA, $owner);
         app(FinancialSetupService::class)->ensureBranchMainWarehouse($tenant, $branchB, $owner);
+        app(FinancialSetupService::class)->ensureBranchPosWarehouse($tenant, $branchB, $owner);
         $this->bankPaymentMethod($tenant, $owner);
 
         [$central, $branchWarehouse] = $this->warehouses($tenant, $branchA);

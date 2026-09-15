@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
+import 'package:windows_application/features/pos/models/create_order_request.dart';
+import 'package:windows_application/features/pos/models/order_type.dart';
 import 'package:windows_application/features/pos/repositories/pos_repository.dart';
 
 void main() {
@@ -21,6 +23,19 @@ void main() {
       expect(products.single.category, 'Coffee');
     },
   );
+
+  test('POS order payload never allows the cashier to choose a warehouse', () {
+    const CreateOrderRequest request = CreateOrderRequest(
+      branchId: 7,
+      shiftId: 11,
+      orderType: OrderType.takeaway,
+      items: <AddOrderItemRequest>[
+        AddOrderItemRequest(productId: 3, quantity: 1),
+      ],
+    );
+
+    expect(request.toJson(), isNot(contains('warehouseId')));
+  });
 }
 
 class _FakePosApiClient extends DioApiClient {

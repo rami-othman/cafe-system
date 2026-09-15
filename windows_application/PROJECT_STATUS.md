@@ -306,3 +306,31 @@ future work and it is not part of Batch 12.
   long Arabic names, image fitting, and the Inventory branch-provider scope.
 - Dart static analysis and focused branding/provider tests pass. The Windows
   debug runner builds successfully with the branded icon and title channel.
+
+## Optional product modifier assignments
+
+- The product modifier assignment endpoint now requires the replacement key to
+  be present while accepting `groups: []` as the explicit detach-all command.
+- Flutter already sends the replacement field for an empty selection; a new
+  Cubit regression test protects that contract and its successful UI state.
+- Laravel coverage verifies initially empty products, removal of all existing
+  assignments without deleting group definitions, retained assignments,
+  missing-key validation, and cross-tenant rejection. POS coverage confirms
+  products with no modifier groups remain directly configurable/sellable.
+- This behavioral fix changes no database schema or seed data.
+
+## Automatic POS Bar inventory routing
+
+- Cashiers no longer select a warehouse in POS. Laravel resolves the active
+  branch's explicit `pos_inventory_warehouse_id`, validates tenant/branch/type,
+  and snapshots it on the order for audit and payment-time revalidation.
+- New branches receive an idempotent Bar warehouse configuration. The schema
+  migration only backfills existing branches that have exactly one active Bar;
+  ambiguous branches are intentionally left for administrator review.
+- The warehouse repair command now audits missing, invalid, and ambiguous POS
+  Bar configuration in dry-run mode and applies only deterministic repairs.
+- POS consumption can create a negative Bar balance while preserving WAC/COGS.
+  Incoming transfers understand signed balances and naturally settle a deficit
+  (covered by the `0 -> -20 -> +20 -> 0` integration scenario).
+- Laravel sale/accounting and warehouse-repair suites pass, and Flutter has a
+  request-contract regression test proving `warehouseId` is never submitted.

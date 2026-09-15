@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Exceptions\OrderLifecycleException;
 use App\Domain\Customer\CustomerOperationalEligibility;
+use App\Exceptions\OrderLifecycleException;
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
 use App\Services\Menu\PublishedMenuOrderResolver;
 use App\Services\OrderLifecyclePolicy;
+use App\Services\PosInventoryWarehouseResolver;
 use App\Services\PosNumberGenerator;
 use App\Services\PosPricingService;
 use App\Services\TenantTaxService;
@@ -30,6 +31,7 @@ class PosOrderController extends Controller
         private readonly OrderLifecyclePolicy $lifecycle,
         private readonly PosNumberGenerator $numbers,
         private readonly CustomerOperationalEligibility $customerEligibility,
+        private readonly PosInventoryWarehouseResolver $posWarehouses,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -76,6 +78,7 @@ class PosOrderController extends Controller
             'orderType' => ['required', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
             'customerId' => ['nullable', 'integer'],
+            'warehouseId' => ['prohibited'],
             'publishedMenuVersionId' => ['nullable', 'integer'],
             'items' => ['required', 'array', 'min:1'],
             // Product identity belongs to the snapshot on the versioned path;
@@ -95,9 +98,10 @@ class PosOrderController extends Controller
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
+        $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $data['branchId']);
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
-            $result = DB::transaction(function () use ($tenantId, $data, $actorId) {
+            $result = DB::transaction(function () use ($tenantId, $data, $actorId, $warehouse) {
                 $key = $data['idempotencyKey'] ?? null;
                 $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
                 if ($key && ($existing = DB::table('orders')->where('tenant_id', $tenantId)->where('idempotency_key', $key)->lockForUpdate()->first())) {
@@ -116,6 +120,7 @@ class PosOrderController extends Controller
                 $orderId = DB::table('orders')->insertGetId([
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'],
+                    'warehouse_id' => $warehouse->id,
                     'published_menu_version_id' => $snapshot['version']->id ?? null,
                     'shift_id' => $data['shiftId'] ?? null,
                     'table_id' => $data['tableId'] ?? null,
@@ -164,6 +169,7 @@ class PosOrderController extends Controller
             'orderType' => ['sometimes', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
             'customerId' => ['nullable', 'integer'],
+            'warehouseId' => ['prohibited'],
             'note' => ['nullable', 'string'],
         ]);
 
@@ -517,10 +523,16 @@ class PosOrderController extends Controller
             ? DB::table('cafe_tables')->where('tenant_id', $tenantId)->where('id', $order->table_id)->first()
             : null;
 
+        $warehouse = $order->warehouse_id
+            ? DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $order->warehouse_id)->first()
+            : null;
+
         return [
             'id' => $order->id,
             'orderNumber' => $order->order_number,
             'branchId' => $order->branch_id,
+            'warehouseId' => $order->warehouse_id,
+            'warehouseName' => $warehouse?->name,
             'publishedMenuVersionId' => $order->published_menu_version_id,
             'shiftId' => $order->shift_id,
             'orderType' => $order->type,

@@ -5,8 +5,8 @@ namespace App\Domain\Inventory;
 use App\Services\OperationalAuditService;
 use App\Support\FinancialActor;
 use App\Support\InventoryDecimal;
-use App\Support\WarehousePresentation;
 use App\Support\PaymentPerformanceProbe;
+use App\Support\WarehousePresentation;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,26 +29,40 @@ final class InventoryPostingService
         $key = $data['idempotencyKey'] ?? null;
         if ($key !== null) {
             $existing = $this->byIdempotencyKey($tenantId, $key);
-            if ($existing !== null) return new MovementPostingResult($existing, true);
+            if ($existing !== null) {
+                return new MovementPostingResult($existing, true);
+            }
         }
 
         try {
             return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key): MovementPostingResult {
                 if ($key !== null) {
                     $existing = $this->byIdempotencyKey($tenantId, $key, true);
-                    if ($existing !== null) return new MovementPostingResult($existing, true);
+                    if ($existing !== null) {
+                        return new MovementPostingResult($existing, true);
+                    }
                 }
                 $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $data['warehouseId'])->where('is_active', true)->whereNull('deleted_at')->lockForUpdate()->first();
                 $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $data['itemId'])->whereNull('deleted_at')->first();
-                if (! $warehouse || ! $item) throw ValidationException::withMessages(['warehouseId' => 'The warehouse or item does not belong to the current tenant.']);
+                if (! $warehouse || ! $item) {
+                    throw ValidationException::withMessages(['warehouseId' => 'The warehouse or item does not belong to the current tenant.']);
+                }
                 $this->assignments->assertAssigned($tenantId, (int) $item->id, (int) $warehouse->id);
-                if (WarehousePresentation::isLegacy($warehouse->code)) throw ValidationException::withMessages(['warehouseId' => 'Legacy warehouses are read-only and cannot receive new movements.']);
-                if (! empty($data['branchId']) && (int) $data['branchId'] !== (int) $warehouse->branch_id) throw ValidationException::withMessages(['branchId' => 'The selected branch does not match the warehouse.']);
+                if (WarehousePresentation::isLegacy($warehouse->code)) {
+                    throw ValidationException::withMessages(['warehouseId' => 'Legacy warehouses are read-only and cannot receive new movements.']);
+                }
+                if (! empty($data['branchId']) && (int) $data['branchId'] !== (int) $warehouse->branch_id) {
+                    throw ValidationException::withMessages(['branchId' => 'The selected branch does not match the warehouse.']);
+                }
                 FinancialActor::assertBranchAccess($actorId, $tenantId, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
 
                 $converted = $this->conversions->resolve($tenantId, $item, $data['quantity'], $data['unit'] ?? null);
-                if ($converted['baseQuantity'] <= 0) throw ValidationException::withMessages(['quantity' => 'Quantity must be greater than zero.']);
-                if (in_array($data['type'], ['adjustment_in', 'adjustment_out', 'waste', 'stock_count_variance'], true) && blank($data['reason'] ?? null)) throw ValidationException::withMessages(['reason' => 'A reason is required for this movement.']);
+                if ($converted['baseQuantity'] <= 0) {
+                    throw ValidationException::withMessages(['quantity' => 'Quantity must be greater than zero.']);
+                }
+                if (in_array($data['type'], ['adjustment_in', 'adjustment_out', 'waste', 'stock_count_variance'], true) && blank($data['reason'] ?? null)) {
+                    throw ValidationException::withMessages(['reason' => 'A reason is required for this movement.']);
+                }
 
                 $balance = DB::table('stock_balances')->where(['tenant_id' => $tenantId, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $item->id])->lockForUpdate()->first();
                 if (! $balance) {
@@ -57,19 +71,30 @@ final class InventoryPostingService
                 }
 
                 $incoming = in_array($data['type'], self::INCOMING, true) || ($data['type'] === 'stock_count_variance' && ($data['countDirection'] ?? null) === 'in');
-                $before = InventoryDecimal::units($balance->quantity_on_hand);
+                $before = InventoryDecimal::signedUnits($balance->quantity_on_hand);
                 $reserved = InventoryDecimal::units($balance->reserved_quantity);
                 $quantity = $converted['baseQuantity'];
                 // A dispatched transfer has already reserved this quantity under
                 // the same balance lock. It may consume its own reservation,
                 // while every other outbound movement remains availability-bound.
                 $outboundLimit = ! empty($data['consumeReservation']) ? $before : $before - $reserved;
-                if (! $incoming && $quantity > $outboundLimit) throw ValidationException::withMessages(['quantity' => 'The requested quantity exceeds available stock.']);
+                if (! $incoming && $quantity > $outboundLimit && empty($data['allowNegativeStock'])) {
+                    throw ValidationException::withMessages(['quantity' => 'The requested quantity exceeds available stock.']);
+                }
                 $oldCost = InventoryDecimal::cost($balance->average_unit_cost);
                 $inputCost = InventoryDecimal::cost($data['unitCost'] ?? $item->latest_unit_cost);
                 $cost = $incoming ? $inputCost : $oldCost;
                 $after = $incoming ? $before + $quantity : $before - $quantity;
-                $average = $incoming ? intdiv(($before * $oldCost) + ($quantity * $inputCost), max($after, 1)) : $oldCost;
+                if (! $incoming) {
+                    $average = $oldCost;
+                } elseif ($before < 0) {
+                    // Incoming stock first settles a POS-created deficit. There
+                    // is no positive inventory pool to average until the
+                    // receipt crosses back above zero.
+                    $average = $after > 0 ? $inputCost : ($oldCost > 0 ? $oldCost : $inputCost);
+                } else {
+                    $average = intdiv(($before * $oldCost) + ($quantity * $inputCost), max($after, 1));
+                }
                 $now = now();
 
                 DB::table('stock_balances')->where('id', $balance->id)->update(['quantity_on_hand' => InventoryDecimal::quantity($after), 'average_unit_cost' => InventoryDecimal::unitCost($average), 'last_movement_at' => $now, 'updated_at' => $now]);
@@ -88,10 +113,13 @@ final class InventoryPostingService
                 $movement = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('id', $id)->first();
                 $impact = $this->accounting->postForFinalMovement($request, $tenantId, $movement, $actorId);
                 $this->audit->record($request, $tenantId, 'stock_movement.posted', 'stock_movement', $id, [], ['type' => $data['type'], 'quantityBefore' => InventoryDecimal::quantity($before), 'quantityAfter' => InventoryDecimal::quantity($after), 'financeImpact' => $impact['classification']], $warehouse->branch_id, $actorId);
+
                 return new MovementPostingResult($id);
             });
         } catch (QueryException $exception) {
-            if ($key !== null && ($existing = $this->byIdempotencyKey($tenantId, $key)) !== null) return new MovementPostingResult($existing, true);
+            if ($key !== null && ($existing = $this->byIdempotencyKey($tenantId, $key)) !== null) {
+                return new MovementPostingResult($existing, true);
+            }
             throw $exception;
         }
     }
@@ -102,11 +130,15 @@ final class InventoryPostingService
         DB::transaction(function () use ($tenantId, $warehouseId, $itemId, $delta): void {
             $this->assignments->assertAssigned($tenantId, $itemId, $warehouseId, 'lines');
             $balance = DB::table('stock_balances')->where(['tenant_id' => $tenantId, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $itemId])->lockForUpdate()->first();
-            if (! $balance) throw ValidationException::withMessages(['lines' => 'No stock balance exists for this transfer item.']);
-            $onHand = InventoryDecimal::units($balance->quantity_on_hand);
+            if (! $balance) {
+                throw ValidationException::withMessages(['lines' => 'No stock balance exists for this transfer item.']);
+            }
+            $onHand = InventoryDecimal::signedUnits($balance->quantity_on_hand);
             $reserved = InventoryDecimal::units($balance->reserved_quantity);
             $after = $reserved + $delta;
-            if ($after < 0 || ($delta > 0 && $delta > $onHand - $reserved)) throw ValidationException::withMessages(['lines' => 'Insufficient available stock to reserve this transfer.']);
+            if ($after < 0 || ($delta > 0 && $delta > $onHand - $reserved)) {
+                throw ValidationException::withMessages(['lines' => 'Insufficient available stock to reserve this transfer.']);
+            }
             DB::table('stock_balances')->where('id', $balance->id)->update(['reserved_quantity' => InventoryDecimal::quantity($after), 'updated_at' => now()]);
         });
     }
@@ -114,8 +146,11 @@ final class InventoryPostingService
     private function byIdempotencyKey(int $tenantId, string $key, bool $lock = false): ?int
     {
         $query = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('idempotency_key', $key);
-        if ($lock) $query->lockForUpdate();
+        if ($lock) {
+            $query->lockForUpdate();
+        }
         $id = $query->value('id');
+
         return $id === null ? null : (int) $id;
     }
 }
