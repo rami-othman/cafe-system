@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Domain\Inventory\RecipeMaterialEligibility;
 use App\Domain\Inventory\UnitConversionResolver;
+use App\Exceptions\OrderLifecycleException;
 use App\Models\PublishedMenuVersion;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
 use App\Support\PaymentPerformanceProbe;
-use App\Exceptions\OrderLifecycleException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -42,6 +42,8 @@ class SaleConsumptionService
         private readonly SalesInventoryMovementService $movements,
         private readonly UnitConversionResolver $conversions,
         private readonly PaymentPerformanceProbe $performance,
+        private readonly TenantSettingsService $settings,
+        private readonly PosInventoryWarehouseResolver $posWarehouses,
     ) {}
 
     /**
@@ -58,6 +60,11 @@ class SaleConsumptionService
         $orderCogsCents = 0;
         $anyInventoryControlled = false;
         $snapshot = $this->performance->measure('recipe loading', fn () => $this->publishedSnapshot($tenantId, $order));
+        // POS sale consumption is the only caller allowed to push stock
+        // negative — manual Sales Invoice consumption (the other caller of
+        // SalesInventoryMovementService::consume()) never receives this flag
+        // and keeps blocking on insufficient stock exactly as before.
+        $allowNegativeStock = $this->settings->getBool($tenantId, 'allow_negative_stock_on_sale', true);
 
         foreach ($items as $item) {
             $product = $item->product_id
@@ -97,10 +104,7 @@ class SaleConsumptionService
                 throw ValidationException::withMessages(['productId' => "The sold variant for product #{$product->id} has no recipe components in its published menu snapshot."]);
             }
 
-            $warehouseId = $this->resolveWarehouse($tenantId, (int) $order->branch_id);
-            if ($warehouseId === null) {
-                throw new OrderLifecycleException('WAREHOUSE_NOT_CONFIGURED', "No active branch-main warehouse is configured for order branch #{$order->branch_id}.");
-            }
+            $warehouseId = $this->resolveOrderWarehouse($tenantId, $order);
 
             $soldQuantity = InventoryDecimal::units($item->quantity);
             $itemCogsCents = 0;
@@ -116,7 +120,7 @@ class SaleConsumptionService
 
             $this->performance->stop('recipe loading', $recipeStarted);
 
-            $movementResult = $this->performance->measure('inventory consumption', fn () => $this->movements->consume($request, $tenantId, (int) $order->branch_id, $warehouseId, 'order_item', (int) $item->id, array_values($consumptions), $actorId));
+            $movementResult = $this->performance->measure('inventory consumption', fn () => $this->movements->consume($request, $tenantId, (int) $order->branch_id, $warehouseId, 'order_item', (int) $item->id, array_values($consumptions), $actorId, $allowNegativeStock));
             $itemCogsCents += $movementResult['cogsCents'];
 
             $cogsStarted = $this->performance->start('COGS');
@@ -314,30 +318,18 @@ class SaleConsumptionService
         ]);
     }
 
-    /**
-     * Resolves which warehouse a product's inventory is consumed from for a
-     * given branch: the provisioned branch main warehouse. Product inventory
-     * settings are not yet a validated operational routing surface, so v1
-     * treats them as non-authoritative rather than inventing a second route.
-     */
-    private function resolveWarehouse(int $tenantId, int $branchId): ?int
+    /** The warehouse snapshot stored on the order is the sole sale source. */
+    private function resolveOrderWarehouse(int $tenantId, object $order): int
     {
-        $warehouses = DB::table('warehouses')
-            ->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('type', 'branch_main')
-            ->where('is_active', true)->whereNull('deleted_at')->orderBy('id')->get(['id', 'code']);
-        if ($warehouses->count() > 1) {
-            throw new OrderLifecycleException('WAREHOUSE_CONFIGURATION_AMBIGUOUS', "Multiple active branch-main warehouses are configured for order branch #{$branchId}.");
+        if ($order->warehouse_id === null) {
+            throw new OrderLifecycleException('ORDER_WAREHOUSE_NOT_CONFIGURED', "Order #{$order->id} has no historical POS inventory warehouse.");
         }
-        if ($warehouses->count() === 1) {
-            return (int) $warehouses->first()->id;
+        try {
+            $this->posWarehouses->assertEligible($tenantId, (int) $order->branch_id, (int) $order->warehouse_id);
+        } catch (OrderLifecycleException) {
+            throw new OrderLifecycleException('ORDER_WAREHOUSE_INVALID', "Order #{$order->id}'s assigned warehouse is no longer valid for branch #{$order->branch_id}.");
         }
 
-        // Backward compatibility for pre-type data. The repair command reports
-        // this state so it can be normalized without blocking an existing site.
-        $legacyId = DB::table('warehouses')
-            ->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")
-            ->where('is_active', true)->whereNull('deleted_at')->value('id');
-
-        return $legacyId !== null ? (int) $legacyId : null;
+        return (int) $order->warehouse_id;
     }
 }

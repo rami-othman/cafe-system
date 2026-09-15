@@ -99,13 +99,23 @@ class PosPricingService
                 'modifier_groups.is_required',
                 'modifier_groups.min_selections',
                 'modifier_groups.max_selections',
+                'product_modifier_group.is_required_override',
+                'product_modifier_group.min_selections_override',
+                'product_modifier_group.max_selections_override',
             ])
-            ->get();
+            ->get()
+            ->map(function ($group) {
+                $group->effective_required = $group->is_required_override ?? $group->is_required;
+                $group->effective_min_selections = $group->min_selections_override ?? $group->min_selections;
+                $group->effective_max_selections = $group->max_selections_override ?? $group->max_selections;
+
+                return $group;
+            });
 
         $optionIds = collect($modifiers)->pluck('optionId')->filter()->map(fn ($id) => (int) $id)->values();
 
         if ($optionIds->isEmpty()) {
-            $requiredGroup = $groups->first(fn ($group) => $group->is_required || $group->min_selections > 0);
+            $requiredGroup = $groups->first(fn ($group) => $group->effective_required || $group->effective_min_selections > 0);
 
             if ($requiredGroup) {
                 throw ValidationException::withMessages(['modifiers' => "{$requiredGroup->name} is required."]);
@@ -142,12 +152,12 @@ class PosPricingService
         foreach ($groups as $group) {
             $count = $optionsByGroup->get($group->id, collect())->count();
 
-            if (($group->is_required || $group->min_selections > 0) && $count < $group->min_selections) {
-                throw ValidationException::withMessages(['modifiers' => "{$group->name} requires at least {$group->min_selections} selection(s)."]);
+            if (($group->effective_required || $group->effective_min_selections > 0) && $count < $group->effective_min_selections) {
+                throw ValidationException::withMessages(['modifiers' => "{$group->name} requires at least {$group->effective_min_selections} selection(s)."]);
             }
 
-            if ($count > $group->max_selections) {
-                throw ValidationException::withMessages(['modifiers' => "{$group->name} allows at most {$group->max_selections} selection(s)."]);
+            if ($count > $group->effective_max_selections) {
+                throw ValidationException::withMessages(['modifiers' => "{$group->name} allows at most {$group->effective_max_selections} selection(s)."]);
             }
 
             if ($group->selection_type === 'single' && $count > 1) {

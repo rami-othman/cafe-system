@@ -424,6 +424,43 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             cubit.update(state.draft.copyWith(timezone: v)),
                       ),
                     ),
+                    if (state.branch != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.lg),
+                      DropdownButtonFormField<int>(
+                        key: const Key('branch-pos-inventory-warehouse'),
+                        initialValue:
+                            state.branch!.availablePosWarehouses.any(
+                              (warehouse) =>
+                                  warehouse.id ==
+                                  state.draft.posInventoryWarehouseId,
+                            )
+                            ? state.draft.posInventoryWarehouseId
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'مخزن نقطة البيع',
+                          helperText:
+                              'يُستخدم تلقائياً لاستهلاك مبيعات هذا الفرع.',
+                        ),
+                        items: state.branch!.availablePosWarehouses
+                            .map(
+                              (warehouse) => DropdownMenuItem<int>(
+                                value: warehouse.id,
+                                child: Text(
+                                  warehouse.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(
+                            posInventoryWarehouseId: value,
+                            clearPosInventoryWarehouseId: value == null,
+                          ),
+                        ),
+                      ),
+                      _FieldError(state.errors['posInventoryWarehouseId']),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     const Divider(),
                     const SizedBox(height: AppSpacing.lg),

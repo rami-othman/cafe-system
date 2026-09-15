@@ -1,0 +1,30 @@
+[Unit]
+Description=Cafe 618 Super Admin (Next.js, standalone production build)
+After=network.target
+
+[Service]
+Type=simple
+User=cafe618
+Group=cafe618
+WorkingDirectory=/var/www/cafe-system/super_admin_web/.next/standalone
+# Next.js "standalone" output ships its own minimal server.js. HOSTNAME binds
+# it to loopback only — Nginx (admin.conf) is the public entry point.
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+ExecStart=@@NODE_BIN@@ server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cafe-admin
+
+# Hardening (safe defaults for a Node HTTP server; loosen only if a real need appears)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/cafe-system/super_admin_web/.next/standalone
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

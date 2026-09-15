@@ -14,6 +14,8 @@ class BackendOrder extends Equatable {
     required this.paymentStatus,
     required this.items,
     required this.totals,
+    this.warehouseId,
+    this.warehouseName,
     this.shiftId,
     this.discountName,
     this.discountType,
@@ -37,6 +39,10 @@ class BackendOrder extends Equatable {
       id: readInt(json['id']) ?? 0,
       orderNumber: readString(json['orderNumber']),
       branchId: readInt(json['branchId']) ?? 0,
+      warehouseId: readInt(json['warehouseId']),
+      warehouseName: readString(json['warehouseName']).isEmpty
+          ? null
+          : readString(json['warehouseName']),
       shiftId: readInt(json['shiftId']),
       orderType: readString(json['orderType']),
       status: readString(json['status']),
@@ -96,6 +102,8 @@ class BackendOrder extends Equatable {
   final int id;
   final String orderNumber;
   final int branchId;
+  final int? warehouseId;
+  final String? warehouseName;
   final int? shiftId;
   final String orderType;
   final String status;
@@ -123,6 +131,8 @@ class BackendOrder extends Equatable {
     id,
     orderNumber,
     branchId,
+    warehouseId,
+    warehouseName,
     shiftId,
     orderType,
     status,

@@ -17,6 +17,15 @@ class BranchResource extends JsonResource
             'timezone' => $this->timezone,
             'currency' => $this->currency,
             'isActive' => $this->is_active,
+            'posInventoryWarehouseId' => $this->pos_inventory_warehouse_id,
+            'posInventoryWarehouse' => $this->whenLoaded('posInventoryWarehouse', fn () => $this->posInventoryWarehouse ? [
+                'id' => $this->posInventoryWarehouse->id,
+                'name' => $this->posInventoryWarehouse->name,
+            ] : null),
+            'availablePosWarehouses' => $this->whenLoaded('warehouses', fn () => $this->warehouses->map(fn ($warehouse) => [
+                'id' => $warehouse->id,
+                'name' => $warehouse->name,
+            ])->values()),
             'createdAt' => $this->created_at?->toISOString(),
             'updatedAt' => $this->updated_at?->toISOString(),
         ];

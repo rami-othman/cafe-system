@@ -75,6 +75,22 @@ void main() {
       await load;
     },
   );
+
+  test('saving zero assignments sends an explicit empty replacement', () async {
+    final _EmptySaveRepository repository = _EmptySaveRepository();
+    final ProductModifierAssignmentsCubit cubit =
+        ProductModifierAssignmentsCubit(repository: repository);
+
+    await cubit.load(11);
+    final bool saved = await cubit.save();
+
+    expect(saved, isTrue);
+    expect(repository.syncedProductId, 11);
+    expect(repository.syncedAssignments, isEmpty);
+    expect(cubit.state.successMessage, isNotNull);
+    expect(cubit.state.fieldErrors, isEmpty);
+    await cubit.close();
+  });
 }
 
 class _ClosedLoadRepository extends MenuCatalogRepository {
@@ -109,6 +125,51 @@ class _ClosedLoadRepository extends MenuCatalogRepository {
       total: 0,
     ),
   );
+}
+
+class _EmptySaveRepository extends MenuCatalogRepository {
+  int? syncedProductId;
+  List<ProductModifierAssignment>? syncedAssignments;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError(invocation.memberName.toString());
+
+  @override
+  Future<ProductDetail> getProduct(
+    int productId, {
+    bool includeArchived = false,
+  }) async => _product();
+
+  @override
+  Future<List<ProductModifierAssignment>> getProductModifierAssignments(
+    int productId,
+  ) async => <ProductModifierAssignment>[];
+
+  @override
+  Future<CatalogPage<ModifierGroupRecord>> listModifierGroups({
+    required ModifierGroupFilter filter,
+    required int page,
+    int perPage = 20,
+  }) async => const CatalogPage<ModifierGroupRecord>(
+    items: <ModifierGroupRecord>[],
+    meta: CatalogPagination(
+      currentPage: 1,
+      lastPage: 1,
+      perPage: 100,
+      total: 0,
+    ),
+  );
+
+  @override
+  Future<List<ProductModifierAssignment>> syncProductModifierAssignments(
+    int productId,
+    List<ProductModifierAssignment> assignments,
+  ) async {
+    syncedProductId = productId;
+    syncedAssignments = List<ProductModifierAssignment>.of(assignments);
+    return <ProductModifierAssignment>[];
+  }
 }
 
 ProductDetail _product() => ProductDetail.fromJson(<String, dynamic>{

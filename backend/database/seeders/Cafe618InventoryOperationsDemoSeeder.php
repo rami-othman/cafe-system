@@ -48,6 +48,7 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
         $this->branchId = (int) $branch->id;
         app(FinancialSetupService::class)->ensureForTenant($this->tenantId, $this->branchId, $this->ownerId);
         app(FinancialSetupService::class)->ensureBranchMainWarehouse($this->tenantId, $this->branchId, $this->ownerId);
+        app(FinancialSetupService::class)->ensureBranchPosWarehouse($this->tenantId, $this->branchId, $this->ownerId);
         $this->request = Request::create('/seed/cafe-618/inventory-operations', 'POST');
         $this->request->attributes->set('tenant_id', $this->tenantId);
         $this->request->attributes->set('auth_user', $owner);

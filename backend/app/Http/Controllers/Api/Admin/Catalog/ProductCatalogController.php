@@ -217,7 +217,9 @@ class ProductCatalogController extends Controller
 
     public function syncModifierGroups(Request $request, int $product): JsonResponse
     {
-        $data = $request->validate(['groups' => ['required', 'array'], 'groups.*.modifierGroupId' => ['required', 'integer'], 'groups.*.sortOrder' => ['required', 'integer'], 'groups.*.isRequiredOverride' => ['nullable', 'boolean'], 'groups.*.minSelectionsOverride' => ['nullable', 'integer', 'min:0'], 'groups.*.maxSelectionsOverride' => ['nullable', 'integer', 'min:0'], 'groups.*.allowQuantityOverride' => ['nullable', 'boolean']]);
+        // This is a replacement endpoint: callers must state their intent by
+        // sending `groups`, while an empty array explicitly means "detach all".
+        $data = $request->validate(['groups' => ['present', 'array'], 'groups.*.modifierGroupId' => ['required', 'integer'], 'groups.*.sortOrder' => ['required', 'integer'], 'groups.*.isRequiredOverride' => ['nullable', 'boolean'], 'groups.*.minSelectionsOverride' => ['nullable', 'integer', 'min:0'], 'groups.*.maxSelectionsOverride' => ['nullable', 'integer', 'min:0'], 'groups.*.allowQuantityOverride' => ['nullable', 'boolean']]);
         $model = $this->findProduct(TenantContext::id($request), $product);
         $this->assignments->sync($model, $data['groups']);
 

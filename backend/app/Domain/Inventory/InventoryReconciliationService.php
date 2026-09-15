@@ -17,13 +17,17 @@ final class InventoryReconciliationService
             $expected[$key] = ($expected[$key] ?? 0) + InventoryDecimal::units($movement->quantity_in) - InventoryDecimal::units($movement->quantity_out);
         }
         $balances = DB::table('stock_balances')->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))->when($warehouseId !== null, fn ($q) => $q->where('warehouse_id', $warehouseId))->when($itemId !== null, fn ($q) => $q->where('inventory_item_id', $itemId))->get();
-        foreach ($balances as $balance) $expected[$balance->tenant_id.':'.$balance->warehouse_id.':'.$balance->inventory_item_id] ??= 0;
+        foreach ($balances as $balance) {
+            $expected[$balance->tenant_id.':'.$balance->warehouse_id.':'.$balance->inventory_item_id] ??= 0;
+        }
         $differences = [];
         foreach ($expected as $key => $movementQuantity) {
             [$tenant, $warehouse, $item] = array_map('intval', explode(':', $key));
             $balance = $balances->first(fn (object $row) => (int) $row->tenant_id === $tenant && (int) $row->warehouse_id === $warehouse && (int) $row->inventory_item_id === $item);
-            $actual = $balance ? InventoryDecimal::units($balance->quantity_on_hand) : 0;
-            if ($movementQuantity !== $actual) $differences[] = ['tenantId' => $tenant, 'warehouseId' => $warehouse, 'itemId' => $item, 'movementQuantity' => InventoryDecimal::quantity($movementQuantity), 'balanceQuantity' => InventoryDecimal::quantity($actual), 'difference' => InventoryDecimal::quantity($actual - $movementQuantity)];
+            $actual = $balance ? InventoryDecimal::signedUnits($balance->quantity_on_hand) : 0;
+            if ($movementQuantity !== $actual) {
+                $differences[] = ['tenantId' => $tenant, 'warehouseId' => $warehouse, 'itemId' => $item, 'movementQuantity' => InventoryDecimal::quantity($movementQuantity), 'balanceQuantity' => InventoryDecimal::quantity($actual), 'difference' => InventoryDecimal::quantity($actual - $movementQuantity)];
+            }
         }
         $transferDifferences = [];
         if (DB::getSchemaBuilder()->hasTable('warehouse_transfer_transit_balances')) {
@@ -31,9 +35,12 @@ final class InventoryReconciliationService
             foreach ($lines as $line) {
                 $expectedTransit = InventoryDecimal::units($line->dispatched_base_quantity) - InventoryDecimal::units($line->received_base_quantity) - InventoryDecimal::units($line->shortage_closed_quantity);
                 $actualTransit = InventoryDecimal::units($line->quantity_in_transit ?? '0');
-                if ($expectedTransit !== $actualTransit) $transferDifferences[] = ['transferLineId' => (int) $line->id, 'expectedInTransit' => InventoryDecimal::quantity($expectedTransit), 'actualInTransit' => InventoryDecimal::quantity($actualTransit)];
+                if ($expectedTransit !== $actualTransit) {
+                    $transferDifferences[] = ['transferLineId' => (int) $line->id, 'expectedInTransit' => InventoryDecimal::quantity($expectedTransit), 'actualInTransit' => InventoryDecimal::quantity($actualTransit)];
+                }
             }
         }
+
         return ['checked' => count($expected), 'differences' => $differences, 'transferTransitDifferences' => $transferDifferences];
     }
 }
