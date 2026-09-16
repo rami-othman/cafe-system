@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../models/discount_list_item.dart';
+import '../models/discount_form_references.dart';
 import '../../pos/models/branch.dart';
 
 class DiscountsState extends Equatable {
@@ -16,6 +17,9 @@ class DiscountsState extends Equatable {
     this.isLoadingBranches = false,
     this.branchErrorMessage,
     this.validationErrors = const <String, List<String>>{},
+    this.formReferences = const DiscountFormReferences(),
+    this.isLoadingFormReferences = false,
+    this.formReferencesErrorMessage,
   });
 
   final List<DiscountListItem> discounts;
@@ -29,6 +33,9 @@ class DiscountsState extends Equatable {
   final bool isLoadingBranches;
   final String? branchErrorMessage;
   final Map<String, List<String>> validationErrors;
+  final DiscountFormReferences formReferences;
+  final bool isLoadingFormReferences;
+  final String? formReferencesErrorMessage;
 
   DiscountsState copyWith({
     List<DiscountListItem>? discounts,
@@ -46,6 +53,10 @@ class DiscountsState extends Equatable {
     bool clearBranchError = false,
     Map<String, List<String>>? validationErrors,
     bool clearValidationErrors = false,
+    DiscountFormReferences? formReferences,
+    bool? isLoadingFormReferences,
+    String? formReferencesErrorMessage,
+    bool clearFormReferencesError = false,
   }) => DiscountsState(
     discounts: discounts ?? this.discounts,
     searchQuery: searchQuery ?? this.searchQuery,
@@ -64,6 +75,12 @@ class DiscountsState extends Equatable {
     validationErrors: clearValidationErrors
         ? const <String, List<String>>{}
         : validationErrors ?? this.validationErrors,
+    formReferences: formReferences ?? this.formReferences,
+    isLoadingFormReferences:
+        isLoadingFormReferences ?? this.isLoadingFormReferences,
+    formReferencesErrorMessage: clearFormReferencesError
+        ? null
+        : formReferencesErrorMessage ?? this.formReferencesErrorMessage,
   );
 
   @override
@@ -79,5 +96,8 @@ class DiscountsState extends Equatable {
     isLoadingBranches,
     branchErrorMessage,
     validationErrors,
+    formReferences,
+    isLoadingFormReferences,
+    formReferencesErrorMessage,
   ];
 }

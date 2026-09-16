@@ -31,24 +31,27 @@ class CustomerManagementModuleTabs extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              _ModuleTab(
-                label: l10n.customerManagementCustomers,
-                selected: !groupsSelected,
-                onPressed: onSelectionChanged == null
-                    ? null
-                    : () => onSelectionChanged!(false),
-              ),
-              _ModuleTab(
-                label: l10n.customerManagementGroups,
-                selected: groupsSelected,
-                onPressed: onSelectionChanged == null
-                    ? null
-                    : () => onSelectionChanged!(true),
-              ),
-            ],
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                _ModuleTab(
+                  label: l10n.customerManagementCustomers,
+                  selected: !groupsSelected,
+                  onPressed: onSelectionChanged == null
+                      ? null
+                      : () => onSelectionChanged!(false),
+                ),
+                _ModuleTab(
+                  label: l10n.customerManagementGroups,
+                  selected: groupsSelected,
+                  onPressed: onSelectionChanged == null
+                      ? null
+                      : () => onSelectionChanged!(true),
+                ),
+              ],
+            ),
           ),
         ),
       ),

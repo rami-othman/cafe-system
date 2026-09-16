@@ -14,9 +14,9 @@ class DiscountBottomActionBar extends StatelessWidget {
     required this.onActivate,
   });
 
-  final VoidCallback onDiscard;
-  final VoidCallback onSaveDraft;
-  final VoidCallback onActivate;
+  final VoidCallback? onDiscard;
+  final VoidCallback? onSaveDraft;
+  final VoidCallback? onActivate;
 
   @override
   Widget build(BuildContext context) {

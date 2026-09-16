@@ -27,7 +27,7 @@ void main() {
     expect(find.text('row-10'), findsOneWidget);
     expect(find.text('row-11'), findsNothing);
 
-    final Finder nextPage = find.byIcon(Icons.chevron_left);
+    final Finder nextPage = find.byIcon(Icons.chevron_right);
     await tester.ensureVisible(nextPage);
     await tester.tap(nextPage);
     await tester.pump();

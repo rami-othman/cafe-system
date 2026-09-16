@@ -43,7 +43,7 @@ class PosPricingService
         ];
     }
 
-    public function recalculateOrder(int $tenantId, int $orderId, bool $rejectInvalidDiscount = false, ?string $paymentMethod = null): object
+    public function recalculateOrder(int $tenantId, int $orderId, bool $rejectInvalidDiscount = false, ?int $paymentMethodId = null, ?string $legacyPaymentMethod = null): object
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
         abort_if(! $order, 404, 'Order not found.');
@@ -58,13 +58,16 @@ class PosPricingService
         // Draft cart mutations recalculate a managed discount or remove it if
         // current authoritative Order state no longer satisfies the policy.
         if (in_array($order->status, ['draft', 'held'], true) && $order->payment_status === 'unpaid') {
-            $this->discounts->refreshAppliedDiscounts($tenantId, $order, $paymentMethod, $rejectInvalidDiscount);
+            $this->discounts->refreshAppliedDiscounts($tenantId, $order, $paymentMethodId, $legacyPaymentMethod, $rejectInvalidDiscount);
         }
 
         $discountTotal = (float) DB::table('order_discounts')
             ->where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
             ->sum('discount_amount');
+        // Guard legacy rows as well as current validation: order totals may
+        // never become negative because of malformed historical discounts.
+        $discountTotal = min($subtotal, max(0, $discountTotal));
 
         $taxable = max(0, $subtotal - $discountTotal);
         $taxTotal = round($taxable * (float) $order->tax_rate, 2);

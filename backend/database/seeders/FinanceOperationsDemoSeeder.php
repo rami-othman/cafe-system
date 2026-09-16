@@ -149,11 +149,12 @@ final class FinanceOperationsDemoSeeder extends Seeder
     {
         $central = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'CENTRAL')->value('id');
         $branchMain = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'BR-'.$branch.'-MAIN')->value('id');
-        if (! $central || ! $branchMain) {
+        $branchPos = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branch)->value('pos_inventory_warehouse_id');
+        if (! $central || ! $branchMain || ! $branchPos) {
             throw new RuntimeException('Finance demo warehouses were not configured.');
         }
 
-        return [$central, $branchMain];
+        return [$central, $branchPos];
     }
 
     private function item(int $tenant, int $owner, string $sku, string $name, string $unit): int

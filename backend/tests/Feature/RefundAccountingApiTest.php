@@ -141,7 +141,7 @@ class RefundAccountingApiTest extends TestCase
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
 
-        $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
+        $warehouseId = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->value('pos_inventory_warehouse_id');
         $itemId = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'مكون اختبار الاسترجاع', 'nameEn' => 'Refund Test Ingredient', 'sku' => 'REFUND-TEST-'.uniqid(),
             'itemType' => 'raw_material', 'unit' => 'kg', 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => '2.0000', 'warehouseIds' => [$warehouseId], 'isActive' => true,

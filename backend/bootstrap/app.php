@@ -9,6 +9,7 @@ use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
 use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsureCustomerPermission;
+use App\Http\Middleware\EnsureDiscountPermission;
 use App\Http\Middleware\EnsureFinancePermission;
 use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
@@ -55,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'inventory.permission' => EnsureInventoryPermission::class,
             'finance.permission' => EnsureFinancePermission::class,
             'customer.permission' => EnsureCustomerPermission::class,
+            'discount.permission' => EnsureDiscountPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

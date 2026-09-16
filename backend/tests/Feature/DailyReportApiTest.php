@@ -39,6 +39,14 @@ class DailyReportApiTest extends TestCase
                     ->where('role', 'owner')
                     ->value('id'),
             );
+            $cardAccountId = (int) DB::table('financial_accounts')
+                ->where('tenant_id', $tenantId)
+                ->where('code', '1030')
+                ->value('id');
+            DB::table('payment_methods')->updateOrInsert(
+                ['tenant_id' => $tenantId, 'code' => 'DAILY-REPORT-CARD'],
+                ['name' => 'Daily Report Card', 'type' => 'card', 'financial_account_id' => $cardAccountId, 'is_active' => true, 'sort_order' => 10, 'created_at' => now(), 'updated_at' => now()],
+            );
 
             $product = DB::table('products')->where('tenant_id', $tenantId)->where('name', 'Cappuccino')->first();
             $snapshot = $this->publishedSnapshot($tenantId, $branchId, $product->id);

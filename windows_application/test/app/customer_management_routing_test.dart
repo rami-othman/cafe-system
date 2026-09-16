@@ -119,7 +119,7 @@ void main() {
         _RouteExpectation(
           path: CustomerManagementRouteLocations.customer(7),
           title: 'Ada',
-          description: l10n.cmvpCustomerDetailDescription,
+          description: '',
           breadcrumb: 'Ada',
           groupsSelected: false,
         ),

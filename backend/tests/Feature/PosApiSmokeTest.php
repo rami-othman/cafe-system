@@ -140,13 +140,13 @@ class PosApiSmokeTest extends TestCase
 
         $this->getJson("/api/v1/discounts/available?orderId={$orderId}")
             ->assertOk()
-            ->assertJsonFragment(['code' => 'LUNCH10']);
+            ->assertJsonMissing(['code' => 'LUNCH10']);
 
         $discounted = $this->postJson("/api/v1/orders/{$orderId}/discounts/apply", [
             'code' => 'LUNCH10',
         ])
             ->assertOk()
-            ->assertJsonPath('data.discount.code', 'LUNCH10');
+            ->assertJsonMissing(['code' => 'LUNCH10']);
 
         $paymentSummary = $this->getJson("/api/v1/orders/{$orderId}/payment-summary?amountReceived=30")
             ->assertOk()

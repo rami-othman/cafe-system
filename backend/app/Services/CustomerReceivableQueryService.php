@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * The single authoritative source for customer/AR balances (mirrors
@@ -253,6 +254,10 @@ final class CustomerReceivableQueryService
      */
     public function invoicesAsOf(int $tenantId, string $asOfDate, ?int $branchId = null, array $authorizedBranchIds = [], ?int $customerId = null): array
     {
+        if (! Schema::hasTable('sales_invoices')) {
+            return [];
+        }
+
         $query = DB::table('sales_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
             ->where('i.tenant_id', $tenantId)->where('i.status', 'posted')->whereDate('i.invoice_date', '<=', $asOfDate)
             ->when($customerId, fn ($q) => $q->where('i.customer_id', $customerId));
@@ -315,7 +320,10 @@ final class CustomerReceivableQueryService
         $ids = $invoices->pluck('id')->all();
         $allocated = $this->allocatedCentsForInvoices($tenantId, $ids);
         $creditedAr = $this->creditedArCentsForInvoices($tenantId, $ids);
-        $totalOutstanding = 0; $currentOutstanding = 0; $overdueOutstanding = 0; $counts = ['paid' => 0, 'partial' => 0, 'unpaid' => 0];
+        $totalOutstanding = 0;
+        $currentOutstanding = 0;
+        $overdueOutstanding = 0;
+        $counts = ['paid' => 0, 'partial' => 0, 'unpaid' => 0];
         foreach ($invoices as $invoice) {
             $totalCents = Money::cents($invoice->total);
             $remaining = $totalCents - ($allocated[$invoice->id] ?? 0) - ($creditedAr[$invoice->id] ?? 0);
@@ -346,7 +354,10 @@ final class CustomerReceivableQueryService
     public function snapshotAsOf(int $tenantId, string $asOfDate, ?array $branchIds = null): array
     {
         $invoices = $this->invoicesAsOf($tenantId, $asOfDate, null, $branchIds ?? []);
-        $outstanding = 0; $overdue = 0; $openCount = 0; $overdueCount = 0;
+        $outstanding = 0;
+        $overdue = 0;
+        $openCount = 0;
+        $overdueCount = 0;
         foreach ($invoices as $invoice) {
             if ($invoice['remainingCents'] <= 0) {
                 continue;

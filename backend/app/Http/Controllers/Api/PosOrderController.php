@@ -118,7 +118,18 @@ class PosOrderController extends Controller
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
-        $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $data['branchId']);
+        // A draft can still be created for legacy/untracked sales before a
+        // branch has a dedicated POS bar warehouse. Stock-tracked payment is
+        // authoritatively preflighted later, and new configured branches still
+        // snapshot their selected bar warehouse here.
+        try {
+            $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $data['branchId']);
+        } catch (OrderLifecycleException $exception) {
+            if ($exception->domainCode !== 'POS_WAREHOUSE_NOT_CONFIGURED') {
+                throw $exception;
+            }
+            $warehouse = null;
+        }
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
             $result = DB::transaction(function () use ($tenantId, $data, $actorId, $warehouse) {
@@ -140,7 +151,7 @@ class PosOrderController extends Controller
                 $orderId = DB::table('orders')->insertGetId([
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'],
-                    'warehouse_id' => $warehouse->id,
+                    'warehouse_id' => $warehouse?->id,
                     'published_menu_version_id' => $snapshot['version']->id ?? null,
                     'shift_id' => $data['shiftId'] ?? null,
                     'table_id' => $data['tableId'] ?? null,
@@ -382,11 +393,14 @@ class PosOrderController extends Controller
     {
         $data = $request->validate([
             'type' => ['required', 'in:percentage,fixed'],
-            'value' => ['required', 'numeric', 'min:0'],
+            'value' => ['required', 'numeric', 'gt:0'],
             'reason' => ['nullable', 'string'],
         ]);
 
         $tenantId = TenantContext::id($request);
+        if ($data['type'] === 'percentage' && (float) $data['value'] > 100) {
+            throw ValidationException::withMessages(['value' => 'A percentage discount cannot exceed 100.']);
+        }
         DB::transaction(function () use ($tenantId, $order, $data): void {
             $row = $this->lockedOrder($tenantId, $order);
             $this->lifecycle->assertDiscountable($row);
@@ -552,8 +566,7 @@ class PosOrderController extends Controller
         object $order,
         bool $withItems = true,
         ?array $resumeEligibility = null,
-    ): array
-    {
+    ): array {
         $refundedAmount = 0.0;
         $refundableAmount = 0.0;
         if ($withItems) {
@@ -584,14 +597,13 @@ class PosOrderController extends Controller
             ? DB::table('cafe_tables')->where('tenant_id', $tenantId)->where('id', $order->table_id)->first()
             : null;
 
-        
-      $warehouse = $order->warehouse_id
+        $warehouse = $order->warehouse_id
     ? DB::table('warehouses')
         ->where('tenant_id', $tenantId)
         ->where('id', $order->warehouse_id)
         ->first()
     : null;
-      
+
         $serialized = [
             'id' => $order->id,
             'orderNumber' => $order->order_number,

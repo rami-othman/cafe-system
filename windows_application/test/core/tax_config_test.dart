@@ -51,7 +51,11 @@ void main() {
               total: 10.75,
               taxRate: 0.075,
             ),
-            const DiscountPosPreviewCard(discountPercent: 10, taxRate: 0.075),
+            const DiscountPosPreviewCard(
+              discountValue: 10,
+              isPercentage: true,
+              taxRate: 0.075,
+            ),
           ],
         ),
       ),

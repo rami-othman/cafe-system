@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +10,8 @@ import 'package:windows_application/core/theme/app_theme.dart';
 import 'package:windows_application/features/discounts/views/create_discount_policy_screen.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
@@ -59,12 +63,21 @@ void main() {
       'Scope & Value',
       'Eligibility Conditions',
       'Schedule',
+      'Usage Limits',
+    ]) {
+      expect(find.text(title), findsAtLeastNWidgets(1));
+    }
+
+    for (final String unsupported in <String>[
       'Approval & Permissions',
       'Discount Rules',
       'Stacking Rules',
       'Reports & Audit',
+      'Automatic',
+      'BOGO',
+      'Manager PIN required',
     ]) {
-      expect(find.text(title), findsAtLeastNWidgets(1));
+      expect(find.text(unsupported), findsNothing);
     }
 
     expect(find.text('Discard Changes'), findsOneWidget);
@@ -73,17 +86,46 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-    'updates discount value selection without changing the form layout',
-    (WidgetTester tester) async {
-      await _pumpScreen(tester, const Size(1280, 900));
+  testWidgets('quick value chips fill the editable custom-value input', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, const Size(1280, 900));
 
-      expect(find.text('10%'), findsWidgets);
-      await tester.tap(find.text('20%').first);
-      await tester.pump();
-      expect(find.text('20%'), findsWidgets);
-    },
-  );
+    expect(find.byKey(const Key('discount-value-field')), findsOneWidget);
+    await tester.tap(find.text('20%').first);
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('discount-value-field')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .controller!
+          .text,
+      '20',
+    );
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const Key('discount-value-field')),
+        matching: find.byType(TextField),
+      ),
+      '12.5',
+    );
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('discount-value-field')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .controller!
+          .text,
+      '12.5',
+    );
+  });
 
   testWidgets('remains overflow-free at a compact desktop width', (
     WidgetTester tester,
@@ -94,7 +136,366 @@ void main() {
     expect(find.text('Activate Discount'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('percentage 0 cannot activate and uses the not-ready state', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, const Size(1280, 900));
+    _fillRequiredFields(tester, name: 'Zero percentage', value: '0');
+    await tester.pump();
+
+    expect(_activateButton(tester).onPressed, isNull);
+    expect(find.text('Enter a value greater than zero.'), findsOneWidget);
+    expect(
+      find.text(
+        'Complete the required fields before activating this discount.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('fixed 0 cannot activate', (WidgetTester tester) async {
+    await _pumpScreen(tester, const Size(1280, 900));
+    await _selectValueType(tester, 'Fixed Amount');
+    _fillRequiredFields(tester, name: 'Zero fixed', value: '0');
+    await tester.pump();
+
+    expect(_activateButton(tester).onPressed, isNull);
+    expect(find.text('Enter a value greater than zero.'), findsOneWidget);
+  });
+
+  testWidgets('valid custom percentage and fixed amount become ready', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, const Size(1280, 900));
+    _fillRequiredFields(tester, name: 'Afternoon', value: '12.5');
+    await tester.pump();
+    expect(_activateButton(tester).onPressed, isNotNull);
+    expect(
+      find.text('Policy is ready for review before activation.'),
+      findsOneWidget,
+    );
+
+    await _selectValueType(tester, 'Fixed Amount');
+    _setField(tester, const Key('discount-value-field'), '5000');
+    await tester.pump();
+    expect(_activateButton(tester).onPressed, isNotNull);
+  });
+
+  testWidgets(
+    'untouched and explicitly cleared optional money serialize null',
+    (WidgetTester tester) async {
+      final _DiscountsRepository repository = _DiscountsRepository(
+        stallCreates: true,
+      );
+      await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+      _fillRequiredFields(tester, name: 'No money bounds', value: '10');
+      await tester.pump();
+
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pump();
+      expect(repository.lastCreateRequest!.minimumOrderAmount, isNull);
+      expect(repository.lastCreateRequest!.maximumDiscountAmount, isNull);
+    },
+  );
+
+  testWidgets('explicitly cleared optional money values serialize null', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      stallCreates: true,
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    // A visible 0 SYP hint is never stateful; clearing an entered value returns
+    // the canonical nullable request value.
+    _fillRequiredFields(tester, name: 'Cleared bound', value: '10');
+    _setField(tester, const Key('discount-min-spend-field'), '5000');
+    _setField(tester, const Key('discount-min-spend-field'), '');
+    _setField(tester, const Key('discount-max-discount-field'), '5000');
+    _setField(tester, const Key('discount-max-discount-field'), '');
+    await tester.pump();
+
+    await tester.tap(find.text('Save as Draft'));
+    await tester.pump();
+    expect(repository.lastCreateRequest!.minimumOrderAmount, isNull);
+    expect(repository.lastCreateRequest!.maximumDiscountAmount, isNull);
+  });
+
+  testWidgets(
+    'date fields use pickers, serialize, clear, and reject bad ranges',
+    (WidgetTester tester) async {
+      final _DiscountsRepository repository = _DiscountsRepository(
+        stallCreates: true,
+      );
+      await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+      _fillRequiredFields(tester, name: 'Date bounded', value: '10');
+      await tester.pump();
+
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-start-date-field')),
+      );
+      await tester.tap(find.byKey(const Key('discount-start-date-field')));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(
+        _fieldText(tester, const Key('discount-start-date-field')),
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')),
+      );
+
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-end-date-field')),
+      );
+      await tester.tap(find.byKey(const Key('discount-end-date-field')));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      _setField(tester, const Key('discount-start-date-field'), '2026-10-02');
+      _setField(tester, const Key('discount-end-date-field'), '2026-10-01');
+      await tester.pump();
+      expect(
+        find.text('End date cannot be earlier than start date.'),
+        findsOneWidget,
+      );
+
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-start-date-field')),
+      );
+      expect(
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: find.byKey(const Key('discount-start-date-field')),
+                matching: find.byType(IconButton),
+              ),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('discount-start-date-field')),
+          matching: find.byType(IconButton),
+        ),
+      );
+      await tester.pump();
+      expect(
+        _fieldText(tester, const Key('discount-start-date-field')),
+        isEmpty,
+      );
+      _setField(tester, const Key('discount-start-date-field'), '2026-10-01');
+      await tester.pump();
+
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pump();
+      expect(repository.lastCreateRequest!.startDate, '2026-10-01');
+      expect(repository.lastCreateRequest!.endDate, '2026-10-01');
+    },
+  );
+
+  testWidgets(
+    'time fields use pickers, serialize canonical values, and allow overnight',
+    (WidgetTester tester) async {
+      final _DiscountsRepository repository = _DiscountsRepository(
+        stallCreates: true,
+      );
+      await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+      _fillRequiredFields(tester, name: 'Night', value: '10');
+      await tester.pump();
+
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-start-time-field')),
+      );
+      await tester.tap(find.byKey(const Key('discount-start-time-field')));
+      await tester.pumpAndSettle();
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await _scrollToField(
+        tester,
+        find.byKey(const Key('discount-end-time-field')),
+      );
+      await tester.tap(find.byKey(const Key('discount-end-time-field')));
+      await tester.pumpAndSettle();
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      _setField(tester, const Key('discount-start-time-field'), '22:00');
+      _setField(tester, const Key('discount-end-time-field'), '02:00');
+      await tester.tap(find.text('Save as Draft'));
+      await tester.pump();
+      expect(repository.lastCreateRequest!.startTime, '22:00');
+      expect(repository.lastCreateRequest!.endTime, '02:00');
+    },
+  );
+
+  testWidgets('only one time is invalid and both can clear to null', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      stallCreates: true,
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    _fillRequiredFields(tester, name: 'Hours', value: '10');
+    _setField(tester, const Key('discount-start-time-field'), '09:00');
+    await tester.pump();
+    expect(
+      find.text('Start time and end time must be provided together.'),
+      findsNWidgets(2),
+    );
+
+    _setField(tester, const Key('discount-end-time-field'), '17:00');
+    await tester.pump();
+    expect(
+      find.text('Start time and end time must be provided together.'),
+      findsNothing,
+    );
+    expect(_activateButton(tester).onPressed, isNotNull);
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-start-time-field')),
+    );
+    expect(
+      tester
+          .widget<IconButton>(
+            find.descendant(
+              of: find.byKey(const Key('discount-start-time-field')),
+              matching: find.byType(IconButton),
+            ),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('discount-start-time-field')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-end-time-field')),
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('discount-end-time-field')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await tester.pump();
+    expect(_fieldText(tester, const Key('discount-start-time-field')), isEmpty);
+    expect(_fieldText(tester, const Key('discount-end-time-field')), isEmpty);
+    _setField(tester, const Key('discount-end-time-field'), '17:00');
+    await tester.pump();
+    expect(
+      find.text('Start time and end time must be provided together.'),
+      findsNWidgets(2),
+    );
+    _setField(tester, const Key('discount-end-time-field'), '');
+    await tester.pump();
+
+    await tester.tap(find.text('Save as Draft'));
+    await tester.pump();
+    expect(repository.lastCreateRequest!.startTime, isNull);
+    expect(repository.lastCreateRequest!.endTime, isNull);
+  });
+
+  testWidgets('edit loads the full V1 detail instead of the list row', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository();
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      repository: repository,
+      initialDiscount: _editRow,
+    );
+
+    expect(repository.detailRequests, 1);
+    expect(find.text('Edit Discount Policy'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('discount-value-field')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .controller!
+          .text,
+      '12.5',
+    );
+    expect(
+      find.byKey(const Key('discount-categories-selector')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('discount-customer-groups-selector')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('discount-payment-methods-selector')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('discount-branches-selector')), findsOneWidget);
+    expect(
+      _fieldText(tester, const Key('discount-start-date-field')),
+      '2026-10-01',
+    );
+    expect(
+      _fieldText(tester, const Key('discount-end-date-field')),
+      '2026-10-31',
+    );
+    expect(_fieldText(tester, const Key('discount-start-time-field')), '22:00');
+    expect(_fieldText(tester, const Key('discount-end-time-field')), '02:00');
+  });
 }
+
+FilledButton _activateButton(WidgetTester tester) =>
+    tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('Activate Discount'),
+        matching: find.byType(FilledButton),
+      ),
+    );
+
+String _fieldText(WidgetTester tester, Key key) =>
+    _textField(tester, key).controller!.text;
+
+void _setField(WidgetTester tester, Key key, String value) {
+  _textField(tester, key).controller!.text = value;
+}
+
+TextField _textField(WidgetTester tester, Key key) => tester.widget<TextField>(
+  find.descendant(of: find.byKey(key), matching: find.byType(TextField)),
+);
+
+void _fillRequiredFields(
+  WidgetTester tester, {
+  required String name,
+  required String value,
+}) {
+  _setField(tester, const Key('discount-name-field'), name);
+  _setField(tester, const Key('discount-value-field'), value);
+}
+
+Future<void> _selectValueType(WidgetTester tester, String label) async {
+  await tester.tap(find.byKey(const Key('discount-value-type-field')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label).last);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _scrollToField(WidgetTester tester, Finder field) => tester
+    .scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
 
 Future<void> _pumpApp(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1280, 900);
@@ -108,7 +509,12 @@ Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpScreen(WidgetTester tester, Size size) async {
+Future<void> _pumpScreen(
+  WidgetTester tester,
+  Size size, {
+  _DiscountsRepository? repository,
+  DiscountListItem? initialDiscount,
+}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(() {
@@ -121,8 +527,9 @@ Future<void> _pumpScreen(WidgetTester tester, Size size) async {
       theme: AppTheme.lightTheme,
       home: Scaffold(
         body: BlocProvider<DiscountsCubit>(
-          create: (_) => DiscountsCubit(repository: _DiscountsRepository()),
-          child: const CreateDiscountPolicyScreen(),
+          create: (_) =>
+              DiscountsCubit(repository: repository ?? _DiscountsRepository()),
+          child: CreateDiscountPolicyScreen(initialDiscount: initialDiscount),
         ),
       ),
     ),
@@ -131,6 +538,25 @@ Future<void> _pumpScreen(WidgetTester tester, Size size) async {
 }
 
 class _DiscountsRepository implements DiscountsRepository {
+  _DiscountsRepository({this.stallCreates = false});
+
+  int detailRequests = 0;
+  final bool stallCreates;
+  DiscountUpsertRequest? lastCreateRequest;
+  @override
+  Future<DiscountFormReferences> getFormReferences() async =>
+      const DiscountFormReferences(
+        categories: <DiscountFormReference>[
+          DiscountFormReference(id: 31, name: 'Coffee', isActive: true),
+        ],
+        customerGroups: <DiscountFormReference>[
+          DiscountFormReference(id: 41, name: 'Members', isActive: true),
+        ],
+        paymentMethods: <DiscountFormReference>[
+          DiscountFormReference(id: 61, name: 'Cash drawer', isActive: true),
+        ],
+      );
+
   @override
   Future<List<Branch>> getBranches() async => const <Branch>[
     Branch(
@@ -147,8 +573,17 @@ class _DiscountsRepository implements DiscountsRepository {
       const <DiscountListItem>[];
 
   @override
-  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
-      throw UnimplementedError();
+  Future<DiscountDetail> getDiscountDetail(String discountId) async {
+    detailRequests++;
+    return _detail;
+  }
+
+  @override
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) {
+    lastCreateRequest = request;
+    if (stallCreates) return Completer<DiscountListItem>().future;
+    throw UnimplementedError();
+  }
 
   @override
   Future<void> deleteDiscount(String discountId) => throw UnimplementedError();
@@ -163,6 +598,48 @@ class _DiscountsRepository implements DiscountsRepository {
     DiscountUpsertRequest request,
   ) => throw UnimplementedError();
 }
+
+const DiscountListItem _editRow = DiscountListItem(
+  id: '81',
+  name: 'List row name must not hydrate edit',
+  secondaryLabel: 'Code: OLD',
+  type: 'Percentage',
+  displayValue: '1% off',
+  conditions: 'List row only',
+  validPeriodPrimary: 'Always Valid',
+  status: DiscountStatus.active,
+  usageCount: 0,
+  estimatedSavedValue: '0 SYP',
+  isActive: true,
+);
+
+const DiscountDetail _detail = DiscountDetail(
+  id: 81,
+  name: 'Complete policy detail',
+  applicationMode: 'code',
+  type: 'percentage',
+  scope: 'category',
+  value: 12.5,
+  isActive: true,
+  appliesToAllBranches: false,
+  customerEligibilityMode: 'selected_groups',
+  targetProductIds: <int>[],
+  targetCategoryIds: <int>[31],
+  customerGroupIds: <int>[41],
+  branchIds: <int>[41],
+  paymentMethodIds: <int>[61],
+  code: 'DETAIL12',
+  description: 'From detail',
+  startDate: '2026-10-01',
+  endDate: '2026-10-31',
+  activeDays: <String>['Mon', 'Fri'],
+  startTime: '22:00:00',
+  endTime: '02:00:00',
+  minimumOrderAmount: 1000,
+  maximumDiscountAmount: 5000,
+  usageLimit: 10,
+  usageLimitPerCustomer: 2,
+);
 
 AppSidebarItem _discountsSidebarItem(WidgetTester tester) {
   return tester.widget<AppSidebarItem>(

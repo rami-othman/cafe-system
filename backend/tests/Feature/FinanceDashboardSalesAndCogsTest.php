@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Domain\Inventory\InventoryPostingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Concerns\DailyClosingFixtures;
@@ -14,8 +13,8 @@ use Tests\TestCase;
  */
 class FinanceDashboardSalesAndCogsTest extends TestCase
 {
-    use RefreshDatabase;
     use DailyClosingFixtures;
+    use RefreshDatabase;
 
     public function test_gross_sale_discount_and_net_sales_breakdown(): void
     {
@@ -262,7 +261,7 @@ class FinanceDashboardSalesAndCogsTest extends TestCase
         DB::table('orders')->where('id', $order)->update(['cogs_total' => '30.00']);
         $this->makePayment($tenant, $branch, $order, '100.00', $date.' 10:00:00');
 
-        $customerId = (int) DB::table('customers')->insertGetId(['tenant_id' => $tenant, 'name' => 'Union Customer', 'customer_number' => 'FD-CUST-1', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $customerId = (int) DB::table('customers')->insertGetId(['tenant_id' => $tenant, 'name' => 'Union Customer', 'normalized_name' => 'union customer', 'customer_number' => 'FD-CUST-1', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $productId = (int) DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Consulting', 'name_ar' => 'استشارة', 'sku' => 'FD-SVC-1', 'price' => '50.00', 'is_active' => true, 'is_stock_tracked' => false, 'inventory_controlled' => false, 'created_at' => now(), 'updated_at' => now()]);
         $invoiceId = (int) DB::table('sales_invoices')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'customer_id' => $customerId, 'invoice_number' => 'FD-SI-1', 'invoice_date' => $date, 'currency_code' => 'SYP', 'status' => 'posted', 'tax_rate' => '0.000000', 'subtotal' => '50.00', 'discount_total' => '0.00', 'tax_total' => '0.00', 'total' => '50.00', 'posted_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
         DB::table('sales_invoice_lines')->insert(['tenant_id' => $tenant, 'sales_invoice_id' => $invoiceId, 'product_id' => $productId, 'line_number' => 1, 'product_name' => 'Consulting', 'quantity' => '1.000', 'unit_price' => '50.00', 'discount_total' => '0.00', 'tax_rate' => '0.000000', 'tax_total' => '0.00', 'subtotal' => '50.00', 'total' => '50.00', 'cogs_total' => '10.00', 'created_at' => now(), 'updated_at' => now()]);
