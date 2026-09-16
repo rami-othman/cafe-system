@@ -24,13 +24,21 @@ use Tests\TestCase;
  */
 class FinanceDashboardMissingSalesInvoiceTablesTest extends TestCase
 {
-    use RefreshDatabase;
     use DailyClosingFixtures;
+    use RefreshDatabase;
 
     private function dropSalesInvoiceTables(): void
     {
+        Schema::dropIfExists('customer_payment_allocation_history');
+        Schema::dropIfExists('customer_payment_allocations');
+        Schema::dropIfExists('customer_receivables');
+        Schema::dropIfExists('sales_invoice_postings');
+        Schema::dropIfExists('customer_credit_ledger');
+        Schema::dropIfExists('sales_credit_note_postings');
+        Schema::dropIfExists('sales_credit_note_costs');
         Schema::dropIfExists('sales_credit_note_lines');
         Schema::dropIfExists('sales_credit_notes');
+        Schema::dropIfExists('sales_invoice_costs');
         Schema::dropIfExists('sales_invoice_lines');
         Schema::dropIfExists('sales_invoices');
     }

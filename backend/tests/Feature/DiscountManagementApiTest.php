@@ -16,6 +16,7 @@ class DiscountManagementApiTest extends TestCase
         $this->seed();
         $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
         $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->value('id');
+        DB::table('products')->where('id', $productId)->update(['is_active' => true]);
         $headers = $this->headers($tenantId);
 
         $this->getJson('/api/v1/discounts', $headers)

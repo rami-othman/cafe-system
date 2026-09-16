@@ -7,6 +7,7 @@ import 'package:windows_application/features/finance_inventory_setup/models/fina
 import 'package:windows_application/features/finance_inventory_setup/views/finance_transactions.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_pagination.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_shell.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   Future<Map<String, dynamic>> branches() async => <String, dynamic>{
@@ -40,6 +41,9 @@ void main() {
       ];
 
   Widget app(Widget child) => MaterialApp(
+    locale: const Locale('ar'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(body: child),
@@ -120,7 +124,8 @@ void main() {
     (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1440, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
-      final List<FinanceTransactionsQuery> queries = <FinanceTransactionsQuery>[];
+      final List<FinanceTransactionsQuery> queries =
+          <FinanceTransactionsQuery>[];
       await tester.pumpWidget(
         app(
           view(
@@ -250,8 +255,9 @@ void main() {
           ),
           GoRoute(
             path: '/finance/journal-entries/:id',
-            builder: (_, GoRouterState state) =>
-                Scaffold(body: Text('journal-route-${state.pathParameters['id']}')),
+            builder: (_, GoRouterState state) => Scaffold(
+              body: Text('journal-route-${state.pathParameters['id']}'),
+            ),
           ),
         ],
       );
@@ -276,32 +282,33 @@ void main() {
     },
   );
 
-  testWidgets('journal drawer shows an error with retry when detail loading fails', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(1440, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    int calls = 0;
-    await tester.pumpWidget(
-      app(
-        view(
-          loader: (_) async => _payload(),
-          detailLoader: (int id) async {
-            calls++;
-            if (calls == 1) throw StateError('offline');
-            return _detail(id);
-          },
+  testWidgets(
+    'journal drawer shows an error with retry when detail loading fails',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1440, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      int calls = 0;
+      await tester.pumpWidget(
+        app(
+          view(
+            loader: (_) async => _payload(),
+            detailLoader: (int id) async {
+              calls++;
+              if (calls == 1) throw StateError('offline');
+              return _detail(id);
+            },
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('دفعة كهرباء'));
-    await tester.pumpAndSettle();
-    expect(find.text('تعذّر تحميل تفاصيل القيد.'), findsOneWidget);
-    await tester.tap(find.text('إعادة المحاولة'));
-    await tester.pumpAndSettle();
-    expect(find.text('1010 — الصندوق'), findsOneWidget);
-  });
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('دفعة كهرباء'));
+      await tester.pumpAndSettle();
+      expect(find.text('تعذّر تحميل تفاصيل القيد.'), findsOneWidget);
+      await tester.tap(find.text('إعادة المحاولة'));
+      await tester.pumpAndSettle();
+      expect(find.text('1010 — الصندوق'), findsOneWidget);
+    },
+  );
 
   testWidgets('remains overflow-free at Finance desktop widths', (
     WidgetTester tester,
@@ -327,64 +334,70 @@ void main() {
   });
 }
 
-FinanceTransactionsPayload _payload({int page = 1}) => FinanceTransactionsPayload(
-  summary: const <String, dynamic>{
-    'transactionCount': 12,
-    'externalCashInflow': '5000.00',
-    'externalCashOutflow': '1200.00',
-    'draftJournalCount': 2,
-    'reversedOriginalCount': 1,
-  },
-  page: FinancePage<Map<String, dynamic>>(
-    items: const <Map<String, dynamic>>[
-      <String, dynamic>{
-        'id': 501,
-        'reference': 'JE-2026-000501',
-        'transactionDate': '2026-09-01',
-        'description': 'دفعة كهرباء',
-        'branch': <String, dynamic>{'id': 2, 'name': 'فرع دمشق'},
-        'source': <String, dynamic>{
-          'type': 'expense',
-          'normalizedType': 'expense',
-          'resourceKind': 'expense',
-          'id': 77,
-          'available': true,
-        },
-        'displayAmount': <String, dynamic>{'amount': '500.00'},
-        'journal': <String, dynamic>{
-          'id': 501,
-          'status': 'posted',
-          'totalDebit': '500.00',
-          'totalCredit': '500.00',
-        },
-        'reversal': <String, dynamic>{'state': 'none'},
+FinanceTransactionsPayload _payload({int page = 1}) =>
+    FinanceTransactionsPayload(
+      summary: const <String, dynamic>{
+        'transactionCount': 12,
+        'externalCashInflow': '5000.00',
+        'externalCashOutflow': '1200.00',
+        'draftJournalCount': 2,
+        'reversedOriginalCount': 1,
       },
-      <String, dynamic>{
-        'id': 502,
-        'reference': 'JE-2026-000502',
-        'transactionDate': '2026-09-02',
-        'description': 'فاتورة مبيعات',
-        'branch': <String, dynamic>{'id': 2, 'name': 'فرع دمشق'},
-        'source': <String, dynamic>{
-          'type': 'pos_order',
-          'normalizedType': 'sale',
-          'resourceKind': 'order',
-          'id': 900,
-          'available': true,
-        },
-        'displayAmount': <String, dynamic>{'amount': '1200.00'},
-        'journal': <String, dynamic>{
-          'id': 502,
-          'status': 'posted',
-          'totalDebit': '1200.00',
-          'totalCredit': '1200.00',
-        },
-        'reversal': <String, dynamic>{'state': 'original_reversed'},
-      },
-    ],
-    meta: FinancePageMeta(currentPage: page, perPage: 10, total: 2, lastPage: 1),
-  ),
-);
+      page: FinancePage<Map<String, dynamic>>(
+        items: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 501,
+            'reference': 'JE-2026-000501',
+            'transactionDate': '2026-09-01',
+            'description': 'دفعة كهرباء',
+            'branch': <String, dynamic>{'id': 2, 'name': 'فرع دمشق'},
+            'source': <String, dynamic>{
+              'type': 'expense',
+              'normalizedType': 'expense',
+              'resourceKind': 'expense',
+              'id': 77,
+              'available': true,
+            },
+            'displayAmount': <String, dynamic>{'amount': '500.00'},
+            'journal': <String, dynamic>{
+              'id': 501,
+              'status': 'posted',
+              'totalDebit': '500.00',
+              'totalCredit': '500.00',
+            },
+            'reversal': <String, dynamic>{'state': 'none'},
+          },
+          <String, dynamic>{
+            'id': 502,
+            'reference': 'JE-2026-000502',
+            'transactionDate': '2026-09-02',
+            'description': 'فاتورة مبيعات',
+            'branch': <String, dynamic>{'id': 2, 'name': 'فرع دمشق'},
+            'source': <String, dynamic>{
+              'type': 'pos_order',
+              'normalizedType': 'sale',
+              'resourceKind': 'order',
+              'id': 900,
+              'available': true,
+            },
+            'displayAmount': <String, dynamic>{'amount': '1200.00'},
+            'journal': <String, dynamic>{
+              'id': 502,
+              'status': 'posted',
+              'totalDebit': '1200.00',
+              'totalCredit': '1200.00',
+            },
+            'reversal': <String, dynamic>{'state': 'original_reversed'},
+          },
+        ],
+        meta: FinancePageMeta(
+          currentPage: page,
+          perPage: 10,
+          total: 2,
+          lastPage: 1,
+        ),
+      ),
+    );
 
 Map<String, dynamic> _detail(int id) => <String, dynamic>{
   'id': id,

@@ -154,10 +154,10 @@ facts. The configuration-to-runtime matrix is:
 | `active_days`, `start_time`, `end_time` | Enforced in the Order Branch timezone; an end before its start is an inclusive overnight window. |
 | branch targets | Enforced against `orders.branch_id`; no targets means global to the tenant. |
 | `scope` + product/category targets | Enforced against Order lines. `order` uses the whole pre-discount subtotal; targeted scopes use only matching lines. |
-| application mode | `code` requires a code; `auto`/`manual` require selection by tenant-scoped ID. It does not auto-select a best discount. |
-| percentage/fixed/BOGO, maximum and minimum | Calculated on the authoritative eligible subtotal; fixed amounts cannot exceed it; percentage is limited to 0–100 at management write time; maximum caps the result. Minimum remains the existing pre-discount whole-order subtotal rule. |
+| application mode | `code` requires a non-empty code; `auto`/`manual` require selection by tenant-scoped ID. It does not auto-select a best discount. Code policies are excluded from POS discovery and are redeemable only through explicit code entry. |
+| percentage/fixed, maximum and minimum | Calculated on the authoritative eligible subtotal; fixed amounts cannot exceed it; percentage is limited to 0–100 at management write time; maximum caps the result. Minimum remains the existing pre-discount whole-order subtotal rule. BOGO writes and new-order application are rejected until separately specified. |
 | customer eligibility | The supported Admin values are All Customers, Regular, VIP, and New Customers; identified Order customer is required where applicable. |
-| payment method | Deferred at Apply because tender is unknown, then strictly revalidated at Payment. A mismatch blocks payment; it does not silently remove the discount. |
+| payment method | Deferred at Apply because tender is unknown, then strictly revalidated at Payment against the resolved active tenant payment-method ID. If legacy `method` and `paymentMethodId` disagree, payment is rejected before pricing or posting. |
 | usage limits | Consumed only on successful payment in the same transaction. `discount_usages` is the completed-sale audit history; the locked Discount row serializes global and per-customer limit checks and idempotent payment retries cannot double consume. |
 | conditions/display period/estimated saved value | UI/description metadata only. There is no stacking/combinability field in the persisted domain, and one `order_discounts` row is retained per Order. |
 
@@ -171,6 +171,21 @@ calculated after the order discount, matching the existing pricing policy.
 
 All active Flutter discount/POS currency displays use the shared formatter; the
 backend available-discount fixed badge emits `SYP`, not `$`.
+
+Discount authorization is tenant-role based: the Owner has all capabilities;
+`discounts.view`, `discounts.manage`, `discounts.apply_configured`, and
+`discounts.apply_manual` are independent grants for Manager/Employee roles.
+Existing and newly provisioned Managers receive explicit default grants;
+Employees receive none until an Owner configures them through the backend role
+permissions endpoint. Order-scoped Discount discovery, application, and removal
+also enforce the authenticated user's Branch access.
+
+`PUT /discounts/{id}` and the legacy `PATCH /discounts/{id}` currently retain
+their established full-policy replacement behavior. The Flutter Edit DTO phase
+must send every editable field: name, code (or explicit null), description,
+applicationMode, type, scope, value, schedule, limits, eligibility, payment
+method, isActive, all target arrays, appliesToAllBranches, and branchIds. This
+phase intentionally does not reinterpret omitted fields as a speculative PATCH.
 
 Backend verification gate:
 

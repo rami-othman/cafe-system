@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
+use App\Services\BranchAccessService;
 use App\Services\DiscountEligibilityService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
@@ -111,7 +112,11 @@ class DiscountController extends Controller
         $tenantId = TenantContext::id($request);
         $order = $request->filled('orderId') ? $this->findOrder($tenantId, (int) $request->query('orderId')) : null;
 
-        $discounts = $this->discountQuery($tenantId)->where('is_active', true)->get()
+        // Coupon policies are redeemable only through explicit code entry;
+        // returning them here would expose their secret to every POS user.
+        $discounts = $this->discountQuery($tenantId)->where('is_active', true)
+            ->where('application_mode', 'manual')
+            ->where('type', '!=', 'bogo')->get()
             ->filter(fn (object $discount) => $this->status($discount) === 'active')
             ->map(fn (object $discount) => $this->serializeDiscount($tenantId, $discount, $order))
             ->values();
@@ -156,7 +161,7 @@ class DiscountController extends Controller
 
         return response()->json(['data' => [
             'orderId' => $order,
-            'discount' => ['id' => $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'type' => $discount->type, 'value' => (float) $discount->value, 'amount' => $amount],
+            'discount' => ['id' => $discount->id, 'name' => $discount->name, 'type' => $discount->type, 'value' => (float) $discount->value, 'amount' => $amount],
             'totals' => ['subtotal' => (float) $updated->subtotal, 'discountTotal' => (float) $updated->discount_total, 'taxTotal' => (float) $updated->tax_total, 'total' => (float) $updated->total],
         ]]);
     }
@@ -182,18 +187,23 @@ class DiscountController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'], 'code' => ['nullable', 'string', 'max:100', $codeRule],
-            'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['auto', 'manual', 'code'])],
-            'type' => ['required', Rule::in(['percentage', 'fixed', 'bogo'])], 'scope' => ['required', Rule::in(['order', 'product', 'category'])],
-            'value' => ['required', 'numeric', 'min:0'], 'conditions' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code'])],
+            'type' => ['required', Rule::in(['percentage', 'fixed'])], 'scope' => ['required', Rule::in(['order', 'product', 'category'])],
+            'value' => ['required', 'numeric', 'gt:0'], 'conditions' => ['nullable', 'string'],
             'startsAt' => ['nullable', 'date'], 'endsAt' => ['nullable', 'date', 'after_or_equal:startsAt'],
-            'activeDays' => ['nullable', 'array'], 'activeDays.*' => [Rule::in(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])],
+            'startDate' => ['nullable', 'date_format:Y-m-d'], 'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
+            'activeDays' => ['nullable', 'array'], 'activeDays.*' => ['distinct', Rule::in(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])],
             'startTime' => ['nullable', 'date_format:H:i'], 'endTime' => ['nullable', 'date_format:H:i'],
             'minimumOrderAmount' => ['nullable', 'numeric', 'min:0'], 'maximumDiscountAmount' => ['nullable', 'numeric', 'min:0'],
             'usageLimit' => ['nullable', 'integer', 'min:1'], 'usageLimitPerCustomer' => ['nullable', 'integer', 'min:1'],
+            'customerEligibilityMode' => ['nullable', Rule::in(['all', 'selected_groups'])],
+            // Read compatibility only: heuristic labels can never create a V1 policy.
             'customerEligibility' => ['nullable', Rule::in(['All Customers', 'Regular', 'VIP', 'New Customers'])],
             'paymentMethod' => ['nullable', Rule::in(['Any Payment Method', 'Cash', 'Card', 'Wallet'])],
-            'isActive' => ['required', 'boolean'], 'targetProductIds' => ['nullable', 'array'], 'targetProductIds.*' => ['integer'],
-            'targetCategoryIds' => ['nullable', 'array'], 'targetCategoryIds.*' => ['integer'],
+            'customerGroupIds' => ['nullable', 'array'], 'customerGroupIds.*' => ['integer', 'distinct'],
+            'paymentMethodIds' => ['nullable', 'array'], 'paymentMethodIds.*' => ['integer', 'distinct'],
+            'isActive' => ['required', 'boolean'], 'targetProductIds' => ['nullable', 'array'], 'targetProductIds.*' => ['integer', 'distinct'],
+            'targetCategoryIds' => ['nullable', 'array'], 'targetCategoryIds.*' => ['integer', 'distinct'],
             'appliesToAllBranches' => ['required', 'boolean'],
             'branchIds' => [
                 'nullable',
@@ -202,10 +212,23 @@ class DiscountController extends Controller
                 Rule::when(! $request->boolean('appliesToAllBranches'), ['min:1']),
             ],
             'branchIds.*' => [
-                'integer',
-                Rule::exists('branches', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->whereNull('deleted_at')),
+                'integer', 'distinct',
+                Rule::exists('branches', 'id')->where(fn (Builder $query) => $query->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')),
             ],
         ]);
+        $data['customerEligibilityMode'] ??= ($data['customerEligibility'] ?? null) === 'All Customers' ? 'all' : 'all';
+        if (($data['customerEligibility'] ?? null) !== null && $data['customerEligibility'] !== 'All Customers') {
+            throw ValidationException::withMessages(['customerEligibility' => 'Legacy spending-heuristic eligibility is not supported by Discount V1. Use customerEligibilityMode and customerGroupIds.']);
+        }
+        if (($data['paymentMethod'] ?? null) !== null && $data['paymentMethod'] !== 'Any Payment Method') {
+            throw ValidationException::withMessages(['paymentMethod' => 'Legacy free-text payment methods are not supported by Discount V1. Use paymentMethodIds.']);
+        }
+        if ($data['applicationMode'] === 'code' && trim((string) ($data['code'] ?? '')) === '') {
+            throw ValidationException::withMessages(['code' => 'A code is required for code-applied discounts.']);
+        }
+        if ($data['applicationMode'] === 'manual' && filled($data['code'] ?? null)) {
+            throw ValidationException::withMessages(['code' => 'Manual discounts cannot define a coupon code.']);
+        }
         if ($data['type'] === 'percentage' && (float) $data['value'] > 100) {
             throw ValidationException::withMessages(['value' => 'A percentage discount cannot exceed 100.']);
         }
@@ -215,8 +238,26 @@ class DiscountController extends Controller
             ->exists()) {
             throw ValidationException::withMessages(['code' => 'The discount code has already been taken.']);
         }
-        if (in_array($data['scope'], ['product', 'category'], true) && empty($data['targetProductIds']) && empty($data['targetCategoryIds'])) {
-            throw ValidationException::withMessages(['targets' => 'Select at least one target for a product or category discount.']);
+        $products = $data['targetProductIds'] ?? [];
+        $categories = $data['targetCategoryIds'] ?? [];
+        if ($data['scope'] === 'order' && ($products || $categories)) {
+            throw ValidationException::withMessages(['targets' => 'Order discounts cannot define product or category targets.']);
+        }
+        if ($data['scope'] === 'product' && (! $products || $categories)) {
+            throw ValidationException::withMessages(['targetProductIds' => 'Product discounts require product targets only.']);
+        }
+        if ($data['scope'] === 'category' && (! $categories || $products)) {
+            throw ValidationException::withMessages(['targetCategoryIds' => 'Category discounts require category targets only.']);
+        }
+        $groups = $data['customerGroupIds'] ?? [];
+        if ($data['customerEligibilityMode'] === 'all' && $groups) {
+            throw ValidationException::withMessages(['customerGroupIds' => 'All-customer discounts cannot define customer-group targets.']);
+        }
+        if ($data['customerEligibilityMode'] === 'selected_groups' && ! $groups) {
+            throw ValidationException::withMessages(['customerGroupIds' => 'Selected-group discounts require one or more customer groups.']);
+        }
+        if (($data['startTime'] ?? null) === null xor ($data['endTime'] ?? null) === null) {
+            throw ValidationException::withMessages(['schedule' => 'Start time and end time must be provided together.']);
         }
         $this->assertTenantTargets($tenantId, $data);
 
@@ -226,15 +267,16 @@ class DiscountController extends Controller
     private function discountPayload(int $tenantId, array $data, bool $creating = true): array
     {
         $payload = [
-            'name' => $data['name'], 'code' => $data['code'] ?: null, 'description' => $data['description'] ?? null,
+            'name' => $data['name'], 'code' => $data['code'] ?? null, 'description' => $data['description'] ?? null,
             'application_mode' => $data['applicationMode'], 'type' => $data['type'], 'scope' => $data['scope'], 'value' => $data['value'],
             'conditions' => $data['conditions'] ?? null, 'starts_at' => $data['startsAt'] ?? null, 'ends_at' => $data['endsAt'] ?? null,
+            'start_date' => $data['startDate'] ?? null, 'end_date' => $data['endDate'] ?? null,
             'active_days' => isset($data['activeDays']) ? json_encode(array_values($data['activeDays'])) : null,
             'start_time' => $data['startTime'] ?? null, 'end_time' => $data['endTime'] ?? null,
             'minimum_order_amount' => $data['minimumOrderAmount'] ?? 0, 'maximum_discount_amount' => $data['maximumDiscountAmount'] ?? null,
             'usage_limit' => $data['usageLimit'] ?? null, 'usage_limit_per_customer' => $data['usageLimitPerCustomer'] ?? null,
-            'customer_eligibility' => $data['customerEligibility'] ?? null,
-            'payment_method' => isset($data['paymentMethod']) && $data['paymentMethod'] !== 'Any Payment Method' ? strtolower($data['paymentMethod']) : null,
+            'customer_eligibility' => $data['customerEligibilityMode'] === 'selected_groups' ? 'selected_groups' : null,
+            'payment_method' => null,
             'is_active' => $data['isActive'], 'updated_at' => now(),
         ];
 
@@ -245,9 +287,19 @@ class DiscountController extends Controller
     {
         foreach (['targetProductIds' => 'products', 'targetCategoryIds' => 'categories'] as $key => $table) {
             $ids = array_values(array_unique(array_map('intval', $data[$key] ?? [])));
-            if ($ids && DB::table($table)->where('tenant_id', $tenantId)->whereNull('deleted_at')->whereIn('id', $ids)->count() !== count($ids)) {
-                throw ValidationException::withMessages([$key => 'One or more selected targets do not belong to this tenant.']);
+            $query = DB::table($table)->where('tenant_id', $tenantId)->whereNull('deleted_at')->whereIn('id', $ids);
+            if ($ids && $query->where('is_active', true)->count() !== count($ids)) {
+                throw ValidationException::withMessages([$key => 'One or more selected targets are inactive or do not belong to this tenant.']);
             }
+        }
+        $groups = array_values(array_unique(array_map('intval', $data['customerGroupIds'] ?? [])));
+        if ($groups && DB::table('customer_groups')->where('tenant_id', $tenantId)->where('is_active', true)->whereNull('deleted_at')->whereIn('id', $groups)->count() !== count($groups)) {
+            throw ValidationException::withMessages(['customerGroupIds' => 'One or more selected customer groups are inactive or do not belong to this tenant.']);
+        }
+        $methods = array_values(array_unique(array_map('intval', $data['paymentMethodIds'] ?? [])));
+        if ($methods && DB::table('payment_methods as methods')->join('financial_accounts as accounts', 'accounts.id', '=', 'methods.financial_account_id')
+            ->where('methods.tenant_id', $tenantId)->where('methods.is_active', true)->where('accounts.tenant_id', $tenantId)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')->whereIn('methods.id', $methods)->count() !== count($methods)) {
+            throw ValidationException::withMessages(['paymentMethodIds' => 'One or more selected payment methods are inactive or do not belong to this tenant.']);
         }
     }
 
@@ -260,6 +312,12 @@ class DiscountController extends Controller
             foreach (array_unique(array_map('intval', $data[$key] ?? [])) as $targetId) {
                 $rows[] = ['tenant_id' => $tenantId, 'discount_id' => $discountId, 'target_type' => $type, 'target_id' => $targetId, 'created_at' => $now, 'updated_at' => $now];
             }
+        }
+        foreach (array_unique(array_map('intval', $data['customerGroupIds'] ?? [])) as $groupId) {
+            $rows[] = ['tenant_id' => $tenantId, 'discount_id' => $discountId, 'target_type' => 'customer_group', 'target_id' => $groupId, 'created_at' => $now, 'updated_at' => $now];
+        }
+        foreach (array_unique(array_map('intval', $data['paymentMethodIds'] ?? [])) as $methodId) {
+            $rows[] = ['tenant_id' => $tenantId, 'discount_id' => $discountId, 'target_type' => 'payment_method', 'target_id' => $methodId, 'created_at' => $now, 'updated_at' => $now];
         }
         if (! $data['appliesToAllBranches']) {
             foreach (array_unique(array_map('intval', $data['branchIds'] ?? [])) as $branchId) {
@@ -288,6 +346,7 @@ class DiscountController extends Controller
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->first();
         abort_if(! $order, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $order->branch_id);
 
         return $order;
     }
@@ -296,6 +355,7 @@ class DiscountController extends Controller
     {
         $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->whereNull('deleted_at')->lockForUpdate()->first();
         abort_if(! $order, 404, 'Order not found.');
+        app(BranchAccessService::class)->authorizeRequestBranch(request(), (int) $order->branch_id);
 
         return $order;
     }
@@ -320,10 +380,17 @@ class DiscountController extends Controller
         if (! $discount->is_active) {
             return 'inactive';
         }
-        if ($discount->starts_at && now()->lessThan(Carbon::parse($discount->starts_at))) {
+        $today = now()->toDateString();
+        if ($discount->start_date && $today < $discount->start_date) {
             return 'scheduled';
         }
-        if ($discount->ends_at && now()->greaterThan(Carbon::parse($discount->ends_at))) {
+        if ($discount->end_date && $today > $discount->end_date) {
+            return 'expired';
+        }
+        if ($discount->start_date === null && $discount->starts_at && now('UTC')->lessThan(Carbon::parse($discount->starts_at, 'UTC'))) {
+            return 'scheduled';
+        }
+        if ($discount->end_date === null && $discount->ends_at && now('UTC')->greaterThan(Carbon::parse($discount->ends_at, 'UTC'))) {
             return 'expired';
         }
 
@@ -333,19 +400,48 @@ class DiscountController extends Controller
     private function serializeManagementDiscount(int $tenantId, object $discount): array
     {
         $targets = DB::table('discount_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->get()->groupBy('target_type');
+        $ids = fn (string $type) => ($targets[$type] ?? collect())->pluck('target_id')->map(fn ($id) => (int) $id)->values()->all();
+        $productIds = $ids('product');
+        $categoryIds = $ids('category');
+        $groupIds = $ids('customer_group');
+        $branchIds = $ids('branch');
+        $paymentMethodIds = $ids('payment_method');
 
         return [
             'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'description' => $discount->description,
             'applicationMode' => $discount->application_mode, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
-            'conditions' => $discount->conditions, 'startsAt' => $discount->starts_at, 'endsAt' => $discount->ends_at,
+            'conditions' => $discount->conditions, 'startDate' => $discount->start_date, 'endDate' => $discount->end_date,
+            // Legacy timestamps remain readable but are not used by V1 edits.
+            'startsAt' => $discount->starts_at, 'endsAt' => $discount->ends_at,
             'activeDays' => $discount->active_days ? json_decode($discount->active_days, true) : [], 'startTime' => $discount->start_time, 'endTime' => $discount->end_time,
             'minimumOrderAmount' => (float) $discount->minimum_order_amount, 'maximumDiscountAmount' => $discount->maximum_discount_amount === null ? null : (float) $discount->maximum_discount_amount,
             'usageLimit' => $discount->usage_limit, 'usageLimitPerCustomer' => $discount->usage_limit_per_customer, 'usedCount' => (int) $discount->used_count,
-            'estimatedSavedValue' => (float) $discount->estimated_saved_value, 'customerEligibility' => $discount->customer_eligibility, 'paymentMethod' => $discount->payment_method,
+            'estimatedSavedValue' => (float) $discount->estimated_saved_value,
+            'customerEligibilityMode' => $groupIds ? 'selected_groups' : 'all',
+            'customerGroupIds' => $groupIds, 'customerGroups' => $this->targetDetails($tenantId, 'customer_groups', $groupIds),
+            'paymentMethodIds' => $paymentMethodIds, 'paymentMethods' => $this->targetDetails($tenantId, 'payment_methods', $paymentMethodIds),
+            'legacyCustomerEligibility' => $discount->customer_eligibility === 'selected_groups' ? null : $discount->customer_eligibility,
+            'legacyPaymentMethod' => $discount->payment_method,
             'isActive' => (bool) $discount->is_active, 'status' => $this->status($discount), 'displayPeriodPrimary' => $discount->display_period_primary, 'displayPeriodSecondary' => $discount->display_period_secondary,
-            'targetProductIds' => ($targets['product'] ?? collect())->pluck('target_id')->map(fn ($id) => (int) $id)->values(), 'targetCategoryIds' => ($targets['category'] ?? collect())->pluck('target_id')->map(fn ($id) => (int) $id)->values(),
-            'appliesToAllBranches' => ! $targets->has('branch'), 'branchIds' => ($targets['branch'] ?? collect())->pluck('target_id')->map(fn ($id) => (int) $id)->values(),
+            'targetProductIds' => $productIds, 'productTargets' => $this->targetDetails($tenantId, 'products', $productIds),
+            'targetCategoryIds' => $categoryIds, 'categoryTargets' => $this->targetDetails($tenantId, 'categories', $categoryIds),
+            'appliesToAllBranches' => ! $targets->has('branch'), 'branchIds' => $branchIds, 'branches' => $this->targetDetails($tenantId, 'branches', $branchIds),
         ];
+    }
+
+    /** @return array<int, array{id: int, name: string, isActive: bool}> */
+    private function targetDetails(int $tenantId, string $table, array $ids): array
+    {
+        if (! $ids) {
+            return [];
+        }
+        $nameColumn = $table === 'payment_methods' ? 'name' : 'name';
+        $rows = DB::table($table)->where('tenant_id', $tenantId)->whereIn('id', $ids)->get(['id', $nameColumn, 'is_active']);
+        $byId = $rows->keyBy('id');
+
+        return collect($ids)->map(fn (int $id) => $byId->has($id) ? [
+            'id' => $id, 'name' => (string) $byId[$id]->{$nameColumn}, 'isActive' => (bool) $byId[$id]->is_active,
+        ] : ['id' => $id, 'name' => null, 'isActive' => false])->values()->all();
     }
 
     private function serializeDiscount(int $tenantId, object $discount, ?object $order): array
@@ -361,7 +457,7 @@ class DiscountController extends Controller
             }
         }
 
-        return ['id' => $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'type' => $discount->type, 'value' => (float) $discount->value,
+        return ['id' => $discount->id, 'name' => $discount->name, 'type' => $discount->type, 'value' => (float) $discount->value,
             'badge' => match ($discount->type) {
                 'percentage' => ((float) $discount->value).'% OFF', 'fixed' => '-SYP '.number_format((float) $discount->value, 2), 'bogo' => 'BOGO', default => strtoupper($discount->type)
             },
@@ -373,8 +469,11 @@ class DiscountController extends Controller
         if ($discount->application_mode === 'code' && empty($data['code'])) {
             throw new OrderLifecycleException('DISCOUNT_CODE_REQUIRED', 'This discount requires its code.');
         }
-        if (in_array($discount->application_mode, ['auto', 'manual'], true) && empty($data['discountId'])) {
+        if ($discount->application_mode === 'manual' && empty($data['discountId'])) {
             throw new OrderLifecycleException('DISCOUNT_SELECTION_REQUIRED', 'Select this discount from the available discounts list.');
+        }
+        if (! in_array($discount->application_mode, ['manual', 'code'], true)) {
+            throw new OrderLifecycleException('DISCOUNT_APPLICATION_MODE_UNSUPPORTED', 'Automatic discounts are not supported.');
         }
     }
 }

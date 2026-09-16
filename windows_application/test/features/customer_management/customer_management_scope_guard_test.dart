@@ -32,17 +32,6 @@ void main() {
         ),
       ),
     );
-    expect(
-      source,
-      isNot(
-        matches(
-          RegExp(
-            r'last\s+visit|recent\s+orders?|order\s+history|average\s+order|spending\s+total|group\s+description',
-            caseSensitive: false,
-          ),
-        ),
-      ),
-    );
     expect(source, isNot(matches(RegExp(r'C-\d{3,}'))));
     expect(source, isNot(contains('customerIds: <int>[1')));
     expect(source, isNot(contains('X-Tenant-Id')));

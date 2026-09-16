@@ -4,6 +4,8 @@ import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
@@ -147,6 +149,10 @@ class _SpyOrdersRepository extends OrdersRepository {
 }
 
 class _SpyDiscountsRepository implements DiscountsRepository {
+  @override
+  Future<DiscountFormReferences> getFormReferences() async =>
+      const DiscountFormReferences();
+
   int requests = 0;
 
   @override
@@ -157,6 +163,10 @@ class _SpyDiscountsRepository implements DiscountsRepository {
 
   @override
   Future<List<Branch>> getBranches() async => const <Branch>[];
+
+  @override
+  Future<DiscountDetail> getDiscountDetail(String discountId) =>
+      throw UnimplementedError();
 
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>

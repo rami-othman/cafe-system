@@ -4,17 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Controllers\Controller;
-use App\Services\BranchAccessService;
 use App\Services\AccountingPostingService;
+use App\Services\BranchAccessService;
 use App\Services\DiscountEligibilityService;
 use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
 use App\Services\SaleConsumptionService;
-use App\Support\TenantContext;
 use App\Support\Money;
-use App\Support\SalePaymentMethodResolver;
 use App\Support\PaymentPerformanceProbe;
+use App\Support\SalePaymentMethodResolver;
+use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -129,6 +129,19 @@ class PaymentController extends Controller
                 return ['payment' => $existing, 'total' => (float) $row->total, 'received' => (float) $data['amount']];
             }
 
+            // A configured payment method is authoritative for both Discount
+            // eligibility and Finance posting. The legacy method remains a
+            // compatibility selector only when no paymentMethodId is supplied.
+            $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
+                ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
+                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
+            if ($resolvedMethod === null) {
+                throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
+            }
+            if ($resolvedMethod->type !== $data['method']) {
+                throw ValidationException::withMessages(['paymentMethodId' => 'The selected payment method does not match method.']);
+            }
+
             $this->lifecycle->assertPayable($row);
             $this->performance->measure('shift validation', fn () => $this->assertActorHasOpenShift($tenantId, $row, $actorId));
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
@@ -139,17 +152,10 @@ class PaymentController extends Controller
             // authoritative second stage, including revalidation after a
             // manager changes a policy or its schedule expires.
             if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
-                $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $data['method']);
+                $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $resolvedMethod->paymentMethodId, $resolvedMethod->type);
             }
             if ((float) $data['amount'] < (float) $row->total) {
                 throw ValidationException::withMessages(['amount' => 'Payment amount is less than order total.']);
-            }
-
-            $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
-                ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
-                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
-            if ($resolvedMethod === null) {
-                throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
             }
 
             $currency = (string) (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $row->branch_id)->whereNull('deleted_at')->value('currency') ?? 'SYP');
@@ -157,7 +163,7 @@ class PaymentController extends Controller
             $persistenceStarted = $this->performance->start('payment persistence');
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $row->branch_id, 'order_id' => $row->id,
-                'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $data['method'],
+                'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $resolvedMethod->type,
                 'amount' => $row->total, 'currency' => $currency, 'status' => 'completed',
                 'payment_method_id' => $resolvedMethod?->paymentMethodId,
                 'idempotency_key' => $data['idempotencyKey'], 'idempotency_hash' => $hash,
@@ -175,6 +181,7 @@ class PaymentController extends Controller
 
             $answer = ['payment' => DB::table('payments')->where('id', $paymentId)->first(), 'total' => (float) $row->total, 'received' => (float) $data['amount']];
             $closureEndedAt = microtime(true);
+
             return $answer;
         }, 3);
         $this->performance->stop('transaction commit', $closureEndedAt ?? $transactionStarted);
