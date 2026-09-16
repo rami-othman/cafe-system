@@ -91,7 +91,7 @@ class AuthPhaseTwoEmployeeManagementTest extends TestCase
         $this->withToken($managerToken)->putJson("/api/v1/employees/{$employee->id}", [
             'roleId' => $managerRole->id, 'temporaryPassword' => 'NewManagerPass', 'temporaryPassword_confirmation' => 'NewManagerPass',
         ])->assertOk()->assertJsonPath('data.role.code', 'manager')->assertJsonPath('data.mustChangePassword', true);
-        $this->withToken($employeeToken)->getJson('/api/v1/auth/me')->assertUnauthorized()->assertJsonPath('code', 'TOKEN_REVOKED');
+        $this->withToken($employeeToken)->getJson('/api/v1/auth/me')->assertUnauthorized()->assertJsonPath('code', 'AUTH_SESSION_INVALID');
         $this->postJson('/api/v1/auth/login', ['email' => $employee->email, 'password' => 'NewManagerPass'])->assertOk();
 
         $other = Tenant::query()->create(['name' => 'Other Cafe', 'slug' => 'other-'.uniqid(), 'status' => 'active']);

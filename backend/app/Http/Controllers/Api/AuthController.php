@@ -8,11 +8,12 @@ use App\Models\ApiToken;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantOperationalPolicy;
+use App\Services\UserLifecycleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -22,33 +23,40 @@ class AuthController extends Controller
 
     public function login(Request $request, TenantOperationalPolicy $tenantPolicy): JsonResponse
     {
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => ['nullable', 'email'],
             'username' => ['nullable', 'string', 'max:100'],
             'password' => ['required', 'string'],
             'deviceName' => ['nullable', 'string', 'max:100'],
         ]);
+        if ($validator->fails()) {
+            return $this->validationFailure('AUTH_LOGIN_VALIDATION_FAILED', $validator->errors()->keys());
+        }
+        $data = $validator->validated();
         $hasEmail = filled($data['email'] ?? null);
         $hasUsername = filled($data['username'] ?? null);
         if ($hasEmail === $hasUsername) {
-            throw ValidationException::withMessages(['identifier' => 'Provide exactly one of email or username.']);
+            return $this->validationFailure('AUTH_LOGIN_VALIDATION_FAILED', ['identifier']);
         }
 
         $identifier = $hasEmail ? mb_strtolower(trim($data['email'])) : User::normalizeUsername($data['username']);
         $rateKey = 'tenant-login:'.$request->ip().':'.$identifier;
         if (RateLimiter::tooManyAttempts($rateKey, 5)) {
-            return $this->invalidCredentials(429);
+            return $this->failure('LOGIN_RATE_LIMITED', 429);
         }
 
         $user = $hasEmail ? $this->findByEmail($identifier) : $this->findByUsername($identifier);
         if (! $user || $user->usesEmailLogin() !== $hasEmail || ! $user->is_active || $user->trashed() || ! $user->tenant || ! $tenantPolicy->allowsOperationalAccess($user->tenant) || ! Hash::check($data['password'], $user->password)) {
             RateLimiter::hit($rateKey, 60);
 
-            return $this->invalidCredentials();
+            return $this->failure('INVALID_CREDENTIALS', 401);
         }
 
         RateLimiter::clear($rateKey);
-        $token = $this->issueToken($user, $data['deviceName'] ?? 'frontend');
+        $token = $this->issueToken(
+            $user,
+            filled($data['deviceName'] ?? null) ? trim($data['deviceName']) : 'frontend',
+        );
         $user->forceFill(['last_login_at' => now()])->save();
 
         return response()->json(['data' => $this->sessionPayload($user, $user->tenant, $token)]);
@@ -64,29 +72,41 @@ class AuthController extends Controller
         )]);
     }
 
-    public function changePassword(Request $request): JsonResponse
+    public function changePassword(Request $request, UserLifecycleService $lifecycle): JsonResponse
     {
         /** @var User $user */
         $user = $request->attributes->get('auth_user');
         $minimum = $user->usesEmailLogin() ? 10 : 8;
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'currentPassword' => ['required', 'string'],
             'newPassword' => ['required', 'string', 'min:'.$minimum, 'confirmed'],
         ]);
+        if ($validator->fails()) {
+            return $this->validationFailure('PASSWORD_CHANGE_VALIDATION_FAILED', $validator->errors()->keys());
+        }
+        $data = $validator->validated();
         if (! Hash::check($data['currentPassword'], $user->password)) {
-            throw ValidationException::withMessages(['currentPassword' => 'The current password is incorrect.']);
+            return $this->validationFailure('INCORRECT_CURRENT_PASSWORD', ['currentPassword']);
         }
 
-        // The current opaque token stays valid after the first-password change.
-        // It is still independently revocable by logout or lifecycle actions.
-        $user->forceFill(['password' => Hash::make($data['newPassword']), 'must_change_password' => false])->save();
+        // Preserve the Phase 1 first-password-change flow for this device, but
+        // atomically revoke every other session whose password authority is
+        // now stale.
+        $lifecycle->changePassword(
+            $user,
+            $data['newPassword'],
+            $request->attributes->get('auth_token'),
+        );
 
         return response()->json(['data' => ['mustChangePassword' => false]]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->attributes->get('auth_token')->forceFill(['revoked_at' => now()])->save();
+        ApiToken::query()
+            ->whereKey($request->attributes->get('auth_token')->id)
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now(), 'updated_at' => now()]);
 
         return response()->json(null, 204);
     }
@@ -113,7 +133,7 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'name' => $deviceName,
             'token_hash' => hash('sha256', $plainToken),
-            'expires_at' => now()->addDays((int) config('auth.tenant_token_ttl_days', 30)),
+            'expires_at' => now()->addDays(max(1, (int) config('auth.tenant_token_ttl_days', 30))),
         ]);
         $token->setAttribute('plain_text_token', $plainToken);
 
@@ -139,8 +159,26 @@ class AuthController extends Controller
         return $data;
     }
 
-    private function invalidCredentials(int $status = 401): JsonResponse
+    /** @param iterable<string> $fields */
+    private function validationFailure(string $code, iterable $fields): JsonResponse
     {
-        return response()->json(['message' => 'Invalid credentials.', 'code' => 'INVALID_CREDENTIALS'], $status);
+        $errors = [];
+        foreach ($fields as $field) {
+            $errors[$field] = ['Invalid authentication request.'];
+        }
+
+        return response()->json([
+            'message' => 'Invalid authentication request.',
+            'code' => $code,
+            'errors' => $errors,
+        ], 422);
+    }
+
+    private function failure(string $code, int $status): JsonResponse
+    {
+        return response()->json([
+            'message' => $code === 'LOGIN_RATE_LIMITED' ? 'Too many login attempts.' : 'Invalid credentials.',
+            'code' => $code,
+        ], $status);
     }
 }

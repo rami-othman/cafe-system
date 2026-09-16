@@ -1240,7 +1240,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
-          redirect: (_, __) => CashierAccess.isCashier(
+          redirect: (_, _) => CashierAccess.isCashier(
                     serviceLocator<AuthSessionCubit>().state.session?.user.role,
                   )
               ? AppRoutes.financeReceiptVouchers

@@ -17,11 +17,14 @@ class WebAuthSessionStorage implements AuthSessionStorage {
   }
 
   static const String _sessionKey = 'cafe618.auth.web-session';
+  static const String _invalidationKey = 'cafe618.auth.web-authoritative-invalid';
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   void _onStorageEvent(web.Event event) {
     final web.StorageEvent storageEvent = event as web.StorageEvent;
-    if (storageEvent.key == _sessionKey || storageEvent.key == null) {
+    if (storageEvent.key == _sessionKey ||
+        storageEvent.key == _invalidationKey ||
+        storageEvent.key == null) {
       _changes.add(null);
     }
   }
@@ -31,18 +34,31 @@ class WebAuthSessionStorage implements AuthSessionStorage {
 
   @override
   Future<AuthSession?> read() async {
-    final String? encoded = web.window.localStorage.getItem(_sessionKey);
-    if (encoded == null || encoded.isEmpty) return null;
     try {
+      final String? encoded = web.window.localStorage.getItem(_sessionKey);
+      if (encoded == null || encoded.isEmpty) return null;
       final dynamic decoded = jsonDecode(encoded);
-      if (decoded is! Map) return null;
+      if (decoded is! Map) throw const AuthSessionStorageCorruptException();
       final Map<String, dynamic> json = Map<String, dynamic>.from(decoded);
       final String? token = json.remove('accessToken') as String?;
-      if (token == null || token.isEmpty) return null;
+      if (token == null || token.isEmpty) {
+        throw const AuthSessionStorageCorruptException();
+      }
       return AuthSession.fromStorage(token, json);
     } on FormatException {
+      await _clearCorruptEntry();
+      throw const AuthSessionStorageCorruptException();
+    } on AuthSessionStorageCorruptException {
+      await _clearCorruptEntry();
+      rethrow;
+    }
+  }
+
+  Future<void> _clearCorruptEntry() async {
+    try {
       await clear();
-      return null;
+    } catch (_) {
+      // The Cubit still reaches a deterministic unauthenticated state.
     }
   }
 
@@ -51,8 +67,17 @@ class WebAuthSessionStorage implements AuthSessionStorage {
     final Map<String, dynamic> payload = session.toStorageJson()
       ..['accessToken'] = session.accessToken;
     web.window.localStorage.setItem(_sessionKey, jsonEncode(payload));
+    web.window.localStorage.removeItem(_invalidationKey);
   }
 
   @override
   Future<void> clear() async => web.window.localStorage.removeItem(_sessionKey);
+
+  @override
+  Future<bool> isAuthoritativelyInvalidated() async =>
+      web.window.localStorage.getItem(_invalidationKey) == '1';
+
+  @override
+  Future<void> markAuthoritativelyInvalidated() async =>
+      web.window.localStorage.setItem(_invalidationKey, '1');
 }

@@ -74,7 +74,7 @@ void main() {
   );
 
   testWidgets(
-    'Employee (cashier) sidebar contains only POS, Orders, Customers, Discounts',
+    'Employee (cashier) sidebar contains POS, Orders, Customers, Discounts, and Finance',
     (WidgetTester tester) async {
       final AuthSessionCubit cubit = await _authenticatedCubit(
         // Cashiers always retain customer lookup for POS regardless of the
@@ -89,18 +89,18 @@ void main() {
       expect(_sidebarText('Orders'), findsOneWidget);
       expect(_sidebarText('Customers'), findsOneWidget);
       expect(_sidebarText('Discounts'), findsOneWidget);
+      expect(_sidebarText('Finance'), findsOneWidget);
 
       expect(_sidebarText('Dashboard'), findsNothing);
       expect(_sidebarText('Cafe Configuration'), findsNothing);
       expect(_sidebarText('Menu Management'), findsNothing);
       expect(_sidebarText('Inventory'), findsNothing);
-      expect(_sidebarText('Finance'), findsNothing);
       expect(_sidebarText('Reports'), findsNothing);
     },
   );
 
   testWidgets(
-    'Cashier (legacy role spelling) sidebar contains only POS, Orders, Customers, Discounts',
+    'Cashier (legacy role spelling) sidebar contains the limited Finance workspace',
     (WidgetTester tester) async {
       final AuthSessionCubit cubit = await _authenticatedCubit(
         _session(role: 'cashier', canManageCustomers: true),
@@ -113,12 +113,12 @@ void main() {
       expect(_sidebarText('Orders'), findsOneWidget);
       expect(_sidebarText('Customers'), findsOneWidget);
       expect(_sidebarText('Discounts'), findsOneWidget);
+      expect(_sidebarText('Finance'), findsOneWidget);
 
       expect(_sidebarText('Dashboard'), findsNothing);
       expect(_sidebarText('Cafe Configuration'), findsNothing);
       expect(_sidebarText('Menu Management'), findsNothing);
       expect(_sidebarText('Inventory'), findsNothing);
-      expect(find.text('Finance'), findsNothing);
       expect(find.text('Reports'), findsNothing);
     },
   );
@@ -246,6 +246,12 @@ class _SessionStorage implements AuthSessionStorage {
 
   @override
   Future<void> clear() async => _session = null;
+
+  @override
+  Future<bool> isAuthoritativelyInvalidated() async => false;
+
+  @override
+  Future<void> markAuthoritativelyInvalidated() async {}
 
   @override
   Stream<void> get changes => const Stream<void>.empty();

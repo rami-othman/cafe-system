@@ -8609,6 +8609,96 @@ abstract class AppLocalizations {
   /// **'We could not log you in. Check your details and try again.'**
   String get authLoginFailed;
 
+  /// No description provided for @authInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'The email, username, or password is incorrect.'**
+  String get authInvalidCredentials;
+
+  /// No description provided for @authTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many login attempts. Please wait a moment and try again.'**
+  String get authTooManyAttempts;
+
+  /// No description provided for @authNetworkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We cannot connect to the server. Check your network connection and try again.'**
+  String get authNetworkUnavailable;
+
+  /// No description provided for @authConnectionTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection timed out. Check your connection and try again.'**
+  String get authConnectionTimeout;
+
+  /// No description provided for @authServerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The service is temporarily unavailable. Please try again shortly.'**
+  String get authServerUnavailable;
+
+  /// No description provided for @authValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Please review the highlighted fields and try again.'**
+  String get authValidationFailed;
+
+  /// No description provided for @authFieldValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this value and try again.'**
+  String get authFieldValidationFailed;
+
+  /// No description provided for @authInvalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not verify the sign-in response. Please try again.'**
+  String get authInvalidResponse;
+
+  /// No description provided for @authSecureStorageFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not securely save this session. Please try again.'**
+  String get authSecureStorageFailure;
+
+  /// No description provided for @authVerifiedSessionSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your verified session could not be saved securely. Retry verification or log out.'**
+  String get authVerifiedSessionSaveFailed;
+
+  /// No description provided for @authPasswordChangedSessionSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password was changed, but we could not save this session. Please log in again using your new password.'**
+  String get authPasswordChangedSessionSaveFailed;
+
+  /// No description provided for @authUnexpectedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected went wrong. Please try again.'**
+  String get authUnexpectedError;
+
+  /// No description provided for @authIncorrectCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'The current password is incorrect.'**
+  String get authIncorrectCurrentPassword;
+
+  /// No description provided for @authWeakNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a stronger new password.'**
+  String get authWeakNewPassword;
+
+  /// No description provided for @authPasswordConfirmationMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The password confirmation does not match.'**
+  String get authPasswordConfirmationMismatch;
+
   /// No description provided for @authChangePassword.
   ///
   /// In en, this message translates to:
@@ -8698,6 +8788,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your offline session has expired. Connect to the internet and log in again.'**
   String get authOfflineSessionExpired;
+
+  /// No description provided for @authVerificationRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your session'**
+  String get authVerificationRequiredTitle;
+
+  /// No description provided for @authUnableToVerifySession.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not verify your saved session. Please try again.'**
+  String get authUnableToVerifySession;
+
+  /// No description provided for @authRetryVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry verification'**
+  String get authRetryVerification;
+
+  /// No description provided for @authRetryingVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying session…'**
+  String get authRetryingVerification;
+
+  /// No description provided for @authReturnToLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to Login'**
+  String get authReturnToLogin;
+
+  /// No description provided for @authSecureStorageReadFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure storage is unavailable. Please try again or return to Login.'**
+  String get authSecureStorageReadFailure;
+
+  /// No description provided for @authCorruptSavedSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved session could not be read. Please log in again.'**
+  String get authCorruptSavedSession;
+
+  /// No description provided for @authConnectionRequiredToVerifySession.
+  ///
+  /// In en, this message translates to:
+  /// **'A connection is required to verify this saved session before access can continue.'**
+  String get authConnectionRequiredToVerifySession;
+
+  /// No description provided for @authTenantNotOperationalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace temporarily unavailable'**
+  String get authTenantNotOperationalTitle;
+
+  /// No description provided for @authTenantNotOperationalExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is temporarily unavailable.'**
+  String get authTenantNotOperationalExplanation;
+
+  /// No description provided for @authContactAdministration.
+  ///
+  /// In en, this message translates to:
+  /// **'Please contact administration for assistance.'**
+  String get authContactAdministration;
 
   /// No description provided for @authSettingsSubtitle.
   ///
