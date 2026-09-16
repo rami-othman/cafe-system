@@ -34,7 +34,8 @@ final class SalesInvoicePostingService
         $this->periods->assertPostingAllowed($tenantId, $invoice->invoice_date);
         $lines = DB::table('sales_invoice_lines')->where('tenant_id', $tenantId)->where('sales_invoice_id', $invoiceId)->orderBy('line_number')->get();
         if ($lines->isEmpty()) throw ValidationException::withMessages(['lines' => 'A sales invoice requires at least one line before posting.']);
-        $totals = $this->snapshotTotals($lines->all());
+        $charges = DB::table('sales_invoice_charges')->where('tenant_id', $tenantId)->where('sales_invoice_id', $invoiceId)->orderBy('sort_order')->get();
+        $totals = $this->snapshotTotals($invoice, $lines->all(), $charges->all());
         if (Money::cents($invoice->subtotal) !== $totals['subtotal'] || Money::cents($invoice->discount_total) !== $totals['discount'] || Money::cents($invoice->tax_total) !== $totals['tax'] || Money::cents($invoice->total) !== $totals['total']) throw ValidationException::withMessages(['totals' => 'The stored invoice totals no longer match its immutable line snapshots.']);
         $accounts = $this->accounts->postingAccounts($tenantId);
         $costs = $this->inventory->preview($tenantId, $invoice, $lines);
@@ -43,7 +44,7 @@ final class SalesInvoicePostingService
         $account = fn (string $code): array => ['id' => (int) $details[$code]->id, 'code' => $code, 'name' => $details[$code]->name_ar ?: $details[$code]->name_en];
         $inventory = [];
         foreach ($costs as $lineId => $cost) foreach ($cost['movements'] as $movement) $inventory[] = ['lineId' => (int) $lineId, 'materialId' => $movement['materialId'], 'materialName' => $movement['materialName'], 'recipeQuantity' => $movement['recipeQuantity'], 'recipeUnit' => $movement['recipeUnit'], 'quantityToConsume' => \App\Support\InventoryDecimal::quantity($movement['quantity']), 'baseUnit' => $movement['baseUnit'], 'warehouseId' => $movement['warehouseId'], 'warehouseName' => $movement['warehouseName'], 'unitCost' => \App\Support\InventoryDecimal::unitCost($movement['unitCostCents']), 'estimatedCost' => Money::decimal($movement['costCents'])];
-        return ['invoice' => ['subtotal' => Money::decimal($totals['subtotal']), 'discount' => Money::decimal($totals['discount']), 'tax' => Money::decimal($totals['tax']), 'total' => Money::decimal($totals['total'])], 'accounting' => ['accountsReceivable' => $account($accounts['accountsReceivable']), 'revenue' => $account($accounts['revenue']), 'taxPayable' => $account($accounts['taxPayable']), 'cogs' => $account($accounts['cogs']), 'inventory' => $account($accounts['inventory']), 'accountsReceivableDebit' => Money::decimal($totals['total']), 'revenueCredit' => Money::decimal($totals['subtotal']), 'taxCredit' => Money::decimal($totals['tax'])], 'inventory' => $inventory, 'cogs' => ['totalEstimated' => Money::decimal($cogs), 'cogsDebit' => Money::decimal($cogs), 'inventoryCredit' => Money::decimal($cogs)], 'warnings' => []];
+        return ['invoice' => ['subtotal' => Money::decimal($totals['subtotal']), 'discount' => Money::decimal($totals['discount']), 'charges' => Money::decimal($totals['charges']), 'adjustment' => Money::decimal($totals['adjustment']), 'tax' => Money::decimal($totals['tax']), 'total' => Money::decimal($totals['total'])], 'accounting' => ['accountsReceivable' => $account($accounts['accountsReceivable']), 'revenue' => $account($accounts['revenue']), 'additionalChargeRevenue' => $account($accounts['additionalChargeRevenue']), 'manualAdjustment' => $account($accounts['manualAdjustment']), 'taxPayable' => $account($accounts['taxPayable']), 'cogs' => $account($accounts['cogs']), 'inventory' => $account($accounts['inventory']), 'accountsReceivableDebit' => Money::decimal($totals['total']), 'revenueCredit' => Money::decimal($totals['subtotal']), 'additionalChargeRevenueCredit' => Money::decimal($totals['charges']), 'taxCredit' => Money::decimal($totals['tax'])], 'inventory' => $inventory, 'cogs' => ['totalEstimated' => Money::decimal($cogs), 'cogsDebit' => Money::decimal($cogs), 'inventoryCredit' => Money::decimal($cogs)], 'warnings' => []];
     }
 
     public function post(Request $request, int $tenantId, int $invoiceId, int $actorId, array $data): object
@@ -65,7 +66,8 @@ final class SalesInvoicePostingService
             $this->periods->assertPostingAllowed($tenantId, $invoice->invoice_date);
             $lines = DB::table('sales_invoice_lines')->where('tenant_id', $tenantId)->where('sales_invoice_id', $invoiceId)->orderBy('line_number')->get();
             if ($lines->isEmpty()) throw ValidationException::withMessages(['lines' => 'A sales invoice requires at least one line before posting.']);
-            $totals = $this->snapshotTotals($lines->all());
+            $charges = DB::table('sales_invoice_charges')->where('tenant_id', $tenantId)->where('sales_invoice_id', $invoiceId)->orderBy('sort_order')->get();
+            $totals = $this->snapshotTotals($invoice, $lines->all(), $charges->all());
             if (Money::cents($invoice->subtotal) !== $totals['subtotal'] || Money::cents($invoice->discount_total) !== $totals['discount'] || Money::cents($invoice->tax_total) !== $totals['tax'] || Money::cents($invoice->total) !== $totals['total']) {
                 throw ValidationException::withMessages(['totals' => 'The stored invoice totals no longer match its immutable line snapshots.']);
             }
@@ -74,6 +76,9 @@ final class SalesInvoicePostingService
             $cogs = array_sum(array_map(fn (array $line): int => $line['cogsCents'], $costs));
             $journalLines = [['accountCode' => $accounts['accountsReceivable'], 'debit' => Money::decimal($totals['total']), 'description' => 'Accounts Receivable']];
             if ($totals['subtotal'] > 0) $journalLines[] = ['accountCode' => $accounts['revenue'], 'credit' => Money::decimal($totals['subtotal']), 'description' => 'Sales Revenue'];
+            if ($totals['charges'] > 0) $journalLines[] = ['accountCode' => $accounts['additionalChargeRevenue'], 'credit' => Money::decimal($totals['charges']), 'description' => 'Customer-billed charges revenue'];
+            if ($totals['adjustment'] > 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'credit' => Money::decimal($totals['adjustment']), 'description' => 'Commercial adjustment'];
+            if ($totals['adjustment'] < 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'debit' => Money::decimal(-$totals['adjustment']), 'description' => 'Commercial adjustment'];
             if ($totals['tax'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'credit' => Money::decimal($totals['tax']), 'description' => 'Sales Tax Payable'];
             if ($cogs > 0) {
                 $journalLines[] = ['accountCode' => $accounts['cogs'], 'debit' => Money::decimal($cogs), 'description' => 'Cost of Goods Sold'];
@@ -94,17 +99,21 @@ final class SalesInvoicePostingService
         }, 3);
     }
 
-    /** @param array<int, object> $lines @return array{subtotal:int,discount:int,tax:int,total:int} */
-    private function snapshotTotals(array $lines): array
+    /** @param array<int, object> $lines @param array<int, object> $charges */
+    private function snapshotTotals(object $invoice, array $lines, array $charges): array
     {
-        $subtotal = 0; $discount = 0; $tax = 0;
+        $gross = 0; $lineDiscount = 0; $lineNet = 0;
         foreach ($lines as $line) {
             $quantity = $this->milli($line->quantity); $unit = Money::cents($line->unit_price); $lineDiscount = Money::cents($line->discount_total);
-            $base = intdiv(($unit * $quantity) + 500, 1000) - $lineDiscount; $rate = $this->rate($line->tax_rate); $lineTax = intdiv(($base * $rate) + 500000, 1000000);
-            if (Money::cents($line->subtotal) !== $base || Money::cents($line->tax_total) !== $lineTax || Money::cents($line->total) !== $base + $lineTax) throw ValidationException::withMessages(['totals' => 'A sales line snapshot is invalid.']);
-            $subtotal += $base; $discount += $lineDiscount; $tax += $lineTax;
+            $lineGross = intdiv(($unit * $quantity) + 500, 1000); $lineNetAmount = $lineGross - $lineDiscount;
+            if ($lineDiscount < 0 || $lineDiscount > $lineGross || Money::cents($line->line_subtotal) !== $lineGross || Money::cents($line->discount_amount) !== $lineDiscount || Money::cents($line->subtotal) !== $lineNetAmount) throw ValidationException::withMessages(['totals' => 'A sales line snapshot is invalid.']);
+            $gross += $lineGross; $lineNet += $lineNetAmount;
         }
-        return ['subtotal' => $subtotal, 'discount' => $discount, 'tax' => $tax, 'total' => $subtotal + $tax];
+        $lineDiscountTotal = $gross - $lineNet; $invoiceDiscount = Money::cents($invoice->invoice_discount_total); $subtotal = $lineNet - $invoiceDiscount;
+        $chargeTotal = 0; $taxableCharges = 0; foreach ($charges as $charge) { $amount = Money::cents($charge->amount); if ($amount < 0) throw ValidationException::withMessages(['totals' => 'A sales charge snapshot is invalid.']); $chargeTotal += $amount; if ($charge->taxable) $taxableCharges += $amount; }
+        $rate = $this->rate($invoice->tax_rate); $taxable = $subtotal + $taxableCharges; $tax = intdiv(($taxable * $rate) + 500000, 1000000); $adjustment = Money::cents($invoice->manual_adjustment); $total = $subtotal + $chargeTotal + $tax + $adjustment;
+        if ($subtotal < 0 || $total < 0 || Money::cents($invoice->gross_subtotal) !== $gross || Money::cents($invoice->line_discount_total) !== $lineDiscountTotal || Money::cents($invoice->subtotal) !== $subtotal || Money::cents($invoice->discount_total) !== $lineDiscountTotal + $invoiceDiscount || Money::cents($invoice->additional_charges_total) !== $chargeTotal || Money::cents($invoice->taxable_amount) !== $taxable || Money::cents($invoice->tax_total) !== $tax || Money::cents($invoice->total) !== $total) throw ValidationException::withMessages(['totals' => 'The stored invoice totals no longer match its immutable snapshots.']);
+        return ['subtotal' => $subtotal, 'discount' => $lineDiscountTotal + $invoiceDiscount, 'charges' => $chargeTotal, 'adjustment' => $adjustment, 'tax' => $tax, 'total' => $total];
     }
     private function milli(mixed $value): int { $v = trim((string) $value); if (! preg_match('/^(\d+)(?:\.(\d+))?$/', $v, $m)) throw ValidationException::withMessages(['quantity' => 'Invalid line quantity.']); return ((int) $m[1] * 1000) + (int) str_pad(substr($m[2] ?? '', 0, 3), 3, '0'); }
     private function rate(mixed $value): int { $v = trim((string) $value); if (! preg_match('/^(\d+)(?:\.(\d+))?$/', $v, $m)) return 0; return ((int) $m[1] * 1000000) + (int) str_pad(substr($m[2] ?? '', 0, 6), 6, '0'); }
