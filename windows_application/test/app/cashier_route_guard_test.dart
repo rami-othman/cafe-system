@@ -17,26 +17,37 @@ void main() {
     await serviceLocator.reset();
   });
 
-  testWidgets('cashier cannot open admin/privileged routes by direct navigation', (
+  testWidgets(
+    'cashier cannot open admin/privileged routes by direct navigation',
+    (WidgetTester tester) async {
+      await _configureAuthenticatedApp(role: 'employee');
+
+      for (final String forbidden in <String>[
+        AppRoutes.inventory,
+        AppRoutes.reports,
+        AppRoutes.cafeConfigurationOverview,
+        AppRoutes.menuManagementProducts,
+      ]) {
+        appRouter.go(forbidden);
+        await _pumpApp(tester);
+        expect(
+          appRouter.state.uri.path,
+          AppRoutes.pos,
+          reason: '$forbidden must redirect a cashier back to POS',
+        );
+      }
+    },
+  );
+
+  testWidgets('cashier is routed to the limited Finance workspace', (
     WidgetTester tester,
   ) async {
     await _configureAuthenticatedApp(role: 'employee');
 
-    for (final String forbidden in <String>[
-      AppRoutes.inventory,
-      AppRoutes.finance,
-      AppRoutes.reports,
-      AppRoutes.cafeConfigurationOverview,
-      AppRoutes.menuManagementProducts,
-    ]) {
-      appRouter.go(forbidden);
-      await _pumpApp(tester);
-      expect(
-        appRouter.state.uri.path,
-        AppRoutes.pos,
-        reason: '$forbidden must redirect a cashier back to POS',
-      );
-    }
+    appRouter.go(AppRoutes.finance);
+    await _pumpApp(tester);
+
+    expect(appRouter.state.uri.path, AppRoutes.financeReceiptVouchers);
   });
 
   testWidgets(
@@ -50,31 +61,35 @@ void main() {
     },
   );
 
-  testWidgets('cashier keeps direct access to POS, Orders, Discounts, Settings', (
-    WidgetTester tester,
-  ) async {
-    await _configureAuthenticatedApp(role: 'employee');
+  testWidgets(
+    'cashier keeps direct access to POS, Orders, Discounts, Settings',
+    (WidgetTester tester) async {
+      await _configureAuthenticatedApp(role: 'employee');
 
-    for (final String allowed in <String>[
-      AppRoutes.orders,
-      AppRoutes.discounts,
-      AppRoutes.settings,
-      AppRoutes.shiftClose,
-    ]) {
-      appRouter.go(allowed);
-      await _pumpApp(tester);
-      expect(
-        appRouter.state.uri.path,
-        allowed,
-        reason: '$allowed must remain reachable for a cashier',
-      );
-    }
-  });
+      for (final String allowed in <String>[
+        AppRoutes.orders,
+        AppRoutes.discounts,
+        AppRoutes.settings,
+        AppRoutes.shiftClose,
+      ]) {
+        appRouter.go(allowed);
+        await _pumpApp(tester);
+        expect(
+          appRouter.state.uri.path,
+          allowed,
+          reason: '$allowed must remain reachable for a cashier',
+        );
+      }
+    },
+  );
 
   testWidgets('cashier with granted customer capability keeps /customers', (
     WidgetTester tester,
   ) async {
-    await _configureAuthenticatedApp(role: 'employee', canManageCustomers: true);
+    await _configureAuthenticatedApp(
+      role: 'employee',
+      canManageCustomers: true,
+    );
 
     appRouter.go(CustomerManagementRouteLocations.customers);
     await _pumpApp(tester);

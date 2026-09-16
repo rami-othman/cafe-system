@@ -390,6 +390,7 @@ class _SyncApiClient extends DioApiClient {
   Future<dynamic> get(
     String path, {
     Map<String, dynamic>? queryParameters,
+    bool suppressAuthenticationFailure = false,
   }) async {
     expect(path, 'pos/menu-sync');
     queries.add(Map<String, dynamic>.from(queryParameters!));

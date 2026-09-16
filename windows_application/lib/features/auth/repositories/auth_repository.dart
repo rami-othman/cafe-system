@@ -38,15 +38,21 @@ class ApiAuthRepository implements AuthRepository {
       'auth/login',
       data: loginPayload,
     );
-    return AuthSession.fromApi(_asMap(data));
+    return AuthSession.fromLoginApi(data);
   }
 
   @override
   Future<AuthSession> me(AuthSession cachedSession) async {
-    final dynamic data = await _apiClient.get('auth/me');
-    final Map<String, dynamic> payload = _asMap(data);
-    payload['accessToken'] = cachedSession.accessToken;
-    return AuthSession.fromApi(payload);
+    // Session restoration classifies auth/me failures itself. A shared
+    // protected-request callback must not race that classification.
+    final dynamic data = await _apiClient.get(
+      'auth/me',
+      suppressAuthenticationFailure: true,
+    );
+    return AuthSession.fromVerifiedMeApi(
+      data,
+      cachedAccessToken: cachedSession.accessToken,
+    );
   }
 
   @override
@@ -90,9 +96,3 @@ class OfflineAuthRepository implements AuthRepository {
   @override
   Future<AuthSession> me(AuthSession cachedSession) async => cachedSession;
 }
-
-Map<String, dynamic> _asMap(dynamic value) => value is Map<String, dynamic>
-    ? value
-    : value is Map
-    ? value.cast<String, dynamic>()
-    : <String, dynamic>{};

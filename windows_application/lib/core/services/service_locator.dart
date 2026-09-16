@@ -123,9 +123,13 @@ void setupServiceLocator({bool useBackend = true}) {
       ),
     );
   }
-  serviceLocator<DioApiClient>().onAuthenticationFailure = (_) {
-    serviceLocator<AuthSessionCubit>().expire();
-  };
+  serviceLocator<DioApiClient>().onAuthenticatedFailureWithToken =
+      (error, requestToken) {
+        serviceLocator<AuthSessionCubit>().handleAuthenticatedFailure(
+          error,
+          requestToken,
+        );
+      };
 
   if (!serviceLocator.isRegistered<PosRepository>()) {
     serviceLocator.registerLazySingleton<PosRepository>(
@@ -296,9 +300,7 @@ void setupServiceLocator({bool useBackend = true}) {
   }
   if (!serviceLocator.isRegistered<PurchasingCubit>()) {
     serviceLocator.registerFactory<PurchasingCubit>(
-      () => PurchasingCubit(
-        repository: serviceLocator<PurchasingRepository>(),
-      ),
+      () => PurchasingCubit(repository: serviceLocator<PurchasingRepository>()),
     );
   }
   if (!serviceLocator.isRegistered<SalesRepository>()) {

@@ -15,6 +15,7 @@ import '../features/auth/controllers/auth_session_state.dart';
 import '../features/auth/views/auth_splash_screen.dart';
 import '../features/auth/views/change_password_screen.dart';
 import '../features/auth/views/login_screen.dart';
+import '../features/auth/views/auth_recovery_screen.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -63,10 +64,18 @@ class _AppState extends State<App> {
         ? AppBrand.systemNameAr
         : AppBrand.systemNameEn;
     final Widget home = switch (auth.status) {
-      AuthSessionStatus.restoring ||
-      AuthSessionStatus.submitting => const AuthSplashScreen(),
-      AuthSessionStatus.unauthenticated => LoginScreen(message: auth.message),
+      AuthSessionStatus.restoring => const AuthSplashScreen(),
+      AuthSessionStatus.submitting when auth.session == null =>
+        const LoginScreen(),
+      AuthSessionStatus.submitting => const ChangePasswordScreen(),
+      AuthSessionStatus.unauthenticated => const LoginScreen(),
       AuthSessionStatus.mustChangePassword => const ChangePasswordScreen(),
+      AuthSessionStatus.verificationRequired => const AuthRecoveryScreen(
+        tenantBlocked: false,
+      ),
+      AuthSessionStatus.tenantNotOperational => const AuthRecoveryScreen(
+        tenantBlocked: true,
+      ),
       AuthSessionStatus.authenticated => const SizedBox.shrink(),
     };
     if (auth.status == AuthSessionStatus.authenticated) {

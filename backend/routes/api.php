@@ -89,8 +89,8 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware('api.token')->group(function (): void {
             Route::get('me', [AuthController::class, 'me']);
             Route::post('change-password', [AuthController::class, 'changePassword']);
-            Route::post('logout', [AuthController::class, 'logout']);
         });
+        Route::post('logout', [AuthController::class, 'logout'])->middleware('api.token:allow-revoked');
     });
 
     Route::middleware(['api.token', 'password.changed', 'employees.manage'])->group(function (): void {

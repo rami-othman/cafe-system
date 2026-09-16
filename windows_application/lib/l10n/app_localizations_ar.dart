@@ -4816,6 +4816,61 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مجددًا.';
 
   @override
+  String get authInvalidCredentials =>
+      'البريد الإلكتروني أو اسم المستخدم أو كلمة المرور غير صحيحة.';
+
+  @override
+  String get authTooManyAttempts =>
+      'تم إجراء محاولات كثيرة لتسجيل الدخول. انتظر قليلًا ثم حاول مجددًا.';
+
+  @override
+  String get authNetworkUnavailable =>
+      'يتعذر الاتصال بالخادم. تحقق من اتصال الشبكة ثم حاول مجددًا.';
+
+  @override
+  String get authConnectionTimeout =>
+      'انتهت مهلة الاتصال. تحقق من الاتصال ثم حاول مجددًا.';
+
+  @override
+  String get authServerUnavailable =>
+      'الخدمة غير متاحة مؤقتًا. يرجى المحاولة بعد قليل.';
+
+  @override
+  String get authValidationFailed =>
+      'يرجى مراجعة الحقول المميزة ثم المحاولة مجددًا.';
+
+  @override
+  String get authFieldValidationFailed => 'تحقق من هذه القيمة ثم حاول مجددًا.';
+
+  @override
+  String get authInvalidResponse =>
+      'تعذر التحقق من استجابة تسجيل الدخول. يرجى المحاولة مجددًا.';
+
+  @override
+  String get authSecureStorageFailure =>
+      'تعذر حفظ الجلسة بأمان. يرجى المحاولة مجددًا.';
+
+  @override
+  String get authVerifiedSessionSaveFailed =>
+      'تعذر حفظ جلستك المتحقق منها بأمان. أعد محاولة التحقق أو سجّل الخروج.';
+
+  @override
+  String get authPasswordChangedSessionSaveFailed =>
+      'تم تغيير كلمة المرور، لكن تعذر حفظ الجلسة. يرجى تسجيل الدخول مجددًا باستخدام كلمة المرور الجديدة.';
+
+  @override
+  String get authUnexpectedError => 'حدث خطأ غير متوقع. يرجى المحاولة مجددًا.';
+
+  @override
+  String get authIncorrectCurrentPassword => 'كلمة المرور الحالية غير صحيحة.';
+
+  @override
+  String get authWeakNewPassword => 'اختر كلمة مرور جديدة أقوى.';
+
+  @override
+  String get authPasswordConfirmationMismatch => 'تأكيد كلمة المرور غير مطابق.';
+
+  @override
   String get authChangePassword => 'تغيير كلمة المرور';
 
   @override
@@ -4866,6 +4921,45 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get authOfflineSessionExpired =>
       'انتهت جلستك بدون اتصال. اتصل بالإنترنت وسجل الدخول مجددًا.';
+
+  @override
+  String get authVerificationRequiredTitle => 'تحقق من جلستك';
+
+  @override
+  String get authUnableToVerifySession =>
+      'تعذر التحقق من جلستك المحفوظة. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get authRetryVerification => 'إعادة محاولة التحقق';
+
+  @override
+  String get authRetryingVerification => 'جارٍ التحقق من الجلسة…';
+
+  @override
+  String get authReturnToLogin => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get authSecureStorageReadFailure =>
+      'التخزين الآمن غير متاح. حاول مرة أخرى أو عد إلى تسجيل الدخول.';
+
+  @override
+  String get authCorruptSavedSession =>
+      'تعذر قراءة جلستك المحفوظة. يرجى تسجيل الدخول مرة أخرى.';
+
+  @override
+  String get authConnectionRequiredToVerifySession =>
+      'يلزم اتصال للتحقق من هذه الجلسة المحفوظة قبل متابعة الوصول.';
+
+  @override
+  String get authTenantNotOperationalTitle => 'مساحة العمل غير متاحة مؤقتًا';
+
+  @override
+  String get authTenantNotOperationalExplanation =>
+      'مساحة العمل هذه غير متاحة مؤقتًا.';
+
+  @override
+  String get authContactAdministration =>
+      'يرجى التواصل مع الإدارة للحصول على المساعدة.';
 
   @override
   String get authSettingsSubtitle => 'إعدادات الحساب والجلسة';

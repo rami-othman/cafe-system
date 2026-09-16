@@ -76,10 +76,11 @@ class AuthPhaseOneTest extends TestCase
         $second = $this->loginEmail($owner, 'OwnerPassword');
 
         $this->withToken($first)->postJson('/api/v1/auth/logout')->assertNoContent();
-        $this->withToken($first)->getJson('/api/v1/auth/me')->assertUnauthorized()->assertJsonPath('code', 'TOKEN_REVOKED');
+        $this->withToken($first)->postJson('/api/v1/auth/logout')->assertNoContent();
+        $this->withToken($first)->getJson('/api/v1/auth/me')->assertUnauthorized()->assertJsonPath('code', 'AUTH_SESSION_INVALID');
         $this->withToken($second)->getJson('/api/v1/auth/me')->assertOk();
         ApiToken::query()->where('token_hash', hash('sha256', $second))->update(['expires_at' => now()->subSecond()]);
-        $this->withToken($second)->getJson('/api/v1/auth/me')->assertUnauthorized()->assertJsonPath('code', 'TOKEN_EXPIRED');
+        $this->withToken($second)->getJson('/api/v1/auth/me')->assertUnauthorized()->assertJsonPath('code', 'AUTH_SESSION_INVALID');
     }
 
     public function test_password_change_gate_and_authenticated_tenant_context_cannot_be_overridden(): void
