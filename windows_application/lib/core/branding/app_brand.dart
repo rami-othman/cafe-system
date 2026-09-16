@@ -1,5 +1,6 @@
 import '../../features/auth/models/auth_session.dart';
 import '../../features/pos/models/branch.dart';
+import '../../shared/access/cashier_access.dart';
 
 class BrandIdentity {
   const BrandIdentity({
@@ -28,7 +29,7 @@ abstract final class AppBrand {
   static const String logoMarkDark =
       'assets/branding/cafe618_logo_mark_dark.png';
 
-  static bool isCashier(AuthUser? user) => user?.role == 'cashier';
+  static bool isCashier(AuthUser? user) => CashierAccess.isCashier(user?.role);
 
   static BrandIdentity resolve({
     required AuthUser? user,

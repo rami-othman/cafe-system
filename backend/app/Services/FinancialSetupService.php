@@ -65,6 +65,7 @@ class FinancialSetupService
             ['code' => '4000', 'name_ar' => 'إيرادات المبيعات', 'name_en' => 'Sales Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '4010', 'name_ar' => 'الخصومات الممنوحة', 'name_en' => 'Discounts Given', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
             ['code' => '4020', 'name_ar' => 'مرتجعات المبيعات', 'name_en' => 'Sales Returns', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
+            ['code' => '4030', 'name_ar' => 'إيرادات الخدمات والرسوم', 'name_en' => 'Service and Charge Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '5000', 'name_ar' => 'تكلفة البضاعة المباعة', 'name_en' => 'Cost of Goods Sold', 'account_group' => 'cost_of_sales', 'normal_balance' => 'debit'],
             ['code' => '5010', 'name_ar' => 'هدر وفروقات المخزون', 'name_en' => 'Waste / Inventory Variance', 'account_group' => 'cost_of_sales', 'normal_balance' => 'debit'],
             ['code' => '6100', 'name_ar' => 'مصروف الإيجار', 'name_en' => 'Rent Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
@@ -98,7 +99,6 @@ class FinancialSetupService
             $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
                 $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
-                $this->ensureBranchPosWarehouse($tenantId, $initialBranchId, $actorId);
             }
         });
     }

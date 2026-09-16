@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\FinancialSetupService;
+use App\Services\PosInventoryWarehouseResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -240,6 +241,27 @@ class RealSaleIntegrationTest extends TestCase
         $this->assertSame('5.00', $lines[(int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1100')->value('id')]->credit);
     }
 
+    public function test_legacy_unpaid_order_is_bound_to_the_effective_main_warehouse_when_paid(): void
+    {
+        $scenario = $this->publishedOrderScenario('1000.000');
+        DB::table('orders')->where('id', $scenario['orderId'])->update(['warehouse_id' => null]);
+
+        $this->postJson("/api/v1/orders/{$scenario['orderId']}/pay", [
+            'method' => 'cash',
+            'amount' => $scenario['total'],
+            'idempotencyKey' => 'legacy-order-warehouse-bind',
+        ], $scenario['headers'])->assertOk();
+
+        $this->assertSame(
+            $scenario['warehouseId'],
+            (int) DB::table('orders')->where('id', $scenario['orderId'])->value('warehouse_id'),
+        );
+        $this->assertSame(
+            $scenario['warehouseId'],
+            (int) DB::table('stock_movements')->where('tenant_id', $scenario['tenant'])->where('type', 'sale_consumption')->value('warehouse_id'),
+        );
+    }
+
     /**
      * The tenant off-switch for the policy above: with
      * allow_negative_stock_on_sale explicitly disabled, POS sale consumption
@@ -308,6 +330,7 @@ class RealSaleIntegrationTest extends TestCase
         $headers = $context['headers'];
 
         $branchId = (int) $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'Multi-Warehouse Branch', 'timezone' => 'Asia/Damascus'], $headers)->assertCreated()->json('data.id');
+        app(FinancialSetupService::class)->ensureBranchPosWarehouse($tenant, $branchId, $context['owner']);
         $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")->value('id');
         $secondWarehouseId = (int) DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id');
         $this->assertSame('bar', DB::table('warehouses')->where('id', $secondWarehouseId)->value('type'));
@@ -395,7 +418,7 @@ class RealSaleIntegrationTest extends TestCase
         $this->assertSame('0.000', DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $secondWarehouseId)->where('inventory_item_id', $materialId)->value('quantity_on_hand'));
     }
 
-    public function test_owner_branch_creation_provisions_main_and_configured_pos_bar_idempotently(): void
+    public function test_owner_branch_creation_provisions_only_main_and_uses_it_as_the_automatic_pos_warehouse(): void
     {
         $context = $this->tenantContext();
         $payload = ['name' => 'Airport', 'timezone' => 'Asia/Damascus'];
@@ -406,10 +429,11 @@ class RealSaleIntegrationTest extends TestCase
 
         $this->assertSame($context['tenant'], (int) DB::table('branches')->where('id', $branchId)->value('tenant_id'));
         $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")->where('type', 'branch_main')->where('is_active', true)->count());
-        $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $branchId)->where('code', "BR-{$branchId}-BAR")->where('type', 'bar')->where('is_active', true)->count());
+        $this->assertSame(0, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $branchId)->where('type', 'bar')->count());
+        $this->assertNull(DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id'));
         $this->assertSame(
-            (int) DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('code', "BR-{$branchId}-BAR")->value('id'),
-            (int) DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id'),
+            (int) DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('code', "BR-{$branchId}-MAIN")->value('id'),
+            (int) app(PosInventoryWarehouseResolver::class)->forBranch($context['tenant'], $branchId)->id,
         );
         $this->postJson('/api/v1/cafe-configuration/branches', $payload, $this->headersForRole($context['tenant'], 'manager'))->assertForbidden();
         $this->postJson('/api/v1/cafe-configuration/branches', $payload, $this->headersForRole($context['tenant'], 'cashier'))->assertForbidden();
@@ -459,7 +483,7 @@ class RealSaleIntegrationTest extends TestCase
         $tenant = $context['tenant'];
         $headers = $context['headers'];
         $branchId = (int) $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'Downtown', 'timezone' => 'Asia/Damascus'], $headers)->assertCreated()->json('data.id');
-        $warehouseId = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->value('pos_inventory_warehouse_id');
+        $warehouseId = (int) app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $branchId)->id;
 
         $materialId = (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'Phase Three Beans', 'nameEn' => 'Phase Three Beans', 'sku' => 'P3-BEANS', 'itemType' => 'raw_material', 'unit' => 'g', 'minimumStock' => '0.000', 'reorderLevel' => '0.000', 'latestUnitCost' => '0.0200', 'warehouseIds' => [$warehouseId], 'isActive' => true], $headers)
             ->assertCreated()

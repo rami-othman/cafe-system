@@ -14,7 +14,7 @@ final class WarehouseConfigurationRepairTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dry_run_does_not_write_and_apply_creates_missing_main_and_pos_bar_without_touching_stock(): void
+    public function test_dry_run_does_not_write_and_apply_creates_only_missing_main_without_touching_stock(): void
     {
         $now = now();
         $tenant = (int) DB::table('tenants')->insertGetId(['name' => 'Repair Tenant', 'slug' => 'repair-tenant', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
@@ -23,15 +23,18 @@ final class WarehouseConfigurationRepairTest extends TestCase
 
         $dryRun = $service->run(false, $tenant);
         $this->assertSame('MISSING_BRANCH_MAIN', $dryRun['findings'][0]['code']);
-        $this->assertTrue(collect($dryRun['findings'])->contains(fn (array $finding) => $finding['code'] === 'MISSING_POS_BAR_WAREHOUSE'));
         $this->assertSame(0, $dryRun['fixed']);
         $this->assertSame(0, DB::table('warehouses')->where('tenant_id', $tenant)->count());
 
         $applied = $service->run(true, $tenant);
-        $this->assertSame(2, $applied['fixed']);
+        $this->assertSame(1, $applied['fixed']);
         $this->assertDatabaseHas('warehouses', ['tenant_id' => $tenant, 'branch_id' => $branch, 'type' => 'branch_main', 'is_active' => true]);
-        $this->assertDatabaseHas('warehouses', ['tenant_id' => $tenant, 'branch_id' => $branch, 'type' => 'bar', 'is_active' => true]);
-        $this->assertNotNull(DB::table('branches')->where('id', $branch)->value('pos_inventory_warehouse_id'));
+        $this->assertDatabaseMissing('warehouses', ['tenant_id' => $tenant, 'branch_id' => $branch, 'type' => 'bar']);
+        $this->assertNull(DB::table('branches')->where('id', $branch)->value('pos_inventory_warehouse_id'));
+        $this->assertSame(
+            (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branch)->where('type', 'branch_main')->value('id'),
+            (int) app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $branch)->id,
+        );
         $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $tenant)->count());
         $this->assertSame(0, DB::table('stock_balances')->where('tenant_id', $tenant)->count());
     }
@@ -76,8 +79,11 @@ final class WarehouseConfigurationRepairTest extends TestCase
         $barB = (int) DB::table('warehouses')->insertGetId(['tenant_id' => $tenantB, 'branch_id' => $branchB, 'name' => 'B Bar', 'code' => 'B-BAR', 'type' => 'bar', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
         DB::table('branches')->where('id', $branchA)->update(['pos_inventory_warehouse_id' => $barB]);
 
-        $this->expectException(OrderLifecycleException::class);
-        $this->expectExceptionMessage('لم يتم تحديد مخزن البار لهذا الفرع');
-        app(PosInventoryWarehouseResolver::class)->forBranch($tenantA, $branchA);
+        try {
+            app(PosInventoryWarehouseResolver::class)->forBranch($tenantA, $branchA);
+            $this->fail('Expected an invalid explicit POS warehouse configuration.');
+        } catch (OrderLifecycleException $exception) {
+            $this->assertSame('POS_WAREHOUSE_INVALID', $exception->domainCode);
+        }
     }
 }

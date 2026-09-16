@@ -7,6 +7,7 @@ import 'package:windows_application/features/auth/controllers/auth_session_cubit
 import 'package:windows_application/features/auth/models/auth_session.dart';
 import 'package:windows_application/features/auth/repositories/auth_repository.dart';
 import 'package:windows_application/features/auth/repositories/auth_session_storage.dart';
+import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
 
 void main() {
   testWidgets(
@@ -72,37 +73,55 @@ void main() {
     },
   );
 
-  testWidgets('Employee does not see Customers or Cafe Configuration', (
-    WidgetTester tester,
-  ) async {
-    final AuthSessionCubit cubit = await _authenticatedCubit(
-      _session(role: 'employee', canManageCustomers: false),
-    );
-    addTearDown(cubit.close);
+  testWidgets(
+    'Employee (cashier) sidebar contains only POS, Orders, Customers, Discounts',
+    (WidgetTester tester) async {
+      final AuthSessionCubit cubit = await _authenticatedCubit(
+        // Cashiers always retain customer lookup for POS regardless of the
+        // manager-only customerManagementAllowed capability flag.
+        _session(role: 'employee', canManageCustomers: true),
+      );
+      addTearDown(cubit.close);
 
-    await _pumpShell(tester, cubit);
+      await _pumpShell(tester, cubit);
 
-    expect(find.text('Customers'), findsNothing);
-    expect(find.text('Cafe Configuration'), findsNothing);
-    expect(find.text('Menu Management'), findsNothing);
-    expect(find.text('Reports'), findsOneWidget);
-  });
+      expect(_sidebarText('POS'), findsOneWidget);
+      expect(_sidebarText('Orders'), findsOneWidget);
+      expect(_sidebarText('Customers'), findsOneWidget);
+      expect(_sidebarText('Discounts'), findsOneWidget);
 
-  testWidgets('Cashier retains Reports but not administrative destinations', (
-    WidgetTester tester,
-  ) async {
-    final AuthSessionCubit cubit = await _authenticatedCubit(
-      _session(role: 'cashier', canManageCustomers: false),
-    );
-    addTearDown(cubit.close);
+      expect(_sidebarText('Dashboard'), findsNothing);
+      expect(_sidebarText('Cafe Configuration'), findsNothing);
+      expect(_sidebarText('Menu Management'), findsNothing);
+      expect(_sidebarText('Inventory'), findsNothing);
+      expect(_sidebarText('Finance'), findsNothing);
+      expect(_sidebarText('Reports'), findsNothing);
+    },
+  );
 
-    await _pumpShell(tester, cubit);
+  testWidgets(
+    'Cashier (legacy role spelling) sidebar contains only POS, Orders, Customers, Discounts',
+    (WidgetTester tester) async {
+      final AuthSessionCubit cubit = await _authenticatedCubit(
+        _session(role: 'cashier', canManageCustomers: true),
+      );
+      addTearDown(cubit.close);
 
-    expect(find.text('Customers'), findsNothing);
-    expect(find.text('Cafe Configuration'), findsNothing);
-    expect(find.text('Menu Management'), findsNothing);
-    expect(find.text('Reports'), findsOneWidget);
-  });
+      await _pumpShell(tester, cubit);
+
+      expect(_sidebarText('POS'), findsOneWidget);
+      expect(_sidebarText('Orders'), findsOneWidget);
+      expect(_sidebarText('Customers'), findsOneWidget);
+      expect(_sidebarText('Discounts'), findsOneWidget);
+
+      expect(_sidebarText('Dashboard'), findsNothing);
+      expect(_sidebarText('Cafe Configuration'), findsNothing);
+      expect(_sidebarText('Menu Management'), findsNothing);
+      expect(_sidebarText('Inventory'), findsNothing);
+      expect(find.text('Finance'), findsNothing);
+      expect(find.text('Reports'), findsNothing);
+    },
+  );
 
   testWidgets(
     'mounted sidebar updates after auth refresh replaces legacy Owner capability',
@@ -157,6 +176,13 @@ void main() {
     },
   );
 }
+
+/// Scopes a text finder to sidebar nav items, since the sidebar's own brand
+/// header subtitle also renders the word "POS" for a cashier session.
+Finder _sidebarText(String label) => find.descendant(
+  of: find.byType(AppSidebarItem),
+  matching: find.text(label),
+);
 
 Future<AuthSessionCubit> _authenticatedCubit(AuthSession session) async {
   final AuthSessionCubit cubit = _cubit(

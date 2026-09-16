@@ -6,6 +6,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
+import '../access/cashier_access.dart';
 import 'app_sidebar_item.dart';
 
 class AppSidebar extends StatelessWidget {
@@ -56,7 +57,8 @@ class AppSidebar extends StatelessWidget {
           (destination.id != 'menuManagement' ||
               _canTemporarilyManageMenus(actorRole)) &&
           (destination.id != 'customers' || canManageCustomers) &&
-          (destination.id != 'cafeConfiguration' || actorRole == 'owner'),
+          (destination.id != 'cafeConfiguration' || actorRole == 'owner') &&
+          CashierAccess.allowsModule(destination.id, actorRole),
     );
     return Container(
       width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,

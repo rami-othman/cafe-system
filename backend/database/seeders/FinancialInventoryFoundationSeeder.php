@@ -21,7 +21,6 @@ class FinancialInventoryFoundationSeeder extends Seeder
         $branches = DB::table('branches')->where('tenant_id', $tenantId)->whereNull('deleted_at')->orderBy('id')->get();
         foreach ($branches as $branch) {
             app(FinancialSetupService::class)->ensureBranchMainWarehouse($tenantId, (int) $branch->id, $managerId);
-            app(FinancialSetupService::class)->ensureBranchPosWarehouse($tenantId, (int) $branch->id, $managerId);
             foreach ([
                 ['suffix' => 'BAR', 'name' => 'البار - '.$branch->name, 'type' => 'bar', 'notes' => 'موقع استهلاك وتجهيز المشروبات.'],
                 ['suffix' => 'KITCHEN', 'name' => 'المطبخ - '.$branch->name, 'type' => 'kitchen', 'notes' => 'موقع استهلاك وتجهيز الطعام.'],

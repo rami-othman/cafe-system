@@ -366,6 +366,54 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shiftStatusClosed => 'الوردية مغلقة';
 
   @override
+  String get shiftCloseTitle => 'إغلاق الوردية';
+
+  @override
+  String get shiftCloseSubtitle => 'احسب النقد في الصندوق ثم أغلق ورديتك.';
+
+  @override
+  String get shiftCloseClosingCashLabel => 'النقد عند الإغلاق';
+
+  @override
+  String get shiftCloseNoteLabel => 'ملاحظة (اختياري)';
+
+  @override
+  String get shiftCloseSubmit => 'إغلاق الوردية';
+
+  @override
+  String get shiftCloseSuccess => 'تم إغلاق الوردية.';
+
+  @override
+  String get shiftCloseRedirectingToBarCheck =>
+      'يجب إجراء فحص البار قبل إغلاق هذه الوردية.';
+
+  @override
+  String get barCheckTitle => 'فحص البار';
+
+  @override
+  String get barCheckSubtitle =>
+      'احسب كل صنف، ثم أرسل الفحص لمتابعة إغلاق ورديتك.';
+
+  @override
+  String get barCheckExpectedLabel => 'المتوقع';
+
+  @override
+  String get barCheckCountedLabel => 'المحسوب';
+
+  @override
+  String get barCheckReasonLabel => 'سبب الفرق';
+
+  @override
+  String get barCheckSubmitAndClose => 'إرسال فحص البار';
+
+  @override
+  String get barCheckPendingManagerReview =>
+      'يجب على مدير مراجعة أحد الفروقات في هذا الفحص قبل إتمامه. اطلب من مدير مراجعته ثم أعد المحاولة.';
+
+  @override
+  String get barCheckAllLinesRequired => 'احسب كل صنف قبل الإرسال.';
+
+  @override
   String get tooltipCart => 'السلة';
 
   @override

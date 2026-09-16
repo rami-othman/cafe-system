@@ -85,9 +85,14 @@ class InventorySecurityAndSeederTest extends TestCase
         $this->seed(TenantAccessSeeder::class);
         $tenantA = $this->tenant('cafe-618');
         $tenantB = $this->createTenant('inventory-security-b');
+        // Cashiers hold no general inventory.view permission (see
+        // InventoryAccess::ROLE_PERMISSIONS), so a manager actor demonstrates
+        // that a spoofed X-Tenant-Id header cannot change the real
+        // token-derived tenant used to scope this read.
+        $manager = $this->createUser($tenantA, 'manager');
         $cashier = $this->createUser($tenantA, 'cashier');
 
-        $this->getJson('/api/v1/inventory/items', $this->headers($tenantA, $cashier) + ['X-Tenant-Id' => $tenantB])
+        $this->getJson('/api/v1/inventory/items', $this->headers($tenantA, $manager) + ['X-Tenant-Id' => $tenantB])
             ->assertOk()
             ->assertJsonPath('data.meta.total', 0);
         $this->postJson('/api/v1/inventory/items', $this->itemPayload(), $this->headers($tenantA, $cashier) + ['X-User-Id' => $this->owner($tenantA)])

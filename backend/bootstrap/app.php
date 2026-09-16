@@ -11,6 +11,7 @@ use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsureCustomerPermission;
 use App\Http\Middleware\EnsureDiscountPermission;
 use App\Http\Middleware\EnsureFinancePermission;
+use App\Http\Middleware\EnsureBarCheckPermission;
 use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\RequireChangedPassword;
@@ -54,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,
+            'barcheck.permission' => EnsureBarCheckPermission::class,
             'finance.permission' => EnsureFinancePermission::class,
             'customer.permission' => EnsureCustomerPermission::class,
             'discount.permission' => EnsureDiscountPermission::class,

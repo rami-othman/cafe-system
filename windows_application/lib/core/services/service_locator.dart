@@ -10,6 +10,9 @@ import '../../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../../features/pos/repositories/pos_menu_sync_cache.dart';
 import '../../features/pos/repositories/pos_menu_sync_repository.dart';
 import '../../features/pos/repositories/pos_repository.dart';
+import '../../features/shift_close/controllers/bar_check_cubit.dart';
+import '../../features/shift_close/controllers/shift_close_cubit.dart';
+import '../../features/shift_close/repositories/shift_close_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
@@ -135,6 +138,21 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<PosCubit>()) {
     serviceLocator.registerFactory<PosCubit>(
       () => PosCubit(repository: serviceLocator<PosRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ShiftCloseRepository>()) {
+    serviceLocator.registerLazySingleton<ShiftCloseRepository>(
+      () => ShiftCloseRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ShiftCloseCubit>()) {
+    serviceLocator.registerFactory<ShiftCloseCubit>(
+      () => ShiftCloseCubit(repository: serviceLocator<ShiftCloseRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<BarCheckCubit>()) {
+    serviceLocator.registerFactory<BarCheckCubit>(
+      () => BarCheckCubit(repository: serviceLocator<ShiftCloseRepository>()),
     );
   }
   if (!serviceLocator.isRegistered<PosMenuSyncCache>()) {

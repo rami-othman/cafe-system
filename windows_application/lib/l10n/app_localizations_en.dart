@@ -369,6 +369,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftStatusClosed => 'SHIFT CLOSED';
 
   @override
+  String get shiftCloseTitle => 'Close Shift';
+
+  @override
+  String get shiftCloseSubtitle =>
+      'Count the cash in your register and close your shift.';
+
+  @override
+  String get shiftCloseClosingCashLabel => 'Closing cash';
+
+  @override
+  String get shiftCloseNoteLabel => 'Note (optional)';
+
+  @override
+  String get shiftCloseSubmit => 'Close Shift';
+
+  @override
+  String get shiftCloseSuccess => 'Shift closed.';
+
+  @override
+  String get shiftCloseRedirectingToBarCheck =>
+      'A bar check is required before you can close this shift.';
+
+  @override
+  String get barCheckTitle => 'Bar Check';
+
+  @override
+  String get barCheckSubtitle =>
+      'Count each item, then submit to continue closing your shift.';
+
+  @override
+  String get barCheckExpectedLabel => 'Expected';
+
+  @override
+  String get barCheckCountedLabel => 'Counted';
+
+  @override
+  String get barCheckReasonLabel => 'Reason for variance';
+
+  @override
+  String get barCheckSubmitAndClose => 'Submit Bar Check';
+
+  @override
+  String get barCheckPendingManagerReview =>
+      'A manager needs to review a variance on this count before it can be completed. Ask a manager to review it, then try again.';
+
+  @override
+  String get barCheckAllLinesRequired => 'Count every item before submitting.';
+
+  @override
   String get tooltipCart => 'Cart';
 
   @override

@@ -173,6 +173,15 @@ class PosCubit extends Cubit<PosState> {
     }
   }
 
+  /// Re-fetches the current shift for the active branch after a shift is
+  /// opened or closed elsewhere (e.g. the Close Shift screen), so the top
+  /// bar's shift badge and any shift-gated actions reflect the new state.
+  Future<void> refreshShift() async {
+    final shift = await repository.getCurrentShift(branchId: state.branchId);
+    if (isClosed) return;
+    emit(state.copyWith(shiftId: shift?.id, clearShiftId: shift == null));
+  }
+
   void selectCategory(String category) {
     emit(state.copyWith(selectedCategory: category, searchQuery: ''));
   }

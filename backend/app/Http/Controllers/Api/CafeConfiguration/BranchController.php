@@ -22,7 +22,7 @@ class BranchController extends Controller
             Branch::query()
                 ->where('tenant_id', TenantContext::id($request))
                 ->whereNull('deleted_at')
-                ->with(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->where('type', 'bar')->where('is_active', true)->whereNull('deleted_at')->orderBy('name')])
+                ->with(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->whereIn('type', ['bar', 'branch_main'])->where('is_active', true)->whereNull('deleted_at')->orderBy('name')])
                 ->orderBy('id')
                 ->get(),
         )->response();
@@ -39,7 +39,6 @@ class BranchController extends Controller
                 'is_active' => true,
             ]);
             $financialSetup->ensureBranchMainWarehouse($tenantId, $branch->id, $request->attributes->get('auth_user')->id);
-            $financialSetup->ensureBranchPosWarehouse($tenantId, $branch->id, $request->attributes->get('auth_user')->id);
 
             return $branch;
         });
@@ -76,6 +75,6 @@ class BranchController extends Controller
 
     private function withPosWarehouses(Branch $branch): Branch
     {
-        return $branch->load(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->where('type', 'bar')->where('is_active', true)->whereNull('deleted_at')->orderBy('name')]);
+        return $branch->load(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->whereIn('type', ['bar', 'branch_main'])->where('is_active', true)->whereNull('deleted_at')->orderBy('name')]);
     }
 }

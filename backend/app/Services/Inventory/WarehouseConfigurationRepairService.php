@@ -66,26 +66,28 @@ final class WarehouseConfigurationRepairService
                 ->whereNull('deleted_at')
                 ->orderBy('id')
                 ->get(['id', 'code']);
+            $eligible = DB::table('warehouses')
+                ->where('tenant_id', $branch->tenant_id)
+                ->where('branch_id', $branch->id)
+                ->whereIn('type', ['bar', 'branch_main'])
+                ->where('is_active', true)
+                ->whereNull('deleted_at')
+                ->get(['id', 'type']);
             $configured = $branch->pos_inventory_warehouse_id === null
                 ? null
-                : $bars->firstWhere('id', (int) $branch->pos_inventory_warehouse_id);
+                : $eligible->firstWhere('id', (int) $branch->pos_inventory_warehouse_id);
 
             if ($configured === null && $branch->pos_inventory_warehouse_id !== null) {
                 $findings[] = $this->finding($branch, 'INVALID_POS_WAREHOUSE_CONFIGURATION', 'manual_review', ['warehouseId' => (int) $branch->pos_inventory_warehouse_id]);
-            } elseif ($configured === null && $bars->isEmpty()) {
-                $findings[] = $this->finding($branch, 'MISSING_POS_BAR_WAREHOUSE', 'create_and_assign');
-                if ($apply) {
-                    $this->setup->ensureBranchPosWarehouse((int) $branch->tenant_id, (int) $branch->id);
-                    $fixed++;
-                }
-            } elseif ($configured === null && $bars->count() === 1) {
-                $findings[] = $this->finding($branch, 'POS_WAREHOUSE_NOT_ASSIGNED', 'assign_existing', ['warehouseId' => (int) $bars->first()->id]);
-                if ($apply) {
-                    DB::table('branches')->where('tenant_id', $branch->tenant_id)->where('id', $branch->id)->update(['pos_inventory_warehouse_id' => $bars->first()->id, 'updated_at' => now()]);
-                    $fixed++;
-                }
-            } elseif ($configured === null) {
+            } elseif ($configured === null && $bars->count() > 1) {
                 $findings[] = $this->finding($branch, 'MULTIPLE_POS_BAR_CANDIDATES', 'manual_review', ['warehouseIds' => $bars->pluck('id')->map(fn ($id) => (int) $id)->all()]);
+            } elseif ($configured === null && $bars->isEmpty()) {
+                $activeMains = $eligible->where('type', 'branch_main')->values();
+                if ($activeMains->count() > 1) {
+                    $findings[] = $this->finding($branch, 'MULTIPLE_POS_MAIN_CANDIDATES', 'manual_review', ['warehouseIds' => $activeMains->pluck('id')->map(fn ($id) => (int) $id)->all()]);
+                } elseif ($activeMains->isEmpty()) {
+                    $findings[] = $this->finding($branch, 'MISSING_POS_OPERATIONAL_WAREHOUSE', 'create_main');
+                }
             }
         }
 

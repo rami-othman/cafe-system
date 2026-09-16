@@ -441,17 +441,21 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                           helperText:
                               'يُستخدم تلقائياً لاستهلاك مبيعات هذا الفرع.',
                         ),
-                        items: state.branch!.availablePosWarehouses
-                            .map(
-                              (warehouse) => DropdownMenuItem<int>(
+                        items: <DropdownMenuItem<int>>[
+                          const DropdownMenuItem<int>(
+                            value: null,
+                            child: Text('تلقائي حسب إعدادات الفرع'),
+                          ),
+                          ...state.branch!.availablePosWarehouses.map(
+                            (warehouse) => DropdownMenuItem<int>(
                                 value: warehouse.id,
                                 child: Text(
-                                  warehouse.name,
+                                  '${warehouse.name} — ${warehouse.type == 'bar' ? 'البار' : 'المخزن الرئيسي'}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            )
-                            .toList(growable: false),
+                          ),
+                        ],
                         onChanged: (value) => cubit.update(
                           state.draft.copyWith(
                             posInventoryWarehouseId: value,
@@ -460,6 +464,14 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                         ),
                       ),
                       _FieldError(state.errors['posInventoryWarehouseId']),
+                      if (state.branch!.posInventoryWarehouseSource ==
+                          'main_fallback')
+                        const Padding(
+                          padding: EdgeInsets.only(top: AppSpacing.sm),
+                          child: Text(
+                            'يتم استخدام المخزن الرئيسي تلقائيًا لنقطة البيع.',
+                          ),
+                        ),
                     ],
                     const SizedBox(height: AppSpacing.xl),
                     const Divider(),

@@ -35,13 +35,10 @@ final class InventoryAccess
             'inventory.counts.post',
             'inventory.adjustments.create',
         ],
-        // Employees can inspect inventory relevant to their assigned branch,
-        // but cannot change stock or its approval workflow.
-        'employee' => [
-            'inventory.view',
-            'inventory.transfers.view',
-            'inventory.counts.view',
-        ],
+        // Employees (cashiers) get no general inventory access at all. Their
+        // only inventory-adjacent capability is the scoped "own shift bar
+        // check" flow authorized separately by BarCheckAccess.
+        'employee' => [],
     ];
 
     public static function authorize(Request $request, string $permission): void
