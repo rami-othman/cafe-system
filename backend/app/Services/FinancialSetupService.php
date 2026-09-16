@@ -60,6 +60,7 @@ class FinancialSetupService
             ['code' => '4000', 'name_ar' => 'إيرادات المبيعات', 'name_en' => 'Sales Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '4010', 'name_ar' => 'الخصومات الممنوحة', 'name_en' => 'Discounts Given', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
             ['code' => '4020', 'name_ar' => 'مرتجعات المبيعات', 'name_en' => 'Sales Returns', 'account_group' => 'revenue', 'normal_balance' => 'debit'],
+            ['code' => '4030', 'name_ar' => 'إيرادات الخدمات والرسوم', 'name_en' => 'Service and Charge Revenue', 'account_group' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '5000', 'name_ar' => 'تكلفة البضاعة المباعة', 'name_en' => 'Cost of Goods Sold', 'account_group' => 'cost_of_sales', 'normal_balance' => 'debit'],
             ['code' => '5010', 'name_ar' => 'هدر وفروقات المخزون', 'name_en' => 'Waste / Inventory Variance', 'account_group' => 'cost_of_sales', 'normal_balance' => 'debit'],
             ['code' => '6100', 'name_ar' => 'مصروف الإيجار', 'name_en' => 'Rent Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
@@ -113,8 +114,10 @@ class FinancialSetupService
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         }
-        foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020'] as $key => $code) {
-            if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) continue;
+        foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020', 'sales.additional_charge_revenue' => '4030', 'sales.manual_adjustment' => '4030'] as $key => $code) {
+            if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) {
+                continue;
+            }
             $accountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', $code)->value('id');
             if ($accountId) DB::table('sales_account_mappings')->insert(['tenant_id' => $tenantId, 'mapping_key' => $key, 'financial_account_id' => $accountId, 'created_at' => $now, 'updated_at' => $now]);
         }

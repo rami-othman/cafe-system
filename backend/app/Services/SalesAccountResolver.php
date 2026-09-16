@@ -8,12 +8,14 @@ use Illuminate\Validation\ValidationException;
 /** Resolves tenant Finance configuration by stable mapping key, never account database ID. */
 final class SalesAccountResolver
 {
-    /** @return array{accountsReceivable:string,revenue:string,taxPayable:string,cogs:string,inventory:string} */
+    /** @return array{accountsReceivable:string,revenue:string,additionalChargeRevenue:string,manualAdjustment:string,taxPayable:string,cogs:string,inventory:string} */
     public function postingAccounts(int $tenantId): array
     {
         return [
             'accountsReceivable' => $this->accountsReceivable($tenantId),
             'revenue' => $this->code($tenantId, 'sales.revenue', 'revenue', 'credit'),
+            'additionalChargeRevenue' => $this->code($tenantId, 'sales.additional_charge_revenue', 'revenue', 'credit'),
+            'manualAdjustment' => $this->code($tenantId, 'sales.manual_adjustment', 'revenue', 'credit'),
             'taxPayable' => $this->code($tenantId, 'sales.tax_payable', 'liabilities', 'credit'),
             'cogs' => $this->code($tenantId, 'sales.cost_of_goods_sold', 'cost_of_sales', 'debit'),
             'inventory' => $this->code($tenantId, 'sales.inventory_asset', 'assets', 'debit'),
