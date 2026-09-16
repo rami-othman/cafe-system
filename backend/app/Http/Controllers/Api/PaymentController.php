@@ -39,7 +39,31 @@ class PaymentController extends Controller
         $row = $this->findOrder($request, $tenantId, $order);
         $itemCount = (float) DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order)->whereNull('deleted_at')->sum('quantity');
         $total = (float) $row->total;
+        $paymentStatus = (string) $row->payment_status;
+        $orderStatus = (string) $row->status;
+        $completedPaymentExists = DB::table('payments')
+            ->where('tenant_id', $tenantId)
+            ->where('order_id', $order)
+            ->where('status', 'completed')
+            ->whereNull('deleted_at')
+            ->exists();
+        $outstandingAmount = $completedPaymentExists
+            ? 0.0
+            : max(0, round($total, 2));
         $received = array_key_exists('amountReceived', $data) ? (float) $data['amountReceived'] : $total;
+        $actorId = (int) $request->attributes->get('auth_user')->id;
+        $hasOpenShift = $row->shift_id !== null && DB::table('shifts')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $row->shift_id)
+            ->where('branch_id', $row->branch_id)
+            ->where('user_id', $actorId)
+            ->where('status', 'open')
+            ->whereNull('deleted_at')
+            ->exists();
+        $lifecycleCanPay = $this->lifecycle->canPay($row);
+        $warehouseBlocker = $lifecycleCanPay
+            ? $this->consumption->preflightWarehouseConfiguration($tenantId, $row)
+            : null;
         $methods = DB::table('payment_methods as pm')
             ->join('financial_accounts as accounts', 'accounts.id', '=', 'pm.financial_account_id')
             ->where('pm.tenant_id', $tenantId)->where('pm.is_active', true)
@@ -47,10 +71,31 @@ class PaymentController extends Controller
             ->whereIn('pm.type', ['cash', 'card'])
             ->orderBy('pm.sort_order')->orderBy('pm.id')->pluck('pm.type')
             ->unique()->values();
+        $canPay = $lifecycleCanPay &&
+            ! $completedPaymentExists &&
+            $outstandingAmount > 0 &&
+            $hasOpenShift &&
+            $methods->isNotEmpty() &&
+            $warehouseBlocker === null;
+        $blockedReason = $canPay
+            ? null
+            : ($completedPaymentExists || $paymentStatus === 'paid'
+                ? 'A completed payment already exists for this order.'
+                : ($warehouseBlocker['reason'] ?? (! $hasOpenShift
+                    ? 'No open shift found. Open a shift before paying.'
+                    : ($methods->isEmpty()
+                        ? 'No supported payment method is available for this order.'
+                        : 'This order cannot be paid in its current state.'))));
+        $blockerCode = $canPay ? null : ($warehouseBlocker['code'] ?? null);
 
         return response()->json(['data' => [
             'orderId' => $row->id, 'orderNumber' => $row->order_number, 'totalDue' => $total,
-            'itemCount' => $itemCount, 'amountReceived' => $received,
+            'outstandingAmount' => $outstandingAmount, 'itemCount' => $itemCount,
+            'orderStatus' => $orderStatus, 'paymentStatus' => $paymentStatus,
+            'canPay' => $canPay, 'blockedReason' => $blockedReason,
+            'blockerCode' => $blockerCode,
+            'completedPaymentExists' => $completedPaymentExists,
+            'amountReceived' => $received,
             'changeDue' => round(max(0, $received - $total), 2),
             'methods' => $methods, 'quickAmounts' => $this->quickAmounts($total),
         ]]);
@@ -89,6 +134,7 @@ class PaymentController extends Controller
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
                 throw new OrderLifecycleException('PAYMENT_ALREADY_COMPLETED', 'A completed payment already exists for this order.');
             }
+            $row = $this->consumption->bindLegacyOrderWarehouse($tenantId, $row);
             // Apply-time deliberately defers tender validation. Payment is the
             // authoritative second stage, including revalidation after a
             // manager changes a policy or its schedule expires.
@@ -158,7 +204,8 @@ class PaymentController extends Controller
     {
         return ['orderId' => $orderId, 'changeDue' => round(max(0, $received - $total), 2), 'payment' => [
             'id' => $payment->id, 'method' => $payment->method, 'amount' => (float) $payment->amount,
-            'status' => $payment->status, 'paidAt' => $payment->paid_at,
+            'status' => $payment->status, 'reference' => $payment->reference_number,
+            'idempotencyKey' => $payment->idempotency_key, 'paidAt' => $payment->paid_at,
         ]];
     }
 

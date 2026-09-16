@@ -424,6 +424,55 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             cubit.update(state.draft.copyWith(timezone: v)),
                       ),
                     ),
+                    if (state.branch != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.lg),
+                      DropdownButtonFormField<int>(
+                        key: const Key('branch-pos-inventory-warehouse'),
+                        initialValue:
+                            state.branch!.availablePosWarehouses.any(
+                              (warehouse) =>
+                                  warehouse.id ==
+                                  state.draft.posInventoryWarehouseId,
+                            )
+                            ? state.draft.posInventoryWarehouseId
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'مخزن نقطة البيع',
+                          helperText:
+                              'يُستخدم تلقائياً لاستهلاك مبيعات هذا الفرع.',
+                        ),
+                        items: <DropdownMenuItem<int>>[
+                          const DropdownMenuItem<int>(
+                            value: null,
+                            child: Text('تلقائي حسب إعدادات الفرع'),
+                          ),
+                          ...state.branch!.availablePosWarehouses.map(
+                            (warehouse) => DropdownMenuItem<int>(
+                                value: warehouse.id,
+                                child: Text(
+                                  '${warehouse.name} — ${warehouse.type == 'bar' ? 'البار' : 'المخزن الرئيسي'}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ),
+                        ],
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(
+                            posInventoryWarehouseId: value,
+                            clearPosInventoryWarehouseId: value == null,
+                          ),
+                        ),
+                      ),
+                      _FieldError(state.errors['posInventoryWarehouseId']),
+                      if (state.branch!.posInventoryWarehouseSource ==
+                          'main_fallback')
+                        const Padding(
+                          padding: EdgeInsets.only(top: AppSpacing.sm),
+                          child: Text(
+                            'يتم استخدام المخزن الرئيسي تلقائيًا لنقطة البيع.',
+                          ),
+                        ),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     const Divider(),
                     const SizedBox(height: AppSpacing.lg),

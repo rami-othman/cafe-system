@@ -7,7 +7,7 @@ class OrderSummaryItem extends Equatable {
     required this.total,
   });
 
-  final int quantity;
+  final double quantity;
   final String name;
   final double total;
 

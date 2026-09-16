@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
 import 'menu_management_route_locations.dart';
+import 'customer_management_route_locations.dart';
+import 'shift_close_route_locations.dart';
 
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
@@ -29,6 +31,11 @@ import '../features/reports/views/sales_profitability_screen.dart';
 import '../features/reports/views/cash_shifts_screen.dart';
 import '../features/reports/views/inventory_report_screen.dart';
 import '../features/reports/views/expenses_report_screen.dart';
+import '../features/shift_close/controllers/bar_check_cubit.dart';
+import '../features/shift_close/controllers/shift_close_cubit.dart';
+import '../features/shift_close/views/bar_check_screen.dart';
+import '../features/shift_close/views/shift_close_screen.dart';
+import '../shared/access/cashier_access.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
 import '../features/finance_inventory_setup/views/daily_closing_screen.dart';
@@ -123,10 +130,50 @@ import '../features/cafe_configuration/views/cafe_configuration_screens.dart';
 import '../features/cafe_configuration/views/team_tax_screens.dart';
 import '../features/cafe_configuration/widgets/cafe_configuration_navigation.dart';
 import '../features/cafe_configuration/widgets/cafe_configuration_scaffold.dart';
+import '../features/customer_management/controllers/customer_detail_cubit.dart';
+import '../features/customer_management/controllers/customer_order_history_cubit.dart';
+import '../features/customer_management/controllers/customer_form_cubit.dart';
+import '../features/customer_management/controllers/customer_list_cubit.dart';
+import '../features/customer_management/models/customer_management_access.dart';
+import '../features/customer_management/repositories/customer_management_repository.dart';
+import '../features/customer_management/controllers/customer_group_list_cubit.dart';
+import '../features/customer_management/controllers/customer_group_detail_cubit.dart';
+import '../features/customer_management/controllers/customer_group_form_cubit.dart';
+import '../features/customer_management/views/customer_group_list_screen.dart';
+import '../features/customer_management/views/customer_group_detail_screen.dart';
+import '../features/customer_management/views/customer_group_form_screen.dart';
+import '../features/customer_management/views/customer_detail_screen.dart';
+import '../features/customer_management/views/customer_order_history_screen.dart';
+import '../features/customer_management/views/customer_form_screen.dart';
+import '../features/customer_management/views/customer_list_screen.dart';
+import '../features/customer_management/widgets/customer_management_scaffold.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../shared/widgets/app_top_bar.dart';
 import 'app_shell.dart';
+
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+Page<void> _customerGroupCreateModalPage(
+  BuildContext context,
+  GoRouterState state,
+) => CustomTransitionPage<void>(
+  key: state.pageKey,
+  name: state.name,
+  opaque: false,
+  barrierDismissible: true,
+  barrierColor: AppColors.materialEffectBackdrop,
+  barrierLabel: AppLocalizations.of(context).customerManagementCreateGroup,
+  transitionDuration: const Duration(milliseconds: 180),
+  reverseTransitionDuration: const Duration(milliseconds: 140),
+  transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+      FadeTransition(opacity: animation, child: child),
+  child: BlocProvider<CustomerGroupFormCubit>(
+    create: (_) =>
+        CustomerGroupFormCubit(serviceLocator<CustomerManagementRepository>()),
+    child: const CustomerGroupFormScreen(),
+  ),
+);
 
 Page<void> _materialEffectPage(
   BuildContext context,
@@ -157,7 +204,9 @@ Page<void> _materialEffectPage(
 );
 
 final GoRouter appRouter = GoRouter(
+  navigatorKey: _rootNavigatorKey,
   initialLocation: AppRoutes.pos,
+  redirect: _cashierAccessRedirect,
   routes: <RouteBase>[
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
@@ -170,6 +219,9 @@ final GoRouter appRouter = GoRouter(
         final bool isReports = state.uri.path.startsWith(AppRoutes.reports);
         final bool isFinance = state.uri.path.startsWith(AppRoutes.finance);
         final bool isInventory = state.uri.path.startsWith(AppRoutes.inventory);
+        final bool isCustomerManagement = state.uri.path.startsWith(
+          CustomerManagementRouteLocations.customers,
+        );
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
@@ -210,6 +262,13 @@ final GoRouter appRouter = GoRouter(
                   ),
                   child: child,
                 )
+              : isCustomerManagement
+              ? CustomerManagementScaffold(
+                  groupsSelected: state.uri.path.startsWith(
+                    CustomerManagementRouteLocations.groups,
+                  ),
+                  child: child,
+                )
               : child,
         );
 
@@ -242,6 +301,139 @@ final GoRouter appRouter = GoRouter(
         );
       },
       routes: <RouteBase>[
+        GoRoute(
+          path: CustomerManagementRouteLocations.customerOrders,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) {
+            final int? id = CustomerManagementRouteLocations.parseId(state.pathParameters['customerId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<CustomerOrderHistoryCubit>(create: (_) => CustomerOrderHistoryCubit(serviceLocator<CustomerManagementRepository>()), child: CustomerOrderHistoryScreen(customerId: id, repository: serviceLocator<CustomerManagementRepository>()));
+          },
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.customers,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) =>
+              BlocProvider<CustomerListCubit>(
+                create: (_) => CustomerListCubit(
+                  serviceLocator<CustomerManagementRepository>(),
+                ),
+                child: CustomerListScreen(
+                  lifecycleRepository:
+                      serviceLocator<CustomerManagementRepository>(),
+                ),
+              ),
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.groups,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) =>
+              BlocProvider<CustomerGroupListCubit>(
+                create: (_) => CustomerGroupListCubit(
+                  serviceLocator<CustomerManagementRepository>(),
+                ),
+                child: CustomerGroupListScreen(
+                  repository: serviceLocator<CustomerManagementRepository>(),
+                ),
+              ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'new',
+              parentNavigatorKey: _rootNavigatorKey,
+              redirect: _customerManagementAccessRedirect,
+              pageBuilder: _customerGroupCreateModalPage,
+            ),
+          ],
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.groupEdit,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) {
+            final int? id = CustomerManagementRouteLocations.parseId(
+              state.pathParameters['groupId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<CustomerGroupFormCubit>(
+              create: (_) => CustomerGroupFormCubit(
+                serviceLocator<CustomerManagementRepository>(),
+              ),
+              child: CustomerGroupFormScreen(groupId: id),
+            );
+          },
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.groupDetail,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) {
+            final int? id = CustomerManagementRouteLocations.parseId(
+              state.pathParameters['groupId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<CustomerGroupDetailCubit>(
+              create: (_) => CustomerGroupDetailCubit(
+                serviceLocator<CustomerManagementRepository>(),
+              ),
+              child: CustomerGroupDetailScreen(
+                groupId: id,
+                repository: serviceLocator<CustomerManagementRepository>(),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.customerCreate,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) =>
+              BlocProvider<CustomerFormCubit>(
+                create: (_) => CustomerFormCubit(
+                  serviceLocator<CustomerManagementRepository>(),
+                ),
+                child: CustomerFormScreen(
+                  lifecycleRepository:
+                      serviceLocator<CustomerManagementRepository>(),
+                ),
+              ),
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.customerEdit,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) {
+            final int? id = CustomerManagementRouteLocations.parseId(
+              state.pathParameters['customerId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<CustomerFormCubit>(
+              create: (_) => CustomerFormCubit(
+                serviceLocator<CustomerManagementRepository>(),
+              ),
+              child: CustomerFormScreen(
+                customerId: id,
+                lifecycleRepository:
+                    serviceLocator<CustomerManagementRepository>(),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: CustomerManagementRouteLocations.customerDetail,
+          redirect: _customerManagementAccessRedirect,
+          builder: (BuildContext context, GoRouterState state) {
+            final int? id = CustomerManagementRouteLocations.parseId(
+              state.pathParameters['customerId'],
+            );
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<CustomerDetailCubit>(
+              create: (_) => CustomerDetailCubit(
+                serviceLocator<CustomerManagementRepository>(),
+              ),
+              child: CustomerDetailScreen(
+                customerId: id,
+                lifecycleRepository:
+                    serviceLocator<CustomerManagementRepository>(),
+              ),
+            );
+          },
+        ),
         GoRoute(
           path: AppRoutes.menuManagementModifierRecipeAdjustments,
           name: AppRouteNames.menuManagementModifierRecipeAdjustments,
@@ -1048,11 +1240,30 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
+          redirect: (_, __) => CashierAccess.isCashier(
+                    serviceLocator<AuthSessionCubit>().state.session?.user.role,
+                  )
+              ? AppRoutes.financeReceiptVouchers
+              : null,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+                child: FinanceOverview.fromRepository(
+                  serviceLocator<FinanceSetupRepository>(),
+                ),
+              ),
+        ),
+        GoRoute(
+          path: AppRoutes.financeReceiptVouchers,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
             create: (_) => serviceLocator<FinanceSetupCubit>(),
-            child: FinanceOverview.fromRepository(
-              serviceLocator<FinanceSetupRepository>(),
-            ),
+            child: const VouchersScreen(initialType: 'receipt'),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.financePaymentVouchers,
+          builder: (context, state) => BlocProvider<FinanceSetupCubit>(
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: const VouchersScreen(initialType: 'payment'),
           ),
         ),
         GoRoute(
@@ -1535,6 +1746,25 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
+          path: AppRoutes.shiftClose,
+          name: AppRouteNames.shiftClose,
+          builder: (context, state) => BlocProvider<ShiftCloseCubit>(
+            create: (_) => serviceLocator<ShiftCloseCubit>(),
+            child: const ShiftCloseScreen(),
+          ),
+        ),
+        GoRoute(
+          path: BarCheckScreen.routePath,
+          name: BarCheckScreen.routeName,
+          builder: (context, state) {
+            final BarCheckScreenArgs args = state.extra as BarCheckScreenArgs;
+            return BlocProvider<BarCheckCubit>(
+              create: (_) => serviceLocator<BarCheckCubit>(),
+              child: BarCheckScreen(args: args),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.cafeConfiguration,
           redirect: (_, _) => AppRoutes.cafeConfigurationOverview,
         ),
@@ -1702,6 +1932,8 @@ Widget? _rightPanelFor(GoRouterState state) {
 
 String _financeActiveTabFor(String path) {
   if (path == AppRoutes.finance) return 'overview';
+  if (path == AppRoutes.financeReceiptVouchers) return 'receipt-vouchers';
+  if (path == AppRoutes.financePaymentVouchers) return 'payment-vouchers';
   if (path.startsWith(AppRoutes.financeTransactions)) return 'transactions';
   if (path.startsWith(AppRoutes.financeCashBanks)) return 'cashbanks';
   if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
@@ -1787,6 +2019,9 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
 }
 
 String _activeDestinationFor(GoRouterState state) {
+  if (state.uri.path.startsWith(CustomerManagementRouteLocations.customers)) {
+    return 'customers';
+  }
   if (state.uri.path.startsWith(AppRoutes.cafeConfiguration)) {
     return 'cafeConfiguration';
   }
@@ -1820,6 +2055,7 @@ abstract final class AppRoutes {
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
   static const String settings = '/settings';
+  static const String shiftClose = ShiftCloseRouteLocations.shiftClose;
   static const String cafeConfiguration = '/cafe-configuration';
   static const String cafeConfigurationOverview =
       '/cafe-configuration/overview';
@@ -1834,6 +2070,8 @@ abstract final class AppRoutes {
       '/cafe-configuration/branches/:branchId/edit';
   static const String inventory = '/inventory';
   static const String finance = '/finance';
+  static const String financeReceiptVouchers = '/finance/receipt-vouchers';
+  static const String financePaymentVouchers = '/finance/payment-vouchers';
   static const String menuManagement = '/menu-management';
   static const String menuManagementProducts = '/menu-management/products';
   static const String menuManagementModifiers = '/menu-management/modifiers';
@@ -1979,6 +2217,7 @@ abstract final class AppRouteNames {
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
   static const String settings = 'settings';
+  static const String shiftClose = 'shift-close';
   static const String cafeConfigurationOverview = 'cafe-configuration-overview';
   static const String cafeConfigurationProfile = 'cafe-configuration-profile';
   static const String cafeConfigurationBranches = 'cafe-configuration-branches';
@@ -2076,7 +2315,27 @@ void _returnToRecipeWorkspace(
   );
 }
 
+/// Centralized route guard: a cashier's bearer token is fine-grained on the
+/// backend (see BarCheckAccess/InventoryAccess), but the client must not
+/// even offer navigation into a module the cashier cannot use. This single
+/// top-level check covers every route so cashier restrictions cannot be
+/// bypassed by a direct URL/deep link, without scattering per-route checks.
+String? _cashierAccessRedirect(BuildContext _, GoRouterState state) =>
+    CashierAccess.allowsPath(
+      state.uri.path,
+      serviceLocator<AuthSessionCubit>().state.session?.user.role,
+    )
+    ? null
+    : AppRoutes.pos;
+
 String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState _) =>
     serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner'
+    ? null
+    : AppRoutes.pos;
+
+String? _customerManagementAccessRedirect(BuildContext _, GoRouterState _) =>
+    CustomerManagementAccess.allows(
+      serviceLocator<AuthSessionCubit>().state.session,
+    )
     ? null
     : AppRoutes.pos;

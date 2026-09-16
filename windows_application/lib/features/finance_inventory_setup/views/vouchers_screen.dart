@@ -17,7 +17,10 @@ import '../widgets/finance_paginated_table.dart';
 /// Receipt/payment documents intentionally use their own API. Journal entries
 /// and cash transfers below stay linked to their established workflows.
 class VouchersScreen extends StatefulWidget {
-  const VouchersScreen({super.key});
+  const VouchersScreen({super.key, this.initialType});
+
+  /// The cashier shell reuses this screen for one document type at a time.
+  final String? initialType;
   @override
   State<VouchersScreen> createState() => _VouchersScreenState();
 }
@@ -33,24 +36,26 @@ class _VouchersScreenState extends State<VouchersScreen> {
   String? _error;
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _type = widget.initialType;
+    _load();
+  }
 
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
       final results = await Future.wait<dynamic>(<Future<dynamic>>[
         _repository.getVouchers(filters: <String, dynamic>{if (_type != null) 'type': _type}),
-        _repository.getAccounts(status: 'active'),
-        _repository.getFinancialLocations('cash'),
-        _repository.getFinancialLocations('bank'),
-        _repository.getBranches(),
+        _repository.getCashierVoucherOptions(),
       ]);
       if (!mounted) return;
       setState(() {
         _items = results[0] as List<FinanceVoucher>;
-        _accounts = results[1] as List<FinancialAccount>;
-        _locations = <FinancialLocation>[...(results[2] as List<FinancialLocation>), ...(results[3] as List<FinancialLocation>)];
-        _branches = results[4] as List<Branch>;
+        final options = results[1] as ({List<FinancialAccount> accounts, List<FinancialLocation> locations, List<Branch> branches});
+        _accounts = options.accounts;
+        _locations = options.locations;
+        _branches = options.branches;
         _loading = false;
       });
     } catch (error) { if (mounted) setState(() { _error = '$error'; _loading = false; }); }
@@ -67,19 +72,23 @@ class _VouchersScreenState extends State<VouchersScreen> {
       title: 'السندات والقيود',
       subtitle: 'سندات القبض والدفع مرتبطة بدفتر الأستاذ؛ القيود والتحويلات تستخدم مساراتها المحاسبية المعتمدة.',
       actions: <Widget>[
-        AppButton(label: 'سند قبض', icon: Icons.add_circle_outline, onPressed: _locations.isEmpty ? null : () => _create('receipt')),
-        AppButton(label: 'سند دفع', icon: Icons.remove_circle_outline, variant: AppButtonVariant.outlined, onPressed: _locations.isEmpty ? null : () => _create('payment')),
-        OutlinedButton.icon(onPressed: () => context.go(AppRoutes.financeJournalEntriesCanonical), icon: const Icon(Icons.menu_book_outlined), label: const Text('قيد يومية')),
-        OutlinedButton.icon(onPressed: () => context.go(AppRoutes.financeCashBanks), icon: const Icon(Icons.swap_horiz), label: const Text('تحويل نقدي')),
+        if (widget.initialType == null || widget.initialType == 'receipt')
+          AppButton(label: 'سند قبض', icon: Icons.add_circle_outline, onPressed: _locations.isEmpty ? null : () => _create('receipt')),
+        if (widget.initialType == null || widget.initialType == 'payment')
+          AppButton(label: 'سند دفع', icon: Icons.remove_circle_outline, variant: AppButtonVariant.outlined, onPressed: _locations.isEmpty ? null : () => _create('payment')),
+        if (widget.initialType == null) ...<Widget>[
+          OutlinedButton.icon(onPressed: () => context.go(AppRoutes.financeJournalEntriesCanonical), icon: const Icon(Icons.menu_book_outlined), label: const Text('قيد يومية')),
+          OutlinedButton.icon(onPressed: () => context.go(AppRoutes.financeCashBanks), icon: const Icon(Icons.swap_horiz), label: const Text('تحويل نقدي')),
+        ],
       ],
     ),
     const SizedBox(height: AppSpacing.lg),
-    Wrap(spacing: AppSpacing.md, children: <Widget>[
+    if (widget.initialType == null) Wrap(spacing: AppSpacing.md, children: <Widget>[
       ChoiceChip(label: const Text('الكل'), selected: _type == null, onSelected: (_) { setState(() => _type = null); _load(); }),
       ChoiceChip(label: const Text('سندات القبض'), selected: _type == 'receipt', onSelected: (_) { setState(() => _type = 'receipt'); _load(); }),
       ChoiceChip(label: const Text('سندات الدفع'), selected: _type == 'payment', onSelected: (_) { setState(() => _type = 'payment'); _load(); }),
     ]),
-    const SizedBox(height: AppSpacing.lg),
+    if (widget.initialType == null) const SizedBox(height: AppSpacing.lg),
     Expanded(child: _content()),
   ]);
 

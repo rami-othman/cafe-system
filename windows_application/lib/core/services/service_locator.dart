@@ -10,6 +10,9 @@ import '../../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../../features/pos/repositories/pos_menu_sync_cache.dart';
 import '../../features/pos/repositories/pos_menu_sync_repository.dart';
 import '../../features/pos/repositories/pos_repository.dart';
+import '../../features/shift_close/controllers/bar_check_cubit.dart';
+import '../../features/shift_close/controllers/shift_close_cubit.dart';
+import '../../features/shift_close/repositories/shift_close_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
@@ -64,6 +67,7 @@ import '../../features/cafe_configuration/controllers/cafe_configuration_overvie
 import '../../features/cafe_configuration/controllers/tax_cubit.dart';
 import '../../features/cafe_configuration/controllers/team_cubit.dart';
 import '../../features/cafe_configuration/repositories/cafe_configuration_repository.dart';
+import '../../features/customer_management/repositories/customer_management_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -134,6 +138,21 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<PosCubit>()) {
     serviceLocator.registerFactory<PosCubit>(
       () => PosCubit(repository: serviceLocator<PosRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ShiftCloseRepository>()) {
+    serviceLocator.registerLazySingleton<ShiftCloseRepository>(
+      () => ShiftCloseRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ShiftCloseCubit>()) {
+    serviceLocator.registerFactory<ShiftCloseCubit>(
+      () => ShiftCloseCubit(repository: serviceLocator<ShiftCloseRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<BarCheckCubit>()) {
+    serviceLocator.registerFactory<BarCheckCubit>(
+      () => BarCheckCubit(repository: serviceLocator<ShiftCloseRepository>()),
     );
   }
   if (!serviceLocator.isRegistered<PosMenuSyncCache>()) {
@@ -328,6 +347,11 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<CafeConfigurationRepository>()) {
     serviceLocator.registerLazySingleton<CafeConfigurationRepository>(
       () => ApiCafeConfigurationRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<CustomerManagementRepository>()) {
+    serviceLocator.registerLazySingleton<CustomerManagementRepository>(
+      () => ApiCustomerManagementRepository(serviceLocator<DioApiClient>()),
     );
   }
   if (!serviceLocator.isRegistered<CafeProfileCubit>()) {

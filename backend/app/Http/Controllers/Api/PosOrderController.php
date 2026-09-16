@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Customer\CustomerOperationalEligibility;
 use App\Exceptions\OrderLifecycleException;
 use App\Exceptions\UnsupportedMenuSnapshotSchemaException;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
 use App\Services\Menu\PublishedMenuOrderResolver;
 use App\Services\OrderLifecyclePolicy;
+use App\Services\PosInventoryWarehouseResolver;
 use App\Services\PosNumberGenerator;
 use App\Services\PosPricingService;
 use App\Services\TenantTaxService;
@@ -28,37 +30,59 @@ class PosOrderController extends Controller
         private readonly PublishedMenuOrderResolver $publishedOrders,
         private readonly OrderLifecyclePolicy $lifecycle,
         private readonly PosNumberGenerator $numbers,
+        private readonly CustomerOperationalEligibility $customerEligibility,
+        private readonly PosInventoryWarehouseResolver $posWarehouses,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
 
-        $request->validate([
+        $data = $request->validate([
             'branchId' => ['nullable', 'integer', $this->tenantExists('branches', $tenantId)],
+            'status' => ['nullable', 'in:active,draft,held,paid,refunded,cancelled,preparing,ready,completed'],
+            'orderType' => ['nullable', 'in:dine_in,takeaway,delivery'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'perPage' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = DB::table('orders')
-            ->where('tenant_id', $tenantId)
-            ->whereIn('branch_id', app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user')))
-            ->whereNull('deleted_at');
+        $branchIds = app(BranchAccessService::class)->accessibleBranchIds($request->attributes->get('auth_user'));
+        $query = $this->orderSummaryQuery($tenantId, $branchIds);
 
-        if ($request->filled('branchId')) {
-            $query->where('branch_id', (int) $request->query('branchId'));
+        if (isset($data['branchId'])) {
+            $query->where('orders.branch_id', (int) $data['branchId']);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->query('status'));
+        if (isset($data['status'])) {
+            if ($data['status'] === 'active') {
+                $query->where('orders.status', 'draft');
+            } else {
+                $query->where('orders.status', $data['status']);
+            }
         }
 
-        if ($request->filled('orderType')) {
-            $query->where('type', $request->query('orderType'));
+        if (isset($data['orderType'])) {
+            $query->where('orders.type', $data['orderType']);
         }
 
-        $orders = $query->latest('created_at')->limit(100)->get()
-            ->map(fn ($order) => $this->serializeOrder($tenantId, $order, false));
+        $page = $query
+            ->orderByDesc('orders.created_at')
+            ->orderByDesc('orders.id')
+            ->paginate($data['perPage'] ?? 25, ['*'], 'page', $data['page'] ?? 1);
+        $previews = $this->orderPreviews($tenantId, $page->items());
+        $orders = collect($page->items())
+            ->map(fn ($order) => $this->serializeOrderSummary($order, $previews[(int) $order->id] ?? []))
+            ->values();
 
-        return response()->json(['data' => $orders]);
+        return response()->json([
+            'data' => $orders,
+            'meta' => [
+                'currentPage' => $page->currentPage(),
+                'lastPage' => $page->lastPage(),
+                'perPage' => $page->perPage(),
+                'total' => $page->total(),
+            ],
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -73,7 +97,8 @@ class PosOrderController extends Controller
             'shiftId' => ['nullable', 'integer', $this->tenantExists('shifts', $tenantId)],
             'orderType' => ['required', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
-            'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
+            'customerId' => ['nullable', 'integer'],
+            'warehouseId' => ['prohibited'],
             'publishedMenuVersionId' => ['nullable', 'integer'],
             'items' => ['required', 'array', 'min:1'],
             // Product identity belongs to the snapshot on the versioned path;
@@ -93,9 +118,10 @@ class PosOrderController extends Controller
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
+        $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $data['branchId']);
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
-            $result = DB::transaction(function () use ($tenantId, $data, $actorId) {
+            $result = DB::transaction(function () use ($tenantId, $data, $actorId, $warehouse) {
                 $key = $data['idempotencyKey'] ?? null;
                 $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
                 if ($key && ($existing = DB::table('orders')->where('tenant_id', $tenantId)->where('idempotency_key', $key)->lockForUpdate()->first())) {
@@ -106,6 +132,7 @@ class PosOrderController extends Controller
                     return ['order' => $existing, 'replayed' => true];
                 }
 
+                $this->customerEligibility->assert($tenantId, $data['customerId'] ?? null);
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
                     : null;
@@ -113,6 +140,7 @@ class PosOrderController extends Controller
                 $orderId = DB::table('orders')->insertGetId([
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'],
+                    'warehouse_id' => $warehouse->id,
                     'published_menu_version_id' => $snapshot['version']->id ?? null,
                     'shift_id' => $data['shiftId'] ?? null,
                     'table_id' => $data['tableId'] ?? null,
@@ -150,7 +178,14 @@ class PosOrderController extends Controller
         $tenantId = TenantContext::id($request);
         $row = $this->findOrder($tenantId, $order);
 
-        return response()->json(['data' => $this->serializeOrder($tenantId, $row)]);
+        return response()->json([
+            'data' => $this->serializeOrder(
+                $tenantId,
+                $row,
+                true,
+                $this->resumeEligibility($tenantId, $row),
+            ),
+        ]);
     }
 
     public function update(Request $request, int $order): JsonResponse
@@ -160,7 +195,8 @@ class PosOrderController extends Controller
         $data = $request->validate([
             'orderType' => ['sometimes', 'in:dine_in,takeaway,delivery'],
             'tableId' => ['nullable', 'integer', $this->tenantExists('cafe_tables', $tenantId)],
-            'customerId' => ['nullable', 'integer', $this->tenantExists('customers', $tenantId)],
+            'customerId' => ['nullable', 'integer'],
+            'warehouseId' => ['prohibited'],
             'note' => ['nullable', 'string'],
         ]);
 
@@ -186,6 +222,7 @@ class PosOrderController extends Controller
 
         DB::transaction(function () use ($tenantId, $order, $updates): void {
             $this->lifecycle->assertMutable($this->lockedOrder($tenantId, $order));
+            $this->customerEligibility->assert($tenantId, array_key_exists('customer_id', $updates) ? $updates['customer_id'] : null);
             DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update($updates);
             $this->pricing->recalculateOrder($tenantId, $order);
         });
@@ -197,7 +234,14 @@ class PosOrderController extends Controller
     {
         $tenantId = TenantContext::id($request);
         DB::transaction(function () use ($tenantId, $order): void {
-            $this->lifecycle->assertCancellable($this->lockedOrder($tenantId, $order));
+            $lockedOrder = $this->lockedOrder($tenantId, $order);
+            $hasCompletedPayment = DB::table('payments')
+                ->where('tenant_id', $tenantId)
+                ->where('order_id', $order)
+                ->where('status', 'completed')
+                ->whereNull('deleted_at')
+                ->exists();
+            $this->lifecycle->assertCancellable($lockedOrder, $hasCompletedPayment);
             DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
                 'status' => 'cancelled', 'closed_at' => now(), 'updated_at' => now(), 'deleted_at' => now(),
             ]);
@@ -503,8 +547,35 @@ class PosOrderController extends Controller
         }
     }
 
-    private function serializeOrder(int $tenantId, object $order, bool $withItems = true): array
+    private function serializeOrder(
+        int $tenantId,
+        object $order,
+        bool $withItems = true,
+        ?array $resumeEligibility = null,
+    ): array
     {
+        $refundedAmount = 0.0;
+        $refundableAmount = 0.0;
+        if ($withItems) {
+            $settledPayment = DB::table('payments')
+                ->where('tenant_id', $tenantId)
+                ->where('order_id', $order->id)
+                ->where('status', 'completed')
+                ->whereNull('deleted_at')
+                ->orderBy('id')
+                ->first();
+            $refundedAmount = $settledPayment
+                ? (float) DB::table('payment_refunds')
+                    ->where('tenant_id', $tenantId)
+                    ->where('order_id', $order->id)
+                    ->where('payment_id', $settledPayment->id)
+                    ->where('status', 'completed')
+                    ->sum('amount')
+                : 0.0;
+            $refundableAmount = $settledPayment
+                ? max(0, round((float) $settledPayment->amount - $refundedAmount, 2))
+                : 0.0;
+        }
         $customer = $order->customer_id
             ? DB::table('customers')->where('tenant_id', $tenantId)->where('id', $order->customer_id)->first()
             : null;
@@ -513,10 +584,20 @@ class PosOrderController extends Controller
             ? DB::table('cafe_tables')->where('tenant_id', $tenantId)->where('id', $order->table_id)->first()
             : null;
 
-        return [
+        
+      $warehouse = $order->warehouse_id
+    ? DB::table('warehouses')
+        ->where('tenant_id', $tenantId)
+        ->where('id', $order->warehouse_id)
+        ->first()
+    : null;
+      
+        $serialized = [
             'id' => $order->id,
             'orderNumber' => $order->order_number,
             'branchId' => $order->branch_id,
+            'warehouseId' => $order->warehouse_id,
+            'warehouseName' => $warehouse?->name,
             'publishedMenuVersionId' => $order->published_menu_version_id,
             'shiftId' => $order->shift_id,
             'orderType' => $order->type,
@@ -529,6 +610,8 @@ class PosOrderController extends Controller
             'payments' => $withItems ? $this->payments($tenantId, $order->id) : [],
             'refunds' => $withItems ? $this->refunds($tenantId, $order->id) : [],
             'timeline' => $withItems ? $this->timeline($tenantId, $order) : [],
+            'refundedAmount' => round($refundedAmount, 2),
+            'refundableAmount' => $refundableAmount,
             'totals' => [
                 'subtotal' => (float) $order->subtotal,
                 'discountTotal' => (float) $order->discount_total,
@@ -540,6 +623,195 @@ class PosOrderController extends Controller
             'note' => $order->notes,
             'createdAt' => $order->created_at,
             'updatedAt' => $order->updated_at,
+        ];
+
+        if ($resumeEligibility !== null) {
+            $serialized['canResume'] = $resumeEligibility['canResume'];
+            $serialized['resumeBlockerCode'] = $resumeEligibility['resumeBlockerCode'];
+            $serialized['resumeBlockedReason'] = $resumeEligibility['resumeBlockedReason'];
+        }
+
+        return $serialized;
+    }
+
+    /**
+     * Detail reads stay historical/read-only even when a pinned menu cannot
+     * be reconstructed. Only the editable POS resume path is blocked.
+     *
+     * @return array{canResume: bool, resumeBlockerCode: ?string, resumeBlockedReason: ?string}
+     */
+    private function resumeEligibility(int $tenantId, object $order): array
+    {
+        if ($order->status !== 'held') {
+            return [
+                'canResume' => false,
+                'resumeBlockerCode' => 'ORDER_NOT_HELD',
+                'resumeBlockedReason' => 'Only a held order can be resumed into POS.',
+            ];
+        }
+
+        if (strtolower((string) $order->payment_status) !== 'unpaid') {
+            return [
+                'canResume' => false,
+                'resumeBlockerCode' => 'ORDER_ALREADY_PAID',
+                'resumeBlockedReason' => 'Only an unpaid order can be resumed into POS.',
+            ];
+        }
+
+        $hasCompletedPayment = DB::table('payments')
+            ->where('tenant_id', $tenantId)
+            ->where('order_id', $order->id)
+            ->where('status', 'completed')
+            ->whereNull('deleted_at')
+            ->exists();
+        if ($hasCompletedPayment) {
+            return [
+                'canResume' => false,
+                'resumeBlockerCode' => 'ORDER_ALREADY_PAID',
+                'resumeBlockedReason' => 'A completed payment prevents this order from being resumed.',
+            ];
+        }
+
+        if ($order->published_menu_version_id === null) {
+            return [
+                'canResume' => true,
+                'resumeBlockerCode' => null,
+                'resumeBlockedReason' => null,
+            ];
+        }
+
+        try {
+            $this->publishedOrders->bindPinnedOrder(
+                $tenantId,
+                (int) $order->branch_id,
+                (int) $order->published_menu_version_id,
+            );
+        } catch (UnsupportedMenuSnapshotSchemaException) {
+            return [
+                'canResume' => false,
+                'resumeBlockerCode' => 'UNSUPPORTED_MENU_SNAPSHOT_SCHEMA',
+                'resumeBlockedReason' => 'This historical order cannot be resumed because its pinned menu snapshot is unsupported.',
+            ];
+        } catch (ValidationException) {
+            return [
+                'canResume' => false,
+                'resumeBlockerCode' => 'PINNED_MENU_SNAPSHOT_UNAVAILABLE',
+                'resumeBlockedReason' => 'This historical order cannot be resumed because its pinned menu snapshot is unavailable.',
+            ];
+        }
+
+        return [
+            'canResume' => true,
+            'resumeBlockerCode' => null,
+            'resumeBlockedReason' => null,
+        ];
+    }
+
+    private function orderSummaryQuery(int $tenantId, array $branchIds)
+    {
+        $itemCounts = DB::table('order_items')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->select('order_id')
+            ->selectRaw('COALESCE(SUM(quantity), 0) as item_count')
+            ->groupBy('order_id');
+
+        return DB::table('orders')
+            ->leftJoinSub($itemCounts, 'item_counts', function ($join): void {
+                $join->on('item_counts.order_id', '=', 'orders.id');
+            })
+            ->leftJoin('customers', function ($join) use ($tenantId): void {
+                $join->on('customers.id', '=', 'orders.customer_id')
+                    ->where('customers.tenant_id', $tenantId)
+                    ->whereNull('customers.deleted_at');
+            })
+            ->leftJoin('cafe_tables', function ($join) use ($tenantId): void {
+                $join->on('cafe_tables.id', '=', 'orders.table_id')
+                    ->where('cafe_tables.tenant_id', $tenantId)
+                    ->whereNull('cafe_tables.deleted_at');
+            })
+            ->where('orders.tenant_id', $tenantId)
+            ->whereIn('orders.branch_id', $branchIds)
+            ->whereNull('orders.deleted_at')
+            ->select([
+                'orders.id',
+                'orders.order_number',
+                'orders.branch_id',
+                'orders.type',
+                'orders.status',
+                'orders.payment_status',
+                'orders.customer_id',
+                'orders.table_id',
+                'orders.total',
+                'orders.created_at',
+                'customers.name as customer_name',
+                'customers.phone as customer_phone',
+                'cafe_tables.name as table_name',
+                'cafe_tables.code as table_code',
+            ])
+            ->selectRaw('COALESCE(item_counts.item_count, 0) as item_count');
+    }
+
+    private function orderPreviews(int $tenantId, array $orders): array
+    {
+        $orderIds = collect($orders)->pluck('id')->map(fn ($id) => (int) $id)->values();
+        if ($orderIds->isEmpty()) {
+            return [];
+        }
+
+        $rankedItems = DB::table('order_items')
+            ->where('tenant_id', $tenantId)
+            ->whereIn('order_id', $orderIds)
+            ->whereNull('deleted_at')
+            ->select(['order_id', 'id', 'quantity', 'product_name', 'total'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY id) as preview_position');
+
+        $items = DB::query()
+            ->fromSub($rankedItems, 'ranked_items')
+            ->where('preview_position', '<=', 3)
+            ->orderBy('order_id')
+            ->orderBy('id')
+            ->get();
+
+        $previews = [];
+        foreach ($items as $item) {
+            $previews[(int) $item->order_id][] = [
+                'quantity' => (float) $item->quantity,
+                'name' => $item->product_name,
+                'lineTotal' => (float) $item->total,
+            ];
+        }
+
+        return $previews;
+    }
+
+    private function serializeOrderSummary(object $order, array $itemPreview): array
+    {
+        return [
+            'id' => (int) $order->id,
+            'orderNumber' => $order->order_number,
+            'branchId' => (int) $order->branch_id,
+            'orderType' => $order->type,
+            'status' => $order->status,
+            'paymentStatus' => $order->payment_status,
+            'customer' => $order->customer_id && $order->customer_name !== null
+                ? [
+                    'id' => (int) $order->customer_id,
+                    'name' => $order->customer_name,
+                    'phone' => $order->customer_phone,
+                ]
+                : null,
+            'table' => $order->table_id && $order->table_name !== null
+                ? [
+                    'id' => (int) $order->table_id,
+                    'name' => $order->table_name,
+                    'code' => $order->table_code,
+                ]
+                : null,
+            'itemCount' => (float) $order->item_count,
+            'itemPreview' => $itemPreview,
+            'totals' => ['total' => (float) $order->total],
+            'createdAt' => $order->created_at,
         ];
     }
 
@@ -557,6 +829,7 @@ class PosOrderController extends Controller
                 'amount' => (float) $payment->amount,
                 'status' => $payment->status,
                 'reference' => $payment->reference_number,
+                'idempotencyKey' => $payment->idempotency_key,
                 'paidAt' => $payment->paid_at,
             ])
             ->all();
@@ -575,7 +848,9 @@ class PosOrderController extends Controller
                 'type' => $refund->type,
                 'amount' => (float) $refund->amount,
                 'reason' => $refund->reason,
+                'managerNotes' => $refund->manager_notes,
                 'status' => $refund->status,
+                'idempotencyKey' => $refund->idempotency_key,
                 'refundedAt' => $refund->refunded_at,
             ])
             ->all();

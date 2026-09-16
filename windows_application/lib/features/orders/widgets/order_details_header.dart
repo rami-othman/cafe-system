@@ -7,6 +7,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_detail.dart';
+import '../models/order_status.dart';
 import 'order_status_badge.dart';
 
 class OrderDetailsHeader extends StatelessWidget {
@@ -17,6 +18,9 @@ class OrderDetailsHeader extends StatelessWidget {
     required this.onPrint,
     required this.onCopy,
     required this.onRefund,
+    this.onPay,
+    this.onResume,
+    this.onCancel,
   });
 
   final OrderDetail detail;
@@ -24,6 +28,9 @@ class OrderDetailsHeader extends StatelessWidget {
   final VoidCallback onPrint;
   final VoidCallback onCopy;
   final VoidCallback onRefund;
+  final VoidCallback? onPay;
+  final VoidCallback? onResume;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -60,12 +67,34 @@ class OrderDetailsHeader extends StatelessWidget {
                   onTap: onCopy,
                 ),
                 const SizedBox(width: AppSpacing.sm),
+                _PayButton(onTap: onPay),
+                const SizedBox(width: AppSpacing.sm),
                 _RefundButton(
-                  onTap: detail.isRefunded ? null : onRefund,
-                  isDisabled: detail.isRefunded,
+                  onTap: detail.canRefund && !detail.isRefunded
+                      ? onRefund
+                      : null,
+                  isRefunded: detail.isRefunded,
                 ),
               ],
             ),
+            if (detail.status == OrderStatus.held ||
+                detail.status == OrderStatus.preparing) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: <Widget>[
+                  if (detail.status == OrderStatus.held)
+                    _LifecycleButton(label: 'Resume in POS', onTap: onResume),
+                  _LifecycleButton(
+                    label: 'Cancel order',
+                    onTap: onCancel,
+                    destructive: true,
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,6 +126,67 @@ class OrderDetailsHeader extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LifecycleButton extends StatelessWidget {
+  const _LifecycleButton({
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = destructive
+        ? AppColors.dangerStrong
+        : AppColors.secondary;
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: onTap == null ? '$label disabled' : label,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          disabledForegroundColor: AppColors.textMuted,
+          side: BorderSide(color: onTap == null ? AppColors.border : color),
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
+          padding: AppSpacing.horizontalMd,
+          minimumSize: const Size(0, AppSizes.orderDetailsHeaderIconSize),
+        ),
+        child: Text(label),
+      ),
+    );
+  }
+}
+
+class _PayButton extends StatelessWidget {
+  const _PayButton({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppSizes.orderDetailsHeaderIconSize,
+      child: FilledButton(
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.tertiary,
+          disabledBackgroundColor: AppColors.surfaceAlt,
+          foregroundColor: AppColors.textInverse,
+          disabledForegroundColor: AppColors.textMuted,
+          padding: AppSpacing.horizontalMd,
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
+        ),
+        child: const Text('Pay'),
       ),
     );
   }
@@ -140,10 +230,10 @@ class _HeaderIconButton extends StatelessWidget {
 }
 
 class _RefundButton extends StatelessWidget {
-  const _RefundButton({required this.onTap, required this.isDisabled});
+  const _RefundButton({required this.onTap, required this.isRefunded});
 
   final VoidCallback? onTap;
-  final bool isDisabled;
+  final bool isRefunded;
 
   @override
   Widget build(BuildContext context) {
@@ -153,11 +243,12 @@ class _RefundButton extends StatelessWidget {
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.secondary,
+          disabledForegroundColor: AppColors.textMuted,
           side: const BorderSide(color: AppColors.border),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
           padding: AppSpacing.horizontalMd,
         ),
-        child: Text(isDisabled ? 'Refunded' : 'Refund'),
+        child: Text(isRefunded ? 'Refunded' : 'Refund'),
       ),
     );
   }

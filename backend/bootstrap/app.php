@@ -1,14 +1,17 @@
 <?php
 
+use App\Domain\Customer\CustomerDomainException;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
 use App\Http\Middleware\CanManageCafeConfiguration;
-use App\Http\Middleware\EnsureInventoryPermission;
-use App\Http\Middleware\EnsureFinancePermission;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
 use App\Http\Middleware\EnsureBranchAccess;
+use App\Http\Middleware\EnsureCustomerPermission;
+use App\Http\Middleware\EnsureFinancePermission;
+use App\Http\Middleware\EnsureBarCheckPermission;
+use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\RequireChangedPassword;
 use App\Http\Middleware\MeasurePaymentPerformance;
@@ -51,7 +54,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,
+            'barcheck.permission' => EnsureBarCheckPermission::class,
             'finance.permission' => EnsureFinancePermission::class,
+            'customer.permission' => EnsureCustomerPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -64,6 +69,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $exception->getMessage(),
                     'code' => $exception->domainCode,
                 ], str_ends_with($exception->domainCode, 'IDEMPOTENCY_CONFLICT') ? 409 : 422);
+            }
+        });
+        $exceptions->render(function (CustomerDomainException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => $exception->getMessage(), 'code' => $exception->domainCode], $exception->status);
             }
         });
         $exceptions->render(function (DomainException $exception, Request $request) {

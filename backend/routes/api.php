@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\Admin\Catalog\CatalogReferenceController;
 use App\Http\Controllers\Api\Admin\Catalog\ModifierCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\OperationalAvailabilityController;
@@ -7,6 +8,9 @@ use App\Http\Controllers\Api\Admin\Catalog\ProductAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
 use App\Http\Controllers\Api\Admin\Catalog\RecipeConfigurationController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerGroupController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerManagementController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerRolePermissionController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentScopeController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
@@ -19,13 +23,14 @@ use App\Http\Controllers\Api\Admin\Menu\MenuValidationController;
 use App\Http\Controllers\Api\Admin\Menu\ProductMenuUsageController;
 use App\Http\Controllers\Api\Admin\Menu\PublishedMenuVersionController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
-use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
-use App\Http\Controllers\Api\AccountingPeriodController;
 use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
+use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
+use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
+use App\Http\Controllers\Api\CustomerCapabilityController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\CustomerGroupLookupController;
 use App\Http\Controllers\Api\CustomerPaymentController;
 use App\Http\Controllers\Api\CustomerRefundController;
 use App\Http\Controllers\Api\SalesCreditNoteController;
@@ -42,6 +47,7 @@ use App\Http\Controllers\Api\FinanceRolePermissionController;
 use App\Http\Controllers\Api\FinancialAccountController;
 use App\Http\Controllers\Api\FinancialLocationController;
 use App\Http\Controllers\Api\FinanceDocumentController;
+use App\Http\Controllers\Api\CashierFinanceOptionsController;
 use App\Http\Controllers\Api\FinancialReconciliationController;
 use App\Http\Controllers\Api\FinancialReportController;
 use App\Http\Controllers\Api\FinancialSetupStatusController;
@@ -115,7 +121,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{branch}', 'show')->whereNumber('branch');
             Route::put('{branch}', 'update')->whereNumber('branch');
         });
-    
+
     Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
         ->prefix('cafe-configuration')
         ->group(function (): void {
@@ -123,6 +129,51 @@ Route::prefix('v1')->group(function (): void {
             Route::put('profile', [CafeConfigurationProfileController::class, 'update']);
             Route::get('tax', [CafeConfigurationTaxController::class, 'show']);
             Route::put('tax', [CafeConfigurationTaxController::class, 'update']);
+        });
+
+    Route::middleware(['api.token', 'password.changed'])
+        ->prefix('admin/customer-management/role-permissions')
+        ->controller(CustomerRolePermissionController::class)
+        ->group(function (): void {
+            Route::middleware('customer.permission:customer.permission')->group(function (): void {
+                Route::get('manager', 'show');
+                Route::put('manager', 'replace');
+            });
+        });
+
+    Route::middleware(['api.token', 'password.changed'])
+        ->get('customer-management/capabilities', [CustomerCapabilityController::class, 'show']);
+
+    Route::middleware(['api.token', 'password.changed', 'customer.permission:customer.manage'])
+        ->prefix('admin/customer-management/customers')
+        ->controller(CustomerManagementController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{customer}/overview', 'overview')->whereNumber('customer');
+            Route::get('{customer}', 'show')->whereNumber('customer');
+            Route::get('{customer}/orders', 'orders')->whereNumber('customer');
+            Route::put('{customer}', 'update')->whereNumber('customer');
+            Route::post('{customer}/activate', 'activate')->whereNumber('customer');
+            Route::post('{customer}/deactivate', 'deactivate')->whereNumber('customer');
+            Route::post('{customer}/archive', 'archive')->whereNumber('customer');
+            Route::post('{customer}/restore', 'restore')->whereNumber('customer');
+        });
+
+    Route::middleware(['api.token', 'password.changed', 'customer.permission:customer.manage'])
+        ->prefix('admin/customer-management/customer-groups')
+        ->controller(CustomerGroupController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{group}', 'show')->whereNumber('group');
+            Route::put('{group}', 'update')->whereNumber('group');
+            Route::post('{group}/archive', 'archive')->whereNumber('group');
+            Route::post('{group}/restore', 'restore')->whereNumber('group');
+            Route::get('{group}/members', 'members')->whereNumber('group');
+            Route::get('{group}/eligible-members', 'eligibleMembers')->whereNumber('group');
+            Route::post('{group}/members', 'addMembers')->whereNumber('group');
+            Route::delete('{group}/members/{customer}', 'removeMember')->whereNumber(['group', 'customer']);
         });
 
     // Tenant operational boundary. Tenant identity comes solely from the
@@ -298,7 +349,10 @@ Route::prefix('v1')->group(function (): void {
         Route::get('menu/products/{product}', [MenuController::class, 'product']);
         Route::get('pos/menu-sync', [PosMenuSyncController::class, 'show']);
 
-        Route::get('customers', [CustomerController::class, 'index']);
+        Route::get('customers', [CustomerController::class, 'index'])->middleware('customer.permission:customer.lookup');
+        Route::post('customers/quick-create', [CustomerController::class, 'storeQuick'])->middleware('customer.permission:customer.quick_create');
+        Route::put('customers/{customer}/groups', [CustomerController::class, 'syncGroups'])->whereNumber('customer')->middleware('customer.permission:customer.memberships');
+        Route::get('customer-groups', [CustomerGroupLookupController::class, 'index'])->middleware('customer.permission:customer.memberships');
         Route::get('tables', [TableController::class, 'index']);
         Route::get('pos/state', [PosStateController::class, 'show']);
         Route::get('discounts/available', [DiscountController::class, 'available']);
@@ -358,17 +412,17 @@ Route::prefix('v1')->group(function (): void {
             Route::get('movements/{movement}', [StockMovementController::class, 'show'])->middleware('inventory.permission:inventory.view');
             Route::get('counts', [StockCountController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
             Route::post('counts', [StockCountController::class, 'store'])->middleware('inventory.permission:inventory.counts.create');
-            Route::get('counts/{count}', [StockCountController::class, 'show'])->middleware('inventory.permission:inventory.counts.view');
-            Route::put('counts/{count}/lines', [StockCountController::class, 'line'])->middleware('inventory.permission:inventory.counts.create');
+            Route::get('counts/{count}', [StockCountController::class, 'show'])->middleware('barcheck.permission:count,inventory.counts.view');
+            Route::put('counts/{count}/lines', [StockCountController::class, 'line'])->middleware('barcheck.permission:count,inventory.counts.create');
             Route::post('counts/{count}/lines/{item}/review', [StockCountController::class, 'reviewLine'])->middleware('inventory.permission:inventory.counts.post');
             foreach (['start' => 'inventory.counts.create', 'submit' => 'inventory.counts.create', 'approve' => 'inventory.counts.post', 'post' => 'inventory.counts.post', 'cancel' => 'inventory.counts.create'] as $action => $permission) {
-                Route::post("counts/{count}/{$action}", [StockCountController::class, 'action'])->defaults('action', $action)->middleware("inventory.permission:{$permission}");
+                Route::post("counts/{count}/{$action}", [StockCountController::class, 'action'])->defaults('action', $action)->middleware("barcheck.permission:count,{$permission}");
             }
-            Route::get('bar-checks', [BarCheckController::class, 'index'])->middleware('inventory.permission:inventory.counts.view');
-            Route::post('bar-checks', [BarCheckController::class, 'start'])->middleware('inventory.permission:inventory.counts.create');
-            Route::get('bar-check-templates', [BarCheckController::class, 'templates'])->middleware('inventory.permission:inventory.counts.view');
+            Route::get('bar-checks', [BarCheckController::class, 'index'])->middleware('barcheck.permission:index,inventory.counts.view');
+            Route::post('bar-checks', [BarCheckController::class, 'start'])->middleware('barcheck.permission:start,inventory.counts.create');
+            Route::get('bar-check-templates', [BarCheckController::class, 'templates'])->middleware('barcheck.permission:templates,inventory.counts.view');
             Route::post('bar-check-templates', [BarCheckController::class, 'storeTemplate'])->middleware('inventory.permission:inventory.counts.create');
-            Route::get('bar-check-templates/{template}', [BarCheckController::class, 'showTemplate'])->middleware('inventory.permission:inventory.counts.view');
+            Route::get('bar-check-templates/{template}', [BarCheckController::class, 'showTemplate'])->middleware('barcheck.permission:templates,inventory.counts.view');
             Route::patch('bar-check-templates/{template}', [BarCheckController::class, 'updateTemplate'])->middleware('inventory.permission:inventory.counts.create');
             Route::get('transfers', [WarehouseTransferController::class, 'index'])->middleware('inventory.permission:inventory.transfers.view');
             Route::post('transfers', [WarehouseTransferController::class, 'store'])->middleware('inventory.permission:inventory.transfers.create');
@@ -428,6 +482,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('cash-transfers', [FinancialLocationController::class, 'transfer'])->middleware('finance.permission:finance.cash_transfer.create');
             Route::post('cash-transfers/{transfer}/reverse', [FinancialLocationController::class, 'reverseTransfer'])->middleware('finance.permission:finance.cash_transfer.reverse');
             Route::get('vouchers', [FinanceDocumentController::class, 'index'])->middleware('finance.permission:finance.vouchers.view');
+            Route::get('cashier/voucher-options', [CashierFinanceOptionsController::class, 'vouchers'])->middleware('finance.permission:finance.vouchers.create');
             Route::post('vouchers', [FinanceDocumentController::class, 'store'])->middleware('finance.permission:finance.vouchers.create');
             Route::get('vouchers/{document}', [FinanceDocumentController::class, 'show'])->middleware('finance.permission:finance.vouchers.view');
             Route::post('vouchers/{document}/post', [FinanceDocumentController::class, 'post'])->middleware('finance.permission:finance.vouchers.post');

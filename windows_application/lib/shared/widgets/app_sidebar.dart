@@ -6,6 +6,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
+import '../access/cashier_access.dart';
 import 'app_sidebar_item.dart';
 
 class AppSidebar extends StatelessWidget {
@@ -14,19 +15,21 @@ class AppSidebar extends StatelessWidget {
     required this.activeLabel,
     this.isCollapsed = false,
     this.actorRole,
+    this.canManageCustomers = false,
     this.brandIdentity,
   });
 
   final String activeLabel;
   final bool isCollapsed;
   final String? actorRole;
+  final bool canManageCustomers;
   final BrandIdentity? brandIdentity;
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
     _SidebarDestination('dashboard', Icons.dashboard_outlined),
     _SidebarDestination('pos', Icons.point_of_sale_outlined, '/'),
     _SidebarDestination('orders', Icons.receipt_long_outlined, '/orders'),
-    _SidebarDestination('customers', Icons.groups_outlined),
+    _SidebarDestination('customers', Icons.groups_outlined, '/customers'),
     _SidebarDestination('discounts', Icons.local_offer_outlined, '/discounts'),
     _SidebarDestination(
       'menuManagement',
@@ -53,7 +56,9 @@ class AppSidebar extends StatelessWidget {
       (destination) =>
           (destination.id != 'menuManagement' ||
               _canTemporarilyManageMenus(actorRole)) &&
-          (destination.id != 'cafeConfiguration' || actorRole == 'owner'),
+          (destination.id != 'customers' || canManageCustomers) &&
+          (destination.id != 'cafeConfiguration' || actorRole == 'owner') &&
+          CashierAccess.allowsModule(destination.id, actorRole),
     );
     return Container(
       width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,

@@ -20,6 +20,7 @@ use App\Services\FinancialReconciliationQueryService;
 use App\Services\FinancialReconciliationService;
 use App\Services\FinancialSetupService;
 use App\Services\Menu\PublishedMenuSnapshotBuilder;
+use App\Services\PosInventoryWarehouseResolver;
 use App\Services\SupplierInvoiceService;
 use App\Services\SupplierPaymentService;
 use App\Services\SupplierService;
@@ -147,12 +148,12 @@ final class FinanceOperationsDemoSeeder extends Seeder
     private function warehouses(int $tenant, int $branch): array
     {
         $central = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'CENTRAL')->value('id');
-        $branchMain = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'BR-'.$branch.'-MAIN')->value('id');
-        if (! $central || ! $branchMain) {
+        $posWarehouse = app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $branch);
+        if (! $central) {
             throw new RuntimeException('Finance demo warehouses were not configured.');
         }
 
-        return [$central, $branchMain];
+        return [$central, (int) $posWarehouse->id];
     }
 
     private function item(int $tenant, int $owner, string $sku, string $name, string $unit): int
@@ -222,16 +223,19 @@ final class FinanceOperationsDemoSeeder extends Seeder
 
     private function saleAndRefund(int $tenant, int $owner, int $branch, int $product, int $variant, int $placement, int $version): void
     {
-        if (DB::table('orders')->where('tenant_id', $tenant)->where('branch_id', $branch)->where('notes', 'Finance demo latte sale')->exists()) {
-            return;
-        }
-
         $authUser = $this->authUser($tenant, $owner);
-        $shiftId = $this->ensureSaleShift($tenant, $owner, $branch);
-        $orderRequest = Request::create('/api/v1/pos/orders', 'POST', ['branchId' => $branch, 'shiftId' => $shiftId, 'orderType' => 'takeaway', 'publishedMenuVersionId' => $version, 'items' => [['productId' => $product, 'placementId' => $placement, 'variantId' => $variant, 'quantity' => 2]], 'note' => 'Finance demo latte sale', 'idempotencyKey' => 'finance-demo-latte-sale']);
-        $orderRequest->attributes->set('tenant_id', $tenant);
-        $orderRequest->attributes->set('auth_user', $authUser);
-        $orderId = (int) app(PosOrderController::class)->store($orderRequest)->getData(true)['data']['id'];
+        $orderId = DB::table('orders')->where('tenant_id', $tenant)->where('branch_id', $branch)->where('notes', 'Finance demo latte sale')->value('id');
+        if (! $orderId) {
+            $shiftId = $this->ensureSaleShift($tenant, $owner, $branch);
+            $orderRequest = Request::create('/api/v1/pos/orders', 'POST', ['branchId' => $branch, 'shiftId' => $shiftId, 'orderType' => 'takeaway', 'publishedMenuVersionId' => $version, 'items' => [['productId' => $product, 'placementId' => $placement, 'variantId' => $variant, 'quantity' => 2]], 'note' => 'Finance demo latte sale', 'idempotencyKey' => 'finance-demo-latte-sale']);
+            $orderRequest->attributes->set('tenant_id', $tenant);
+            $orderRequest->attributes->set('auth_user', $authUser);
+            $orderId = (int) app(PosOrderController::class)->store($orderRequest)->getData(true)['data']['id'];
+        }
+        if (DB::table('orders')->where('id', $orderId)->value('payment_status') !== 'paid') {
+            $shiftId = $this->ensureSaleShift($tenant, $owner, $branch);
+            DB::table('orders')->where('tenant_id', $tenant)->where('id', $orderId)->update(['shift_id' => $shiftId, 'updated_at' => now()]);
+        }
         $paymentRequest = Request::create('/api/v1/pos/orders/'.$orderId.'/payment', 'POST', ['method' => 'cash', 'paymentMethodId' => DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'), 'amount' => '75.60', 'idempotencyKey' => 'finance-demo-latte-payment']);
         $paymentRequest->attributes->set('tenant_id', $tenant);
         $paymentRequest->attributes->set('auth_user', $authUser);
@@ -250,6 +254,15 @@ final class FinanceOperationsDemoSeeder extends Seeder
             ->where('notes', 'Finance demo close shift')
             ->value('id');
         if ($existing) {
+            DB::table('shifts')->where('tenant_id', $tenant)->where('id', $existing)->update([
+                'closing_cash' => null,
+                'expected_cash' => '0.00',
+                'cash_difference' => '0.00',
+                'status' => 'open',
+                'closed_at' => null,
+                'updated_at' => now(),
+            ]);
+
             return (int) $existing;
         }
 

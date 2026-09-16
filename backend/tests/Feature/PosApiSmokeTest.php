@@ -148,9 +148,13 @@ class PosApiSmokeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.discount.code', 'LUNCH10');
 
-        $this->getJson("/api/v1/orders/{$orderId}/payment-summary?amountReceived=30")
+        $paymentSummary = $this->getJson("/api/v1/orders/{$orderId}/payment-summary?amountReceived=30")
             ->assertOk()
-            ->assertJsonPath('data.changeDue', round(30 - $discounted->json('data.totals.total'), 2));
+            ->assertJsonPath('data.changeDue', round(30 - $discounted->json('data.totals.total'), 2))
+            ->assertJsonPath('data.paymentStatus', 'unpaid')
+            ->assertJsonPath('data.orderStatus', 'draft')
+            ->assertJsonPath('data.canPay', true)
+            ->assertJsonPath('data.outstandingAmount', $discounted->json('data.totals.total'));
 
         $payment = $this->postJson("/api/v1/orders/{$orderId}/pay", [
             'method' => 'cash',
@@ -158,7 +162,8 @@ class PosApiSmokeTest extends TestCase
             'idempotencyKey' => 'smoke-payment-1',
         ])
             ->assertOk()
-            ->assertJsonPath('data.payment.status', 'completed');
+            ->assertJsonPath('data.payment.status', 'completed')
+            ->assertJsonPath('data.payment.idempotencyKey', 'smoke-payment-1');
 
         $this->assertDatabaseHas('payments', [
             'id' => $payment->json('data.payment.id'),
@@ -209,6 +214,8 @@ class PosApiSmokeTest extends TestCase
 
         $this->getJson("/api/v1/orders/{$orderId}")
             ->assertOk()
+            ->assertJsonPath('data.paymentStatus', 'refunded')
+            ->assertJsonPath('data.payments.0.idempotencyKey', 'smoke-payment-1')
             ->assertJsonPath('data.refunds.0.amount', 5);
     }
 

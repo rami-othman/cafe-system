@@ -369,6 +369,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftStatusClosed => 'SHIFT CLOSED';
 
   @override
+  String get shiftCloseTitle => 'Close Shift';
+
+  @override
+  String get shiftCloseSubtitle =>
+      'Count the cash in your register and close your shift.';
+
+  @override
+  String get shiftCloseClosingCashLabel => 'Closing cash';
+
+  @override
+  String get shiftCloseNoteLabel => 'Note (optional)';
+
+  @override
+  String get shiftCloseSubmit => 'Close Shift';
+
+  @override
+  String get shiftCloseSuccess => 'Shift closed.';
+
+  @override
+  String get shiftCloseRedirectingToBarCheck =>
+      'A bar check is required before you can close this shift.';
+
+  @override
+  String get barCheckTitle => 'Bar Check';
+
+  @override
+  String get barCheckSubtitle =>
+      'Count each item, then submit to continue closing your shift.';
+
+  @override
+  String get barCheckExpectedLabel => 'Expected';
+
+  @override
+  String get barCheckCountedLabel => 'Counted';
+
+  @override
+  String get barCheckReasonLabel => 'Reason for variance';
+
+  @override
+  String get barCheckSubmitAndClose => 'Submit Bar Check';
+
+  @override
+  String get barCheckPendingManagerReview =>
+      'A manager needs to review a variance on this count before it can be completed. Ask a manager to review it, then try again.';
+
+  @override
+  String get barCheckAllLinesRequired => 'Count every item before submitting.';
+
+  @override
   String get tooltipCart => 'Cart';
 
   @override
@@ -6489,6 +6538,569 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxNewOrdersOnly => 'This applies to new orders.';
+
+  @override
+  String get customerManagementTitle => 'Customer Management';
+
+  @override
+  String get customerManagementCustomers => 'Customers';
+
+  @override
+  String get customerManagementGroups => 'Customer Groups';
+
+  @override
+  String get customerManagementCreateCustomer => 'New Customer';
+
+  @override
+  String get customerManagementCreateGroup => 'New Group';
+
+  @override
+  String get customerManagementSearch => 'Search';
+
+  @override
+  String get customerManagementActive => 'Active';
+
+  @override
+  String get customerManagementInactive => 'Inactive';
+
+  @override
+  String get customerManagementArchived => 'Archived';
+
+  @override
+  String get customerManagementAll => 'All';
+
+  @override
+  String get customerManagementNoPhone => 'No phone';
+
+  @override
+  String get customerManagementNotAvailable => 'Not available';
+
+  @override
+  String get customerManagementValueSeparator => ' · ';
+
+  @override
+  String get customerManagementLoading => 'Loading customer information…';
+
+  @override
+  String get customerManagementEmptyCustomers => 'No customers yet.';
+
+  @override
+  String get customerManagementEmptyGroups => 'No customer groups yet.';
+
+  @override
+  String get customerManagementNoResults => 'No matching results.';
+
+  @override
+  String get customerManagementRetry => 'Retry';
+
+  @override
+  String get customerManagementClearFilters => 'Clear filters';
+
+  @override
+  String get customerManagementAccessDenied =>
+      'You do not have access to Customer Management.';
+
+  @override
+  String get customerManagementNotFound =>
+      'The requested record was not found.';
+
+  @override
+  String get customerManagementCustomerNumber => 'Customer number';
+
+  @override
+  String get customerManagementName => 'Name';
+
+  @override
+  String get customerManagementPhone => 'Phone';
+
+  @override
+  String get customerManagementGroupsLabel => 'Groups';
+
+  @override
+  String get customerManagementStatus => 'Status';
+
+  @override
+  String get customerManagementEmail => 'Email';
+
+  @override
+  String get customerManagementBirthDate => 'Birth date';
+
+  @override
+  String get customerManagementNotes => 'Notes';
+
+  @override
+  String get customerManagementPrimary => 'Primary';
+
+  @override
+  String get customerManagementMembers => 'Members';
+
+  @override
+  String customerManagementMemberCount(int count) {
+    return 'Members: $count';
+  }
+
+  @override
+  String get customerManagementPreviousPage => 'Previous page';
+
+  @override
+  String get customerManagementNextPage => 'Next page';
+
+  @override
+  String customerManagementPage(int page, int total) {
+    return 'Page $page of $total';
+  }
+
+  @override
+  String get customerManagementView => 'View';
+
+  @override
+  String get customerManagementEdit => 'Edit';
+
+  @override
+  String get customerManagementSave => 'Save';
+
+  @override
+  String get customerManagementCancel => 'Cancel';
+
+  @override
+  String get customerManagementActivate => 'Activate';
+
+  @override
+  String get customerManagementDeactivate => 'Deactivate';
+
+  @override
+  String get customerManagementArchive => 'Archive';
+
+  @override
+  String get customerManagementRestore => 'Restore';
+
+  @override
+  String get customerManagementConfirm => 'Confirm';
+
+  @override
+  String get customerManagementDiscardChanges => 'Discard unsaved changes?';
+
+  @override
+  String get customerManagementChangesKept => 'Your changes were kept.';
+
+  @override
+  String get customerManagementRequestFailed =>
+      'The request could not be completed.';
+
+  @override
+  String get customerManagementValidationFailed =>
+      'Review the highlighted fields.';
+
+  @override
+  String get customerManagementAddMembers => 'Add members';
+
+  @override
+  String get customerManagementRemoveMember => 'Remove member';
+
+  @override
+  String customerManagementRemoveMemberConfirm(Object customer, Object group) {
+    return 'Remove $customer from $group?';
+  }
+
+  @override
+  String get customerManagementCreateTitle => 'New Customer';
+
+  @override
+  String get customerManagementEditTitle => 'Edit Customer';
+
+  @override
+  String get customerManagementCustomerName => 'Customer name';
+
+  @override
+  String get customerManagementAddPhone => 'Add phone';
+
+  @override
+  String get customerManagementRemovePhone => 'Remove phone';
+
+  @override
+  String get customerManagementPhoneType => 'Phone type';
+
+  @override
+  String get customerManagementPhoneMobile => 'Mobile';
+
+  @override
+  String get customerManagementPhoneHome => 'Home';
+
+  @override
+  String get customerManagementPhoneWork => 'Work';
+
+  @override
+  String get customerManagementPhoneOther => 'Other';
+
+  @override
+  String get customerManagementSelectGroups => 'Groups';
+
+  @override
+  String get customerManagementActiveGroups => 'Active groups';
+
+  @override
+  String get customerManagementArchivedGroupRetained =>
+      'Archived group retained';
+
+  @override
+  String get customerManagementDateHint => 'YYYY-MM-DD';
+
+  @override
+  String get customerManagementStay => 'Keep editing';
+
+  @override
+  String get customerManagementLeave => 'Leave';
+
+  @override
+  String get customerManagementRequiredName => 'Enter a customer name.';
+
+  @override
+  String get customerManagementRequiredPhone => 'Enter a phone number.';
+
+  @override
+  String get customerManagementPrimaryRequired => 'Select one primary phone.';
+
+  @override
+  String get customerManagementNoActiveGroups => 'No active groups available.';
+
+  @override
+  String customerManagementDeactivateConfirm(Object name) {
+    return 'Deactivate $name?';
+  }
+
+  @override
+  String get customerManagementDeactivateConsequence =>
+      'This customer will no longer be available for new operational use. Historical records remain preserved.';
+
+  @override
+  String customerManagementArchiveConfirm(Object name) {
+    return 'Archive $name?';
+  }
+
+  @override
+  String get customerManagementArchiveConsequence =>
+      'This customer will be archived without deleting historical records. It can be restored later.';
+
+  @override
+  String customerManagementRestoreConfirm(Object name) {
+    return 'Restore $name?';
+  }
+
+  @override
+  String get customerManagementRestoreConsequence =>
+      'This customer will be restored as Inactive. Activate it separately before new operational use.';
+
+  @override
+  String get customerManagementMutationFailed =>
+      'Your customer was not changed. You can retry safely.';
+
+  @override
+  String get cmvpCustomersDescription =>
+      'Manage customer records, phones, groups, and lifecycle state.';
+
+  @override
+  String get cmvpGroupsDescription =>
+      'Organize customer groups and their bounded memberships.';
+
+  @override
+  String get cmvpCustomerDetailDescription =>
+      'Review the authoritative customer information and memberships.';
+
+  @override
+  String get cmvpCustomerFormDescription =>
+      'Enter the customer information managed by the server.';
+
+  @override
+  String get cmvpGroupDetailDescription =>
+      'Review the group identity, lifecycle, and current members.';
+
+  @override
+  String get cmvpGroupFormDescription => 'Create or rename a customer group.';
+
+  @override
+  String get cmvpBreadcrumbCustomers => 'Customers';
+
+  @override
+  String get cmvpBreadcrumbGroups => 'Customer Groups';
+
+  @override
+  String get cmvpBreadcrumbDetails => 'Details';
+
+  @override
+  String get cmvpBreadcrumbEdit => 'Edit';
+
+  @override
+  String get cmvpBreadcrumbCreate => 'New';
+
+  @override
+  String cmvpCustomersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count customers',
+      one: '1 customer',
+      zero: 'No customers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpGroupsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups',
+      one: '1 group',
+      zero: 'No groups',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cmvpMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+      zero: 'No members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpMoreActions => 'More actions';
+
+  @override
+  String get cmvpOpenActions => 'Open row actions';
+
+  @override
+  String get cmvpSelectRow => 'Select row';
+
+  @override
+  String get cmvpRemoveGroup => 'Remove group';
+
+  @override
+  String get cmvpInformationSection => 'Customer information';
+
+  @override
+  String get cmvpPhoneSection => 'Phone numbers';
+
+  @override
+  String get cmvpGroupsSection => 'Customer groups';
+
+  @override
+  String get cmvpNotesSection => 'Notes';
+
+  @override
+  String get cmvpLifecycleSection => 'Lifecycle';
+
+  @override
+  String get cmvpGeneratedNumberHint =>
+      'The customer number is generated by the server.';
+
+  @override
+  String get cmvpCreatedAt => 'Created';
+
+  @override
+  String get cmvpAbsenceValue => 'Not available';
+
+  @override
+  String get cmvpManageGroups => 'Manage groups';
+
+  @override
+  String get cmvpGroupName => 'Group name';
+
+  @override
+  String get cmvpMemberSearch => 'Search members';
+
+  @override
+  String get cmvpNoMembers => 'No members in this group.';
+
+  @override
+  String get cmvpNoCandidates => 'No eligible customers found.';
+
+  @override
+  String get cmvpCandidateSearch => 'Search eligible customers';
+
+  @override
+  String cmvpSelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Add $count members',
+      one: 'Add 1 member',
+      zero: 'Add members',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmvpAddMembersDialogTitle => 'Add members';
+
+  @override
+  String get cmvpConfirmRemoveMember => 'Remove member';
+
+  @override
+  String get cmvpLoadingCustomers => 'Loading customers';
+
+  @override
+  String get cmvpLoadingGroups => 'Loading customer groups';
+
+  @override
+  String get cmvpLoadingRecord => 'Loading record';
+
+  @override
+  String get cmvpForbiddenTitle => 'Access unavailable';
+
+  @override
+  String get cmvpNotFoundTitle => 'Record not found';
+
+  @override
+  String get cmvpRetryableTitle => 'Could not load this view';
+
+  @override
+  String get cmvpNoResultsTitle => 'No matching results';
+
+  @override
+  String get cmvpEmptyTitle => 'Nothing here yet';
+
+  @override
+  String get cmvpStateLoadingSemantics =>
+      'Customer Management content is loading';
+
+  @override
+  String get cmvpRetryableMessage => 'Check your connection and try again.';
+
+  @override
+  String get cmvpNoResultsMessage =>
+      'Try changing the search or clearing the filters.';
+
+  @override
+  String get cmvpEmptyCustomersMessage => 'Add the first customer to begin.';
+
+  @override
+  String get cmvpEmptyGroupsMessage => 'Create the first group to begin.';
+
+  @override
+  String get cmvpForbiddenMessage =>
+      'You do not have permission to view this content.';
+
+  @override
+  String get cmvpNotFoundMessage =>
+      'The requested record is no longer available.';
+
+  @override
+  String get cmvpSubmitting => 'Saving';
+
+  @override
+  String get cmvpAddingMembers => 'Adding members';
+
+  @override
+  String get cmvpRemovingMember => 'Removing member';
+
+  @override
+  String get cmvpDiscardChangesMessage => 'Your unsaved changes will be lost.';
+
+  @override
+  String get cmvpDialogCancel => 'Cancel';
+
+  @override
+  String get cmvpDialogConfirm => 'Confirm';
+
+  @override
+  String get cmvpMemberRemoveConsequence =>
+      'This member will be removed from the group.';
+
+  @override
+  String get cmvpGroupLifecycleMessage =>
+      'The group will remain available in historical records.';
+
+  @override
+  String get cmvpOrders => 'Orders';
+
+  @override
+  String get cmvpOrderHistory => 'Customer orders';
+
+  @override
+  String get cmvpFromDate => 'From date';
+
+  @override
+  String get cmvpToDate => 'To date';
+
+  @override
+  String get cmvpBranch => 'Branch';
+
+  @override
+  String get cmvpAllBranches => 'All branches';
+
+  @override
+  String get cmvpOrderStatus => 'Order status';
+
+  @override
+  String get cmvpPaymentStatus => 'Payment status';
+
+  @override
+  String get cmvpOrderNumber => 'Order number';
+
+  @override
+  String get cmvpOrderDateTime => 'Date and time';
+
+  @override
+  String get cmvpOrderTotal => 'Total';
+
+  @override
+  String get cmvpOrderStatusCompleted => 'Completed';
+
+  @override
+  String get cmvpOrderStatusHeld => 'Held';
+
+  @override
+  String get cmvpOrderStatusCancelled => 'Cancelled';
+
+  @override
+  String get cmvpOrderStatusDraft => 'Draft';
+
+  @override
+  String get cmvpPaymentStatusPaid => 'Paid';
+
+  @override
+  String get cmvpPaymentStatusUnpaid => 'Unpaid';
+
+  @override
+  String get cmvpPaymentStatusPartiallyRefunded => 'Partially refunded';
+
+  @override
+  String get cmvpPaymentStatusRefunded => 'Refunded';
+
+  @override
+  String get cmvpNoOrders => 'No orders found.';
+
+  @override
+  String cmvpOrdersShowing(int start, int end, int total) {
+    return 'Showing $start–$end of $total';
+  }
+
+  @override
+  String get cmvpOverview => 'Overview';
+
+  @override
+  String get cmvpTotalOrders => 'Total orders';
+
+  @override
+  String get cmvpTotalSpending => 'Total spending';
+
+  @override
+  String get cmvpAverageOrderValue => 'Average order value';
+
+  @override
+  String get cmvpLastVisit => 'Last visit';
+
+  @override
+  String get cmvpRecentOrders => 'Recent orders';
+
+  @override
+  String get cmvpViewAllOrders => 'View all orders';
 
   @override
   String get expensesReportTitle => 'Expenses';

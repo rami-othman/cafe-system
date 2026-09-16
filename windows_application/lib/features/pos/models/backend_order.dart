@@ -14,6 +14,8 @@ class BackendOrder extends Equatable {
     required this.paymentStatus,
     required this.items,
     required this.totals,
+    this.warehouseId,
+    this.warehouseName,
     this.shiftId,
     this.discountName,
     this.discountType,
@@ -25,7 +27,11 @@ class BackendOrder extends Equatable {
     this.tableId,
     this.tableName,
     this.tableCode,
+    this.note,
     this.publishedMenuVersionId,
+    this.canResume,
+    this.resumeBlockerCode,
+    this.resumeBlockedReason,
   });
 
   factory BackendOrder.fromJson(Map<String, dynamic> json) {
@@ -33,6 +39,10 @@ class BackendOrder extends Equatable {
       id: readInt(json['id']) ?? 0,
       orderNumber: readString(json['orderNumber']),
       branchId: readInt(json['branchId']) ?? 0,
+      warehouseId: readInt(json['warehouseId']),
+      warehouseName: readString(json['warehouseName']).isEmpty
+          ? null
+          : readString(json['warehouseName']),
       shiftId: readInt(json['shiftId']),
       orderType: readString(json['orderType']),
       status: readString(json['status']),
@@ -73,13 +83,27 @@ class BackendOrder extends Equatable {
       tableCode: readString((json['table'] as Map?)?['code']).isEmpty
           ? null
           : readString((json['table'] as Map?)?['code']),
+      note: readString(json['note']).trim().isEmpty
+          ? null
+          : readString(json['note']).trim(),
       publishedMenuVersionId: readInt(json['publishedMenuVersionId']),
+      canResume: json.containsKey('canResume')
+          ? readBool(json['canResume'])
+          : null,
+      resumeBlockerCode: json.containsKey('resumeBlockerCode')
+          ? readString(json['resumeBlockerCode']).trim()
+          : null,
+      resumeBlockedReason: json.containsKey('resumeBlockedReason')
+          ? readString(json['resumeBlockedReason']).trim()
+          : null,
     );
   }
 
   final int id;
   final String orderNumber;
   final int branchId;
+  final int? warehouseId;
+  final String? warehouseName;
   final int? shiftId;
   final String orderType;
   final String status;
@@ -96,13 +120,19 @@ class BackendOrder extends Equatable {
   final int? tableId;
   final String? tableName;
   final String? tableCode;
+  final String? note;
   final int? publishedMenuVersionId;
+  final bool? canResume;
+  final String? resumeBlockerCode;
+  final String? resumeBlockedReason;
 
   @override
   List<Object?> get props => <Object?>[
     id,
     orderNumber,
     branchId,
+    warehouseId,
+    warehouseName,
     shiftId,
     orderType,
     status,
@@ -119,6 +149,10 @@ class BackendOrder extends Equatable {
     tableId,
     tableName,
     tableCode,
+    note,
     publishedMenuVersionId,
+    canResume,
+    resumeBlockerCode,
+    resumeBlockedReason,
   ];
 }

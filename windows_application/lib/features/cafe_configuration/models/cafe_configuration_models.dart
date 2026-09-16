@@ -74,6 +74,10 @@ class CafeConfigurationBranch {
     required this.timezone,
     required this.currency,
     required this.isActive,
+    this.posInventoryWarehouseId,
+    this.effectivePosInventoryWarehouseId,
+    this.posInventoryWarehouseSource = 'not_configured',
+    this.availablePosWarehouses = const <BranchWarehouseOption>[],
   });
 
   final int id;
@@ -83,16 +87,51 @@ class CafeConfigurationBranch {
   final String timezone;
   final String currency;
   final bool isActive;
+  final int? posInventoryWarehouseId;
+  final int? effectivePosInventoryWarehouseId;
+  final String posInventoryWarehouseSource;
+  final List<BranchWarehouseOption> availablePosWarehouses;
 
-  factory CafeConfigurationBranch.fromJson(Map<String, dynamic> json) =>
-      CafeConfigurationBranch(
-        id: (json['id'] as num?)?.toInt() ?? 0,
+  factory CafeConfigurationBranch.fromJson(
+    Map<String, dynamic> json,
+  ) => CafeConfigurationBranch(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    name: json['name'] as String? ?? '',
+    address: json['address'] as String?,
+    phone: json['phone'] as String?,
+    timezone: json['timezone'] as String? ?? 'UTC',
+    currency: json['currency'] as String? ?? '',
+    isActive: json['isActive'] == true,
+    posInventoryWarehouseId: (json['posInventoryWarehouseId'] as num?)?.toInt(),
+    effectivePosInventoryWarehouseId:
+        (json['effectivePosInventoryWarehouseId'] as num?)?.toInt(),
+    posInventoryWarehouseSource:
+        json['posInventoryWarehouseSource'] as String? ?? 'not_configured',
+    availablePosWarehouses:
+        (json['availablePosWarehouses'] as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (row) =>
+                  BranchWarehouseOption.fromJson(row.cast<String, dynamic>()),
+            )
+            .toList(growable: false),
+  );
+}
+
+class BranchWarehouseOption {
+  const BranchWarehouseOption({
+    required this.id,
+    required this.name,
+    required this.type,
+  });
+  final int id;
+  final String name;
+  final String type;
+  factory BranchWarehouseOption.fromJson(Map<String, dynamic> json) =>
+      BranchWarehouseOption(
+        id: (json['id'] as num).toInt(),
         name: json['name'] as String? ?? '',
-        address: json['address'] as String?,
-        phone: json['phone'] as String?,
-        timezone: json['timezone'] as String? ?? 'UTC',
-        currency: json['currency'] as String? ?? '',
-        isActive: json['isActive'] == true,
+        type: json['type'] as String? ?? '',
       );
 }
 
@@ -102,18 +141,21 @@ class BranchDraft {
     this.address = '',
     this.phone = '',
     this.timezone = 'UTC',
+    this.posInventoryWarehouseId,
   });
 
   final String name;
   final String address;
   final String phone;
   final String timezone;
+  final int? posInventoryWarehouseId;
 
   factory BranchDraft.fromBranch(CafeConfigurationBranch branch) => BranchDraft(
     name: branch.name,
     address: branch.address ?? '',
     phone: branch.phone ?? '',
     timezone: branch.timezone,
+    posInventoryWarehouseId: branch.posInventoryWarehouseId,
   );
 
   BranchDraft copyWith({
@@ -121,11 +163,16 @@ class BranchDraft {
     String? address,
     String? phone,
     String? timezone,
+    int? posInventoryWarehouseId,
+    bool clearPosInventoryWarehouseId = false,
   }) => BranchDraft(
     name: name ?? this.name,
     address: address ?? this.address,
     phone: phone ?? this.phone,
     timezone: timezone ?? this.timezone,
+    posInventoryWarehouseId: clearPosInventoryWarehouseId
+        ? null
+        : posInventoryWarehouseId ?? this.posInventoryWarehouseId,
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -133,6 +180,7 @@ class BranchDraft {
     'address': address.trim().isEmpty ? null : address.trim(),
     'phone': phone.trim().isEmpty ? null : phone.trim(),
     'timezone': timezone,
+    'posInventoryWarehouseId': posInventoryWarehouseId,
   };
 }
 

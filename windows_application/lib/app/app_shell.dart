@@ -6,13 +6,14 @@ import '../core/branding/brand_title_synchronizer.dart';
 import '../core/constants/app_sizes.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/responsive.dart';
-import '../shared/widgets/app_sidebar.dart';
 import '../features/auth/controllers/auth_session_cubit.dart';
 import '../features/auth/models/auth_session.dart';
+import '../features/customer_management/models/customer_management_access.dart';
 import '../features/pos/controllers/pos_cubit.dart';
 import '../features/pos/controllers/pos_state.dart';
 import '../features/pos/models/branch.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/widgets/app_sidebar.dart';
 import '../shared/widgets/app_top_bar.dart';
 
 class AppShell extends StatelessWidget {
@@ -35,23 +36,28 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AuthUser? user = context
-        .watch<AuthSessionCubit>()
-        .state
-        .session
-        ?.user;
+    final AuthSession? session =
+        context.watch<AuthSessionCubit>().state.session;
+
+    final AuthUser? user = session?.user;
+
     PosState? pos;
     try {
       pos = context.watch<PosCubit>().state;
     } catch (_) {
       // Keeps AppShell independently renderable in previews and shell-only
-      // tests. Authenticated application routes always provide PosCubit.
+      // tests. Authenticated application routes normally provide PosCubit.
     }
-    final AppLocalizations? l10n = Localizations.of<AppLocalizations>(
-      context,
-      AppLocalizations,
-    );
-    final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final AppLocalizations? l10n =
+        Localizations.of<AppLocalizations>(
+          context,
+          AppLocalizations,
+        );
+
+    final bool isArabic =
+        Localizations.localeOf(context).languageCode == 'ar';
+
     final BrandIdentity identity = AppBrand.resolve(
       user: user,
       branches: pos?.branches ?? const <Branch>[],
@@ -60,8 +66,11 @@ class AppShell extends StatelessWidget {
           l10n?.appName ??
           (isArabic ? AppBrand.systemNameAr : AppBrand.systemNameEn),
       localizedOperationalHub:
-          l10n?.operationalHub ?? (isArabic ? 'مركز العمليات' : 'OPERATIONAL HUB'),
-      localizedPos: l10n?.navigationPos ?? (isArabic ? 'نقطة البيع' : 'POS'),
+          l10n?.operationalHub ??
+          (isArabic ? 'مركز العمليات' : 'OPERATIONAL HUB'),
+      localizedPos:
+          l10n?.navigationPos ??
+          (isArabic ? 'نقطة البيع' : 'POS'),
     );
 
     return BrandTitleSynchronizer(
@@ -71,11 +80,15 @@ class AppShell extends StatelessWidget {
         body: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             final double width = constraints.maxWidth;
+
             final bool isLarge =
                 Responsive.isLargeWidth(width) &&
                 (!prioritizeContentWidth ||
-                    width >= AppSizes.menuModuleSidebarExpandedBreakpoint);
+                    width >=
+                        AppSizes.menuModuleSidebarExpandedBreakpoint);
+
             final bool isCompact = Responsive.isCompactWidth(width);
+
             final double rightPanelWidth = isLarge
                 ? AppSizes.rightPanelWidth
                 : AppSizes.mediumRightPanelWidth;
@@ -87,13 +100,16 @@ class AppShell extends StatelessWidget {
                   isCollapsed: !isLarge,
                   actorRole: user?.role,
                   brandIdentity: identity,
+                  canManageCustomers:
+                      CustomerManagementAccess.allows(session),
                 ),
                 Expanded(
                   child: Column(
                     children: <Widget>[
                       topBar ??
                           AppTopBar(
-                            showCartButton: isCompact && rightPanel != null,
+                            showCartButton:
+                                isCompact && rightPanel != null,
                             onRefresh: onRefresh,
                           ),
                       Expanded(child: child),
@@ -101,7 +117,10 @@ class AppShell extends StatelessWidget {
                   ),
                 ),
                 if (!isCompact && rightPanel != null)
-                  SizedBox(width: rightPanelWidth, child: rightPanel),
+                  SizedBox(
+                    width: rightPanelWidth,
+                    child: rightPanel,
+                  ),
               ],
             );
           },

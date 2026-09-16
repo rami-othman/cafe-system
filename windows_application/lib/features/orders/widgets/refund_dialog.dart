@@ -47,7 +47,8 @@ class _RefundDialogState extends State<RefundDialog> {
     super.dispose();
   }
 
-  String get _fullAmountText => widget.orderDetail.total.toStringAsFixed(2);
+  String get _fullAmountText =>
+      widget.orderDetail.refundableAmount.toStringAsFixed(2);
 
   double? get _amount {
     return double.tryParse(_amountController.text.trim());
@@ -63,8 +64,8 @@ class _RefundDialogState extends State<RefundDialog> {
       return 'Refund amount must be greater than zero.';
     }
 
-    if (amount > widget.orderDetail.total) {
-      return 'Refund amount cannot exceed order total.';
+    if (amount > widget.orderDetail.refundableAmount) {
+      return 'Refund amount cannot exceed refundable balance.';
     }
 
     return null;
@@ -115,7 +116,7 @@ class _RefundDialogState extends State<RefundDialog> {
                           const SizedBox(height: AppSpacing.lg),
                           RefundTypeSelector(
                             selectedType: _type,
-                            orderTotal: widget.orderDetail.total,
+                            orderTotal: widget.orderDetail.refundableAmount,
                             onChanged: _selectType,
                           ),
                           const SizedBox(height: AppSpacing.lg),

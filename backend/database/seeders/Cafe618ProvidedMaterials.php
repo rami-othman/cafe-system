@@ -229,4 +229,3 @@ final class Cafe618ProvidedMaterials
 MATERIALS)));
     }
 }
-

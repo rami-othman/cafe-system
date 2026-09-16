@@ -56,6 +56,7 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
         $this->branchId = (int) $branch->id;
         app(FinancialSetupService::class)->ensureForTenant($this->tenantId, $this->branchId, $this->ownerId);
         app(FinancialSetupService::class)->ensureBranchMainWarehouse($this->tenantId, $this->branchId, $this->ownerId);
+        app(FinancialSetupService::class)->ensureBranchPosWarehouse($this->tenantId, $this->branchId, $this->ownerId);
         // The POS scenario reuses the standard demo products. Calling the
         // catalog seeder keeps this entry point usable on a fresh local DB
         // without creating a parallel product catalog.

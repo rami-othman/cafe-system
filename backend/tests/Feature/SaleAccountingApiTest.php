@@ -7,6 +7,7 @@ use App\Models\ModifierOption;
 use App\Models\ProductVariant;
 use App\Services\Catalog\RecipeConfigurationService;
 use App\Services\Menu\PublishedMenuSnapshotBuilder;
+use App\Services\PosInventoryWarehouseResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -323,7 +324,13 @@ class SaleAccountingApiTest extends TestCase
         $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->count());
     }
 
-    public function test_insufficient_stock_rolls_back_the_entire_payment_no_journal_no_partial_consumption(): void
+    /**
+     * `allow_negative_stock_on_sale` defaults to true, so this must now
+     * complete rather than roll back — the client's explicit requirement
+     * that a POS sale can finish even when stock is insufficient. WAC/COGS
+     * still come from the same unit cost the opening stock_in set.
+     */
+    public function test_insufficient_stock_completes_the_payment_and_goes_negative(): void
     {
         $this->seed();
         $tenant = $this->demoTenantId();
@@ -340,6 +347,43 @@ class SaleAccountingApiTest extends TestCase
         $totals = $order->json('data.totals');
 
         $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-short-stock-1'], $headers)
+            ->assertOk()->assertJsonPath('data.payment.status', 'completed');
+
+        $orderRow = DB::table('orders')->where('id', $orderId)->first();
+        $this->assertSame('paid', $orderRow->payment_status);
+        $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
+        $movement = DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->where('inventory_item_id', $beans['itemId'])->sole();
+        $this->assertSame(6.0, (float) $movement->quantity);
+        $this->assertSame(4.0, (float) $movement->quantity_before);
+        $this->assertSame(-2.0, (float) $movement->quantity_after);
+        $this->assertSame(2.0, (float) $movement->unit_cost);
+        $this->assertSame(12.0, (float) $movement->total_cost);
+        $balance = DB::table('stock_balances')->where('tenant_id', $tenant)->where('inventory_item_id', $beans['itemId'])->first();
+        $this->assertSame(-2.0, (float) $balance->quantity_on_hand);
+        $this->assertSame(12.0, (float) $orderRow->cogs_total);
+    }
+
+    /** The tenant off-switch: disabling the policy restores the old block. */
+    public function test_insufficient_stock_still_rolls_back_when_tenant_policy_disables_negative_stock(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        DB::table('tenant_settings')->updateOrInsert(
+            ['tenant_id' => $tenant],
+            ['settings' => json_encode(['allow_negative_stock_on_sale' => false]), 'updated_at' => now(), 'created_at' => now()],
+        );
+
+        $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '4.000');
+        $product = $this->stockTrackedProduct($tenant, name: 'Short Stock Item', price: '10.00');
+        $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '2.000']]);
+
+        $order = $this->createOrder($tenant, $branchId, $headers, $product, quantity: 3);
+        $orderId = $order->json('data.id');
+        $totals = $order->json('data.totals');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-short-stock-blocked-1'], $headers)
             ->assertUnprocessable();
 
         $orderRow = DB::table('orders')->where('id', $orderId)->first();
@@ -387,7 +431,7 @@ class SaleAccountingApiTest extends TestCase
         $this->assertSame('unpaid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
     }
 
-    public function test_branch_main_is_the_v1_sale_route_even_when_a_legacy_product_setting_exists(): void
+    public function test_configured_pos_bar_is_the_sale_route_even_when_a_legacy_product_setting_points_elsewhere(): void
     {
         $this->seed();
         $tenant = $this->demoTenantId();
@@ -397,10 +441,10 @@ class SaleAccountingApiTest extends TestCase
 
         $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
         DB::table('warehouses')->where('id', $mainWarehouseId)->update(['code' => 'DOWNTOWN-PRIMARY']);
-        $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '20.000', warehouseId: $mainWarehouseId);
+        $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '20.000', warehouseId: $barWarehouseId);
         $product = $this->stockTrackedProduct($tenant, name: 'Bar Routed Item', price: '9.00');
         $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '1.000']]);
-        DB::table('product_inventory_settings')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'branch_id' => $branchId, 'warehouse_id' => $barWarehouseId, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_inventory_settings')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'branch_id' => $branchId, 'warehouse_id' => $mainWarehouseId, 'created_at' => now(), 'updated_at' => now()]);
 
         $order = $this->createOrder($tenant, $branchId, $headers, $product, quantity: 1);
         $orderId = $order->json('data.id');
@@ -408,7 +452,7 @@ class SaleAccountingApiTest extends TestCase
         $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-warehouse-override-1'], $headers)->assertOk();
 
         $movement = DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->where('inventory_item_id', $beans['itemId'])->first();
-        $this->assertSame($mainWarehouseId, (int) $movement->warehouse_id);
+        $this->assertSame($barWarehouseId, (int) $movement->warehouse_id);
     }
 
     public function test_card_payment_method_debits_its_own_configured_account_not_cash(): void
@@ -495,7 +539,7 @@ class SaleAccountingApiTest extends TestCase
 
     private function stockIn(int $tenant, int $branchId, array $headers, string $unitCost, string $quantity, ?int $warehouseId = null, string $unit = 'kg'): array
     {
-        $warehouseId ??= (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
+        $warehouseId ??= (int) app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $branchId)->id;
         $itemId = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'حبوب اختبار', 'nameEn' => 'Test Beans '.uniqid(), 'sku' => 'SALE-TEST-'.uniqid(),
             'itemType' => 'raw_material', 'unit' => $unit, 'minimumStock' => '1.000', 'reorderLevel' => '1.000', 'latestUnitCost' => $unitCost, 'warehouseIds' => [$warehouseId], 'isActive' => true,

@@ -8,10 +8,12 @@ use App\Http\Requests\CafeConfiguration\UpdateBranchRequest;
 use App\Http\Resources\CafeConfiguration\BranchResource;
 use App\Models\Branch;
 use App\Services\FinancialSetupService;
+use App\Services\PosInventoryWarehouseResolver;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 class BranchController extends Controller
 {
     public function index(Request $request): JsonResponse
@@ -20,6 +22,7 @@ class BranchController extends Controller
             Branch::query()
                 ->where('tenant_id', TenantContext::id($request))
                 ->whereNull('deleted_at')
+                ->with(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->whereIn('type', ['bar', 'branch_main'])->where('is_active', true)->whereNull('deleted_at')->orderBy('name')])
                 ->orderBy('id')
                 ->get(),
         )->response();
@@ -40,20 +43,26 @@ class BranchController extends Controller
             return $branch;
         });
 
-        return (new BranchResource($branch))->response()->setStatusCode(201);
+        return (new BranchResource($this->withPosWarehouses($branch)))->response()->setStatusCode(201);
     }
 
     public function show(Request $request, int $branch): BranchResource
     {
-        return new BranchResource($this->branch($request, $branch));
+        return new BranchResource($this->withPosWarehouses($this->branch($request, $branch)));
     }
 
-    public function update(UpdateBranchRequest $request, int $branch): BranchResource
+    public function update(UpdateBranchRequest $request, int $branch, PosInventoryWarehouseResolver $posWarehouses): BranchResource
     {
         $branch = $this->branch($request, $branch);
-        $branch->update($request->validated());
+        $data = $request->validated();
+        if (array_key_exists('posInventoryWarehouseId', $data)) {
+            $posWarehouses->assertEligible((int) $branch->tenant_id, (int) $branch->id, $data['posInventoryWarehouseId']);
+            $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];
+            unset($data['posInventoryWarehouseId']);
+        }
+        $branch->update($data);
 
-        return new BranchResource($branch->fresh());
+        return new BranchResource($this->withPosWarehouses($branch->fresh()));
     }
 
     private function branch(Request $request, int $branchId): Branch
@@ -62,5 +71,10 @@ class BranchController extends Controller
             ->where('tenant_id', TenantContext::id($request))
             ->whereNull('deleted_at')
             ->findOrFail($branchId);
+    }
+
+    private function withPosWarehouses(Branch $branch): Branch
+    {
+        return $branch->load(['posInventoryWarehouse', 'warehouses' => fn ($query) => $query->whereIn('type', ['bar', 'branch_main'])->where('is_active', true)->whereNull('deleted_at')->orderBy('name')]);
     }
 }

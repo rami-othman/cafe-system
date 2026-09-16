@@ -69,6 +69,7 @@ class DailyReportController extends Controller
             ->where('tenant_id', $tenantId)
             ->where('branch_id', $branchId)
             ->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])
+            ->where('status', '!=', 'cancelled')
             ->whereBetween('closed_at', [$start, $end])
             ->whereNull('deleted_at');
     }

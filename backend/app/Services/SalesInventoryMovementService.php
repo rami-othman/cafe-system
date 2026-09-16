@@ -13,8 +13,15 @@ final class SalesInventoryMovementService
 {
     public function __construct(private readonly InventoryPostingService $posting) {}
 
-    /** @param array<int, array{materialId:int,baseUnit:string,quantity:int}> $consumptions */
-    public function consume(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $consumptions, ?int $actorId): array
+    /**
+     * @param array<int, array{materialId:int,baseUnit:string,quantity:int}> $consumptions
+     * @param bool $allowNegativeStock Only ever set true by POS sale consumption
+     *   (`SaleConsumptionService`), gated by the tenant's
+     *   `allow_negative_stock_on_sale` setting. Manual Sales Invoice
+     *   consumption never sets this — it keeps blocking on insufficient
+     *   stock exactly as before.
+     */
+    public function consume(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $consumptions, ?int $actorId, bool $allowNegativeStock = false): array
     {
         $cost = 0; $movements = [];
         foreach ($consumptions as $consumption) {
@@ -23,6 +30,7 @@ final class SalesInventoryMovementService
                 'warehouseId' => $warehouseId, 'itemId' => $consumption['materialId'], 'type' => 'sale_consumption',
                 'quantity' => InventoryDecimal::quantity($consumption['quantity']), 'unit' => $consumption['baseUnit'], 'branchId' => $branchId,
                 'referenceType' => $referenceType, 'referenceId' => $referenceId,
+                'allowNegativeStock' => $allowNegativeStock,
                 'idempotencyKey' => $referenceType === 'order_item'
                     ? "sale-consumption-{$tenantId}-{$referenceId}-{$consumption['materialId']}"
                     : "sale-consumption-{$tenantId}-{$referenceType}-{$referenceId}-{$consumption['materialId']}",

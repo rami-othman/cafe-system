@@ -178,6 +178,26 @@ class FinanceSetupRepository {
           'finance/${kind == 'cash' ? 'cash-accounts' : 'bank-accounts'}',
         ),
       ).map(FinancialLocation.fromJson).toList(growable: false);
+
+  /// Minimal, branch-scoped reference data for the voucher form. This avoids
+  /// giving a cashier access to the Accounts or Cash/Banks workspaces.
+  Future<({List<FinancialAccount> accounts, List<FinancialLocation> locations, List<Branch> branches})>
+  getCashierVoucherOptions() async {
+    final Map<String, dynamic> response = Map<String, dynamic>.from(
+      await _api.get('finance/cashier/voucher-options') as Map,
+    );
+    return (
+      accounts: readMapList(response['accounts'])
+          .map(FinancialAccount.fromJson)
+          .toList(growable: false),
+      locations: readMapList(response['locations'])
+          .map(FinancialLocation.fromJson)
+          .toList(growable: false),
+      branches: readMapList(response['branchRows'])
+          .map(Branch.fromJson)
+          .toList(growable: false),
+    );
+  }
   Future<void> createCashTransfer(Map<String, dynamic> payload) =>
       _api.post('finance/cash-transfers', data: payload);
   Future<Map<String, dynamic>> saveFinancialLocation(
