@@ -36,9 +36,77 @@ class CustomerOperationalCompatibilityTest extends TestCase
         $created->assertJsonPath('data.status', 'active')->assertJsonPath('data.customerNumber', 'C-000001');
         $this->assertDatabaseHas('customer_phones', ['customer_id' => $id, 'is_primary' => true, 'raw_number' => '+963 991234567', 'validation_status' => 'valid']);
         $this->assertDatabaseHas('customers', ['id' => $id, 'phone' => '+963 991234567']);
+        $this->assertSame(0, DB::table('customer_group_memberships')->where('customer_id', $id)->count());
+
+        $emptyGroups = $this->withToken($token)->postJson('/api/v1/customers/quick-create', [
+            'name' => 'Empty Groups Customer',
+            'phone' => '+963 991234568',
+            'groupIds' => [],
+        ])->assertCreated();
+        $this->assertSame(0, DB::table('customer_group_memberships')->where('customer_id', $emptyGroups->json('data.id'))->count());
 
         $this->withToken($token)->postJson('/api/v1/customers/quick-create', ['name' => 'Invalid', 'phone' => '091234567', 'phones' => [['rawNumber' => '091234568']]])->assertUnprocessable();
-        $this->assertSame(1, DB::table('customers')->where('tenant_id', $tenant)->count());
+        $this->assertSame(2, DB::table('customers')->where('tenant_id', $tenant)->count());
+    }
+
+    public function test_quick_create_persists_notes_and_multiple_active_same_tenant_groups_atomically(): void
+    {
+        $tenant = $this->tenant('quick-groups');
+        $owner = $this->user($tenant, 'owner');
+        $employee = $this->user($tenant, 'employee');
+        $ownerToken = $this->authenticateTenantUser($tenant, $owner);
+        $employeeToken = $this->authenticateTenantUser($tenant, $employee);
+        $firstGroup = $this->withToken($ownerToken)->postJson('/api/v1/admin/customer-management/customer-groups', ['name' => 'VIP'])->assertCreated()->json('data.id');
+        $secondGroup = $this->withToken($ownerToken)->postJson('/api/v1/admin/customer-management/customer-groups', ['name' => 'Regular'])->assertCreated()->json('data.id');
+
+        $created = $this->withToken($employeeToken)->postJson('/api/v1/customers/quick-create', [
+            'name' => 'Grouped Customer',
+            'phone' => '0912 345-67',
+            'notes' => 'Operational note',
+            'groupIds' => [$secondGroup, $firstGroup],
+        ])->assertCreated();
+
+        $id = $created->json('data.id');
+        $created->assertJsonPath('data.notes', 'Operational note');
+        $this->assertSame(
+            [$firstGroup, $secondGroup],
+            DB::table('customer_group_memberships')->where('customer_id', $id)->orderBy('customer_group_id')->pluck('customer_group_id')->all(),
+        );
+        $this->assertDatabaseHas('customer_phones', [
+            'customer_id' => $id,
+            'normalized_number' => '091234567',
+            'is_primary' => true,
+        ]);
+    }
+
+    public function test_quick_create_rejects_duplicate_unknown_and_invalid_groups_without_partial_state(): void
+    {
+        $tenant = $this->tenant('quick-invalid');
+        $owner = $this->user($tenant, 'owner');
+        $employee = $this->user($tenant, 'employee');
+        $ownerToken = $this->authenticateTenantUser($tenant, $owner);
+        $employeeToken = $this->authenticateTenantUser($tenant, $employee);
+        $group = $this->withToken($ownerToken)->postJson('/api/v1/admin/customer-management/customer-groups', ['name' => 'VIP'])->assertCreated()->json('data.id');
+        $foreignTenant = $this->tenant('quick-foreign');
+        $foreignOwner = $this->user($foreignTenant, 'owner');
+        $foreignGroup = $this->withToken($this->authenticateTenantUser($foreignTenant, $foreignOwner))->postJson('/api/v1/admin/customer-management/customer-groups', ['name' => 'Foreign'])->assertCreated()->json('data.id');
+
+        foreach ([
+            ['groupIds' => [$group, $group]],
+            ['groupIds' => [$foreignGroup]],
+            ['groupIds' => [999999999]],
+            ['groupIds' => ['invalid']],
+            ['unknown' => true],
+        ] as $payload) {
+            $this->withToken($employeeToken)->postJson('/api/v1/customers/quick-create', array_merge([
+                'name' => 'Rejected Customer',
+                'phone' => '091234567',
+            ], $payload))->assertUnprocessable();
+        }
+
+        $this->assertSame(0, DB::table('customers')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('customer_phones')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('customer_group_memberships')->where('tenant_id', $tenant)->count());
     }
 
     private function tenant(string $name): int

@@ -7655,4 +7655,65 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get discountV2Search => 'بحث';
+
+  @override
+  String posCustomerPoints(String points) {
+    return '$points نقطة';
+  }
+
+  @override
+  String get posWalkInCustomer => 'عميل عابر';
+
+  @override
+  String get posUseWalkInCustomer => 'استخدام عميل عابر';
+
+  @override
+  String get posSelectCustomer => 'اختيار العميل';
+
+  @override
+  String get posSearchCustomers => 'ابحث عن العملاء...';
+
+  @override
+  String get posNoCustomers => 'لا يوجد عملاء.';
+
+  @override
+  String get posNoCustomerMatches => 'لا توجد عملاء مطابقون.';
+
+  @override
+  String get posCreateNewCustomer => 'إنشاء جديد';
+
+  @override
+  String get posCloseCustomerSelector => 'إغلاق اختيار العميل';
+
+  @override
+  String get posCustomerCreateTitle => 'إنشاء عميل';
+
+  @override
+  String get posCustomerGroupsLoading => 'جاري تحميل المجموعات النشطة...';
+
+  @override
+  String get posCustomerGroupsEmpty => 'لا توجد مجموعات نشطة.';
+
+  @override
+  String get posCustomerGroupsForbidden => 'لا يمكنك تحميل مجموعات العملاء.';
+
+  @override
+  String get posCustomerGroupsRetry => 'تعذر تحميل مجموعات العملاء.';
+
+  @override
+  String get posCustomerCreateForbidden => 'لا يمكنك إنشاء عميل من نقطة البيع.';
+
+  @override
+  String get posCustomerCreateFailed =>
+      'تعذر إنشاء العميل. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get posCustomerAttachmentFailed =>
+      'تم إنشاء العميل، لكن تعذر إلحاقه بهذا الطلب. أعد المحاولة بأمان.';
+
+  @override
+  String get posCustomerSearchForbidden => 'لا يمكنك البحث عن العملاء.';
+
+  @override
+  String get posCustomerSearchFailed => 'البحث عن العملاء غير متاح مؤقتاً.';
 }

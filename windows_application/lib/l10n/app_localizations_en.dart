@@ -7670,4 +7670,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discountV2Search => 'Search';
+
+  @override
+  String posCustomerPoints(String points) {
+    return '$points pts';
+  }
+
+  @override
+  String get posWalkInCustomer => 'Walk-in customer';
+
+  @override
+  String get posUseWalkInCustomer => 'Use walk-in customer';
+
+  @override
+  String get posSelectCustomer => 'Select Customer';
+
+  @override
+  String get posSearchCustomers => 'Search customers...';
+
+  @override
+  String get posNoCustomers => 'No customers found.';
+
+  @override
+  String get posNoCustomerMatches => 'No matching customers found.';
+
+  @override
+  String get posCreateNewCustomer => 'Create New';
+
+  @override
+  String get posCloseCustomerSelector => 'Close customer selector';
+
+  @override
+  String get posCustomerCreateTitle => 'Create customer';
+
+  @override
+  String get posCustomerGroupsLoading => 'Loading active groups...';
+
+  @override
+  String get posCustomerGroupsEmpty => 'No active groups available.';
+
+  @override
+  String get posCustomerGroupsForbidden => 'You cannot load customer groups.';
+
+  @override
+  String get posCustomerGroupsRetry => 'Customer groups could not be loaded.';
+
+  @override
+  String get posCustomerCreateForbidden =>
+      'You cannot create a customer from the POS.';
+
+  @override
+  String get posCustomerCreateFailed =>
+      'The customer could not be created. You can retry safely.';
+
+  @override
+  String get posCustomerAttachmentFailed =>
+      'The customer was created, but could not be attached to this order. Retry safely.';
+
+  @override
+  String get posCustomerSearchForbidden => 'You cannot search customers.';
+
+  @override
+  String get posCustomerSearchFailed =>
+      'Customer search is temporarily unavailable.';
 }

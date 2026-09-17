@@ -13765,6 +13765,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search'**
   String get discountV2Search;
+
+  /// No description provided for @posCustomerPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts'**
+  String posCustomerPoints(String points);
+
+  /// No description provided for @posWalkInCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk-in customer'**
+  String get posWalkInCustomer;
+
+  /// No description provided for @posUseWalkInCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Use walk-in customer'**
+  String get posUseWalkInCustomer;
+
+  /// No description provided for @posSelectCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Customer'**
+  String get posSelectCustomer;
+
+  /// No description provided for @posSearchCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Search customers...'**
+  String get posSearchCustomers;
+
+  /// No description provided for @posNoCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers found.'**
+  String get posNoCustomers;
+
+  /// No description provided for @posNoCustomerMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching customers found.'**
+  String get posNoCustomerMatches;
+
+  /// No description provided for @posCreateNewCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New'**
+  String get posCreateNewCustomer;
+
+  /// No description provided for @posCloseCustomerSelector.
+  ///
+  /// In en, this message translates to:
+  /// **'Close customer selector'**
+  String get posCloseCustomerSelector;
+
+  /// No description provided for @posCustomerCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create customer'**
+  String get posCustomerCreateTitle;
+
+  /// No description provided for @posCustomerGroupsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading active groups...'**
+  String get posCustomerGroupsLoading;
+
+  /// No description provided for @posCustomerGroupsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No active groups available.'**
+  String get posCustomerGroupsEmpty;
+
+  /// No description provided for @posCustomerGroupsForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot load customer groups.'**
+  String get posCustomerGroupsForbidden;
+
+  /// No description provided for @posCustomerGroupsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer groups could not be loaded.'**
+  String get posCustomerGroupsRetry;
+
+  /// No description provided for @posCustomerCreateForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot create a customer from the POS.'**
+  String get posCustomerCreateForbidden;
+
+  /// No description provided for @posCustomerCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer could not be created. You can retry safely.'**
+  String get posCustomerCreateFailed;
+
+  /// No description provided for @posCustomerAttachmentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer was created, but could not be attached to this order. Retry safely.'**
+  String get posCustomerAttachmentFailed;
+
+  /// No description provided for @posCustomerSearchForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot search customers.'**
+  String get posCustomerSearchForbidden;
+
+  /// No description provided for @posCustomerSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer search is temporarily unavailable.'**
+  String get posCustomerSearchFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -157,6 +157,7 @@ import '../features/customer_management/views/customer_order_history_screen.dart
 import '../features/customer_management/views/customer_form_screen.dart';
 import '../features/customer_management/views/customer_list_screen.dart';
 import '../features/customer_management/widgets/customer_management_scaffold.dart';
+import '../features/customer_management/widgets/customer_create_dialog.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 import '../shared/widgets/app_top_bar.dart';
@@ -182,6 +183,33 @@ Page<void> _customerGroupCreateModalPage(
     create: (_) =>
         CustomerGroupFormCubit(serviceLocator<CustomerManagementRepository>()),
     child: const CustomerGroupFormScreen(),
+  ),
+);
+
+Page<void> _customerCreateModalPage(
+  BuildContext context,
+  GoRouterState state,
+) => CustomTransitionPage<void>(
+  key: state.pageKey,
+  name: state.name,
+  opaque: false,
+  barrierDismissible: true,
+  barrierColor: AppColors.materialEffectBackdrop,
+  barrierLabel: AppLocalizations.of(context).customerManagementCreateCustomer,
+  transitionDuration: const Duration(milliseconds: 180),
+  reverseTransitionDuration: const Duration(milliseconds: 140),
+  transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+      FadeTransition(opacity: animation, child: child),
+  child: BlocProvider<CustomerFormCubit>(
+    create: (_) =>
+        CustomerFormCubit(serviceLocator<CustomerManagementRepository>()),
+    child: CustomerCreateDialog(
+      mode: CustomerCreateMode.administrative,
+      child: CustomerFormScreen(
+        dialogMode: true,
+        lifecycleRepository: serviceLocator<CustomerManagementRepository>(),
+      ),
+    ),
   ),
 );
 
@@ -423,16 +451,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: CustomerManagementRouteLocations.customerCreate,
           redirect: _customerManagementAccessRedirect,
-          builder: (BuildContext context, GoRouterState state) =>
-              BlocProvider<CustomerFormCubit>(
-                create: (_) => CustomerFormCubit(
-                  serviceLocator<CustomerManagementRepository>(),
-                ),
-                child: CustomerFormScreen(
-                  lifecycleRepository:
-                      serviceLocator<CustomerManagementRepository>(),
-                ),
-              ),
+          pageBuilder: _customerCreateModalPage,
         ),
         GoRoute(
           path: CustomerManagementRouteLocations.customerEdit,

@@ -121,7 +121,6 @@ class DiscountsApiRepository implements DiscountsRepository {
 
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) async {
-    _debugRequest('POST /discounts', request);
     final dynamic response = await _apiClient.post(
       'discounts',
       data: request.toJson(),
@@ -134,7 +133,6 @@ class DiscountsApiRepository implements DiscountsRepository {
     String discountId,
     DiscountUpsertRequest request,
   ) async {
-    _debugRequest('PATCH /discounts/$discountId', request);
     final dynamic response = await _apiClient.patch(
       'discounts/$discountId',
       data: request.toJson(),
@@ -235,13 +233,4 @@ class DiscountsApiRepository implements DiscountsRepository {
       ? value.toInt().toString()
       : value.toString();
 
-  void _debugRequest(String endpoint, DiscountUpsertRequest request) {
-    assert(() {
-      // Branch IDs are intentionally logged only in debug builds to diagnose
-      // tenant-scoped validation without exposing request data in release logs.
-      // ignore: avoid_print
-      print('[DiscountsRepository] $endpoint ${request.toJson()}');
-      return true;
-    }());
-  }
 }

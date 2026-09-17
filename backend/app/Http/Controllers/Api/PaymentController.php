@@ -71,11 +71,11 @@ class PaymentController extends Controller
             ->whereIn('pm.type', ['cash', 'card'])
             ->orderBy('pm.sort_order')->orderBy('pm.id')->pluck('pm.type')
             ->unique()->values();
+        $isZeroBalanceCompletion = Money::cents($total) === 0 && $itemCount > 0;
         $canPay = $lifecycleCanPay &&
             ! $completedPaymentExists &&
-            $outstandingAmount > 0 &&
+            ($isZeroBalanceCompletion || ($outstandingAmount > 0 && $methods->isNotEmpty())) &&
             $hasOpenShift &&
-            $methods->isNotEmpty() &&
             $warehouseBlocker === null;
         $blockedReason = $canPay
             ? null
@@ -83,7 +83,7 @@ class PaymentController extends Controller
                 ? 'A completed payment already exists for this order.'
                 : ($warehouseBlocker['reason'] ?? (! $hasOpenShift
                     ? 'No open shift found. Open a shift before paying.'
-                    : ($methods->isEmpty()
+                    : (! $isZeroBalanceCompletion && $methods->isEmpty()
                         ? 'No supported payment method is available for this order.'
                         : 'This order cannot be paid in its current state.'))));
         $blockerCode = $canPay ? null : ($warehouseBlocker['code'] ?? null);
@@ -105,7 +105,9 @@ class PaymentController extends Controller
     {
         $this->performance->controllerStarted();
         $data = $request->validate([
-            'method' => ['required', 'in:cash,card,wallet,split'],
+            // A zero-balance order is completed without a tender. Keep the
+            // normal tender contract strict below once totals are recalculated.
+            'method' => ['nullable', 'in:cash,card,wallet,split'],
             'paymentMethodId' => ['nullable', 'integer'],
             'amount' => ['required', 'numeric', 'min:0'],
             'reference' => ['nullable', 'string'], 'note' => ['nullable', 'string'],
@@ -129,19 +131,6 @@ class PaymentController extends Controller
                 return ['payment' => $existing, 'total' => (float) $row->total, 'received' => (float) $data['amount']];
             }
 
-            // A configured payment method is authoritative for both Discount
-            // eligibility and Finance posting. The legacy method remains a
-            // compatibility selector only when no paymentMethodId is supplied.
-            $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
-                ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
-                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
-            if ($resolvedMethod === null) {
-                throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
-            }
-            if ($resolvedMethod->type !== $data['method']) {
-                throw ValidationException::withMessages(['paymentMethodId' => 'The selected payment method does not match method.']);
-            }
-
             $this->lifecycle->assertPayable($row);
             $this->performance->measure('shift validation', fn () => $this->assertActorHasOpenShift($tenantId, $row, $actorId));
             if (DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $row->id)->where('status', 'completed')->whereNull('deleted_at')->exists()) {
@@ -152,7 +141,29 @@ class PaymentController extends Controller
             // authoritative second stage, including revalidation after a
             // manager changes a policy or its schedule expires.
             if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
-                $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $resolvedMethod->paymentMethodId, $resolvedMethod->type);
+                $row = $this->pricing->recalculateOrder($tenantId, $row->id, true);
+            }
+            $zeroBalance = Money::cents($row->total) === 0;
+            $resolvedMethod = null;
+            if (! $zeroBalance) {
+                // A configured payment method is authoritative for both
+                // Discount eligibility and Finance posting. The legacy method
+                // remains a compatibility selector only when no ID is sent.
+                if (($data['method'] ?? null) === null) {
+                    throw ValidationException::withMessages(['method' => 'A payment method is required when an amount is due.']);
+                }
+                $resolvedMethod = array_key_exists('paymentMethodId', $data) && $data['paymentMethodId'] !== null
+                    ? SalePaymentMethodResolver::resolveExplicit($tenantId, (int) $data['paymentMethodId'])
+                    : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $data['method']);
+                if ($resolvedMethod === null) {
+                    throw new OrderLifecycleException('PAYMENT_METHOD_INVALID', 'The selected payment method is not active or has no valid Finance account mapping.');
+                }
+                if ($resolvedMethod->type !== $data['method']) {
+                    throw ValidationException::withMessages(['paymentMethodId' => 'The selected payment method does not match method.']);
+                }
+                if (DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $row->id)->whereNotNull('discount_id')->exists()) {
+                    $row = $this->pricing->recalculateOrder($tenantId, $row->id, true, $resolvedMethod->paymentMethodId, $resolvedMethod->type);
+                }
             }
             if ((float) $data['amount'] < (float) $row->total) {
                 throw ValidationException::withMessages(['amount' => 'Payment amount is less than order total.']);
@@ -163,9 +174,11 @@ class PaymentController extends Controller
             $persistenceStarted = $this->performance->start('payment persistence');
             $paymentId = DB::table('payments')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $row->branch_id, 'order_id' => $row->id,
-                'shift_id' => $row->shift_id, 'cashier_id' => $actorId, 'method' => $resolvedMethod->type,
+                'shift_id' => $row->shift_id, 'cashier_id' => $actorId,
+                // This is a completion marker, not a cash/card tender.
+                'method' => $zeroBalance ? 'zero_balance' : $resolvedMethod->type,
                 'amount' => $row->total, 'currency' => $currency, 'status' => 'completed',
-                'payment_method_id' => $resolvedMethod?->paymentMethodId,
+                'payment_method_id' => $zeroBalance ? null : $resolvedMethod->paymentMethodId,
                 'idempotency_key' => $data['idempotencyKey'], 'idempotency_hash' => $hash,
                 'reference_number' => $data['reference'] ?? null, 'notes' => $data['note'] ?? null,
                 'paid_at' => $now, 'created_at' => $now, 'updated_at' => $now,
@@ -237,19 +250,21 @@ class PaymentController extends Controller
     private function payloadHash(array $data): string
     {
         return hash('sha256', json_encode([
-            'method' => $data['method'], 'amount' => (string) $data['amount'],
+            'method' => $data['method'] ?? null, 'amount' => (string) $data['amount'],
             'paymentMethodId' => $data['paymentMethodId'] ?? null,
             'reference' => $data['reference'] ?? null, 'note' => $data['note'] ?? null,
         ], JSON_THROW_ON_ERROR));
     }
 
-    private function postSale(Request $request, int $tenantId, object $order, object $method, int $cogsCents, int $actorId): void
+    private function postSale(Request $request, int $tenantId, object $order, ?object $method, int $cogsCents, int $actorId): void
     {
         $subtotal = Money::cents($order->subtotal);
         $discount = Money::cents($order->discount_total);
         $tax = Money::cents($order->tax_total);
         $total = Money::cents($order->total);
-        $lines = [['accountCode' => $method->accountCode, 'debit' => Money::decimal($total)]];
+        // A zero-balance completion deliberately has no tender line. Its
+        // discount debit offsets revenue; inventory/COGS stays balanced too.
+        $lines = $method === null ? [] : [['accountCode' => $method->accountCode, 'debit' => Money::decimal($total)]];
         if ($discount > 0) {
             $lines[] = ['accountCode' => '4010', 'debit' => Money::decimal($discount)];
         }
