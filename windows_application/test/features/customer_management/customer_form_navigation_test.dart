@@ -10,9 +10,48 @@ import 'package:windows_application/features/customer_management/models/customer
 import 'package:windows_application/features/customer_management/models/customer_queries.dart';
 import 'package:windows_application/features/customer_management/repositories/customer_management_repository.dart';
 import 'package:windows_application/features/customer_management/views/customer_form_screen.dart';
+import 'package:windows_application/features/customer_management/widgets/customer_create_dialog.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
+  testWidgets(
+    'administrative create keeps the complete form inside the shared dialog',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: BlocProvider<CustomerFormCubit>(
+            create: (_) => CustomerFormCubit(_Repository()),
+            child: const CustomerCreateDialog(
+              mode: CustomerCreateMode.administrative,
+              child: CustomerFormScreen(dialogMode: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('customer-create-dialog-administrative'),
+        ),
+        findsOneWidget,
+      );
+      for (final String key in <String>[
+        'customer-name-field',
+        'customer-email-field',
+        'customer-birth-date-field',
+        'customer-add-phone',
+        'customer-notes-field',
+        'customer-form-save',
+      ]) {
+        expect(find.byKey(Key(key)), findsOneWidget, reason: key);
+      }
+    },
+  );
+
   testWidgets(
     'dirty form navigation asks before discarding and keeps input on stay',
     (tester) async {

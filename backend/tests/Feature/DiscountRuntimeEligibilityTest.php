@@ -72,6 +72,27 @@ class DiscountRuntimeEligibilityTest extends TestCase
         $this->assertSame(1, (int) DB::table('discounts')->where('id', $discount)->value('used_count'));
     }
 
+    public function test_a_hundred_percent_discount_completes_without_a_payment_method(): void
+    {
+        $scope = $this->scope();
+        $discount = $this->discount($scope, ['type' => 'percentage', 'value' => 100, 'usage_limit' => 1]);
+        $this->apply($scope, $discount)->assertOk()->assertJsonPath('data.totals.total', 0);
+
+        $this->getJson("/api/v1/orders/{$scope['order']}/payment-summary", $this->headers($scope))
+            ->assertOk()->assertJsonPath('data.canPay', true)->assertJsonPath('data.totalDue', 0);
+        $paid = $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'amount' => 0, 'idempotencyKey' => 'zero-percent-once',
+        ], $this->headers($scope))->assertOk()->assertJsonPath('data.payment.method', 'zero_balance');
+        $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'amount' => 0, 'idempotencyKey' => 'zero-percent-once',
+        ], $this->headers($scope))->assertOk()->assertJsonPath('data.payment.id', $paid->json('data.payment.id'));
+
+        $this->assertSame('paid', DB::table('orders')->where('id', $scope['order'])->value('payment_status'));
+        $this->assertNull(DB::table('payments')->where('order_id', $scope['order'])->value('payment_method_id'));
+        $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discount)->count());
+        $this->assertSame(1, (int) DB::table('discounts')->where('id', $discount)->value('used_count'));
+    }
+
     public function test_payment_method_id_is_authoritative_for_discount_eligibility_and_idempotent_retries(): void
     {
         $scope = $this->scope();

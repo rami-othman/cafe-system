@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../models/available_discount.dart';
 import '../models/backend_order.dart';
@@ -7,6 +8,8 @@ import '../models/backend_product_detail.dart';
 import '../models/branch.dart';
 import '../models/create_order_request.dart';
 import '../models/customer.dart';
+import '../models/pos_customer_group.dart';
+import '../models/pos_quick_create_customer_request.dart';
 import '../models/json_helpers.dart';
 import '../models/order_receipt.dart';
 import '../models/order_receipt_mapper.dart';
@@ -124,7 +127,51 @@ class PosRepository {
       'customers',
       queryParameters: query,
     );
-    return _mapList(response).map(_customerFromJson).toList(growable: false);
+    if (response is! List) {
+      throw const FormatException('Customer lookup response is invalid.');
+    }
+    final List<Map<String, dynamic>> rawCustomers = readMapList(response);
+    if (rawCustomers.length != response.length) {
+      throw const FormatException('Customer lookup response is invalid.');
+    }
+    return rawCustomers.map(_customerFromJson).toList(growable: false);
+  }
+
+  Future<List<PosCustomerGroup>> getCustomerGroups({int perPage = 100}) async {
+    if (!_usesBackend) {
+      return const <PosCustomerGroup>[];
+    }
+
+    final int boundedPerPage = perPage.clamp(1, 100);
+    final dynamic response = await apiClient!.getEnvelope(
+      'customer-groups',
+      queryParameters: <String, dynamic>{'perPage': boundedPerPage},
+    );
+    final Map<String, dynamic> envelope = _mapObject(response);
+    final dynamic rawData = envelope['data'];
+    if (rawData is! List) {
+      throw const FormatException('Customer group lookup response is invalid.');
+    }
+    return rawData
+        .map((dynamic value) => PosCustomerGroup.fromJson(_mapObject(value)))
+        .toList(growable: false);
+  }
+
+  Future<Customer> quickCreateCustomer(
+    PosQuickCreateCustomerRequest request,
+  ) async {
+    if (!_usesBackend) {
+      throw const ApiException(
+        message: 'Customer creation requires a backend connection.',
+        type: ApiErrorType.networkUnavailable,
+      );
+    }
+
+    final dynamic response = await apiClient!.post(
+      'customers/quick-create',
+      data: request.toJson(),
+    );
+    return _customerFromJson(_mapObject(response), requirePhone: true);
   }
 
   Future<Map<String, dynamic>> getPosState({required int branchId}) async {
@@ -290,7 +337,9 @@ class PosRepository {
     final dynamic response = await apiClient!.post(
       'orders/$orderId/pay',
       data: <String, dynamic>{
-        'method': method,
+        // The server owns the zero-balance decision. Omitting a tender lets
+        // it complete a fully discounted order without a cash/card record.
+        if (totalDue == 0) ...<String, dynamic>{} else 'method': method,
         'amount': amount,
         'reference': reference,
         'idempotencyKey': idempotencyKey,
@@ -334,15 +383,44 @@ class PosRepository {
     );
   }
 
-  Customer _customerFromJson(Map<String, dynamic> json) {
-    final int id = readInt(json['id']) ?? 0;
+  Customer _customerFromJson(
+    Map<String, dynamic> json, {
+    bool requirePhone = false,
+  }) {
+    final int? parsedId = readInt(json['id']);
+    final String name = readString(json['name']).trim();
+    if (parsedId == null || parsedId <= 0 || name.isEmpty) {
+      throw const FormatException('Customer response is missing its identity.');
+    }
+    String phone = readString(json['phone']).trim();
+    if (phone.isEmpty && json['phones'] is List) {
+      final List<Map<String, dynamic>> phones = readMapList(json['phones']);
+      for (final Map<String, dynamic> candidate in phones) {
+        if (readBool(candidate['isPrimary'])) {
+          phone = readString(candidate['rawNumber']).trim();
+          break;
+        }
+      }
+    }
+    if (requirePhone && phone.isEmpty) {
+      throw const FormatException(
+        'Customer response is missing its primary phone.',
+      );
+    }
+    final String rawTier = readString(json['tier']).trim();
+    final int? parsedPoints = readInt(json['loyaltyPoints']);
+    if (parsedPoints != null && parsedPoints < 0) {
+      throw const FormatException(
+        'Customer response has invalid loyalty points.',
+      );
+    }
     return Customer(
-      id: id.toString(),
-      backendId: id,
-      name: readString(json['name']),
-      phone: readString(json['phone']),
-      tier: readString(json['tier'], fallback: 'new').toUpperCase(),
-      points: readInt(json['loyaltyPoints']) ?? 0,
+      id: parsedId.toString(),
+      backendId: parsedId,
+      name: name,
+      phone: phone,
+      tier: rawTier.isEmpty ? null : rawTier.toUpperCase(),
+      points: parsedPoints,
     );
   }
 
@@ -402,6 +480,16 @@ class PosRepository {
 
   List<Map<String, dynamic>> _mapList(dynamic response) {
     return readMapList(response);
+  }
+
+  Map<String, dynamic> _mapObject(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    throw const FormatException('POS customer response is invalid.');
   }
 
   List<String> _fakeCategories() {

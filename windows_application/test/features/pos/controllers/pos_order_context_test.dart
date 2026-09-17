@@ -11,6 +11,8 @@ import 'package:windows_application/features/pos/models/create_order_request.dar
 import 'package:windows_application/features/pos/models/customer.dart';
 import 'package:windows_application/features/pos/models/order_type.dart';
 import 'package:windows_application/features/pos/models/pos_product.dart';
+import 'package:windows_application/features/pos/models/pos_customer_create_result.dart';
+import 'package:windows_application/features/pos/models/pos_quick_create_customer_request.dart';
 import 'package:windows_application/features/pos/models/product_customization.dart';
 import 'package:windows_application/features/pos/models/product_modifier.dart';
 import 'package:windows_application/features/pos/models/shift.dart';
@@ -74,6 +76,70 @@ void main() {
       expect(typeRequest.clearTable, isTrue);
       expect(typeRequest.tableId, isNull);
       expect(cubit.state.orderType, OrderType.takeaway);
+    },
+  );
+
+  test(
+    'quick-create selects a new customer and attaches its backend ID',
+    () async {
+      await cubit.addCustomizedProductToCart(_customization());
+      final PosCustomerCreateResult result = await cubit.quickCreateCustomer(
+        const PosQuickCreateCustomerRequest(
+          name: 'Created at till',
+          phone: '091234567',
+        ),
+      );
+
+      expect(result.attachmentFailed, isFalse);
+      expect(result.attachedToOrder, isTrue);
+      expect(repository.contextRequests.last.customerId, 99);
+      expect(cubit.state.selectedCustomer?.backendId, 99);
+      expect(
+        cubit.state.customers.where((Customer item) => item.backendId == 99),
+        hasLength(1),
+      );
+    },
+  );
+
+  test('quick-create keeps the customer when order attachment fails', () async {
+    await cubit.addCustomizedProductToCart(_customization());
+    repository.contextError = const ApiException(message: 'attachment failed');
+
+    final PosCustomerCreateResult result = await cubit.quickCreateCustomer(
+      const PosQuickCreateCustomerRequest(
+        name: 'Created but detached',
+        phone: '091234567',
+      ),
+    );
+
+    expect(result.attachmentFailed, isTrue);
+    expect(result.attachedToOrder, isFalse);
+    expect(cubit.state.selectedCustomer, isNull);
+    expect(
+      cubit.state.customers.where((Customer item) => item.backendId == 99),
+      hasLength(1),
+    );
+    expect(
+      cubit.state.cartMutationError,
+      PosCubit.customerAttachmentFailedMessage,
+    );
+  });
+
+  test(
+    'quick-create before an order is created is sent with the new order',
+    () async {
+      final PosCustomerCreateResult result = await cubit.quickCreateCustomer(
+        const PosQuickCreateCustomerRequest(
+          name: 'Pending customer',
+          phone: '091234567',
+        ),
+      );
+
+      await cubit.addCustomizedProductToCart(_customization());
+
+      expect(result.attachedToOrder, isFalse);
+      expect(repository.createRequest?.customerId, 99);
+      expect(cubit.state.selectedCustomer?.backendId, 99);
     },
   );
 
@@ -240,7 +306,7 @@ ProductCustomization _customization() => ProductCustomization(
 class _OrderContextRepository extends PosRepository {
   _OrderContextRepository() : super();
 
-  final List<Customer> customers = const <Customer>[
+  final List<Customer> customers = <Customer>[
     Customer(
       id: '7',
       backendId: 7,
@@ -291,6 +357,20 @@ class _OrderContextRepository extends PosRepository {
 
   @override
   Future<List<Customer>> getCustomers({String? search}) async => customers;
+
+  @override
+  Future<Customer> quickCreateCustomer(
+    PosQuickCreateCustomerRequest request,
+  ) async {
+    const Customer customer = Customer(
+      id: '99',
+      backendId: 99,
+      name: 'Created at till',
+      phone: '091234567',
+    );
+    customers.add(customer);
+    return customer;
+  }
 
   @override
   Future<Map<String, dynamic>> getPosState({required int branchId}) async =>

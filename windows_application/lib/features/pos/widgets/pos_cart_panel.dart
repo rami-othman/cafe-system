@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
@@ -108,7 +109,8 @@ class PosCartPanel extends StatelessWidget {
                     state.isPaymentSubmitting ||
                         state.uncertainPaymentOrderId != null
                     ? null
-                    : () => _showPaymentDialog(context, state, cubit),
+                    : () =>
+                          unawaited(_showPaymentDialog(context, state, cubit)),
                 isSyncingOrder:
                     state.isCartMutationInProgress || state.isPaymentSubmitting,
                 isBackendReachable:
@@ -177,9 +179,10 @@ class PosCartPanel extends StatelessWidget {
           customers: state.customers,
           selectedCustomer: state.selectedCustomer,
           onSubmit: cubit.selectCustomer,
-          onSearch: (String query) => cubit.repository.getCustomers(
-            search: query,
-          ),
+          onSearch: (String query) =>
+              cubit.repository.getCustomers(search: query),
+          quickCreateRepository: state.isBackendMode ? cubit.repository : null,
+          onQuickCreate: state.isBackendMode ? cubit.quickCreateCustomer : null,
         );
       },
     );
@@ -199,7 +202,19 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
-    if (!state.hasCartItems || state.total <= 0) {
+    if (!state.hasCartItems || state.total < 0) {
+      return;
+    }
+
+    if (state.total == 0) {
+      await cubit.completeBackendPayment(
+        const PaymentResult(
+          method: PaymentMethod.cash,
+          totalDue: 0,
+          amountReceived: 0,
+          changeDue: 0,
+        ),
+      );
       return;
     }
 
@@ -454,7 +469,7 @@ class _CartFooter extends StatelessWidget {
                   !isSyncingOrder &&
                   isBackendReachable &&
                   hasCartItems &&
-                  total > 0 &&
+                  total >= 0 &&
                   itemCount > 0,
             ),
           ],

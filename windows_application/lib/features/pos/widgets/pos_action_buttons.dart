@@ -66,7 +66,11 @@ class PosActionButtons extends StatelessWidget {
                 letterSpacing: 0.45,
               ),
             ),
-            child: Text('PAY ${CurrencyFormatter.format(total)}'),
+            child: Text(
+              total == 0
+                  ? 'COMPLETE ORDER'
+                  : 'PAY ${CurrencyFormatter.format(total)}',
+            ),
           ),
         ),
       ],

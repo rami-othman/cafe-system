@@ -18,10 +18,12 @@ class CustomerFormScreen extends StatefulWidget {
     super.key,
     this.customerId,
     this.lifecycleRepository,
+    this.dialogMode = false,
   });
 
   final int? customerId;
   final CustomerManagementRepository? lifecycleRepository;
+  final bool dialogMode;
 
   @override
   State<CustomerFormScreen> createState() => _CustomerFormScreenState();
@@ -93,6 +95,9 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
             );
           }
           final AppLocalizations l10n = AppLocalizations.of(context);
+          if (widget.dialogMode && state.isCreate) {
+            return _buildCreateDialogContent(context, state, cubit, l10n);
+          }
           return PopScope<void>(
             canPop: !state.isDirty,
             onPopInvokedWithResult: (bool didPop, _) async {
@@ -168,7 +173,82 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
         },
       );
 
+  Widget _buildCreateDialogContent(
+    BuildContext context,
+    CustomerFormState state,
+    CustomerFormCubit cubit,
+    AppLocalizations l10n,
+  ) => PopScope<void>(
+    canPop: !state.isDirty,
+    onPopInvokedWithResult: (bool didPop, _) async {
+      if (didPop) return;
+      if (await _canLeave(context) && context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    },
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          CustomerManagementPageHeader(
+            title: l10n.customerManagementCreateTitle,
+            description: l10n.cmvpCustomerFormDescription,
+            breadcrumbs: <String>[
+              l10n.cmvpBreadcrumbCustomers,
+              l10n.cmvpBreadcrumbCreate,
+            ],
+            actions: IconButton(
+              key: const Key('customer-form-close'),
+              tooltip: l10n.posCloseCustomerSelector,
+              onPressed: () => _dismissDialog(context),
+              icon: const Icon(Icons.close),
+            ),
+          ),
+          if (state.fieldErrors.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 12),
+            Text(
+              l10n.customerManagementValidationFailed,
+              key: const Key('customer-form-general-error'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Expanded(
+            child: CustomerManagementSurface(
+              key: const Key('customer-form-surface'),
+              expandBody: true,
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: CustomerFormSections(
+                  state: state,
+                  cubit: cubit,
+                  lifecycleRepository: widget.lifecycleRepository,
+                ),
+              ),
+              footer: _FormFooter(
+                state: state,
+                onCancel: () => _dismissDialog(context),
+                onSave: cubit.submit,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Future<void> _dismissDialog(BuildContext context) async {
+    if (await _canLeave(context) && context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+
   Future<void> _leaveToList(BuildContext context) async {
+    if (widget.dialogMode) {
+      await _dismissDialog(context);
+      return;
+    }
     if (UnsavedNavigationScope.maybeOf(context) != null) {
       context.guardedGo(CustomerManagementRouteLocations.customers);
       return;

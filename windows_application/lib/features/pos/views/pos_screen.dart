@@ -491,6 +491,8 @@ class _PosScreenState extends State<PosScreen> {
         context.l10n.posConnectionRequiredToCompleteOrder,
       PosCubit.menuChangedReviewMessage =>
         context.l10n.posMenuChangedReviewOrder,
+      PosCubit.customerAttachmentFailedMessage =>
+        context.l10n.posCustomerAttachmentFailed,
       _ => null,
     };
   }

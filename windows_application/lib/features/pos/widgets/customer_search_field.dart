@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations_en.dart';
 
 class CustomerSearchField extends StatelessWidget {
   const CustomerSearchField({
@@ -18,6 +20,9 @@ class CustomerSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n =
+        Localizations.of<AppLocalizations>(context, AppLocalizations) ??
+        AppLocalizationsEn();
     return Container(
       height: AppSizes.customerSearchHeight,
       decoration: BoxDecoration(
@@ -31,7 +36,7 @@ class CustomerSearchField extends StatelessWidget {
         onChanged: onChanged,
         style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
         decoration: InputDecoration(
-          hintText: 'Search customers...',
+          hintText: l10n.posSearchCustomers,
           hintStyle: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textMuted,
           ),

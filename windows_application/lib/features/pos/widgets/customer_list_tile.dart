@@ -6,6 +6,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations_en.dart';
 import '../models/customer.dart';
 
 class CustomerListTile extends StatelessWidget {
@@ -23,6 +25,9 @@ class CustomerListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _TierColors tierColors = _tierColorsFor(customer.tier);
+    final AppLocalizations l10n =
+        Localizations.of<AppLocalizations>(context, AppLocalizations) ??
+        AppLocalizationsEn();
 
     return Material(
       color: AppColors.transparent,
@@ -67,11 +72,12 @@ class CustomerListTile extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        _TierBadge(
-                          label: customer.tier,
-                          background: tierColors.background,
-                          foreground: tierColors.foreground,
-                        ),
+                        if (customer.tier != null)
+                          _TierBadge(
+                            label: customer.tier!,
+                            background: tierColors.background,
+                            foreground: tierColors.foreground,
+                          ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
@@ -91,13 +97,16 @@ class CustomerListTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: <Widget>[
-                  Text(
-                    '${NumberFormat.decimalPattern().format(customer.points)} pts',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w800,
+                  if (customer.points != null)
+                    Text(
+                      l10n.posCustomerPoints(
+                        NumberFormat.decimalPattern().format(customer.points),
+                      ),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: AppSpacing.xs),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 120),
@@ -185,8 +194,8 @@ class _TierColors {
   final Color foreground;
 }
 
-_TierColors _tierColorsFor(String tier) {
-  return switch (tier.toUpperCase()) {
+_TierColors _tierColorsFor(String? tier) {
+  return switch (tier?.toUpperCase()) {
     'VIP' => const _TierColors(
       background: AppColors.customerVipBadge,
       foreground: AppColors.customerVipText,
