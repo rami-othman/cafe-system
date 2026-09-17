@@ -53,16 +53,12 @@ class ShiftHistoryState extends Equatable {
       differenceFilter != ShiftDifferenceFilter.all;
 
   List<String> get cashierOptions {
-    final Set<String> names = all
-        .map((ShiftHistoryEntry e) => e.cashierName)
-        .toSet();
+    final Set<String> names = all.map((ShiftHistoryEntry e) => e.cashierName).toSet();
     return names.toList()..sort();
   }
 
   List<String> get branchOptions {
-    final Set<String> names = all
-        .map((ShiftHistoryEntry e) => e.branchName)
-        .toSet();
+    final Set<String> names = all.map((ShiftHistoryEntry e) => e.branchName).toSet();
     return names.toList()..sort();
   }
 
@@ -129,10 +125,7 @@ class ShiftHistoryState extends Equatable {
         today.subtract(Duration(days: today.weekday % 7)),
         today,
       ),
-      ShiftHistoryPeriod.thisMonth => (
-        DateTime(now.year, now.month),
-        today,
-      ),
+      ShiftHistoryPeriod.thisMonth => (DateTime(now.year, now.month), today),
       ShiftHistoryPeriod.custom => (
         customStart ?? DateTime(now.year, now.month),
         customEnd ?? today,

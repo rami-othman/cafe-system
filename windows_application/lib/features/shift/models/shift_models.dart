@@ -9,6 +9,7 @@ enum ShiftLifecycle { open, closed }
 /// repeated verbatim at the top of the closing report.
 class ShiftIdentity extends Equatable {
   const ShiftIdentity({
+    this.id = 0,
     required this.shiftNumber,
     required this.branchName,
     required this.cashierName,
@@ -20,6 +21,9 @@ class ShiftIdentity extends Equatable {
     this.closedBy,
   });
 
+  /// Database identifier used only for lifecycle mutations; reports use the
+  /// human-readable [shiftNumber]. Zero keeps the legacy UI fixtures valid.
+  final int id;
   final String shiftNumber;
   final String branchName;
   final String cashierName;
@@ -44,6 +48,7 @@ class ShiftIdentity extends Equatable {
     DateTime? closedAt,
     String? closedBy,
   }) => ShiftIdentity(
+    id: id,
     shiftNumber: shiftNumber,
     branchName: branchName,
     cashierName: cashierName,
@@ -58,6 +63,7 @@ class ShiftIdentity extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     shiftNumber,
+    id,
     branchName,
     cashierName,
     cashierCode,

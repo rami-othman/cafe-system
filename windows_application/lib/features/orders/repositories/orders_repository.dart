@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/config/tax_config.dart';
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/backend_datetime.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/branch.dart';
 import '../../pos/models/json_helpers.dart';
@@ -259,8 +260,8 @@ class OrdersRepository {
       amount: readDouble(json['amount'], fallback: request.amount),
       reason: readString(json['reason'], fallback: request.reason),
       managerNotes: request.managerNotes,
-      refundedAt:
-          DateTime.tryParse(readString(json['refundedAt'])) ?? DateTime.now(),
+      refundedAt: parseBackendDateTime(readString(json['refundedAt'])) ??
+          DateTime.now(),
     );
   }
 
@@ -594,15 +595,15 @@ class OrdersRepository {
   }
 
   DateTime _dateFromBackend(String value) {
-    return DateTime.tryParse(value)?.toLocal() ?? DateTime.now();
+    return parseBackendDateTime(value) ?? DateTime.now();
   }
 
   DateTime? _latestRefundedAt(List<Map<String, dynamic>> refunds) {
     DateTime? latest;
     for (final Map<String, dynamic> refund in refunds) {
-      final DateTime? refundedAt = DateTime.tryParse(
+      final DateTime? refundedAt = parseBackendDateTime(
         readString(refund['refundedAt']),
-      )?.toLocal();
+      );
       if (refundedAt == null) {
         continue;
       }
@@ -615,7 +616,7 @@ class OrdersRepository {
   }
 
   String _timeLabel(String value) {
-    final DateTime? createdAt = DateTime.tryParse(value)?.toLocal();
+    final DateTime? createdAt = parseBackendDateTime(value);
     if (createdAt == null) {
       return 'Just now';
     }

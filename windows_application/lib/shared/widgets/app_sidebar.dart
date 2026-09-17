@@ -6,6 +6,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../l10n/app_localizations.dart';
+import '../../features/shift/widgets/shift_strings.dart';
 import '../access/cashier_access.dart';
 import 'app_sidebar_item.dart';
 
@@ -14,16 +15,60 @@ class AppSidebar extends StatelessWidget {
     super.key,
     required this.activeLabel,
     this.isCollapsed = false,
+    this.width,
     this.actorRole,
     this.canManageCustomers = false,
+    this.financeCapabilities = const <String>{},
     this.brandIdentity,
   });
 
   final String activeLabel;
   final bool isCollapsed;
+  final double? width;
   final String? actorRole;
   final bool canManageCustomers;
+  final Set<String> financeCapabilities;
   final BrandIdentity? brandIdentity;
+
+  /// The Cashier's navigation: the operational home, the till, and the
+  /// Cashier-safe views of Finance and Inventory. "Inventory" here lands on the
+  /// operational stock view, never the full Inventory Center, and "Finance"
+  /// lands on the vouchers workspace, never the Finance overview.
+  static const List<_SidebarDestination> _cashierDestinations =
+      <_SidebarDestination>[
+        _SidebarDestination(
+          'dashboard',
+          Icons.dashboard_outlined,
+          CashierRoutes.dashboard,
+          'cashierHome',
+        ),
+        _SidebarDestination(
+          'pos',
+          Icons.point_of_sale_outlined,
+          CashierRoutes.pos,
+        ),
+        _SidebarDestination(
+          'orders',
+          Icons.receipt_long_outlined,
+          CashierRoutes.orders,
+        ),
+        _SidebarDestination(
+          'discounts',
+          Icons.local_offer_outlined,
+          CashierRoutes.discounts,
+        ),
+        _SidebarDestination(
+          'finance',
+          Icons.account_balance_wallet_outlined,
+          CashierRoutes.financeVouchers,
+        ),
+        _SidebarDestination(
+          'inventory',
+          Icons.inventory_2_outlined,
+          CashierRoutes.cashierInventory,
+        ),
+        _SidebarDestination('shift', Icons.schedule_outlined, '/shift/current'),
+      ];
 
   static const List<_SidebarDestination> _destinations = <_SidebarDestination>[
     _SidebarDestination('dashboard', Icons.dashboard_outlined),
@@ -31,6 +76,7 @@ class AppSidebar extends StatelessWidget {
     _SidebarDestination('orders', Icons.receipt_long_outlined, '/orders'),
     _SidebarDestination('customers', Icons.groups_outlined, '/customers'),
     _SidebarDestination('discounts', Icons.local_offer_outlined, '/discounts'),
+    _SidebarDestination('shift', Icons.schedule_outlined, '/shift/current'),
     _SidebarDestination(
       'menuManagement',
       Icons.restaurant_menu_outlined,
@@ -52,16 +98,26 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Iterable<_SidebarDestination> destinations = _destinations.where(
-      (destination) =>
-          (destination.id != 'menuManagement' ||
-              _canTemporarilyManageMenus(actorRole)) &&
-          (destination.id != 'customers' || canManageCustomers) &&
-          (destination.id != 'cafeConfiguration' || actorRole == 'owner') &&
-          CashierAccess.allowsModule(destination.id, actorRole),
+    final bool isCashier = CashierAccess.isCashierRole(actorRole);
+    final bool canOpenFinance = financeCapabilities.any(
+      CashierAccess.financeWorkspacePermissions.contains,
     );
+    final Iterable<_SidebarDestination> destinations = isCashier
+        ? _cashierDestinations.where(
+            (_SidebarDestination destination) =>
+                destination.id != 'finance' || canOpenFinance,
+          )
+        : _destinations.where(
+            (destination) =>
+                (destination.id != 'menuManagement' ||
+                    _canTemporarilyManageMenus(actorRole)) &&
+                (destination.id != 'customers' || canManageCustomers) &&
+                (destination.id != 'cafeConfiguration' || actorRole == 'owner'),
+          );
     return Container(
-      width: isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth,
+      width:
+          width ??
+          (isCollapsed ? AppSizes.sidebarRailWidth : AppSizes.sidebarWidth),
       decoration: const BoxDecoration(
         color: AppColors.sidebarBackground,
         border: BorderDirectional(
@@ -106,7 +162,7 @@ class AppSidebar extends StatelessWidget {
                           in destinations)
                         AppSidebarItem(
                           icon: destination.icon,
-                          label: _labelFor(context, destination.id),
+                          label: _labelFor(context, destination.labelId),
                           isActive:
                               destination.id == activeLabel ||
                               _englishLabel(destination.id) == activeLabel,
@@ -169,8 +225,14 @@ String _labelFor(BuildContext context, String id) {
     context,
     AppLocalizations,
   );
+  // The Shift module ships its own Arabic copy (see ShiftStrings) rather
+  // than through AppLocalizations, matching the l10n-lite pattern already
+  // used by Finance/Inventory. It renders identically regardless of app
+  // locale until the module gets full bilingual support.
+  if (id == 'shift') return ShiftStrings.module;
   if (l10n == null) return _englishLabel(id);
   return switch (id) {
+    'cashierHome' => l10n.cashierHomeTitle,
     'dashboard' => l10n.navigationDashboard,
     'pos' => l10n.navigationPos,
     'orders' => l10n.navigationOrders,
@@ -204,6 +266,7 @@ String _operationalHub(BuildContext context) =>
     'OPERATIONAL HUB';
 
 String _englishLabel(String id) => switch (id) {
+  'cashierHome' => 'Home',
   'dashboard' => 'Dashboard',
   'pos' => 'POS',
   'orders' => 'Orders',
@@ -214,13 +277,23 @@ String _englishLabel(String id) => switch (id) {
   'inventory' => 'Inventory',
   'finance' => 'Finance',
   'reports' => 'Reports',
+  'shift' => 'Shift',
   _ => '',
 };
 
 class _SidebarDestination {
-  const _SidebarDestination(this.id, this.icon, [this.routePath]);
+  const _SidebarDestination(
+    this.id,
+    this.icon, [
+    this.routePath,
+    String? labelId,
+  ]) : labelId = labelId ?? id;
 
   final String id;
   final IconData icon;
   final String? routePath;
+
+  /// Lets a destination keep its `id` (which drives active-state matching)
+  /// while showing a different label, as the Cashier's home does.
+  final String labelId;
 }

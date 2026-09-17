@@ -1017,7 +1017,7 @@ Future<bool> _confirmMenu(
 }) async =>
     await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(
           restore
               ? context.l10n.menuDetailRestoreTitle
@@ -1030,11 +1030,11 @@ Future<bool> _confirmMenu(
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
               restore
                   ? context.l10n.menuOverviewRestore

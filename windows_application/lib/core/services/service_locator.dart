@@ -10,11 +10,13 @@ import '../../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../../features/pos/repositories/pos_menu_sync_cache.dart';
 import '../../features/pos/repositories/pos_menu_sync_repository.dart';
 import '../../features/pos/repositories/pos_repository.dart';
-import '../../features/shift_close/controllers/bar_check_cubit.dart';
-import '../../features/shift_close/controllers/shift_close_cubit.dart';
-import '../../features/shift_close/repositories/shift_close_repository.dart';
 import '../../features/discounts/controllers/discounts_cubit.dart';
 import '../../features/discounts/repositories/discounts_repository.dart';
+import '../../features/shift/controllers/shift_closing_cubit.dart';
+import '../../features/shift/controllers/shift_history_cubit.dart';
+import '../../features/shift/controllers/shift_overview_cubit.dart';
+import '../../features/shift/controllers/shift_report_cubit.dart';
+import '../../features/shift/repositories/shift_repository.dart';
 import '../../features/reports/controllers/daily_report_cubit.dart';
 import '../../features/reports/controllers/reports_overview_cubit.dart';
 import '../../features/reports/controllers/sales_profitability_cubit.dart';
@@ -32,6 +34,9 @@ import '../../features/purchasing/controllers/purchasing_cubit.dart';
 import '../../features/purchasing/repositories/purchasing_repository.dart';
 import '../../features/sales/controllers/sales_cubit.dart';
 import '../../features/sales/repositories/sales_repository.dart';
+import '../../features/cashier_dashboard/controllers/cashier_dashboard_cubit.dart';
+import '../../features/cashier_dashboard/controllers/cashier_inventory_cubit.dart';
+import '../../features/cashier_dashboard/repositories/cashier_dashboard_repository.dart';
 import '../../features/inventory/controllers/inventory_cubit.dart';
 import '../../features/inventory/repositories/inventory_repository.dart';
 import '../../features/operational_context/controllers/operational_branch_cubit.dart';
@@ -140,21 +145,6 @@ void setupServiceLocator({bool useBackend = true}) {
       () => PosCubit(repository: serviceLocator<PosRepository>()),
     );
   }
-  if (!serviceLocator.isRegistered<ShiftCloseRepository>()) {
-    serviceLocator.registerLazySingleton<ShiftCloseRepository>(
-      () => ShiftCloseRepository(serviceLocator<DioApiClient>()),
-    );
-  }
-  if (!serviceLocator.isRegistered<ShiftCloseCubit>()) {
-    serviceLocator.registerFactory<ShiftCloseCubit>(
-      () => ShiftCloseCubit(repository: serviceLocator<ShiftCloseRepository>()),
-    );
-  }
-  if (!serviceLocator.isRegistered<BarCheckCubit>()) {
-    serviceLocator.registerFactory<BarCheckCubit>(
-      () => BarCheckCubit(repository: serviceLocator<ShiftCloseRepository>()),
-    );
-  }
   if (!serviceLocator.isRegistered<PosMenuSyncCache>()) {
     serviceLocator.registerLazySingleton<PosMenuSyncCache>(
       createPosMenuSyncCache,
@@ -172,6 +162,28 @@ void setupServiceLocator({bool useBackend = true}) {
     serviceLocator.registerFactory<PosMenuSyncCubit>(
       () =>
           PosMenuSyncCubit(repository: serviceLocator<PosMenuSyncRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<CashierDashboardRepository>()) {
+    serviceLocator.registerLazySingleton<CashierDashboardRepository>(
+      () => CashierDashboardRepository(
+        apiClient: useBackend ? serviceLocator<DioApiClient>() : null,
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<CashierDashboardCubit>()) {
+    serviceLocator.registerFactory<CashierDashboardCubit>(
+      () => CashierDashboardCubit(
+        repository: serviceLocator<CashierDashboardRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<CashierInventoryCubit>()) {
+    serviceLocator.registerFactory<CashierInventoryCubit>(
+      () => CashierInventoryCubit(
+        repository: serviceLocator<CashierDashboardRepository>(),
+      ),
     );
   }
 
@@ -198,6 +210,38 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<DiscountsCubit>()) {
     serviceLocator.registerFactory<DiscountsCubit>(
       () => DiscountsCubit(repository: serviceLocator<DiscountsRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ShiftRepository>()) {
+    serviceLocator.registerLazySingleton<ShiftRepository>(
+      () => ShiftRepository(
+        apiClient: useBackend ? serviceLocator<DioApiClient>() : null,
+      ),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ShiftOverviewCubit>()) {
+    serviceLocator.registerFactory<ShiftOverviewCubit>(
+      () => ShiftOverviewCubit(repository: serviceLocator<ShiftRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ShiftClosingCubit>()) {
+    serviceLocator.registerFactory<ShiftClosingCubit>(
+      () => ShiftClosingCubit(repository: serviceLocator<ShiftRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ShiftHistoryCubit>()) {
+    serviceLocator.registerFactory<ShiftHistoryCubit>(
+      () => ShiftHistoryCubit(repository: serviceLocator<ShiftRepository>()),
+    );
+  }
+
+  if (!serviceLocator.isRegistered<ShiftReportCubit>()) {
+    serviceLocator.registerFactory<ShiftReportCubit>(
+      () => ShiftReportCubit(repository: serviceLocator<ShiftRepository>()),
     );
   }
 

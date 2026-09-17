@@ -3,6 +3,7 @@
 import 'dart:ui';
 
 import 'package:windows_application/core/utils/localized_entity_text.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 import '../../modifiers/models/modifier_models.dart';
 import '../../models/catalog_models.dart';
@@ -184,8 +185,7 @@ String? _text(dynamic value) {
   return text.isEmpty ? null : text;
 }
 
-DateTime? _date(dynamic value) =>
-    DateTime.tryParse(readString(value))?.toLocal();
+DateTime? _date(dynamic value) => parseBackendDateTime(readString(value));
 int _activeOptions(dynamic value) => value is List
     ? value
           .whereType<Map>()

@@ -18,6 +18,11 @@ class PurchaseInvoiceLine {
     required this.taxAmount,
     required this.lineTotal,
     required this.receivedQuantity,
+    this.lineGrossAmount,
+    this.discountType = 'fixed',
+    this.discountValue,
+    this.allocatedDiscount = '0.00',
+    this.allocatedLandedCost = '0.00',
     this.inventoryItemId,
     this.inventoryItemName,
     this.purchaseUnit,
@@ -39,8 +44,16 @@ class PurchaseInvoiceLine {
   final String quantity;
   final String? conversionFactor;
   final String? baseQuantity;
+  /// Server-derived: (lineGrossAmount - discount) / quantity. Display only — never sent as input.
   final String unitPrice;
+  final String? lineGrossAmount;
+  final String discountType;
+  final String? discountValue;
   final String discountAmount;
+  /// This line's proportional share of the whole-invoice discount (by value).
+  final String allocatedDiscount;
+  /// This line's proportional share of any capitalized additional charge — raises unitPrice, not lineTotal.
+  final String allocatedLandedCost;
   final String taxAmount;
   final String lineTotal;
   final int? warehouseId;
@@ -75,7 +88,25 @@ class PurchaseInvoiceLine {
             ? null
             : readString(json['baseQuantity']),
         unitPrice: readString(json['unitPrice']),
+        lineGrossAmount: json['lineGrossAmount'] == null
+            ? null
+            : readString(json['lineGrossAmount']),
+        discountType: readString(json['discountType'], fallback: 'fixed')
+                .isEmpty
+            ? 'fixed'
+            : readString(json['discountType'], fallback: 'fixed'),
+        discountValue: json['discountValue'] == null
+            ? null
+            : readString(json['discountValue']),
         discountAmount: readString(json['discountAmount'], fallback: '0.00'),
+        allocatedDiscount: readString(
+          json['allocatedDiscount'],
+          fallback: '0.00',
+        ),
+        allocatedLandedCost: readString(
+          json['allocatedLandedCost'],
+          fallback: '0.00',
+        ),
         taxAmount: readString(json['taxAmount'], fallback: '0.00'),
         lineTotal: readString(json['lineTotal']),
         warehouseId: readInt(json['warehouseId']),
@@ -86,6 +117,44 @@ class PurchaseInvoiceLine {
         remainingQuantity: json['remainingQuantity'] == null
             ? null
             : readString(json['remainingQuantity']),
+      );
+}
+
+/// An additional charge (freight, hospitality, ...) attached to an invoice.
+/// `treatment: capitalize` raises the eligible (inventory) lines'
+/// `allocatedLandedCost`/`unitPrice` proportionally by value; `expense`
+/// posts standalone to `expenseCategoryId`'s account and never touches
+/// inventory cost.
+class PurchaseInvoiceCharge {
+  const PurchaseInvoiceCharge({
+    this.id,
+    required this.description,
+    required this.treatment,
+    this.expenseCategoryId,
+    this.expenseCategoryName,
+    required this.amount,
+    this.taxAmount = '0.00',
+  });
+
+  final int? id;
+  final String description;
+  final String treatment; // capitalize | expense
+  final int? expenseCategoryId;
+  final String? expenseCategoryName;
+  final String amount;
+  final String taxAmount;
+
+  factory PurchaseInvoiceCharge.fromJson(Map<String, dynamic> json) =>
+      PurchaseInvoiceCharge(
+        id: readInt(json['id']),
+        description: readString(json['description']),
+        treatment: readString(json['treatment'], fallback: 'expense'),
+        expenseCategoryId: readInt(json['expenseCategoryId']),
+        expenseCategoryName: readString(json['expenseCategoryName']).isEmpty
+            ? null
+            : readString(json['expenseCategoryName']),
+        amount: readString(json['amount'], fallback: '0.00'),
+        taxAmount: readString(json['taxAmount'], fallback: '0.00'),
       );
 }
 
@@ -312,6 +381,11 @@ class PurchaseInvoice {
     required this.paymentStatus,
     required this.status,
     required this.isOverdue,
+    this.discountType = 'fixed',
+    this.discountValue,
+    this.discountAmount = '0.00',
+    this.chargesAmount = '0.00',
+    this.charges = const <PurchaseInvoiceCharge>[],
     this.receiptStatus = 'not_applicable',
     this.branchId,
     this.branchName,
@@ -354,6 +428,11 @@ class PurchaseInvoice {
   final String? debitAccountName;
   final String subtotal;
   final String taxAmount;
+  final String discountType;
+  final String? discountValue;
+  final String discountAmount;
+  final String chargesAmount;
+  final List<PurchaseInvoiceCharge> charges;
   final String totalAmount;
   final String paidAmount;
   final String remainingAmount;
@@ -413,6 +492,18 @@ class PurchaseInvoice {
             : readString(json['debitAccountName']),
         subtotal: readString(json['subtotal']),
         taxAmount: readString(json['taxAmount']),
+        discountType: readString(json['discountType'], fallback: 'fixed')
+                .isEmpty
+            ? 'fixed'
+            : readString(json['discountType'], fallback: 'fixed'),
+        discountValue: json['discountValue'] == null
+            ? null
+            : readString(json['discountValue']),
+        discountAmount: readString(json['discountAmount'], fallback: '0.00'),
+        chargesAmount: readString(json['chargesAmount'], fallback: '0.00'),
+        charges: readMapList(
+          json['charges'],
+        ).map(PurchaseInvoiceCharge.fromJson).toList(growable: false),
         totalAmount: readString(json['totalAmount']),
         paidAmount: readString(json['paidAmount'], fallback: '0.00'),
         remainingAmount: readString(json['remainingAmount']),

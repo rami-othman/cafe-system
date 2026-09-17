@@ -817,16 +817,16 @@ Future<void> _confirmMenu(
   final _MenuListCopy copy = _MenuListCopy.of(context);
   final bool? yes = await showDialog<bool>(
     context: context,
-    builder: (_) => AlertDialog(
+    builder: (BuildContext dialogContext) => AlertDialog(
       title: Text(archive ? copy.archiveTitle : copy.restoreTitle),
       content: Text(archive ? copy.archiveHelp : copy.restoreHelp),
       actions: <Widget>[
         TextButton(
-          onPressed: () => Navigator.pop(context, false),
+          onPressed: () => Navigator.pop(dialogContext, false),
           child: Text(copy.cancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(context, true),
+          onPressed: () => Navigator.pop(dialogContext, true),
           child: Text(archive ? copy.archive : copy.restore),
         ),
       ],

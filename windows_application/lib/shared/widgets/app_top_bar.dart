@@ -9,7 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../app/shift_close_route_locations.dart';
+import '../../app/shift_route_locations.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
 import '../../features/pos/controllers/pos_state.dart';
 import '../../features/pos/models/branch.dart';
@@ -119,9 +119,7 @@ class _AppTopBarState extends State<AppTopBar> {
                       posState.shiftId != null,
                   onTap: posState?.shiftId == null
                       ? null
-                      : () => context.push(
-                          ShiftCloseRouteLocations.shiftClose,
-                        ),
+                      : () => context.push(ShiftRouteLocations.current),
                 ),
               ],
               if (widget.showCartButton) ...<Widget>[

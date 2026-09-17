@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\CustomerManagementService;
 use App\Services\OperationalAuditService;
+use App\Support\Search\SmartSearch;
 use App\Support\FinanceAccess;
 use App\Support\FinancialActor;
 use App\Support\TenantContext;
@@ -21,9 +22,17 @@ final class FinanceCustomerController extends Controller
         $tenant = TenantContext::id($request);
         $query = DB::table('customers')->where('tenant_id', $tenant)->whereNull('deleted_at');
         if ($request->filled('status')) $query->where('is_active', $request->input('status') === 'active');
+        $search = $request->input('search');
+        $searchFields = [
+            ['column' => 'name', 'weight' => 3],
+            ['column' => 'phone', 'weight' => 2, 'type' => 'phone'],
+            ['column' => 'customer_number', 'weight' => 2, 'type' => 'code'],
+            ['column' => 'email', 'weight' => 1],
+        ];
         if ($request->filled('search')) {
-            $like = '%'.strtolower($request->input('search')).'%';
-            $query->where(fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', [$like])->orWhereRaw('LOWER(customer_number) LIKE ?', [$like])->orWhereRaw('LOWER(COALESCE(phone, \'\')) LIKE ?', [$like])->orWhereRaw('LOWER(COALESCE(email, \'\')) LIKE ?', [$like]));
+            SmartSearch::apply($query, $search, $searchFields);
+            SmartSearch::withRelevance($query, $search, $searchFields);
+            $query->orderByDesc('smart_rank');
         }
         $paginator = $query->orderBy('name')->paginate($this->perPage($request));
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);

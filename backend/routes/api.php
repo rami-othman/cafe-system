@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
 use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
 use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
+use App\Http\Controllers\Api\CashierDashboardController;
 use App\Http\Controllers\Api\CustomerCapabilityController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerGroupLookupController;
@@ -338,7 +339,18 @@ Route::prefix('v1')->group(function (): void {
         Route::get('reports/daily', [DailyReportController::class, 'show'])->middleware('finance.permission:finance.reports.view');
         Route::get('reports/overview', [ReportsOverviewController::class, 'show'])->middleware('finance.permission:finance.reports.view');
 
+        // The Cashier's operational surface. Narrow, read-only permissions that
+        // grant no finance/inventory/reports ability of their own; branch and
+        // shift scope are enforced inside the controller and its services.
+        Route::prefix('cashier')->group(function (): void {
+            Route::get('dashboard', [CashierDashboardController::class, 'show'])->middleware('cashier.permission:cashier.dashboard.view');
+            Route::get('inventory', [CashierDashboardController::class, 'inventory'])->middleware('cashier.permission:cashier.inventory.view');
+        });
+
         Route::get('shifts/current', [ShiftController::class, 'current']);
+        Route::get('shifts/current/snapshot', [ShiftController::class, 'snapshot']);
+        Route::get('shifts/history', [ShiftController::class, 'history']);
+        Route::get('shifts/{shiftNumber}/report', [ShiftController::class, 'report']);
         Route::post('shifts/current', [ShiftController::class, 'open']);
         Route::post('shifts/{shift}/close', [ShiftController::class, 'close']);
 

@@ -79,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextField, 'البيان'), 'صيانة آلة الإسبريسو');
-    await tester.enterText(find.widgetWithText(TextField, 'سعر الوحدة'), '60');
+    await tester.enterText(find.widgetWithText(TextField, 'إجمالي الصنف'), '60');
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('حفظ'));
@@ -106,7 +106,7 @@ void main() {
         backend.lastCreatePayload!['lines'][0] as Map<String, dynamic>;
     expect(line['lineType'], 'expense');
     expect(line['description'], 'صيانة آلة الإسبريسو');
-    expect(line['unitPrice'], '60');
+    expect(line['lineGrossAmount'], '60');
   });
 }
 

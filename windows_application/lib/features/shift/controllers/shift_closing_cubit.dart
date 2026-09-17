@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/shift_models.dart';
-import '../repositories/shift_mock_repository.dart';
+import '../repositories/shift_repository.dart';
 import '../widgets/shift_strings.dart';
 import 'shift_closing_state.dart';
 
@@ -14,7 +14,7 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
   ShiftClosingCubit({required this.repository})
     : super(const ShiftClosingState());
 
-  final ShiftMockRepository repository;
+  final ShiftRepository repository;
 
   Future<void> load() async {
     emit(state.copyWith(status: ShiftClosingStatus.loading));
@@ -129,10 +129,7 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
   );
 
   void updateCashReasonDetail(String value) => emit(
-    state.copyWith(
-      cashReasonDetail: value,
-      clearCashReasonDetailError: true,
-    ),
+    state.copyWith(cashReasonDetail: value, clearCashReasonDetailError: true),
   );
 
   /// Cash rules: an amount is required, must parse, must not be negative; and
@@ -219,17 +216,18 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
     (BarCountLine line) => line.copyWith(counted: line.theoretical),
   );
 
-  void clearCount(String lineId) =>
-      _replaceLine(lineId, (BarCountLine line) => line.copyWith(clearCounted: true));
+  void clearCount(String lineId) => _replaceLine(
+    lineId,
+    (BarCountLine line) => line.copyWith(clearCounted: true),
+  );
 
   /// Bulk affordance for the long tail of untouched items. Confirmed in the
   /// UI first — it writes the theoretical quantity into every uncounted line.
   void acceptAllUncountedAsMatching() {
     final List<BarCountLine> next = state.barLines
         .map(
-          (BarCountLine line) => line.isCounted
-              ? line
-              : line.copyWith(counted: line.theoretical),
+          (BarCountLine line) =>
+              line.isCounted ? line : line.copyWith(counted: line.theoretical),
         )
         .toList();
     emit(state.copyWith(barLines: next, savedAt: repository.now));
@@ -261,8 +259,7 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
   void updateClosingNotes(String value) =>
       emit(state.copyWith(closingNotes: value, savedAt: repository.now));
 
-  void setAcknowledged(bool value) =>
-      emit(state.copyWith(acknowledged: value));
+  void setAcknowledged(bool value) => emit(state.copyWith(acknowledged: value));
 
   /// Seals the shift. Guarded by [ShiftClosingState.assessment] having no
   /// blockers and by the acknowledgement checkbox in the dialog.
@@ -291,16 +288,28 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
       reportNumber:
           'RPT-${snapshot.identity.shiftNumber.replaceFirst('SH-', '')}',
     );
-    await repository.closeShift(result);
-    if (isClosed) return result;
-    emit(
-      state.copyWith(
-        status: ShiftClosingStatus.closed,
-        step: ShiftClosingStep.done,
-        snapshot: sealed,
-        result: result,
-      ),
-    );
-    return result;
+    try {
+      final ShiftClosingResult sealedResult = await repository.closeShift(result);
+      if (isClosed) return result;
+      emit(
+        state.copyWith(
+          status: ShiftClosingStatus.closed,
+          step: ShiftClosingStep.done,
+          snapshot: sealedResult.snapshot,
+          result: sealedResult,
+        ),
+      );
+      return sealedResult;
+    } on ShiftDataException catch (error) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            status: ShiftClosingStatus.error,
+            errorMessage: error.message,
+          ),
+        );
+      }
+      return null;
+    }
   }
 }

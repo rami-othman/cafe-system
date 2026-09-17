@@ -69,6 +69,25 @@ final class InventoryDecimal
         return ($negative ? '-' : '').self::decimal($cents, 2);
     }
 
+    /**
+     * Inverse of totalCost(): derives a per-unit cost (4dp) from a net
+     * currency amount (2dp cents) and a quantity (3dp units) — used to turn
+     * a purchase line's entered gross/net total into a unit cost instead of
+     * requiring the unit cost as direct input.
+     */
+    public static function unitCostFromTotal(int $netCents, int $quantityUnits, string $field = 'quantity'): int
+    {
+        if ($quantityUnits <= 0) {
+            throw ValidationException::withMessages([$field => 'يجب أن تكون الكمية أكبر من صفر لاشتقاق تكلفة الوحدة.']);
+        }
+        $negative = $netCents < 0;
+        $numerator = abs($netCents) * 100000;
+        $denominator = $quantityUnits;
+        $result = intdiv(2 * $numerator + $denominator, 2 * $denominator);
+
+        return $negative ? -$result : $result;
+    }
+
     private static function scaled(mixed $value, int $scale, string $field): int
     {
         $decimal = trim((string) $value);

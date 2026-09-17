@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +14,7 @@ import '../../inventory/repositories/inventory_repository.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/purchasing_cubit.dart';
 import '../models/purchasing_models.dart';
+import '../widgets/inventory_item_search_field.dart';
 import '../widgets/purchase_type_label.dart';
 
 /// Create/edit a purchase invoice (`/finance/purchases/new`,
@@ -38,26 +37,79 @@ class _LineDraft {
   _LineDraft(this.lineType);
   final String lineType;
   InventoryItem? item;
+  int? pendingInventoryItemId;
   final TextEditingController description = TextEditingController();
   final TextEditingController purchaseUnit = TextEditingController();
   final TextEditingController quantity = TextEditingController(text: '1');
-  final TextEditingController unitPrice = TextEditingController(text: '0');
-  final TextEditingController discount = TextEditingController(text: '0');
+  final TextEditingController lineGrossAmount = TextEditingController(text: '0');
+  String discountType = 'fixed'; // 'fixed' | 'percentage'
+  final TextEditingController discountValue = TextEditingController(text: '0');
   final TextEditingController tax = TextEditingController(text: '0');
   int? warehouseId;
 
   double _num0(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
-  double get lineTotal {
-    final double gross = _num0(quantity) * _num0(unitPrice);
-    return (gross - _num0(discount) + _num0(tax)).clamp(0, double.infinity);
+  double get grossAmount => _num0(lineGrossAmount);
+  double get taxValue => _num0(tax);
+
+  double get discountAmount {
+    final double gross = _num0(lineGrossAmount);
+    final double value = _num0(discountValue);
+    if (discountType == 'percentage') {
+      return gross * (value.clamp(0, 100) / 100);
+    }
+    return value;
   }
+
+  double get netAmount =>
+      (_num0(lineGrossAmount) - discountAmount).clamp(0, double.infinity);
+
+  /// Read-only, server-mirrored preview: what the backend will derive and store as unit_price.
+  double get derivedUnitCost {
+    final double qty = _num0(quantity);
+    return qty > 0 ? netAmount / qty : 0;
+  }
+
+  double get lineTotal => netAmount + _num0(tax);
 
   void dispose() {
     description.dispose();
     purchaseUnit.dispose();
     quantity.dispose();
-    unitPrice.dispose();
-    discount.dispose();
+    lineGrossAmount.dispose();
+    discountValue.dispose();
+    tax.dispose();
+  }
+}
+
+const List<String> kQuickChargeTypes = <String>[
+  'نقل',
+  'توصيل',
+  'شحن',
+  'تحميل وتنزيل',
+  'ضيافة',
+  'إكرامية',
+  'تغليف',
+  'رسوم',
+  'خدمة',
+  'أخرى',
+];
+
+class _ChargeDraft {
+  _ChargeDraft();
+  final TextEditingController description = TextEditingController();
+  String treatment = 'expense'; // 'capitalize' | 'expense'
+  int? expenseCategoryId;
+  final TextEditingController amount = TextEditingController(text: '0');
+  final TextEditingController tax = TextEditingController(text: '0');
+
+  double _num0(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
+  double get amountValue => _num0(amount);
+  double get taxValue => _num0(tax);
+  double get total => amountValue + taxValue;
+
+  void dispose() {
+    description.dispose();
+    amount.dispose();
     tax.dispose();
   }
 }
@@ -73,6 +125,9 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   int? _expenseCategoryId;
   int? _assetAccountId;
   final List<_LineDraft> _lines = <_LineDraft>[];
+  final List<_ChargeDraft> _charges = <_ChargeDraft>[];
+  String _invoiceDiscountType = 'fixed'; // 'fixed' | 'percentage'
+  final TextEditingController _invoiceDiscountValue = TextEditingController(text: '0');
 
   List<Supplier> _suppliers = const <Supplier>[];
   List<Branch> _branches = const <Branch>[];
@@ -98,11 +153,37 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   void dispose() {
     _invoiceNumber.dispose();
     _notes.dispose();
+    _invoiceDiscountValue.dispose();
     for (final _LineDraft line in _lines) {
       line.dispose();
     }
+    for (final _ChargeDraft charge in _charges) {
+      charge.dispose();
+    }
     super.dispose();
   }
+
+  void _addCharge() => setState(() => _charges.add(_ChargeDraft()));
+  void _removeCharge(int index) => setState(() {
+    _charges[index].dispose();
+    _charges.removeAt(index);
+  });
+
+  double get _linesNetTotal => _lines.fold<double>(0, (double s, _LineDraft l) => s + l.netAmount);
+  double get _linesTaxTotal => _lines.fold<double>(0, (double s, _LineDraft l) => s + l.taxValue);
+  double get _invoiceDiscountPreview {
+    final double value = double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
+    if (_invoiceDiscountType == 'percentage') {
+      return _linesNetTotal * (value.clamp(0, 100) / 100);
+    }
+    return value.clamp(0, _linesNetTotal);
+  }
+
+  double get _netAfterInvoiceDiscount => (_linesNetTotal - _invoiceDiscountPreview).clamp(0, double.infinity);
+  double get _chargesAmountTotal => _charges.fold<double>(0, (double s, _ChargeDraft c) => s + c.amountValue);
+  double get _chargesTaxTotal => _charges.fold<double>(0, (double s, _ChargeDraft c) => s + c.taxValue);
+  double get _grandTotalPreview =>
+      _netAfterInvoiceDiscount + _linesTaxTotal + _chargesAmountTotal + _chargesTaxTotal;
 
   PurchasingCubit get _cubit => context.read<PurchasingCubit>();
   FinanceSetupCubit get _financeCubit => context.read<FinanceSetupCubit>();
@@ -128,10 +209,6 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       ]);
       if (!mounted) return;
       final dynamic suppliersPage = results[0];
-      final PurchaseInvoice? editing = _isEdit ? results[4] as PurchaseInvoice : null;
-      final Map<int, InventoryItem> editingItemsById = editing == null
-          ? const <int, InventoryItem>{}
-          : await _resolveLineItems(editing);
       if (!mounted) return;
       setState(() {
         _suppliers = (suppliersPage.items as List<dynamic>)
@@ -142,12 +219,15 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         _accounts = (results[3] as List<FinancialAccount>)
             .where((FinancialAccount a) => a.accountGroup == 'assets' && a.code != '1100')
             .toList(growable: false);
-        if (editing != null) {
-          _editing = editing;
-          _applyEditingData(editing, editingItemsById);
+        if (_isEdit) {
+          _editing = results[4] as PurchaseInvoice;
+          _applyEditingData(_editing!);
         }
         _loadingReferenceData = false;
       });
+      if (_isEdit) {
+        await _resolveEditingLineItems();
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -165,27 +245,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     }
   }
 
-  /// Existing invoice lines reference an [InventoryItem] only by id — the item
-  /// itself may be well beyond whatever page a picker search happens to be
-  /// on, so it's fetched directly by id instead of matched against a
-  /// preloaded list.
-  Future<Map<int, InventoryItem>> _resolveLineItems(PurchaseInvoice p) async {
-    final Set<int> ids = p.lines
-        .where((PurchaseInvoiceLine l) => l.lineType == 'inventory' && l.inventoryItemId != null)
-        .map((PurchaseInvoiceLine l) => l.inventoryItemId!)
-        .toSet();
-    if (ids.isEmpty) return const <int, InventoryItem>{};
-
-    final InventoryRepository repository = serviceLocator<InventoryRepository>();
-    final List<InventoryItem> items = await Future.wait(
-      ids.map((int id) => repository.item(id)),
-    );
-    return <int, InventoryItem>{
-      for (final InventoryItem item in items) item.id: item,
-    };
-  }
-
-  void _applyEditingData(PurchaseInvoice p, Map<int, InventoryItem> itemsById) {
+  void _applyEditingData(PurchaseInvoice p) {
     _invoiceNumber.text = p.invoiceNumber;
     _notes.text = p.notes ?? '';
     _invoiceDate = DateTime.tryParse(p.invoiceDate) ?? _invoiceDate;
@@ -205,16 +265,53 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 draft.description.text = l.description;
                 draft.purchaseUnit.text = l.purchaseUnit ?? '';
                 draft.quantity.text = l.quantity;
-                draft.unitPrice.text = l.unitPrice;
-                draft.discount.text = l.discountAmount;
+                draft.lineGrossAmount.text =
+                    l.lineGrossAmount ?? l.lineTotal;
+                draft.discountType = l.discountType;
+                draft.discountValue.text = l.discountType == 'percentage'
+                    ? (l.discountValue ?? '0')
+                    : l.discountAmount;
                 draft.tax.text = l.taxAmount;
                 draft.warehouseId = l.warehouseId;
-                if (l.inventoryItemId != null) {
-                  draft.item = itemsById[l.inventoryItemId];
-                }
+                draft.pendingInventoryItemId = l.inventoryItemId;
                 return draft;
               }),
       );
+    _invoiceDiscountType = p.discountType;
+    _invoiceDiscountValue.text = p.discountType == 'percentage'
+        ? (p.discountValue ?? '0')
+        : p.discountAmount;
+    _charges
+      ..clear()
+      ..addAll(
+        p.charges.map((PurchaseInvoiceCharge c) {
+          final _ChargeDraft draft = _ChargeDraft();
+          draft.description.text = c.description;
+          draft.treatment = c.treatment;
+          draft.expenseCategoryId = c.expenseCategoryId;
+          draft.amount.text = c.amount;
+          draft.tax.text = c.taxAmount;
+          return draft;
+        }),
+      );
+  }
+
+  /// Edit mode only: the item search field shows nothing until the user
+  /// types, so an existing line's already-selected item (which may sit
+  /// anywhere in the catalog, not just the first page) is fetched directly
+  /// by id instead of relying on a preloaded, capped item list.
+  Future<void> _resolveEditingLineItems() async {
+    final InventoryRepository repository = serviceLocator<InventoryRepository>();
+    await Future.wait(_lines.map((_LineDraft draft) async {
+      final int? itemId = draft.pendingInventoryItemId;
+      if (itemId == null) return;
+      try {
+        final InventoryItem item = await repository.item(itemId);
+        if (mounted) setState(() => draft.item = item);
+      } catch (_) {
+        // Item may have been deleted since the invoice was created; leave unresolved.
+      }
+    }));
   }
 
   void _addLine() => setState(() => _lines.add(_LineDraft(_purchaseType)));
@@ -255,8 +352,6 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     });
   }
 
-  double get _totalPreview => _lines.fold<double>(0, (double sum, _LineDraft l) => sum + l.lineTotal);
-
   String? _validate() {
     if (_supplierId == null) return 'اختر المورد.';
     if (_purchaseType == 'expense' && _expenseCategoryId == null) return 'اختر فئة المصروف.';
@@ -268,7 +363,25 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       if (line.lineType == 'inventory' && line.item == null) return 'اختر صنف المخزون لكل بند.';
       if (line.lineType != 'inventory' && line.description.text.trim().isEmpty) return 'أدخل بيان كل بند.';
       if ((double.tryParse(line.quantity.text.trim()) ?? 0) <= 0) return 'الكمية يجب أن تكون أكبر من صفر.';
-      if ((double.tryParse(line.unitPrice.text.trim()) ?? 0) <= 0) return 'سعر الوحدة يجب أن يكون أكبر من صفر.';
+      if ((double.tryParse(line.lineGrossAmount.text.trim()) ?? 0) <= 0) return 'إجمالي الصنف يجب أن يكون أكبر من صفر.';
+      if (line.discountType == 'percentage') {
+        final double percent = double.tryParse(line.discountValue.text.trim()) ?? 0;
+        if (percent < 0 || percent > 100) return 'نسبة الخصم يجب أن تكون بين 0 و100.';
+      }
+    }
+    if (_invoiceDiscountType == 'percentage') {
+      final double percent = double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
+      if (percent < 0 || percent > 100) return 'نسبة خصم الفاتورة يجب أن تكون بين 0 و100.';
+    }
+    for (final _ChargeDraft charge in _charges) {
+      if (charge.description.text.trim().isEmpty) return 'أدخل وصف كل تكلفة إضافية.';
+      if (charge.amountValue <= 0) return 'مبلغ التكلفة الإضافية يجب أن يكون أكبر من صفر.';
+      if (charge.treatment == 'capitalize' && _purchaseType != 'inventory') {
+        return 'إضافة التكلفة للمخزون متاحة فقط لفواتير المخزون.';
+      }
+      if (charge.treatment == 'expense' && charge.expenseCategoryId == null) {
+        return 'اختر فئة المصروف لكل تكلفة إضافية مستقلة.';
+      }
     }
     return null;
   }
@@ -298,6 +411,19 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         if (_purchaseType == 'expense') 'expenseCategoryId': _expenseCategoryId,
         if (_purchaseType == 'asset' || _purchaseType == 'other') 'debitAccountId': _assetAccountId,
         'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        'discountType': _invoiceDiscountType,
+        'discountValue': _invoiceDiscountValue.text.trim().isEmpty ? '0' : _invoiceDiscountValue.text.trim(),
+        'charges': _charges
+            .map(
+              (_ChargeDraft c) => <String, dynamic>{
+                'description': c.description.text.trim(),
+                'treatment': c.treatment,
+                if (c.treatment == 'expense') 'expenseCategoryId': c.expenseCategoryId,
+                'amount': c.amount.text.trim(),
+                'taxAmount': c.tax.text.trim().isEmpty ? '0' : c.tax.text.trim(),
+              },
+            )
+            .toList(growable: false),
         'lines': _lines
             .map(
               (_LineDraft l) => <String, dynamic>{
@@ -309,8 +435,9 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 if (l.lineType == 'inventory' && l.purchaseUnit.text.trim().isNotEmpty)
                   'purchaseUnit': l.purchaseUnit.text.trim(),
                 'quantity': l.quantity.text.trim(),
-                'unitPrice': l.unitPrice.text.trim(),
-                'discountAmount': l.discount.text.trim().isEmpty ? '0' : l.discount.text.trim(),
+                'lineGrossAmount': l.lineGrossAmount.text.trim(),
+                'discountType': l.discountType,
+                'discountValue': l.discountValue.text.trim().isEmpty ? '0' : l.discountValue.text.trim(),
                 'taxAmount': l.tax.text.trim().isEmpty ? '0' : l.tax.text.trim(),
               },
             )
@@ -389,6 +516,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               const SizedBox(height: FinanceSpace.md),
             ],
             _HeaderSection(
+              internalReference: _editing?.internalReference,
               suppliers: _suppliers,
               branches: _branches,
               supplierId: _supplierId,
@@ -448,13 +576,45 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: FinanceSpace.md),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Text(
-                'الإجمالي التقديري: ${_totalPreview.toStringAsFixed(2)}',
-                style: FinanceText.page,
+            const SizedBox(height: FinanceSpace.lg),
+            Row(
+              children: <Widget>[
+                Expanded(child: Text('تكاليف ورسوم إضافية', style: FinanceText.page)),
+                TextButton.icon(
+                  onPressed: _addCharge,
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('إضافة تكلفة'),
+                ),
+              ],
+            ),
+            const SizedBox(height: FinanceSpace.sm),
+            ...List<Widget>.generate(
+              _charges.length,
+              (int index) => Padding(
+                padding: const EdgeInsets.only(bottom: FinanceSpace.sm),
+                child: _ChargeEditorRow(
+                  draft: _charges[index],
+                  expenseCategories: _expenseCategories,
+                  allowCapitalize: _purchaseType == 'inventory',
+                  onRemove: () => _removeCharge(index),
+                  onChanged: () => setState(() {}),
+                ),
               ),
+            ),
+            const SizedBox(height: FinanceSpace.lg),
+            _InvoiceSummaryCard(
+              linesNetTotal: _linesNetTotal,
+              discountType: _invoiceDiscountType,
+              discountValueController: _invoiceDiscountValue,
+              onDiscountTypeChanged: (String type) => setState(() => _invoiceDiscountType = type),
+              onDiscountChanged: () => setState(() {}),
+              invoiceDiscountAmount: _invoiceDiscountPreview,
+              netAfterDiscount: _netAfterInvoiceDiscount,
+              charges: _charges,
+              chargesAmountTotal: _chargesAmountTotal,
+              chargesTaxTotal: _chargesTaxTotal,
+              linesTaxTotal: _linesTaxTotal,
+              grandTotal: _grandTotalPreview,
             ),
             const SizedBox(height: FinanceSpace.xl),
           ],
@@ -496,6 +656,7 @@ String _isoDate(DateTime d) =>
 
 class _HeaderSection extends StatelessWidget {
   const _HeaderSection({
+    required this.internalReference,
     required this.suppliers,
     required this.branches,
     required this.supplierId,
@@ -509,6 +670,8 @@ class _HeaderSection extends StatelessWidget {
     required this.onPickInvoiceDate,
     required this.onPickDueDate,
   });
+  /// System-generated (e.g. PI-2026-000001) — read-only, assigned by the backend on save.
+  final String? internalReference;
   final List<Supplier> suppliers;
   final List<Branch> branches;
   final int? supplierId;
@@ -534,6 +697,17 @@ class _HeaderSection extends StatelessWidget {
       spacing: FinanceSpace.lg,
       runSpacing: FinanceSpace.md,
       children: <Widget>[
+        SizedBox(
+          width: 200,
+          child: InputDecorator(
+            decoration: const InputDecoration(labelText: 'رقم الفاتورة'),
+            child: Text(
+              internalReference ?? 'سيتم إنشاؤه تلقائيًا عند الحفظ',
+              style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
         SizedBox(
           width: 260,
           child: DropdownButtonFormField<int>(
@@ -603,19 +777,6 @@ class _LineEditorRow extends StatelessWidget {
   final VoidCallback? onRemove;
   final VoidCallback onChanged;
 
-  Future<void> _pickItem(BuildContext context) async {
-    final InventoryItem? selected = await showDialog<InventoryItem>(
-      context: context,
-      builder: (BuildContext context) => const _InventoryItemSearchDialog(),
-    );
-    if (selected == null) return;
-    draft.item = selected;
-    if (draft.purchaseUnit.text.trim().isEmpty) {
-      draft.purchaseUnit.text = selected.purchaseUnit.isNotEmpty ? selected.purchaseUnit : selected.unit;
-    }
-    onChanged();
-  }
-
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(FinanceSpace.md),
@@ -631,26 +792,18 @@ class _LineEditorRow extends StatelessWidget {
       children: <Widget>[
         if (draft.lineType == 'inventory')
           SizedBox(
-            width: 220,
-            child: InputDecorator(
-              decoration: const InputDecoration(labelText: 'الصنف', isDense: true),
-              child: InkWell(
-                onTap: () => _pickItem(context),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        draft.item?.name ?? 'اختر صنفاً...',
-                        overflow: TextOverflow.ellipsis,
-                        style: draft.item == null
-                            ? const TextStyle(color: FinanceColors.muted)
-                            : null,
-                      ),
-                    ),
-                    const Icon(Icons.search, size: 16),
-                  ],
-                ),
-              ),
+            width: 240,
+            child: InventoryItemSearchField(
+              repository: serviceLocator<InventoryRepository>(),
+              selected: draft.item,
+              width: 240,
+              onSelected: (InventoryItem? i) {
+                draft.item = i;
+                if (i != null && draft.purchaseUnit.text.trim().isEmpty) {
+                  draft.purchaseUnit.text = i.purchaseUnit.isNotEmpty ? i.purchaseUnit : i.unit;
+                }
+                onChanged();
+              },
             ),
           )
         else
@@ -664,23 +817,40 @@ class _LineEditorRow extends StatelessWidget {
           ),
         if (draft.lineType == 'inventory')
           SizedBox(
-            width: 100,
-            child: TextField(
+            width: 130,
+            child: _PurchaseUnitField(
+              item: draft.item,
               controller: draft.purchaseUnit,
-              decoration: const InputDecoration(labelText: 'الوحدة', isDense: true),
-              onChanged: (_) => onChanged(),
+              onChanged: onChanged,
             ),
           ),
         SizedBox(width: 90, child: _numberField('الكمية', draft.quantity, onChanged)),
-        SizedBox(width: 110, child: _numberField('سعر الوحدة', draft.unitPrice, onChanged)),
-        SizedBox(width: 90, child: _numberField('الخصم', draft.discount, onChanged)),
+        SizedBox(width: 120, child: _numberField('إجمالي الصنف', draft.lineGrossAmount, onChanged)),
+        SizedBox(
+          width: 150,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Expanded(child: _numberField('الخصم', draft.discountValue, onChanged)),
+              const SizedBox(width: 4),
+              _DiscountTypeToggle(
+                discountType: draft.discountType,
+                onChanged: (String type) {
+                  draft.discountType = type;
+                  onChanged();
+                },
+              ),
+            ],
+          ),
+        ),
         SizedBox(width: 90, child: _numberField('الضريبة', draft.tax, onChanged)),
         SizedBox(
+          width: 110,
+          child: _ReadOnlyAmount(label: 'تكلفة الوحدة', value: draft.derivedUnitCost, decimals: 4),
+        ),
+        SizedBox(
           width: 120,
-          child: Text(
-            'الإجمالي: ${draft.lineTotal.toStringAsFixed(2)}',
-            style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
-          ),
+          child: _ReadOnlyAmount(label: 'الإجمالي الصافي', value: draft.lineTotal, emphasize: true),
         ),
         if (onRemove != null)
           IconButton(
@@ -701,165 +871,374 @@ class _LineEditorRow extends StatelessWidget {
       );
 }
 
-/// Server-side searchable, paginated inventory item picker for a Purchase
-/// Invoice line. Replaces a preloaded single-page dropdown (which silently
-/// hid any item beyond the first 100) with a debounced search against the
-/// backend's real pagination, matching the pattern already used by
-/// `InventoryCubit` for the main Inventory Items screen.
-class _InventoryItemSearchDialog extends StatefulWidget {
-  const _InventoryItemSearchDialog();
+/// Purchase unit as a select instead of free text: the base unit plus any
+/// unit conversions configured for the selected item (e.g. "carton" when a
+/// carton→bottle conversion exists) — never an arbitrary typed string.
+class _PurchaseUnitField extends StatefulWidget {
+  const _PurchaseUnitField({
+    required this.item,
+    required this.controller,
+    required this.onChanged,
+  });
+  final InventoryItem? item;
+  final TextEditingController controller;
+  final VoidCallback onChanged;
 
   @override
-  State<_InventoryItemSearchDialog> createState() => _InventoryItemSearchDialogState();
+  State<_PurchaseUnitField> createState() => _PurchaseUnitFieldState();
 }
 
-class _InventoryItemSearchDialogState extends State<_InventoryItemSearchDialog> {
-  final TextEditingController _search = TextEditingController();
-  final ScrollController _scroll = ScrollController();
-  final InventoryRepository _repository = serviceLocator<InventoryRepository>();
-  Timer? _debounce;
-  List<InventoryItem> _results = const <InventoryItem>[];
-  int _page = 1;
-  int _lastPage = 1;
-  bool _loading = true;
-  bool _loadingMore = false;
-  String? _error;
+class _PurchaseUnitFieldState extends State<_PurchaseUnitField> {
+  List<String> _options = const <String>[];
+  int? _loadedForItemId;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
-    _load();
+    _maybeLoad();
   }
 
   @override
-  void dispose() {
-    _debounce?.cancel();
-    _search.dispose();
-    _scroll.dispose();
-    super.dispose();
+  void didUpdateWidget(covariant _PurchaseUnitField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _maybeLoad();
   }
 
-  void _onScroll() {
-    if (_loading || _loadingMore || _page >= _lastPage) return;
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 80) {
-      _load(page: _page + 1, append: true);
-    }
-  }
-
-  void _onQueryChanged(String _) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () => _load());
-  }
-
-  Future<void> _load({int page = 1, bool append = false}) async {
-    setState(() {
-      if (append) {
-        _loadingMore = true;
-      } else {
-        _loading = true;
+  void _maybeLoad() {
+    final InventoryItem? item = widget.item;
+    if (item == null) {
+      if (_loadedForItemId != null) {
+        setState(() {
+          _options = const <String>[];
+          _loadedForItemId = null;
+        });
       }
-      _error = null;
-    });
-    try {
-      final InventoryItemsPage result = await _repository.itemsPage(
-        search: _search.text.trim().isEmpty ? null : _search.text.trim(),
-        status: 'active',
-        page: page,
-        perPage: 25,
-      );
-      if (!mounted) return;
-      setState(() {
-        _page = result.currentPage;
-        _lastPage = result.lastPage;
-        _results = append ? <InventoryItem>[..._results, ...result.items] : result.items;
-        _loading = false;
-        _loadingMore = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _error = '$error';
-        _loading = false;
-        _loadingMore = false;
-      });
+      return;
     }
+    if (_loadedForItemId == item.id) return;
+    _loadedForItemId = item.id;
+    if (widget.controller.text.trim().isEmpty) {
+      widget.controller.text = item.purchaseUnit.isNotEmpty
+          ? item.purchaseUnit
+          : item.unit;
+    }
+    setState(() => _options = <String>[item.unit]);
+    serviceLocator<InventoryRepository>()
+        .unitConversions(item.id)
+        .then((List<InventoryItemUnitConversion> conversions) {
+          if (!mounted || _loadedForItemId != item.id) return;
+          final Set<String> units = <String>{item.unit};
+          for (final InventoryItemUnitConversion c in conversions) {
+            if (c.active) units.add(c.sourceUnit);
+          }
+          setState(() => _options = units.toList(growable: false));
+        })
+        .catchError((_) {});
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('اختر صنفاً'),
-    content: SizedBox(
-      width: 420,
-      height: 480,
-      child: Column(
-        children: <Widget>[
-          TextField(
-            controller: _search,
-            autofocus: true,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'ابحث بالاسم أو الرمز...',
-              isDense: true,
-            ),
-            onChanged: _onQueryChanged,
-          ),
-          const SizedBox(height: FinanceSpace.sm),
-          Expanded(child: _body()),
-        ],
-      ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('إلغاء'),
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final String current = widget.controller.text.trim();
+    final List<String> options = current.isEmpty || _options.contains(current)
+        ? _options
+        : <String>[current, ..._options];
 
-  Widget _body() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(_error!, style: FinanceText.body.copyWith(color: FinanceColors.danger)),
-            const SizedBox(height: FinanceSpace.sm),
-            TextButton(onPressed: () => _load(), child: const Text('إعادة المحاولة')),
-          ],
-        ),
-      );
-    }
-    if (_results.isEmpty) {
-      return Center(
-        child: Text('لا توجد أصناف مطابقة.', style: FinanceText.body.copyWith(color: FinanceColors.muted)),
-      );
-    }
-    return ListView.separated(
-      controller: _scroll,
-      itemCount: _results.length + (_page < _lastPage ? 1 : 0),
-      separatorBuilder: (BuildContext context, int index) => const Divider(height: 1),
-      itemBuilder: (BuildContext context, int index) {
-        if (index >= _results.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: FinanceSpace.sm),
-            child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-          );
-        }
-        final InventoryItem item = _results[index];
-        return ListTile(
-          dense: true,
-          title: Text(item.name),
-          subtitle: Text(
-            item.sku.isNotEmpty ? '${item.sku} · ${item.unit}' : item.unit,
-            style: FinanceText.body.copyWith(color: FinanceColors.muted, fontSize: 12),
-          ),
-          onTap: () => Navigator.of(context).pop(item),
-        );
-      },
+    return DropdownButtonFormField<String>(
+      key: ValueKey<String>('purchase-unit-${widget.item?.id}-$current'),
+      initialValue: options.contains(current)
+          ? current
+          : (options.isEmpty ? null : options.first),
+      isExpanded: true,
+      decoration: const InputDecoration(labelText: 'الوحدة', isDense: true),
+      items: options
+          .map(
+            (String u) => DropdownMenuItem<String>(value: u, child: Text(u)),
+          )
+          .toList(growable: false),
+      onChanged: options.isEmpty
+          ? null
+          : (String? value) {
+              if (value == null) return;
+              widget.controller.text = value;
+              widget.onChanged();
+            },
     );
   }
+}
+
+class _DiscountTypeToggle extends StatelessWidget {
+  const _DiscountTypeToggle({required this.discountType, required this.onChanged});
+  final String discountType;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) => ToggleButtons(
+    isSelected: <bool>[discountType == 'fixed', discountType == 'percentage'],
+    onPressed: (int index) => onChanged(index == 0 ? 'fixed' : 'percentage'),
+    borderRadius: BorderRadius.circular(FinanceRadius.control),
+    constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
+    children: const <Widget>[
+      Tooltip(message: 'مبلغ ثابت', child: Icon(Icons.attach_money, size: 16)),
+      Tooltip(message: 'نسبة مئوية', child: Icon(Icons.percent, size: 16)),
+    ],
+  );
+}
+
+class _ReadOnlyAmount extends StatelessWidget {
+  const _ReadOnlyAmount({
+    required this.label,
+    required this.value,
+    this.decimals = 2,
+    this.emphasize = false,
+  });
+  final String label;
+  final double value;
+  final int decimals;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) => InputDecorator(
+    decoration: InputDecoration(labelText: label, isDense: true),
+    child: Text(
+      value.toStringAsFixed(decimals),
+      style: emphasize
+          ? FinanceText.body.copyWith(fontWeight: FontWeight.w700)
+          : FinanceText.body,
+    ),
+  );
+}
+
+class _ChargeEditorRow extends StatelessWidget {
+  const _ChargeEditorRow({
+    required this.draft,
+    required this.expenseCategories,
+    required this.allowCapitalize,
+    required this.onRemove,
+    required this.onChanged,
+  });
+  final _ChargeDraft draft;
+  final List<ExpenseCategory> expenseCategories;
+  final bool allowCapitalize;
+  final VoidCallback onRemove;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(FinanceSpace.md),
+    decoration: BoxDecoration(
+      color: FinanceColors.workspace,
+      border: Border.all(color: FinanceColors.border),
+      borderRadius: BorderRadius.circular(FinanceRadius.control),
+    ),
+    child: Wrap(
+      spacing: FinanceSpace.sm,
+      runSpacing: FinanceSpace.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        SizedBox(
+          width: 220,
+          child: TextField(
+            controller: draft.description,
+            decoration: InputDecoration(
+              labelText: 'نوع / الوصف',
+              isDense: true,
+              suffixIcon: PopupMenuButton<String>(
+                tooltip: 'أنواع سريعة',
+                icon: const Icon(Icons.arrow_drop_down, size: 20),
+                onSelected: (String value) {
+                  draft.description.text = value;
+                  onChanged();
+                },
+                itemBuilder: (BuildContext context) => kQuickChargeTypes
+                    .map(
+                      (String type) => PopupMenuItem<String>(
+                        value: type,
+                        child: Text(type),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ),
+            onChanged: (_) => onChanged(),
+          ),
+        ),
+        SizedBox(
+          width: 150,
+          child: ToggleButtons(
+            isSelected: <bool>[
+              draft.treatment == 'capitalize',
+              draft.treatment == 'expense',
+            ],
+            onPressed: (int index) {
+              if (index == 0 && !allowCapitalize) return;
+              draft.treatment = index == 0 ? 'capitalize' : 'expense';
+              onChanged();
+            },
+            borderRadius: BorderRadius.circular(FinanceRadius.control),
+            constraints: const BoxConstraints(minWidth: 70, minHeight: 40),
+            children: <Widget>[
+              Opacity(
+                opacity: allowCapitalize ? 1 : 0.4,
+                child: const Tooltip(
+                  message: 'إضافة إلى تكلفة المخزون',
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('للمخزون', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ),
+              const Tooltip(
+                message: 'مصروف مستقل',
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Text('مصروف', style: TextStyle(fontSize: 11)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (draft.treatment == 'expense')
+          SizedBox(
+            width: 170,
+            child: DropdownButtonFormField<int>(
+              initialValue: draft.expenseCategoryId,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'فئة المصروف', isDense: true),
+              items: expenseCategories
+                  .map(
+                    (ExpenseCategory c) => DropdownMenuItem<int>(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis)),
+                  )
+                  .toList(growable: false),
+              onChanged: (int? v) {
+                draft.expenseCategoryId = v;
+                onChanged();
+              },
+            ),
+          ),
+        SizedBox(
+          width: 110,
+          child: TextField(
+            controller: draft.amount,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'المبلغ', isDense: true),
+            onChanged: (_) => onChanged(),
+          ),
+        ),
+        SizedBox(
+          width: 90,
+          child: TextField(
+            controller: draft.tax,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'الضريبة', isDense: true),
+            onChanged: (_) => onChanged(),
+          ),
+        ),
+        IconButton(
+          tooltip: 'حذف التكلفة',
+          icon: const Icon(Icons.delete_outline, size: 18, color: FinanceColors.danger),
+          onPressed: onRemove,
+        ),
+      ],
+    ),
+  );
+}
+
+class _InvoiceSummaryCard extends StatelessWidget {
+  const _InvoiceSummaryCard({
+    required this.linesNetTotal,
+    required this.discountType,
+    required this.discountValueController,
+    required this.onDiscountTypeChanged,
+    required this.onDiscountChanged,
+    required this.invoiceDiscountAmount,
+    required this.netAfterDiscount,
+    required this.charges,
+    required this.chargesAmountTotal,
+    required this.chargesTaxTotal,
+    required this.linesTaxTotal,
+    required this.grandTotal,
+  });
+  final double linesNetTotal;
+  final String discountType;
+  final TextEditingController discountValueController;
+  final ValueChanged<String> onDiscountTypeChanged;
+  final VoidCallback onDiscountChanged;
+  final double invoiceDiscountAmount;
+  final double netAfterDiscount;
+  final List<_ChargeDraft> charges;
+  final double chargesAmountTotal;
+  final double chargesTaxTotal;
+  final double linesTaxTotal;
+  final double grandTotal;
+
+  String _fmt(double v) => v.toStringAsFixed(2);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(FinanceSpace.lg),
+    decoration: BoxDecoration(
+      color: FinanceColors.card,
+      border: Border.all(color: FinanceColors.border),
+      borderRadius: BorderRadius.circular(FinanceRadius.card),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            SizedBox(
+              width: 130,
+              child: TextField(
+                controller: discountValueController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'خصم الفاتورة', isDense: true),
+                onChanged: (_) => onDiscountChanged(),
+              ),
+            ),
+            const SizedBox(width: FinanceSpace.sm),
+            _DiscountTypeToggle(discountType: discountType, onChanged: onDiscountTypeChanged),
+          ],
+        ),
+        const SizedBox(height: FinanceSpace.md),
+        const Divider(),
+        _summaryRow('إجمالي البنود بعد خصومات البند', _fmt(linesNetTotal)),
+        _summaryRow('خصم الفاتورة', '-${_fmt(invoiceDiscountAmount)}'),
+        _summaryRow('صافي البنود', _fmt(netAfterDiscount), emphasize: true),
+        if (charges.isNotEmpty) ...<Widget>[
+          const SizedBox(height: FinanceSpace.sm),
+          Text('تكاليف إضافية:', style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+          ...charges.map(
+            (_ChargeDraft c) => _summaryRow(
+              c.description.text.trim().isEmpty ? '—' : c.description.text.trim(),
+              _fmt(c.amountValue),
+            ),
+          ),
+          _summaryRow('إجمالي التكاليف الإضافية', _fmt(chargesAmountTotal)),
+        ],
+        _summaryRow('الضريبة', _fmt(linesTaxTotal + chargesTaxTotal)),
+        const Divider(),
+        _summaryRow('الإجمالي النهائي', _fmt(grandTotal), emphasize: true, big: true),
+      ],
+    ),
+  );
+
+  Widget _summaryRow(String label, String value, {bool emphasize = false, bool big = false}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            label,
+            style: emphasize ? FinanceText.body.copyWith(fontWeight: FontWeight.w700) : FinanceText.body,
+          ),
+        ),
+        Text(
+          value,
+          style: big
+              ? FinanceText.page.copyWith(fontWeight: FontWeight.w800)
+              : (emphasize ? FinanceText.body.copyWith(fontWeight: FontWeight.w700) : FinanceText.body),
+        ),
+      ],
+    ),
+  );
 }

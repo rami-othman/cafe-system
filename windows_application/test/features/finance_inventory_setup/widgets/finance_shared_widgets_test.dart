@@ -7,9 +7,11 @@ import 'package:windows_application/features/finance_inventory_setup/widgets/fin
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_pagination.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_module_shell.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_shell.dart';
+import 'package:windows_application/features/auth/models/auth_session.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/l10n/app_localizations_ar.dart';
 import 'package:windows_application/l10n/app_localizations_en.dart';
+import 'package:windows_application/shared/access/cashier_access.dart';
 
 final AppLocalizationsAr _ar = AppLocalizationsAr();
 final AppLocalizationsEn _en = AppLocalizationsEn();
@@ -19,13 +21,12 @@ void main() {
   // RTL, English -> LTR) rather than a manual wrapper, matching every real
   // Finance route. Defaults to Arabic/RTL since that is what most of these
   // widget-level assertions below exercise.
-  Widget app(Widget child, {Locale locale = const Locale('ar')}) =>
-      MaterialApp(
-        locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: child),
-      );
+  Widget app(Widget child, {Locale locale = const Locale('ar')}) => MaterialApp(
+    locale: locale,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: child),
+  );
 
   testWidgets('renders the Finance shared component set', (
     WidgetTester tester,
@@ -145,24 +146,53 @@ void main() {
     await tester.binding.setSurfaceSize(null);
   });
 
-  testWidgets(
-    'Finance module shell renders the navigation bar exactly once',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        app(
-          const FinanceModuleShell(
-            selectedTab: 'overview',
-            child: FinanceShell(
-              title: 'نظرة عامة',
-              child: FinanceEmptyState(),
-            ),
-          ),
+  testWidgets('Finance module shell renders the navigation bar exactly once', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        const FinanceModuleShell(
+          selectedTab: 'overview',
+          child: FinanceShell(title: 'نظرة عامة', child: FinanceEmptyState()),
         ),
-      );
-      expect(tester.takeException(), isNull);
-      expect(find.byType(FinanceNavigationBar), findsOneWidget);
-    },
-  );
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.byType(FinanceNavigationBar), findsOneWidget);
+  });
+
+  testWidgets('Cashier sees only Finance sections granted to them', (
+    WidgetTester tester,
+  ) async {
+    final CashierAccess access = CashierAccess.of(
+      const AuthUser(
+        id: 1,
+        name: 'Cashier',
+        role: 'cashier',
+        financeCapabilities: <String>{'finance.vouchers.view'},
+      ),
+    );
+    await tester.pumpWidget(
+      app(FinanceNavigationBar(selected: 'vouchers', access: access)),
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-vouchers')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-overview')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-purchases')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-sales')),
+      findsNothing,
+    );
+  });
 
   testWidgets(
     'Finance module shell and navigation bar are English/LTR under English locale',
@@ -317,9 +347,18 @@ void main() {
 
   test('Finance statuses use canonical semantic tones in Arabic', () {
     expect(FinanceStatusBadge.resolve(_ar, 'paid').tone, FinanceTone.success);
-    expect(FinanceStatusBadge.resolve(_ar, 'pending').tone, FinanceTone.warning);
-    expect(FinanceStatusBadge.resolve(_ar, 'rejected').tone, FinanceTone.danger);
-    expect(FinanceStatusBadge.resolve(_ar, 'approved').label, _ar.financeStatusApproved);
+    expect(
+      FinanceStatusBadge.resolve(_ar, 'pending').tone,
+      FinanceTone.warning,
+    );
+    expect(
+      FinanceStatusBadge.resolve(_ar, 'rejected').tone,
+      FinanceTone.danger,
+    );
+    expect(
+      FinanceStatusBadge.resolve(_ar, 'approved').label,
+      _ar.financeStatusApproved,
+    );
     expect(
       FinanceStatusBadge.resolve(_ar, 'pending_approval').label,
       _ar.financeStatusPendingApproval,
@@ -328,12 +367,18 @@ void main() {
       FinanceStatusBadge.resolve(_ar, 'pending_approval').tone,
       FinanceTone.warning,
     );
-    expect(FinanceStatusBadge.resolve(_ar, 'reversed').label, _ar.financeStatusReversed);
+    expect(
+      FinanceStatusBadge.resolve(_ar, 'reversed').label,
+      _ar.financeStatusReversed,
+    );
     expect(
       FinanceStatusBadge.resolve(_ar, 'partially_paid').label,
       _ar.financeStatusPartiallyPaid,
     );
-    expect(FinanceStatusBadge.resolve(_ar, 'locked').label, _ar.financeStatusLocked);
+    expect(
+      FinanceStatusBadge.resolve(_ar, 'locked').label,
+      _ar.financeStatusLocked,
+    );
   });
 
   test('Finance statuses use canonical semantic tones in English', () {

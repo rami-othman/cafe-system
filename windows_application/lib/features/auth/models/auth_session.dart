@@ -7,6 +7,7 @@ class AuthUser {
     required this.role,
     this.email,
     this.username,
+    this.financeCapabilities = const <String>{},
   });
 
   final int id;
@@ -14,6 +15,7 @@ class AuthUser {
   final String role;
   final String? email;
   final String? username;
+  final Set<String> financeCapabilities;
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
     id: (json['id'] as num?)?.toInt() ?? 0,
@@ -21,6 +23,7 @@ class AuthUser {
     role: json['role'] as String? ?? '',
     email: json['email'] as String?,
     username: json['username'] as String?,
+    financeCapabilities: _stringSet(json['financeCapabilities']),
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -29,6 +32,7 @@ class AuthUser {
     'role': role,
     'email': email,
     'username': username,
+    'financeCapabilities': financeCapabilities.toList(growable: false),
   };
 }
 
@@ -146,3 +150,10 @@ Map<String, dynamic> _map(dynamic value) => value is Map<String, dynamic>
 
 bool _customerManagementAllowed(Map<String, dynamic> json) =>
     _map(_map(json['capabilities'])['customer'])['manage'] == true;
+
+Set<String> _stringSet(dynamic value) => value is List
+    ? value
+          .map((dynamic item) => item.toString().trim())
+          .where((String item) => item.isNotEmpty)
+          .toSet()
+    : const <String>{};

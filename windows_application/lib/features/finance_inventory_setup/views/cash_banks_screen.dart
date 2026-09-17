@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../pos/controllers/pos_cubit.dart';
 import '../../pos/models/branch.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
@@ -734,7 +736,9 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
     _type = current?.type ?? 'cash_drawer';
     _accountId = current?.financialAccountId ??
         (widget.ledgerAccounts.isEmpty ? null : widget.ledgerAccounts.first.id);
-    _branchId = current?.branchId;
+    // New accounts default to the signed-in actor's own branch — a cashier
+    // or manager scoped to one branch has no reason to pick it manually.
+    _branchId = current?.branchId ?? context.read<PosCubit>().state.branchId;
     _active = current?.isActive ?? true;
   }
 
@@ -925,6 +929,9 @@ class _FormDropdown<T> extends StatelessWidget {
     decoration: InputDecoration(labelText: label),
     items: items,
     onChanged: onChanged,
+    // Cap the open menu to roughly 5 rows; longer lists (e.g. ledger
+    // accounts) scroll inside the menu instead of overflowing the screen.
+    menuMaxHeight: 5 * 48,
   );
 }
 

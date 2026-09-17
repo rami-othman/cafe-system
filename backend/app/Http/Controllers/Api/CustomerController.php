@@ -9,6 +9,7 @@ use App\Http\Requests\Customer\QuickCreateCustomerRequest;
 use App\Http\Requests\Customer\SyncCustomerGroupsRequest;
 use App\Http\Resources\Customer\CustomerManagementResource;
 use App\Services\Customer\CustomerService;
+use App\Support\Search\SmartSearch;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,12 +26,24 @@ class CustomerController extends Controller
 
         $query = $this->eligibility->scope(DB::table('customers'), $tenantId);
 
+        $search = $request->query('search');
+        $searchFields = [
+            ['column' => 'name', 'weight' => 3],
+            ['column' => 'phone', 'weight' => 2, 'type' => 'phone'],
+        ];
+        // Unfiltered load is a quick-pick default list (kept small); an active
+        // search runs against the full authorized customer table before this
+        // cap, ranked by relevance, so results beyond the default 30 are
+        // still reachable by typing rather than only by scrolling.
+        $limit = 30;
         if ($request->filled('search')) {
-            $search = '%'.addcslashes((string) $request->query('search'), '%_\\').'%';
-            $query->where(fn ($q) => $q->where('name', 'like', $search)->orWhere('phone', 'like', $search));
+            SmartSearch::apply($query, $search, $searchFields);
+            SmartSearch::withRelevance($query, $search, $searchFields);
+            $query->orderByDesc('smart_rank');
+            $limit = 50;
         }
 
-        $customers = $query->orderBy('name')->limit(30)->get()->map(fn ($customer) => $this->operationalPayload($customer));
+        $customers = $query->orderBy('name')->limit($limit)->get()->map(fn ($customer) => $this->operationalPayload($customer));
 
         return response()->json(['data' => $customers]);
     }

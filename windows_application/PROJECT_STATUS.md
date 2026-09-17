@@ -334,3 +334,44 @@ future work and it is not part of Batch 12.
   (covered by the `0 -> -20 -> +20 -> 0` integration scenario).
 - Laravel sale/accounting and warehouse-repair suites pass, and Flutter has a
   request-contract regression test proving `warehouseId` is never submitted.
+
+## Shift module — full UI (frontend-only, mock-backed)
+
+- New self-contained `lib/features/shift` module: current-shift overview, no
+  open-shift / open-shift form, a five-step closing wizard (operations
+  review, cash count with a denomination counter, bar count, final review,
+  success), a filterable/paginated history screen, and a full closing report
+  with an A4/thermal print-preview mock.
+- Bar counting lives entirely inside the closing wizard (step 3), per
+  explicit direction, and is not routed through
+  `features/inventory/bar_checks`.
+- Backed by `ShiftMockRepository`, a local in-memory data source with a
+  debug-only scenario switcher (balanced close, cash shortage/surplus, stock
+  variance, negative theoretical stock, blocking open order, incomplete
+  count, no open shift, loading, error) — no backend endpoint exists yet.
+- Domain models (`shift_models.dart`), a pure `ShiftAssessment` (alerts,
+  readiness checklist, stage track) computed once and shared by the
+  overview, the wizard and the confirmation dialog, and centralized
+  `ShiftStrings`/`ShiftFormat` copy/formatting so no screen holds a literal.
+- Registered in `service_locator.dart` and wired into `app_router.dart`
+  under `/shift/current`, `/shift/history`, `/shift/closing`,
+  `/shift/report/:shiftNumber`, with a new `ShiftModuleShell` sub-nav and a
+  sidebar entry for both the owner and cashier navigation lists.
+- `flutter analyze` is clean (only two pre-existing, unrelated warnings in
+  `sales_screens.dart`). Two tests cover the module: a smoke test
+  (`shift_overview_smoke_test.dart`) and a full five-step wizard walk-through
+  (`shift_closing_flow_test.dart`, balanced scenario, operations → cash →
+  bar count → final review → confirm dialog → success → report route).
+  Running the wizard test surfaced and fixed a real responsive bug: the
+  stepper's full-label mode was switching on at the module's general tablet
+  breakpoint (700px), which overflows with five Arabic step labels — it now
+  switches at the desktop breakpoint (1100px). Deeper per-scenario coverage
+  is left for a follow-up pass.
+- Not done: backend integration, accounting/inventory posting, and real
+  print/export — all explicitly out of scope for this UI-approval pass.
+- Update: the module is now backed by a real `ShiftRepository` API client
+  (`shifts/current`, `shifts/current/snapshot`, `shifts/history`,
+  `shifts/{shiftNumber}/report`, `shifts/{shift}/close`); the demo scenario
+  switcher was dropped from production wiring, and the older, separate
+  `features/shift_close` module (and its `/shift-close` route) was retired in
+  its favor — this is now the one Shift implementation.

@@ -3,6 +3,7 @@
 import 'dart:ui';
 
 import 'package:windows_application/core/utils/localized_entity_text.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 import '../../models/catalog_models.dart';
 import '../../../pos/models/json_helpers.dart';
@@ -26,8 +27,7 @@ String? _nullable(dynamic value) {
   return text.isEmpty ? null : text;
 }
 
-DateTime? _date(dynamic value) =>
-    DateTime.tryParse(readString(value))?.toLocal();
+DateTime? _date(dynamic value) => parseBackendDateTime(readString(value));
 
 class ModifierOptionRecord {
   const ModifierOptionRecord({

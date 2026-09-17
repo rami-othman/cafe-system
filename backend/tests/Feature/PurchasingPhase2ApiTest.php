@@ -113,7 +113,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $id = $this->postJson('/api/v1/finance/supplier-invoices', [
             'supplierId' => $supplierId, 'invoiceNumber' => 'SVC-P2-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
             'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
-            'lines' => [['lineType' => 'expense', 'description' => 'Internet', 'quantity' => '1', 'unitPrice' => '50.00']],
+            'lines' => [['lineType' => 'expense', 'description' => 'Internet', 'quantity' => '1', 'lineGrossAmount' => '50.00']],
         ], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/supplier-invoices/{$id}/post", ['idempotencyKey' => 'svc-post-1'], $headers)->assertOk();
         $lineId = (int) DB::table('supplier_invoice_lines')->where('supplier_invoice_id', $id)->value('id');
@@ -211,7 +211,7 @@ class PurchasingPhase2ApiTest extends TestCase
 
         $invoiceId = $this->postJson('/api/v1/finance/supplier-invoices', [
             'supplierId' => $supplierId, 'invoiceNumber' => 'CARTON-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
-            'lines' => [['lineType' => 'inventory', 'description' => 'Bottled water', 'inventoryItemId' => $itemId, 'purchaseUnit' => 'carton', 'quantity' => '2', 'unitPrice' => '24.0000', 'warehouseId' => $warehouseId]],
+            'lines' => [['lineType' => 'inventory', 'description' => 'Bottled water', 'inventoryItemId' => $itemId, 'purchaseUnit' => 'carton', 'quantity' => '2', 'lineGrossAmount' => '48.00', 'warehouseId' => $warehouseId]],
         ], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/supplier-invoices/{$invoiceId}/post", ['idempotencyKey' => 'carton-post-1'], $headers)->assertOk();
         $lineId = (int) DB::table('supplier_invoice_lines')->where('supplier_invoice_id', $invoiceId)->value('id');
@@ -450,9 +450,11 @@ class PurchasingPhase2ApiTest extends TestCase
 
     private function createInventoryInvoice(array $headers, int $supplierId, int $itemId, int $warehouseId, string $quantity, string $unitPrice): int
     {
+        $grossAmount = number_format((float) $quantity * (float) $unitPrice, 2, '.', '');
+
         return (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'supplierId' => $supplierId, 'invoiceNumber' => 'P2-INV-'.uniqid(), 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
-            'lines' => [['lineType' => 'inventory', 'description' => 'Goods', 'inventoryItemId' => $itemId, 'quantity' => $quantity, 'unitPrice' => $unitPrice, 'warehouseId' => $warehouseId]],
+            'lines' => [['lineType' => 'inventory', 'description' => 'Goods', 'inventoryItemId' => $itemId, 'quantity' => $quantity, 'lineGrossAmount' => $grossAmount, 'warehouseId' => $warehouseId]],
         ], $headers)->assertCreated()->json('data.id');
     }
 

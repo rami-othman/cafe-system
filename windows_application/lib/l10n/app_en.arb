@@ -2365,7 +2365,13 @@
   "salesProfitabilityMostProfitable": "Most Profitable",
   "salesProfitabilityUnderperforming": "Underperforming",
   "salesProfitabilityPeak": "Peak: {value}",
-  "@salesProfitabilityPeak": {"placeholders": {"value": {"type": "String"}}},
+  "@salesProfitabilityPeak": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "salesProfitabilityNoTrend": "No sales and profit trend is available for this period.",
   "salesProfitabilityNoHourly": "No hourly sales are available for this period.",
   "salesProfitabilityNoCategories": "No category sales are available for this period.",
@@ -3229,5 +3235,126 @@
   "expensesReportRejected": "Rejected",
   "expensesReportReversed": "Reversed",
   "expensesReportComparisonUnavailable": "Comparison unavailable",
-  "expensesReportPercentOfTotal": "of total"
+  "expensesReportPercentOfTotal": "of total",
+  "cashierHomeTitle": "Home",
+  "cashierDashboardTitle": "Cashier Operations",
+  "cashierDashboardSubtitle": "Everything needed to run this shift at the till.",
+  "cashierBranchLabel": "Branch",
+  "cashierNameLabel": "Cashier",
+  "cashierShiftLabel": "Shift",
+  "cashierShiftOpenedAt": "Opened",
+  "cashierShiftDuration": "Duration",
+  "cashierShiftStatus": "Status",
+  "cashierShiftStatusOpen": "Open",
+  "cashierNoOpenShift": "No open shift",
+  "cashierNoOpenShiftHint": "Shift figures appear once a shift is open at this branch.",
+  "cashierScopeCurrentShift": "Current shift",
+  "cashierScopeBranch": "Branch",
+  "cashierSectionCashAndShift": "Cash and shift",
+  "cashierSectionSalesAndOrders": "Sales and orders",
+  "cashierSectionFinance": "Finance",
+  "cashierSectionInventory": "Inventory",
+  "cashierSectionQuickAccess": "Quick access",
+  "cashierSectionAlerts": "Operational alerts",
+  "cashierExpectedDrawer": "Expected drawer cash",
+  "cashierExpectedDrawerHint": "Expected, not counted. The physical count happens at shift close.",
+  "cashierOpeningFloat": "Opening float",
+  "cashierCashSales": "Cash sales",
+  "cashierReceiptVouchers": "Cash receipt vouchers",
+  "cashierPaymentVouchers": "Cash payment vouchers",
+  "cashierCashRefunds": "Cash refunds",
+  "cashierShiftSales": "Shift sales",
+  "cashierOrderCount": "Orders",
+  "cashierAverageOrder": "Average order",
+  "cashierCardSales": "Card sales",
+  "cashierOtherMethods": "Other methods",
+  "cashierDiscounts": "Discounts",
+  "cashierRefunds": "Refunds",
+  "cashierOrdersActive": "Active",
+  "cashierOrdersHeld": "Held",
+  "cashierOrdersCompleted": "Completed",
+  "cashierPosWarehouse": "POS warehouse",
+  "cashierItemCount": "Items",
+  "cashierLowStock": "Low stock",
+  "cashierZeroStock": "Zero stock",
+  "cashierNegativeStock": "Negative stock",
+  "cashierShiftCountStatus": "Shift count",
+  "cashierShiftCountComplete": "Complete",
+  "cashierShiftCountPending": "Not complete",
+  "cashierShiftCountNotRequired": "Not required",
+  "cashierQuickPos": "Point of sale",
+  "cashierQuickOrders": "Orders",
+  "cashierQuickDiscounts": "Discounts",
+  "cashierQuickReceiptVoucher": "Receipt voucher",
+  "cashierQuickPaymentVoucher": "Payment voucher",
+  "cashierQuickPurchases": "Purchases",
+  "cashierQuickSales": "Sales",
+  "cashierQuickInventory": "POS stock",
+  "cashierQuickLowStock": "Low items",
+  "cashierQuickNegativeStock": "Negative items",
+  "cashierCloseShift": "Close shift",
+  "cashierCloseShiftUnavailable": "The shift close flow is not available in this client yet.",
+  "cashierOperationsCount": "{count} operations",
+  "@cashierOperationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierPendingTemplates": "{count} pending",
+  "@cashierPendingTemplates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertNoBranch": "No operational branch is assigned to this account.",
+  "cashierAlertNoShift": "No shift is open right now.",
+  "cashierAlertWarehouseMissing": "No POS warehouse is configured for this branch.",
+  "cashierAlertWarehouseAmbiguous": "More than one POS warehouse is configured for this branch.",
+  "cashierAlertBlockingOrders": "{count} orders must be settled before closing the shift.",
+  "@cashierAlertBlockingOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertNegativeStock": "{count} items have negative stock.",
+  "@cashierAlertNegativeStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertLowStock": "{count} items are low on stock.",
+  "@cashierAlertLowStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cashierAlertShiftCount": "The shift count is not complete.",
+  "cashierAlertsNone": "No operational alerts.",
+  "cashierRetry": "Retry",
+  "cashierLoadError": "Unable to load the operations dashboard.",
+  "cashierInventoryTitle": "POS stock",
+  "cashierInventorySubtitle": "Operational quantities for the warehouse this till sells from.",
+  "cashierInventorySearchHint": "Search by name or code",
+  "cashierInventoryFilterAll": "All",
+  "cashierInventoryStateNormal": "Normal",
+  "cashierInventoryStateLow": "Low",
+  "cashierInventoryStateZero": "Zero",
+  "cashierInventoryStateNegative": "Negative",
+  "cashierInventoryColumnItem": "Item",
+  "cashierInventoryColumnQuantity": "Quantity",
+  "cashierInventoryColumnState": "State",
+  "cashierInventoryColumnLastMovement": "Last movement",
+  "cashierInventoryEmpty": "There are no items in this warehouse.",
+  "cashierInventoryUnavailable": "No POS warehouse is configured for this branch.",
+  "cashierInventoryError": "Unable to load POS stock."
 }
