@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../models/applied_discount.dart';
+import '../models/available_discount.dart';
 import '../models/backend_order.dart';
 import '../models/backend_order_item.dart';
 import '../models/backend_product_detail.dart';
@@ -538,6 +539,29 @@ class PosCubit extends Cubit<PosState> {
     emit(state.copyWith(appliedDiscount: discount));
   }
 
+  /// Makes the current cart authoritative before loading configured
+  /// discounts. Published-menu carts normally stay local until payment, but
+  /// discount eligibility is calculated from persisted order state and a
+  /// selected policy must be applied to that same backend order.
+  Future<List<AvailableDiscount>> getAvailableDiscountsForCurrentCart() async {
+    if (!repository.usesBackend) {
+      return const <AvailableDiscount>[];
+    }
+
+    if (state.currentOrderId == null) {
+      final bool created = await _ensureBackendOrderForCurrentCart();
+      if (!created || state.currentOrderId == null) {
+        throw ApiException(
+          message:
+              state.cartMutationError ??
+              'Could not prepare the order for discount lookup.',
+        );
+      }
+    }
+
+    return repository.getAvailableDiscounts(state.currentOrderId!);
+  }
+
   Future<void> removeDiscount() async {
     if (state.currentOrderId != null) {
       await _syncOrder(() => repository.removeDiscount(state.currentOrderId!));
@@ -658,7 +682,8 @@ class PosCubit extends Cubit<PosState> {
       }
       if (order.canResume == false) {
         throw ApiException(
-          message: order.resumeBlockedReason ??
+          message:
+              order.resumeBlockedReason ??
               'This order cannot be safely resumed into POS.',
         );
       }
@@ -1165,6 +1190,68 @@ class PosCubit extends Cubit<PosState> {
     await _enqueueCartMutation(
       fallbackMessage: 'Could not update order. Please try again.',
       action: () async => _emitBackendOrder(await action()),
+    );
+  }
+
+  Future<bool> _ensureBackendOrderForCurrentCart() {
+    if (state.currentOrderId != null) {
+      return Future<bool>.value(true);
+    }
+
+    return _enqueueCartMutation(
+      fallbackMessage: 'Could not prepare order for discount lookup.',
+      action: () async {
+        _emitBackendOrder(
+          await repository.createOrder(_createPublishedOrderRequest()),
+        );
+      },
+    );
+  }
+
+  CreateOrderRequest _createPublishedOrderRequest() {
+    int? versionId;
+    for (final CartItem item in state.cartItems) {
+      if (item.publishedMenuVersionId != null) {
+        versionId = item.publishedMenuVersionId;
+        break;
+      }
+    }
+    if (versionId == null ||
+        state.cartItems.any(
+          (CartItem item) =>
+              item.publishedMenuVersionId != versionId ||
+              item.backendProductId == null ||
+              item.placementId == null ||
+              item.variantId == null,
+        )) {
+      throw const ApiException(
+        message: 'MENU_VERSION_STALE: refresh the POS menu before continuing.',
+      );
+    }
+    if (state.shiftId == null) {
+      throw const ApiException(
+        message: 'No open shift found. Open a shift before creating an order.',
+      );
+    }
+
+    return CreateOrderRequest(
+      branchId: state.branchId,
+      shiftId: state.shiftId,
+      orderType: state.orderType,
+      customerId: state.selectedCustomer?.backendId,
+      publishedMenuVersionId: versionId,
+      items: state.cartItems
+          .map(
+            (CartItem item) => AddOrderItemRequest(
+              productId: item.backendProductId!,
+              placementId: item.placementId,
+              variantId: item.variantId,
+              modifierOptionIds: item.modifierOptionIds,
+              quantity: item.quantity,
+              note: item.specialInstructions,
+            ),
+          )
+          .toList(growable: false),
     );
   }
 

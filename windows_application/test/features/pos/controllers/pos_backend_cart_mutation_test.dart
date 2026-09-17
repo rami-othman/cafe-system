@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
+import 'package:windows_application/features/pos/models/available_discount.dart';
 import 'package:windows_application/features/pos/models/backend_order.dart';
 import 'package:windows_application/features/pos/models/backend_order_item.dart';
 import 'package:windows_application/features/pos/models/backend_order_totals.dart';
@@ -104,6 +105,23 @@ void main() {
       expect(cubit.state.cartItems.single.backendProductId, 4);
       expect(cubit.state.cartItems.single.placementId, 40);
       expect(cubit.state.cartItems.single.variantId, 30);
+    },
+  );
+
+  test(
+    'published local cart creates a draft before loading available discounts',
+    () async {
+      await cubit.addCustomizedProductToCart(_publishedCustomization());
+
+      final List<AvailableDiscount> discounts = await cubit
+          .getAvailableDiscountsForCurrentCart();
+
+      expect(repository.createCalls, 1);
+      expect(repository.availableDiscountCalls, 1);
+      expect(repository.availableDiscountOrderId, 5);
+      expect(repository.lastCreateRequest!.publishedMenuVersionId, 12);
+      expect(cubit.state.currentOrderId, 5);
+      expect(discounts.single.backendId, 101);
     },
   );
 
@@ -216,6 +234,8 @@ class _BackendCartRepository extends PosRepository {
   int addCalls = 0;
   int updateCalls = 0;
   int payCalls = 0;
+  int availableDiscountCalls = 0;
+  int? availableDiscountOrderId;
   bool failUpdate = false;
   int? publishedVersion;
   CreateOrderRequest? lastCreateRequest;
@@ -238,6 +258,23 @@ class _BackendCartRepository extends PosRepository {
   @override
   Future<Shift?> getCurrentShift({required int branchId}) async =>
       const Shift(id: 1, branchId: 1, userId: 1, status: 'open');
+
+  @override
+  Future<List<AvailableDiscount>> getAvailableDiscounts(int orderId) async {
+    availableDiscountCalls += 1;
+    availableDiscountOrderId = orderId;
+    return const <AvailableDiscount>[
+      AvailableDiscount(
+        id: '101',
+        backendId: 101,
+        title: 'Bundle 20%',
+        subtitle: 'Manual policy',
+        badgeLabel: '20% OFF',
+        type: AvailableDiscountType.percentage,
+        value: 20,
+      ),
+    ];
+  }
 
   @override
   Future<List<String>> getCategories({required int branchId}) async =>
