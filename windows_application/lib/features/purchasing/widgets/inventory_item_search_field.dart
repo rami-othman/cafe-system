@@ -38,6 +38,7 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
   List<InventoryItem> _results = const <InventoryItem>[];
   bool _loading = false;
   bool _searched = false;
+  final Object _tapGroupId = Object();
 
   @override
   void initState() {
@@ -127,12 +128,15 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
           link: _layerLink,
           showWhenUnlinked: false,
           offset: const Offset(0, 56),
-          child: Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(8),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 240),
-              child: _buildOverlayContent(),
+          child: TapRegion(
+            groupId: _tapGroupId,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(8),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 240),
+                child: _buildOverlayContent(),
+              ),
             ),
           ),
         ),
@@ -184,6 +188,7 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
     return CompositedTransformTarget(
       link: _layerLink,
       child: TapRegion(
+        groupId: _tapGroupId,
         onTapOutside: (_) => _hideOverlay(),
         child: TextField(
           controller: _controller,
