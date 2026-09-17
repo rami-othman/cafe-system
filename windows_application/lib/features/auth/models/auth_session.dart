@@ -300,6 +300,9 @@ AuthSession _sessionFromAuthoritativeContract(
   _requiredNonBlankString(user['status']);
   final String? email = _requiredNullableString(user['email']);
   final String? username = _requiredNullableString(user['username']);
+  final Set<String> financeCapabilities = _requiredStringSet(
+    user['financeCapabilities'],
+  );
   final int tenantId = _requiredPositiveInt(tenant['id']);
   final String tenantName = _requiredNonBlankString(tenant['name']);
   _requiredNonBlankString(tenant['status']);
@@ -307,7 +310,9 @@ AuthSession _sessionFromAuthoritativeContract(
   _requiredPositiveInt(session['id']);
   _requiredNonBlankString(session['deviceName']);
   _requiredDateTime(session['authenticatedAt']);
-  final DateTime lastValidatedAt = _requiredDateTime(session['lastValidatedAt']);
+  final DateTime lastValidatedAt = _requiredDateTime(
+    session['lastValidatedAt'],
+  );
   final DateTime responseExpiry = _requiredDateTime(json['expiresAt']);
   final DateTime sessionExpiry = _requiredDateTime(session['expiresAt']);
   if (!responseExpiry.isAtSameMomentAs(sessionExpiry)) {
@@ -325,6 +330,7 @@ AuthSession _sessionFromAuthoritativeContract(
       role: role,
       email: email,
       username: username,
+      financeCapabilities: financeCapabilities,
     ),
     tenant: AuthTenant(id: tenantId, name: tenantName),
     mustChangePassword: json['mustChangePassword'] as bool,
@@ -396,3 +402,21 @@ Set<String> _stringSet(dynamic value) => value is List
           .where((String item) => item.isNotEmpty)
           .toSet()
     : const <String>{};
+
+/// The authoritative login/`auth/me` contract treats an absent capability
+/// list as "no finance permissions" for compatibility with callers that
+/// predate this field, but a *present* value that is not a list, or that
+/// contains anything other than non-empty permission strings, fails the
+/// whole response closed rather than guessing at Finance access.
+Set<String> _requiredStringSet(dynamic value) {
+  if (value == null) return const <String>{};
+  final List<dynamic> items = _requiredList(value);
+  final Set<String> result = <String>{};
+  for (final dynamic item in items) {
+    if (item is! String) throw const AuthInvalidResponseException();
+    final String trimmed = item.trim();
+    if (trimmed.isEmpty) throw const AuthInvalidResponseException();
+    result.add(trimmed);
+  }
+  return result;
+}

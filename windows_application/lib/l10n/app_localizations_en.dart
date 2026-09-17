@@ -7616,6 +7616,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashierInventoryError => 'Unable to load POS stock.';
+
+  @override
   String get discountV2PackageBundle => 'Package / Bundle';
 
   @override

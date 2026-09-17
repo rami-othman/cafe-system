@@ -13663,6 +13663,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to load POS stock.'**
   String get cashierInventoryError;
+
   /// No description provided for @discountV2PackageBundle.
   ///
   /// In en, this message translates to:

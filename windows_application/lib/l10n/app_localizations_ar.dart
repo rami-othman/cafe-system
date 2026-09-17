@@ -7602,6 +7602,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cashierInventoryError => 'تعذر تحميل مخزون نقطة البيع.';
+
+  @override
   String get discountV2PackageBundle => 'حزمة / باقة';
 
   @override

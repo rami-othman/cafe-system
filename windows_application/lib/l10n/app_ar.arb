@@ -3063,7 +3063,7 @@
   "cashierInventoryColumnLastMovement": "آخر حركة",
   "cashierInventoryEmpty": "لا توجد مواد في هذا المخزن.",
   "cashierInventoryUnavailable": "لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.",
-  "cashierInventoryError": "تعذر تحميل مخزون نقطة البيع."
+  "cashierInventoryError": "تعذر تحميل مخزون نقطة البيع.",
   "discountV2PackageBundle": "حزمة / باقة",
   "discountV2PackageRequirements": "متطلبات الباقة",
   "discountV2AllPackageItems": "يجب أن تكون جميع عناصر الباقة موجودة في الطلب لتطبيق هذا الخصم.",

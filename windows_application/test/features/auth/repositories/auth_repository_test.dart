@@ -354,6 +354,87 @@ void main() {
       );
     });
 
+    test(
+      'login preserves the exact backend-granted finance capabilities',
+      () async {
+        final ApiAuthRepository repository = _repository(
+          (_) {},
+          response: <String, dynamic>{
+            ..._sessionResponse,
+            'user': <String, dynamic>{
+              ...(_sessionResponse['user'] as Map<String, dynamic>),
+              'role': 'cashier',
+              'financeCapabilities': <String>[
+                'finance.vouchers.view',
+                'finance.purchases.view',
+                'finance.sales.view',
+              ],
+            },
+          },
+        );
+
+        final AuthSession session = await repository.login(
+          identifier: 'cashier',
+          password: 'password',
+        );
+
+        expect(session.user.financeCapabilities, <String>{
+          'finance.vouchers.view',
+          'finance.purchases.view',
+          'finance.sales.view',
+        });
+      },
+    );
+
+    test(
+      'login without a finance capability list grants no finance access',
+      () async {
+        final ApiAuthRepository repository = _repository((_) {});
+
+        final AuthSession session = await repository.login(
+          identifier: 'cashier',
+          password: 'password',
+        );
+
+        expect(session.user.financeCapabilities, isEmpty);
+      },
+    );
+
+    for (final ({String name, dynamic value}) malformed
+        in <({String name, dynamic value})>[
+          (name: 'a string instead of a list', value: 'finance.sales.view'),
+          (name: 'a map instead of a list', value: <String, dynamic>{}),
+          (
+            name: 'a list containing a number',
+            value: <dynamic>['finance.sales.view', 1],
+          ),
+          (
+            name: 'a list containing an empty string',
+            value: <String>['finance.sales.view', '   '],
+          ),
+        ]) {
+      test(
+        'login rejects a finance capability list that is ${malformed.name}',
+        () {
+          final ApiAuthRepository repository = _repository(
+            (_) {},
+            response: <String, dynamic>{
+              ..._sessionResponse,
+              'user': <String, dynamic>{
+                ...(_sessionResponse['user'] as Map<String, dynamic>),
+                'financeCapabilities': malformed.value,
+              },
+            },
+          );
+
+          expect(
+            repository.login(identifier: 'cashier', password: 'password'),
+            throwsA(isA<AuthInvalidResponseException>()),
+          );
+        },
+      );
+    }
+
     test('422 login responses remain typed validation errors', () async {
       final ApiAuthRepository repository = _repository((_) {}, statusCode: 422);
 
@@ -377,21 +458,27 @@ void main() {
   });
 
   group('ApiAuthRepository auth/me response validation', () {
-    test('valid auth/me response retains only the verified cached token', () async {
-      final ApiAuthRepository repository = _meRepository(_meResponse);
+    test(
+      'valid auth/me response retains only the verified cached token',
+      () async {
+        final ApiAuthRepository repository = _meRepository(_meResponse);
 
-      final session = await repository.me(_cachedSession());
+        final session = await repository.me(_cachedSession());
 
-      expect(session.accessToken, 'cached-opaque-token');
-      expect(session.user.role, 'manager');
-      expect(session.customerManagementAllowed, isTrue);
-      expect(session.expiresAt, DateTime.utc(2026, 10, 1));
-    });
+        expect(session.accessToken, 'cached-opaque-token');
+        expect(session.user.role, 'manager');
+        expect(session.customerManagementAllowed, isTrue);
+        expect(session.expiresAt, DateTime.utc(2026, 10, 1));
+      },
+    );
 
     for (final ({String name, dynamic response}) malformed
         in <({String name, dynamic response})>[
           (name: 'a non-map payload', response: <dynamic>[]),
-          (name: 'a missing token type', response: _without(_meResponse, 'tokenType')),
+          (
+            name: 'a missing token type',
+            response: _without(_meResponse, 'tokenType'),
+          ),
           (
             name: 'a non-Bearer token type',
             response: <String, dynamic>{..._meResponse, 'tokenType': 'Basic'},
@@ -414,7 +501,10 @@ void main() {
             name: 'a missing user role',
             response: <String, dynamic>{
               ..._meResponse,
-              'user': _without(_meResponse['user'] as Map<String, dynamic>, 'role'),
+              'user': _without(
+                _meResponse['user'] as Map<String, dynamic>,
+                'role',
+              ),
             },
           ),
           (
@@ -451,7 +541,9 @@ void main() {
             name: 'a missing capability permission',
             response: <String, dynamic>{
               ..._meResponse,
-              'capabilities': <String, dynamic>{'customer': <String, dynamic>{}},
+              'capabilities': <String, dynamic>{
+                'customer': <String, dynamic>{},
+              },
             },
           ),
           (
@@ -528,14 +620,19 @@ void main() {
             },
           ),
         ]) {
-      test('malformed successful auth/me payload with ${malformed.name} is rejected', () {
-        final ApiAuthRepository repository = _meRepository(malformed.response);
+      test(
+        'malformed successful auth/me payload with ${malformed.name} is rejected',
+        () {
+          final ApiAuthRepository repository = _meRepository(
+            malformed.response,
+          );
 
-        expect(
-          repository.me(_cachedSession()),
-          throwsA(isA<AuthInvalidResponseException>()),
-        );
-      });
+          expect(
+            repository.me(_cachedSession()),
+            throwsA(isA<AuthInvalidResponseException>()),
+          );
+        },
+      );
     }
 
     test('an empty cached token cannot be accepted as auth/me authority', () {
@@ -546,6 +643,92 @@ void main() {
         throwsA(isA<AuthInvalidResponseException>()),
       );
     });
+
+    test(
+      'auth/me preserves the exact backend-granted finance capabilities',
+      () async {
+        final ApiAuthRepository repository = _meRepository(<String, dynamic>{
+          ..._meResponse,
+          'user': <String, dynamic>{
+            ...(_meResponse['user'] as Map<String, dynamic>),
+            'role': 'cashier',
+            'financeCapabilities': <String>[
+              'finance.vouchers.view',
+              'finance.purchases.view',
+              'finance.sales.view',
+            ],
+          },
+        });
+
+        final AuthSession session = await repository.me(_cachedSession());
+
+        expect(session.user.financeCapabilities, <String>{
+          'finance.vouchers.view',
+          'finance.purchases.view',
+          'finance.sales.view',
+        });
+      },
+    );
+
+    test('auth/me rejects a non-list finance capability value', () {
+      final ApiAuthRepository repository = _meRepository(<String, dynamic>{
+        ..._meResponse,
+        'user': <String, dynamic>{
+          ...(_meResponse['user'] as Map<String, dynamic>),
+          'financeCapabilities': 'finance.sales.view',
+        },
+      });
+
+      expect(
+        repository.me(_cachedSession()),
+        throwsA(isA<AuthInvalidResponseException>()),
+      );
+    });
+  });
+
+  group('AuthSession storage round-trip', () {
+    test(
+      'finance capabilities survive serialization to and from local storage',
+      () {
+        final AuthSession session = AuthSession.fromApi(<String, dynamic>{
+          ..._sessionResponse,
+          'user': <String, dynamic>{
+            ...(_sessionResponse['user'] as Map<String, dynamic>),
+            'role': 'cashier',
+            'financeCapabilities': <String>[
+              'finance.vouchers.view',
+              'finance.purchases.view',
+            ],
+          },
+        });
+
+        final AuthSession restored = AuthSession.fromStorage(
+          session.accessToken,
+          session.toStorageJson(),
+        );
+
+        expect(restored.user.financeCapabilities, <String>{
+          'finance.vouchers.view',
+          'finance.purchases.view',
+        });
+      },
+    );
+
+    test(
+      'a cashier without finance capabilities keeps existing behavior unchanged',
+      () {
+        final AuthSession session = AuthSession.fromApi(<String, dynamic>{
+          ..._sessionResponse,
+          'user': <String, dynamic>{
+            ...(_sessionResponse['user'] as Map<String, dynamic>),
+            'role': 'cashier',
+          },
+        });
+
+        expect(session.user.financeCapabilities, isEmpty);
+        expect(session.user.role, 'cashier');
+      },
+    );
   });
 }
 
@@ -626,11 +809,7 @@ final Map<String, dynamic> _sessionResponse = <String, dynamic>{
     'email': 'manager@example.test',
     'username': null,
   },
-  'tenant': <String, dynamic>{
-    'id': 4,
-    'name': 'Cafe 618',
-    'status': 'active',
-  },
+  'tenant': <String, dynamic>{'id': 4, 'name': 'Cafe 618', 'status': 'active'},
   'capabilities': <String, dynamic>{
     'customer': <String, dynamic>{'manage': true},
   },
@@ -674,11 +853,7 @@ final Map<String, dynamic> _meResponse = <String, dynamic>{
     'email': 'manager@example.test',
     'username': null,
   },
-  'tenant': <String, dynamic>{
-    'id': 4,
-    'name': 'Cafe 618',
-    'status': 'active',
-  },
+  'tenant': <String, dynamic>{'id': 4, 'name': 'Cafe 618', 'status': 'active'},
   'capabilities': <String, dynamic>{
     'customer': <String, dynamic>{'manage': true},
   },

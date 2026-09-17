@@ -3382,7 +3382,7 @@
   "cashierInventoryColumnLastMovement": "Last movement",
   "cashierInventoryEmpty": "There are no items in this warehouse.",
   "cashierInventoryUnavailable": "No POS warehouse is configured for this branch.",
-  "cashierInventoryError": "Unable to load POS stock."
+  "cashierInventoryError": "Unable to load POS stock.",
   "discountV2PackageBundle": "Package / Bundle",
   "discountV2PackageRequirements": "Package Requirements",
   "discountV2AllPackageItems": "All package items must be present in the order for this discount to apply.",
