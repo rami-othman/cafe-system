@@ -1,6 +1,7 @@
 import 'json_helpers.dart';
 import '../../../core/config/tax_config.dart';
 import '../../../core/branding/app_brand.dart';
+import '../../../core/utils/backend_datetime.dart';
 import 'order_receipt.dart';
 import 'payment_method.dart';
 import 'payment_result.dart';
@@ -20,9 +21,7 @@ OrderReceipt orderReceiptFromJson(Map<String, dynamic> json) {
     orderNumber: readString(json['orderNumber']),
     branchName: readString(json['branchName'], fallback: AppBrand.systemNameEn),
     cashierName: readString(json['cashierName'], fallback: 'POS Register'),
-    completedAt:
-        DateTime.tryParse(readString(json['date']))?.toLocal() ??
-        DateTime.now(),
+    completedAt: parseBackendDateTime(readString(json['date'])) ?? DateTime.now(),
     items: readMapList(
       json['items'],
     ).map(_receiptLineFromJson).toList(growable: false),

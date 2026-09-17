@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 import '../models/shift_assessment.dart';
 import '../models/shift_models.dart';
-import '../models/shift_scenario.dart';
 
 enum ShiftOverviewStatus { initial, loading, ready, empty, error }
 
@@ -11,7 +10,6 @@ enum ShiftOverviewStatus { initial, loading, ready, empty, error }
 class ShiftOverviewState extends Equatable {
   const ShiftOverviewState({
     this.status = ShiftOverviewStatus.initial,
-    this.scenario = ShiftScenario.balanced,
     this.snapshot,
     this.assessment,
     this.lastShift,
@@ -23,7 +21,6 @@ class ShiftOverviewState extends Equatable {
   });
 
   final ShiftOverviewStatus status;
-  final ShiftScenario scenario;
   final ShiftSnapshot? snapshot;
   final ShiftAssessment? assessment;
 
@@ -46,7 +43,6 @@ class ShiftOverviewState extends Equatable {
 
   ShiftOverviewState copyWith({
     ShiftOverviewStatus? status,
-    ShiftScenario? scenario,
     ShiftSnapshot? snapshot,
     bool clearSnapshot = false,
     ShiftAssessment? assessment,
@@ -62,7 +58,6 @@ class ShiftOverviewState extends Equatable {
     bool clearErrorMessage = false,
   }) => ShiftOverviewState(
     status: status ?? this.status,
-    scenario: scenario ?? this.scenario,
     snapshot: clearSnapshot ? null : snapshot ?? this.snapshot,
     assessment: clearAssessment ? null : assessment ?? this.assessment,
     lastShift: clearLastShift ? null : lastShift ?? this.lastShift,
@@ -78,7 +73,6 @@ class ShiftOverviewState extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     status,
-    scenario,
     snapshot,
     assessment,
     lastShift,

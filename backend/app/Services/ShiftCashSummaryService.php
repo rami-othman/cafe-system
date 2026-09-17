@@ -16,27 +16,39 @@ use Illuminate\Support\Facades\DB;
  * mapped to a non-cash method (e.g. a card method that happens to still carry
  * the legacy string "cash") is never miscounted as drawer cash.
  *
- * Only opening cash, cash sales, and cash refunds are included: card/bank
- * payments and unrelated Phase 2 cash transfers between financial locations
- * are deliberately excluded, since neither is a movement of this shift's
- * physical drawer.
+ * Card/bank payments and unrelated Phase 2 cash transfers between financial
+ * locations are deliberately excluded, since neither is a movement of this
+ * shift's physical drawer. Dedicated shift cash movements are included: a
+ * deposit adds to the drawer while withdrawals and expenses reduce it.
  */
 class ShiftCashSummaryService
 {
     /**
-     * @return array{openingCash:string,cashSales:string,cashRefunds:string,expectedCash:string}
+     * @return array{openingCash:string,cashSales:string,cashRefunds:string,withdrawals:string,deposits:string,expenses:string,expectedCash:string}
      */
     public function summarize(int $tenantId, object $shift): array
     {
         $openingCents = Money::cents($shift->opening_cash);
         $cashSalesCents = Money::cents($this->cashPaymentsQuery($tenantId, $shift->id)->sum('p.amount') ?? '0');
         $cashRefundsCents = Money::cents($this->cashRefundsQuery($tenantId, $shift->id)->sum('r.amount') ?? '0');
-        $expectedCents = $openingCents + $cashSalesCents - $cashRefundsCents;
+        $movements = DB::table('shift_cash_movements')
+            ->where('tenant_id', $tenantId)->where('shift_id', $shift->id)
+            ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'withdrawal' THEN amount ELSE 0 END), 0) as withdrawals")
+            ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'deposit' THEN amount ELSE 0 END), 0) as deposits")
+            ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'expense' THEN amount ELSE 0 END), 0) as expenses")
+            ->first();
+        $withdrawalsCents = Money::cents($movements?->withdrawals ?? '0');
+        $depositsCents = Money::cents($movements?->deposits ?? '0');
+        $expensesCents = Money::cents($movements?->expenses ?? '0');
+        $expectedCents = $openingCents + $cashSalesCents + $depositsCents - $cashRefundsCents - $withdrawalsCents - $expensesCents;
 
         return [
             'openingCash' => Money::decimal($openingCents),
             'cashSales' => Money::decimal($cashSalesCents),
             'cashRefunds' => Money::decimal($cashRefundsCents),
+            'withdrawals' => Money::decimal($withdrawalsCents),
+            'deposits' => Money::decimal($depositsCents),
+            'expenses' => Money::decimal($expensesCents),
             'expectedCash' => Money::decimal($expectedCents),
         ];
     }

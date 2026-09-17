@@ -33,7 +33,7 @@ class ShiftCashSummaryApiTest extends TestCase
         // A 50.00 cash refund against the second sale.
         $this->postJson("/api/v1/orders/{$orderId2}/refunds", ['type' => 'partial', 'amount' => 50, 'reason' => 'Shift cash test refund', 'idempotencyKey' => 'shift-cash-refund-1'], $headers)->assertCreated();
 
-        $closed = $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 545], $headers)->assertOk();
+        $closed = $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 545, 'cashDifferenceReason' => 'change_error'], $headers)->assertOk();
 
         $this->assertSame(550.0, (float) $closed->json('data.expectedCash'));
         $this->assertSame(545.0, (float) $closed->json('data.closingCash'));
@@ -63,6 +63,46 @@ class ShiftCashSummaryApiTest extends TestCase
         // its full refund must not appear on either side of the formula.
         $this->assertSame(180.0, (float) $closed->json('data.expectedCash'));
         $this->assertSame(0.0, (float) $closed->json('data.cashDifference'));
+    }
+
+    public function test_shift_cash_movements_adjust_the_expected_drawer_cash(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $actorId = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id');
+        $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 100], $headers)->assertCreated();
+        $shiftId = (int) $shift->json('data.id');
+
+        foreach ([['withdrawal', '10.00'], ['deposit', '5.00'], ['expense', '2.00']] as [$kind, $amount]) {
+            DB::table('shift_cash_movements')->insert([
+                'tenant_id' => $tenant, 'branch_id' => $branchId, 'shift_id' => $shiftId,
+                'kind' => $kind, 'amount' => $amount, 'description' => 'Test movement',
+                'created_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+
+        // 100 - 10 + 5 - 2 = 93. The movement table must never be merely
+        // cosmetic: it changes the reconciliation target at close time.
+        $closed = $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 93], $headers)->assertOk();
+        $this->assertSame(93.0, (float) $closed->json('data.expectedCash'));
+    }
+
+    public function test_current_snapshot_exposes_the_server_authoritative_shift_shape(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 25], $headers)->assertCreated();
+
+        $this->getJson('/api/v1/shifts/current/snapshot?branchId='.$branchId, $headers)
+            ->assertOk()
+            ->assertJsonPath('data.identity.id', $shift->json('data.id'))
+            ->assertJsonPath('data.identity.lifecycle', 'open')
+            ->assertJsonPath('data.drawer.openingFloat', '25.00')
+            ->assertJsonStructure(['data' => ['identity', 'sales', 'payments' => ['lines'], 'orders', 'drawer' => ['movements'], 'barCount' => ['lines'], 'pendingOperations', 'refunds', 'discounts']]);
     }
 
     public function test_multiple_cash_payments_and_refunds_accumulate_correctly_with_decimal_precision(): void

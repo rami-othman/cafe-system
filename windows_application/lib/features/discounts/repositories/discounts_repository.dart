@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/backend_datetime.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/json_helpers.dart';
 import '../../pos/models/branch.dart';
@@ -157,12 +158,10 @@ class DiscountsApiRepository implements DiscountsRepository {
   DiscountListItem _fromJson(Map<String, dynamic> json) {
     final String type = readString(json['type']).toLowerCase();
     final double value = readDouble(json['value']);
-    final DateTime? startsAt = DateTime.tryParse(
+    final DateTime? startsAt = parseBackendDateTime(
       readString(json['startsAt']),
-    )?.toLocal();
-    final DateTime? endsAt = DateTime.tryParse(
-      readString(json['endsAt']),
-    )?.toLocal();
+    );
+    final DateTime? endsAt = parseBackendDateTime(readString(json['endsAt']));
     final String code = readString(json['code']).trim();
     final String primary = readString(json['displayPeriodPrimary']).trim();
     final String statusValue = readString(json['status']).toLowerCase();

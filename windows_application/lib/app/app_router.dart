@@ -5,13 +5,22 @@ import 'package:go_router/go_router.dart';
 import '../l10n/app_localizations.dart';
 import 'menu_management_route_locations.dart';
 import 'customer_management_route_locations.dart';
-import 'shift_close_route_locations.dart';
+import 'shift_route_locations.dart';
 
 import '../core/services/service_locator.dart';
 import '../features/discounts/views/create_discount_policy_screen.dart';
 import '../features/discounts/controllers/discounts_cubit.dart';
 import '../features/discounts/models/discount_list_item.dart';
 import '../features/discounts/views/discounts_list_screen.dart';
+import '../features/shift/controllers/shift_closing_cubit.dart';
+import '../features/shift/controllers/shift_history_cubit.dart';
+import '../features/shift/controllers/shift_overview_cubit.dart';
+import '../features/shift/controllers/shift_report_cubit.dart';
+import '../features/shift/views/shift_closing_screen.dart';
+import '../features/shift/views/shift_history_screen.dart';
+import '../features/shift/views/shift_overview_screen.dart';
+import '../features/shift/views/shift_report_screen.dart';
+import '../features/shift/widgets/shift_module_shell.dart';
 import '../features/orders/controllers/orders_cubit.dart';
 import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
@@ -31,10 +40,6 @@ import '../features/reports/views/sales_profitability_screen.dart';
 import '../features/reports/views/cash_shifts_screen.dart';
 import '../features/reports/views/inventory_report_screen.dart';
 import '../features/reports/views/expenses_report_screen.dart';
-import '../features/shift_close/controllers/bar_check_cubit.dart';
-import '../features/shift_close/controllers/shift_close_cubit.dart';
-import '../features/shift_close/views/bar_check_screen.dart';
-import '../features/shift_close/views/shift_close_screen.dart';
 import '../shared/access/cashier_access.dart';
 import '../features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../features/finance_inventory_setup/views/cash_banks_screen.dart';
@@ -119,8 +124,13 @@ import '../features/menu_management/review/views/menu_review_screen.dart';
 import '../features/menu_management/versions/controllers/published_version_cubit.dart';
 import '../features/menu_management/widgets/menu_module_navigation.dart';
 import '../features/menu_management/widgets/menu_module_scaffold.dart';
+import '../features/cashier_dashboard/controllers/cashier_dashboard_cubit.dart';
+import '../features/cashier_dashboard/controllers/cashier_inventory_cubit.dart';
+import '../features/cashier_dashboard/views/cashier_dashboard_screen.dart';
+import '../features/cashier_dashboard/views/cashier_inventory_screen.dart';
 import '../features/auth/views/settings_screen.dart';
 import '../features/auth/controllers/auth_session_cubit.dart';
+import '../features/auth/models/auth_session.dart';
 import '../features/cafe_configuration/controllers/cafe_configuration_cubits.dart';
 import '../features/cafe_configuration/controllers/cafe_configuration_overview_cubit.dart';
 import '../features/cafe_configuration/controllers/tax_cubit.dart';
@@ -203,10 +213,27 @@ Page<void> _materialEffectPage(
       ),
 );
 
+/// The live Cashier access projection. Read from the session each time rather
+/// than cached, so a re-login as a different role is reflected immediately.
+CashierAccess _cashierAccess() {
+  final AuthSession? session = serviceLocator<AuthSessionCubit>().state.session;
+  return CashierAccess.of(
+    session?.user,
+    customerManagementAllowed: session?.customerManagementAllowed ?? false,
+  );
+}
+
+/// Central deep-link guard. A no-op for every non-Cashier role, so Owner,
+/// Admin and Manager routing is untouched; a Cashier who types a Finance or
+/// Inventory administration path is returned to their operational home.
+String? _cashierRouteGuard(BuildContext _, GoRouterState state) =>
+    _cashierAccess().redirectFor(state.uri.path);
+
+/// Evaluated lazily on first router use, which is after the session restores.
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: AppRoutes.pos,
-  redirect: _cashierAccessRedirect,
+  initialLocation: _cashierAccess().homeRoute,
+  redirect: _cashierRouteGuard,
   routes: <RouteBase>[
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
@@ -222,11 +249,21 @@ final GoRouter appRouter = GoRouter(
         final bool isCustomerManagement = state.uri.path.startsWith(
           CustomerManagementRouteLocations.customers,
         );
+        final bool isShift = ShiftRouteLocations.isShiftLocation(
+          state.uri.path,
+        );
+        // The Cashier surface renders inside the plain shell: it must not be
+        // wrapped in the Inventory or Finance module shells, whose tabs lead
+        // to screens a Cashier may not open.
+        final bool isCashierSurface =
+            state.uri.path == AppRoutes.dashboard ||
+            state.uri.path.startsWith(AppRoutes.cashierInventory);
         final AppShell shell = AppShell(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(context, state),
-          onRefresh: state.uri.path == AppRoutes.pos || isReports
+          onRefresh:
+              state.uri.path == AppRoutes.pos || isReports || isCashierSurface
               ? _refreshActionFor(state)
               : null,
           prioritizeContentWidth: isMenuManagement || isCafeConfiguration,
@@ -248,6 +285,7 @@ final GoRouter appRouter = GoRouter(
               : isFinance
               ? FinanceModuleShell(
                   selectedTab: _financeActiveTabFor(state.uri.path),
+                  access: _cashierAccess(),
                   child: child,
                 )
               : isInventory
@@ -255,6 +293,8 @@ final GoRouter appRouter = GoRouter(
                   selectedTab: _inventoryActiveTabFor(state.uri.path),
                   child: child,
                 )
+              : isShift
+              ? ShiftModuleShell(location: state.uri.path, child: child)
               : isCafeConfiguration
               ? CafeConfigurationScaffold(
                   selected: CafeConfigurationDestination.forPath(
@@ -1240,9 +1280,7 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
-          redirect: (_, _) => CashierAccess.isCashier(
-                    serviceLocator<AuthSessionCubit>().state.session?.user.role,
-                  )
+          redirect: (_, _) => _cashierAccess().isCashier
               ? AppRoutes.financeReceiptVouchers
               : null,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
@@ -1380,8 +1418,12 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.financeSales,
           builder: (context, state) => MultiBlocProvider(
             providers: <BlocProvider<dynamic>>[
-              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              BlocProvider<SalesCubit>(
+                create: (_) => serviceLocator<SalesCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
             ],
             child: const SalesCenterScreen(),
           ),
@@ -1390,8 +1432,12 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.financeCustomersReceivables,
           builder: (context, state) => MultiBlocProvider(
             providers: <BlocProvider<dynamic>>[
-              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              BlocProvider<SalesCubit>(
+                create: (_) => serviceLocator<SalesCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
             ],
             child: const CustomerReceivablesScreen(),
           ),
@@ -1400,8 +1446,12 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.financeSalesNew,
           builder: (context, state) => MultiBlocProvider(
             providers: <BlocProvider<dynamic>>[
-              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              BlocProvider<SalesCubit>(
+                create: (_) => serviceLocator<SalesCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
             ],
             child: const SalesInvoiceFormScreen(),
           ),
@@ -1409,12 +1459,18 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/finance/sales/:salesId/edit',
           builder: (context, state) {
-            final int? id = parsePositiveRouteId(state.pathParameters['salesId']);
+            final int? id = parsePositiveRouteId(
+              state.pathParameters['salesId'],
+            );
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
               providers: <BlocProvider<dynamic>>[
-                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+                BlocProvider<SalesCubit>(
+                  create: (_) => serviceLocator<SalesCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
               ],
               child: SalesInvoiceFormScreen(id: id),
             );
@@ -1423,12 +1479,18 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.financeSalesDetail,
           builder: (context, state) {
-            final int? id = parsePositiveRouteId(state.pathParameters['salesId']);
+            final int? id = parsePositiveRouteId(
+              state.pathParameters['salesId'],
+            );
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
               providers: <BlocProvider<dynamic>>[
-                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+                BlocProvider<SalesCubit>(
+                  create: (_) => serviceLocator<SalesCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
               ],
               child: SalesInvoiceDetailScreen(id: id),
             );
@@ -1438,8 +1500,12 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.financeSalesCreditNotes,
           builder: (context, state) => MultiBlocProvider(
             providers: <BlocProvider<dynamic>>[
-              BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-              BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+              BlocProvider<SalesCubit>(
+                create: (_) => serviceLocator<SalesCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
             ],
             child: const SalesCreditNotesScreen(),
           ),
@@ -1447,27 +1513,43 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.financeSalesCreditNoteNew,
           builder: (context, state) {
-            final int? invoiceId = parsePositiveRouteId(state.uri.queryParameters['invoiceId']);
-            final String customerName = state.uri.queryParameters['customerName'] ?? '';
+            final int? invoiceId = parsePositiveRouteId(
+              state.uri.queryParameters['invoiceId'],
+            );
+            final String customerName =
+                state.uri.queryParameters['customerName'] ?? '';
             if (invoiceId == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
               providers: <BlocProvider<dynamic>>[
-                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+                BlocProvider<SalesCubit>(
+                  create: (_) => serviceLocator<SalesCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
               ],
-              child: CreateCreditNoteScreen(invoiceId: invoiceId, customerName: customerName),
+              child: CreateCreditNoteScreen(
+                invoiceId: invoiceId,
+                customerName: customerName,
+              ),
             );
           },
         ),
         GoRoute(
           path: AppRoutes.financeSalesCreditNoteDetail,
           builder: (context, state) {
-            final int? id = parsePositiveRouteId(state.pathParameters['creditNoteId']);
+            final int? id = parsePositiveRouteId(
+              state.pathParameters['creditNoteId'],
+            );
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
               providers: <BlocProvider<dynamic>>[
-                BlocProvider<SalesCubit>(create: (_) => serviceLocator<SalesCubit>()),
-                BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>()),
+                BlocProvider<SalesCubit>(
+                  create: (_) => serviceLocator<SalesCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
               ],
               child: SalesCreditNoteDetailScreen(id: id),
             );
@@ -1488,7 +1570,9 @@ final GoRouter appRouter = GoRouter(
                   create: (_) => serviceLocator<FinanceSetupCubit>(),
                 ),
               ],
-              child: PurchaseInvoiceFormScreen(preselectedSupplierId: supplierId),
+              child: PurchaseInvoiceFormScreen(
+                preselectedSupplierId: supplierId,
+              ),
             );
           },
         ),
@@ -1741,28 +1825,47 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
-          path: AppRoutes.settings,
-          name: AppRouteNames.settings,
-          builder: (context, state) => const SettingsScreen(),
+          path: ShiftRouteLocations.root,
+          redirect: (_, _) => ShiftRouteLocations.current,
         ),
         GoRoute(
-          path: AppRoutes.shiftClose,
-          name: AppRouteNames.shiftClose,
-          builder: (context, state) => BlocProvider<ShiftCloseCubit>(
-            create: (_) => serviceLocator<ShiftCloseCubit>(),
-            child: const ShiftCloseScreen(),
+          path: ShiftRouteLocations.current,
+          name: AppRouteNames.shiftCurrent,
+          builder: (context, state) => BlocProvider<ShiftOverviewCubit>(
+            create: (_) => serviceLocator<ShiftOverviewCubit>(),
+            child: const ShiftOverviewScreen(),
           ),
         ),
         GoRoute(
-          path: BarCheckScreen.routePath,
-          name: BarCheckScreen.routeName,
-          builder: (context, state) {
-            final BarCheckScreenArgs args = state.extra as BarCheckScreenArgs;
-            return BlocProvider<BarCheckCubit>(
-              create: (_) => serviceLocator<BarCheckCubit>(),
-              child: BarCheckScreen(args: args),
-            );
-          },
+          path: ShiftRouteLocations.history,
+          name: AppRouteNames.shiftHistory,
+          builder: (context, state) => BlocProvider<ShiftHistoryCubit>(
+            create: (_) => serviceLocator<ShiftHistoryCubit>(),
+            child: const ShiftHistoryScreen(),
+          ),
+        ),
+        GoRoute(
+          path: ShiftRouteLocations.closing,
+          name: AppRouteNames.shiftClosing,
+          builder: (context, state) => BlocProvider<ShiftClosingCubit>(
+            create: (_) => serviceLocator<ShiftClosingCubit>(),
+            child: const ShiftClosingScreen(),
+          ),
+        ),
+        GoRoute(
+          path: ShiftRouteLocations.reportPattern,
+          name: AppRouteNames.shiftReport,
+          builder: (context, state) => BlocProvider<ShiftReportCubit>(
+            create: (_) => serviceLocator<ShiftReportCubit>(),
+            child: ShiftReportScreen(
+              shiftNumber: state.pathParameters['shiftNumber']!,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.settings,
+          name: AppRouteNames.settings,
+          builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
           path: AppRoutes.cafeConfiguration,
@@ -1846,6 +1949,24 @@ final GoRouter appRouter = GoRouter(
           path: AppRoutes.pos,
           name: AppRouteNames.pos,
           builder: (context, state) => const PosScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.dashboard,
+          name: AppRouteNames.dashboard,
+          builder: (context, state) => BlocProvider<CashierDashboardCubit>(
+            create: (_) => serviceLocator<CashierDashboardCubit>(),
+            child: const CashierDashboardScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.cashierInventory,
+          name: AppRouteNames.cashierInventory,
+          builder: (context, state) => BlocProvider<CashierInventoryCubit>(
+            create: (_) => serviceLocator<CashierInventoryCubit>(),
+            child: CashierInventoryScreen(
+              initialState: state.uri.queryParameters['state'],
+            ),
+          ),
         ),
         GoRoute(
           path: AppRoutes.orders,
@@ -1939,7 +2060,10 @@ String _financeActiveTabFor(String path) {
   if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
   if (path.startsWith(AppRoutes.financeExpenses)) return 'expenses';
   if (path.startsWith(AppRoutes.financePurchases)) return 'purchases';
-  if (path.startsWith(AppRoutes.financeSales) || path.startsWith(AppRoutes.financeCustomersReceivables)) return 'sales';
+if (path.startsWith(AppRoutes.financeSales) ||
+    path.startsWith(AppRoutes.financeCustomersReceivables)) {
+  return 'sales';
+}
   if (path.startsWith(AppRoutes.financePurchaseReceipts)) return 'purchases';
   if (path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
   if (path.startsWith(AppRoutes.financeReconciliationCanonical)) {
@@ -2002,10 +2126,15 @@ Future<void> Function(BuildContext context)? refreshActionForMatchedLocation(
         hasActiveCart: pos.hasCartItems || pos.currentOrderId != null,
       );
     },
+    AppRoutes.dashboard =>
+      (BuildContext context) => context.read<CashierDashboardCubit>().refresh(),
+    AppRoutes.cashierInventory =>
+      (BuildContext context) => context.read<CashierInventoryCubit>().load(),
     AppRoutes.orders =>
       (BuildContext context) => context.read<OrdersCubit>().refreshOrders(),
     AppRoutes.reports =>
-      (BuildContext context) => context.read<ReportsOverviewCubit>().load(force: true),
+      (BuildContext context) =>
+          context.read<ReportsOverviewCubit>().load(force: true),
     AppRoutes.discounts =>
       (BuildContext context) => context.read<DiscountsCubit>().loadDiscounts(),
     AppRoutes.menuManagementProducts =>
@@ -2034,7 +2163,14 @@ String _activeDestinationFor(GoRouterState state) {
   if (state.uri.path.startsWith(AppRoutes.menuManagement)) {
     return 'menuManagement';
   }
+  if (state.uri.path.startsWith(AppRoutes.cashierInventory)) {
+    return 'inventory';
+  }
+  if (ShiftRouteLocations.isShiftLocation(state.uri.path)) {
+    return 'shift';
+  }
   return switch (state.matchedLocation) {
+    AppRoutes.dashboard => 'dashboard',
     AppRoutes.discounts || AppRoutes.discountCreate => 'discounts',
     AppRoutes.orders => 'orders',
     _ when state.uri.path.startsWith(AppRoutes.reports) => 'reports',
@@ -2045,6 +2181,14 @@ String _activeDestinationFor(GoRouterState state) {
 
 abstract final class AppRoutes {
   static const String pos = '/';
+
+  /// The Cashier's operational home. Every other role keeps its existing
+  /// landing, so this adds a surface rather than replacing one.
+  static const String dashboard = '/dashboard';
+
+  /// Cashier-safe operational stock. Deliberately outside `/inventory`, which
+  /// remains the full Inventory Center for Owner/Admin/Inventory Manager.
+  static const String cashierInventory = '/cashier-inventory';
   static const String orders = '/orders';
   static const String reports = '/reports';
   static const String reportsSalesProfitability =
@@ -2054,8 +2198,11 @@ abstract final class AppRoutes {
   static const String reportsExpenses = '/reports/expenses';
   static const String discounts = '/discounts';
   static const String discountCreate = '/discounts/create';
+  static const String shift = ShiftRouteLocations.root;
+  static const String shiftCurrent = ShiftRouteLocations.current;
+  static const String shiftHistory = ShiftRouteLocations.history;
+  static const String shiftClosing = ShiftRouteLocations.closing;
   static const String settings = '/settings';
-  static const String shiftClose = ShiftCloseRouteLocations.shiftClose;
   static const String cafeConfiguration = '/cafe-configuration';
   static const String cafeConfigurationOverview =
       '/cafe-configuration/overview';
@@ -2185,10 +2332,13 @@ abstract final class AppRoutes {
   static const String financeSales = '/finance/sales';
   static const String financeSalesNew = '/finance/sales/new';
   static const String financeSalesDetail = '/finance/sales/:salesId';
-  static const String financeCustomersReceivables = '/finance/customers-receivables';
+  static const String financeCustomersReceivables =
+      '/finance/customers-receivables';
   static const String financeSalesCreditNotes = '/finance/sales/credit-notes';
-  static const String financeSalesCreditNoteNew = '/finance/sales/credit-notes/new';
-  static const String financeSalesCreditNoteDetail = '/finance/sales/credit-notes/:creditNoteId';
+  static const String financeSalesCreditNoteNew =
+      '/finance/sales/credit-notes/new';
+  static const String financeSalesCreditNoteDetail =
+      '/finance/sales/credit-notes/:creditNoteId';
   static const String financePurchasesNew = '/finance/purchases/new';
   static const String financePurchasesDetail = '/finance/purchases/:purchaseId';
   static const String financePurchasesReceive =
@@ -2212,12 +2362,17 @@ abstract final class AppRoutes {
 
 abstract final class AppRouteNames {
   static const String pos = 'pos';
+  static const String dashboard = 'dashboard';
+  static const String cashierInventory = 'cashier-inventory';
   static const String orders = 'orders';
   static const String reports = 'reports';
   static const String discounts = 'discounts';
   static const String discountCreate = 'discount-create';
+  static const String shiftCurrent = 'shift-current';
+  static const String shiftHistory = 'shift-history';
+  static const String shiftClosing = 'shift-closing';
+  static const String shiftReport = 'shift-report';
   static const String settings = 'settings';
-  static const String shiftClose = 'shift-close';
   static const String cafeConfigurationOverview = 'cafe-configuration-overview';
   static const String cafeConfigurationProfile = 'cafe-configuration-profile';
   static const String cafeConfigurationBranches = 'cafe-configuration-branches';
@@ -2314,19 +2469,6 @@ void _returnToRecipeWorkspace(
     ),
   );
 }
-
-/// Centralized route guard: a cashier's bearer token is fine-grained on the
-/// backend (see BarCheckAccess/InventoryAccess), but the client must not
-/// even offer navigation into a module the cashier cannot use. This single
-/// top-level check covers every route so cashier restrictions cannot be
-/// bypassed by a direct URL/deep link, without scattering per-route checks.
-String? _cashierAccessRedirect(BuildContext _, GoRouterState state) =>
-    CashierAccess.allowsPath(
-      state.uri.path,
-      serviceLocator<AuthSessionCubit>().state.session?.user.role,
-    )
-    ? null
-    : AppRoutes.pos;
 
 String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState _) =>
     serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner'

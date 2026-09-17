@@ -8,6 +8,7 @@ use App\Http\Middleware\CanManageCafeConfiguration;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
 use App\Http\Middleware\EnsureBranchAccess;
+use App\Http\Middleware\EnsureCashierPermission;
 use App\Http\Middleware\EnsureCustomerPermission;
 use App\Http\Middleware\EnsureDiscountPermission;
 use App\Http\Middleware\EnsureFinancePermission;
@@ -58,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'barcheck.permission' => EnsureBarCheckPermission::class,
             'finance.permission' => EnsureFinancePermission::class,
             'customer.permission' => EnsureCustomerPermission::class,
+            'cashier.permission' => EnsureCashierPermission::class,
             'discount.permission' => EnsureDiscountPermission::class,
         ]);
     })

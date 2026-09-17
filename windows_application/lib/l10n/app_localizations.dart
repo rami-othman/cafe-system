@@ -13148,6 +13148,521 @@ abstract class AppLocalizations {
   /// **'of total'**
   String get expensesReportPercentOfTotal;
 
+  /// No description provided for @cashierHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get cashierHomeTitle;
+
+  /// No description provided for @cashierDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashier Operations'**
+  String get cashierDashboardTitle;
+
+  /// No description provided for @cashierDashboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything needed to run this shift at the till.'**
+  String get cashierDashboardSubtitle;
+
+  /// No description provided for @cashierBranchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get cashierBranchLabel;
+
+  /// No description provided for @cashierNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashier'**
+  String get cashierNameLabel;
+
+  /// No description provided for @cashierShiftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift'**
+  String get cashierShiftLabel;
+
+  /// No description provided for @cashierShiftOpenedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened'**
+  String get cashierShiftOpenedAt;
+
+  /// No description provided for @cashierShiftDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get cashierShiftDuration;
+
+  /// No description provided for @cashierShiftStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get cashierShiftStatus;
+
+  /// No description provided for @cashierShiftStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get cashierShiftStatusOpen;
+
+  /// No description provided for @cashierNoOpenShift.
+  ///
+  /// In en, this message translates to:
+  /// **'No open shift'**
+  String get cashierNoOpenShift;
+
+  /// No description provided for @cashierNoOpenShiftHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift figures appear once a shift is open at this branch.'**
+  String get cashierNoOpenShiftHint;
+
+  /// No description provided for @cashierScopeCurrentShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Current shift'**
+  String get cashierScopeCurrentShift;
+
+  /// No description provided for @cashierScopeBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get cashierScopeBranch;
+
+  /// No description provided for @cashierSectionCashAndShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash and shift'**
+  String get cashierSectionCashAndShift;
+
+  /// No description provided for @cashierSectionSalesAndOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales and orders'**
+  String get cashierSectionSalesAndOrders;
+
+  /// No description provided for @cashierSectionFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get cashierSectionFinance;
+
+  /// No description provided for @cashierSectionInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get cashierSectionInventory;
+
+  /// No description provided for @cashierSectionQuickAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick access'**
+  String get cashierSectionQuickAccess;
+
+  /// No description provided for @cashierSectionAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational alerts'**
+  String get cashierSectionAlerts;
+
+  /// No description provided for @cashierExpectedDrawer.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected drawer cash'**
+  String get cashierExpectedDrawer;
+
+  /// No description provided for @cashierExpectedDrawerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected, not counted. The physical count happens at shift close.'**
+  String get cashierExpectedDrawerHint;
+
+  /// No description provided for @cashierOpeningFloat.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening float'**
+  String get cashierOpeningFloat;
+
+  /// No description provided for @cashierCashSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash sales'**
+  String get cashierCashSales;
+
+  /// No description provided for @cashierReceiptVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash receipt vouchers'**
+  String get cashierReceiptVouchers;
+
+  /// No description provided for @cashierPaymentVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash payment vouchers'**
+  String get cashierPaymentVouchers;
+
+  /// No description provided for @cashierCashRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash refunds'**
+  String get cashierCashRefunds;
+
+  /// No description provided for @cashierShiftSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift sales'**
+  String get cashierShiftSales;
+
+  /// No description provided for @cashierOrderCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get cashierOrderCount;
+
+  /// No description provided for @cashierAverageOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Average order'**
+  String get cashierAverageOrder;
+
+  /// No description provided for @cashierCardSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Card sales'**
+  String get cashierCardSales;
+
+  /// No description provided for @cashierOtherMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Other methods'**
+  String get cashierOtherMethods;
+
+  /// No description provided for @cashierDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts'**
+  String get cashierDiscounts;
+
+  /// No description provided for @cashierRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunds'**
+  String get cashierRefunds;
+
+  /// No description provided for @cashierOrdersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get cashierOrdersActive;
+
+  /// No description provided for @cashierOrdersHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Held'**
+  String get cashierOrdersHeld;
+
+  /// No description provided for @cashierOrdersCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get cashierOrdersCompleted;
+
+  /// No description provided for @cashierPosWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'POS warehouse'**
+  String get cashierPosWarehouse;
+
+  /// No description provided for @cashierItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get cashierItemCount;
+
+  /// No description provided for @cashierLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get cashierLowStock;
+
+  /// No description provided for @cashierZeroStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero stock'**
+  String get cashierZeroStock;
+
+  /// No description provided for @cashierNegativeStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative stock'**
+  String get cashierNegativeStock;
+
+  /// No description provided for @cashierShiftCountStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift count'**
+  String get cashierShiftCountStatus;
+
+  /// No description provided for @cashierShiftCountComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get cashierShiftCountComplete;
+
+  /// No description provided for @cashierShiftCountPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Not complete'**
+  String get cashierShiftCountPending;
+
+  /// No description provided for @cashierShiftCountNotRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Not required'**
+  String get cashierShiftCountNotRequired;
+
+  /// No description provided for @cashierQuickPos.
+  ///
+  /// In en, this message translates to:
+  /// **'Point of sale'**
+  String get cashierQuickPos;
+
+  /// No description provided for @cashierQuickOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get cashierQuickOrders;
+
+  /// No description provided for @cashierQuickDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts'**
+  String get cashierQuickDiscounts;
+
+  /// No description provided for @cashierQuickReceiptVoucher.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt voucher'**
+  String get cashierQuickReceiptVoucher;
+
+  /// No description provided for @cashierQuickPaymentVoucher.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment voucher'**
+  String get cashierQuickPaymentVoucher;
+
+  /// No description provided for @cashierQuickPurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases'**
+  String get cashierQuickPurchases;
+
+  /// No description provided for @cashierQuickSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales'**
+  String get cashierQuickSales;
+
+  /// No description provided for @cashierQuickInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'POS stock'**
+  String get cashierQuickInventory;
+
+  /// No description provided for @cashierQuickLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low items'**
+  String get cashierQuickLowStock;
+
+  /// No description provided for @cashierQuickNegativeStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative items'**
+  String get cashierQuickNegativeStock;
+
+  /// No description provided for @cashierCloseShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Close shift'**
+  String get cashierCloseShift;
+
+  /// No description provided for @cashierCloseShiftUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The shift close flow is not available in this client yet.'**
+  String get cashierCloseShiftUnavailable;
+
+  /// No description provided for @cashierOperationsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} operations'**
+  String cashierOperationsCount(int count);
+
+  /// No description provided for @cashierPendingTemplates.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending'**
+  String cashierPendingTemplates(int count);
+
+  /// No description provided for @cashierAlertNoBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'No operational branch is assigned to this account.'**
+  String get cashierAlertNoBranch;
+
+  /// No description provided for @cashierAlertNoShift.
+  ///
+  /// In en, this message translates to:
+  /// **'No shift is open right now.'**
+  String get cashierAlertNoShift;
+
+  /// No description provided for @cashierAlertWarehouseMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No POS warehouse is configured for this branch.'**
+  String get cashierAlertWarehouseMissing;
+
+  /// No description provided for @cashierAlertWarehouseAmbiguous.
+  ///
+  /// In en, this message translates to:
+  /// **'More than one POS warehouse is configured for this branch.'**
+  String get cashierAlertWarehouseAmbiguous;
+
+  /// No description provided for @cashierAlertBlockingOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} orders must be settled before closing the shift.'**
+  String cashierAlertBlockingOrders(int count);
+
+  /// No description provided for @cashierAlertNegativeStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items have negative stock.'**
+  String cashierAlertNegativeStock(int count);
+
+  /// No description provided for @cashierAlertLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items are low on stock.'**
+  String cashierAlertLowStock(int count);
+
+  /// No description provided for @cashierAlertShiftCount.
+  ///
+  /// In en, this message translates to:
+  /// **'The shift count is not complete.'**
+  String get cashierAlertShiftCount;
+
+  /// No description provided for @cashierAlertsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No operational alerts.'**
+  String get cashierAlertsNone;
+
+  /// No description provided for @cashierRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get cashierRetry;
+
+  /// No description provided for @cashierLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load the operations dashboard.'**
+  String get cashierLoadError;
+
+  /// No description provided for @cashierInventoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POS stock'**
+  String get cashierInventoryTitle;
+
+  /// No description provided for @cashierInventorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational quantities for the warehouse this till sells from.'**
+  String get cashierInventorySubtitle;
+
+  /// No description provided for @cashierInventorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or code'**
+  String get cashierInventorySearchHint;
+
+  /// No description provided for @cashierInventoryFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get cashierInventoryFilterAll;
+
+  /// No description provided for @cashierInventoryStateNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get cashierInventoryStateNormal;
+
+  /// No description provided for @cashierInventoryStateLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get cashierInventoryStateLow;
+
+  /// No description provided for @cashierInventoryStateZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero'**
+  String get cashierInventoryStateZero;
+
+  /// No description provided for @cashierInventoryStateNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative'**
+  String get cashierInventoryStateNegative;
+
+  /// No description provided for @cashierInventoryColumnItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get cashierInventoryColumnItem;
+
+  /// No description provided for @cashierInventoryColumnQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get cashierInventoryColumnQuantity;
+
+  /// No description provided for @cashierInventoryColumnState.
+  ///
+  /// In en, this message translates to:
+  /// **'State'**
+  String get cashierInventoryColumnState;
+
+  /// No description provided for @cashierInventoryColumnLastMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Last movement'**
+  String get cashierInventoryColumnLastMovement;
+
+  /// No description provided for @cashierInventoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no items in this warehouse.'**
+  String get cashierInventoryEmpty;
+
+  /// No description provided for @cashierInventoryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No POS warehouse is configured for this branch.'**
+  String get cashierInventoryUnavailable;
+
+  /// No description provided for @cashierInventoryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load POS stock.'**
+  String get cashierInventoryError;
   /// No description provided for @discountV2PackageBundle.
   ///
   /// In en, this message translates to:

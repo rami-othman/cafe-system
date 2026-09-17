@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/access/cashier_access.dart';
 import 'finance_design.dart';
 import 'finance_navigation_bar.dart';
 
@@ -21,17 +22,19 @@ class FinanceModuleShell extends StatelessWidget {
     super.key,
     required this.selectedTab,
     required this.child,
+    this.access,
   });
 
   final String selectedTab;
   final Widget child;
+  final CashierAccess? access;
 
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: FinanceColors.workspace,
     child: Column(
       children: <Widget>[
-        FinanceNavigationBar(selected: selectedTab),
+        FinanceNavigationBar(selected: selectedTab, access: access),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(

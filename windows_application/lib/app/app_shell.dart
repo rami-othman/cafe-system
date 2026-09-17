@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/branding/app_brand.dart';
 import '../core/branding/brand_title_synchronizer.dart';
@@ -16,7 +17,7 @@ import '../l10n/app_localizations.dart';
 import '../shared/widgets/app_sidebar.dart';
 import '../shared/widgets/app_top_bar.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
     required this.child,
@@ -33,6 +34,73 @@ class AppShell extends StatelessWidget {
   final Widget? topBar;
   final Future<void> Function(BuildContext context)? onRefresh;
   final bool prioritizeContentWidth;
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  static const String _sidebarWidthPreference = 'app_sidebar_width';
+  static const String _sidebarCollapsedPreference = 'app_sidebar_collapsed';
+  static const double _sidebarMinWidth = 180;
+  static const double _sidebarMaxWidth = 360;
+
+  double _sidebarWidth = AppSizes.sidebarWidth;
+  bool _sidebarCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSidebarPreference();
+  }
+
+  Future<void> _restoreSidebarPreference() async {
+    try {
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      final double width = preferences.getDouble(_sidebarWidthPreference) ?? _sidebarWidth;
+      final bool collapsed =
+          preferences.getBool(_sidebarCollapsedPreference) ?? _sidebarCollapsed;
+      if (!mounted) return;
+      setState(() {
+        _sidebarWidth =
+            width.clamp(_sidebarMinWidth, _sidebarMaxWidth).toDouble();
+        _sidebarCollapsed = collapsed;
+      });
+    } catch (_) {
+      // Preference storage is optional; the shell remains fully usable when
+      // an embedding (such as a widget test) does not provide it.
+    }
+  }
+
+  Future<void> _saveSidebarPreference() async {
+    try {
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      await preferences.setDouble(_sidebarWidthPreference, _sidebarWidth);
+      await preferences.setBool(_sidebarCollapsedPreference, _sidebarCollapsed);
+    } catch (_) {
+      // A failed preference write must never prevent navigation or resizing.
+    }
+  }
+
+  void _toggleSidebar() {
+    setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+    _saveSidebarPreference();
+  }
+
+  void _resizeSidebar(double delta, TextDirection direction) {
+    final double directionalDelta =
+        direction == TextDirection.rtl ? -delta : delta;
+    setState(() {
+      if (_sidebarCollapsed) {
+        _sidebarCollapsed = false;
+      }
+      _sidebarWidth =
+          (_sidebarWidth + directionalDelta)
+              .clamp(_sidebarMinWidth, _sidebarMaxWidth)
+              .toDouble();
+    });
+    _saveSidebarPreference();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +136,7 @@ class AppShell extends StatelessWidget {
       localizedOperationalHub:
           l10n?.operationalHub ??
           (isArabic ? 'مركز العمليات' : 'OPERATIONAL HUB'),
-      localizedPos:
-          l10n?.navigationPos ??
-          (isArabic ? 'نقطة البيع' : 'POS'),
+      localizedPos: l10n?.navigationPos ?? (isArabic ? 'نقطة البيع' : 'POS'),
     );
 
     return BrandTitleSynchronizer(
@@ -83,47 +149,107 @@ class AppShell extends StatelessWidget {
 
             final bool isLarge =
                 Responsive.isLargeWidth(width) &&
-                (!prioritizeContentWidth ||
-                    width >=
-                        AppSizes.menuModuleSidebarExpandedBreakpoint);
-
+                (!widget.prioritizeContentWidth ||
+                    width >= AppSizes.menuModuleSidebarExpandedBreakpoint);
             final bool isCompact = Responsive.isCompactWidth(width);
 
             final double rightPanelWidth = isLarge
                 ? AppSizes.rightPanelWidth
                 : AppSizes.mediumRightPanelWidth;
+            final bool sidebarCollapsed = !isLarge || _sidebarCollapsed;
+            final double sidebarWidth = sidebarCollapsed
+                ? AppSizes.sidebarRailWidth
+                : _sidebarWidth;
 
             return Row(
               children: <Widget>[
-                AppSidebar(
-                  activeLabel: activeLabel,
-                  isCollapsed: !isLarge,
-                  actorRole: user?.role,
-                  brandIdentity: identity,
-                  canManageCustomers:
-                      CustomerManagementAccess.allows(session),
+                SizedBox(
+                  width: sidebarWidth,
+                  child: AppSidebar(
+                    activeLabel: widget.activeLabel,
+                    isCollapsed: sidebarCollapsed,
+                    width: sidebarWidth,
+                    actorRole: user?.role,
+                    financeCapabilities:
+                        user?.financeCapabilities ?? const <String>{},
+                    brandIdentity: identity,
+                    canManageCustomers:
+                        CustomerManagementAccess.allows(session),
+                  ),
                 ),
+                if (isLarge)
+                  _SidebarResizeHandle(
+                    isCollapsed: _sidebarCollapsed,
+                    onToggle: _toggleSidebar,
+                    onResize: (double delta) =>
+                        _resizeSidebar(delta, Directionality.of(context)),
+                  ),
                 Expanded(
                   child: Column(
                     children: <Widget>[
-                      topBar ??
+                      widget.topBar ??
                           AppTopBar(
                             showCartButton:
-                                isCompact && rightPanel != null,
-                            onRefresh: onRefresh,
+                                isCompact && widget.rightPanel != null,
+                            onRefresh: widget.onRefresh,
                           ),
-                      Expanded(child: child),
+                      Expanded(child: widget.child),
                     ],
                   ),
                 ),
-                if (!isCompact && rightPanel != null)
-                  SizedBox(
-                    width: rightPanelWidth,
-                    child: rightPanel,
-                  ),
+                if (!isCompact && widget.rightPanel != null)
+                  SizedBox(width: rightPanelWidth, child: widget.rightPanel),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarResizeHandle extends StatelessWidget {
+  const _SidebarResizeHandle({
+    required this.isCollapsed,
+    required this.onToggle,
+    required this.onResize,
+  });
+
+  final bool isCollapsed;
+  final VoidCallback onToggle;
+  final ValueChanged<double> onResize;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (DragUpdateDetails details) =>
+            onResize(details.delta.dx),
+        child: SizedBox(
+          width: 20,
+          child: Center(
+            child: Tooltip(
+              message: isCollapsed
+                  ? (isArabic ? 'توسيع الشريط الجانبي' : 'Expand sidebar')
+                  : (isArabic ? 'طي الشريط الجانبي' : 'Collapse sidebar'),
+              child: IconButton(
+                constraints: const BoxConstraints.tightFor(width: 20, height: 32),
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                iconSize: 16,
+                color: AppColors.textMuted,
+                onPressed: onToggle,
+                icon: Icon(
+                  isCollapsed
+                      ? Icons.keyboard_double_arrow_right
+                      : Icons.keyboard_double_arrow_left,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

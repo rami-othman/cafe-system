@@ -1,6 +1,7 @@
 // ignore_for_file: use_null_aware_elements
 
 import 'package:equatable/equatable.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 import '../../menus/models/menu_models.dart';
 
@@ -251,4 +252,4 @@ bool _requiredBool(Map<String, dynamic> json, String key) {
 int? _nullableInt(dynamic value) => value == null ? null : _int(value);
 String? _nullableString(dynamic value) => value == null ? null : '$value';
 DateTime? _date(dynamic value) =>
-    value == null ? null : DateTime.tryParse('$value')?.toLocal();
+    value == null ? null : parseBackendDateTime('$value');

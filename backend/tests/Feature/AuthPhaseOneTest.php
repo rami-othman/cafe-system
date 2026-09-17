@@ -11,6 +11,7 @@ use App\Services\UserBranchAssignmentService;
 use App\Services\UserLifecycleService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -34,12 +35,20 @@ class AuthPhaseOneTest extends TestCase
         $employee = $this->user($tenant, 'cashier', 'Cashier1', 'Rami');
         $branch = $this->branch($tenant);
         app(UserBranchAssignmentService::class)->assign($employee, $branch);
+        DB::table('finance_role_permissions')->insert([
+            'tenant_id' => $tenant->id,
+            'role' => 'cashier',
+            'permission' => 'finance.vouchers.view',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $ownerResponse = $this->postJson('/api/v1/auth/login', ['email' => $owner->email, 'password' => 'OwnerPassword', 'deviceName' => 'Owner laptop'])->assertOk();
         $this->postJson('/api/v1/auth/login', ['email' => $manager->email, 'password' => 'ManagerPass'])->assertOk();
         $employeeResponse = $this->postJson('/api/v1/auth/login', ['username' => 'rami', 'password' => 'Cashier1'])->assertOk()
             ->assertJsonPath('data.user.id', $employee->id)->assertJsonPath('data.branchAccess.allBranches', false)
-            ->assertJsonPath('data.branchAccess.branchIds.0', $branch->id);
+            ->assertJsonPath('data.branchAccess.branchIds.0', $branch->id)
+            ->assertJsonPath('data.user.financeCapabilities.0', 'finance.vouchers.view');
 
         $token = $ownerResponse->json('data.accessToken');
         $ownerResponse->assertJsonPath('data.capabilities.customer.manage', true);

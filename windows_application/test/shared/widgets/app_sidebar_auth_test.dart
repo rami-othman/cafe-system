@@ -7,7 +7,7 @@ import 'package:windows_application/features/auth/controllers/auth_session_cubit
 import 'package:windows_application/features/auth/models/auth_session.dart';
 import 'package:windows_application/features/auth/repositories/auth_repository.dart';
 import 'package:windows_application/features/auth/repositories/auth_session_storage.dart';
-import 'package:windows_application/shared/widgets/app_sidebar_item.dart';
+import 'package:windows_application/shared/widgets/app_sidebar.dart';
 
 void main() {
   testWidgets(
@@ -74,56 +74,6 @@ void main() {
   );
 
   testWidgets(
-    'Employee (cashier) sidebar contains POS, Orders, Customers, Discounts, and Finance',
-    (WidgetTester tester) async {
-      final AuthSessionCubit cubit = await _authenticatedCubit(
-        // Cashiers always retain customer lookup for POS regardless of the
-        // manager-only customerManagementAllowed capability flag.
-        _session(role: 'employee', canManageCustomers: true),
-      );
-      addTearDown(cubit.close);
-
-      await _pumpShell(tester, cubit);
-
-      expect(_sidebarText('POS'), findsOneWidget);
-      expect(_sidebarText('Orders'), findsOneWidget);
-      expect(_sidebarText('Customers'), findsOneWidget);
-      expect(_sidebarText('Discounts'), findsOneWidget);
-      expect(_sidebarText('Finance'), findsOneWidget);
-
-      expect(_sidebarText('Dashboard'), findsNothing);
-      expect(_sidebarText('Cafe Configuration'), findsNothing);
-      expect(_sidebarText('Menu Management'), findsNothing);
-      expect(_sidebarText('Inventory'), findsNothing);
-      expect(_sidebarText('Reports'), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'Cashier (legacy role spelling) sidebar contains the limited Finance workspace',
-    (WidgetTester tester) async {
-      final AuthSessionCubit cubit = await _authenticatedCubit(
-        _session(role: 'cashier', canManageCustomers: true),
-      );
-      addTearDown(cubit.close);
-
-      await _pumpShell(tester, cubit);
-
-      expect(_sidebarText('POS'), findsOneWidget);
-      expect(_sidebarText('Orders'), findsOneWidget);
-      expect(_sidebarText('Customers'), findsOneWidget);
-      expect(_sidebarText('Discounts'), findsOneWidget);
-      expect(_sidebarText('Finance'), findsOneWidget);
-
-      expect(_sidebarText('Dashboard'), findsNothing);
-      expect(_sidebarText('Cafe Configuration'), findsNothing);
-      expect(_sidebarText('Menu Management'), findsNothing);
-      expect(_sidebarText('Inventory'), findsNothing);
-      expect(find.text('Reports'), findsNothing);
-    },
-  );
-
-  testWidgets(
     'mounted sidebar updates after auth refresh replaces legacy Owner capability',
     (WidgetTester tester) async {
       final _SessionRepository repository = _SessionRepository(
@@ -175,14 +125,87 @@ void main() {
       expect(find.text('Customers'), findsNothing);
     },
   );
-}
 
-/// Scopes a text finder to sidebar nav items, since the sidebar's own brand
-/// header subtitle also renders the word "POS" for a cashier session.
-Finder _sidebarText(String label) => find.descendant(
-  of: find.byType(AppSidebarItem),
-  matching: find.text(label),
-);
+  // The till roles now get the Cashier operational navigation rather than a
+  // trimmed copy of the management one: Reports is a management surface and is
+  // no longer offered to them. `employee` is the role code the authentication
+  // API returns; `cashier` is its legacy alias. Both must behave identically.
+  for (final String role in <String>['employee', 'cashier']) {
+    testWidgets('$role gets the Cashier navigation, not the management one', (
+      WidgetTester tester,
+    ) async {
+      await _pumpSidebar(
+        tester,
+        role,
+        financeCapabilities: const <String>{'finance.vouchers.view'},
+      );
+
+      expect(find.text('Menu Management'), findsNothing);
+      expect(find.text('Reports'), findsNothing);
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('POS'), findsOneWidget);
+      expect(find.text('Inventory'), findsOneWidget);
+      expect(find.text('Finance'), findsOneWidget);
+    });
+  }
+
+  testWidgets('Cashier without Finance access does not see its sidebar link', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'cashier');
+
+    expect(find.text('Finance'), findsNothing);
+  });
+
+  testWidgets('Owner sees Menu Management and retains Reports', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'owner');
+
+    expect(find.text('Menu Management'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
+  });
+
+  testWidgets('Manager sees Menu Management and retains Reports', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'manager');
+
+    expect(find.text('Menu Management'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
+  });
+
+  testWidgets('Owner sees Cafe Configuration', (WidgetTester tester) async {
+    await _pumpSidebar(tester, 'owner');
+
+    expect(find.text('Cafe Configuration'), findsOneWidget);
+  });
+
+  testWidgets('Manager does not see Cafe Configuration', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'manager');
+
+    expect(find.text('Cafe Configuration'), findsNothing);
+  });
+
+  testWidgets('Employee does not see Cafe Configuration', (
+    WidgetTester tester,
+  ) async {
+    await _pumpSidebar(tester, 'employee');
+
+    expect(find.text('Cafe Configuration'), findsNothing);
+  });
+
+  testWidgets('Employee and Cashier both reach the operational stock view', (
+    WidgetTester tester,
+  ) async {
+    for (final String role in <String>['employee', 'cashier']) {
+      await _pumpSidebar(tester, role);
+      expect(find.text('Inventory'), findsOneWidget, reason: role);
+    }
+  });
+}
 
 Future<AuthSessionCubit> _authenticatedCubit(AuthSession session) async {
   final AuthSessionCubit cubit = _cubit(
@@ -221,6 +244,36 @@ Future<void> _pumpShell(WidgetTester tester, AuthSessionCubit cubit) async {
           activeLabel: 'POS',
           topBar: SizedBox.shrink(),
           child: SizedBox.shrink(),
+        ),
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
+Future<void> _pumpSidebar(
+  WidgetTester tester,
+  String role, {
+  Set<String> financeCapabilities = const <String>{},
+}) async {
+  // Explicit, tall-enough surface: the default test surface is too short to
+  // mount every sidebar item's Element (ListView/Sliver virtualization only
+  // builds what's within the viewport + cache extent) now that the owner
+  // role's item count grew with Cafe Configuration — without this, `find`
+  // can miss items pushed past the cache extent, not because they're absent.
+  tester.view.physicalSize = const Size(1280, 900);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: AppSidebar(
+          activeLabel: 'POS',
+          actorRole: role,
+          financeCapabilities: financeCapabilities,
         ),
       ),
     ),

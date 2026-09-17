@@ -1,6 +1,6 @@
 /// Standalone route path constants for the Shift module, kept
-/// dependency-free (like `shift_close_route_locations.dart`) so the router,
-/// the sidebar and the module shell can all reference them without a
+/// dependency-free (like other `*_route_locations.dart` files) so the
+/// router, the sidebar and the module shell can all reference them without a
 /// circular import on `app_router.dart`.
 abstract final class ShiftRouteLocations {
   static const String root = '/shift';

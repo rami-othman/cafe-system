@@ -139,7 +139,7 @@ class _SalesCreditNoteDetailScreenState extends State<SalesCreditNoteDetailScree
     try {
       final preview = await cubit.repository.creditNotePostingPreview(n.id);
       if (!mounted) return;
-      final approved = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
+      final approved = await showDialog<bool>(context: context, builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('تأكيد ترحيل الإشعار الدائن'),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Text('الإجمالي المُعتمد: ${preview.total}'), const SizedBox(height: 10),
@@ -148,7 +148,7 @@ class _SalesCreditNoteDetailScreenState extends State<SalesCreditNoteDetailScree
           const SizedBox(height: 10), const Text('بنود المرتجع'),
           ...preview.lines.map((l) => Text('${l.productName}: ${l.quantity} — ${l.restock ? "إعادة للمخزون (تكلفة: ${l.cogsReversal})" : "بدون إعادة للمخزون"}')),
         ])),
-        actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')), ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('ترحيل'))],
+        actions: <Widget>[TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')), ElevatedButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('ترحيل'))],
       ));
       if (approved != true) return;
       await cubit.repository.postCreditNote(n.id, 'cn-post-${n.id}-${DateTime.now().microsecondsSinceEpoch}');

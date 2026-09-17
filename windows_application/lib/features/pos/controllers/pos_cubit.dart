@@ -110,6 +110,26 @@ class PosCubit extends Cubit<PosState> {
     return true;
   }
 
+  /// Refreshes only the branch's current-shift marker. The top application
+  /// badge uses this marker, so opening or closing a shift must not wait for a
+  /// full POS catalog reload before reflecting the new operational state.
+  Future<void> refreshShiftStatus() async {
+    final int branchId = state.branchId;
+    try {
+      final shift = await repository.getCurrentShift(branchId: branchId);
+      if (isClosed || state.branchId != branchId) return;
+      emit(
+        state.copyWith(
+          shiftId: shift?.id,
+          clearShiftId: shift == null,
+        ),
+      );
+    } catch (_) {
+      // Keep the last known state on a transient refresh failure. The POS
+      // screen has visible connection/error handling for full loads.
+    }
+  }
+
   Future<void> _activateBranch(
     Branch branch, {
     bool reloadCustomers = false,

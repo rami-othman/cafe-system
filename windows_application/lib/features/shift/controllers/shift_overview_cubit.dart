@@ -2,24 +2,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/shift_assessment.dart';
 import '../models/shift_models.dart';
-import '../models/shift_scenario.dart';
-import '../repositories/shift_mock_repository.dart';
+import '../repositories/shift_repository.dart';
 import '../widgets/shift_strings.dart';
 import 'shift_overview_state.dart';
 
 /// Owns the current-shift screen: loading the open shift, deriving its
 /// alerts/readiness, and validating the shift-opening form.
 class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
-  ShiftOverviewCubit({required this.repository})
-    : super(ShiftOverviewState(scenario: repository.scenario));
+  ShiftOverviewCubit({required this.repository, this.branchId})
+    : super(const ShiftOverviewState());
 
-  final ShiftMockRepository repository;
+  final ShiftRepository repository;
+  final int? branchId;
 
   Future<void> load() async {
     emit(
       state.copyWith(
         status: ShiftOverviewStatus.loading,
-        scenario: repository.scenario,
         clearErrorMessage: true,
       ),
     );
@@ -61,20 +60,6 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
     }
   }
 
-  /// Switches the demo scenario and reloads. Debug-only affordance.
-  Future<void> selectScenario(ShiftScenario scenario) async {
-    repository.selectScenario(scenario);
-    emit(
-      state.copyWith(
-        scenario: scenario,
-        openingFloatInput: '',
-        openingNoteInput: '',
-        clearOpeningFloatError: true,
-      ),
-    );
-    await load();
-  }
-
   void updateOpeningFloat(String value) => emit(
     state.copyWith(openingFloatInput: value, clearOpeningFloatError: true),
   );
@@ -112,15 +97,16 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
     if (amount == null) return false;
 
     emit(state.copyWith(isOpeningShift: true));
-    final ShiftSnapshot snapshot = await repository.openShift(
-      openingFloat: amount,
-      note: state.openingNoteInput.trim(),
-    );
+    try {
+      final ShiftSnapshot snapshot = await repository.openShift(
+        openingFloat: amount,
+        note: state.openingNoteInput.trim(),
+        branchId: branchId,
+      );
     if (isClosed) return false;
     emit(
       state.copyWith(
         status: ShiftOverviewStatus.ready,
-        scenario: repository.scenario,
         snapshot: snapshot,
         assessment: ShiftAssessment.build(
           snapshot: snapshot,
@@ -132,6 +118,12 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
         clearOpeningFloatError: true,
       ),
     );
-    return true;
+      return true;
+    } on ShiftDataException catch (error) {
+      if (!isClosed) {
+        emit(state.copyWith(isOpeningShift: false, errorMessage: error.message));
+      }
+      return false;
+    }
   }
 }

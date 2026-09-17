@@ -153,7 +153,12 @@ class PurchaseController extends Controller
                     'conversionFactor' => $l->conversion_factor,
                     'baseQuantity' => $l->base_quantity,
                     'unitPrice' => $l->unit_price,
+                    'lineGrossAmount' => $l->line_gross_amount,
+                    'discountType' => $l->discount_type,
+                    'discountValue' => $l->discount_value,
                     'discountAmount' => $l->discount_amount,
+                    'allocatedDiscount' => $l->allocated_discount,
+                    'allocatedLandedCost' => $l->allocated_landed_cost,
                     'taxAmount' => $l->tax_amount,
                     'lineTotal' => $l->line_total,
                     'warehouseId' => $l->warehouse_id ? (int) $l->warehouse_id : null,
@@ -163,6 +168,16 @@ class PurchaseController extends Controller
                     'remainingQuantity' => $ordered === null ? null : InventoryDecimal::quantity(max(0, $ordered - $received)),
                 ];
             }, $lines)]
+            + ['charges' => array_map(fn (object $c): array => [
+                'id' => (int) $c->id,
+                'chargeNumber' => (int) $c->charge_number,
+                'description' => $c->description,
+                'treatment' => $c->treatment,
+                'expenseCategoryId' => $c->expense_category_id ? (int) $c->expense_category_id : null,
+                'expenseCategoryName' => $c->expense_category_name,
+                'amount' => $c->amount,
+                'taxAmount' => $c->tax_amount,
+            ], $this->invoices->charges($tenant, $purchase))]
             + ['receipts' => $receipts]
             + ['payments' => $payments]
             + ['allowedActions' => $this->actions($row, $permissions)]]);
@@ -235,6 +250,10 @@ class PurchaseController extends Controller
             'debitAccountName' => $row->debit_account_name,
             'subtotal' => Money::decimal(Money::cents($row->subtotal)),
             'taxAmount' => Money::decimal(Money::cents($row->tax_amount)),
+            'discountType' => $row->discount_type,
+            'discountValue' => $row->discount_value,
+            'discountAmount' => Money::decimal(Money::cents($row->discount_amount)),
+            'chargesAmount' => Money::decimal(Money::cents($row->charges_amount)),
             'totalAmount' => Money::decimal($totalCents),
             'paidAmount' => Money::decimal($paidCents),
             'remainingAmount' => Money::decimal($remaining),

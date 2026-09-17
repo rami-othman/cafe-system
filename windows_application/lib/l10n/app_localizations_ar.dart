@@ -7328,6 +7328,280 @@ class AppLocalizationsAr extends AppLocalizations {
   String get expensesReportPercentOfTotal => 'من الإجمالي';
 
   @override
+  String get cashierHomeTitle => 'الرئيسية';
+
+  @override
+  String get cashierDashboardTitle => 'عمليات الكاشير';
+
+  @override
+  String get cashierDashboardSubtitle =>
+      'كل ما تحتاجه لإدارة ورديتك على نقطة البيع.';
+
+  @override
+  String get cashierBranchLabel => 'الفرع';
+
+  @override
+  String get cashierNameLabel => 'الكاشير';
+
+  @override
+  String get cashierShiftLabel => 'الوردية';
+
+  @override
+  String get cashierShiftOpenedAt => 'بدأت';
+
+  @override
+  String get cashierShiftDuration => 'المدة';
+
+  @override
+  String get cashierShiftStatus => 'الحالة';
+
+  @override
+  String get cashierShiftStatusOpen => 'مفتوحة';
+
+  @override
+  String get cashierNoOpenShift => 'لا توجد وردية مفتوحة';
+
+  @override
+  String get cashierNoOpenShiftHint =>
+      'تظهر أرقام الوردية بعد فتح وردية في هذا الفرع.';
+
+  @override
+  String get cashierScopeCurrentShift => 'الوردية الحالية';
+
+  @override
+  String get cashierScopeBranch => 'الفرع';
+
+  @override
+  String get cashierSectionCashAndShift => 'الصندوق والوردية';
+
+  @override
+  String get cashierSectionSalesAndOrders => 'المبيعات والطلبات';
+
+  @override
+  String get cashierSectionFinance => 'المالية';
+
+  @override
+  String get cashierSectionInventory => 'المخزون';
+
+  @override
+  String get cashierSectionQuickAccess => 'وصول سريع';
+
+  @override
+  String get cashierSectionAlerts => 'تنبيهات تشغيلية';
+
+  @override
+  String get cashierExpectedDrawer => 'إجمالي الصندوق المتوقع';
+
+  @override
+  String get cashierExpectedDrawerHint =>
+      'مبلغ متوقع وليس فعلياً. الجرد النقدي يتم عند إغلاق الوردية.';
+
+  @override
+  String get cashierOpeningFloat => 'عهدة بداية الوردية';
+
+  @override
+  String get cashierCashSales => 'مبيعات نقدية';
+
+  @override
+  String get cashierReceiptVouchers => 'سندات قبض نقدية';
+
+  @override
+  String get cashierPaymentVouchers => 'سندات دفع نقدية';
+
+  @override
+  String get cashierCashRefunds => 'مرتجعات نقدية';
+
+  @override
+  String get cashierShiftSales => 'مبيعات الوردية';
+
+  @override
+  String get cashierOrderCount => 'عدد الطلبات';
+
+  @override
+  String get cashierAverageOrder => 'متوسط الطلب';
+
+  @override
+  String get cashierCardSales => 'مبيعات بطاقة';
+
+  @override
+  String get cashierOtherMethods => 'وسائل دفع أخرى';
+
+  @override
+  String get cashierDiscounts => 'الخصومات';
+
+  @override
+  String get cashierRefunds => 'المرتجعات';
+
+  @override
+  String get cashierOrdersActive => 'نشطة';
+
+  @override
+  String get cashierOrdersHeld => 'معلقة';
+
+  @override
+  String get cashierOrdersCompleted => 'مكتملة';
+
+  @override
+  String get cashierPosWarehouse => 'مخزن نقطة البيع';
+
+  @override
+  String get cashierItemCount => 'عدد المواد';
+
+  @override
+  String get cashierLowStock => 'مخزون منخفض';
+
+  @override
+  String get cashierZeroStock => 'مخزون صفر';
+
+  @override
+  String get cashierNegativeStock => 'مخزون سالب';
+
+  @override
+  String get cashierShiftCountStatus => 'جرد الوردية';
+
+  @override
+  String get cashierShiftCountComplete => 'مكتمل';
+
+  @override
+  String get cashierShiftCountPending => 'غير مكتمل';
+
+  @override
+  String get cashierShiftCountNotRequired => 'غير مطلوب';
+
+  @override
+  String get cashierQuickPos => 'نقطة البيع';
+
+  @override
+  String get cashierQuickOrders => 'الطلبات';
+
+  @override
+  String get cashierQuickDiscounts => 'الخصومات';
+
+  @override
+  String get cashierQuickReceiptVoucher => 'سند قبض';
+
+  @override
+  String get cashierQuickPaymentVoucher => 'سند دفع';
+
+  @override
+  String get cashierQuickPurchases => 'المشتريات';
+
+  @override
+  String get cashierQuickSales => 'المبيعات';
+
+  @override
+  String get cashierQuickInventory => 'مخزون نقطة البيع';
+
+  @override
+  String get cashierQuickLowStock => 'المواد المنخفضة';
+
+  @override
+  String get cashierQuickNegativeStock => 'المواد السالبة';
+
+  @override
+  String get cashierCloseShift => 'إغلاق الوردية';
+
+  @override
+  String get cashierCloseShiftUnavailable =>
+      'تدفق إغلاق الوردية غير متاح في هذا التطبيق بعد.';
+
+  @override
+  String cashierOperationsCount(int count) {
+    return '$count عملية';
+  }
+
+  @override
+  String cashierPendingTemplates(int count) {
+    return '$count متبقٍ';
+  }
+
+  @override
+  String get cashierAlertNoBranch => 'لا يوجد فرع تشغيلي مرتبط بهذا الحساب.';
+
+  @override
+  String get cashierAlertNoShift => 'لا توجد وردية مفتوحة حالياً.';
+
+  @override
+  String get cashierAlertWarehouseMissing =>
+      'لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.';
+
+  @override
+  String get cashierAlertWarehouseAmbiguous =>
+      'يوجد أكثر من مخزن لنقطة البيع في هذا الفرع.';
+
+  @override
+  String cashierAlertBlockingOrders(int count) {
+    return '$count طلبات يجب إنهاؤها قبل إغلاق الوردية.';
+  }
+
+  @override
+  String cashierAlertNegativeStock(int count) {
+    return '$count مواد بمخزون سالب.';
+  }
+
+  @override
+  String cashierAlertLowStock(int count) {
+    return '$count مواد منخفضة المخزون.';
+  }
+
+  @override
+  String get cashierAlertShiftCount => 'الجرد غير مكتمل.';
+
+  @override
+  String get cashierAlertsNone => 'لا توجد تنبيهات تشغيلية.';
+
+  @override
+  String get cashierRetry => 'إعادة المحاولة';
+
+  @override
+  String get cashierLoadError => 'تعذر تحميل لوحة العمليات.';
+
+  @override
+  String get cashierInventoryTitle => 'مخزون نقطة البيع';
+
+  @override
+  String get cashierInventorySubtitle =>
+      'الكميات التشغيلية للمخزن الذي تبيع منه نقطة البيع.';
+
+  @override
+  String get cashierInventorySearchHint => 'ابحث بالاسم أو الرمز';
+
+  @override
+  String get cashierInventoryFilterAll => 'الكل';
+
+  @override
+  String get cashierInventoryStateNormal => 'طبيعي';
+
+  @override
+  String get cashierInventoryStateLow => 'منخفض';
+
+  @override
+  String get cashierInventoryStateZero => 'صفر';
+
+  @override
+  String get cashierInventoryStateNegative => 'سالب';
+
+  @override
+  String get cashierInventoryColumnItem => 'المادة';
+
+  @override
+  String get cashierInventoryColumnQuantity => 'الكمية';
+
+  @override
+  String get cashierInventoryColumnState => 'الحالة';
+
+  @override
+  String get cashierInventoryColumnLastMovement => 'آخر حركة';
+
+  @override
+  String get cashierInventoryEmpty => 'لا توجد مواد في هذا المخزن.';
+
+  @override
+  String get cashierInventoryUnavailable =>
+      'لا يوجد مخزن تشغيلي مضبوط لنقطة البيع في هذا الفرع.';
+
+  @override
+  String get cashierInventoryError => 'تعذر تحميل مخزون نقطة البيع.';
   String get discountV2PackageBundle => 'حزمة / باقة';
 
   @override

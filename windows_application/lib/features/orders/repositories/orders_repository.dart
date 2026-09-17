@@ -260,8 +260,8 @@ class OrdersRepository {
       amount: readDouble(json['amount'], fallback: request.amount),
       reason: readString(json['reason'], fallback: request.reason),
       managerNotes: request.managerNotes,
-      refundedAt:
-          DateTime.tryParse(readString(json['refundedAt'])) ?? DateTime.now(),
+      refundedAt: parseBackendDateTime(readString(json['refundedAt'])) ??
+          DateTime.now(),
     );
   }
 

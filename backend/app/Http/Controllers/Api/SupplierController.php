@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\SupplierPayableQueryService;
 use App\Services\SupplierService;
+use App\Support\Search\SmartSearch;
 use App\Support\FinancialActor;
 use App\Support\FinanceAccess;
 use App\Support\Money;
@@ -24,9 +25,16 @@ class SupplierController extends Controller
         if ($request->filled('status')) {
             $q->where('is_active', $request->input('status') === 'active');
         }
+        $search = $request->input('search');
+        $searchFields = [
+            ['column' => 'name', 'weight' => 3],
+            ['column' => 'phone', 'weight' => 2, 'type' => 'phone'],
+            ['column' => 'supplier_number', 'weight' => 2, 'type' => 'code'],
+        ];
         if ($request->filled('search')) {
-            $like = '%'.strtolower($request->input('search')).'%';
-            $q->where(fn ($x) => $x->whereRaw('LOWER(name) LIKE ?', [$like])->orWhereRaw('LOWER(supplier_number) LIKE ?', [$like]));
+            SmartSearch::apply($q, $search, $searchFields);
+            SmartSearch::withRelevance($q, $search, $searchFields);
+            $q->orderByDesc('smart_rank');
         }
         $paginator = $q->orderBy('name')->paginate($this->perPage($request));
         $outstanding = $this->payable->outstandingBySupplier($tenant);

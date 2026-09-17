@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/shift_models.dart';
-import '../repositories/shift_mock_repository.dart';
+import '../repositories/shift_repository.dart';
 import 'shift_history_state.dart';
 
 /// Owns the history list and its filters. Filtering, paging and the summary
@@ -9,10 +9,9 @@ import 'shift_history_state.dart';
 /// change here is a single emit and the KPI row can never drift from the
 /// table below it.
 class ShiftHistoryCubit extends Cubit<ShiftHistoryState> {
-  ShiftHistoryCubit({required this.repository})
-    : super(const ShiftHistoryState());
+  ShiftHistoryCubit({required this.repository}) : super(const ShiftHistoryState());
 
-  final ShiftMockRepository repository;
+  final ShiftRepository repository;
 
   DateTime get now => repository.now;
 

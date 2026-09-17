@@ -50,6 +50,23 @@ final class PosInventoryWarehouseResolver
         throw new OrderLifecycleException('POS_WAREHOUSE_NOT_CONFIGURED', 'لا يوجد مخزن تشغيلي صالح لنقطة البيع في هذا الفرع.');
     }
 
+    /**
+     * Never throws: a dashboard must render a configuration fault as an
+     * operational alert instead of failing the whole read.
+     *
+     * @return array{id:int|null,row:object|null,ambiguous:bool}
+     */
+    public function resolveForDashboard(int $tenantId, int $branchId): array
+    {
+        try {
+            $resolution = $this->resolutionForBranch($tenantId, $branchId);
+        } catch (OrderLifecycleException $exception) {
+            return ['id' => null, 'row' => null, 'ambiguous' => $exception->domainCode === 'POS_WAREHOUSE_AMBIGUOUS'];
+        }
+
+        return ['id' => (int) $resolution->warehouse->id, 'row' => $resolution->warehouse, 'ambiguous' => false];
+    }
+
     public function assertEligible(int $tenantId, int $branchId, ?int $warehouseId): void
     {
         if ($warehouseId === null) {

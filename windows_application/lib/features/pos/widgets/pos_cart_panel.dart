@@ -179,6 +179,9 @@ class PosCartPanel extends StatelessWidget {
           customers: state.customers,
           selectedCustomer: state.selectedCustomer,
           onSubmit: cubit.selectCustomer,
+          onSearch: (String query) => cubit.repository.getCustomers(
+            search: query,
+          ),
         );
       },
     );

@@ -1,5 +1,6 @@
 import '../../models/catalog_models.dart';
 import '../../../pos/models/json_helpers.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 typedef PlacementJson = Map<String, dynamic>;
 
@@ -122,5 +123,4 @@ class PlacementReorderItem {
   Map<String, dynamic> toJson() => {'id': id, 'sortOrder': sortOrder};
 }
 
-DateTime? _date(dynamic value) =>
-    DateTime.tryParse(readString(value))?.toLocal();
+DateTime? _date(dynamic value) => parseBackendDateTime(readString(value));

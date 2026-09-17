@@ -8,9 +8,11 @@ import 'package:windows_application/features/finance_inventory_setup/widgets/fin
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_pagination.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_module_shell.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_shell.dart';
+import 'package:windows_application/features/auth/models/auth_session.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/l10n/app_localizations_ar.dart';
 import 'package:windows_application/l10n/app_localizations_en.dart';
+import 'package:windows_application/shared/access/cashier_access.dart';
 
 final AppLocalizationsAr _ar = AppLocalizationsAr();
 final AppLocalizationsEn _en = AppLocalizationsEn();
@@ -165,6 +167,39 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     expect(find.byType(FinanceNavigationBar), findsOneWidget);
+  });
+
+  testWidgets('Cashier sees only Finance sections granted to them', (
+    WidgetTester tester,
+  ) async {
+    final CashierAccess access = CashierAccess.of(
+      const AuthUser(
+        id: 1,
+        name: 'Cashier',
+        role: 'cashier',
+        financeCapabilities: <String>{'finance.vouchers.view'},
+      ),
+    );
+    await tester.pumpWidget(
+      app(FinanceNavigationBar(selected: 'vouchers', access: access)),
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-vouchers')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-overview')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-purchases')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('finance-tab-sales')),
+      findsNothing,
+    );
   });
 
   testWidgets(

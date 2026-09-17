@@ -7341,6 +7341,281 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensesReportPercentOfTotal => 'of total';
 
   @override
+  String get cashierHomeTitle => 'Home';
+
+  @override
+  String get cashierDashboardTitle => 'Cashier Operations';
+
+  @override
+  String get cashierDashboardSubtitle =>
+      'Everything needed to run this shift at the till.';
+
+  @override
+  String get cashierBranchLabel => 'Branch';
+
+  @override
+  String get cashierNameLabel => 'Cashier';
+
+  @override
+  String get cashierShiftLabel => 'Shift';
+
+  @override
+  String get cashierShiftOpenedAt => 'Opened';
+
+  @override
+  String get cashierShiftDuration => 'Duration';
+
+  @override
+  String get cashierShiftStatus => 'Status';
+
+  @override
+  String get cashierShiftStatusOpen => 'Open';
+
+  @override
+  String get cashierNoOpenShift => 'No open shift';
+
+  @override
+  String get cashierNoOpenShiftHint =>
+      'Shift figures appear once a shift is open at this branch.';
+
+  @override
+  String get cashierScopeCurrentShift => 'Current shift';
+
+  @override
+  String get cashierScopeBranch => 'Branch';
+
+  @override
+  String get cashierSectionCashAndShift => 'Cash and shift';
+
+  @override
+  String get cashierSectionSalesAndOrders => 'Sales and orders';
+
+  @override
+  String get cashierSectionFinance => 'Finance';
+
+  @override
+  String get cashierSectionInventory => 'Inventory';
+
+  @override
+  String get cashierSectionQuickAccess => 'Quick access';
+
+  @override
+  String get cashierSectionAlerts => 'Operational alerts';
+
+  @override
+  String get cashierExpectedDrawer => 'Expected drawer cash';
+
+  @override
+  String get cashierExpectedDrawerHint =>
+      'Expected, not counted. The physical count happens at shift close.';
+
+  @override
+  String get cashierOpeningFloat => 'Opening float';
+
+  @override
+  String get cashierCashSales => 'Cash sales';
+
+  @override
+  String get cashierReceiptVouchers => 'Cash receipt vouchers';
+
+  @override
+  String get cashierPaymentVouchers => 'Cash payment vouchers';
+
+  @override
+  String get cashierCashRefunds => 'Cash refunds';
+
+  @override
+  String get cashierShiftSales => 'Shift sales';
+
+  @override
+  String get cashierOrderCount => 'Orders';
+
+  @override
+  String get cashierAverageOrder => 'Average order';
+
+  @override
+  String get cashierCardSales => 'Card sales';
+
+  @override
+  String get cashierOtherMethods => 'Other methods';
+
+  @override
+  String get cashierDiscounts => 'Discounts';
+
+  @override
+  String get cashierRefunds => 'Refunds';
+
+  @override
+  String get cashierOrdersActive => 'Active';
+
+  @override
+  String get cashierOrdersHeld => 'Held';
+
+  @override
+  String get cashierOrdersCompleted => 'Completed';
+
+  @override
+  String get cashierPosWarehouse => 'POS warehouse';
+
+  @override
+  String get cashierItemCount => 'Items';
+
+  @override
+  String get cashierLowStock => 'Low stock';
+
+  @override
+  String get cashierZeroStock => 'Zero stock';
+
+  @override
+  String get cashierNegativeStock => 'Negative stock';
+
+  @override
+  String get cashierShiftCountStatus => 'Shift count';
+
+  @override
+  String get cashierShiftCountComplete => 'Complete';
+
+  @override
+  String get cashierShiftCountPending => 'Not complete';
+
+  @override
+  String get cashierShiftCountNotRequired => 'Not required';
+
+  @override
+  String get cashierQuickPos => 'Point of sale';
+
+  @override
+  String get cashierQuickOrders => 'Orders';
+
+  @override
+  String get cashierQuickDiscounts => 'Discounts';
+
+  @override
+  String get cashierQuickReceiptVoucher => 'Receipt voucher';
+
+  @override
+  String get cashierQuickPaymentVoucher => 'Payment voucher';
+
+  @override
+  String get cashierQuickPurchases => 'Purchases';
+
+  @override
+  String get cashierQuickSales => 'Sales';
+
+  @override
+  String get cashierQuickInventory => 'POS stock';
+
+  @override
+  String get cashierQuickLowStock => 'Low items';
+
+  @override
+  String get cashierQuickNegativeStock => 'Negative items';
+
+  @override
+  String get cashierCloseShift => 'Close shift';
+
+  @override
+  String get cashierCloseShiftUnavailable =>
+      'The shift close flow is not available in this client yet.';
+
+  @override
+  String cashierOperationsCount(int count) {
+    return '$count operations';
+  }
+
+  @override
+  String cashierPendingTemplates(int count) {
+    return '$count pending';
+  }
+
+  @override
+  String get cashierAlertNoBranch =>
+      'No operational branch is assigned to this account.';
+
+  @override
+  String get cashierAlertNoShift => 'No shift is open right now.';
+
+  @override
+  String get cashierAlertWarehouseMissing =>
+      'No POS warehouse is configured for this branch.';
+
+  @override
+  String get cashierAlertWarehouseAmbiguous =>
+      'More than one POS warehouse is configured for this branch.';
+
+  @override
+  String cashierAlertBlockingOrders(int count) {
+    return '$count orders must be settled before closing the shift.';
+  }
+
+  @override
+  String cashierAlertNegativeStock(int count) {
+    return '$count items have negative stock.';
+  }
+
+  @override
+  String cashierAlertLowStock(int count) {
+    return '$count items are low on stock.';
+  }
+
+  @override
+  String get cashierAlertShiftCount => 'The shift count is not complete.';
+
+  @override
+  String get cashierAlertsNone => 'No operational alerts.';
+
+  @override
+  String get cashierRetry => 'Retry';
+
+  @override
+  String get cashierLoadError => 'Unable to load the operations dashboard.';
+
+  @override
+  String get cashierInventoryTitle => 'POS stock';
+
+  @override
+  String get cashierInventorySubtitle =>
+      'Operational quantities for the warehouse this till sells from.';
+
+  @override
+  String get cashierInventorySearchHint => 'Search by name or code';
+
+  @override
+  String get cashierInventoryFilterAll => 'All';
+
+  @override
+  String get cashierInventoryStateNormal => 'Normal';
+
+  @override
+  String get cashierInventoryStateLow => 'Low';
+
+  @override
+  String get cashierInventoryStateZero => 'Zero';
+
+  @override
+  String get cashierInventoryStateNegative => 'Negative';
+
+  @override
+  String get cashierInventoryColumnItem => 'Item';
+
+  @override
+  String get cashierInventoryColumnQuantity => 'Quantity';
+
+  @override
+  String get cashierInventoryColumnState => 'State';
+
+  @override
+  String get cashierInventoryColumnLastMovement => 'Last movement';
+
+  @override
+  String get cashierInventoryEmpty => 'There are no items in this warehouse.';
+
+  @override
+  String get cashierInventoryUnavailable =>
+      'No POS warehouse is configured for this branch.';
+
+  @override
+  String get cashierInventoryError => 'Unable to load POS stock.';
   String get discountV2PackageBundle => 'Package / Bundle';
 
   @override

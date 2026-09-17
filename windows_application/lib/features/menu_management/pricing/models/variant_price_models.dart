@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 import '../../../pos/models/json_helpers.dart';
 
@@ -69,8 +70,8 @@ class VariantPriceOverride extends Equatable {
         price: PriceAmount.parse(json['overridePrice']),
         isActive: readBool(json['isActive'], fallback: true),
         branchName: _nullableString(json['branchName']),
-        createdAt: DateTime.tryParse(readString(json['createdAt'])),
-        updatedAt: DateTime.tryParse(readString(json['updatedAt'])),
+        createdAt: parseBackendDateTime(readString(json['createdAt'])),
+        updatedAt: parseBackendDateTime(readString(json['updatedAt'])),
       );
 
   final int id;

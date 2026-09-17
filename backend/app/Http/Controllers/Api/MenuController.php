@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\Search\SmartSearch;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,9 +57,15 @@ class MenuController extends Controller
             $query->where('products.category_id', (int) $request->query('categoryId'));
         }
 
+        $search = $request->query('search');
+        $searchFields = [
+            ['column' => 'products.name', 'weight' => 3],
+            ['column' => 'products.sku', 'weight' => 2, 'type' => 'code'],
+            ['column' => 'products.barcode', 'weight' => 2, 'type' => 'code'],
+        ];
         if ($request->filled('search')) {
-            $search = '%'.$request->query('search').'%';
-            $query->where(fn ($q) => $q->where('products.name', 'like', $search)->orWhere('products.sku', 'like', $search));
+            SmartSearch::apply($query, $search, $searchFields);
+            SmartSearch::withRelevance($query, $search, $searchFields);
         }
 
         if ($availability === 'available') {
@@ -67,6 +74,9 @@ class MenuController extends Controller
             $query->where('products.is_active', false);
         }
 
+        if ($request->filled('search')) {
+            $query->orderByDesc('smart_rank');
+        }
         $products = $query->orderBy('products.sort_order')->orderBy('products.name')->get()
             ->map(fn ($product) => $this->productSummary($product));
 

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:windows_application/core/utils/localized_entity_text.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 import '../../pos/models/json_helpers.dart';
 
@@ -34,8 +35,7 @@ JsonMap? _map(dynamic value) =>
 
 List<JsonMap> _maps(dynamic value) => readMapList(value);
 
-DateTime? _date(dynamic value) =>
-    DateTime.tryParse(readString(value))?.toLocal();
+DateTime? _date(dynamic value) => parseBackendDateTime(readString(value));
 
 class CatalogPage<T> {
   const CatalogPage({required this.items, required this.meta});

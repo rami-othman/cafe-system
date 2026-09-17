@@ -8,9 +8,10 @@ import 'package:windows_application/features/auth/models/auth_session.dart';
 import 'package:windows_application/features/auth/repositories/auth_session_storage.dart';
 
 /// Proves cashier route restrictions are enforced centrally at the router
-/// level (see CashierAccess/_cashierAccessRedirect in app_router.dart), not
+/// level (see CashierAccess/_cashierRouteGuard in app_router.dart), not
 /// only by hiding sidebar items — a direct URL/deep link into a forbidden
-/// module must still redirect back to POS.
+/// module must still redirect back to the Cashier's operational home, the
+/// dashboard.
 void main() {
   tearDown(() async {
     appRouter.go(AppRoutes.pos);
@@ -57,7 +58,7 @@ void main() {
 
       appRouter.go(AppRoutes.inventory);
       await _pumpApp(tester);
-      expect(appRouter.state.uri.path, AppRoutes.pos);
+      expect(appRouter.state.uri.path, AppRoutes.dashboard);
     },
   );
 
@@ -66,22 +67,21 @@ void main() {
     (WidgetTester tester) async {
       await _configureAuthenticatedApp(role: 'employee');
 
-      for (final String allowed in <String>[
-        AppRoutes.orders,
-        AppRoutes.discounts,
-        AppRoutes.settings,
-        AppRoutes.shiftClose,
-      ]) {
-        appRouter.go(allowed);
-        await _pumpApp(tester);
-        expect(
-          appRouter.state.uri.path,
-          allowed,
-          reason: '$allowed must remain reachable for a cashier',
-        );
-      }
-    },
-  );
+    for (final String allowed in <String>[
+      AppRoutes.orders,
+      AppRoutes.discounts,
+      AppRoutes.settings,
+      AppRoutes.shiftCurrent,
+    ]) {
+      appRouter.go(allowed);
+      await _pumpApp(tester);
+      expect(
+        appRouter.state.uri.path,
+        allowed,
+        reason: '$allowed must remain reachable for a cashier',
+      );
+    }
+  });
 
   testWidgets('cashier with granted customer capability keeps /customers', (
     WidgetTester tester,

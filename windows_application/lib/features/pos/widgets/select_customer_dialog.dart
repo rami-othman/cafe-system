@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/search_debouncer.dart';
 import '../models/customer.dart';
 import 'customer_list_tile.dart';
 import 'customer_search_field.dart';
@@ -17,11 +18,19 @@ class SelectCustomerDialog extends StatefulWidget {
     required this.customers,
     required this.selectedCustomer,
     this.onSubmit,
+    this.onSearch,
   });
 
+  /// Initial results shown before the user types anything (e.g. recent/top
+  /// customers already loaded by the caller).
   final List<Customer> customers;
   final Customer? selectedCustomer;
   final Future<bool> Function(Customer customer)? onSubmit;
+
+  /// Backend-driven live search — called (debounced) on every keystroke so
+  /// results come from the full authorized customer list, not just
+  /// [customers]. When null, falls back to filtering [customers] locally.
+  final Future<List<Customer>> Function(String query)? onSearch;
 
   @override
   State<SelectCustomerDialog> createState() => _SelectCustomerDialogState();
@@ -29,8 +38,12 @@ class SelectCustomerDialog extends StatefulWidget {
 
 class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   late final TextEditingController _searchController;
+  final SearchDebouncer _debouncer = SearchDebouncer();
+  final LatestRequestGuard _requestGuard = LatestRequestGuard();
   Customer? _temporaryCustomer;
   String _query = '';
+  List<Customer> _results = const <Customer>[];
+  bool _isSearching = false;
   bool _isSubmitting = false;
 
   @override
@@ -38,15 +51,54 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
     super.initState();
     _searchController = TextEditingController();
     _temporaryCustomer = widget.selectedCustomer;
+    _results = widget.customers;
   }
 
   @override
   void dispose() {
+    _debouncer.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onQueryChanged(String value) {
+    setState(() => _query = value);
+    if (widget.onSearch == null) {
+      return;
+    }
+    _debouncer.run(() => _runSearch(value));
+  }
+
+  Future<void> _runSearch(String value) async {
+    final String trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      setState(() {
+        _results = widget.customers;
+        _isSearching = false;
+      });
+      return;
+    }
+    final int token = _requestGuard.next();
+    setState(() => _isSearching = true);
+    List<Customer> results;
+    try {
+      results = await widget.onSearch!(trimmed);
+    } catch (_) {
+      results = const <Customer>[];
+    }
+    if (!mounted || !_requestGuard.isCurrent(token)) {
+      return;
+    }
+    setState(() {
+      _results = results;
+      _isSearching = false;
+    });
+  }
+
   List<Customer> get _filteredCustomers {
+    if (widget.onSearch != null) {
+      return _results;
+    }
     final String normalized = _query.trim().toLowerCase();
     if (normalized.isEmpty) {
       return widget.customers;
@@ -112,19 +164,29 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                           children: <Widget>[
                             CustomerSearchField(
                               controller: _searchController,
-                              onChanged: (String value) {
-                                setState(() => _query = value);
-                              },
+                              onChanged: _onQueryChanged,
                             ),
                             const SizedBox(height: AppSpacing.lg),
                             Expanded(
-                              child: _CustomerList(
-                                customers: filteredCustomers,
-                                selectedCustomer: _temporaryCustomer,
-                                onCustomerSelected: (Customer customer) {
-                                  setState(() => _temporaryCustomer = customer);
-                                },
-                              ),
+                              child: _isSearching && filteredCustomers.isEmpty
+                                  ? const Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    )
+                                  : _CustomerList(
+                                      customers: filteredCustomers,
+                                      selectedCustomer: _temporaryCustomer,
+                                      onCustomerSelected: (Customer customer) {
+                                        setState(
+                                          () => _temporaryCustomer = customer,
+                                        );
+                                      },
+                                    ),
                             ),
                           ],
                         ),

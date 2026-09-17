@@ -34,7 +34,7 @@ class PurchasingPhase1ApiTest extends TestCase
             'subtotal' => '999999.00',
             'lines' => [[
                 'lineType' => 'inventory', 'description' => 'Coffee beans', 'inventoryItemId' => $itemId,
-                'quantity' => '5.000', 'unitPrice' => '16.0000',
+                'quantity' => '5.000', 'lineGrossAmount' => '80.00',
             ]],
         ];
         $created = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()
@@ -69,7 +69,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $payload = [
             'supplierId' => $supplierId, 'invoiceNumber' => 'NET-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
             'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
-            'lines' => [['lineType' => 'expense', 'description' => 'Internet service', 'quantity' => '1', 'unitPrice' => '100.00']],
+            'lines' => [['lineType' => 'expense', 'description' => 'Internet service', 'quantity' => '1', 'lineGrossAmount' => '100.00']],
         ];
         $id = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()
             ->assertJsonPath('data.totalAmount', '100.00')->json('data.id');
@@ -91,15 +91,15 @@ class PurchasingPhase1ApiTest extends TestCase
         $base = ['supplierId' => $supplierId, 'invoiceNumber' => 'ASSET-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'other'];
 
         // asset line against a non-asset account is rejected.
-        $this->postJson('/api/v1/finance/supplier-invoices', [...$base, 'debitAccountId' => $cogsAccountId, 'lines' => [['lineType' => 'asset', 'description' => 'Espresso machine', 'quantity' => '1', 'unitPrice' => '2500.00']]], $headers)
+        $this->postJson('/api/v1/finance/supplier-invoices', [...$base, 'debitAccountId' => $cogsAccountId, 'lines' => [['lineType' => 'asset', 'description' => 'Espresso machine', 'quantity' => '1', 'lineGrossAmount' => '2500.00']]], $headers)
             ->assertUnprocessable()->assertJsonValidationErrors('debitAccountId');
 
         // other line against an asset-group account is rejected (must use "asset" instead).
-        $this->postJson('/api/v1/finance/supplier-invoices', [...$base, 'debitAccountId' => $fixedAssetsId, 'lines' => [['lineType' => 'other', 'description' => 'Misc', 'quantity' => '1', 'unitPrice' => '50.00']]], $headers)
+        $this->postJson('/api/v1/finance/supplier-invoices', [...$base, 'debitAccountId' => $fixedAssetsId, 'lines' => [['lineType' => 'other', 'description' => 'Misc', 'quantity' => '1', 'lineGrossAmount' => '50.00']]], $headers)
             ->assertUnprocessable()->assertJsonValidationErrors('debitAccountId');
 
         // asset line against an asset-group account succeeds.
-        $created = $this->postJson('/api/v1/finance/supplier-invoices', [...$base, 'debitAccountId' => $fixedAssetsId, 'lines' => [['lineType' => 'asset', 'description' => 'Espresso machine', 'quantity' => '1', 'unitPrice' => '2500.00']]], $headers)
+        $created = $this->postJson('/api/v1/finance/supplier-invoices', [...$base, 'debitAccountId' => $fixedAssetsId, 'lines' => [['lineType' => 'asset', 'description' => 'Espresso machine', 'quantity' => '1', 'lineGrossAmount' => '2500.00']]], $headers)
             ->assertCreated()->assertJsonPath('data.totalAmount', '2500.00');
         $this->assertSame('asset', $created->json('data.lines.0.lineType'));
     }
@@ -114,8 +114,8 @@ class PurchasingPhase1ApiTest extends TestCase
         $payload = [
             'supplierId' => $supplierId, 'invoiceNumber' => 'MIX-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [
-                ['lineType' => 'inventory', 'description' => 'Coffee beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '10.00'],
-                ['lineType' => 'expense', 'description' => 'Delivery charge', 'quantity' => '1', 'unitPrice' => '5.00'],
+                ['lineType' => 'inventory', 'description' => 'Coffee beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '10.00'],
+                ['lineType' => 'expense', 'description' => 'Delivery charge', 'quantity' => '1', 'lineGrossAmount' => '5.00'],
             ],
         ];
         $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertUnprocessable()->assertJsonValidationErrors('lines');
@@ -131,7 +131,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $payload = [
             'supplierId' => $supplierId, 'invoiceNumber' => 'MISMATCH-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
             'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
-            'lines' => [['lineType' => 'inventory', 'description' => 'Should not be allowed', 'inventoryItemId' => $this->inventoryItem($headers, 'kg'), 'quantity' => '1', 'unitPrice' => '10.00']],
+            'lines' => [['lineType' => 'inventory', 'description' => 'Should not be allowed', 'inventoryItemId' => $this->inventoryItem($headers, 'kg'), 'quantity' => '1', 'lineGrossAmount' => '10.00']],
         ];
         $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertUnprocessable()->assertJsonValidationErrors('invoiceTypeId');
     }
@@ -161,15 +161,15 @@ class PurchasingPhase1ApiTest extends TestCase
         $payload = [
             'supplierId' => $supplierId, 'invoiceNumber' => 'UPD-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [
-                ['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '2', 'unitPrice' => '10.00'],
-                ['lineType' => 'inventory', 'description' => 'Milk', 'inventoryItemId' => $this->inventoryItem($headers, 'liter'), 'quantity' => '3', 'unitPrice' => '2.00'],
+                ['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '2', 'lineGrossAmount' => '20.00'],
+                ['lineType' => 'inventory', 'description' => 'Milk', 'inventoryItemId' => $this->inventoryItem($headers, 'liter'), 'quantity' => '3', 'lineGrossAmount' => '6.00'],
             ],
         ];
         $id = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->assertJsonPath('data.totalAmount', '26.00')->json('data.id');
 
         // Replacing with a single line recomputes the total and drops the old lines.
         $updated = $this->patchJson("/api/v1/finance/supplier-invoices/{$id}", [
-            ...$payload, 'lines' => [['lineType' => 'inventory', 'description' => 'Beans only', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '10.00']],
+            ...$payload, 'lines' => [['lineType' => 'inventory', 'description' => 'Beans only', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '10.00']],
         ], $headers)->assertOk()->assertJsonPath('data.totalAmount', '10.00')->assertJsonCount(1, 'data.lines');
         $this->assertSame(1, DB::table('supplier_invoice_lines')->where('supplier_invoice_id', $id)->count());
 
@@ -187,7 +187,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $headers = $this->headers($tenant);
         $supplierId = $this->supplier($headers);
         $itemId = $this->inventoryItem($headers, 'kg');
-        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'IMM-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '20.00']]];
+        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'IMM-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '20.00']]];
         $id = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/supplier-invoices/{$id}/post", ['idempotencyKey' => 'imm-post-1'], $headers)->assertOk();
 
@@ -206,7 +206,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $headers = $this->headers($tenant);
         $supplierId = $this->supplier($headers);
         $itemId = $this->inventoryItem($headers, 'kg');
-        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'IDEM-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'idempotencyKey' => 'create-idem-1', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '20.00']]];
+        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'IDEM-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'idempotencyKey' => 'create-idem-1', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '20.00']]];
 
         $first = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->json('data.id');
         $replay = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->json('data.id');
@@ -225,7 +225,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $headers = $this->headers($tenant);
         $supplierId = $this->supplier($headers);
         $itemId = $this->inventoryItem($headers, 'kg');
-        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'LIST-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '5', 'unitPrice' => '16.00']]];
+        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'LIST-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '5', 'lineGrossAmount' => '80.00']]];
         $id = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/supplier-invoices/{$id}/post", ['idempotencyKey' => 'list-post-1'], $headers)->assertOk();
 
@@ -251,7 +251,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $headers = $this->headers($tenant);
         $supplierId = $this->supplier($headers);
         $itemId = $this->inventoryItem($headers, 'kg');
-        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'SHOW-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '5', 'unitPrice' => '16.00']]];
+        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'SHOW-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '5', 'lineGrossAmount' => '80.00']]];
         $id = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/supplier-invoices/{$id}/post", ['idempotencyKey' => 'show-post-1'], $headers)->assertOk();
 
@@ -277,7 +277,7 @@ class PurchasingPhase1ApiTest extends TestCase
         $headersA = $this->headers($tenantA);
         $supplierId = $this->supplier($headersA);
         $itemId = $this->inventoryItem($headersA, 'kg');
-        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'ISO-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '10.00']]];
+        $payload = ['supplierId' => $supplierId, 'invoiceNumber' => 'ISO-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '10.00']]];
         $id = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headersA)->assertCreated()->json('data.id');
 
         $tenantB = $this->tenant('purchasing-tenant-b');
@@ -287,7 +287,7 @@ class PurchasingPhase1ApiTest extends TestCase
 
         // Cross-tenant inventory item is rejected at line-build time, even with a valid tenant-B supplier.
         $supplierBId = $this->supplier($headersB);
-        $crossPayload = [...$payload, 'supplierId' => $supplierBId, 'invoiceNumber' => 'ISO-002', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '10.00']]];
+        $crossPayload = [...$payload, 'supplierId' => $supplierBId, 'invoiceNumber' => 'ISO-002', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '10.00']]];
         $this->postJson('/api/v1/finance/supplier-invoices', $crossPayload, $headersB)->assertUnprocessable()->assertJsonValidationErrors('lines');
 
         // A cashier-role user without finance.purchases.view is denied the Purchasing Center read.
@@ -306,8 +306,8 @@ class PurchasingPhase1ApiTest extends TestCase
         $supplierId = $this->supplier($headers);
         $itemId = $this->inventoryItem($headers, 'kg');
 
-        $allowedInvoiceId = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $supplierId, 'branchId' => $branchAllowed, 'invoiceNumber' => 'BR-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '10.00']]], $headers)->assertCreated()->json('data.id');
-        $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $supplierId, 'branchId' => $branchOther, 'invoiceNumber' => 'BR-002', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'unitPrice' => '10.00']]], $headers)->assertCreated();
+        $allowedInvoiceId = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $supplierId, 'branchId' => $branchAllowed, 'invoiceNumber' => 'BR-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '10.00']]], $headers)->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $supplierId, 'branchId' => $branchOther, 'invoiceNumber' => 'BR-002', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory', 'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '10.00']]], $headers)->assertCreated();
 
         foreach (\App\Support\FinanceAccess::defaultPermissionsForRole('manager') as $permission) {
             DB::table('finance_role_permissions')->updateOrInsert(['tenant_id' => $tenant, 'role' => 'manager', 'permission' => $permission], ['created_at' => now(), 'updated_at' => now()]);

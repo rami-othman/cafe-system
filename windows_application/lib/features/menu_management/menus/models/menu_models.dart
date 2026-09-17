@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:windows_application/core/utils/localized_entity_text.dart';
+import 'package:windows_application/core/utils/backend_datetime.dart';
 
 import '../../../pos/models/json_helpers.dart';
 import 'product_placement.dart';
@@ -20,8 +21,7 @@ String _name(MenuJson json) {
   return value;
 }
 
-DateTime? _date(dynamic value) =>
-    DateTime.tryParse(readString(value))?.toLocal();
+DateTime? _date(dynamic value) => parseBackendDateTime(readString(value));
 
 class MenuRecord {
   const MenuRecord({

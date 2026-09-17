@@ -109,16 +109,32 @@ class SupplierInvoiceController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['nullable', 'string', 'max:120'],
+            // Whole-invoice discount — allocated proportionally into the lines' cost
+            // basis (and their commercial total) when lines are present; see
+            // SupplierInvoiceService::invoiceDiscount()/allocateAndFinalize().
+            'discountType' => ['nullable', 'in:fixed,percentage'],
+            'discountValue' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'lines' => ['nullable', 'array', 'min:1'],
             'lines.*.lineType' => ['required_with:lines', 'in:inventory,expense,asset,other'],
             'lines.*.description' => ['required_with:lines', 'string', 'max:500'],
             'lines.*.inventoryItemId' => ['nullable', 'integer'],
             'lines.*.purchaseUnit' => ['nullable', 'string', 'max:40'],
             'lines.*.quantity' => ['nullable', 'regex:/^\d+(\.\d{1,3})?$/'],
-            'lines.*.unitPrice' => ['required_with:lines', 'regex:/^\d+(\.\d{1,4})?$/'],
-            'lines.*.discountAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
+            // The client sends the line's gross purchase total, never a unit price — the
+            // server derives unit cost from (gross - discount) / quantity (see buildLines()).
+            'lines.*.lineGrossAmount' => ['required_with:lines', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'lines.*.discountType' => ['nullable', 'in:fixed,percentage'],
+            'lines.*.discountValue' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'lines.*.taxAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'lines.*.warehouseId' => ['nullable', 'integer'],
+            // Additional charges (freight, hospitality, ...) — only meaningful
+            // alongside `lines`; see SupplierInvoiceService::buildCharges().
+            'charges' => ['nullable', 'array'],
+            'charges.*.description' => ['required_with:charges', 'string', 'max:255'],
+            'charges.*.treatment' => ['required_with:charges', 'in:capitalize,expense'],
+            'charges.*.expenseCategoryId' => ['nullable', 'integer', 'required_if:charges.*.treatment,expense'],
+            'charges.*.amount' => ['required_with:charges', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'charges.*.taxAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
         ]);
     }
 
@@ -144,6 +160,7 @@ class SupplierInvoiceController extends Controller
 
         return $this->serialize($row)
             + ['lines' => $this->serializeLines($this->invoices->lines($tenant, $id))]
+            + ['charges' => $this->serializeCharges($this->invoices->charges($tenant, $id))]
             + ['allowedActions' => $this->actions($row, array_fill_keys(FinanceAccess::capabilities($request), true))];
     }
 
@@ -163,12 +180,32 @@ class SupplierInvoiceController extends Controller
             'conversionFactor' => $l->conversion_factor,
             'baseQuantity' => $l->base_quantity,
             'unitPrice' => $l->unit_price,
+            'lineGrossAmount' => $l->line_gross_amount,
+            'discountType' => $l->discount_type,
+            'discountValue' => $l->discount_value,
             'discountAmount' => $l->discount_amount,
+            'allocatedDiscount' => $l->allocated_discount,
+            'allocatedLandedCost' => $l->allocated_landed_cost,
             'taxAmount' => $l->tax_amount,
             'lineTotal' => $l->line_total,
             'warehouseId' => $l->warehouse_id ? (int) $l->warehouse_id : null,
             'receivedQuantity' => $l->received_quantity,
         ], $lines);
+    }
+
+    /** @param array<int, object> $charges */
+    private function serializeCharges(array $charges): array
+    {
+        return array_map(fn (object $c): array => [
+            'id' => (int) $c->id,
+            'chargeNumber' => (int) $c->charge_number,
+            'description' => $c->description,
+            'treatment' => $c->treatment,
+            'expenseCategoryId' => $c->expense_category_id ? (int) $c->expense_category_id : null,
+            'expenseCategoryName' => $c->expense_category_name,
+            'amount' => $c->amount,
+            'taxAmount' => $c->tax_amount,
+        ], $charges);
     }
 
     private function actions(object $row, array $permissions): array
@@ -210,6 +247,10 @@ class SupplierInvoiceController extends Controller
             'debitAccountName' => $row->debit_account_name,
             'subtotal' => Money::decimal(Money::cents($row->subtotal)),
             'taxAmount' => Money::decimal(Money::cents($row->tax_amount)),
+            'discountType' => $row->discount_type,
+            'discountValue' => $row->discount_value,
+            'discountAmount' => Money::decimal(Money::cents($row->discount_amount)),
+            'chargesAmount' => Money::decimal(Money::cents($row->charges_amount)),
             'totalAmount' => Money::decimal(Money::cents($row->total_amount)),
             'remainingAmount' => number_format($remaining / 100, 2, '.', ''),
             'status' => $row->status,

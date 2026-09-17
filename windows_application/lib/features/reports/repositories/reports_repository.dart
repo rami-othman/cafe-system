@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/dio_api_client.dart';
+import '../../../core/utils/backend_datetime.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../pos/models/json_helpers.dart';
 import '../models/daily_report_data.dart';
@@ -237,7 +238,7 @@ class ReportsRepository {
       CurrencyFormatter.format(value, currencyCode: currency);
 
   String _time(dynamic value) {
-    final DateTime? date = DateTime.tryParse(readString(value));
+    final DateTime? date = parseBackendDateTime(readString(value));
     return date == null ? '—' : DateFormat.jm().format(date.toLocal());
   }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\InventoryItemRequest;
 use App\Services\InventoryItemService;
+use App\Support\Search\SmartSearch;
 use App\Support\FinancialActor;
 use App\Support\InventoryDecimal;
 use App\Support\TenantContext;
@@ -76,9 +77,16 @@ class InventoryItemController extends Controller
         } elseif ($warehouseId) {
             $query->whereRaw('1 = 0');
         }
+        $search = $request->query('search');
+        $searchFields = [
+            ['column' => 'items.name_ar', 'weight' => 3],
+            ['column' => 'items.name_en', 'weight' => 3],
+            ['column' => 'items.sku', 'weight' => 2, 'type' => 'code'],
+            ['column' => 'items.barcode', 'weight' => 2, 'type' => 'code'],
+        ];
         if ($request->filled('search')) {
-            $like = '%'.strtolower($request->query('search')).'%';
-            $query->where(fn (Builder $q) => $q->whereRaw('LOWER(items.name_ar) LIKE ?', [$like])->orWhereRaw('LOWER(items.name_en) LIKE ?', [$like])->orWhereRaw('LOWER(items.sku) LIKE ?', [$like])->orWhereRaw('LOWER(items.barcode) LIKE ?', [$like]));
+            SmartSearch::apply($query, $search, $searchFields);
+            SmartSearch::withRelevance($query, $search, $searchFields);
         }
         foreach (['type' => 'item_type', 'category' => 'category'] as $key => $column) {
             if ($request->filled($key)) {
@@ -99,6 +107,9 @@ class InventoryItemController extends Controller
             'expired' => $query->whereRaw('1 = 0'),
             default => null,
         };
+        if ($request->filled('search')) {
+            $query->orderByDesc('smart_rank');
+        }
         $paginator = $query
             ->orderBy('items.name_en')
             ->orderBy('items.id')
@@ -130,12 +141,16 @@ class InventoryItemController extends Controller
             ->where('tenant_id', $tenant)
             ->where('is_active', true)
             ->whereNull('deleted_at');
+        $conversionSearch = $request->query('search');
+        $conversionSearchFields = [
+            ['column' => 'name_ar', 'weight' => 3],
+            ['column' => 'name_en', 'weight' => 3],
+            ['column' => 'sku', 'weight' => 2, 'type' => 'code'],
+        ];
         if ($request->filled('search')) {
-            $like = '%'.strtolower($request->query('search')).'%';
-            $query->where(fn (Builder $builder) => $builder
-                ->whereRaw('LOWER(name_ar) LIKE ?', [$like])
-                ->orWhereRaw('LOWER(name_en) LIKE ?', [$like])
-                ->orWhereRaw('LOWER(sku) LIKE ?', [$like]));
+            SmartSearch::apply($query, $conversionSearch, $conversionSearchFields);
+            SmartSearch::withRelevance($query, $conversionSearch, $conversionSearchFields);
+            $query->orderByDesc('smart_rank');
         }
 
         return response()->json(['data' => $query

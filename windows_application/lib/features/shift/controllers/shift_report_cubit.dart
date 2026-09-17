@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/shift_models.dart';
-import '../repositories/shift_mock_repository.dart';
+import '../repositories/shift_repository.dart';
 import '../widgets/shift_strings.dart';
 
 enum ShiftReportStatus { loading, ready, missing, error }
@@ -52,10 +52,9 @@ class ShiftReportState extends Equatable {
 
 /// Loads one sealed shift report and owns the print-preview toggle.
 class ShiftReportCubit extends Cubit<ShiftReportState> {
-  ShiftReportCubit({required this.repository})
-    : super(const ShiftReportState());
+  ShiftReportCubit({required this.repository}) : super(const ShiftReportState());
 
-  final ShiftMockRepository repository;
+  final ShiftRepository repository;
 
   Future<void> load(String shiftNumber) async {
     emit(

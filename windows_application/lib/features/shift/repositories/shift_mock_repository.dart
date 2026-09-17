@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../models/shift_models.dart';
 import '../models/shift_scenario.dart';
+import 'shift_repository.dart';
 
 /// UI-phase data source for the shift module.
 ///
@@ -12,9 +13,10 @@ import '../models/shift_scenario.dart';
 ///
 /// Registered as a singleton so the overview, the closing wizard and the
 /// report all observe the same scenario and the same freshly closed shift.
-class ShiftMockRepository {
+class ShiftMockRepository extends ShiftRepository {
   ShiftMockRepository({DateTime Function()? clock})
-    : _clock = clock ?? DateTime.now;
+    : _clock = clock ?? DateTime.now,
+      super();
 
   final DateTime Function() _clock;
 
@@ -30,6 +32,7 @@ class ShiftMockRepository {
 
   ShiftScenario get scenario => _scenario;
 
+  @override
   DateTime get now => _clock();
 
   /// Simulated latency, short enough to keep the UI responsive while still
@@ -43,6 +46,7 @@ class ShiftMockRepository {
   }
 
   /// Loads the shift currently open on this register, or null when none is.
+  @override
   Future<ShiftSnapshot?> loadOpenShift() async {
     await Future<void>.delayed(_latency);
     if (_scenario == ShiftScenario.error) {
@@ -61,9 +65,11 @@ class ShiftMockRepository {
   }
 
   /// Opens a shift with the given float. Returns the new snapshot.
+  @override
   Future<ShiftSnapshot> openShift({
     required double openingFloat,
     String note = '',
+    int? branchId,
   }) async {
     await Future<void>.delayed(_latency);
     final DateTime now = _clock();
@@ -78,15 +84,17 @@ class ShiftMockRepository {
     return base;
   }
 
-  Future<ShiftClosingResult> closeShift(ShiftClosingResult result) async {
+  @override
+  Future<ShiftClosingResult> closeShift(ShiftClosingResult draft) async {
     await Future<void>.delayed(_latency);
-    _closedShifts[result.snapshot.identity.shiftNumber] = result;
+    _closedShifts[draft.snapshot.identity.shiftNumber] = draft;
     _openShift = null;
     _openShiftLoaded = true;
     _scenario = ShiftScenario.noOpenShift;
-    return result;
+    return draft;
   }
 
+  @override
   Future<List<ShiftHistoryEntry>> loadHistory() async {
     await Future<void>.delayed(_latency);
     if (_scenario == ShiftScenario.error) {
@@ -103,6 +111,7 @@ class ShiftMockRepository {
   }
 
   /// The sealed report for a shift number, from this session or the seed set.
+  @override
   Future<ShiftClosingResult?> loadClosingResult(String shiftNumber) async {
     await Future<void>.delayed(_latency);
     final ShiftClosingResult? fromSession = _closedShifts[shiftNumber];
@@ -112,19 +121,11 @@ class ShiftMockRepository {
 
   /// The most recently closed shift, shown as continuity on the "no open
   /// shift" screen.
+  @override
   Future<ShiftHistoryEntry?> loadLastShift() async {
     final List<ShiftHistoryEntry> history = await loadHistory();
     return history.isEmpty ? null : history.first;
   }
-}
-
-class ShiftDataException implements Exception {
-  const ShiftDataException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => 'ShiftDataException: $message';
 }
 
 /// Expressive fixtures for every shift scenario.
@@ -133,7 +134,6 @@ abstract final class ShiftMockData {
   static const String cashierName = 'tf-pos';
   static const String cashierCode = 'EMP-0142';
   static const String warehouseName = 'Bar - 618TierFour';
-  static const String supervisorName = 'محمد العلي';
 
   /// Bank notes counted at the drawer, descending.
   static const List<int> denominations = <int>[
@@ -147,13 +147,7 @@ abstract final class ShiftMockData {
   ];
 
   static ShiftSnapshot snapshotFor(ShiftScenario scenario, DateTime now) {
-    final DateTime openedAt = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      8,
-      15,
-    );
+    final DateTime openedAt = DateTime(now.year, now.month, now.day, 8, 15);
     final ShiftIdentity identity = ShiftIdentity(
       shiftNumber: 'SH-${_compactDate(now)}-001',
       branchName: branchName,
@@ -415,8 +409,7 @@ abstract final class ShiftMockData {
     final bool negative = scenario == ShiftScenario.negativeStock;
     final bool partial = scenario == ShiftScenario.incompleteCount;
 
-    double? counted(double theoretical, double delta, {bool skip = false}) {
-      if (skip) return null;
+    double? counted(double theoretical, double delta) {
       if (!prefill && !partial) return null;
       return theoretical + (variance || negative ? delta : 0);
     }
@@ -719,10 +712,11 @@ abstract final class ShiftMockData {
   /// Rebuilds a sealed report for a seeded (archived) shift so the report
   /// route works for history rows as well as freshly closed shifts.
   static ShiftClosingResult? archivedResult(String shiftNumber, DateTime now) {
-    final ShiftHistoryEntry? entry = history(now)
-        .where((ShiftHistoryEntry e) => e.shiftNumber == shiftNumber)
-        .firstOrNull;
-    if (entry == null) return null;
+    final Iterable<ShiftHistoryEntry> matches = history(
+      now,
+    ).where((ShiftHistoryEntry e) => e.shiftNumber == shiftNumber);
+    if (matches.isEmpty) return null;
+    final ShiftHistoryEntry entry = matches.first;
 
     final ShiftSnapshot base = snapshotFor(
       entry.barDifferenceCount > 0

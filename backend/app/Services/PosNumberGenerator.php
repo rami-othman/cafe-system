@@ -20,6 +20,15 @@ class PosNumberGenerator
         return 'RF-'.now()->format('Ymd').'-'.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
     }
 
+    /** Resets every calendar year: the year is part of `kind`, so each year gets its own counter row. */
+    public function nextPurchaseInvoiceNumber(int $tenantId): string
+    {
+        $year = now()->format('Y');
+        $sequence = $this->next($tenantId, "purchase_invoice_{$year}", 0);
+
+        return "PI-{$year}-".str_pad((string) $sequence, 6, '0', STR_PAD_LEFT);
+    }
+
     private function next(int $tenantId, string $kind, int $branchScopeId): int
     {
         // Historical counters are initialized by the Hardening A migration.
@@ -59,6 +68,12 @@ class PosNumberGenerator
 
     private function formattedHighWaterMark(int $tenantId, string $kind, int $branchScopeId): int
     {
+        // Only 'order'/'refund' predate this counter table and need a historical
+        // backfill; any other kind (e.g. a new year's purchase-invoice counter)
+        // starts at zero — there is nothing pre-existing in that number format.
+        if (! in_array($kind, ['order', 'refund'], true)) {
+            return 0;
+        }
         $table = $kind === 'order' ? 'orders' : 'payment_refunds';
         $prefix = $kind === 'order' ? now()->format('Ymd').'-' : 'RF-'.now()->format('Ymd').'-';
         $numberColumn = $kind === 'order' ? 'order_number' : 'refund_number';
