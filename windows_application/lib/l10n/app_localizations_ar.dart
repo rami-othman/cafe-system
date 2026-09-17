@@ -7326,4 +7326,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get expensesReportPercentOfTotal => 'من الإجمالي';
+
+  @override
+  String get discountV2PackageBundle => 'حزمة / باقة';
+
+  @override
+  String get discountV2PackageRequirements => 'متطلبات الباقة';
+
+  @override
+  String get discountV2AllPackageItems =>
+      'يجب أن تكون جميع عناصر الباقة موجودة في الطلب لتطبيق هذا الخصم.';
+
+  @override
+  String get discountV2RequiredQuantity => 'الكمية المطلوبة';
+
+  @override
+  String get discountV2AddProduct => 'إضافة منتج';
+
+  @override
+  String get discountV2SelectedCustomers => 'عملاء محددون';
+
+  @override
+  String get discountV2SelectCustomers => 'اختيار العملاء';
+
+  @override
+  String get discountV2Channels => 'القنوات';
+
+  @override
+  String get discountV2AllChannels => 'كل القنوات';
+
+  @override
+  String get discountV2SelectedChannels => 'قنوات محددة';
+
+  @override
+  String get discountV2BranchChannelHelp => 'تُطبق قيود الفرع والقناة معاً.';
+
+  @override
+  String get discountV2DailyLimit => 'الحد اليومي لكل عميل';
+
+  @override
+  String get discountV2DailyLimitDetails =>
+      'يمكن لكل عميل استخدام هذا الخصم حتى الحد الإجمالي، وبحد يومي لكل يوم عمل.';
+
+  @override
+  String get discountV2Regenerate => 'إعادة التوليد';
+
+  @override
+  String get discountV2CodeGenerationFailed => 'تعذر توليد الرمز.';
+
+  @override
+  String get discountV2Retry => 'إعادة المحاولة';
+
+  @override
+  String get discountV2Search => 'بحث';
 }

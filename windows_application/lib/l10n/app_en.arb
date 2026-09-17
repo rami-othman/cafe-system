@@ -3255,5 +3255,22 @@
   "expensesReportRejected": "Rejected",
   "expensesReportReversed": "Reversed",
   "expensesReportComparisonUnavailable": "Comparison unavailable",
-  "expensesReportPercentOfTotal": "of total"
+  "expensesReportPercentOfTotal": "of total",
+  "discountV2PackageBundle": "Package / Bundle",
+  "discountV2PackageRequirements": "Package Requirements",
+  "discountV2AllPackageItems": "All package items must be present in the order for this discount to apply.",
+  "discountV2RequiredQuantity": "Required Quantity",
+  "discountV2AddProduct": "Add Product",
+  "discountV2SelectedCustomers": "Selected Customers",
+  "discountV2SelectCustomers": "Select Customers",
+  "discountV2Channels": "Channels",
+  "discountV2AllChannels": "All Channels",
+  "discountV2SelectedChannels": "Selected Channels",
+  "discountV2BranchChannelHelp": "Branch and channel restrictions are applied together.",
+  "discountV2DailyLimit": "Per Customer Daily Limit",
+  "discountV2DailyLimitDetails": "Each customer may use this discount up to the lifetime limit, but only up to the daily limit per business day.",
+  "discountV2Regenerate": "Regenerate",
+  "discountV2CodeGenerationFailed": "Unable to generate a code.",
+  "discountV2Retry": "Retry",
+  "discountV2Search": "Search"
 }

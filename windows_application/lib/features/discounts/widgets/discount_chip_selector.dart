@@ -12,12 +12,14 @@ class DiscountChipSelector extends StatelessWidget {
     required this.selected,
     required this.onSelected,
     this.multiSelect = true,
+    this.optionLabel,
   });
 
   final List<String> options;
   final Set<String> selected;
   final ValueChanged<String> onSelected;
   final bool multiSelect;
+  final String Function(String option)? optionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,7 @@ class DiscountChipSelector extends StatelessWidget {
       children: <Widget>[
         for (final String option in options)
           ChoiceChip(
-            label: Text(option),
+            label: Text(optionLabel?.call(option) ?? option),
             selected: selected.contains(option),
             onSelected: (_) => onSelected(option),
             labelStyle: AppTextStyles.labelSmall.copyWith(

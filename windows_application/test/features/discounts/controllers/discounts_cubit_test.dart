@@ -61,6 +61,8 @@ class _Repository implements DiscountsRepository {
   Future<DiscountDetail> getDiscountDetail(String discountId) =>
       throw UnimplementedError();
   @override
+  Future<String> generateCouponCode() => throw UnimplementedError();
+  @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) async {
     final DiscountListItem item = _item('2', request.name, request.isActive);
     _items.insert(0, item);

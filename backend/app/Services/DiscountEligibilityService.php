@@ -27,6 +27,7 @@ class DiscountEligibilityService
         $now = CarbonImmutable::now($branch->timezone ?: 'UTC');
         $this->assertSchedule($discount, $now);
         $this->assertBranch($tenantId, $discount, $order);
+        $this->assertChannel($tenantId, $discount, $order);
         $this->assertCustomer($tenantId, $discount, $order);
         if ($paymentMethodId !== null) {
             $this->assertPaymentMethod($tenantId, $discount, $paymentMethodId, $legacyPaymentMethod);
@@ -38,8 +39,10 @@ class DiscountEligibilityService
             throw new OrderLifecycleException('DISCOUNT_MINIMUM_NOT_MET', 'The minimum order amount has not been reached.');
         }
 
+        $this->assertUsageAvailable($tenantId, $discount, $order, $branch);
+
         $eligibleSubtotal = $this->eligibleSubtotal($tenantId, $order, $discount);
-        if (in_array($discount->scope, ['product', 'category'], true) && $eligibleSubtotal <= 0) {
+        if (in_array($discount->scope, ['product', 'category', 'bundle'], true) && $eligibleSubtotal <= 0) {
             throw new OrderLifecycleException('DISCOUNT_ITEMS_NOT_ELIGIBLE', 'No order items are eligible for this discount.');
         }
 
@@ -115,9 +118,24 @@ class DiscountEligibilityService
                     throw new OrderLifecycleException('DISCOUNT_USAGE_LIMIT_REACHED', 'The customer usage limit has been reached.');
                 }
             }
+            $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $order->branch_id)->where('is_active', true)->whereNull('deleted_at')->first();
+            if (! $branch) {
+                throw new OrderLifecycleException('DISCOUNT_BRANCH_NOT_ELIGIBLE', 'The order branch is unavailable.');
+            }
+            $businessDate = $this->businessDate($branch);
+            if ($discount->usage_limit_per_customer_per_day !== null) {
+                if ($order->customer_id === null) {
+                    throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+                }
+                $dailyUses = DB::table('discount_usages')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)
+                    ->where('customer_id', $order->customer_id)->where('business_date', $businessDate)->count();
+                if ($dailyUses >= $discount->usage_limit_per_customer_per_day) {
+                    throw new OrderLifecycleException('DISCOUNT_DAILY_USAGE_LIMIT_REACHED', 'The customer daily usage limit has been reached.');
+                }
+            }
             DB::table('discount_usages')->insert([
                 'tenant_id' => $tenantId, 'discount_id' => $discount->id, 'order_id' => $order->id,
-                'payment_id' => $paymentId, 'customer_id' => $order->customer_id,
+                'payment_id' => $paymentId, 'customer_id' => $order->customer_id, 'business_date' => $businessDate,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
             DB::table('discounts')->where('id', $discount->id)->increment('used_count');
@@ -182,8 +200,30 @@ class DiscountEligibilityService
         }
     }
 
+    private function assertChannel(int $tenantId, object $discount, object $order): void
+    {
+        $channels = DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->pluck('channel_key')->all();
+        if ($channels && ! in_array((string) ($order->sales_channel ?? 'pos'), $channels, true)) {
+            throw new OrderLifecycleException('DISCOUNT_CHANNEL_NOT_ELIGIBLE', 'This discount is not available for the order sales channel.');
+        }
+    }
+
     private function assertCustomer(int $tenantId, object $discount, object $order): void
     {
+        $mode = strtolower(trim((string) $discount->customer_eligibility));
+        if ($mode === 'selected_customers') {
+            if ($order->customer_id === null) {
+                throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+            }
+            $customerIds = $this->targetIds($tenantId, $discount->id, 'customer');
+            $eligible = $customerIds && in_array((int) $order->customer_id, $customerIds, true)
+                && DB::table('customers')->where('tenant_id', $tenantId)->where('id', $order->customer_id)->where('is_active', true)->whereNull('deleted_at')->exists();
+            if (! $eligible) {
+                throw new OrderLifecycleException('DISCOUNT_CUSTOMER_NOT_ELIGIBLE', 'The order customer is not eligible for this discount.');
+            }
+
+            return;
+        }
         $groupIds = $this->targetIds($tenantId, $discount->id, 'customer_group');
         if (! $groupIds) {
             // Historical, pre-V1 records remain readable and executable. New
@@ -254,6 +294,9 @@ class DiscountEligibilityService
         if ($discount->scope === 'order') {
             return (float) $order->subtotal;
         }
+        if ($discount->scope === 'bundle') {
+            return $this->bundleSubtotal($tenantId, $order, $discount);
+        }
         $productIds = $this->targetIds($tenantId, $discount->id, 'product');
         $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
         $items = DB::table('order_items')->leftJoin('products', 'products.id', '=', 'order_items.product_id')
@@ -271,6 +314,65 @@ class DiscountEligibilityService
         });
 
         return (float) $items->sum('order_items.total');
+    }
+
+    /**
+     * Prices are derived only from immutable order items. One requirement set
+     * is selected, even where an order contains enough units for many bundles.
+     */
+    private function bundleSubtotal(int $tenantId, object $order, object $discount): float
+    {
+        $requirements = DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->orderBy('product_id')->get();
+        if ($requirements->isEmpty()) {
+            return 0.0;
+        }
+        $itemsByProduct = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')
+            ->whereIn('product_id', $requirements->pluck('product_id'))->orderBy('id')->get()->groupBy('product_id');
+        $subtotal = 0.0;
+        foreach ($requirements as $requirement) {
+            $remaining = (float) $requirement->quantity;
+            foreach ($itemsByProduct->get($requirement->product_id, collect()) as $item) {
+                $taken = min($remaining, (float) $item->quantity);
+                $subtotal += $taken * (float) $item->unit_price;
+                $remaining -= $taken;
+                if ($remaining <= 0.00001) {
+                    break;
+                }
+            }
+            if ($remaining > 0.00001) {
+                return 0.0;
+            }
+        }
+
+        return round($subtotal, 2);
+    }
+
+    private function assertUsageAvailable(int $tenantId, object $discount, object $order, object $branch): void
+    {
+        if ($discount->usage_limit === null && $discount->usage_limit_per_customer === null && $discount->usage_limit_per_customer_per_day === null) {
+            return;
+        }
+        $usages = DB::table('discount_usages')->where('tenant_id', $tenantId)->where('discount_id', $discount->id);
+        if ($discount->usage_limit !== null && (clone $usages)->count() >= $discount->usage_limit) {
+            throw new OrderLifecycleException('DISCOUNT_USAGE_LIMIT_REACHED', 'The discount usage limit has been reached.');
+        }
+        if ($discount->usage_limit_per_customer !== null || $discount->usage_limit_per_customer_per_day !== null) {
+            if ($order->customer_id === null) {
+                throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+            }
+            $customerUsages = (clone $usages)->where('customer_id', $order->customer_id);
+            if ($discount->usage_limit_per_customer !== null && (clone $customerUsages)->count() >= $discount->usage_limit_per_customer) {
+                throw new OrderLifecycleException('DISCOUNT_USAGE_LIMIT_REACHED', 'The customer usage limit has been reached.');
+            }
+            if ($discount->usage_limit_per_customer_per_day !== null && $customerUsages->where('business_date', $this->businessDate($branch))->count() >= $discount->usage_limit_per_customer_per_day) {
+                throw new OrderLifecycleException('DISCOUNT_DAILY_USAGE_LIMIT_REACHED', 'The customer daily usage limit has been reached.');
+            }
+        }
+    }
+
+    private function businessDate(object $branch): string
+    {
+        return CarbonImmutable::now($branch->timezone ?: 'UTC')->toDateString();
     }
 
     private function targetIds(int $tenantId, int $discountId, string $type): array

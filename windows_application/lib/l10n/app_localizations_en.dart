@@ -7339,4 +7339,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expensesReportPercentOfTotal => 'of total';
+
+  @override
+  String get discountV2PackageBundle => 'Package / Bundle';
+
+  @override
+  String get discountV2PackageRequirements => 'Package Requirements';
+
+  @override
+  String get discountV2AllPackageItems =>
+      'All package items must be present in the order for this discount to apply.';
+
+  @override
+  String get discountV2RequiredQuantity => 'Required Quantity';
+
+  @override
+  String get discountV2AddProduct => 'Add Product';
+
+  @override
+  String get discountV2SelectedCustomers => 'Selected Customers';
+
+  @override
+  String get discountV2SelectCustomers => 'Select Customers';
+
+  @override
+  String get discountV2Channels => 'Channels';
+
+  @override
+  String get discountV2AllChannels => 'All Channels';
+
+  @override
+  String get discountV2SelectedChannels => 'Selected Channels';
+
+  @override
+  String get discountV2BranchChannelHelp =>
+      'Branch and channel restrictions are applied together.';
+
+  @override
+  String get discountV2DailyLimit => 'Per Customer Daily Limit';
+
+  @override
+  String get discountV2DailyLimitDetails =>
+      'Each customer may use this discount up to the lifetime limit, but only up to the daily limit per business day.';
+
+  @override
+  String get discountV2Regenerate => 'Regenerate';
+
+  @override
+  String get discountV2CodeGenerationFailed => 'Unable to generate a code.';
+
+  @override
+  String get discountV2Retry => 'Retry';
+
+  @override
+  String get discountV2Search => 'Search';
 }

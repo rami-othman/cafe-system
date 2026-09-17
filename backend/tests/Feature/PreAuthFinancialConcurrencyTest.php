@@ -84,6 +84,69 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         $this->assertSame(1, (int) DB::table('discounts')->where('id', $discountId)->value('used_count'));
     }
 
+    public function test_concurrent_same_customer_daily_limit_one_allows_one_payment_and_one_usage(): void
+    {
+        [$tenantId, $branchId] = $this->scope();
+        $customerId = $this->makeCustomer($tenantId, 'Daily limit one');
+        $discountId = $this->makeDailyLimitDiscount($tenantId, 1);
+        $firstOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+        $secondOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+
+        $results = $this->runConcurrently('payment', [
+            $this->paymentPayload($tenantId, $firstOrder, 'daily-limit-one-a'),
+            $this->paymentPayload($tenantId, $secondOrder, 'daily-limit-one-b'),
+        ]);
+
+        $this->assertCount(1, array_filter($results, fn (array $result): bool => $result['ok']));
+        $loser = collect($results)->first(fn (array $result): bool => ! $result['ok']);
+        $this->assertSame('DISCOUNT_DAILY_USAGE_LIMIT_REACHED', $loser['code']);
+        $this->assertSame(1, DB::table('payments')->whereIn('order_id', [$firstOrder, $secondOrder])->where('status', 'completed')->count());
+        $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discountId)->count());
+        $this->assertSame(1, (int) DB::table('discounts')->where('id', $discountId)->value('used_count'));
+    }
+
+    public function test_concurrent_same_customer_daily_limit_two_allows_two_then_rejects_the_third_use(): void
+    {
+        [$tenantId, $branchId] = $this->scope();
+        $customerId = $this->makeCustomer($tenantId, 'Daily limit two');
+        $discountId = $this->makeDailyLimitDiscount($tenantId, 2);
+        $firstOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+        $secondOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+
+        $results = $this->runConcurrently('payment', [
+            $this->paymentPayload($tenantId, $firstOrder, 'daily-limit-two-a'),
+            $this->paymentPayload($tenantId, $secondOrder, 'daily-limit-two-b'),
+        ]);
+
+        $this->assertCount(2, array_filter($results, fn (array $result): bool => $result['ok']));
+        $thirdOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+        $this->postJson("/api/v1/orders/{$thirdOrder}/pay", $this->paymentPayload($tenantId, $thirdOrder, 'daily-limit-two-c')['request'], $this->headers($tenantId))
+            ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_DAILY_USAGE_LIMIT_REACHED');
+        $this->assertSame(2, DB::table('payments')->whereIn('order_id', [$firstOrder, $secondOrder, $thirdOrder])->where('status', 'completed')->count());
+        $this->assertSame(2, DB::table('discount_usages')->where('discount_id', $discountId)->count());
+    }
+
+    public function test_lost_response_retry_of_daily_limited_discount_payment_does_not_consume_a_second_usage(): void
+    {
+        [$tenantId, $branchId] = $this->scope();
+        $customerId = $this->makeCustomer($tenantId, 'Daily retry');
+        $discountId = $this->makeDailyLimitDiscount($tenantId, 1);
+        $orderId = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+        $payload = $this->paymentPayload($tenantId, $orderId, 'daily-lost-response');
+
+        // The first successful response is discarded exactly as it would be
+        // when the network fails after the transaction commits.
+        $results = $this->runConcurrently('payment', [$payload]);
+        $this->assertTrue($results[0]['ok']);
+        $paymentId = DB::table('payments')->where('order_id', $orderId)->value('id');
+
+        $this->postJson("/api/v1/orders/{$orderId}/pay", $payload['request'], $this->headers($tenantId))
+            ->assertOk()->assertJsonPath('data.payment.id', $paymentId);
+        $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->where('status', 'completed')->count());
+        $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discountId)->where('order_id', $orderId)->count());
+        $this->assertSame(1, (int) DB::table('discounts')->where('id', $discountId)->value('used_count'));
+    }
+
     public function test_payment_conflict_and_lost_response_retry_have_no_second_effect(): void
     {
         [$tenantId, $branchId] = $this->scope();
@@ -252,9 +315,12 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         return [$orderId, $paymentId];
     }
 
-    private function makeDiscountedOrder(int $tenantId, int $branchId, int $discountId): int
+    private function makeDiscountedOrder(int $tenantId, int $branchId, int $discountId, ?int $customerId = null): int
     {
         $orderId = $this->makeOrder($tenantId, $branchId, 100);
+        if ($customerId !== null) {
+            DB::table('orders')->where('id', $orderId)->update(['customer_id' => $customerId]);
+        }
         $product = DB::table('products')->where('tenant_id', $tenantId)->first();
         DB::table('order_items')->insert([
             'tenant_id' => $tenantId, 'order_id' => $orderId, 'product_id' => $product->id,
@@ -268,6 +334,25 @@ class PreAuthFinancialConcurrencyTest extends TestCase
         ]);
 
         return $orderId;
+    }
+
+    private function makeDailyLimitDiscount(int $tenantId, int $dailyLimit): int
+    {
+        return (int) DB::table('discounts')->insertGetId([
+            'tenant_id' => $tenantId, 'name' => 'Daily limit '.$dailyLimit, 'application_mode' => 'auto',
+            'type' => 'percentage', 'value' => 10, 'scope' => 'order', 'minimum_order_amount' => 0,
+            'usage_limit_per_customer_per_day' => $dailyLimit, 'used_count' => 0, 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    private function makeCustomer(int $tenantId, string $name): int
+    {
+        return (int) DB::table('customers')->insertGetId([
+            'tenant_id' => $tenantId, 'name' => $name, 'customer_number' => 'C-'.uniqid(),
+            'normalized_name' => strtolower(str_replace(' ', '-', $name)).'-'.uniqid(), 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 
     private function paymentPayload(int $tenantId, int $orderId, string $key): array

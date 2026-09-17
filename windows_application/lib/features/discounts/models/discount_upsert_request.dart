@@ -18,11 +18,15 @@ class DiscountUpsertRequest {
     this.endTime,
     this.usageLimit,
     this.usageLimitPerCustomer,
+    this.perCustomerDailyUsageLimit,
     this.customerEligibilityMode = 'all',
     this.customerGroupIds = const <int>[],
+    this.customerIds = const <int>[],
     this.paymentMethodIds = const <int>[],
     this.targetProductIds = const <int>[],
     this.targetCategoryIds = const <int>[],
+    this.bundleRequirements = const <DiscountBundleRequirement>[],
+    this.channelKeys = const <String>[],
     // Deprecated server compatibility fields. New callers should use the
     // canonical IDs and eligibility mode above.
     this.customerEligibility,
@@ -48,11 +52,15 @@ class DiscountUpsertRequest {
   final String? endTime;
   final int? usageLimit;
   final int? usageLimitPerCustomer;
+  final int? perCustomerDailyUsageLimit;
   final String customerEligibilityMode;
   final List<int> customerGroupIds;
+  final List<int> customerIds;
   final List<int> paymentMethodIds;
   final List<int> targetProductIds;
   final List<int> targetCategoryIds;
+  final List<DiscountBundleRequirement> bundleRequirements;
+  final List<String> channelKeys;
   final String? customerEligibility;
   final String? paymentMethod;
   final bool appliesToAllBranches;
@@ -79,15 +87,36 @@ class DiscountUpsertRequest {
     'endTime': endTime,
     'usageLimit': usageLimit,
     'usageLimitPerCustomer': usageLimitPerCustomer,
+    'perCustomerDailyUsageLimit': perCustomerDailyUsageLimit,
     'customerEligibilityMode': customerEligibilityMode,
     'customerGroupIds': customerGroupIds,
+    'customerIds': customerIds,
     'paymentMethodIds': paymentMethodIds,
     'targetProductIds': targetProductIds,
     'targetCategoryIds': targetCategoryIds,
+    'bundleRequirements': bundleRequirements
+        .map((DiscountBundleRequirement item) => item.toJson())
+        .toList(growable: false),
+    'channelKeys': channelKeys,
     'customerEligibility': customerEligibility,
     'paymentMethod': paymentMethod,
     'appliesToAllBranches': appliesToAllBranches,
     'branchIds': branchIds,
     'isActive': isActive,
+  };
+}
+
+class DiscountBundleRequirement {
+  const DiscountBundleRequirement({
+    required this.productId,
+    required this.quantity,
+  });
+
+  final int productId;
+  final double quantity;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'productId': productId,
+    'quantity': quantity,
   };
 }

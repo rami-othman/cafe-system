@@ -13147,6 +13147,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'of total'**
   String get expensesReportPercentOfTotal;
+
+  /// No description provided for @discountV2PackageBundle.
+  ///
+  /// In en, this message translates to:
+  /// **'Package / Bundle'**
+  String get discountV2PackageBundle;
+
+  /// No description provided for @discountV2PackageRequirements.
+  ///
+  /// In en, this message translates to:
+  /// **'Package Requirements'**
+  String get discountV2PackageRequirements;
+
+  /// No description provided for @discountV2AllPackageItems.
+  ///
+  /// In en, this message translates to:
+  /// **'All package items must be present in the order for this discount to apply.'**
+  String get discountV2AllPackageItems;
+
+  /// No description provided for @discountV2RequiredQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Quantity'**
+  String get discountV2RequiredQuantity;
+
+  /// No description provided for @discountV2AddProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Product'**
+  String get discountV2AddProduct;
+
+  /// No description provided for @discountV2SelectedCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Customers'**
+  String get discountV2SelectedCustomers;
+
+  /// No description provided for @discountV2SelectCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Customers'**
+  String get discountV2SelectCustomers;
+
+  /// No description provided for @discountV2Channels.
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get discountV2Channels;
+
+  /// No description provided for @discountV2AllChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'All Channels'**
+  String get discountV2AllChannels;
+
+  /// No description provided for @discountV2SelectedChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Channels'**
+  String get discountV2SelectedChannels;
+
+  /// No description provided for @discountV2BranchChannelHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch and channel restrictions are applied together.'**
+  String get discountV2BranchChannelHelp;
+
+  /// No description provided for @discountV2DailyLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Per Customer Daily Limit'**
+  String get discountV2DailyLimit;
+
+  /// No description provided for @discountV2DailyLimitDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Each customer may use this discount up to the lifetime limit, but only up to the daily limit per business day.'**
+  String get discountV2DailyLimitDetails;
+
+  /// No description provided for @discountV2Regenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get discountV2Regenerate;
+
+  /// No description provided for @discountV2CodeGenerationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to generate a code.'**
+  String get discountV2CodeGenerationFailed;
+
+  /// No description provided for @discountV2Retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get discountV2Retry;
+
+  /// No description provided for @discountV2Search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get discountV2Search;
 }
 
 class _AppLocalizationsDelegate

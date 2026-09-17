@@ -96,6 +96,38 @@ void main() {
       expect(json['branchIds'], isEmpty);
     },
   );
+
+  test('serializes V2 customer, channel, daily-limit, and bundle fields', () {
+    final Map<String, dynamic> json = DiscountUpsertRequest(
+      name: 'VIP breakfast package',
+      code: 'CPN-ABCD-EFGH',
+      applicationMode: 'code',
+      type: 'percentage',
+      scope: 'bundle',
+      value: 20,
+      customerEligibilityMode: 'selected_customers',
+      customerIds: const <int>[71, 72],
+      customerGroupIds: const <int>[],
+      perCustomerDailyUsageLimit: 1,
+      channelKeys: const <String>['pos', 'delivery'],
+      bundleRequirements: const <DiscountBundleRequirement>[
+        DiscountBundleRequirement(productId: 11, quantity: 1),
+        DiscountBundleRequirement(productId: 12, quantity: 2),
+      ],
+      appliesToAllBranches: true,
+      isActive: true,
+    ).toJson();
+
+    expect(json['customerEligibilityMode'], 'selected_customers');
+    expect(json['customerIds'], <int>[71, 72]);
+    expect(json['customerGroupIds'], isEmpty);
+    expect(json['perCustomerDailyUsageLimit'], 1);
+    expect(json['channelKeys'], <String>['pos', 'delivery']);
+    expect(json['bundleRequirements'], <Map<String, dynamic>>[
+      <String, dynamic>{'productId': 11, 'quantity': 1.0},
+      <String, dynamic>{'productId': 12, 'quantity': 2.0},
+    ]);
+  });
 }
 
 DiscountUpsertRequest _request({

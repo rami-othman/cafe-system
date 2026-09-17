@@ -151,6 +151,7 @@ class PosOrderController extends Controller
                 $orderId = DB::table('orders')->insertGetId([
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'],
+                    'sales_channel' => 'pos',
                     'warehouse_id' => $warehouse?->id,
                     'published_menu_version_id' => $snapshot['version']->id ?? null,
                     'shift_id' => $data['shiftId'] ?? null,
@@ -608,6 +609,7 @@ class PosOrderController extends Controller
             'id' => $order->id,
             'orderNumber' => $order->order_number,
             'branchId' => $order->branch_id,
+            'salesChannel' => $order->sales_channel,
             'warehouseId' => $order->warehouse_id,
             'warehouseName' => $warehouse?->name,
             'publishedMenuVersionId' => $order->published_menu_version_id,

@@ -7,6 +7,7 @@ import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/core/theme/app_theme.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/features/discounts/views/create_discount_policy_screen.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
@@ -456,6 +457,167 @@ void main() {
     );
     expect(_fieldText(tester, const Key('discount-start-time-field')), '22:00');
     expect(_fieldText(tester, const Key('discount-end-time-field')), '02:00');
+    expect(_fieldText(tester, const Key('discount-code-field')), 'DETAIL12');
+    expect(repository.generateCouponCalls, 0);
+  });
+
+  testWidgets('code mode requests backend-generated code and regenerates it', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository();
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+
+    await _selectDropdown(
+      tester,
+      const Key('discount-application-mode-field'),
+      'Coupon / Code',
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.generateCouponCalls, 1);
+    expect(_fieldText(tester, const Key('discount-code-field')), 'CPN-0001');
+    expect(
+      _textField(tester, const Key('discount-code-field')).readOnly,
+      isTrue,
+    );
+
+    await tester.tap(find.byKey(const Key('discount-regenerate-code')));
+    await tester.pumpAndSettle();
+    expect(repository.generateCouponCalls, 2);
+    expect(_fieldText(tester, const Key('discount-code-field')), 'CPN-0002');
+  });
+
+  testWidgets('V2 bundle and customer selections serialize canonical IDs', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      stallCreates: true,
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    _fillRequiredFields(tester, name: 'Customer package', value: '20');
+
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-customer-eligibility-field')),
+    );
+    await _selectDropdown(
+      tester,
+      const Key('discount-customer-eligibility-field'),
+      'Selected Customers',
+    );
+    await tester.tap(find.byKey(const Key('discount-customers-selector')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('discount-reference-search')),
+      'Amina',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Amina Hassan'));
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+
+    await _scrollToField(tester, find.byKey(const Key('discount-scope-field')));
+    await _selectDropdown(
+      tester,
+      const Key('discount-scope-field'),
+      'Package / Bundle',
+    );
+    await tester.tap(find.byKey(const Key('discount-add-bundle-product')));
+    await tester.pump();
+    await _selectDropdown(
+      tester,
+      const Key('discount-bundle-product-0'),
+      'Cappuccino',
+    );
+    _setField(tester, const Key('discount-bundle-quantity-0'), '1');
+
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-channel-mode-field')),
+    );
+    await _selectDropdown(
+      tester,
+      const Key('discount-channel-mode-field'),
+      'Selected Channels',
+    );
+    await tester.pump();
+    await tester.tap(find.text('POS'));
+    await tester.tap(find.text('Delivery'));
+    await tester.pump();
+
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-per-customer-daily-limit-field')),
+    );
+    _setField(
+      tester,
+      const Key('discount-per-customer-daily-limit-field'),
+      '1',
+    );
+    await tester.tap(find.text('Save as Draft'));
+    await tester.pump();
+
+    final DiscountUpsertRequest request = repository.lastCreateRequest!;
+    expect(request.customerIds, <int>[71]);
+    expect(request.customerGroupIds, isEmpty);
+    expect(request.scope, 'bundle');
+    expect(request.bundleRequirements.single.productId, 11);
+    expect(request.bundleRequirements.single.quantity, 1);
+    expect(request.channelKeys, <String>['pos', 'delivery']);
+    expect(request.perCustomerDailyUsageLimit, 1);
+  });
+
+  testWidgets('coupon generation failure exposes retry', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      couponFailuresRemaining: 1,
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+
+    await _selectDropdown(
+      tester,
+      const Key('discount-application-mode-field'),
+      'Coupon / Code',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Unable to generate a code.'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(repository.generateCouponCalls, 2);
+    expect(_fieldText(tester, const Key('discount-code-field')), 'CPN-0002');
+  });
+
+  testWidgets('edit hydrates V2 detail without generating a new code', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      detail: _v2Detail,
+    );
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      repository: repository,
+      initialDiscount: _editRow,
+    );
+
+    expect(_fieldText(tester, const Key('discount-code-field')), 'CPN-V2-0001');
+    expect(
+      _fieldText(tester, const Key('discount-per-customer-daily-limit-field')),
+      '1',
+    );
+    expect(repository.generateCouponCalls, 0);
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-bundle-product-0')),
+    );
+    expect(
+      find.byKey(const Key('discount-customers-selector')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('discount-channels-selector')), findsOneWidget);
+    expect(_fieldText(tester, const Key('discount-bundle-quantity-0')), '1');
   });
 }
 
@@ -488,7 +650,11 @@ void _fillRequiredFields(
 }
 
 Future<void> _selectValueType(WidgetTester tester, String label) async {
-  await tester.tap(find.byKey(const Key('discount-value-type-field')));
+  await _selectDropdown(tester, const Key('discount-value-type-field'), label);
+}
+
+Future<void> _selectDropdown(WidgetTester tester, Key key, String label) async {
+  await tester.tap(find.byKey(key));
   await tester.pumpAndSettle();
   await tester.tap(find.text(label).last);
   await tester.pumpAndSettle();
@@ -525,6 +691,8 @@ Future<void> _pumpScreen(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: BlocProvider<DiscountsCubit>(
           create: (_) =>
@@ -538,19 +706,43 @@ Future<void> _pumpScreen(
 }
 
 class _DiscountsRepository implements DiscountsRepository {
-  _DiscountsRepository({this.stallCreates = false});
+  _DiscountsRepository({
+    this.stallCreates = false,
+    this.couponFailuresRemaining = 0,
+    this.detail,
+  });
 
   int detailRequests = 0;
   final bool stallCreates;
   DiscountUpsertRequest? lastCreateRequest;
+  int generateCouponCalls = 0;
+  int couponFailuresRemaining;
+  final DiscountDetail? detail;
   @override
   Future<DiscountFormReferences> getFormReferences() async =>
       const DiscountFormReferences(
+        products: <DiscountFormReference>[
+          DiscountFormReference(id: 11, name: 'Cappuccino', isActive: true),
+        ],
         categories: <DiscountFormReference>[
           DiscountFormReference(id: 31, name: 'Coffee', isActive: true),
         ],
         customerGroups: <DiscountFormReference>[
           DiscountFormReference(id: 41, name: 'Members', isActive: true),
+        ],
+        customers: <DiscountFormReference>[
+          DiscountFormReference(
+            id: 71,
+            name: 'Amina Hassan',
+            subtitle: '0933000000',
+            isActive: true,
+          ),
+          DiscountFormReference(
+            id: 72,
+            name: 'Basil Nasser',
+            subtitle: '0933111111',
+            isActive: true,
+          ),
         ],
         paymentMethods: <DiscountFormReference>[
           DiscountFormReference(id: 61, name: 'Cash drawer', isActive: true),
@@ -575,7 +767,17 @@ class _DiscountsRepository implements DiscountsRepository {
   @override
   Future<DiscountDetail> getDiscountDetail(String discountId) async {
     detailRequests++;
-    return _detail;
+    return detail ?? _detail;
+  }
+
+  @override
+  Future<String> generateCouponCode() async {
+    generateCouponCalls++;
+    if (couponFailuresRemaining > 0) {
+      couponFailuresRemaining--;
+      throw StateError('unavailable');
+    }
+    return 'CPN-000${generateCouponCalls}';
   }
 
   @override
@@ -639,6 +841,30 @@ const DiscountDetail _detail = DiscountDetail(
   maximumDiscountAmount: 5000,
   usageLimit: 10,
   usageLimitPerCustomer: 2,
+);
+
+const DiscountDetail _v2Detail = DiscountDetail(
+  id: 82,
+  name: 'V2 package',
+  code: 'CPN-V2-0001',
+  applicationMode: 'code',
+  type: 'percentage',
+  scope: 'bundle',
+  value: 20,
+  isActive: true,
+  appliesToAllBranches: true,
+  customerEligibilityMode: 'selected_customers',
+  targetProductIds: <int>[],
+  targetCategoryIds: <int>[],
+  customerGroupIds: <int>[],
+  customerIds: <int>[71],
+  branchIds: <int>[],
+  paymentMethodIds: <int>[],
+  perCustomerDailyUsageLimit: 1,
+  channelKeys: <String>['pos', 'delivery'],
+  bundleRequirements: <DiscountBundleRequirement>[
+    DiscountBundleRequirement(productId: 11, quantity: 1),
+  ],
 );
 
 AppSidebarItem _discountsSidebarItem(WidgetTester tester) {

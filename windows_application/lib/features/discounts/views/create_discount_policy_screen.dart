@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -8,8 +10,10 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../menu_management/operational_availability/operational_availability_formatters.dart';
 import '../controllers/discounts_cubit.dart';
 import '../controllers/discounts_state.dart';
 import '../models/discount_detail.dart';
@@ -49,6 +53,8 @@ class _CreateDiscountPolicyScreenState
   final TextEditingController _usageLimitController = TextEditingController();
   final TextEditingController _perCustomerLimitController =
       TextEditingController();
+  final TextEditingController _perCustomerDailyLimitController =
+      TextEditingController();
 
   bool _active = false;
   String _applicationMode = 'manual';
@@ -57,16 +63,23 @@ class _CreateDiscountPolicyScreenState
   String _customerEligibilityMode = 'all';
   bool _appliesToAllBranches = true;
   bool _allPaymentMethods = true;
+  bool _allChannels = true;
   final Set<int> _productIds = <int>{};
   final Set<int> _categoryIds = <int>{};
   final Set<int> _customerGroupIds = <int>{};
+  final Set<int> _customerIds = <int>{};
   final Set<int> _branchIds = <int>{};
   final Set<int> _paymentMethodIds = <int>{};
+  final Set<String> _channelKeys = <String>{};
+  final List<_BundleRequirementDraft> _bundleRequirements =
+      <_BundleRequirementDraft>[];
   final Set<String> _activeDays = <String>{};
   bool _isLoadingDetail = false;
   String? _detailError;
   String? _conditions;
   bool _showValidationErrors = false;
+  bool _isGeneratingCode = false;
+  String? _couponGenerationError;
 
   bool get _isEdit => widget.initialDiscount != null;
   bool get _isPercentage => _valueType == 'percentage';
@@ -92,6 +105,7 @@ class _CreateDiscountPolicyScreenState
       controller.removeListener(_onFormChanged);
       controller.dispose();
     }
+    _clearBundleRequirements();
     super.dispose();
   }
 
@@ -108,6 +122,7 @@ class _CreateDiscountPolicyScreenState
     _endTimeController,
     _usageLimitController,
     _perCustomerLimitController,
+    _perCustomerDailyLimitController,
   ];
 
   void _onFormChanged() {
@@ -152,26 +167,46 @@ class _CreateDiscountPolicyScreenState
     _usageLimitController.text = detail.usageLimit?.toString() ?? '';
     _perCustomerLimitController.text =
         detail.usageLimitPerCustomer?.toString() ?? '';
+    _perCustomerDailyLimitController.text =
+        detail.perCustomerDailyUsageLimit?.toString() ?? '';
     setState(() {
       _active = detail.isActive;
       _applicationMode = detail.applicationMode == 'code' ? 'code' : 'manual';
       _scope = switch (detail.scope) {
         'product' => 'product',
         'category' => 'category',
+        'bundle' => 'bundle',
         _ => 'order',
       };
       _valueType = detail.type == 'fixed' ? 'fixed' : 'percentage';
-      _customerEligibilityMode =
-          detail.customerEligibilityMode == 'selected_groups'
-          ? 'selected_groups'
-          : 'all';
+      _customerEligibilityMode = switch (detail.customerEligibilityMode) {
+        'selected_groups' => 'selected_groups',
+        'selected_customers' => 'selected_customers',
+        _ => 'all',
+      };
       _appliesToAllBranches = detail.appliesToAllBranches;
       _allPaymentMethods = detail.paymentMethodIds.isEmpty;
       _replace(_productIds, detail.targetProductIds);
       _replace(_categoryIds, detail.targetCategoryIds);
       _replace(_customerGroupIds, detail.customerGroupIds);
+      _replace(_customerIds, detail.customerIds);
       _replace(_branchIds, detail.branchIds);
       _replace(_paymentMethodIds, detail.paymentMethodIds);
+      _channelKeys
+        ..clear()
+        ..addAll(detail.channelKeys);
+      _allChannels = detail.channelKeys.isEmpty;
+      for (final _BundleRequirementDraft requirement in _bundleRequirements) {
+        requirement.dispose();
+      }
+      _bundleRequirements
+        ..clear()
+        ..addAll(
+          detail.bundleRequirements.map(
+            (requirement) =>
+                _BundleRequirementDraft.fromRequirement(requirement),
+          ),
+        );
       _activeDays
         ..clear()
         ..addAll(detail.activeDays);
@@ -290,279 +325,401 @@ class _CreateDiscountPolicyScreenState
     ],
   );
 
-  Widget _basicCard(bool locked) => DiscountFormSectionCard(
-    title: 'Basic Information',
-    trailing: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text('Active', style: AppTextStyles.bodySmall),
-        const SizedBox(width: AppSpacing.sm),
-        Switch(
-          value: _active,
-          onChanged: locked ? null : (value) => setState(() => _active = value),
-        ),
-      ],
-    ),
-    child: _AdaptiveFields(
-      children: <_LabeledField>[
-        _LabeledField(
-          label: 'Discount Name',
-          child: AppTextField(
-            key: const Key('discount-name-field'),
-            controller: _nameController,
-            enabled: !locked,
+  Widget _basicCard(bool locked) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return DiscountFormSectionCard(
+      title: 'Basic Information',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text('Active', style: AppTextStyles.bodySmall),
+          const SizedBox(width: AppSpacing.sm),
+          Switch(
+            value: _active,
+            onChanged: locked
+                ? null
+                : (value) => setState(() => _active = value),
           ),
-        ),
-        _LabeledField(
-          label: 'Application Mode',
-          child: _SelectField(
-            key: const Key('discount-application-mode-field'),
-            value: _applicationMode,
-            options: const <_SelectOption>[
-              _SelectOption('manual', 'Manual'),
-              _SelectOption('code', 'Coupon / Code'),
-            ],
-            enabled: !locked,
-            onChanged: (value) => setState(() {
-              _applicationMode = value;
-              if (value == 'manual') _codeController.clear();
-            }),
-          ),
-        ),
-        if (_applicationMode == 'code')
+        ],
+      ),
+      child: _AdaptiveFields(
+        children: <_LabeledField>[
           _LabeledField(
-            label: 'Code',
+            label: 'Discount Name',
             child: AppTextField(
-              key: const Key('discount-code-field'),
-              controller: _codeController,
+              key: const Key('discount-name-field'),
+              controller: _nameController,
               enabled: !locked,
             ),
           ),
-        _LabeledField(
-          label: 'Description',
-          span: 2,
-          child: AppTextField(
-            controller: _descriptionController,
-            enabled: !locked,
-            hintText: 'Internal description for discount policy...',
-            maxLines: 3,
+          _LabeledField(
+            label: 'Application Mode',
+            child: _SelectField(
+              key: const Key('discount-application-mode-field'),
+              value: _applicationMode,
+              options: <_SelectOption>[
+                _SelectOption('manual', 'Manual'),
+                _SelectOption('code', 'Coupon / Code'),
+              ],
+              enabled: !locked,
+              onChanged: _changeApplicationMode,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+          if (_applicationMode == 'code')
+            _LabeledField(
+              label: 'Code',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  AppTextField(
+                    key: const Key('discount-code-field'),
+                    controller: _codeController,
+                    enabled: !locked && !_isGeneratingCode,
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: <Widget>[
+                      if (_isGeneratingCode)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else
+                        TextButton(
+                          key: const Key('discount-regenerate-code'),
+                          onPressed: locked ? null : _generateCouponCode,
+                          child: Text(l10n.discountV2Regenerate),
+                        ),
+                      if (_couponGenerationError != null) ...<Widget>[
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            l10n.discountV2CodeGenerationFailed,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: locked ? null : _generateCouponCode,
+                          child: Text(l10n.discountV2Retry),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          _LabeledField(
+            label: 'Description',
+            span: 2,
+            child: AppTextField(
+              controller: _descriptionController,
+              enabled: !locked,
+              hintText: 'Internal description for discount policy...',
+              maxLines: 3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _scopeCard(DiscountsState state, bool locked) =>
-      DiscountFormSectionCard(
-        title: 'Scope & Value',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _AdaptiveFields(
-              children: <_LabeledField>[
-                _LabeledField(
-                  label: 'Applies To',
-                  child: _SelectField(
-                    key: const Key('discount-scope-field'),
-                    value: _scope,
-                    options: const <_SelectOption>[
-                      _SelectOption('order', 'Entire Order'),
-                      _SelectOption('product', 'Selected Products'),
-                      _SelectOption('category', 'Selected Categories'),
-                    ],
-                    enabled: !locked,
-                    onChanged: (value) => setState(() {
-                      _scope = value;
-                      if (value != 'product') _productIds.clear();
-                      if (value != 'category') _categoryIds.clear();
-                    }),
-                  ),
+  Widget _scopeCard(DiscountsState state, bool locked) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return DiscountFormSectionCard(
+      title: 'Scope & Value',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _AdaptiveFields(
+            children: <_LabeledField>[
+              _LabeledField(
+                label: 'Applies To',
+                child: _SelectField(
+                  key: const Key('discount-scope-field'),
+                  value: _scope,
+                  options: <_SelectOption>[
+                    _SelectOption('order', 'Entire Order'),
+                    _SelectOption('product', 'Selected Products'),
+                    _SelectOption('category', 'Selected Categories'),
+                    _SelectOption('bundle', l10n.discountV2PackageBundle),
+                  ],
+                  enabled: !locked,
+                  onChanged: (value) => setState(() {
+                    _scope = value;
+                    if (value != 'product') _productIds.clear();
+                    if (value != 'category') _categoryIds.clear();
+                    if (value != 'bundle') _clearBundleRequirements();
+                  }),
                 ),
-                _LabeledField(
-                  label: 'Value Type',
-                  child: _SelectField(
-                    key: const Key('discount-value-type-field'),
-                    value: _valueType,
-                    options: const <_SelectOption>[
-                      _SelectOption('percentage', 'Percentage'),
-                      _SelectOption('fixed', 'Fixed Amount'),
-                    ],
-                    enabled: !locked,
-                    onChanged: (value) => setState(() => _valueType = value),
-                  ),
+              ),
+              _LabeledField(
+                label: 'Value Type',
+                child: _SelectField(
+                  key: const Key('discount-value-type-field'),
+                  value: _valueType,
+                  options: <_SelectOption>[
+                    _SelectOption('percentage', 'Percentage'),
+                    _SelectOption('fixed', 'Fixed Amount'),
+                  ],
+                  enabled: !locked,
+                  onChanged: (value) => setState(() => _valueType = value),
                 ),
-                _LabeledField(
-                  label: 'Value',
-                  child: AppTextField(
-                    key: const Key('discount-value-field'),
-                    controller: _valueController,
+              ),
+              _LabeledField(
+                label: 'Value',
+                child: AppTextField(
+                  key: const Key('discount-value-field'),
+                  controller: _valueController,
+                  enabled: !locked,
+                  prefixText: _isPercentage ? null : '${_currency(state)} ',
+                  hintText: _isPercentage ? '0 %' : '0 ${_currency(state)}',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  errorText: _fieldError('value'),
+                ),
+              ),
+              _LabeledField(
+                label: 'Min Spend (optional)',
+                child: _moneyField(
+                  _minSpendController,
+                  locked,
+                  const Key('discount-min-spend-field'),
+                  _currency(state),
+                ),
+              ),
+              _LabeledField(
+                label: 'Max Discount (optional)',
+                child: _moneyField(
+                  _maxDiscountController,
+                  locked,
+                  const Key('discount-max-discount-field'),
+                  _currency(state),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _FieldLabel(
+            label: _isPercentage
+                ? 'Quick percentage values'
+                : 'Quick fixed values',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          DiscountChipSelector(
+            options: _isPercentage
+                ? const <String>['5%', '10%', '15%', '20%']
+                : const <String>['5000', '12500', '25000'],
+            selected: const <String>{},
+            multiSelect: false,
+            onSelected: locked
+                ? (_) {}
+                : (value) => setState(
+                    () => _valueController.text = value.replaceAll('%', ''),
+                  ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          if (_scope == 'product')
+            _referenceSelector(
+              key: const Key('discount-products-selector'),
+              label: 'Selected Products',
+              items: state.formReferences.products,
+              selectedIds: _productIds,
+              loading: state.isLoadingFormReferences,
+              enabled: !locked,
+              onChanged: (ids) => setState(() => _replace(_productIds, ids)),
+            ),
+          if (_scope == 'category')
+            _referenceSelector(
+              key: const Key('discount-categories-selector'),
+              label: 'Selected Categories',
+              items: state.formReferences.categories,
+              selectedIds: _categoryIds,
+              loading: state.isLoadingFormReferences,
+              enabled: !locked,
+              onChanged: (ids) => setState(() => _replace(_categoryIds, ids)),
+            ),
+          if (_scope == 'bundle') ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
+            _bundleRequirementsBuilder(state, locked),
+          ],
+          if (state.formReferencesErrorMessage != null)
+            _ReferencesRetry(
+              onRetry: () =>
+                  context.read<DiscountsCubit>().loadFormReferences(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _eligibilityCard(DiscountsState state, bool locked) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return DiscountFormSectionCard(
+      title: 'Eligibility Conditions',
+      child: _AdaptiveFields(
+        children: <_LabeledField>[
+          _LabeledField(
+            label: 'Customer Eligibility',
+            child: _SelectField(
+              key: const Key('discount-customer-eligibility-field'),
+              value: _customerEligibilityMode,
+              options: <_SelectOption>[
+                _SelectOption('all', 'All Customers'),
+                _SelectOption('selected_groups', 'Selected Customer Groups'),
+                _SelectOption(
+                  'selected_customers',
+                  l10n.discountV2SelectedCustomers,
+                ),
+              ],
+              enabled: !locked,
+              onChanged: (value) => setState(() {
+                _customerEligibilityMode = value;
+                if (value == 'all') {
+                  _customerGroupIds.clear();
+                  _customerIds.clear();
+                } else if (value == 'selected_groups') {
+                  _customerIds.clear();
+                } else if (value == 'selected_customers') {
+                  _customerGroupIds.clear();
+                }
+              }),
+            ),
+          ),
+          _LabeledField(
+            label: 'Payment Methods',
+            child: _SelectField(
+              key: const Key('discount-payment-mode-field'),
+              value: _allPaymentMethods ? 'all' : 'selected',
+              options: const <_SelectOption>[
+                _SelectOption('all', 'All Payment Methods'),
+                _SelectOption('selected', 'Selected Payment Methods'),
+              ],
+              enabled: !locked,
+              onChanged: (value) => setState(() {
+                _allPaymentMethods = value == 'all';
+                if (_allPaymentMethods) _paymentMethodIds.clear();
+              }),
+            ),
+          ),
+          _LabeledField(
+            label: 'Branches',
+            child: _SelectField(
+              key: const Key('discount-branch-mode-field'),
+              value: _appliesToAllBranches ? 'all' : 'selected',
+              options: const <_SelectOption>[
+                _SelectOption('all', 'All Branches'),
+                _SelectOption('selected', 'Selected Branches'),
+              ],
+              enabled: !locked,
+              onChanged: (value) => setState(() {
+                _appliesToAllBranches = value == 'all';
+                if (_appliesToAllBranches) _branchIds.clear();
+              }),
+            ),
+          ),
+          if (_customerEligibilityMode == 'selected_groups')
+            _LabeledField(
+              label: 'Customer Groups',
+              child: _referenceSelector(
+                key: const Key('discount-customer-groups-selector'),
+                label: 'Select Customer Groups',
+                items: state.formReferences.customerGroups,
+                selectedIds: _customerGroupIds,
+                loading: state.isLoadingFormReferences,
+                enabled: !locked,
+                onChanged: (ids) =>
+                    setState(() => _replace(_customerGroupIds, ids)),
+              ),
+            ),
+          if (_customerEligibilityMode == 'selected_customers')
+            _LabeledField(
+              label: l10n.discountV2SelectedCustomers,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _referenceSelector(
+                    key: const Key('discount-customers-selector'),
+                    label: l10n.discountV2SelectCustomers,
+                    items: state.formReferences.customers,
+                    selectedIds: _customerIds,
+                    loading: state.isLoadingFormReferences,
                     enabled: !locked,
-                    prefixText: _isPercentage ? null : '${_currency(state)} ',
-                    hintText: _isPercentage ? '0 %' : '0 ${_currency(state)}',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                    searchable: true,
+                    onChanged: (ids) =>
+                        setState(() => _replace(_customerIds, ids)),
+                  ),
+                  if (_customerIds.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _SelectedReferenceChips(
+                      items: state.formReferences.customers,
+                      selectedIds: _customerIds,
+                      enabled: !locked,
+                      onRemove: (id) => setState(() => _customerIds.remove(id)),
                     ),
-                    errorText: _fieldError('value'),
-                  ),
+                  ],
+                ],
+              ),
+            ),
+          if (!_allPaymentMethods)
+            _LabeledField(
+              label: 'Selected Payment Methods',
+              child: _referenceSelector(
+                key: const Key('discount-payment-methods-selector'),
+                label: 'Select Payment Methods',
+                items: state.formReferences.paymentMethods,
+                selectedIds: _paymentMethodIds,
+                loading: state.isLoadingFormReferences,
+                enabled: !locked,
+                onChanged: (ids) =>
+                    setState(() => _replace(_paymentMethodIds, ids)),
+              ),
+            ),
+          if (!_appliesToAllBranches)
+            _LabeledField(
+              label: 'Selected Branches',
+              child: _branchSelector(state, locked),
+            ),
+          _LabeledField(
+            label: l10n.discountV2Channels,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _SelectField(
+                  key: const Key('discount-channel-mode-field'),
+                  value: _allChannels ? 'all' : 'selected',
+                  options: <_SelectOption>[
+                    _SelectOption('all', l10n.discountV2AllChannels),
+                    _SelectOption('selected', l10n.discountV2SelectedChannels),
+                  ],
+                  enabled: !locked,
+                  onChanged: (value) => setState(() {
+                    _allChannels = value == 'all';
+                    if (_allChannels) _channelKeys.clear();
+                  }),
                 ),
-                _LabeledField(
-                  label: 'Min Spend (optional)',
-                  child: _moneyField(
-                    _minSpendController,
-                    locked,
-                    const Key('discount-min-spend-field'),
-                    _currency(state),
-                  ),
-                ),
-                _LabeledField(
-                  label: 'Max Discount (optional)',
-                  child: _moneyField(
-                    _maxDiscountController,
-                    locked,
-                    const Key('discount-max-discount-field'),
-                    _currency(state),
+                if (!_allChannels) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  _channelSelector(locked),
+                ],
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.discountV2BranchChannelHelp,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textMuted,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            _FieldLabel(
-              label: _isPercentage
-                  ? 'Quick percentage values'
-                  : 'Quick fixed values',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            DiscountChipSelector(
-              options: _isPercentage
-                  ? const <String>['5%', '10%', '15%', '20%']
-                  : const <String>['5000', '12500', '25000'],
-              selected: const <String>{},
-              multiSelect: false,
-              onSelected: locked
-                  ? (_) {}
-                  : (value) => setState(
-                      () => _valueController.text = value.replaceAll('%', ''),
-                    ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            if (_scope == 'product')
-              _referenceSelector(
-                key: const Key('discount-products-selector'),
-                label: 'Selected Products',
-                items: state.formReferences.products,
-                selectedIds: _productIds,
-                loading: state.isLoadingFormReferences,
-                enabled: !locked,
-                onChanged: (ids) => setState(() => _replace(_productIds, ids)),
-              ),
-            if (_scope == 'category')
-              _referenceSelector(
-                key: const Key('discount-categories-selector'),
-                label: 'Selected Categories',
-                items: state.formReferences.categories,
-                selectedIds: _categoryIds,
-                loading: state.isLoadingFormReferences,
-                enabled: !locked,
-                onChanged: (ids) => setState(() => _replace(_categoryIds, ids)),
-              ),
-            if (state.formReferencesErrorMessage != null)
-              _ReferencesRetry(
-                onRetry: () =>
-                    context.read<DiscountsCubit>().loadFormReferences(),
-              ),
-          ],
-        ),
-      );
-
-  Widget _eligibilityCard(DiscountsState state, bool locked) =>
-      DiscountFormSectionCard(
-        title: 'Eligibility Conditions',
-        child: _AdaptiveFields(
-          children: <_LabeledField>[
-            _LabeledField(
-              label: 'Customer Eligibility',
-              child: _SelectField(
-                key: const Key('discount-customer-eligibility-field'),
-                value: _customerEligibilityMode,
-                options: const <_SelectOption>[
-                  _SelectOption('all', 'All Customers'),
-                  _SelectOption('selected_groups', 'Selected Customer Groups'),
-                ],
-                enabled: !locked,
-                onChanged: (value) => setState(() {
-                  _customerEligibilityMode = value;
-                  if (value == 'all') _customerGroupIds.clear();
-                }),
-              ),
-            ),
-            _LabeledField(
-              label: 'Payment Methods',
-              child: _SelectField(
-                key: const Key('discount-payment-mode-field'),
-                value: _allPaymentMethods ? 'all' : 'selected',
-                options: const <_SelectOption>[
-                  _SelectOption('all', 'All Payment Methods'),
-                  _SelectOption('selected', 'Selected Payment Methods'),
-                ],
-                enabled: !locked,
-                onChanged: (value) => setState(() {
-                  _allPaymentMethods = value == 'all';
-                  if (_allPaymentMethods) _paymentMethodIds.clear();
-                }),
-              ),
-            ),
-            _LabeledField(
-              label: 'Branches',
-              child: _SelectField(
-                key: const Key('discount-branch-mode-field'),
-                value: _appliesToAllBranches ? 'all' : 'selected',
-                options: const <_SelectOption>[
-                  _SelectOption('all', 'All Branches'),
-                  _SelectOption('selected', 'Selected Branches'),
-                ],
-                enabled: !locked,
-                onChanged: (value) => setState(() {
-                  _appliesToAllBranches = value == 'all';
-                  if (_appliesToAllBranches) _branchIds.clear();
-                }),
-              ),
-            ),
-            if (_customerEligibilityMode == 'selected_groups')
-              _LabeledField(
-                label: 'Customer Groups',
-                child: _referenceSelector(
-                  key: const Key('discount-customer-groups-selector'),
-                  label: 'Select Customer Groups',
-                  items: state.formReferences.customerGroups,
-                  selectedIds: _customerGroupIds,
-                  loading: state.isLoadingFormReferences,
-                  enabled: !locked,
-                  onChanged: (ids) =>
-                      setState(() => _replace(_customerGroupIds, ids)),
-                ),
-              ),
-            if (!_allPaymentMethods)
-              _LabeledField(
-                label: 'Selected Payment Methods',
-                child: _referenceSelector(
-                  key: const Key('discount-payment-methods-selector'),
-                  label: 'Select Payment Methods',
-                  items: state.formReferences.paymentMethods,
-                  selectedIds: _paymentMethodIds,
-                  loading: state.isLoadingFormReferences,
-                  enabled: !locked,
-                  onChanged: (ids) =>
-                      setState(() => _replace(_paymentMethodIds, ids)),
-                ),
-              ),
-            if (!_appliesToAllBranches)
-              _LabeledField(
-                label: 'Selected Branches',
-                child: _branchSelector(state, locked),
-              ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _scheduleCard(bool locked) => DiscountFormSectionCard(
     title: 'Schedule',
@@ -636,29 +793,49 @@ class _CreateDiscountPolicyScreenState
     ),
   );
 
-  Widget _usageCard(bool locked) => DiscountFormSectionCard(
-    title: 'Usage Limits',
-    child: _AdaptiveFields(
-      children: <_LabeledField>[
-        _LabeledField(
-          label: 'Global Usage Limit (optional)',
-          child: _integerField(
-            _usageLimitController,
-            locked,
-            const Key('discount-usage-limit-field'),
+  Widget _usageCard(bool locked) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return DiscountFormSectionCard(
+      title: 'Usage Limits',
+      child: _AdaptiveFields(
+        children: <_LabeledField>[
+          _LabeledField(
+            label: 'Global Usage Limit (optional)',
+            child: _integerField(
+              _usageLimitController,
+              locked,
+              const Key('discount-usage-limit-field'),
+            ),
           ),
-        ),
-        _LabeledField(
-          label: 'Per Customer Lifetime Limit (optional)',
-          child: _integerField(
-            _perCustomerLimitController,
-            locked,
-            const Key('discount-per-customer-limit-field'),
+          _LabeledField(
+            label: 'Per Customer Lifetime Limit (optional)',
+            child: _integerField(
+              _perCustomerLimitController,
+              locked,
+              const Key('discount-per-customer-limit-field'),
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+          _LabeledField(
+            label: l10n.discountV2DailyLimit,
+            child: _integerField(
+              _perCustomerDailyLimitController,
+              locked,
+              const Key('discount-per-customer-daily-limit-field'),
+            ),
+          ),
+          _LabeledField(
+            label: 'Daily limit details',
+            child: Text(
+              l10n.discountV2DailyLimitDetails,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _moneyField(
     TextEditingController controller,
@@ -728,6 +905,7 @@ class _CreateDiscountPolicyScreenState
     required Set<int> selectedIds,
     required bool loading,
     required bool enabled,
+    bool searchable = false,
     required ValueChanged<Set<int>> onChanged,
   }) => _ReferenceSelector(
     key: key,
@@ -736,6 +914,7 @@ class _CreateDiscountPolicyScreenState
     selectedIds: selectedIds,
     loading: loading,
     enabled: enabled,
+    searchable: searchable,
     onChanged: onChanged,
   );
 
@@ -759,6 +938,200 @@ class _CreateDiscountPolicyScreenState
       enabled: !locked,
       onChanged: (ids) => setState(() => _replace(_branchIds, ids)),
     );
+  }
+
+  Widget _channelSelector(bool locked) => DiscountChipSelector(
+    key: const Key('discount-channels-selector'),
+    options: operationalSalesChannels,
+    selected: _channelKeys,
+    onSelected: locked
+        ? (_) {}
+        : (String value) => setState(
+            () => _channelKeys.contains(value)
+                ? _channelKeys.remove(value)
+                : _channelKeys.add(value),
+          ),
+    optionLabel: operationalChannelLabel,
+  );
+
+  Widget _bundleRequirementsBuilder(DiscountsState state, bool locked) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _FieldLabel(label: l10n.discountV2PackageRequirements),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          l10n.discountV2AllPackageItems,
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        for (int index = 0; index < _bundleRequirements.length; index++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: _AdaptiveFields(
+              children: <_LabeledField>[
+                _LabeledField(
+                  label: 'Product',
+                  child: DropdownButtonFormField<int>(
+                    key: Key('discount-bundle-product-$index'),
+                    initialValue: _bundleRequirements[index].productId == 0
+                        ? null
+                        : _bundleRequirements[index].productId,
+                    isExpanded: true,
+                    items: state.formReferences.products
+                        .where(
+                          (DiscountFormReference product) =>
+                              product.id ==
+                                  _bundleRequirements[index].productId ||
+                              !_bundleRequirements.any(
+                                (_BundleRequirementDraft requirement) =>
+                                    requirement != _bundleRequirements[index] &&
+                                    requirement.productId == product.id,
+                              ),
+                        )
+                        .map(
+                          (DiscountFormReference product) =>
+                              DropdownMenuItem<int>(
+                                value: product.id,
+                                child: Text(product.name),
+                              ),
+                        )
+                        .toList(growable: false),
+                    onChanged: locked
+                        ? null
+                        : (int? value) => setState(
+                            () => _bundleRequirements[index].productId =
+                                value ?? 0,
+                          ),
+                  ),
+                ),
+                _LabeledField(
+                  label: l10n.discountV2RequiredQuantity,
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: AppTextField(
+                          key: Key('discount-bundle-quantity-$index'),
+                          controller: _bundleRequirements[index].controller,
+                          enabled: !locked,
+                          hintText: '0',
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        key: Key('discount-remove-bundle-row-$index'),
+                        onPressed: locked
+                            ? null
+                            : () => setState(() {
+                                final _BundleRequirementDraft requirement =
+                                    _bundleRequirements.removeAt(index);
+                                requirement.dispose();
+                              }),
+                        icon: const Icon(Icons.remove_circle_outline),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        TextButton.icon(
+          key: const Key('discount-add-bundle-product'),
+          onPressed: locked
+              ? null
+              : () => setState(
+                  () => _bundleRequirements.add(_BundleRequirementDraft()),
+                ),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.discountV2AddProduct),
+        ),
+      ],
+    );
+  }
+
+  void _changeApplicationMode(String value) {
+    setState(() {
+      _applicationMode = value;
+      _couponGenerationError = null;
+      if (value == 'manual') _codeController.clear();
+    });
+    if (value == 'code' && _nullableText(_codeController) == null) {
+      unawaited(_generateCouponCode());
+    }
+  }
+
+  Future<void> _generateCouponCode() async {
+    if (_isGeneratingCode || _applicationMode != 'code') return;
+    setState(() {
+      _isGeneratingCode = true;
+      _couponGenerationError = null;
+    });
+    try {
+      final String code = await context
+          .read<DiscountsCubit>()
+          .generateCouponCode();
+      if (!mounted || _applicationMode != 'code') return;
+      _codeController.text = code;
+      setState(() => _isGeneratingCode = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isGeneratingCode = false;
+        _couponGenerationError = 'generation_failed';
+      });
+    }
+  }
+
+  void _clearBundleRequirements() {
+    for (final _BundleRequirementDraft requirement in _bundleRequirements) {
+      requirement.dispose();
+    }
+    _bundleRequirements.clear();
+  }
+
+  String _customerSummary(DiscountsState state) {
+    if (_customerEligibilityMode == 'all') return 'All Customers';
+    final Set<int> ids = _customerEligibilityMode == 'selected_groups'
+        ? _customerGroupIds
+        : _customerIds;
+    final List<DiscountFormReference> items =
+        _customerEligibilityMode == 'selected_groups'
+        ? state.formReferences.customerGroups
+        : state.formReferences.customers;
+    final List<String> names = items
+        .where((DiscountFormReference item) => ids.contains(item.id))
+        .map((DiscountFormReference item) => item.name)
+        .toList(growable: false);
+    return names.isEmpty
+        ? '${ids.length} selected customers'
+        : names.join(', ');
+  }
+
+  String? _bundleSummary(DiscountsState state) {
+    if (_scope != 'bundle' || _bundleRequirements.isEmpty) return null;
+    final Map<int, String> names = <int, String>{
+      for (final DiscountFormReference product in state.formReferences.products)
+        product.id: product.name,
+    };
+    return _bundleRequirements
+        .where((item) => item.productId > 0)
+        .map(
+          (item) =>
+              '${names[item.productId] ?? 'Product'} ×${item.controller.text}',
+        )
+        .join(' + ');
+  }
+
+  String? _usageSummary() {
+    final int? lifetime = _positiveInt(_perCustomerLimitController.text);
+    final int? daily = _positiveInt(_perCustomerDailyLimitController.text);
+    if (lifetime == null && daily == null) return null;
+    if (lifetime == null) return '$daily per day';
+    if (daily == null) return '$lifetime lifetime';
+    return '$lifetime lifetime / $daily per day';
   }
 
   Widget _buildSideRail(DiscountsState state, bool isReady) {
@@ -793,6 +1166,15 @@ class _CreateDiscountPolicyScreenState
           schedule: _activeDays.isEmpty
               ? 'Any day'
               : '${_activeDays.length} days selected',
+          customers: _customerSummary(state),
+          package: _bundleSummary(state),
+          channels: _allChannels
+              ? 'All Channels'
+              : _channelKeys.map(operationalChannelLabel).join(', '),
+          usage: _usageSummary(),
+          coupon: _applicationMode == 'code'
+              ? _nullableText(_codeController)
+              : null,
         ),
       ],
     );
@@ -814,11 +1196,15 @@ class _CreateDiscountPolicyScreenState
       _customerEligibilityMode = 'all';
       _appliesToAllBranches = true;
       _allPaymentMethods = true;
+      _allChannels = true;
       _productIds.clear();
       _categoryIds.clear();
       _customerGroupIds.clear();
+      _customerIds.clear();
       _branchIds.clear();
       _paymentMethodIds.clear();
+      _channelKeys.clear();
+      _clearBundleRequirements();
       _activeDays.clear();
     });
   }
@@ -853,9 +1239,15 @@ class _CreateDiscountPolicyScreenState
       endTime: _nullableText(_endTimeController),
       usageLimit: _positiveInt(_usageLimitController.text),
       usageLimitPerCustomer: _positiveInt(_perCustomerLimitController.text),
+      perCustomerDailyUsageLimit: _positiveInt(
+        _perCustomerDailyLimitController.text,
+      ),
       customerEligibilityMode: _customerEligibilityMode,
       customerGroupIds: _customerEligibilityMode == 'selected_groups'
           ? _customerGroupIds.toList(growable: false)
+          : const <int>[],
+      customerIds: _customerEligibilityMode == 'selected_customers'
+          ? _customerIds.toList(growable: false)
           : const <int>[],
       paymentMethodIds: _allPaymentMethods
           ? const <int>[]
@@ -866,6 +1258,19 @@ class _CreateDiscountPolicyScreenState
       targetCategoryIds: _scope == 'category'
           ? _categoryIds.toList(growable: false)
           : const <int>[],
+      bundleRequirements: _scope == 'bundle'
+          ? _bundleRequirements
+                .map(
+                  (_BundleRequirementDraft item) => DiscountBundleRequirement(
+                    productId: item.productId,
+                    quantity: _decimalValue(item.controller.text) ?? 0,
+                  ),
+                )
+                .toList(growable: false)
+          : const <DiscountBundleRequirement>[],
+      channelKeys: _allChannels
+          ? const <String>[]
+          : _channelKeys.toList(growable: false),
       appliesToAllBranches: _appliesToAllBranches,
       branchIds: _appliesToAllBranches
           ? const <int>[]
@@ -945,12 +1350,58 @@ class _CreateDiscountPolicyScreenState
         const _FormValidationIssue('scope', 'Select one or more categories.'),
       );
     }
+    if (_scope == 'bundle') {
+      if (_bundleRequirements.isEmpty) {
+        issues.add(
+          const _FormValidationIssue(
+            'bundleRequirements',
+            'Add at least one package product.',
+          ),
+        );
+      }
+      final Set<int> bundleProductIds = <int>{};
+      for (final _BundleRequirementDraft requirement in _bundleRequirements) {
+        if (requirement.productId <= 0) {
+          issues.add(
+            const _FormValidationIssue(
+              'bundleRequirements',
+              'Select a product for every package requirement.',
+            ),
+          );
+        } else if (!bundleProductIds.add(requirement.productId)) {
+          issues.add(
+            const _FormValidationIssue(
+              'bundleRequirements',
+              'A package product can only be added once.',
+            ),
+          );
+        }
+        final double? quantity = _decimalValue(requirement.controller.text);
+        if (quantity == null || quantity <= 0) {
+          issues.add(
+            const _FormValidationIssue(
+              'bundleRequirements',
+              'Package quantities must be greater than zero.',
+            ),
+          );
+        }
+      }
+    }
     if (_customerEligibilityMode == 'selected_groups' &&
         _customerGroupIds.isEmpty) {
       issues.add(
         const _FormValidationIssue(
           'customerGroups',
           'Select one or more customer groups.',
+        ),
+      );
+    }
+    if (_customerEligibilityMode == 'selected_customers' &&
+        _customerIds.isEmpty) {
+      issues.add(
+        const _FormValidationIssue(
+          'customers',
+          'Select one or more customers.',
         ),
       );
     }
@@ -991,6 +1442,15 @@ class _CreateDiscountPolicyScreenState
         const _FormValidationIssue(
           'usageLimit',
           'Usage limits must be positive whole numbers.',
+        ),
+      );
+    }
+    if (_positiveInt(_perCustomerDailyLimitController.text) == null &&
+        _perCustomerDailyLimitController.text.trim().isNotEmpty) {
+      issues.add(
+        const _FormValidationIssue(
+          'dailyUsageLimit',
+          'Daily usage limits must be positive whole numbers.',
         ),
       );
     }
@@ -1102,6 +1562,7 @@ class _CreateDiscountPolicyScreenState
   static String _scopeLabel(String scope) => switch (scope) {
     'product' => 'Selected Products',
     'category' => 'Selected Categories',
+    'bundle' => 'Package / Bundle',
     _ => 'Entire Order',
   };
   static String _currency(DiscountsState state) {
@@ -1269,6 +1730,7 @@ class _ReferenceSelector extends StatelessWidget {
     required this.loading,
     required this.enabled,
     required this.onChanged,
+    this.searchable = false,
   });
   final String label;
   final List<DiscountFormReference> items;
@@ -1276,6 +1738,7 @@ class _ReferenceSelector extends StatelessWidget {
   final bool loading;
   final bool enabled;
   final ValueChanged<Set<int>> onChanged;
+  final bool searchable;
   @override
   Widget build(BuildContext context) {
     final List<String> names = items
@@ -1292,6 +1755,7 @@ class _ReferenceSelector extends StatelessWidget {
                   title: label,
                   items: items,
                   initialSelection: selectedIds,
+                  searchable: searchable,
                 ),
               );
               if (next != null) onChanged(next);
@@ -1317,50 +1781,133 @@ class _ReferencePicker extends StatefulWidget {
     required this.title,
     required this.items,
     required this.initialSelection,
+    required this.searchable,
   });
   final String title;
   final List<DiscountFormReference> items;
   final Set<int> initialSelection;
+  final bool searchable;
   @override
   State<_ReferencePicker> createState() => _ReferencePickerState();
 }
 
 class _ReferencePickerState extends State<_ReferencePicker> {
   late final Set<int> _selection = Set<int>.of(widget.initialSelection);
+  String _query = '';
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
-    content: SizedBox(
-      width: 420,
-      child: widget.items.isEmpty
-          ? const Text('No active options are available.')
-          : ListView(
-              children: widget.items
-                  .map(
-                    (item) => CheckboxListTile(
-                      value: _selection.contains(item.id),
-                      title: Text(item.name),
-                      onChanged: (value) => setState(
-                        () => value == true
-                            ? _selection.add(item.id)
-                            : _selection.remove(item.id),
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 420,
+        child: widget.items.isEmpty
+            ? const Text('No active options are available.')
+            : Column(
+                children: <Widget>[
+                  if (widget.searchable)
+                    TextField(
+                      key: const Key('discount-reference-search'),
+                      onChanged: (value) => setState(() => _query = value),
+                      decoration: InputDecoration(
+                        hintText: l10n.discountV2Search,
                       ),
                     ),
-                  )
-                  .toList(),
+                  Expanded(
+                    child: ListView(
+                      children: widget.items
+                          .where((DiscountFormReference item) {
+                            final String query = _query.trim().toLowerCase();
+                            return query.isEmpty ||
+                                item.name.toLowerCase().contains(query) ||
+                                (item.subtitle ?? '').toLowerCase().contains(
+                                  query,
+                                );
+                          })
+                          .map(
+                            (item) => CheckboxListTile(
+                              value: _selection.contains(item.id),
+                              title: Text(item.name),
+                              subtitle: item.subtitle == null
+                                  ? null
+                                  : Text(item.subtitle!),
+                              onChanged: (value) => setState(
+                                () => value == true
+                                    ? _selection.add(item.id)
+                                    : _selection.remove(item.id),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _selection),
+          child: const Text('Done'),
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectedReferenceChips extends StatelessWidget {
+  const _SelectedReferenceChips({
+    required this.items,
+    required this.selectedIds,
+    required this.enabled,
+    required this.onRemove,
+  });
+
+  final List<DiscountFormReference> items;
+  final Set<int> selectedIds;
+  final bool enabled;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: AppSpacing.sm,
+    runSpacing: AppSpacing.sm,
+    children: items
+        .where((DiscountFormReference item) => selectedIds.contains(item.id))
+        .map(
+          (DiscountFormReference item) => InputChip(
+            label: Text(
+              item.subtitle == null
+                  ? item.name
+                  : '${item.name} · ${item.subtitle}',
             ),
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      TextButton(
-        onPressed: () => Navigator.pop(context, _selection),
-        child: const Text('Done'),
-      ),
-    ],
+            onDeleted: enabled ? () => onRemove(item.id) : null,
+          ),
+        )
+        .toList(growable: false),
   );
+}
+
+class _BundleRequirementDraft {
+  _BundleRequirementDraft({this.productId = 0, String quantity = ''})
+    : controller = TextEditingController(text: quantity);
+
+  factory _BundleRequirementDraft.fromRequirement(
+    DiscountBundleRequirement requirement,
+  ) => _BundleRequirementDraft(
+    productId: requirement.productId,
+    quantity: requirement.quantity == requirement.quantity.truncateToDouble()
+        ? requirement.quantity.toInt().toString()
+        : requirement.quantity.toString(),
+  );
+
+  int productId;
+  final TextEditingController controller;
+
+  void dispose() => controller.dispose();
 }
 
 class _LoadError extends StatelessWidget {
