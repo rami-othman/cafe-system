@@ -2971,5 +2971,22 @@
   "expensesReportRejected": "مرفوض",
   "expensesReportReversed": "معكوس",
   "expensesReportComparisonUnavailable": "المقارنة غير متاحة",
-  "expensesReportPercentOfTotal": "من الإجمالي"
+  "expensesReportPercentOfTotal": "من الإجمالي",
+  "discountV2PackageBundle": "حزمة / باقة",
+  "discountV2PackageRequirements": "متطلبات الباقة",
+  "discountV2AllPackageItems": "يجب أن تكون جميع عناصر الباقة موجودة في الطلب لتطبيق هذا الخصم.",
+  "discountV2RequiredQuantity": "الكمية المطلوبة",
+  "discountV2AddProduct": "إضافة منتج",
+  "discountV2SelectedCustomers": "عملاء محددون",
+  "discountV2SelectCustomers": "اختيار العملاء",
+  "discountV2Channels": "القنوات",
+  "discountV2AllChannels": "كل القنوات",
+  "discountV2SelectedChannels": "قنوات محددة",
+  "discountV2BranchChannelHelp": "تُطبق قيود الفرع والقناة معاً.",
+  "discountV2DailyLimit": "الحد اليومي لكل عميل",
+  "discountV2DailyLimitDetails": "يمكن لكل عميل استخدام هذا الخصم حتى الحد الإجمالي، وبحد يومي لكل يوم عمل.",
+  "discountV2Regenerate": "إعادة التوليد",
+  "discountV2CodeGenerationFailed": "تعذر توليد الرمز.",
+  "discountV2Retry": "إعادة المحاولة",
+  "discountV2Search": "بحث"
 }

@@ -86,6 +86,8 @@ class _Repository implements DiscountsRepository {
   Future<DiscountDetail> getDiscountDetail(String discountId) =>
       throw UnimplementedError();
   @override
+  Future<String> generateCouponCode() => throw UnimplementedError();
+  @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
       throw UnimplementedError();
   @override

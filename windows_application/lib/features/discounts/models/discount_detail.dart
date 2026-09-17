@@ -18,6 +18,7 @@ class DiscountDetail {
     required this.targetProductIds,
     required this.targetCategoryIds,
     required this.customerGroupIds,
+    this.customerIds = const <int>[],
     required this.branchIds,
     required this.paymentMethodIds,
     this.code,
@@ -32,12 +33,16 @@ class DiscountDetail {
     this.maximumDiscountAmount,
     this.usageLimit,
     this.usageLimitPerCustomer,
+    this.perCustomerDailyUsageLimit,
     this.status,
     this.productTargets = const <DiscountTargetDetail>[],
     this.categoryTargets = const <DiscountTargetDetail>[],
     this.customerGroups = const <DiscountTargetDetail>[],
+    this.customers = const <DiscountTargetDetail>[],
     this.branches = const <DiscountTargetDetail>[],
     this.paymentMethods = const <DiscountTargetDetail>[],
+    this.bundleRequirements = const <DiscountBundleRequirement>[],
+    this.channelKeys = const <String>[],
   });
 
   final int id;
@@ -58,10 +63,12 @@ class DiscountDetail {
   final double? maximumDiscountAmount;
   final int? usageLimit;
   final int? usageLimitPerCustomer;
+  final int? perCustomerDailyUsageLimit;
   final String customerEligibilityMode;
   final List<int> targetProductIds;
   final List<int> targetCategoryIds;
   final List<int> customerGroupIds;
+  final List<int> customerIds;
   final bool appliesToAllBranches;
   final List<int> branchIds;
   final List<int> paymentMethodIds;
@@ -70,8 +77,11 @@ class DiscountDetail {
   final List<DiscountTargetDetail> productTargets;
   final List<DiscountTargetDetail> categoryTargets;
   final List<DiscountTargetDetail> customerGroups;
+  final List<DiscountTargetDetail> customers;
   final List<DiscountTargetDetail> branches;
   final List<DiscountTargetDetail> paymentMethods;
+  final List<DiscountBundleRequirement> bundleRequirements;
+  final List<String> channelKeys;
 
   factory DiscountDetail.fromJson(Map<String, dynamic> json) => DiscountDetail(
     id: readInt(json['id']) ?? 0,
@@ -96,6 +106,7 @@ class DiscountDetail {
         : readDouble(json['maximumDiscountAmount']),
     usageLimit: readInt(json['usageLimit']),
     usageLimitPerCustomer: readInt(json['usageLimitPerCustomer']),
+    perCustomerDailyUsageLimit: readInt(json['perCustomerDailyUsageLimit']),
     customerEligibilityMode: readString(
       json['customerEligibilityMode'],
       fallback: 'all',
@@ -103,6 +114,7 @@ class DiscountDetail {
     targetProductIds: _ids(json['targetProductIds']),
     targetCategoryIds: _ids(json['targetCategoryIds']),
     customerGroupIds: _ids(json['customerGroupIds']),
+    customerIds: _ids(json['customerIds']),
     appliesToAllBranches: readBool(
       json['appliesToAllBranches'],
       fallback: true,
@@ -114,8 +126,11 @@ class DiscountDetail {
     productTargets: _targets(json['productTargets']),
     categoryTargets: _targets(json['categoryTargets']),
     customerGroups: _targets(json['customerGroups']),
+    customers: _targets(json['customers']),
     branches: _targets(json['branches']),
     paymentMethods: _targets(json['paymentMethods']),
+    bundleRequirements: _bundleRequirements(json['bundleRequirements']),
+    channelKeys: _strings(json['channelKeys']),
   );
 
   DiscountUpsertRequest toUpsertRequest() => DiscountUpsertRequest(
@@ -136,11 +151,15 @@ class DiscountDetail {
     maximumDiscountAmount: maximumDiscountAmount,
     usageLimit: usageLimit,
     usageLimitPerCustomer: usageLimitPerCustomer,
+    perCustomerDailyUsageLimit: perCustomerDailyUsageLimit,
     customerEligibilityMode: customerEligibilityMode,
     customerGroupIds: customerGroupIds,
+    customerIds: customerIds,
     paymentMethodIds: paymentMethodIds,
     targetProductIds: targetProductIds,
     targetCategoryIds: targetCategoryIds,
+    bundleRequirements: bundleRequirements,
+    channelKeys: channelKeys,
     appliesToAllBranches: appliesToAllBranches,
     branchIds: branchIds,
     isActive: isActive,
@@ -163,6 +182,17 @@ class DiscountDetail {
             (Map item) =>
                 DiscountTargetDetail.fromJson(Map<String, dynamic>.from(item)),
           )
+          .toList(growable: false);
+  static List<DiscountBundleRequirement> _bundleRequirements(dynamic value) =>
+      (value as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map(
+            (Map item) => DiscountBundleRequirement(
+              productId: readInt(item['productId']) ?? 0,
+              quantity: readDouble(item['quantity']),
+            ),
+          )
+          .where((DiscountBundleRequirement item) => item.productId > 0)
           .toList(growable: false);
   static String? _nullable(dynamic value) {
     final String result = readString(value).trim();

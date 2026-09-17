@@ -61,4 +61,42 @@ void main() {
       expect(detail.customerGroups.single.name, 'Members');
     },
   );
+
+  test('complete V2 detail remains lossless through an upsert request', () {
+    final DiscountDetail detail = DiscountDetail.fromJson(<String, dynamic>{
+      'id': 82,
+      'name': 'Customer bundle',
+      'code': 'CPN-ABCD-EFGH',
+      'applicationMode': 'code',
+      'type': 'fixed',
+      'scope': 'bundle',
+      'value': 5000,
+      'isActive': true,
+      'appliesToAllBranches': false,
+      'customerEligibilityMode': 'selected_customers',
+      'targetProductIds': const <int>[],
+      'targetCategoryIds': const <int>[],
+      'customerGroupIds': const <int>[],
+      'customerIds': <int>[71, 72],
+      'branchIds': <int>[51],
+      'paymentMethodIds': const <int>[],
+      'perCustomerDailyUsageLimit': 1,
+      'channelKeys': <String>['pos', 'delivery'],
+      'bundleRequirements': <Map<String, dynamic>>[
+        <String, dynamic>{'productId': 11, 'quantity': 1},
+        <String, dynamic>{'productId': 12, 'quantity': 2},
+      ],
+    });
+
+    final Map<String, dynamic> request = detail.toUpsertRequest().toJson();
+    expect(request['scope'], 'bundle');
+    expect(request['customerIds'], <int>[71, 72]);
+    expect(request['customerGroupIds'], isEmpty);
+    expect(request['perCustomerDailyUsageLimit'], 1);
+    expect(request['channelKeys'], <String>['pos', 'delivery']);
+    expect(request['bundleRequirements'], <Map<String, dynamic>>[
+      <String, dynamic>{'productId': 11, 'quantity': 1.0},
+      <String, dynamic>{'productId': 12, 'quantity': 2.0},
+    ]);
+  });
 }

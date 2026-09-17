@@ -20,6 +20,9 @@ abstract class DiscountsRepository {
       Future<DiscountDetail>.error(
         UnimplementedError('Discount detail is unavailable.'),
       );
+  Future<String> generateCouponCode() => Future<String>.error(
+    UnimplementedError('Coupon generation is unavailable.'),
+  );
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request);
   Future<DiscountListItem> updateDiscount(
     String discountId,
@@ -66,6 +69,10 @@ class DiscountsApiRepository implements DiscountsRepository {
           queryParameters: const <String, dynamic>{'perPage': 100},
         ),
         _apiClient.get(
+          'customers',
+          queryParameters: const <String, dynamic>{'perPage': 100},
+        ),
+        _apiClient.get(
           'finance/payment-methods',
           queryParameters: const <String, dynamic>{'perPage': 100},
         ),
@@ -80,7 +87,18 @@ class DiscountsApiRepository implements DiscountsRepository {
       products: references(responses[0]),
       categories: references(responses[1]),
       customerGroups: references(responses[2]),
-      paymentMethods: references(responses[3]),
+      customers: readMapList(responses[3])
+          .map(
+            (Map<String, dynamic> item) => DiscountFormReference(
+              id: readInt(item['id']) ?? 0,
+              name: readString(item['name']),
+              isActive: true,
+              subtitle: _nullableString(item['phone']),
+            ),
+          )
+          .where((DiscountFormReference item) => item.id > 0)
+          .toList(growable: false),
+      paymentMethods: references(responses[4]),
     );
   }
 
@@ -88,6 +106,16 @@ class DiscountsApiRepository implements DiscountsRepository {
   Future<DiscountDetail> getDiscountDetail(String discountId) async {
     final dynamic response = await _apiClient.get('discounts/$discountId');
     return DiscountDetail.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  @override
+  Future<String> generateCouponCode() async {
+    final dynamic response = await _apiClient.post('discounts/generate-code');
+    final String code = readString((response as Map?)?['code']).trim();
+    if (code.isEmpty) {
+      throw StateError('The server did not return a coupon code.');
+    }
+    return code;
   }
 
   @override

@@ -14,6 +14,11 @@ class DiscountSummaryPanel extends StatelessWidget {
     required this.schedule,
     required this.scope,
     required this.branches,
+    this.customers,
+    this.package,
+    this.channels,
+    this.usage,
+    this.coupon,
   });
 
   final String value;
@@ -21,6 +26,11 @@ class DiscountSummaryPanel extends StatelessWidget {
   final String schedule;
   final String scope;
   final String branches;
+  final String? customers;
+  final String? package;
+  final String? channels;
+  final String? usage;
+  final String? coupon;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +44,13 @@ class DiscountSummaryPanel extends StatelessWidget {
           _SummaryRow(label: 'Scope', value: scope),
           _SummaryRow(label: 'Branches', value: branches),
           _SummaryRow(label: 'Schedule', value: schedule),
+          if (customers != null)
+            _SummaryRow(label: 'Customers', value: customers!),
+          if (package != null) _SummaryRow(label: 'Package', value: package!),
+          if (channels != null)
+            _SummaryRow(label: 'Channels', value: channels!),
+          if (usage != null) _SummaryRow(label: 'Usage', value: usage!),
+          if (coupon != null) _SummaryRow(label: 'Coupon', value: coupon!),
           const SizedBox(height: AppSpacing.lg),
           Container(
             padding: AppSpacing.allMd,

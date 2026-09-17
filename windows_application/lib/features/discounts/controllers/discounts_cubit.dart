@@ -97,6 +97,8 @@ class DiscountsCubit extends Cubit<DiscountsState> {
   Future<DiscountDetail> getDiscountDetail(String discountId) =>
       _repository.getDiscountDetail(discountId);
 
+  Future<String> generateCouponCode() => _repository.generateCouponCode();
+
   Future<bool> createDiscount(DiscountUpsertRequest request) async {
     return _save(() => _repository.createDiscount(request));
   }

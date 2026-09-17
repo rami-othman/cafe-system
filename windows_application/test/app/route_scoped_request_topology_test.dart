@@ -169,6 +169,9 @@ class _SpyDiscountsRepository implements DiscountsRepository {
       throw UnimplementedError();
 
   @override
+  Future<String> generateCouponCode() => throw UnimplementedError();
+
+  @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
       throw UnimplementedError();
 
