@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\FinancialSetupService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +72,108 @@ class DiscountRuntimeEligibilityTest extends TestCase
         $this->assertSame(1, (int) DB::table('discounts')->where('id', $discount)->value('used_count'));
     }
 
+    public function test_payment_method_id_is_authoritative_for_discount_eligibility_and_idempotent_retries(): void
+    {
+        $scope = $this->scope();
+        $cashOnly = $this->discount($scope, ['payment_method' => 'cash']);
+        $this->apply($scope, $cashOnly)->assertOk();
+        $paid = $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 100, 'idempotencyKey' => 'matching-method-id',
+        ], $this->headers($scope))->assertOk();
+        $this->assertSame($scope['cashMethod'], (int) DB::table('payments')->where('id', $paid->json('data.payment.id'))->value('payment_method_id'));
+
+        // A completed replay remains recoverable even if an administrator
+        // deactivates the method after the original successful payment.
+        DB::table('payment_methods')->where('id', $scope['cashMethod'])->update(['is_active' => false]);
+        $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 100, 'idempotencyKey' => 'matching-method-id',
+        ], $this->headers($scope))->assertOk()->assertJsonPath('data.payment.id', $paid->json('data.payment.id'));
+
+        $mismatch = $this->scope();
+        $this->apply($mismatch, $this->discount($mismatch, ['payment_method' => 'cash']))->assertOk();
+        $this->postJson("/api/v1/orders/{$mismatch['order']}/pay", [
+            'method' => 'cash', 'paymentMethodId' => $mismatch['cardMethod'], 'amount' => 100, 'idempotencyKey' => 'cash-card-mismatch',
+        ], $this->headers($mismatch))->assertUnprocessable()->assertJsonValidationErrors('paymentMethodId');
+        $this->assertSame(0, DB::table('payments')->where('order_id', $mismatch['order'])->count());
+
+        $foreign = $this->scope();
+        $this->postJson("/api/v1/orders/{$foreign['order']}/pay", [
+            'method' => 'card', 'paymentMethodId' => $mismatch['cardMethod'], 'amount' => 100, 'idempotencyKey' => 'foreign-method',
+        ], $this->headers($foreign))->assertUnprocessable()->assertJsonValidationErrors('paymentMethodId');
+
+        DB::table('payment_methods')->where('id', $foreign['cardMethod'])->update(['is_active' => false]);
+        $this->postJson("/api/v1/orders/{$foreign['order']}/pay", [
+            'method' => 'card', 'paymentMethodId' => $foreign['cardMethod'], 'amount' => 100, 'idempotencyKey' => 'inactive-method',
+        ], $this->headers($foreign))->assertUnprocessable()->assertJsonValidationErrors('paymentMethodId');
+    }
+
+    public function test_customer_group_membership_is_authoritative_at_apply_and_payment_time(): void
+    {
+        $scope = $this->scope();
+        $member = (int) DB::table('customers')->insertGetId([
+            'tenant_id' => $scope['tenant'], 'name' => 'Member', 'customer_number' => 'C-GROUP-1', 'normalized_name' => 'member',
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $nonMember = (int) DB::table('customers')->insertGetId([
+            'tenant_id' => $scope['tenant'], 'name' => 'Anonymous identity', 'customer_number' => 'C-GROUP-2', 'normalized_name' => 'anonymous identity',
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $groupA = $this->group($scope, 'Group A');
+        $groupB = $this->group($scope, 'Group B');
+        foreach ([$groupA, $groupB] as $group) {
+            DB::table('customer_group_memberships')->insert([
+                'tenant_id' => $scope['tenant'], 'customer_id' => $member, 'customer_group_id' => $group,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        DB::table('orders')->where('id', $scope['order'])->update(['customer_id' => $member]);
+        $discount = $this->discount($scope);
+        $this->target($scope, $discount, 'customer_group', $groupB);
+        $this->apply($scope, $discount)->assertOk(); // Matches one of multiple memberships.
+
+        DB::table('customer_group_memberships')->where('tenant_id', $scope['tenant'])->where('customer_id', $member)->where('customer_group_id', $groupB)->delete();
+        $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 100, 'idempotencyKey' => 'group-membership-removed',
+        ], $this->headers($scope))->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_CUSTOMER_NOT_ELIGIBLE');
+
+        DB::table('orders')->where('id', $scope['order'])->update(['customer_id' => $nonMember]);
+        $this->apply($scope, $discount)->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_CUSTOMER_NOT_ELIGIBLE');
+        DB::table('customer_groups')->where('id', $groupB)->update(['is_active' => false]);
+        DB::table('orders')->where('id', $scope['order'])->update(['customer_id' => $member]);
+        DB::table('customer_group_memberships')->insert([
+            'tenant_id' => $scope['tenant'], 'customer_id' => $member, 'customer_group_id' => $groupB,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->apply($scope, $discount)->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_CUSTOMER_NOT_ELIGIBLE');
+    }
+
+    public function test_paid_order_retains_its_discount_snapshot_after_the_policy_changes(): void
+    {
+        $scope = $this->scope();
+        $discount = $this->discount($scope, ['name' => 'Original 10%', 'value' => 10]);
+        $this->apply($scope, $discount)->assertOk()->assertJsonPath('data.discount.amount', 10);
+        $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 90, 'idempotencyKey' => 'historical-discount-snapshot',
+        ], $this->headers($scope))->assertOk();
+
+        $snapshot = DB::table('order_discounts')->where('order_id', $scope['order'])->first();
+        DB::table('discounts')->where('id', $discount)->update([
+            'name' => 'Changed after payment', 'value' => 75, 'is_active' => false, 'updated_at' => now(),
+        ]);
+        DB::table('discount_targets')->insert([
+            'tenant_id' => $scope['tenant'], 'discount_id' => $discount, 'target_type' => 'branch', 'target_id' => $scope['branch'],
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $paidOrder = DB::table('orders')->where('id', $scope['order'])->first();
+        $retained = DB::table('order_discounts')->where('order_id', $scope['order'])->first();
+        $this->assertSame('paid', $paidOrder->payment_status);
+        $this->assertSame(90.0, (float) $paidOrder->total);
+        $this->assertSame($snapshot->discount_name, $retained->discount_name);
+        $this->assertSame((float) $snapshot->discount_value, (float) $retained->discount_value);
+        $this->assertSame((float) $snapshot->discount_amount, (float) $retained->discount_amount);
+    }
+
     protected function tearDown(): void
     {
         CarbonImmutable::setTestNow();
@@ -87,17 +190,25 @@ class DiscountRuntimeEligibilityTest extends TestCase
         $publication = DB::table('menu_publications')->insertGetId(['tenant_id' => $tenant, 'status' => 'published', 'published_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         $this->authenticateTenantUser($tenant);
         $actorId = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->orderBy('id')->value('id');
+        app(FinancialSetupService::class)->ensureForTenant($tenant, $branch, $actorId);
+        $bankAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1030')->value('id');
+        $cashMethod = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('type', 'cash')->value('id');
+        $cardMethod = (int) DB::table('payment_methods')->insertGetId([
+            'tenant_id' => $tenant, 'code' => 'CARD', 'name' => 'Card', 'type' => 'card',
+            'financial_account_id' => $bankAccountId, 'is_active' => true, 'sort_order' => 2,
+            'created_by' => $actorId, 'updated_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
+        ]);
         $shift = DB::table('shifts')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $actorId, 'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         $order = DB::table('orders')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'shift_id' => $shift, 'order_number' => 'D-1', 'type' => 'takeaway', 'status' => 'draft', 'payment_status' => 'unpaid', 'subtotal' => 100, 'tax_rate' => 0, 'total' => 100, 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         DB::table('order_items')->insert(['tenant_id' => $tenant, 'order_id' => $order, 'product_id' => $product, 'category_id' => $category, 'product_name' => 'Published Product', 'quantity' => 1, 'unit_price' => 100, 'total' => 100, 'created_at' => $now, 'updated_at' => $now]);
 
-        return compact('tenant', 'branch', 'category', 'product', 'publication', 'order');
+        return compact('tenant', 'branch', 'category', 'product', 'publication', 'order', 'cashMethod', 'cardMethod');
     }
 
     private function discount(array $scope, array $overrides = []): int
     {
         return DB::table('discounts')->insertGetId($overrides + [
-            'tenant_id' => $scope['tenant'], 'name' => 'Runtime policy '.uniqid(), 'application_mode' => 'auto', 'type' => 'percentage', 'value' => 10,
+            'tenant_id' => $scope['tenant'], 'name' => 'Runtime policy '.uniqid(), 'application_mode' => 'manual', 'type' => 'percentage', 'value' => 10,
             'scope' => 'order', 'minimum_order_amount' => 0, 'is_active' => true, 'used_count' => 0, 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
@@ -105,6 +216,14 @@ class DiscountRuntimeEligibilityTest extends TestCase
     private function target(array $scope, int $discount, string $type, int $target): void
     {
         DB::table('discount_targets')->insert(['tenant_id' => $scope['tenant'], 'discount_id' => $discount, 'target_type' => $type, 'target_id' => $target, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    private function group(array $scope, string $name): int
+    {
+        return (int) DB::table('customer_groups')->insertGetId([
+            'tenant_id' => $scope['tenant'], 'name' => $name, 'normalized_name' => strtolower($name).'-'.uniqid(), 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 
     private function apply(array $scope, int $discount)

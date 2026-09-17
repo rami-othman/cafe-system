@@ -79,6 +79,29 @@ void main() {
     },
   );
 
+  test('treats a timezone-less order timestamp as UTC', () async {
+    final OrdersRepository repository = OrdersRepository(
+      apiClient: _clientFor((RequestOptions options) {
+        return Response<dynamic>(
+          requestOptions: options,
+          data: <String, dynamic>{
+            'data': _summaryJson(
+              id: 1,
+              orderNumber: 'ORD-1',
+              orderType: 'takeaway',
+              status: 'draft',
+              createdAt: '2026-08-27 07:30:00',
+            ),
+          },
+        );
+      }),
+    );
+
+    final detail = await repository.getOrderDetail(1);
+
+    expect(detail.createdAt.toUtc(), DateTime.utc(2026, 8, 27, 7, 30));
+  });
+
   test('handles missing or malformed pagination metadata safely', () async {
     final OrdersRepository repository = OrdersRepository(
       apiClient: _clientFor((RequestOptions options) {
@@ -410,6 +433,7 @@ Map<String, dynamic> _summaryJson({
   List<Map<String, dynamic>> timeline = const <Map<String, dynamic>>[],
   double? refundedAmount,
   double? refundableAmount,
+  String createdAt = '2026-06-20T10:00:00Z',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -441,7 +465,7 @@ Map<String, dynamic> _summaryJson({
       'total': 15.66,
     },
     'note': null,
-    'createdAt': '2026-06-20T10:00:00Z',
+    'createdAt': createdAt,
     'updatedAt': '2026-06-20T10:05:00Z',
   };
 }

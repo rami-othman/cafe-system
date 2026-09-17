@@ -42,17 +42,23 @@ class DioApiClient {
 
   final Dio _dio;
   int? _authenticatedTenantId;
+  String? _accessToken;
   void Function(ApiException error)? onAuthenticationFailure;
+  void Function(ApiException error, String? requestToken)?
+  onAuthenticatedFailureWithToken;
 
   int? get authenticatedTenantId => _authenticatedTenantId;
+  String? get accessToken => _accessToken;
 
   /// The API uses opaque bearer tokens. The token is held in memory and is
   /// supplied by the auth session owner after a secure-store restore or login.
   void setAccessToken(String? token) {
     if (token == null || token.isEmpty) {
+      _accessToken = null;
       _dio.options.headers.remove('Authorization');
       return;
     }
+    _accessToken = token;
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
@@ -66,9 +72,14 @@ class DioApiClient {
         : '${ApiConfig.baseUrl}/';
   }
 
-  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) {
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    bool suppressAuthenticationFailure = false,
+  }) {
     return _send(
       () => _dio.get<dynamic>(path, queryParameters: queryParameters),
+      suppressAuthenticationFailure: suppressAuthenticationFailure,
     );
   }
 
@@ -147,14 +158,18 @@ class DioApiClient {
     );
   }
 
-  Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
+  Future<dynamic> _send(
+    Future<Response<dynamic>> Function() request, {
+    bool suppressAuthenticationFailure = false,
+  }) async {
     try {
       final Response<dynamic> response = await request();
       return ApiResponseParser.unwrapData(response.data);
     } on DioException catch (error) {
       final ApiException apiError = _handleDioException(error);
-      if (_isAuthenticatedRequest(error, apiError)) {
-        onAuthenticationFailure?.call(apiError);
+      if (!suppressAuthenticationFailure &&
+          _isAuthenticatedRequest(error, apiError)) {
+        _notifyAuthenticatedFailure(error, apiError);
       }
       throw apiError;
     }
@@ -168,7 +183,7 @@ class DioApiClient {
     } on DioException catch (error) {
       final ApiException apiError = _handleDioException(error);
       if (_isAuthenticatedRequest(error, apiError)) {
-        onAuthenticationFailure?.call(apiError);
+        _notifyAuthenticatedFailure(error, apiError);
       }
       throw apiError;
     }
@@ -273,8 +288,19 @@ class DioApiClient {
   }
 
   bool _isAuthenticatedRequest(DioException error, ApiException apiError) =>
-      apiError.type == ApiErrorType.unauthenticated &&
-      error.requestOptions.headers['Authorization'] != null;
+      error.requestOptions.headers['Authorization'] != null &&
+      (apiError.type == ApiErrorType.unauthenticated ||
+          apiError.type == ApiErrorType.forbidden);
+
+  void _notifyAuthenticatedFailure(DioException error, ApiException apiError) {
+    final String? header =
+        error.requestOptions.headers['Authorization'] as String?;
+    final String? requestToken = header?.startsWith('Bearer ') == true
+        ? header!.substring('Bearer '.length)
+        : null;
+    onAuthenticatedFailureWithToken?.call(apiError, requestToken);
+    onAuthenticationFailure?.call(apiError);
+  }
 
   bool _isBackendOffline(DioException error) {
     if (error.type == DioExceptionType.unknown) {

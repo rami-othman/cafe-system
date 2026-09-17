@@ -46,6 +46,7 @@ void main() {
     tester.view.physicalSize = const Size(500, 800);
     await tester.pump();
     expect(find.byKey(childKey), findsOneWidget);
+    expect(tester.takeException(), isNull);
     tester.view.resetPhysicalSize();
   });
 

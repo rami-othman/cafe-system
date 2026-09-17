@@ -15,8 +15,8 @@ use Tests\TestCase;
  */
 class DailyClosingReconciliationTest extends TestCase
 {
-    use RefreshDatabase;
     use DailyClosingFixtures;
+    use RefreshDatabase;
 
     public function test_required_cash_reconciliation_missing_blocks_close(): void
     {
@@ -167,7 +167,7 @@ class DailyClosingReconciliationTest extends TestCase
         $bankLocationId = $this->locationId($tenant, 'BANK');
         $bankAccountId = (int) DB::table('financial_locations')->where('id', $bankLocationId)->value('financial_account_id');
         $paymentMethodId = (int) DB::table('payment_methods')->insertGetId(['tenant_id' => $tenant, 'code' => 'DC-BANKTRF', 'name' => 'Bank Transfer', 'type' => 'bank_transfer', 'financial_account_id' => $bankAccountId, 'financial_location_id' => $bankLocationId, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
-        $customerId = (int) DB::table('customers')->insertGetId(['tenant_id' => $tenant, 'name' => 'Recon Customer', 'customer_number' => 'DC-CUST-1', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $customerId = (int) DB::table('customers')->insertGetId(['tenant_id' => $tenant, 'name' => 'Recon Customer', 'normalized_name' => 'recon customer', 'customer_number' => 'DC-CUST-1', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         DB::table('customer_payments')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'customer_id' => $customerId, 'payment_number' => 'DC-CR-1', 'payment_date' => $date, 'amount' => '50.00', 'payment_method_id' => $paymentMethodId, 'financial_location_id' => $bankLocationId, 'status' => 'posted', 'created_at' => now(), 'updated_at' => now()]);
 

@@ -14,9 +14,12 @@ use Illuminate\Support\Facades\DB;
  */
 class DiscountEligibilityService
 {
-    public function assertApplicable(int $tenantId, object $discount, object $order, ?string $paymentMethod = null): array
+    public function assertApplicable(int $tenantId, object $discount, object $order, ?int $paymentMethodId = null, ?string $legacyPaymentMethod = null): array
     {
-        $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $order->branch_id)->whereNull('deleted_at')->first();
+        if ($discount->type === 'bogo') {
+            throw new OrderLifecycleException('DISCOUNT_BOGO_UNSUPPORTED', 'BOGO discounts are not supported for new orders.');
+        }
+        $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $order->branch_id)->where('is_active', true)->whereNull('deleted_at')->first();
         if (! $branch) {
             throw new OrderLifecycleException('DISCOUNT_BRANCH_NOT_ELIGIBLE', 'The order branch is unavailable.');
         }
@@ -24,9 +27,10 @@ class DiscountEligibilityService
         $now = CarbonImmutable::now($branch->timezone ?: 'UTC');
         $this->assertSchedule($discount, $now);
         $this->assertBranch($tenantId, $discount, $order);
+        $this->assertChannel($tenantId, $discount, $order);
         $this->assertCustomer($tenantId, $discount, $order);
-        if ($paymentMethod !== null) {
-            $this->assertPaymentMethod($discount, $paymentMethod);
+        if ($paymentMethodId !== null) {
+            $this->assertPaymentMethod($tenantId, $discount, $paymentMethodId, $legacyPaymentMethod);
         }
 
         // Existing semantics define the minimum against the pre-discount
@@ -35,26 +39,27 @@ class DiscountEligibilityService
             throw new OrderLifecycleException('DISCOUNT_MINIMUM_NOT_MET', 'The minimum order amount has not been reached.');
         }
 
+        $this->assertUsageAvailable($tenantId, $discount, $order, $branch);
+
         $eligibleSubtotal = $this->eligibleSubtotal($tenantId, $order, $discount);
-        if (in_array($discount->scope, ['product', 'category'], true) && $eligibleSubtotal <= 0) {
+        if (in_array($discount->scope, ['product', 'category', 'bundle'], true) && $eligibleSubtotal <= 0) {
             throw new OrderLifecycleException('DISCOUNT_ITEMS_NOT_ELIGIBLE', 'No order items are eligible for this discount.');
         }
 
         $amount = match ($discount->type) {
             'percentage' => $eligibleSubtotal * ((float) $discount->value / 100),
             'fixed' => min((float) $discount->value, $eligibleSubtotal),
-            'bogo' => $this->bogoAmount($tenantId, (int) $order->id, $discount),
             default => 0,
         };
         if ($discount->maximum_discount_amount !== null) {
             $amount = min($amount, (float) $discount->maximum_discount_amount);
         }
 
-        return ['eligibleSubtotal' => round($eligibleSubtotal, 2), 'amount' => round(min($amount, $eligibleSubtotal), 2)];
+        return ['eligibleSubtotal' => round($eligibleSubtotal, 2), 'amount' => round(max(0, min($amount, $eligibleSubtotal)), 2)];
     }
 
     /** Refresh a draft discount after cart/customer mutations, or reject it at payment. */
-    public function refreshAppliedDiscounts(int $tenantId, object $order, ?string $paymentMethod = null, bool $rejectInvalid = false): void
+    public function refreshAppliedDiscounts(int $tenantId, object $order, ?int $paymentMethodId = null, ?string $legacyPaymentMethod = null, bool $rejectInvalid = false): void
     {
         $rows = DB::table('order_discounts')->where('tenant_id', $tenantId)->where('order_id', $order->id)->get();
         foreach ($rows as $row) {
@@ -67,7 +72,7 @@ class DiscountEligibilityService
                 if (! $discount) {
                     throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'The configured discount is no longer available.');
                 }
-                $result = $this->assertApplicable($tenantId, $discount, $order, $paymentMethod);
+                $result = $this->assertApplicable($tenantId, $discount, $order, $paymentMethodId, $legacyPaymentMethod);
                 DB::table('order_discounts')->where('id', $row->id)->update([
                     'discount_type' => $discount->type,
                     'discount_value' => $discount->value,
@@ -113,9 +118,24 @@ class DiscountEligibilityService
                     throw new OrderLifecycleException('DISCOUNT_USAGE_LIMIT_REACHED', 'The customer usage limit has been reached.');
                 }
             }
+            $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $order->branch_id)->where('is_active', true)->whereNull('deleted_at')->first();
+            if (! $branch) {
+                throw new OrderLifecycleException('DISCOUNT_BRANCH_NOT_ELIGIBLE', 'The order branch is unavailable.');
+            }
+            $businessDate = $this->businessDate($branch);
+            if ($discount->usage_limit_per_customer_per_day !== null) {
+                if ($order->customer_id === null) {
+                    throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+                }
+                $dailyUses = DB::table('discount_usages')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)
+                    ->where('customer_id', $order->customer_id)->where('business_date', $businessDate)->count();
+                if ($dailyUses >= $discount->usage_limit_per_customer_per_day) {
+                    throw new OrderLifecycleException('DISCOUNT_DAILY_USAGE_LIMIT_REACHED', 'The customer daily usage limit has been reached.');
+                }
+            }
             DB::table('discount_usages')->insert([
                 'tenant_id' => $tenantId, 'discount_id' => $discount->id, 'order_id' => $order->id,
-                'payment_id' => $paymentId, 'customer_id' => $order->customer_id,
+                'payment_id' => $paymentId, 'customer_id' => $order->customer_id, 'business_date' => $businessDate,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
             DB::table('discounts')->where('id', $discount->id)->increment('used_count');
@@ -127,10 +147,19 @@ class DiscountEligibilityService
         if (! $discount->is_active) {
             throw new OrderLifecycleException('DISCOUNT_INACTIVE', 'This discount is inactive.');
         }
-        if ($discount->starts_at && $now->lessThan(CarbonImmutable::parse($discount->starts_at))) {
+        $today = $now->toDateString();
+        if ($discount->start_date && $today < $discount->start_date) {
             throw new OrderLifecycleException('DISCOUNT_NOT_STARTED', 'This discount has not started yet.');
         }
-        if ($discount->ends_at && $now->greaterThan(CarbonImmutable::parse($discount->ends_at))) {
+        if ($discount->end_date && $today > $discount->end_date) {
+            throw new OrderLifecycleException('DISCOUNT_EXPIRED', 'This discount has expired.');
+        }
+        // Legacy timestamps retain their original instant semantics. Canonical
+        // V1 date-only fields above are branch-local and never use app time.
+        if ($discount->start_date === null && $discount->starts_at && CarbonImmutable::now('UTC')->lessThan(CarbonImmutable::parse($discount->starts_at, 'UTC'))) {
+            throw new OrderLifecycleException('DISCOUNT_NOT_STARTED', 'This discount has not started yet.');
+        }
+        if ($discount->end_date === null && $discount->ends_at && CarbonImmutable::now('UTC')->greaterThan(CarbonImmutable::parse($discount->ends_at, 'UTC'))) {
             throw new OrderLifecycleException('DISCOUNT_EXPIRED', 'This discount has expired.');
         }
         $days = $discount->active_days ? json_decode($discount->active_days, true) : [];
@@ -171,12 +200,60 @@ class DiscountEligibilityService
         }
     }
 
+    private function assertChannel(int $tenantId, object $discount, object $order): void
+    {
+        $channels = DB::table('discount_channel_targets')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->pluck('channel_key')->all();
+        if ($channels && ! in_array((string) ($order->sales_channel ?? 'pos'), $channels, true)) {
+            throw new OrderLifecycleException('DISCOUNT_CHANNEL_NOT_ELIGIBLE', 'This discount is not available for the order sales channel.');
+        }
+    }
+
     private function assertCustomer(int $tenantId, object $discount, object $order): void
     {
-        $policy = strtolower(trim((string) $discount->customer_eligibility));
-        if ($policy === '' || $policy === 'all customers') {
+        $mode = strtolower(trim((string) $discount->customer_eligibility));
+        if ($mode === 'selected_customers') {
+            if ($order->customer_id === null) {
+                throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+            }
+            $customerIds = $this->targetIds($tenantId, $discount->id, 'customer');
+            $eligible = $customerIds && in_array((int) $order->customer_id, $customerIds, true)
+                && DB::table('customers')->where('tenant_id', $tenantId)->where('id', $order->customer_id)->where('is_active', true)->whereNull('deleted_at')->exists();
+            if (! $eligible) {
+                throw new OrderLifecycleException('DISCOUNT_CUSTOMER_NOT_ELIGIBLE', 'The order customer is not eligible for this discount.');
+            }
+
             return;
         }
+        $groupIds = $this->targetIds($tenantId, $discount->id, 'customer_group');
+        if (! $groupIds) {
+            // Historical, pre-V1 records remain readable and executable. New
+            // V1 policies always use explicit Customer Group targets instead.
+            $policy = strtolower(trim((string) $discount->customer_eligibility));
+            if ($policy === '' || $policy === 'all customers') {
+                return;
+            }
+            $this->assertLegacyCustomer($tenantId, $order, $policy);
+
+            return;
+        }
+        if ($order->customer_id === null) {
+            throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+        }
+        $eligible = DB::table('customer_group_memberships as memberships')
+            ->join('customer_groups as groups', 'groups.id', '=', 'memberships.customer_group_id')
+            ->join('customers', 'customers.id', '=', 'memberships.customer_id')
+            ->where('memberships.tenant_id', $tenantId)->where('memberships.customer_id', $order->customer_id)
+            ->whereIn('memberships.customer_group_id', $groupIds)
+            ->where('groups.tenant_id', $tenantId)->where('groups.is_active', true)->whereNull('groups.deleted_at')
+            ->where('customers.tenant_id', $tenantId)->where('customers.is_active', true)->whereNull('customers.deleted_at')
+            ->exists();
+        if (! $eligible) {
+            throw new OrderLifecycleException('DISCOUNT_CUSTOMER_NOT_ELIGIBLE', 'The order customer is not eligible for this discount.');
+        }
+    }
+
+    private function assertLegacyCustomer(int $tenantId, object $order, string $policy): void
+    {
         if ($order->customer_id === null) {
             throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
         }
@@ -195,10 +272,18 @@ class DiscountEligibilityService
         }
     }
 
-    private function assertPaymentMethod(object $discount, string $paymentMethod): void
+    private function assertPaymentMethod(int $tenantId, object $discount, int $paymentMethodId, ?string $legacyPaymentMethod): void
     {
+        $allowedIds = $this->targetIds($tenantId, $discount->id, 'payment_method');
+        if ($allowedIds) {
+            if (! in_array($paymentMethodId, $allowedIds, true)) {
+                throw new OrderLifecycleException('DISCOUNT_PAYMENT_METHOD_NOT_ALLOWED', 'This discount is not available with the selected payment method.');
+            }
+
+            return;
+        }
         $policy = strtolower(trim((string) $discount->payment_method));
-        if ($policy === '' || $policy === 'any payment method' || $policy === strtolower($paymentMethod)) {
+        if ($policy === '' || $policy === 'any payment method' || $policy === strtolower((string) $legacyPaymentMethod)) {
             return;
         }
         throw new OrderLifecycleException('DISCOUNT_PAYMENT_METHOD_NOT_ALLOWED', 'This discount is not available with the selected payment method.');
@@ -208,6 +293,9 @@ class DiscountEligibilityService
     {
         if ($discount->scope === 'order') {
             return (float) $order->subtotal;
+        }
+        if ($discount->scope === 'bundle') {
+            return $this->bundleSubtotal($tenantId, $order, $discount);
         }
         $productIds = $this->targetIds($tenantId, $discount->id, 'product');
         $categoryIds = $this->targetIds($tenantId, $discount->id, 'category');
@@ -228,32 +316,63 @@ class DiscountEligibilityService
         return (float) $items->sum('order_items.total');
     }
 
-    private function bogoAmount(int $tenantId, int $orderId, object $discount): float
+    /**
+     * Prices are derived only from immutable order items. One requirement set
+     * is selected, even where an order contains enough units for many bundles.
+     */
+    private function bundleSubtotal(int $tenantId, object $order, object $discount): float
     {
-        $eligible = $this->eligibleItems($tenantId, $orderId, $discount);
-        $item = $eligible->where('order_items.quantity', '>=', 2)->orderBy('order_items.unit_price')->first();
-
-        return $item ? (float) $item->unit_price * floor((float) $item->quantity / max(2, (int) $discount->value + 1)) : 0;
-    }
-
-    private function eligibleItems(int $tenantId, int $orderId, object $discount): Builder
-    {
-        $order = DB::table('orders')->where('tenant_id', $tenantId)->where('id', $orderId)->first();
-        $items = DB::table('order_items')->leftJoin('products', 'products.id', '=', 'order_items.product_id')->where('order_items.tenant_id', $tenantId)->where('order_items.order_id', $orderId)->whereNull('order_items.deleted_at');
-        $products = $this->targetIds($tenantId, $discount->id, 'product');
-        $categories = $this->targetIds($tenantId, $discount->id, 'category');
-        if ($products || $categories) {
-            $items->where(function (Builder $query) use ($products, $categories, $order): void {
-                if ($products) {
-                    $query->whereIn('order_items.product_id', $products);
+        $requirements = DB::table('discount_bundle_requirements')->where('tenant_id', $tenantId)->where('discount_id', $discount->id)->orderBy('product_id')->get();
+        if ($requirements->isEmpty()) {
+            return 0.0;
+        }
+        $itemsByProduct = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')
+            ->whereIn('product_id', $requirements->pluck('product_id'))->orderBy('id')->get()->groupBy('product_id');
+        $subtotal = 0.0;
+        foreach ($requirements as $requirement) {
+            $remaining = (float) $requirement->quantity;
+            foreach ($itemsByProduct->get($requirement->product_id, collect()) as $item) {
+                $taken = min($remaining, (float) $item->quantity);
+                $subtotal += $taken * (float) $item->unit_price;
+                $remaining -= $taken;
+                if ($remaining <= 0.00001) {
+                    break;
                 }
-                if ($categories) {
-                    $products ? $query->orWhereIn($order->published_menu_version_id === null ? 'products.category_id' : 'order_items.category_id', $categories) : $query->whereIn($order->published_menu_version_id === null ? 'products.category_id' : 'order_items.category_id', $categories);
-                }
-            });
+            }
+            if ($remaining > 0.00001) {
+                return 0.0;
+            }
         }
 
-        return $items;
+        return round($subtotal, 2);
+    }
+
+    private function assertUsageAvailable(int $tenantId, object $discount, object $order, object $branch): void
+    {
+        if ($discount->usage_limit === null && $discount->usage_limit_per_customer === null && $discount->usage_limit_per_customer_per_day === null) {
+            return;
+        }
+        $usages = DB::table('discount_usages')->where('tenant_id', $tenantId)->where('discount_id', $discount->id);
+        if ($discount->usage_limit !== null && (clone $usages)->count() >= $discount->usage_limit) {
+            throw new OrderLifecycleException('DISCOUNT_USAGE_LIMIT_REACHED', 'The discount usage limit has been reached.');
+        }
+        if ($discount->usage_limit_per_customer !== null || $discount->usage_limit_per_customer_per_day !== null) {
+            if ($order->customer_id === null) {
+                throw new OrderLifecycleException('DISCOUNT_CUSTOMER_REQUIRED', 'This discount requires an identified customer.');
+            }
+            $customerUsages = (clone $usages)->where('customer_id', $order->customer_id);
+            if ($discount->usage_limit_per_customer !== null && (clone $customerUsages)->count() >= $discount->usage_limit_per_customer) {
+                throw new OrderLifecycleException('DISCOUNT_USAGE_LIMIT_REACHED', 'The customer usage limit has been reached.');
+            }
+            if ($discount->usage_limit_per_customer_per_day !== null && $customerUsages->where('business_date', $this->businessDate($branch))->count() >= $discount->usage_limit_per_customer_per_day) {
+                throw new OrderLifecycleException('DISCOUNT_DAILY_USAGE_LIMIT_REACHED', 'The customer daily usage limit has been reached.');
+            }
+        }
+    }
+
+    private function businessDate(object $branch): string
+    {
+        return CarbonImmutable::now($branch->timezone ?: 'UTC')->toDateString();
     }
 
     private function targetIds(int $tenantId, int $discountId, string $type): array

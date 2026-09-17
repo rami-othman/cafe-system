@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/currency_formatter.dart';
+import '../../../shared/widgets/app_text_field.dart';
 import '../models/applied_discount.dart';
 import '../models/available_discount.dart';
 import 'coupon_code_input.dart';
@@ -15,65 +15,46 @@ class DiscountDialog extends StatefulWidget {
   const DiscountDialog({
     super.key,
     required this.subtotal,
-    this.availableDiscounts,
+    this.availableDiscounts = const <AvailableDiscount>[],
   });
 
   final double subtotal;
-  final List<AvailableDiscount>? availableDiscounts;
+  final List<AvailableDiscount> availableDiscounts;
 
   @override
   State<DiscountDialog> createState() => _DiscountDialogState();
 }
 
 class _DiscountDialogState extends State<DiscountDialog> {
-  static final String _minimumOrderMessage =
-      'Minimum order amount (${CurrencyFormatter.format(20)}) not reached.';
-  static final List<AvailableDiscount> _availableDiscounts =
-      <AvailableDiscount>[
-        AvailableDiscount(
-          id: 'morning-rush',
-          title: 'Morning Rush',
-          subtitle: 'Valid until 11:00 AM',
-          badgeLabel: '15% OFF',
-          type: AvailableDiscountType.percentage,
-          value: 15,
-          minimumSubtotal: 20,
-          couponCode: 'MORNING15',
-        ),
-        AvailableDiscount(
-          id: 'vip-reward',
-          title: 'VIP Reward',
-          subtitle: 'Loyalty member tier',
-          badgeLabel: '-${CurrencyFormatter.format(5)}',
-          type: AvailableDiscountType.fixedAmount,
-          value: 5,
-          couponCode: 'VIP5',
-        ),
-        AvailableDiscount(
-          id: 'pastry-special',
-          title: 'Pastry Special',
-          subtitle: 'Buy 1 get 1 free',
-          badgeLabel: 'BOGO',
-          type: AvailableDiscountType.bogo,
-          value: 0,
-        ),
-      ];
-
   late final TextEditingController _couponController;
+  late final TextEditingController _searchController;
   String? _validationMessage;
+  String _searchQuery = '';
 
-  List<AvailableDiscount> get _discounts =>
-      widget.availableDiscounts ?? _availableDiscounts;
+  List<AvailableDiscount> get _filteredDiscounts {
+    final String query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return widget.availableDiscounts;
+    return widget.availableDiscounts
+        .where(
+          (AvailableDiscount discount) =>
+              discount.title.toLowerCase().contains(query) ||
+              discount.subtitle.toLowerCase().contains(query) ||
+              discount.badgeLabel.toLowerCase().contains(query),
+        )
+        .toList(growable: false);
+  }
 
   @override
   void initState() {
     super.initState();
     _couponController = TextEditingController();
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
     _couponController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -140,38 +121,20 @@ class _DiscountDialogState extends State<DiscountDialog> {
       return;
     }
 
-    AvailableDiscount? discount;
-    for (final AvailableDiscount availableDiscount in _discounts) {
-      if (availableDiscount.couponCode?.toUpperCase() == code) {
-        discount = availableDiscount;
-        break;
-      }
-    }
-
-    if (discount == null) {
-      _showValidation('Invalid coupon code.');
-      return;
-    }
-
-    _applyAvailableDiscount(discount, code: code);
+    // Code policies are intentionally absent from the available-policy endpoint.
+    // The backend resolves the code and its eligibility against the locked order.
+    Navigator.of(context).pop<AppliedDiscount>(
+      AppliedDiscount(
+        id: 'coupon:$code',
+        title: 'Coupon discount',
+        type: AppliedDiscountType.fixedAmount,
+        value: 0,
+        code: code,
+      ),
+    );
   }
 
   void _applyAvailableDiscount(AvailableDiscount discount, {String? code}) {
-    if (discount.type == AvailableDiscountType.bogo) {
-      _showValidation('BOGO discounts will be supported later.');
-      return;
-    }
-
-    if (!discount.isEligible) {
-      _showValidation(discount.message ?? _minimumOrderMessage);
-      return;
-    }
-
-    if (widget.subtotal < discount.minimumSubtotal) {
-      _showValidation(_minimumOrderMessage);
-      return;
-    }
-
     Navigator.of(context).pop<AppliedDiscount>(
       AppliedDiscount(
         id: discount.id,
@@ -190,6 +153,10 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
   void _showValidation(String message) {
     setState(() => _validationMessage = message);
+  }
+
+  void _updateSearch(String value) {
+    setState(() => _searchQuery = value);
   }
 }
 
@@ -270,13 +237,30 @@ class _DialogBody extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            key: const Key('pos-discount-search-field'),
+            controller: state._searchController,
+            hintText: 'Search discounts',
+            prefixIcon: Icons.search,
+            onChanged: state._updateSearch,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (state._filteredDiscounts.isEmpty)
+            Text(
+              state._searchQuery.trim().isEmpty
+                  ? 'No discounts are available for this order.'
+                  : 'No discounts match your search.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
           for (final AvailableDiscount discount
-              in state._discounts) ...<Widget>[
+              in state._filteredDiscounts) ...<Widget>[
             DiscountCard(
               discount: discount,
               onApply: () => state._applyAvailableDiscount(discount),
             ),
-            if (discount != state._discounts.last)
+            if (discount != state._filteredDiscounts.last)
               const SizedBox(height: AppSpacing.md),
           ],
         ],

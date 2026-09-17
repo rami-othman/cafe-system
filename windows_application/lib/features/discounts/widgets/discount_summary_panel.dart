@@ -10,19 +10,27 @@ class DiscountSummaryPanel extends StatelessWidget {
   const DiscountSummaryPanel({
     super.key,
     required this.value,
-    required this.active,
+    required this.isReady,
     required this.schedule,
-    required this.requiresApproval,
-    required this.allowsStacking,
-    required this.auditEnabled,
+    required this.scope,
+    required this.branches,
+    this.customers,
+    this.package,
+    this.channels,
+    this.usage,
+    this.coupon,
   });
 
   final String value;
-  final bool active;
+  final bool isReady;
   final String schedule;
-  final bool requiresApproval;
-  final bool allowsStacking;
-  final bool auditEnabled;
+  final String scope;
+  final String branches;
+  final String? customers;
+  final String? package;
+  final String? channels;
+  final String? usage;
+  final String? coupon;
 
   @override
   Widget build(BuildContext context) {
@@ -33,52 +41,44 @@ class DiscountSummaryPanel extends StatelessWidget {
           Text('Summary', style: AppTextStyles.titleMedium),
           const SizedBox(height: AppSpacing.lg),
           _SummaryRow(label: 'Discount', value: value),
-          const _SummaryRow(label: 'Scope', value: 'Entire Order'),
-          const _SummaryRow(
-            label: 'Branches',
-            value: 'Downtown, Mall, Airport',
-          ),
+          _SummaryRow(label: 'Scope', value: scope),
+          _SummaryRow(label: 'Branches', value: branches),
           _SummaryRow(label: 'Schedule', value: schedule),
-          _SummaryRow(
-            label: 'Approval',
-            value: requiresApproval ? 'Manager required' : 'Not required',
-          ),
-          _SummaryRow(
-            label: 'Stacking',
-            value: allowsStacking ? 'Allowed' : 'Restricted',
-          ),
-          _SummaryRow(
-            label: 'Reports',
-            value: auditEnabled ? 'Audit enabled' : 'Limited tracking',
-          ),
+          if (customers != null)
+            _SummaryRow(label: 'Customers', value: customers!),
+          if (package != null) _SummaryRow(label: 'Package', value: package!),
+          if (channels != null)
+            _SummaryRow(label: 'Channels', value: channels!),
+          if (usage != null) _SummaryRow(label: 'Usage', value: usage!),
+          if (coupon != null) _SummaryRow(label: 'Coupon', value: coupon!),
           const SizedBox(height: AppSpacing.lg),
           Container(
             padding: AppSpacing.allMd,
             decoration: BoxDecoration(
-              color: active
+              color: isReady
                   ? AppColors.discountGreenBadge
                   : AppColors.discountOrangeBadge,
               borderRadius: AppRadius.control,
               border: Border.all(
-                color: active ? AppColors.success : AppColors.warning,
+                color: isReady ? AppColors.success : AppColors.warning,
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Icon(
-                  active ? Icons.check_circle_outline : Icons.warning_amber,
+                  isReady ? Icons.check_circle_outline : Icons.warning_amber,
                   size: 18,
-                  color: active ? AppColors.success : AppColors.warning,
+                  color: isReady ? AppColors.success : AppColors.warning,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    active
+                    isReady
                         ? 'Policy is ready for review before activation.'
-                        : 'Enable the policy before activating this discount.',
+                        : 'Complete the required fields before activating this discount.',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: active
+                      color: isReady
                           ? AppColors.discountGreenText
                           : AppColors.discountOrangeText,
                       fontSize: 11,

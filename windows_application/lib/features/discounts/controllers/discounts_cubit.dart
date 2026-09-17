@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../models/discount_list_item.dart';
+import '../models/discount_detail.dart';
+import '../models/discount_form_references.dart';
 import '../models/discount_upsert_request.dart';
 import '../repositories/discounts_repository.dart';
 import 'discounts_state.dart';
@@ -64,6 +66,38 @@ class DiscountsCubit extends Cubit<DiscountsState> {
       );
     }
   }
+
+  Future<void> loadFormReferences() async {
+    emit(
+      state.copyWith(
+        isLoadingFormReferences: true,
+        clearFormReferencesError: true,
+      ),
+    );
+    try {
+      final DiscountFormReferences references = await _repository
+          .getFormReferences();
+      emit(
+        state.copyWith(
+          formReferences: references,
+          isLoadingFormReferences: false,
+          clearFormReferencesError: true,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          isLoadingFormReferences: false,
+          formReferencesErrorMessage: _message(error),
+        ),
+      );
+    }
+  }
+
+  Future<DiscountDetail> getDiscountDetail(String discountId) =>
+      _repository.getDiscountDetail(discountId);
+
+  Future<String> generateCouponCode() => _repository.generateCouponCode();
 
   Future<bool> createDiscount(DiscountUpsertRequest request) async {
     return _save(() => _repository.createDiscount(request));

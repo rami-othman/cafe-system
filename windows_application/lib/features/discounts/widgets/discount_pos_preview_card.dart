@@ -11,17 +11,21 @@ import '../../../shared/widgets/app_card.dart';
 class DiscountPosPreviewCard extends StatelessWidget {
   const DiscountPosPreviewCard({
     super.key,
-    required this.discountPercent,
+    required this.discountValue,
+    required this.isPercentage,
     required this.taxRate,
   });
 
-  final int discountPercent;
+  final double discountValue;
+  final bool isPercentage;
   final double taxRate;
 
   @override
   Widget build(BuildContext context) {
     const double subtotal = 50;
-    final double discount = subtotal * discountPercent / 100;
+    final double discount = isPercentage
+        ? subtotal * discountValue / 100
+        : discountValue.clamp(0, subtotal).toDouble();
     final double taxable = subtotal - discount;
     final double tax = taxable * taxRate;
     final double total = taxable + tax;
@@ -64,7 +68,9 @@ class DiscountPosPreviewCard extends StatelessWidget {
                 _ReceiptRow(label: 'Subtotal', value: subtotal),
                 const SizedBox(height: AppSpacing.md),
                 _ReceiptRow(
-                  label: 'Discount ($discountPercent%)',
+                  label: isPercentage
+                      ? 'Discount (${_decimal(discountValue)}%)'
+                      : 'Discount',
                   value: -discount,
                   color: AppColors.success,
                 ),
@@ -79,6 +85,10 @@ class DiscountPosPreviewCard extends StatelessWidget {
       ),
     );
   }
+
+  static String _decimal(double value) => value == value.truncateToDouble()
+      ? value.toInt().toString()
+      : value.toString();
 }
 
 class _ReceiptRow extends StatelessWidget {

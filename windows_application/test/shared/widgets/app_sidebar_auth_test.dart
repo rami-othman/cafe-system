@@ -301,6 +301,12 @@ class _SessionStorage implements AuthSessionStorage {
   Future<void> clear() async => _session = null;
 
   @override
+  Future<bool> isAuthoritativelyInvalidated() async => false;
+
+  @override
+  Future<void> markAuthoritativelyInvalidated() async {}
+
+  @override
   Stream<void> get changes => const Stream<void>.empty();
 
   @override

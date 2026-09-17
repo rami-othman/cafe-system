@@ -49,10 +49,9 @@ abstract class TestCase extends BaseTestCase
             'user_id' => $user->id,
             'name' => 'phase4-test',
             'token_hash' => hash('sha256', $token),
-            // Test tokens intentionally have no expiry so clock-controlled
-            // schedule tests exercise their business time rather than a
-            // synthetic session timeout. They remain real opaque DB tokens.
-            'expires_at' => null,
+            // Operational test tokens remain opaque server-side sessions with
+            // the same absolute-expiry invariant as production tokens.
+            'expires_at' => now()->addDays(30),
         ]);
 
         return $token;

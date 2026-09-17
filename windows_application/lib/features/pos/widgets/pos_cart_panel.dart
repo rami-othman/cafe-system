@@ -126,7 +126,7 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
-    List<AvailableDiscount>? availableDiscounts;
+    List<AvailableDiscount> availableDiscounts = const <AvailableDiscount>[];
     if (state.currentOrderId != null) {
       try {
         availableDiscounts = await cubit.repository.getAvailableDiscounts(

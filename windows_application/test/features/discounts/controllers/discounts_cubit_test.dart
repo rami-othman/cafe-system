@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
@@ -35,6 +37,10 @@ const DiscountUpsertRequest _request = DiscountUpsertRequest(
 );
 
 class _Repository implements DiscountsRepository {
+  @override
+  Future<DiscountFormReferences> getFormReferences() async =>
+      const DiscountFormReferences();
+
   final List<DiscountListItem> _items = <DiscountListItem>[
     _item('1', 'Existing', true),
   ];
@@ -51,6 +57,11 @@ class _Repository implements DiscountsRepository {
       isActive: true,
     ),
   ];
+  @override
+  Future<DiscountDetail> getDiscountDetail(String discountId) =>
+      throw UnimplementedError();
+  @override
+  Future<String> generateCouponCode() => throw UnimplementedError();
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) async {
     final DiscountListItem item = _item('2', request.name, request.isActive);

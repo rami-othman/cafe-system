@@ -5,6 +5,8 @@ import 'package:windows_application/core/theme/app_theme.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
+import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
@@ -21,6 +23,8 @@ void main() {
     expect(find.text('2'), findsOneWidget);
     expect(find.text('292'), findsOneWidget);
     expect(find.text('520 SYP'), findsOneWidget);
+    expect(find.text('Manual'), findsOneWidget);
+    expect(find.text('Automatic'), findsNothing);
   });
 
   testWidgets('filters loaded discounts by search and status', (
@@ -68,12 +72,21 @@ Future<void> _pumpScreen(
 
 class _Repository implements DiscountsRepository {
   @override
+  Future<DiscountFormReferences> getFormReferences() async =>
+      const DiscountFormReferences();
+
+  @override
   Future<List<Branch>> getBranches() async => const <Branch>[];
   @override
   Future<List<DiscountListItem>> getDiscounts() async => <DiscountListItem>[
     _item('1', 'Morning Rush 15%', DiscountStatus.active, 128, '192 SYP'),
     _item('2', 'Student Discount', DiscountStatus.active, 164, '328 SYP'),
   ];
+  @override
+  Future<DiscountDetail> getDiscountDetail(String discountId) =>
+      throw UnimplementedError();
+  @override
+  Future<String> generateCouponCode() => throw UnimplementedError();
   @override
   Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
       throw UnimplementedError();
@@ -106,7 +119,7 @@ DiscountListItem _item(
 ) => DiscountListItem(
   id: id,
   name: name,
-  secondaryLabel: name == 'Student Discount' ? 'Automatic' : 'Code: MRNG15',
+  secondaryLabel: name == 'Student Discount' ? 'Manual' : 'Code: MRNG15',
   type: name == 'Student Discount' ? 'Fixed Amount' : 'Percentage',
   displayValue: name == 'Student Discount' ? '2 SYP off' : '15% off',
   conditions: name == 'Student Discount'

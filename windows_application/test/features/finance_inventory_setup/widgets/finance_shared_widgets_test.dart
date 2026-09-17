@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_components.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_design.dart';
 import 'package:windows_application/features/finance_inventory_setup/widgets/finance_navigation_bar.dart';
@@ -17,6 +18,13 @@ final AppLocalizationsAr _ar = AppLocalizationsAr();
 final AppLocalizationsEn _en = AppLocalizationsEn();
 
 void main() {
+  setUp(() async {
+    await serviceLocator.reset();
+    setupServiceLocator(useBackend: false);
+  });
+
+  tearDown(() => serviceLocator.reset());
+
   // Ambient Directionality now comes from MaterialApp.locale (Arabic ->
   // RTL, English -> LTR) rather than a manual wrapper, matching every real
   // Finance route. Defaults to Arabic/RTL since that is what most of these

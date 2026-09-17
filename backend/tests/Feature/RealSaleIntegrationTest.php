@@ -120,7 +120,7 @@ class RealSaleIntegrationTest extends TestCase
             'idempotencyKey' => 'preflight-apply-time',
         ], $scenario['headers'])
             ->assertUnprocessable()
-            ->assertJsonPath('code', 'WAREHOUSE_NOT_CONFIGURED');
+            ->assertJsonPath('code', 'ORDER_WAREHOUSE_INVALID');
 
         $this->assertSame('unpaid', DB::table('orders')->where('id', $scenario['orderId'])->value('payment_status'));
         $this->assertSame(0, DB::table('payments')->where('tenant_id', $scenario['tenant'])->where('order_id', $scenario['orderId'])->count());

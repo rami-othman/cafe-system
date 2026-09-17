@@ -4817,6 +4817,64 @@ class AppLocalizationsEn extends AppLocalizations {
       'We could not log you in. Check your details and try again.';
 
   @override
+  String get authInvalidCredentials =>
+      'The email, username, or password is incorrect.';
+
+  @override
+  String get authTooManyAttempts =>
+      'Too many login attempts. Please wait a moment and try again.';
+
+  @override
+  String get authNetworkUnavailable =>
+      'We cannot connect to the server. Check your network connection and try again.';
+
+  @override
+  String get authConnectionTimeout =>
+      'The connection timed out. Check your connection and try again.';
+
+  @override
+  String get authServerUnavailable =>
+      'The service is temporarily unavailable. Please try again shortly.';
+
+  @override
+  String get authValidationFailed =>
+      'Please review the highlighted fields and try again.';
+
+  @override
+  String get authFieldValidationFailed => 'Check this value and try again.';
+
+  @override
+  String get authInvalidResponse =>
+      'We could not verify the sign-in response. Please try again.';
+
+  @override
+  String get authSecureStorageFailure =>
+      'We could not securely save this session. Please try again.';
+
+  @override
+  String get authVerifiedSessionSaveFailed =>
+      'Your verified session could not be saved securely. Retry verification or log out.';
+
+  @override
+  String get authPasswordChangedSessionSaveFailed =>
+      'Your password was changed, but we could not save this session. Please log in again using your new password.';
+
+  @override
+  String get authUnexpectedError =>
+      'Something unexpected went wrong. Please try again.';
+
+  @override
+  String get authIncorrectCurrentPassword =>
+      'The current password is incorrect.';
+
+  @override
+  String get authWeakNewPassword => 'Choose a stronger new password.';
+
+  @override
+  String get authPasswordConfirmationMismatch =>
+      'The password confirmation does not match.';
+
+  @override
   String get authChangePassword => 'Change Password';
 
   @override
@@ -4868,6 +4926,46 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authOfflineSessionExpired =>
       'Your offline session has expired. Connect to the internet and log in again.';
+
+  @override
+  String get authVerificationRequiredTitle => 'Verify your session';
+
+  @override
+  String get authUnableToVerifySession =>
+      'We could not verify your saved session. Please try again.';
+
+  @override
+  String get authRetryVerification => 'Retry verification';
+
+  @override
+  String get authRetryingVerification => 'Verifying session…';
+
+  @override
+  String get authReturnToLogin => 'Return to Login';
+
+  @override
+  String get authSecureStorageReadFailure =>
+      'Secure storage is unavailable. Please try again or return to Login.';
+
+  @override
+  String get authCorruptSavedSession =>
+      'Your saved session could not be read. Please log in again.';
+
+  @override
+  String get authConnectionRequiredToVerifySession =>
+      'A connection is required to verify this saved session before access can continue.';
+
+  @override
+  String get authTenantNotOperationalTitle =>
+      'Workspace temporarily unavailable';
+
+  @override
+  String get authTenantNotOperationalExplanation =>
+      'This workspace is temporarily unavailable.';
+
+  @override
+  String get authContactAdministration =>
+      'Please contact administration for assistance.';
 
   @override
   String get authSettingsSubtitle => 'Account and session controls';
@@ -7518,4 +7616,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashierInventoryError => 'Unable to load POS stock.';
+  String get discountV2PackageBundle => 'Package / Bundle';
+
+  @override
+  String get discountV2PackageRequirements => 'Package Requirements';
+
+  @override
+  String get discountV2AllPackageItems =>
+      'All package items must be present in the order for this discount to apply.';
+
+  @override
+  String get discountV2RequiredQuantity => 'Required Quantity';
+
+  @override
+  String get discountV2AddProduct => 'Add Product';
+
+  @override
+  String get discountV2SelectedCustomers => 'Selected Customers';
+
+  @override
+  String get discountV2SelectCustomers => 'Select Customers';
+
+  @override
+  String get discountV2Channels => 'Channels';
+
+  @override
+  String get discountV2AllChannels => 'All Channels';
+
+  @override
+  String get discountV2SelectedChannels => 'Selected Channels';
+
+  @override
+  String get discountV2BranchChannelHelp =>
+      'Branch and channel restrictions are applied together.';
+
+  @override
+  String get discountV2DailyLimit => 'Per Customer Daily Limit';
+
+  @override
+  String get discountV2DailyLimitDetails =>
+      'Each customer may use this discount up to the lifetime limit, but only up to the daily limit per business day.';
+
+  @override
+  String get discountV2Regenerate => 'Regenerate';
+
+  @override
+  String get discountV2CodeGenerationFailed => 'Unable to generate a code.';
+
+  @override
+  String get discountV2Retry => 'Retry';
+
+  @override
+  String get discountV2Search => 'Search';
 }

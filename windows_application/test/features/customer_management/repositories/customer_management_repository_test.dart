@@ -354,12 +354,13 @@ class _ScriptedAdapter implements HttpClientAdapter {
   ) async {
     requests.add(options);
     final _Reply reply = _replies.removeAt(0);
-    if (reply.errorType != null)
+    if (reply.errorType != null) {
       throw DioException(
         requestOptions: options,
         type: reply.errorType!,
         error: reply.error,
       );
+    }
     return ResponseBody.fromString(
       jsonEncode(reply.body),
       reply.statusCode,

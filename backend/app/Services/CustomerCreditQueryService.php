@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * The single authoritative source for a customer's unapplied credit balance
@@ -18,6 +19,10 @@ final class CustomerCreditQueryService
     /** Pass $lock inside a refund-posting transaction to serialize concurrent settlement against the same balance. */
     public function balanceCents(int $tenantId, int $customerId, bool $lock = false): int
     {
+        if (! Schema::hasTable('customer_credit_ledger')) {
+            return 0;
+        }
+
         $query = DB::table('customer_credit_ledger')->where('tenant_id', $tenantId)->where('customer_id', $customerId);
         if ($lock) {
             // PostgreSQL rejects FOR UPDATE on SUM(...); lock the ledger rows
@@ -45,12 +50,19 @@ final class CustomerCreditQueryService
      */
     public function balanceCentsAsOf(int $tenantId, int $customerId, string $asOfDate): int
     {
-        $grants = DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
-            ->where('l.tenant_id', $tenantId)->where('l.customer_id', $customerId)->whereDate('n.credit_date', '<=', $asOfDate)
-            ->sum('l.amount') ?: '0';
-        $consumptions = DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
-            ->where('l.tenant_id', $tenantId)->where('l.customer_id', $customerId)->whereDate('r.refund_date', '<=', $asOfDate)
-            ->sum('l.amount') ?: '0';
+        if (! Schema::hasTable('customer_credit_ledger')) {
+            return 0;
+        }
+        $grants = Schema::hasTable('sales_credit_notes')
+            ? DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
+                ->where('l.tenant_id', $tenantId)->where('l.customer_id', $customerId)->whereDate('n.credit_date', '<=', $asOfDate)
+                ->sum('l.amount') ?: '0'
+            : '0';
+        $consumptions = Schema::hasTable('customer_refunds')
+            ? DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
+                ->where('l.tenant_id', $tenantId)->where('l.customer_id', $customerId)->whereDate('r.refund_date', '<=', $asOfDate)
+                ->sum('l.amount') ?: '0'
+            : '0';
 
         return Money::cents($grants) + Money::cents($consumptions);
     }
@@ -58,10 +70,17 @@ final class CustomerCreditQueryService
     /** Tenant-wide unapplied customer credit as of a cutoff date, for the Finance Dashboard tile. */
     public function totalBalanceCentsAsOf(int $tenantId, string $asOfDate): int
     {
-        $grants = DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
-            ->where('l.tenant_id', $tenantId)->whereDate('n.credit_date', '<=', $asOfDate)->sum('l.amount') ?: '0';
-        $consumptions = DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
-            ->where('l.tenant_id', $tenantId)->whereDate('r.refund_date', '<=', $asOfDate)->sum('l.amount') ?: '0';
+        if (! Schema::hasTable('customer_credit_ledger')) {
+            return 0;
+        }
+        $grants = Schema::hasTable('sales_credit_notes')
+            ? DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
+                ->where('l.tenant_id', $tenantId)->whereDate('n.credit_date', '<=', $asOfDate)->sum('l.amount') ?: '0'
+            : '0';
+        $consumptions = Schema::hasTable('customer_refunds')
+            ? DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
+                ->where('l.tenant_id', $tenantId)->whereDate('r.refund_date', '<=', $asOfDate)->sum('l.amount') ?: '0'
+            : '0';
 
         return Money::cents($grants) + Money::cents($consumptions);
     }
