@@ -12,20 +12,15 @@ final class WarehousePresentation
     public static function typeLabel(string $type): string
     {
         return match ($type) {
-            'central' => 'Central',
-            'branch_main', 'main' => 'Main Store',
-            'bar' => 'Bar',
-            'kitchen' => 'Kitchen',
-            default => 'Warehouse',
+            'branch_main', 'main' => 'رئيسي',
+            'bar' => 'البار',
+            'kitchen' => 'المطبخ',
+            default => 'مخزن',
         };
     }
 
     public static function displayName(?string $branchName, string $type): string
     {
-        if ($type === 'central') {
-            return 'Central Warehouse';
-        }
-
-        return ($branchName ?: 'Branch').' — '.self::typeLabel($type);
+        return ($branchName ?: 'الفرع').' — مخزن '.self::typeLabel($type);
     }
 }

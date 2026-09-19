@@ -109,6 +109,7 @@ class SupplierPaymentService
                     'amount' => Money::decimal($amountCents),
                     'payment_method_id' => $method->id,
                     'financial_location_id' => $location->id,
+                    'shift_id' => $data['shiftId'] ?? null,
                     'external_reference' => $data['externalReference'] ?? null,
                     'notes' => $data['notes'] ?? null,
                     'status' => 'posted',
@@ -188,6 +189,21 @@ class SupplierPaymentService
             DB::table('supplier_payments')->where('tenant_id', $tenantId)->where('id', $id)->update([
                 'status' => 'reversed', 'reversal_journal_entry_id' => $reversal, 'reversed_by' => $actorId, 'reversed_at' => $now, 'updated_at' => $now,
             ]);
+            if ($payment->finance_document_id) {
+                DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $payment->finance_document_id)->update([
+                    'status' => 'reversed', 'reversal_journal_entry_id' => $reversal, 'reversed_by' => $actorId,
+                    'reversed_at' => $now, 'reversal_reason' => 'Linked supplier payment reversed.', 'updated_at' => $now,
+                ]);
+            }
+            if ($payment->shift_id) {
+                DB::table('shift_cash_movements')->insertOrIgnore([
+                    'tenant_id' => $tenantId, 'branch_id' => $payment->branch_id, 'shift_id' => $payment->shift_id,
+                    'kind' => 'deposit', 'amount' => $payment->amount,
+                    'description' => "Reversal of supplier payment {$payment->payment_number}",
+                    'source_type' => 'supplier_payment_reversal', 'source_id' => $payment->id,
+                    'created_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
+                ]);
+            }
             foreach ($allocations as $allocation) {
                 $this->recomputeInvoiceStatus($tenantId, (int) $allocation->supplier_invoice_id);
             }

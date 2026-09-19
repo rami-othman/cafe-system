@@ -98,41 +98,18 @@ final class InventoryAccess
         return app(\App\Services\BranchAccessService::class)->accessibleBranchIds($actor);
     }
 
+    /** There is no "central"/branchless warehouse concept — every warehouse belongs to a branch. */
     public static function scopeWarehouseBranches(Builder $query, Request $request, string $branchColumn): void
     {
-        $branchIds = self::allowedBranchIds($request);
-        $query->where(function (Builder $warehouses) use ($branchColumn, $branchIds, $request): void {
-            if (self::canAccessCentralWarehouse($request)) {
-                $warehouses->whereNull($branchColumn);
-            } else {
-                $warehouses->whereRaw('1 = 0');
-            }
-            if ($branchIds !== []) {
-                $warehouses->orWhereIn($branchColumn, $branchIds);
-            }
-        });
+        $query->whereIn($branchColumn, self::allowedBranchIds($request));
     }
 
     public static function assertBranchAccess(Request $request, ?int $branchId): void
     {
-        if ($branchId === null) {
-            if (self::canAccessCentralWarehouse($request)) {
-                return;
-            }
-
-            throw new HttpException(403, 'Central warehouses are not available to this user.');
-        }
-
-        $branchIds = self::allowedBranchIds($request);
-        if (in_array($branchId, $branchIds, true)) {
+        if ($branchId !== null && in_array($branchId, self::allowedBranchIds($request), true)) {
             return;
         }
 
         throw new HttpException(403, 'The selected branch is not assigned to this user.');
-    }
-
-    private static function canAccessCentralWarehouse(Request $request): bool
-    {
-        return in_array(self::actor($request)->effectiveRoleCode(), ['owner', 'manager'], true);
     }
 }

@@ -20,7 +20,12 @@ class FinancialInventoryFoundationSeeder extends Seeder
         $now = now();
         $branches = DB::table('branches')->where('tenant_id', $tenantId)->whereNull('deleted_at')->orderBy('id')->get();
         foreach ($branches as $branch) {
-            app(FinancialSetupService::class)->ensureBranchMainWarehouse($tenantId, (int) $branch->id, $managerId);
+            // This seeder deliberately enriches the flagship demo tenant with
+            // several named warehouses per branch (bar/kitchen) to
+            // showcase transfers and multi-store reporting; a real branch
+            // created through the product only ever gets the one warehouse
+            // it's created with (FinancialSetupService::ensureBranchWarehouse).
+            // There is no "main"/"primary" warehouse — see ensureBranchWarehouse.
             foreach ([
                 ['suffix' => 'BAR', 'name' => 'البار - '.$branch->name, 'type' => 'bar', 'notes' => 'موقع استهلاك وتجهيز المشروبات.'],
                 ['suffix' => 'KITCHEN', 'name' => 'المطبخ - '.$branch->name, 'type' => 'kitchen', 'notes' => 'موقع استهلاك وتجهيز الطعام.'],
@@ -40,21 +45,12 @@ class FinancialInventoryFoundationSeeder extends Seeder
                     ],
                 );
             }
-        }
-
-        foreach ($branches as $branch) {
-            foreach (['BAR' => 'Bar', 'KITCHEN' => 'Kitchen'] as $suffix => $label) {
-                DB::table('warehouses')
-                    ->where('tenant_id', $tenantId)
-                    ->where('code', 'BR-'.$branch->id.'-'.$suffix)
-                    ->update([
-                        'name' => $branch->name.' — '.$label,
-                        'notes' => $label === 'Bar'
-                            ? 'Beverage preparation and consumption location.'
-                            : 'Food preparation and consumption location.',
-                        'updated_at' => $now,
-                    ]);
-            }
+            // A branch with several warehouses and no explicit POS
+            // configuration is ambiguous by design (PosInventoryWarehouseResolver
+            // never guesses) — this demo tenant's bar is the deliberate,
+            // explicit sale source, matching real-world usage.
+            $barId = (int) DB::table('warehouses')->where('tenant_id', $tenantId)->where('code', 'BR-'.$branch->id.'-BAR')->value('id');
+            DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branch->id)->update(['pos_inventory_warehouse_id' => $barId, 'updated_at' => $now]);
         }
 
         $entryId = DB::table('journal_entries')->where('tenant_id', $tenantId)->where('entry_number', 'SETUP-OPENING-0001')->value('id');

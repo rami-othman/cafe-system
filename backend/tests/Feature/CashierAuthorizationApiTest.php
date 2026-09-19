@@ -252,7 +252,7 @@ class CashierAuthorizationApiTest extends TestCase
         $owner = $this->owner($tenant);
         $warehouse = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branch)->where('code', 'not like', 'LEGACY-%')->value('id');
         if (! $warehouse) {
-            $warehouse = (int) DB::table('warehouses')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'name' => 'Bar', 'code' => 'BAR-'.$branch, 'type' => 'branch_main', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            $warehouse = (int) DB::table('warehouses')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'name' => 'Bar', 'code' => 'BAR-'.$branch, 'type' => 'other', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         }
         $item = (int) $this->postJson('/api/v1/inventory/items', [
             'nameAr' => 'صنف اختبار', 'nameEn' => 'Test item', 'sku' => 'CASHIER-TEST-'.uniqid(),

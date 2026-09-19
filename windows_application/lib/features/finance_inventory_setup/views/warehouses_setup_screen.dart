@@ -82,11 +82,7 @@ class _WarehousesState extends State<WarehousesSetupScreen> {
                                 DataCell(Text(warehouse.displayName)),
                                 DataCell(Text(warehouse.code)),
                                 DataCell(
-                                  Text(
-                                    warehouse.type == 'central'
-                                        ? context.l10n.financeWarehouseCentral
-                                        : context.l10n.financeWarehouseBranchType,
-                                  ),
+                                  Text(context.l10n.financeWarehouseBranchType),
                                 ),
                                 DataCell(
                                   Text(
@@ -172,7 +168,7 @@ class _WarehousesState extends State<WarehousesSetupScreen> {
                 <String, dynamic>{
                   'name': name.text.trim(),
                   'code': code.text.trim(),
-                  'type': current?.type ?? 'central',
+                  'type': current?.type ?? 'other',
                   'branchId': current?.branchId,
                   'notes': current?.notes,
                   'isActive': current?.isActive ?? true,

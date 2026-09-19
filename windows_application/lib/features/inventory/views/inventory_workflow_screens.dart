@@ -67,7 +67,7 @@ class _BarCheckTemplatesScreenState extends State<BarCheckTemplatesScreen> {
           children: <Widget>[
             ManagementPageHeader(
               title: 'قوالب فحص البار',
-              subtitle: 'إعداد عناصر فحص البار لكل فرع ومستودع.',
+              subtitle: 'إعداد عناصر فحص البار لكل فرع ومخزن.',
               actions: <Widget>[
                 AppButton(
                   label: 'قالب جديد',
@@ -212,7 +212,7 @@ class _BarCheckTemplatesScreenState extends State<BarCheckTemplatesScreen> {
                         columns: const <DataColumn>[
                           DataColumn(label: Text('القالب')),
                           DataColumn(label: Text('الفرع')),
-                          DataColumn(label: Text('مستودع البار')),
+                          DataColumn(label: Text('مخزن البار')),
                           DataColumn(label: Text('الحالة')),
                           DataColumn(label: Text('إغلاق الشفت')),
                           DataColumn(label: Text('')),
@@ -462,7 +462,7 @@ class _BarCheckTemplateEditorScreenState
                           ? _warehouseId
                           : null,
                       decoration: const InputDecoration(
-                        labelText: 'مستودع البار',
+                        labelText: 'مخزن البار',
                         border: OutlineInputBorder(),
                       ),
                       items: branchWarehouses
@@ -788,8 +788,8 @@ class _InventoryTransfersWorkspaceScreenState
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       ManagementPageHeader(
-        title: 'تحويلات المستودعات',
-        subtitle: 'إنشاء ومتابعة التحويلات بين المستودعات التشغيلية.',
+        title: 'تحويلات المخازن',
+        subtitle: 'إنشاء ومتابعة التحويلات بين المخازن التشغيلية.',
         actions: <Widget>[
           AppButton(
             label: 'إنشاء تحويل',
@@ -809,7 +809,7 @@ class _InventoryTransfersWorkspaceScreenState
               controller: _search,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'البحث برقم التحويل أو المستودع',
+                hintText: 'البحث برقم التحويل أو المخزن',
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -987,7 +987,7 @@ class _InventoryTransfersWorkspaceScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'إدارة المخزون / تحويلات المستودعات / ${t.number}',
+          'إدارة المخزون / تحويلات المخازن / ${t.number}',
           style: AppTextStyles.bodySmall,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -1013,8 +1013,8 @@ class _InventoryTransfersWorkspaceScreenState
             runSpacing: AppSpacing.md,
             children: <Widget>[
               _meta('رقم التحويل', t.number),
-              _meta('المستودع المصدر', t.sourceWarehouseName),
-              _meta('المستودع الوجهة', t.destinationWarehouseName),
+              _meta('المخزن المصدر', t.sourceWarehouseName),
+              _meta('المخزن الوجهة', t.destinationWarehouseName),
               _status(t.status),
               _meta('تاريخ الطلب', t.createdAt ?? '—'),
               if (t.approvedAt != null) _meta('تاريخ الاعتماد', t.approvedAt!),
@@ -1428,7 +1428,7 @@ class _NewBarTemplateDialogState extends State<_NewBarTemplateDialog> {
                 .toList(),
             onChanged: (id) => setState(() => _warehouseId = id!),
             decoration: const InputDecoration(
-              labelText: 'مستودع البار',
+              labelText: 'مخزن البار',
               border: OutlineInputBorder(),
             ),
           ),
@@ -1508,13 +1508,13 @@ class _TransferLocationsDialogState extends State<_TransferLocationsDialog> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             select(
-              'المستودع المصدر',
+              'المخزن المصدر',
               _sourceId,
               (v) => setState(() => _sourceId = v!),
             ),
             const SizedBox(height: AppSpacing.md),
             select(
-              'المستودع الوجهة',
+              'المخزن الوجهة',
               _destinationId,
               (v) => setState(() => _destinationId = v!),
             ),

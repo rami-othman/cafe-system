@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Scope is the single warehouse PosInventoryWarehouseResolver resolves for a
  * branch the caller may already access; there is no warehouse parameter, so a
- * caller cannot point this at another branch's or the central warehouse.
+ * caller cannot point this at another branch's warehouse.
  */
 class CashierInventoryQueryService
 {

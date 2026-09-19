@@ -913,9 +913,7 @@ class InventoryCenterApiTest extends TestCase
         $tenant = $this->tenant('cafe-618');
         $headers = $this->headers($tenant);
 
-        $central = DB::table('warehouses')->where('tenant_id', $tenant)->where('type', 'central')->whereNull('branch_id')->first();
-        $this->assertNotNull($central, 'Seeder must provide a branchless central warehouse.');
-
+        // No central/branchless warehouse concept: every warehouse belongs to a branch.
         $branchWarehouses = DB::table('warehouses')->where('tenant_id', $tenant)->whereNotNull('branch_id')->where('is_active', true)->orderBy('branch_id')->get();
         $this->assertGreaterThanOrEqual(2, $branchWarehouses->pluck('branch_id')->unique()->count(), 'Seeder must provide warehouses on at least two different branches.');
         $branchA = $branchWarehouses->first();
@@ -924,16 +922,13 @@ class InventoryCenterApiTest extends TestCase
         $branchBName = (string) DB::table('branches')->where('id', $branchB->branch_id)->value('name');
 
         $item = $this->createItem($tenant);
-        foreach ([$central->id, $branchA->id, $branchB->id] as $warehouseId) {
+        foreach ([$branchA->id, $branchB->id] as $warehouseId) {
             DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'warehouse_id' => $warehouseId, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);
         }
         $this->postJson('/api/v1/inventory/movements', $this->movement($item, $branchA->id, 'stock_in', '10.000'), $headers)->assertCreated();
-        $this->postJson('/api/v1/inventory/movements', $this->movement($item, $central->id, 'stock_in', '10.000'), $headers)->assertCreated();
 
         $lines = [['itemId' => $item, 'requestedQuantity' => '1.000', 'unit' => 'kilogram']];
         $branchToBranch = (int) $this->postJson('/api/v1/inventory/transfers', ['sourceWarehouseId' => $branchA->id, 'destinationWarehouseId' => $branchB->id, 'idempotencyKey' => 'contract-branch-branch', 'lines' => $lines], $headers)->assertCreated()->json('data.id');
-        $centralToBranch = (int) $this->postJson('/api/v1/inventory/transfers', ['sourceWarehouseId' => $central->id, 'destinationWarehouseId' => $branchB->id, 'idempotencyKey' => 'contract-central-branch', 'lines' => $lines], $headers)->assertCreated()->json('data.id');
-        $branchToCentral = (int) $this->postJson('/api/v1/inventory/transfers', ['sourceWarehouseId' => $branchA->id, 'destinationWarehouseId' => $central->id, 'idempotencyKey' => 'contract-branch-central', 'lines' => $lines], $headers)->assertCreated()->json('data.id');
 
         $rows = collect($this->getJson('/api/v1/inventory/transfers?perPage=50', $headers)->assertOk()->json('data'))->keyBy('id');
 
@@ -947,20 +942,6 @@ class InventoryCenterApiTest extends TestCase
         $this->assertStringContainsString($branchAName, $bb['sourceWarehouseName']);
         $this->assertStringContainsString($branchBName, $bb['destinationWarehouseName']);
 
-        $cb = $rows[$centralToBranch];
-        $this->assertNull($cb['sourceBranchId'], 'Central warehouse has no branch.');
-        $this->assertNull($cb['sourceBranchName'], 'Central warehouse has no branch.');
-        $this->assertSame('Central Warehouse', $cb['sourceWarehouseName']);
-        $this->assertSame((int) $branchB->branch_id, $cb['destinationBranchId']);
-        $this->assertSame($branchBName, $cb['destinationBranchName']);
-
-        $bc = $rows[$branchToCentral];
-        $this->assertSame((int) $branchA->branch_id, $bc['sourceBranchId']);
-        $this->assertSame($branchAName, $bc['sourceBranchName']);
-        $this->assertNull($bc['destinationBranchId'], 'Central warehouse has no branch.');
-        $this->assertNull($bc['destinationBranchName'], 'Central warehouse has no branch.');
-        $this->assertSame('Central Warehouse', $bc['destinationWarehouseName']);
-
         $this->getJson("/api/v1/inventory/transfers/$branchToBranch", $headers)->assertOk()
             ->assertJsonPath('data.sourceWarehouseId', (int) $branchA->id)
             ->assertJsonPath('data.sourceBranchId', (int) $branchA->branch_id)
@@ -968,11 +949,6 @@ class InventoryCenterApiTest extends TestCase
             ->assertJsonPath('data.destinationWarehouseId', (int) $branchB->id)
             ->assertJsonPath('data.destinationBranchId', (int) $branchB->branch_id)
             ->assertJsonPath('data.destinationBranchName', $branchBName);
-
-        $this->getJson("/api/v1/inventory/transfers/$centralToBranch", $headers)->assertOk()
-            ->assertJsonPath('data.sourceBranchId', null)
-            ->assertJsonPath('data.sourceBranchName', null)
-            ->assertJsonPath('data.sourceWarehouseName', 'Central Warehouse');
     }
 
     private function createItem(int $tenant): int
@@ -1018,11 +994,14 @@ class InventoryCenterApiTest extends TestCase
 
     private function isolatedWarehouse(int $tenant): int
     {
+        $branch = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+
         return (int) DB::table('warehouses')->insertGetId([
             'tenant_id' => $tenant,
+            'branch_id' => $branch,
             'name' => 'Isolated inventory test warehouse',
-            'code' => 'TEST-ISOLATED',
-            'type' => 'central',
+            'code' => 'TEST-ISOLATED-'.uniqid(),
+            'type' => 'other',
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),

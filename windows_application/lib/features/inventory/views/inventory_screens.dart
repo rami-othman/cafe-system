@@ -2099,8 +2099,8 @@ class _StockCountStartDialogState extends State<StockCountStartDialog> {
               initialValue: _warehouseId,
               isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'المستودع',
-                hintText: 'اختر المستودع…',
+                labelText: 'المخزن',
+                hintText: 'اختر المخزن…',
               ),
               items: widget.warehouses
                   .map(
@@ -2133,7 +2133,7 @@ class _StockCountStartDialogState extends State<StockCountStartDialog> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               _countType == 'full'
-                  ? 'سيتم جرد جميع عناصر المخزون النشطة المخصصة لهذا المستودع.'
+                  ? 'سيتم جرد جميع عناصر المخزون النشطة المخصصة لهذا المخزن.'
                   : 'سيتم جرد عناصر المخزون النشطة في الفئات المحددة فقط.',
               style: AppTextStyles.bodySmall,
             ),
@@ -2348,7 +2348,7 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
                         runSpacing: AppSpacing.md,
                         children: <Widget>[
                           _Detail('رقم الجرد', count.number),
-                          _Detail('المستودع', count.warehouseName),
+                          _Detail('المخزن', count.warehouseName),
                           _Detail(
                             'نوع الجرد',
                             count.countType == 'cycle' ? 'دوري / جزئي' : 'كامل',
@@ -2792,11 +2792,11 @@ class _CountFilters extends StatelessWidget {
               ? warehouseId
               : null,
           isExpanded: true,
-          decoration: _decoration('المستودع'),
+          decoration: _decoration('المخزن'),
           items: <DropdownMenuItem<int?>>[
             const DropdownMenuItem<int?>(
               value: null,
-              child: _DropdownSelection('كل المستودعات'),
+              child: _DropdownSelection('كل المخازن'),
             ),
             ...warehouses.map(
               (WarehouseLocation warehouse) => DropdownMenuItem<int?>(

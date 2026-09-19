@@ -77,13 +77,13 @@ class FinancialSetupService
         ];
     }
 
-    public function ensureForTenant(int $tenantId, ?int $initialBranchId = null, ?int $actorId = null): void
+    public function ensureForTenant(int $tenantId, ?int $initialBranchId = null, ?int $actorId = null, ?string $warehouseName = null): void
     {
         if (! DB::table('tenants')->where('id', $tenantId)->exists()) {
             throw new \RuntimeException("FinancialSetupService::ensureForTenant called with unknown tenant_id [{$tenantId}]. Ensure the tenant is created and committed before seeding its financial accounts.");
         }
 
-        DB::transaction(function () use ($tenantId, $initialBranchId, $actorId): void {
+        DB::transaction(function () use ($tenantId, $initialBranchId, $actorId, $warehouseName): void {
             $now = now();
             foreach ($this->defaultAccounts() as $account) {
                 DB::table('financial_accounts')->updateOrInsert(
@@ -96,9 +96,8 @@ class FinancialSetupService
             $this->ensureSalesDefaults($tenantId, $actorId);
             $this->ensureDefaultInvoiceTypes($tenantId);
 
-            $this->ensureCentralWarehouse($tenantId, $actorId);
             if ($initialBranchId) {
-                $this->ensureBranchMainWarehouse($tenantId, $initialBranchId, $actorId);
+                $this->ensureBranchWarehouse($tenantId, $initialBranchId, $warehouseName, $actorId);
             }
         });
     }
@@ -209,79 +208,39 @@ class FinancialSetupService
         }
     }
 
-    public function ensureCentralWarehouse(int $tenantId, ?int $actorId = null): void
-    {
-        $now = now();
-        DB::table('warehouses')->updateOrInsert(
-            ['tenant_id' => $tenantId, 'code' => 'CENTRAL'],
-            [
-                'branch_id' => null,
-                'name' => 'المستودع المركزي',
-                'type' => 'central',
-                'is_active' => true,
-                'notes' => 'مستودع مركزي مشترك لفروع المنشأة.',
-                'updated_by' => $actorId,
-                'updated_at' => $now,
-                'created_by' => $actorId,
-                'created_at' => $now,
-            ],
-        );
-        DB::table('warehouses')
-            ->where('tenant_id', $tenantId)
-            ->where('code', 'CENTRAL')
-            ->update([
-                'name' => 'Central Warehouse',
-                'notes' => 'Shared warehouse for cross-branch inventory operations.',
-                'updated_at' => $now,
-            ]);
-    }
-
-    public function ensureBranchMainWarehouse(int $tenantId, int $branchId, ?int $actorId = null): void
+    /**
+     * There is no "main"/"primary" warehouse concept: a branch cannot
+     * operate without at least one place to hold stock, so exactly one
+     * warehouse is created at branch-creation time, named by whoever
+     * created the branch (defaults to "البار", the common case). If the
+     * branch already has a warehouse (added manually, or this ran before),
+     * nothing is created — this never produces a second, competing store.
+     */
+    public function ensureBranchWarehouse(int $tenantId, int $branchId, ?string $name = null, ?int $actorId = null): void
     {
         $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->first();
         if (! $branch) {
             return;
         }
-
-        $now = now();
-        DB::table('warehouses')->updateOrInsert(
-            ['tenant_id' => $tenantId, 'code' => 'BR-'.$branchId.'-MAIN'],
-            [
-                'branch_id' => $branchId,
-                'name' => 'المخزن الرئيسي - '.$branch->name,
-                'type' => 'branch_main',
-                'is_active' => true,
-                'notes' => 'مخزن الفرع الرئيسي.',
-                'updated_by' => $actorId,
-                'updated_at' => $now,
-                'created_by' => $actorId,
-                'created_at' => $now,
-            ],
-        );
-        DB::table('warehouses')
-            ->where('tenant_id', $tenantId)
-            ->where('code', 'BR-'.$branchId.'-MAIN')
-            ->update([
-                'name' => $branch->name.' — Main Store',
-                'notes' => 'Primary operational warehouse for '.$branch->name.'.',
-                'updated_at' => $now,
-            ]);
-    }
-
-    public function ensureBranchPosWarehouse(int $tenantId, int $branchId, ?int $actorId = null): void
-    {
-        $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->first();
-        if (! $branch) {
+        if (DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->whereNull('deleted_at')->exists()) {
             return;
         }
+
         $now = now();
-        DB::table('warehouses')->updateOrInsert(
-            ['tenant_id' => $tenantId, 'code' => 'BR-'.$branchId.'-BAR'],
-            ['branch_id' => $branchId, 'name' => $branch->name.' — Bar', 'type' => 'bar', 'is_active' => true,
-                'notes' => 'POS inventory consumption warehouse for '.$branch->name.'.', 'updated_by' => $actorId,
-                'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now],
-        );
-        $warehouseId = DB::table('warehouses')->where('tenant_id', $tenantId)->where('code', 'BR-'.$branchId.'-BAR')->value('id');
+        $warehouseName = $name !== null && trim($name) !== '' ? trim($name) : $branch->name.' — البار';
+        $warehouseId = DB::table('warehouses')->insertGetId([
+            'tenant_id' => $tenantId,
+            'branch_id' => $branchId,
+            'name' => $warehouseName,
+            'code' => 'BR-'.$branchId.'-1',
+            'type' => 'bar',
+            'is_active' => true,
+            'notes' => null,
+            'updated_by' => $actorId,
+            'updated_at' => $now,
+            'created_by' => $actorId,
+            'created_at' => $now,
+        ]);
         DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->update([
             'pos_inventory_warehouse_id' => $warehouseId,
             'updated_at' => $now,

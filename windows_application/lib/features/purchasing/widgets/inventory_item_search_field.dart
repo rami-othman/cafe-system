@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/utils/search_debouncer.dart';
 import '../../inventory/models/inventory_models.dart';
@@ -38,6 +39,12 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
   List<InventoryItem> _results = const <InventoryItem>[];
   bool _loading = false;
   bool _searched = false;
+  bool _failed = false;
+  bool _clearingSelection = false;
+  bool _pointerInsideResults = false;
+  int _highlighted = -1;
+  final ScrollController _scrollController = ScrollController();
+  static const double _resultHeight = 64;
   final Object _tapGroupId = Object();
 
   @override
@@ -45,20 +52,27 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
     super.initState();
     _controller.text = widget.selected?.name ?? '';
     _focusNode.addListener(_onFocusChanged);
+    _focusNode.onKeyEvent = _onKeyEvent;
   }
 
   @override
   void didUpdateWidget(covariant InventoryItemSearchField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.selected?.id != oldWidget.selected?.id) {
-      _controller.text = widget.selected?.name ?? '';
+      if (!(_clearingSelection && widget.selected == null)) {
+        _cancelSearch();
+        _hideOverlay();
+        _controller.text = widget.selected?.name ?? '';
+      }
     }
+    _clearingSelection = false;
   }
 
   @override
   void dispose() {
     _hideOverlay();
     _debouncer.dispose();
+    _scrollController.dispose();
     _focusNode
       ..removeListener(_onFocusChanged)
       ..dispose();
@@ -67,36 +81,55 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
   }
 
   void _onFocusChanged() {
-    if (!_focusNode.hasFocus) {
-      _hideOverlay();
+    if (!_focusNode.hasFocus && !_pointerInsideResults) {
+      _dismiss();
     }
   }
 
   void _onChanged(String value) {
     if (widget.selected != null) {
+      _clearingSelection = true;
       widget.onSelected(null);
     }
-    final String query = value.trim();
-    if (query.isEmpty) {
-      setState(() {
-        _results = const <InventoryItem>[];
-        _loading = false;
-        _searched = false;
-      });
-      _hideOverlay();
-      return;
-    }
-    _debouncer.run(() => _search(query));
+    _queueSearch(value);
   }
 
-  Future<void> _search(String query) async {
+  void _cancelSearch() {
+    _debouncer.cancel();
+    _guard.next();
+    _loading = false;
+    _results = const <InventoryItem>[];
+    _searched = false;
+    _failed = false;
+    _highlighted = -1;
+  }
+
+  void _dismiss() {
+    _hideOverlay();
+    setState(_cancelSearch);
+  }
+
+  void _queueSearch(String value) {
+    _cancelSearch();
+    _hideOverlay();
+    final String query = value.trim();
+    setState(() => _loading = query.isNotEmpty);
+    if (query.isEmpty) {
+      return;
+    }
     final int token = _guard.next();
-    setState(() => _loading = true);
+    _showOverlay();
+    _debouncer.run(() => _search(query, token));
+  }
+
+  Future<void> _search(String query, int token) async {
     List<InventoryItem> results;
+    bool failed = false;
     try {
       results = await widget.repository.items(search: query, activeOnly: true);
     } catch (_) {
       results = const <InventoryItem>[];
+      failed = true;
     }
     if (!mounted || !_guard.isCurrent(token)) {
       return;
@@ -105,40 +138,98 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
       _results = results;
       _loading = false;
       _searched = true;
+      _failed = failed;
+      _highlighted = -1;
     });
     _showOverlay();
   }
 
   void _select(InventoryItem item) {
+    _pointerInsideResults = false;
+    _cancelSearch();
     _controller.text = item.name;
     widget.onSelected(item);
     _hideOverlay();
     _focusNode.unfocus();
   }
 
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final LogicalKeyboardKey key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape) {
+      _dismiss();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.tab) {
+      _dismiss();
+      return KeyEventResult.ignored;
+    }
+    if (_overlayEntry == null || _loading || _results.isEmpty) {
+      return KeyEventResult.ignored;
+    }
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      _select(_results[_highlighted < 0 ? 0 : _highlighted]);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.arrowUp) {
+      _highlighted = key == LogicalKeyboardKey.arrowDown
+          ? (_highlighted + 1) % _results.length
+          : (_highlighted <= 0 ? _results.length - 1 : _highlighted - 1);
+      _overlayEntry?.markNeedsBuild();
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(
+          (_highlighted * _resultHeight).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+        );
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
   void _showOverlay() {
     _hideOverlay();
+    if (!_focusNode.hasFocus) return;
     if (!_loading && _results.isEmpty && !_searched) {
       return;
     }
     _overlayEntry = OverlayEntry(
-      builder: (BuildContext context) => Positioned(
-        width: widget.width,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 56),
-          child: TapRegion(
-            groupId: _tapGroupId,
-            child: Material(
-              elevation: 4,
-              borderRadius: BorderRadius.circular(8),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 240),
-                child: _buildOverlayContent(),
+      builder: (BuildContext context) => Positioned.fill(
+        child: Stack(
+          children: <Widget>[
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              targetAnchor: Alignment.bottomRight,
+              followerAnchor: Alignment.topRight,
+              offset: const Offset(0, 4),
+              child: TapRegion(
+                groupId: _tapGroupId,
+                child: Listener(
+                  onPointerDown: (_) => _pointerInsideResults = true,
+                  onPointerUp: (_) => _pointerInsideResults = false,
+                  onPointerCancel: (_) => _pointerInsideResults = false,
+                  child: SizedBox(
+                    width: widget.width,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(8),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 240),
+                        child: _buildOverlayContent(),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -156,6 +247,21 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
         ),
       );
     }
+    if (_failed) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('تعذّر البحث عن الأصناف. حاول مرة أخرى.'),
+            TextButton(
+              onPressed: () => _queueSearch(_controller.text),
+              child: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    }
     if (_results.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(12),
@@ -163,12 +269,15 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
       );
     }
     return ListView.builder(
+      controller: _scrollController,
+      itemExtent: _resultHeight,
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       itemCount: _results.length,
       itemBuilder: (BuildContext context, int index) {
         final InventoryItem item = _results[index];
         return ListTile(
+          selected: index == _highlighted,
           dense: true,
           title: Text(item.name, overflow: TextOverflow.ellipsis),
           subtitle: item.sku.isEmpty ? null : Text(item.sku),
@@ -180,6 +289,7 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
 
   void _hideOverlay() {
     _overlayEntry?.remove();
+    _overlayEntry?.dispose();
     _overlayEntry = null;
   }
 
@@ -189,7 +299,7 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
       link: _layerLink,
       child: TapRegion(
         groupId: _tapGroupId,
-        onTapOutside: (_) => _hideOverlay(),
+        onTapOutside: (_) => _dismiss(),
         child: TextField(
           controller: _controller,
           focusNode: _focusNode,
@@ -216,8 +326,11 @@ class _InventoryItemSearchFieldState extends State<InventoryItemSearchField> {
           ),
           onChanged: _onChanged,
           onTap: () {
-            if (_results.isNotEmpty || _loading) {
+            if (_searched || _loading) {
               _showOverlay();
+            } else if (widget.selected == null &&
+                _controller.text.trim().isNotEmpty) {
+              _queueSearch(_controller.text);
             }
           },
         ),

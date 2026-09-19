@@ -3,7 +3,6 @@ import '../../pos/models/json_helpers.dart';
 class SetupStatus {
   const SetupStatus({
     required this.systemAccountsReady,
-    required this.centralWarehouseReady,
     required this.branchWarehouseCoverageReady,
     required this.financialSetupReady,
     required this.missingBranchWarehouses,
@@ -33,7 +32,6 @@ class SetupStatus {
   });
 
   final bool systemAccountsReady;
-  final bool centralWarehouseReady;
   final bool branchWarehouseCoverageReady;
   final bool financialSetupReady;
   final List<String> missingBranchWarehouses;
@@ -63,7 +61,6 @@ class SetupStatus {
 
   factory SetupStatus.fromJson(Map<String, dynamic> json) => SetupStatus(
     systemAccountsReady: readBool(json['systemAccountsReady']),
-    centralWarehouseReady: readBool(json['centralWarehouseReady']),
     branchWarehouseCoverageReady: readBool(
       json['branchWarehouseCoverageReady'],
     ),

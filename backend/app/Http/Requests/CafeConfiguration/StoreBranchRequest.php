@@ -17,6 +17,7 @@ class StoreBranchRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'warehouseName' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:5000'],
             'phone' => ['nullable', 'string', 'max:255'],
             'timezone' => ['required', 'string', 'timezone:all'],

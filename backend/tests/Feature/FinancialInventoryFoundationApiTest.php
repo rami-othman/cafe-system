@@ -143,7 +143,7 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->seed();
         $tenantId = $this->demoTenantId();
         $branchId = (int) DB::table('branches')->where('tenant_id', $tenantId)->value('id');
-        $this->postJson('/api/v1/warehouses', $this->warehousePayload(['type' => 'central', 'branchId' => $branchId]), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('branchId');
+        $this->postJson('/api/v1/warehouses', $this->warehousePayload(['type' => 'central', 'branchId' => $branchId]), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('type');
         $this->postJson('/api/v1/warehouses', $this->warehousePayload(['type' => 'bar', 'branchId' => null]), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('branchId');
 
         $tenantB = $this->createTenant('foreign-branch-tenant');
@@ -151,14 +151,114 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->postJson('/api/v1/warehouses', $this->warehousePayload(['branchId' => $foreignBranchId]), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('branchId');
     }
 
+    public function test_branch_creation_seeds_exactly_one_user_named_warehouse(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $created = $this->postJson(
+            '/api/v1/cafe-configuration/branches',
+            ['name' => 'Suburb', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'بار الضاحية'],
+            $this->headers($tenantId)
+        )->assertCreated();
+        $branchId = (int) $created->json('data.id');
+
+        $warehouses = DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->whereNull('deleted_at')->get();
+        $this->assertCount(1, $warehouses);
+        $this->assertSame('بار الضاحية', $warehouses->first()->name);
+        $this->assertSame((int) $warehouses->first()->id, (int) DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id'));
+
+        $resolver = app(\App\Services\PosInventoryWarehouseResolver::class);
+        $this->assertSame((int) $warehouses->first()->id, $resolver->forBranch($tenantId, $branchId)->id);
+    }
+
+    public function test_branch_creation_without_a_warehouse_name_defaults_to_the_bar(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $created = $this->postJson(
+            '/api/v1/cafe-configuration/branches',
+            ['name' => 'Suburb Two', 'timezone' => 'Asia/Damascus'],
+            $this->headers($tenantId)
+        )->assertCreated();
+        $branchId = (int) $created->json('data.id');
+
+        $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->whereNull('deleted_at')->sole();
+        $this->assertSame('Suburb Two — البار', $warehouse->name);
+    }
+
+    public function test_a_branch_with_more_than_one_warehouse_requires_explicit_pos_configuration(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $branchId = (int) $this->postJson(
+            '/api/v1/cafe-configuration/branches',
+            ['name' => 'Multi Store Branch', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'المخزن الأول'],
+            $this->headers($tenantId)
+        )->assertCreated()->json('data.id');
+        $this->postJson(
+            '/api/v1/warehouses',
+            $this->warehousePayload(['code' => 'MULTI-2', 'branchId' => $branchId]),
+            $this->headers($tenantId)
+        )->assertCreated();
+        // Branch creation always sets an explicit configuration for its one
+        // auto-created warehouse; clear it to exercise the "no explicit
+        // configuration" fallback path with more than one warehouse present.
+        DB::table('branches')->where('id', $branchId)->update(['pos_inventory_warehouse_id' => null]);
+
+        $resolver = app(\App\Services\PosInventoryWarehouseResolver::class);
+        try {
+            $resolver->forBranch($tenantId, $branchId);
+            $this->fail('Expected ambiguous resolution with two warehouses and no explicit configuration.');
+        } catch (\App\Exceptions\OrderLifecycleException $exception) {
+            $this->assertSame('POS_WAREHOUSE_AMBIGUOUS', $exception->domainCode);
+        }
+
+        $secondWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('code', 'MULTI-2')->value('id');
+        DB::table('branches')->where('id', $branchId)->update(['pos_inventory_warehouse_id' => $secondWarehouseId]);
+        $this->assertSame($secondWarehouseId, $resolver->forBranch($tenantId, $branchId)->id);
+    }
+
+    public function test_a_branch_with_zero_active_warehouses_is_not_configured_for_pos(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $branchId = (int) $this->postJson(
+            '/api/v1/cafe-configuration/branches',
+            ['name' => 'Empty Branch', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'مخزن فارغ'],
+            $this->headers($tenantId)
+        )->assertCreated()->json('data.id');
+        DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->update(['is_active' => false]);
+        DB::table('branches')->where('id', $branchId)->update(['pos_inventory_warehouse_id' => null]);
+
+        $resolver = app(\App\Services\PosInventoryWarehouseResolver::class);
+        try {
+            $resolver->forBranch($tenantId, $branchId);
+            $this->fail('Expected POS_WAREHOUSE_NOT_CONFIGURED with zero active warehouses.');
+        } catch (\App\Exceptions\OrderLifecycleException $exception) {
+            $this->assertSame('POS_WAREHOUSE_NOT_CONFIGURED', $exception->domainCode);
+        }
+    }
+
+    public function test_repair_service_flags_branches_with_no_warehouse_or_ambiguous_pos_configuration(): void
+    {
+        $this->seed();
+        $tenantId = $this->demoTenantId();
+        $emptyBranchId = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenantId, 'name' => 'No Warehouse Branch', 'currency' => 'SYP', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        $result = app(\App\Services\Inventory\WarehouseConfigurationRepairService::class)->run(true, $tenantId);
+        $this->assertTrue(collect($result['findings'])->contains(fn (array $f) => $f['branchId'] === $emptyBranchId && $f['code'] === 'MISSING_WAREHOUSE'));
+        $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $emptyBranchId)->whereNull('deleted_at')->count());
+    }
+
     public function test_setup_status_reports_foundation_readiness_accurately(): void
     {
         $this->seed();
         $tenantId = $this->demoTenantId();
-        $this->getJson('/api/v1/finance/setup-status', $this->headers($tenantId))->assertOk()->assertJsonPath('data.systemAccountsReady', true)->assertJsonPath('data.centralWarehouseReady', true)->assertJsonPath('data.branchWarehouseCoverageReady', true)->assertJsonPath('data.financialSetupReady', true);
+        $this->getJson('/api/v1/finance/setup-status', $this->headers($tenantId))->assertOk()->assertJsonPath('data.systemAccountsReady', true)->assertJsonPath('data.branchWarehouseCoverageReady', true)->assertJsonPath('data.financialSetupReady', true);
 
-        DB::table('warehouses')->where('tenant_id', $tenantId)->where('type', 'central')->update(['is_active' => false]);
-        $this->getJson('/api/v1/finance/setup-status', $this->headers($tenantId))->assertOk()->assertJsonPath('data.centralWarehouseReady', false)->assertJsonPath('data.financialSetupReady', false);
+        $branchId = (int) DB::table('branches')->where('tenant_id', $tenantId)->value('id');
+        DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->update(['is_active' => false]);
+        $this->getJson('/api/v1/finance/setup-status', $this->headers($tenantId))->assertOk()->assertJsonPath('data.branchWarehouseCoverageReady', false)->assertJsonPath('data.financialSetupReady', false);
     }
 
     public function test_accounts_support_tenant_scoped_search_filters_and_safe_parent_hierarchy(): void

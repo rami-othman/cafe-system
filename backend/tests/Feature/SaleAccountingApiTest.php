@@ -439,7 +439,7 @@ class SaleAccountingApiTest extends TestCase
         $branchId = $this->downtownBranchId($tenant);
         $barWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-BAR")->value('id');
 
-        $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branchId}-MAIN")->value('id');
+        $mainWarehouseId = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->value('pos_inventory_warehouse_id');
         DB::table('warehouses')->where('id', $mainWarehouseId)->update(['code' => 'DOWNTOWN-PRIMARY']);
         $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '20.000', warehouseId: $barWarehouseId);
         $product = $this->stockTrackedProduct($tenant, name: 'Bar Routed Item', price: '9.00');

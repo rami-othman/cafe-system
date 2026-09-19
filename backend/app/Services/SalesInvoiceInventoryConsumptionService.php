@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Domain\Inventory\InventoryWarehouseAssignment;
 use App\Domain\Inventory\RecipeMaterialEligibility;
 use App\Domain\Inventory\UnitConversionResolver;
+use App\Exceptions\OrderLifecycleException;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 /** A read-only plan is shared by preview and the final movement writer. */
 final class SalesInvoiceInventoryConsumptionService
 {
-    public function __construct(private readonly SalesInventoryMovementService $movements, private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments) {}
+    public function __construct(private readonly SalesInventoryMovementService $movements, private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments, private readonly PosInventoryWarehouseResolver $warehouseResolver) {}
 
     /** @param iterable<object> $lines @return array<int, array<string,mixed>> */
     public function preview(int $tenantId, object $invoice, iterable $lines): array
@@ -104,9 +105,14 @@ final class SalesInvoiceInventoryConsumptionService
         return (bool) $product->is_stock_tracked || (bool) $product->inventory_controlled;
     }
 
+    /** No "main"/"primary" warehouse concept — same resolution POS uses (App\Services\PosInventoryWarehouseResolver). */
     private function warehouse(int $tenantId, int $branchId): ?object
     {
-        return DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")->where('is_active', true)->whereNull('deleted_at')->first(['id', 'name']);
+        try {
+            return $this->warehouseResolver->forBranch($tenantId, $branchId);
+        } catch (OrderLifecycleException) {
+            return null;
+        }
     }
 
     private function components(int $tenantId, int $productId, int $variantId)

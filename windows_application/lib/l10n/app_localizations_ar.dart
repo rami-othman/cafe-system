@@ -6178,17 +6178,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get financeSupplierOverdueBadge => 'Overdue';
 
   @override
-  String get financeWarehouseTitle => 'إعداد المستودعات';
+  String get financeWarehouseTitle => 'إعداد المخازن';
 
   @override
   String get financeWarehouseSubtitle =>
-      'إدارة المستودعات التشغيلية وربطها بالفروع.';
+      'إدارة المخازن التشغيلية وربطها بالفروع.';
 
   @override
-  String get financeWarehouseAdd => 'إضافة مستودع';
+  String get financeWarehouseAdd => 'إضافة مخزن';
 
   @override
-  String get financeWarehouseEmpty => 'لا توجد مستودعات مضافة بعد.';
+  String get financeWarehouseEmpty => 'لا توجد مخازن مضافة بعد.';
 
   @override
   String get financeWarehouseAllBranches => 'كل الفروع';
@@ -6197,7 +6197,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get financeWarehouseAllStatuses => 'كل الحالات';
 
   @override
-  String get financeWarehouseName => 'المستودع';
+  String get financeWarehouseName => 'المخزن';
 
   @override
   String get financeWarehouseCode => 'الرمز';
@@ -6209,7 +6209,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get financeWarehouseBranch => 'الفرع';
 
   @override
-  String get financeWarehouseEdit => 'تعديل المستودع';
+  String get financeWarehouseEdit => 'تعديل المخزن';
 
   @override
   String get financeWarehouseCentral => 'مركزي';

@@ -224,8 +224,8 @@ class FinanceDashboardCompletionTest extends TestCase
         $destinationBranch = $this->branchId($tenant, 'Mall');
         $headers = $this->headers($tenant, 'owner', 'dashboard-transfer');
         $actor = (int) DB::table('users')->where('tenant_id', $tenant)->where('email', "dashboard-transfer-owner-$tenant@test.local")->value('id');
-        $sourceWarehouse = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-$sourceBranch-MAIN")->value('id');
-        $destinationWarehouse = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-$destinationBranch-MAIN")->value('id');
+        $sourceWarehouse = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $sourceBranch)->value('pos_inventory_warehouse_id');
+        $destinationWarehouse = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $destinationBranch)->value('pos_inventory_warehouse_id');
         $item = $this->inventoryItemId($tenant);
         foreach ([$sourceWarehouse, $destinationWarehouse] as $warehouse) {
             DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);

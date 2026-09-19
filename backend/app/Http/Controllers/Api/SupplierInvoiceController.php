@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\SupplierInvoiceService;
 use App\Services\SupplierPayableQueryService;
-use App\Support\FinancialActor;
 use App\Support\FinanceAccess;
+use App\Support\FinancialActor;
 use App\Support\Money;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -42,6 +42,7 @@ class SupplierInvoiceController extends Controller
 
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
         $paginator = $q->orderByDesc('i.invoice_date')->orderByDesc('i.id')->paginate($this->perPage($request));
+
         return response()->json(['data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row) + ['allowedActions' => $this->actions($row, $permissions)])->values(), 'meta' => $this->meta($paginator)]);
     }
 
@@ -52,8 +53,15 @@ class SupplierInvoiceController extends Controller
         return response()->json(['data' => $this->one($tenant, $invoice, $request)]);
     }
 
-    private function perPage(Request $request): int { return min(max((int) $request->query('perPage', 100), 1), 100); }
-    private function meta($paginator): array { return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()]; }
+    private function perPage(Request $request): int
+    {
+        return min(max((int) $request->query('perPage', 100), 1), 100);
+    }
+
+    private function meta($paginator): array
+    {
+        return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()];
+    }
 
     public function store(Request $request): JsonResponse
     {
@@ -93,7 +101,8 @@ class SupplierInvoiceController extends Controller
         return $request->validate([
             'branchId' => ['nullable', 'integer'],
             'supplierId' => ['required', 'integer'],
-            'invoiceNumber' => ['required', 'string', 'max:80'],
+            'invoiceNumber' => ['nullable', 'string', 'max:80'],
+            'supplierInvoiceNumber' => ['nullable', 'string', 'max:80'],
             'invoiceDate' => ['required', 'date'],
             'dueDate' => ['required', 'date'],
             // invoiceType remains accepted for older clients; new clients select a configured type.
@@ -122,7 +131,8 @@ class SupplierInvoiceController extends Controller
             'lines.*.quantity' => ['nullable', 'regex:/^\d+(\.\d{1,3})?$/'],
             // The client sends the line's gross purchase total, never a unit price — the
             // server derives unit cost from (gross - discount) / quantity (see buildLines()).
-            'lines.*.lineGrossAmount' => ['required_with:lines', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'lines.*.unitCost' => ['nullable', 'regex:/^\d+(\.\d{1,4})?$/'],
+            'lines.*.lineGrossAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'lines.*.discountType' => ['nullable', 'in:fixed,percentage'],
             'lines.*.discountValue' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
             'lines.*.taxAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -212,9 +222,16 @@ class SupplierInvoiceController extends Controller
     {
         $can = fn (string $permission): bool => isset($permissions[$permission]);
         $actions = [];
-        if ($row->status === 'draft' && $can('finance.supplier_invoices.edit')) $actions[] = 'edit';
-        if ($row->status === 'draft' && $row->configured_is_postable && $can('finance.supplier_invoices.post')) $actions[] = 'post';
-        if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) $actions[] = 'reverse';
+        if ($row->status === 'draft' && $can('finance.supplier_invoices.edit')) {
+            $actions[] = 'edit';
+        }
+        if ($row->status === 'draft' && $row->configured_is_postable && $can('finance.supplier_invoices.post')) {
+            $actions[] = 'post';
+        }
+        if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) {
+            $actions[] = 'reverse';
+        }
+
         return $actions;
     }
 
@@ -226,7 +243,8 @@ class SupplierInvoiceController extends Controller
         return [
             'id' => (int) $row->id,
             'internalReference' => $row->internal_reference,
-            'invoiceNumber' => $row->invoice_number,
+            'invoiceNumber' => $row->internal_reference,
+            'supplierInvoiceNumber' => $row->invoice_number,
             'supplierId' => (int) $row->supplier_id,
             'supplierName' => $row->supplier_name,
             'supplierNumber' => $row->supplier_number,

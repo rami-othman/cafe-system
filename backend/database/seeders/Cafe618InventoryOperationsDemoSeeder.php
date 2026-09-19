@@ -46,15 +46,19 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
 
         $this->ownerId = (int) $owner->id;
         $this->branchId = (int) $branch->id;
-        app(FinancialSetupService::class)->ensureForTenant($this->tenantId, $this->branchId, $this->ownerId);
-        app(FinancialSetupService::class)->ensureBranchMainWarehouse($this->tenantId, $this->branchId, $this->ownerId);
-        app(FinancialSetupService::class)->ensureBranchPosWarehouse($this->tenantId, $this->branchId, $this->ownerId);
+        // This demo tenant deliberately showcases a branch with several
+        // warehouses (bar/kitchen) to exercise transfers, bar checks,
+        // and multi-store reporting — a normal branch only ever gets the one
+        // warehouse it's created with (see FinancialSetupService::ensureBranchWarehouse).
+        // There is no "main"/"primary" warehouse — see ensureBranchWarehouse.
+        app(FinancialSetupService::class)->ensureForTenant($this->tenantId, null, $this->ownerId);
+        $this->ensureDemoWarehouses($branch->name);
         $this->request = Request::create('/seed/cafe-618/inventory-operations', 'POST');
         $this->request->attributes->set('tenant_id', $this->tenantId);
         $this->request->attributes->set('auth_user', $owner);
 
         $warehouses = $this->warehouses();
-        if (! $warehouses['central'] || ! $warehouses['main'] || ! $warehouses['bar']) {
+        if (! $warehouses['bar'] || ! $warehouses['kitchen']) {
             throw new RuntimeException('Cafe 618 inventory warehouse foundation is incomplete.');
         }
 
@@ -66,14 +70,29 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
         $this->seedBarChecks($warehouses, $items);
     }
 
-    /** @return array{central: ?object, main: ?object, bar: ?object, kitchen: ?object} */
+    /** Explicitly seeds this demo branch's showcase warehouses (idempotent). */
+    private function ensureDemoWarehouses(string $branchName): void
+    {
+        $now = now();
+        foreach ([
+            ['code' => 'BR-'.$this->branchId.'-BAR', 'name' => $branchName.' — مخزن البار', 'type' => 'bar'],
+            ['code' => 'BR-'.$this->branchId.'-KITCHEN', 'name' => $branchName.' — مخزن المطبخ', 'type' => 'kitchen'],
+        ] as $warehouse) {
+            DB::table('warehouses')->updateOrInsert(
+                ['tenant_id' => $this->tenantId, 'code' => $warehouse['code']],
+                ['branch_id' => $this->branchId, 'name' => $warehouse['name'], 'type' => $warehouse['type'], 'is_active' => true, 'updated_by' => $this->ownerId, 'updated_at' => $now, 'created_by' => $this->ownerId, 'created_at' => $now],
+            );
+        }
+        $barId = (int) DB::table('warehouses')->where('tenant_id', $this->tenantId)->where('code', 'BR-'.$this->branchId.'-BAR')->value('id');
+        DB::table('branches')->where('tenant_id', $this->tenantId)->where('id', $this->branchId)->update(['pos_inventory_warehouse_id' => $barId, 'updated_at' => $now]);
+    }
+
+    /** @return array{bar: ?object, kitchen: ?object} */
     private function warehouses(): array
     {
         $rows = DB::table('warehouses')->where('tenant_id', $this->tenantId)->where('is_active', true)->whereNull('deleted_at')->where('code', 'not like', 'LEGACY-%')->get();
 
         return [
-            'central' => $rows->firstWhere('type', 'central'),
-            'main' => $rows->first(fn (object $row) => $row->type === 'branch_main' && (int) $row->branch_id === $this->branchId),
             'bar' => $rows->first(fn (object $row) => $row->type === 'bar' && (int) $row->branch_id === $this->branchId),
             'kitchen' => $rows->first(fn (object $row) => $row->type === 'kitchen' && (int) $row->branch_id === $this->branchId),
         ];
@@ -94,17 +113,20 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
 
     private function ensureAssignments(array $warehouses, array $items): void
     {
+        // Items moved bar->kitchen in seedTransfers() need an assignment at
+        // both ends: WarehouseTransferService requires the item to already
+        // be assigned to source and destination before a transfer can move it.
         $locations = [
-            'INV-BEANS' => ['central', 'main', 'bar'],
-            'INV-MILK-FRESH' => ['central', 'main', 'bar'],
-            'INV-CUP-12OZ' => ['central', 'main', 'bar'],
-            'INV-CUP-16OZ' => ['central', 'main', 'bar'],
-            'INV-LID-12OZ' => ['central', 'main', 'bar'],
-            'INV-VANILLA' => ['central', 'main', 'bar'],
-            'INV-CARAMEL' => ['central', 'main', 'bar'],
-            'INV-CROISSANT' => ['central', 'main', 'kitchen'],
-            'INV-CLEANER' => ['central', 'main'],
-            'INV-ICE' => ['central', 'bar'],
+            'INV-BEANS' => ['bar', 'kitchen'],
+            'INV-MILK-FRESH' => ['bar', 'kitchen'],
+            'INV-CUP-12OZ' => ['bar', 'kitchen'],
+            'INV-CUP-16OZ' => ['bar', 'kitchen'],
+            'INV-LID-12OZ' => ['bar'],
+            'INV-VANILLA' => ['bar', 'kitchen'],
+            'INV-CARAMEL' => ['bar', 'kitchen'],
+            'INV-CROISSANT' => ['bar', 'kitchen'],
+            'INV-CLEANER' => ['bar'],
+            'INV-ICE' => ['bar'],
         ];
         $now = now();
         foreach ($locations as $sku => $types) {
@@ -138,7 +160,7 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
             ['lids-1', 'INV-LID-12OZ', '600.000', '0.0310', 34, 'Cup lids carton receipt'],
             ['croissants-1', 'INV-CROISSANT', '40.000', '1.0800', 16, 'Morning pastry delivery'],
         ] as [$name, $sku, $quantity, $cost, $daysAgo, $reason]) {
-            $this->movement($name, $warehouses['central'], $items[$sku], 'stock_in', $quantity, $cost, $daysAgo, $reason);
+            $this->movement($name, $warehouses['bar'], $items[$sku], 'stock_in', $quantity, $cost, $daysAgo, $reason);
         }
 
         foreach ([
@@ -147,7 +169,7 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
             ['spoiled-pastry', 'INV-CROISSANT', '3.000', 5, 'Unsold pastry discarded at end of day'],
             ['bean-spill', 'INV-BEANS', '0.650', 2, 'Coffee beans spilled during grinder refill'],
         ] as [$name, $sku, $quantity, $daysAgo, $reason]) {
-            $this->movement($name, $warehouses['central'], $items[$sku], 'waste', $quantity, null, $daysAgo, $reason);
+            $this->movement($name, $warehouses['bar'], $items[$sku], 'waste', $quantity, null, $daysAgo, $reason);
         }
     }
 
@@ -173,15 +195,15 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
 
     private function seedCounts(array $warehouses, array $items): void
     {
-        $this->count('zero-variance', $warehouses['central'], 31, function (object $line): string {
+        $this->count('zero-variance', $warehouses['bar'], 31, function (object $line): string {
             return (string) $line->expected_quantity;
         });
-        $this->count('shortage', $warehouses['central'], 15, function (object $line) use ($items): string {
+        $this->count('shortage', $warehouses['bar'], 15, function (object $line) use ($items): string {
             return (int) $line->inventory_item_id === $items['INV-CUP-12OZ']
                 ? number_format(max(0, (float) $line->expected_quantity - 18), 3, '.', '')
                 : (string) $line->expected_quantity;
         }, 'Shortage found after counter service reconciliation.');
-        $this->count('surplus', $warehouses['central'], 7, function (object $line) use ($items): string {
+        $this->count('surplus', $warehouses['bar'], 7, function (object $line) use ($items): string {
             return (int) $line->inventory_item_id === $items['INV-LID-12OZ']
                 ? number_format((float) $line->expected_quantity + 25, 3, '.', '')
                 : (string) $line->expected_quantity;
@@ -190,7 +212,7 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
         $notes = $this->countNotes('open-cycle');
         if (! DB::table('stock_counts')->where('tenant_id', $this->tenantId)->where('notes', $notes)->exists()) {
             $service = app(StockCountService::class);
-            $id = $service->create($this->request, $this->tenantId, ['warehouseId' => $warehouses['main']->id, 'countDate' => $this->today->toDateString(), 'countType' => 'cycle', 'categoryFilters' => ['Coffee'], 'notes' => $notes], $this->ownerId);
+            $id = $service->create($this->request, $this->tenantId, ['warehouseId' => $warehouses['bar']->id, 'countDate' => $this->today->toDateString(), 'countType' => 'cycle', 'categoryFilters' => ['Coffee'], 'notes' => $notes], $this->ownerId);
             $service->transition($this->request, $this->tenantId, $id, 'start', $this->ownerId);
         }
     }
@@ -220,22 +242,22 @@ final class Cafe618InventoryOperationsDemoSeeder extends Seeder
 
     private function seedTransfers(array $warehouses, array $items): void
     {
-        $this->transfer('central-to-main-received', $warehouses['central'], $warehouses['main'], [
+        $this->transfer('bar-to-kitchen-received', $warehouses['bar'], $warehouses['kitchen'], [
             ['itemId' => $items['INV-BEANS'], 'requestedQuantity' => '9.000'],
             ['itemId' => $items['INV-MILK-FRESH'], 'requestedQuantity' => '12.000'],
             ['itemId' => $items['INV-CUP-12OZ'], 'requestedQuantity' => '180.000'],
             ['itemId' => $items['INV-VANILLA'], 'requestedQuantity' => '4.000'],
             ['itemId' => $items['INV-CARAMEL'], 'requestedQuantity' => '4.000'],
         ], 'received');
-        $this->transfer('main-to-bar-partial', $warehouses['main'], $warehouses['bar'], [
+        $this->transfer('bar-to-kitchen-partial', $warehouses['bar'], $warehouses['kitchen'], [
             ['itemId' => $items['INV-BEANS'], 'requestedQuantity' => '3.000'],
             ['itemId' => $items['INV-MILK-FRESH'], 'requestedQuantity' => '5.000'],
             ['itemId' => $items['INV-CUP-12OZ'], 'requestedQuantity' => '90.000'],
         ], 'partial');
-        $this->transfer('central-to-kitchen-draft', $warehouses['central'], $warehouses['kitchen'] ?: $warehouses['main'], [
+        $this->transfer('bar-to-kitchen-draft', $warehouses['bar'], $warehouses['kitchen'], [
             ['itemId' => $items['INV-CROISSANT'], 'requestedQuantity' => '12.000'],
         ], 'draft');
-        $this->transfer('central-to-main-cancelled', $warehouses['central'], $warehouses['main'], [
+        $this->transfer('bar-to-kitchen-cancelled', $warehouses['bar'], $warehouses['kitchen'], [
             ['itemId' => $items['INV-CUP-16OZ'], 'requestedQuantity' => '20.000'],
         ], 'cancelled');
     }

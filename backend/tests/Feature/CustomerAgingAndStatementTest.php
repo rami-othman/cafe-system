@@ -133,7 +133,7 @@ class CustomerAgingAndStatementTest extends TestCase
         $branch = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Downtown', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $owner = (int) DB::table('users')->insertGetId(['tenant_id' => $tenant, 'name' => 'Owner', 'email' => "sales-p5-{$suffix}@test.local", 'password' => bcrypt('password'), 'role' => 'owner', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         app(FinancialSetupService::class)->ensureForTenant($tenant, $branch, $owner);
-        $warehouse = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-{$branch}-MAIN")->value('id');
+        $warehouse = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branch)->value('pos_inventory_warehouse_id');
         $token = "sales-p5-{$suffix}";
         DB::table('api_tokens')->insert(['tenant_id' => $tenant, 'user_id' => $owner, 'name' => 'sales-p5', 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]);
         $headers = ['Authorization' => "Bearer {$token}", 'X-Tenant-Id' => $tenant];

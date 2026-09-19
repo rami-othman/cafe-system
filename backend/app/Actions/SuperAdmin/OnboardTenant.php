@@ -92,7 +92,7 @@ class OnboardTenant
             /*
              * INVENTRY / FINANCE:
              * Creates financial accounts, financial locations,
-             * payment defaults, central warehouse and branch warehouse.
+             * payment defaults, and the branch's warehouse.
              *
              * Do not create the legacy "Main Warehouse" separately here,
              * otherwise the initial branch can end up with duplicate warehouses.
@@ -101,6 +101,7 @@ class OnboardTenant
                 $tenantId,
                 $branchId,
                 $ownerId,
+                $data['warehouseName'] ?? null,
             );
 
             DB::table('tenant_settings')->insert([

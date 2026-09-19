@@ -1,7 +1,7 @@
 # CURRENT AUTHORITATIVE STATUS
 
 - Inventory catalogue: the 184 supplied material definitions from
-  المواد_مض2بوط.xlsx are represented as active raw materials without opening
+  Ø§Ù„Ù…ÙˆØ§Ø¯_Ù…Ø¶2Ø¨ÙˆØ·.xlsx are represented as active raw materials without opening
   stock, costs, or reorder thresholds. Exact existing names are retained
   rather than duplicated; all other names, categories, and units are preserved
   and available to product recipe configuration.
@@ -17,7 +17,7 @@ suite is guarded to use `cafe_system_618_testing`.
 - Pre-Auth Hardening A-D: **CLOSED**
 - Batch 12: **COMPLETE**
 - Auth Phase 2: **CLOSED**
-- Flutter Auth Phase 3: **IMPLEMENTED — verification in progress**
+- Flutter Auth Phase 3: **IMPLEMENTED â€” verification in progress**
 - Phase 1B staging smoke: Flutter login sends exactly one trimmed identity key
   (`email` or `username`), never `identifier`; request-contract coverage
   protects session parsing and safe 422 handling.
@@ -49,11 +49,11 @@ attribution, and full operational route authorization remain deferred.
 
 Menu Management Admin is **COMPLETE through Publish / Versions**:
 
-- Batch 8 — Pricing & Availability: **COMPLETE**
-- Batch 9 — Menus & Composition: **COMPLETE**
-- Batch 10 — Assignments & Schedules: **COMPLETE**
-- Batch 11 — Review & Publish: **COMPLETE**
-- Menu ↔ Inventory validation hardening: **COMPLETE** — recipe writes,
+- Batch 8 â€” Pricing & Availability: **COMPLETE**
+- Batch 9 â€” Menus & Composition: **COMPLETE**
+- Batch 10 â€” Assignments & Schedules: **COMPLETE**
+- Batch 11 â€” Review & Publish: **COMPLETE**
+- Menu â†” Inventory validation hardening: **COMPLETE** â€” recipe writes,
   resolution, publishing, and Review & Publish now use the Inventory conversion
   contract; existing invalid rows remain visible with actionable diagnostics.
 - Recipe editor dropdown resilience: existing recipes load inactive/archived
@@ -79,15 +79,15 @@ the selected historical payload unchanged.
   every sellable runtime variant, defaults to the published default, and
   submits the selected immutable variant ID with its effective price.
 
-- Phase 12A — Runtime Contract: **COMPLETE**
-- Phase 12B — Backend POS Runtime Sync API: **COMPLETE**
-- Phase 12C — Snapshot-Aware Order Contract (backend): **COMPLETE**
-- Phase 12D — Flutter Runtime DTOs + Sync Repository + Scoped Cache: **COMPLETE**
-- Phase 12E — Published Menu presentation cutover: **COMPLETE**
-- Phase 12F — Offline / reconnect / pending-version behavior: **COMPLETE**
-- Phase 12G — Legacy cutover + final regression: **COMPLETE**
+- Phase 12A â€” Runtime Contract: **COMPLETE**
+- Phase 12B â€” Backend POS Runtime Sync API: **COMPLETE**
+- Phase 12C â€” Snapshot-Aware Order Contract (backend): **COMPLETE**
+- Phase 12D â€” Flutter Runtime DTOs + Sync Repository + Scoped Cache: **COMPLETE**
+- Phase 12E â€” Published Menu presentation cutover: **COMPLETE**
+- Phase 12F â€” Offline / reconnect / pending-version behavior: **COMPLETE**
+- Phase 12G â€” Legacy cutover + final regression: **COMPLETE**
 
-**BATCH 12 — COMPLETE.** Production POS follows Published Runtime Contract v1
+**BATCH 12 â€” COMPLETE.** Production POS follows Published Runtime Contract v1
 only: Menu Management -> Publish -> Immutable Published Version -> POS Runtime
 Contract v1 -> `/pos/menu-sync` -> scoped Flutter cache -> Published POS UI ->
 version-bound cart -> snapshot-aware Order. It never falls back to the live
@@ -115,7 +115,7 @@ the Published POS screen.
 
 ## Pre-Auth hardening
 
-### Pre-Auth Hardening A ✅ CLOSED
+### Pre-Auth Hardening A âœ… CLOSED
 
 - `OrderLifecyclePolicy` permits normal mutation only for unpaid Draft/Held
   orders; completed and refunded orders are immutable.
@@ -126,7 +126,7 @@ the Published POS screen.
 - True PostgreSQL process-concurrency coverage passed for payment/refund
   idempotency and order/refund number contention.
 
-### Pre-Auth Hardening B ✅ CLOSED
+### Pre-Auth Hardening B âœ… CLOSED
 
 - Mutable admin feature Cubits are lazy and route-scoped; POS startup no
   longer creates Orders, Discounts, Reports, or Menu Management state.
@@ -137,7 +137,7 @@ the Published POS screen.
 - Router topology tests assert that POS does not request unvisited feature
   repositories and that Orders, Reports, and Discounts initialize independently.
 
-### Pre-Auth Hardening C ✅ CLOSED
+### Pre-Auth Hardening C âœ… CLOSED
 
 - `DiscountEligibilityService` is the authoritative runtime policy for managed
   discounts, including Branch-local date/day/time and overnight windows.
@@ -150,7 +150,7 @@ the Published POS screen.
   `git diff --check` passed; `cafe_system_618_testing` migration rebuild and
   seed completed successfully. No Flutter files changed for Hardening C.
 
-### Pre-Auth Hardening D ✅ CLOSED
+### Pre-Auth Hardening D âœ… CLOSED
 
 - Publication now acquires its exact tenant + Branch + channel advisory lock
   before it starts the repeatable-read critical section. Candidate resolution,
@@ -181,13 +181,13 @@ Flutter permission-aware navigation. It is not implemented by this baseline.
 
 The hardening sequence is:
 
-1. **Pre-Auth Hardening A** — Order lifecycle + payment/refund concurrency/idempotency
-2. **Pre-Auth Hardening B** — Flutter route-scoped Cubits / shared app context cleanup
-3. **Pre-Auth Hardening C** — Discount runtime correctness
-4. **Pre-Auth Hardening D** — Publish validation race + docs/error hygiene
+1. **Pre-Auth Hardening A** â€” Order lifecycle + payment/refund concurrency/idempotency
+2. **Pre-Auth Hardening B** â€” Flutter route-scoped Cubits / shared app context cleanup
+3. **Pre-Auth Hardening C** â€” Discount runtime correctness
+4. **Pre-Auth Hardening D** â€” Publish validation race + docs/error hygiene
 5. **Auth + Employee Roles + Permissions + Branch Assignment**
 
-Hardening items 1–4 are closed; only the final tenant employee-auth handoff is
+Hardening items 1â€“4 are closed; only the final tenant employee-auth handoff is
 future work and it is not part of Batch 12.
 
 ## Important architecture notes
@@ -258,15 +258,15 @@ future work and it is not part of Batch 12.
   local, development, and testing environments and is included in local
   `DatabaseSeeder` runs.
 
-- 12A ✅ Runtime Contract
-- 12B ✅ Backend POS Runtime Sync API
-- 12C ✅ Snapshot-Aware Order Contract
-- 12D ✅ Flutter Sync / Scoped Cache
-- 12E ✅ Published POS UI Cutover
-- 12F ✅ Offline / Reconnect / Pending Version
-- 12G ✅ Legacy Cutover / Final Regression
+- 12A âœ… Runtime Contract
+- 12B âœ… Backend POS Runtime Sync API
+- 12C âœ… Snapshot-Aware Order Contract
+- 12D âœ… Flutter Sync / Scoped Cache
+- 12E âœ… Published POS UI Cutover
+- 12F âœ… Offline / Reconnect / Pending Version
+- 12G âœ… Legacy Cutover / Final Regression
 
-**BATCH 12 — COMPLETE**
+**BATCH 12 â€” COMPLETE**
 
 ## Inventory warehouse context audit
 
@@ -335,7 +335,7 @@ future work and it is not part of Batch 12.
 - Laravel sale/accounting and warehouse-repair suites pass, and Flutter has a
   request-contract regression test proving `warehouseId` is never submitted.
 
-## Shift module — full UI (frontend-only, mock-backed)
+## Shift module â€” full UI (frontend-only, mock-backed)
 
 - New self-contained `lib/features/shift` module: current-shift overview, no
   open-shift / open-shift form, a five-step closing wizard (operations
@@ -348,7 +348,7 @@ future work and it is not part of Batch 12.
 - Backed by `ShiftMockRepository`, a local in-memory data source with a
   debug-only scenario switcher (balanced close, cash shortage/surplus, stock
   variance, negative theoretical stock, blocking open order, incomplete
-  count, no open shift, loading, error) — no backend endpoint exists yet.
+  count, no open shift, loading, error) â€” no backend endpoint exists yet.
 - Domain models (`shift_models.dart`), a pure `ShiftAssessment` (alerts,
   readiness checklist, stage track) computed once and shared by the
   overview, the wizard and the confirmation dialog, and centralized
@@ -360,18 +360,54 @@ future work and it is not part of Batch 12.
 - `flutter analyze` is clean (only two pre-existing, unrelated warnings in
   `sales_screens.dart`). Two tests cover the module: a smoke test
   (`shift_overview_smoke_test.dart`) and a full five-step wizard walk-through
-  (`shift_closing_flow_test.dart`, balanced scenario, operations → cash →
-  bar count → final review → confirm dialog → success → report route).
+  (`shift_closing_flow_test.dart`, balanced scenario, operations â†’ cash â†’
+  bar count â†’ final review â†’ confirm dialog â†’ success â†’ report route).
   Running the wizard test surfaced and fixed a real responsive bug: the
   stepper's full-label mode was switching on at the module's general tablet
-  breakpoint (700px), which overflows with five Arabic step labels — it now
+  breakpoint (700px), which overflows with five Arabic step labels â€” it now
   switches at the desktop breakpoint (1100px). Deeper per-scenario coverage
   is left for a follow-up pass.
 - Not done: backend integration, accounting/inventory posting, and real
-  print/export — all explicitly out of scope for this UI-approval pass.
+  print/export â€” all explicitly out of scope for this UI-approval pass.
 - Update: the module is now backed by a real `ShiftRepository` API client
   (`shifts/current`, `shifts/current/snapshot`, `shifts/history`,
   `shifts/{shiftNumber}/report`, `shifts/{shift}/close`); the demo scenario
   switcher was dropped from production wiring, and the older, separate
   `features/shift_close` module (and its `/shift-close` route) was retired in
-  its favor — this is now the one Shift implementation.
+  its favor â€” this is now the one Shift implementation.
+
+### 2026-09-17 â€” Purchase item search usability review
+- Evaluated the item picker implementation and ran two temporary widget probes using mocked inventory responses. Both reproduced defects: clearing a query before debounce completion still shows old results; typing a replacement after selecting an item clears the typed text.
+- Code review also found no explicit arrow/Enter selection support and network errors rendered as empty search results.
+- Live desktop interaction was interrupted by concurrent user input. No invoices were saved and no production code was changed. Temporary probes were removed after diagnosis.
+- Recommended next step: fix selection/query synchronization and stale request cancellation, then add keyboard selection and distinct connection-error feedback.
+
+### 2026-09-17 â€” Purchase item search repair
+- Fixed query/selection synchronization so replacing a selected item preserves typed text.
+- Debounced and in-flight responses are invalidated immediately on query changes, clear, selection, outside click, focus loss, and Escape. Removed stale results during new searches and prevented delayed overlays after dismissal/disposal.
+- Added arrow-key highlighting with scrolling, Enter selection, and separate search-failure feedback with retry. Result overlay now anchors to the actual field bottom in RTL.
+- Added 9 widget regression scenarios; all 14 focused picker and purchase-form tests passed. Flutter analyze reports only the pre-existing unnecessary_brace_in_string_interps info in create_discount_policy_screen_test.dart:780; no findings in changed files. git diff --check passed.
+- No database, catalogue, stock, or backend changes. Next step: smoke-check the updated Windows UI after hot restart/rebuild.
+
+### 2026-09-17 â€” Atomic Purchase Invoice posting, receiving, and cash settlement
+- Added a dedicated `PurchasePostingOrchestrator` behind `POST /finance/purchases/{id}/post`. It validates permissions, branch and an unambiguous actor cash source before atomically posting the Supplier Invoice, completing remaining inventory receipt lines through `PurchaseReceivingService`, settling AP through `SupplierPaymentService`, and creating a linked posted Payment Voucher.
+- Inventory purchases continue to use the existing Goods Receipt -> `InventoryPostingService` path, preserving stock movements, balances, WAC, unit conversions, landed costs, and receipt history. Expense/service and asset purchases create no stock movement.
+- Cashiers must have an open shift in the invoice branch. The shift is bound to one active branch cash drawer; no bank, cross-branch, or arbitrary fallback is allowed. The payment is recorded as a shift expense so expected cash and closing reflect the purchase. Owners/managers without a shift require exactly one active branch cash drawer.
+- Added schema links for shift cash source, Supplier Payment -> shift/voucher, Voucher -> purchase invoice/payment source, and idempotent shift movement sources. The migration performs no historical backfill or posting.
+- The automatic voucher shares the Supplier Payment journal (Dr AP / Cr Cash) instead of creating a duplicate journal. Direct voucher reversal is blocked; reversing the Supplier Payment updates its linked voucher and shift cash movement consistently.
+- Flutter Purchase Invoice now supports Save as Draft and unified Post, requires branch/receipt warehouse for posting, shows a server-resolved cash/shift confirmation, reports success, and links the payment voucher from invoice detail.
+- New backend integration coverage passes 8 scenarios / 90 assertions covering inventory posting, double-submit idempotency, missing shift, shift expected cash, inventory/payment-stage rollback, old fully received invoices, expense/asset behavior, and branch isolation. Focused Flutter purchase/search tests pass (14 tests). The broader related Laravel run passed 106 tests / 961 assertions and retained four pre-existing authorization/bar-check expectation failures documented in the handoff; Flutter analyze is clean for changed files with one unrelated pre-existing info in the discounts test.
+
+### 2026-09-19 — Purchase item mouse selection repair
+- Root cause: the positioned overlay entry had only the popup width, while CompositedTransformFollower painted its result list below that parent. Flutter hit testing rejected mouse events outside the parent even though the list was visible. The overlay now has a full-screen hit-test parent and the follower remains anchored to the field; TapRegion still dismisses outside clicks.
+- Preserved debounced server search and latest-request cancellation. Added mouse-click and scroll-then-click widget regressions. Purchase lines now retain stable widget identity, and choosing another item resets the purchase unit to that item's default while preserving the warehouse.
+- Picker widget tests: 12 passed, including mouse click, scroll then click, and independent rows. Focused purchase and picker tests: 18 passed before the final two picker cases. Flutter analyze: one existing unused optional parameter warning in the purchase form and one unrelated discount-test info. Web and Windows release builds passed.
+
+### 2026-09-19 — Follow-up: real mouse pointer regression
+- Reproduced the reported failure with a widget test using PointerDeviceKind.mouse and separate pointer-down/up events. The previous tester.tap test used a touch pointer and missed it. On mouse down, the TextField lost focus and its focus listener removed the result overlay before ListTile.onTap could run.
+- The result popup now tracks pointer-down inside its own region, so focus loss during a result click does not dismiss it. Selection closes the popup after updating the selected item. Tab, Escape, outside click, and ordinary blur still dismiss it.
+- Focused picker and purchase-form suite: 20 tests passed, including the real mouse sequence. Flutter analyze retains the same two pre-existing findings. Web and Windows release builds passed after this follow-up fix.
+
+### 2026-09-19 — Purchase receipt warehouse selector
+- Fixed the invoice's optional all-branches state filtering out every branch warehouse. It now shows all accessible active warehouses when no invoice branch is selected, and the selected branch plus global warehouses once a branch is chosen. An incompatible line warehouse is cleared on branch change.
+- Long warehouse names now fit the 190px selector via expanded layout and ellipsis. Added a widget regression with two branch warehouses; focused purchase and picker tests pass (21).

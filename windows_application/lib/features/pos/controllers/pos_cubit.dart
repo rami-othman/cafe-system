@@ -1575,9 +1575,9 @@ class PosCubit extends Cubit<PosState> {
       final String? expected = switch (error.code) {
         'NO_OPEN_SHIFT' =>
           'لا توجد وردية مفتوحة صالحة لهذا الطلب. افتح وردية ثم أعد المحاولة.',
-        'WAREHOUSE_NOT_CONFIGURED' => 'لا يوجد مستودع رئيسي فعّال لفرع الطلب.',
+        'WAREHOUSE_NOT_CONFIGURED' => 'لا يوجد مخزن رئيسي فعّال لفرع الطلب.',
         'WAREHOUSE_CONFIGURATION_AMBIGUOUS' =>
-          'إعداد مستودع الفرع غير صالح. يوجد أكثر من مستودع رئيسي.',
+          'إعداد مخزن الفرع غير صالح. يوجد أكثر من مخزن رئيسي.',
         'ACCOUNTING_CONFIGURATION_MISSING' =>
           'إعدادات الحسابات المطلوبة لإتمام الدفع غير مكتملة.',
         'INSUFFICIENT_STOCK' => 'المخزون غير كافٍ لإتمام عملية البيع.',

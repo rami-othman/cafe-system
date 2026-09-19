@@ -60,24 +60,24 @@ final class FinanceOperationsDemoSeeder extends Seeder
         [$tenant, $owner, $branchA, $branchB] = $this->foundation();
         $request = $this->request($tenant, $owner);
         app(FinancialSetupService::class)->ensureForTenant($tenant, $branchA, $owner);
-        app(FinancialSetupService::class)->ensureBranchMainWarehouse($tenant, $branchB, $owner);
+        app(FinancialSetupService::class)->ensureBranchWarehouse($tenant, $branchB, null, $owner);
         $this->bankPaymentMethod($tenant, $owner);
 
-        [$central, $branchWarehouse] = $this->warehouses($tenant, $branchA);
+        [$sourceWarehouse, $branchWarehouse] = $this->warehouses($tenant, $branchA, $branchB);
         $beans = $this->item($tenant, $owner, 'DEMO-BEANS', 'Arabica Coffee Beans', 'kg');
         $milk = $this->item($tenant, $owner, 'DEMO-MILK', 'Fresh Milk', 'liter');
         $packaging = $this->item($tenant, $owner, 'DEMO-PACKAGING', 'Takeaway Cups & Lids', 'piece');
-        $this->assignItem($tenant, $beans, $central);
+        $this->assignItem($tenant, $beans, $sourceWarehouse);
         $this->assignItem($tenant, $beans, $branchWarehouse);
         $this->assignItem($tenant, $milk, $branchWarehouse);
-        $this->assignItem($tenant, $packaging, $central);
-        $this->inventory($request, $tenant, $owner, $central, $branchWarehouse, $beans, $milk, $branchA);
+        $this->assignItem($tenant, $packaging, $sourceWarehouse);
+        $this->inventory($request, $tenant, $owner, $sourceWarehouse, $branchWarehouse, $beans, $milk, $branchA);
 
         [$product, $variant, $placement, $version] = $this->coffeeProduct($tenant, $owner, $branchA, $branchWarehouse, $beans, $milk);
         $this->saleAndRefund($tenant, $owner, $branchA, $product, $variant, $placement, $version);
         $this->expenses($request, $tenant, $owner, $branchA);
         $this->accountsPayable($request, $tenant, $owner, $branchA);
-        $this->purchasingLineItems($request, $tenant, $owner, $branchA, $central, $branchWarehouse, $beans, $milk, $packaging);
+        $this->purchasingLineItems($request, $tenant, $owner, $branchA, $sourceWarehouse, $branchWarehouse, $beans, $milk, $packaging);
         $this->cashTransfer($request, $tenant, $owner, $branchA);
         $this->reconcileAndClose($request, $tenant, $owner, $branchA);
         $this->closePeriod($request, $tenant, $owner);
@@ -145,15 +145,13 @@ final class FinanceOperationsDemoSeeder extends Seeder
         DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenant, 'code' => 'BANK'], ['name' => 'Bank Transfer', 'type' => 'bank', 'financial_account_id' => $account, 'financial_location_id' => $location, 'is_active' => true, 'sort_order' => 2, 'created_by' => $owner, 'updated_by' => $owner, 'created_at' => now(), 'updated_at' => now()]);
     }
 
-    private function warehouses(int $tenant, int $branch): array
+    /** No central warehouse: demo transfers move stock branch-to-branch instead. */
+    private function warehouses(int $tenant, int $branch, int $sourceBranch): array
     {
-        $central = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'CENTRAL')->value('id');
+        $sourceWarehouse = app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $sourceBranch);
         $posWarehouse = app(PosInventoryWarehouseResolver::class)->forBranch($tenant, $branch);
-        if (! $central) {
-            throw new RuntimeException('Finance demo warehouses were not configured.');
-        }
 
-        return [$central, (int) $posWarehouse->id];
+        return [(int) $sourceWarehouse->id, (int) $posWarehouse->id];
     }
 
     private function item(int $tenant, int $owner, string $sku, string $name, string $unit): int
@@ -168,17 +166,17 @@ final class FinanceOperationsDemoSeeder extends Seeder
         DB::table('inventory_item_warehouses')->updateOrInsert(['tenant_id' => $tenant, 'inventory_item_id' => $item, 'warehouse_id' => $warehouse], ['created_at' => now(), 'updated_at' => now()]);
     }
 
-    private function inventory(Request $request, int $tenant, int $owner, int $central, int $branchWarehouse, int $beans, int $milk, int $branch): void
+    private function inventory(Request $request, int $tenant, int $owner, int $sourceWarehouse, int $branchWarehouse, int $beans, int $milk, int $branch): void
     {
         $posting = app(InventoryPostingService::class);
         $post = fn (array $data) => $posting->post($request, $tenant, $data, $owner);
-        $post(['warehouseId' => $central, 'itemId' => $beans, 'type' => 'opening_balance', 'quantity' => '10.000', 'unit' => 'kg', 'unitCost' => '12.0000', 'occurredAt' => '2026-07-01 08:00:00', 'idempotencyKey' => 'finance-demo-beans-opening']);
-        $post(['warehouseId' => $central, 'itemId' => $beans, 'type' => 'stock_in', 'quantity' => '5.000', 'unit' => 'kg', 'unitCost' => '18.0000', 'occurredAt' => '2026-07-08 08:00:00', 'idempotencyKey' => 'finance-demo-beans-second-batch']);
+        $post(['warehouseId' => $sourceWarehouse, 'itemId' => $beans, 'type' => 'opening_balance', 'quantity' => '10.000', 'unit' => 'kg', 'unitCost' => '12.0000', 'occurredAt' => '2026-07-01 08:00:00', 'idempotencyKey' => 'finance-demo-beans-opening']);
+        $post(['warehouseId' => $sourceWarehouse, 'itemId' => $beans, 'type' => 'stock_in', 'quantity' => '5.000', 'unit' => 'kg', 'unitCost' => '18.0000', 'occurredAt' => '2026-07-08 08:00:00', 'idempotencyKey' => 'finance-demo-beans-second-batch']);
         $post(['warehouseId' => $branchWarehouse, 'branchId' => $branch, 'itemId' => $milk, 'type' => 'opening_balance', 'quantity' => '30.000', 'unit' => 'liter', 'unitCost' => '2.0000', 'occurredAt' => '2026-07-01 08:00:00', 'idempotencyKey' => 'finance-demo-milk-opening']);
         // The transfer workflow creates its paired outbound/inbound movements;
         // neither is a Finance event because this is internal relocation.
         $transfer = app(WarehouseTransferService::class);
-        $transferId = $transfer->create($request, $tenant, ['sourceWarehouseId' => $central, 'destinationWarehouseId' => $branchWarehouse, 'lines' => [['itemId' => $beans, 'requestedQuantity' => '4.000', 'unit' => 'kg']], 'notes' => 'Demo internal bean transfer', 'idempotencyKey' => 'finance-demo-beans-transfer'], $owner);
+        $transferId = $transfer->create($request, $tenant, ['sourceWarehouseId' => $sourceWarehouse, 'destinationWarehouseId' => $branchWarehouse, 'lines' => [['itemId' => $beans, 'requestedQuantity' => '4.000', 'unit' => 'kg']], 'notes' => 'Demo internal bean transfer', 'idempotencyKey' => 'finance-demo-beans-transfer'], $owner);
         $transfer->action($request, $tenant, $transferId, 'submit', ['idempotencyKey' => 'finance-demo-beans-transfer-submit'], $owner);
         $transfer->action($request, $tenant, $transferId, 'approve', ['idempotencyKey' => 'finance-demo-beans-transfer-approve'], $owner);
         $transfer->action($request, $tenant, $transferId, 'dispatch', ['idempotencyKey' => 'finance-demo-beans-transfer-dispatch'], $owner);

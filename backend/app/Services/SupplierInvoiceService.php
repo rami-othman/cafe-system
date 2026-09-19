@@ -346,7 +346,14 @@ class SupplierInvoiceService
             if ($quantityUnits <= 0) {
                 throw ValidationException::withMessages(['lines' => 'Line quantity must be greater than zero.']);
             }
-            $grossCents = Money::cents($line['lineGrossAmount'] ?? '0', 'lines');
+            if (array_key_exists('unitCost', $line) && $line['unitCost'] !== null && trim((string) $line['unitCost']) !== '') {
+                $enteredUnitCost = InventoryDecimal::cost($line['unitCost'], 'lines');
+                $grossCents = Money::cents(InventoryDecimal::totalCost($quantityUnits, $enteredUnitCost), 'lines');
+            } else {
+                // Compatibility for older API clients. Modern clients send
+                // unitCost and never control the derived gross amount.
+                $grossCents = Money::cents($line['lineGrossAmount'] ?? '0', 'lines');
+            }
             if ($grossCents <= 0) {
                 throw ValidationException::withMessages(['lines' => 'Line total must be greater than zero.']);
             }
@@ -722,7 +729,9 @@ class SupplierInvoiceService
         return [
             'branch_id' => $data['branchId'] ?? null,
             'supplier_id' => (int) $data['supplierId'],
-            'invoice_number' => $data['invoiceNumber'],
+            // The existing schema uses internal_reference for the generated
+            // system PI number and invoice_number for the supplier reference.
+            'invoice_number' => $data['supplierInvoiceNumber'] ?? $data['invoiceNumber'] ?? null,
             'invoice_date' => $data['invoiceDate'],
             'due_date' => $data['dueDate'],
             'invoice_type' => $data['invoiceType'],
@@ -781,7 +790,10 @@ class SupplierInvoiceService
 
         if ($type === 'none') {
             $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1100')->where('is_active', true)->whereNull('deleted_at')->first();
-            if (! $account) throw ValidationException::withMessages(['invoiceTypeId' => 'A non-financial invoice requires the active Inventory Asset system account.']);
+            if (! $account) {
+                throw ValidationException::withMessages(['invoiceTypeId' => 'A non-financial invoice requires the active Inventory Asset system account.']);
+            }
+
             return (int) $account->id;
         }
 
@@ -792,10 +804,16 @@ class SupplierInvoiceService
     {
         $query = DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
             ->where('t.tenant_id', $tenantId)->where('g.tenant_id', $tenantId)->where('t.is_active', true)->where('g.is_active', true);
-        if (! empty($data['invoiceTypeId'])) $query->where('t.id', (int) $data['invoiceTypeId']);
-        else $query->where('t.code', $data['invoiceType'] ?? '');
+        if (! empty($data['invoiceTypeId'])) {
+            $query->where('t.id', (int) $data['invoiceTypeId']);
+        } else {
+            $query->where('t.code', $data['invoiceType'] ?? '');
+        }
         $type = $query->select('t.*', 'g.is_active as group_is_active')->first();
-        if (! $type) throw ValidationException::withMessages(['invoiceTypeId' => 'Select an active configured invoice type.']);
+        if (! $type) {
+            throw ValidationException::withMessages(['invoiceTypeId' => 'Select an active configured invoice type.']);
+        }
+
         return array_merge($data, ['invoiceTypeId' => (int) $type->id, 'invoiceType' => $type->posting_behavior]);
     }
 
@@ -804,7 +822,10 @@ class SupplierInvoiceService
         $type = DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
             ->where('t.tenant_id', $tenantId)->where('t.id', $invoice->invoice_type_id)
             ->select('t.*', 'g.is_active as group_is_active')->lockForUpdate()->first();
-        if (! $type) throw ValidationException::withMessages(['invoiceTypeId' => 'This invoice type no longer exists.']);
+        if (! $type) {
+            throw ValidationException::withMessages(['invoiceTypeId' => 'This invoice type no longer exists.']);
+        }
+
         return $type;
     }
 

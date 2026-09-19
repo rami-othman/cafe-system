@@ -917,7 +917,7 @@ class _ReceiptsCenterTable extends StatelessWidget {
             Text(r.invoiceNumber, style: FinanceText.body),
             Text(r.supplierName, style: FinanceText.body),
             Text(r.receiptDate, style: FinanceText.small),
-            Text(r.branchName ?? 'المستودع المركزي', style: FinanceText.small),
+            Text(r.branchName ?? 'بدون فرع', style: FinanceText.small),
             Text('${r.lineCount}', style: FinanceText.body),
             GoodsReceiptStatusBadge(status: r.status),
             Text(r.createdByName ?? '—', style: FinanceText.small),

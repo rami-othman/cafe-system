@@ -160,7 +160,7 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
       if (qty > remaining + 0.0005) {
         return 'الكمية المستلمة لا يمكن أن تتجاوز الكمية المتبقية (${line.invoiceLine.remainingQuantity}).';
       }
-      if (line.warehouseId == null) return 'اختر مستودعاً لكل بند.';
+      if (line.warehouseId == null) return 'اختر مخزناً لكل بند.';
     }
     return null;
   }
@@ -395,7 +395,7 @@ class _ReceiptLineCard extends StatelessWidget {
                 child: DropdownButtonFormField<int>(
                   initialValue: draft.warehouseId,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'المستودع'),
+                  decoration: const InputDecoration(labelText: 'المخزن'),
                   items: warehouses
                       .map(
                         (WarehouseLocation w) =>

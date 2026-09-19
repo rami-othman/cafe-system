@@ -12,7 +12,16 @@ final class PosInventoryWarehouseResolver
         return $this->resolutionForBranch($tenantId, $branchId)->warehouse;
     }
 
-    /** @return object{warehouse:object,source:string} */
+    /**
+     * There is no "primary"/"main" warehouse concept: a branch is simply a
+     * flat set of warehouses. If the branch has explicitly configured
+     * `pos_inventory_warehouse_id`, that always wins. Otherwise, POS can
+     * only resolve unambiguously when the branch has exactly one active
+     * warehouse — anything else requires explicit configuration rather
+     * than guessing which one is "the" store.
+     *
+     * @return object{warehouse:object,source:string}
+     */
     public function resolutionForBranch(int $tenantId, int $branchId): object
     {
         $branch = DB::table('branches')->where('id', $branchId)->where('tenant_id', $tenantId)
@@ -31,20 +40,12 @@ final class PosInventoryWarehouseResolver
             return (object) ['warehouse' => $warehouse, 'source' => 'configured'];
         }
 
-        $bars = $this->fallbackCandidates($tenantId, $branchId, 'bar');
-        if ($bars->count() === 1) {
-            return (object) ['warehouse' => $bars->first(), 'source' => 'bar_fallback'];
+        $candidates = $this->branchWarehouses($tenantId, $branchId);
+        if ($candidates->count() === 1) {
+            return (object) ['warehouse' => $candidates->first(), 'source' => 'single_warehouse'];
         }
-        if ($bars->count() > 1) {
-            throw new OrderLifecycleException('POS_WAREHOUSE_AMBIGUOUS', 'يوجد أكثر من مخزن بار لهذا الفرع. يرجى تحديد مخزن نقطة البيع من إعدادات الفرع.');
-        }
-
-        $mainStores = $this->fallbackCandidates($tenantId, $branchId, 'branch_main');
-        if ($mainStores->count() === 1) {
-            return (object) ['warehouse' => $mainStores->first(), 'source' => 'main_fallback'];
-        }
-        if ($mainStores->count() > 1) {
-            throw new OrderLifecycleException('POS_WAREHOUSE_AMBIGUOUS', 'يوجد أكثر من مخزن رئيسي صالح لهذا الفرع. يرجى تحديد مخزن نقطة البيع من إعدادات الفرع.');
+        if ($candidates->count() > 1) {
+            throw new OrderLifecycleException('POS_WAREHOUSE_AMBIGUOUS', 'يوجد أكثر من مخزن لهذا الفرع. يرجى تحديد مخزن نقطة البيع من إعدادات الفرع.');
         }
 
         throw new OrderLifecycleException('POS_WAREHOUSE_NOT_CONFIGURED', 'لا يوجد مخزن تشغيلي صالح لنقطة البيع في هذا الفرع.');
@@ -77,16 +78,18 @@ final class PosInventoryWarehouseResolver
         }
     }
 
+    /** Any active warehouse belonging to the branch is POS-eligible — there is no "type" gate. */
     private function eligibleWarehouse(int $tenantId, int $branchId, int $warehouseId): ?object
     {
         return DB::table('warehouses')->where('id', $warehouseId)->where('tenant_id', $tenantId)
-            ->where('branch_id', $branchId)->whereIn('type', ['bar', 'branch_main'])->where('is_active', true)
+            ->where('branch_id', $branchId)
+            ->where('is_active', true)
             ->whereNull('deleted_at')->first();
     }
 
-    private function fallbackCandidates(int $tenantId, int $branchId, string $type): \Illuminate\Support\Collection
+    private function branchWarehouses(int $tenantId, int $branchId): \Illuminate\Support\Collection
     {
         return DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
-            ->where('type', $type)->where('is_active', true)->whereNull('deleted_at')->orderBy('id')->get();
+            ->where('is_active', true)->whereNull('deleted_at')->orderBy('id')->get();
     }
 }

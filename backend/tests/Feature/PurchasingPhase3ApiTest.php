@@ -179,8 +179,10 @@ class PurchasingPhase3ApiTest extends TestCase
 
     private function warehouse(array $headers): int
     {
+        $branchId = (int) DB::table('branches')->where('tenant_id', $headers['X-Tenant-Id'])->value('id');
+
         return (int) $this->postJson('/api/v1/warehouses', [
-            'name' => 'Central Warehouse '.uniqid(), 'code' => 'WH-'.strtoupper(uniqid()), 'type' => 'central', 'branchId' => null, 'isActive' => true,
+            'name' => 'Warehouse '.uniqid(), 'code' => 'WH-'.strtoupper(uniqid()), 'type' => 'other', 'branchId' => $branchId, 'isActive' => true,
         ], $headers)->assertCreated()->json('data.id');
     }
 

@@ -42,7 +42,15 @@ class BranchResource extends JsonResource
         ];
     }
 
-    /** @return array{warehouse:mixed,source:string} */
+    /**
+     * There is no "primary"/"bar" precedence — a branch is a flat set of
+     * warehouses. An explicit `pos_inventory_warehouse_id` always wins;
+     * otherwise this only resolves when the branch has exactly one
+     * warehouse (mirrors PosInventoryWarehouseResolver exactly, so the UI
+     * can never show a different answer than what POS actually uses).
+     *
+     * @return array{warehouse:mixed,source:string}
+     */
     private function effectivePosWarehouse(): array
     {
         if (! $this->relationLoaded('warehouses')) {
@@ -53,18 +61,10 @@ class BranchResource extends JsonResource
 
             return ['warehouse' => $configured, 'source' => $configured ? 'configured' : 'invalid_configured'];
         }
-        $bars = $this->warehouses->where('type', 'bar')->values();
-        if ($bars->count() === 1) {
-            return ['warehouse' => $bars->first(), 'source' => 'bar_fallback'];
-        }
-        if ($bars->count() > 1) {
-            return ['warehouse' => null, 'source' => 'ambiguous'];
-        }
-        $mainStores = $this->warehouses->where('type', 'branch_main')->values();
-        if ($mainStores->count() === 1) {
-            return ['warehouse' => $mainStores->first(), 'source' => 'main_fallback'];
+        if ($this->warehouses->count() === 1) {
+            return ['warehouse' => $this->warehouses->first(), 'source' => 'single_warehouse'];
         }
 
-        return ['warehouse' => null, 'source' => $mainStores->count() > 1 ? 'ambiguous' : 'not_configured'];
+        return ['warehouse' => null, 'source' => $this->warehouses->count() > 1 ? 'ambiguous' : 'not_configured'];
     }
 }

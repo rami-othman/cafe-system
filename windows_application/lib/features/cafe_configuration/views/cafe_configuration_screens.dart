@@ -318,13 +318,15 @@ class BranchEditorScreen extends StatefulWidget {
 class _BranchEditorScreenState extends State<BranchEditorScreen> {
   final TextEditingController _name = TextEditingController(),
       _address = TextEditingController(),
-      _phone = TextEditingController();
+      _phone = TextEditingController(),
+      _warehouseName = TextEditingController();
   bool _seeded = false;
   @override
   void dispose() {
     _name.dispose();
     _address.dispose();
     _phone.dispose();
+    _warehouseName.dispose();
     super.dispose();
   }
 
@@ -334,6 +336,7 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
     _name.text = d.name;
     _address.text = d.address;
     _phone.text = d.phone;
+    _warehouseName.text = d.warehouseName;
   }
 
   @override
@@ -424,6 +427,24 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             cubit.update(state.draft.copyWith(timezone: v)),
                       ),
                     ),
+                    if (state.branch == null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.lg),
+                      AppTextField(
+                        controller: _warehouseName,
+                        label: 'اسم المخزن *',
+                        hintText: 'مثال: البار',
+                        onChanged: (v) => cubit.update(
+                          state.draft.copyWith(warehouseName: v),
+                        ),
+                      ),
+                      _FieldError(state.errors['warehouseName']),
+                      const Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.xs),
+                        child: Text(
+                          'كل فرع يحتاج مخزناً واحداً على الأقل. يمكنك إضافة مخازن أخرى لاحقاً من إعدادات المخزون.',
+                        ),
+                      ),
+                    ],
                     if (state.branch != null) ...<Widget>[
                       const SizedBox(height: AppSpacing.lg),
                       DropdownButtonFormField<int>(
@@ -450,7 +471,7 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             (warehouse) => DropdownMenuItem<int>(
                                 value: warehouse.id,
                                 child: Text(
-                                  '${warehouse.name} — ${warehouse.type == 'bar' ? 'البار' : 'المخزن الرئيسي'}',
+                                  warehouse.name,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -465,11 +486,11 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                       ),
                       _FieldError(state.errors['posInventoryWarehouseId']),
                       if (state.branch!.posInventoryWarehouseSource ==
-                          'main_fallback')
+                          'single_warehouse')
                         const Padding(
                           padding: EdgeInsets.only(top: AppSpacing.sm),
                           child: Text(
-                            'يتم استخدام المخزن الرئيسي تلقائيًا لنقطة البيع.',
+                            'يتم استخدام المخزن الوحيد لهذا الفرع تلقائيًا لنقطة البيع.',
                           ),
                         ),
                     ],

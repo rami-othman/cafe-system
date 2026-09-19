@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Services\FinancialSetupService;
+use App\Services\ShiftCashSummaryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -389,13 +391,250 @@ class PurchasingPhase2ApiTest extends TestCase
         $this->assertNotNull($detail['lines'][0]['stockMovementId']);
     }
 
+    public function test_unified_purchase_post_receives_pays_vouchers_and_is_idempotent(): void
+    {
+        $tenant = $this->tenant('unified-purchase-post');
+        $headers = $this->headers($tenant);
+        $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+        DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->update(['branch_id' => $branchId]);
+        $supplierId = $this->supplier($headers);
+        $warehouseId = $this->warehouse($headers);
+        $itemId = $this->inventoryItem($headers, 'kg', [$warehouseId]);
+
+        $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
+            'branchId' => $branchId,
+            'supplierId' => $supplierId,
+            'invoiceNumber' => 'AUTO-260',
+            'invoiceDate' => '2026-09-17',
+            'dueDate' => '2026-09-17',
+            'invoiceType' => 'inventory',
+            'lines' => [[
+                'lineType' => 'inventory',
+                'description' => 'Auto received material',
+                'inventoryItemId' => $itemId,
+                'quantity' => '12.000',
+                'lineGrossAmount' => '260.00',
+                'warehouseId' => $warehouseId,
+            ]],
+        ], $headers)->assertCreated()->json('data.id');
+
+        $posted = $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'unified-1'], $headers)
+            ->assertOk()->json('data');
+        $this->assertSame('paid', $posted['paymentStatus']);
+        $this->assertSame('received', $posted['receiptStatus']);
+        $this->assertSame('260.00', $posted['paidAmount']);
+        $this->assertSame('0.00', $posted['remainingAmount']);
+        $this->assertSame('12.000', DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $itemId)->value('quantity_on_hand'));
+        $this->assertSame(1, DB::table('purchase_receipts')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->where('status', 'posted')->count());
+        $this->assertSame(1, DB::table('supplier_payments')->where('tenant_id', $tenant)->where('supplier_id', $supplierId)->count());
+        $this->assertSame(1, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'unified-double-click'], $headers)->assertOk();
+        $this->assertSame(1, DB::table('stock_movements')->where('tenant_id', $tenant)->where('reference_type', 'purchase_receipt_line')->count());
+        $this->assertSame(1, DB::table('purchase_receipts')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->count());
+        $this->assertSame(1, DB::table('supplier_payments')->where('tenant_id', $tenant)->count());
+        $this->assertSame(1, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
+    }
+
+    public function test_cashier_without_open_shift_rolls_back_every_purchase_effect(): void
+    {
+        [$tenant, $ownerHeaders, $branchId, $invoiceId, $warehouseId, $itemId] = $this->unifiedInventoryFixture('no-open-shift');
+        $cashierHeaders = $this->cashierHeaders($tenant, $branchId, 'no-shift');
+
+        $response = $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'no-shift'], $cashierHeaders)
+            ->assertUnprocessable();
+        $this->assertStringContainsString('يجب فتح وردية', json_encode($response->json(), JSON_UNESCAPED_UNICODE));
+        $this->assertNull(DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $itemId)->value('quantity_on_hand'));
+        $this->assertSame('draft', DB::table('supplier_invoices')->where('id', $invoiceId)->value('status'));
+        $this->assertSame(0, DB::table('supplier_payments')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
+    }
+
+    public function test_cashier_open_shift_uses_its_drawer_and_reduces_expected_cash(): void
+    {
+        [$tenant, $ownerHeaders, $branchId, $invoiceId] = $this->unifiedInventoryFixture('cashier-open-shift');
+        $cashierHeaders = $this->cashierHeaders($tenant, $branchId, 'open-shift');
+        $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => '1000.00'], $cashierHeaders)
+            ->assertCreated()->json('data');
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'cashier-open'], $cashierHeaders)->assertOk();
+
+        $payment = DB::table('supplier_payments')->where('tenant_id', $tenant)->first();
+        $this->assertSame((int) $shift['id'], (int) $payment->shift_id);
+        $this->assertSame((int) DB::table('shifts')->where('id', $shift['id'])->value('financial_location_id'), (int) $payment->financial_location_id);
+        $summary = app(ShiftCashSummaryService::class)->summarize($tenant, DB::table('shifts')->where('id', $shift['id'])->first());
+        $this->assertSame('740.00', $summary['expectedCash']);
+        $this->assertSame('260.00', $summary['expenses']);
+    }
+
+    public function test_inventory_failure_rolls_back_invoice_and_creates_no_payment_or_voucher(): void
+    {
+        [$tenant, $headers, $branchId, $invoiceId, $warehouseId, $itemId] = $this->unifiedInventoryFixture('inventory-failure');
+        DB::table('inventory_item_warehouses')->where('tenant_id', $tenant)->where('inventory_item_id', $itemId)->where('warehouse_id', $warehouseId)->delete();
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'inventory-fail'], $headers)->assertUnprocessable();
+
+        $this->assertSame('draft', DB::table('supplier_invoices')->where('id', $invoiceId)->value('status'));
+        $this->assertSame(0, DB::table('purchase_receipts')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('supplier_payments')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
+    }
+
+    public function test_existing_fully_received_invoice_is_paid_without_duplicate_stock(): void
+    {
+        [$tenant, $headers, $branchId, $invoiceId, $warehouseId, $itemId] = $this->unifiedInventoryFixture('legacy-received');
+        $this->postJson("/api/v1/finance/supplier-invoices/{$invoiceId}/post", ['idempotencyKey' => 'legacy-invoice-post'], $headers)->assertOk();
+        $lineId = (int) DB::table('supplier_invoice_lines')->where('supplier_invoice_id', $invoiceId)->value('id');
+        $receiptId = (int) $this->postJson("/api/v1/finance/purchases/{$invoiceId}/receipts", [
+            'idempotencyKey' => 'legacy-receipt',
+            'lines' => [['supplierInvoiceLineId' => $lineId, 'quantity' => '12.000', 'warehouseId' => $warehouseId]],
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/purchase-receipts/{$receiptId}/post", ['idempotencyKey' => 'legacy-receipt-post'], $headers)->assertOk();
+        $movements = DB::table('stock_movements')->where('tenant_id', $tenant)->count();
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'legacy-auto-pay'], $headers)
+            ->assertOk()->assertJsonPath('data.paymentStatus', 'paid')->assertJsonPath('data.receiptStatus', 'received');
+        $this->assertSame($movements, DB::table('stock_movements')->where('tenant_id', $tenant)->count());
+        $this->assertSame(1, DB::table('purchase_receipts')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->count());
+    }
+
+    public function test_expense_and_asset_purchases_auto_pay_without_inventory_movements(): void
+    {
+        $tenant = $this->tenant('unified-non-inventory');
+        $headers = $this->headers($tenant);
+        $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+        DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->update(['branch_id' => $branchId]);
+        $supplierId = $this->supplier($headers);
+        $categoryId = $this->expenseCategory($tenant, $headers, '6140');
+        $fixedAssetId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1500')->value('id');
+        $beforeMovements = DB::table('stock_movements')->where('tenant_id', $tenant)->count();
+
+        $expenseId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
+            'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'EXP-AUTO',
+            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
+            'lines' => [['lineType' => 'expense', 'description' => 'Service', 'quantity' => '1', 'lineGrossAmount' => '80.00']],
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/purchases/{$expenseId}/post", ['idempotencyKey' => 'expense-auto'], $headers)
+            ->assertOk()->assertJsonPath('data.paymentStatus', 'paid')->assertJsonPath('data.receiptStatus', 'not_applicable');
+
+        $assetId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
+            'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'ASSET-AUTO',
+            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'invoiceType' => 'other', 'debitAccountId' => $fixedAssetId,
+            'lines' => [['lineType' => 'asset', 'description' => 'Machine', 'quantity' => '1', 'lineGrossAmount' => '180.00']],
+        ], $headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/purchases/{$assetId}/post", ['idempotencyKey' => 'asset-auto'], $headers)
+            ->assertOk()->assertJsonPath('data.paymentStatus', 'paid')->assertJsonPath('data.receiptStatus', 'not_applicable');
+
+        $this->assertSame($beforeMovements, DB::table('stock_movements')->where('tenant_id', $tenant)->count());
+        $this->assertSame(2, DB::table('supplier_payments')->where('tenant_id', $tenant)->count());
+        $this->assertSame(2, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
+    }
+
+    public function test_branch_scoped_user_cannot_pay_purchase_from_another_branch_drawer(): void
+    {
+        [$tenant, $headers, $branchA, $invoiceId] = $this->unifiedInventoryFixture('auto-pay-branch-isolation');
+        $branchB = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Branch B', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('supplier_invoices')->where('id', $invoiceId)->update(['branch_id' => $branchB]);
+        $cashierHeaders = $this->cashierHeaders($tenant, $branchA, 'branch-a-only');
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'wrong-branch'], $cashierHeaders)->assertForbidden();
+        $this->assertSame('draft', DB::table('supplier_invoices')->where('id', $invoiceId)->value('status'));
+        $this->assertSame(0, DB::table('supplier_payments')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('purchase_receipts')->where('tenant_id', $tenant)->count());
+    }
+
+    public function test_failure_after_supplier_payment_rolls_back_inventory_payment_and_invoice(): void
+    {
+        [$tenant, $headers, $branchId, $invoiceId, $warehouseId, $itemId] = $this->unifiedInventoryFixture('payment-stage-failure');
+        DB::statement(<<<'SQL'
+            CREATE OR REPLACE FUNCTION reject_auto_purchase_voucher() RETURNS trigger AS $$
+            BEGIN
+                IF NEW.source_type = 'supplier_payment' THEN
+                    RAISE EXCEPTION 'forced voucher failure';
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql
+        SQL);
+        DB::statement('CREATE TRIGGER reject_auto_purchase_voucher BEFORE INSERT ON finance_documents FOR EACH ROW EXECUTE FUNCTION reject_auto_purchase_voucher()');
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", ['idempotencyKey' => 'forced-payment-stage-failure'], $headers)->assertServerError();
+
+        $this->assertSame('draft', DB::table('supplier_invoices')->where('id', $invoiceId)->value('status'));
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $tenant)->where('inventory_item_id', $itemId)->count());
+        $this->assertSame(0, DB::table('purchase_receipts')->where('tenant_id', $tenant)->count());
+        $this->assertSame(0, DB::table('supplier_payments')->where('tenant_id', $tenant)->count());
+        $this->assertNull(DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $itemId)->first());
+    }
+
+    public function test_purchase_numbers_are_server_generated_unique_and_supplier_reference_is_optional_and_separate(): void
+    {
+        $tenant = $this->tenant('purchase-auto-number');
+        $headers = $this->headers($tenant);
+        $supplierId = $this->supplier($headers);
+        $categoryId = $this->expenseCategory($tenant, $headers, '6140');
+
+        $payload = [
+            'supplierId' => $supplierId,
+            'invoiceDate' => '2026-09-17',
+            'dueDate' => '2026-09-17',
+            'invoiceType' => 'expense',
+            'expenseCategoryId' => $categoryId,
+            'lines' => [[
+                'lineType' => 'expense',
+                'description' => 'Service',
+                'quantity' => '1.000',
+                'unitCost' => '10.0000',
+            ]],
+        ];
+
+        $first = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)
+            ->assertCreated()->json('data');
+        $second = $this->postJson('/api/v1/finance/supplier-invoices', $payload + [
+            'supplierInvoiceNumber' => 'SUPPLIER-77',
+        ], $headers)->assertCreated()->json('data');
+
+        $this->assertMatchesRegularExpression('/^PI-\d{4}-\d{6}$/', $first['invoiceNumber']);
+        $this->assertMatchesRegularExpression('/^PI-\d{4}-\d{6}$/', $second['invoiceNumber']);
+        $this->assertNotSame($first['invoiceNumber'], $second['invoiceNumber']);
+        $this->assertNull($first['supplierInvoiceNumber']);
+        $this->assertSame('SUPPLIER-77', $second['supplierInvoiceNumber']);
+    }
+
+    public function test_line_gross_is_derived_from_quantity_and_four_decimal_unit_cost(): void
+    {
+        $tenant = $this->tenant('purchase-derived-gross');
+        $headers = $this->headers($tenant);
+        $supplierId = $this->supplier($headers);
+        $categoryId = $this->expenseCategory($tenant, $headers, '6140');
+
+        $invoice = $this->postJson('/api/v1/finance/supplier-invoices', [
+            'supplierId' => $supplierId,
+            'invoiceDate' => '2026-09-17',
+            'dueDate' => '2026-09-17',
+            'invoiceType' => 'expense',
+            'expenseCategoryId' => $categoryId,
+            'lines' => [[
+                'lineType' => 'expense',
+                'description' => 'Precision service',
+                'quantity' => '12.000',
+                'unitCost' => '21.6667',
+                'lineGrossAmount' => '999.99',
+            ]],
+        ], $headers)->assertCreated()->json('data');
+
+        $this->assertSame('260.00', $invoice['subtotal']);
+        $this->assertSame('260.00', $invoice['lines'][0]['lineGrossAmount']);
+        $this->assertSame('21.6667', $invoice['lines'][0]['unitPrice']);
+    }
+
     // --- helpers -----------------------------------------------------
 
     private function tenant(string $slug): int
     {
         $tenantId = DB::table('tenants')->insertGetId(['name' => ucfirst($slug), 'slug' => $slug, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('branches')->insert(['tenant_id' => $tenantId, 'name' => 'Central Branch', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
-        app(\App\Services\FinancialSetupService::class)->ensureForTenant($tenantId);
+        app(FinancialSetupService::class)->ensureForTenant($tenantId);
 
         return (int) $tenantId;
     }
@@ -426,8 +665,10 @@ class PurchasingPhase2ApiTest extends TestCase
 
     private function warehouse(array $headers, ?string $code = null): int
     {
+        $branchId = (int) DB::table('branches')->where('tenant_id', $headers['X-Tenant-Id'])->value('id');
+
         return (int) $this->postJson('/api/v1/warehouses', [
-            'name' => 'Central Warehouse '.uniqid(), 'code' => $code ?? 'WH-'.strtoupper(uniqid()), 'type' => 'central', 'branchId' => null, 'isActive' => true,
+            'name' => 'Warehouse '.uniqid(), 'code' => $code ?? 'WH-'.strtoupper(uniqid()), 'type' => 'other', 'branchId' => $branchId, 'isActive' => true,
         ], $headers)->assertCreated()->json('data.id');
     }
 
@@ -464,5 +705,37 @@ class PurchasingPhase2ApiTest extends TestCase
         $this->postJson("/api/v1/finance/supplier-invoices/{$id}/post", ['idempotencyKey' => 'inv-post-'.uniqid()], $headers)->assertOk();
 
         return $id;
+    }
+
+    private function unifiedInventoryFixture(string $slug): array
+    {
+        $tenant = $this->tenant($slug);
+        $headers = $this->headers($tenant);
+        $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+        DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->update(['branch_id' => $branchId]);
+        $supplierId = $this->supplier($headers);
+        $warehouseId = $this->warehouse($headers);
+        $itemId = $this->inventoryItem($headers, 'kg', [$warehouseId]);
+        $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
+            'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'AUTO-'.uniqid(),
+            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'invoiceType' => 'inventory',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Material', 'inventoryItemId' => $itemId, 'quantity' => '12.000', 'lineGrossAmount' => '260.00', 'warehouseId' => $warehouseId]],
+        ], $headers)->assertCreated()->json('data.id');
+
+        return [$tenant, $headers, $branchId, $invoiceId, $warehouseId, $itemId];
+    }
+
+    private function cashierHeaders(int $tenant, int $branchId, string $tag): array
+    {
+        $userId = (int) DB::table('users')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'Cashier', 'email' => "{$tag}-{$tenant}@example.test",
+            'password' => bcrypt('password'), 'role' => 'cashier', 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('user_branches')->insert(['tenant_id' => $tenant, 'user_id' => $userId, 'branch_id' => $branchId, 'created_at' => now(), 'updated_at' => now()]);
+        $token = "{$tag}-{$tenant}-{$userId}";
+        DB::table('api_tokens')->insert(['tenant_id' => $tenant, 'user_id' => $userId, 'name' => $tag, 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return ['Authorization' => "Bearer {$token}", 'X-Tenant-Id' => $tenant];
     }
 }

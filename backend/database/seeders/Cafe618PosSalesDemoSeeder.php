@@ -32,7 +32,7 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
 
     private int $branchId;
 
-    private int $mainWarehouseId;
+    private int $salesWarehouseId;
 
     private Carbon $today;
 
@@ -54,16 +54,15 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
         }
         $this->ownerId = (int) $this->owner->id;
         $this->branchId = (int) $branch->id;
-        app(FinancialSetupService::class)->ensureForTenant($this->tenantId, $this->branchId, $this->ownerId);
-        app(FinancialSetupService::class)->ensureBranchMainWarehouse($this->tenantId, $this->branchId, $this->ownerId);
-        app(FinancialSetupService::class)->ensureBranchPosWarehouse($this->tenantId, $this->branchId, $this->ownerId);
+        app(FinancialSetupService::class)->ensureForTenant($this->tenantId, null, $this->ownerId);
+        $this->ensureDemoWarehouses($branch->name);
         // The POS scenario reuses the standard demo products. Calling the
         // catalog seeder keeps this entry point usable on a fresh local DB
         // without creating a parallel product catalog.
         $this->call(MenuCatalogSeeder::class);
-        $this->mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $this->tenantId)->where('code', 'BR-'.$this->branchId.'-MAIN')->value('id');
-        if (! $this->mainWarehouseId) {
-            throw new RuntimeException('Cafe 618 POS branch main warehouse is missing.');
+        $this->salesWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $this->tenantId)->where('code', 'BR-'.$this->branchId.'-BAR')->value('id');
+        if (! $this->salesWarehouseId) {
+            throw new RuntimeException('Cafe 618 POS branch bar warehouse is missing.');
         }
 
         $schedule = $this->schedule();
@@ -96,6 +95,27 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
         } finally {
             Carbon::setTestNow($previousTestNow);
         }
+    }
+
+    /**
+     * Matches Cafe618InventoryOperationsDemoSeeder's showcase warehouses
+     * exactly (same codes, idempotent updateOrInsert) so both seeders agree
+     * on the branch's demo warehouse set regardless of run order.
+     */
+    private function ensureDemoWarehouses(string $branchName): void
+    {
+        $now = now();
+        foreach ([
+            ['code' => 'BR-'.$this->branchId.'-BAR', 'name' => $branchName.' — مخزن البار', 'type' => 'bar'],
+            ['code' => 'BR-'.$this->branchId.'-KITCHEN', 'name' => $branchName.' — مخزن المطبخ', 'type' => 'kitchen'],
+        ] as $warehouse) {
+            DB::table('warehouses')->updateOrInsert(
+                ['tenant_id' => $this->tenantId, 'code' => $warehouse['code']],
+                ['branch_id' => $this->branchId, 'name' => $warehouse['name'], 'type' => $warehouse['type'], 'is_active' => true, 'updated_by' => $this->ownerId, 'updated_at' => $now, 'created_by' => $this->ownerId, 'created_at' => $now],
+            );
+        }
+        $barId = (int) DB::table('warehouses')->where('tenant_id', $this->tenantId)->where('code', 'BR-'.$this->branchId.'-BAR')->value('id');
+        DB::table('branches')->where('tenant_id', $this->tenantId)->where('id', $this->branchId)->update(['pos_inventory_warehouse_id' => $barId, 'updated_at' => $now]);
     }
 
     /** @return list<array{daysAgo:int,index:int,productKey:string,method:string,quantity:int}> */
@@ -150,7 +170,7 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
             $quantity = ceil($info['quantity'] * 1.5 * 1000) / 1000;
             $unitCost = (string) (DB::table('inventory_items')->where('id', $itemId)->value('latest_unit_cost') ?: '1.0000');
             $posting->post($this->request('/api/v1/inventory/movements', []), $this->tenantId, [
-                'warehouseId' => $this->mainWarehouseId,
+                'warehouseId' => $this->salesWarehouseId,
                 'itemId' => $itemId,
                 'type' => 'stock_in',
                 'quantity' => number_format($quantity, 3, '.', ''),
@@ -182,7 +202,7 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
             DB::table('products')->where('id', $id)->update(['is_stock_tracked' => true, 'updated_at' => now()]);
             DB::table('product_inventory_settings')->updateOrInsert(
                 ['tenant_id' => $this->tenantId, 'product_id' => $id, 'branch_id' => $this->branchId],
-                ['warehouse_id' => $this->mainWarehouseId, 'created_at' => now(), 'updated_at' => now()],
+                ['warehouse_id' => $this->salesWarehouseId, 'created_at' => now(), 'updated_at' => now()],
             );
             $products[$key] = $id;
         }

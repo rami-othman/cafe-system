@@ -30,6 +30,7 @@ final class FinanceDocumentService
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint): object {
             if ($key && ($existing = $this->byKey($tenantId, $key, true))) {
                 $this->assertFingerprint($existing, $fingerprint);
+
                 return $existing;
             }
             $now = now();
@@ -67,8 +68,90 @@ final class FinanceDocumentService
             }
             $document = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.draft_created', 'finance_document', $id, [], ['number' => $document->document_number, 'type' => $document->document_type], $document->branch_id, $actorId);
+
             return $document;
         });
+    }
+
+    /**
+     * Creates the visible payment-voucher representation of a supplier
+     * payment without posting a second journal. The supplier payment is the
+     * money/AP source of truth; both records point at its one journal entry.
+     */
+    public function createPostedSupplierPaymentVoucher(
+        Request $request,
+        int $tenantId,
+        object $payment,
+        object $invoice,
+        ?int $shiftId,
+        ?int $actorId,
+    ): object {
+        $existing = DB::table('finance_documents')
+            ->where('tenant_id', $tenantId)
+            ->where('source_type', 'supplier_payment')
+            ->where('source_id', $payment->id)
+            ->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $location = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $payment->financial_location_id)->first();
+        $payableAccountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '2000')->where('is_active', true)->value('id');
+        if (! $location || ! $payableAccountId || ! $payment->journal_entry_id) {
+            throw ValidationException::withMessages(['payment' => 'تعذر إنشاء سند الدفع التلقائي بسبب إعدادات مالية غير مكتملة.']);
+        }
+
+        $now = now();
+        $description = "دفع تلقائي لفاتورة الشراء {$invoice->internal_reference}";
+        $id = (int) DB::table('finance_documents')->insertGetId([
+            'tenant_id' => $tenantId,
+            'branch_id' => $payment->branch_id,
+            'document_number' => $this->nextNumber($tenantId, 'payment', $payment->payment_date),
+            'document_type' => 'payment',
+            'status' => 'posted',
+            'document_date' => $payment->payment_date,
+            'financial_location_id' => $payment->financial_location_id,
+            'shift_id' => $shiftId,
+            'counterparty_type' => 'supplier',
+            'counterparty_id' => $payment->supplier_id,
+            'currency_code' => 'SYP',
+            'exchange_rate' => '1.000000',
+            'amount' => $payment->amount,
+            'external_reference' => $invoice->internal_reference,
+            'source_type' => 'supplier_payment',
+            'source_id' => $payment->id,
+            'purchase_invoice_id' => $invoice->id,
+            'description' => $description,
+            'journal_entry_id' => $payment->journal_entry_id,
+            'created_by' => $actorId,
+            'posted_by' => $actorId,
+            'posted_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('finance_document_lines')->insert([
+            [
+                'tenant_id' => $tenantId, 'finance_document_id' => $id,
+                'financial_account_id' => $location->financial_account_id, 'line_number' => 1,
+                'description' => $description, 'debit' => '0.00', 'credit' => $payment->amount,
+                'reference' => $invoice->internal_reference, 'created_at' => $now, 'updated_at' => $now,
+            ],
+            [
+                'tenant_id' => $tenantId, 'finance_document_id' => $id,
+                'financial_account_id' => $payableAccountId, 'line_number' => 2,
+                'description' => $description, 'debit' => $payment->amount, 'credit' => '0.00',
+                'reference' => $invoice->internal_reference, 'created_at' => $now, 'updated_at' => $now,
+            ],
+        ]);
+        $document = $this->find($tenantId, $id);
+        $this->audit->record($request, $tenantId, 'payment_voucher.created', 'finance_document', $id, [], [
+            'invoiceId' => (int) $invoice->id,
+            'supplierPaymentId' => (int) $payment->id,
+            'shiftId' => $shiftId,
+            'amount' => $payment->amount,
+        ], $payment->branch_id ? (int) $payment->branch_id : null, $actorId);
+
+        return $document;
     }
 
     public function post(Request $request, int $tenantId, int $id, ?int $actorId): object
@@ -93,6 +176,7 @@ final class FinanceDocumentService
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'posted', 'journal_entry_id' => $journalId, 'posted_by' => $actorId, 'posted_at' => now(), 'updated_at' => now()]);
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.posted', 'finance_document', $id, [], ['number' => $result->document_number, 'journalEntryId' => $journalId], $result->branch_id, $actorId);
+
             return $result;
         });
     }
@@ -105,6 +189,9 @@ final class FinanceDocumentService
             if ($document->status !== 'posted' || ! $document->journal_entry_id || $document->reversal_journal_entry_id) {
                 throw ValidationException::withMessages(['document' => 'Only an unreversed posted voucher can be reversed.']);
             }
+            if (($document->source_type ?? null) === 'supplier_payment') {
+                throw ValidationException::withMessages(['document' => 'Reverse the linked supplier payment so its invoice allocation and voucher remain consistent.']);
+            }
             FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
             $reversal = $this->entries->reverse($request, $tenantId, (int) $document->journal_entry_id, $actorId);
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update([
@@ -113,6 +200,7 @@ final class FinanceDocumentService
             ]);
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.reversed', 'finance_document', $id, [], ['number' => $result->document_number, 'reversalJournalEntryId' => $reversal, 'reason' => $reason], $result->branch_id, $actorId);
+
             return $result;
         });
     }
@@ -121,6 +209,7 @@ final class FinanceDocumentService
     {
         $row = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->first();
         abort_unless($row, 404, 'Finance document not found.');
+
         return $row;
     }
 
@@ -147,28 +236,39 @@ final class FinanceDocumentService
                 'reference' => $line['reference'] ?? null,
             ];
         }
+
         return $result;
     }
 
     private function validatePayload(int $tenantId, array $data, ?int $actorId): void
     {
         $amount = Money::cents($data['amount'], 'amount');
-        if ($amount <= 0) throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+        if ($amount <= 0) {
+            throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+        }
         $location = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $data['financialLocationId'])->where('is_active', true)->first();
-        if (! $location) throw ValidationException::withMessages(['financialLocationId' => 'The selected cash or bank account is not active for this tenant.']);
+        if (! $location) {
+            throw ValidationException::withMessages(['financialLocationId' => 'The selected cash or bank account is not active for this tenant.']);
+        }
         $branchId = $data['branchId'] ?? $location->branch_id;
         if ($branchId && ! DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->exists()) {
             throw ValidationException::withMessages(['branchId' => 'The selected branch does not belong to this tenant.']);
         }
         FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId ? (int) $branchId : null);
-        if (($data['counterpartyType'] ?? null) === 'supplier') throw ValidationException::withMessages(['counterpartyType' => 'Supplier invoice payments must use the existing supplier payment workflow to avoid double posting.']);
+        if (($data['counterpartyType'] ?? null) === 'supplier') {
+            throw ValidationException::withMessages(['counterpartyType' => 'Supplier invoice payments must use the existing supplier payment workflow to avoid double posting.']);
+        }
         $distributed = 0;
         foreach ($data['lines'] as $index => $line) {
             $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $line['accountId'])->where('is_active', true)->whereNull('deleted_at')->exists();
-            if (! $account) throw ValidationException::withMessages(["lines.$index.accountId" => 'The selected account is not active for this tenant.']);
+            if (! $account) {
+                throw ValidationException::withMessages(["lines.$index.accountId" => 'The selected account is not active for this tenant.']);
+            }
             $distributed += Money::cents($line['amount'], "lines.$index.amount");
         }
-        if ($distributed !== $amount) throw ValidationException::withMessages(['lines' => 'The distributed amount must exactly equal the voucher amount.']);
+        if ($distributed !== $amount) {
+            throw ValidationException::withMessages(['lines' => 'The distributed amount must exactly equal the voucher amount.']);
+        }
     }
 
     private function nextNumber(int $tenantId, string $type, string $date): string
@@ -176,18 +276,24 @@ final class FinanceDocumentService
         $prefix = $type === 'receipt' ? 'RV' : 'PV';
         DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
         $count = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('document_type', $type)->whereYear('document_date', substr($date, 0, 4))->count() + 1;
+
         return $prefix.'-'.substr($date, 0, 4).'-'.str_pad((string) $count, 6, '0', STR_PAD_LEFT);
     }
 
     private function byKey(int $tenantId, string $key, bool $lock = false): ?object
     {
         $query = DB::table('finance_documents')->where('tenant_id', $tenantId)->where('idempotency_key', $key);
-        if ($lock) $query->lockForUpdate();
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
         return $query->first();
     }
 
     private function assertFingerprint(object $existing, ?string $fingerprint): void
     {
-        if ($fingerprint === null || ! $existing->idempotency_fingerprint || ! hash_equals($existing->idempotency_fingerprint, $fingerprint)) abort(409, 'This idempotency key was already used for a different voucher request.');
+        if ($fingerprint === null || ! $existing->idempotency_fingerprint || ! hash_equals($existing->idempotency_fingerprint, $fingerprint)) {
+            abort(409, 'This idempotency key was already used for a different voucher request.');
+        }
     }
 }

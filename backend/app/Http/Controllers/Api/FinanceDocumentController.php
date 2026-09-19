@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\FinanceDocumentService;
-use App\Support\FinancialActor;
 use App\Support\FinanceAccess;
+use App\Support\FinancialActor;
 use App\Support\Money;
 use App\Support\TenantContext;
 use Illuminate\Database\Query\Builder;
@@ -30,15 +30,22 @@ final class FinanceDocumentController extends Controller
             $query->where(fn (Builder $scope) => $scope->whereNull('documents.branch_id')->orWhereIn('documents.branch_id', FinancialActor::operationalBranchIds($actorId, $tenantId)));
         }
         foreach (['type' => 'documents.document_type', 'status' => 'documents.status', 'branchId' => 'documents.branch_id', 'financialLocationId' => 'documents.financial_location_id'] as $input => $column) {
-            if ($request->filled($input)) $query->where($column, $request->query($input));
+            if ($request->filled($input)) {
+                $query->where($column, $request->query($input));
+            }
         }
-        if ($request->filled('from')) $query->whereDate('documents.document_date', '>=', $request->query('from'));
-        if ($request->filled('to')) $query->whereDate('documents.document_date', '<=', $request->query('to'));
+        if ($request->filled('from')) {
+            $query->whereDate('documents.document_date', '>=', $request->query('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('documents.document_date', '<=', $request->query('to'));
+        }
         if ($request->filled('search')) {
             $term = '%'.strtolower((string) $request->query('search')).'%';
             $query->where(fn (Builder $items) => $items->whereRaw('LOWER(documents.document_number) LIKE ?', [$term])->orWhereRaw('LOWER(COALESCE(documents.description, \'\')) LIKE ?', [$term])->orWhereRaw('LOWER(COALESCE(documents.external_reference, \'\')) LIKE ?', [$term]));
         }
         $paginator = $query->orderByDesc('documents.document_date')->orderByDesc('documents.id')->paginate($this->perPage($request));
+
         return response()->json(['data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row, false, $request))->values(), 'meta' => $this->meta($paginator)]);
     }
 
@@ -47,6 +54,7 @@ final class FinanceDocumentController extends Controller
         $tenantId = TenantContext::id($request);
         $row = $this->documents->find($tenantId, $document);
         FinancialActor::assertBranchAccess(FinancialActor::id($request, $tenantId), $tenantId, $row->branch_id ? (int) $row->branch_id : null);
+
         return response()->json(['data' => $this->serialize($row, true, $request)]);
     }
 
@@ -56,6 +64,7 @@ final class FinanceDocumentController extends Controller
         FinanceAccess::authorize($request, $data['documentType'] === 'receipt' ? 'finance.receipts.create' : 'finance.payments.create');
         $tenantId = TenantContext::id($request);
         $row = $this->documents->createDraft($request, $tenantId, $data, FinancialActor::id($request, $tenantId));
+
         return response()->json(['data' => $this->serialize($row, true, $request)], 201);
     }
 
@@ -63,6 +72,7 @@ final class FinanceDocumentController extends Controller
     {
         $tenantId = TenantContext::id($request);
         $row = $this->documents->post($request, $tenantId, $document, FinancialActor::id($request, $tenantId));
+
         return response()->json(['data' => $this->serialize($row, true, $request)]);
     }
 
@@ -71,6 +81,7 @@ final class FinanceDocumentController extends Controller
         $data = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
         $tenantId = TenantContext::id($request);
         $row = $this->documents->reverse($request, $tenantId, $document, $data['reason'], FinancialActor::id($request, $tenantId));
+
         return response()->json(['data' => $this->serialize($row, true, $request)]);
     }
 
@@ -108,16 +119,24 @@ final class FinanceDocumentController extends Controller
             'amount' => Money::decimal(Money::cents($row->amount)), 'currencyCode' => $row->currency_code,
             'financialLocationId' => (int) $row->financial_location_id, 'description' => $row->description,
             'externalReference' => $row->external_reference, 'journalEntryId' => $row->journal_entry_id ? (int) $row->journal_entry_id : null,
+            'shiftId' => isset($row->shift_id) && $row->shift_id ? (int) $row->shift_id : null,
+            'sourceType' => $row->source_type ?? null, 'sourceId' => isset($row->source_id) && $row->source_id ? (int) $row->source_id : null,
+            'purchaseInvoiceId' => isset($row->purchase_invoice_id) && $row->purchase_invoice_id ? (int) $row->purchase_invoice_id : null,
             'reversalJournalEntryId' => $row->reversal_journal_entry_id ? (int) $row->reversal_journal_entry_id : null,
             'createdAt' => $row->created_at, 'postedAt' => $row->posted_at ?? null, 'reversedAt' => $row->reversed_at,
             'allowedActions' => $this->actions($row, $request),
         ];
-        if (isset($row->branch_name)) $data['branchName'] = $row->branch_name;
-        if (isset($row->location_name)) $data['financialLocationName'] = $row->location_name;
+        if (isset($row->branch_name)) {
+            $data['branchName'] = $row->branch_name;
+        }
+        if (isset($row->location_name)) {
+            $data['financialLocationName'] = $row->location_name;
+        }
         if ($detail) {
             $data += ['notes' => $row->notes, 'counterpartyType' => $row->counterparty_type, 'counterpartyId' => $row->counterparty_id, 'exchangeRate' => $row->exchange_rate, 'reversalReason' => $row->reversal_reason,
                 'lines' => DB::table('finance_document_lines as lines')->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')->where('lines.tenant_id', $tenantId)->where('lines.finance_document_id', $row->id)->orderBy('lines.line_number')->get(['lines.line_number', 'lines.description', 'lines.debit', 'lines.credit', 'lines.cost_center', 'lines.reference', 'accounts.id as account_id', 'accounts.code as account_code', 'accounts.name_ar as account_name_ar'])->map(fn (object $line) => ['lineNumber' => $line->line_number, 'accountId' => (int) $line->account_id, 'accountCode' => $line->account_code, 'accountNameAr' => $line->account_name_ar, 'description' => $line->description, 'debit' => $line->debit, 'credit' => $line->credit, 'costCenter' => $line->cost_center, 'reference' => $line->reference])->values()];
         }
+
         return $data;
     }
 
@@ -125,10 +144,23 @@ final class FinanceDocumentController extends Controller
     {
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
         $actions = [];
-        if ($row->status === 'draft' && isset($permissions['finance.vouchers.post'])) $actions[] = 'post';
-        if ($row->status === 'posted' && ! $row->reversal_journal_entry_id && isset($permissions['finance.vouchers.reverse'])) $actions[] = 'reverse';
+        if ($row->status === 'draft' && isset($permissions['finance.vouchers.post'])) {
+            $actions[] = 'post';
+        }
+        if ($row->status === 'posted' && ! $row->reversal_journal_entry_id && ($row->source_type ?? null) !== 'supplier_payment' && isset($permissions['finance.vouchers.reverse'])) {
+            $actions[] = 'reverse';
+        }
+
         return $actions;
     }
-    private function perPage(Request $request): int { return min(max((int) $request->query('perPage', 25), 1), 100); }
-    private function meta($paginator): array { return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()]; }
+
+    private function perPage(Request $request): int
+    {
+        return min(max((int) $request->query('perPage', 25), 1), 100);
+    }
+
+    private function meta($paginator): array
+    {
+        return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()];
+    }
 }

@@ -44,14 +44,17 @@ class PurchaseInvoiceLine {
   final String quantity;
   final String? conversionFactor;
   final String? baseQuantity;
+
   /// Server-derived: (lineGrossAmount - discount) / quantity. Display only — never sent as input.
   final String unitPrice;
   final String? lineGrossAmount;
   final String discountType;
   final String? discountValue;
   final String discountAmount;
+
   /// This line's proportional share of the whole-invoice discount (by value).
   final String allocatedDiscount;
+
   /// This line's proportional share of any capitalized additional charge — raises unitPrice, not lineTotal.
   final String allocatedLandedCost;
   final String taxAmount;
@@ -64,60 +67,54 @@ class PurchaseInvoiceLine {
   bool get hasRemainingToReceive =>
       isInventory && (double.tryParse(remainingQuantity ?? '0') ?? 0) > 0;
 
-  factory PurchaseInvoiceLine.fromJson(Map<String, dynamic> json) =>
-      PurchaseInvoiceLine(
-        id: readInt(json['id']) ?? 0,
-        lineNumber: readInt(json['lineNumber']) ?? 0,
-        lineType: readString(json['lineType']),
-        description: readString(json['description']),
-        inventoryItemId: readInt(json['inventoryItemId']),
-        inventoryItemName: readString(json['inventoryItemName']).isEmpty
-            ? null
-            : readString(json['inventoryItemName']),
-        purchaseUnit: readString(json['purchaseUnit']).isEmpty
-            ? null
-            : readString(json['purchaseUnit']),
-        baseUnit: readString(json['baseUnit']).isEmpty
-            ? null
-            : readString(json['baseUnit']),
-        quantity: readString(json['quantity']),
-        conversionFactor: readString(json['conversionFactor']).isEmpty
-            ? null
-            : readString(json['conversionFactor']),
-        baseQuantity: readString(json['baseQuantity']).isEmpty
-            ? null
-            : readString(json['baseQuantity']),
-        unitPrice: readString(json['unitPrice']),
-        lineGrossAmount: json['lineGrossAmount'] == null
-            ? null
-            : readString(json['lineGrossAmount']),
-        discountType: readString(json['discountType'], fallback: 'fixed')
-                .isEmpty
-            ? 'fixed'
-            : readString(json['discountType'], fallback: 'fixed'),
-        discountValue: json['discountValue'] == null
-            ? null
-            : readString(json['discountValue']),
-        discountAmount: readString(json['discountAmount'], fallback: '0.00'),
-        allocatedDiscount: readString(
-          json['allocatedDiscount'],
-          fallback: '0.00',
-        ),
-        allocatedLandedCost: readString(
-          json['allocatedLandedCost'],
-          fallback: '0.00',
-        ),
-        taxAmount: readString(json['taxAmount'], fallback: '0.00'),
-        lineTotal: readString(json['lineTotal']),
-        warehouseId: readInt(json['warehouseId']),
-        receivedQuantity: readString(
-          json['receivedQuantity'],
-          fallback: '0.000',
-        ),
-        remainingQuantity: json['remainingQuantity'] == null
-            ? null
-            : readString(json['remainingQuantity']),
-      );
+  factory PurchaseInvoiceLine.fromJson(
+    Map<String, dynamic> json,
+  ) => PurchaseInvoiceLine(
+    id: readInt(json['id']) ?? 0,
+    lineNumber: readInt(json['lineNumber']) ?? 0,
+    lineType: readString(json['lineType']),
+    description: readString(json['description']),
+    inventoryItemId: readInt(json['inventoryItemId']),
+    inventoryItemName: readString(json['inventoryItemName']).isEmpty
+        ? null
+        : readString(json['inventoryItemName']),
+    purchaseUnit: readString(json['purchaseUnit']).isEmpty
+        ? null
+        : readString(json['purchaseUnit']),
+    baseUnit: readString(json['baseUnit']).isEmpty
+        ? null
+        : readString(json['baseUnit']),
+    quantity: readString(json['quantity']),
+    conversionFactor: readString(json['conversionFactor']).isEmpty
+        ? null
+        : readString(json['conversionFactor']),
+    baseQuantity: readString(json['baseQuantity']).isEmpty
+        ? null
+        : readString(json['baseQuantity']),
+    unitPrice: readString(json['unitPrice']),
+    lineGrossAmount: json['lineGrossAmount'] == null
+        ? null
+        : readString(json['lineGrossAmount']),
+    discountType: readString(json['discountType'], fallback: 'fixed').isEmpty
+        ? 'fixed'
+        : readString(json['discountType'], fallback: 'fixed'),
+    discountValue: json['discountValue'] == null
+        ? null
+        : readString(json['discountValue']),
+    discountAmount: readString(json['discountAmount'], fallback: '0.00'),
+    allocatedDiscount: readString(json['allocatedDiscount'], fallback: '0.00'),
+    allocatedLandedCost: readString(
+      json['allocatedLandedCost'],
+      fallback: '0.00',
+    ),
+    taxAmount: readString(json['taxAmount'], fallback: '0.00'),
+    lineTotal: readString(json['lineTotal']),
+    warehouseId: readInt(json['warehouseId']),
+    receivedQuantity: readString(json['receivedQuantity'], fallback: '0.000'),
+    remainingQuantity: json['remainingQuantity'] == null
+        ? null
+        : readString(json['remainingQuantity']),
+  );
 }
 
 /// An additional charge (freight, hospitality, ...) attached to an invoice.
@@ -237,6 +234,7 @@ class PurchaseReceipt {
   final int id;
   final String receiptNumber;
   final String receiptDate;
+
   /// draft | posted
   final String status;
   final String? reference;
@@ -339,6 +337,8 @@ class PurchasePayment {
     required this.paymentDate,
     required this.status,
     required this.amount,
+    this.voucherId,
+    this.voucherNumber,
   });
 
   final int paymentId;
@@ -346,6 +346,8 @@ class PurchasePayment {
   final String paymentDate;
   final String status;
   final String amount;
+  final int? voucherId;
+  final String? voucherNumber;
 
   factory PurchasePayment.fromJson(Map<String, dynamic> json) =>
       PurchasePayment(
@@ -354,6 +356,40 @@ class PurchasePayment {
         paymentDate: readString(json['paymentDate']),
         status: readString(json['status']),
         amount: readString(json['amount']),
+        voucherId: readInt(json['voucherId']),
+        voucherNumber: readString(json['voucherNumber']).isEmpty
+            ? null
+            : readString(json['voucherNumber']),
+      );
+}
+
+class PurchasePostingPreview {
+  const PurchasePostingPreview({
+    required this.amount,
+    required this.branchId,
+    required this.financialLocationId,
+    required this.financialLocationName,
+    this.shiftId,
+    this.shiftNumber,
+  });
+
+  final String amount;
+  final int branchId;
+  final int financialLocationId;
+  final String financialLocationName;
+  final int? shiftId;
+  final String? shiftNumber;
+
+  factory PurchasePostingPreview.fromJson(Map<String, dynamic> json) =>
+      PurchasePostingPreview(
+        amount: readString(json['amount']),
+        branchId: readInt(json['branchId']) ?? 0,
+        financialLocationId: readInt(json['financialLocationId']) ?? 0,
+        financialLocationName: readString(json['financialLocationName']),
+        shiftId: readInt(json['shiftId']),
+        shiftNumber: readString(json['shiftNumber']).isEmpty
+            ? null
+            : readString(json['shiftNumber']),
       );
 }
 
@@ -387,6 +423,7 @@ class PurchaseInvoice {
     this.chargesAmount = '0.00',
     this.charges = const <PurchaseInvoiceCharge>[],
     this.receiptStatus = 'not_applicable',
+    this.supplierInvoiceNumber,
     this.branchId,
     this.branchName,
     this.invoiceTypeId,
@@ -411,12 +448,14 @@ class PurchaseInvoice {
   final int id;
   final String internalReference;
   final String invoiceNumber;
+  final String? supplierInvoiceNumber;
   final int supplierId;
   final String supplierName;
   final int? branchId;
   final String? branchName;
   final String invoiceDate;
   final String dueDate;
+
   /// inventory | expense | asset | other — derived server-side from the
   /// invoice's lines when present, else its legacy header invoice type.
   final String purchaseType;
@@ -436,10 +475,13 @@ class PurchaseInvoice {
   final String totalAmount;
   final String paidAmount;
   final String remainingAmount;
+
   /// draft | posted | cancelled
   final String documentStatus;
+
   /// not_applicable | unpaid | partial | paid
   final String paymentStatus;
+
   /// not_applicable | not_received | partially_received | received —
   /// completely independent from paymentStatus, maintained by
   /// PurchaseReceivingService as Goods Receipts are posted.
@@ -459,88 +501,90 @@ class PurchaseInvoice {
   final List<PurchaseReceiptSummary> receipts;
 
   bool get isDraft => documentStatus == 'draft';
-  bool get hasInventoryLines => lines.any((PurchaseInvoiceLine l) => l.isInventory);
+  bool get hasInventoryLines =>
+      lines.any((PurchaseInvoiceLine l) => l.isInventory);
   bool get canReceive => allowedActions.contains('receive');
 
-  factory PurchaseInvoice.fromJson(Map<String, dynamic> json) =>
-      PurchaseInvoice(
-        id: readInt(json['id']) ?? 0,
-        internalReference: readString(json['internalReference']),
-        invoiceNumber: readString(json['invoiceNumber']),
-        supplierId: readInt(json['supplierId']) ?? 0,
-        supplierName: readString(json['supplierName']),
-        branchId: readInt(json['branchId']),
-        branchName: readString(json['branchName']).isEmpty
-            ? null
-            : readString(json['branchName']),
-        invoiceDate: readString(json['invoiceDate']),
-        dueDate: readString(json['dueDate']),
-        purchaseType: readString(json['purchaseType']),
-        invoiceTypeId: readInt(json['invoiceTypeId']),
-        invoiceTypeName: readString(json['invoiceTypeName']).isEmpty
-            ? null
-            : readString(json['invoiceTypeName']),
-        invoiceGroupName: readString(json['invoiceGroupName']).isEmpty
-            ? null
-            : readString(json['invoiceGroupName']),
-        debitAccountId: readInt(json['debitAccountId']),
-        debitAccountCode: readString(json['debitAccountCode']).isEmpty
-            ? null
-            : readString(json['debitAccountCode']),
-        debitAccountName: readString(json['debitAccountName']).isEmpty
-            ? null
-            : readString(json['debitAccountName']),
-        subtotal: readString(json['subtotal']),
-        taxAmount: readString(json['taxAmount']),
-        discountType: readString(json['discountType'], fallback: 'fixed')
-                .isEmpty
-            ? 'fixed'
-            : readString(json['discountType'], fallback: 'fixed'),
-        discountValue: json['discountValue'] == null
-            ? null
-            : readString(json['discountValue']),
-        discountAmount: readString(json['discountAmount'], fallback: '0.00'),
-        chargesAmount: readString(json['chargesAmount'], fallback: '0.00'),
-        charges: readMapList(
-          json['charges'],
-        ).map(PurchaseInvoiceCharge.fromJson).toList(growable: false),
-        totalAmount: readString(json['totalAmount']),
-        paidAmount: readString(json['paidAmount'], fallback: '0.00'),
-        remainingAmount: readString(json['remainingAmount']),
-        documentStatus: readString(json['documentStatus']),
-        paymentStatus: readString(json['paymentStatus']),
-        receiptStatus: readString(
-          json['receiptStatus'],
-          fallback: 'not_applicable',
-        ),
-        status: readString(json['status']),
-        isOverdue: readBool(json['isOverdue']),
-        description: readString(json['description']).isEmpty
-            ? null
-            : readString(json['description']),
-        notes: readString(json['notes']).isEmpty
-            ? null
-            : readString(json['notes']),
-        createdByName: readString(json['createdByName']).isEmpty
-            ? null
-            : readString(json['createdByName']),
-        journalEntryId: readInt(json['journalEntryId']),
-        reversalJournalEntryId: readInt(json['reversalJournalEntryId']),
-        postedAt: readString(json['postedAt']).isEmpty
-            ? null
-            : readString(json['postedAt']),
-        createdAt: readString(json['createdAt']).isEmpty
-            ? null
-            : readString(json['createdAt']),
-        allowedActions: readStringList(json['allowedActions']),
-        lines: readMapList(
-          json['lines'],
-        ).map(PurchaseInvoiceLine.fromJson).toList(growable: false),
-        payments: readMapList(
-          json['payments'],
-        ).map(PurchasePayment.fromJson).toList(growable: false),
-        receipts: readMapList(
-          json['receipts'],
-        ).map(PurchaseReceiptSummary.fromJson).toList(growable: false),
-      );
+  factory PurchaseInvoice.fromJson(
+    Map<String, dynamic> json,
+  ) => PurchaseInvoice(
+    id: readInt(json['id']) ?? 0,
+    internalReference: readString(json['internalReference']),
+    invoiceNumber: readString(json['invoiceNumber']),
+    supplierInvoiceNumber: readString(json['supplierInvoiceNumber']).isEmpty
+        ? null
+        : readString(json['supplierInvoiceNumber']),
+    supplierId: readInt(json['supplierId']) ?? 0,
+    supplierName: readString(json['supplierName']),
+    branchId: readInt(json['branchId']),
+    branchName: readString(json['branchName']).isEmpty
+        ? null
+        : readString(json['branchName']),
+    invoiceDate: readString(json['invoiceDate']),
+    dueDate: readString(json['dueDate']),
+    purchaseType: readString(json['purchaseType']),
+    invoiceTypeId: readInt(json['invoiceTypeId']),
+    invoiceTypeName: readString(json['invoiceTypeName']).isEmpty
+        ? null
+        : readString(json['invoiceTypeName']),
+    invoiceGroupName: readString(json['invoiceGroupName']).isEmpty
+        ? null
+        : readString(json['invoiceGroupName']),
+    debitAccountId: readInt(json['debitAccountId']),
+    debitAccountCode: readString(json['debitAccountCode']).isEmpty
+        ? null
+        : readString(json['debitAccountCode']),
+    debitAccountName: readString(json['debitAccountName']).isEmpty
+        ? null
+        : readString(json['debitAccountName']),
+    subtotal: readString(json['subtotal']),
+    taxAmount: readString(json['taxAmount']),
+    discountType: readString(json['discountType'], fallback: 'fixed').isEmpty
+        ? 'fixed'
+        : readString(json['discountType'], fallback: 'fixed'),
+    discountValue: json['discountValue'] == null
+        ? null
+        : readString(json['discountValue']),
+    discountAmount: readString(json['discountAmount'], fallback: '0.00'),
+    chargesAmount: readString(json['chargesAmount'], fallback: '0.00'),
+    charges: readMapList(
+      json['charges'],
+    ).map(PurchaseInvoiceCharge.fromJson).toList(growable: false),
+    totalAmount: readString(json['totalAmount']),
+    paidAmount: readString(json['paidAmount'], fallback: '0.00'),
+    remainingAmount: readString(json['remainingAmount']),
+    documentStatus: readString(json['documentStatus']),
+    paymentStatus: readString(json['paymentStatus']),
+    receiptStatus: readString(
+      json['receiptStatus'],
+      fallback: 'not_applicable',
+    ),
+    status: readString(json['status']),
+    isOverdue: readBool(json['isOverdue']),
+    description: readString(json['description']).isEmpty
+        ? null
+        : readString(json['description']),
+    notes: readString(json['notes']).isEmpty ? null : readString(json['notes']),
+    createdByName: readString(json['createdByName']).isEmpty
+        ? null
+        : readString(json['createdByName']),
+    journalEntryId: readInt(json['journalEntryId']),
+    reversalJournalEntryId: readInt(json['reversalJournalEntryId']),
+    postedAt: readString(json['postedAt']).isEmpty
+        ? null
+        : readString(json['postedAt']),
+    createdAt: readString(json['createdAt']).isEmpty
+        ? null
+        : readString(json['createdAt']),
+    allowedActions: readStringList(json['allowedActions']),
+    lines: readMapList(
+      json['lines'],
+    ).map(PurchaseInvoiceLine.fromJson).toList(growable: false),
+    payments: readMapList(
+      json['payments'],
+    ).map(PurchasePayment.fromJson).toList(growable: false),
+    receipts: readMapList(
+      json['receipts'],
+    ).map(PurchaseReceiptSummary.fromJson).toList(growable: false),
+  );
 }

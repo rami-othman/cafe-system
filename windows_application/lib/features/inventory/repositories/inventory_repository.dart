@@ -23,14 +23,14 @@ class InventoryRepository {
       await _api.get(
             'inventory/dashboard',
             queryParameters: <String, dynamic>{
-              if (branchId case final int value) 'branch_id': value,
-              if (warehouseId case final int value) 'warehouse_id': value,
+              if (branchId case final int value) 'branchId': value,
+              if (warehouseId case final int value) 'warehouseId': value,
               if (from case final String value) 'from': value,
               if (to case final String value) 'to': value,
               if (search != null && search.isNotEmpty) 'search': search,
               if (movementType != null && movementType.isNotEmpty)
-                'movement_type': movementType,
-              if (trendDays case final int value) 'trend_days': value,
+                'movementType': movementType,
+              if (trendDays case final int value) 'trendDays': value,
               // Query parameters arrive at Laravel as strings; `1`/`0` are
               // accepted by its boolean validator while `true`/`false` are not.
               'compare_previous': comparePrevious ? '1' : '0',

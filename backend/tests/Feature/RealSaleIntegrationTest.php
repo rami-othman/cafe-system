@@ -24,39 +24,40 @@ class RealSaleIntegrationTest extends TestCase
             ->assertOk()
             ->json('data');
 
+        // The order's warehouse is an immutable snapshot taken at order
+        // creation (PosOrderController), so deactivating that specific
+        // warehouse afterward is an "invalid" order snapshot, not "no
+        // warehouse was ever resolved" — the resolver never silently
+        // re-picks a different one behind the order's back.
         $this->assertFalse($summary['canPay']);
-        $this->assertSame('WAREHOUSE_NOT_CONFIGURED', $summary['blockerCode']);
+        $this->assertSame('POS_WAREHOUSE_INVALID', $summary['blockerCode']);
         $this->assertSame(
-            'No active branch-main warehouse is configured. Configure one before paying.',
+            'مخزن نقطة البيع المحدد غير صالح أو لا يتبع لهذا الفرع.',
             $summary['blockedReason'],
         );
     }
 
-    public function test_payment_summary_blocks_an_inventory_sale_with_ambiguous_branch_main_warehouses(): void
+    public function test_adding_a_second_warehouse_to_a_branch_never_disturbs_an_existing_explicit_pos_configuration(): void
     {
         $scenario = $this->publishedOrderScenario('1000.000');
         $branchId = (int) DB::table('orders')->where('id', $scenario['orderId'])->value('branch_id');
+        // Branch creation always sets an explicit pos_inventory_warehouse_id
+        // for its one seeded warehouse — adding a second warehouse later
+        // must never create ambiguity for a branch that already has an
+        // explicit configuration; the override always wins.
         DB::table('warehouses')->insert([
             'tenant_id' => $scenario['tenant'],
             'branch_id' => $branchId,
-            'name' => 'Duplicate Main Store',
-            'code' => 'DUPLICATE-MAIN-'.str()->random(8),
-            'type' => 'branch_main',
+            'name' => 'Second Store',
+            'code' => 'SECOND-STORE-'.str()->random(8),
+            'type' => 'other',
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $summary = $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
-            ->assertOk()
-            ->json('data');
-
-        $this->assertFalse($summary['canPay']);
-        $this->assertSame('WAREHOUSE_CONFIGURATION_AMBIGUOUS', $summary['blockerCode']);
-        $this->assertSame(
-            'Multiple active branch-main warehouses are configured. Keep exactly one active main warehouse for this branch before paying.',
-            $summary['blockedReason'],
-        );
+        $this->getJson("/api/v1/orders/{$scenario['orderId']}/payment-summary", $scenario['headers'])
+            ->assertOk()->assertJsonPath('data.canPay', true)->assertJsonPath('data.blockerCode', null);
     }
 
     public function test_payment_summary_does_not_require_a_warehouse_for_an_untracked_order(): void
@@ -329,11 +330,11 @@ class RealSaleIntegrationTest extends TestCase
         $tenant = $context['tenant'];
         $headers = $context['headers'];
 
-        $branchId = (int) $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'Multi-Warehouse Branch', 'timezone' => 'Asia/Damascus'], $headers)->assertCreated()->json('data.id');
-        app(FinancialSetupService::class)->ensureBranchPosWarehouse($tenant, $branchId, $context['owner']);
-        $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")->value('id');
-        $secondWarehouseId = (int) DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id');
-        $this->assertSame('bar', DB::table('warehouses')->where('id', $secondWarehouseId)->value('type'));
+        $branchId = (int) $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'Multi-Warehouse Branch', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'Default Store'], $headers)->assertCreated()->json('data.id');
+        $mainWarehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branchId)->where('code', "BR-{$branchId}-1")->value('id');
+        $secondWarehouseId = (int) $this->postJson('/api/v1/warehouses', ['name' => 'Explicit Bar', 'code' => "BR-{$branchId}-BAR", 'type' => 'bar', 'branchId' => $branchId, 'isActive' => true], $headers)->assertCreated()->json('data.id');
+        // Explicit branch-level override: POS must use this one, never the branch's other (auto-created) warehouse.
+        $this->putJson("/api/v1/cafe-configuration/branches/{$branchId}", ['posInventoryWarehouseId' => $secondWarehouseId], $headers)->assertOk();
 
         $materialId = (int) $this->postJson('/api/v1/inventory/items', ['nameAr' => 'E2E Beans', 'nameEn' => 'E2E Beans', 'sku' => 'E2E-BEANS', 'itemType' => 'raw_material', 'unit' => 'g', 'minimumStock' => '0.000', 'reorderLevel' => '0.000', 'latestUnitCost' => '0.0200', 'warehouseIds' => [$mainWarehouseId, $secondWarehouseId], 'isActive' => true], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/inventory/items/{$materialId}/unit-conversions", ['sourceUnit' => 'kg', 'targetUnit' => 'g', 'factor' => '1000.000000', 'isActive' => true], $headers)->assertCreated();
@@ -418,21 +419,21 @@ class RealSaleIntegrationTest extends TestCase
         $this->assertSame('0.000', DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $secondWarehouseId)->where('inventory_item_id', $materialId)->value('quantity_on_hand'));
     }
 
-    public function test_owner_branch_creation_provisions_only_main_and_uses_it_as_the_automatic_pos_warehouse(): void
+    public function test_owner_branch_creation_provisions_exactly_one_user_named_warehouse_as_the_automatic_pos_warehouse(): void
     {
         $context = $this->tenantContext();
-        $payload = ['name' => 'Airport', 'timezone' => 'Asia/Damascus'];
+        $payload = ['name' => 'Airport', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'مخزن المطار'];
         $created = $this->postJson('/api/v1/cafe-configuration/branches', $payload, $context['headers'])->assertCreated()
             ->assertJsonPath('data.currency', 'SYP')
             ->assertJsonPath('data.isActive', true);
         $branchId = (int) $created->json('data.id');
 
         $this->assertSame($context['tenant'], (int) DB::table('branches')->where('id', $branchId)->value('tenant_id'));
-        $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $branchId)->where('code', "BR-{$branchId}-MAIN")->where('type', 'branch_main')->where('is_active', true)->count());
-        $this->assertSame(0, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $branchId)->where('type', 'bar')->count());
-        $this->assertNull(DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id'));
+        $warehouse = DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $branchId)->whereNull('deleted_at')->sole();
+        $this->assertSame('مخزن المطار', $warehouse->name);
+        $this->assertSame((int) $warehouse->id, (int) DB::table('branches')->where('id', $branchId)->value('pos_inventory_warehouse_id'));
         $this->assertSame(
-            (int) DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('code', "BR-{$branchId}-MAIN")->value('id'),
+            (int) $warehouse->id,
             (int) app(PosInventoryWarehouseResolver::class)->forBranch($context['tenant'], $branchId)->id,
         );
         $this->postJson('/api/v1/cafe-configuration/branches', $payload, $this->headersForRole($context['tenant'], 'manager'))->assertForbidden();
@@ -440,16 +441,11 @@ class RealSaleIntegrationTest extends TestCase
 
         $legacyBranch = DB::table('branches')->insertGetId(['tenant_id' => $context['tenant'], 'name' => 'Legacy Branch', 'timezone' => 'Asia/Damascus', 'currency' => 'SYP', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $setup = app(FinancialSetupService::class);
-        $setup->ensureBranchMainWarehouse($context['tenant'], $legacyBranch, $context['owner']);
-        $setup->ensureBranchMainWarehouse($context['tenant'], $legacyBranch, $context['owner']);
-        $setup->ensureBranchPosWarehouse($context['tenant'], $legacyBranch, $context['owner']);
-        $setup->ensureBranchPosWarehouse($context['tenant'], $legacyBranch, $context['owner']);
+        // Idempotent: calling it twice never produces a second, competing warehouse.
+        $setup->ensureBranchWarehouse($context['tenant'], $legacyBranch, null, $context['owner']);
+        $setup->ensureBranchWarehouse($context['tenant'], $legacyBranch, null, $context['owner']);
 
-        $warehouse = DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('code', "BR-{$legacyBranch}-MAIN")->sole();
-        $this->assertSame($legacyBranch, (int) $warehouse->branch_id);
-        $this->assertSame('branch_main', $warehouse->type);
-        $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('code', "BR-{$legacyBranch}-MAIN")->count());
-        $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('code', "BR-{$legacyBranch}-BAR")->count());
+        $this->assertSame(1, DB::table('warehouses')->where('tenant_id', $context['tenant'])->where('branch_id', $legacyBranch)->whereNull('deleted_at')->count());
     }
 
     /** @return array{tenant:int, owner:int, headers:array<string,string>} */

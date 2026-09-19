@@ -80,7 +80,7 @@ class _GoodsReceiptDetailScreenState extends State<GoodsReceiptDetailScreen> {
             FinanceInfoGrid(
               items: <FinanceInfoItem>[
                 FinanceInfoItem('فاتورة الشراء', r.invoiceNumber),
-                FinanceInfoItem('الفرع', r.branchName ?? 'المستودع المركزي'),
+                FinanceInfoItem('الفرع', r.branchName ?? 'بدون فرع'),
                 FinanceInfoItem('تاريخ الاستلام', r.receiptDate),
                 FinanceInfoItem('المرجع', r.reference ?? '—'),
                 FinanceInfoItem('أنشأ بواسطة', r.createdByName ?? '—'),
@@ -101,7 +101,7 @@ class _GoodsReceiptDetailScreenState extends State<GoodsReceiptDetailScreen> {
               )
             else
               FinanceTable(
-                headers: const <String>['الصنف', 'المستودع', 'الكمية المستلمة', 'الكمية الأساسية', 'تكلفة الوحدة'],
+                headers: const <String>['الصنف', 'المخزن', 'الكمية المستلمة', 'الكمية الأساسية', 'تكلفة الوحدة'],
                 minWidth: 760,
                 rows: r.lines
                     .map(

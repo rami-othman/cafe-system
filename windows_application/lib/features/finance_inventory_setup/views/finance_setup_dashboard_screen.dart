@@ -130,7 +130,7 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                               const SizedBox(height: AppSpacing.xs),
                               Text(
                                 status.financialSetupReady
-                                    ? 'تم إعداد الحسابات والمستودعات الأساسية.'
+                                    ? 'تم إعداد الحسابات والمخازن الأساسية.'
                                     : 'راجع قائمة الجاهزية وأكمل العناصر المطلوبة.',
                                 style: AppTextStyles.bodySmall,
                               ),
@@ -165,12 +165,6 @@ class _SetupState extends State<FinanceSetupDashboardScreen> {
                   label: 'دليل الحسابات الأساسي',
                   ready: status.systemAccountsReady,
                   onTap: () => context.go(AppRoutes.financeAccountsCanonical),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _Readiness(
-                  label: 'المستودع المركزي',
-                  ready: status.centralWarehouseReady,
-                  onTap: () => context.go(AppRoutes.financeWarehouses),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _Readiness(

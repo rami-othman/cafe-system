@@ -68,7 +68,7 @@ class DailyClosingIntegrityTest extends TestCase
         $headers = $this->headers($tenant, 'owner', 'inv-clean');
         $branch = $this->branchId($tenant);
         $date = '2030-02-03';
-        $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', "BR-$branch-MAIN")->value('id');
+        $warehouseId = (int) DB::table('branches')->where('tenant_id', $tenant)->where('id', $branch)->value('pos_inventory_warehouse_id');
         $item = $this->inventoryItemId($tenant);
         DB::table('inventory_item_warehouses')->insertOrIgnore(['tenant_id' => $tenant, 'inventory_item_id' => $item, 'warehouse_id' => $warehouseId, 'created_at' => now(), 'updated_at' => now()]);
         $service = app(InventoryPostingService::class);

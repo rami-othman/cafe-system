@@ -65,8 +65,9 @@ class InventoryAccountingMapperTest extends TestCase
     {
         $tenant = DB::table('tenants')->insertGetId(['name' => 'Inventory Finance', 'slug' => 'inventory-finance', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
         $actor = DB::table('users')->insertGetId(['tenant_id' => $tenant, 'name' => 'Owner', 'email' => 'inventory-finance@example.test', 'password' => bcrypt('password'), 'role' => 'owner', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
-        app(FinancialSetupService::class)->ensureForTenant($tenant, null, $actor);
-        $warehouse = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'CENTRAL')->value('id');
+        $branch = DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Main', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        app(FinancialSetupService::class)->ensureForTenant($tenant, $branch, $actor);
+        $warehouse = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branch)->value('id');
         $item = DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => 'Beans', 'name_ar' => 'Beans', 'name_en' => 'Beans', 'sku' => 'BEANS', 'catalog_identity' => 'beans', 'item_type' => 'raw_material', 'unit' => 'gram', 'minimum_stock' => '0.000', 'reorder_level' => '0.000', 'cost_per_unit' => '0.0000', 'latest_unit_cost' => '0.0000', 'is_active' => true, 'created_by' => $actor, 'updated_by' => $actor, 'created_at' => now(), 'updated_at' => now()]);
         DB::table('inventory_item_warehouses')->insert(['tenant_id' => $tenant, 'inventory_item_id' => $item, 'warehouse_id' => $warehouse, 'created_at' => now(), 'updated_at' => now()]);
         return [(int) $tenant, (int) $actor, $warehouse, (int) $item];

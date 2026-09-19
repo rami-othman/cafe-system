@@ -553,6 +553,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('purchases', [PurchaseController::class, 'index'])->middleware('finance.permission:finance.purchases.view');
             Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->middleware('finance.permission:finance.purchases.view');
             Route::get('purchases/{purchase}/receipts', [PurchaseReceiptController::class, 'forInvoice'])->middleware('finance.permission:finance.purchases.view');
+            Route::get('purchases/{purchase}/posting-preview', [PurchaseController::class, 'postingPreview'])->middleware('finance.permission:finance.purchases.post');
+            Route::post('purchases/{purchase}/post', [PurchaseController::class, 'post'])->middleware('finance.permission:finance.purchases.post');
             Route::post('purchases/{purchase}/receipts', [PurchaseReceiptController::class, 'store'])->middleware('finance.permission:finance.purchases.receive');
             Route::get('purchase-receipts', [PurchaseReceiptController::class, 'index'])->middleware('finance.permission:finance.purchases.view');
             Route::get('purchase-receipts/{receipt}', [PurchaseReceiptController::class, 'show'])->middleware('finance.permission:finance.purchases.view');

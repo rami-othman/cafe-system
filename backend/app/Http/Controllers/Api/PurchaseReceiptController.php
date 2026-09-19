@@ -158,7 +158,7 @@ class PurchaseReceiptController extends Controller
             'supplierId' => (int) $row->supplier_id,
             'supplierName' => $row->supplier_name,
             'branchId' => $row->branch_id ? (int) $row->branch_id : null,
-            'branchName' => $row->branch_name ?? 'المستودع المركزي',
+            'branchName' => $row->branch_name ?? 'بدون فرع',
             'lineCount' => (int) $row->line_count,
             'createdByName' => $row->created_by_name,
             'postedAt' => $row->posted_at,

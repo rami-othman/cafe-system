@@ -126,8 +126,12 @@ class InventorySecurityAndSeederTest extends TestCase
     {
         $this->seed(TenantAccessSeeder::class);
         $tenant = $this->tenant('cafe-618');
-        [$source, $destination] = $this->warehouses($tenant);
+        $ownBranch = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
+        $otherBranch = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenant, 'name' => 'Other Branch', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $source = (int) DB::table('warehouses')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $ownBranch, 'name' => 'Own Branch Store', 'code' => "SEC-OWN-$tenant", 'type' => 'other', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $destination = (int) DB::table('warehouses')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $otherBranch, 'name' => 'Other Branch Store', 'code' => "SEC-OTHER-$tenant", 'type' => 'other', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $manager = $this->createUser($tenant, 'manager');
+        DB::table('user_branches')->insert(['tenant_id' => $tenant, 'user_id' => $manager, 'branch_id' => $ownBranch, 'created_at' => now(), 'updated_at' => now()]);
         $item = $this->createItem($tenant);
         foreach ([$source, $destination] as $warehouse) {
             DB::table('inventory_item_warehouses')->insert(['tenant_id' => $tenant, 'warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'created_at' => now(), 'updated_at' => now()]);
@@ -174,8 +178,8 @@ class InventorySecurityAndSeederTest extends TestCase
         $ids = DB::table('warehouses')->where('tenant_id', $tenant)->orderBy('id')->limit(2)->pluck('id')->map(fn ($id) => (int) $id)->all();
         if (count($ids) < 2) {
             $branch = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
-            DB::table('warehouses')->insert(['tenant_id' => $tenant, 'branch_id' => null, 'name' => 'Central', 'code' => "CENTRAL-$tenant", 'type' => 'central', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
-            DB::table('warehouses')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'name' => 'Store', 'code' => "STORE-$tenant", 'type' => 'branch_main', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('warehouses')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'name' => 'Source', 'code' => "SOURCE-$tenant", 'type' => 'other', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('warehouses')->insert(['tenant_id' => $tenant, 'branch_id' => $branch, 'name' => 'Store', 'code' => "STORE-$tenant", 'type' => 'other', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
             $ids = DB::table('warehouses')->where('tenant_id', $tenant)->orderBy('id')->limit(2)->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
         return $ids;

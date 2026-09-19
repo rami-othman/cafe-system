@@ -62,15 +62,11 @@ class WarehouseService
     private function assertBranchRules(int $tenantId, array $data, ?int $actorId): void
     {
         $branchId = isset($data['branchId']) ? (int) $data['branchId'] : null;
-        $isCentral = $data['type'] === 'central';
-        if ($isCentral && $branchId) {
-            throw ValidationException::withMessages(['branchId' => 'A central warehouse cannot belong to a branch.']);
+        if (! $branchId) {
+            throw ValidationException::withMessages(['branchId' => 'يجب تحديد فرع لهذا المخزن.']);
         }
-        if (! $isCentral && ! $branchId) {
-            throw ValidationException::withMessages(['branchId' => 'A branch is required for this warehouse type.']);
-        }
-        if ($branchId && ! DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->exists()) {
-            throw ValidationException::withMessages(['branchId' => 'The selected branch does not belong to this tenant.']);
+        if (! DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->exists()) {
+            throw ValidationException::withMessages(['branchId' => 'الفرع المحدد لا يتبع لهذه المنشأة.']);
         }
         FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId);
     }
@@ -78,7 +74,7 @@ class WarehouseService
     private function payload(array $data, ?int $actorId): array
     {
         return [
-            'branch_id' => $data['type'] === 'central' ? null : (int) $data['branchId'],
+            'branch_id' => (int) $data['branchId'],
             'name' => $data['name'],
             'code' => strtoupper($data['code']),
             'type' => $data['type'],

@@ -141,6 +141,7 @@ class BranchDraft {
     this.address = '',
     this.phone = '',
     this.timezone = 'UTC',
+    this.warehouseName = '',
     this.posInventoryWarehouseId,
   });
 
@@ -148,6 +149,10 @@ class BranchDraft {
   final String address;
   final String phone;
   final String timezone;
+  // Only used when creating a new branch: the branch cannot operate without
+  // a place to hold stock, so its one warehouse is named right here — there
+  // is no separate "main"/"primary" warehouse concept to configure later.
+  final String warehouseName;
   final int? posInventoryWarehouseId;
 
   factory BranchDraft.fromBranch(CafeConfigurationBranch branch) => BranchDraft(
@@ -163,6 +168,7 @@ class BranchDraft {
     String? address,
     String? phone,
     String? timezone,
+    String? warehouseName,
     int? posInventoryWarehouseId,
     bool clearPosInventoryWarehouseId = false,
   }) => BranchDraft(
@@ -170,6 +176,7 @@ class BranchDraft {
     address: address ?? this.address,
     phone: phone ?? this.phone,
     timezone: timezone ?? this.timezone,
+    warehouseName: warehouseName ?? this.warehouseName,
     posInventoryWarehouseId: clearPosInventoryWarehouseId
         ? null
         : posInventoryWarehouseId ?? this.posInventoryWarehouseId,
@@ -180,6 +187,7 @@ class BranchDraft {
     'address': address.trim().isEmpty ? null : address.trim(),
     'phone': phone.trim().isEmpty ? null : phone.trim(),
     'timezone': timezone,
+    if (warehouseName.trim().isNotEmpty) 'warehouseName': warehouseName.trim(),
     'posInventoryWarehouseId': posInventoryWarehouseId,
   };
 }

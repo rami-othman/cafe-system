@@ -335,18 +335,21 @@ class SaleConsumptionService
         ]);
     }
 
-    /** The warehouse snapshot stored on the order is the sole sale source. */
+    /**
+     * The warehouse snapshot stored on the order is the sole sale source.
+     * Legacy orders (predating the snapshot) resolve through the single
+     * canonical `PosInventoryWarehouseResolver` — never a second,
+     * independently-implemented "find the branch's main warehouse" query —
+     * so this can never disagree with what POS itself would resolve.
+     */
     private function resolveOrderWarehouse(int $tenantId, object $order): int
     {
         if ($order->warehouse_id === null) {
-            // Legacy orders predate the POS-warehouse snapshot. Retain their
-            // established branch-main fallback without changing the order row.
-            $warehouseId = $this->resolveWarehouse($tenantId, (int) $order->branch_id);
-            if ($warehouseId === null) {
+            try {
+                return (int) $this->posWarehouses->forBranch($tenantId, (int) $order->branch_id)->id;
+            } catch (OrderLifecycleException) {
                 throw new OrderLifecycleException('ORDER_WAREHOUSE_NOT_CONFIGURED', "Order #{$order->id} has no historical POS inventory warehouse.");
             }
-
-            return $warehouseId;
         }
         try {
             $this->posWarehouses->assertEligible($tenantId, (int) $order->branch_id, (int) $order->warehouse_id);
@@ -355,31 +358,5 @@ class SaleConsumptionService
         }
 
         return (int) $order->warehouse_id;
-    }
-
-    /**
-     * Resolves the active branch-main warehouse for the payment preflight and
-     * historical-order fallback. A legacy, correctly named main warehouse is
-     * included, but ambiguity is always rejected rather than guessed.
-     */
-    private function resolveWarehouse(int $tenantId, int $branchId): ?int
-    {
-        $warehouses = DB::table('warehouses')
-            ->where('tenant_id', $tenantId)
-            ->where('branch_id', $branchId)
-            ->where('is_active', true)
-            ->whereNull('deleted_at')
-            ->where(function ($query) use ($branchId): void {
-                $query->where('type', 'branch_main')
-                    ->orWhere('code', 'BR-'.$branchId.'-MAIN');
-            })
-            ->orderBy('id')
-            ->get(['id']);
-
-        if ($warehouses->count() > 1) {
-            throw new OrderLifecycleException('WAREHOUSE_CONFIGURATION_AMBIGUOUS', 'Multiple active branch-main warehouses are configured.');
-        }
-
-        return $warehouses->first()?->id ? (int) $warehouses->first()->id : null;
     }
 }

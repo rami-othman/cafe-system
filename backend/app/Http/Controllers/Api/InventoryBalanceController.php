@@ -63,20 +63,22 @@ class InventoryBalanceController extends Controller
 
         $tenant = TenantContext::id($request);
         $filters = $request->validate([
-            'branch_id' => ['nullable', 'integer'],
-            'warehouse_id' => ['nullable', 'integer'],
+            'branchId' => ['nullable', 'integer'],
+            'warehouseId' => ['nullable', 'integer'],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'search' => ['nullable', 'string', 'max:120'],
+            'movementType' => ['nullable', 'in:purchase_receive,recipe_consumption,transfer_in,transfer_out,waste,adjustment,opening_balance,return'],
+            'trendDays' => ['nullable', 'integer', 'in:7,30,90'],
+            'compare_previous' => ['nullable', 'boolean'],
+            // Deprecated snake_case aliases, kept for backward compatibility with older clients.
+            'branch_id' => ['nullable', 'integer'],
+            'warehouse_id' => ['nullable', 'integer'],
             'movement_type' => ['nullable', 'in:purchase_receive,recipe_consumption,transfer_in,transfer_out,waste,adjustment,opening_balance,return'],
             'trend_days' => ['nullable', 'integer', 'in:7,30,90'],
-            'compare_previous' => ['nullable', 'boolean'],
-            // Existing clients use these names. Keep them while the dashboard
-            // moves to the documented snake_case contract.
-            'warehouseId' => ['nullable', 'integer'],
         ]);
-        $branchId = isset($filters['branch_id']) ? (int) $filters['branch_id'] : null;
-        $warehouseId = isset($filters['warehouse_id']) ? (int) $filters['warehouse_id'] : (isset($filters['warehouseId']) ? (int) $filters['warehouseId'] : null);
+        $branchId = isset($filters['branchId']) ? (int) $filters['branchId'] : (isset($filters['branch_id']) ? (int) $filters['branch_id'] : null);
+        $warehouseId = isset($filters['warehouseId']) ? (int) $filters['warehouseId'] : (isset($filters['warehouse_id']) ? (int) $filters['warehouse_id'] : null);
         if ($branchId && ! DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->whereNull('deleted_at')->exists()) {
             abort(422, 'The selected branch does not belong to this tenant.');
         }
@@ -89,8 +91,8 @@ class InventoryBalanceController extends Controller
         if ($warehouseId && DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->whereNull('branch_id')->exists()) $branchId = null;
         $from = $filters['from'] ?? now()->startOfMonth()->toDateString();
         $to = $filters['to'] ?? now()->toDateString();
-        $movementType = $filters['movement_type'] ?? null;
-        $trendDays = (int) ($filters['trend_days'] ?? 30);
+        $movementType = $filters['movementType'] ?? $filters['movement_type'] ?? null;
+        $trendDays = (int) ($filters['trendDays'] ?? $filters['trend_days'] ?? 30);
         $movementTypes = $this->dashboardMovementTypes($movementType);
         $periodDays = max(1, Carbon::parse($from)->diffInDays(Carbon::parse($to)) + 1);
         $previousTo = Carbon::parse($from)->subDay()->toDateString();

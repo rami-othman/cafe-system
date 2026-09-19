@@ -25,12 +25,17 @@ import '../widgets/purchase_type_label.dart';
 /// enforces one line type per invoice, matching the backend exactly; mixed
 /// invoices are deferred, not half-built.
 class PurchaseInvoiceFormScreen extends StatefulWidget {
-  const PurchaseInvoiceFormScreen({super.key, this.editId, this.preselectedSupplierId});
+  const PurchaseInvoiceFormScreen({
+    super.key,
+    this.editId,
+    this.preselectedSupplierId,
+  });
   final int? editId;
   final int? preselectedSupplierId;
 
   @override
-  State<PurchaseInvoiceFormScreen> createState() => _PurchaseInvoiceFormScreenState();
+  State<PurchaseInvoiceFormScreen> createState() =>
+      _PurchaseInvoiceFormScreenState();
 }
 
 class _LineDraft {
@@ -41,18 +46,18 @@ class _LineDraft {
   final TextEditingController description = TextEditingController();
   final TextEditingController purchaseUnit = TextEditingController();
   final TextEditingController quantity = TextEditingController(text: '1');
-  final TextEditingController lineGrossAmount = TextEditingController(text: '0');
+  final TextEditingController unitCost = TextEditingController(text: '0');
   String discountType = 'fixed'; // 'fixed' | 'percentage'
   final TextEditingController discountValue = TextEditingController(text: '0');
   final TextEditingController tax = TextEditingController(text: '0');
   int? warehouseId;
 
   double _num0(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
-  double get grossAmount => _num0(lineGrossAmount);
+  double get grossAmount => _num0(quantity) * _num0(unitCost);
   double get taxValue => _num0(tax);
 
   double get discountAmount {
-    final double gross = _num0(lineGrossAmount);
+    final double gross = grossAmount;
     final double value = _num0(discountValue);
     if (discountType == 'percentage') {
       return gross * (value.clamp(0, 100) / 100);
@@ -61,13 +66,7 @@ class _LineDraft {
   }
 
   double get netAmount =>
-      (_num0(lineGrossAmount) - discountAmount).clamp(0, double.infinity);
-
-  /// Read-only, server-mirrored preview: what the backend will derive and store as unit_price.
-  double get derivedUnitCost {
-    final double qty = _num0(quantity);
-    return qty > 0 ? netAmount / qty : 0;
-  }
+      (grossAmount - discountAmount).clamp(0, double.infinity);
 
   double get lineTotal => netAmount + _num0(tax);
 
@@ -75,7 +74,7 @@ class _LineDraft {
     description.dispose();
     purchaseUnit.dispose();
     quantity.dispose();
-    lineGrossAmount.dispose();
+    unitCost.dispose();
     discountValue.dispose();
     tax.dispose();
   }
@@ -127,10 +126,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   final List<_LineDraft> _lines = <_LineDraft>[];
   final List<_ChargeDraft> _charges = <_ChargeDraft>[];
   String _invoiceDiscountType = 'fixed'; // 'fixed' | 'percentage'
-  final TextEditingController _invoiceDiscountValue = TextEditingController(text: '0');
+  final TextEditingController _invoiceDiscountValue = TextEditingController(
+    text: '0',
+  );
 
   List<Supplier> _suppliers = const <Supplier>[];
   List<Branch> _branches = const <Branch>[];
+  List<WarehouseLocation> _warehouses = const <WarehouseLocation>[];
   List<ExpenseCategory> _expenseCategories = const <ExpenseCategory>[];
   List<FinancialAccount> _accounts = const <FinancialAccount>[];
   PurchaseInvoice? _editing;
@@ -140,6 +142,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   String? _error;
 
   bool get _isEdit => widget.editId != null;
+
+  String get _selectedBranchName {
+    for (final Branch branch in _branches) {
+      if (branch.id == _branchId) return branch.name;
+    }
+    return '—';
+  }
 
   @override
   void initState() {
@@ -169,58 +178,80 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     _charges.removeAt(index);
   });
 
-  double get _linesNetTotal => _lines.fold<double>(0, (double s, _LineDraft l) => s + l.netAmount);
-  double get _linesTaxTotal => _lines.fold<double>(0, (double s, _LineDraft l) => s + l.taxValue);
+  double get _linesNetTotal =>
+      _lines.fold<double>(0, (double s, _LineDraft l) => s + l.netAmount);
+  double get _linesTaxTotal =>
+      _lines.fold<double>(0, (double s, _LineDraft l) => s + l.taxValue);
   double get _invoiceDiscountPreview {
-    final double value = double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
+    final double value =
+        double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
     if (_invoiceDiscountType == 'percentage') {
       return _linesNetTotal * (value.clamp(0, 100) / 100);
     }
     return value.clamp(0, _linesNetTotal);
   }
 
-  double get _netAfterInvoiceDiscount => (_linesNetTotal - _invoiceDiscountPreview).clamp(0, double.infinity);
-  double get _chargesAmountTotal => _charges.fold<double>(0, (double s, _ChargeDraft c) => s + c.amountValue);
-  double get _chargesTaxTotal => _charges.fold<double>(0, (double s, _ChargeDraft c) => s + c.taxValue);
+  double get _netAfterInvoiceDiscount =>
+      (_linesNetTotal - _invoiceDiscountPreview).clamp(0, double.infinity);
+  double get _chargesAmountTotal =>
+      _charges.fold<double>(0, (double s, _ChargeDraft c) => s + c.amountValue);
+  double get _chargesTaxTotal =>
+      _charges.fold<double>(0, (double s, _ChargeDraft c) => s + c.taxValue);
   double get _grandTotalPreview =>
-      _netAfterInvoiceDiscount + _linesTaxTotal + _chargesAmountTotal + _chargesTaxTotal;
+      _netAfterInvoiceDiscount +
+      _linesTaxTotal +
+      _chargesAmountTotal +
+      _chargesTaxTotal;
 
   PurchasingCubit get _cubit => context.read<PurchasingCubit>();
   FinanceSetupCubit get _financeCubit => context.read<FinanceSetupCubit>();
 
   Future<void> _loadReferenceData() async {
     try {
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _financeCubit.repository.getFinancePage('finance/suppliers', queryParameters: const <String, dynamic>{'perPage': 200}),
-        _financeCubit.repository.getBranches(),
-        // Cashiers are not allowed to browse Finance Settings or the chart
-        // of accounts. Inventory purchase lines do not require either list;
-        // leave non-inventory account/category selection unavailable rather
-        // than failing the entire permitted purchasing workflow with 403.
-        _optionalReferenceData<List<ExpenseCategory>>(
-          _financeCubit.repository.getExpenseCategories(),
-          const <ExpenseCategory>[],
-        ),
-        _optionalReferenceData<List<FinancialAccount>>(
-          _financeCubit.repository.getAccounts(),
-          const <FinancialAccount>[],
-        ),
-        if (_isEdit) _cubit.repository.getPurchase(widget.editId!),
-      ]);
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          _financeCubit.repository.getFinancePage(
+            'finance/suppliers',
+            queryParameters: const <String, dynamic>{'perPage': 200},
+          ),
+          _financeCubit.repository.getBranches(),
+          // Cashiers are not allowed to browse Finance Settings or the chart
+          // of accounts. Inventory purchase lines do not require either list;
+          // leave non-inventory account/category selection unavailable rather
+          // than failing the entire permitted purchasing workflow with 403.
+          _optionalReferenceData<List<ExpenseCategory>>(
+            _financeCubit.repository.getExpenseCategories(),
+            const <ExpenseCategory>[],
+          ),
+          _optionalReferenceData<List<FinancialAccount>>(
+            _financeCubit.repository.getAccounts(),
+            const <FinancialAccount>[],
+          ),
+          serviceLocator<InventoryRepository>().warehouses(),
+          if (_isEdit) _cubit.repository.getPurchase(widget.editId!),
+        ],
+      );
       if (!mounted) return;
       final dynamic suppliersPage = results[0];
       if (!mounted) return;
       setState(() {
         _suppliers = (suppliersPage.items as List<dynamic>)
-            .map((dynamic j) => Supplier.fromJson(Map<String, dynamic>.from(j as Map)))
+            .map(
+              (dynamic j) =>
+                  Supplier.fromJson(Map<String, dynamic>.from(j as Map)),
+            )
             .toList(growable: false);
         _branches = results[1] as List<Branch>;
         _expenseCategories = results[2] as List<ExpenseCategory>;
         _accounts = (results[3] as List<FinancialAccount>)
-            .where((FinancialAccount a) => a.accountGroup == 'assets' && a.code != '1100')
+            .where(
+              (FinancialAccount a) =>
+                  a.accountGroup == 'assets' && a.code != '1100',
+            )
             .toList(growable: false);
+        _warehouses = results[4] as List<WarehouseLocation>;
         if (_isEdit) {
-          _editing = results[4] as PurchaseInvoice;
+          _editing = results[5] as PurchaseInvoice;
           _applyEditingData(_editing!);
         }
         _loadingReferenceData = false;
@@ -246,15 +277,19 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   }
 
   void _applyEditingData(PurchaseInvoice p) {
-    _invoiceNumber.text = p.invoiceNumber;
+    _invoiceNumber.text = p.supplierInvoiceNumber ?? '';
     _notes.text = p.notes ?? '';
     _invoiceDate = DateTime.tryParse(p.invoiceDate) ?? _invoiceDate;
     _dueDate = DateTime.tryParse(p.dueDate) ?? _dueDate;
     _supplierId = p.supplierId;
     _branchId = p.branchId;
     _expenseCategoryId = p.purchaseType == 'expense' ? null : null;
-    _assetAccountId = (p.purchaseType == 'asset' || p.purchaseType == 'other') ? p.debitAccountId : null;
-    _purchaseType = p.purchaseType == 'other' && p.lines.isEmpty ? 'other' : p.purchaseType;
+    _assetAccountId = (p.purchaseType == 'asset' || p.purchaseType == 'other')
+        ? p.debitAccountId
+        : null;
+    _purchaseType = p.purchaseType == 'other' && p.lines.isEmpty
+        ? 'other'
+        : p.purchaseType;
     _lines
       ..clear()
       ..addAll(
@@ -265,8 +300,12 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 draft.description.text = l.description;
                 draft.purchaseUnit.text = l.purchaseUnit ?? '';
                 draft.quantity.text = l.quantity;
-                draft.lineGrossAmount.text =
-                    l.lineGrossAmount ?? l.lineTotal;
+                final double quantity = double.tryParse(l.quantity) ?? 0;
+                final double gross =
+                    double.tryParse(l.lineGrossAmount ?? '') ?? 0;
+                draft.unitCost.text = quantity > 0
+                    ? (gross / quantity).toStringAsFixed(4)
+                    : l.unitPrice;
                 draft.discountType = l.discountType;
                 draft.discountValue.text = l.discountType == 'percentage'
                     ? (l.discountValue ?? '0')
@@ -301,17 +340,20 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   /// anywhere in the catalog, not just the first page) is fetched directly
   /// by id instead of relying on a preloaded, capped item list.
   Future<void> _resolveEditingLineItems() async {
-    final InventoryRepository repository = serviceLocator<InventoryRepository>();
-    await Future.wait(_lines.map((_LineDraft draft) async {
-      final int? itemId = draft.pendingInventoryItemId;
-      if (itemId == null) return;
-      try {
-        final InventoryItem item = await repository.item(itemId);
-        if (mounted) setState(() => draft.item = item);
-      } catch (_) {
-        // Item may have been deleted since the invoice was created; leave unresolved.
-      }
-    }));
+    final InventoryRepository repository =
+        serviceLocator<InventoryRepository>();
+    await Future.wait(
+      _lines.map((_LineDraft draft) async {
+        final int? itemId = draft.pendingInventoryItemId;
+        if (itemId == null) return;
+        try {
+          final InventoryItem item = await repository.item(itemId);
+          if (mounted) setState(() => draft.item = item);
+        } catch (_) {
+          // Item may have been deleted since the invoice was created; leave unresolved.
+        }
+      }),
+    );
   }
 
   void _addLine() => setState(() => _lines.add(_LineDraft(_purchaseType)));
@@ -352,30 +394,66 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     });
   }
 
-  String? _validate() {
-    if (_supplierId == null) return 'اختر المورد.';
-    if (_purchaseType == 'expense' && _expenseCategoryId == null) return 'اختر فئة المصروف.';
-    if ((_purchaseType == 'asset' || _purchaseType == 'other') && _assetAccountId == null) {
-      return _purchaseType == 'asset' ? 'اختر حساب الأصل الثابت.' : 'اختر الحساب المحاسبي.';
+  String? _validate({bool forPosting = false}) {
+    if (_supplierId == null) {
+      return 'اختر المورد.';
     }
-    if (_lines.isEmpty) return 'أضف بنداً واحداً على الأقل.';
+    if (forPosting && _branchId == null) {
+      return 'اختر الفرع قبل الترحيل.';
+    }
+    if (_purchaseType == 'expense' && _expenseCategoryId == null) {
+      return 'اختر فئة المصروف.';
+    }
+    if ((_purchaseType == 'asset' || _purchaseType == 'other') &&
+        _assetAccountId == null) {
+      return _purchaseType == 'asset'
+          ? 'اختر حساب الأصل الثابت.'
+          : 'اختر الحساب المحاسبي.';
+    }
+    if (_lines.isEmpty) {
+      return 'أضف بنداً واحداً على الأقل.';
+    }
     for (final _LineDraft line in _lines) {
-      if (line.lineType == 'inventory' && line.item == null) return 'اختر صنف المخزون لكل بند.';
-      if (line.lineType != 'inventory' && line.description.text.trim().isEmpty) return 'أدخل بيان كل بند.';
-      if ((double.tryParse(line.quantity.text.trim()) ?? 0) <= 0) return 'الكمية يجب أن تكون أكبر من صفر.';
-      if ((double.tryParse(line.lineGrossAmount.text.trim()) ?? 0) <= 0) return 'إجمالي الصنف يجب أن يكون أكبر من صفر.';
+      if (line.lineType == 'inventory' && line.item == null) {
+        return 'اختر صنف المخزون لكل بند.';
+      }
+      if (forPosting &&
+          line.lineType == 'inventory' &&
+          line.warehouseId == null) {
+        return 'اختر مخزن الاستلام لكل بند مخزون.';
+      }
+      if (line.lineType != 'inventory' &&
+          line.description.text.trim().isEmpty) {
+        return 'أدخل بيان كل بند.';
+      }
+      if ((double.tryParse(line.quantity.text.trim()) ?? 0) <= 0) {
+        return 'الكمية يجب أن تكون أكبر من صفر.';
+      }
+      if ((double.tryParse(line.unitCost.text.trim()) ?? 0) <= 0) {
+        return 'تكلفة الوحدة يجب أن تكون أكبر من صفر.';
+      }
       if (line.discountType == 'percentage') {
-        final double percent = double.tryParse(line.discountValue.text.trim()) ?? 0;
-        if (percent < 0 || percent > 100) return 'نسبة الخصم يجب أن تكون بين 0 و100.';
+        final double percent =
+            double.tryParse(line.discountValue.text.trim()) ?? 0;
+        if (percent < 0 || percent > 100) {
+          return 'نسبة الخصم يجب أن تكون بين 0 و100.';
+        }
       }
     }
     if (_invoiceDiscountType == 'percentage') {
-      final double percent = double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
-      if (percent < 0 || percent > 100) return 'نسبة خصم الفاتورة يجب أن تكون بين 0 و100.';
+      final double percent =
+          double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
+      if (percent < 0 || percent > 100) {
+        return 'نسبة خصم الفاتورة يجب أن تكون بين 0 و100.';
+      }
     }
     for (final _ChargeDraft charge in _charges) {
-      if (charge.description.text.trim().isEmpty) return 'أدخل وصف كل تكلفة إضافية.';
-      if (charge.amountValue <= 0) return 'مبلغ التكلفة الإضافية يجب أن يكون أكبر من صفر.';
+      if (charge.description.text.trim().isEmpty) {
+        return 'أدخل وصف كل تكلفة إضافية.';
+      }
+      if (charge.amountValue <= 0) {
+        return 'مبلغ التكلفة الإضافية يجب أن يكون أكبر من صفر.';
+      }
       if (charge.treatment == 'capitalize' && _purchaseType != 'inventory') {
         return 'إضافة التكلفة للمخزون متاحة فقط لفواتير المخزون.';
       }
@@ -386,8 +464,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     return null;
   }
 
-  Future<void> _save() async {
-    final String? validationError = _validate();
+  Future<void> _save({bool postAfterSave = false}) async {
+    final String? validationError = _validate(forPosting: postAfterSave);
     if (validationError != null) {
       setState(() => _error = validationError);
       return;
@@ -400,7 +478,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       final Map<String, dynamic> payload = <String, dynamic>{
         'supplierId': _supplierId,
         if (_branchId != null) 'branchId': _branchId,
-        'invoiceNumber': _invoiceNumber.text.trim(),
+        if (_invoiceNumber.text.trim().isNotEmpty)
+          'supplierInvoiceNumber': _invoiceNumber.text.trim(),
         'invoiceDate': _isoDate(_invoiceDate),
         'dueDate': _isoDate(_dueDate),
         'invoiceType': _purchaseType == 'inventory'
@@ -409,18 +488,24 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             ? 'expense'
             : 'other',
         if (_purchaseType == 'expense') 'expenseCategoryId': _expenseCategoryId,
-        if (_purchaseType == 'asset' || _purchaseType == 'other') 'debitAccountId': _assetAccountId,
+        if (_purchaseType == 'asset' || _purchaseType == 'other')
+          'debitAccountId': _assetAccountId,
         'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
         'discountType': _invoiceDiscountType,
-        'discountValue': _invoiceDiscountValue.text.trim().isEmpty ? '0' : _invoiceDiscountValue.text.trim(),
+        'discountValue': _invoiceDiscountValue.text.trim().isEmpty
+            ? '0'
+            : _invoiceDiscountValue.text.trim(),
         'charges': _charges
             .map(
               (_ChargeDraft c) => <String, dynamic>{
                 'description': c.description.text.trim(),
                 'treatment': c.treatment,
-                if (c.treatment == 'expense') 'expenseCategoryId': c.expenseCategoryId,
+                if (c.treatment == 'expense')
+                  'expenseCategoryId': c.expenseCategoryId,
                 'amount': c.amount.text.trim(),
-                'taxAmount': c.tax.text.trim().isEmpty ? '0' : c.tax.text.trim(),
+                'taxAmount': c.tax.text.trim().isEmpty
+                    ? '0'
+                    : c.tax.text.trim(),
               },
             )
             .toList(growable: false),
@@ -432,20 +517,72 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                     ? (l.item?.name ?? '')
                     : l.description.text.trim(),
                 if (l.lineType == 'inventory') 'inventoryItemId': l.item!.id,
-                if (l.lineType == 'inventory' && l.purchaseUnit.text.trim().isNotEmpty)
+                if (l.lineType == 'inventory' &&
+                    l.purchaseUnit.text.trim().isNotEmpty)
                   'purchaseUnit': l.purchaseUnit.text.trim(),
                 'quantity': l.quantity.text.trim(),
-                'lineGrossAmount': l.lineGrossAmount.text.trim(),
+                'unitCost': l.unitCost.text.trim(),
                 'discountType': l.discountType,
-                'discountValue': l.discountValue.text.trim().isEmpty ? '0' : l.discountValue.text.trim(),
-                'taxAmount': l.tax.text.trim().isEmpty ? '0' : l.tax.text.trim(),
+                'discountValue': l.discountValue.text.trim().isEmpty
+                    ? '0'
+                    : l.discountValue.text.trim(),
+                'taxAmount': l.tax.text.trim().isEmpty
+                    ? '0'
+                    : l.tax.text.trim(),
+                if (l.lineType == 'inventory') 'warehouseId': l.warehouseId,
               },
             )
             .toList(growable: false),
         if (!_isEdit)
-          'idempotencyKey': 'purchase-create-${DateTime.now().microsecondsSinceEpoch}',
+          'idempotencyKey':
+              'purchase-create-${DateTime.now().microsecondsSinceEpoch}',
       };
-      final PurchaseInvoice saved = await _cubit.repository.savePurchase(payload, id: widget.editId);
+      final PurchaseInvoice saved = await _cubit.repository.savePurchase(
+        payload,
+        id: widget.editId,
+      );
+      if (!mounted) return;
+      if (postAfterSave) {
+        final PurchasePostingPreview preview = await _cubit.repository
+            .getPostingPreview(saved.id);
+        if (!mounted) return;
+        final bool? confirmed = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext dialog) => AlertDialog(
+            title: const Text('ترحيل واستلام ودفع فاتورة الشراء'),
+            content: Text(
+              'سيتم ترحيل الفاتورة واستلام المواد ودفع قيمة الفاتورة من الصندوق المرتبط بالمستخدم. هل تريد المتابعة؟\n\n'
+              'إجمالي الفاتورة: ${preview.amount} SYP\n'
+              'الصندوق: ${preview.financialLocationName}\n'
+              'الفرع: $_selectedBranchName',
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialog, false),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialog, true),
+                child: const Text('تأكيد الترحيل والدفع'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed == true) {
+          final PurchaseInvoice posted = await _cubit.repository.postPurchase(
+            saved.id,
+            'purchase-post-${saved.id}-${DateTime.now().microsecondsSinceEpoch}',
+          );
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${posted.paidAmount} SYP من ${preview.financialLocationName} بنجاح.',
+              ),
+            ),
+          );
+        }
+      }
       if (!mounted) return;
       context.go('${AppRoutes.financePurchases}/${saved.id}');
     } catch (error) {
@@ -460,7 +597,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loadingReferenceData) {
-      return const FinanceShell(title: 'فاتورة شراء جديدة', child: FinanceLoadingState());
+      return const FinanceShell(
+        title: 'فاتورة شراء جديدة',
+        child: FinanceLoadingState(),
+      );
     }
     if (_error != null && _suppliers.isEmpty) {
       return FinanceShell(
@@ -482,7 +622,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         title: 'فاتورة شراء',
         child: FinanceErrorState(
           message: 'لا يمكن تعديل فاتورة مُرحّلة. عرض الفاتورة فقط.',
-          onRetry: () => context.go('${AppRoutes.financePurchases}/${widget.editId}'),
+          onRetry: () =>
+              context.go('${AppRoutes.financePurchases}/${widget.editId}'),
         ),
       );
     }
@@ -490,21 +631,39 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       title: _isEdit ? 'تعديل فاتورة شراء' : 'فاتورة شراء جديدة',
       actions: <Widget>[
         TextButton(
-          onPressed: _saving ? null : () => context.go(AppRoutes.financePurchases),
+          onPressed: _saving
+              ? null
+              : () => context.go(AppRoutes.financePurchases),
           child: const Text('إلغاء'),
         ),
         const SizedBox(width: FinanceSpace.sm),
         ElevatedButton.icon(
-          onPressed: _saving ? null : _save,
-          style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+          onPressed: _saving ? null : () => _save(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.primary,
+            foregroundColor: Colors.white,
+          ),
           icon: _saving
               ? const SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Icon(Icons.save_outlined, size: 16),
-          label: const Text('حفظ'),
+          label: const Text('حفظ كمسودة'),
+        ),
+        const SizedBox(width: FinanceSpace.sm),
+        ElevatedButton.icon(
+          onPressed: _saving ? null : () => _save(postAfterSave: true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.success,
+            foregroundColor: Colors.white,
+          ),
+          icon: const Icon(Icons.check_circle_outline, size: 16),
+          label: const Text('ترحيل'),
         ),
       ],
       child: SingleChildScrollView(
@@ -526,7 +685,21 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               dueDate: _dueDate,
               notes: _notes,
               onSupplierChanged: (int? v) => setState(() => _supplierId = v),
-              onBranchChanged: (int? v) => setState(() => _branchId = v),
+              onBranchChanged: (int? v) => setState(() {
+                _branchId = v;
+                for (final _LineDraft line in _lines) {
+                  if (line.warehouseId != null &&
+                      !_warehouses.any(
+                        (WarehouseLocation warehouse) =>
+                            warehouse.id == line.warehouseId &&
+                            (v == null ||
+                                warehouse.branchId == null ||
+                                warehouse.branchId == v),
+                      )) {
+                    line.warehouseId = null;
+                  }
+                }
+              }),
               onPickInvoiceDate: () => _pickDate(isInvoiceDate: true),
               onPickDueDate: () => _pickDate(isInvoiceDate: false),
             ),
@@ -549,7 +722,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               const SizedBox(height: FinanceSpace.md),
               _categoryDropdown(),
             ],
-            if (_purchaseType == 'asset' || _purchaseType == 'other') ...<Widget>[
+            if (_purchaseType == 'asset' ||
+                _purchaseType == 'other') ...<Widget>[
               const SizedBox(height: FinanceSpace.md),
               _accountDropdown(),
             ],
@@ -568,9 +742,18 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             ...List<Widget>.generate(
               _lines.length,
               (int index) => Padding(
+                key: ObjectKey(_lines[index]),
                 padding: const EdgeInsets.only(bottom: FinanceSpace.sm),
                 child: _LineEditorRow(
                   draft: _lines[index],
+                  warehouses: _warehouses
+                      .where(
+                        (WarehouseLocation w) =>
+                            _branchId == null ||
+                            w.branchId == null ||
+                            w.branchId == _branchId,
+                      )
+                      .toList(growable: false),
                   onRemove: _lines.length > 1 ? () => _removeLine(index) : null,
                   onChanged: () => setState(() {}),
                 ),
@@ -579,7 +762,9 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             const SizedBox(height: FinanceSpace.lg),
             Row(
               children: <Widget>[
-                Expanded(child: Text('تكاليف ورسوم إضافية', style: FinanceText.page)),
+                Expanded(
+                  child: Text('تكاليف ورسوم إضافية', style: FinanceText.page),
+                ),
                 TextButton.icon(
                   onPressed: _addCharge,
                   icon: const Icon(Icons.add, size: 16),
@@ -606,7 +791,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               linesNetTotal: _linesNetTotal,
               discountType: _invoiceDiscountType,
               discountValueController: _invoiceDiscountValue,
-              onDiscountTypeChanged: (String type) => setState(() => _invoiceDiscountType = type),
+              onDiscountTypeChanged: (String type) =>
+                  setState(() => _invoiceDiscountType = type),
               onDiscountChanged: () => setState(() {}),
               invoiceDiscountAmount: _invoiceDiscountPreview,
               netAfterDiscount: _netAfterInvoiceDiscount,
@@ -629,7 +815,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     isExpanded: true,
     decoration: const InputDecoration(labelText: 'فئة المصروف'),
     items: _expenseCategories
-        .map((ExpenseCategory c) => DropdownMenuItem<int>(value: c.id, child: Text(c.name)))
+        .map(
+          (ExpenseCategory c) =>
+              DropdownMenuItem<int>(value: c.id, child: Text(c.name)),
+        )
         .toList(growable: false),
     onChanged: (int? v) => setState(() => _expenseCategoryId = v),
   );
@@ -639,12 +828,16 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     initialValue: _assetAccountId,
     isExpanded: true,
     decoration: InputDecoration(
-      labelText: _purchaseType == 'asset' ? 'حساب الأصل الثابت' : 'الحساب المحاسبي',
+      labelText: _purchaseType == 'asset'
+          ? 'حساب الأصل الثابت'
+          : 'الحساب المحاسبي',
     ),
     items: _accounts
         .map(
-          (FinancialAccount a) =>
-              DropdownMenuItem<int>(value: a.id, child: Text('${a.code} — ${a.nameAr}')),
+          (FinancialAccount a) => DropdownMenuItem<int>(
+            value: a.id,
+            child: Text('${a.code} — ${a.nameAr}'),
+          ),
         )
         .toList(growable: false),
     onChanged: (int? v) => setState(() => _assetAccountId = v),
@@ -670,6 +863,7 @@ class _HeaderSection extends StatelessWidget {
     required this.onPickInvoiceDate,
     required this.onPickDueDate,
   });
+
   /// System-generated (e.g. PI-2026-000001) — read-only, assigned by the backend on save.
   final String? internalReference;
   final List<Supplier> suppliers;
@@ -715,7 +909,10 @@ class _HeaderSection extends StatelessWidget {
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'المورد'),
             items: suppliers
-                .map((Supplier s) => DropdownMenuItem<int>(value: s.id, child: Text(s.name)))
+                .map(
+                  (Supplier s) =>
+                      DropdownMenuItem<int>(value: s.id, child: Text(s.name)),
+                )
                 .toList(growable: false),
             onChanged: onSupplierChanged,
           ),
@@ -725,9 +922,14 @@ class _HeaderSection extends StatelessWidget {
           child: DropdownButtonFormField<int>(
             initialValue: branchId,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'الفرع (اختياري: كل الفروع)'),
+            decoration: const InputDecoration(
+              labelText: 'الفرع (اختياري: كل الفروع)',
+            ),
             items: branches
-                .map((Branch b) => DropdownMenuItem<int>(value: b.id, child: Text(b.name)))
+                .map(
+                  (Branch b) =>
+                      DropdownMenuItem<int>(value: b.id, child: Text(b.name)),
+                )
                 .toList(growable: false),
             onChanged: onBranchChanged,
           ),
@@ -770,10 +972,12 @@ class _HeaderSection extends StatelessWidget {
 class _LineEditorRow extends StatelessWidget {
   const _LineEditorRow({
     required this.draft,
+    required this.warehouses,
     required this.onRemove,
     required this.onChanged,
   });
   final _LineDraft draft;
+  final List<WarehouseLocation> warehouses;
   final VoidCallback? onRemove;
   final VoidCallback onChanged;
 
@@ -798,10 +1002,12 @@ class _LineEditorRow extends StatelessWidget {
               selected: draft.item,
               width: 240,
               onSelected: (InventoryItem? i) {
-                draft.item = i;
-                if (i != null && draft.purchaseUnit.text.trim().isEmpty) {
-                  draft.purchaseUnit.text = i.purchaseUnit.isNotEmpty ? i.purchaseUnit : i.unit;
+                if (draft.item?.id != i?.id) {
+                  draft.purchaseUnit.text = i == null
+                      ? ''
+                      : (i.purchaseUnit.isNotEmpty ? i.purchaseUnit : i.unit);
                 }
+                draft.item = i;
                 onChanged();
               },
             ),
@@ -811,8 +1017,43 @@ class _LineEditorRow extends StatelessWidget {
             width: 260,
             child: TextField(
               controller: draft.description,
-              decoration: const InputDecoration(labelText: 'البيان', isDense: true),
+              decoration: const InputDecoration(
+                labelText: 'البيان',
+                isDense: true,
+              ),
               onChanged: (_) => onChanged(),
+            ),
+          ),
+        if (draft.lineType == 'inventory')
+          SizedBox(
+            width: 190,
+            child: DropdownButtonFormField<int>(
+              isExpanded: true,
+              initialValue:
+                  warehouses.any(
+                    (WarehouseLocation w) => w.id == draft.warehouseId,
+                  )
+                  ? draft.warehouseId
+                  : null,
+              decoration: const InputDecoration(
+                labelText: 'مخزن الاستلام',
+                isDense: true,
+              ),
+              items: warehouses
+                  .map(
+                    (WarehouseLocation w) => DropdownMenuItem<int>(
+                      value: w.id,
+                      child: Text(
+                        w.displayName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (int? value) {
+                draft.warehouseId = value;
+                onChanged();
+              },
             ),
           ),
         if (draft.lineType == 'inventory')
@@ -824,14 +1065,22 @@ class _LineEditorRow extends StatelessWidget {
               onChanged: onChanged,
             ),
           ),
-        SizedBox(width: 90, child: _numberField('الكمية', draft.quantity, onChanged)),
-        SizedBox(width: 120, child: _numberField('إجمالي الصنف', draft.lineGrossAmount, onChanged)),
+        SizedBox(
+          width: 90,
+          child: _numberField('الكمية', draft.quantity, onChanged),
+        ),
+        SizedBox(
+          width: 120,
+          child: _numberField('تكلفة الوحدة', draft.unitCost, onChanged),
+        ),
         SizedBox(
           width: 150,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Expanded(child: _numberField('الخصم', draft.discountValue, onChanged)),
+              Expanded(
+                child: _numberField('الخصم', draft.discountValue, onChanged),
+              ),
               const SizedBox(width: 4),
               _DiscountTypeToggle(
                 discountType: draft.discountType,
@@ -843,32 +1092,50 @@ class _LineEditorRow extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(width: 90, child: _numberField('الضريبة', draft.tax, onChanged)),
         SizedBox(
-          width: 110,
-          child: _ReadOnlyAmount(label: 'تكلفة الوحدة', value: draft.derivedUnitCost, decimals: 4),
+          width: 90,
+          child: _numberField('الضريبة', draft.tax, onChanged),
         ),
         SizedBox(
           width: 120,
-          child: _ReadOnlyAmount(label: 'الإجمالي الصافي', value: draft.lineTotal, emphasize: true),
+          child: _ReadOnlyAmount(
+            label: 'إجمالي الصنف',
+            value: draft.grossAmount,
+            emphasize: true,
+          ),
+        ),
+        SizedBox(
+          width: 120,
+          child: _ReadOnlyAmount(
+            label: 'الإجمالي الصافي',
+            value: draft.lineTotal,
+            emphasize: true,
+          ),
         ),
         if (onRemove != null)
           IconButton(
             tooltip: 'حذف البند',
-            icon: const Icon(Icons.delete_outline, size: 18, color: FinanceColors.danger),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 18,
+              color: FinanceColors.danger,
+            ),
             onPressed: onRemove,
           ),
       ],
     ),
   );
 
-  Widget _numberField(String label, TextEditingController controller, VoidCallback onChanged) =>
-      TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(labelText: label, isDense: true),
-        onChanged: (_) => onChanged(),
-      );
+  Widget _numberField(
+    String label,
+    TextEditingController controller,
+    VoidCallback onChanged,
+  ) => TextField(
+    controller: controller,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    decoration: InputDecoration(labelText: label, isDense: true),
+    onChanged: (_) => onChanged(),
+  );
 }
 
 /// Purchase unit as a select instead of free text: the base unit plus any
@@ -951,9 +1218,7 @@ class _PurchaseUnitFieldState extends State<_PurchaseUnitField> {
       isExpanded: true,
       decoration: const InputDecoration(labelText: 'الوحدة', isDense: true),
       items: options
-          .map(
-            (String u) => DropdownMenuItem<String>(value: u, child: Text(u)),
-          )
+          .map((String u) => DropdownMenuItem<String>(value: u, child: Text(u)))
           .toList(growable: false),
       onChanged: options.isEmpty
           ? null
@@ -967,7 +1232,10 @@ class _PurchaseUnitFieldState extends State<_PurchaseUnitField> {
 }
 
 class _DiscountTypeToggle extends StatelessWidget {
-  const _DiscountTypeToggle({required this.discountType, required this.onChanged});
+  const _DiscountTypeToggle({
+    required this.discountType,
+    required this.onChanged,
+  });
   final String discountType;
   final ValueChanged<String> onChanged;
 
@@ -1051,10 +1319,8 @@ class _ChargeEditorRow extends StatelessWidget {
                 },
                 itemBuilder: (BuildContext context) => kQuickChargeTypes
                     .map(
-                      (String type) => PopupMenuItem<String>(
-                        value: type,
-                        child: Text(type),
-                      ),
+                      (String type) =>
+                          PopupMenuItem<String>(value: type, child: Text(type)),
                     )
                     .toList(growable: false),
               ),
@@ -1103,10 +1369,16 @@ class _ChargeEditorRow extends StatelessWidget {
             child: DropdownButtonFormField<int>(
               initialValue: draft.expenseCategoryId,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'فئة المصروف', isDense: true),
+              decoration: const InputDecoration(
+                labelText: 'فئة المصروف',
+                isDense: true,
+              ),
               items: expenseCategories
                   .map(
-                    (ExpenseCategory c) => DropdownMenuItem<int>(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis)),
+                    (ExpenseCategory c) => DropdownMenuItem<int>(
+                      value: c.id,
+                      child: Text(c.name, overflow: TextOverflow.ellipsis),
+                    ),
                   )
                   .toList(growable: false),
               onChanged: (int? v) {
@@ -1120,7 +1392,10 @@ class _ChargeEditorRow extends StatelessWidget {
           child: TextField(
             controller: draft.amount,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'المبلغ', isDense: true),
+            decoration: const InputDecoration(
+              labelText: 'المبلغ',
+              isDense: true,
+            ),
             onChanged: (_) => onChanged(),
           ),
         ),
@@ -1129,13 +1404,20 @@ class _ChargeEditorRow extends StatelessWidget {
           child: TextField(
             controller: draft.tax,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'الضريبة', isDense: true),
+            decoration: const InputDecoration(
+              labelText: 'الضريبة',
+              isDense: true,
+            ),
             onChanged: (_) => onChanged(),
           ),
         ),
         IconButton(
           tooltip: 'حذف التكلفة',
-          icon: const Icon(Icons.delete_outline, size: 18, color: FinanceColors.danger),
+          icon: const Icon(
+            Icons.delete_outline,
+            size: 18,
+            color: FinanceColors.danger,
+          ),
           onPressed: onRemove,
         ),
       ],
@@ -1190,13 +1472,21 @@ class _InvoiceSummaryCard extends StatelessWidget {
               width: 130,
               child: TextField(
                 controller: discountValueController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'خصم الفاتورة', isDense: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'خصم الفاتورة',
+                  isDense: true,
+                ),
                 onChanged: (_) => onDiscountChanged(),
               ),
             ),
             const SizedBox(width: FinanceSpace.sm),
-            _DiscountTypeToggle(discountType: discountType, onChanged: onDiscountTypeChanged),
+            _DiscountTypeToggle(
+              discountType: discountType,
+              onChanged: onDiscountTypeChanged,
+            ),
           ],
         ),
         const SizedBox(height: FinanceSpace.md),
@@ -1206,10 +1496,15 @@ class _InvoiceSummaryCard extends StatelessWidget {
         _summaryRow('صافي البنود', _fmt(netAfterDiscount), emphasize: true),
         if (charges.isNotEmpty) ...<Widget>[
           const SizedBox(height: FinanceSpace.sm),
-          Text('تكاليف إضافية:', style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'تكاليف إضافية:',
+            style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
+          ),
           ...charges.map(
             (_ChargeDraft c) => _summaryRow(
-              c.description.text.trim().isEmpty ? '—' : c.description.text.trim(),
+              c.description.text.trim().isEmpty
+                  ? '—'
+                  : c.description.text.trim(),
               _fmt(c.amountValue),
             ),
           ),
@@ -1217,26 +1512,40 @@ class _InvoiceSummaryCard extends StatelessWidget {
         ],
         _summaryRow('الضريبة', _fmt(linesTaxTotal + chargesTaxTotal)),
         const Divider(),
-        _summaryRow('الإجمالي النهائي', _fmt(grandTotal), emphasize: true, big: true),
+        _summaryRow(
+          'الإجمالي النهائي',
+          _fmt(grandTotal),
+          emphasize: true,
+          big: true,
+        ),
       ],
     ),
   );
 
-  Widget _summaryRow(String label, String value, {bool emphasize = false, bool big = false}) => Padding(
+  Widget _summaryRow(
+    String label,
+    String value, {
+    bool emphasize = false,
+    bool big = false,
+  }) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
     child: Row(
       children: <Widget>[
         Expanded(
           child: Text(
             label,
-            style: emphasize ? FinanceText.body.copyWith(fontWeight: FontWeight.w700) : FinanceText.body,
+            style: emphasize
+                ? FinanceText.body.copyWith(fontWeight: FontWeight.w700)
+                : FinanceText.body,
           ),
         ),
         Text(
           value,
           style: big
               ? FinanceText.page.copyWith(fontWeight: FontWeight.w800)
-              : (emphasize ? FinanceText.body.copyWith(fontWeight: FontWeight.w700) : FinanceText.body),
+              : (emphasize
+                    ? FinanceText.body.copyWith(fontWeight: FontWeight.w700)
+                    : FinanceText.body),
         ),
       ],
     ),

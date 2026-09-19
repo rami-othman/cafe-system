@@ -314,11 +314,11 @@ final class PurchaseReceivingService
 
             $warehouseId = (int) ($input['warehouseId'] ?? $invoiceLine->warehouse_id ?? 0);
             if ($warehouseId <= 0) {
-                throw ValidationException::withMessages(['lines' => 'Select a destination warehouse for this line.']);
+                throw ValidationException::withMessages(['lines' => 'يرجى اختيار مخزن الاستلام لهذا البند.']);
             }
             $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->first();
             if (! $warehouse) {
-                throw ValidationException::withMessages(['lines' => 'Select an active warehouse that belongs to this tenant.']);
+                throw ValidationException::withMessages(['lines' => 'لا يمكن الوصول إلى هذا المخزن. يرجى اختيار مخزن نشط يتبع لهذه المنشأة.']);
             }
 
             // Unit cost per base unit, derived once from the invoice line's

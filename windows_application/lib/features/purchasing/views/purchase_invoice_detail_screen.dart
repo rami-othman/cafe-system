@@ -20,10 +20,12 @@ class PurchaseInvoiceDetailScreen extends StatefulWidget {
   final int purchaseId;
 
   @override
-  State<PurchaseInvoiceDetailScreen> createState() => _PurchaseInvoiceDetailScreenState();
+  State<PurchaseInvoiceDetailScreen> createState() =>
+      _PurchaseInvoiceDetailScreenState();
 }
 
-class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScreen> {
+class _PurchaseInvoiceDetailScreenState
+    extends State<PurchaseInvoiceDetailScreen> {
   PurchaseInvoice? _purchase;
   Object? _error;
   bool _busy = false;
@@ -38,7 +40,9 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
 
   Future<void> _load() async {
     try {
-      final PurchaseInvoice purchase = await _cubit.repository.getPurchase(widget.purchaseId);
+      final PurchaseInvoice purchase = await _cubit.repository.getPurchase(
+        widget.purchaseId,
+      );
       if (!mounted) return;
       setState(() {
         _purchase = purchase;
@@ -51,11 +55,92 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
   }
 
   Future<void> _post() async {
+    PurchasePostingPreview preview;
+    try {
+      preview = await _cubit.repository.getPostingPreview(widget.purchaseId);
+    } catch (error) {
+      _showError(error);
+      return;
+    }
+    if (!mounted) return;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialog) => AlertDialog(
+        title: const Text('ترحيل واستلام ودفع فاتورة الشراء'),
+        content: Text(
+          'سيتم ترحيل الفاتورة واستلام المواد ودفع قيمة الفاتورة من الصندوق المرتبط بالمستخدم. هل تريد المتابعة؟\n\n'
+          'إجمالي الفاتورة: ${preview.amount} SYP\n'
+          'الصندوق: ${preview.financialLocationName}\n'
+          'الفرع: ${_purchase?.branchName ?? '—'}'
+          '${preview.shiftNumber == null ? '' : '\nالوردية: ${preview.shiftNumber}'}',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: const Text('تأكيد الترحيل والدفع'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     setState(() => _busy = true);
     try {
       final PurchaseInvoice updated = await _cubit.repository.postPurchase(
         widget.purchaseId,
         'purchase-post-${widget.purchaseId}-${DateTime.now().millisecondsSinceEpoch}',
+      );
+      if (!mounted) return;
+      setState(() {
+        _purchase = updated;
+        _busy = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${updated.paidAmount} SYP من ${preview.financialLocationName} بنجاح.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      _showError(error);
+    }
+  }
+
+  Future<void> _reverse() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialog) => AlertDialog(
+        title: const Text('إلغاء ترحيل الفاتورة'),
+        content: const Text(
+          'سيتم إنشاء قيد عكسي متوازن. لا يمكن التراجع عن هذا الإجراء.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FinanceColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _busy = true);
+    try {
+      final PurchaseInvoice updated = await _cubit.repository.reversePurchase(
+        widget.purchaseId,
       );
       if (!mounted) return;
       setState(() {
@@ -69,51 +154,27 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
     }
   }
 
-  Future<void> _reverse() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialog) => AlertDialog(
-        title: const Text('إلغاء ترحيل الفاتورة'),
-        content: const Text('سيتم إنشاء قيد عكسي متوازن. لا يمكن التراجع عن هذا الإجراء.'),
-        actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(dialog, false), child: const Text('إلغاء')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialog, true),
-            style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.danger, foregroundColor: Colors.white),
-            child: const Text('تأكيد'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    setState(() => _busy = true);
-    try {
-      final PurchaseInvoice updated = await _cubit.repository.reversePurchase(widget.purchaseId);
-      if (!mounted) return;
-      setState(() {
-        _purchase = updated;
-        _busy = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _busy = false);
-      _showError(error);
-    }
-  }
-
   void _showError(Object error) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$error')));
   }
 
   @override
   Widget build(BuildContext context) {
     if (_purchase == null && _error == null) {
-      return const FinanceShell(title: 'المشتريات', child: FinanceLoadingState(label: 'جارٍ تحميل الفاتورة…'));
+      return const FinanceShell(
+        title: 'المشتريات',
+        child: FinanceLoadingState(label: 'جارٍ تحميل الفاتورة…'),
+      );
     }
     if (_purchase == null) {
       return FinanceShell(
         title: 'المشتريات',
-        child: FinanceErrorState(message: 'تعذّر تحميل فاتورة الشراء.', onRetry: _load),
+        child: FinanceErrorState(
+          message: 'تعذّر تحميل فاتورة الشراء.',
+          onRetry: _load,
+        ),
       );
     }
     final PurchaseInvoice p = _purchase!;
@@ -129,7 +190,8 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
         if (p.allowedActions.contains('edit')) ...<Widget>[
           const SizedBox(width: FinanceSpace.sm),
           OutlinedButton.icon(
-            onPressed: () => context.go('${AppRoutes.financePurchases}/${p.id}/edit'),
+            onPressed: () =>
+                context.go('${AppRoutes.financePurchases}/${p.id}/edit'),
             icon: const Icon(Icons.edit_outlined, size: 16),
             label: const Text('تعديل'),
           ),
@@ -138,7 +200,10 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
           const SizedBox(width: FinanceSpace.sm),
           ElevatedButton.icon(
             onPressed: _busy ? null : _post,
-            style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FinanceColors.primary,
+              foregroundColor: Colors.white,
+            ),
             icon: const Icon(Icons.check_circle_outline, size: 16),
             label: const Text('ترحيل'),
           ),
@@ -147,7 +212,9 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
           const SizedBox(width: FinanceSpace.sm),
           OutlinedButton.icon(
             onPressed: _busy ? null : _reverse,
-            style: OutlinedButton.styleFrom(foregroundColor: FinanceColors.danger),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: FinanceColors.danger,
+            ),
             icon: const Icon(Icons.undo, size: 16),
             label: const Text('إلغاء الترحيل'),
           ),
@@ -157,8 +224,13 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
           ElevatedButton.icon(
             onPressed: _busy
                 ? null
-                : () => context.go('${AppRoutes.financePurchases}/${p.id}/receive'),
-            style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.success, foregroundColor: Colors.white),
+                : () => context.go(
+                    '${AppRoutes.financePurchases}/${p.id}/receive',
+                  ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FinanceColors.success,
+              foregroundColor: Colors.white,
+            ),
             icon: const Icon(Icons.inventory_2_outlined, size: 16),
             label: const Text('استلام مخزون'),
           ),
@@ -172,7 +244,9 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
               title: p.supplierName,
               reference: p.invoiceNumber,
               status: p.documentStatus,
-              actions: <Widget>[PurchaseTypeBadge(purchaseType: p.purchaseType)],
+              actions: <Widget>[
+                PurchaseTypeBadge(purchaseType: p.purchaseType),
+              ],
             ),
             const SizedBox(height: FinanceSpace.lg),
             FinanceInfoGrid(
@@ -180,11 +254,18 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
                 FinanceInfoItem('الفرع', p.branchName ?? 'كل الفروع'),
                 FinanceInfoItem('تاريخ الفاتورة', p.invoiceDate),
                 FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
-                FinanceInfoItem('الحساب', '${p.debitAccountCode ?? ''} ${p.debitAccountName ?? ''}'.trim()),
+                FinanceInfoItem(
+                  'الحساب',
+                  '${p.debitAccountCode ?? ''} ${p.debitAccountName ?? ''}'
+                      .trim(),
+                ),
                 FinanceInfoItem('أنشأ بواسطة', p.createdByName ?? '—'),
                 FinanceInfoItem('تاريخ الترحيل', p.postedAt ?? '—'),
                 if (p.hasInventoryLines)
-                  FinanceInfoItem('حالة الاستلام', receiptStatusLabel(p.receiptStatus)),
+                  FinanceInfoItem(
+                    'حالة الاستلام',
+                    receiptStatusLabel(p.receiptStatus),
+                  ),
               ],
             ),
             const SizedBox(height: FinanceSpace.lg),
@@ -212,7 +293,9 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
               if (p.receipts.isEmpty)
                 const SizedBox(
                   height: 100,
-                  child: FinanceEmptyState(message: 'لم يتم إنشاء أي استلام مخزون بعد لهذه الفاتورة'),
+                  child: FinanceEmptyState(
+                    message: 'لم يتم إنشاء أي استلام مخزون بعد لهذه الفاتورة',
+                  ),
                 )
               else
                 _ReceiptsTable(receipts: p.receipts),
@@ -225,7 +308,9 @@ class _PurchaseInvoiceDetailScreenState extends State<PurchaseInvoiceDetailScree
             if (p.payments.isEmpty)
               const SizedBox(
                 height: 120,
-                child: FinanceEmptyState(message: 'لا توجد دفعات مسجلة على هذه الفاتورة'),
+                child: FinanceEmptyState(
+                  message: 'لا توجد دفعات مسجلة على هذه الفاتورة',
+                ),
               )
             else
               _PaymentsTable(payments: p.payments),
@@ -269,7 +354,9 @@ class _LinesTable extends StatelessWidget {
                 ? Text(
                     '${l.receivedQuantity} / ${l.baseQuantity ?? l.quantity} — متبقي ${l.remainingQuantity ?? '—'}',
                     style: FinanceText.small.copyWith(
-                      color: l.hasRemainingToReceive ? FinanceColors.warning : FinanceColors.success,
+                      color: l.hasRemainingToReceive
+                          ? FinanceColors.warning
+                          : FinanceColors.success,
                     ),
                   )
                 : Text('—', style: FinanceText.small),
@@ -285,7 +372,14 @@ class _ReceiptsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FinanceTable(
-    headers: const <String>['رقم الاستلام', 'التاريخ', 'الفرع', 'عدد البنود', 'أنشأ بواسطة', 'الحالة'],
+    headers: const <String>[
+      'رقم الاستلام',
+      'التاريخ',
+      'الفرع',
+      'عدد البنود',
+      'أنشأ بواسطة',
+      'الحالة',
+    ],
     minWidth: 760,
     onRowTap: (int index) => context.go(
       '${AppRoutes.financePurchaseReceipts}/${receipts[index].id}',
@@ -325,7 +419,11 @@ class _TotalsPanel extends StatelessWidget {
         const Divider(height: FinanceSpace.lg),
         _totalsRow('الإجمالي', purchase.totalAmount, emphasize: true),
         _totalsRow('المدفوع', purchase.paidAmount),
-        _totalsRow('المتبقي', purchase.remainingAmount, danger: purchase.isOverdue),
+        _totalsRow(
+          'المتبقي',
+          purchase.remainingAmount,
+          danger: purchase.isOverdue,
+        ),
         const SizedBox(height: FinanceSpace.sm),
         Wrap(
           spacing: FinanceSpace.sm,
@@ -339,15 +437,17 @@ class _TotalsPanel extends StatelessWidget {
     ),
   );
 
-  Widget _totalsRow(String label, String value, {bool emphasize = false, bool danger = false}) => Padding(
+  Widget _totalsRow(
+    String label,
+    String value, {
+    bool emphasize = false,
+    bool danger = false,
+  }) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Text(
-          label,
-          style: emphasize ? FinanceText.page : FinanceText.label,
-        ),
+        Text(label, style: emphasize ? FinanceText.page : FinanceText.label),
         const SizedBox(width: FinanceSpace.lg),
         FinanceAmount(
           value: value,
@@ -364,12 +464,28 @@ class _PaymentsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FinanceTable(
-    headers: const <String>['رقم الدفعة', 'التاريخ', 'الحالة', 'المبلغ'],
+    headers: const <String>[
+      'رقم الدفعة',
+      'سند الدفع',
+      'التاريخ',
+      'الحالة',
+      'المبلغ',
+    ],
     minWidth: 640,
     rows: payments
         .map(
           (PurchasePayment pay) => <Widget>[
             FinanceReference(reference: pay.paymentNumber),
+            pay.voucherId == null
+                ? const Text('—')
+                : InkWell(
+                    onTap: () => context.go(
+                      '${AppRoutes.financeVouchers}/${pay.voucherId}',
+                    ),
+                    child: FinanceReference(
+                      reference: pay.voucherNumber ?? 'سند الدفع',
+                    ),
+                  ),
             Text(pay.paymentDate, style: FinanceText.small),
             FinanceStatusBadge(status: pay.status),
             FinanceAmount(value: pay.amount),

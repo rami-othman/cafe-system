@@ -84,8 +84,8 @@ class _TransfersScreenState extends State<TransfersScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         ManagementPageHeader(
-          title: 'تحويلات المستودعات',
-          subtitle: 'إنشاء ومتابعة التحويلات بين المستودعات.',
+          title: 'تحويلات المخازن',
+          subtitle: 'إنشاء ومتابعة التحويلات بين المخازن.',
           actions: <Widget>[
             AppButton(
               label: 'إنشاء تحويل',
@@ -122,7 +122,7 @@ class _TransfersScreenState extends State<TransfersScreen> {
                 },
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search),
-                  hintText: 'بحث برقم التحويل أو المستودع',
+                  hintText: 'بحث برقم التحويل أو المخزن',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -578,7 +578,7 @@ class _CreateTransferDialogState extends State<_CreateTransferDialog> {
             children: <Widget>[
               DropdownButtonFormField<int>(
                 initialValue: _source,
-                decoration: const InputDecoration(labelText: 'مستودع المصدر'),
+                decoration: const InputDecoration(labelText: 'المخزن المصدر'),
                 items: widget.warehouses
                     .map(
                       (x) => DropdownMenuItem(value: x.id, child: Text(x.name)),
@@ -598,7 +598,7 @@ class _CreateTransferDialogState extends State<_CreateTransferDialog> {
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
                 initialValue: _destination,
-                decoration: const InputDecoration(labelText: 'مستودع الوجهة'),
+                decoration: const InputDecoration(labelText: 'المخزن الوجهة'),
                 items: widget.warehouses
                     .where((x) => x.id != _source)
                     .map(
@@ -711,7 +711,7 @@ class _LocationDialogState extends State<_LocationDialog> {
   int? _destination;
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('مستودعات التحويل'),
+    title: const Text('مخازن التحويل'),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[

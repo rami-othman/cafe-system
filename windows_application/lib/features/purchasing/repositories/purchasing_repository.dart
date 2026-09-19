@@ -53,18 +53,23 @@ class PurchasingRepository {
     ),
   );
 
-  Future<PurchaseInvoice> postPurchase(
-    int id,
-    String idempotencyKey,
-  ) async => PurchaseInvoice.fromJson(
-    Map<String, dynamic>.from(
-      await _api.post(
-            'finance/supplier-invoices/$id/post',
-            data: <String, dynamic>{'idempotencyKey': idempotencyKey},
-          )
-          as Map,
-    ),
-  );
+  Future<PurchaseInvoice> postPurchase(int id, String idempotencyKey) async =>
+      PurchaseInvoice.fromJson(
+        Map<String, dynamic>.from(
+          await _api.post(
+                'finance/purchases/$id/post',
+                data: <String, dynamic>{'idempotencyKey': idempotencyKey},
+              )
+              as Map,
+        ),
+      );
+
+  Future<PurchasePostingPreview> getPostingPreview(int id) async =>
+      PurchasePostingPreview.fromJson(
+        Map<String, dynamic>.from(
+          await _api.get('finance/purchases/$id/posting-preview') as Map,
+        ),
+      );
 
   Future<PurchaseInvoice> reversePurchase(int id) async =>
       PurchaseInvoice.fromJson(
@@ -124,10 +129,7 @@ class PurchasingRepository {
     Map<String, dynamic> payload,
   ) async => PurchaseReceipt.fromJson(
     Map<String, dynamic>.from(
-      await _api.post(
-            'finance/purchases/$invoiceId/receipts',
-            data: payload,
-          )
+      await _api.post('finance/purchases/$invoiceId/receipts', data: payload)
           as Map,
     ),
   );
@@ -137,10 +139,7 @@ class PurchasingRepository {
     Map<String, dynamic> payload,
   ) async => PurchaseReceipt.fromJson(
     Map<String, dynamic>.from(
-      await _api.patch(
-            'finance/purchase-receipts/$receiptId',
-            data: payload,
-          )
+      await _api.patch('finance/purchase-receipts/$receiptId', data: payload)
           as Map,
     ),
   );

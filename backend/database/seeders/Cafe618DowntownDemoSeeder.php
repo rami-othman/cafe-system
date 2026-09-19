@@ -52,16 +52,16 @@ final class Cafe618DowntownDemoSeeder extends Seeder
 
         $this->branchId = (int) $branch->id;
         app(FinancialSetupService::class)->ensureForTenant($this->tenantId, $this->branchId, $this->owner->id);
-        app(FinancialSetupService::class)->ensureBranchMainWarehouse($this->tenantId, $this->branchId, $this->owner->id);
+        app(FinancialSetupService::class)->ensureBranchWarehouse($this->tenantId, $this->branchId, null, $this->owner->id);
         $this->warehouseId = (int) DB::table('warehouses')
             ->where('tenant_id', $this->tenantId)
             ->where('branch_id', $this->branchId)
-            ->where('type', 'branch_main')
             ->where('is_active', true)
             ->whereNull('deleted_at')
+            ->orderBy('id')
             ->value('id');
         if (! $this->warehouseId) {
-            throw new RuntimeException('Downtown main store warehouse is unavailable.');
+            throw new RuntimeException('Downtown store warehouse is unavailable.');
         }
 
         $this->request = Request::create('/seed/cafe-618/downtown-demo', 'POST');

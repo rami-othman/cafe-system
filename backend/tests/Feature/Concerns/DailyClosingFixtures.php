@@ -192,10 +192,7 @@ trait DailyClosingFixtures
     /** Direct fixture insert (bypasses InventoryPostingService/InventoryAccountingMapper) for simulating a legacy/broken posting state. */
     protected function makeStockMovementRaw(int $tenant, int $branch, string $type, string $totalCost, string $occurredAt, string $quantityOut = '0.000'): int
     {
-        $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'BR-'.$branch.'-MAIN')->value('id');
-        if (! $warehouseId) {
-            $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'CENTRAL')->value('id');
-        }
+        $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branch)->whereNull('deleted_at')->orderBy('id')->value('id');
         $itemId = $this->inventoryItemId($tenant);
 
         return (int) DB::table('stock_movements')->insertGetId([

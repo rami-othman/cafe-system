@@ -18,38 +18,56 @@ void main() {
     }
   });
 
-  testWidgets('preselects the supplier passed in from the Supplier Profile screen', (
+  testWidgets('all branches show branch warehouses in the receipt selector', (
     WidgetTester tester,
   ) async {
-    await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
-
-    expect(find.text('Demo Bean Roasters'), findsOneWidget);
-  });
-
-  testWidgets('validates an inventory line requires a selected item before saving', (
-    WidgetTester tester,
-  ) async {
-    await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
-
-    await tester.tap(find.text('حفظ'));
+    await _pump(tester, _FakeBackend(withWarehouses: true));
+    final selector = find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownButtonFormField<int> &&
+          widget.decoration.labelText == 'مخزن الاستلام',
+    );
+    await tester.tap(selector);
     await tester.pumpAndSettle();
-
-    expect(find.text('اختر صنف المخزون لكل بند.'), findsOneWidget);
+    expect(find.text('Main Warehouse'), findsWidgets);
+    expect(find.text('Downtown Warehouse'), findsWidgets);
   });
 
-  testWidgets('switching purchase type to service hides the inventory item picker', (
-    WidgetTester tester,
-  ) async {
-    await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
+  testWidgets(
+    'preselects the supplier passed in from the Supplier Profile screen',
+    (WidgetTester tester) async {
+      await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
 
-    expect(find.text('الصنف'), findsOneWidget);
+      expect(find.text('Demo Bean Roasters'), findsOneWidget);
+    },
+  );
 
-    await tester.tap(find.text('مصروف / خدمة'));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'validates an inventory line requires a selected item before saving',
+    (WidgetTester tester) async {
+      await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
 
-    expect(find.text('الصنف'), findsNothing);
-    expect(find.text('فئة المصروف'), findsOneWidget);
-  });
+      await tester.tap(find.text('حفظ كمسودة'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('اختر صنف المخزون لكل بند.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'switching purchase type to service hides the inventory item picker',
+    (WidgetTester tester) async {
+      await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
+
+      expect(find.text('الصنف'), findsOneWidget);
+
+      await tester.tap(find.text('مصروف / خدمة'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('الصنف'), findsNothing);
+      expect(find.text('فئة المصروف'), findsOneWidget);
+    },
+  );
 
   testWidgets('adding and removing a second line updates the row count', (
     WidgetTester tester,
@@ -69,53 +87,108 @@ void main() {
     expect(find.byIcon(Icons.delete_outline), findsNothing);
   });
 
-  testWidgets('saving a valid service line posts to the supplier-invoices endpoint with lines', (
+  testWidgets(
+    'saving a valid service line posts to the supplier-invoices endpoint with lines',
+    (WidgetTester tester) async {
+      final _FakeBackend backend = _FakeBackend();
+      await _pump(tester, backend, preselectedSupplierId: 1);
+
+      await tester.tap(find.text('مصروف / خدمة'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'البيان'),
+        'صيانة آلة الإسبريسو',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'تكلفة الوحدة'),
+        '60',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('حفظ كمسودة'));
+      await tester.pumpAndSettle();
+
+      // Blocked first by the required expense category, proving client-side
+      // validation runs before any network call.
+      expect(find.text('اختر فئة المصروف.'), findsOneWidget);
+      expect(backend.lastCreatePayload, isNull);
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('purchase-expense-category-dropdown'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Utilities').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('حفظ كمسودة'));
+      await tester.pumpAndSettle();
+
+      expect(backend.lastCreatePayload, isNotNull);
+      expect(backend.lastCreatePayload!['invoiceType'], 'expense');
+      expect(backend.lastCreatePayload!['expenseCategoryId'], 4);
+      expect(backend.lastCreatePayload!['lines'], hasLength(1));
+      final Map<String, dynamic> line =
+          backend.lastCreatePayload!['lines'][0] as Map<String, dynamic>;
+      expect(line['lineType'], 'expense');
+      expect(line['description'], 'صيانة آلة الإسبريسو');
+      expect(line['unitCost'], '60');
+      expect(line.containsKey('lineGrossAmount'), isFalse);
+      expect(backend.lastCreatePayload!.containsKey('invoiceNumber'), isFalse);
+    },
+  );
+
+  testWidgets('quantity and unit cost update the read-only line gross', (
     WidgetTester tester,
   ) async {
-    final _FakeBackend backend = _FakeBackend();
-    await _pump(tester, backend, preselectedSupplierId: 1);
+    await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
 
-    await tester.tap(find.text('مصروف / خدمة'));
-    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'الكمية'), '12');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'تكلفة الوحدة'),
+      '21.6667',
+    );
+    await tester.pump();
 
-    await tester.enterText(find.widgetWithText(TextField, 'البيان'), 'صيانة آلة الإسبريسو');
-    await tester.enterText(find.widgetWithText(TextField, 'إجمالي الصنف'), '60');
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('حفظ'));
-    await tester.pumpAndSettle();
-
-    // Blocked first by the required expense category, proving client-side
-    // validation runs before any network call.
-    expect(find.text('اختر فئة المصروف.'), findsOneWidget);
-    expect(backend.lastCreatePayload, isNull);
-
-    await tester.tap(find.byKey(const ValueKey<String>('purchase-expense-category-dropdown')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Utilities').last);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('حفظ'));
-    await tester.pumpAndSettle();
-
-    expect(backend.lastCreatePayload, isNotNull);
-    expect(backend.lastCreatePayload!['invoiceType'], 'expense');
-    expect(backend.lastCreatePayload!['expenseCategoryId'], 4);
-    expect(backend.lastCreatePayload!['lines'], hasLength(1));
-    final Map<String, dynamic> line =
-        backend.lastCreatePayload!['lines'][0] as Map<String, dynamic>;
-    expect(line['lineType'], 'expense');
-    expect(line['description'], 'صيانة آلة الإسبريسو');
-    expect(line['lineGrossAmount'], '60');
+    final Finder grossField = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is InputDecorator &&
+          widget.decoration.labelText == 'إجمالي الصنف',
+    );
+    expect(
+      find.descendant(of: grossField, matching: find.text('260.00')),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextField, 'إجمالي الصنف'), findsNothing);
   });
+
+  for (final Size size in <Size>[const Size(1280, 800), const Size(500, 800)]) {
+    testWidgets('purchase lines remain overflow-free in RTL at ${size.width}', (
+      WidgetTester tester,
+    ) async {
+      await _pump(
+        tester,
+        _FakeBackend(),
+        preselectedSupplierId: 1,
+        surfaceSize: size,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('إجمالي الصنف'), findsOneWidget);
+      expect(find.text('تكلفة الوحدة'), findsOneWidget);
+    });
+  }
 }
 
 Future<void> _pump(
   WidgetTester tester,
   _FakeBackend backend, {
   int? preselectedSupplierId,
+  Size surfaceSize = const Size(1600, 1200),
 }) async {
-  await tester.binding.setSurfaceSize(const Size(1600, 1200));
+  await tester.binding.setSurfaceSize(surfaceSize);
   addTearDown(() => tester.binding.setSurfaceSize(null));
 
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://test.local/api/v1/'));
@@ -163,6 +236,8 @@ Future<void> _pump(
 }
 
 class _FakeBackend {
+  _FakeBackend({this.withWarehouses = false});
+  final bool withWarehouses;
   Map<String, dynamic>? lastCreatePayload;
 
   Response<dynamic> respond(RequestOptions options) {
@@ -184,11 +259,43 @@ class _FakeBackend {
             'allowedActions': <String>[],
           },
         ],
-        meta: <String, dynamic>{'currentPage': 1, 'perPage': 200, 'total': 1, 'lastPage': 1},
+        meta: <String, dynamic>{
+          'currentPage': 1,
+          'perPage': 200,
+          'total': 1,
+          'lastPage': 1,
+        },
       );
     }
     if (path == 'branches') {
       return _ok(options, <Map<String, dynamic>>[]);
+    }
+    if (path == 'warehouses') {
+      return _ok(
+        options,
+        withWarehouses
+            ? <Map<String, dynamic>>[
+                {
+                  'id': 1,
+                  'branchId': 1,
+                  'name': 'Main Warehouse',
+                  'displayName': 'Main Warehouse',
+                  'code': 'MAIN',
+                  'type': 'warehouse',
+                  'isActive': true,
+                },
+                {
+                  'id': 2,
+                  'branchId': 2,
+                  'name': 'Downtown Warehouse',
+                  'displayName': 'Downtown Warehouse',
+                  'code': 'DOWN',
+                  'type': 'warehouse',
+                  'isActive': true,
+                },
+              ]
+            : <Map<String, dynamic>>[],
+      );
     }
     if (path == 'inventory/items') {
       return _ok(options, <String, dynamic>{
@@ -231,8 +338,9 @@ class _FakeBackend {
       lastCreatePayload = Map<String, dynamic>.from(options.data as Map);
       return _ok(options, <String, dynamic>{
         'id': 55,
-        'internalReference': 'AP-000055',
-        'invoiceNumber': lastCreatePayload!['invoiceNumber'],
+        'internalReference': 'PI-2026-000055',
+        'invoiceNumber': 'PI-2026-000055',
+        'supplierInvoiceNumber': lastCreatePayload!['supplierInvoiceNumber'],
         'supplierId': 1,
         'supplierName': 'Demo Bean Roasters',
         'invoiceDate': lastCreatePayload!['invoiceDate'],

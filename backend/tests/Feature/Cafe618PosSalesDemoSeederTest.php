@@ -26,10 +26,11 @@ class Cafe618PosSalesDemoSeederTest extends TestCase
             $this->seed(InventoryCenterSeeder::class);
             $this->seed(Cafe618InventoryOperationsDemoSeeder::class);
             $tenant = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
-            $main = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('type', 'branch_main')->orderBy('id')->value('id');
+            $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->whereNull('deleted_at')->orderBy('id')->value('id');
+            $bar = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('code', 'BR-'.$branchId.'-BAR')->value('id');
             foreach (['INV-BEANS', 'INV-MILK-FRESH', 'INV-CUP-12OZ', 'INV-VANILLA', 'INV-CARAMEL'] as $sku) {
                 $item = (int) DB::table('inventory_items')->where('tenant_id', $tenant)->where('sku', $sku)->value('id');
-                $this->assertGreaterThan(0, (float) DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $main)->where('inventory_item_id', $item)->value('quantity_on_hand'), $sku.' must be available at the POS source warehouse.');
+                $this->assertGreaterThan(0, (float) DB::table('stock_balances')->where('tenant_id', $tenant)->where('warehouse_id', $bar)->where('inventory_item_id', $item)->value('quantity_on_hand'), $sku.' must be available at the POS source warehouse.');
             }
             $this->seed(Cafe618PosSalesDemoSeeder::class);
 

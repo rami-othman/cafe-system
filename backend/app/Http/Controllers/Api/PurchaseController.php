@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\PurchasePostingOrchestrator;
 use App\Services\SupplierInvoiceService;
 use App\Services\SupplierPayableQueryService;
-use App\Support\FinancialActor;
 use App\Support\FinanceAccess;
+use App\Support\FinancialActor;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
 use App\Support\TenantContext;
@@ -35,6 +36,7 @@ class PurchaseController extends Controller
     public function __construct(
         private readonly SupplierInvoiceService $invoices,
         private readonly SupplierPayableQueryService $payable,
+        private readonly PurchasePostingOrchestrator $posting,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -106,15 +108,18 @@ class PurchaseController extends Controller
         $lines = $this->invoices->lines($tenant, $purchase);
         $payments = DB::table('payment_allocations as a')
             ->join('supplier_payments as p', 'p.id', '=', 'a.supplier_payment_id')
+            ->leftJoin('finance_documents as v', 'v.id', '=', 'p.finance_document_id')
             ->where('a.tenant_id', $tenant)->where('a.supplier_invoice_id', $purchase)
             ->orderByDesc('p.payment_date')
-            ->select('p.id', 'p.payment_number', 'p.payment_date', 'p.status', 'a.amount')
+            ->select('p.id', 'p.payment_number', 'p.payment_date', 'p.status', 'a.amount', 'v.id as voucher_id', 'v.document_number as voucher_number')
             ->get()->map(fn (object $p) => [
                 'paymentId' => (int) $p->id,
                 'paymentNumber' => $p->payment_number,
                 'paymentDate' => $p->payment_date,
                 'status' => $p->status,
                 'amount' => Money::decimal(Money::cents($p->amount)),
+                'voucherId' => $p->voucher_id ? (int) $p->voucher_id : null,
+                'voucherNumber' => $p->voucher_number,
             ])->values();
 
         $receipts = DB::table('purchase_receipts as r')
@@ -128,7 +133,7 @@ class PurchaseController extends Controller
                 'receiptNumber' => $r->receipt_number,
                 'receiptDate' => $r->receipt_date,
                 'status' => $r->status,
-                'branchName' => $r->branch_name ?? 'المستودع المركزي',
+                'branchName' => $r->branch_name ?? 'بدون فرع',
                 'createdByName' => $r->created_by_name,
                 'lineCount' => (int) $r->line_count,
             ])->values();
@@ -183,8 +188,36 @@ class PurchaseController extends Controller
             + ['allowedActions' => $this->actions($row, $permissions)]]);
     }
 
-    private function perPage(Request $request): int { return min(max((int) $request->query('perPage', 50), 1), 100); }
-    private function meta($paginator): array { return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()]; }
+    public function postingPreview(Request $request, int $purchase): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+
+        return response()->json(['data' => $this->posting->preview(
+            $request,
+            $tenant,
+            $purchase,
+            FinancialActor::id($request, $tenant),
+        )]);
+    }
+
+    public function post(Request $request, int $purchase): JsonResponse
+    {
+        $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:120']]);
+        $tenant = TenantContext::id($request);
+        $this->posting->post($request, $tenant, $purchase, $data['idempotencyKey'], FinancialActor::id($request, $tenant));
+
+        return $this->show($request, $purchase);
+    }
+
+    private function perPage(Request $request): int
+    {
+        return min(max((int) $request->query('perPage', 50), 1), 100);
+    }
+
+    private function meta($paginator): array
+    {
+        return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()];
+    }
 
     private function rows(int $tenant)
     {
@@ -210,14 +243,22 @@ class PurchaseController extends Controller
     {
         $can = fn (string $permission): bool => isset($permissions[$permission]);
         $actions = [];
-        if ($row->status === 'draft' && $can('finance.supplier_invoices.edit')) $actions[] = 'edit';
-        if ($row->status === 'draft' && $can('finance.supplier_invoices.post')) $actions[] = 'post';
-        if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) $actions[] = 'reverse';
+        if ($row->status === 'draft' && $can('finance.supplier_invoices.edit')) {
+            $actions[] = 'edit';
+        }
+        if ($row->status === 'draft' && $can('finance.purchases.post') && $can('finance.vouchers.create') && $can('finance.vouchers.post') && ($row->line_type !== 'inventory' || $can('finance.purchases.receive'))) {
+            $actions[] = 'post';
+        }
+        if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) {
+            $actions[] = 'reverse';
+        }
         // "receive" only when the invoice is financially postable (Phase 2's
         // no-GRNI restriction) and its receipt status isn't already fully
         // received — the client still needs a fresh remaining-quantity check
         // per line, this is a coarse show/hide signal only.
-        if ($row->line_type === 'inventory' && in_array($row->status, ['posted', 'partially_paid', 'paid'], true) && $row->receipt_status !== 'received' && $can('finance.purchases.receive')) $actions[] = 'receive';
+        if ($row->line_type === 'inventory' && in_array($row->status, ['posted', 'partially_paid', 'paid'], true) && $row->receipt_status !== 'received' && $can('finance.purchases.receive')) {
+            $actions[] = 'receive';
+        }
 
         return $actions;
     }
@@ -233,7 +274,8 @@ class PurchaseController extends Controller
         return [
             'id' => (int) $row->id,
             'internalReference' => $row->internal_reference,
-            'invoiceNumber' => $row->invoice_number,
+            'invoiceNumber' => $row->internal_reference,
+            'supplierInvoiceNumber' => $row->invoice_number,
             'supplierId' => (int) $row->supplier_id,
             'supplierName' => $row->supplier_name,
             'supplierNumber' => $row->supplier_number,
