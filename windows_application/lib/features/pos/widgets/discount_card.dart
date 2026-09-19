@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -87,7 +88,7 @@ class DiscountCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Apply',
+                      context.l10n.posApply,
                       style: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.secondary,
                         fontWeight: FontWeight.w800,

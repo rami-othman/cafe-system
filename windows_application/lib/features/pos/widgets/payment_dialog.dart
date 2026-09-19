@@ -2,12 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../l10n/app_localizations.dart';
 import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../controllers/pos_cubit.dart';
@@ -73,9 +75,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
     return math.max(amountReceived - widget.totalDue, 0);
   }
 
-  String? get _validationMessage {
+  String? _validationMessage(AppLocalizations l10n) {
     if (_selectedMethod == PaymentMethod.split) {
-      return 'Split payment will be supported later.';
+      return l10n.posSplitUnavailable;
     }
 
     if (_selectedMethod != PaymentMethod.cash) {
@@ -87,11 +89,11 @@ class _PaymentDialogState extends State<PaymentDialog> {
     }
 
     if (_amountController.text.trim().isEmpty || _amountReceived == null) {
-      return 'Enter amount received.';
+      return l10n.posEnterAmountReceived;
     }
 
     if ((_amountReceived ?? 0) < widget.totalDue) {
-      return 'Amount received is less than total due.';
+      return l10n.posAmountBelowTotal;
     }
 
     return null;
@@ -247,7 +249,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Payment failed: $error')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.posPaymentFailed)));
       return;
     }
     if (!mounted) {
@@ -288,7 +290,7 @@ class _PaymentHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Payment',
+                  context.l10n.posPayment,
                   style: AppTextStyles.headlineMedium.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w700,
@@ -296,7 +298,7 @@ class _PaymentHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Order ${orderNumber ?? '#618-42'}',
+                  context.l10n.posOrderNumber(orderNumber ?? '#618-42'),
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -309,7 +311,7 @@ class _PaymentHeader extends StatelessWidget {
             onPressed: onClose,
             icon: const Icon(Icons.close),
             color: AppColors.primary,
-            tooltip: 'Close',
+            tooltip: context.l10n.posClose,
           ),
         ],
       ),
@@ -328,7 +330,7 @@ class _PaymentBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Select Method',
+          context.l10n.posSelectPaymentMethod,
           style: AppTextStyles.titleMedium.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w700,
@@ -356,12 +358,12 @@ class _MethodDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (state._selectedMethod) {
       PaymentMethod.cash => _CashDetails(state: state),
-      PaymentMethod.card || PaymentMethod.wallet => const _PaymentNote(
-        message: 'External payment terminal integration will be added later.',
+      PaymentMethod.card || PaymentMethod.wallet => _PaymentNote(
+        message: context.l10n.posExternalTerminalPending,
         icon: Icons.info_outline,
       ),
-      PaymentMethod.split => const _PaymentNote(
-        message: 'Split payment will be supported later.',
+      PaymentMethod.split => _PaymentNote(
+        message: context.l10n.posSplitUnavailable,
         icon: Icons.call_split,
       ),
     };
@@ -379,7 +381,7 @@ class _CashDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'AMOUNT RECEIVED',
+          context.l10n.posAmountReceived,
           style: AppTextStyles.labelSmall.copyWith(
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w800,
@@ -398,9 +400,9 @@ class _CashDetails extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         _ChangeDueRow(changeDue: state._changeDue),
-        if (state._validationMessage != null) ...<Widget>[
+        if (state._validationMessage(context.l10n) != null) ...<Widget>[
           const SizedBox(height: AppSpacing.sm),
-          _ValidationMessage(message: state._validationMessage!),
+          _ValidationMessage(message: state._validationMessage(context.l10n)!),
         ],
       ],
     );
@@ -424,7 +426,7 @@ class _ChangeDueRow extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              'Change Due',
+              context.l10n.posChangeDue,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
@@ -550,7 +552,7 @@ class _PaymentFooter extends StatelessWidget {
                     borderRadius: AppRadius.control,
                   ),
                 ),
-                child: const Text('Cancel'),
+                child: Text(context.l10n.posCancel),
               ),
             ),
           ),
@@ -580,18 +582,18 @@ class _PaymentFooter extends StatelessWidget {
                           color: AppColors.white,
                         ),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Flexible(
                             child: Text(
-                              'Confirm Payment',
+                              context.l10n.posConfirmPayment,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(width: AppSpacing.sm),
-                          Icon(Icons.arrow_forward, size: 18),
+                          const SizedBox(width: AppSpacing.sm),
+                          const Icon(Icons.arrow_forward, size: 18),
                         ],
                       ),
               ),

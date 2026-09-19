@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/payment_method.dart';
+import 'pos_localization.dart';
 
 class PaymentMethodSelector extends StatelessWidget {
   const PaymentMethodSelector({
@@ -84,7 +86,7 @@ class _PaymentMethodCard extends StatelessWidget {
             Icon(method.icon, size: 20, color: foreground),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              method.label,
+              method.localizedLabel(context.l10n),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.labelSmall.copyWith(

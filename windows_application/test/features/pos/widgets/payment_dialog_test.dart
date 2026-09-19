@@ -6,11 +6,15 @@ import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/models/payment_method.dart';
 import 'package:windows_application/features/pos/models/payment_result.dart';
 import 'package:windows_application/features/pos/widgets/payment_dialog.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('cash amount updates change due', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: PaymentDialog(totalDue: 24.5, itemCount: 3)),
       ),
     );
@@ -27,6 +31,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: PaymentDialog(totalDue: 24.5, itemCount: 3)),
       ),
     );
@@ -71,6 +78,9 @@ void main() {
   testWidgets('split payment is disabled for now', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: PaymentDialog(totalDue: 24.5, itemCount: 3)),
       ),
     );
@@ -94,6 +104,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: PaymentDialog(
             totalDue: 24.5,
@@ -136,6 +149,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (BuildContext context) {
             return Scaffold(
@@ -184,6 +200,9 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: PaymentDialog(totalDue: 24.5, itemCount: 3)),
       ),
     );
@@ -203,6 +222,9 @@ class _PaymentDialogHost extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Builder(
         builder: (BuildContext context) {
           return Scaffold(

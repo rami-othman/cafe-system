@@ -13879,6 +13879,1698 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Customer search is temporarily unavailable.'**
   String get posCustomerSearchFailed;
+
+  /// No description provided for @discountManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get discountManual;
+
+  /// No description provided for @discountCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get discountCode;
+
+  /// No description provided for @discountCoupon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon'**
+  String get discountCoupon;
+
+  /// No description provided for @discountCodeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Code: {code}'**
+  String discountCodeValue(String code);
+
+  /// No description provided for @discountPercentage.
+  ///
+  /// In en, this message translates to:
+  /// **'Percentage'**
+  String get discountPercentage;
+
+  /// No description provided for @discountFixedAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed Amount'**
+  String get discountFixedAmount;
+
+  /// No description provided for @discountActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get discountActive;
+
+  /// No description provided for @discountInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get discountInactive;
+
+  /// No description provided for @discountScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get discountScheduled;
+
+  /// No description provided for @discountExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get discountExpired;
+
+  /// No description provided for @discountEntireOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Entire Order'**
+  String get discountEntireOrder;
+
+  /// No description provided for @discountSelectedProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Products'**
+  String get discountSelectedProducts;
+
+  /// No description provided for @discountSelectedCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Categories'**
+  String get discountSelectedCategories;
+
+  /// No description provided for @discountNoConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'No Conditions'**
+  String get discountNoConditions;
+
+  /// No description provided for @discountAlwaysValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Always Valid'**
+  String get discountAlwaysValid;
+
+  /// No description provided for @discountAmountOff.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} off'**
+  String discountAmountOff(String amount);
+
+  /// No description provided for @discountPercentOff.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}% off'**
+  String discountPercentOff(String value);
+
+  /// No description provided for @discountBundleValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy {quantity} Get {quantity}'**
+  String discountBundleValue(int quantity);
+
+  /// No description provided for @discountUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String discountUntil(String date);
+
+  /// No description provided for @discountFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From {date}'**
+  String discountFrom(String date);
+
+  /// No description provided for @discountDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} - {end}'**
+  String discountDateRange(String start, String end);
+
+  /// No description provided for @discountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discounts & Coupons'**
+  String get discountsTitle;
+
+  /// No description provided for @discountsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage promotional offers and pricing rules'**
+  String get discountsSubtitle;
+
+  /// No description provided for @discountsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Discount'**
+  String get discountsCreate;
+
+  /// No description provided for @discountsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search discounts...'**
+  String get discountsSearchHint;
+
+  /// No description provided for @discountsAllStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All Statuses'**
+  String get discountsAllStatuses;
+
+  /// No description provided for @discountsAdvancedFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced filters'**
+  String get discountsAdvancedFilters;
+
+  /// No description provided for @discountsAdvancedFiltersSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced filters will be available soon.'**
+  String get discountsAdvancedFiltersSoon;
+
+  /// No description provided for @discountsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No discounts match your search or status filter.'**
+  String get discountsEmpty;
+
+  /// No description provided for @discountsTableName.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount Name'**
+  String get discountsTableName;
+
+  /// No description provided for @discountsTableType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get discountsTableType;
+
+  /// No description provided for @discountsTableValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get discountsTableValue;
+
+  /// No description provided for @discountsTableConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions'**
+  String get discountsTableConditions;
+
+  /// No description provided for @discountsTablePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid Period'**
+  String get discountsTablePeriod;
+
+  /// No description provided for @discountsTableStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get discountsTableStatus;
+
+  /// No description provided for @discountsTableActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get discountsTableActions;
+
+  /// No description provided for @discountsViewTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View discount'**
+  String get discountsViewTooltip;
+
+  /// No description provided for @discountsEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit discount'**
+  String get discountsEditTooltip;
+
+  /// No description provided for @discountsDeactivateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate discount'**
+  String get discountsDeactivateTooltip;
+
+  /// No description provided for @discountsActivateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate discount'**
+  String get discountsActivateTooltip;
+
+  /// No description provided for @discountsDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete discount'**
+  String get discountsDeleteTooltip;
+
+  /// No description provided for @discountsPagination.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {start} to {end} of {total} entries'**
+  String discountsPagination(int start, int end, int total);
+
+  /// No description provided for @discountsActiveMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE DISCOUNTS'**
+  String get discountsActiveMetric;
+
+  /// No description provided for @discountsUsageMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL USAGE (THIS MONTH)'**
+  String get discountsUsageMetric;
+
+  /// No description provided for @discountsSavedMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'ESTIMATED VALUE SAVED'**
+  String get discountsSavedMetric;
+
+  /// No description provided for @discountsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete discount?'**
+  String get discountsDeleteTitle;
+
+  /// No description provided for @discountsDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will no longer be available.'**
+  String discountsDeleteBody(String name);
+
+  /// No description provided for @discountsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount deleted.'**
+  String get discountsDeleted;
+
+  /// No description provided for @discountsDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to delete discount.'**
+  String get discountsDeleteFailed;
+
+  /// No description provided for @discountsStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount {status}.'**
+  String discountsStatusUpdated(String status);
+
+  /// No description provided for @discountsStatusUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update discount status.'**
+  String get discountsStatusUpdateFailed;
+
+  /// No description provided for @discountsUsedSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {count} times - {amount} saved'**
+  String discountsUsedSaved(int count, String amount);
+
+  /// No description provided for @discountFormBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get discountFormBasic;
+
+  /// No description provided for @discountFormName.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount Name'**
+  String get discountFormName;
+
+  /// No description provided for @discountFormApplicationMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Application Mode'**
+  String get discountFormApplicationMode;
+
+  /// No description provided for @discountFormCouponOrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon / Code'**
+  String get discountFormCouponOrCode;
+
+  /// No description provided for @discountFormDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get discountFormDescription;
+
+  /// No description provided for @discountFormDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal description for discount policy...'**
+  String get discountFormDescriptionHint;
+
+  /// No description provided for @discountFormScopeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope & Value'**
+  String get discountFormScopeValue;
+
+  /// No description provided for @discountFormAppliesTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies To'**
+  String get discountFormAppliesTo;
+
+  /// No description provided for @discountFormValueType.
+  ///
+  /// In en, this message translates to:
+  /// **'Value Type'**
+  String get discountFormValueType;
+
+  /// No description provided for @discountFormValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get discountFormValue;
+
+  /// No description provided for @discountFormMinSpendOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Spend (optional)'**
+  String get discountFormMinSpendOptional;
+
+  /// No description provided for @discountFormMaxDiscountOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum Discount (optional)'**
+  String get discountFormMaxDiscountOptional;
+
+  /// No description provided for @discountFormQuickPercentages.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick percentage values'**
+  String get discountFormQuickPercentages;
+
+  /// No description provided for @discountFormQuickFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick fixed values'**
+  String get discountFormQuickFixed;
+
+  /// No description provided for @discountFormEligibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligibility Conditions'**
+  String get discountFormEligibility;
+
+  /// No description provided for @discountFormAllCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'All Customers'**
+  String get discountFormAllCustomers;
+
+  /// No description provided for @discountFormSelectedCustomerGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Customer Groups'**
+  String get discountFormSelectedCustomerGroups;
+
+  /// No description provided for @discountFormAllPaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'All Payment Methods'**
+  String get discountFormAllPaymentMethods;
+
+  /// No description provided for @discountFormSelectedPaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Payment Methods'**
+  String get discountFormSelectedPaymentMethods;
+
+  /// No description provided for @discountFormAllBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'All Branches'**
+  String get discountFormAllBranches;
+
+  /// No description provided for @discountFormSelectedBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Branches'**
+  String get discountFormSelectedBranches;
+
+  /// No description provided for @discountFormCustomerGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Groups'**
+  String get discountFormCustomerGroups;
+
+  /// No description provided for @discountFormSelectCustomerGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Customer Groups'**
+  String get discountFormSelectCustomerGroups;
+
+  /// No description provided for @discountFormSelectPaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Payment Methods'**
+  String get discountFormSelectPaymentMethods;
+
+  /// No description provided for @discountFormSelectBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Branches'**
+  String get discountFormSelectBranches;
+
+  /// No description provided for @discountFormSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get discountFormSchedule;
+
+  /// No description provided for @discountFormActiveWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Weekdays (optional)'**
+  String get discountFormActiveWeekdays;
+
+  /// No description provided for @discountFormStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get discountFormStartDate;
+
+  /// No description provided for @discountFormEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get discountFormEndDate;
+
+  /// No description provided for @discountFormStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get discountFormStartTime;
+
+  /// No description provided for @discountFormEndTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get discountFormEndTime;
+
+  /// No description provided for @discountFormOvernightHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'An end time earlier than the start time is an overnight window.'**
+  String get discountFormOvernightHelp;
+
+  /// No description provided for @discountFormUsageLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage Limits'**
+  String get discountFormUsageLimits;
+
+  /// No description provided for @discountFormGlobalUsageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Usage Limit (optional)'**
+  String get discountFormGlobalUsageOptional;
+
+  /// No description provided for @discountFormLifetimeUsageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Per Customer Lifetime Limit (optional)'**
+  String get discountFormLifetimeUsageOptional;
+
+  /// No description provided for @discountFormUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get discountFormUnlimited;
+
+  /// No description provided for @discountFormProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get discountFormProduct;
+
+  /// No description provided for @discountFormLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get discountFormLoading;
+
+  /// No description provided for @discountFormNoOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No active options are available.'**
+  String get discountFormNoOptions;
+
+  /// No description provided for @discountFormDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get discountFormDone;
+
+  /// No description provided for @discountFormLoadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load discount'**
+  String get discountFormLoadTitle;
+
+  /// No description provided for @discountFormRetryOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry loading selection options'**
+  String get discountFormRetryOptions;
+
+  /// No description provided for @discountFormDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Changes'**
+  String get discountFormDiscard;
+
+  /// No description provided for @discountFormSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Draft'**
+  String get discountFormSaveDraft;
+
+  /// No description provided for @discountFormActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Discount'**
+  String get discountFormActivate;
+
+  /// No description provided for @discountFormSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get discountFormSummary;
+
+  /// No description provided for @discountFormReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy is ready for review before activation.'**
+  String get discountFormReady;
+
+  /// No description provided for @discountFormNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the required fields before activating this discount.'**
+  String get discountFormNotReady;
+
+  /// No description provided for @discountFormDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get discountFormDiscount;
+
+  /// No description provided for @discountFormScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get discountFormScope;
+
+  /// No description provided for @discountFormBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Branches'**
+  String get discountFormBranches;
+
+  /// No description provided for @discountFormScheduleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get discountFormScheduleLabel;
+
+  /// No description provided for @discountFormCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get discountFormCustomers;
+
+  /// No description provided for @discountFormPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Package'**
+  String get discountFormPackage;
+
+  /// No description provided for @discountFormUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get discountFormUsage;
+
+  /// No description provided for @discountFormAnyDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Any day'**
+  String get discountFormAnyDay;
+
+  /// No description provided for @discountFormSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String discountFormSelectedCount(int count);
+
+  /// No description provided for @discountFormDaysSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days selected'**
+  String discountFormDaysSelected(int count);
+
+  /// No description provided for @discountFormSelectedCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected customers'**
+  String discountFormSelectedCustomers(int count);
+
+  /// No description provided for @discountFormPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per day'**
+  String discountFormPerDay(int count);
+
+  /// No description provided for @discountFormLifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} lifetime'**
+  String discountFormLifetime(int count);
+
+  /// No description provided for @discountFormUsageBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'{lifetime} lifetime / {daily} per day'**
+  String discountFormUsageBoth(int lifetime, int daily);
+
+  /// No description provided for @discountFormSavedActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount saved and activated.'**
+  String get discountFormSavedActivated;
+
+  /// No description provided for @discountFormSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount saved.'**
+  String get discountFormSaved;
+
+  /// No description provided for @discountFormSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save discount.'**
+  String get discountFormSaveFailed;
+
+  /// No description provided for @discountValidationName.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount name is required.'**
+  String get discountValidationName;
+
+  /// No description provided for @discountValidationPositiveValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value greater than zero.'**
+  String get discountValidationPositiveValue;
+
+  /// No description provided for @discountValidationPercentage.
+  ///
+  /// In en, this message translates to:
+  /// **'A percentage discount cannot exceed 100.'**
+  String get discountValidationPercentage;
+
+  /// No description provided for @discountValidationCode.
+  ///
+  /// In en, this message translates to:
+  /// **'A code is required for coupon discounts.'**
+  String get discountValidationCode;
+
+  /// No description provided for @discountValidationProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one or more products.'**
+  String get discountValidationProducts;
+
+  /// No description provided for @discountValidationCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one or more categories.'**
+  String get discountValidationCategories;
+
+  /// No description provided for @discountValidationBundle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one package product.'**
+  String get discountValidationBundle;
+
+  /// No description provided for @discountValidationBundleProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a product for every package requirement.'**
+  String get discountValidationBundleProduct;
+
+  /// No description provided for @discountValidationBundleUnique.
+  ///
+  /// In en, this message translates to:
+  /// **'A package product can only be added once.'**
+  String get discountValidationBundleUnique;
+
+  /// No description provided for @discountValidationBundleQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Package quantities must be greater than zero.'**
+  String get discountValidationBundleQuantity;
+
+  /// No description provided for @discountValidationGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one or more customer groups.'**
+  String get discountValidationGroups;
+
+  /// No description provided for @discountValidationCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one or more customers.'**
+  String get discountValidationCustomers;
+
+  /// No description provided for @discountValidationBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one or more branches.'**
+  String get discountValidationBranches;
+
+  /// No description provided for @discountValidationMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter valid monetary amounts.'**
+  String get discountValidationMoney;
+
+  /// No description provided for @discountValidationNegativeMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Monetary amounts cannot be negative.'**
+  String get discountValidationNegativeMoney;
+
+  /// No description provided for @discountValidationUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage limits must be positive whole numbers.'**
+  String get discountValidationUsage;
+
+  /// No description provided for @discountValidationDailyUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily usage limits must be positive whole numbers.'**
+  String get discountValidationDailyUsage;
+
+  /// No description provided for @discountValidationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Dates must use YYYY-MM-DD.'**
+  String get discountValidationDate;
+
+  /// No description provided for @discountValidationEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date cannot be earlier than start date.'**
+  String get discountValidationEndDate;
+
+  /// No description provided for @discountValidationTimesTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time and end time must be provided together.'**
+  String get discountValidationTimesTogether;
+
+  /// No description provided for @discountValidationTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Times must use HH:mm.'**
+  String get discountValidationTime;
+
+  /// No description provided for @discountFormCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Discount'**
+  String get discountFormCreate;
+
+  /// No description provided for @discountFormEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Discount'**
+  String get discountFormEdit;
+
+  /// No description provided for @discountFormCreatePolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Discount Policy'**
+  String get discountFormCreatePolicy;
+
+  /// No description provided for @discountFormEditPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Discount Policy'**
+  String get discountFormEditPolicy;
+
+  /// No description provided for @discountFormHeadingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure policy scope, eligibility, and schedule.'**
+  String get discountFormHeadingSubtitle;
+
+  /// No description provided for @discountCustomerEligibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Eligibility'**
+  String get discountCustomerEligibility;
+
+  /// No description provided for @discountPaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Methods'**
+  String get discountPaymentMethods;
+
+  /// No description provided for @discountWeekdayMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get discountWeekdayMonday;
+
+  /// No description provided for @discountWeekdayTuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get discountWeekdayTuesday;
+
+  /// No description provided for @discountWeekdayWednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get discountWeekdayWednesday;
+
+  /// No description provided for @discountWeekdayThursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get discountWeekdayThursday;
+
+  /// No description provided for @discountWeekdayFriday.
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get discountWeekdayFriday;
+
+  /// No description provided for @discountWeekdaySaturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get discountWeekdaySaturday;
+
+  /// No description provided for @discountWeekdaySunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get discountWeekdaySunday;
+
+  /// No description provided for @discountPosPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'POS Preview'**
+  String get discountPosPreview;
+
+  /// No description provided for @discountSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get discountSubtotal;
+
+  /// No description provided for @discountTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get discountTotal;
+
+  /// No description provided for @discountTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax ({percent}%)'**
+  String discountTax(String percent);
+
+  /// No description provided for @discountRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to complete the discount request. Please try again.'**
+  String get discountRequestFailed;
+
+  /// No description provided for @discountServerFieldInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the {field} field.'**
+  String discountServerFieldInvalid(String field);
+
+  /// No description provided for @discountCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get discountCurrency;
+
+  /// No description provided for @discountChannelPos.
+  ///
+  /// In en, this message translates to:
+  /// **'POS'**
+  String get discountChannelPos;
+
+  /// No description provided for @discountChannelWaiterApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiter app'**
+  String get discountChannelWaiterApp;
+
+  /// No description provided for @discountChannelKiosk.
+  ///
+  /// In en, this message translates to:
+  /// **'Kiosk'**
+  String get discountChannelKiosk;
+
+  /// No description provided for @discountChannelQrOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'QR ordering'**
+  String get discountChannelQrOrdering;
+
+  /// No description provided for @discountChannelDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get discountChannelDelivery;
+
+  /// No description provided for @discountChannelOnlineOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'Online ordering'**
+  String get discountChannelOnlineOrdering;
+
+  /// No description provided for @discountFormSelectedCountPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{None selected} =1{1 selected} other{{count} selected}}'**
+  String discountFormSelectedCountPlural(int count);
+
+  /// No description provided for @discountFormDaysSelectedPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Any day} =1{1 day selected} other{{count} days selected}}'**
+  String discountFormDaysSelectedPlural(int count);
+
+  /// No description provided for @discountFormSelectedCustomersPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No customers selected} =1{1 selected customer} other{{count} selected customers}}'**
+  String discountFormSelectedCustomersPlural(int count);
+
+  /// No description provided for @discountFormPerDayPlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 per day} other{{count} per day}}'**
+  String discountFormPerDayPlural(int count);
+
+  /// No description provided for @discountFormLifetimePlural.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 lifetime} other{{count} lifetime}}'**
+  String discountFormLifetimePlural(int count);
+
+  /// No description provided for @posApplyDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Discount'**
+  String get posApplyDiscount;
+
+  /// No description provided for @posCouponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon code'**
+  String get posCouponCode;
+
+  /// No description provided for @posEnterCouponCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter coupon code'**
+  String get posEnterCouponCode;
+
+  /// No description provided for @posCouponCodeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a coupon code.'**
+  String get posCouponCodeRequired;
+
+  /// No description provided for @posCouponDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon discount'**
+  String get posCouponDiscount;
+
+  /// No description provided for @posAvailableDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Discounts'**
+  String get posAvailableDiscounts;
+
+  /// No description provided for @posSearchDiscounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search discounts'**
+  String get posSearchDiscounts;
+
+  /// No description provided for @posNoDiscountsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No discounts are available for this order.'**
+  String get posNoDiscountsAvailable;
+
+  /// No description provided for @posNoDiscountsMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No discounts match your search.'**
+  String get posNoDiscountsMatch;
+
+  /// No description provided for @posApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get posApply;
+
+  /// No description provided for @posClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get posClose;
+
+  /// No description provided for @posCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get posCancel;
+
+  /// No description provided for @posPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get posPayment;
+
+  /// No description provided for @posOrderNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {number}'**
+  String posOrderNumber(String number);
+
+  /// No description provided for @posSelectPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Method'**
+  String get posSelectPaymentMethod;
+
+  /// No description provided for @posPaymentMethodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get posPaymentMethodCash;
+
+  /// No description provided for @posPaymentMethodCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get posPaymentMethodCard;
+
+  /// No description provided for @posPaymentMethodWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get posPaymentMethodWallet;
+
+  /// No description provided for @posPaymentMethodSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get posPaymentMethodSplit;
+
+  /// No description provided for @posAmountReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'AMOUNT RECEIVED'**
+  String get posAmountReceived;
+
+  /// No description provided for @posChangeDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Due'**
+  String get posChangeDue;
+
+  /// No description provided for @posEnterAmountReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount received.'**
+  String get posEnterAmountReceived;
+
+  /// No description provided for @posAmountBelowTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount received is less than total due.'**
+  String get posAmountBelowTotal;
+
+  /// No description provided for @posSplitUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Split payment will be supported later.'**
+  String get posSplitUnavailable;
+
+  /// No description provided for @posExternalTerminalPending.
+  ///
+  /// In en, this message translates to:
+  /// **'External payment terminal integration will be added later.'**
+  String get posExternalTerminalPending;
+
+  /// No description provided for @posConfirmPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Payment'**
+  String get posConfirmPayment;
+
+  /// No description provided for @posPaymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment could not be completed. Please try again.'**
+  String get posPaymentFailed;
+
+  /// No description provided for @posNoPaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'No active payment method is linked to a financial account.'**
+  String get posNoPaymentMethods;
+
+  /// No description provided for @posPaymentUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment status is uncertain. Check the payment status before trying again.'**
+  String get posPaymentUncertain;
+
+  /// No description provided for @posReceiptUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The receipt could not be loaded. You can retry safely.'**
+  String get posReceiptUnavailable;
+
+  /// No description provided for @posRetryReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Receipt'**
+  String get posRetryReceipt;
+
+  /// No description provided for @posCheckPaymentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Payment Status'**
+  String get posCheckPaymentStatus;
+
+  /// No description provided for @posOrderTypeDineIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Dine-in'**
+  String get posOrderTypeDineIn;
+
+  /// No description provided for @posOrderTypeTakeaway.
+  ///
+  /// In en, this message translates to:
+  /// **'Takeaway'**
+  String get posOrderTypeTakeaway;
+
+  /// No description provided for @posOrderTypeDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get posOrderTypeDelivery;
+
+  /// No description provided for @posCurrentOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Current order'**
+  String get posCurrentOrder;
+
+  /// No description provided for @posSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get posSubtotal;
+
+  /// No description provided for @posDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get posDiscount;
+
+  /// No description provided for @posTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax ({percent}%)'**
+  String posTax(String percent);
+
+  /// No description provided for @posTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get posTotal;
+
+  /// No description provided for @posRemoveDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get posRemoveDiscount;
+
+  /// No description provided for @posAddDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Add discount'**
+  String get posAddDiscount;
+
+  /// No description provided for @posHoldOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold order'**
+  String get posHoldOrder;
+
+  /// No description provided for @posCancelOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order'**
+  String get posCancelOrder;
+
+  /// No description provided for @posPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get posPrint;
+
+  /// No description provided for @posPayAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {amount}'**
+  String posPayAmount(String amount);
+
+  /// No description provided for @posCompleteOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete order'**
+  String get posCompleteOrder;
+
+  /// No description provided for @posRemoveItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove item'**
+  String get posRemoveItem;
+
+  /// No description provided for @posExactAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact'**
+  String get posExactAmount;
+
+  /// No description provided for @posTotalDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total due'**
+  String get posTotalDue;
+
+  /// No description provided for @posItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items} =1{1 item} other{{count} items}}'**
+  String posItemCount(int count);
+
+  /// No description provided for @posViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get posViewDetails;
+
+  /// No description provided for @posCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get posCheckout;
+
+  /// No description provided for @posProductOptionsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Product options unavailable'**
+  String get posProductOptionsUnavailable;
+
+  /// No description provided for @posRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get posRetry;
+
+  /// No description provided for @posProductCustomization.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize {product}'**
+  String posProductCustomization(String product);
+
+  /// No description provided for @posVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Variant'**
+  String get posVariant;
+
+  /// No description provided for @posSpecialInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Special Instructions'**
+  String get posSpecialInstructions;
+
+  /// No description provided for @posSpecialInstructionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'E.g., extra hot, in a to-go cup...'**
+  String get posSpecialInstructionsHint;
+
+  /// No description provided for @posTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get posTemperature;
+
+  /// No description provided for @posSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get posSize;
+
+  /// No description provided for @posMilkBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Milk Base'**
+  String get posMilkBase;
+
+  /// No description provided for @posAddOns.
+  ///
+  /// In en, this message translates to:
+  /// **'Add-ons'**
+  String get posAddOns;
+
+  /// No description provided for @posSweetness.
+  ///
+  /// In en, this message translates to:
+  /// **'Sweetness'**
+  String get posSweetness;
+
+  /// No description provided for @posQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get posQuantity;
+
+  /// No description provided for @posAddToOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Order'**
+  String get posAddToOrder;
+
+  /// No description provided for @posAdding.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding...'**
+  String get posAdding;
+
+  /// No description provided for @posRequiredSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the required options.'**
+  String get posRequiredSelection;
+
+  /// No description provided for @posReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get posReceipt;
+
+  /// No description provided for @posReceiptPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt preview'**
+  String get posReceiptPreview;
+
+  /// No description provided for @posCloseReceiptPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Close receipt preview'**
+  String get posCloseReceiptPreview;
+
+  /// No description provided for @posSendViaWhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Send via WhatsApp'**
+  String get posSendViaWhatsApp;
+
+  /// No description provided for @posPrintReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Print receipt'**
+  String get posPrintReceipt;
+
+  /// No description provided for @posWhatsAppPending.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp sending will be added later.'**
+  String get posWhatsAppPending;
+
+  /// No description provided for @posPaymentCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment completed'**
+  String get posPaymentCompleted;
+
+  /// No description provided for @posReceiptOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order:'**
+  String get posReceiptOrder;
+
+  /// No description provided for @posReceiptCashier.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashier:'**
+  String get posReceiptCashier;
+
+  /// No description provided for @posReceiptCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer:'**
+  String get posReceiptCustomer;
+
+  /// No description provided for @posReceiptDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date:'**
+  String get posReceiptDate;
+
+  /// No description provided for @posReceiptTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time:'**
+  String get posReceiptTime;
+
+  /// No description provided for @posReceiptPaidVia.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid via:'**
+  String get posReceiptPaidVia;
+
+  /// No description provided for @posReceiptAuthorization.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorization:'**
+  String get posReceiptAuthorization;
+
+  /// No description provided for @posReceiptApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get posReceiptApproved;
+
+  /// No description provided for @posReceiptChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get posReceiptChange;
+
+  /// No description provided for @posReceiptNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: {note}'**
+  String posReceiptNote(String note);
+
+  /// No description provided for @posReceiptThankYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for visiting!'**
+  String get posReceiptThankYou;
+
+  /// No description provided for @posOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The POS operation could not be completed. Please try again.'**
+  String get posOperationFailed;
+
+  /// No description provided for @posMenuVersionStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The menu changed. Refresh the POS menu and review the order.'**
+  String get posMenuVersionStale;
+
+  /// No description provided for @posOpenShiftRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a shift before continuing.'**
+  String get posOpenShiftRequired;
+
+  /// No description provided for @posOrderUnavailableForBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'This order is not available in the selected branch.'**
+  String get posOrderUnavailableForBranch;
+
+  /// No description provided for @posHeldOrderRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an unpaid held order can be resumed.'**
+  String get posHeldOrderRequired;
+
+  /// No description provided for @posCustomizeItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize item'**
+  String get posCustomizeItem;
+
+  /// No description provided for @posRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get posRequired;
+
+  /// No description provided for @posHot.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot'**
+  String get posHot;
+
+  /// No description provided for @posIced.
+  ///
+  /// In en, this message translates to:
+  /// **'Iced'**
+  String get posIced;
+
+  /// No description provided for @posSmallSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Small (8oz)'**
+  String get posSmallSize;
+
+  /// No description provided for @posMediumSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium (12oz)'**
+  String get posMediumSize;
+
+  /// No description provided for @posLargeSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Large (16oz)'**
+  String get posLargeSize;
+
+  /// No description provided for @posWholeMilk.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole milk'**
+  String get posWholeMilk;
+
+  /// No description provided for @posOatMilk.
+  ///
+  /// In en, this message translates to:
+  /// **'Oat milk'**
+  String get posOatMilk;
+
+  /// No description provided for @posAlmondMilk.
+  ///
+  /// In en, this message translates to:
+  /// **'Almond milk'**
+  String get posAlmondMilk;
+
+  /// No description provided for @posDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get posDefault;
+
+  /// No description provided for @posExtraEspresso.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra espresso shot'**
+  String get posExtraEspresso;
+
+  /// No description provided for @posCaramelSyrup.
+  ///
+  /// In en, this message translates to:
+  /// **'Caramel syrup'**
+  String get posCaramelSyrup;
+
+  /// No description provided for @posVanillaSyrup.
+  ///
+  /// In en, this message translates to:
+  /// **'Vanilla syrup'**
+  String get posVanillaSyrup;
+
+  /// No description provided for @posWhippedCream.
+  ///
+  /// In en, this message translates to:
+  /// **'Whipped cream'**
+  String get posWhippedCream;
+
+  /// No description provided for @posProductDescriptionFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'A classic espresso-based beverage.'**
+  String get posProductDescriptionFallback;
+
+  /// No description provided for @posBasePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'{variant} base - {price}'**
+  String posBasePrice(String variant, String price);
+
+  /// No description provided for @posSearchProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search products...'**
+  String get posSearchProducts;
+
+  /// No description provided for @posNoItemsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No items available.'**
+  String get posNoItemsAvailable;
+
+  /// No description provided for @posNoCartItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No items added yet'**
+  String get posNoCartItems;
+
+  /// No description provided for @posCloseCustomizationDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Close customization dialog'**
+  String get posCloseCustomizationDialog;
 }
 
 class _AppLocalizationsDelegate

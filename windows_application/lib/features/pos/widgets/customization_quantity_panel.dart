@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -43,7 +44,7 @@ class CustomizationQuantityPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'Total',
+                  context.l10n.posTotal,
                   style: AppTextStyles.labelMedium.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -63,7 +64,7 @@ class CustomizationQuantityPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  'Quantity',
+                  context.l10n.posQuantity,
                   style: AppTextStyles.labelMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),

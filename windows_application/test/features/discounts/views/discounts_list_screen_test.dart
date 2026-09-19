@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 import 'package:windows_application/core/theme/app_theme.dart';
 import 'package:windows_application/core/network/api_exception.dart';
+import 'package:windows_application/core/utils/currency_formatter.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
@@ -40,11 +43,133 @@ void main() {
     expect(find.text('Morning Rush 15%'), findsNothing);
   });
 
+  testWidgets('search preserves raw name, coupon code, and conditions', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester);
+    for (final String query in <String>[
+      'Morning Rush',
+      'MRNG15',
+      'Student ID',
+    ]) {
+      await tester.enterText(
+        find.byKey(const Key('discounts-search-field')),
+        query,
+      );
+      await tester.pump();
+      expect(find.byType(DiscountsListScreen), findsOneWidget);
+      expect(
+        find.text('No discounts match your search or status filter.'),
+        findsNothing,
+      );
+    }
+  });
+
+  testWidgets('English search matches localized visible labels', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, repository: _SearchRepository());
+
+    for (final MapEntry<String, String> search in <String, String>{
+      'Manual': 'Manual fixed',
+      'Code': 'Code percentage',
+      'Percentage': 'Code percentage',
+      'Fixed Amount': 'Manual fixed',
+      'Active': 'Manual fixed',
+      'Inactive': 'Code percentage',
+      'Scheduled': 'Scheduled offer',
+      'Expired': 'Expired offer',
+    }.entries) {
+      await tester.enterText(
+        find.byKey(const Key('discounts-search-field')),
+        search.key,
+      );
+      await tester.pump();
+      expect(find.text(search.value), findsOneWidget, reason: search.key);
+    }
+  });
+
+  testWidgets('Arabic search matches localized visible labels', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      repository: _SearchRepository(),
+      locale: const Locale('ar'),
+    );
+
+    for (final MapEntry<String, String> search in <String, String>{
+      'يدوي': 'Manual fixed',
+      'الرمز': 'Code percentage',
+      'نسبة مئوية': 'Code percentage',
+      'مبلغ ثابت': 'Manual fixed',
+      'نشط': 'Manual fixed',
+      'غير نشط': 'Code percentage',
+      'مجدول': 'Scheduled offer',
+      'منتهي': 'Expired offer',
+    }.entries) {
+      await tester.enterText(
+        find.byKey(const Key('discounts-search-field')),
+        search.key,
+      );
+      await tester.pump();
+      expect(find.text(search.value), findsOneWidget, reason: search.key);
+    }
+  });
+
+  testWidgets('Arabic delete confirmation uses localized body', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, locale: const Locale('ar'));
+
+    tester
+        .widget<IconButton>(
+          find.ancestor(
+            of: find.byIcon(Icons.delete_outline).first,
+            matching: find.byType(IconButton),
+          ),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('حذف الخصم؟'), findsOneWidget);
+    expect(find.text('لن يعود Morning Rush 15% متاحاً.'), findsOneWidget);
+    expect(find.textContaining('will no longer'), findsNothing);
+  });
+
+  testWidgets('canonical period, currency, and counts follow the locale', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      repository: _LocalizedFormattingRepository(),
+      locale: const Locale('ar'),
+    );
+
+    expect(
+      find.textContaining(DateFormat.yMMMd('ar').format(DateTime(2026, 1, 2))),
+      findsOneWidget,
+    );
+    expect(
+      find.text(NumberFormat.decimalPattern('ar').format(1234)),
+      findsAtLeastNWidgets(1),
+    );
+    expect(
+      find.text(CurrencyFormatter.format(1234, locale: 'ar')),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.text('Legacy display period'), findsNothing);
+  });
+
   testWidgets('shows the API error instead of mock fallback data', (
     WidgetTester tester,
   ) async {
     await _pumpScreen(tester, repository: _FailingRepository());
-    expect(find.text('Backend is not reachable.'), findsOneWidget);
+    expect(
+      find.text('Unable to complete the discount request. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('Backend is not reachable.'), findsNothing);
     expect(find.text('Morning Rush 15%'), findsNothing);
   });
 }
@@ -52,6 +177,7 @@ void main() {
 Future<void> _pumpScreen(
   WidgetTester tester, {
   DiscountsRepository? repository,
+  Locale locale = const Locale('en'),
 }) async {
   final DiscountsCubit cubit = DiscountsCubit(
     repository: repository ?? _Repository(),
@@ -59,6 +185,9 @@ Future<void> _pumpScreen(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.lightTheme,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: BlocProvider<DiscountsCubit>.value(
           value: cubit,
@@ -69,6 +198,57 @@ Future<void> _pumpScreen(
   );
   await tester.pumpAndSettle();
 }
+
+class _SearchRepository extends _Repository {
+  @override
+  Future<List<DiscountListItem>> getDiscounts() async => <DiscountListItem>[
+    _searchItem('1', 'Manual fixed', 'fixed', DiscountStatus.active),
+    _searchItem(
+      '2',
+      'Code percentage',
+      'percentage',
+      DiscountStatus.inactive,
+      code: 'SAVE20',
+    ),
+    _searchItem('3', 'Scheduled offer', 'fixed', DiscountStatus.scheduled),
+    _searchItem('4', 'Expired offer', 'percentage', DiscountStatus.expired),
+  ];
+}
+
+class _LocalizedFormattingRepository extends _Repository {
+  @override
+  Future<List<DiscountListItem>> getDiscounts() async => <DiscountListItem>[
+    DiscountListItem(
+      id: 'format',
+      name: 'بيانات التنسيق',
+      type: 'fixed',
+      status: DiscountStatus.active,
+      usageCount: 1234,
+      estimatedSavedValue: 1234,
+      value: 1234,
+      startDate: DateTime(2026, 1, 2),
+      endDate: DateTime(2026, 2, 3),
+      displayPeriodPrimary: 'Legacy display period',
+    ),
+  ];
+}
+
+DiscountListItem _searchItem(
+  String id,
+  String name,
+  String type,
+  DiscountStatus status, {
+  String? code,
+}) => DiscountListItem(
+  id: id,
+  name: name,
+  code: code,
+  type: type,
+  conditions: 'Condition text',
+  status: status,
+  usageCount: 0,
+  estimatedSavedValue: 0,
+);
 
 class _Repository implements DiscountsRepository {
   @override
@@ -119,14 +299,12 @@ DiscountListItem _item(
 ) => DiscountListItem(
   id: id,
   name: name,
-  secondaryLabel: name == 'Student Discount' ? 'Manual' : 'Code: MRNG15',
-  type: name == 'Student Discount' ? 'Fixed Amount' : 'Percentage',
-  displayValue: name == 'Student Discount' ? '2 SYP off' : '15% off',
+  code: name == 'Student Discount' ? null : 'MRNG15',
+  type: name == 'Student Discount' ? 'fixed' : 'percentage',
   conditions: name == 'Student Discount'
       ? 'Requires Student ID tag'
       : 'Min. 10 SYP spent',
-  validPeriodPrimary: 'Always Valid',
   status: status,
   usageCount: usage,
-  estimatedSavedValue: saved,
+  estimatedSavedValue: double.parse(saved.split(' ').first),
 );

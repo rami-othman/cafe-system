@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -21,7 +22,10 @@ class PaymentQuickAmountButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<_QuickAmountOption> options = _quickAmountsFor(totalDue);
+    final List<_QuickAmountOption> options = _quickAmountsFor(
+      totalDue,
+      exactLabel: context.l10n.posExactAmount,
+    );
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -71,7 +75,10 @@ class _QuickAmountOption {
   final double amount;
 }
 
-List<_QuickAmountOption> _quickAmountsFor(double totalDue) {
+List<_QuickAmountOption> _quickAmountsFor(
+  double totalDue, {
+  required String exactLabel,
+}) {
   final double roundedToFive = (math.max(totalDue, 0) / 5).ceil() * 5;
   final double first = roundedToFive <= 0 ? totalDue : roundedToFive;
   final List<double> amounts = <double>[first, first + 5, first + 15];
@@ -82,6 +89,6 @@ List<_QuickAmountOption> _quickAmountsFor(double totalDue) {
         label: CurrencyFormatter.format(amount).replaceAll('.00', ''),
         amount: amount,
       ),
-    _QuickAmountOption(label: 'Exact', amount: totalDue),
+    _QuickAmountOption(label: exactLabel, amount: totalDue),
   ];
 }

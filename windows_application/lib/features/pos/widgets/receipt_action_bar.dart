@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -35,7 +36,7 @@ class ReceiptActionBar extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onSendViaWhatsApp,
               icon: const Icon(Icons.send_outlined, size: 18),
-              label: const Text('Send via WhatsApp'),
+              label: Text(context.l10n.posSendViaWhatsApp),
               style: OutlinedButton.styleFrom(
                 backgroundColor: AppColors.white,
                 foregroundColor: AppColors.primary,
@@ -52,7 +53,7 @@ class ReceiptActionBar extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onPrintReceipt,
               icon: const Icon(Icons.print_outlined, size: 18),
-              label: const Text('Print Receipt'),
+              label: Text(context.l10n.posPrintReceipt),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.tertiary,
                 foregroundColor: AppColors.white,

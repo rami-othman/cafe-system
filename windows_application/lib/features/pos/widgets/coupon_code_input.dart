@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -79,7 +80,7 @@ class _CouponTextField extends StatelessWidget {
           disabledBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
           isCollapsed: true,
-          hintText: 'Enter code',
+          hintText: context.l10n.posEnterCouponCode,
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textMuted,
             fontWeight: FontWeight.w400,
@@ -114,7 +115,7 @@ class _ApplyButton extends StatelessWidget {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            'Apply',
+            context.l10n.posApply,
             maxLines: 1,
             softWrap: false,
             style: AppTextStyles.buttonMedium.copyWith(

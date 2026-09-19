@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -74,7 +75,7 @@ class ReceiptPreviewDialog extends StatelessWidget {
                     ReceiptActionBar(
                       onSendViaWhatsApp: () => _showPlaceholder(
                         context,
-                        'WhatsApp sending will be added later.',
+                        context.l10n.posWhatsAppPending,
                       ),
                       onPrintReceipt: () => _completePaymentFeedback(context),
                     ),
@@ -99,7 +100,7 @@ class ReceiptPreviewDialog extends StatelessWidget {
     Navigator.of(context).pop();
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Payment completed')));
+      ..showSnackBar(SnackBar(content: Text(context.l10n.posPaymentCompleted)));
   }
 }
 
@@ -119,7 +120,7 @@ class _ReceiptDialogHeader extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              'Receipt Preview',
+              context.l10n.posReceiptPreview,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.labelLarge.copyWith(
@@ -133,7 +134,7 @@ class _ReceiptDialogHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close, size: 20),
             color: AppColors.textPrimary,
-            tooltip: 'Close receipt preview',
+            tooltip: context.l10n.posCloseReceiptPreview,
           ),
         ],
       ),

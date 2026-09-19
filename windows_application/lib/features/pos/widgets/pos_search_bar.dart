@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -88,7 +89,7 @@ class _PosSearchBarState extends State<PosSearchBar> {
                   isCollapsed: true,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
-                  hintText: 'Search products...',
+                  hintText: context.l10n.posSearchProducts,
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w400,

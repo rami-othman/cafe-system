@@ -5,6 +5,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DiscountSummaryPanel extends StatelessWidget {
   const DiscountSummaryPanel({
@@ -34,23 +35,27 @@ class DiscountSummaryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Summary', style: AppTextStyles.titleMedium),
+          Text(l10n.discountFormSummary, style: AppTextStyles.titleMedium),
           const SizedBox(height: AppSpacing.lg),
-          _SummaryRow(label: 'Discount', value: value),
-          _SummaryRow(label: 'Scope', value: scope),
-          _SummaryRow(label: 'Branches', value: branches),
-          _SummaryRow(label: 'Schedule', value: schedule),
+          _SummaryRow(label: l10n.discountFormDiscount, value: value),
+          _SummaryRow(label: l10n.discountFormScope, value: scope),
+          _SummaryRow(label: l10n.discountFormBranches, value: branches),
+          _SummaryRow(label: l10n.discountFormScheduleLabel, value: schedule),
           if (customers != null)
-            _SummaryRow(label: 'Customers', value: customers!),
-          if (package != null) _SummaryRow(label: 'Package', value: package!),
+            _SummaryRow(label: l10n.discountFormCustomers, value: customers!),
+          if (package != null)
+            _SummaryRow(label: l10n.discountFormPackage, value: package!),
           if (channels != null)
-            _SummaryRow(label: 'Channels', value: channels!),
-          if (usage != null) _SummaryRow(label: 'Usage', value: usage!),
-          if (coupon != null) _SummaryRow(label: 'Coupon', value: coupon!),
+            _SummaryRow(label: l10n.discountV2Channels, value: channels!),
+          if (usage != null)
+            _SummaryRow(label: l10n.discountFormUsage, value: usage!),
+          if (coupon != null)
+            _SummaryRow(label: l10n.discountCoupon, value: coupon!),
           const SizedBox(height: AppSpacing.lg),
           Container(
             padding: AppSpacing.allMd,
@@ -75,8 +80,8 @@ class DiscountSummaryPanel extends StatelessWidget {
                 Expanded(
                   child: Text(
                     isReady
-                        ? 'Policy is ready for review before activation.'
-                        : 'Complete the required fields before activating this discount.',
+                        ? l10n.discountFormReady
+                        : l10n.discountFormNotReady,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: isReady
                           ? AppColors.discountGreenText

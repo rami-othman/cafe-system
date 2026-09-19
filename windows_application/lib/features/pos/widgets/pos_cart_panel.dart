@@ -4,6 +4,7 @@ import 'dart:ui' show PathMetric;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -26,6 +27,7 @@ import 'order_totals_panel.dart';
 import 'payment_dialog.dart';
 import 'order_type_selector.dart';
 import 'pos_action_buttons.dart';
+import 'pos_localization.dart';
 import 'select_customer_dialog.dart';
 
 class PosCartPanel extends StatelessWidget {
@@ -134,9 +136,9 @@ class PosCartPanel extends StatelessWidget {
         availableDiscounts = await cubit.getAvailableDiscountsForCurrentCart();
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(error.toString())));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
         }
         return;
       }
@@ -227,9 +229,9 @@ class PosCartPanel extends StatelessWidget {
         );
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(error.toString())));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
         }
         return;
       }
@@ -249,9 +251,7 @@ class PosCartPanel extends StatelessWidget {
           .toList(growable: false);
       if (availableMethods.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('لا توجد طريقة دفع فعّالة مرتبطة بحساب مالي.'),
-          ),
+          SnackBar(content: Text(context.l10n.posNoPaymentMethods)),
         );
         return;
       }
@@ -389,7 +389,7 @@ class _AddDiscountButton extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    'ADD DISCOUNT',
+                    context.l10n.posAddDiscount,
                     style: AppTextStyles.labelSmall.copyWith(
                       color: contentColor,
                       fontWeight: FontWeight.w800,

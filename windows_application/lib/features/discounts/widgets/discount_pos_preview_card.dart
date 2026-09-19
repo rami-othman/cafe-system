@@ -5,7 +5,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../../core/utils/tax_formatter.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_card.dart';
 
 class DiscountPosPreviewCard extends StatelessWidget {
@@ -29,6 +29,7 @@ class DiscountPosPreviewCard extends StatelessWidget {
     final double taxable = subtotal - discount;
     final double tax = taxable * taxRate;
     final double total = taxable + tax;
+    final AppLocalizations l10n = AppLocalizations.of(context);
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -52,10 +53,14 @@ class DiscountPosPreviewCard extends StatelessWidget {
                   size: 18,
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'POS Preview',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: AppColors.textInverse,
+                Expanded(
+                  child: Text(
+                    l10n.discountPosPreview,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: AppColors.textInverse,
+                    ),
                   ),
                 ),
               ],
@@ -65,19 +70,26 @@ class DiscountPosPreviewCard extends StatelessWidget {
             padding: AppSpacing.allLg,
             child: Column(
               children: <Widget>[
-                _ReceiptRow(label: 'Subtotal', value: subtotal),
+                _ReceiptRow(label: l10n.discountSubtotal, value: subtotal),
                 const SizedBox(height: AppSpacing.md),
                 _ReceiptRow(
                   label: isPercentage
-                      ? 'Discount (${_decimal(discountValue)}%)'
-                      : 'Discount',
+                      ? l10n.discountPercentOff(_decimal(discountValue))
+                      : l10n.discountFormDiscount,
                   value: -discount,
                   color: AppColors.success,
                 ),
                 const Padding(padding: AppSpacing.verticalMd, child: Divider()),
-                _ReceiptRow(label: TaxFormatter.taxLabel(taxRate), value: tax),
+                _ReceiptRow(
+                  label: l10n.discountTax(_decimal(taxRate * 100)),
+                  value: tax,
+                ),
                 const SizedBox(height: AppSpacing.md),
-                _ReceiptRow(label: 'Total', value: total, emphasized: true),
+                _ReceiptRow(
+                  label: l10n.discountTotal,
+                  value: total,
+                  emphasized: true,
+                ),
               ],
             ),
           ),
@@ -117,7 +129,7 @@ class _ReceiptRow extends StatelessWidget {
           child: Text(label, style: style.copyWith(color: color)),
         ),
         Text(
-          '$sign${CurrencyFormatter.format(value.abs())}',
+          '$sign${CurrencyFormatter.formatForContext(context, value.abs())}',
           style: style.copyWith(color: color),
         ),
       ],

@@ -7733,4 +7733,983 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get posCustomerSearchFailed =>
       'Customer search is temporarily unavailable.';
+
+  @override
+  String get discountManual => 'Manual';
+
+  @override
+  String get discountCode => 'Code';
+
+  @override
+  String get discountCoupon => 'Coupon';
+
+  @override
+  String discountCodeValue(String code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String get discountPercentage => 'Percentage';
+
+  @override
+  String get discountFixedAmount => 'Fixed Amount';
+
+  @override
+  String get discountActive => 'Active';
+
+  @override
+  String get discountInactive => 'Inactive';
+
+  @override
+  String get discountScheduled => 'Scheduled';
+
+  @override
+  String get discountExpired => 'Expired';
+
+  @override
+  String get discountEntireOrder => 'Entire Order';
+
+  @override
+  String get discountSelectedProducts => 'Selected Products';
+
+  @override
+  String get discountSelectedCategories => 'Selected Categories';
+
+  @override
+  String get discountNoConditions => 'No Conditions';
+
+  @override
+  String get discountAlwaysValid => 'Always Valid';
+
+  @override
+  String discountAmountOff(String amount) {
+    return '$amount off';
+  }
+
+  @override
+  String discountPercentOff(String value) {
+    return '$value% off';
+  }
+
+  @override
+  String discountBundleValue(int quantity) {
+    return 'Buy $quantity Get $quantity';
+  }
+
+  @override
+  String discountUntil(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String discountFrom(String date) {
+    return 'From $date';
+  }
+
+  @override
+  String discountDateRange(String start, String end) {
+    return '$start - $end';
+  }
+
+  @override
+  String get discountsTitle => 'Discounts & Coupons';
+
+  @override
+  String get discountsSubtitle => 'Manage promotional offers and pricing rules';
+
+  @override
+  String get discountsCreate => 'Create Discount';
+
+  @override
+  String get discountsSearchHint => 'Search discounts...';
+
+  @override
+  String get discountsAllStatuses => 'All Statuses';
+
+  @override
+  String get discountsAdvancedFilters => 'Advanced filters';
+
+  @override
+  String get discountsAdvancedFiltersSoon =>
+      'Advanced filters will be available soon.';
+
+  @override
+  String get discountsEmpty =>
+      'No discounts match your search or status filter.';
+
+  @override
+  String get discountsTableName => 'Discount Name';
+
+  @override
+  String get discountsTableType => 'Type';
+
+  @override
+  String get discountsTableValue => 'Value';
+
+  @override
+  String get discountsTableConditions => 'Conditions';
+
+  @override
+  String get discountsTablePeriod => 'Valid Period';
+
+  @override
+  String get discountsTableStatus => 'Status';
+
+  @override
+  String get discountsTableActions => 'Actions';
+
+  @override
+  String get discountsViewTooltip => 'View discount';
+
+  @override
+  String get discountsEditTooltip => 'Edit discount';
+
+  @override
+  String get discountsDeactivateTooltip => 'Deactivate discount';
+
+  @override
+  String get discountsActivateTooltip => 'Activate discount';
+
+  @override
+  String get discountsDeleteTooltip => 'Delete discount';
+
+  @override
+  String discountsPagination(int start, int end, int total) {
+    return 'Showing $start to $end of $total entries';
+  }
+
+  @override
+  String get discountsActiveMetric => 'ACTIVE DISCOUNTS';
+
+  @override
+  String get discountsUsageMetric => 'TOTAL USAGE (THIS MONTH)';
+
+  @override
+  String get discountsSavedMetric => 'ESTIMATED VALUE SAVED';
+
+  @override
+  String get discountsDeleteTitle => 'Delete discount?';
+
+  @override
+  String discountsDeleteBody(String name) {
+    return '\"$name\" will no longer be available.';
+  }
+
+  @override
+  String get discountsDeleted => 'Discount deleted.';
+
+  @override
+  String get discountsDeleteFailed => 'Unable to delete discount.';
+
+  @override
+  String discountsStatusUpdated(String status) {
+    return 'Discount $status.';
+  }
+
+  @override
+  String get discountsStatusUpdateFailed => 'Unable to update discount status.';
+
+  @override
+  String discountsUsedSaved(int count, String amount) {
+    return 'Used $count times - $amount saved';
+  }
+
+  @override
+  String get discountFormBasic => 'Basic Information';
+
+  @override
+  String get discountFormName => 'Discount Name';
+
+  @override
+  String get discountFormApplicationMode => 'Application Mode';
+
+  @override
+  String get discountFormCouponOrCode => 'Coupon / Code';
+
+  @override
+  String get discountFormDescription => 'Description';
+
+  @override
+  String get discountFormDescriptionHint =>
+      'Internal description for discount policy...';
+
+  @override
+  String get discountFormScopeValue => 'Scope & Value';
+
+  @override
+  String get discountFormAppliesTo => 'Applies To';
+
+  @override
+  String get discountFormValueType => 'Value Type';
+
+  @override
+  String get discountFormValue => 'Value';
+
+  @override
+  String get discountFormMinSpendOptional => 'Minimum Spend (optional)';
+
+  @override
+  String get discountFormMaxDiscountOptional => 'Maximum Discount (optional)';
+
+  @override
+  String get discountFormQuickPercentages => 'Quick percentage values';
+
+  @override
+  String get discountFormQuickFixed => 'Quick fixed values';
+
+  @override
+  String get discountFormEligibility => 'Eligibility Conditions';
+
+  @override
+  String get discountFormAllCustomers => 'All Customers';
+
+  @override
+  String get discountFormSelectedCustomerGroups => 'Selected Customer Groups';
+
+  @override
+  String get discountFormAllPaymentMethods => 'All Payment Methods';
+
+  @override
+  String get discountFormSelectedPaymentMethods => 'Selected Payment Methods';
+
+  @override
+  String get discountFormAllBranches => 'All Branches';
+
+  @override
+  String get discountFormSelectedBranches => 'Selected Branches';
+
+  @override
+  String get discountFormCustomerGroups => 'Customer Groups';
+
+  @override
+  String get discountFormSelectCustomerGroups => 'Select Customer Groups';
+
+  @override
+  String get discountFormSelectPaymentMethods => 'Select Payment Methods';
+
+  @override
+  String get discountFormSelectBranches => 'Select Branches';
+
+  @override
+  String get discountFormSchedule => 'Schedule';
+
+  @override
+  String get discountFormActiveWeekdays => 'Active Weekdays (optional)';
+
+  @override
+  String get discountFormStartDate => 'Start Date';
+
+  @override
+  String get discountFormEndDate => 'End Date';
+
+  @override
+  String get discountFormStartTime => 'Start Time';
+
+  @override
+  String get discountFormEndTime => 'End Time';
+
+  @override
+  String get discountFormOvernightHelp =>
+      'An end time earlier than the start time is an overnight window.';
+
+  @override
+  String get discountFormUsageLimits => 'Usage Limits';
+
+  @override
+  String get discountFormGlobalUsageOptional => 'Global Usage Limit (optional)';
+
+  @override
+  String get discountFormLifetimeUsageOptional =>
+      'Per Customer Lifetime Limit (optional)';
+
+  @override
+  String get discountFormUnlimited => 'Unlimited';
+
+  @override
+  String get discountFormProduct => 'Product';
+
+  @override
+  String get discountFormLoading => 'Loading...';
+
+  @override
+  String get discountFormNoOptions => 'No active options are available.';
+
+  @override
+  String get discountFormDone => 'Done';
+
+  @override
+  String get discountFormLoadTitle => 'Unable to load discount';
+
+  @override
+  String get discountFormRetryOptions => 'Retry loading selection options';
+
+  @override
+  String get discountFormDiscard => 'Discard Changes';
+
+  @override
+  String get discountFormSaveDraft => 'Save as Draft';
+
+  @override
+  String get discountFormActivate => 'Activate Discount';
+
+  @override
+  String get discountFormSummary => 'Summary';
+
+  @override
+  String get discountFormReady =>
+      'Policy is ready for review before activation.';
+
+  @override
+  String get discountFormNotReady =>
+      'Complete the required fields before activating this discount.';
+
+  @override
+  String get discountFormDiscount => 'Discount';
+
+  @override
+  String get discountFormScope => 'Scope';
+
+  @override
+  String get discountFormBranches => 'Branches';
+
+  @override
+  String get discountFormScheduleLabel => 'Schedule';
+
+  @override
+  String get discountFormCustomers => 'Customers';
+
+  @override
+  String get discountFormPackage => 'Package';
+
+  @override
+  String get discountFormUsage => 'Usage';
+
+  @override
+  String get discountFormAnyDay => 'Any day';
+
+  @override
+  String discountFormSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String discountFormDaysSelected(int count) {
+    return '$count days selected';
+  }
+
+  @override
+  String discountFormSelectedCustomers(int count) {
+    return '$count selected customers';
+  }
+
+  @override
+  String discountFormPerDay(int count) {
+    return '$count per day';
+  }
+
+  @override
+  String discountFormLifetime(int count) {
+    return '$count lifetime';
+  }
+
+  @override
+  String discountFormUsageBoth(int lifetime, int daily) {
+    return '$lifetime lifetime / $daily per day';
+  }
+
+  @override
+  String get discountFormSavedActivated => 'Discount saved and activated.';
+
+  @override
+  String get discountFormSaved => 'Discount saved.';
+
+  @override
+  String get discountFormSaveFailed => 'Unable to save discount.';
+
+  @override
+  String get discountValidationName => 'Discount name is required.';
+
+  @override
+  String get discountValidationPositiveValue =>
+      'Enter a value greater than zero.';
+
+  @override
+  String get discountValidationPercentage =>
+      'A percentage discount cannot exceed 100.';
+
+  @override
+  String get discountValidationCode =>
+      'A code is required for coupon discounts.';
+
+  @override
+  String get discountValidationProducts => 'Select one or more products.';
+
+  @override
+  String get discountValidationCategories => 'Select one or more categories.';
+
+  @override
+  String get discountValidationBundle => 'Add at least one package product.';
+
+  @override
+  String get discountValidationBundleProduct =>
+      'Select a product for every package requirement.';
+
+  @override
+  String get discountValidationBundleUnique =>
+      'A package product can only be added once.';
+
+  @override
+  String get discountValidationBundleQuantity =>
+      'Package quantities must be greater than zero.';
+
+  @override
+  String get discountValidationGroups => 'Select one or more customer groups.';
+
+  @override
+  String get discountValidationCustomers => 'Select one or more customers.';
+
+  @override
+  String get discountValidationBranches => 'Select one or more branches.';
+
+  @override
+  String get discountValidationMoney => 'Enter valid monetary amounts.';
+
+  @override
+  String get discountValidationNegativeMoney =>
+      'Monetary amounts cannot be negative.';
+
+  @override
+  String get discountValidationUsage =>
+      'Usage limits must be positive whole numbers.';
+
+  @override
+  String get discountValidationDailyUsage =>
+      'Daily usage limits must be positive whole numbers.';
+
+  @override
+  String get discountValidationDate => 'Dates must use YYYY-MM-DD.';
+
+  @override
+  String get discountValidationEndDate =>
+      'End date cannot be earlier than start date.';
+
+  @override
+  String get discountValidationTimesTogether =>
+      'Start time and end time must be provided together.';
+
+  @override
+  String get discountValidationTime => 'Times must use HH:mm.';
+
+  @override
+  String get discountFormCreate => 'Create Discount';
+
+  @override
+  String get discountFormEdit => 'Edit Discount';
+
+  @override
+  String get discountFormCreatePolicy => 'Create Discount Policy';
+
+  @override
+  String get discountFormEditPolicy => 'Edit Discount Policy';
+
+  @override
+  String get discountFormHeadingSubtitle =>
+      'Configure policy scope, eligibility, and schedule.';
+
+  @override
+  String get discountCustomerEligibility => 'Customer Eligibility';
+
+  @override
+  String get discountPaymentMethods => 'Payment Methods';
+
+  @override
+  String get discountWeekdayMonday => 'Mon';
+
+  @override
+  String get discountWeekdayTuesday => 'Tue';
+
+  @override
+  String get discountWeekdayWednesday => 'Wed';
+
+  @override
+  String get discountWeekdayThursday => 'Thu';
+
+  @override
+  String get discountWeekdayFriday => 'Fri';
+
+  @override
+  String get discountWeekdaySaturday => 'Sat';
+
+  @override
+  String get discountWeekdaySunday => 'Sun';
+
+  @override
+  String get discountPosPreview => 'POS Preview';
+
+  @override
+  String get discountSubtotal => 'Subtotal';
+
+  @override
+  String get discountTotal => 'Total';
+
+  @override
+  String discountTax(String percent) {
+    return 'Tax ($percent%)';
+  }
+
+  @override
+  String get discountRequestFailed =>
+      'Unable to complete the discount request. Please try again.';
+
+  @override
+  String discountServerFieldInvalid(String field) {
+    return 'Review the $field field.';
+  }
+
+  @override
+  String get discountCurrency => 'Currency';
+
+  @override
+  String get discountChannelPos => 'POS';
+
+  @override
+  String get discountChannelWaiterApp => 'Waiter app';
+
+  @override
+  String get discountChannelKiosk => 'Kiosk';
+
+  @override
+  String get discountChannelQrOrdering => 'QR ordering';
+
+  @override
+  String get discountChannelDelivery => 'Delivery';
+
+  @override
+  String get discountChannelOnlineOrdering => 'Online ordering';
+
+  @override
+  String discountFormSelectedCountPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected',
+      one: '1 selected',
+      zero: 'None selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormDaysSelectedPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days selected',
+      one: '1 day selected',
+      zero: 'Any day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormSelectedCustomersPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected customers',
+      one: '1 selected customer',
+      zero: 'No customers selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormPerDayPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count per day',
+      one: '1 per day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormLifetimePlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lifetime',
+      one: '1 lifetime',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posApplyDiscount => 'Apply Discount';
+
+  @override
+  String get posCouponCode => 'Coupon code';
+
+  @override
+  String get posEnterCouponCode => 'Enter coupon code';
+
+  @override
+  String get posCouponCodeRequired => 'Enter a coupon code.';
+
+  @override
+  String get posCouponDiscount => 'Coupon discount';
+
+  @override
+  String get posAvailableDiscounts => 'Available Discounts';
+
+  @override
+  String get posSearchDiscounts => 'Search discounts';
+
+  @override
+  String get posNoDiscountsAvailable =>
+      'No discounts are available for this order.';
+
+  @override
+  String get posNoDiscountsMatch => 'No discounts match your search.';
+
+  @override
+  String get posApply => 'Apply';
+
+  @override
+  String get posClose => 'Close';
+
+  @override
+  String get posCancel => 'Cancel';
+
+  @override
+  String get posPayment => 'Payment';
+
+  @override
+  String posOrderNumber(String number) {
+    return 'Order $number';
+  }
+
+  @override
+  String get posSelectPaymentMethod => 'Select Method';
+
+  @override
+  String get posPaymentMethodCash => 'Cash';
+
+  @override
+  String get posPaymentMethodCard => 'Card';
+
+  @override
+  String get posPaymentMethodWallet => 'Wallet';
+
+  @override
+  String get posPaymentMethodSplit => 'Split';
+
+  @override
+  String get posAmountReceived => 'AMOUNT RECEIVED';
+
+  @override
+  String get posChangeDue => 'Change Due';
+
+  @override
+  String get posEnterAmountReceived => 'Enter amount received.';
+
+  @override
+  String get posAmountBelowTotal => 'Amount received is less than total due.';
+
+  @override
+  String get posSplitUnavailable => 'Split payment will be supported later.';
+
+  @override
+  String get posExternalTerminalPending =>
+      'External payment terminal integration will be added later.';
+
+  @override
+  String get posConfirmPayment => 'Confirm Payment';
+
+  @override
+  String get posPaymentFailed =>
+      'Payment could not be completed. Please try again.';
+
+  @override
+  String get posNoPaymentMethods =>
+      'No active payment method is linked to a financial account.';
+
+  @override
+  String get posPaymentUncertain =>
+      'Payment status is uncertain. Check the payment status before trying again.';
+
+  @override
+  String get posReceiptUnavailable =>
+      'The receipt could not be loaded. You can retry safely.';
+
+  @override
+  String get posRetryReceipt => 'Retry Receipt';
+
+  @override
+  String get posCheckPaymentStatus => 'Check Payment Status';
+
+  @override
+  String get posOrderTypeDineIn => 'Dine-in';
+
+  @override
+  String get posOrderTypeTakeaway => 'Takeaway';
+
+  @override
+  String get posOrderTypeDelivery => 'Delivery';
+
+  @override
+  String get posCurrentOrder => 'Current order';
+
+  @override
+  String get posSubtotal => 'Subtotal';
+
+  @override
+  String get posDiscount => 'Discount';
+
+  @override
+  String posTax(String percent) {
+    return 'Tax ($percent%)';
+  }
+
+  @override
+  String get posTotal => 'Total';
+
+  @override
+  String get posRemoveDiscount => 'Remove';
+
+  @override
+  String get posAddDiscount => 'Add discount';
+
+  @override
+  String get posHoldOrder => 'Hold order';
+
+  @override
+  String get posCancelOrder => 'Cancel order';
+
+  @override
+  String get posPrint => 'Print';
+
+  @override
+  String posPayAmount(String amount) {
+    return 'Pay $amount';
+  }
+
+  @override
+  String get posCompleteOrder => 'Complete order';
+
+  @override
+  String get posRemoveItem => 'Remove item';
+
+  @override
+  String get posExactAmount => 'Exact';
+
+  @override
+  String get posTotalDue => 'Total due';
+
+  @override
+  String posItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'No items',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posViewDetails => 'View details';
+
+  @override
+  String get posCheckout => 'Checkout';
+
+  @override
+  String get posProductOptionsUnavailable => 'Product options unavailable';
+
+  @override
+  String get posRetry => 'Retry';
+
+  @override
+  String posProductCustomization(String product) {
+    return 'Customize $product';
+  }
+
+  @override
+  String get posVariant => 'Variant';
+
+  @override
+  String get posSpecialInstructions => 'Special Instructions';
+
+  @override
+  String get posSpecialInstructionsHint => 'E.g., extra hot, in a to-go cup...';
+
+  @override
+  String get posTemperature => 'Temperature';
+
+  @override
+  String get posSize => 'Size';
+
+  @override
+  String get posMilkBase => 'Milk Base';
+
+  @override
+  String get posAddOns => 'Add-ons';
+
+  @override
+  String get posSweetness => 'Sweetness';
+
+  @override
+  String get posQuantity => 'Quantity';
+
+  @override
+  String get posAddToOrder => 'Add to Order';
+
+  @override
+  String get posAdding => 'Adding...';
+
+  @override
+  String get posRequiredSelection => 'Select the required options.';
+
+  @override
+  String get posReceipt => 'Receipt';
+
+  @override
+  String get posReceiptPreview => 'Receipt preview';
+
+  @override
+  String get posCloseReceiptPreview => 'Close receipt preview';
+
+  @override
+  String get posSendViaWhatsApp => 'Send via WhatsApp';
+
+  @override
+  String get posPrintReceipt => 'Print receipt';
+
+  @override
+  String get posWhatsAppPending => 'WhatsApp sending will be added later.';
+
+  @override
+  String get posPaymentCompleted => 'Payment completed';
+
+  @override
+  String get posReceiptOrder => 'Order:';
+
+  @override
+  String get posReceiptCashier => 'Cashier:';
+
+  @override
+  String get posReceiptCustomer => 'Customer:';
+
+  @override
+  String get posReceiptDate => 'Date:';
+
+  @override
+  String get posReceiptTime => 'Time:';
+
+  @override
+  String get posReceiptPaidVia => 'Paid via:';
+
+  @override
+  String get posReceiptAuthorization => 'Authorization:';
+
+  @override
+  String get posReceiptApproved => 'Approved';
+
+  @override
+  String get posReceiptChange => 'Change';
+
+  @override
+  String posReceiptNote(String note) {
+    return 'Note: $note';
+  }
+
+  @override
+  String get posReceiptThankYou => 'Thank you for visiting!';
+
+  @override
+  String get posOperationFailed =>
+      'The POS operation could not be completed. Please try again.';
+
+  @override
+  String get posMenuVersionStale =>
+      'The menu changed. Refresh the POS menu and review the order.';
+
+  @override
+  String get posOpenShiftRequired => 'Open a shift before continuing.';
+
+  @override
+  String get posOrderUnavailableForBranch =>
+      'This order is not available in the selected branch.';
+
+  @override
+  String get posHeldOrderRequired =>
+      'Only an unpaid held order can be resumed.';
+
+  @override
+  String get posCustomizeItem => 'Customize item';
+
+  @override
+  String get posRequired => 'Required';
+
+  @override
+  String get posHot => 'Hot';
+
+  @override
+  String get posIced => 'Iced';
+
+  @override
+  String get posSmallSize => 'Small (8oz)';
+
+  @override
+  String get posMediumSize => 'Medium (12oz)';
+
+  @override
+  String get posLargeSize => 'Large (16oz)';
+
+  @override
+  String get posWholeMilk => 'Whole milk';
+
+  @override
+  String get posOatMilk => 'Oat milk';
+
+  @override
+  String get posAlmondMilk => 'Almond milk';
+
+  @override
+  String get posDefault => 'Default';
+
+  @override
+  String get posExtraEspresso => 'Extra espresso shot';
+
+  @override
+  String get posCaramelSyrup => 'Caramel syrup';
+
+  @override
+  String get posVanillaSyrup => 'Vanilla syrup';
+
+  @override
+  String get posWhippedCream => 'Whipped cream';
+
+  @override
+  String get posProductDescriptionFallback =>
+      'A classic espresso-based beverage.';
+
+  @override
+  String posBasePrice(String variant, String price) {
+    return '$variant base - $price';
+  }
+
+  @override
+  String get posSearchProducts => 'Search products...';
+
+  @override
+  String get posNoItemsAvailable => 'No items available.';
+
+  @override
+  String get posNoCartItems => 'No items added yet';
+
+  @override
+  String get posCloseCustomizationDialog => 'Close customization dialog';
 }
