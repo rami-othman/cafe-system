@@ -1256,19 +1256,17 @@ class _ReadOnlyAmount extends StatelessWidget {
   const _ReadOnlyAmount({
     required this.label,
     required this.value,
-    this.decimals = 2,
     this.emphasize = false,
   });
   final String label;
   final double value;
-  final int decimals;
   final bool emphasize;
 
   @override
   Widget build(BuildContext context) => InputDecorator(
     decoration: InputDecoration(labelText: label, isDense: true),
     child: Text(
-      value.toStringAsFixed(decimals),
+      value.toStringAsFixed(2),
       style: emphasize
           ? FinanceText.body.copyWith(fontWeight: FontWeight.w700)
           : FinanceText.body,
