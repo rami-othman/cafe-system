@@ -151,6 +151,49 @@ class SaleAccountingApiTest extends TestCase
         $this->assertSame(1, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->count());
     }
 
+    public function test_fixed_discount_to_zero_completes_without_tender_and_preserves_inventory_and_accounting(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branch = $this->downtownBranchId($tenant);
+        $beans = $this->stockIn($tenant, $branch, $headers, '2.0000', '100.000');
+        $product = $this->stockTrackedProduct($tenant, 'Zero balance latte', '10.00');
+        $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '2.000']]);
+        $order = $this->createOrder($tenant, $branch, $headers, $product, 1);
+        $orderId = $order->json('data.id');
+        $discount = DB::table('discounts')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'Free latte', 'application_mode' => 'manual',
+            'type' => 'fixed', 'value' => '10.00', 'scope' => 'order',
+            'minimum_order_amount' => 0, 'is_active' => true, 'used_count' => 0,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->postJson("/api/v1/orders/{$orderId}/discounts/apply", ['discountId' => $discount], $headers)
+            ->assertOk()->assertJsonPath('data.totals.total', 0);
+
+        $paid = $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'amount' => 0, 'idempotencyKey' => 'fixed-zero-balance',
+        ], $headers)->assertOk()->assertJsonPath('data.payment.method', 'zero_balance');
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'amount' => 0, 'idempotencyKey' => 'fixed-zero-balance',
+        ], $headers)->assertOk()->assertJsonPath('data.payment.id', $paid->json('data.payment.id'));
+
+        $this->assertSame('paid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
+        $this->assertNull(DB::table('payments')->where('order_id', $orderId)->value('payment_method_id'));
+        $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discount)->count());
+        $this->assertSame(1, DB::table('stock_movements')->where('inventory_item_id', $beans['itemId'])->where('type', 'sale_consumption')->count());
+        $this->assertSame(98.0, (float) DB::table('stock_balances')->where('inventory_item_id', $beans['itemId'])->value('quantity_on_hand'));
+
+        $entry = DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->first();
+        $this->assertNotNull($entry);
+        $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $entry->id)->get();
+        $this->assertSame(round((float) $lines->sum('debit'), 2), round((float) $lines->sum('credit'), 2));
+        $cashAccount = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->value('id');
+        $this->assertNull($lines->firstWhere('financial_account_id', $cashAccount));
+        $this->getJson("/api/v1/orders/{$orderId}/receipt", $headers)
+            ->assertOk()->assertJsonPath('data.payment.method', 'zero_balance');
+    }
+
     public function test_non_inventory_product_sale_creates_no_stock_movement_and_a_valid_zero_cogs_snapshot(): void
     {
         $this->seed();

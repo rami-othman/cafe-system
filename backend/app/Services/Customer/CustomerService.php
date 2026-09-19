@@ -97,8 +97,19 @@ class CustomerService
         return DB::transaction(function () use ($request, $tenantId, $data): Customer {
             $name = CustomerNameNormalizer::normalize($data['name']);
             $phone = CustomerPhoneNormalizer::normalize($data['phone']);
-            $customer = Customer::query()->create(['tenant_id' => $tenantId, 'name' => $name['displayName'], 'normalized_name' => $name['normalizedName'], 'customer_number' => $this->numbers->next($tenantId), 'phone' => $phone['rawNumber'], 'is_active' => true]);
+            $customer = Customer::query()->create([
+                'tenant_id' => $tenantId,
+                'name' => $name['displayName'],
+                'normalized_name' => $name['normalizedName'],
+                'customer_number' => $this->numbers->next($tenantId),
+                'phone' => $phone['rawNumber'],
+                'notes' => $data['notes'] ?? null,
+                'is_active' => true,
+            ]);
             DB::table('customer_phones')->insert(['tenant_id' => $tenantId, 'customer_id' => $customer->id, 'raw_number' => $phone['rawNumber'], 'normalized_number' => $phone['normalizedNumber'], 'type' => 'mobile', 'is_primary' => true, 'validation_status' => $phone['validationStatus'], 'created_at' => now(), 'updated_at' => now()]);
+            if (array_key_exists('groupIds', $data)) {
+                $this->replaceGroups($request, $tenantId, $customer->id, $data['groupIds']);
+            }
             $this->audit->record($request, $tenantId, 'customer.quick_create', 'customer', $customer->id, [], $this->auditState($customer), actorId: $this->access->actor($request)->id);
 
             return $this->fresh($tenantId, $customer->id);

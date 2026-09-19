@@ -5,6 +5,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/discount_list_item.dart';
+import '../../../l10n/app_localizations.dart';
+import 'discount_localization.dart';
 
 class DiscountStatusBadge extends StatelessWidget {
   const DiscountStatusBadge({super.key, required this.status});
@@ -42,7 +44,7 @@ class DiscountStatusBadge extends StatelessWidget {
         borderRadius: AppRadius.pillRadius,
       ),
       child: Text(
-        status.label,
+        status.label(AppLocalizations.of(context)),
         style: AppTextStyles.labelSmall.copyWith(
           color: foreground,
           fontSize: 10,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/pos/models/available_discount.dart';
 import 'package:windows_application/features/pos/widgets/discount_dialog.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('discount dialog does not overflow in compact layouts', (
@@ -15,7 +16,12 @@ void main() {
     });
 
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: DiscountDialog(subtotal: 12))),
+      const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: DiscountDialog(subtotal: 12)),
+      ),
     );
     await tester.pump();
 
@@ -36,6 +42,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: DiscountDialog(
             subtotal: 100,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -24,12 +25,18 @@ class PaymentSummaryPanel extends StatelessWidget {
     if (totalDue <= 0 && itemCount == 0) {
       return Column(
         children: <Widget>[
-          _SummaryRow(label: 'Subtotal', value: CurrencyFormatter.format(0)),
+          _SummaryRow(
+            label: context.l10n.posSubtotal,
+            value: CurrencyFormatter.format(0),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          _SummaryRow(label: 'Total', value: CurrencyFormatter.format(0)),
+          _SummaryRow(
+            label: context.l10n.posTotal,
+            value: CurrencyFormatter.format(0),
+          ),
           const SizedBox(height: AppSpacing.lg),
-          const AppButton(
-            label: 'Checkout',
+          AppButton(
+            label: context.l10n.posCheckout,
             icon: Icons.payment_outlined,
             onPressed: null,
             isExpanded: true,
@@ -52,7 +59,7 @@ class PaymentSummaryPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'Total Due',
+                  context.l10n.posTotalDue,
                   style: AppTextStyles.labelMedium.copyWith(
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w700,
@@ -87,7 +94,7 @@ class PaymentSummaryPanel extends StatelessWidget {
                   borderRadius: AppRadius.pillRadius,
                 ),
                 child: Text(
-                  '$itemCount ${itemCount == 1 ? 'Item' : 'Items'}',
+                  context.l10n.posItemCount(itemCount),
                   style: AppTextStyles.labelMedium.copyWith(
                     color: AppColors.secondary,
                     fontWeight: FontWeight.w800,
@@ -105,7 +112,7 @@ class PaymentSummaryPanel extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'VIEW DETAILS',
+                  context.l10n.posViewDetails,
                   style: AppTextStyles.labelSmall.copyWith(
                     color: AppColors.tertiary,
                     fontWeight: FontWeight.w800,

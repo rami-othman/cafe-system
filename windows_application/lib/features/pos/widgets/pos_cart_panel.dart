@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -25,6 +27,7 @@ import 'order_totals_panel.dart';
 import 'payment_dialog.dart';
 import 'order_type_selector.dart';
 import 'pos_action_buttons.dart';
+import 'pos_localization.dart';
 import 'select_customer_dialog.dart';
 
 class PosCartPanel extends StatelessWidget {
@@ -108,7 +111,8 @@ class PosCartPanel extends StatelessWidget {
                     state.isPaymentSubmitting ||
                         state.uncertainPaymentOrderId != null
                     ? null
-                    : () => _showPaymentDialog(context, state, cubit),
+                    : () =>
+                          unawaited(_showPaymentDialog(context, state, cubit)),
                 isSyncingOrder:
                     state.isCartMutationInProgress || state.isPaymentSubmitting,
                 isBackendReachable:
@@ -132,9 +136,9 @@ class PosCartPanel extends StatelessWidget {
         availableDiscounts = await cubit.getAvailableDiscountsForCurrentCart();
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(error.toString())));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
         }
         return;
       }
@@ -177,9 +181,10 @@ class PosCartPanel extends StatelessWidget {
           customers: state.customers,
           selectedCustomer: state.selectedCustomer,
           onSubmit: cubit.selectCustomer,
-          onSearch: (String query) => cubit.repository.getCustomers(
-            search: query,
-          ),
+          onSearch: (String query) =>
+              cubit.repository.getCustomers(search: query),
+          quickCreateRepository: state.isBackendMode ? cubit.repository : null,
+          onQuickCreate: state.isBackendMode ? cubit.quickCreateCustomer : null,
         );
       },
     );
@@ -199,7 +204,19 @@ class PosCartPanel extends StatelessWidget {
     PosState state,
     PosCubit cubit,
   ) async {
-    if (!state.hasCartItems || state.total <= 0) {
+    if (!state.hasCartItems || state.total < 0) {
+      return;
+    }
+
+    if (state.total == 0) {
+      await cubit.completeBackendPayment(
+        const PaymentResult(
+          method: PaymentMethod.cash,
+          totalDue: 0,
+          amountReceived: 0,
+          changeDue: 0,
+        ),
+      );
       return;
     }
 
@@ -212,9 +229,9 @@ class PosCartPanel extends StatelessWidget {
         );
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(error.toString())));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizedPosFailure(context.l10n, error))),
+          );
         }
         return;
       }
@@ -234,9 +251,7 @@ class PosCartPanel extends StatelessWidget {
           .toList(growable: false);
       if (availableMethods.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('لا توجد طريقة دفع فعّالة مرتبطة بحساب مالي.'),
-          ),
+          SnackBar(content: Text(context.l10n.posNoPaymentMethods)),
         );
         return;
       }
@@ -374,7 +389,7 @@ class _AddDiscountButton extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    'ADD DISCOUNT',
+                    context.l10n.posAddDiscount,
                     style: AppTextStyles.labelSmall.copyWith(
                       color: contentColor,
                       fontWeight: FontWeight.w800,
@@ -454,7 +469,7 @@ class _CartFooter extends StatelessWidget {
                   !isSyncingOrder &&
                   isBackendReachable &&
                   hasCartItems &&
-                  total > 0 &&
+                  total >= 0 &&
                   itemCount > 0,
             ),
           ],

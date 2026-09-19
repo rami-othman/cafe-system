@@ -17,6 +17,8 @@ import '../models/order_receipt.dart';
 import '../models/payment_method.dart';
 import '../models/payment_result.dart';
 import '../models/pos_product.dart';
+import '../models/pos_customer_create_result.dart';
+import '../models/pos_quick_create_customer_request.dart';
 import '../models/product_customization.dart';
 import '../models/product_detail_load_result.dart';
 import '../models/receipt_line_item.dart';
@@ -54,6 +56,9 @@ class PosCubit extends Cubit<PosState> {
   int _existingOrderRequestVersion = 0;
   Future<bool>? _inFlightExistingOrder;
   int? _inFlightExistingOrderId;
+  Future<PosCustomerCreateResult>? _inFlightCustomerCreate;
+  Future<bool>? _inFlightCustomerAttachment;
+  int? _inFlightCustomerAttachmentId;
 
   static const String connectionRequiredMessage =
       'pos.connectionRequiredToCompleteOrder';
@@ -119,12 +124,7 @@ class PosCubit extends Cubit<PosState> {
     try {
       final shift = await repository.getCurrentShift(branchId: branchId);
       if (isClosed || state.branchId != branchId) return;
-      emit(
-        state.copyWith(
-          shiftId: shift?.id,
-          clearShiftId: shift == null,
-        ),
-      );
+      emit(state.copyWith(shiftId: shift?.id, clearShiftId: shift == null));
     } catch (_) {
       // Keep the last known state on a transient refresh failure. The POS
       // screen has visible connection/error handling for full loads.
@@ -488,7 +488,7 @@ class PosCubit extends Cubit<PosState> {
   }
 
   Future<bool> selectCustomer(Customer? customer) {
-    if (state.selectedCustomer == customer) {
+    if (_sameCustomer(state.selectedCustomer, customer)) {
       return Future<bool>.value(true);
     }
     if (state.currentOrderId == null) {
@@ -503,17 +503,107 @@ class PosCubit extends Cubit<PosState> {
     }
 
     final int orderId = state.currentOrderId!;
-    return _enqueueCartMutation(
-      fallbackMessage: 'Could not update customer. Please try again.',
+    final int? customerId = customer?.backendId;
+    if (customer != null && customerId == null) {
+      return Future<bool>.value(false);
+    }
+    if (customerId != null &&
+        _inFlightCustomerAttachmentId == customerId &&
+        _inFlightCustomerAttachment != null) {
+      return _inFlightCustomerAttachment!;
+    }
+    final Future<bool> request = _enqueueCartMutation(
+      fallbackMessage: customerAttachmentFailedMessage,
+      exposeApiMessage: false,
       action: () async {
         final BackendOrder order = await repository.updateOrderContext(
           orderId: orderId,
-          customerId: customer?.backendId,
+          customerId: customerId,
           clearCustomer: customer == null,
         );
         _emitBackendOrder(order);
       },
     );
+    if (customerId != null) {
+      _inFlightCustomerAttachmentId = customerId;
+      _inFlightCustomerAttachment = request;
+      request.whenComplete(() {
+        if (identical(_inFlightCustomerAttachment, request)) {
+          _inFlightCustomerAttachment = null;
+          _inFlightCustomerAttachmentId = null;
+        }
+      });
+    }
+    return request;
+  }
+
+  static const String customerAttachmentFailedMessage =
+      'pos.customerAttachmentFailed';
+
+  Future<PosCustomerCreateResult> quickCreateCustomer(
+    PosQuickCreateCustomerRequest request,
+  ) {
+    final Future<PosCustomerCreateResult>? current = _inFlightCustomerCreate;
+    if (current != null) return current;
+    final Future<PosCustomerCreateResult> operation = _quickCreateCustomer(
+      request,
+    );
+    _inFlightCustomerCreate = operation;
+    return operation.whenComplete(() {
+      if (identical(_inFlightCustomerCreate, operation)) {
+        _inFlightCustomerCreate = null;
+      }
+    });
+  }
+
+  Future<PosCustomerCreateResult> _quickCreateCustomer(
+    PosQuickCreateCustomerRequest request,
+  ) async {
+    final Customer customer = await repository.quickCreateCustomer(request);
+    _upsertCustomer(customer);
+    if (state.currentOrderId == null) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            selectedCustomer: customer,
+            clearCartMutationError: true,
+          ),
+        );
+      }
+      return PosCustomerCreateResult(
+        customer: customer,
+        attachedToOrder: false,
+      );
+    }
+
+    final bool attached = await selectCustomer(customer);
+    return PosCustomerCreateResult(
+      customer: customer,
+      attachedToOrder: attached,
+      attachmentFailed: !attached,
+    );
+  }
+
+  void _upsertCustomer(Customer customer) {
+    final int index = state.customers.indexWhere(
+      (Customer item) =>
+          customer.backendId != null && item.backendId == customer.backendId,
+    );
+    final List<Customer> customers = List<Customer>.from(state.customers);
+    if (index >= 0) {
+      customers[index] = customer;
+    } else {
+      customers.add(customer);
+    }
+    if (!isClosed) emit(state.copyWith(customers: customers));
+  }
+
+  bool _sameCustomer(Customer? first, Customer? second) {
+    if (first == null || second == null) return first == second;
+    if (first.backendId != null && second.backendId != null) {
+      return first.backendId == second.backendId;
+    }
+    return first.id == second.id;
   }
 
   Future<bool> clearSelectedCustomer() {
@@ -816,7 +906,7 @@ class PosCubit extends Cubit<PosState> {
 
     final int? orderId = state.currentOrderId;
     final double totalDue = state.total;
-    if (orderId == null || totalDue <= 0 || !state.hasCartItems) {
+    if (orderId == null || totalDue < 0 || !state.hasCartItems) {
       return PaymentCompletionStatus.retryableFailure;
     }
 
@@ -1258,6 +1348,7 @@ class PosCubit extends Cubit<PosState> {
   Future<bool> _enqueueCartMutation({
     required String fallbackMessage,
     required Future<void> Function() action,
+    bool exposeApiMessage = true,
   }) {
     if (repository.usesBackend && !state.isBackendReachable) {
       emit(state.copyWith(cartMutationError: connectionRequiredMessage));
@@ -1287,7 +1378,7 @@ class PosCubit extends Cubit<PosState> {
         if (!isClosed) {
           emit(
             state.copyWith(
-              cartMutationError: error is ApiException
+              cartMutationError: exposeApiMessage && error is ApiException
                   ? _messageFor(error)
                   : fallbackMessage,
               requiresMenuRefresh: _isMenuVersionStale(error),
@@ -1362,8 +1453,6 @@ class PosCubit extends Cubit<PosState> {
       backendId: customerId,
       name: order.customerName ?? 'Customer $customerId',
       phone: order.customerPhone ?? '',
-      tier: 'CUSTOMER',
-      points: 0,
     );
   }
 

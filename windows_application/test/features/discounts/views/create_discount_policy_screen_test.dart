@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/app/app.dart';
 import 'package:windows_application/app/app_router.dart';
+import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/core/theme/app_theme.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
@@ -136,6 +137,86 @@ void main() {
     expect(find.text('Create Discount Policy'), findsOneWidget);
     expect(find.text('Activate Discount'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Arabic Create/Edit is RTL and overflow-free when constrained', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      const Size(700, 800),
+      locale: const Locale('ar'),
+      repository: _DiscountsRepository(detail: _detail),
+      initialDiscount: _editRow,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('تعديل سياسة خصم'), findsOneWidget);
+    expect(
+      Directionality.of(
+        tester.element(find.byType(CreateDiscountPolicyScreen)),
+      ),
+      TextDirection.rtl,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Arabic channel labels are localized without English leakage', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      locale: const Locale('ar'),
+    );
+    await _scrollToField(
+      tester,
+      find.byKey(const Key('discount-channel-mode-field')),
+    );
+    await _selectDropdown(
+      tester,
+      const Key('discount-channel-mode-field'),
+      'قنوات محددة',
+    );
+
+    for (final String label in <String>[
+      'نقطة البيع',
+      'تطبيق النادل',
+      'الكشك',
+      'الطلب عبر رمز QR',
+      'التوصيل',
+      'الطلب عبر الإنترنت',
+    ]) {
+      expect(find.text(label), findsOneWidget);
+    }
+    for (final String leaked in <String>[
+      'Waiter App',
+      'Kiosk',
+      'QR Ordering',
+      'Delivery',
+      'Online Ordering',
+      'Basic Information',
+      'Save as Draft',
+      'Activate Discount',
+    ]) {
+      expect(find.text(leaked), findsNothing, reason: leaked);
+    }
+  });
+
+  testWidgets('English operational UI contains no Arabic leakage', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, const Size(1280, 900));
+
+    for (final String leaked in <String>[
+      'المعلومات الأساسية',
+      'حفظ كمسودة',
+      'تنشيط الخصم',
+      'تطبيق النادل',
+      'التوصيل',
+    ]) {
+      expect(find.text(leaked), findsNothing, reason: leaked);
+    }
   });
 
   testWidgets('percentage 0 cannot activate and uses the not-ready state', (
@@ -589,6 +670,141 @@ void main() {
     expect(_fieldText(tester, const Key('discount-code-field')), 'CPN-0002');
   });
 
+  testWidgets('known backend field validation is safely localized in English', (
+    WidgetTester tester,
+  ) async {
+    const String rawBackendText = 'RAW_BACKEND_NAME_FAILURE';
+    final _DiscountsRepository repository = _DiscountsRepository(
+      createFailure: const ApiException(
+        message: rawBackendText,
+        type: ApiErrorType.validation,
+        validationErrors: <String, List<String>>{
+          'name': <String>[rawBackendText],
+        },
+      ),
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    await _submitValidDraft(tester);
+
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CreateDiscountPolicyScreen)),
+    );
+    expect(
+      find.textContaining(
+        l10n.discountServerFieldInvalid(l10n.discountFormName),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.discountRequestFailed), findsNothing);
+    expect(find.text(rawBackendText), findsNothing);
+  });
+
+  testWidgets('known backend field validation is safely localized in Arabic', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      createFailure: const ApiException(
+        message: 'RAW_ARABIC_BACKEND_FAILURE',
+        type: ApiErrorType.validation,
+        validationErrors: <String, List<String>>{
+          'value': <String>['RAW_ARABIC_BACKEND_FAILURE'],
+        },
+      ),
+    );
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      repository: repository,
+      locale: const Locale('ar'),
+    );
+    await _submitValidDraft(tester);
+
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CreateDiscountPolicyScreen)),
+    );
+    expect(
+      find.textContaining(
+        l10n.discountServerFieldInvalid(l10n.discountFormValue),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('RAW_ARABIC_BACKEND_FAILURE'), findsNothing);
+  });
+
+  testWidgets('multiple known backend field errors remain visible', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      createFailure: const ApiException(
+        message: 'invalid',
+        type: ApiErrorType.validation,
+        validationErrors: <String, List<String>>{
+          'name': <String>['unsafe name text'],
+          'value': <String>['unsafe value text'],
+        },
+      ),
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    await _submitValidDraft(tester);
+
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CreateDiscountPolicyScreen)),
+    );
+    expect(
+      find.textContaining(
+        l10n.discountServerFieldInvalid(l10n.discountFormName),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        l10n.discountServerFieldInvalid(l10n.discountFormValue),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'unknown backend validation uses generic fallback without leaks',
+    (WidgetTester tester) async {
+      const String rawBackendText = 'TOP_SECRET_SERVER_VALIDATION';
+      final _DiscountsRepository repository = _DiscountsRepository(
+        createFailure: const ApiException(
+          message: rawBackendText,
+          type: ApiErrorType.validation,
+          validationErrors: <String, List<String>>{
+            'unrecognizedServerField': <String>[rawBackendText],
+          },
+        ),
+      );
+      await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+      await _submitValidDraft(tester);
+
+      final AppLocalizations l10n = AppLocalizations.of(
+        tester.element(find.byType(CreateDiscountPolicyScreen)),
+      );
+      expect(find.text(l10n.discountRequestFailed), findsOneWidget);
+      expect(find.text(rawBackendText), findsNothing);
+    },
+  );
+
+  testWidgets('non-validation exception uses localized generic fallback', (
+    WidgetTester tester,
+  ) async {
+    const String exceptionText = 'INTERNAL_EXCEPTION_DETAILS';
+    final _DiscountsRepository repository = _DiscountsRepository(
+      createFailure: StateError(exceptionText),
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    await _submitValidDraft(tester);
+
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CreateDiscountPolicyScreen)),
+    );
+    expect(find.text(l10n.discountRequestFailed), findsOneWidget);
+    expect(find.text(exceptionText), findsNothing);
+  });
+
   testWidgets('edit hydrates V2 detail without generating a new code', (
     WidgetTester tester,
   ) async {
@@ -680,6 +896,7 @@ Future<void> _pumpScreen(
   Size size, {
   _DiscountsRepository? repository,
   DiscountListItem? initialDiscount,
+  Locale locale = const Locale('en'),
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -691,6 +908,7 @@ Future<void> _pumpScreen(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.lightTheme,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
@@ -705,11 +923,22 @@ Future<void> _pumpScreen(
   await tester.pump();
 }
 
+Future<void> _submitValidDraft(WidgetTester tester) async {
+  _fillRequiredFields(tester, name: 'Backend validation', value: '10');
+  await tester.pump();
+  final AppLocalizations l10n = AppLocalizations.of(
+    tester.element(find.byType(CreateDiscountPolicyScreen)),
+  );
+  await tester.tap(find.text(l10n.discountFormSaveDraft));
+  await tester.pump();
+}
+
 class _DiscountsRepository implements DiscountsRepository {
   _DiscountsRepository({
     this.stallCreates = false,
     this.couponFailuresRemaining = 0,
     this.detail,
+    this.createFailure,
   });
 
   int detailRequests = 0;
@@ -718,6 +947,7 @@ class _DiscountsRepository implements DiscountsRepository {
   int generateCouponCalls = 0;
   int couponFailuresRemaining;
   final DiscountDetail? detail;
+  final Object? createFailure;
   @override
   Future<DiscountFormReferences> getFormReferences() async =>
       const DiscountFormReferences(
@@ -777,13 +1007,14 @@ class _DiscountsRepository implements DiscountsRepository {
       couponFailuresRemaining--;
       throw StateError('unavailable');
     }
-    return 'CPN-000${generateCouponCalls}';
+    return 'CPN-000$generateCouponCalls';
   }
 
   @override
-  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) {
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) async {
     lastCreateRequest = request;
     if (stallCreates) return Completer<DiscountListItem>().future;
+    if (createFailure != null) throw createFailure!;
     throw UnimplementedError();
   }
 
@@ -804,14 +1035,12 @@ class _DiscountsRepository implements DiscountsRepository {
 const DiscountListItem _editRow = DiscountListItem(
   id: '81',
   name: 'List row name must not hydrate edit',
-  secondaryLabel: 'Code: OLD',
-  type: 'Percentage',
-  displayValue: '1% off',
+  code: 'OLD',
+  type: 'percentage',
   conditions: 'List row only',
-  validPeriodPrimary: 'Always Valid',
   status: DiscountStatus.active,
   usageCount: 0,
-  estimatedSavedValue: '0 SYP',
+  estimatedSavedValue: 0,
   isActive: true,
 );
 

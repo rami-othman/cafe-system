@@ -7655,4 +7655,1051 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get discountV2Search => 'بحث';
+
+  @override
+  String posCustomerPoints(String points) {
+    return '$points نقطة';
+  }
+
+  @override
+  String get posWalkInCustomer => 'عميل عابر';
+
+  @override
+  String get posUseWalkInCustomer => 'استخدام عميل عابر';
+
+  @override
+  String get posSelectCustomer => 'اختيار العميل';
+
+  @override
+  String get posSearchCustomers => 'ابحث عن العملاء...';
+
+  @override
+  String get posNoCustomers => 'لا يوجد عملاء.';
+
+  @override
+  String get posNoCustomerMatches => 'لا توجد عملاء مطابقون.';
+
+  @override
+  String get posCreateNewCustomer => 'إنشاء جديد';
+
+  @override
+  String get posCloseCustomerSelector => 'إغلاق اختيار العميل';
+
+  @override
+  String get posCustomerCreateTitle => 'إنشاء عميل';
+
+  @override
+  String get posCustomerGroupsLoading => 'جاري تحميل المجموعات النشطة...';
+
+  @override
+  String get posCustomerGroupsEmpty => 'لا توجد مجموعات نشطة.';
+
+  @override
+  String get posCustomerGroupsForbidden => 'لا يمكنك تحميل مجموعات العملاء.';
+
+  @override
+  String get posCustomerGroupsRetry => 'تعذر تحميل مجموعات العملاء.';
+
+  @override
+  String get posCustomerCreateForbidden => 'لا يمكنك إنشاء عميل من نقطة البيع.';
+
+  @override
+  String get posCustomerCreateFailed =>
+      'تعذر إنشاء العميل. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get posCustomerAttachmentFailed =>
+      'تم إنشاء العميل، لكن تعذر إلحاقه بهذا الطلب. أعد المحاولة بأمان.';
+
+  @override
+  String get posCustomerSearchForbidden => 'لا يمكنك البحث عن العملاء.';
+
+  @override
+  String get posCustomerSearchFailed => 'البحث عن العملاء غير متاح مؤقتاً.';
+
+  @override
+  String get discountManual => 'يدوي';
+
+  @override
+  String get discountCode => 'الرمز';
+
+  @override
+  String get discountCoupon => 'قسيمة';
+
+  @override
+  String discountCodeValue(String code) {
+    return 'الرمز: $code';
+  }
+
+  @override
+  String get discountPercentage => 'نسبة مئوية';
+
+  @override
+  String get discountFixedAmount => 'مبلغ ثابت';
+
+  @override
+  String get discountActive => 'نشط';
+
+  @override
+  String get discountInactive => 'غير نشط';
+
+  @override
+  String get discountScheduled => 'مجدول';
+
+  @override
+  String get discountExpired => 'منتهي';
+
+  @override
+  String get discountEntireOrder => 'الطلب بالكامل';
+
+  @override
+  String get discountSelectedProducts => 'المنتجات المحددة';
+
+  @override
+  String get discountSelectedCategories => 'الفئات المحددة';
+
+  @override
+  String get discountNoConditions => 'بلا شروط';
+
+  @override
+  String get discountAlwaysValid => 'صالح دائماً';
+
+  @override
+  String discountAmountOff(String amount) {
+    return 'خصم $amount';
+  }
+
+  @override
+  String discountPercentOff(String value) {
+    return 'خصم $value%';
+  }
+
+  @override
+  String discountBundleValue(int quantity) {
+    return 'اشترِ $quantity واحصل على $quantity';
+  }
+
+  @override
+  String discountUntil(String date) {
+    return 'حتى $date';
+  }
+
+  @override
+  String discountFrom(String date) {
+    return 'من $date';
+  }
+
+  @override
+  String discountDateRange(String start, String end) {
+    return '$start - $end';
+  }
+
+  @override
+  String get discountsTitle => 'الخصومات والقسائم';
+
+  @override
+  String get discountsSubtitle => 'إدارة العروض الترويجية وقواعد التسعير';
+
+  @override
+  String get discountsCreate => 'إنشاء خصم';
+
+  @override
+  String get discountsSearchHint => 'البحث في الخصومات...';
+
+  @override
+  String get discountsAllStatuses => 'كل الحالات';
+
+  @override
+  String get discountsAdvancedFilters => 'فلاتر متقدمة';
+
+  @override
+  String get discountsAdvancedFiltersSoon => 'ستتوفر الفلاتر المتقدمة قريباً.';
+
+  @override
+  String get discountsEmpty => 'لا توجد خصومات تطابق البحث أو فلتر الحالة.';
+
+  @override
+  String get discountsTableName => 'اسم الخصم';
+
+  @override
+  String get discountsTableType => 'النوع';
+
+  @override
+  String get discountsTableValue => 'القيمة';
+
+  @override
+  String get discountsTableConditions => 'الشروط';
+
+  @override
+  String get discountsTablePeriod => 'فترة الصلاحية';
+
+  @override
+  String get discountsTableStatus => 'الحالة';
+
+  @override
+  String get discountsTableActions => 'الإجراءات';
+
+  @override
+  String get discountsViewTooltip => 'عرض الخصم';
+
+  @override
+  String get discountsEditTooltip => 'تعديل الخصم';
+
+  @override
+  String get discountsDeactivateTooltip => 'إلغاء تنشيط الخصم';
+
+  @override
+  String get discountsActivateTooltip => 'تنشيط الخصم';
+
+  @override
+  String get discountsDeleteTooltip => 'حذف الخصم';
+
+  @override
+  String discountsPagination(int start, int end, int total) {
+    return 'عرض $start إلى $end من $total إدخال';
+  }
+
+  @override
+  String get discountsActiveMetric => 'الخصومات النشطة';
+
+  @override
+  String get discountsUsageMetric => 'إجمالي الاستخدام هذا الشهر';
+
+  @override
+  String get discountsSavedMetric => 'القيمة التقديرية الموفرة';
+
+  @override
+  String get discountsDeleteTitle => 'حذف الخصم؟';
+
+  @override
+  String discountsDeleteBody(String name) {
+    return 'لن يعود $name متاحاً.';
+  }
+
+  @override
+  String get discountsDeleted => 'تم حذف الخصم.';
+
+  @override
+  String get discountsDeleteFailed => 'تعذر حذف الخصم.';
+
+  @override
+  String discountsStatusUpdated(String status) {
+    return 'الخصم $status.';
+  }
+
+  @override
+  String get discountsStatusUpdateFailed => 'تعذر تحديث حالة الخصم.';
+
+  @override
+  String discountsUsedSaved(int count, String amount) {
+    return 'استخدم $count مرة - تم توفير $amount';
+  }
+
+  @override
+  String get discountFormBasic => 'المعلومات الأساسية';
+
+  @override
+  String get discountFormName => 'اسم الخصم';
+
+  @override
+  String get discountFormApplicationMode => 'وضع التطبيق';
+
+  @override
+  String get discountFormCouponOrCode => 'قسيمة / رمز';
+
+  @override
+  String get discountFormDescription => 'الوصف';
+
+  @override
+  String get discountFormDescriptionHint => 'وصف داخلي لسياسة الخصم...';
+
+  @override
+  String get discountFormScopeValue => 'النطاق والقيمة';
+
+  @override
+  String get discountFormAppliesTo => 'يطبق على';
+
+  @override
+  String get discountFormValueType => 'نوع القيمة';
+
+  @override
+  String get discountFormValue => 'القيمة';
+
+  @override
+  String get discountFormMinSpendOptional => 'الحد الأدنى للطلب (اختياري)';
+
+  @override
+  String get discountFormMaxDiscountOptional => 'الحد الأقصى للخصم (اختياري)';
+
+  @override
+  String get discountFormQuickPercentages => 'قيم نسب مئوية سريعة';
+
+  @override
+  String get discountFormQuickFixed => 'قيم ثابتة سريعة';
+
+  @override
+  String get discountFormEligibility => 'شروط الأهلية';
+
+  @override
+  String get discountFormAllCustomers => 'كل العملاء';
+
+  @override
+  String get discountFormSelectedCustomerGroups => 'مجموعات عملاء محددة';
+
+  @override
+  String get discountFormAllPaymentMethods => 'كل طرق الدفع';
+
+  @override
+  String get discountFormSelectedPaymentMethods => 'طرق دفع محددة';
+
+  @override
+  String get discountFormAllBranches => 'كل الفروع';
+
+  @override
+  String get discountFormSelectedBranches => 'فروع محددة';
+
+  @override
+  String get discountFormCustomerGroups => 'مجموعات العملاء';
+
+  @override
+  String get discountFormSelectCustomerGroups => 'اختيار مجموعات العملاء';
+
+  @override
+  String get discountFormSelectPaymentMethods => 'اختيار طرق الدفع';
+
+  @override
+  String get discountFormSelectBranches => 'اختيار الفروع';
+
+  @override
+  String get discountFormSchedule => 'الجدولة';
+
+  @override
+  String get discountFormActiveWeekdays => 'أيام الأسبوع النشطة (اختياري)';
+
+  @override
+  String get discountFormStartDate => 'تاريخ البدء';
+
+  @override
+  String get discountFormEndDate => 'تاريخ الانتهاء';
+
+  @override
+  String get discountFormStartTime => 'وقت البدء';
+
+  @override
+  String get discountFormEndTime => 'وقت الانتهاء';
+
+  @override
+  String get discountFormOvernightHelp =>
+      'وقت انتهاء أسبق من وقت البدء يعني نافذة ليلية.';
+
+  @override
+  String get discountFormUsageLimits => 'حدود الاستخدام';
+
+  @override
+  String get discountFormGlobalUsageOptional => 'حد الاستخدام العام (اختياري)';
+
+  @override
+  String get discountFormLifetimeUsageOptional =>
+      'حد العميل مدى الحياة (اختياري)';
+
+  @override
+  String get discountFormUnlimited => 'غير محدود';
+
+  @override
+  String get discountFormProduct => 'المنتج';
+
+  @override
+  String get discountFormLoading => 'جارٍ التحميل...';
+
+  @override
+  String get discountFormNoOptions => 'لا توجد خيارات نشطة متاحة.';
+
+  @override
+  String get discountFormDone => 'تم';
+
+  @override
+  String get discountFormLoadTitle => 'تعذر تحميل الخصم';
+
+  @override
+  String get discountFormRetryOptions => 'إعادة محاولة تحميل خيارات الاختيار';
+
+  @override
+  String get discountFormDiscard => 'تجاهل التغييرات';
+
+  @override
+  String get discountFormSaveDraft => 'حفظ كمسودة';
+
+  @override
+  String get discountFormActivate => 'تنشيط الخصم';
+
+  @override
+  String get discountFormSummary => 'الملخص';
+
+  @override
+  String get discountFormReady => 'السياسة جاهزة للمراجعة قبل التنشيط.';
+
+  @override
+  String get discountFormNotReady =>
+      'أكمل الحقول المطلوبة قبل تنشيط هذا الخصم.';
+
+  @override
+  String get discountFormDiscount => 'الخصم';
+
+  @override
+  String get discountFormScope => 'النطاق';
+
+  @override
+  String get discountFormBranches => 'الفروع';
+
+  @override
+  String get discountFormScheduleLabel => 'الجدولة';
+
+  @override
+  String get discountFormCustomers => 'العملاء';
+
+  @override
+  String get discountFormPackage => 'الحزمة';
+
+  @override
+  String get discountFormUsage => 'الاستخدام';
+
+  @override
+  String get discountFormAnyDay => 'أي يوم';
+
+  @override
+  String discountFormSelectedCount(int count) {
+    return '$count محدد';
+  }
+
+  @override
+  String discountFormDaysSelected(int count) {
+    return 'تم تحديد $count أيام';
+  }
+
+  @override
+  String discountFormSelectedCustomers(int count) {
+    return '$count عملاء محددون';
+  }
+
+  @override
+  String discountFormPerDay(int count) {
+    return '$count يومياً';
+  }
+
+  @override
+  String discountFormLifetime(int count) {
+    return '$count مدى الحياة';
+  }
+
+  @override
+  String discountFormUsageBoth(int lifetime, int daily) {
+    return '$lifetime مدى الحياة / $daily يومياً';
+  }
+
+  @override
+  String get discountFormSavedActivated => 'تم حفظ الخصم وتنشيطه.';
+
+  @override
+  String get discountFormSaved => 'تم حفظ الخصم.';
+
+  @override
+  String get discountFormSaveFailed => 'تعذر حفظ الخصم.';
+
+  @override
+  String get discountValidationName => 'اسم الخصم مطلوب.';
+
+  @override
+  String get discountValidationPositiveValue => 'أدخل قيمة أكبر من صفر.';
+
+  @override
+  String get discountValidationPercentage =>
+      'لا يمكن أن تتجاوز نسبة الخصم 100.';
+
+  @override
+  String get discountValidationCode => 'رمز مطلوب لخصومات القسائم.';
+
+  @override
+  String get discountValidationProducts => 'اختر منتجاً واحداً أو أكثر.';
+
+  @override
+  String get discountValidationCategories => 'اختر فئة واحدة أو أكثر.';
+
+  @override
+  String get discountValidationBundle => 'أضف منتج حزمة واحداً على الأقل.';
+
+  @override
+  String get discountValidationBundleProduct => 'اختر منتجاً لكل متطلب حزمة.';
+
+  @override
+  String get discountValidationBundleUnique =>
+      'لا يمكن إضافة منتج الحزمة أكثر من مرة.';
+
+  @override
+  String get discountValidationBundleQuantity =>
+      'يجب أن تكون كميات الحزمة أكبر من صفر.';
+
+  @override
+  String get discountValidationGroups => 'اختر مجموعة عملاء واحدة أو أكثر.';
+
+  @override
+  String get discountValidationCustomers => 'اختر عميلاً واحداً أو أكثر.';
+
+  @override
+  String get discountValidationBranches => 'اختر فرعاً واحداً أو أكثر.';
+
+  @override
+  String get discountValidationMoney => 'أدخل مبالغ نقدية صالحة.';
+
+  @override
+  String get discountValidationNegativeMoney =>
+      'لا يمكن أن تكون المبالغ النقدية سالبة.';
+
+  @override
+  String get discountValidationUsage =>
+      'يجب أن تكون حدود الاستخدام أرقاماً صحيحة موجبة.';
+
+  @override
+  String get discountValidationDailyUsage =>
+      'يجب أن تكون حدود الاستخدام اليومية أرقاماً صحيحة موجبة.';
+
+  @override
+  String get discountValidationDate => 'يجب أن تستخدم التواريخ YYYY-MM-DD.';
+
+  @override
+  String get discountValidationEndDate =>
+      'لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.';
+
+  @override
+  String get discountValidationTimesTogether =>
+      'يجب تقديم وقت البدء والانتهاء معاً.';
+
+  @override
+  String get discountValidationTime => 'يجب أن تستخدم الأوقات HH:mm.';
+
+  @override
+  String get discountFormCreate => 'إنشاء خصم';
+
+  @override
+  String get discountFormEdit => 'تعديل الخصم';
+
+  @override
+  String get discountFormCreatePolicy => 'إنشاء سياسة خصم';
+
+  @override
+  String get discountFormEditPolicy => 'تعديل سياسة خصم';
+
+  @override
+  String get discountFormHeadingSubtitle =>
+      'إعداد نطاق السياسة وأهليتها وجدولها.';
+
+  @override
+  String get discountCustomerEligibility => 'أهلية العملاء';
+
+  @override
+  String get discountPaymentMethods => 'طرق الدفع';
+
+  @override
+  String get discountWeekdayMonday => 'الاثنين';
+
+  @override
+  String get discountWeekdayTuesday => 'الثلاثاء';
+
+  @override
+  String get discountWeekdayWednesday => 'الأربعاء';
+
+  @override
+  String get discountWeekdayThursday => 'الخميس';
+
+  @override
+  String get discountWeekdayFriday => 'الجمعة';
+
+  @override
+  String get discountWeekdaySaturday => 'السبت';
+
+  @override
+  String get discountWeekdaySunday => 'الأحد';
+
+  @override
+  String get discountPosPreview => 'معاينة نقطة البيع';
+
+  @override
+  String get discountSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get discountTotal => 'الإجمالي';
+
+  @override
+  String discountTax(String percent) {
+    return 'الضريبة ($percent%)';
+  }
+
+  @override
+  String get discountRequestFailed =>
+      'تعذر إكمال طلب الخصم. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String discountServerFieldInvalid(String field) {
+    return 'يرجى مراجعة حقل $field.';
+  }
+
+  @override
+  String get discountCurrency => 'العملة';
+
+  @override
+  String get discountChannelPos => 'نقطة البيع';
+
+  @override
+  String get discountChannelWaiterApp => 'تطبيق النادل';
+
+  @override
+  String get discountChannelKiosk => 'الكشك';
+
+  @override
+  String get discountChannelQrOrdering => 'الطلب عبر رمز QR';
+
+  @override
+  String get discountChannelDelivery => 'التوصيل';
+
+  @override
+  String get discountChannelOnlineOrdering => 'الطلب عبر الإنترنت';
+
+  @override
+  String discountFormSelectedCountPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count محدد',
+      many: '$count محدداً',
+      few: '$count محددة',
+      two: 'محددان',
+      one: 'محدد واحد',
+      zero: 'لا يوجد محدد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormDaysSelectedPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوم محدد',
+      many: '$count يوماً محدداً',
+      few: '$count أيام محددة',
+      two: 'يومان محددان',
+      one: 'يوم واحد محدد',
+      zero: 'أي يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormSelectedCustomersPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عميل محدد',
+      many: '$count عميلاً محدداً',
+      few: '$count عملاء محددون',
+      two: 'عميلان محددان',
+      one: 'عميل واحد محدد',
+      zero: 'لا يوجد عملاء محددون',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormPerDayPlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مرة يومياً',
+      many: '$count مرة يومياً',
+      few: '$count مرات يومياً',
+      two: 'مرتان يومياً',
+      one: 'مرة واحدة يومياً',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String discountFormLifetimePlural(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مرة مدى الحياة',
+      many: '$count مرة مدى الحياة',
+      few: '$count مرات مدى الحياة',
+      two: 'مرتان مدى الحياة',
+      one: 'مرة واحدة مدى الحياة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posApplyDiscount => 'تطبيق خصم';
+
+  @override
+  String get posCouponCode => 'رمز القسيمة';
+
+  @override
+  String get posEnterCouponCode => 'أدخل رمز القسيمة';
+
+  @override
+  String get posCouponCodeRequired => 'أدخل رمز القسيمة.';
+
+  @override
+  String get posCouponDiscount => 'خصم القسيمة';
+
+  @override
+  String get posAvailableDiscounts => 'الخصومات المتاحة';
+
+  @override
+  String get posSearchDiscounts => 'البحث في الخصومات';
+
+  @override
+  String get posNoDiscountsAvailable => 'لا توجد خصومات متاحة لهذا الطلب.';
+
+  @override
+  String get posNoDiscountsMatch => 'لا توجد خصومات تطابق بحثك.';
+
+  @override
+  String get posApply => 'تطبيق';
+
+  @override
+  String get posClose => 'إغلاق';
+
+  @override
+  String get posCancel => 'إلغاء';
+
+  @override
+  String get posPayment => 'الدفع';
+
+  @override
+  String posOrderNumber(String number) {
+    return 'الطلب $number';
+  }
+
+  @override
+  String get posSelectPaymentMethod => 'اختر طريقة الدفع';
+
+  @override
+  String get posPaymentMethodCash => 'نقداً';
+
+  @override
+  String get posPaymentMethodCard => 'بطاقة';
+
+  @override
+  String get posPaymentMethodWallet => 'محفظة';
+
+  @override
+  String get posPaymentMethodSplit => 'دفع مقسم';
+
+  @override
+  String get posAmountReceived => 'النقد المستلم';
+
+  @override
+  String get posChangeDue => 'الباقي المستحق';
+
+  @override
+  String get posEnterAmountReceived => 'أدخل النقد المستلم.';
+
+  @override
+  String get posAmountBelowTotal => 'النقد المستلم أقل من الإجمالي المستحق.';
+
+  @override
+  String get posSplitUnavailable => 'سيتوفر الدفع المقسم لاحقاً.';
+
+  @override
+  String get posExternalTerminalPending =>
+      'سيتم ربط جهاز الدفع الخارجي لاحقاً.';
+
+  @override
+  String get posConfirmPayment => 'تأكيد الدفع';
+
+  @override
+  String get posPaymentFailed => 'تعذر إكمال الدفع. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get posNoPaymentMethods =>
+      'لا توجد طريقة دفع فعالة مرتبطة بحساب مالي.';
+
+  @override
+  String get posPaymentUncertain =>
+      'حالة الدفع غير مؤكدة. تحقق من حالة الدفع قبل إعادة المحاولة.';
+
+  @override
+  String get posReceiptUnavailable =>
+      'تعذر تحميل الإيصال. يمكنك إعادة المحاولة بأمان.';
+
+  @override
+  String get posRetryReceipt => 'إعادة محاولة الإيصال';
+
+  @override
+  String get posCheckPaymentStatus => 'التحقق من حالة الدفع';
+
+  @override
+  String get posOrderTypeDineIn => 'طلب محلي';
+
+  @override
+  String get posOrderTypeTakeaway => 'طلب سفري';
+
+  @override
+  String get posOrderTypeDelivery => 'توصيل';
+
+  @override
+  String get posCurrentOrder => 'الطلب الحالي';
+
+  @override
+  String get posSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get posDiscount => 'خصم';
+
+  @override
+  String posTax(String percent) {
+    return 'الضريبة ($percent%)';
+  }
+
+  @override
+  String get posTotal => 'الإجمالي';
+
+  @override
+  String get posRemoveDiscount => 'إزالة';
+
+  @override
+  String get posAddDiscount => 'إضافة خصم';
+
+  @override
+  String get posHoldOrder => 'تعليق الطلب';
+
+  @override
+  String get posCancelOrder => 'إلغاء الطلب';
+
+  @override
+  String get posPrint => 'طباعة';
+
+  @override
+  String posPayAmount(String amount) {
+    return 'دفع $amount';
+  }
+
+  @override
+  String get posCompleteOrder => 'إكمال الطلب';
+
+  @override
+  String get posRemoveItem => 'إزالة العنصر';
+
+  @override
+  String get posExactAmount => 'المبلغ الدقيق';
+
+  @override
+  String get posTotalDue => 'الإجمالي المستحق';
+
+  @override
+  String posItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عنصر',
+      many: '$count عنصراً',
+      few: '$count عناصر',
+      two: 'عنصران',
+      one: 'عنصر واحد',
+      zero: 'لا توجد عناصر',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get posViewDetails => 'عرض التفاصيل';
+
+  @override
+  String get posCheckout => 'الدفع';
+
+  @override
+  String get posProductOptionsUnavailable => 'خيارات المنتج غير متاحة';
+
+  @override
+  String get posRetry => 'إعادة المحاولة';
+
+  @override
+  String posProductCustomization(String product) {
+    return 'تخصيص $product';
+  }
+
+  @override
+  String get posVariant => 'الخيار';
+
+  @override
+  String get posSpecialInstructions => 'تعليمات خاصة';
+
+  @override
+  String get posSpecialInstructionsHint => 'مثال: ساخن جداً، في كوب سفري...';
+
+  @override
+  String get posTemperature => 'درجة الحرارة';
+
+  @override
+  String get posSize => 'الحجم';
+
+  @override
+  String get posMilkBase => 'نوع الحليب';
+
+  @override
+  String get posAddOns => 'الإضافات';
+
+  @override
+  String get posSweetness => 'درجة الحلاوة';
+
+  @override
+  String get posQuantity => 'الكمية';
+
+  @override
+  String get posAddToOrder => 'إضافة إلى الطلب';
+
+  @override
+  String get posAdding => 'جارٍ الإضافة...';
+
+  @override
+  String get posRequiredSelection => 'اختر الخيارات المطلوبة.';
+
+  @override
+  String get posReceipt => 'الإيصال';
+
+  @override
+  String get posReceiptPreview => 'معاينة الإيصال';
+
+  @override
+  String get posCloseReceiptPreview => 'إغلاق معاينة الإيصال';
+
+  @override
+  String get posSendViaWhatsApp => 'إرسال عبر واتساب';
+
+  @override
+  String get posPrintReceipt => 'طباعة الإيصال';
+
+  @override
+  String get posWhatsAppPending => 'ستتوفر ميزة الإرسال عبر واتساب لاحقاً.';
+
+  @override
+  String get posPaymentCompleted => 'تم الدفع';
+
+  @override
+  String get posReceiptOrder => 'الطلب:';
+
+  @override
+  String get posReceiptCashier => 'أمين الصندوق:';
+
+  @override
+  String get posReceiptCustomer => 'العميل:';
+
+  @override
+  String get posReceiptDate => 'التاريخ:';
+
+  @override
+  String get posReceiptTime => 'الوقت:';
+
+  @override
+  String get posReceiptPaidVia => 'طريقة الدفع:';
+
+  @override
+  String get posReceiptAuthorization => 'التفويض:';
+
+  @override
+  String get posReceiptApproved => 'مقبول';
+
+  @override
+  String get posReceiptChange => 'الباقي';
+
+  @override
+  String posReceiptNote(String note) {
+    return 'ملاحظة: $note';
+  }
+
+  @override
+  String get posReceiptThankYou => 'شكراً لزيارتكم!';
+
+  @override
+  String get posOperationFailed =>
+      'تعذر إكمال عملية نقطة البيع. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get posMenuVersionStale =>
+      'تغيرت القائمة. حدّث قائمة نقطة البيع وراجع الطلب.';
+
+  @override
+  String get posOpenShiftRequired => 'افتح وردية قبل المتابعة.';
+
+  @override
+  String get posOrderUnavailableForBranch =>
+      'هذا الطلب غير متاح في الفرع المحدد.';
+
+  @override
+  String get posHeldOrderRequired => 'يمكن استئناف طلب معلّق وغير مدفوع فقط.';
+
+  @override
+  String get posCustomizeItem => 'تخصيص العنصر';
+
+  @override
+  String get posRequired => 'مطلوب';
+
+  @override
+  String get posHot => 'ساخن';
+
+  @override
+  String get posIced => 'مثلج';
+
+  @override
+  String get posSmallSize => 'صغير (8 أونصات)';
+
+  @override
+  String get posMediumSize => 'متوسط (12 أونصة)';
+
+  @override
+  String get posLargeSize => 'كبير (16 أونصة)';
+
+  @override
+  String get posWholeMilk => 'حليب كامل الدسم';
+
+  @override
+  String get posOatMilk => 'حليب الشوفان';
+
+  @override
+  String get posAlmondMilk => 'حليب اللوز';
+
+  @override
+  String get posDefault => 'افتراضي';
+
+  @override
+  String get posExtraEspresso => 'جرعة إسبريسو إضافية';
+
+  @override
+  String get posCaramelSyrup => 'شراب الكراميل';
+
+  @override
+  String get posVanillaSyrup => 'شراب الفانيليا';
+
+  @override
+  String get posWhippedCream => 'كريمة مخفوقة';
+
+  @override
+  String get posProductDescriptionFallback => 'مشروب كلاسيكي محضر بالإسبريسو.';
+
+  @override
+  String posBasePrice(String variant, String price) {
+    return '$variant أساسي - $price';
+  }
+
+  @override
+  String get posSearchProducts => 'البحث عن المنتجات...';
+
+  @override
+  String get posNoItemsAvailable => 'لا توجد عناصر متاحة.';
+
+  @override
+  String get posNoCartItems => 'لم تتم إضافة عناصر بعد';
+
+  @override
+  String get posCloseCustomizationDialog => 'إغلاق نافذة تخصيص المنتج';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
@@ -22,6 +23,28 @@ void main() {
       expect(cubit.state.discounts.first.status, DiscountStatus.inactive);
       await cubit.deleteDiscount('2');
       expect(cubit.state.discounts, hasLength(1));
+    },
+  );
+
+  test(
+    'preserves ApiException validation errors without exposing its message',
+    () async {
+      const Map<String, List<String>> validationErrors = <String, List<String>>{
+        'name': <String>['RAW_BACKEND_TEXT'],
+      };
+      final DiscountsCubit cubit = DiscountsCubit(
+        repository: _FailingRepository(
+          const ApiException(
+            message: 'RAW_EXCEPTION_TEXT',
+            type: ApiErrorType.validation,
+            validationErrors: validationErrors,
+          ),
+        ),
+      );
+
+      expect(await cubit.createDiscount(_request), isFalse);
+      expect(cubit.state.validationErrors, validationErrors);
+      expect(cubit.state.errorMessage, DiscountsCubit.requestFailed);
     },
   );
 }
@@ -89,16 +112,24 @@ class _Repository implements DiscountsRepository {
   ) async => setStatus(id, request.isActive);
 }
 
+class _FailingRepository extends _Repository {
+  _FailingRepository(this.failure);
+
+  final Object failure;
+
+  @override
+  Future<DiscountListItem> createDiscount(DiscountUpsertRequest request) =>
+      Future<DiscountListItem>.error(failure);
+}
+
 DiscountListItem _item(String id, String name, bool active) => DiscountListItem(
   id: id,
   name: name,
-  secondaryLabel: 'Code: TEST',
-  type: 'Percentage',
-  displayValue: '10% off',
-  conditions: 'None',
-  validPeriodPrimary: 'Always Valid',
+  code: 'TEST',
+  type: 'percentage',
+  conditions: null,
   status: active ? DiscountStatus.active : DiscountStatus.inactive,
   usageCount: 0,
-  estimatedSavedValue: '0 SYP',
+  estimatedSavedValue: 0,
   isActive: active,
 );

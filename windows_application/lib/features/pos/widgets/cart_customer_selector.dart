@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations_en.dart';
 import '../models/customer.dart';
 
 class CartCustomerSelector extends StatelessWidget {
@@ -21,6 +23,9 @@ class CartCustomerSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n =
+        Localizations.of<AppLocalizations>(context, AppLocalizations) ??
+        AppLocalizationsEn();
     return SizedBox(
       height: AppSizes.cartControlHeight,
       child: Material(
@@ -45,7 +50,7 @@ class CartCustomerSelector extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    customer?.name ?? 'Walk-in Customer',
+                    customer?.name ?? l10n.posWalkInCustomer,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodySmall.copyWith(
@@ -56,21 +61,22 @@ class CartCustomerSelector extends StatelessWidget {
                 ),
                 if (customer != null) ...<Widget>[
                   const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    customer!.tier,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
+                  if (customer!.tier != null)
+                    Text(
+                      customer!.tier!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
                   IconButton(
                     onPressed: onClear,
                     icon: const Icon(Icons.close, size: 14),
                     color: AppColors.textSecondary,
-                    tooltip: 'Use walk-in customer',
+                    tooltip: l10n.posUseWalkInCustomer,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints.tightFor(
                       width: 22,

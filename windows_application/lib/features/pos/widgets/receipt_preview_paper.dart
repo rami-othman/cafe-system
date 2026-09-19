@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/branding/brand_header.dart';
 import 'package:intl/intl.dart';
 
@@ -12,6 +13,7 @@ import '../../../core/utils/tax_formatter.dart';
 import '../models/order_receipt.dart';
 import '../models/payment_method.dart';
 import '../models/receipt_line_item.dart';
+import 'pos_localization.dart';
 
 class ReceiptPreviewPaper extends StatelessWidget {
   const ReceiptPreviewPaper({super.key, required this.receipt});
@@ -70,20 +72,30 @@ class ReceiptPreviewPaper extends StatelessWidget {
             const _CenteredText(_address),
             const _CenteredText('TEL: $_phone'),
             const _ReceiptDivider(),
-            _ReceiptInfoRow(label: 'ORDER:', value: receipt.orderNumber),
-            _ReceiptInfoRow(label: 'CASHIER:', value: receipt.cashierName),
+            _ReceiptInfoRow(
+              label: context.l10n.posReceiptOrder,
+              value: receipt.orderNumber,
+            ),
+            _ReceiptInfoRow(
+              label: context.l10n.posReceiptCashier,
+              value: receipt.cashierName,
+            ),
             if (receipt.customerName != null)
               _ReceiptInfoRow(
-                label: 'CUSTOMER:',
+                label: context.l10n.posReceiptCustomer,
                 value: receipt.customerName!.toUpperCase(),
               ),
             _ReceiptInfoRow(
-              label: 'DATE:',
-              value: DateFormat('MMM d, yyyy').format(receipt.completedAt),
+              label: context.l10n.posReceiptDate,
+              value: DateFormat.yMMMd(
+                Localizations.localeOf(context).toLanguageTag(),
+              ).format(receipt.completedAt),
             ),
             _ReceiptInfoRow(
-              label: 'TIME:',
-              value: DateFormat('hh:mm a').format(receipt.completedAt),
+              label: context.l10n.posReceiptTime,
+              value: DateFormat.jm(
+                Localizations.localeOf(context).toLanguageTag(),
+              ).format(receipt.completedAt),
             ),
             const _ReceiptDivider(),
             for (final ReceiptLineItem item in receipt.items) ...<Widget>[
@@ -91,36 +103,53 @@ class ReceiptPreviewPaper extends StatelessWidget {
               for (final String modifier in item.modifiers)
                 _IndentedLine('+ $modifier'),
               if (item.specialInstructions != null)
-                _IndentedLine('NOTE: ${item.specialInstructions}'),
+                _IndentedLine(
+                  context.l10n.posReceiptNote(item.specialInstructions!),
+                ),
               const SizedBox(height: AppSpacing.xs),
             ],
             const _ReceiptDivider(),
-            _AmountRow(label: 'Subtotal', amount: receipt.subtotal),
             _AmountRow(
-              label: TaxFormatter.taxLabel(receipt.taxRate),
+              label: context.l10n.posSubtotal,
+              amount: receipt.subtotal,
+            ),
+            _AmountRow(
+              label: context.l10n.posTax(
+                TaxFormatter.percentLabel(receipt.taxRate),
+              ),
               amount: receipt.tax,
             ),
             if (receipt.discountTotal > 0)
               _AmountRow(
-                label: receipt.discountLabel ?? 'Discount',
+                label: receipt.discountLabel ?? context.l10n.posDiscount,
                 amount: -receipt.discountTotal,
               ),
             const SizedBox(height: AppSpacing.xs),
-            _AmountRow(label: 'Total', amount: receipt.total, isStrong: true),
+            _AmountRow(
+              label: context.l10n.posTotal,
+              amount: receipt.total,
+              isStrong: true,
+            ),
             const _ReceiptDivider(),
             _ReceiptInfoRow(
-              label: 'PAID VIA:',
-              value: receipt.payment.method.label.toUpperCase(),
+              label: context.l10n.posReceiptPaidVia,
+              value: receipt.payment.method.localizedLabel(context.l10n),
             ),
             if (receipt.payment.method == PaymentMethod.card ||
                 receipt.payment.method == PaymentMethod.wallet)
-              const _ReceiptInfoRow(label: 'AUTH:', value: 'APPROVED 4092'),
+              _ReceiptInfoRow(
+                label: context.l10n.posReceiptAuthorization,
+                value: '${context.l10n.posReceiptApproved} 4092',
+              ),
             if (receipt.payment.method == PaymentMethod.cash &&
                 receipt.payment.changeDue > 0)
-              _AmountRow(label: 'Change', amount: receipt.payment.changeDue),
+              _AmountRow(
+                label: context.l10n.posReceiptChange,
+                amount: receipt.payment.changeDue,
+              ),
             const _ReceiptDivider(),
             Text(
-              'THANK YOU FOR VISITING!',
+              context.l10n.posReceiptThankYou,
               textAlign: TextAlign.center,
               style: mono.copyWith(fontWeight: FontWeight.w700),
             ),

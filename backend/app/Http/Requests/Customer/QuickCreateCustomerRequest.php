@@ -14,14 +14,20 @@ class QuickCreateCustomerRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['name' => ['required', 'string', 'max:255'], 'phone' => ['required', 'string', 'max:50']];
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'groupIds' => ['sometimes', 'array'],
+            'groupIds.*' => ['integer', 'distinct', 'min:1'],
+        ];
     }
 
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->all()), ['name', 'phone']) !== []) {
-                $validator->errors()->add('payload', 'Quick-create accepts only name and exactly one phone.');
+            if (array_diff(array_keys($this->all()), ['name', 'phone', 'notes', 'groupIds']) !== []) {
+                $validator->errors()->add('payload', 'Quick-create accepts only its operational fields.');
             }
         });
     }

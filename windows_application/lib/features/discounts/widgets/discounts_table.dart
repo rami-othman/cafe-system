@@ -9,6 +9,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_empty_state.dart';
 import '../models/discount_list_item.dart';
+import '../../../l10n/app_localizations.dart';
+import 'discount_localization.dart';
 import 'discount_status_badge.dart';
 
 class DiscountsTable extends StatelessWidget {
@@ -52,11 +54,11 @@ class DiscountsTable extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: discounts.isEmpty
-          ? const SizedBox(
+          ? SizedBox(
               height: 292,
               child: AppEmptyState(
                 icon: Icons.search_off_outlined,
-                message: 'No discounts match your search or status filter.',
+                message: AppLocalizations.of(context).discountsEmpty,
               ),
             )
           : Column(
@@ -109,15 +111,37 @@ class _DiscountTableHeader extends StatelessWidget {
     return Container(
       height: AppSizes.discountsTableHeaderHeight,
       color: AppColors.menuTableHeader,
-      child: const Row(
+      child: Row(
         children: <Widget>[
-          _HeaderCell(label: 'Discount Name', flex: 23),
-          _HeaderCell(label: 'Type', flex: 15),
-          _HeaderCell(label: 'Value', flex: 13),
-          _HeaderCell(label: 'Conditions', flex: 21),
-          _HeaderCell(label: 'Valid Period', flex: 20),
-          _HeaderCell(label: 'Status', flex: 13),
-          _HeaderCell(label: 'Actions', flex: 14, alignRight: true),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTableName,
+            flex: 23,
+          ),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTableType,
+            flex: 15,
+          ),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTableValue,
+            flex: 13,
+          ),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTableConditions,
+            flex: 21,
+          ),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTablePeriod,
+            flex: 20,
+          ),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTableStatus,
+            flex: 13,
+          ),
+          _HeaderCell(
+            label: AppLocalizations.of(context).discountsTableActions,
+            flex: 14,
+            alignRight: true,
+          ),
         ],
       ),
     );
@@ -148,6 +172,7 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     final DiscountListItem discount = widget.discount;
     final bool isExpired = discount.status == DiscountStatus.expired;
     final Color textColor = isExpired
@@ -178,19 +203,22 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
             ),
             _BodyCell(
               flex: 15,
-              child: _CellText(discount.type, color: textColor),
+              child: _CellText(discount.typeLabel(l10n), color: textColor),
             ),
             _BodyCell(
               flex: 13,
               child: _CellText(
-                discount.displayValue,
+                discount.valueLabel(l10n),
                 color: textColor,
                 isEmphasized: true,
               ),
             ),
             _BodyCell(
               flex: 21,
-              child: _CellText(discount.conditions, color: textColor),
+              child: _CellText(
+                discount.conditionsLabel(l10n),
+                color: textColor,
+              ),
             ),
             _BodyCell(
               flex: 20,
@@ -210,12 +238,12 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
                   children: <Widget>[
                     _RowAction(
                       icon: Icons.visibility_outlined,
-                      tooltip: 'View discount',
+                      tooltip: l10n.discountsViewTooltip,
                       onPressed: () => widget.onView(discount),
                     ),
                     _RowAction(
                       icon: Icons.edit_outlined,
-                      tooltip: 'Edit discount',
+                      tooltip: l10n.discountsEditTooltip,
                       onPressed: () => widget.onEdit(discount),
                     ),
                     _RowAction(
@@ -223,13 +251,13 @@ class _DiscountTableRowState extends State<_DiscountTableRow> {
                           ? Icons.pause_circle_outline
                           : Icons.play_circle_outline,
                       tooltip: discount.isActive
-                          ? 'Deactivate discount'
-                          : 'Activate discount',
+                          ? l10n.discountsDeactivateTooltip
+                          : l10n.discountsActivateTooltip,
                       onPressed: () => widget.onToggleStatus(discount),
                     ),
                     _RowAction(
                       icon: Icons.delete_outline,
-                      tooltip: 'Delete discount',
+                      tooltip: l10n.discountsDeleteTooltip,
                       onPressed: () => widget.onDelete(discount),
                     ),
                   ],
@@ -320,7 +348,7 @@ class _NameCell extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          discount.secondaryLabel,
+          discount.secondaryLabel(AppLocalizations.of(context)),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTextStyles.labelSmall.copyWith(
@@ -368,20 +396,10 @@ class _ValidPeriodCell extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _CellText(discount.validPeriodPrimary, color: color),
-        if (discount.validPeriodSecondary != null) ...<Widget>[
-          const SizedBox(height: 2),
-          Text(
-            discount.validPeriodSecondary!,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+        _CellText(
+          discount.periodLabel(AppLocalizations.of(context)),
+          color: color,
+        ),
       ],
     );
   }
@@ -444,7 +462,9 @@ class _DiscountPagination extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
           Text(
-            'Showing $start to $end of $totalEntries entries',
+            AppLocalizations.of(
+              context,
+            ).discountsPagination(start, end, totalEntries),
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textMuted,
               fontSize: 14,

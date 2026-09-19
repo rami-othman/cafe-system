@@ -6,6 +6,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/discount_list_item.dart';
+import '../../../l10n/app_localizations.dart';
+import 'discount_localization.dart';
 
 class DiscountSearchControls extends StatelessWidget {
   const DiscountSearchControls({
@@ -21,6 +23,7 @@ class DiscountSearchControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
@@ -49,12 +52,12 @@ class DiscountSearchControls extends StatelessWidget {
                 color: AppColors.textDark,
                 fontSize: 14,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 constraints: BoxConstraints(
                   minHeight: AppSizes.discountsControlHeight,
                 ),
-                hintText: 'Search discounts...',
-                prefixIcon: Icon(Icons.search, size: 18),
+                hintText: l10n.discountsSearchHint,
+                prefixIcon: const Icon(Icons.search, size: 18),
                 filled: true,
                 fillColor: AppColors.background,
                 isDense: true,
@@ -75,12 +78,10 @@ class DiscountSearchControls extends StatelessWidget {
                 onChanged: onStatusChanged,
               ),
               Tooltip(
-                message: 'Advanced filters',
+                message: l10n.discountsAdvancedFilters,
                 child: OutlinedButton(
                   onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Advanced filters will be available soon.'),
-                    ),
+                    SnackBar(content: Text(l10n.discountsAdvancedFiltersSoon)),
                   ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.square(40),
@@ -126,6 +127,7 @@ class _StatusDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     return Container(
       key: const Key('discount-status-filter'),
       height: AppSizes.discountsControlHeight,
@@ -138,19 +140,19 @@ class _StatusDropdown extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<DiscountStatus?>(
           value: selectedStatus,
-          hint: Text('All Statuses', style: _textStyle),
+          hint: Text(l10n.discountsAllStatuses, style: _textStyle),
           icon: const Icon(Icons.keyboard_arrow_down, size: 21),
           style: _textStyle,
           onChanged: onChanged,
           items: <DropdownMenuItem<DiscountStatus?>>[
             DropdownMenuItem<DiscountStatus?>(
               value: null,
-              child: Text('All Statuses', style: _textStyle),
+              child: Text(l10n.discountsAllStatuses, style: _textStyle),
             ),
             for (final DiscountStatus status in DiscountStatus.values)
               DropdownMenuItem<DiscountStatus?>(
                 value: status,
-                child: Text(_titleCase(status.name), style: _textStyle),
+                child: Text(status.label(l10n), style: _textStyle),
               ),
           ],
         ),
@@ -163,7 +165,4 @@ class _StatusDropdown extends StatelessWidget {
     fontSize: 14,
     fontWeight: FontWeight.w400,
   );
-
-  String _titleCase(String value) =>
-      '${value[0].toUpperCase()}${value.substring(1)}';
 }

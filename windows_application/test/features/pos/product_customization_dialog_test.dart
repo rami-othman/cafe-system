@@ -4,6 +4,7 @@ import 'package:windows_application/features/pos/models/pos_menu_runtime_models.
 import 'package:windows_application/features/pos/models/pos_product.dart';
 import 'package:windows_application/features/pos/models/product_customization.dart';
 import 'package:windows_application/features/pos/widgets/product_customization_dialog.dart';
+import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
   testWidgets(
@@ -18,7 +19,9 @@ void main() {
         },
       );
 
-      await tester.tap(find.byKey(const ValueKey<String>('published-variant-31')));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('published-variant-31')),
+      );
       await tester.pump();
       await tester.tap(find.text('Add to Order'));
       await tester.pump();
@@ -29,25 +32,24 @@ void main() {
     },
   );
 
-  testWidgets(
-    'shows only sellable published variants',
-    (WidgetTester tester) async {
-      await _pumpDialog(tester);
+  testWidgets('shows only sellable published variants', (
+    WidgetTester tester,
+  ) async {
+    await _pumpDialog(tester);
 
-      expect(
-        find.byKey(const ValueKey<String>('published-variant-30')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey<String>('published-variant-31')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey<String>('published-variant-32')),
-        findsNothing,
-      );
-    },
-  );
+    expect(
+      find.byKey(const ValueKey<String>('published-variant-30')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('published-variant-31')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('published-variant-32')),
+      findsNothing,
+    );
+  });
 }
 
 Future<void> _pumpDialog(
@@ -63,6 +65,9 @@ Future<void> _pumpDialog(
 
   await tester.pumpWidget(
     MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: ProductCustomizationDialog(
           product: _publishedProduct,

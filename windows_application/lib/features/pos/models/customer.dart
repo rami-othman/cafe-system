@@ -5,8 +5,8 @@ class Customer extends Equatable {
     required this.id,
     required this.name,
     required this.phone,
-    required this.tier,
-    required this.points,
+    this.tier,
+    this.points,
     this.backendId,
   });
 
@@ -14,8 +14,8 @@ class Customer extends Equatable {
   final int? backendId;
   final String name;
   final String phone;
-  final String tier;
-  final int points;
+  final String? tier;
+  final int? points;
 
   String get initials {
     final List<String> parts = name

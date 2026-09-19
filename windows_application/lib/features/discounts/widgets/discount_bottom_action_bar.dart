@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../l10n/app_localizations.dart';
 
 class DiscountBottomActionBar extends StatelessWidget {
   const DiscountBottomActionBar({
@@ -20,6 +21,7 @@ class DiscountBottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
@@ -41,7 +43,7 @@ class DiscountBottomActionBar extends StatelessWidget {
           final Widget discard = TextButton(
             onPressed: onDiscard,
             child: Text(
-              'Discard Changes',
+              l10n.discountFormDiscard,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -49,13 +51,13 @@ class DiscountBottomActionBar extends StatelessWidget {
           );
           final List<Widget> actions = <Widget>[
             AppButton(
-              label: 'Save as Draft',
+              label: l10n.discountFormSaveDraft,
               variant: AppButtonVariant.outlined,
               onPressed: onSaveDraft,
             ),
             const SizedBox(width: AppSpacing.md),
             AppButton(
-              label: 'Activate Discount',
+              label: l10n.discountFormActivate,
               icon: Icons.bolt,
               variant: AppButtonVariant.accent,
               onPressed: onActivate,

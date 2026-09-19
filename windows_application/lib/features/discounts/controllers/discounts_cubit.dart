@@ -9,6 +9,7 @@ import '../repositories/discounts_repository.dart';
 import 'discounts_state.dart';
 
 class DiscountsCubit extends Cubit<DiscountsState> {
+  static const String requestFailed = 'discount_request_failed';
   DiscountsCubit({required this._repository}) : super(const DiscountsState());
 
   static const int pageSize = 4;
@@ -188,7 +189,9 @@ class DiscountsCubit extends Cubit<DiscountsState> {
     }
   }
 
-  List<DiscountListItem> get filteredDiscounts {
+  List<DiscountListItem> filteredDiscountsMatching({
+    bool Function(DiscountListItem discount)? matchesLocalizedLabel,
+  }) {
     final String query = state.searchQuery.trim().toLowerCase();
     return state.discounts
         .where((DiscountListItem discount) {
@@ -198,24 +201,33 @@ class DiscountsCubit extends Cubit<DiscountsState> {
           final bool matchesSearch =
               query.isEmpty ||
               discount.name.toLowerCase().contains(query) ||
-              discount.secondaryLabel.toLowerCase().contains(query) ||
+              (discount.code?.toLowerCase() ?? '').contains(query) ||
               discount.type.toLowerCase().contains(query) ||
-              discount.conditions.toLowerCase().contains(query);
+              (discount.conditions?.toLowerCase() ?? '').contains(query) ||
+              (matchesLocalizedLabel?.call(discount) ?? false);
           return matchesStatus && matchesSearch;
         })
         .toList(growable: false);
   }
 
-  int get totalPages =>
-      (filteredDiscounts.length / pageSize).ceil().clamp(1, 1 << 31);
-  List<DiscountListItem> get currentPageDiscounts {
-    final List<DiscountListItem> discounts = filteredDiscounts;
+  List<DiscountListItem> get filteredDiscounts => filteredDiscountsMatching();
+
+  int totalPagesFor(List<DiscountListItem> discounts) =>
+      (discounts.length / pageSize).ceil().clamp(1, 1 << 31);
+
+  int get totalPages => totalPagesFor(filteredDiscounts);
+
+  List<DiscountListItem> pageFor(List<DiscountListItem> discounts) {
     final int start = (state.currentPage - 1) * pageSize;
     if (start >= discounts.length) return const <DiscountListItem>[];
     return discounts.sublist(
       start,
       (start + pageSize).clamp(0, discounts.length),
     );
+  }
+
+  List<DiscountListItem> get currentPageDiscounts {
+    return pageFor(filteredDiscounts);
   }
 
   void updateSearchQuery(String query) =>
@@ -227,16 +239,17 @@ class DiscountsCubit extends Cubit<DiscountsState> {
       currentPage: 1,
     ),
   );
-  void changePage(int page) {
-    if (page >= 1 && page <= totalPages && page != state.currentPage) {
+  void changePage(int page, {int? availablePages}) {
+    if (page >= 1 &&
+        page <= (availablePages ?? totalPages) &&
+        page != state.currentPage) {
       emit(state.copyWith(currentPage: page));
     }
   }
 
   void clearError() => emit(state.copyWith(clearError: true));
-  String _message(Object error) => error is ApiException
-      ? error.message
-      : 'Unable to complete the discount request. Please try again.';
+  String _message(Object error) => requestFailed;
+
   Map<String, List<String>> _validationErrors(Object error) =>
       error is ApiException
       ? error.validationErrors ?? const <String, List<String>>{}

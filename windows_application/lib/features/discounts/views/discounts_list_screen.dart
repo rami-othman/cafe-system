@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../controllers/discounts_cubit.dart';
@@ -15,6 +17,7 @@ import '../controllers/discounts_state.dart';
 import '../models/discount_list_item.dart';
 import '../widgets/discount_search_controls.dart';
 import '../widgets/discount_summary_card.dart';
+import '../widgets/discount_localization.dart';
 import '../widgets/discounts_table.dart';
 
 class DiscountsListScreen extends StatelessWidget {
@@ -25,10 +28,16 @@ class DiscountsListScreen extends StatelessWidget {
     return BlocBuilder<DiscountsCubit, DiscountsState>(
       builder: (BuildContext context, DiscountsState state) {
         final DiscountsCubit cubit = context.read<DiscountsCubit>();
-        final List<DiscountListItem> filteredDiscounts =
-            cubit.filteredDiscounts;
+        final AppLocalizations l10n = AppLocalizations.of(context);
+        final List<DiscountListItem> filteredDiscounts = cubit
+            .filteredDiscountsMatching(
+              matchesLocalizedLabel: (DiscountListItem discount) =>
+                  discount.matchesLocalizedLabel(state.searchQuery, l10n),
+            );
+        final int totalPages = cubit.totalPagesFor(filteredDiscounts);
         final List<DiscountSummaryMetric> summaryMetrics = _summaryMetrics(
           state.discounts,
+          AppLocalizations.of(context),
         );
 
         return DesktopPageLayout(
@@ -112,7 +121,9 @@ class DiscountsListScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   if (state.errorMessage != null) ...<Widget>[
-                    _DiscountError(message: state.errorMessage!),
+                    _DiscountError(
+                      message: _localizedFailure(context, state.errorMessage!),
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   if (state.isLoading)
@@ -122,11 +133,12 @@ class DiscountsListScreen extends StatelessWidget {
                     )
                   else
                     DiscountsTable(
-                      discounts: cubit.currentPageDiscounts,
+                      discounts: cubit.pageFor(filteredDiscounts),
                       currentPage: state.currentPage,
                       totalEntries: filteredDiscounts.length,
-                      totalPages: cubit.totalPages,
-                      onPageChanged: cubit.changePage,
+                      totalPages: totalPages,
+                      onPageChanged: (int page) =>
+                          cubit.changePage(page, availablePages: totalPages),
                       onView: (DiscountListItem discount) =>
                           _showDetails(context, discount),
                       onEdit: (DiscountListItem discount) =>
@@ -140,9 +152,20 @@ class DiscountsListScreen extends StatelessWidget {
                           _showSnackBar(
                             context,
                             saved
-                                ? 'Discount ${discount.isActive ? 'deactivated' : 'activated'}.'
-                                : state.errorMessage ??
-                                      'Unable to update discount status.',
+                                ? AppLocalizations.of(
+                                    context,
+                                  ).discountsStatusUpdated(
+                                    discount.isActive
+                                        ? AppLocalizations.of(
+                                            context,
+                                          ).discountInactive.toLowerCase()
+                                        : AppLocalizations.of(
+                                            context,
+                                          ).discountActive.toLowerCase(),
+                                  )
+                                : AppLocalizations.of(
+                                    context,
+                                  ).discountsStatusUpdateFailed,
                           );
                         }
                       },
@@ -160,6 +183,7 @@ class DiscountsListScreen extends StatelessWidget {
 
   List<DiscountSummaryMetric> _summaryMetrics(
     List<DiscountListItem> discounts,
+    AppLocalizations l10n,
   ) {
     final int active = discounts
         .where(
@@ -175,17 +199,20 @@ class DiscountsListScreen extends StatelessWidget {
       double total,
       DiscountListItem discount,
     ) {
-      return total +
-          double.tryParse(
-            discount.estimatedSavedValue.replaceAll(RegExp(r'[^0-9.]'), ''),
-          )!;
+      return total + discount.estimatedSavedValue;
     });
     return <DiscountSummaryMetric>[
-      DiscountSummaryMetric(label: 'ACTIVE DISCOUNTS', value: '$active'),
-      DiscountSummaryMetric(label: 'TOTAL USAGE (THIS MONTH)', value: '$usage'),
       DiscountSummaryMetric(
-        label: 'ESTIMATED VALUE SAVED',
-        value: CurrencyFormatter.format(saved),
+        label: l10n.discountsActiveMetric,
+        value: NumberFormat.decimalPattern(l10n.localeName).format(active),
+      ),
+      DiscountSummaryMetric(
+        label: l10n.discountsUsageMetric,
+        value: NumberFormat.decimalPattern(l10n.localeName).format(usage),
+      ),
+      DiscountSummaryMetric(
+        label: l10n.discountsSavedMetric,
+        value: CurrencyFormatter.format(saved, locale: l10n.localeName),
       ),
     ];
   }
@@ -198,16 +225,18 @@ class DiscountsListScreen extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Delete discount?'),
-        content: Text('“${discount.name}” will no longer be available in POS.'),
+        title: Text(AppLocalizations.of(context).discountsDeleteTitle),
+        content: Text(
+          AppLocalizations.of(context).discountsDeleteBody(discount.name),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).commonDelete),
           ),
         ],
       ),
@@ -220,8 +249,8 @@ class DiscountsListScreen extends StatelessWidget {
       _showSnackBar(
         context,
         deleted
-            ? 'Discount deleted.'
-            : cubit.state.errorMessage ?? 'Unable to delete discount.',
+            ? AppLocalizations.of(context).discountsDeleted
+            : AppLocalizations.of(context).discountsDeleteFailed,
       );
     }
   }
@@ -235,21 +264,28 @@ class DiscountsListScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(discount.secondaryLabel),
-            const SizedBox(height: AppSpacing.sm),
-            Text('${discount.displayValue} · ${discount.conditions}'),
-            const SizedBox(height: AppSpacing.sm),
-            Text('${discount.validPeriodPrimary} · ${discount.status.label}'),
+            Text(discount.secondaryLabel(AppLocalizations.of(context))),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Used ${discount.usageCount} times · ${discount.estimatedSavedValue} saved',
+              '${discount.valueLabel(AppLocalizations.of(context))} · ${discount.conditionsLabel(AppLocalizations.of(context))}',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '${discount.periodLabel(AppLocalizations.of(context))} · ${discount.status.label(AppLocalizations.of(context))}',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              AppLocalizations.of(context).discountsUsedSaved(
+                discount.usageCount,
+                discount.savedValueLabel(AppLocalizations.of(context)),
+              ),
             ),
           ],
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(AppLocalizations.of(context).commonClose),
           ),
         ],
       ),
@@ -280,6 +316,9 @@ class _DiscountError extends StatelessWidget {
   );
 }
 
+String _localizedFailure(BuildContext context, String message) =>
+    AppLocalizations.of(context).discountRequestFailed;
+
 class _PageHeader extends StatelessWidget {
   const _PageHeader({required this.onCreateDiscount});
 
@@ -293,14 +332,14 @@ class _PageHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Discounts & Coupons',
+              AppLocalizations.of(context).discountsTitle,
               style: AppTextStyles.headlineMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Manage promotional offers and pricing rules',
+              AppLocalizations.of(context).discountsSubtitle,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
                 fontSize: 14,
@@ -310,7 +349,7 @@ class _PageHeader extends StatelessWidget {
           ],
         );
         final Widget action = AppButton(
-          label: 'Create Discount',
+          label: AppLocalizations.of(context).discountsCreate,
           icon: Icons.add,
           minimumHeight: AppSizes.discountsControlHeight,
           onPressed: onCreateDiscount,

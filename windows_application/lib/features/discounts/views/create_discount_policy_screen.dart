@@ -7,13 +7,15 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_router.dart';
 import '../../../core/config/tax_config.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_breadcrumbs.dart';
 import '../../../shared/widgets/app_text_field.dart';
-import '../../menu_management/operational_availability/operational_availability_formatters.dart';
+import '../../menu_management/operational_availability/operational_availability_formatters.dart'
+    show operationalSalesChannels;
 import '../controllers/discounts_cubit.dart';
 import '../controllers/discounts_state.dart';
 import '../models/discount_detail.dart';
@@ -23,6 +25,7 @@ import '../models/discount_upsert_request.dart';
 import '../widgets/discount_bottom_action_bar.dart';
 import '../widgets/discount_chip_selector.dart';
 import '../widgets/discount_form_section_card.dart';
+import '../widgets/discount_localization.dart';
 import '../widgets/discount_pos_preview_card.dart';
 import '../widgets/discount_summary_panel.dart';
 
@@ -145,7 +148,7 @@ class _CreateDiscountPolicyScreenState
       if (!mounted) return;
       setState(() {
         _isLoadingDetail = false;
-        _detailError = 'Unable to load this discount. Please try again.';
+        _detailError = AppLocalizations.of(context).discountFormLoadTitle;
       });
     }
   }
@@ -302,9 +305,7 @@ class _CreateDiscountPolicyScreenState
           _showValidationErrors) ...<Widget>[
         _ValidationBanner(
           messages: <String>[
-            ...state.validationErrors.values.expand(
-              (List<String> messages) => messages,
-            ),
+            ..._localizedServerValidationErrors(state.validationErrors),
             if (_showValidationErrors)
               ..._validationIssues().map(
                 (_FormValidationIssue issue) => issue.message,
@@ -328,11 +329,11 @@ class _CreateDiscountPolicyScreenState
   Widget _basicCard(bool locked) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     return DiscountFormSectionCard(
-      title: 'Basic Information',
+      title: l10n.discountFormBasic,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text('Active', style: AppTextStyles.bodySmall),
+          Text(l10n.commonActive, style: AppTextStyles.bodySmall),
           const SizedBox(width: AppSpacing.sm),
           Switch(
             value: _active,
@@ -345,7 +346,7 @@ class _CreateDiscountPolicyScreenState
       child: _AdaptiveFields(
         children: <_LabeledField>[
           _LabeledField(
-            label: 'Discount Name',
+            label: l10n.discountFormName,
             child: AppTextField(
               key: const Key('discount-name-field'),
               controller: _nameController,
@@ -353,13 +354,13 @@ class _CreateDiscountPolicyScreenState
             ),
           ),
           _LabeledField(
-            label: 'Application Mode',
+            label: l10n.discountFormApplicationMode,
             child: _SelectField(
               key: const Key('discount-application-mode-field'),
               value: _applicationMode,
               options: <_SelectOption>[
-                _SelectOption('manual', 'Manual'),
-                _SelectOption('code', 'Coupon / Code'),
+                _SelectOption('manual', l10n.discountManual),
+                _SelectOption('code', l10n.discountFormCouponOrCode),
               ],
               enabled: !locked,
               onChanged: _changeApplicationMode,
@@ -367,7 +368,7 @@ class _CreateDiscountPolicyScreenState
           ),
           if (_applicationMode == 'code')
             _LabeledField(
-              label: 'Code',
+              label: l10n.discountCode,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -413,12 +414,12 @@ class _CreateDiscountPolicyScreenState
               ),
             ),
           _LabeledField(
-            label: 'Description',
+            label: l10n.discountFormDescription,
             span: 2,
             child: AppTextField(
               controller: _descriptionController,
               enabled: !locked,
-              hintText: 'Internal description for discount policy...',
+              hintText: l10n.discountFormDescriptionHint,
               maxLines: 3,
             ),
           ),
@@ -430,21 +431,21 @@ class _CreateDiscountPolicyScreenState
   Widget _scopeCard(DiscountsState state, bool locked) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     return DiscountFormSectionCard(
-      title: 'Scope & Value',
+      title: l10n.discountFormScopeValue,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _AdaptiveFields(
             children: <_LabeledField>[
               _LabeledField(
-                label: 'Applies To',
+                label: l10n.discountFormAppliesTo,
                 child: _SelectField(
                   key: const Key('discount-scope-field'),
                   value: _scope,
                   options: <_SelectOption>[
-                    _SelectOption('order', 'Entire Order'),
-                    _SelectOption('product', 'Selected Products'),
-                    _SelectOption('category', 'Selected Categories'),
+                    _SelectOption('order', l10n.discountEntireOrder),
+                    _SelectOption('product', l10n.discountSelectedProducts),
+                    _SelectOption('category', l10n.discountSelectedCategories),
                     _SelectOption('bundle', l10n.discountV2PackageBundle),
                   ],
                   enabled: !locked,
@@ -457,20 +458,20 @@ class _CreateDiscountPolicyScreenState
                 ),
               ),
               _LabeledField(
-                label: 'Value Type',
+                label: l10n.discountFormValueType,
                 child: _SelectField(
                   key: const Key('discount-value-type-field'),
                   value: _valueType,
                   options: <_SelectOption>[
-                    _SelectOption('percentage', 'Percentage'),
-                    _SelectOption('fixed', 'Fixed Amount'),
+                    _SelectOption('percentage', l10n.discountPercentage),
+                    _SelectOption('fixed', l10n.discountFixedAmount),
                   ],
                   enabled: !locked,
                   onChanged: (value) => setState(() => _valueType = value),
                 ),
               ),
               _LabeledField(
-                label: 'Value',
+                label: l10n.discountFormValue,
                 child: AppTextField(
                   key: const Key('discount-value-field'),
                   controller: _valueController,
@@ -484,7 +485,7 @@ class _CreateDiscountPolicyScreenState
                 ),
               ),
               _LabeledField(
-                label: 'Min Spend (optional)',
+                label: l10n.discountFormMinSpendOptional,
                 child: _moneyField(
                   _minSpendController,
                   locked,
@@ -493,7 +494,7 @@ class _CreateDiscountPolicyScreenState
                 ),
               ),
               _LabeledField(
-                label: 'Max Discount (optional)',
+                label: l10n.discountFormMaxDiscountOptional,
                 child: _moneyField(
                   _maxDiscountController,
                   locked,
@@ -506,8 +507,8 @@ class _CreateDiscountPolicyScreenState
           const SizedBox(height: AppSpacing.md),
           _FieldLabel(
             label: _isPercentage
-                ? 'Quick percentage values'
-                : 'Quick fixed values',
+                ? l10n.discountFormQuickPercentages
+                : l10n.discountFormQuickFixed,
           ),
           const SizedBox(height: AppSpacing.sm),
           DiscountChipSelector(
@@ -526,7 +527,7 @@ class _CreateDiscountPolicyScreenState
           if (_scope == 'product')
             _referenceSelector(
               key: const Key('discount-products-selector'),
-              label: 'Selected Products',
+              label: l10n.discountSelectedProducts,
               items: state.formReferences.products,
               selectedIds: _productIds,
               loading: state.isLoadingFormReferences,
@@ -536,7 +537,7 @@ class _CreateDiscountPolicyScreenState
           if (_scope == 'category')
             _referenceSelector(
               key: const Key('discount-categories-selector'),
-              label: 'Selected Categories',
+              label: l10n.discountSelectedCategories,
               items: state.formReferences.categories,
               selectedIds: _categoryIds,
               loading: state.isLoadingFormReferences,
@@ -560,17 +561,20 @@ class _CreateDiscountPolicyScreenState
   Widget _eligibilityCard(DiscountsState state, bool locked) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     return DiscountFormSectionCard(
-      title: 'Eligibility Conditions',
+      title: l10n.discountFormEligibility,
       child: _AdaptiveFields(
         children: <_LabeledField>[
           _LabeledField(
-            label: 'Customer Eligibility',
+            label: l10n.discountCustomerEligibility,
             child: _SelectField(
               key: const Key('discount-customer-eligibility-field'),
               value: _customerEligibilityMode,
               options: <_SelectOption>[
-                _SelectOption('all', 'All Customers'),
-                _SelectOption('selected_groups', 'Selected Customer Groups'),
+                _SelectOption('all', l10n.discountFormAllCustomers),
+                _SelectOption(
+                  'selected_groups',
+                  l10n.discountFormSelectedCustomerGroups,
+                ),
                 _SelectOption(
                   'selected_customers',
                   l10n.discountV2SelectedCustomers,
@@ -591,13 +595,16 @@ class _CreateDiscountPolicyScreenState
             ),
           ),
           _LabeledField(
-            label: 'Payment Methods',
+            label: l10n.discountPaymentMethods,
             child: _SelectField(
               key: const Key('discount-payment-mode-field'),
               value: _allPaymentMethods ? 'all' : 'selected',
-              options: const <_SelectOption>[
-                _SelectOption('all', 'All Payment Methods'),
-                _SelectOption('selected', 'Selected Payment Methods'),
+              options: <_SelectOption>[
+                _SelectOption('all', l10n.discountFormAllPaymentMethods),
+                _SelectOption(
+                  'selected',
+                  l10n.discountFormSelectedPaymentMethods,
+                ),
               ],
               enabled: !locked,
               onChanged: (value) => setState(() {
@@ -607,13 +614,13 @@ class _CreateDiscountPolicyScreenState
             ),
           ),
           _LabeledField(
-            label: 'Branches',
+            label: l10n.discountFormBranches,
             child: _SelectField(
               key: const Key('discount-branch-mode-field'),
               value: _appliesToAllBranches ? 'all' : 'selected',
-              options: const <_SelectOption>[
-                _SelectOption('all', 'All Branches'),
-                _SelectOption('selected', 'Selected Branches'),
+              options: <_SelectOption>[
+                _SelectOption('all', l10n.discountFormAllBranches),
+                _SelectOption('selected', l10n.discountFormSelectedBranches),
               ],
               enabled: !locked,
               onChanged: (value) => setState(() {
@@ -624,10 +631,10 @@ class _CreateDiscountPolicyScreenState
           ),
           if (_customerEligibilityMode == 'selected_groups')
             _LabeledField(
-              label: 'Customer Groups',
+              label: l10n.discountFormCustomerGroups,
               child: _referenceSelector(
                 key: const Key('discount-customer-groups-selector'),
-                label: 'Select Customer Groups',
+                label: l10n.discountFormSelectCustomerGroups,
                 items: state.formReferences.customerGroups,
                 selectedIds: _customerGroupIds,
                 loading: state.isLoadingFormReferences,
@@ -667,10 +674,10 @@ class _CreateDiscountPolicyScreenState
             ),
           if (!_allPaymentMethods)
             _LabeledField(
-              label: 'Selected Payment Methods',
+              label: l10n.discountFormSelectedPaymentMethods,
               child: _referenceSelector(
                 key: const Key('discount-payment-methods-selector'),
-                label: 'Select Payment Methods',
+                label: l10n.discountFormSelectPaymentMethods,
                 items: state.formReferences.paymentMethods,
                 selectedIds: _paymentMethodIds,
                 loading: state.isLoadingFormReferences,
@@ -681,7 +688,7 @@ class _CreateDiscountPolicyScreenState
             ),
           if (!_appliesToAllBranches)
             _LabeledField(
-              label: 'Selected Branches',
+              label: l10n.discountFormSelectedBranches,
               child: _branchSelector(state, locked),
             ),
           _LabeledField(
@@ -722,11 +729,13 @@ class _CreateDiscountPolicyScreenState
   }
 
   Widget _scheduleCard(bool locked) => DiscountFormSectionCard(
-    title: 'Schedule',
+    title: AppLocalizations.of(context).discountFormSchedule,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const _FieldLabel(label: 'Active Weekdays (optional)'),
+        _FieldLabel(
+          label: AppLocalizations.of(context).discountFormActiveWeekdays,
+        ),
         const SizedBox(height: AppSpacing.sm),
         DiscountChipSelector(
           options: const <String>[
@@ -746,12 +755,13 @@ class _CreateDiscountPolicyScreenState
                       ? _activeDays.remove(value)
                       : _activeDays.add(value),
                 ),
+          optionLabel: _weekdayLabel,
         ),
         const SizedBox(height: AppSpacing.lg),
         _AdaptiveFields(
           children: <_LabeledField>[
             _LabeledField(
-              label: 'Start Date',
+              label: AppLocalizations.of(context).discountFormStartDate,
               child: _dateField(
                 _startDateController,
                 locked,
@@ -759,7 +769,7 @@ class _CreateDiscountPolicyScreenState
               ),
             ),
             _LabeledField(
-              label: 'End Date',
+              label: AppLocalizations.of(context).discountFormEndDate,
               child: _dateField(
                 _endDateController,
                 locked,
@@ -767,7 +777,7 @@ class _CreateDiscountPolicyScreenState
               ),
             ),
             _LabeledField(
-              label: 'Start Time',
+              label: AppLocalizations.of(context).discountFormStartTime,
               child: _timeField(
                 _startTimeController,
                 locked,
@@ -775,7 +785,7 @@ class _CreateDiscountPolicyScreenState
               ),
             ),
             _LabeledField(
-              label: 'End Time',
+              label: AppLocalizations.of(context).discountFormEndTime,
               child: _timeField(
                 _endTimeController,
                 locked,
@@ -786,7 +796,7 @@ class _CreateDiscountPolicyScreenState
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'An end time earlier than the start time is an overnight window.',
+          AppLocalizations.of(context).discountFormOvernightHelp,
           style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
         ),
       ],
@@ -796,11 +806,11 @@ class _CreateDiscountPolicyScreenState
   Widget _usageCard(bool locked) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     return DiscountFormSectionCard(
-      title: 'Usage Limits',
+      title: l10n.discountFormUsageLimits,
       child: _AdaptiveFields(
         children: <_LabeledField>[
           _LabeledField(
-            label: 'Global Usage Limit (optional)',
+            label: l10n.discountFormGlobalUsageOptional,
             child: _integerField(
               _usageLimitController,
               locked,
@@ -808,7 +818,7 @@ class _CreateDiscountPolicyScreenState
             ),
           ),
           _LabeledField(
-            label: 'Per Customer Lifetime Limit (optional)',
+            label: l10n.discountFormLifetimeUsageOptional,
             child: _integerField(
               _perCustomerLimitController,
               locked,
@@ -824,7 +834,7 @@ class _CreateDiscountPolicyScreenState
             ),
           ),
           _LabeledField(
-            label: 'Daily limit details',
+            label: l10n.discountV2DailyLimit,
             child: Text(
               l10n.discountV2DailyLimitDetails,
               style: AppTextStyles.bodySmall.copyWith(
@@ -894,7 +904,7 @@ class _CreateDiscountPolicyScreenState
     key: key,
     controller: controller,
     enabled: !locked,
-    hintText: 'Unlimited',
+    hintText: AppLocalizations.of(context).discountFormUnlimited,
     keyboardType: TextInputType.number,
   );
 
@@ -931,7 +941,7 @@ class _CreateDiscountPolicyScreenState
         .toList(growable: false);
     return _referenceSelector(
       key: const Key('discount-branches-selector'),
-      label: 'Select Branches',
+      label: AppLocalizations.of(context).discountFormSelectBranches,
       items: branches,
       selectedIds: _branchIds,
       loading: state.isLoadingBranches,
@@ -951,7 +961,8 @@ class _CreateDiscountPolicyScreenState
                 ? _channelKeys.remove(value)
                 : _channelKeys.add(value),
           ),
-    optionLabel: operationalChannelLabel,
+    optionLabel: (String channel) =>
+        discountChannelLabel(channel, AppLocalizations.of(context)),
   );
 
   Widget _bundleRequirementsBuilder(DiscountsState state, bool locked) {
@@ -972,7 +983,7 @@ class _CreateDiscountPolicyScreenState
             child: _AdaptiveFields(
               children: <_LabeledField>[
                 _LabeledField(
-                  label: 'Product',
+                  label: l10n.discountFormProduct,
                   child: DropdownButtonFormField<int>(
                     key: Key('discount-bundle-product-$index'),
                     initialValue: _bundleRequirements[index].productId == 0
@@ -1093,7 +1104,9 @@ class _CreateDiscountPolicyScreenState
   }
 
   String _customerSummary(DiscountsState state) {
-    if (_customerEligibilityMode == 'all') return 'All Customers';
+    if (_customerEligibilityMode == 'all') {
+      return AppLocalizations.of(context).discountFormAllCustomers;
+    }
     final Set<int> ids = _customerEligibilityMode == 'selected_groups'
         ? _customerGroupIds
         : _customerIds;
@@ -1106,7 +1119,9 @@ class _CreateDiscountPolicyScreenState
         .map((DiscountFormReference item) => item.name)
         .toList(growable: false);
     return names.isEmpty
-        ? '${ids.length} selected customers'
+        ? AppLocalizations.of(
+            context,
+          ).discountFormSelectedCustomersPlural(ids.length)
         : names.join(', ');
   }
 
@@ -1120,18 +1135,19 @@ class _CreateDiscountPolicyScreenState
         .where((item) => item.productId > 0)
         .map(
           (item) =>
-              '${names[item.productId] ?? 'Product'} ×${item.controller.text}',
+              '${names[item.productId] ?? AppLocalizations.of(context).discountFormProduct} ×${item.controller.text}',
         )
         .join(' + ');
   }
 
   String? _usageSummary() {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     final int? lifetime = _positiveInt(_perCustomerLimitController.text);
     final int? daily = _positiveInt(_perCustomerDailyLimitController.text);
     if (lifetime == null && daily == null) return null;
-    if (lifetime == null) return '$daily per day';
-    if (daily == null) return '$lifetime lifetime';
-    return '$lifetime lifetime / $daily per day';
+    if (lifetime == null) return l10n.discountFormPerDayPlural(daily!);
+    if (daily == null) return l10n.discountFormLifetimePlural(lifetime);
+    return l10n.discountFormUsageBoth(lifetime, daily);
   }
 
   Widget _buildSideRail(DiscountsState state, bool isReady) {
@@ -1156,21 +1172,38 @@ class _CreateDiscountPolicyScreenState
         const SizedBox(height: AppSpacing.lg),
         DiscountSummaryPanel(
           value: _isPercentage
-              ? '${_decimal(value)}% Percentage'
-              : '${_currency(state)} ${_decimal(value)} Fixed Amount',
+              ? AppLocalizations.of(context).discountPercentOff(_decimal(value))
+              : AppLocalizations.of(context).discountAmountOff(
+                  CurrencyFormatter.format(
+                    value,
+                    locale: AppLocalizations.of(context).localeName,
+                    currencyCode: _currency(state),
+                  ),
+                ),
           isReady: isReady,
           scope: _scopeLabel(_scope),
           branches: _appliesToAllBranches
-              ? 'All Branches'
-              : '${_branchIds.length} selected',
+              ? AppLocalizations.of(context).discountFormAllBranches
+              : AppLocalizations.of(
+                  context,
+                ).discountFormSelectedCountPlural(_branchIds.length),
           schedule: _activeDays.isEmpty
-              ? 'Any day'
-              : '${_activeDays.length} days selected',
+              ? AppLocalizations.of(context).discountFormAnyDay
+              : AppLocalizations.of(
+                  context,
+                ).discountFormDaysSelectedPlural(_activeDays.length),
           customers: _customerSummary(state),
           package: _bundleSummary(state),
           channels: _allChannels
-              ? 'All Channels'
-              : _channelKeys.map(operationalChannelLabel).join(', '),
+              ? AppLocalizations.of(context).discountV2AllChannels
+              : _channelKeys
+                    .map(
+                      (String channel) => discountChannelLabel(
+                        channel,
+                        AppLocalizations.of(context),
+                      ),
+                    )
+                    .join(', '),
           usage: _usageSummary(),
           coupon: _applicationMode == 'code'
               ? _nullableText(_codeController)
@@ -1286,12 +1319,67 @@ class _CreateDiscountPolicyScreenState
     }
     if (saved) {
       _showMessage(
-        activate ? 'Discount saved and activated.' : 'Discount saved.',
+        activate
+            ? AppLocalizations.of(context).discountFormSavedActivated
+            : AppLocalizations.of(context).discountFormSaved,
       );
       context.go(AppRoutes.discounts);
-    } else {
-      _showMessage(cubit.state.errorMessage ?? 'Unable to save discount.');
+    } else if (cubit.state.validationErrors.isEmpty) {
+      _showMessage(AppLocalizations.of(context).discountRequestFailed);
     }
+  }
+
+  List<String> _localizedServerValidationErrors(
+    Map<String, List<String>> validationErrors,
+  ) {
+    if (validationErrors.isEmpty) {
+      return const <String>[];
+    }
+
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final Set<String> messages = <String>{};
+    for (final String field in validationErrors.keys) {
+      final String? label = _discountValidationFieldLabel(field, l10n);
+      if (label == null) {
+        return <String>[l10n.discountRequestFailed];
+      }
+      messages.add(l10n.discountServerFieldInvalid(label));
+    }
+    return messages.toList(growable: false);
+  }
+
+  String? _discountValidationFieldLabel(String field, AppLocalizations l10n) {
+    final String root = field.split('.').first;
+    return switch (root) {
+      'name' => l10n.discountFormName,
+      'code' => l10n.discountCode,
+      'description' => l10n.discountFormDescription,
+      'applicationMode' => l10n.discountFormApplicationMode,
+      'type' => l10n.discountFormValueType,
+      'scope' || 'targets' => l10n.discountFormAppliesTo,
+      'value' => l10n.discountFormValue,
+      'minimumOrderAmount' => l10n.discountFormMinSpendOptional,
+      'maximumDiscountAmount' => l10n.discountFormMaxDiscountOptional,
+      'targetProductIds' => l10n.discountSelectedProducts,
+      'targetCategoryIds' => l10n.discountSelectedCategories,
+      'bundleRequirements' => l10n.discountV2PackageRequirements,
+      'customerEligibilityMode' ||
+      'customerEligibility' => l10n.discountCustomerEligibility,
+      'customerGroupIds' => l10n.discountFormCustomerGroups,
+      'customerIds' => l10n.discountV2SelectedCustomers,
+      'paymentMethod' || 'paymentMethodIds' => l10n.discountPaymentMethods,
+      'branchIds' || 'appliesToAllBranches' => l10n.discountFormBranches,
+      'channelKeys' => l10n.discountV2Channels,
+      'startDate' || 'startsAt' => l10n.discountFormStartDate,
+      'endDate' || 'endsAt' => l10n.discountFormEndDate,
+      'startTime' => l10n.discountFormStartTime,
+      'endTime' => l10n.discountFormEndTime,
+      'schedule' || 'activeDays' => l10n.discountFormSchedule,
+      'usageLimit' || 'usageLimitPerCustomer' => l10n.discountFormUsageLimits,
+      'perCustomerDailyUsageLimit' => l10n.discountV2DailyLimit,
+      'isActive' => l10n.commonActive,
+      _ => null,
+    };
   }
 
   String? _validate() {
@@ -1312,50 +1400,41 @@ class _CreateDiscountPolicyScreenState
   }
 
   List<_FormValidationIssue> _validationIssues() {
+    final AppLocalizations l10n = AppLocalizations.of(context);
     final List<_FormValidationIssue> issues = <_FormValidationIssue>[];
     if (_nameController.text.trim().isEmpty) {
-      issues.add(
-        const _FormValidationIssue('name', 'Discount name is required.'),
-      );
+      issues.add(_FormValidationIssue('name', l10n.discountValidationName));
     }
     final double? value = _decimalValue(_valueController.text);
     if (value == null || value <= 0) {
       issues.add(
-        const _FormValidationIssue('value', 'Enter a value greater than zero.'),
+        _FormValidationIssue('value', l10n.discountValidationPositiveValue),
       );
     }
     if (_isPercentage && value != null && value > 100) {
       issues.add(
-        const _FormValidationIssue(
-          'value',
-          'A percentage discount cannot exceed 100.',
-        ),
+        _FormValidationIssue('value', l10n.discountValidationPercentage),
       );
     }
     if (_applicationMode == 'code' && _nullableText(_codeController) == null) {
-      issues.add(
-        const _FormValidationIssue(
-          'code',
-          'A code is required for coupon discounts.',
-        ),
-      );
+      issues.add(_FormValidationIssue('code', l10n.discountValidationCode));
     }
     if (_scope == 'product' && _productIds.isEmpty) {
       issues.add(
-        const _FormValidationIssue('scope', 'Select one or more products.'),
+        _FormValidationIssue('scope', l10n.discountValidationProducts),
       );
     }
     if (_scope == 'category' && _categoryIds.isEmpty) {
       issues.add(
-        const _FormValidationIssue('scope', 'Select one or more categories.'),
+        _FormValidationIssue('scope', l10n.discountValidationCategories),
       );
     }
     if (_scope == 'bundle') {
       if (_bundleRequirements.isEmpty) {
         issues.add(
-          const _FormValidationIssue(
+          _FormValidationIssue(
             'bundleRequirements',
-            'Add at least one package product.',
+            l10n.discountValidationBundle,
           ),
         );
       }
@@ -1363,25 +1442,25 @@ class _CreateDiscountPolicyScreenState
       for (final _BundleRequirementDraft requirement in _bundleRequirements) {
         if (requirement.productId <= 0) {
           issues.add(
-            const _FormValidationIssue(
+            _FormValidationIssue(
               'bundleRequirements',
-              'Select a product for every package requirement.',
+              l10n.discountValidationBundleProduct,
             ),
           );
         } else if (!bundleProductIds.add(requirement.productId)) {
           issues.add(
-            const _FormValidationIssue(
+            _FormValidationIssue(
               'bundleRequirements',
-              'A package product can only be added once.',
+              l10n.discountValidationBundleUnique,
             ),
           );
         }
         final double? quantity = _decimalValue(requirement.controller.text);
         if (quantity == null || quantity <= 0) {
           issues.add(
-            const _FormValidationIssue(
+            _FormValidationIssue(
               'bundleRequirements',
-              'Package quantities must be greater than zero.',
+              l10n.discountValidationBundleQuantity,
             ),
           );
         }
@@ -1390,67 +1469,50 @@ class _CreateDiscountPolicyScreenState
     if (_customerEligibilityMode == 'selected_groups' &&
         _customerGroupIds.isEmpty) {
       issues.add(
-        const _FormValidationIssue(
-          'customerGroups',
-          'Select one or more customer groups.',
-        ),
+        _FormValidationIssue('customerGroups', l10n.discountValidationGroups),
       );
     }
     if (_customerEligibilityMode == 'selected_customers' &&
         _customerIds.isEmpty) {
       issues.add(
-        const _FormValidationIssue(
-          'customers',
-          'Select one or more customers.',
-        ),
+        _FormValidationIssue('customers', l10n.discountValidationCustomers),
       );
     }
     if (!_appliesToAllBranches && _branchIds.isEmpty) {
       issues.add(
-        const _FormValidationIssue('branches', 'Select one or more branches.'),
+        _FormValidationIssue('branches', l10n.discountValidationBranches),
       );
     }
     if ((_minSpendController.text.trim().isNotEmpty &&
             _decimalValue(_minSpendController.text) == null) ||
         (_maxDiscountController.text.trim().isNotEmpty &&
             _decimalValue(_maxDiscountController.text) == null)) {
-      issues.add(
-        const _FormValidationIssue('money', 'Enter valid monetary amounts.'),
-      );
+      issues.add(_FormValidationIssue('money', l10n.discountValidationMoney));
     }
     if ((_decimalValue(_minSpendController.text) ?? 0) < 0 ||
         (_decimalValue(_maxDiscountController.text) ?? 0) < 0) {
       issues.add(
-        const _FormValidationIssue(
-          'money',
-          'Monetary amounts cannot be negative.',
-        ),
+        _FormValidationIssue('money', l10n.discountValidationNegativeMoney),
       );
     }
     if (_positiveInt(_usageLimitController.text) == null &&
         _usageLimitController.text.trim().isNotEmpty) {
       issues.add(
-        const _FormValidationIssue(
-          'usageLimit',
-          'Usage limits must be positive whole numbers.',
-        ),
+        _FormValidationIssue('usageLimit', l10n.discountValidationUsage),
       );
     }
     if (_positiveInt(_perCustomerLimitController.text) == null &&
         _perCustomerLimitController.text.trim().isNotEmpty) {
       issues.add(
-        const _FormValidationIssue(
-          'usageLimit',
-          'Usage limits must be positive whole numbers.',
-        ),
+        _FormValidationIssue('usageLimit', l10n.discountValidationUsage),
       );
     }
     if (_positiveInt(_perCustomerDailyLimitController.text) == null &&
         _perCustomerDailyLimitController.text.trim().isNotEmpty) {
       issues.add(
-        const _FormValidationIssue(
+        _FormValidationIssue(
           'dailyUsageLimit',
-          'Daily usage limits must be positive whole numbers.',
+          l10n.discountValidationDailyUsage,
         ),
       );
     }
@@ -1459,37 +1521,28 @@ class _CreateDiscountPolicyScreenState
     if ((_startDateController.text.trim().isNotEmpty && startDate == null) ||
         (_endDateController.text.trim().isNotEmpty && endDate == null)) {
       issues.add(
-        const _FormValidationIssue('startDate', 'Dates must use YYYY-MM-DD.'),
+        _FormValidationIssue('startDate', l10n.discountValidationDate),
       );
     }
     if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
       issues.add(
-        const _FormValidationIssue(
-          'endDate',
-          'End date cannot be earlier than start date.',
-        ),
+        _FormValidationIssue('endDate', l10n.discountValidationEndDate),
       );
     }
     final bool hasStartTime = _startTimeController.text.trim().isNotEmpty;
     final bool hasEndTime = _endTimeController.text.trim().isNotEmpty;
     if (hasStartTime != hasEndTime) {
       issues.add(
-        const _FormValidationIssue(
-          'startTime',
-          'Start time and end time must be provided together.',
-        ),
+        _FormValidationIssue('startTime', l10n.discountValidationTimesTogether),
       );
       issues.add(
-        const _FormValidationIssue(
-          'endTime',
-          'Start time and end time must be provided together.',
-        ),
+        _FormValidationIssue('endTime', l10n.discountValidationTimesTogether),
       );
     }
     if ((hasStartTime && !_validTime(_startTimeController.text)) ||
         (hasEndTime && !_validTime(_endTimeController.text))) {
       issues.add(
-        const _FormValidationIssue('startTime', 'Times must use HH:mm.'),
+        _FormValidationIssue('startTime', l10n.discountValidationTime),
       );
     }
     return issues;
@@ -1559,19 +1612,33 @@ class _CreateDiscountPolicyScreenState
       : value.length >= 5
       ? value.substring(0, 5)
       : value;
-  static String _scopeLabel(String scope) => switch (scope) {
-    'product' => 'Selected Products',
-    'category' => 'Selected Categories',
-    'bundle' => 'Package / Bundle',
-    _ => 'Entire Order',
+  String _weekdayLabel(String value) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return switch (value) {
+      'Mon' => l10n.discountWeekdayMonday,
+      'Tue' => l10n.discountWeekdayTuesday,
+      'Wed' => l10n.discountWeekdayWednesday,
+      'Thu' => l10n.discountWeekdayThursday,
+      'Fri' => l10n.discountWeekdayFriday,
+      'Sat' => l10n.discountWeekdaySaturday,
+      'Sun' => l10n.discountWeekdaySunday,
+      _ => value,
+    };
+  }
+
+  String _scopeLabel(String scope) => switch (scope) {
+    'product' => AppLocalizations.of(context).discountSelectedProducts,
+    'category' => AppLocalizations.of(context).discountSelectedCategories,
+    'bundle' => AppLocalizations.of(context).discountV2PackageBundle,
+    _ => AppLocalizations.of(context).discountEntireOrder,
   };
-  static String _currency(DiscountsState state) {
+  String _currency(DiscountsState state) {
     for (final branch in state.branches) {
       if (branch.isActive && branch.currency.trim().isNotEmpty) {
         return branch.currency;
       }
     }
-    return 'Currency';
+    return AppLocalizations.of(context).discountCurrency;
   }
 
   void _showMessage(String message) {
@@ -1598,23 +1665,27 @@ class _PageHeading extends StatelessWidget {
       AppBreadcrumbs(
         items: <AppBreadcrumbItem>[
           AppBreadcrumbItem(
-            label: 'Discounts',
+            label: AppLocalizations.of(context).discountsTitle,
             onTap: () => context.go(AppRoutes.discounts),
             key: const Key('breadcrumb-discounts'),
           ),
           AppBreadcrumbItem(
-            label: isEdit ? 'Edit Discount' : 'Create Discount',
+            label: isEdit
+                ? AppLocalizations.of(context).discountFormEdit
+                : AppLocalizations.of(context).discountFormCreate,
           ),
         ],
       ),
       const SizedBox(height: AppSpacing.xs),
       Text(
-        isEdit ? 'Edit Discount Policy' : 'Create Discount Policy',
+        isEdit
+            ? AppLocalizations.of(context).discountFormEditPolicy
+            : AppLocalizations.of(context).discountFormCreatePolicy,
         style: AppTextStyles.headlineMedium,
       ),
       const SizedBox(height: AppSpacing.xs),
       Text(
-        'Configure policy scope, eligibility, and schedule.',
+        AppLocalizations.of(context).discountFormHeadingSubtitle,
         style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
       ),
     ],
@@ -1764,7 +1835,7 @@ class _ReferenceSelector extends StatelessWidget {
         alignment: AlignmentDirectional.centerStart,
         child: Text(
           loading
-              ? 'Loading...'
+              ? AppLocalizations.of(context).discountFormLoading
               : names.isEmpty
               ? label
               : names.join(', '),
@@ -1802,7 +1873,7 @@ class _ReferencePickerState extends State<_ReferencePicker> {
       content: SizedBox(
         width: 420,
         child: widget.items.isEmpty
-            ? const Text('No active options are available.')
+            ? Text(l10n.discountFormNoOptions)
             : Column(
                 children: <Widget>[
                   if (widget.searchable)
@@ -1847,11 +1918,11 @@ class _ReferencePickerState extends State<_ReferencePicker> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.commonCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _selection),
-          child: const Text('Done'),
+          child: Text(l10n.discountFormDone),
         ),
       ],
     );
@@ -1916,13 +1987,16 @@ class _LoadError extends StatelessWidget {
   final VoidCallback onRetry;
   @override
   Widget build(BuildContext context) => DiscountFormSectionCard(
-    title: 'Unable to load discount',
+    title: AppLocalizations.of(context).discountFormLoadTitle,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(message),
         const SizedBox(height: AppSpacing.md),
-        OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+        OutlinedButton(
+          onPressed: onRetry,
+          child: Text(AppLocalizations.of(context).discountV2Retry),
+        ),
       ],
     ),
   );
@@ -1936,7 +2010,7 @@ class _ReferencesRetry extends StatelessWidget {
     padding: const EdgeInsets.only(top: AppSpacing.sm),
     child: TextButton(
       onPressed: onRetry,
-      child: const Text('Retry loading selection options'),
+      child: Text(AppLocalizations.of(context).discountFormRetryOptions),
     ),
   );
 }
