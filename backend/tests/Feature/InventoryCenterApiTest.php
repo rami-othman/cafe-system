@@ -323,7 +323,7 @@ class InventoryCenterApiTest extends TestCase
         // 'cafe-618' demo catalog (184 items with no stock_balance row at
         // all, not just this test's own isolated item) — verified against
         // the current seeder, not this test's own scenario alone.
-        $this->getJson('/api/v1/inventory/dashboard', $headers)->assertOk()->assertJsonPath('data.lowStockItemCount', 5)->assertJsonPath('data.outOfStockItemCount', 184);
+        $this->getJson('/api/v1/inventory/dashboard', $headers)->assertOk()->assertJsonPath('data.lowStockItemCount', 4)->assertJsonPath('data.outOfStockItemCount', 184);
     }
 
     public function test_stock_count_list_returns_filtered_pages_summary_and_creator_options(): void

@@ -98,7 +98,9 @@ class InventoryBalanceController extends Controller
         $previousTo = Carbon::parse($from)->subDay()->toDateString();
         $previousFrom = Carbon::parse($previousTo)->subDays($periodDays - 1)->toDateString();
         $base = DB::table('stock_balances as balances')->join('inventory_items as items', 'items.id', '=', 'balances.inventory_item_id')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('items.is_active', true)->whereNull('items.deleted_at')->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%');
-        InventoryAccess::assertBranchAccess($request, $branchId);
+        if ($branchId) {
+            InventoryAccess::assertBranchAccess($request, $branchId);
+        }
         if ($warehouseId) {
             InventoryAccess::assertBranchAccess($request, DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->value('branch_id'));
         }

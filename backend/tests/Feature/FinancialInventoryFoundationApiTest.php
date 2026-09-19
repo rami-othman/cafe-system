@@ -17,7 +17,8 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->seed();
         $tenantA = $this->demoTenantId();
         $tenantB = $this->createTenant('other-finance-tenant');
-        app(FinancialSetupService::class)->ensureForTenant($tenantB);
+        $branchB = (int) DB::table('branches')->where('tenant_id', $tenantB)->value('id');
+        app(FinancialSetupService::class)->ensureForTenant($tenantB, $branchB);
 
         $warehouse = $this->postJson('/api/v1/warehouses', $this->warehousePayload(), $this->headers($tenantA))->assertCreated();
         $accountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenantA)->where('code', '1010')->value('id');
