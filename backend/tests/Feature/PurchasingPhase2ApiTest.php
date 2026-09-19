@@ -396,7 +396,6 @@ class PurchasingPhase2ApiTest extends TestCase
         $tenant = $this->tenant('unified-purchase-post');
         $headers = $this->headers($tenant);
         $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
-        DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->update(['branch_id' => $branchId]);
         $supplierId = $this->supplier($headers);
         $warehouseId = $this->warehouse($headers);
         $itemId = $this->inventoryItem($headers, 'kg', [$warehouseId]);
@@ -503,7 +502,6 @@ class PurchasingPhase2ApiTest extends TestCase
         $tenant = $this->tenant('unified-non-inventory');
         $headers = $this->headers($tenant);
         $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
-        DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->update(['branch_id' => $branchId]);
         $supplierId = $this->supplier($headers);
         $categoryId = $this->expenseCategory($tenant, $headers, '6140');
         $fixedAssetId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1500')->value('id');
@@ -712,7 +710,6 @@ class PurchasingPhase2ApiTest extends TestCase
         $tenant = $this->tenant($slug);
         $headers = $this->headers($tenant);
         $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
-        DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->update(['branch_id' => $branchId]);
         $supplierId = $this->supplier($headers);
         $warehouseId = $this->warehouse($headers);
         $itemId = $this->inventoryItem($headers, 'kg', [$warehouseId]);

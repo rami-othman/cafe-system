@@ -28,6 +28,16 @@ class FinancialSetupService
             $issues[] = ['code' => 'CASH_BANK_DESTINATION_MISSING', 'severity' => 'critical', 'accountCodes' => []];
         }
 
+        $branchDrawerCounts = DB::table('financial_locations')->where('tenant_id', $tenantId)
+            ->where('kind', 'cash')->where('type', 'cash_drawer')->where('is_active', true)
+            ->whereNotNull('branch_id')->selectRaw('branch_id, COUNT(*) as drawer_count')
+            ->groupBy('branch_id')->pluck('drawer_count', 'branch_id');
+        $invalidBranchIds = DB::table('branches')->where('tenant_id', $tenantId)->where('is_active', true)
+            ->whereNull('deleted_at')->pluck('id')->filter(fn ($id) => (int) ($branchDrawerCounts[$id] ?? 0) !== 1)->values()->all();
+        if ($invalidBranchIds !== []) {
+            $issues[] = ['code' => 'BRANCH_CASH_DRAWER_INVALID', 'severity' => 'critical', 'branchIds' => $invalidBranchIds];
+        }
+
         $invalidMethods = DB::table('payment_methods as methods')
             ->leftJoin('financial_accounts as accounts', 'accounts.id', '=', 'methods.financial_account_id')
             ->leftJoin('financial_locations as locations', 'locations.id', '=', 'methods.financial_location_id')
@@ -93,6 +103,11 @@ class FinancialSetupService
             }
 
             $this->ensureCashAndBankDefaults($tenantId, $actorId);
+            $branchIds = DB::table('branches')->where('tenant_id', $tenantId)
+                ->where('is_active', true)->whereNull('deleted_at')->pluck('id');
+            foreach ($branchIds as $branchId) {
+                $this->ensureBranchCashDrawer($tenantId, (int) $branchId, $actorId);
+            }
             $this->ensureSalesDefaults($tenantId, $actorId);
             $this->ensureDefaultInvoiceTypes($tenantId);
 
@@ -200,12 +215,55 @@ class FinancialSetupService
             if (! $accountId) {
                 continue;
             }
+            if ($location['code'] === 'CASH-DRAWER' && DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'CASH-DRAWER')->exists()) {
+                continue;
+            }
             DB::table('financial_locations')->updateOrInsert(['tenant_id' => $tenantId, 'code' => $location['code']], ['branch_id' => null, 'financial_account_id' => $accountId, 'name' => $location['name'], 'kind' => $location['kind'], 'type' => $location['type'], 'bank_name' => null, 'masked_reference' => null, 'is_active' => true, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
         }
-        $drawerId = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'CASH-DRAWER')->value('id');
-        if ($drawerId && isset($accounts['1010'])) {
-            DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => $drawerId, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+        if (isset($accounts['1010'])) {
+            DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => null, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
         }
+    }
+
+    /** Keep an existing branch drawer's ID and account; never substitute the global legacy drawer. */
+    public function ensureBranchCashDrawer(int $tenantId, int $branchId, ?int $actorId = null): int
+    {
+        return DB::transaction(function () use ($tenantId, $branchId, $actorId): int {
+            $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)
+                ->where('is_active', true)->whereNull('deleted_at')->lockForUpdate()->first();
+            if (! $branch) {
+                throw new \RuntimeException("Active branch {$branchId} is unavailable for tenant {$tenantId}.");
+            }
+            $drawers = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
+                ->where('kind', 'cash')->where('type', 'cash_drawer')->get();
+            $active = $drawers->where('is_active', true);
+            if ($active->count() > 1) {
+                throw new \RuntimeException("Branch {$branchId} has multiple active cash drawers.");
+            }
+            if ($active->count() === 1) {
+                return (int) $active->first()->id;
+            }
+            if ($drawers->count() > 1) {
+                throw new \RuntimeException("Branch {$branchId} has ambiguous inactive cash drawers.");
+            }
+            if ($drawers->count() === 1) {
+                $id = (int) $drawers->first()->id;
+                DB::table('financial_locations')->where('id', $id)->update(['is_active' => true, 'updated_by' => $actorId, 'updated_at' => now()]);
+                return $id;
+            }
+            $accountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1010')
+                ->where('is_active', true)->whereNull('deleted_at')->value('id');
+            if (! $accountId) {
+                throw new \RuntimeException("Tenant {$tenantId} has no active cash account 1010.");
+            }
+            return (int) DB::table('financial_locations')->insertGetId([
+                'tenant_id' => $tenantId, 'branch_id' => $branchId, 'financial_account_id' => $accountId,
+                'code' => 'CASH-DRAWER-BR-'.$branchId, 'name' => $branch->name.' Cash Drawer',
+                'kind' => 'cash', 'type' => 'cash_drawer', 'bank_name' => null, 'masked_reference' => null,
+                'is_active' => true, 'created_by' => $actorId, 'updated_by' => $actorId,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        });
     }
 
     /**
@@ -221,6 +279,9 @@ class FinancialSetupService
         $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->first();
         if (! $branch) {
             return;
+        }
+        if ($branch->is_active) {
+            $this->ensureBranchCashDrawer($tenantId, $branchId, $actorId);
         }
         if (DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->whereNull('deleted_at')->exists()) {
             return;

@@ -54,7 +54,7 @@ class BranchController extends Controller
         return new BranchResource($this->withPosWarehouses($this->branch($request, $branch)));
     }
 
-    public function update(UpdateBranchRequest $request, int $branch, PosInventoryWarehouseResolver $posWarehouses): BranchResource
+    public function update(UpdateBranchRequest $request, int $branch, PosInventoryWarehouseResolver $posWarehouses, FinancialSetupService $financialSetup): BranchResource
     {
         $branch = $this->branch($request, $branch);
         $data = $request->validated();
@@ -63,7 +63,12 @@ class BranchController extends Controller
             $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];
             unset($data['posInventoryWarehouseId']);
         }
-        $branch->update($data);
+        DB::transaction(function () use ($branch, $data, $financialSetup, $request): void {
+            $branch->update($data);
+            if ($branch->is_active) {
+                $financialSetup->ensureBranchCashDrawer((int) $branch->tenant_id, (int) $branch->id, $request->attributes->get('auth_user')->id);
+            }
+        });
 
         return new BranchResource($this->withPosWarehouses($branch->fresh()));
     }

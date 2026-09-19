@@ -28,16 +28,20 @@ final class PurchaseCashSourceResolver
             throw ValidationException::withMessages(['shift' => 'يجب فتح وردية قبل ترحيل فاتورة شراء نقدية.']);
         }
 
+        $locations = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
+            ->where('kind', 'cash')->where('type', 'cash_drawer')->where('is_active', true)->get();
+        if ($locations->count() !== 1) {
+            throw ValidationException::withMessages(['cashSource' => 'The branch must have exactly one active cash drawer.']);
+        }
+        $branchDrawerId = (int) $locations->first()->id;
         $location = null;
         if ($shift?->financial_location_id) {
             $location = $this->location($tenantId, (int) $shift->financial_location_id, $branchId, $lock);
-        } else {
-            $locations = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
-                ->where('kind', 'cash')->where('type', 'cash_drawer')->where('is_active', true)->get();
-            if ($locations->count() !== 1) {
-                throw ValidationException::withMessages(['cashSource' => 'لا يمكن ترحيل فاتورة الشراء لأنه لا يوجد صندوق نقدي/وردية مفتوحة صالحة لهذا المستخدم.']);
+            if ((int) ($location?->id ?? 0) !== $branchDrawerId) {
+                throw ValidationException::withMessages(['cashSource' => 'The open shift is linked to a different cash drawer.']);
             }
-            $location = $this->location($tenantId, (int) $locations->first()->id, $branchId, $lock);
+        } else {
+            $location = $this->location($tenantId, $branchDrawerId, $branchId, $lock);
             if ($shift) {
                 DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift->id)->update([
                     'financial_location_id' => $location->id,
@@ -68,7 +72,7 @@ final class PurchaseCashSourceResolver
     {
         $query = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
             ->where('l.tenant_id', $tenantId)->where('l.id', $id)->where('l.branch_id', $branchId)
-            ->where('l.kind', 'cash')->where('l.is_active', true)->where('a.is_active', true)->whereNull('a.deleted_at')
+            ->where('l.kind', 'cash')->where('l.type', 'cash_drawer')->where('l.is_active', true)->where('a.is_active', true)->whereNull('a.deleted_at')
             ->select('l.*', 'a.code as account_code');
         if ($lock) {
             $query->lockForUpdate();
