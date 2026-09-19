@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -30,19 +31,25 @@ class PosActionButtons extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              child: _SecondaryActionButton(label: 'HOLD', onPressed: onHold),
+              child: _SecondaryActionButton(
+                label: context.l10n.posHoldOrder,
+                onPressed: onHold,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _SecondaryActionButton(
-                label: 'CANCEL',
+                label: context.l10n.posCancelOrder,
                 foreground: AppColors.dangerStrong,
                 onPressed: onCancel,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: _SecondaryActionButton(label: 'PRINT', onPressed: () {}),
+              child: _SecondaryActionButton(
+                label: context.l10n.posPrint,
+                onPressed: () {},
+              ),
             ),
           ],
         ),
@@ -68,8 +75,8 @@ class PosActionButtons extends StatelessWidget {
             ),
             child: Text(
               total == 0
-                  ? 'COMPLETE ORDER'
-                  : 'PAY ${CurrencyFormatter.format(total)}',
+                  ? context.l10n.posCompleteOrder
+                  : context.l10n.posPayAmount(CurrencyFormatter.format(total)),
             ),
           ),
         ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/order_type.dart';
+import 'pos_localization.dart';
 
 class OrderTypeSelector extends StatelessWidget {
   const OrderTypeSelector({
@@ -37,7 +39,7 @@ class OrderTypeSelector extends StatelessWidget {
           for (int index = 0; index < _types.length; index += 1)
             Expanded(
               child: _OrderTypeSegment(
-                label: _types[index].label,
+                label: _types[index].localizedLabel(context.l10n),
                 isActive: _types[index] == selectedOrderType,
                 onTap: () => onOrderTypeSelected(_types[index]),
               ),

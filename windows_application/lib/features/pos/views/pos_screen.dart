@@ -21,6 +21,7 @@ import '../models/product_customization.dart';
 import '../widgets/product_customization_dialog.dart';
 import '../widgets/pos_product_area.dart';
 import '../widgets/receipt_preview_dialog.dart';
+import '../widgets/pos_localization.dart';
 
 class PosScreen extends StatefulWidget {
   const PosScreen({super.key});
@@ -158,7 +159,7 @@ class _PosScreenState extends State<PosScreen> {
                     _localizedPosMessage(context, errorMessage) ??
                         (state.requiresMenuRefresh
                             ? context.l10n.posMenuRefreshRequired
-                            : errorMessage),
+                            : localizedPosFailure(context.l10n, errorMessage)),
                   ),
                 ),
               );
@@ -167,9 +168,9 @@ class _PosScreenState extends State<PosScreen> {
             if (state.receiptErrorMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.receiptErrorMessage!),
+                  content: Text(context.l10n.posReceiptUnavailable),
                   action: SnackBarAction(
-                    label: 'Retry Receipt',
+                    label: context.l10n.posRetryReceipt,
                     onPressed: () =>
                         context.read<PosCubit>().retryPendingReceipt(),
                   ),
@@ -180,9 +181,9 @@ class _PosScreenState extends State<PosScreen> {
             if (state.uncertainPaymentMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.uncertainPaymentMessage!),
+                  content: Text(context.l10n.posPaymentUncertain),
                   action: SnackBarAction(
-                    label: 'Check Payment Status',
+                    label: context.l10n.posCheckPaymentStatus,
                     onPressed: () =>
                         context.read<PosCubit>().checkUncertainPaymentStatus(),
                   ),
@@ -399,7 +400,7 @@ class _PosScreenState extends State<PosScreen> {
       await showGeneralDialog<ProductCustomization>(
         context: context,
         barrierDismissible: true,
-        barrierLabel: 'Close customization dialog',
+        barrierLabel: context.l10n.posCloseCustomizationDialog,
         barrierColor: AppColors.black.withValues(alpha: 0.4),
         transitionDuration: const Duration(milliseconds: 160),
         pageBuilder:
@@ -434,16 +435,16 @@ class _PosScreenState extends State<PosScreen> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Product options unavailable'),
-          content: Text(message),
+          title: Text(context.l10n.posProductOptionsUnavailable),
+          content: Text(localizedPosFailure(context.l10n, message)),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.posCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Retry'),
+              child: Text(context.l10n.posRetry),
             ),
           ],
         );

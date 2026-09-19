@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -33,20 +34,20 @@ class OrderTotalsPanel extends StatelessWidget {
     return Column(
       children: <Widget>[
         _TotalLine(
-          label: 'Subtotal',
+          label: context.l10n.posSubtotal,
           value: CurrencyFormatter.format(subtotal),
         ),
         if (appliedDiscount != null) ...<Widget>[
           const SizedBox(height: AppSpacing.xs),
           _DiscountLine(
-            label: 'Discount',
+            label: context.l10n.posDiscount,
             value: '-${CurrencyFormatter.format(discountTotal)}',
             onRemoveDiscount: onRemoveDiscount,
           ),
         ],
         const SizedBox(height: AppSpacing.xs),
         _TotalLine(
-          label: TaxFormatter.taxLabel(taxRate),
+          label: context.l10n.posTax(TaxFormatter.percentLabel(taxRate)),
           value: CurrencyFormatter.format(tax),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -60,7 +61,7 @@ class OrderTotalsPanel extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Total',
+                    context.l10n.posTotal,
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: AppColors.primary,
                       fontSize: 24,
@@ -130,7 +131,7 @@ class _DiscountLine extends StatelessWidget {
               vertical: AppSpacing.xs,
             ),
             child: Text(
-              'Remove',
+              context.l10n.posRemoveDiscount,
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w800,

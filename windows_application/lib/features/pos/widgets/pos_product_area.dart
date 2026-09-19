@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../models/pos_product.dart';
@@ -151,6 +152,9 @@ class _ProductAreaEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Text(message ?? 'No items available.', textAlign: TextAlign.center),
+    child: Text(
+      message ?? context.l10n.posNoItemsAvailable,
+      textAlign: TextAlign.center,
+    ),
   );
 }

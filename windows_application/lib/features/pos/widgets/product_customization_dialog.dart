@@ -2,6 +2,7 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -530,7 +531,7 @@ class _BackendModifiersColumn extends StatelessWidget {
           children: <Widget>[
             if (publishedVariants.length > 1) ...<Widget>[
               CustomizationSection(
-                title: 'Variant',
+                title: context.l10n.posVariant,
                 trailing: const _RequiredLabel(),
                 child: _SelectionCard(
                   children: <Widget>[
@@ -568,7 +569,7 @@ class _BackendModifiersColumn extends StatelessWidget {
               const SizedBox(height: AppSpacing.xxl),
             ],
             CustomizationSection(
-              title: 'Special Instructions',
+              title: context.l10n.posSpecialInstructions,
               child: _InstructionsField(controller: instructionsController),
             ),
           ],
@@ -721,7 +722,7 @@ class _DialogHeader extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              'Customize Item',
+              context.l10n.posCustomizeItem,
               style: AppTextStyles.headlineMedium.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
@@ -732,7 +733,7 @@ class _DialogHeader extends StatelessWidget {
             onPressed: onClose,
             icon: const Icon(Icons.close),
             color: AppColors.primary,
-            tooltip: 'Close',
+            tooltip: context.l10n.posClose,
           ),
         ],
       ),
@@ -759,7 +760,8 @@ class _ProductInfoColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String selectedVariantName = selectedVariant?.name.resolve(
+    final String selectedVariantName =
+        selectedVariant?.name.resolve(
           Localizations.localeOf(context).languageCode,
         ) ??
         product.size;
@@ -826,7 +828,7 @@ class _ProductInfoColumn extends StatelessWidget {
             Text(
               product.description?.trim().isNotEmpty == true
                   ? product.description!.trim()
-                  : 'A classic Italian espresso-based beverage with steamed milk and a thick layer of micro-foam.',
+                  : context.l10n.posProductDescriptionFallback,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
                 fontWeight: FontWeight.w400,
@@ -834,8 +836,14 @@ class _ProductInfoColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              '$selectedVariantName base - '
-              '${CurrencyFormatter.formatForContext(context, selectedVariantPrice, currencyCode: product.currencyCode ?? 'SYP')}',
+              context.l10n.posBasePrice(
+                selectedVariantName,
+                CurrencyFormatter.formatForContext(
+                  context,
+                  selectedVariantPrice,
+                  currencyCode: product.currencyCode ?? 'SYP',
+                ),
+              ),
               style: AppTextStyles.labelMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -891,14 +899,16 @@ class _ModifiersColumn extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             CustomizationSection(
-              title: 'Temperature',
+              title: context.l10n.posTemperature,
               child: _ResponsiveOptionGrid(
                 itemCount: 2,
                 minTileWidth: 160,
                 itemBuilder: (BuildContext context, int index) {
                   final String option = index == 0 ? 'Hot' : 'Iced';
                   return CustomizationOptionTile(
-                    label: option,
+                    label: index == 0
+                        ? context.l10n.posHot
+                        : context.l10n.posIced,
                     icon: index == 0
                         ? Icons.local_fire_department_outlined
                         : Icons.ac_unit_outlined,
@@ -910,7 +920,7 @@ class _ModifiersColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxl),
             CustomizationSection(
-              title: 'Size',
+              title: context.l10n.posSize,
               trailing: const _RequiredLabel(),
               child: _SelectionCard(
                 children: <Widget>[
@@ -926,7 +936,7 @@ class _ModifiersColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxl),
             CustomizationSection(
-              title: 'Milk Base',
+              title: context.l10n.posMilkBase,
               child: _ResponsiveOptionGrid(
                 itemCount: _ProductCustomizationDialogState.milkOptions.length,
                 minTileWidth: 120,
@@ -934,9 +944,11 @@ class _ModifiersColumn extends StatelessWidget {
                   final ProductModifierOption option =
                       _ProductCustomizationDialogState.milkOptions[index];
                   return CustomizationOptionTile(
-                    label: option.label,
+                    label: _localizedModifierLabel(context, option),
                     helperLabel:
-                        option.helperLabel ??
+                        (option.helperLabel == 'Default'
+                            ? context.l10n.posDefault
+                            : option.helperLabel) ??
                         _formatPriceDelta(option.priceDelta),
                     isSelected: option == selectedMilk,
                     onTap: () => onMilkSelected(option),
@@ -946,7 +958,7 @@ class _ModifiersColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxl),
             CustomizationSection(
-              title: 'Add-ons',
+              title: context.l10n.posAddOns,
               child: _SelectionCard(
                 children: <Widget>[
                   for (final ProductModifierOption option
@@ -961,7 +973,7 @@ class _ModifiersColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxl),
             CustomizationSection(
-              title: 'Sweetness',
+              title: context.l10n.posSweetness,
               child: CustomizationSegmentedSelector(
                 options: _ProductCustomizationDialogState.sweetnessOptions,
                 selectedOption: sweetness,
@@ -970,7 +982,7 @@ class _ModifiersColumn extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xxl),
             CustomizationSection(
-              title: 'Special Instructions',
+              title: context.l10n.posSpecialInstructions,
               child: _InstructionsField(controller: instructionsController),
             ),
           ],
@@ -1080,7 +1092,7 @@ class _SingleSelectRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
-                  option.label,
+                  _localizedModifierLabel(context, option),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.labelLarge.copyWith(
@@ -1133,7 +1145,7 @@ class _MultiSelectRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
-                  option.label,
+                  _localizedModifierLabel(context, option),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.labelLarge.copyWith(
@@ -1192,7 +1204,7 @@ class _InstructionsField extends StatelessWidget {
           disabledBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
           isCollapsed: true,
-          hintText: 'E.g., Extra hot, in a to-go cup...',
+          hintText: context.l10n.posSpecialInstructionsHint,
           hintStyle: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textMuted,
             fontWeight: FontWeight.w400,
@@ -1210,7 +1222,7 @@ class _RequiredLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Required',
+      context.l10n.posRequired,
       style: AppTextStyles.labelSmall.copyWith(
         color: AppColors.tertiary,
         fontWeight: FontWeight.w800,
@@ -1254,7 +1266,7 @@ class _DialogFooter extends StatelessWidget {
           TextButton(
             onPressed: onCancel,
             child: Text(
-              'Cancel',
+              context.l10n.posCancel,
               style: AppTextStyles.buttonMedium.copyWith(
                 color: AppColors.primary,
               ),
@@ -1270,7 +1282,11 @@ class _DialogFooter extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.shopping_cart_outlined),
-            label: Text(isSubmitting ? 'Adding...' : 'Add to Order'),
+            label: Text(
+              isSubmitting
+                  ? context.l10n.posAdding
+                  : context.l10n.posAddToOrder,
+            ),
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, AppSizes.buttonHeight),
               backgroundColor: AppColors.tertiary,
@@ -1296,3 +1312,20 @@ String _formatPriceDelta(double amount) {
   final String formatted = CurrencyFormatter.format(amount.abs());
   return amount > 0 ? '+$formatted' : '-$formatted';
 }
+
+String _localizedModifierLabel(
+  BuildContext context,
+  ProductModifierOption option,
+) => switch (option.id) {
+  'small' => context.l10n.posSmallSize,
+  'medium' => context.l10n.posMediumSize,
+  'large' => context.l10n.posLargeSize,
+  'whole' => context.l10n.posWholeMilk,
+  'oat' => context.l10n.posOatMilk,
+  'almond' => context.l10n.posAlmondMilk,
+  'extra-espresso' => context.l10n.posExtraEspresso,
+  'caramel' => context.l10n.posCaramelSyrup,
+  'vanilla' => context.l10n.posVanillaSyrup,
+  'whipped-cream' => context.l10n.posWhippedCream,
+  _ => option.label,
+};

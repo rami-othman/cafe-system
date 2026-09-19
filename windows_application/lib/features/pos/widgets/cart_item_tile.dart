@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -92,7 +93,7 @@ class CartItemTile extends StatelessWidget {
                   width: AppSizes.quantityButtonSize,
                   height: AppSizes.quantityButtonSize,
                 ),
-                tooltip: 'Remove item',
+                tooltip: context.l10n.posRemoveItem,
               ),
               QuantityStepper(
                 quantity: item.quantity,

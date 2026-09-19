@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -117,7 +118,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     final String code = _couponController.text.trim().toUpperCase();
 
     if (code.isEmpty) {
-      _showValidation('Enter a coupon code.');
+      _showValidation(context.l10n.posCouponCodeRequired);
       return;
     }
 
@@ -126,7 +127,7 @@ class _DiscountDialogState extends State<DiscountDialog> {
     Navigator.of(context).pop<AppliedDiscount>(
       AppliedDiscount(
         id: 'coupon:$code',
-        title: 'Coupon discount',
+        title: context.l10n.posCouponDiscount,
         type: AppliedDiscountType.fixedAmount,
         value: 0,
         code: code,
@@ -178,7 +179,7 @@ class _DialogHeader extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              'Apply Discount',
+              context.l10n.posApplyDiscount,
               style: AppTextStyles.headlineMedium.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
@@ -189,7 +190,7 @@ class _DialogHeader extends StatelessWidget {
             onPressed: onClose,
             icon: const Icon(Icons.close),
             color: AppColors.primary,
-            tooltip: 'Close',
+            tooltip: context.l10n.posClose,
           ),
         ],
       ),
@@ -210,7 +211,7 @@ class _DialogBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'COUPON CODE',
+            context.l10n.posCouponCode,
             style: AppTextStyles.labelSmall.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w800,
@@ -229,7 +230,7 @@ class _DialogBody extends StatelessWidget {
           const Divider(height: 1, color: AppColors.border),
           const SizedBox(height: AppSpacing.xl),
           Text(
-            'Available Discounts',
+            context.l10n.posAvailableDiscounts,
             style: AppTextStyles.titleMedium.copyWith(
               color: AppColors.primary,
               fontSize: 18,
@@ -240,7 +241,7 @@ class _DialogBody extends StatelessWidget {
           AppTextField(
             key: const Key('pos-discount-search-field'),
             controller: state._searchController,
-            hintText: 'Search discounts',
+            hintText: context.l10n.posSearchDiscounts,
             prefixIcon: Icons.search,
             onChanged: state._updateSearch,
           ),
@@ -248,8 +249,8 @@ class _DialogBody extends StatelessWidget {
           if (state._filteredDiscounts.isEmpty)
             Text(
               state._searchQuery.trim().isEmpty
-                  ? 'No discounts are available for this order.'
-                  : 'No discounts match your search.',
+                  ? context.l10n.posNoDiscountsAvailable
+                  : context.l10n.posNoDiscountsMatch,
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -330,7 +331,7 @@ class _DialogFooter extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             ),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.posCancel),
           ),
         ],
       ),

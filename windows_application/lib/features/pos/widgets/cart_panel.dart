@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_empty_state.dart';
@@ -14,12 +15,15 @@ class CartPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Current Order', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            context.l10n.posCurrentOrder,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.lg),
-          const Expanded(
+          Expanded(
             child: AppEmptyState(
               icon: Icons.shopping_cart_outlined,
-              message: 'No items added yet',
+              message: context.l10n.posNoCartItems,
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
