@@ -21,6 +21,7 @@ class UpdateBranchRequest extends FormRequest
             'phone' => ['sometimes', 'nullable', 'string', 'max:255'],
             'timezone' => ['sometimes', 'required', 'string', 'timezone:all'],
             'posInventoryWarehouseId' => ['sometimes', 'nullable', 'integer'],
+            'posCashFinancialLocationId' => ['sometimes', 'required', 'integer'],
             'tenantId' => ['prohibited'],
             'tenant_id' => ['prohibited'],
             'ownerId' => ['prohibited'],

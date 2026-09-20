@@ -77,9 +77,8 @@ class ShiftController extends Controller
         $shift = DB::transaction(function () use ($tenantId, $data, $actor): object {
             DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
             $now = now();
-            $drawerIds = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('branch_id', $data['branchId'])
-                ->where('kind', 'cash')->where('type', 'cash_drawer')->where('is_active', true)->pluck('id');
-            $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawerIds->count() === 1 ? $drawerIds->first() : null, 'shift_number' => $this->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
+            $drawer = app(\App\Services\BranchPosCashDrawer::class)->resolve($tenantId, (int) $data['branchId'], true);
+            $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'shift_number' => $this->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
 
             return DB::table('shifts')->where('id', $id)->first();
         });

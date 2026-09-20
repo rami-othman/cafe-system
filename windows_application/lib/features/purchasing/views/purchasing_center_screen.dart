@@ -28,7 +28,7 @@ class PurchasingCenterScreen extends StatefulWidget {
 }
 
 class _PurchasingCenterScreenState extends State<PurchasingCenterScreen> {
-  int _tab = 0;
+  int _tab = 1;
 
   @override
   Widget build(BuildContext context) => FinanceShell(
@@ -579,6 +579,7 @@ class _PurchasesTable extends StatelessWidget {
       'التاريخ',
       'المورد',
       'الفرع',
+      'المخزن',
       'نوع الشراء',
       'الإجمالي',
       'المدفوع',
@@ -588,7 +589,7 @@ class _PurchasesTable extends StatelessWidget {
       'حالة المستند',
       'أنشأ بواسطة',
     ],
-    minWidth: 1480,
+    minWidth: 1560,
     onRowTap: (int index) => onOpen(rows[index]),
     rows: rows
         .map(
@@ -607,6 +608,7 @@ class _PurchasesTable extends StatelessWidget {
             Text(p.invoiceDate, style: FinanceText.small),
             Text(p.supplierName, style: FinanceText.body),
             Text(p.branchName ?? 'كل الفروع', style: FinanceText.small),
+            Text(p.warehouseName ?? '—', style: FinanceText.small),
             PurchaseTypeBadge(purchaseType: p.purchaseType),
             FinanceAmount(value: p.totalAmount),
             FinanceAmount(value: p.paidAmount),

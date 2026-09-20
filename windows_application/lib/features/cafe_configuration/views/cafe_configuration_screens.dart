@@ -217,6 +217,7 @@ class _CafeProfileScreenState extends State<CafeProfileScreen> {
                             cubit.update(state.draft.copyWith(timezone: v)),
                       ),
                     ),
+
                     const SizedBox(height: AppSpacing.xl),
                     const Divider(),
                     const SizedBox(height: AppSpacing.lg),
@@ -497,6 +498,33 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                     const SizedBox(height: AppSpacing.xl),
                     const Divider(),
                     const SizedBox(height: AppSpacing.lg),
+                    if (state.branch != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.xl),
+                      const Divider(),
+                      const SizedBox(height: AppSpacing.lg),
+                      const Text('إعدادات الصندوق'),
+                      const SizedBox(height: AppSpacing.sm),
+                      DropdownButtonFormField<int>(
+                        key: const Key('branch-pos-cash-drawer'),
+                        initialValue: state.branch!.availablePosCashLocations.any(
+                          (location) => location.id == state.draft.posCashFinancialLocationId,
+                        ) ? state.draft.posCashFinancialLocationId : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'صندوق نقطة البيع'),
+                        items: state.branch!.availablePosCashLocations.map(
+                          (location) => DropdownMenuItem<int>(
+                            value: location.id,
+                            child: Text(location.name, overflow: TextOverflow.ellipsis),
+                          ),
+                        ).toList(growable: false),
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(posCashFinancialLocationId: value),
+                        ),
+                      ),
+                      if (state.branch!.posCashFinancialLocationId == null)
+                        const Text('لم يتم تحديد صندوق نقطة البيع لهذا الفرع.'),
+                      _FieldError(state.errors['posCashFinancialLocationId']),
+                    ],
                     _Fact(
                       label: c.currency,
                       value: state.branch?.currency ?? 'SYP',

@@ -218,21 +218,98 @@ void main() {
     },
   );
 
-  testWidgets('approved detail pays through the real flow with the accounting impact preview', (
+  testWidgets(
+    'cashier expense payment: cash drawer is resolved from the shift and shown read-only',
+    (WidgetTester tester) async {
+      Map<String, dynamic>? paid;
+      serviceLocator.registerLazySingleton<FinanceSetupRepository>(
+        () => _FakeRepository(
+          expenseRows: <Map<String, dynamic>>[
+            _approvedRow(allowedActions: const <String>['pay'], branchId: 2),
+          ],
+          categories: <ExpenseCategory>[_rentCategory()],
+          paymentMethods: <PaymentMethodSetting>[_cashMethod()],
+          cashOptions: _shiftCashOptions(),
+          onPay: (int id, Map<String, dynamic> payload) async {
+            paid = payload;
+          },
+        ),
+      );
+      await pumpScreen(tester);
+
+      await tester.tap(find.text('صيانة القهوة'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تسجيل دفعة'));
+      await tester.pumpAndSettle();
+
+      // Resolved from the shift: shown read-only, never a dropdown.
+      expect(find.text('صندوق الوردية: صندوق الوردية'), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<int>), findsOneWidget); // payment method only
+
+      expect(find.text('الأثر المحاسبي المتوقع'), findsOneWidget);
+      await tester.tap(find.text('ترحيل الدفع'));
+      await tester.pumpAndSettle();
+
+      expect(paid, isNotNull);
+      expect(paid!['paymentMethodId'], _cashMethod().id);
+      // Shift mode omits financialLocationId — the backend re-resolves it.
+      expect(paid!.containsKey('financialLocationId'), isFalse);
+    },
+  );
+
+  testWidgets(
+    'manager expense payment: authorized cash drawers are offered in a dropdown',
+    (WidgetTester tester) async {
+      Map<String, dynamic>? paid;
+      serviceLocator.registerLazySingleton<FinanceSetupRepository>(
+        () => _FakeRepository(
+          expenseRows: <Map<String, dynamic>>[
+            _approvedRow(allowedActions: const <String>['pay'], branchId: 2),
+          ],
+          categories: <ExpenseCategory>[_rentCategory()],
+          paymentMethods: <PaymentMethodSetting>[_cashMethod()],
+          cashOptions: _selectableCashOptions(),
+          onPay: (int id, Map<String, dynamic> payload) async {
+            paid = payload;
+          },
+        ),
+      );
+      await pumpScreen(tester);
+
+      await tester.tap(find.text('صيانة القهوة'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تسجيل دفعة'));
+      await tester.pumpAndSettle();
+
+      // Manager must pick a drawer — submitting without one is blocked.
+      await tester.tap(find.text('ترحيل الدفع'));
+      await tester.pumpAndSettle();
+      expect(find.text('يرجى اختيار الصندوق.'), findsOneWidget);
+      expect(paid, isNull);
+
+      await tester.tap(find.byType(DropdownButtonFormField<int>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('صندوق الفرع الرئيسي').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ترحيل الدفع'));
+      await tester.pumpAndSettle();
+
+      expect(paid, isNotNull);
+      expect(paid!['paymentMethodId'], _cashMethod().id);
+      expect(paid!['financialLocationId'], 9);
+    },
+  );
+
+  testWidgets('expense payment cannot proceed without a branch on the expense', (
     WidgetTester tester,
   ) async {
-    Map<String, dynamic>? paid;
     serviceLocator.registerLazySingleton<FinanceSetupRepository>(
       () => _FakeRepository(
         expenseRows: <Map<String, dynamic>>[
-          _approvedRow(allowedActions: const <String>['pay']),
+          _approvedRow(allowedActions: const <String>['pay'], branchId: null),
         ],
         categories: <ExpenseCategory>[_rentCategory()],
         paymentMethods: <PaymentMethodSetting>[_cashMethod()],
-        locations: <FinancialLocation>[_cashDrawer()],
-        onPay: (int id, Map<String, dynamic> payload) async {
-          paid = payload;
-        },
       ),
     );
     await pumpScreen(tester);
@@ -242,13 +319,7 @@ void main() {
     await tester.tap(find.text('تسجيل دفعة'));
     await tester.pumpAndSettle();
 
-    expect(find.text('الأثر المحاسبي المتوقع'), findsOneWidget);
-    await tester.tap(find.text('ترحيل الدفع'));
-    await tester.pumpAndSettle();
-
-    expect(paid, isNotNull);
-    expect(paid!['paymentMethodId'], _cashMethod().id);
-    expect(paid!['financialLocationId'], _cashDrawer().id);
+    expect(find.text('لا يمكن الدفع لمصروف بدون فرع محدد.'), findsOneWidget);
   });
 
   testWidgets('paid expense is immutable and its journal action opens the shared journal drawer', (
@@ -416,11 +487,12 @@ Map<String, dynamic> _pendingRow({required List<String> allowedActions}) => <Str
   'allowedActions': allowedActions,
 };
 
-Map<String, dynamic> _approvedRow({required List<String> allowedActions}) => <String, dynamic>{
+Map<String, dynamic> _approvedRow({required List<String> allowedActions, int? branchId}) =>
+    <String, dynamic>{
   'id': 3,
   'expenseNumber': 'EXP-000003',
-  'branchId': null,
-  'branchName': null,
+  'branchId': branchId,
+  'branchName': branchId == null ? null : 'فرع دمشق',
   'expenseCategoryId': 4,
   'expenseCategoryCode': 'RENT',
   'expenseCategoryName': 'Rent',
@@ -473,18 +545,16 @@ PaymentMethodSetting _cashMethod() => const PaymentMethodSetting(
   isActive: true,
 );
 
-FinancialLocation _cashDrawer() => const FinancialLocation(
-  id: 3,
-  code: 'CASH-DRAWER',
-  name: 'Cash Drawer',
-  kind: 'cash',
-  type: 'cash_drawer',
-  financialAccountId: 2,
-  financialAccountCode: '1010',
-  balance: '500.00',
-  todayIncoming: '0.00',
-  todayOutgoing: '0.00',
-  isActive: true,
+CashSourceOptions _shiftCashOptions() => const CashSourceOptions(
+  mode: 'shift',
+  resolved: CashSourceLocation(id: 3, name: 'صندوق الوردية'),
+  allowed: <CashSourceLocation>[],
+);
+
+CashSourceOptions _selectableCashOptions() => const CashSourceOptions(
+  mode: 'selectable',
+  resolved: null,
+  allowed: <CashSourceLocation>[CashSourceLocation(id: 9, name: 'صندوق الفرع الرئيسي')],
 );
 
 typedef _SaveCallback = Future<void> Function(Map<String, dynamic> payload, int? id);
@@ -498,7 +568,7 @@ class _FakeRepository extends FinanceSetupRepository {
     this.branchRows = const <Map<String, dynamic>>[],
     this.summary = const <String, dynamic>{},
     this.paymentMethods = const <PaymentMethodSetting>[],
-    this.locations = const <FinancialLocation>[],
+    this.cashOptions,
     this.detail,
     this.onAction,
     this.onPay,
@@ -513,7 +583,7 @@ class _FakeRepository extends FinanceSetupRepository {
   final List<Map<String, dynamic>> branchRows;
   final Map<String, dynamic> summary;
   final List<PaymentMethodSetting> paymentMethods;
-  final List<FinancialLocation> locations;
+  final CashSourceOptions? cashOptions;
   final Map<String, dynamic> Function(int id)? detail;
   final _ActionCallback? onAction;
   final _PayCallback? onPay;
@@ -530,7 +600,11 @@ class _FakeRepository extends FinanceSetupRepository {
 
   @override
   Future<List<FinancialLocation>> getFinancialLocations(String kind) async =>
-      locations.where((FinancialLocation l) => l.kind == kind).toList();
+      const <FinancialLocation>[];
+
+  @override
+  Future<CashSourceOptions> getCashSourceOptions(int branchId) async =>
+      cashOptions ?? _shiftCashOptions();
 
   @override
   Future<FinancePage<Map<String, dynamic>>> getFinancePage(

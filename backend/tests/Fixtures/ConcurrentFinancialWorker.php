@@ -14,16 +14,24 @@ $payload = json_decode((string) base64_decode((string) $encodedPayload), true, 5
 
 // A worker is deliberately an independent Laravel/PDO process. Never inherit
 // the local development database when this fixture is launched outside PHPUnit.
+// The parent test process passes its actual (possibly isolated) testing
+// database via the environment so the worker commits to the same database
+// the parent's fixtures live in.
+$expectedDatabase = getenv('DB_DATABASE') ?: null;
+if ($expectedDatabase === null) {
+    throw new RuntimeException('Concurrent worker requires DB_DATABASE from its parent process.');
+}
+
 putenv('APP_ENV=testing');
 putenv('DB_CONNECTION=pgsql');
-putenv('DB_DATABASE=cafe_system_618_testing');
+putenv('DB_DATABASE='.$expectedDatabase);
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 
 $app = require dirname(__DIR__, 2).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
-if (config('database.default') !== 'pgsql' || config('database.connections.pgsql.database') !== 'cafe_system_618_testing') {
+if (config('database.default') !== 'pgsql' || config('database.connections.pgsql.database') !== $expectedDatabase || ! str_contains($expectedDatabase, 'testing')) {
     throw new RuntimeException('Concurrent worker refused a non-testing PostgreSQL connection.');
 }
 

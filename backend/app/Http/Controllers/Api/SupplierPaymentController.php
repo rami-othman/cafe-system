@@ -53,7 +53,7 @@ class SupplierPaymentController extends Controller
             'paymentDate' => ['required', 'date'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
             'externalReference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['required', 'string', 'max:120'],

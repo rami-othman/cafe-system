@@ -67,9 +67,13 @@ class SupplierInvoiceService
             }
             $totals = $this->resolveTotals($tenantId, $data, $built);
 
+            $supplierCode = (string) DB::table('suppliers')->where('tenant_id', $tenantId)
+                ->where('id', $data['supplierId'])->value('supplier_number');
+
             $id = (int) DB::table('supplier_invoices')->insertGetId($this->draftPayload($data, $debitAccountId, $totals) + [
                 'tenant_id' => $tenantId,
                 'internal_reference' => $this->nextReference($tenantId),
+                'supplier_internal_reference' => $this->numbers->nextSupplierInvoiceNumber($tenantId, (int) $data['supplierId'], $supplierCode),
                 'status' => 'draft',
                 'idempotency_key' => $key,
                 'idempotency_fingerprint' => $fingerprint,
@@ -96,6 +100,9 @@ class SupplierInvoiceService
             $this->assertBranch($actorId, $tenantId, $before->branch_id);
             if ($before->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only draft supplier invoices can be edited.']);
+            }
+            if ((int) $before->supplier_id !== (int) $data['supplierId']) {
+                throw ValidationException::withMessages(['supplierId' => 'A saved invoice cannot change supplier. Create a new draft for the other supplier.']);
             }
             $data = $this->withResolvedType($tenantId, $data);
             $this->assertSupplierAndBranch($tenantId, $data, $actorId);
@@ -249,6 +256,9 @@ class SupplierInvoiceService
             $hasAllocations = DB::table('payment_allocations')->where('tenant_id', $tenantId)->where('supplier_invoice_id', $id)->exists();
             if ($hasAllocations) {
                 throw ValidationException::withMessages(['status' => 'This invoice already has payments allocated to it; reverse those payments first.']);
+            }
+            if (DB::table('purchase_receipts')->where('tenant_id', $tenantId)->where('supplier_invoice_id', $id)->where('status', 'posted')->exists()) {
+                throw ValidationException::withMessages(['status' => 'Received inventory must be reversed before cancelling this purchase.']);
             }
 
             $reversal = $this->entries->reverse($request, $tenantId, (int) $invoice->journal_entry_id, $actorId);
@@ -728,6 +738,7 @@ class SupplierInvoiceService
     {
         return [
             'branch_id' => $data['branchId'] ?? null,
+            'receipt_mode' => $data['receiptMode'] ?? null,
             'supplier_id' => (int) $data['supplierId'],
             // The existing schema uses internal_reference for the generated
             // system PI number and invoice_number for the supplier reference.

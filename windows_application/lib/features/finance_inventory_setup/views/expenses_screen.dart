@@ -8,6 +8,7 @@ import '../../../core/services/service_locator.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
+import '../widgets/cash_source_field.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_design.dart';
 import '../widgets/finance_journal_drawer.dart';
@@ -957,10 +958,10 @@ class _ExpensePaymentDialog extends StatefulWidget {
 
 class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
   List<PaymentMethodSetting> _methods = const <PaymentMethodSetting>[];
-  List<FinancialLocation> _locations = const <FinancialLocation>[];
+  CashSourceOptions? _cashOptions;
   bool _loadingOptions = true;
   int? _methodId;
-  int? _locationId;
+  int? _cashLocationId;
   final TextEditingController _notes = TextEditingController();
   String? _error;
   bool _submitting = false;
@@ -972,25 +973,29 @@ class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
   }
 
   Future<void> _loadOptions() async {
+    final int? branchId = widget.expense.branchId;
+    if (branchId == null) {
+      setState(() {
+        _error = 'لا يمكن الدفع لمصروف بدون فرع محدد.';
+        _loadingOptions = false;
+      });
+      return;
+    }
     final FinanceSetupRepository repository =
         serviceLocator<FinanceSetupRepository>();
     try {
       final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
         repository.getPaymentMethods(),
-        repository.getFinancialLocations('cash'),
-        repository.getFinancialLocations('bank'),
+        repository.getCashSourceOptions(branchId),
       ]);
       if (!mounted) return;
       setState(() {
         _methods = (results[0] as List<PaymentMethodSetting>)
-            .where((PaymentMethodSetting m) => m.isActive)
+            .where((PaymentMethodSetting m) =>
+                m.isActive && (m.type == 'cash' || m.financialLocationId != null))
             .toList(growable: false);
-        _locations = <FinancialLocation>[
-          ...results[1] as List<FinancialLocation>,
-          ...results[2] as List<FinancialLocation>,
-        ].where((FinancialLocation l) => l.isActive).toList(growable: false);
+        _cashOptions = results[1] as CashSourceOptions;
         _methodId = _methods.isEmpty ? null : _methods.first.id;
-        _locationId = _locations.isEmpty ? null : _locations.first.id;
         _loadingOptions = false;
       });
     } catch (error) {
@@ -1009,9 +1014,19 @@ class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
     super.dispose();
   }
 
+  PaymentMethodSetting? get _method =>
+      _methods.where((PaymentMethodSetting m) => m.id == _methodId).firstOrNull;
+
   Future<void> _submit() async {
-    if (_methodId == null || _locationId == null) {
-      setState(() => _error = 'اختر طريقة دفع وحساباً نقدياً أو بنكياً نشطاً.');
+    final PaymentMethodSetting? method = _method;
+    if (method == null) {
+      setState(() => _error = 'اختر طريقة دفع نشطة.');
+      return;
+    }
+    if (method.type == 'cash' && !cashSourceIsResolved(_cashOptions, _cashLocationId)) {
+      setState(() => _error = _cashOptions?.mode == 'shift'
+          ? 'يجب فتح وردية بصندوق صالح.'
+          : 'يرجى اختيار الصندوق.');
       return;
     }
     setState(() {
@@ -1021,7 +1036,9 @@ class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
     try {
       await widget.onSubmit(<String, dynamic>{
         'paymentMethodId': _methodId,
-        'financialLocationId': _locationId,
+        if (method.type != 'cash' || _cashOptions?.mode == 'selectable')
+          'financialLocationId':
+              method.type == 'cash' ? _cashLocationId : method.financialLocationId,
         'paymentDate': DateTime.now().toIso8601String().substring(0, 10),
         if (_notes.text.trim().isNotEmpty) 'description': _notes.text.trim(),
         'idempotencyKey':
@@ -1040,9 +1057,17 @@ class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final FinancialLocation? location = _locationId == null
+    final PaymentMethodSetting? method = _method;
+    final String? locationName = method == null
         ? null
-        : _locations.where((FinancialLocation l) => l.id == _locationId).firstOrNull;
+        : method.type == 'cash'
+            ? (_cashOptions?.mode == 'shift'
+                ? _cashOptions?.resolved?.name
+                : _cashOptions?.allowed
+                    .where((CashSourceLocation l) => l.id == _cashLocationId)
+                    .firstOrNull
+                    ?.name)
+            : method.financialLocationName;
     return FinanceDialogShell(
       title: 'دفع ${widget.expense.expenseNumber}',
       actions: <Widget>[
@@ -1070,10 +1095,12 @@ class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
               height: 120,
               child: FinanceLoadingState(label: 'جارٍ تحميل خيارات الدفع…'),
             )
-          : (_methods.isEmpty || _locations.isEmpty)
+          : _error != null && _methods.isEmpty
+          ? FinanceAlertBanner(message: _error!, tone: FinanceTone.warning)
+          : (_methods.isEmpty)
           ? const FinanceAlertBanner(
               message:
-                  'لا توجد طريقة دفع أو حساب نقدي/بنكي نشط. أضف واحداً من إعدادات المالية أولاً.',
+                  'لا توجد طريقة دفع نشطة. أضف واحدة من إعدادات المالية أولاً.',
               tone: FinanceTone.warning,
             )
           : SingleChildScrollView(
@@ -1092,31 +1119,33 @@ class _ExpensePaymentDialogState extends State<_ExpensePaymentDialog> {
                               DropdownMenuItem<int>(value: m.id, child: Text(m.name)),
                         )
                         .toList(),
-                    onChanged: (int? v) => setState(() => _methodId = v),
+                    onChanged: (int? v) => setState(() {
+                      _methodId = v;
+                      _cashLocationId = null;
+                    }),
                   ),
-                  const SizedBox(height: FinanceSpace.md),
-                  DropdownButtonFormField<int>(
-                    initialValue: _locationId,
-                    decoration: const InputDecoration(labelText: 'الحساب النقدي/البنكي'),
-                    items: _locations
-                        .map(
-                          (FinancialLocation l) =>
-                              DropdownMenuItem<int>(value: l.id, child: Text(l.name)),
-                        )
-                        .toList(),
-                    onChanged: (int? v) => setState(() => _locationId = v),
-                  ),
+                  if (method?.type == 'cash') ...<Widget>[
+                    const SizedBox(height: FinanceSpace.md),
+                    CashSourceField(
+                      options: _cashOptions,
+                      selectedLocationId: _cashLocationId,
+                      onChanged: (int? v) => setState(() => _cashLocationId = v),
+                    ),
+                  ] else if (method != null) ...<Widget>[
+                    const SizedBox(height: FinanceSpace.md),
+                    Text('الحساب: ${method.financialLocationName ?? '—'}', style: FinanceText.small),
+                  ],
                   const SizedBox(height: FinanceSpace.md),
                   TextField(
                     controller: _notes,
                     decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
                   ),
-                  if (widget.category != null && location != null) ...<Widget>[
+                  if (widget.category != null && locationName != null) ...<Widget>[
                     const SizedBox(height: FinanceSpace.lg),
                     FinanceAccountImpactPreview(
                       toLabel:
                           '${widget.category!.financialAccountCode} — ${widget.category!.financialAccountName ?? widget.category!.name}',
-                      fromLabel: location.name,
+                      fromLabel: locationName,
                       amount: widget.expense.totalAmount,
                     ),
                   ],

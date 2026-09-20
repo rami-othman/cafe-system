@@ -1547,3 +1547,26 @@ class DailyClosingDetail {
 
 Map<String, dynamic> _map(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};
+class CashSourceLocation {
+  const CashSourceLocation({required this.id, required this.name});
+  final int id;
+  final String name;
+  factory CashSourceLocation.fromJson(Map<String, dynamic> json) =>
+      CashSourceLocation(id: readInt(json['id']) ?? 0, name: readString(json['name']));
+}
+
+class CashSourceOptions {
+  const CashSourceOptions({required this.mode, this.resolved, required this.allowed});
+  final String mode;
+  final CashSourceLocation? resolved;
+  final List<CashSourceLocation> allowed;
+  factory CashSourceOptions.fromJson(Map<String, dynamic> json) => CashSourceOptions(
+        mode: readString(json['cashSourceMode']),
+        resolved: json['resolvedCashLocation'] is Map
+            ? CashSourceLocation.fromJson(Map<String, dynamic>.from(json['resolvedCashLocation'] as Map))
+            : null,
+        allowed: (json['allowedCashLocations'] as List<dynamic>? ?? const [])
+            .map((value) => CashSourceLocation.fromJson(Map<String, dynamic>.from(value as Map)))
+            .toList(growable: false),
+      );
+}

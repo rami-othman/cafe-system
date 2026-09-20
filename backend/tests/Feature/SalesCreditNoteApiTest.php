@@ -329,7 +329,7 @@ class SalesCreditNoteApiTest extends TestCase
 
     private function postedInvoice(array $s, string $quantity): int
     {
-        $invoice = (int) $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-17', 'lines' => [['productId' => $s['product'], 'quantity' => $quantity]]], $s['headers'])->assertCreated()->json('data.id');
+        $invoice = (int) $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => now()->toDateString(), 'lines' => [['productId' => $s['product'], 'quantity' => $quantity]]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'invoice-post-'.uniqid()], $s['headers'])->assertOk();
 
         return $invoice;
@@ -345,7 +345,7 @@ class SalesCreditNoteApiTest extends TestCase
     /** @return array{0:int,1:int} [paymentMethodId, financialLocationId] */
     private function cashMethodAndLocation(int $tenant): array
     {
-        return [(int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'), (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id')];
+        return [(int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'), (int) DB::table('branches')->where('tenant_id', $tenant)->value('pos_cash_financial_location_id')];
     }
 
     private function creditBalance(array $s): string

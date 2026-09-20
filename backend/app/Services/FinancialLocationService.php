@@ -20,9 +20,6 @@ class FinancialLocationService
         $this->assertReferences($tenantId, $data, $actorId);
         return DB::transaction(function () use ($request, $tenantId, $data, $id, $actorId): int {
             $before = $id ? $this->find($tenantId, $id) : null;
-            if ($data['kind'] === 'cash' && $data['type'] === 'cash_drawer' && $data['isActive'] && ! empty($data['branchId'])) {
-                $this->assertUniqueActiveBranchDrawer($tenantId, (int) $data['branchId'], $id);
-            }
             $payload = ['branch_id' => $data['branchId'] ?? null, 'financial_account_id' => (int) $data['financialAccountId'], 'code' => strtoupper($data['code']), 'name' => $data['name'], 'kind' => $data['kind'], 'type' => $data['type'], 'bank_name' => $data['bankName'] ?? null, 'masked_reference' => $data['maskedReference'] ?? null, 'is_active' => (bool) $data['isActive'], 'updated_by' => $actorId, 'updated_at' => now()];
             if ($id) {
                 DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $id)->update($payload);
@@ -39,9 +36,6 @@ class FinancialLocationService
     {
         DB::transaction(function () use ($request, $tenantId, $id, $active, $actorId): void {
             $before = $this->find($tenantId, $id);
-            if ($active && $before->kind === 'cash' && $before->type === 'cash_drawer' && $before->branch_id) {
-                $this->assertUniqueActiveBranchDrawer($tenantId, (int) $before->branch_id, $id);
-            }
             DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $id)->update(['is_active' => $active, 'updated_by' => $actorId, 'updated_at' => now()]);
             $this->audit->record($request, $tenantId, $active ? 'financial_location.activated' : 'financial_location.deactivated', 'financial_location', $id, (array) $before, (array) $this->find($tenantId, $id), $before->branch_id, $actorId);
         });
@@ -66,16 +60,4 @@ class FinancialLocationService
         if ($data['kind'] === 'bank' && $data['type'] !== 'bank') throw ValidationException::withMessages(['type' => 'Bank locations must use the bank type.']);
     }
 
-    private function assertUniqueActiveBranchDrawer(int $tenantId, int $branchId, ?int $exceptId): void
-    {
-        DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->lockForUpdate()->first();
-        $query = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('branch_id', $branchId)
-            ->where('kind', 'cash')->where('type', 'cash_drawer')->where('is_active', true);
-        if ($exceptId) {
-            $query->where('id', '!=', $exceptId);
-        }
-        if ($query->exists()) {
-            throw ValidationException::withMessages(['branchId' => 'This branch already has an active cash drawer.']);
-        }
-    }
 }

@@ -31,6 +31,15 @@ class ShiftCashSummaryService
         $openingCents = Money::cents($shift->opening_cash);
         $cashSalesCents = Money::cents($this->cashPaymentsQuery($tenantId, $shift->id)->sum('p.amount') ?? '0');
         $cashRefundsCents = Money::cents($this->cashRefundsQuery($tenantId, $shift->id)->sum('r.amount') ?? '0');
+        $customerPaymentsCents = Money::cents(DB::table('customer_payments')->where('tenant_id', $tenantId)
+            ->where('shift_id', $shift->id)->where('financial_location_id', $shift->financial_location_id)
+            ->where('status', 'posted')->sum('amount') ?? '0');
+        $customerRefundsCents = Money::cents(DB::table('customer_refunds')->where('tenant_id', $tenantId)
+            ->where('shift_id', $shift->id)->where('financial_location_id', $shift->financial_location_id)
+            ->where('status', 'posted')->sum('amount') ?? '0');
+        $operationalExpensesCents = Money::cents(DB::table('expenses')->where('tenant_id', $tenantId)
+            ->where('shift_id', $shift->id)->where('paid_from_financial_location_id', $shift->financial_location_id)
+            ->where('status', 'paid')->whereNull('deleted_at')->sum('total_amount') ?? '0');
         $movements = DB::table('shift_cash_movements')
             ->where('tenant_id', $tenantId)->where('shift_id', $shift->id)
             ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'withdrawal' THEN amount ELSE 0 END), 0) as withdrawals")
@@ -40,15 +49,18 @@ class ShiftCashSummaryService
         $withdrawalsCents = Money::cents($movements?->withdrawals ?? '0');
         $depositsCents = Money::cents($movements?->deposits ?? '0');
         $expensesCents = Money::cents($movements?->expenses ?? '0');
-        $expectedCents = $openingCents + $cashSalesCents + $depositsCents - $cashRefundsCents - $withdrawalsCents - $expensesCents;
+        $expectedCents = $openingCents + $cashSalesCents + $customerPaymentsCents + $depositsCents
+            - $cashRefundsCents - $customerRefundsCents - $withdrawalsCents - $expensesCents - $operationalExpensesCents;
 
         return [
             'openingCash' => Money::decimal($openingCents),
             'cashSales' => Money::decimal($cashSalesCents),
             'cashRefunds' => Money::decimal($cashRefundsCents),
+            'customerPayments' => Money::decimal($customerPaymentsCents),
+            'customerRefunds' => Money::decimal($customerRefundsCents),
             'withdrawals' => Money::decimal($withdrawalsCents),
             'deposits' => Money::decimal($depositsCents),
-            'expenses' => Money::decimal($expensesCents),
+            'expenses' => Money::decimal($expensesCents + $operationalExpensesCents),
             'expectedCash' => Money::decimal($expectedCents),
         ];
     }

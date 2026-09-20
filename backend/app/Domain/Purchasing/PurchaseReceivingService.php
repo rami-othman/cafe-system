@@ -166,6 +166,8 @@ final class PurchaseReceivingService
                 }
 
                 $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->first();
+                $warehouseBranchId = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $line->warehouse_id)->value('branch_id');
+                FinancialActor::assertBranchAccess($actorId, $tenantId, $warehouseBranchId ? (int) $warehouseBranchId : null);
                 $movement = $this->posting->post($request, $tenantId, [
                     'warehouseId' => $line->warehouse_id,
                     // The movement's branch is always the destination

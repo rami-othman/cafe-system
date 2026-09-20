@@ -50,7 +50,7 @@ final class BranchCashDrawerTest extends TestCase
         $this->assertSame(1, $this->drawers($tenant)->where('branch_id', $branchId)->count());
     }
 
-    public function test_legacy_null_shift_binds_only_to_its_branch_drawer_and_shared_cash_method(): void
+    public function test_null_open_shift_is_rejected_until_safe_repair_runs(): void
     {
         [$tenant, $a, $b] = $this->tenantWithBranches();
         app(FinancialSetupService::class)->ensureForTenant($tenant);
@@ -61,15 +61,15 @@ final class BranchCashDrawerTest extends TestCase
             'status' => 'open', 'opened_at' => now(), 'financial_location_id' => null,
             'created_at' => now(), 'updated_at' => now(),
         ]);
-        $resolved = app(PurchaseCashSourceResolver::class)->resolve($tenant, $cashier->id, $a, true);
-        $this->assertSame($a, (int) $resolved->location->branch_id);
-        $this->assertSame((int) $resolved->location->id, (int) DB::table('shifts')->where('id', $shiftId)->value('financial_location_id'));
-        $this->assertNull($resolved->method->financial_location_id);
-        $this->assertNotEquals(DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id'), $resolved->location->id);
-        $this->assertNotEquals($b, (int) $resolved->location->branch_id);
+        try {
+            app(PurchaseCashSourceResolver::class)->resolve($tenant, $cashier->id, $a, true);
+            $this->fail('An unassigned shift must not silently acquire a drawer during posting.');
+        } catch (ValidationException) {
+            $this->assertNull(DB::table('shifts')->where('id', $shiftId)->value('financial_location_id'));
+        }
     }
 
-    public function test_duplicate_branch_drawers_are_not_guessed(): void
+    public function test_multiple_branch_drawers_keep_an_explicit_default(): void
     {
         [$tenant, $a] = $this->tenantWithBranches();
         app(FinancialSetupService::class)->ensureForTenant($tenant);
@@ -83,6 +83,11 @@ final class BranchCashDrawerTest extends TestCase
             'tenant_id' => $tenant, 'name' => 'Owner', 'email' => 'drawer-owner@example.test',
             'password' => 'password', 'role' => 'owner', 'is_active' => true,
         ]);
+        $configured = (int) DB::table('branches')->where('id', $a)->value('pos_cash_financial_location_id');
+        $second = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'DUPLICATE-DRAWER')->value('id');
+        $resolved = app(PurchaseCashSourceResolver::class)->resolve($tenant, $owner->id, $a, selectedLocationId: $second);
+        $this->assertSame($second, (int) $resolved->location->id);
+        $this->assertSame($configured, (int) DB::table('branches')->where('id', $a)->value('pos_cash_financial_location_id'));
         $this->expectException(ValidationException::class);
         app(PurchaseCashSourceResolver::class)->resolve($tenant, $owner->id, $a);
     }
@@ -115,7 +120,20 @@ final class BranchCashDrawerTest extends TestCase
         );
     }
 
-    public function test_financial_location_api_rejects_a_second_active_branch_drawer(): void
+    public function test_shift_opening_rejects_missing_branch_pos_drawer(): void
+    {
+        [$tenant, $a] = $this->tenantWithBranches();
+        app(FinancialSetupService::class)->ensureForTenant($tenant);
+        DB::table('branches')->where('id', $a)->update(['pos_cash_financial_location_id' => null]);
+        $cashier = $this->cashier($tenant, $a);
+        $token = $this->authenticateTenantUser($tenant, $cashier);
+        $this->postJson('/api/v1/shifts/current', [
+            'branchId' => $a, 'openingCash' => '100.00',
+        ], ['Authorization' => 'Bearer '.$token])->assertUnprocessable()->assertJsonValidationErrors('cashSource');
+        $this->assertSame(0, DB::table('shifts')->where('tenant_id', $tenant)->where('branch_id', $a)->count());
+    }
+
+    public function test_financial_location_api_allows_a_second_active_branch_drawer_without_changing_default(): void
     {
         [$tenant, $a] = $this->tenantWithBranches();
         app(FinancialSetupService::class)->ensureForTenant($tenant);
@@ -125,8 +143,9 @@ final class BranchCashDrawerTest extends TestCase
             'branchId' => $a, 'financialAccountId' => $accountId,
             'code' => 'SECOND-DRAWER', 'name' => 'Second Drawer',
             'type' => 'cash_drawer', 'isActive' => true,
-        ], ['Authorization' => 'Bearer '.$token])->assertUnprocessable()->assertJsonValidationErrors('branchId');
-        $this->assertSame(1, $this->drawers($tenant)->where('branch_id', $a)->count());
+        ], ['Authorization' => 'Bearer '.$token])->assertCreated();
+        $this->assertSame(2, $this->drawers($tenant)->where('branch_id', $a)->count());
+        $this->assertNotNull(DB::table('branches')->where('id', $a)->value('pos_cash_financial_location_id'));
     }
 
     public function test_voucher_options_offer_branch_drawers_without_legacy_global_drawer(): void
@@ -141,6 +160,30 @@ final class BranchCashDrawerTest extends TestCase
         $this->assertContains('CASH-DRAWER-BR-'.$a, $codes);
         $this->assertContains('CASH-DRAWER-BR-'.$b, $codes);
         $this->assertNotContains('CASH-DRAWER', $codes);
+    }
+
+    public function test_cashier_voucher_uses_shift_drawer_and_affects_expected_cash(): void
+    {
+        [$tenant, $branch] = $this->tenantWithBranches();
+        app(FinancialSetupService::class)->ensureForTenant($tenant);
+        $cashier = $this->cashier($tenant, $branch);
+        $token = $this->authenticateTenantUser($tenant, $cashier);
+        $headers = ['Authorization' => 'Bearer '.$token];
+        $shiftId = (int) $this->postJson('/api/v1/shifts/current', [
+            'branchId' => $branch, 'openingCash' => '100.00',
+        ], $headers)->assertCreated()->json('data.id');
+        $account = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '6190')->value('id');
+        $voucherId = (int) $this->postJson('/api/v1/finance/vouchers', [
+            'documentType' => 'payment', 'documentDate' => now()->toDateString(),
+            'branchId' => $branch, 'amount' => '20.00',
+            'lines' => [['accountId' => $account, 'amount' => '20.00']],
+        ], $headers)->assertCreated()->json('data.id');
+        $voucher = DB::table('finance_documents')->where('id', $voucherId)->first();
+        $this->assertSame($shiftId, (int) $voucher->shift_id);
+        $this->assertSame((int) DB::table('shifts')->where('id', $shiftId)->value('financial_location_id'), (int) $voucher->financial_location_id);
+        $this->postJson("/api/v1/finance/vouchers/{$voucherId}/post", [], $headers)->assertOk();
+        $summary = app(\App\Services\ShiftCashSummaryService::class)->summarize($tenant, DB::table('shifts')->where('id', $shiftId)->first());
+        $this->assertSame('80.00', $summary['expectedCash']);
     }
 
     private function tenantWithBranches(): array

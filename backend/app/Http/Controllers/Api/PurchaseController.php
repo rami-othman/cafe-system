@@ -197,14 +197,15 @@ class PurchaseController extends Controller
             $tenant,
             $purchase,
             FinancialActor::id($request, $tenant),
+            $request->filled('financialLocationId') ? (int) $request->query('financialLocationId') : null,
         )]);
     }
 
     public function post(Request $request, int $purchase): JsonResponse
     {
-        $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:120']]);
+        $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:120'], 'financialLocationId' => ['nullable', 'integer'], 'paidAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/']]);
         $tenant = TenantContext::id($request);
-        $this->posting->post($request, $tenant, $purchase, $data['idempotencyKey'], FinancialActor::id($request, $tenant));
+        $this->posting->post($request, $tenant, $purchase, $data['idempotencyKey'], FinancialActor::id($request, $tenant), $data['financialLocationId'] ?? null, $data['paidAmount'] ?? null);
 
         return $this->show($request, $purchase);
     }
@@ -236,6 +237,7 @@ class PurchaseController extends Controller
                 'b.name as branch_name', 'u.name as created_by_name',
                 't.name as invoice_type_name', 'g.name as invoice_group_name',
                 DB::raw('(SELECT sl.line_type FROM supplier_invoice_lines sl WHERE sl.supplier_invoice_id = i.id ORDER BY sl.line_number LIMIT 1) as line_type'),
+                DB::raw("(SELECT CASE WHEN COUNT(DISTINCT sl.warehouse_id) > 1 THEN 'متعدد المخازن' ELSE MAX(w.name) END FROM supplier_invoice_lines sl JOIN warehouses w ON w.id = sl.warehouse_id WHERE sl.supplier_invoice_id = i.id) as warehouse_name"),
             );
     }
 
@@ -249,7 +251,7 @@ class PurchaseController extends Controller
         if ($row->status === 'draft' && $can('finance.purchases.post') && $can('finance.vouchers.create') && $can('finance.vouchers.post') && ($row->line_type !== 'inventory' || $can('finance.purchases.receive'))) {
             $actions[] = 'post';
         }
-        if (in_array($row->status, ['posted', 'partially_paid'], true) && $can('finance.supplier_invoices.reverse')) {
+        if (in_array($row->status, ['posted', 'partially_paid'], true) && ! in_array($row->receipt_status, ['received', 'partially_received'], true) && $can('finance.supplier_invoices.reverse')) {
             $actions[] = 'reverse';
         }
         // "receive" only when the invoice is financially postable (Phase 2's
@@ -276,14 +278,18 @@ class PurchaseController extends Controller
             'internalReference' => $row->internal_reference,
             'invoiceNumber' => $row->internal_reference,
             'supplierInvoiceNumber' => $row->invoice_number,
+            'supplierInternalReference' => $row->supplier_internal_reference,
+            'externalSupplierReference' => $row->invoice_number,
             'supplierId' => (int) $row->supplier_id,
             'supplierName' => $row->supplier_name,
             'supplierNumber' => $row->supplier_number,
             'branchId' => $row->branch_id ? (int) $row->branch_id : null,
             'branchName' => $row->branch_name,
+            'warehouseName' => $row->warehouse_name,
             'invoiceDate' => $row->invoice_date,
             'dueDate' => $row->due_date,
             'purchaseType' => $purchaseType,
+            'receiptMode' => $row->receipt_mode,
             'invoiceTypeId' => $row->invoice_type_id ? (int) $row->invoice_type_id : null,
             'invoiceTypeName' => $row->invoice_type_name,
             'invoiceGroupName' => $row->invoice_group_name,

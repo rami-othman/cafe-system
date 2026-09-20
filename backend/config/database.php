@@ -99,6 +99,27 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        // Dedicated database for the handful of tests that must run real
+        // migrate:fresh/migrate:rollback lifecycles (or fork separate
+        // worker processes) instead of a RefreshDatabase transaction. Kept
+        // physically separate from `pgsql`'s testing database so those
+        // lifecycles never mutate the schema the rest of the suite relies
+        // on mid-run. See Tests\Concerns\UsesIsolatedMigrationDatabase.
+        'pgsql_migrations' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE_MIGRATIONS_TESTING', env('DB_DATABASE', 'laravel').'_migrations'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

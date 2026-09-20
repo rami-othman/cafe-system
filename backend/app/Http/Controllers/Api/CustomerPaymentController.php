@@ -63,7 +63,7 @@ final class CustomerPaymentController extends Controller
             'customerId' => ['required', 'integer'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
             'allocations' => ['required', 'array', 'min:1'],
             'allocations.*.invoiceId' => ['required', 'integer'],
             'allocations.*.amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
@@ -90,7 +90,7 @@ final class CustomerPaymentController extends Controller
             'paymentDate' => ['required', 'date'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'paymentIdempotencyKey' => ['required', 'string', 'max:120'],
@@ -107,7 +107,7 @@ final class CustomerPaymentController extends Controller
 
         $result = $this->postAndCollect->postAndCollect($request, $tenant, $invoice, $actor, ['idempotencyKey' => $data['postIdempotencyKey']], [
             'branchId' => (int) $invoiceRow->branch_id, 'customerId' => (int) $invoiceRow->customer_id, 'paymentDate' => $data['paymentDate'], 'amount' => $data['amount'],
-            'paymentMethodId' => $data['paymentMethodId'], 'financialLocationId' => $data['financialLocationId'], 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null,
+            'paymentMethodId' => $data['paymentMethodId'], 'financialLocationId' => $data['financialLocationId'] ?? null, 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null,
             'idempotencyKey' => $data['paymentIdempotencyKey'], 'allocations' => $data['allocations'],
         ]);
 
@@ -150,7 +150,7 @@ final class CustomerPaymentController extends Controller
             'paymentDate' => ['required', 'date'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['required', 'string', 'max:120'],

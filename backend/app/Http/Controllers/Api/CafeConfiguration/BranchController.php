@@ -13,6 +13,7 @@ use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BranchController extends Controller
 {
@@ -42,6 +43,7 @@ class BranchController extends Controller
                 'is_active' => true,
             ]);
             $financialSetup->ensureBranchWarehouse($tenantId, $branch->id, $warehouseName, $request->attributes->get('auth_user')->id);
+            $financialSetup->ensureBranchCashDrawer($tenantId, $branch->id, $request->attributes->get('auth_user')->id);
 
             return $branch;
         });
@@ -62,6 +64,17 @@ class BranchController extends Controller
             $posWarehouses->assertEligible((int) $branch->tenant_id, (int) $branch->id, $data['posInventoryWarehouseId']);
             $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];
             unset($data['posInventoryWarehouseId']);
+        }
+        if (array_key_exists('posCashFinancialLocationId', $data)) {
+            $locationId = (int) $data['posCashFinancialLocationId'];
+            $valid = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                ->where('l.id', $locationId)->where('l.tenant_id', $branch->tenant_id)
+                ->where('l.branch_id', $branch->id)->where('l.kind', 'cash')->where('l.type', 'cash_drawer')
+                ->where('l.is_active', true)->where('a.tenant_id', $branch->tenant_id)
+                ->where('a.is_active', true)->whereNull('a.deleted_at')->exists();
+            if (! $valid) throw ValidationException::withMessages(['posCashFinancialLocationId' => 'Select an active POS cash drawer for this branch.']);
+            $data['pos_cash_financial_location_id'] = $locationId;
+            unset($data['posCashFinancialLocationId']);
         }
         DB::transaction(function () use ($branch, $data, $financialSetup, $request): void {
             $branch->update($data);

@@ -77,7 +77,7 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> { S
  ]))); }
  Widget _creditStatusChip(String? status) { final tones = <String, FinanceTone>{'not_credited': FinanceTone.neutral, 'partially_credited': FinanceTone.warning, 'fully_credited': FinanceTone.dark}; final labels = <String, String>{'not_credited': 'بدون إشعارات', 'partially_credited': 'مخصومة جزئياً', 'fully_credited': 'مخصومة بالكامل'}; final key = status ?? 'not_credited'; return FinanceStatusBadgeCustom(label: labels[key] ?? '—', tone: tones[key] ?? FinanceTone.neutral); }
  Future<void> _confirmPost(SalesInvoice i) async { try { final p = await cubit.repository.postingPreview(i.id); if (!mounted) return; final bool? approved = await showDialog<bool>(context: context, builder: (BuildContext dialogContext) => AlertDialog(title: const Text('تأكيد ترحيل الفاتورة'), content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Text('العميل: ${i.customerName}\nالإجمالي: ${i.total}'), const SizedBox(height: 12), const Text('الأثر المحاسبي'), Text('الذمم المدينة: ${p.ar}\nالإيرادات: ${p.revenue}\nالضريبة: ${p.tax}'), const SizedBox(height: 12), const Text('تكلفة البضاعة'), Text('COGS: ${p.cogs}\nInventory Asset: ${p.inventoryAsset}'), const SizedBox(height: 12), const Text('تأثير المخزون'), if (p.materials.isEmpty) const Text('لا يوجد استهلاك مخزني.'), ...p.materials.map((m) => Text('${m.name}: ${m.quantity} ${m.unit} — ${m.warehouse}')), const SizedBox(height: 8), const Text('لن يتم إنشاء دفعة أو أثر نقدي.') ])), actions: <Widget>[TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')), ElevatedButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('ترحيل'))])); if (approved != true) return; await cubit.repository.post(i.id, 'sales-post-${i.id}-${DateTime.now().microsecondsSinceEpoch}'); if (mounted) { await load(); if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم ترحيل الفاتورة بنجاح.'))); } } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعذر الحصول على معاينة/ترحيل الفاتورة: $e'))); } }
- Future<void> _postAndCollect(SalesInvoice i) async { final financeSetupRepository = context.read<FinanceSetupCubit>().repository; final result = await showDialog<Map<String, dynamic>>(context: context, builder: (_) => ImmediateCollectDialog(financeSetupRepository: financeSetupRepository, invoiceTotal: i.total)); if (result == null || !mounted) return; try { final now = DateTime.now().microsecondsSinceEpoch; await cubit.repository.postAndCollect(i.id, <String, dynamic>{'postIdempotencyKey': 'sales-post-$now', 'paymentDate': result['paymentDate'], 'amount': result['amount'], 'paymentMethodId': result['paymentMethodId'], 'financialLocationId': result['financialLocationId'], 'paymentIdempotencyKey': 'sales-pay-$now', 'allocations': <Map<String, dynamic>>[<String, dynamic>{'invoiceId': i.id, 'amount': result['amount']}]}); if (mounted) { await load(); if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم ترحيل الفاتورة وتسجيل الدفعة بنجاح.'))); } } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعذر ترحيل الفاتورة وتسجيل الدفعة: $e'))); } }
+ Future<void> _postAndCollect(SalesInvoice i) async { final financeSetupRepository = context.read<FinanceSetupCubit>().repository; final result = await showDialog<Map<String, dynamic>>(context: context, builder: (_) => ImmediateCollectDialog(financeSetupRepository: financeSetupRepository, invoiceTotal: i.total, branchId: i.branchId)); if (result == null || !mounted) return; try { final now = DateTime.now().microsecondsSinceEpoch; await cubit.repository.postAndCollect(i.id, <String, dynamic>{'postIdempotencyKey': 'sales-post-$now', 'paymentDate': result['paymentDate'], 'amount': result['amount'], 'paymentMethodId': result['paymentMethodId'], if (result['financialLocationId'] != null) 'financialLocationId': result['financialLocationId'], 'paymentIdempotencyKey': 'sales-pay-$now', 'allocations': <Map<String, dynamic>>[<String, dynamic>{'invoiceId': i.id, 'amount': result['amount']}]}); if (mounted) { await load(); if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم ترحيل الفاتورة وتسجيل الدفعة بنجاح.'))); } } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعذر ترحيل الفاتورة وتسجيل الدفعة: $e'))); } }
  Future<void> _showReceipt(int paymentId) async { final reversed = await ReceiptDialog.show(context, salesRepository: cubit.repository, paymentId: paymentId); if (reversed == true) load(); }
  Widget _field(String l, String v) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Text(l, style: FinanceText.small), Text(v, style: FinanceText.body)]); }
 
@@ -117,6 +117,8 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
   DateTime date = DateTime.now();
   List<PaymentMethodSetting> methods = const <PaymentMethodSetting>[];
   int? methodId;
+  CashSourceOptions? cashOptions;
+  int? cashLocationId;
   CustomerReceivablesSummary? summary;
   final Map<int, TextEditingController> allocation = <int, TextEditingController>{};
   bool loading = true; bool saving = false; Object? error;
@@ -127,12 +129,12 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
 
   Future<void> bootstrap() async {
     try {
-      final results = await Future.wait<dynamic>(<Future<dynamic>>[widget.financeSetupRepository.getPaymentMethods(), widget.salesRepository.customerReceivables(widget.customerId)]);
+      final results = await Future.wait<dynamic>(<Future<dynamic>>[widget.financeSetupRepository.getPaymentMethods(), widget.salesRepository.customerReceivables(widget.customerId), widget.financeSetupRepository.getCashSourceOptions(widget.branchId)]);
       if (!mounted) return;
-      final ms = (results[0] as List<PaymentMethodSetting>).where((m) => m.financialLocationId != null && m.isActive).toList();
+      final ms = (results[0] as List<PaymentMethodSetting>).where((m) => m.isActive && (m.type == 'cash' || m.financialLocationId != null)).toList();
       final s = results[1] as CustomerReceivablesSummary;
       setState(() {
-        methods = ms; methodId = ms.firstOrNull?.id; summary = s;
+        methods = ms; methodId = ms.firstOrNull?.id; summary = s; cashOptions = results[2] as CashSourceOptions;
         for (final inv in s.openInvoices) { allocation[inv.id] = TextEditingController()..addListener(_refresh); }
         final preselected = widget.preselectedInvoiceId;
         if (preselected != null) {
@@ -172,11 +174,12 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
     final allocations = allocation.entries.where((e) => _num(e.value.text) > 0).map((e) => <String, dynamic>{'invoiceId': e.key, 'amount': e.value.text.trim()}).toList();
     if (allocations.isEmpty) { _snack('حدد فاتورة واحدة على الأقل لتوزيع الدفعة عليها.'); return; }
     final method = methods.firstWhere((m) => m.id == methodId);
+    if (method.type == 'cash' && cashOptions?.mode == 'selectable' && cashLocationId == null) { _snack('اختر الصندوق.'); return; }
     setState(() => saving = true);
     try {
       await widget.salesRepository.registerPayment(<String, dynamic>{
         'branchId': widget.branchId, 'customerId': widget.customerId, 'paymentDate': _date(date), 'amount': amount.text.trim(),
-        'paymentMethodId': methodId, 'financialLocationId': method.financialLocationId,
+        'paymentMethodId': methodId, if (method.type != 'cash' || cashOptions?.mode == 'selectable') 'financialLocationId': method.type == 'cash' ? cashLocationId : method.financialLocationId,
         if (reference.text.trim().isNotEmpty) 'reference': reference.text.trim(), if (notes.text.trim().isNotEmpty) 'notes': notes.text.trim(),
         'idempotencyKey': 'customer-pay-${DateTime.now().microsecondsSinceEpoch}', 'allocations': allocations,
       });
@@ -202,7 +205,9 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
                     SizedBox(width: 220, child: DropdownButtonFormField<int>(initialValue: methodId, decoration: const InputDecoration(labelText: 'طريقة الدفع'), items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.name))).toList(), onChanged: (v) => setState(() => methodId = v))),
                     SizedBox(width: 160, child: TextField(key: const Key('customerPaymentAmountField'), controller: amount, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'المبلغ'))),
                   ]),
-                  if (method != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text('الحساب المستلم: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
+                  if (method?.type == 'cash' && cashOptions?.mode == 'shift') Text('الصندوق: ${cashOptions?.resolved?.name ?? 'غير محدد'}'),
+                  if (method?.type == 'cash' && cashOptions?.mode == 'selectable') DropdownButtonFormField<int>(initialValue: cashLocationId, isExpanded: true, decoration: const InputDecoration(labelText: 'الصندوق'), items: cashOptions!.allowed.map((l) => DropdownMenuItem(value: l.id, child: Text(l.name, overflow: TextOverflow.ellipsis))).toList(), onChanged: (v) => setState(() => cashLocationId = v)),
+                  if (method != null && method.type != 'cash') Padding(padding: const EdgeInsets.only(top: 6), child: Text('الحساب المستلم: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
                   const SizedBox(height: 10),
                   TextField(controller: reference, decoration: const InputDecoration(labelText: 'المرجع')),
                   TextField(controller: notes, decoration: const InputDecoration(labelText: 'ملاحظات')),
@@ -235,22 +240,25 @@ class _CustomerPaymentDialogState extends State<CustomerPaymentDialog> {
 /// the two accounting events (invoice post, then settlement) remain separate
 /// (see SalesInvoicePostAndCollectService on the backend).
 class ImmediateCollectDialog extends StatefulWidget {
-  const ImmediateCollectDialog({super.key, required this.financeSetupRepository, required this.invoiceTotal});
-  final FinanceSetupRepository financeSetupRepository; final String invoiceTotal;
+  const ImmediateCollectDialog({super.key, required this.financeSetupRepository, required this.invoiceTotal, required this.branchId});
+  final FinanceSetupRepository financeSetupRepository; final String invoiceTotal; final int branchId;
   @override State<ImmediateCollectDialog> createState() => _ImmediateCollectDialogState();
 }
 
 class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
   late final TextEditingController amount = TextEditingController(text: widget.invoiceTotal);
   List<PaymentMethodSetting> methods = const <PaymentMethodSetting>[];
+  CashSourceOptions? cashOptions;
+  int? cashLocationId;
   int? methodId; bool loading = true; Object? error;
   @override void initState() { super.initState(); bootstrap(); }
   @override void dispose() { amount.dispose(); super.dispose(); }
   Future<void> bootstrap() async {
     try {
-      final ms = (await widget.financeSetupRepository.getPaymentMethods()).where((m) => m.financialLocationId != null && m.isActive).toList();
+      final results = await Future.wait<dynamic>([widget.financeSetupRepository.getPaymentMethods(), widget.financeSetupRepository.getCashSourceOptions(widget.branchId)]);
+      final ms = (results[0] as List<PaymentMethodSetting>).where((m) => m.isActive && (m.type == 'cash' || m.financialLocationId != null)).toList();
       if (!mounted) return;
-      setState(() { methods = ms; methodId = ms.firstOrNull?.id; loading = false; });
+      setState(() { methods = ms; methodId = ms.firstOrNull?.id; cashOptions = results[1] as CashSourceOptions; loading = false; });
     } catch (e) { if (mounted) setState(() { error = e; loading = false; }); }
   }
   String _today() { final d = DateTime.now(); return '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}'; }
@@ -266,13 +274,17 @@ class _ImmediateCollectDialogState extends State<ImmediateCollectDialog> {
                   const Text('عمليتان محاسبيتان منفصلتان في طلب واحد: ترحيل الفاتورة (ذمم مدينة + إيرادات + ضريبة)، ثم تحصيل دفعة تسوية (نقدية/بنك مقابل الذمم). لن تُسجَّل إيرادات مرتين.'),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<int>(initialValue: methodId, decoration: const InputDecoration(labelText: 'طريقة الدفع'), items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.name))).toList(), onChanged: (v) => setState(() => methodId = v)),
-                  if (method != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text('الحساب المستلم: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
+                  if (method?.type == 'cash' && cashOptions?.mode == 'shift')
+                    Text('الصندوق: ${cashOptions?.resolved?.name ?? 'غير محدد'}'),
+                  if (method?.type == 'cash' && cashOptions?.mode == 'selectable')
+                    DropdownButtonFormField<int>(initialValue: cashLocationId, isExpanded: true, decoration: const InputDecoration(labelText: 'الصندوق'), items: cashOptions!.allowed.map((l) => DropdownMenuItem(value: l.id, child: Text(l.name, overflow: TextOverflow.ellipsis))).toList(), onChanged: (v) => setState(() => cashLocationId = v)),
+                  if (method != null && method.type != 'cash') Padding(padding: const EdgeInsets.only(top: 6), child: Text('الحساب المستلم: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
                   const SizedBox(height: 10),
                   TextField(controller: amount, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'المبلغ المحصّل الآن', helperText: 'إجمالي الفاتورة: ${widget.invoiceTotal}')),
                 ])),
       actions: <Widget>[
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
-        ElevatedButton(onPressed: (loading || methodId == null) ? null : () { final selected = methods.firstWhere((m) => m.id == methodId); Navigator.pop(context, <String, dynamic>{'paymentDate': _today(), 'amount': amount.text.trim(), 'paymentMethodId': methodId, 'financialLocationId': selected.financialLocationId}); }, child: const Text('ترحيل وتسجيل الدفعة')),
+        ElevatedButton(onPressed: (loading || methodId == null || (method?.type == 'cash' && cashOptions?.mode == 'selectable' && cashLocationId == null)) ? null : () { final selected = methods.firstWhere((m) => m.id == methodId); Navigator.pop(context, <String, dynamic>{'paymentDate': _today(), 'amount': amount.text.trim(), 'paymentMethodId': methodId, 'financialLocationId': selected.type == 'cash' ? (cashOptions?.mode == 'selectable' ? cashLocationId : null) : selected.financialLocationId}); }, child: const Text('ترحيل وتسجيل الدفعة')),
       ],
     );
   }

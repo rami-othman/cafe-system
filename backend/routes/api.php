@@ -452,6 +452,7 @@ Route::prefix('v1')->group(function (): void {
         });
 
         Route::prefix('finance')->group(function (): void {
+            Route::get('cash-source-options', \App\Http\Controllers\Api\CashSourceOptionsController::class)->middleware('finance.permission:finance.cash_sources.view');
             Route::get('dashboard', [FinanceDashboardController::class, 'show'])->middleware('finance.permission:finance.view');
             Route::get('dashboard/trends', [FinanceDashboardController::class, 'trends'])->middleware('finance.permission:finance.view');
             Route::get('dashboard/branches', [FinanceDashboardController::class, 'branches'])->middleware('finance.permission:finance.view');

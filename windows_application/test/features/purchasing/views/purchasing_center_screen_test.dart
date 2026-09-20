@@ -12,6 +12,17 @@ import 'package:windows_application/features/purchasing/views/purchase_invoice_d
 import 'package:windows_application/features/purchasing/views/purchasing_center_screen.dart';
 
 void main() {
+  testWidgets('shows a multi-warehouse invoice without implying one destination', (
+    WidgetTester tester,
+  ) async {
+    await _pump(tester, _FakeBackend(purchases: <Map<String, dynamic>>[
+      <String, dynamic>{..._FakeBackend._purchase(), 'warehouseName': 'متعدد المخازن'},
+    ]));
+
+    expect(find.text('متعدد المخازن'), findsOneWidget);
+    expect(find.text('المستودع الأول'), findsNothing);
+  });
+
   testWidgets('renders the Purchasing Center with real-shaped list data', (
     WidgetTester tester,
   ) async {
@@ -46,7 +57,7 @@ void main() {
   ) async {
     await _pump(tester, _FakeBackend(purchases: const <Map<String, dynamic>>[]));
 
-    expect(find.text('لا توجد مشتريات مسجلة بعد'), findsOneWidget);
+    expect(find.text('لا توجد فواتير شراء بعد'), findsOneWidget);
   });
 
   testWidgets('shows an error message with retry when loading fails', (
@@ -54,7 +65,7 @@ void main() {
   ) async {
     await _pump(tester, _FakeBackend(failList: true));
 
-    expect(find.text('تعذّر تحميل المشتريات.'), findsOneWidget);
+    expect(find.text('تعذّر تحميل فواتير الشراء.'), findsOneWidget);
     expect(find.text('إعادة المحاولة'), findsOneWidget);
   });
 
@@ -132,6 +143,23 @@ void main() {
     expect(find.text('استلام مخزون'), findsOneWidget);
     expect(find.text('GRN-2026-000001'), findsOneWidget);
   });
+
+  testWidgets('received purchase explains why cancellation is unavailable', (
+    WidgetTester tester,
+  ) async {
+    final backend = _FakeBackend(received: true);
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(home: _wired(
+      backend,
+      const PurchaseInvoiceDetailScreen(purchaseId: 1),
+    )));
+    await tester.pumpAndSettle();
+
+    expect(find.text('تم الاستلام'), findsOneWidget);
+    expect(find.textContaining('لا يمكن إلغاء الفاتورة بعد استلام المخزون'), findsOneWidget);
+    expect(find.text('استلام مخزون'), findsNothing);
+  });
 }
 
 Widget _wired(_FakeBackend backend, Widget child) {
@@ -185,6 +213,7 @@ class _FakeBackend {
     List<Map<String, dynamic>>? purchases,
     this.failList = false,
     this.receivable = false,
+    this.received = false,
   }) : _purchases = purchases ?? <Map<String, dynamic>>[_purchase()];
 
   final List<Map<String, dynamic>> _purchases;
@@ -194,6 +223,7 @@ class _FakeBackend {
   /// shape a real Phase 2 backend response has once `finance.purchases.receive`
   /// is granted and the invoice isn't yet fully received.
   final bool receivable;
+  final bool received;
 
   static Map<String, dynamic> _purchase() => <String, dynamic>{
     'id': 1,
@@ -235,6 +265,7 @@ class _FakeBackend {
 
   Map<String, dynamic> _detail() => <String, dynamic>{
     ..._purchase(),
+    if (received) 'receiptStatus': 'received',
     if (receivable) 'allowedActions': <String>['reverse', 'receive'],
     'lines': <Map<String, dynamic>>[
       <String, dynamic>{
@@ -252,8 +283,8 @@ class _FakeBackend {
         'taxAmount': '0.00',
         'lineTotal': '175.00',
         'warehouseId': null,
-        'receivedQuantity': '0.000',
-        'remainingQuantity': '10.000',
+        'receivedQuantity': received ? '10.000' : '0.000',
+        'remainingQuantity': received ? '0.000' : '10.000',
       },
     ],
     'payments': <Map<String, dynamic>>[],

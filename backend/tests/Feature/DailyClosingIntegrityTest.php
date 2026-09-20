@@ -107,7 +107,8 @@ class DailyClosingIntegrityTest extends TestCase
 
         $foreignTenant = (int) DB::table('tenants')->insertGetId(['name' => 'Foreign Inv', 'slug' => 'daily-closing-inv-foreign', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
         app(\App\Services\FinancialSetupService::class)->ensureForTenant($foreignTenant);
-        $this->makeStockMovementRaw($foreignTenant, $branch, 'waste', '15.00', $date.' 10:00:00');
+        $foreignBranch = $this->foreignBranchWithWarehouse($foreignTenant);
+        $this->makeStockMovementRaw($foreignTenant, $foreignBranch, 'waste', '15.00', $date.' 10:00:00');
 
         $preview = $this->getJson("/api/v1/finance/daily-closing?branchId=$branch&date=$date", $headers)->assertOk()->json('data');
         $this->assertNotContains('UNPOSTED_INVENTORY_FINANCIAL_EVENT', array_column($preview['blockers'], 'code'));

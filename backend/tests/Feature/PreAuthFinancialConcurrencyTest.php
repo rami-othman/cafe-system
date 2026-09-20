@@ -6,18 +6,21 @@ use App\Services\PosNumberGenerator;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Tests\Concerns\UsesIsolatedMigrationDatabase;
 use Tests\TestCase;
 
 class PreAuthFinancialConcurrencyTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, UsesIsolatedMigrationDatabase {
+        UsesIsolatedMigrationDatabase::beforeRefreshingDatabase insteadof DatabaseMigrations;
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->assertSame('pgsql', config('database.default'));
-        $this->assertSame('cafe_system_618_testing', config('database.connections.pgsql.database'));
+        $this->assertSame('pgsql_migrations', config('database.default'));
+        $this->assertStringContainsString('testing', (string) config('database.connections.pgsql_migrations.database'));
         $this->seed();
 
         // PHPUnit seeds after migrate:fresh. Reapply this data migration so the
@@ -391,12 +394,13 @@ class PreAuthFinancialConcurrencyTest extends TestCase
                     $payload['accessToken'] = $this->authenticateTenantUser((int) $payload['tenantId']);
                 }
                 $pipes = [];
+                $workerEnv = array_merge(getenv() ?: [], ['DB_DATABASE' => (string) config('database.connections.pgsql_migrations.database')]);
                 $process = proc_open([
                     PHP_BINARY,
                     base_path('tests/Fixtures/ConcurrentFinancialWorker.php'),
                     $mode,
                     base64_encode(json_encode($payload, JSON_THROW_ON_ERROR)),
-                ], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path());
+                ], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path(), $workerEnv);
                 if (! is_resource($process)) {
                     throw new RuntimeException('Could not start concurrent financial worker.');
                 }

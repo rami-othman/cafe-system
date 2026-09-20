@@ -300,6 +300,11 @@ void main() {
             'customer': <String, dynamic>{'id': 2, 'name': 'Damascus Tech'}, 'availableCredit': '100.00',
           }}));
         }
+        if (options.path == 'finance/cash-source-options') {
+          return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{'data': <String, dynamic>{
+            'cashSourceMode': 'shift', 'resolvedCashLocation': <String, dynamic>{'id': 7, 'name': 'صندوق الوردية', 'shiftId': 55}, 'allowedCashLocations': <Map<String, dynamic>>[],
+          }}));
+        }
         if (options.path == 'finance/customer-refunds' && options.method == 'POST') {
           posted.add(options);
           return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 201, data: <String, dynamic>{'data': <String, dynamic>{
@@ -320,6 +325,8 @@ void main() {
 
       expect(find.text('رد مبلغ للعميل — Damascus Tech'), findsOneWidget);
       expect(find.textContaining('الرصيد الائتماني المتاح: 100.00'), findsOneWidget);
+      // Cashier/barista: the drawer is resolved from the shift, read-only.
+      expect(find.text('صندوق الوردية: صندوق الوردية'), findsOneWidget);
 
       await tester.tap(find.text('تسجيل الرد'));
       await tester.pumpAndSettle();
@@ -329,8 +336,68 @@ void main() {
       expect(body['customerId'], 2);
       expect(body['amount'], '100.00');
       expect(body['paymentMethodId'], 1);
-      expect(body['financialLocationId'], 7);
+      // Shift mode omits financialLocationId — the backend re-resolves it.
+      expect(body.containsKey('financialLocationId'), isFalse);
       expect(find.text('رد مبلغ للعميل — Damascus Tech'), findsNothing);
+    });
+
+    testWidgets('manager refund: authorized cash drawers are offered in a dropdown and required', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1600, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final Dio dio = Dio(BaseOptions(baseUrl: 'http://test.local/api/v1/'));
+      final List<RequestOptions> posted = <RequestOptions>[];
+      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+        if (options.path == 'finance/payment-methods') {
+          return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{'data': <Map<String, dynamic>>[
+            <String, dynamic>{'id': 1, 'code': 'CASH', 'name': 'نقدي', 'type': 'cash', 'financialAccountId': 9, 'financialAccountCode': '1010', 'isActive': true, 'financialLocationId': 7, 'financialLocationName': 'الصندوق'},
+          ], 'meta': <String, dynamic>{'currentPage': 1, 'lastPage': 1, 'total': 1}}));
+        }
+        if (options.path == 'finance/customers/2/credit') {
+          return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{'data': <String, dynamic>{
+            'customer': <String, dynamic>{'id': 2, 'name': 'Damascus Tech'}, 'availableCredit': '100.00',
+          }}));
+        }
+        if (options.path == 'finance/cash-source-options') {
+          return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{'data': <String, dynamic>{
+            'cashSourceMode': 'selectable', 'resolvedCashLocation': null, 'allowedCashLocations': <Map<String, dynamic>>[
+              <String, dynamic>{'id': 9, 'name': 'صندوق الفرع الرئيسي', 'branchId': 3, 'type': 'cash_drawer'},
+            ],
+          }}));
+        }
+        if (options.path == 'finance/customer-refunds' && options.method == 'POST') {
+          posted.add(options);
+          return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 201, data: <String, dynamic>{'data': <String, dynamic>{
+            'id': 1, 'refundNumber': 'RF-2026-000001', 'customerId': 2, 'customerName': 'Damascus Tech', 'branchId': 3, 'branchName': 'Downtown',
+            'refundDate': '2026-09-14', 'amount': '100.00', 'paymentMethodName': 'نقدي', 'financialLocationName': 'صندوق الفرع الرئيسي', 'status': 'posted',
+          }}));
+        }
+        return handler.reject(DioException(requestOptions: options, message: 'unexpected path: ${options.path}'));
+      }));
+      final SalesRepository repository = SalesRepository(DioApiClient(dio: dio));
+      final FinanceSetupRepository financeSetupRepository = FinanceSetupRepository(DioApiClient(dio: dio));
+      await tester.pumpWidget(MaterialApp(home: Directionality(textDirection: TextDirection.rtl, child: Scaffold(body: Builder(builder: (context) => ElevatedButton(
+        onPressed: () => CustomerRefundDialog.show(context, api: repository, financeSetupRepository: financeSetupRepository, customerId: 2, customerName: 'Damascus Tech', branchId: 3),
+        child: const Text('open'),
+      ))))));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      // Manager must pick a drawer before submitting.
+      await tester.tap(find.text('تسجيل الرد'));
+      await tester.pumpAndSettle();
+      expect(find.text('يرجى اختيار الصندوق.'), findsOneWidget);
+      expect(posted, isEmpty);
+
+      await tester.tap(find.byType(DropdownButtonFormField<int>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('صندوق الفرع الرئيسي').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تسجيل الرد'));
+      await tester.pumpAndSettle();
+
+      expect(posted, hasLength(1));
+      final Map<String, dynamic> body = Map<String, dynamic>.from(posted.single.data as Map);
+      expect(body['financialLocationId'], 9);
     });
 
     testWidgets('rejects a zero/empty amount before posting', (tester) async {
@@ -346,6 +413,11 @@ void main() {
         if (options.path == 'finance/customers/2/credit') {
           return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{'data': <String, dynamic>{
             'customer': <String, dynamic>{'id': 2, 'name': 'Damascus Tech'}, 'availableCredit': '100.00',
+          }}));
+        }
+        if (options.path == 'finance/cash-source-options') {
+          return handler.resolve(Response<dynamic>(requestOptions: options, statusCode: 200, data: <String, dynamic>{'data': <String, dynamic>{
+            'cashSourceMode': 'shift', 'resolvedCashLocation': <String, dynamic>{'id': 7, 'name': 'صندوق الوردية', 'shiftId': 55}, 'allowedCashLocations': <Map<String, dynamic>>[],
           }}));
         }
         return handler.reject(DioException(requestOptions: options, message: 'unexpected POST with an invalid amount'));

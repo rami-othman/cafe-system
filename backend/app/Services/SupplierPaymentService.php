@@ -26,9 +26,10 @@ class SupplierPaymentService
         private readonly JournalEntryService $entries,
         private readonly SupplierPayableQueryService $payable,
         private readonly OperationalAuditService $audit,
+        private readonly CashSourceResolver $cashSources,
     ) {}
 
-    public function pay(Request $request, int $tenantId, array $data, ?int $actorId): object
+    public function pay(Request $request, int $tenantId, array $data, ?int $actorId, ?object $trustedCashSource = null): object
     {
         $key = $data['idempotencyKey'];
         $fingerprint = IdempotencyFingerprint::from($data);
@@ -39,7 +40,7 @@ class SupplierPaymentService
         }
 
         try {
-            return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint): object {
+            return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint, $trustedCashSource): object {
                 $existing = $this->byKey($tenantId, $key, true);
                 if ($existing !== null) {
                     $this->assertFingerprint($existing, $fingerprint);
@@ -56,11 +57,25 @@ class SupplierPaymentService
                 }
 
                 $method = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->lockForUpdate()->first();
+                $cashSource = null;
+                if ($method?->type === 'cash') {
+                    if (empty($data['branchId'])) throw ValidationException::withMessages(['branchId' => 'A branch is required for cash payment.']);
+                    $cashSource = $trustedCashSource ?? $this->cashSources->resolve(
+                        $tenantId, (int) $actorId, (int) $data['branchId'], $data['financialLocationId'] ?? null, true,
+                    );
+                    $data['financialLocationId'] = (int) $cashSource->location->id;
+                    $data['shiftId'] = $cashSource->shift?->id;
+                }
                 $location = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
                     ->where('l.tenant_id', $tenantId)->where('l.id', $data['financialLocationId'])->where('l.is_active', true)
                     ->where('a.is_active', true)->whereNull('a.deleted_at')->select('l.*', 'a.code as account_code')->lockForUpdate()->first();
-                if (! $method || ! $location || (int) $method->financial_account_id !== (int) $location->financial_account_id) {
+                if (! $method || ! $location || ($method->type === 'cash'
+                    ? $location->kind !== 'cash'
+                    : (int) $method->financial_account_id !== (int) $location->financial_account_id)) {
                     throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
+                }
+                if ($location->branch_id && (int) $location->branch_id !== (int) ($data['branchId'] ?? 0)) {
+                    throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the payment branch.']);
                 }
 
                 $amountCents = Money::cents($data['amount']);
@@ -140,11 +155,19 @@ class SupplierPaymentService
                     'description' => "Supplier Payment — {$supplier->name}",
                     'lines' => [
                         ['accountCode' => '2000', 'debit' => Money::decimal($amountCents), 'credit' => '0.00'],
-                        ['accountCode' => $location->account_code, 'debit' => '0.00', 'credit' => Money::decimal($amountCents)],
+                        ['accountCode' => $location->account_code, 'debit' => '0.00', 'credit' => Money::decimal($amountCents), 'financialLocationId' => $location->id],
                     ],
                 ], $actorId);
 
                 DB::table('supplier_payments')->where('id', $paymentId)->update(['journal_entry_id' => $journalId, 'updated_at' => now()]);
+                if ($cashSource?->shift) {
+                    DB::table('shift_cash_movements')->insertOrIgnore([
+                        'tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'shift_id' => $cashSource->shift->id,
+                        'kind' => 'expense', 'amount' => Money::decimal($amountCents),
+                        'description' => "Supplier payment {$paymentId}", 'source_type' => 'supplier_payment',
+                        'source_id' => $paymentId, 'created_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
+                    ]);
+                }
                 $result = $this->find($tenantId, $paymentId);
                 $this->audit->record($request, $tenantId, 'supplier_payment.posted', 'supplier_payment', $paymentId, [], (array) $result, $result->branch_id, $actorId);
 
