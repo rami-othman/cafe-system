@@ -1,5 +1,7 @@
 # CURRENT AUTHORITATIVE STATUS
 
+- Direct purchasing flow: new inventory purchases default to immediate receipt when posted; payment amount and receipt mode are independent. One destination warehouse is selected for direct purchases. The Purchasing Center opens on the invoice list and the receipt screen remains available for delayed/partial delivery. Purchasing API regression suite: 30 passed, 351 assertions on an isolated test database. Three purchasing Flutter widget suites: 19 passed. `flutter analyze --no-pub`: no issues. See `docs/purchasing/DIRECT_PURCHASE_FLOW_AUDIT.md`. No deployment or commit was made.
+
 - Inventory catalogue: the 184 supplied material definitions from
   Ø§Ù„Ù…ÙˆØ§Ø¯_Ù…Ø¶2Ø¨ÙˆØ·.xlsx are represented as active raw materials without opening
   stock, costs, or reorder thresholds. Exact existing names are retained
@@ -411,3 +413,21 @@ future work and it is not part of Batch 12.
 ### 2026-09-19 — Purchase receipt warehouse selector
 - Fixed the invoice's optional all-branches state filtering out every branch warehouse. It now shows all accessible active warehouses when no invoice branch is selected, and the selected branch plus global warehouses once a branch is chosen. An incompatible line warehouse is cleared on branch change.
 - Long warehouse names now fit the 190px selector via expanded layout and ellipsis. Added a widget regression with two branch warehouses; focused purchase and picker tests pass (21).
+### 2026-09-19 — Direct purchase release readiness pass
+- The default inventory purchase remains a single invoice form and posting action. Receive later is an unchecked operational option; it retains the separate partial receipt workflow.
+- The purchase list and detail now label invoices spanning warehouses as “متعدد المخازن”. The detail shows a compact received quantity summary and explains why cancellation is unavailable after stock receipt.
+- The purchase receipt mode migration was renamed to `2026_09_19_000001_add_purchase_receipt_mode.php` before staging; no historical stock is backfilled.
+
+### 2026-09-19 � Supplier-specific purchase invoice numbering
+- New purchase invoices receive a supplier-scoped, backend-generated reference using the stable supplier number and the existing locked number counter. The system PI number and optional external supplier document reference remain separate.
+- Saved drafts keep their supplier and assigned number; changing supplier requires a new draft. The purchase form displays both automatic numbers read-only and labels the manual external reference separately.
+- Added API regression assertions for independent supplier sequences, idempotent retry, optional external reference, and blocked supplier changes.
+
+### 2026-09-20 - Manual Sales Invoice
+
+- The form now offers direct posting from the editor. Posting uses the existing Sales Invoice service, which consumes inventory and records WAC/COGS in the same transaction.
+- The form has a grouped header, detailed line controls, additional charges, and a totals preview. Backend totals remain authoritative.
+- A line can sell an eligible inventory material directly. Its unit selector contains the base unit and active item-specific conversions. The invoice snapshots the selected unit and converted base quantity.
+- The detail view shows the selling unit and line totals. Credit Note restock uses the original stock movement and cost snapshot.
+- Focused backend pricing and posting tests, new raw-material tests, and targeted Flutter tests pass. The broader sales suites still contain failures in payment widget and sales-reporting fixtures.
+- Deployment was not performed.

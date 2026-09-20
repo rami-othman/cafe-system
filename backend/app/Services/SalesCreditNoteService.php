@@ -92,10 +92,10 @@ final class SalesCreditNoteService
             $product = $products->get((int) $line->product_id);
 
             return [
-                'originalSalesInvoiceLineId' => (int) $line->id, 'productId' => (int) $line->product_id, 'productName' => $line->product_name, 'productSku' => $line->product_sku,
+                'originalSalesInvoiceLineId' => (int) $line->id, 'productId' => $line->product_id ? (int) $line->product_id : null, 'productName' => $line->product_name, 'productSku' => $line->product_sku,
                 'originalQuantity' => $line->quantity, 'alreadyReturned' => $this->milliDecimal($returnedMilli), 'returnable' => $this->milliDecimal($returnableMilli),
                 'unitPrice' => $line->unit_price, 'taxRate' => $line->tax_rate,
-                'isStockTracked' => $product ? ((bool) $product->is_stock_tracked || (bool) $product->inventory_controlled) : false,
+                'isStockTracked' => $line->inventory_item_id !== null || ($product ? ((bool) $product->is_stock_tracked || (bool) $product->inventory_controlled) : false),
             ];
         })->values()->all();
     }
@@ -128,7 +128,7 @@ final class SalesCreditNoteService
                 throw ValidationException::withMessages(["lines.{$index}.quantity" => 'Credited quantity exceeds the returnable balance of '.$this->milliDecimal(max(0, $returnableMilli)).'.']);
             }
             $product = DB::table('products')->where('tenant_id', $tenantId)->where('id', $originalLine->product_id)->first();
-            $tracked = $product && ((bool) $product->is_stock_tracked || (bool) $product->inventory_controlled);
+            $tracked = $originalLine->inventory_item_id !== null || ($product && ((bool) $product->is_stock_tracked || (bool) $product->inventory_controlled));
             $restock = (bool) ($line['restock'] ?? false);
             if ($restock && ! $tracked) {
                 throw ValidationException::withMessages(["lines.{$index}.restock" => 'Only inventory-tracked lines can be restocked.']);

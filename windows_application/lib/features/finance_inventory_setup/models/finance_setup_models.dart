@@ -128,6 +128,8 @@ class FinancialLocation {
     required this.balance,
     required this.todayIncoming,
     required this.todayOutgoing,
+    this.todayExternalIncoming = '0.00',
+    this.todayExternalOutgoing = '0.00',
     required this.isActive,
     this.branchId,
     this.branchName,
@@ -145,6 +147,8 @@ class FinancialLocation {
   final String balance;
   final String todayIncoming;
   final String todayOutgoing;
+  final String todayExternalIncoming;
+  final String todayExternalOutgoing;
   final bool isActive;
   final int? branchId;
   final String? branchName;
@@ -163,6 +167,8 @@ class FinancialLocation {
         balance: readString(json['balance'], fallback: '0.00'),
         todayIncoming: readString(json['todayIncoming'], fallback: '0.00'),
         todayOutgoing: readString(json['todayOutgoing'], fallback: '0.00'),
+        todayExternalIncoming: readString(json['todayExternalIncoming'], fallback: '0.00'),
+        todayExternalOutgoing: readString(json['todayExternalOutgoing'], fallback: '0.00'),
         isActive: readBool(json['isActive']),
         branchId: readInt(json['branchId']),
         branchName: readString(json['branchName']).isEmpty
@@ -1547,3 +1553,26 @@ class DailyClosingDetail {
 
 Map<String, dynamic> _map(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};
+class CashSourceLocation {
+  const CashSourceLocation({required this.id, required this.name});
+  final int id;
+  final String name;
+  factory CashSourceLocation.fromJson(Map<String, dynamic> json) =>
+      CashSourceLocation(id: readInt(json['id']) ?? 0, name: readString(json['name']));
+}
+
+class CashSourceOptions {
+  const CashSourceOptions({required this.mode, this.resolved, required this.allowed});
+  final String mode;
+  final CashSourceLocation? resolved;
+  final List<CashSourceLocation> allowed;
+  factory CashSourceOptions.fromJson(Map<String, dynamic> json) => CashSourceOptions(
+        mode: readString(json['cashSourceMode']),
+        resolved: json['resolvedCashLocation'] is Map
+            ? CashSourceLocation.fromJson(Map<String, dynamic>.from(json['resolvedCashLocation'] as Map))
+            : null,
+        allowed: (json['allowedCashLocations'] as List<dynamic>? ?? const [])
+            .map((value) => CashSourceLocation.fromJson(Map<String, dynamic>.from(value as Map)))
+            .toList(growable: false),
+      );
+}

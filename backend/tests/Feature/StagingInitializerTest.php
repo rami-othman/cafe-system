@@ -14,11 +14,14 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use RuntimeException;
+use Tests\Concerns\UsesIsolatedMigrationDatabase;
 use Tests\TestCase;
 
 class StagingInitializerTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, UsesIsolatedMigrationDatabase {
+        UsesIsolatedMigrationDatabase::beforeRefreshingDatabase insteadof DatabaseMigrations;
+    }
 
     protected function tearDown(): void
     {

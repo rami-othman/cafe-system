@@ -34,9 +34,11 @@ class FinancialLocationService
 
     public function setStatus(Request $request, int $tenantId, int $id, bool $active, ?int $actorId): void
     {
-        $before = $this->find($tenantId, $id);
-        DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $id)->update(['is_active' => $active, 'updated_by' => $actorId, 'updated_at' => now()]);
-        $this->audit->record($request, $tenantId, $active ? 'financial_location.activated' : 'financial_location.deactivated', 'financial_location', $id, (array) $before, (array) $this->find($tenantId, $id), $before->branch_id, $actorId);
+        DB::transaction(function () use ($request, $tenantId, $id, $active, $actorId): void {
+            $before = $this->find($tenantId, $id);
+            DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $id)->update(['is_active' => $active, 'updated_by' => $actorId, 'updated_at' => now()]);
+            $this->audit->record($request, $tenantId, $active ? 'financial_location.activated' : 'financial_location.deactivated', 'financial_location', $id, (array) $before, (array) $this->find($tenantId, $id), $before->branch_id, $actorId);
+        });
     }
 
     public function find(int $tenantId, int $id): object
@@ -57,4 +59,5 @@ class FinancialLocationService
         if ($data['kind'] === 'cash' && ! in_array($data['type'], ['cash_drawer', 'main_safe', 'petty_cash'], true)) throw ValidationException::withMessages(['type' => 'Invalid cash account type.']);
         if ($data['kind'] === 'bank' && $data['type'] !== 'bank') throw ValidationException::withMessages(['type' => 'Bank locations must use the bank type.']);
     }
+
 }

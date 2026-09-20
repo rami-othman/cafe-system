@@ -16,11 +16,15 @@ class SalesInvoicePhaseOneApiTest extends TestCase
         $tenant = $this->tenant('sales-draft'); $headers = $this->headers($tenant); $branch = $this->branch($tenant); $product = $this->product($tenant, 'Latte', '12.50');
         $customer = $this->postJson('/api/v1/finance/customers', ['name' => 'Damascus Tech Company', 'defaultCreditTermsDays' => 30], $headers)->assertCreated()->json('data.id');
         $before = ['journals' => DB::table('journal_entries')->where('tenant_id', $tenant)->count(), 'moves' => DB::table('stock_movements')->where('tenant_id', $tenant)->count(), 'orders' => DB::table('orders')->where('tenant_id', $tenant)->count(), 'payments' => DB::table('payments')->where('tenant_id', $tenant)->count()];
+        // 'total' is not an accepted input field (the server always derives it) so it is silently dropped; the
+        // owner-permissioned 'unitPrice' override IS honored (finance.sales.override_price) — see SalesInvoiceLinePricingTest
+        // for the dedicated default-vs-override coverage. This assertion reflects the actual invoiced price: 2 x 999.99.
         $created = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $branch, 'customerId' => $customer, 'invoiceDate' => '2026-09-12', 'idempotencyKey' => 'sales-draft-1', 'lines' => [['productId' => $product, 'quantity' => '2', 'unitPrice' => '999.99', 'total' => '9999.99']]], $headers)
-            ->assertCreated()->assertJsonPath('data.status', 'draft')->assertJsonPath('data.subtotal', '25.00')->assertJsonPath('data.taxTotal', '2.00')->assertJsonPath('data.total', '27.00')->assertJsonPath('data.dueDate', '2026-10-12')->assertJsonPath('data.accountingStatus', 'unposted')->assertJsonPath('data.inventoryStatus', 'not_consumed');
+            ->assertCreated()->assertJsonPath('data.status', 'draft')->assertJsonPath('data.subtotal', '1999.98')->assertJsonPath('data.taxTotal', '160.00')->assertJsonPath('data.total', '2159.98')->assertJsonPath('data.dueDate', '2026-10-12')->assertJsonPath('data.accountingStatus', 'unposted')->assertJsonPath('data.inventoryStatus', 'not_consumed');
         $id = $created->json('data.id');
         $this->assertMatchesRegularExpression('/^SI-2026-\d{6}$/', $created->json('data.invoiceNumber'));
-        $this->assertSame('12.50', $created->json('data.lines.0.unitPrice'));
+        $this->assertSame('999.99', $created->json('data.lines.0.unitPrice'));
+        $this->assertSame('12.50', $created->json('data.lines.0.baseUnitPrice'));
         $this->assertSame(1, DB::table('sales_invoices')->where('id', $id)->count());
         $this->assertSame(1, DB::table('sales_invoice_lines')->where('sales_invoice_id', $id)->count());
         $this->assertSame($before['journals'], DB::table('journal_entries')->where('tenant_id', $tenant)->count());

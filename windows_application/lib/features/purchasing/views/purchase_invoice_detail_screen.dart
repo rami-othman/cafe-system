@@ -9,6 +9,7 @@ import '../../finance_inventory_setup/widgets/finance_shell.dart';
 import '../controllers/purchasing_cubit.dart';
 import '../models/purchasing_models.dart';
 import '../widgets/purchase_type_label.dart';
+import '../widgets/purchase_posting_dialog.dart';
 
 /// Purchase Invoice detail (`/finance/purchases/:id`). This is the same
 /// Supplier Invoice record shown at `/finance/suppliers/:id` — just a
@@ -63,35 +64,15 @@ class _PurchaseInvoiceDetailScreenState
       return;
     }
     if (!mounted) return;
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialog) => AlertDialog(
-        title: const Text('ترحيل واستلام ودفع فاتورة الشراء'),
-        content: Text(
-          'سيتم ترحيل الفاتورة واستلام المواد ودفع قيمة الفاتورة من الصندوق المرتبط بالمستخدم. هل تريد المتابعة؟\n\n'
-          'إجمالي الفاتورة: ${preview.amount} SYP\n'
-          'الصندوق: ${preview.financialLocationName}\n'
-          'الفرع: ${_purchase?.branchName ?? '—'}'
-          '${preview.shiftNumber == null ? '' : '\nالوردية: ${preview.shiftNumber}'}',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialog, false),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialog, true),
-            child: const Text('تأكيد الترحيل والدفع'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
+    final choice = await showPurchasePostingDialog(context, preview: preview, branchName: _purchase?.branchName ?? "—");
+    if (choice == null) return;
     setState(() => _busy = true);
     try {
       final PurchaseInvoice updated = await _cubit.repository.postPurchase(
         widget.purchaseId,
         'purchase-post-${widget.purchaseId}-${DateTime.now().millisecondsSinceEpoch}',
+        financialLocationId: choice.financialLocationId,
+        paidAmount: choice.paidAmount,
       );
       if (!mounted) return;
       setState(() {
@@ -101,7 +82,7 @@ class _PurchaseInvoiceDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${updated.paidAmount} SYP من ${preview.financialLocationName} بنجاح.',
+          'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${updated.paidAmount} SYP بنجاح.',
           ),
         ),
       );
@@ -251,7 +232,20 @@ class _PurchaseInvoiceDetailScreenState
             const SizedBox(height: FinanceSpace.lg),
             FinanceInfoGrid(
               items: <FinanceInfoItem>[
+                FinanceInfoItem('حالة المستند', switch (p.documentStatus) {
+                  'posted' => 'مُرحّل',
+                  'cancelled' => 'ملغي',
+                  _ => 'مسودة',
+                }),
+                FinanceInfoItem('حالة الدفع', switch (p.paymentStatus) {
+                  'paid' => 'مدفوع بالكامل',
+                  'partial' => 'مدفوع جزئياً',
+                  'unpaid' => 'غير مدفوع',
+                  _ => 'لا ينطبق',
+                }),
                 FinanceInfoItem('الفرع', p.branchName ?? 'كل الفروع'),
+                if (p.hasInventoryLines)
+                  FinanceInfoItem('المخزن', p.warehouseName ?? '—'),
                 FinanceInfoItem('تاريخ الفاتورة', p.invoiceDate),
                 FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
                 FinanceInfoItem(
@@ -268,6 +262,21 @@ class _PurchaseInvoiceDetailScreenState
                   ),
               ],
             ),
+            if (p.hasInventoryLines && p.receiptStatus == 'received') ...<Widget>[
+              const SizedBox(height: FinanceSpace.md),
+              Text('تم الاستلام', style: FinanceText.page),
+              Text(
+                p.lines.where((line) => line.isInventory).map((line) =>
+                  '${line.receivedQuantity} ${line.baseUnit ?? line.purchaseUnit ?? ''} ${line.inventoryItemName ?? line.description}'
+                ).join('، '),
+                style: FinanceText.body,
+              ),
+              if (p.documentStatus == 'posted')
+                const Text(
+                  'لا يمكن إلغاء الفاتورة بعد استلام المخزون. يجب إرجاع حركة المخزون أولاً.',
+                  style: FinanceText.small,
+                ),
+            ],
             const SizedBox(height: FinanceSpace.lg),
             Text('بنود الفاتورة', style: FinanceText.page),
             const SizedBox(height: FinanceSpace.md),

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class SupplierInvoiceController extends Controller
 {
-    public function __construct(private readonly SupplierInvoiceService $invoices, private readonly SupplierPayableQueryService $payable) {}
+    public function __construct(private readonly SupplierInvoiceService $invoices, private readonly SupplierPayableQueryService $payable, private readonly \App\Services\PurchasePostingOrchestrator $purchasePosting) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -83,7 +83,11 @@ class SupplierInvoiceController extends Controller
     {
         $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:120']]);
         $tenant = TenantContext::id($request);
-        $this->invoices->post($request, $tenant, $invoice, $data, FinancialActor::id($request, $tenant));
+        if ($this->invoices->find($tenant, $invoice)->receipt_mode === 'immediate') {
+            $this->purchasePosting->post($request, $tenant, $invoice, $data['idempotencyKey'], FinancialActor::id($request, $tenant), paidAmount: '0.00');
+        } else {
+            $this->invoices->post($request, $tenant, $invoice, $data, FinancialActor::id($request, $tenant));
+        }
 
         return response()->json(['data' => $this->one($tenant, $invoice, $request)]);
     }
@@ -100,6 +104,7 @@ class SupplierInvoiceController extends Controller
     {
         return $request->validate([
             'branchId' => ['nullable', 'integer'],
+            'receiptMode' => ['nullable', 'in:immediate,receive_later'],
             'supplierId' => ['required', 'integer'],
             'invoiceNumber' => ['nullable', 'string', 'max:80'],
             'supplierInvoiceNumber' => ['nullable', 'string', 'max:80'],
@@ -245,6 +250,8 @@ class SupplierInvoiceController extends Controller
             'internalReference' => $row->internal_reference,
             'invoiceNumber' => $row->internal_reference,
             'supplierInvoiceNumber' => $row->invoice_number,
+            'supplierInternalReference' => $row->supplier_internal_reference,
+            'externalSupplierReference' => $row->invoice_number,
             'supplierId' => (int) $row->supplier_id,
             'supplierName' => $row->supplier_name,
             'supplierNumber' => $row->supplier_number,

@@ -50,7 +50,7 @@ final class CustomerRefundController extends Controller
             'customerId' => ['required', 'integer'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
         ]);
         $tenant = TenantContext::id($request);
 
@@ -75,7 +75,7 @@ final class CustomerRefundController extends Controller
             'refundDate' => ['required', 'date'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['required', 'string', 'max:120'],

@@ -35,8 +35,9 @@ class FinancialInventoryFoundationApiTest extends TestCase
     {
         $this->seed();
         $tenantId = $this->demoTenantId();
+        $initialAccountCount = DB::table('financial_accounts')->where('tenant_id', $tenantId)->count();
         $this->seed(FinancialInventoryFoundationSeeder::class);
-        $this->assertSame(22, DB::table('financial_accounts')->where('tenant_id', $tenantId)->count());
+        $this->assertSame($initialAccountCount, DB::table('financial_accounts')->where('tenant_id', $tenantId)->count());
 
         $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000']), $this->headers($tenantId))->assertCreated();
         $this->postJson('/api/v1/finance/accounts', $this->accountPayload(['code' => '9000', 'nameAr' => 'حساب مكرر']), $this->headers($tenantId))->assertUnprocessable()->assertJsonValidationErrors('code');
@@ -293,7 +294,7 @@ class FinancialInventoryFoundationApiTest extends TestCase
 
         $this->getJson('/api/v1/finance/journal-entries?search=manual&status=draft', $this->headers($tenantId))->assertOk()->assertJsonCount(1, 'data');
         $this->getJson('/api/v1/finance/setup-status', $this->headers($tenantId))->assertOk()
-            ->assertJsonPath('data.accountCount', 22)
+            ->assertJsonPath('data.accountCount', DB::table('financial_accounts')->where('tenant_id', $tenantId)->count())
             ->assertJsonPath('data.journalCount', $beforeCount + 1)
             ->assertJsonPath('data.draftJournalCount', $beforeDraftCount + 1)
             ->assertJsonPath('data.journalReversalReady', true);
@@ -313,7 +314,9 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $draft = $this->postJson('/api/v1/finance/journal-entries', $this->journalPayload($cash, $equity), $headers)->assertCreated();
         $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->assertOk()->assertJsonPath('data.location.balance', $beforeBalance);
         $this->postJson('/api/v1/finance/journal-entries/'.$draft->json('data.id').'/post', [], $headers)->assertOk();
-        $expectedPostedBalance = number_format((float) $beforeBalance + 100, 2, '.', '');
+        // The manual journal has no financial_location_id, so it cannot be
+        // attributed to this drawer when several locations share account 1010.
+        $expectedPostedBalance = $beforeBalance;
         $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->assertOk()->assertJsonPath('data.location.balance', $expectedPostedBalance);
 
         $payload = ['fromFinancialLocationId' => $drawerId, 'toFinancialLocationId' => $safeId, 'amount' => '25.00', 'transferDate' => '2026-08-20', 'idempotencyKey' => 'cash-transfer-1'];
@@ -326,19 +329,52 @@ class FinancialInventoryFoundationApiTest extends TestCase
         $this->assertSame($expectedPostedBalance, $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->json('data.location.balance'));
     }
 
+    public function test_internal_transfers_affect_each_location_once_but_not_company_cash_flow(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $drawer = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+        $safe = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'MAIN-SAFE')->value('id');
+        $date = now()->toDateString();
+        $before = $this->getJson('/api/v1/finance/cash-accounts', $headers)->assertOk()->json('data');
+        $byId = fn (array $rows, int $id) => collect($rows)->firstWhere('id', $id);
+        $sourceBefore = $byId($before, $drawer);
+        $destinationBefore = $byId($before, $safe);
+        $externalBefore = collect($before)->sum(fn ($row) => (float) $row['todayExternalOutgoing']);
+
+        foreach (['3456.00', '100.00'] as $index => $amount) {
+            $response = $this->postJson('/api/v1/finance/cash-transfers', ['fromFinancialLocationId' => $drawer, 'toFinancialLocationId' => $safe, 'amount' => $amount, 'transferDate' => $date, 'idempotencyKey' => 'location-transfer-'.$index], $headers)->assertCreated();
+            $id = $response->json('data.id');
+            $journal = $response->json('data.journalEntryId');
+            $this->assertSame(1, DB::table('cash_transfers')->where('tenant_id', $tenant)->where('id', $id)->count());
+            $this->assertSame(1, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'cash_transfer')->where('source_id', $id)->where('status', 'posted')->count());
+            $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $journal)->get();
+            $this->assertCount(2, $lines);
+            $this->assertEquals($lines->sum('debit'), $lines->sum('credit'));
+        }
+
+        $after = $this->getJson('/api/v1/finance/cash-accounts', $headers)->assertOk()->json('data');
+        $this->assertEquals((float) $sourceBefore['todayOutgoing'] + 3556, (float) $byId($after, $drawer)['todayOutgoing']);
+        $this->assertEquals((float) $destinationBefore['todayIncoming'] + 3556, (float) $byId($after, $safe)['todayIncoming']);
+        $this->assertEquals($externalBefore, collect($after)->sum(fn ($row) => (float) $row['todayExternalOutgoing']));
+        $this->assertEquals(0, collect($after)->sum(fn ($row) => (float) $row['todayExternalOutgoing']) - $externalBefore);
+    }
+
     public function test_expense_is_a_tenant_scoped_business_record_with_one_idempotent_posted_payment_and_reversal(): void
     {
         $this->seed(); $tenant = $this->demoTenantId(); $headers = $this->headers($tenant);
+        $branchId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('id');
         $expenseAccount = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '6100')->value('id');
         $category = $this->postJson('/api/v1/finance/expense-categories', ['code' => 'RENT', 'name' => 'Rent', 'financialAccountId' => $expenseAccount, 'isActive' => true], $headers)->assertCreated();
         $this->postJson('/api/v1/finance/expense-categories', ['code' => 'RENT', 'name' => 'Duplicate', 'financialAccountId' => $expenseAccount, 'isActive' => true], $headers)->assertUnprocessable()->assertJsonValidationErrors('code');
-        $draftPayload = ['expenseCategoryId' => $category->json('data.id'), 'amount' => '100.00', 'taxAmount' => '10.00', 'expenseDate' => '2026-08-20', 'description' => 'August rent', 'idempotencyKey' => 'expense-create-1'];
+        $draftPayload = ['branchId' => $branchId, 'expenseCategoryId' => $category->json('data.id'), 'amount' => '100.00', 'taxAmount' => '10.00', 'expenseDate' => '2026-08-20', 'description' => 'August rent', 'idempotencyKey' => 'expense-create-1'];
         $expense = $this->postJson('/api/v1/finance/expenses', $draftPayload, $headers)->assertCreated()->assertJsonPath('data.status', 'draft'); $id = $expense->json('data.id');
         $this->postJson('/api/v1/finance/expenses', $draftPayload, $headers)->assertCreated()->assertJsonPath('data.id', $id);
         $this->postJson('/api/v1/finance/expenses/'.$id.'/pay', ['paymentMethodId' => 1, 'financialLocationId' => 1, 'paymentDate' => '2026-08-20', 'idempotencyKey' => 'expense-pay-early'], $headers)->assertUnprocessable();
         $this->postJson('/api/v1/finance/expenses/'.$id.'/submit', [], $headers)->assertOk()->assertJsonPath('data.status', 'pending_approval');
         $this->postJson('/api/v1/finance/expenses/'.$id.'/approve', [], $headers)->assertOk()->assertJsonPath('data.status', 'approved');
-        $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'); $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+        $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'); $locationId = (int) DB::table('branches')->where('id', $branchId)->value('pos_cash_financial_location_id');
         $pay = ['paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'paymentDate' => '2026-08-20', 'idempotencyKey' => 'expense-pay-1'];
         $this->postJson('/api/v1/finance/expenses/'.$id.'/pay', $pay, $headers)->assertOk()->assertJsonPath('data.status', 'paid')->assertJsonPath('data.paymentStatus', 'paid');
         $this->postJson('/api/v1/finance/expenses/'.$id.'/pay', $pay, $headers)->assertOk()->assertJsonPath('data.status', 'paid');

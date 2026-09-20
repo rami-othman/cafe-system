@@ -19,13 +19,28 @@ final class FinanceDocumentService
         private readonly AccountingPostingService $posting,
         private readonly JournalEntryService $entries,
         private readonly OperationalAuditService $audit,
+        private readonly CashSourceResolver $cashSources,
     ) {}
 
     public function createDraft(Request $request, int $tenantId, array $data, ?int $actorId): object
     {
-        $this->validatePayload($tenantId, $data, $actorId);
         $key = $data['idempotencyKey'] ?? null;
         $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
+        if ($key && ($existing = $this->byKey($tenantId, $key))) {
+            $this->assertFingerprint($existing, $fingerprint);
+            return $existing;
+        }
+        $mode = $this->cashSources->mode($tenantId, (int) $actorId);
+        $selected = isset($data['financialLocationId'])
+            ? DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $data['financialLocationId'])->first()
+            : null;
+        if ($mode === 'shift' || $selected?->kind === 'cash') {
+            if (empty($data['branchId'])) throw ValidationException::withMessages(['branchId' => 'A branch is required for a cash voucher.']);
+            $source = $this->cashSources->resolve($tenantId, (int) $actorId, (int) $data['branchId'], $data['financialLocationId'] ?? null);
+            $data['financialLocationId'] = (int) $source->location->id;
+            $data['shiftId'] = $source->shift?->id;
+        }
+        $this->validatePayload($tenantId, $data, $actorId);
 
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint): object {
             if ($key && ($existing = $this->byKey($tenantId, $key, true))) {
@@ -42,6 +57,7 @@ final class FinanceDocumentService
                 'status' => 'draft',
                 'document_date' => $data['documentDate'],
                 'financial_location_id' => $data['financialLocationId'],
+                'shift_id' => $data['shiftId'] ?? null,
                 'counterparty_type' => $data['counterpartyType'] ?? null,
                 'counterparty_id' => $data['counterpartyId'] ?? null,
                 'currency_code' => $data['currencyCode'] ?? 'SYP',
@@ -163,17 +179,31 @@ final class FinanceDocumentService
                 throw ValidationException::withMessages(['document' => 'Only draft vouchers can be posted.']);
             }
             FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
+            if ($document->shift_id) {
+                $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $document->shift_id)
+                    ->where('branch_id', $document->branch_id)->where('user_id', $actorId)
+                    ->where('financial_location_id', $document->financial_location_id)
+                    ->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
+                if (! $shift) throw ValidationException::withMessages(['shift' => 'Open the original drawer shift before posting this voucher.']);
+            }
             $lines = DB::table('finance_document_lines as lines')->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')
                 ->where('lines.tenant_id', $tenantId)->where('lines.finance_document_id', $id)
-                ->orderBy('lines.line_number')->get(['accounts.code', 'lines.debit', 'lines.credit', 'lines.description']);
+                ->orderBy('lines.line_number')->get(['accounts.id as account_id', 'accounts.code', 'lines.debit', 'lines.credit', 'lines.description']);
+            $cashAccountId = $document->financial_location_id
+                ? DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $document->financial_location_id)->value('financial_account_id')
+                : null;
             $journalId = $this->posting->post($request, $tenantId, [
                 'branchId' => $document->branch_id,
                 'sourceType' => 'finance_document', 'sourceId' => $id, 'sourceEvent' => 'FINANCE_DOCUMENT_POSTED',
                 'entryDate' => $document->document_date,
                 'description' => $document->document_number.($document->description ? ' — '.$document->description : ''),
-                'lines' => $lines->map(fn (object $line) => ['accountCode' => $line->code, 'debit' => $line->debit, 'credit' => $line->credit, 'description' => $line->description])->all(),
+                'lines' => $lines->map(fn (object $line) => [
+                    'accountCode' => $line->code, 'debit' => $line->debit, 'credit' => $line->credit, 'description' => $line->description,
+                    'financialLocationId' => ($cashAccountId && (int) $line->account_id === (int) $cashAccountId) ? $document->financial_location_id : null,
+                ])->all(),
             ], $actorId);
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'posted', 'journal_entry_id' => $journalId, 'posted_by' => $actorId, 'posted_at' => now(), 'updated_at' => now()]);
+            if ($document->shift_id) $this->recordShiftMovement($tenantId, $document, $actorId, false);
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.posted', 'finance_document', $id, [], ['number' => $result->document_number, 'journalEntryId' => $journalId], $result->branch_id, $actorId);
 
@@ -198,6 +228,7 @@ final class FinanceDocumentService
                 'status' => 'reversed', 'reversal_journal_entry_id' => $reversal,
                 'reversed_at' => now(), 'reversed_by' => $actorId, 'reversal_reason' => $reason, 'updated_at' => now(),
             ]);
+            if ($document->shift_id) $this->recordShiftMovement($tenantId, $document, $actorId, true);
             $result = $this->find($tenantId, $id);
             $this->audit->record($request, $tenantId, 'finance_document.reversed', 'finance_document', $id, [], ['number' => $result->document_number, 'reversalJournalEntryId' => $reversal, 'reason' => $reason], $result->branch_id, $actorId);
 
@@ -211,6 +242,17 @@ final class FinanceDocumentService
         abort_unless($row, 404, 'Finance document not found.');
 
         return $row;
+    }
+
+    private function recordShiftMovement(int $tenantId, object $document, ?int $actorId, bool $reversed): void
+    {
+        DB::table('shift_cash_movements')->insertOrIgnore([
+            'tenant_id' => $tenantId, 'branch_id' => $document->branch_id, 'shift_id' => $document->shift_id,
+            'kind' => ($document->document_type === 'receipt') !== $reversed ? 'deposit' : 'withdrawal',
+            'amount' => $document->amount, 'description' => $document->document_number,
+            'source_type' => $reversed ? 'finance_document_reversal' : 'finance_document',
+            'source_id' => $document->id, 'created_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 
     /** @return array<int, array{accountId:int,debit:int,credit:int,description:?string,costCenter?:?string,reference?:?string}> */
@@ -242,6 +284,7 @@ final class FinanceDocumentService
 
     private function validatePayload(int $tenantId, array $data, ?int $actorId): void
     {
+        if (empty($data['financialLocationId'])) throw ValidationException::withMessages(['financialLocationId' => 'يرجى اختيار الصندوق.']);
         $amount = Money::cents($data['amount'], 'amount');
         if ($amount <= 0) {
             throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
@@ -251,6 +294,9 @@ final class FinanceDocumentService
             throw ValidationException::withMessages(['financialLocationId' => 'The selected cash or bank account is not active for this tenant.']);
         }
         $branchId = $data['branchId'] ?? $location->branch_id;
+        if ($location->branch_id && (int) $location->branch_id !== (int) $branchId) {
+            throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the voucher branch.']);
+        }
         if ($branchId && ! DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->whereNull('deleted_at')->exists()) {
             throw ValidationException::withMessages(['branchId' => 'The selected branch does not belong to this tenant.']);
         }

@@ -190,6 +190,28 @@ trait DailyClosingFixtures
     }
 
     /** Direct fixture insert (bypasses InventoryPostingService/InventoryAccountingMapper) for simulating a legacy/broken posting state. */
+    /**
+     * A branch + warehouse that genuinely belong to $tenant, for tests that
+     * need a foreign tenant's own inventory data (e.g. isolation checks).
+     * Reusing another tenant's branch id here would leave makeStockMovementRaw
+     * unable to find a same-tenant warehouse and fail on the warehouse_id
+     * foreign key instead of exercising the isolation being tested.
+     */
+    protected function foreignBranchWithWarehouse(int $tenant): int
+    {
+        $now = now();
+        $branchId = (int) DB::table('branches')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'Foreign Branch', 'is_active' => true,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        DB::table('warehouses')->insert([
+            'tenant_id' => $tenant, 'branch_id' => $branchId, 'name' => 'Foreign Warehouse',
+            'type' => 'bar', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+
+        return $branchId;
+    }
+
     protected function makeStockMovementRaw(int $tenant, int $branch, string $type, string $totalCost, string $occurredAt, string $quantityOut = '0.000'): int
     {
         $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->where('branch_id', $branch)->whereNull('deleted_at')->orderBy('id')->value('id');

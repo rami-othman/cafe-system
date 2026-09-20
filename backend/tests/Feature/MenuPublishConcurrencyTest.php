@@ -8,18 +8,21 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use PDO;
 use RuntimeException;
+use Tests\Concerns\UsesIsolatedMigrationDatabase;
 use Tests\TestCase;
 
 class MenuPublishConcurrencyTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, UsesIsolatedMigrationDatabase {
+        UsesIsolatedMigrationDatabase::beforeRefreshingDatabase insteadof DatabaseMigrations;
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->assertSame('pgsql', config('database.default'));
-        $this->assertSame('cafe_system_618_testing', config('database.connections.pgsql.database'));
+        $this->assertSame('pgsql_migrations', config('database.default'));
+        $this->assertStringContainsString('testing', (string) config('database.connections.pgsql_migrations.database'));
     }
 
     public function test_same_scope_publishers_serialize_to_one_current_version_and_one_no_change_result(): void
@@ -110,7 +113,8 @@ class MenuPublishConcurrencyTest extends TestCase
             foreach ($payloads as $payload) {
                 $payload['barrier'] = $barrier;
                 $pipes = [];
-                $process = proc_open([PHP_BINARY, base_path('tests/Fixtures/ConcurrentMenuPublishWorker.php'), base64_encode(json_encode($payload, JSON_THROW_ON_ERROR))], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path());
+                $workerEnv = array_merge(getenv() ?: [], ['DB_DATABASE' => (string) config('database.connections.pgsql_migrations.database')]);
+                $process = proc_open([PHP_BINARY, base_path('tests/Fixtures/ConcurrentMenuPublishWorker.php'), base64_encode(json_encode($payload, JSON_THROW_ON_ERROR))], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path(), $workerEnv);
                 if (! is_resource($process)) {
                     throw new RuntimeException('Could not start concurrent menu publish worker.');
                 }
@@ -162,7 +166,7 @@ class MenuPublishConcurrencyTest extends TestCase
 
     private function independentConnection(): PDO
     {
-        $connection = config('database.connections.pgsql');
+        $connection = config('database.connections.pgsql_migrations');
         $pdo = new PDO("pgsql:host={$connection['host']};port={$connection['port']};dbname={$connection['database']}", $connection['username'], $connection['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->setAttribute(PDO::ATTR_AUTOCOMMIT, true);
 

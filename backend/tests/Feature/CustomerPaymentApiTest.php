@@ -470,7 +470,7 @@ class CustomerPaymentApiTest extends TestCase
     private function cashMethodAndLocation(int $tenant): array
     {
         $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id');
-        $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+        $locationId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('pos_cash_financial_location_id');
 
         return [$methodId, $locationId];
     }

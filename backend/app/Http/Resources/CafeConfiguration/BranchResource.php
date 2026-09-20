@@ -4,6 +4,7 @@ namespace App\Http\Resources\CafeConfiguration;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 
 class BranchResource extends JsonResource
 {
@@ -19,6 +20,23 @@ class BranchResource extends JsonResource
             'timezone' => $this->timezone,
             'currency' => $this->currency,
             'isActive' => $this->is_active,
+            'posCashFinancialLocationId' => $this->pos_cash_financial_location_id,
+            'shiftCloseDestinationFinancialLocationId' => $this->shift_close_destination_financial_location_id,
+            'shiftClosingFloatAmount' => $this->shift_closing_float_amount,
+            'shiftCloseTime' => $this->shift_close_time ? substr($this->shift_close_time, 0, 5) : null,
+            'availableShiftCloseDestinations' => DB::table('financial_locations as l')
+                ->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                ->where('l.tenant_id', $this->tenant_id)->where('l.kind', 'cash')->where('l.is_active', true)
+                ->where('a.tenant_id', $this->tenant_id)->where('a.is_active', true)->whereNull('a.deleted_at')
+                ->where(fn ($q) => $q->whereNull('l.branch_id')->orWhere('l.branch_id', $this->id))
+                ->where('l.id', '<>', $this->pos_cash_financial_location_id ?? 0)
+                ->orderBy('l.name')->get(['l.id', 'l.name'])->map(fn ($l) => ['id' => (int) $l->id, 'name' => $l->name]),
+            'availablePosCashLocations' => DB::table('financial_locations as l')
+                ->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                ->where('l.tenant_id', $this->tenant_id)->where('l.branch_id', $this->id)
+                ->where('l.kind', 'cash')->where('l.type', 'cash_drawer')->where('l.is_active', true)
+                ->where('a.tenant_id', $this->tenant_id)->where('a.is_active', true)->whereNull('a.deleted_at')
+                ->orderBy('l.name')->get(['l.id', 'l.name'])->map(fn ($l) => ['id' => (int) $l->id, 'name' => $l->name]),
             'posInventoryWarehouseId' => $this->pos_inventory_warehouse_id,
             'posInventoryWarehouse' => $this->whenLoaded('posInventoryWarehouse', fn () => $this->posInventoryWarehouse ? [
                 'id' => $this->posInventoryWarehouse->id,

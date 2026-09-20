@@ -13,6 +13,7 @@ use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BranchController extends Controller
 {
@@ -42,6 +43,7 @@ class BranchController extends Controller
                 'is_active' => true,
             ]);
             $financialSetup->ensureBranchWarehouse($tenantId, $branch->id, $warehouseName, $request->attributes->get('auth_user')->id);
+            $financialSetup->ensureBranchCashDrawer($tenantId, $branch->id, $request->attributes->get('auth_user')->id);
 
             return $branch;
         });
@@ -54,7 +56,7 @@ class BranchController extends Controller
         return new BranchResource($this->withPosWarehouses($this->branch($request, $branch)));
     }
 
-    public function update(UpdateBranchRequest $request, int $branch, PosInventoryWarehouseResolver $posWarehouses): BranchResource
+    public function update(UpdateBranchRequest $request, int $branch, PosInventoryWarehouseResolver $posWarehouses, FinancialSetupService $financialSetup): BranchResource
     {
         $branch = $this->branch($request, $branch);
         $data = $request->validated();
@@ -63,7 +65,44 @@ class BranchController extends Controller
             $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];
             unset($data['posInventoryWarehouseId']);
         }
-        $branch->update($data);
+        if (array_key_exists('posCashFinancialLocationId', $data)) {
+            $locationId = (int) $data['posCashFinancialLocationId'];
+            $valid = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                ->where('l.id', $locationId)->where('l.tenant_id', $branch->tenant_id)
+                ->where('l.branch_id', $branch->id)->where('l.kind', 'cash')->where('l.type', 'cash_drawer')
+                ->where('l.is_active', true)->where('a.tenant_id', $branch->tenant_id)
+                ->where('a.is_active', true)->whereNull('a.deleted_at')->exists();
+            if (! $valid) throw ValidationException::withMessages(['posCashFinancialLocationId' => 'Select an active POS cash drawer for this branch.']);
+            $data['pos_cash_financial_location_id'] = $locationId;
+            unset($data['posCashFinancialLocationId']);
+        }
+        if (array_key_exists('shiftCloseDestinationFinancialLocationId', $data)) {
+            $locationId = $data['shiftCloseDestinationFinancialLocationId'];
+            if ($locationId !== null) {
+                $valid = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                    ->where('l.id', $locationId)->where('l.tenant_id', $branch->tenant_id)
+                    ->where('l.kind', 'cash')->where('l.is_active', true)
+                    ->where('a.tenant_id', $branch->tenant_id)->where('a.is_active', true)->whereNull('a.deleted_at')
+                    ->where(fn ($q) => $q->whereNull('l.branch_id')->orWhere('l.branch_id', $branch->id))->exists();
+                if (! $valid || (int) $locationId === (int) ($data['pos_cash_financial_location_id'] ?? $branch->pos_cash_financial_location_id)) {
+                    throw ValidationException::withMessages(['shiftCloseDestinationFinancialLocationId' => 'Select an active cash destination different from the POS drawer.']);
+                }
+            }
+            $data['shift_close_destination_financial_location_id'] = $locationId;
+            unset($data['shiftCloseDestinationFinancialLocationId']);
+        }
+        if (isset($data['pos_cash_financial_location_id']) && (int) $data['pos_cash_financial_location_id'] === (int) ($data['shift_close_destination_financial_location_id'] ?? $branch->shift_close_destination_financial_location_id)) {
+            throw ValidationException::withMessages(['posCashFinancialLocationId' => 'The POS drawer cannot be the shift close destination.']);
+        }
+        foreach (['shiftClosingFloatAmount' => 'shift_closing_float_amount', 'shiftCloseTime' => 'shift_close_time'] as $input => $column) {
+            if (array_key_exists($input, $data)) { $data[$column] = $data[$input]; unset($data[$input]); }
+        }
+        DB::transaction(function () use ($branch, $data, $financialSetup, $request): void {
+            $branch->update($data);
+            if ($branch->is_active) {
+                $financialSetup->ensureBranchCashDrawer((int) $branch->tenant_id, (int) $branch->id, $request->attributes->get('auth_user')->id);
+            }
+        });
 
         return new BranchResource($this->withPosWarehouses($branch->fresh()));
     }

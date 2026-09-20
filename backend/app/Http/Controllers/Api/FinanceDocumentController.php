@@ -91,7 +91,7 @@ final class FinanceDocumentController extends Controller
             'documentType' => ['required', 'in:receipt,payment'],
             'documentDate' => ['required', 'date_format:Y-m-d'],
             'branchId' => ['nullable', 'integer'],
-            'financialLocationId' => ['required', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
             'counterpartyType' => ['nullable', 'string', 'max:30'],
             'counterpartyId' => ['nullable', 'integer'],
             'currencyCode' => ['nullable', 'string', 'size:3'],

@@ -251,8 +251,13 @@ final class CashierDashboardApiTest extends TestCase
         $this->openShift($this->cashierA, $this->branchA, '0.00');
         $warehouse = app(PosInventoryWarehouseResolver::class)->forBranch($this->tenant, $this->branchA)->id;
         $item = $this->stockedItem($warehouse, '7.000');
+        $sku = DB::table('inventory_items')->where('id', $item)->value('sku');
 
-        $response = $this->getJson(self::INVENTORY.'?perPage=100', $this->cashierAHeaders)->assertOk();
+        // The seeded tenant's catalog has far more than one page of items, and
+        // this new item sorts after every zero/low-stock one under the state
+        // ordering (see CashierInventoryQueryService::list). Searching by its
+        // own unique SKU finds it deterministically regardless of catalog size.
+        $response = $this->getJson(self::INVENTORY.'?perPage=100&search='.$sku, $this->cashierAHeaders)->assertOk();
 
         $row = collect($response->json('data.items'))->firstWhere('itemId', $item);
         $this->assertNotNull($row, 'The seeded item must appear in the POS warehouse list.');

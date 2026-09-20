@@ -29,6 +29,13 @@ class PosNumberGenerator
         return "PI-{$year}-".str_pad((string) $sequence, 6, '0', STR_PAD_LEFT);
     }
 
+    public function nextSupplierInvoiceNumber(int $tenantId, int $supplierId, string $supplierCode): string
+    {
+        $sequence = $this->next($tenantId, 'supplier_invoice', $supplierId);
+
+        return $supplierCode.'-'.str_pad((string) $sequence, 6, '0', STR_PAD_LEFT);
+    }
+
     private function next(int $tenantId, string $kind, int $branchScopeId): int
     {
         // Historical counters are initialized by the Hardening A migration.

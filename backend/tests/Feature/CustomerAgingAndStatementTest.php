@@ -50,7 +50,7 @@ class CustomerAgingAndStatementTest extends TestCase
         $closing1 = $this->closing($s, $day1);
         $this->assertSame('0.00', $closing1['cash']['customerPaymentsCash'], 'Day 1: Cash = 0 (credit invoice never moves cash).');
 
-        [$cashMethod, $cashLocation] = $this->cashMethodAndLocation($s['tenant']);
+        [$cashMethod, $cashLocation] = $this->cashMethodAndLocation($s['tenant'], $s['branch']);
         [$bankMethod, $bankLocation] = $this->bankMethodAndLocation($s);
 
         // Day 2: Customer pays Cash = 100 -> AR = 200.
@@ -151,9 +151,13 @@ class CustomerAgingAndStatementTest extends TestCase
     }
 
     /** @return array{0:int,1:int} [paymentMethodId, financialLocationId] */
-    private function cashMethodAndLocation(int $tenant): array
+    private function cashMethodAndLocation(int $tenant, int $branch): array
     {
-        return [(int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'), (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id')];
+        // The branch-specific drawer (CASH-DRAWER-BR-{branch}), not the
+        // legacy tenant-wide CASH-DRAWER — see FinancialSetupService::
+        // ensureBranchCashDrawer. A branch-scoped customer payment must use
+        // a location that belongs to that branch.
+        return [(int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id'), (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER-BR-'.$branch)->value('id')];
     }
 
     private function bankMethodAndLocation(array $s): array

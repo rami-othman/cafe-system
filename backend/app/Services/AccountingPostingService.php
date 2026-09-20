@@ -43,7 +43,7 @@ class AccountingPostingService
      *   sourceEvent?: string|null,
      *   entryDate?: string|null,
      *   description?: string|null,
-     *   lines: array<int, array{accountCode: string, debit?: string|float|int|null, credit?: string|float|int|null, description?: string|null}>,
+     *   lines: array<int, array{accountCode: string, debit?: string|float|int|null, credit?: string|float|int|null, description?: string|null, financialLocationId?: int|null}>,
      * } $data
      */
     public function post(Request $request, int $tenantId, array $data, ?int $actorId): int
@@ -80,6 +80,7 @@ class AccountingPostingService
                         'debit' => $line['debit'] ?? '0',
                         'credit' => $line['credit'] ?? '0',
                         'description' => $line['description'] ?? null,
+                        'locationId' => $line['financialLocationId'] ?? null,
                     ],
                     $data['lines'] ?? [],
                 );

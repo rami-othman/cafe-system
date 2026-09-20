@@ -7,7 +7,7 @@ use App\Services\Catalog\ProductImageStorage;
 use App\Services\Catalog\ProductImageStorageException;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Filesystem\FilesystemManager;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +17,7 @@ use Tests\TestCase;
 
 class ProductImageStorageTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDatabase;
 
     public function test_local_upload_keeps_the_legacy_public_api_url_and_tenant_path(): void
     {

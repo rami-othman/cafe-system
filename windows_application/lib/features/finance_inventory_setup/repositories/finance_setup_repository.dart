@@ -179,6 +179,11 @@ class FinanceSetupRepository {
         ),
       ).map(FinancialLocation.fromJson).toList(growable: false);
 
+  Future<CashSourceOptions> getCashSourceOptions(int branchId) async =>
+      CashSourceOptions.fromJson(Map<String, dynamic>.from(
+        await _api.get('finance/cash-source-options', queryParameters: {'branchId': branchId}) as Map,
+      ));
+
   /// Minimal, branch-scoped reference data for the voucher form. This avoids
   /// giving a cashier access to the Accounts or Cash/Banks workspaces.
   Future<({List<FinancialAccount> accounts, List<FinancialLocation> locations, List<Branch> branches})>

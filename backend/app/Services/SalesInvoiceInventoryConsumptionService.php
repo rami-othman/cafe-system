@@ -24,6 +24,10 @@ final class SalesInvoiceInventoryConsumptionService
     {
         $results = [];
         foreach ($lines as $line) {
+            if ($line->inventory_item_id) {
+                $results[(int) $line->id] = $this->directMaterialPlan($tenantId, $invoice, $line);
+                continue;
+            }
             $product = DB::table('products')->where('tenant_id', $tenantId)->where('id', $line->product_id)->where('is_active', true)->whereNull('deleted_at')->first();
             if (! $product) {
                 throw ValidationException::withMessages(['productId' => "Sales invoice line {$line->line_number} has an inactive or unavailable product."]);
@@ -36,7 +40,20 @@ final class SalesInvoiceInventoryConsumptionService
             if (! $line->product_variant_id) {
                 throw ValidationException::withMessages(['variantId' => "Inventory-tracked line {$line->line_number} has no selected product variant. Edit the draft and select a variant before posting."]);
             }
-            $components = $this->components($tenantId, (int) $product->id, (int) $line->product_variant_id);
+            $components = $this->overrides($tenantId, (int) $line->id)
+    ->map(fn ($component): array => [
+        'materialId' => (int) $component->inventory_item_id,
+        'quantity' => $component->quantity,
+        'unitCode' => $component->unit_code,
+    ]);
+
+if ($components->isEmpty()) {
+    $components = $this->components(
+        $tenantId,
+        (int) $product->id,
+        (int) $line->product_variant_id,
+    );
+}
             if ($components->isEmpty()) {
                 // An explicitly absent effective recipe is a valid, zero-Cogs
                 // sale. It must not require a warehouse merely because the
@@ -86,6 +103,29 @@ final class SalesInvoiceInventoryConsumptionService
         return $results;
     }
 
+    private function directMaterialPlan(int $tenantId, object $invoice, object $line): array
+    {
+        $material = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->where('is_active', true)->whereNull('deleted_at')->first();
+        if (! $material || ! RecipeMaterialEligibility::allows($material)) throw ValidationException::withMessages(['inventory' => 'The sold inventory material is unavailable.']);
+        $warehouse = $this->warehouse($tenantId, (int) $invoice->branch_id);
+        if (! $warehouse) throw ValidationException::withMessages(['inventory' => 'No active selling warehouse exists for this branch.']);
+        $this->assignments->assertAssigned($tenantId, (int) $material->id, (int) $warehouse->id, 'inventory');
+        $quantity = InventoryDecimal::units($line->base_quantity);
+        if ($quantity <= 0) throw ValidationException::withMessages(['quantity' => 'Sold material quantity must be positive.']);
+        $balance = DB::table('stock_balances')->where(['tenant_id' => $tenantId, 'warehouse_id' => $warehouse->id, 'inventory_item_id' => $material->id])->first();
+        $available = InventoryDecimal::signedUnits($balance->quantity_on_hand ?? '0.000') - InventoryDecimal::units($balance->reserved_quantity ?? '0.000');
+        if ($quantity > $available) throw ValidationException::withMessages(['quantity' => "Insufficient available stock for {$material->name} in {$warehouse->name}."]);
+        $unitCost = InventoryDecimal::cost($balance->average_unit_cost ?? '0.0000');
+        if ($unitCost <= 0) throw ValidationException::withMessages(['inventory' => "Missing WAC/cost for {$material->name}."]);
+        $cost = Money::cents(InventoryDecimal::totalCost($quantity, $unitCost));
+        return ['cogsCents' => $cost, 'warehouseId' => (int) $warehouse->id, 'warehouseName' => $warehouse->name, 'movements' => [[
+            'materialId' => (int) $material->id, 'materialName' => $material->name_ar ?: $material->name,
+            'recipeQuantity' => $line->quantity, 'recipeUnit' => $line->unit_code, 'baseUnit' => $material->unit,
+            'quantity' => $quantity, 'warehouseId' => (int) $warehouse->id, 'warehouseName' => $warehouse->name,
+            'unitCostCents' => $unitCost, 'costCents' => $cost,
+        ]]];
+    }
+
     /** @param iterable<object> $lines @return array<int, array<string,mixed>> */
     public function consume(Request $request, int $tenantId, object $invoice, iterable $lines, ?int $actorId): array
     {
@@ -120,6 +160,13 @@ final class SalesInvoiceInventoryConsumptionService
         } catch (OrderLifecycleException) {
             return null;
         }
+    }
+
+    /** A sales invoice line's saved per-invoice recipe override, if any — see 2026_09_20_122659_create_sales_invoice_line_material_overrides. */
+    private function overrides(int $tenantId, int $lineId)
+    {
+        return DB::table('sales_invoice_line_material_overrides')->where('tenant_id', $tenantId)->where('sales_invoice_line_id', $lineId)
+            ->orderBy('sort_order')->select('inventory_item_id', 'quantity', 'unit_code')->get();
     }
 
     private function components(int $tenantId, int $productId, int $variantId)

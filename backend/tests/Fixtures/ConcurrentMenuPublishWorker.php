@@ -9,16 +9,25 @@ use Illuminate\Support\Facades\DB;
 [$encodedPayload] = array_pad(array_slice($argv, 1), 1, null);
 $payload = json_decode((string) base64_decode((string) $encodedPayload), true, 512, JSON_THROW_ON_ERROR);
 
+// The parent test process passes its actual (possibly isolated) testing
+// database via the environment so the worker commits to the same database
+// the parent's fixtures live in. It must never silently fall back to a
+// different database than the one the caller is actually using.
+$expectedDatabase = getenv('DB_DATABASE') ?: null;
+if ($expectedDatabase === null) {
+    throw new RuntimeException('Concurrent menu worker requires DB_DATABASE from its parent process.');
+}
+
 putenv('APP_ENV=testing');
 putenv('DB_CONNECTION=pgsql');
-putenv('DB_DATABASE=cafe_system_618_testing');
+putenv('DB_DATABASE='.$expectedDatabase);
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';
 
 $app = require dirname(__DIR__, 2).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
-if (config('database.default') !== 'pgsql' || config('database.connections.pgsql.database') !== 'cafe_system_618_testing') {
+if (config('database.default') !== 'pgsql' || config('database.connections.pgsql.database') !== $expectedDatabase || ! str_contains($expectedDatabase, 'testing')) {
     throw new RuntimeException('Concurrent menu worker refused a non-testing PostgreSQL connection.');
 }
 

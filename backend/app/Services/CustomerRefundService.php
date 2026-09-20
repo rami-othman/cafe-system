@@ -25,6 +25,7 @@ final class CustomerRefundService
         private readonly SalesAccountResolver $accounts,
         private readonly CustomerCreditQueryService $credit,
         private readonly OperationalAuditService $audit,
+        private readonly CashSourceResolver $cashSources,
     ) {}
 
     public function pay(Request $request, int $tenantId, array $data, ?int $actorId): object
@@ -52,7 +53,14 @@ final class CustomerRefundService
                     throw ValidationException::withMessages(['customerId' => 'Select an active tenant customer.']);
                 }
 
+                $requestedMethod = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->first();
+                if (! $requestedMethod) throw ValidationException::withMessages(['paymentMethodId' => 'Select an active payment method.']);
+                $cashSource = $this->cashSources->forPaymentMethod($tenantId, (int) $actorId, (int) $data['branchId'], $requestedMethod, $data['financialLocationId'] ?? null, true);
+                if ($cashSource) $data['financialLocationId'] = (int) $cashSource->location->id;
                 [$method, $location] = $this->resolveSettlement($tenantId, $data);
+                if ($location->branch_id && (int) $location->branch_id !== (int) $data['branchId']) {
+                    throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the refund branch.']);
+                }
                 $amountCents = Money::cents($data['amount']);
                 if ($amountCents <= 0) {
                     throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
@@ -67,7 +75,7 @@ final class CustomerRefundService
                 $refundId = DB::table('customer_refunds')->insertGetId([
                     'tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'customer_id' => $customer->id,
                     'refund_number' => $this->nextNumber($tenantId), 'refund_date' => $data['refundDate'], 'amount' => Money::decimal($amountCents),
-                    'payment_method_id' => $method->id, 'financial_location_id' => $location->id,
+                    'payment_method_id' => $method->id, 'financial_location_id' => $location->id, 'shift_id' => $cashSource?->shift?->id,
                     'external_reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null, 'status' => 'posted',
                     'idempotency_key' => $key, 'idempotency_fingerprint' => $fingerprint,
                     'created_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
@@ -80,7 +88,7 @@ final class CustomerRefundService
                     'entryDate' => $data['refundDate'], 'description' => "Customer Refund — {$customer->name}",
                     'lines' => [
                         ['accountCode' => $customerCreditCode, 'debit' => Money::decimal($amountCents), 'description' => 'Customer Credit Balance'],
-                        ['accountCode' => $location->account_code, 'credit' => Money::decimal($amountCents), 'description' => 'Cash/Bank Paid'],
+                        ['accountCode' => $location->account_code, 'credit' => Money::decimal($amountCents), 'description' => 'Cash/Bank Paid', 'financialLocationId' => $location->id],
                     ],
                 ], $actorId);
 
@@ -148,7 +156,9 @@ final class CustomerRefundService
         $location = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
             ->where('l.tenant_id', $tenantId)->where('l.id', $data['financialLocationId'] ?? 0)->where('l.is_active', true)
             ->where('a.is_active', true)->whereNull('a.deleted_at')->select('l.*', 'a.code as account_code', 'a.name_ar as account_name')->first();
-        if (! $method || ! $location || (int) $method->financial_account_id !== (int) $location->financial_account_id) {
+        if (! $method || ! $location || ($method->type === 'cash'
+            ? $location->kind !== 'cash'
+            : (int) $method->financial_account_id !== (int) $location->financial_account_id)) {
             throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
         }
 

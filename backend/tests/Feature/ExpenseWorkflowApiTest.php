@@ -189,7 +189,7 @@ class ExpenseWorkflowApiTest extends TestCase
         $id = $this->approvedExpense($tenant, $headers, $categoryId, '250.00', '25.00');
 
         $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id');
-        $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+        $locationId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('pos_cash_financial_location_id');
         $expenseAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '6100')->value('id');
         $cashAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1010')->value('id');
         $balanceBefore = (float) $this->getJson('/api/v1/finance/cash-accounts/'.$locationId.'/transactions', $headers)->json('data.location.balance');
@@ -246,13 +246,13 @@ class ExpenseWorkflowApiTest extends TestCase
         $id = $this->approvedExpense($tenant, $headers, $categoryId, '60.00', '0.00');
 
         $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id');
-        $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+        $locationId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('pos_cash_financial_location_id');
 
-        // Mismatched method/location pair (location's account differs from method's account).
+        // A cash method cannot draw from a bank location.
         $bankLocationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'BANK')->value('id');
         $this->postJson('/api/v1/finance/expenses/'.$id.'/pay', [
             'paymentMethodId' => $methodId, 'financialLocationId' => $bankLocationId, 'paymentDate' => '2026-08-21', 'idempotencyKey' => 'bad-pair-1',
-        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('payment');
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('financialLocationId');
 
         // Inactive payment method.
         DB::table('payment_methods')->where('id', $methodId)->update(['is_active' => false]);
@@ -285,7 +285,7 @@ class ExpenseWorkflowApiTest extends TestCase
         $id = $this->approvedExpense($tenant, $headers, $categoryId, '80.00', '0.00');
 
         $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id');
-        $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+        $locationId = (int) DB::table('branches')->where('tenant_id', $tenant)->value('pos_cash_financial_location_id');
         $balanceBeforePay = (float) $this->getJson('/api/v1/finance/cash-accounts/'.$locationId.'/transactions', $headers)->json('data.location.balance');
 
         $paid = $this->postJson('/api/v1/finance/expenses/'.$id.'/pay', [
@@ -423,6 +423,7 @@ class ExpenseWorkflowApiTest extends TestCase
     private function approvedExpense(int $tenant, array $headers, int $categoryId, string $amount, string $tax): int
     {
         $expense = $this->postJson('/api/v1/finance/expenses', [
+            'branchId' => (int) DB::table('branches')->where('tenant_id', $tenant)->value('id'),
             'expenseCategoryId' => $categoryId, 'amount' => $amount, 'taxAmount' => $tax, 'expenseDate' => '2026-08-20', 'description' => 'Approved expense fixture',
         ], $headers)->assertCreated();
         $id = $expense->json('data.id');

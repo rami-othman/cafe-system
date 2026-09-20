@@ -7,11 +7,14 @@ use App\Domain\Customer\CustomerOperationalEligibility;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Tests\Concerns\UsesIsolatedMigrationDatabase;
 use Tests\TestCase;
 
 class CustomerOrderEligibilityTest extends TestCase
 {
-    use DatabaseMigrations;
+    use DatabaseMigrations, UsesIsolatedMigrationDatabase {
+        UsesIsolatedMigrationDatabase::beforeRefreshingDatabase insteadof DatabaseMigrations;
+    }
 
     public function test_only_active_non_archived_same_tenant_customers_are_eligible_and_null_is_allowed(): void
     {
@@ -66,7 +69,8 @@ class CustomerOrderEligibilityTest extends TestCase
                     'barrier' => $barrier,
                 ], JSON_THROW_ON_ERROR));
                 $pipes = [];
-                $process = proc_open([PHP_BINARY, base_path('tests/Fixtures/ConcurrentCustomerEligibilityWorker.php'), $payload], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path());
+                $workerEnv = array_merge(getenv() ?: [], ['DB_DATABASE' => (string) config('database.connections.pgsql_migrations.database')]);
+                $process = proc_open([PHP_BINARY, base_path('tests/Fixtures/ConcurrentCustomerEligibilityWorker.php'), $payload], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, base_path(), $workerEnv);
                 if (! is_resource($process)) {
                     throw new RuntimeException('Could not start concurrent customer worker.');
                 }

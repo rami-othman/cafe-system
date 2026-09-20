@@ -11,6 +11,7 @@ import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../models/finance_voucher.dart';
 import '../repositories/finance_setup_repository.dart';
+import '../widgets/cash_source_field.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_paginated_table.dart';
 
@@ -114,8 +115,9 @@ class _VoucherDialog extends StatefulWidget {
 }
 
 class _VoucherDialogState extends State<_VoucherDialog> {
-  late int _locationId = widget.locations.first.id;
+  int? _locationId;
   int? _branchId;
+  CashSourceOptions? _cashOptions;
   late final TextEditingController _amount = TextEditingController();
   late final TextEditingController _description = TextEditingController();
   final List<_DistributionLine> _lines = <_DistributionLine>[];
@@ -123,19 +125,32 @@ class _VoucherDialogState extends State<_VoucherDialog> {
   @override void initState() { super.initState(); _addLine(); }
   @override void dispose() { _amount.dispose(); _description.dispose(); for (final line in _lines) { line.dispose(); } super.dispose(); }
   void _addLine() => _lines.add(_DistributionLine(widget.accounts.first.id));
+  Future<void> _selectBranch(int? branchId) async {
+    setState(() { _branchId = branchId; _locationId = null; _cashOptions = null; });
+    if (branchId == null) return;
+    try {
+      final options = await widget.repository.getCashSourceOptions(branchId);
+      if (mounted && _branchId == branchId) setState(() => _cashOptions = options);
+    } catch (error) {
+      if (mounted) setState(() => _error = '$error');
+    }
+  }
   Future<void> _save() async {
     if (_amount.text.trim().isEmpty || _lines.any((line) => line.amount.text.trim().isEmpty)) { setState(() => _error = 'أدخل مبلغ السند ومبالغ التوزيع.'); return; }
+    if (_cashOptions?.mode == 'shift' && _cashOptions?.resolved == null) { setState(() => _error = 'يجب فتح وردية بصندوق صالح.'); return; }
+    if (_cashOptions?.mode != 'shift' && !cashSourceIsResolved(_cashOptions, _locationId)) { setState(() => _error = 'يرجى اختيار الصندوق.'); return; }
     setState(() { _saving = true; _error = null; });
     try {
-      await widget.repository.createVoucher(<String, dynamic>{'documentType': widget.type, 'documentDate': DateTime.now().toIso8601String().substring(0, 10), 'branchId': _branchId, 'financialLocationId': _locationId, 'currencyCode': 'SYP', 'exchangeRate': '1', 'amount': _amount.text.trim(), 'description': _description.text.trim(), 'idempotencyKey': 'voucher-${DateTime.now().microsecondsSinceEpoch}', 'lines': _lines.map((line) => <String, dynamic>{'accountId': line.accountId, 'amount': line.amount.text.trim(), 'description': line.description.text.trim()}).toList()});
+      await widget.repository.createVoucher(<String, dynamic>{'documentType': widget.type, 'documentDate': DateTime.now().toIso8601String().substring(0, 10), 'branchId': _branchId, if (_cashOptions?.mode != 'shift') 'financialLocationId': _locationId, 'currencyCode': 'SYP', 'exchangeRate': '1', 'amount': _amount.text.trim(), 'description': _description.text.trim(), 'idempotencyKey': 'voucher-${DateTime.now().microsecondsSinceEpoch}', 'lines': _lines.map((line) => <String, dynamic>{'accountId': line.accountId, 'amount': line.amount.text.trim(), 'description': line.description.text.trim()}).toList()});
       if (mounted) Navigator.pop(context, true);
     } catch (error) { if (mounted) setState(() { _error = '$error'; _saving = false; }); }
   }
   @override Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.type == 'receipt' ? 'سند قبض جديد' : 'سند دفع جديد'),
     content: SizedBox(width: 760, child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-      DropdownButtonFormField<int>(initialValue: _locationId, decoration: const InputDecoration(labelText: 'الصندوق / الحساب البنكي'), items: widget.locations.map((x) => DropdownMenuItem(value: x.id, child: Text(x.name))).toList(), onChanged: (x) => setState(() => _locationId = x!)),
-      DropdownButtonFormField<int?>(initialValue: _branchId, decoration: const InputDecoration(labelText: 'الفرع'), items: <DropdownMenuItem<int?>>[const DropdownMenuItem(value: null, child: Text('بدون فرع')), ...widget.branches.map((x) => DropdownMenuItem(value: x.id, child: Text(x.name)))], onChanged: (x) => setState(() => _branchId = x)),
+      DropdownButtonFormField<int?>(initialValue: _branchId, decoration: const InputDecoration(labelText: 'الفرع'), items: <DropdownMenuItem<int?>>[const DropdownMenuItem(value: null, child: Text('بدون فرع')), ...widget.branches.map((x) => DropdownMenuItem(value: x.id, child: Text(x.name)))], onChanged: _selectBranch),
+      if (_cashOptions?.mode == 'shift') Text('الصندوق: ${_cashOptions?.resolved?.name ?? 'غير محدد'}')
+      else DropdownButtonFormField<int>(initialValue: _locationId, isExpanded: true, decoration: const InputDecoration(labelText: 'الصندوق / الحساب البنكي'), items: widget.locations.where((x) => _branchId == null || (x.kind == 'bank' && (x.branchId == null || x.branchId == _branchId)) || (_cashOptions?.allowed.any((allowed) => allowed.id == x.id) ?? false)).map((x) => DropdownMenuItem(value: x.id, child: Text(x.name, overflow: TextOverflow.ellipsis))).toList(), onChanged: (x) => setState(() => _locationId = x)),
       TextField(controller: _amount, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: widget.type == 'receipt' ? 'إجمالي المقبوض' : 'إجمالي المدفوع')),
       TextField(controller: _description, decoration: const InputDecoration(labelText: 'البيان')),
       const SizedBox(height: AppSpacing.md), const Text('التوزيع المحاسبي'),

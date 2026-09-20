@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class ExpenseService
 {
-    public function __construct(private readonly AccountingPostingService $posting, private readonly JournalEntryService $entries, private readonly OperationalAuditService $audit, private readonly FinanceApprovalPolicy $approval) {}
+    public function __construct(private readonly AccountingPostingService $posting, private readonly JournalEntryService $entries, private readonly OperationalAuditService $audit, private readonly FinanceApprovalPolicy $approval, private readonly CashSourceResolver $cashSources) {}
 
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): object
     {
@@ -60,12 +60,19 @@ class ExpenseService
             if ($expense->status === 'paid') throw ValidationException::withMessages(['expense' => 'This expense is already paid.']);
             if ($expense->status !== 'approved' || $expense->payment_status !== 'unpaid') throw ValidationException::withMessages(['expense' => 'Only an approved unpaid expense can be paid.']);
             $method = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->lockForUpdate()->first();
+            $cashSource = null;
+            if ($method?->type === 'cash') {
+                if (! $expense->branch_id) throw ValidationException::withMessages(['branchId' => 'A branch is required for a cash expense.']);
+                $cashSource = $this->cashSources->resolve($tenantId, (int) $actorId, (int) $expense->branch_id, $data['financialLocationId'] ?? null, true);
+                $data['financialLocationId'] = (int) $cashSource->location->id;
+            }
             $location = DB::table('financial_locations as locations')->join('financial_accounts as accounts', 'accounts.id', '=', 'locations.financial_account_id')->where('locations.tenant_id', $tenantId)->where('locations.id', $data['financialLocationId'])->where('locations.is_active', true)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')->select('locations.*', 'accounts.code as account_code')->lockForUpdate()->first();
-            if (! $method || ! $location || ((int) $method->financial_account_id !== (int) $location->financial_account_id)) throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
+            if (! $method || ! $location || ($method->type === 'cash' ? $location->kind !== 'cash' : (int) $method->financial_account_id !== (int) $location->financial_account_id)) throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
+            if ($location->branch_id && (int) $location->branch_id !== (int) ($expense->branch_id ?? 0)) throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the expense branch.']);
             $this->assertBranch($actorId, $tenantId, $location->branch_id); $category = DB::table('expense_categories as categories')->join('financial_accounts as accounts', 'accounts.id', '=', 'categories.financial_account_id')->where('categories.tenant_id', $tenantId)->where('categories.id', $expense->expense_category_id)->where('categories.is_active', true)->where('accounts.is_active', true)->whereNull('categories.deleted_at')->whereNull('accounts.deleted_at')->select('categories.*', 'accounts.code as account_code')->lockForUpdate()->first();
             if (! $category) throw ValidationException::withMessages(['expenseCategoryId' => 'The expense category and account must remain active before payment.']);
-            $total = Money::cents($expense->total_amount); $journalId = $this->posting->postExpense($request, $tenantId, ['branchId' => $expense->branch_id, 'sourceId' => $expense->id, 'sourceEvent' => 'EXPENSE_PAID', 'entryDate' => $data['paymentDate'], 'description' => $data['description'] ?? $expense->description, 'lines' => [['accountCode' => $category->account_code, 'debit' => Money::decimal($total), 'credit' => '0.00'], ['accountCode' => $location->account_code, 'debit' => '0.00', 'credit' => Money::decimal($total)]]], $actorId);
-            DB::table('expenses')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'paid', 'payment_status' => 'paid', 'payment_method_id' => $method->id, 'paid_from_financial_location_id' => $location->id, 'paid_at' => $data['paymentDate'], 'journal_entry_id' => $journalId, 'payment_idempotency_key' => $key, 'payment_idempotency_fingerprint' => $fingerprint, 'updated_at' => now()]);
+            $total = Money::cents($expense->total_amount); $journalId = $this->posting->postExpense($request, $tenantId, ['branchId' => $expense->branch_id, 'sourceId' => $expense->id, 'sourceEvent' => 'EXPENSE_PAID', 'entryDate' => $data['paymentDate'], 'description' => $data['description'] ?? $expense->description, 'lines' => [['accountCode' => $category->account_code, 'debit' => Money::decimal($total), 'credit' => '0.00'], ['accountCode' => $location->account_code, 'debit' => '0.00', 'credit' => Money::decimal($total), 'financialLocationId' => $location->id]]], $actorId);
+            DB::table('expenses')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'paid', 'payment_status' => 'paid', 'payment_method_id' => $method->id, 'paid_from_financial_location_id' => $location->id, 'shift_id' => $cashSource?->shift?->id, 'paid_at' => $data['paymentDate'], 'journal_entry_id' => $journalId, 'payment_idempotency_key' => $key, 'payment_idempotency_fingerprint' => $fingerprint, 'updated_at' => now()]);
             $result = $this->find($tenantId, $id); $this->audit->record($request, $tenantId, 'expense.paid', 'expense', $id, (array) $expense, (array) $result, $result->branch_id, $actorId); return $result;
         }); } catch (QueryException $e) { $existing = DB::table('expenses')->where('tenant_id', $tenantId)->where('payment_idempotency_key', $key)->first(); if ($existing && (int) $existing->id === $id) { $this->assertPaymentFingerprint($existing, $fingerprint); return $existing; } if ($existing) abort(409, 'This idempotency key was already used for a different expense payment.'); throw $e; }
     }

@@ -12,11 +12,11 @@ use Illuminate\Validation\ValidationException;
  */
 class FinancialAccountBalanceQuery
 {
-    public function summary(int $tenantId, int $accountId, ?string $from = null, ?string $to = null): array
+    public function summary(int $tenantId, int $accountId, ?string $from = null, ?string $to = null, ?int $locationId = null, bool $externalOnly = false): array
     {
         $account = $this->account($tenantId, $accountId);
-        $all = $this->lines($tenantId, $accountId, null, $to);
-        $period = $this->lines($tenantId, $accountId, $from, $to);
+        $all = $this->lines($tenantId, $accountId, null, $to, $locationId);
+        $period = $this->lines($tenantId, $accountId, $from, $to, $locationId, $externalOnly);
         $allDebit = $all->sum(fn (object $line) => Money::cents($line->debit));
         $allCredit = $all->sum(fn (object $line) => Money::cents($line->credit));
         $periodDebit = $period->sum(fn (object $line) => Money::cents($line->debit));
@@ -31,12 +31,12 @@ class FinancialAccountBalanceQuery
         ];
     }
 
-    public function transactions(int $tenantId, int $accountId, ?string $from = null, ?string $to = null, ?string $search = null): array
+    public function transactions(int $tenantId, int $accountId, ?string $from = null, ?string $to = null, ?string $search = null, ?int $locationId = null): array
     {
         $account = $this->account($tenantId, $accountId);
-        $opening = $this->summary($tenantId, $accountId, null, $from ? now()->parse($from)->subDay()->toDateString() : null)['balance'];
+        $opening = $this->summary($tenantId, $accountId, null, $from ? now()->parse($from)->subDay()->toDateString() : null, $locationId)['balance'];
         $running = Money::cents($opening);
-        $query = $this->baseLines($tenantId, $accountId, $from, $to);
+        $query = $this->baseLines($tenantId, $accountId, $from, $to, $locationId);
         if ($search) {
             $needle = '%'.strtolower($search).'%';
             $query->where(fn ($items) => $items->whereRaw('LOWER(entries.entry_number) LIKE ?', [$needle])->orWhereRaw('LOWER(COALESCE(entries.description, \'\')) LIKE ?', [$needle])->orWhereRaw('LOWER(COALESCE(entries.source_type, \'\')) LIKE ?', [$needle]));
@@ -52,16 +52,21 @@ class FinancialAccountBalanceQuery
         })->values()->all();
     }
 
-    private function lines(int $tenantId, int $accountId, ?string $from, ?string $to)
+    private function lines(int $tenantId, int $accountId, ?string $from, ?string $to, ?int $locationId = null, bool $externalOnly = false)
     {
-        return $this->baseLines($tenantId, $accountId, $from, $to)->get(['lines.debit', 'lines.credit']);
+        $query = $this->baseLines($tenantId, $accountId, $from, $to, $locationId);
+        if ($externalOnly) $query->where('entries.source_type', '<>', 'cash_transfer')->whereNotExists(fn ($reversal) => $reversal->selectRaw('1')->from('journal_entries as originals')->whereColumn('originals.id', 'entries.reversal_of_id')->where('originals.tenant_id', $tenantId)->where('originals.source_type', 'cash_transfer'));
+        return $query->get(['lines.debit', 'lines.credit']);
     }
 
-    private function baseLines(int $tenantId, int $accountId, ?string $from, ?string $to)
+    private function baseLines(int $tenantId, int $accountId, ?string $from, ?string $to, ?int $locationId = null)
     {
         $query = DB::table('journal_entry_lines as lines')->join('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')->where('lines.tenant_id', $tenantId)->where('lines.financial_account_id', $accountId)->where('entries.tenant_id', $tenantId)->where('entries.status', 'posted')->select('lines.*', 'entries.entry_date', 'entries.entry_number', 'entries.source_type', 'entries.description as entry_description', 'lines.description as line_description', 'entries.status');
         if ($from) $query->whereDate('entries.entry_date', '>=', $from);
         if ($to) $query->whereDate('entries.entry_date', '<=', $to);
+        if ($locationId !== null) {
+            $query->where('lines.financial_location_id', $locationId);
+        }
 
         return $query;
     }

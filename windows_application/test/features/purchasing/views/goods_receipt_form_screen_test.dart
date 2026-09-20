@@ -24,7 +24,7 @@ void main() {
     expect(find.text('استلام مخزون'), findsWidgets);
     expect(find.text('Arabica beans'), findsOneWidget);
     expect(find.textContaining('المتبقي: 10.000'), findsOneWidget);
-    expect(find.text('المستودع'), findsOneWidget);
+    expect(find.text('المخزن'), findsOneWidget);
   });
 
   testWidgets('rejects a quantity greater than the remaining quantity before posting anything', (

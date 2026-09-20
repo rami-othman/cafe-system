@@ -13,6 +13,10 @@ class SalesRepository {
   Future<List<SalesCustomer>> customers({String? search}) async { final Map<String, dynamic> r = Map<String, dynamic>.from(await _api.getEnvelope('finance/customers', queryParameters: <String, dynamic>{'status': 'active', if (search != null && search.isNotEmpty) 'search': search, 'perPage': 100}) as Map); return readMapList(r['data']).map(SalesCustomer.fromJson).toList(growable: false); }
   Future<SalesCustomer> createCustomer(Map<String, dynamic> data) async => SalesCustomer.fromJson(Map<String, dynamic>.from(await _api.post('finance/customers', data: data) as Map));
   Future<List<SalesProduct>> products({String? search}) async { final Map<String, dynamic> r = Map<String, dynamic>.from(await _api.getEnvelope('finance/sales-products', queryParameters: <String, dynamic>{if (search != null && search.isNotEmpty) 'search': search, 'perPage': 100}) as Map); return readMapList(r['data']).map(SalesProduct.fromJson).toList(growable: false); }
+  Future<List<SalesMaterial>> materials() async => readMapList(await _api.get('finance/sales-materials')).map(SalesMaterial.fromJson).toList(growable: false);
+  Future<double> salesTaxRate() async { final r = Map<String, dynamic>.from(await _api.getEnvelope('finance/sales-products', queryParameters: const <String, dynamic>{'perPage': 1}) as Map); return double.tryParse(readString(r['taxRate'])) ?? 0; }
+  /// The variant's default recipe, to pre-fill an editable per-invoice material list when a product line is added.
+  Future<List<SalesVariantRecipeComponent>> variantRecipe(int variantId) async { final r = Map<String, dynamic>.from(await _api.get('finance/sales-products/variants/$variantId/recipe') as Map); return readMapList(r['components']).map(SalesVariantRecipeComponent.fromJson).toList(growable: false); }
 
   // ---- Customer Payments / AR (Phase 3) ---------------------------------
 

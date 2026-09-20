@@ -16,6 +16,7 @@ import '../controllers/purchasing_cubit.dart';
 import '../models/purchasing_models.dart';
 import '../widgets/inventory_item_search_field.dart';
 import '../widgets/purchase_type_label.dart';
+import '../widgets/purchase_posting_dialog.dart';
 
 /// Create/edit a purchase invoice (`/finance/purchases/new`,
 /// `/finance/purchases/:id/edit`). This posts to the exact same
@@ -116,10 +117,13 @@ class _ChargeDraft {
 class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   final TextEditingController _invoiceNumber = TextEditingController();
   final TextEditingController _notes = TextEditingController();
+  final TextEditingController _paidNow = TextEditingController(text: '0');
+  String _receiptMode = 'immediate';
   DateTime _invoiceDate = DateTime.now();
   DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
   int? _supplierId;
   int? _branchId;
+  int? _destinationWarehouseId;
   String _purchaseType = 'inventory';
   int? _expenseCategoryId;
   int? _assetAccountId;
@@ -162,6 +166,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   void dispose() {
     _invoiceNumber.dispose();
     _notes.dispose();
+    _paidNow.dispose();
     _invoiceDiscountValue.dispose();
     for (final _LineDraft line in _lines) {
       line.dispose();
@@ -283,6 +288,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     _dueDate = DateTime.tryParse(p.dueDate) ?? _dueDate;
     _supplierId = p.supplierId;
     _branchId = p.branchId;
+    _receiptMode = p.receiptMode ?? 'receive_later';
     _expenseCategoryId = p.purchaseType == 'expense' ? null : null;
     _assetAccountId = (p.purchaseType == 'asset' || p.purchaseType == 'other')
         ? p.debitAccountId
@@ -316,6 +322,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 return draft;
               }),
       );
+    _destinationWarehouseId = p.lines.isEmpty ? null : p.lines.first.warehouseId;
     _invoiceDiscountType = p.discountType;
     _invoiceDiscountValue.text = p.discountType == 'percentage'
         ? (p.discountValue ?? '0')
@@ -356,7 +363,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     );
   }
 
-  void _addLine() => setState(() => _lines.add(_LineDraft(_purchaseType)));
+  void _addLine() => setState(() {
+    final line = _LineDraft(_purchaseType);
+    if (_purchaseType == 'inventory' && _receiptMode == 'immediate') {
+      line.warehouseId = _destinationWarehouseId;
+    }
+    _lines.add(line);
+  });
   void _removeLine(int index) => setState(() {
     _lines[index].dispose();
     _lines.removeAt(index);
@@ -395,6 +408,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   }
 
   String? _validate({bool forPosting = false}) {
+    if (forPosting && ((double.tryParse(_paidNow.text.trim()) ?? -1) < 0 ||
+        (double.tryParse(_paidNow.text.trim()) ?? 0) > _grandTotalPreview + 0.001)) {
+      return 'المبلغ المدفوع الآن يجب أن يكون بين صفر وإجمالي الفاتورة.';
+    }
     if (_supplierId == null) {
       return 'اختر المورد.';
     }
@@ -417,7 +434,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       if (line.lineType == 'inventory' && line.item == null) {
         return 'اختر صنف المخزون لكل بند.';
       }
-      if (forPosting &&
+      if (forPosting && _receiptMode == 'immediate' &&
           line.lineType == 'inventory' &&
           line.warehouseId == null) {
         return 'اختر مخزن الاستلام لكل بند مخزون.';
@@ -477,6 +494,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     try {
       final Map<String, dynamic> payload = <String, dynamic>{
         'supplierId': _supplierId,
+        'receiptMode': _purchaseType == 'inventory' ? _receiptMode : 'receive_later',
         if (_branchId != null) 'branchId': _branchId,
         if (_invoiceNumber.text.trim().isNotEmpty)
           'supplierInvoiceNumber': _invoiceNumber.text.trim(),
@@ -543,41 +561,26 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       );
       if (!mounted) return;
       if (postAfterSave) {
-        final PurchasePostingPreview preview = await _cubit.repository
-            .getPostingPreview(saved.id);
-        if (!mounted) return;
-        final bool? confirmed = await showDialog<bool>(
-          context: context,
-          builder: (BuildContext dialog) => AlertDialog(
-            title: const Text('ترحيل واستلام ودفع فاتورة الشراء'),
-            content: Text(
-              'سيتم ترحيل الفاتورة واستلام المواد ودفع قيمة الفاتورة من الصندوق المرتبط بالمستخدم. هل تريد المتابعة؟\n\n'
-              'إجمالي الفاتورة: ${preview.amount} SYP\n'
-              'الصندوق: ${preview.financialLocationName}\n'
-              'الفرع: $_selectedBranchName',
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(dialog, false),
-                child: const Text('إلغاء'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(dialog, true),
-                child: const Text('تأكيد الترحيل والدفع'),
-              ),
-            ],
-          ),
-        );
-        if (confirmed == true) {
+        final String paidAmount = _paidNow.text.trim();
+        final bool hasPayment = (double.tryParse(paidAmount) ?? 0) > 0;
+        PurchasePostingChoice? choice;
+        if (hasPayment) {
+          final PurchasePostingPreview preview = await _cubit.repository.getPostingPreview(saved.id);
+          if (!mounted) return;
+          choice = await showPurchasePostingDialog(context, preview: preview, branchName: _selectedBranchName, paidAmount: paidAmount);
+        }
+        if (!hasPayment || choice != null) {
           final PurchaseInvoice posted = await _cubit.repository.postPurchase(
             saved.id,
             'purchase-post-${saved.id}-${DateTime.now().microsecondsSinceEpoch}',
+            financialLocationId: choice?.financialLocationId,
+            paidAmount: paidAmount,
           );
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${posted.paidAmount} SYP من ${preview.financialLocationName} بنجاح.',
+                'تم ترحيل فاتورة الشراء. المدفوع: ${posted.paidAmount} SYP.',
               ),
             ),
           );
@@ -630,32 +633,6 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     return FinanceShell(
       title: _isEdit ? 'تعديل فاتورة شراء' : 'فاتورة شراء جديدة',
       actions: <Widget>[
-        TextButton(
-          onPressed: _saving
-              ? null
-              : () => context.go(AppRoutes.financePurchases),
-          child: const Text('إلغاء'),
-        ),
-        const SizedBox(width: FinanceSpace.sm),
-        ElevatedButton.icon(
-          onPressed: _saving ? null : () => _save(),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: FinanceColors.primary,
-            foregroundColor: Colors.white,
-          ),
-          icon: _saving
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.save_outlined, size: 16),
-          label: const Text('حفظ كمسودة'),
-        ),
-        const SizedBox(width: FinanceSpace.sm),
         ElevatedButton.icon(
           onPressed: _saving ? null : () => _save(postAfterSave: true),
           style: ElevatedButton.styleFrom(
@@ -663,7 +640,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             foregroundColor: Colors.white,
           ),
           icon: const Icon(Icons.check_circle_outline, size: 16),
-          label: const Text('ترحيل'),
+          label: const Text('ترحيل فاتورة الشراء'),
         ),
       ],
       child: SingleChildScrollView(
@@ -676,6 +653,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             ],
             _HeaderSection(
               internalReference: _editing?.internalReference,
+              supplierInternalReference: _editing?.supplierInternalReference,
+              supplierLocked: _isEdit,
               suppliers: _suppliers,
               branches: _branches,
               supplierId: _supplierId,
@@ -698,6 +677,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                       )) {
                     line.warehouseId = null;
                   }
+                }
+                if (!_warehouses.any((w) => w.id == _destinationWarehouseId &&
+                    (v == null || w.branchId == null || w.branchId == v))) {
+                  _destinationWarehouseId = null;
                 }
               }),
               onPickInvoiceDate: () => _pickDate(isInvoiceDate: true),
@@ -728,6 +711,28 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               _accountDropdown(),
             ],
             const SizedBox(height: FinanceSpace.lg),
+            if (_purchaseType == 'inventory' && _receiptMode == 'immediate') ...<Widget>[
+              Text('وجهة المخزون', style: FinanceText.page),
+              const SizedBox(height: FinanceSpace.sm),
+              SizedBox(
+                width: 280,
+                child: DropdownButtonFormField<int>(
+                  key: const ValueKey('direct-purchase-warehouse'),
+                  initialValue: _destinationWarehouseId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'مخزن الاستلام'),
+                  items: _warehouses.where((w) => _branchId == null || w.branchId == null || w.branchId == _branchId)
+                      .map((w) => DropdownMenuItem<int>(value: w.id, child: Text(w.name))).toList(growable: false),
+                  onChanged: (warehouseId) => setState(() {
+                    _destinationWarehouseId = warehouseId;
+                    for (final line in _lines) {
+                      line.warehouseId = warehouseId;
+                    }
+                  }),
+                ),
+              ),
+              const SizedBox(height: FinanceSpace.lg),
+            ],
             Row(
               children: <Widget>[
                 Expanded(child: Text('بنود الفاتورة', style: FinanceText.page)),
@@ -754,6 +759,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                             w.branchId == _branchId,
                       )
                       .toList(growable: false),
+                  showWarehouse: _receiptMode == 'receive_later',
                   onRemove: _lines.length > 1 ? () => _removeLine(index) : null,
                   onChanged: () => setState(() {}),
                 ),
@@ -801,6 +807,49 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               chargesTaxTotal: _chargesTaxTotal,
               linesTaxTotal: _linesTaxTotal,
               grandTotal: _grandTotalPreview,
+            ),
+            const SizedBox(height: FinanceSpace.lg),
+            if (_purchaseType == 'inventory') ...<Widget>[
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('استلام البضاعة لاحقاً'),
+                value: _receiptMode == 'receive_later',
+                onChanged: (receiveLater) => setState(() {
+                  _receiptMode = receiveLater == true ? 'receive_later' : 'immediate';
+                  if (_receiptMode == 'immediate') {
+                    _destinationWarehouseId ??= _lines.first.warehouseId;
+                    for (final line in _lines) {
+                      line.warehouseId = _destinationWarehouseId;
+                    }
+                  }
+                }),
+              ),
+            ],
+            Text('المدفوع الآن', style: FinanceText.page),
+            SizedBox(
+              width: 260,
+              child: TextField(
+                controller: _paidNow,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'المبلغ المدفوع الآن'),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            Text('المتبقي: ${(_grandTotalPreview - (double.tryParse(_paidNow.text) ?? 0)).clamp(0, double.infinity).toStringAsFixed(2)} SYP'),
+            const SizedBox(height: FinanceSpace.md),
+            Wrap(
+              spacing: FinanceSpace.sm,
+              children: <Widget>[
+                TextButton.icon(
+                  onPressed: _saving ? null : () => _save(),
+                  icon: const Icon(Icons.save_outlined),
+                  label: const Text('حفظ كمسودة'),
+                ),
+                TextButton(
+                  onPressed: _saving ? null : () => context.go(AppRoutes.financePurchases),
+                  child: const Text('إلغاء'),
+                ),
+              ],
             ),
             const SizedBox(height: FinanceSpace.xl),
           ],
@@ -852,6 +901,8 @@ class _HeaderSection extends StatelessWidget {
     required this.internalReference,
     required this.suppliers,
     required this.branches,
+    required this.supplierInternalReference,
+    required this.supplierLocked,
     required this.supplierId,
     required this.branchId,
     required this.invoiceNumber,
@@ -866,6 +917,8 @@ class _HeaderSection extends StatelessWidget {
 
   /// System-generated (e.g. PI-2026-000001) — read-only, assigned by the backend on save.
   final String? internalReference;
+  final String? supplierInternalReference;
+  final bool supplierLocked;
   final List<Supplier> suppliers;
   final List<Branch> branches;
   final int? supplierId;
@@ -914,7 +967,18 @@ class _HeaderSection extends StatelessWidget {
                       DropdownMenuItem<int>(value: s.id, child: Text(s.name)),
                 )
                 .toList(growable: false),
-            onChanged: onSupplierChanged,
+            onChanged: supplierLocked ? null : onSupplierChanged,
+          ),
+        ),
+        SizedBox(
+          width: 200,
+          child: InputDecorator(
+            decoration: const InputDecoration(labelText: 'الرقم الداخلي للمورد'),
+            child: Text(
+              supplierInternalReference ?? 'يتم إنشاؤه تلقائيًا عند الحفظ',
+              style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
         SizedBox(
@@ -938,7 +1002,7 @@ class _HeaderSection extends StatelessWidget {
           width: 220,
           child: TextField(
             controller: invoiceNumber,
-            decoration: const InputDecoration(labelText: 'رقم فاتورة المورد'),
+            decoration: const InputDecoration(labelText: 'مرجع فاتورة المورد الأصلية (اختياري)'),
           ),
         ),
         SizedBox(
@@ -973,11 +1037,13 @@ class _LineEditorRow extends StatelessWidget {
   const _LineEditorRow({
     required this.draft,
     required this.warehouses,
+    required this.showWarehouse,
     required this.onRemove,
     required this.onChanged,
   });
   final _LineDraft draft;
   final List<WarehouseLocation> warehouses;
+  final bool showWarehouse;
   final VoidCallback? onRemove;
   final VoidCallback onChanged;
 
@@ -1024,7 +1090,7 @@ class _LineEditorRow extends StatelessWidget {
               onChanged: (_) => onChanged(),
             ),
           ),
-        if (draft.lineType == 'inventory')
+        if (draft.lineType == 'inventory' && showWarehouse)
           SizedBox(
             width: 190,
             child: DropdownButtonFormField<int>(

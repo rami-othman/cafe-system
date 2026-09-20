@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../../finance_inventory_setup/repositories/finance_setup_repository.dart';
+import '../../finance_inventory_setup/widgets/cash_source_field.dart';
 import '../../finance_inventory_setup/widgets/finance_components.dart';
 import '../../finance_inventory_setup/widgets/finance_design.dart';
 import '../../finance_inventory_setup/widgets/finance_shell.dart';
@@ -178,16 +179,16 @@ class _CustomerRefundDialogState extends State<CustomerRefundDialog> {
   final reference = TextEditingController();
   DateTime date = DateTime.now();
   List<PaymentMethodSetting> methods = const <PaymentMethodSetting>[];
-  int? methodId; String availableCredit = '0.00'; bool loading = true; bool saving = false; Object? error;
+  int? methodId; int? cashLocationId; CashSourceOptions? cashOptions; String availableCredit = '0.00'; bool loading = true; bool saving = false; Object? error;
   @override void initState() { super.initState(); bootstrap(); }
   @override void dispose() { amount.dispose(); reference.dispose(); super.dispose(); }
   Future<void> bootstrap() async {
     try {
-      final results = await Future.wait<dynamic>(<Future<dynamic>>[widget.financeSetupRepository.getPaymentMethods(), widget.api.customerCredit(widget.customerId)]);
+      final results = await Future.wait<dynamic>(<Future<dynamic>>[widget.financeSetupRepository.getPaymentMethods(), widget.api.customerCredit(widget.customerId), widget.financeSetupRepository.getCashSourceOptions(widget.branchId)]);
       if (!mounted) return;
-      final ms = (results[0] as List<PaymentMethodSetting>).where((m) => m.financialLocationId != null && m.isActive).toList();
+      final ms = (results[0] as List<PaymentMethodSetting>).where((m) => m.isActive && (m.type == 'cash' || m.financialLocationId != null)).toList();
       final credit = results[1] as CustomerCreditInfo;
-      setState(() { methods = ms; methodId = ms.firstOrNull?.id; availableCredit = credit.availableCredit; amount.text = credit.availableCredit; loading = false; });
+      setState(() { methods = ms; methodId = ms.firstOrNull?.id; cashOptions = results[2] as CashSourceOptions; availableCredit = credit.availableCredit; amount.text = credit.availableCredit; loading = false; });
     } catch (e) { if (mounted) setState(() { error = e; loading = false; }); }
   }
   Future<void> submit() async {
@@ -195,11 +196,13 @@ class _CustomerRefundDialogState extends State<CustomerRefundDialog> {
     if (amt == null || amt <= 0) { _snack('أدخل مبلغاً صحيحاً أكبر من صفر.'); return; }
     if (methodId == null) { _snack('اختر طريقة الدفع.'); return; }
     final method = methods.firstWhere((m) => m.id == methodId);
+    if (method.type == 'cash' && !cashSourceIsResolved(cashOptions, cashLocationId)) { _snack('يرجى اختيار الصندوق.'); return; }
     setState(() => saving = true);
     try {
       await widget.api.registerRefund(<String, dynamic>{
         'branchId': widget.branchId, 'customerId': widget.customerId, 'refundDate': _date(date), 'amount': amount.text.trim(),
-        'paymentMethodId': methodId, 'financialLocationId': method.financialLocationId,
+        'paymentMethodId': methodId,
+        if (method.type != 'cash' || cashOptions?.mode == 'selectable') 'financialLocationId': method.type == 'cash' ? cashLocationId : method.financialLocationId,
         if (reference.text.trim().isNotEmpty) 'reference': reference.text.trim(),
         'idempotencyKey': 'refund-${DateTime.now().microsecondsSinceEpoch}',
       });
@@ -226,7 +229,9 @@ class _CustomerRefundDialogState extends State<CustomerRefundDialog> {
                   OutlinedButton.icon(onPressed: () async { final d = await showDatePicker(context: context, initialDate: date, firstDate: DateTime(2020), lastDate: DateTime(2100)); if (d != null) setState(() => date = d); }, icon: const Icon(Icons.calendar_today), label: Text(_date(date))),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<int>(initialValue: methodId, decoration: const InputDecoration(labelText: 'طريقة الدفع'), items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.name))).toList(), onChanged: (v) => setState(() => methodId = v)),
-                  if (method != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text('الصندوق / البنك: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
+                  if (method?.type == 'cash')
+                    CashSourceField(options: cashOptions, selectedLocationId: cashLocationId, onChanged: (value) => setState(() => cashLocationId = value)),
+                  if (method != null && method.type != 'cash') Padding(padding: const EdgeInsets.only(top: 6), child: Text('الصندوق / البنك: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
                   const SizedBox(height: 10),
                   TextField(controller: amount, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'المبلغ')),
                   TextField(controller: reference, decoration: const InputDecoration(labelText: 'المرجع (اختياري)')),

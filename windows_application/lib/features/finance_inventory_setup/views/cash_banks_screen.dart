@@ -360,11 +360,11 @@ class _SummaryGrid extends StatelessWidget {
     final List<FinancialLocation> all = <FinancialLocation>[...cash, ...bank];
     final double inToday = all.fold<double>(
       0,
-      (double sum, FinancialLocation a) => sum + _amount(a.todayIncoming),
+      (double sum, FinancialLocation a) => sum + _amount(a.todayExternalIncoming),
     );
     final double outToday = all.fold<double>(
       0,
-      (double sum, FinancialLocation a) => sum + _amount(a.todayOutgoing),
+      (double sum, FinancialLocation a) => sum + _amount(a.todayExternalOutgoing),
     );
     return FinanceKpiGrid(
       items: <FinanceKpiData>[

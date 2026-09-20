@@ -136,12 +136,17 @@ final class FinanceKpiQueryService
         $query = DB::table('financial_locations as locations')
             ->join('financial_accounts as accounts', 'accounts.id', '=', 'locations.financial_account_id')
             ->leftJoin('journal_entry_lines as lines', 'lines.financial_account_id', '=', 'accounts.id')
-            ->leftJoin('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')
+            ->leftJoin('journal_entries as entries', function ($join) use ($context): void {
+                $join->on('entries.id', '=', 'lines.journal_entry_id');
+                if ($context['branchId'] !== null) {
+                    $join->where('entries.branch_id', $context['branchId']);
+                }
+            })
             ->where('locations.tenant_id', $context['tenantId'])->whereIn('locations.kind', ['cash', 'bank'])->where('locations.is_active', true);
         BranchScope::apply($query, 'locations.branch_id', $context['branchId'], $context['authorizedBranchIds']);
-        $rows = $query->groupBy('locations.id', 'accounts.normal_balance', 'locations.kind')
+        $rows = $query->groupBy('locations.id', 'accounts.id', 'accounts.normal_balance', 'locations.kind')
             ->selectRaw(
-                "locations.id, locations.kind, accounts.normal_balance,
+                "locations.id, locations.kind, accounts.id as account_id, accounts.normal_balance,
                  COALESCE(SUM(CASE WHEN entries.status = 'posted' AND entries.entry_date <= ? THEN lines.debit ELSE 0 END),0) debit,
                  COALESCE(SUM(CASE WHEN entries.status = 'posted' AND entries.entry_date <= ? THEN lines.credit ELSE 0 END),0) credit",
                 [$asOfDate, $asOfDate],
@@ -151,7 +156,14 @@ final class FinanceKpiQueryService
         $cashCents = 0;
         $bankCents = 0;
         $accounts = [];
+        $countedAccountIds = [];
         foreach ($rows as $row) {
+            // Multiple branch drawers can intentionally share the 1010 ledger.
+            // A ledger balance must be counted once, never once per location.
+            if (isset($countedAccountIds[$row->account_id])) {
+                continue;
+            }
+            $countedAccountIds[$row->account_id] = true;
             $balance = $row->normal_balance === 'credit' ? Money::cents($row->credit ?: '0') - Money::cents($row->debit ?: '0') : Money::cents($row->debit ?: '0') - Money::cents($row->credit ?: '0');
             if ($row->kind === 'cash') {
                 $cashCents += $balance;

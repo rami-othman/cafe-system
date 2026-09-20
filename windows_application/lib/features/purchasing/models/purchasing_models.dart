@@ -369,14 +369,18 @@ class PurchasePostingPreview {
     required this.branchId,
     required this.financialLocationId,
     required this.financialLocationName,
+    this.cashSourceMode = 'shift',
+    this.allowedCashLocations = const [],
     this.shiftId,
     this.shiftNumber,
   });
 
   final String amount;
   final int branchId;
-  final int financialLocationId;
-  final String financialLocationName;
+  final int? financialLocationId;
+  final String? financialLocationName;
+  final String cashSourceMode;
+  final List<PurchaseCashLocation> allowedCashLocations;
   final int? shiftId;
   final String? shiftNumber;
 
@@ -384,13 +388,27 @@ class PurchasePostingPreview {
       PurchasePostingPreview(
         amount: readString(json['amount']),
         branchId: readInt(json['branchId']) ?? 0,
-        financialLocationId: readInt(json['financialLocationId']) ?? 0,
-        financialLocationName: readString(json['financialLocationName']),
+        financialLocationId: readInt(json['financialLocationId']),
+        financialLocationName: json['financialLocationName']?.toString(),
+        cashSourceMode: readString(json['cashSourceMode']),
+        allowedCashLocations: (json['allowedCashLocations'] as List<dynamic>? ?? const [])
+            .map((value) => PurchaseCashLocation.fromJson(Map<String, dynamic>.from(value as Map)))
+            .toList(growable: false),
         shiftId: readInt(json['shiftId']),
         shiftNumber: readString(json['shiftNumber']).isEmpty
             ? null
             : readString(json['shiftNumber']),
       );
+}
+
+class PurchaseCashLocation {
+  const PurchaseCashLocation({required this.id, required this.name});
+
+  final int id;
+  final String name;
+
+  factory PurchaseCashLocation.fromJson(Map<String, dynamic> json) =>
+      PurchaseCashLocation(id: readInt(json['id']) ?? 0, name: readString(json['name']));
 }
 
 /// A Purchasing Center row/detail. This is a READ shape of the existing
@@ -423,9 +441,12 @@ class PurchaseInvoice {
     this.chargesAmount = '0.00',
     this.charges = const <PurchaseInvoiceCharge>[],
     this.receiptStatus = 'not_applicable',
+    this.receiptMode,
     this.supplierInvoiceNumber,
+    this.supplierInternalReference,
     this.branchId,
     this.branchName,
+    this.warehouseName,
     this.invoiceTypeId,
     this.invoiceTypeName,
     this.invoiceGroupName,
@@ -449,10 +470,12 @@ class PurchaseInvoice {
   final String internalReference;
   final String invoiceNumber;
   final String? supplierInvoiceNumber;
+  final String? supplierInternalReference;
   final int supplierId;
   final String supplierName;
   final int? branchId;
   final String? branchName;
+  final String? warehouseName;
   final String invoiceDate;
   final String dueDate;
 
@@ -486,6 +509,7 @@ class PurchaseInvoice {
   /// completely independent from paymentStatus, maintained by
   /// PurchaseReceivingService as Goods Receipts are posted.
   final String receiptStatus;
+  final String? receiptMode;
   final String status;
   final bool isOverdue;
   final String? description;
@@ -514,12 +538,18 @@ class PurchaseInvoice {
     supplierInvoiceNumber: readString(json['supplierInvoiceNumber']).isEmpty
         ? null
         : readString(json['supplierInvoiceNumber']),
+    supplierInternalReference: readString(json['supplierInternalReference']).isEmpty
+        ? null
+        : readString(json['supplierInternalReference']),
     supplierId: readInt(json['supplierId']) ?? 0,
     supplierName: readString(json['supplierName']),
     branchId: readInt(json['branchId']),
     branchName: readString(json['branchName']).isEmpty
         ? null
         : readString(json['branchName']),
+    warehouseName: readString(json['warehouseName']).isEmpty
+        ? null
+        : readString(json['warehouseName']),
     invoiceDate: readString(json['invoiceDate']),
     dueDate: readString(json['dueDate']),
     purchaseType: readString(json['purchaseType']),
@@ -559,6 +589,7 @@ class PurchaseInvoice {
       json['receiptStatus'],
       fallback: 'not_applicable',
     ),
+    receiptMode: json['receiptMode'] == null ? null : readString(json['receiptMode']),
     status: readString(json['status']),
     isOverdue: readBool(json['isOverdue']),
     description: readString(json['description']).isEmpty
