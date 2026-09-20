@@ -11,6 +11,7 @@ class CreateOrderRequest {
     this.customerId,
     this.note,
     this.publishedMenuVersionId,
+    this.idempotencyKey,
   });
 
   final int branchId;
@@ -21,6 +22,7 @@ class CreateOrderRequest {
   final List<AddOrderItemRequest> items;
   final String? note;
   final int? publishedMenuVersionId;
+  final String? idempotencyKey;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -29,6 +31,8 @@ class CreateOrderRequest {
       'orderType': orderType.apiValue,
       'tableId': tableId,
       'customerId': customerId,
+      if (idempotencyKey != null && idempotencyKey!.trim().isNotEmpty)
+        'idempotencyKey': idempotencyKey!.trim(),
       if (publishedMenuVersionId != null)
         'publishedMenuVersionId': publishedMenuVersionId,
       'items': items

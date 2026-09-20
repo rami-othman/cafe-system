@@ -39,6 +39,8 @@ class PosState extends Equatable {
     this.taxRate = TaxConfig.defaultTaxRate,
     this.shiftId,
     this.currentOrderId,
+    this.currentOrderStatus,
+    this.currentOrderPaymentStatus,
     this.tableId,
     this.tableName,
     this.tableCode,
@@ -57,6 +59,8 @@ class PosState extends Equatable {
     this.isLoading = false,
     this.errorMessage,
     this.requiresMenuRefresh = false,
+    this.holdSuccessMessage,
+    this.uncertainHoldMessage,
   });
 
   /// The POS-owned selling context.  The shell branch tabs must use this
@@ -88,6 +92,8 @@ class PosState extends Equatable {
   final double taxRate;
   final int? shiftId;
   final int? currentOrderId;
+  final String? currentOrderStatus;
+  final String? currentOrderPaymentStatus;
   final int? tableId;
   final String? tableName;
   final String? tableCode;
@@ -112,6 +118,8 @@ class PosState extends Equatable {
   final bool isLoading;
   final String? errorMessage;
   final bool requiresMenuRefresh;
+  final String? holdSuccessMessage;
+  final String? uncertainHoldMessage;
 
   List<PosProduct> get filteredProducts {
     final String normalizedQuery = searchQuery.trim().toLowerCase();
@@ -178,6 +186,15 @@ class PosState extends Equatable {
 
   bool get hasCartItems => cartItems.isNotEmpty;
 
+  bool get canHoldCurrentOrder {
+    if (!hasCartItems || isCartMutationInProgress || isPaymentSubmitting) {
+      return false;
+    }
+    if (currentOrderId == null) return true;
+    return currentOrderStatus?.toLowerCase() == 'draft' &&
+        currentOrderPaymentStatus?.toLowerCase() == 'unpaid';
+  }
+
   String get customerDisplayName {
     return selectedCustomer?.name ?? 'Walk-in Customer';
   }
@@ -210,6 +227,8 @@ class PosState extends Equatable {
     double? taxRate,
     int? shiftId,
     int? currentOrderId,
+    String? currentOrderStatus,
+    String? currentOrderPaymentStatus,
     int? tableId,
     String? tableName,
     String? tableCode,
@@ -228,6 +247,8 @@ class PosState extends Equatable {
     bool? isLoading,
     String? errorMessage,
     bool? requiresMenuRefresh,
+    String? holdSuccessMessage,
+    String? uncertainHoldMessage,
     bool clearErrorMessage = false,
     bool clearApiErrorMessage = false,
     bool clearCartMutationError = false,
@@ -245,6 +266,8 @@ class PosState extends Equatable {
     bool clearBackendTotals = false,
     bool clearTable = false,
     bool clearOrderNote = false,
+    bool clearHoldSuccessMessage = false,
+    bool clearUncertainHoldMessage = false,
   }) {
     return PosState(
       branches: branches ?? this.branches,
@@ -295,6 +318,12 @@ class PosState extends Equatable {
       currentOrderId: clearCurrentOrderId
           ? null
           : currentOrderId ?? this.currentOrderId,
+      currentOrderStatus: clearCurrentOrderId
+          ? null
+          : currentOrderStatus ?? this.currentOrderStatus,
+      currentOrderPaymentStatus: clearCurrentOrderId
+          ? null
+          : currentOrderPaymentStatus ?? this.currentOrderPaymentStatus,
       tableId: clearTable || clearCurrentOrderId
           ? null
           : tableId ?? this.tableId,
@@ -336,6 +365,12 @@ class PosState extends Equatable {
           ? null
           : errorMessage ?? this.errorMessage,
       requiresMenuRefresh: requiresMenuRefresh ?? this.requiresMenuRefresh,
+      holdSuccessMessage: clearHoldSuccessMessage
+          ? null
+          : holdSuccessMessage ?? this.holdSuccessMessage,
+      uncertainHoldMessage: clearUncertainHoldMessage
+          ? null
+          : uncertainHoldMessage ?? this.uncertainHoldMessage,
     );
   }
 
@@ -368,6 +403,8 @@ class PosState extends Equatable {
     taxRate,
     shiftId,
     currentOrderId,
+    currentOrderStatus,
+    currentOrderPaymentStatus,
     tableId,
     tableName,
     tableCode,
@@ -386,5 +423,7 @@ class PosState extends Equatable {
     isLoading,
     errorMessage,
     requiresMenuRefresh,
+    holdSuccessMessage,
+    uncertainHoldMessage,
   ];
 }

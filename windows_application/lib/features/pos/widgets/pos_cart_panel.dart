@@ -103,6 +103,7 @@ class PosCartPanel extends StatelessWidget {
                 total: state.total,
                 itemCount: state.totalItems,
                 hasCartItems: state.hasCartItems,
+                canHoldCurrentOrder: state.canHoldCurrentOrder,
                 appliedDiscount: state.appliedDiscount,
                 onRemoveDiscount: cubit.removeDiscount,
                 onClearCart: cubit.clearCart,
@@ -415,6 +416,7 @@ class _CartFooter extends StatelessWidget {
     required this.total,
     required this.itemCount,
     required this.hasCartItems,
+    required this.canHoldCurrentOrder,
     required this.appliedDiscount,
     required this.onRemoveDiscount,
     required this.onClearCart,
@@ -431,6 +433,7 @@ class _CartFooter extends StatelessWidget {
   final double total;
   final int itemCount;
   final bool hasCartItems;
+  final bool canHoldCurrentOrder;
   final AppliedDiscount? appliedDiscount;
   final VoidCallback onRemoveDiscount;
   final VoidCallback onClearCart;
@@ -463,7 +466,7 @@ class _CartFooter extends StatelessWidget {
             PosActionButtons(
               total: total,
               onCancel: isSyncingOrder ? null : onClearCart,
-              onHold: isSyncingOrder || !hasCartItems ? null : onHold,
+              onHold: isSyncingOrder || !canHoldCurrentOrder ? null : onHold,
               onPay: isSyncingOrder ? null : onPay,
               isPaymentEnabled:
                   !isSyncingOrder &&

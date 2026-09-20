@@ -145,7 +145,9 @@ class _PosScreenState extends State<PosScreen> {
                 previous.paymentErrorMessage != current.paymentErrorMessage ||
                 previous.receiptErrorMessage != current.receiptErrorMessage ||
                 previous.uncertainPaymentMessage !=
-                    current.uncertainPaymentMessage;
+                    current.uncertainPaymentMessage ||
+                previous.holdSuccessMessage != current.holdSuccessMessage ||
+                previous.uncertainHoldMessage != current.uncertainHoldMessage;
           },
           listener: (BuildContext context, PosState state) {
             final String? errorMessage =
@@ -161,6 +163,22 @@ class _PosScreenState extends State<PosScreen> {
                             ? context.l10n.posMenuRefreshRequired
                             : localizedPosFailure(context.l10n, errorMessage)),
                   ),
+                ),
+              );
+            }
+
+            if (state.holdSuccessMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(localizedPosHoldSucceeded(context.l10n)),
+                ),
+              );
+            }
+
+            if (state.uncertainHoldMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(localizedPosHoldUncertain(context.l10n)),
                 ),
               );
             }
@@ -494,6 +512,7 @@ class _PosScreenState extends State<PosScreen> {
         context.l10n.posMenuChangedReviewOrder,
       PosCubit.customerAttachmentFailedMessage =>
         context.l10n.posCustomerAttachmentFailed,
+      PosCubit.holdRetryableMessage => localizedPosHoldRetryable(context.l10n),
       _ => null,
     };
   }
