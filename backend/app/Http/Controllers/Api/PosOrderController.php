@@ -118,17 +118,22 @@ class PosOrderController extends Controller
         ]);
 
         $this->assertBranchRelationships($tenantId, $data, (int) $data['branchId']);
+        $snapshotHasConsumption = $snapshotRequested && $this->snapshotHasRecipeConsumption($tenantId, (int) $data['publishedMenuVersionId'], $data['items']);
         // A draft can still be created for legacy/untracked sales before a
         // branch has a dedicated POS bar warehouse. Stock-tracked payment is
         // authoritatively preflighted later, and new configured branches still
         // snapshot their selected bar warehouse here.
-        try {
-            $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $data['branchId']);
-        } catch (OrderLifecycleException $exception) {
-            if ($exception->domainCode !== 'POS_WAREHOUSE_NOT_CONFIGURED') {
-                throw $exception;
-            }
+        if (! $snapshotHasConsumption) {
             $warehouse = null;
+        } else {
+            try {
+                $warehouse = $this->posWarehouses->forBranch($tenantId, (int) $data['branchId']);
+            } catch (OrderLifecycleException $exception) {
+                if ($exception->domainCode !== 'POS_WAREHOUSE_NOT_CONFIGURED') {
+                    throw $exception;
+                }
+                $warehouse = null;
+            }
         }
         try {
             $actorId = (int) $request->attributes->get('auth_user')->id;
@@ -959,6 +964,30 @@ class PosOrderController extends Controller
             'amount' => (float) $discount->discount_amount,
             'reason' => $discount->discount_name,
         ];
+    }
+
+    /** True only when the immutable requested snapshot has an actual recipe effect. */
+    private function snapshotHasRecipeConsumption(int $tenantId, int $versionId, array $items): bool
+    {
+        $payload = DB::table('published_menu_versions')->where('tenant_id', $tenantId)->where('id', $versionId)->value('payload_json');
+        $payload = is_string($payload) ? json_decode($payload, true) : $payload;
+        if (! is_array($payload) || (int) ($payload['context']['schemaVersion'] ?? 0) < 3) {
+            return true;
+        }
+        foreach ($items as $item) {
+            foreach ($payload['menus'] ?? [] as $menu) foreach ($menu['sections'] ?? [] as $section) foreach ($section['products'] ?? [] as $product) {
+                if ((int) ($product['productId'] ?? 0) !== (int) $item['productId'] || (int) ($product['placementId'] ?? 0) !== (int) ($item['placementId'] ?? 0)) continue;
+                foreach ($product['variants'] ?? [] as $variant) if ((int) ($variant['id'] ?? 0) === (int) ($item['variantId'] ?? 0)) {
+                    if (($variant['baseRecipe'] ?? null) === null || ! is_array($variant['baseRecipe'])) return true;
+                    if ($variant['baseRecipe'] !== []) return true;
+                    $selected = array_map('intval', $item['modifierOptionIds'] ?? []);
+                    foreach ($variant['modifierRecipeAdjustments'] ?? [] as $adjustment) if (in_array((int) ($adjustment['optionId'] ?? 0), $selected, true) && ($adjustment['components'] ?? []) !== []) return true;
+                    continue 5;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private function unsupportedSnapshotResponse(UnsupportedMenuSnapshotSchemaException $exception): JsonResponse

@@ -118,7 +118,7 @@ class FinancialSetupService
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         }
-        foreach (['sales.revenue' => '4000', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020'] as $key => $code) {
+        foreach (['sales.revenue' => '4000', 'sales.additional_charge_revenue' => '4030', 'sales.manual_adjustment' => '4030', 'sales.tax_payable' => '2010', 'sales.cost_of_goods_sold' => '5000', 'sales.inventory_asset' => '1100', 'sales.sales_returns' => '4020', 'sales.customer_credit' => '2020'] as $key => $code) {
             if (DB::table('sales_account_mappings')->where('tenant_id', $tenantId)->where('mapping_key', $key)->exists()) {
                 continue;
             }

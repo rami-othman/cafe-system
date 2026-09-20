@@ -52,6 +52,11 @@ class Product extends Model
         return $this->hasOne(ProductVariant::class)->where('is_default', true);
     }
 
+    public function recipe(): HasOne
+    {
+        return $this->hasOne(ProductRecipe::class);
+    }
+
     public function modifierGroups(): BelongsToMany
     {
         return $this->belongsToMany(ModifierGroup::class, 'product_modifier_group')->withPivot(['tenant_id', 'sort_order', 'is_required_override', 'min_selections_override', 'max_selections_override', 'allow_quantity_override'])->withTimestamps();

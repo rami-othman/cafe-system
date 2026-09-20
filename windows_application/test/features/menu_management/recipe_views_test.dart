@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/menu_management/models/catalog_models.dart';
@@ -66,6 +67,44 @@ void main() {
     expect(find.text('Add Material'), findsOneWidget);
   });
 
+  testWidgets(
+    'base recipe editor exposes accessible field labels and supports keyboard focus traversal',
+    (tester) async {
+      final repository = _RecipeViewRepository();
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<VariantRecipeCubit>(
+            create: (_) => VariantRecipeCubit(repository),
+            child: const VariantRecipeScreen(variantId: 7),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Fields expose their purpose as accessible labels, not just visual
+      // placeholders, so a screen reader announces them correctly.
+      expect(find.bySemanticsLabel('Quantity'), findsOneWidget);
+
+      final quantityField = find.byKey(const Key('recipe-quantity-0'));
+      await tester.tap(quantityField);
+      await tester.pump();
+      final FocusNode? focusedAfterTap = FocusManager.instance.primaryFocus;
+      expect(
+        focusedAfterTap,
+        isNotNull,
+        reason: 'tapping the quantity field must give it keyboard focus',
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(
+        FocusManager.instance.primaryFocus,
+        isNot(same(focusedAfterTap)),
+        reason: 'Tab must move keyboard focus to the next control',
+      );
+    },
+  );
+
   testWidgets('base recipe tolerates duplicate material IDs', (tester) async {
     final repository = _RecipeViewRepository(duplicateFirstMaterial: true);
     await tester.pumpWidget(
@@ -83,8 +122,9 @@ void main() {
       find.byType(DropdownButton<int>),
     );
     expect(
-      materialField.items!
-          .where((DropdownMenuItem<int> item) => item.value == 1),
+      materialField.items!.where(
+        (DropdownMenuItem<int> item) => item.value == 1,
+      ),
       hasLength(1),
     );
   });
@@ -111,8 +151,9 @@ void main() {
       );
       expect(materialField.value, 1);
       expect(
-        materialField.items!
-            .where((DropdownMenuItem<int> item) => item.value == 1),
+        materialField.items!.where(
+          (DropdownMenuItem<int> item) => item.value == 1,
+        ),
         hasLength(1),
       );
     },
@@ -151,8 +192,9 @@ void main() {
       find.byType(DropdownButton<String>),
     );
     expect(
-      unitField.items!
-          .where((DropdownMenuItem<String> item) => item.value == 'g'),
+      unitField.items!.where(
+        (DropdownMenuItem<String> item) => item.value == 'g',
+      ),
       hasLength(1),
     );
   });
@@ -182,7 +224,9 @@ void main() {
     expect(repository.lastSavedComponents!.single.unitCode, 'ml');
   });
 
-  testWidgets('base recipe changes unit and saves the new selection', (tester) async {
+  testWidgets('base recipe changes unit and saves the new selection', (
+    tester,
+  ) async {
     final repository = _RecipeViewRepository(
       firstMaterialAllowedRecipeUnits: const <String>['g', 'kg'],
     );
@@ -463,8 +507,15 @@ void main() {
       final product = await repository.getProduct(1);
       await tester.pumpWidget(
         _app(
-          BlocProvider<VariantRecipeCubit>(
-            create: (_) => VariantRecipeCubit(repository),
+          MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<VariantRecipeCubit>(
+                create: (_) => VariantRecipeCubit(repository),
+              ),
+              BlocProvider<ProductRecipeCubit>(
+                create: (_) => ProductRecipeCubit(repository),
+              ),
+            ],
             child: RecipeMaterialsWorkspace(product: product),
           ),
         ),
@@ -476,6 +527,48 @@ void main() {
       expect(find.text('Modifier Material Effects'), findsOneWidget);
       expect(find.text('Using Global settings'), findsOneWidget);
       expect(find.text('Test Recipe'), findsNWidgets(2));
+    },
+  );
+
+  testWidgets(
+    'recipe workspace presents no material effect and stays safe at narrow Arabic width',
+    (tester) async {
+      tester.view.physicalSize = const Size(760, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final repository = _RecipeViewRepository(
+        modifierProfileComponents: const <RecipeComponent>[],
+      );
+      final product = await repository.getProduct(1);
+      await tester.pumpWidget(
+        _app(
+          MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<VariantRecipeCubit>(
+                create: (_) => VariantRecipeCubit(repository),
+              ),
+              BlocProvider<ProductRecipeCubit>(
+                create: (_) => ProductRecipeCubit(repository),
+              ),
+            ],
+            child: RecipeMaterialsWorkspace(product: product),
+          ),
+          locale: const Locale('ar'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('لا تغيير في المواد'), findsOneWidget);
+      expect(
+        Directionality.of(
+          tester.element(find.byType(RecipeMaterialsWorkspace)),
+        ),
+        TextDirection.rtl,
+      );
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -607,6 +700,225 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'product base recipe starts empty and lets a manager add then save a material',
+    (tester) async {
+      final repository = _RecipeViewRepository(
+        productRecipeComponents: const <RecipeComponent>[],
+      );
+      await tester.pumpWidget(
+        _app(
+          BlocProvider<ProductRecipeCubit>(
+            create: (_) => ProductRecipeCubit(repository),
+            child: const ProductBaseRecipeCard(productId: 1),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('No recipe components are configured.'), findsOneWidget);
+
+      await tester.tap(find.text('Add Material'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Beans'));
+      await tester.pumpAndSettle();
+      expect(find.text('Beans'), findsOneWidget);
+
+      await tester.tap(find.text('Save recipe'));
+      await tester.pumpAndSettle();
+      expect(repository.lastSavedComponents, hasLength(1));
+      expect(repository.lastSavedComponents!.single.materialId, 1);
+    },
+  );
+
+  testWidgets('product base recipe clear removes configured materials', (
+    tester,
+  ) async {
+    final repository = _RecipeViewRepository(
+      productRecipeComponents: const <RecipeComponent>[
+        RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+      ],
+    );
+    await tester.pumpWidget(
+      _app(
+        BlocProvider<ProductRecipeCubit>(
+          create: (_) => ProductRecipeCubit(repository),
+          child: const ProductBaseRecipeCard(productId: 1),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Beans'), findsOneWidget);
+
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear recipe'));
+    await tester.pumpAndSettle();
+    expect(repository.productRecipeCleared, isTrue);
+  });
+
+  testWidgets(
+    'variant recipe shows inherited product source without a blocking error when nothing is configured',
+    (tester) async {
+      final repository = _RecipeViewRepository(
+        productRecipeComponents: const <RecipeComponent>[],
+        variantComponents: const <RecipeComponent>[],
+        variantSource: RecipeSource.none,
+        variantHasOverride: false,
+        variantOverrideComponents: const <RecipeComponent>[],
+        variantEffectiveComponents: const <RecipeComponent>[],
+      );
+      final product = await repository.getProduct(1);
+      await tester.pumpWidget(
+        _app(
+          MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<VariantRecipeCubit>(
+                create: (_) => VariantRecipeCubit(repository),
+              ),
+              BlocProvider<ProductRecipeCubit>(
+                create: (_) => ProductRecipeCubit(repository),
+              ),
+            ],
+            child: RecipeMaterialsWorkspace(product: product),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.text('No recipe components are configured.'), findsOneWidget);
+      expect(
+        find.text(
+          'No materials are configured yet. Add each material used to prepare one unit of this Variant.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'variant recipe shows an inherited product recipe with no restore action to offer',
+    (tester) async {
+      final repository = _RecipeViewRepository(
+        productRecipeComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+        ],
+        variantSource: RecipeSource.product,
+        variantHasOverride: false,
+        variantOverrideComponents: const <RecipeComponent>[],
+        variantEffectiveComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+        ],
+      );
+      final product = await repository.getProduct(1);
+      await tester.pumpWidget(
+        _app(
+          MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<VariantRecipeCubit>(
+                create: (_) => VariantRecipeCubit(repository),
+              ),
+              BlocProvider<ProductRecipeCubit>(
+                create: (_) => ProductRecipeCubit(repository),
+              ),
+            ],
+            child: RecipeMaterialsWorkspace(product: product),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Use inherited settings'), findsOneWidget);
+      expect(find.byTooltip('Use inherited settings again'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'variant recipe with an override offers a restore-to-inherited action that removes it',
+    (tester) async {
+      final overridden = _RecipeViewRepository(
+        productRecipeComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+        ],
+        variantSource: RecipeSource.variant,
+        variantHasOverride: true,
+        variantOverrideComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 2, quantity: '250', unitCode: 'ml'),
+        ],
+        variantEffectiveComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 2, quantity: '250', unitCode: 'ml'),
+        ],
+      );
+      final overriddenProduct = await overridden.getProduct(1);
+      await tester.pumpWidget(
+        _app(
+          MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<VariantRecipeCubit>(
+                create: (_) => VariantRecipeCubit(overridden),
+              ),
+              BlocProvider<ProductRecipeCubit>(
+                create: (_) => ProductRecipeCubit(overridden),
+              ),
+            ],
+            child: RecipeMaterialsWorkspace(product: overriddenProduct),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Use inherited settings again'), findsOneWidget);
+      await tester.tap(find.byTooltip('Use inherited settings again'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(overridden.overrideRemoved, isTrue);
+    },
+  );
+
+  testWidgets(
+    'variant recipe diagnoses a stored material that is no longer in the active catalog by name',
+    (tester) async {
+      final repository = _RecipeViewRepository(
+        selectedMaterialIsUnavailable: true,
+        variantSource: RecipeSource.variant,
+        variantHasOverride: true,
+        variantOverrideComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+        ],
+        variantEffectiveComponents: const <RecipeComponent>[
+          RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+        ],
+      );
+      final product = await repository.getProduct(1);
+      await tester.pumpWidget(
+        _app(
+          MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<VariantRecipeCubit>(
+                create: (_) => VariantRecipeCubit(repository),
+              ),
+              BlocProvider<ProductRecipeCubit>(
+                create: (_) => ProductRecipeCubit(repository),
+              ),
+            ],
+            child: RecipeMaterialsWorkspace(product: product),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The stored, now-inactive material is still looked up by id (the
+      // cubit requests includeUnavailable materials) and diagnosed by its
+      // real name rather than silently vanishing or falling back to a bare
+      // "Material #1" placeholder.
+      expect(find.text('Beans'), findsOneWidget);
+    },
+  );
 }
 
 Widget _app(Widget child, {Locale? locale}) => MaterialApp(
@@ -624,6 +936,22 @@ class _RecipeViewRepository extends MenuCatalogRepository {
     this.firstMaterialAllowedRecipeUnits = const <String>['g'],
     this.duplicateFirstMaterial = false,
     this.selectedMaterialIsUnavailable = false,
+    this.productRecipeComponents = const <RecipeComponent>[],
+    this.variantComponents = const <RecipeComponent>[
+      RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
+    ],
+    this.variantHasOverride = false,
+    this.variantSource = RecipeSource.none,
+    this.variantOverrideComponents = const <RecipeComponent>[],
+    this.variantEffectiveComponents = const <RecipeComponent>[],
+    this.modifierProfileComponents = const <RecipeComponent>[
+      RecipeComponent(
+        materialId: 1,
+        operation: 'add',
+        quantity: '18',
+        unitCode: 'g',
+      ),
+    ],
   });
   final String materialName;
   final bool arabicContext;
@@ -631,13 +959,46 @@ class _RecipeViewRepository extends MenuCatalogRepository {
   final List<String> firstMaterialAllowedRecipeUnits;
   final bool duplicateFirstMaterial;
   final bool selectedMaterialIsUnavailable;
+  final List<RecipeComponent> productRecipeComponents;
+  final List<RecipeComponent> variantComponents;
+  final bool variantHasOverride;
+  final RecipeSource variantSource;
+  final List<RecipeComponent> variantOverrideComponents;
+  final List<RecipeComponent> variantEffectiveComponents;
+  final List<RecipeComponent> modifierProfileComponents;
   List<RecipeComponent>? lastSavedComponents;
-  final VariantRecipe _recipe = const VariantRecipe(
+  bool overrideRemoved = false;
+  bool productRecipeCleared = false;
+  VariantRecipe get _recipe => VariantRecipe(
     variantId: 7,
-    components: <RecipeComponent>[
-      RecipeComponent(materialId: 1, quantity: '18', unitCode: 'g'),
-    ],
+    components: variantComponents,
+    hasOverride: variantHasOverride,
+    source: variantSource,
+    overrideComponents: variantOverrideComponents,
+    effectiveComponents: variantEffectiveComponents,
   );
+  @override
+  Future<ProductRecipe> getProductRecipe(int productId) async =>
+      ProductRecipe(productId: productId, components: productRecipeComponents);
+
+  @override
+  Future<void> deleteVariantRecipe(int variantId) async {
+    overrideRemoved = true;
+  }
+
+  @override
+  Future<void> deleteProductRecipe(int productId) async {
+    productRecipeCleared = true;
+  }
+
+  @override
+  Future<ProductRecipe> saveProductRecipe(
+    int productId,
+    List<RecipeComponent> components,
+  ) async {
+    lastSavedComponents = components;
+    return ProductRecipe(productId: productId, components: components);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -695,19 +1056,12 @@ class _RecipeViewRepository extends MenuCatalogRepository {
     int optionId, {
     int? productId,
     int? variantId,
-  }) async => const ModifierRecipeProfile(
+  }) async => ModifierRecipeProfile(
     optionId: 3,
     scope: 'product',
     hasOverride: false,
     inheritedFrom: 'global',
-    components: <RecipeComponent>[
-      RecipeComponent(
-        materialId: 1,
-        operation: 'add',
-        quantity: '18',
-        unitCode: 'g',
-      ),
-    ],
+    components: modifierProfileComponents,
   );
 
   @override

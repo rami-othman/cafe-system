@@ -22,7 +22,7 @@ class RecipeResolver
             ->with(['options' => fn ($query) => $query->where('is_active', true)->where('is_available', true)])
             ->get()
             ->keyBy('id');
-        $base = $this->configuration->recipe($variant)['components'];
+        $base = $this->configuration->effectiveRecipe($variant)['effectiveComponents'];
         $baseMaterialIds = array_column($base, 'materialId');
         $materials = $this->materials->materials($variant->tenant_id, $baseMaterialIds);
         $amounts = [];

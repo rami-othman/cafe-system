@@ -7,8 +7,10 @@ use App\Domain\Inventory\UnitConversionResolver;
 use App\Exceptions\OrderLifecycleException;
 use App\Models\PublishedMenuVersion;
 use App\Support\InventoryDecimal;
+use App\Support\InventoryUnitCatalog;
 use App\Support\Money;
 use App\Support\PaymentPerformanceProbe;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -101,7 +103,12 @@ class SaleConsumptionService
             $recipeStarted = $this->performance->start('recipe loading');
             $lines = $this->componentsForItem($tenantId, $snapshot, $item);
             if ($lines === []) {
-                throw ValidationException::withMessages(['productId' => "The sold variant for product #{$product->id} has no recipe components in its published menu snapshot."]);
+                // `baseRecipe: []` is a deliberately pinned zero-consumption
+                // state. Snapshot absence is rejected by componentsForItem().
+                $this->performance->stop('recipe loading', $recipeStarted);
+                $this->snapshotItem($tenantId, $item, 0, null);
+
+                continue;
             }
 
             $warehouseId = $this->resolveOrderWarehouse($tenantId, $order);
@@ -167,14 +174,25 @@ class SaleConsumptionService
      */
     public function preflightWarehouseConfiguration(int $tenantId, object $order): ?array
     {
-        $requiresInventory = DB::table('order_items')
-            ->join('products', 'products.id', '=', 'order_items.product_id')
-            ->where('order_items.tenant_id', $tenantId)
-            ->where('products.tenant_id', $tenantId)
-            ->where('order_items.order_id', $order->id)
-            ->whereNull('order_items.deleted_at')
-            ->where('products.is_stock_tracked', true)
-            ->exists();
+        $items = DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')->get();
+        $snapshot = $this->publishedSnapshot($tenantId, $order);
+        $requiresInventory = false;
+        foreach ($items as $item) {
+            $product = $item->product_id ? DB::table('products')->where('tenant_id', $tenantId)->where('id', $item->product_id)->first() : null;
+            if (! $product || ! $this->isTracked($product)) {
+                continue;
+            }
+            if ($snapshot === null || (int) ($snapshot['context']['schemaVersion'] ?? 0) < 3 || empty($item->product_variant_id) || empty($item->menu_item_placement_id)) {
+                // The payment path will emit the precise validation failure;
+                // preflight must not mistake historical corruption for zero.
+                $requiresInventory = true;
+                break;
+            }
+            if ($this->componentsForItem($tenantId, $snapshot, $item) !== []) {
+                $requiresInventory = true;
+                break;
+            }
+        }
 
         if (! $requiresInventory) {
             return null;
@@ -203,7 +221,7 @@ class SaleConsumptionService
      */
     public function bindLegacyOrderWarehouse(int $tenantId, object $order): object
     {
-        if ($order->warehouse_id !== null) {
+        if ($order->warehouse_id !== null || ! $this->requiresWarehouse($tenantId, $order)) {
             return $order;
         }
 
@@ -216,6 +234,22 @@ class SaleConsumptionService
         $order->warehouse_id = $warehouse->id;
 
         return $order;
+    }
+
+    private function requiresWarehouse(int $tenantId, object $order): bool
+    {
+        $snapshot = $this->publishedSnapshot($tenantId, $order);
+        if ($snapshot === null || (int) ($snapshot['context']['schemaVersion'] ?? 0) < 3) {
+            return true;
+        }
+        foreach (DB::table('order_items')->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')->get() as $item) {
+            $product = $item->product_id ? DB::table('products')->where('tenant_id', $tenantId)->where('id', $item->product_id)->first() : null;
+            if ($product && $this->isTracked($product) && $this->componentsForItem($tenantId, $snapshot, $item) !== []) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -275,30 +309,83 @@ class SaleConsumptionService
             ->all();
         $components = [];
         $add = function (array $component, int $direction = 1, int $multiplier = 1) use (&$components): void {
-            $materialId = (int) ($component['materialId'] ?? 0);
-            $unit = (string) ($component['unitCode'] ?? '');
-            $quantity = (string) ($component['quantity'] ?? '');
-            if ($materialId <= 0 || $unit === '' || $quantity === '') {
-                return;
-            }
+            $materialId = $component['materialId'];
+            $unit = $component['unitCode'];
+            $quantity = $component['quantity'];
             for ($i = 0; $i < $multiplier; $i++) {
                 $components[] = ['materialId' => $materialId, 'quantity' => $quantity, 'unitCode' => $unit, 'canonicalQuantity' => $component['canonicalQuantity'] ?? null, 'baseUnit' => $component['baseUnit'] ?? null, 'direction' => $direction];
             }
         };
-        foreach ($variant['baseRecipe'] ?? [] as $component) {
-            $add($component);
+        if (! array_key_exists('baseRecipe', $variant) || ! is_array($variant['baseRecipe'])) {
+            throw ValidationException::withMessages(['variantId' => 'The sold variant has incompatible recipe data in its published menu snapshot.']);
+        }
+        foreach ($variant['baseRecipe'] as $component) {
+            $add($this->validatePinnedComponent($component));
+        }
+        if (array_key_exists('modifierRecipeAdjustments', $variant) && ! is_array($variant['modifierRecipeAdjustments'])) {
+            throw ValidationException::withMessages(['variantId' => 'The sold variant has incompatible modifier recipe data in its published menu snapshot.']);
         }
         foreach ($variant['modifierRecipeAdjustments'] ?? [] as $adjustment) {
-            $selectedQuantity = $selected[(int) ($adjustment['optionId'] ?? 0)] ?? 0;
+            if (! is_array($adjustment) || ! array_key_exists('optionId', $adjustment) || ! is_array($adjustment['components'] ?? null)) {
+                throw ValidationException::withMessages(['variantId' => 'The sold variant has incompatible modifier recipe data in its published menu snapshot.']);
+            }
+            $optionId = filter_var($adjustment['optionId'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($optionId === false) {
+                throw ValidationException::withMessages(['variantId' => 'The sold variant has incompatible modifier recipe data in its published menu snapshot.']);
+            }
+            $selectedQuantity = $selected[(int) $optionId] ?? 0;
             if ($selectedQuantity === 0) {
                 continue;
             }
             foreach ($adjustment['components'] ?? [] as $component) {
-                $add($component, ($component['operation'] ?? 'add') === 'remove' ? -1 : 1, $selectedQuantity);
+                $component = $this->validatePinnedComponent($component, true);
+                $add($component, $component['operation'] === 'remove' ? -1 : 1, $selectedQuantity);
             }
         }
 
         return $components;
+    }
+
+    /** @return array<string, mixed> */
+    private function validatePinnedComponent(mixed $component, bool $modifier = false): array
+    {
+        if (! is_array($component)) {
+            throw ValidationException::withMessages(['variantId' => 'The sold variant has malformed recipe component data in its published menu snapshot.']);
+        }
+
+        $materialId = filter_var($component['materialId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $quantity = $component['quantity'] ?? null;
+        $unitCode = $component['unitCode'] ?? null;
+        if ($materialId === false || (! is_string($quantity) && ! is_int($quantity) && ! is_float($quantity)) || ! $this->isPositiveDecimal((string) $quantity) || ! is_string($unitCode) || trim($unitCode) === '' || ! InventoryUnitCatalog::isKnown($unitCode)) {
+            throw ValidationException::withMessages(['variantId' => 'The sold variant has malformed recipe component data in its published menu snapshot.']);
+        }
+
+        $hasCanonical = array_key_exists('canonicalQuantity', $component) || array_key_exists('baseUnit', $component);
+        if ($hasCanonical && (! is_string($component['canonicalQuantity'] ?? null) || ! is_string($component['baseUnit'] ?? null) || ! $this->isPositiveDecimal($component['canonicalQuantity']) || ! InventoryUnitCatalog::isKnown($component['baseUnit']))) {
+            throw ValidationException::withMessages(['variantId' => 'The sold variant has malformed canonical recipe data in its published menu snapshot.']);
+        }
+        if ($modifier && ! in_array($component['operation'] ?? null, ['add', 'remove'], true)) {
+            throw ValidationException::withMessages(['variantId' => 'The sold variant has malformed modifier recipe data in its published menu snapshot.']);
+        }
+
+        $component['materialId'] = $materialId;
+        $component['quantity'] = (string) $quantity;
+        $component['unitCode'] = $unitCode;
+
+        return $component;
+    }
+
+    private function isPositiveDecimal(string $value): bool
+    {
+        if (! preg_match('/^\d+(?:\.\d+)?$/', $value)) {
+            return false;
+        }
+
+        try {
+            return BigDecimal::of($value)->isGreaterThan(BigDecimal::zero());
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /** @return array{quantity: int, baseUnit: string} */

@@ -232,8 +232,12 @@ Route::prefix('v1')->group(function (): void {
             });
             Route::controller(RecipeConfigurationController::class)->group(function (): void {
                 Route::get('materials', 'materials');
+                Route::get('products/{product}/recipe', 'productRecipe');
+                Route::put('products/{product}/recipe', 'putProductRecipe');
+                Route::delete('products/{product}/recipe', 'deleteProductRecipe');
                 Route::get('product-variants/{variant}/recipe', 'recipe');
                 Route::put('product-variants/{variant}/recipe', 'putRecipe');
+                Route::delete('product-variants/{variant}/recipe', 'deleteRecipe');
                 Route::post('product-variants/{variant}/recipe/resolve', 'resolve');
                 Route::get('product-variants/{variant}/recipe-material-effects', 'profileSummary');
                 Route::get('modifier-groups/{modifierGroup}/recipe-material-effects', 'modifierGroupProfileSummary');

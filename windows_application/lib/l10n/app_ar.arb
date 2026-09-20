@@ -837,12 +837,30 @@
       }
     }
   },
+  "recipeMaterialId": "المادة #{materialId}",
+  "@recipeMaterialId": {
+    "placeholders": {
+      "materialId": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeSku": "SKU {sku}",
+  "@recipeSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
   "recipeMissing": "الوصفة مفقودة",
   "recipeNotConfigured": "الوصفة غير معدّة",
   "recipeModifierMaterialEffects": "تأثيرات مواد المعدلات",
   "recipeModifierMaterialEffectsHelp": "اطلع على كيفية تغيير اختيارات العميل للمواد المستهلكة.",
   "recipeNoMaterialChange": "لا تغيير في المواد",
   "recipeUsingGlobalSettings": "باستخدام الإعدادات العامة",
+  "recipeUsingProductSettings": "باستخدام إعدادات المنتج",
+  "recipeUsingVariantSettings": "باستخدام إعدادات النوع",
   "recipeCustomizedForProduct": "مخصص للمنتج",
   "recipeCustomizedForVariant": "مخصص للنوع",
   "recipeTest": "اختبار الوصفة",
@@ -852,6 +870,10 @@
   "recipeCurrentBehavior": "السلوك الحالي",
   "recipeUseInherited": "استخدام الإعدادات الموروثة",
   "recipeUseInheritedAgain": "استخدم الإعدادات الموروثة مجدداً",
+  "recipeClearTitle": "مسح وصفة المنتج؟",
+  "recipeClearBody": "سيؤدي ذلك إلى إزالة كل المواد المعدة في الوصفة الأساسية للمنتج.",
+  "recipeClearAction": "مسح الوصفة",
+  "recipeRemoveOverrideAction": "إزالة التجاوز",
   "recipeCustomizeFor": "تخصيص لـ {context}",
   "@recipeCustomizeFor": {
     "placeholders": {
@@ -866,6 +888,26 @@
       "context": {
         "type": "String"
       }
+    }
+  },
+  "recipeCurrentVariant": "هذا النوع",
+  "recipeReplacesSummary": "يستبدل {from} بـ {to}",
+  "@recipeReplacesSummary": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "recipeRemovesSummary": "يزيل {materials}",
+  "@recipeRemovesSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeAddsSummary": "يضيف {materials}",
+  "@recipeAddsSummary": {
+    "placeholders": {
+      "materials": {}
     }
   },
   "recipeRemoves": "يزيل",

@@ -551,6 +551,10 @@ class ResolvedVariant extends Equatable {
     required this.reasons,
     required this.recipeConfigured,
     required this.recipeComponentCount,
+    this.effectiveRecipeConfigured,
+    this.effectiveRecipeComponentCount,
+    this.recipeSource,
+    this.hasRecipeOverride,
   });
   factory ResolvedVariant.fromJson(Map<String, dynamic> json) =>
       ResolvedVariant(
@@ -568,6 +572,18 @@ class ResolvedVariant extends Equatable {
         reasons: _strings(json['unavailabilityReasons']),
         recipeConfigured: readBool(json['recipeConfigured']),
         recipeComponentCount: readInt(json['recipeComponentCount']) ?? 0,
+        effectiveRecipeConfigured: json.containsKey('effectiveRecipeConfigured')
+            ? readBool(json['effectiveRecipeConfigured'])
+            : null,
+        effectiveRecipeComponentCount: readInt(
+          json['effectiveRecipeComponentCount'],
+        ),
+        recipeSource: readString(json['recipeSource']).isEmpty
+            ? null
+            : readString(json['recipeSource']),
+        hasRecipeOverride: json.containsKey('hasRecipeOverride')
+            ? readBool(json['hasRecipeOverride'])
+            : null,
       );
   final int id;
   final String name;
@@ -583,6 +599,10 @@ class ResolvedVariant extends Equatable {
   final List<String> reasons;
   final bool recipeConfigured;
   final int recipeComponentCount;
+  final bool? effectiveRecipeConfigured;
+  final int? effectiveRecipeComponentCount;
+  final String? recipeSource;
+  final bool? hasRecipeOverride;
   @override
   List<Object?> get props => <Object?>[
     id,
@@ -599,6 +619,10 @@ class ResolvedVariant extends Equatable {
     reasons,
     recipeConfigured,
     recipeComponentCount,
+    effectiveRecipeConfigured,
+    effectiveRecipeComponentCount,
+    recipeSource,
+    hasRecipeOverride,
   ];
 }
 

@@ -860,12 +860,30 @@
       }
     }
   },
+  "recipeMaterialId": "Material #{materialId}",
+  "@recipeMaterialId": {
+    "placeholders": {
+      "materialId": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeSku": "SKU {sku}",
+  "@recipeSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
   "recipeMissing": "Recipe missing",
   "recipeNotConfigured": "Recipe not configured",
   "recipeModifierMaterialEffects": "Modifier Material Effects",
   "recipeModifierMaterialEffectsHelp": "See how customer choices change the materials consumed.",
   "recipeNoMaterialChange": "No material change",
   "recipeUsingGlobalSettings": "Using Global settings",
+  "recipeUsingProductSettings": "Using Product settings",
+  "recipeUsingVariantSettings": "Using Variant settings",
   "recipeCustomizedForProduct": "Customized for Product",
   "recipeCustomizedForVariant": "Customized for Variant",
   "recipeTest": "Test Recipe",
@@ -875,6 +893,10 @@
   "recipeCurrentBehavior": "Current Behavior",
   "recipeUseInherited": "Use inherited settings",
   "recipeUseInheritedAgain": "Use inherited settings again",
+  "recipeClearTitle": "Clear the product recipe?",
+  "recipeClearBody": "This removes every material configured for the product base recipe.",
+  "recipeClearAction": "Clear recipe",
+  "recipeRemoveOverrideAction": "Remove override",
   "recipeCustomizeFor": "Customize for {context}",
   "@recipeCustomizeFor": {
     "placeholders": {
@@ -889,6 +911,26 @@
       "context": {
         "type": "String"
       }
+    }
+  },
+  "recipeCurrentVariant": "this Variant",
+  "recipeReplacesSummary": "Replaces {from} with {to}",
+  "@recipeReplacesSummary": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "recipeRemovesSummary": "Removes {materials}",
+  "@recipeRemovesSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeAddsSummary": "Adds {materials}",
+  "@recipeAddsSummary": {
+    "placeholders": {
+      "materials": {}
     }
   },
   "recipeRemoves": "Removes",

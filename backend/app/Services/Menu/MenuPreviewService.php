@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\ProductAvailabilityResolver;
 use App\Services\Catalog\ProductVariantPriceResolver;
+use App\Services\Catalog\RecipeConfigurationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +24,7 @@ class MenuPreviewService
         private readonly ProductVariantPriceResolver $prices,
         private readonly ProductAvailabilityResolver $scheduled,
         private readonly OperationalAvailabilityResolver $operational,
+        private readonly RecipeConfigurationService $recipes,
     ) {}
 
     public function one(int $tenantId, int $menuId, array $input): array
@@ -75,7 +77,7 @@ class MenuPreviewService
             'sections' => fn ($sections) => $sections->withTrashed()->orderBy('sort_order')->orderBy('id')->with([
                 'placements' => fn ($placements) => $placements->withTrashed()->orderBy('sort_order')->orderBy('id')->with([
                     'product' => fn ($products) => $products->withTrashed()->with([
-                        'variants' => fn ($variants) => $variants->withTrashed()->with('recipe.components')->orderBy('sort_order')->orderBy('id'),
+                        'variants' => fn ($variants) => $variants->withTrashed()->with(['recipe.components', 'product.recipe.components'])->orderBy('sort_order')->orderBy('id'),
                         'modifierGroups' => fn ($groups) => $groups->withTrashed()->with(['options' => fn ($options) => $options->withTrashed()->orderBy('sort_order')->orderBy('id')]),
                     ]),
                 ]),
@@ -166,12 +168,15 @@ class MenuPreviewService
         }
         $sellable = ! $product->trashed() && $product->is_active && $variant->is_active && $scheduled['isScheduledAvailable'] && $operational['isOperationallyAvailable'] && $validPrice;
 
+        $recipe = $this->recipes->effectiveRecipe($variant);
+
         return ['id' => $variant->id, 'name' => $this->localized($variant, 'name', $language), 'sku' => $variant->sku, 'barcode' => $variant->barcode,
             'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default, 'basePrice' => (float) $price['basePrice'],
             'effectivePrice' => (float) $price['effectivePrice'], 'matchedPriceScope' => $price['matchedScope'],
             'isScheduledAvailable' => $scheduled['isScheduledAvailable'], 'isOperationallyAvailable' => $operational['isOperationallyAvailable'],
             'isSellable' => $sellable, 'unavailabilityReasons' => $reasons,
-            'recipeConfigured' => $variant->recipe !== null && $variant->recipe->components->isNotEmpty(), 'recipeComponentCount' => $variant->recipe?->components->count() ?? 0];
+            'effectiveRecipeConfigured' => $recipe['effectiveComponents'] !== [], 'effectiveRecipeComponentCount' => count($recipe['effectiveComponents']), 'recipeSource' => $recipe['source'], 'hasRecipeOverride' => $recipe['hasOverride'],
+            'recipeConfigured' => $recipe['effectiveComponents'] !== [], 'recipeComponentCount' => count($recipe['effectiveComponents'])];
     }
 
     private function modifiers(Product $product, string $language): array

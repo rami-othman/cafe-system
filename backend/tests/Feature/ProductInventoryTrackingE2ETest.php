@@ -68,10 +68,12 @@ class ProductInventoryTrackingE2ETest extends TestCase
 
         $context = ['branchId' => $branchId, 'channel' => 'pos', 'menuIds' => [$menu]];
 
-        // A4: a stock-tracked variant with no recipe must block publishing.
+        // A4: a stock-tracked variant with no recipe publishes a pinned empty
+        // recipe; it is a valid zero-consumption configuration.
         $this->postJson('/api/v1/admin/menu-management/publish', $context, $headers)
-            ->assertUnprocessable();
-        $this->assertDatabaseMissing('published_menu_versions', ['tenant_id' => $tenant, 'branch_id' => $branchId, 'channel' => 'pos', 'status' => 'current']);
+            ->assertOk();
+        $emptyPayload = json_decode((string) DB::table('published_menu_versions')->where('tenant_id', $tenant)->where('branch_id', $branchId)->where('channel', 'pos')->where('status', 'current')->value('payload_json'), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame([], $emptyPayload['menus'][0]['sections'][0]['products'][0]['variants'][0]['baseRecipe']);
 
         $this->putJson("/api/v1/admin/catalog/product-variants/{$variantId}/recipe", [
             'components' => [

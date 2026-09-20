@@ -9,6 +9,7 @@ use App\Support\InventoryUnitCatalog;
 use App\Models\ModifierOption;
 use App\Models\ModifierOptionRecipeProfile;
 use App\Models\Product;
+use App\Models\ProductRecipe;
 use App\Models\ProductVariant;
 use App\Models\VariantRecipe;
 use Brick\Math\BigDecimal;
@@ -21,9 +22,9 @@ class RecipeConfigurationService
 
     public function recipe(ProductVariant $variant): array
     {
-        $r = $variant->recipe()->with('components')->first();
+        $state = $this->effectiveRecipe($variant);
 
-        return ['variantId' => $variant->id, 'components' => $r?->components->sortBy('sort_order')->map(fn ($c) => $this->component($c))->values()->all() ?? []];
+        return ['variantId' => $variant->id, 'hasOverride' => $state['hasOverride'], 'source' => $state['source'], 'components' => $state['overrideComponents'], 'overrideComponents' => $state['overrideComponents'], 'effectiveComponents' => $state['effectiveComponents']];
     }
 
     public function replaceRecipe(ProductVariant $variant, array $components): array
@@ -31,9 +32,18 @@ class RecipeConfigurationService
         $this->activeVariant($variant);
         $this->validateComponents($variant->tenant_id, $components, false);
 
+        if ($components === []) {
+            return $this->deleteRecipe($variant);
+        }
+
         return DB::transaction(function () use ($variant, $components) {
-            $recipe = VariantRecipe::query()->firstOrCreate(['tenant_id' => $variant->tenant_id, 'product_variant_id' => $variant->id]);
             $before = $this->recipe($variant);
+            $recipe = VariantRecipe::query()
+                ->where('tenant_id', $variant->tenant_id)
+                ->where('product_variant_id', $variant->id)
+                ->lockForUpdate()
+                ->first()
+                ?? VariantRecipe::query()->create(['tenant_id' => $variant->tenant_id, 'product_variant_id' => $variant->id]);
             $recipe->components()->delete();
             foreach ($components as $c) {
                 $recipe->components()->create(['tenant_id' => $variant->tenant_id, 'inventory_item_id' => $c['materialId'], 'quantity' => $c['quantity'], 'unit_code' => $c['unitCode'], 'sort_order' => $c['sortOrder'] ?? 0]);
@@ -41,6 +51,115 @@ class RecipeConfigurationService
 
             return $this->recipe($variant->fresh('recipe.components'));
         });
+    }
+
+    public function productRecipe(Product $product): array
+    {
+        $recipe = $product->recipe()->with('components')->first();
+
+        return ['productId' => $product->id, 'configured' => $recipe !== null && $recipe->components->isNotEmpty(), 'components' => $recipe?->components->map(fn ($component) => $this->component($component))->values()->all() ?? []];
+    }
+
+    public function replaceProductRecipe(Product $product, array $components): array
+    {
+        $this->activeProduct($product);
+        $this->validateComponents($product->tenant_id, $components, false);
+
+        if ($components === []) {
+            return $this->deleteProductRecipe($product);
+        }
+
+        return DB::transaction(function () use ($product, $components): array {
+            $before = $this->productRecipe($product);
+            $recipe = ProductRecipe::query()
+                ->where('tenant_id', $product->tenant_id)
+                ->where('product_id', $product->id)
+                ->lockForUpdate()
+                ->first()
+                ?? ProductRecipe::query()->create(['tenant_id' => $product->tenant_id, 'product_id' => $product->id]);
+            $recipe->components()->delete();
+            foreach ($components as $component) {
+                $recipe->components()->create(['tenant_id' => $product->tenant_id, 'inventory_item_id' => $component['materialId'], 'quantity' => $component['quantity'], 'unit_code' => $component['unitCode'], 'sort_order' => $component['sortOrder'] ?? 0]);
+            }
+            $this->audit->log($product->tenant_id, $product, MenuAuditAction::Updated, $before, ['productRecipeComponents' => count($components)]);
+
+            return $this->productRecipe($product->fresh('recipe.components'));
+        });
+    }
+
+    public function deleteRecipe(ProductVariant $variant): array
+    {
+        $this->activeVariant($variant);
+
+        return DB::transaction(function () use ($variant): array {
+            $recipe = VariantRecipe::query()
+                ->where('tenant_id', $variant->tenant_id)
+                ->where('product_variant_id', $variant->id)
+                ->lockForUpdate()
+                ->first();
+            if ($recipe !== null) {
+                $before = $this->recipe($variant);
+                $recipe->delete();
+                $this->audit->log($variant->tenant_id, $variant, MenuAuditAction::Updated, $before, ['recipeOverrideRemoved' => true]);
+            }
+
+            return $this->recipe($variant->fresh('recipe.components'));
+        });
+    }
+
+    public function deleteProductRecipe(Product $product): array
+    {
+        $this->activeProduct($product);
+
+        return DB::transaction(function () use ($product): array {
+            $recipe = ProductRecipe::query()
+                ->where('tenant_id', $product->tenant_id)
+                ->where('product_id', $product->id)
+                ->lockForUpdate()
+                ->first();
+            if ($recipe !== null) {
+                $before = $this->productRecipe($product);
+                $recipe->delete();
+                $this->audit->log($product->tenant_id, $product, MenuAuditAction::Updated, $before, ['productRecipeRemoved' => true]);
+            }
+
+            return $this->productRecipe($product->fresh('recipe.components'));
+        });
+    }
+
+    /** @return array{source: string, hasOverride: bool, overrideComponents: array<int, array<string, mixed>>, effectiveComponents: array<int, array<string, mixed>>} */
+    public function effectiveRecipe(ProductVariant $variant): array
+    {
+        $variant->loadMissing(['recipe.components', 'product.recipe.components']);
+        $override = $variant->recipe?->components->sortBy('sort_order')->values();
+        $product = $variant->product?->recipe?->components->sortBy('sort_order')->values();
+        $overrideComponents = $override?->map(fn ($component) => $this->component($component))->all() ?? [];
+
+        if ($override?->isNotEmpty()) {
+            return ['source' => 'variant', 'hasOverride' => true, 'overrideComponents' => $overrideComponents, 'effectiveComponents' => $overrideComponents];
+        }
+        $effective = $product?->map(fn ($component) => $this->component($component))->all() ?? [];
+
+        return ['source' => $effective === [] ? 'none' : 'product', 'hasOverride' => false, 'overrideComponents' => [], 'effectiveComponents' => $effective];
+    }
+
+    /** @return array<int, array{source: string, hasOverride: bool, overrideComponents: array<int, array<string, mixed>>, effectiveComponents: array<int, array<string, mixed>>}> */
+    public function effectiveRecipes(iterable $variants): array
+    {
+        $ids = collect($variants)->pluck('id')->filter()->values();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+        $variants = ProductVariant::query()
+            ->whereIn('id', $ids)
+            ->with(['recipe.components', 'product.recipe.components'])
+            ->get();
+        $states = [];
+        foreach ($variants as $variant) {
+            $states[$variant->id] = $this->effectiveRecipe($variant);
+        }
+
+        return $states;
     }
 
     public function profile(ModifierOption $option, ?Product $product = null, ?ProductVariant $variant = null): array
@@ -276,6 +395,13 @@ class RecipeConfigurationService
     {
         if ($v->trashed() || ! $v->product || $v->product->trashed()) {
             throw ValidationException::withMessages(['variant' => 'Archived variants are read-only.']);
+        }
+    }
+
+    private function activeProduct(Product $product): void
+    {
+        if ($product->trashed()) {
+            throw ValidationException::withMessages(['product' => 'Archived products are read-only.']);
         }
     }
 

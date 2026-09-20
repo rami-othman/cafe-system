@@ -6,6 +6,8 @@ use App\Domain\Inventory\InventoryWarehouseAssignment;
 use App\Domain\Inventory\RecipeMaterialEligibility;
 use App\Domain\Inventory\UnitConversionResolver;
 use App\Exceptions\OrderLifecycleException;
+use App\Models\ProductVariant;
+use App\Services\Catalog\RecipeConfigurationService;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
 use Illuminate\Http\Request;
@@ -15,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 /** A read-only plan is shared by preview and the final movement writer. */
 final class SalesInvoiceInventoryConsumptionService
 {
-    public function __construct(private readonly SalesInventoryMovementService $movements, private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments, private readonly PosInventoryWarehouseResolver $warehouseResolver) {}
+    public function __construct(private readonly SalesInventoryMovementService $movements, private readonly UnitConversionResolver $conversions, private readonly InventoryWarehouseAssignment $assignments, private readonly PosInventoryWarehouseResolver $warehouseResolver, private readonly RecipeConfigurationService $recipes) {}
 
     /** @param iterable<object> $lines @return array<int, array<string,mixed>> */
     public function preview(int $tenantId, object $invoice, iterable $lines): array
@@ -34,26 +36,31 @@ final class SalesInvoiceInventoryConsumptionService
             if (! $line->product_variant_id) {
                 throw ValidationException::withMessages(['variantId' => "Inventory-tracked line {$line->line_number} has no selected product variant. Edit the draft and select a variant before posting."]);
             }
+            $components = $this->components($tenantId, (int) $product->id, (int) $line->product_variant_id);
+            if ($components->isEmpty()) {
+                // An explicitly absent effective recipe is a valid, zero-Cogs
+                // sale. It must not require a warehouse merely because the
+                // product is inventory tracked.
+                $results[(int) $line->id] = ['cogsCents' => 0, 'warehouseId' => null, 'warehouseName' => null, 'movements' => []];
+
+                continue;
+            }
             $warehouse = $this->warehouse($tenantId, (int) $invoice->branch_id);
             if (! $warehouse) {
                 throw ValidationException::withMessages(['inventory' => "Product {$product->name} has no active selling warehouse for this branch."]);
             }
-            $components = $this->components($tenantId, (int) $product->id, (int) $line->product_variant_id);
-            if ($components->isEmpty()) {
-                throw ValidationException::withMessages(['inventory' => "Selected variant for inventory-tracked product {$product->name} has no recipe components."]);
-            }
             $sold = InventoryDecimal::units($line->quantity);
             $consumptions = [];
             foreach ($components as $component) {
-                $material = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $component->inventory_item_id)->whereNull('deleted_at')->first();
+                $material = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $component['materialId'])->whereNull('deleted_at')->first();
                 if (! $material || ! RecipeMaterialEligibility::allows($material)) {
                     throw ValidationException::withMessages(['inventory' => 'A selected recipe material is unavailable or ineligible.']);
                 }
                 $this->assignments->assertAssigned($tenantId, (int) $material->id, (int) $warehouse->id, 'inventory');
-                $canonical = $this->conversions->resolveRecipe($tenantId, $material, $component->quantity, $component->unit_code);
+                $canonical = $this->conversions->resolveRecipe($tenantId, $material, $component['quantity'], $component['unitCode']);
                 $quantity = InventoryDecimal::applyFactor($canonical['baseQuantity'], $sold * 1000);
                 $id = (int) $material->id;
-                $consumptions[$id] ??= ['materialId' => $id, 'materialName' => $material->name_ar ?: $material->name, 'recipeQuantity' => $component->quantity, 'recipeUnit' => $component->unit_code, 'baseUnit' => $canonical['baseUnit'], 'quantity' => 0];
+                $consumptions[$id] ??= ['materialId' => $id, 'materialName' => $material->name_ar ?: $material->name, 'recipeQuantity' => $component['quantity'], 'recipeUnit' => $component['unitCode'], 'baseUnit' => $canonical['baseUnit'], 'quantity' => 0];
                 $consumptions[$id]['quantity'] += $quantity;
             }
             $cogs = 0;
@@ -117,10 +124,14 @@ final class SalesInvoiceInventoryConsumptionService
 
     private function components(int $tenantId, int $productId, int $variantId)
     {
-        return DB::table('product_variants as variants')->join('variant_recipes as recipes', function ($join): void {
-            $join->on('recipes.product_variant_id', '=', 'variants.id')->whereColumn('recipes.tenant_id', 'variants.tenant_id');
-        })->join('variant_recipe_components as components', function ($join): void {
-            $join->on('components.variant_recipe_id', '=', 'recipes.id')->whereColumn('components.tenant_id', 'variants.tenant_id');
-        })->where('variants.tenant_id', $tenantId)->where('variants.product_id', $productId)->where('variants.id', $variantId)->where('variants.is_active', true)->whereNull('variants.deleted_at')->orderBy('components.sort_order')->select('components.inventory_item_id', 'components.quantity', 'components.unit_code')->get();
+        $variant = ProductVariant::query()
+            ->where('tenant_id', $tenantId)->where('product_id', $productId)->whereKey($variantId)
+            ->where('is_active', true)->with(['product.recipe.components', 'recipe.components'])
+            ->first();
+        if (! $variant || $variant->trashed()) {
+            throw ValidationException::withMessages(['variantId' => 'Selected product variant is inactive or unavailable.']);
+        }
+
+        return collect($this->recipes->effectiveRecipe($variant)['effectiveComponents']);
     }
 }
