@@ -76,6 +76,27 @@ class BranchController extends Controller
             $data['pos_cash_financial_location_id'] = $locationId;
             unset($data['posCashFinancialLocationId']);
         }
+        if (array_key_exists('shiftCloseDestinationFinancialLocationId', $data)) {
+            $locationId = $data['shiftCloseDestinationFinancialLocationId'];
+            if ($locationId !== null) {
+                $valid = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                    ->where('l.id', $locationId)->where('l.tenant_id', $branch->tenant_id)
+                    ->where('l.kind', 'cash')->where('l.is_active', true)
+                    ->where('a.tenant_id', $branch->tenant_id)->where('a.is_active', true)->whereNull('a.deleted_at')
+                    ->where(fn ($q) => $q->whereNull('l.branch_id')->orWhere('l.branch_id', $branch->id))->exists();
+                if (! $valid || (int) $locationId === (int) ($data['pos_cash_financial_location_id'] ?? $branch->pos_cash_financial_location_id)) {
+                    throw ValidationException::withMessages(['shiftCloseDestinationFinancialLocationId' => 'Select an active cash destination different from the POS drawer.']);
+                }
+            }
+            $data['shift_close_destination_financial_location_id'] = $locationId;
+            unset($data['shiftCloseDestinationFinancialLocationId']);
+        }
+        if (isset($data['pos_cash_financial_location_id']) && (int) $data['pos_cash_financial_location_id'] === (int) ($data['shift_close_destination_financial_location_id'] ?? $branch->shift_close_destination_financial_location_id)) {
+            throw ValidationException::withMessages(['posCashFinancialLocationId' => 'The POS drawer cannot be the shift close destination.']);
+        }
+        foreach (['shiftClosingFloatAmount' => 'shift_closing_float_amount', 'shiftCloseTime' => 'shift_close_time'] as $input => $column) {
+            if (array_key_exists($input, $data)) { $data[$column] = $data[$input]; unset($data[$input]); }
+        }
         DB::transaction(function () use ($branch, $data, $financialSetup, $request): void {
             $branch->update($data);
             if ($branch->is_active) {

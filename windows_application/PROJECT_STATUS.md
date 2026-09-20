@@ -418,8 +418,16 @@ future work and it is not part of Batch 12.
 - The purchase list and detail now label invoices spanning warehouses as “متعدد المخازن”. The detail shows a compact received quantity summary and explains why cancellation is unavailable after stock receipt.
 - The purchase receipt mode migration was renamed to `2026_09_19_000001_add_purchase_receipt_mode.php` before staging; no historical stock is backfilled.
 
-### 2026-09-19 � Supplier-specific purchase invoice numbering
+### 2026-09-19 � Supplier-specific purchase invoice numbering
 - New purchase invoices receive a supplier-scoped, backend-generated reference using the stable supplier number and the existing locked number counter. The system PI number and optional external supplier document reference remain separate.
 - Saved drafts keep their supplier and assigned number; changing supplier requires a new draft. The purchase form displays both automatic numbers read-only and labels the manual external reference separately.
 - Added API regression assertions for independent supplier sequences, idempotent retry, optional external reference, and blocked supplier changes.
 
+### 2026-09-20 - Manual Sales Invoice
+
+- The form now offers direct posting from the editor. Posting uses the existing Sales Invoice service, which consumes inventory and records WAC/COGS in the same transaction.
+- The form has a grouped header, detailed line controls, additional charges, and a totals preview. Backend totals remain authoritative.
+- A line can sell an eligible inventory material directly. Its unit selector contains the base unit and active item-specific conversions. The invoice snapshots the selected unit and converted base quantity.
+- The detail view shows the selling unit and line totals. Credit Note restock uses the original stock movement and cost snapshot.
+- Focused backend pricing and posting tests, new raw-material tests, and targeted Flutter tests pass. The broader sales suites still contain failures in payment widget and sales-reporting fixtures.
+- Deployment was not performed.

@@ -6,17 +6,40 @@ class SalesCustomer {
   factory SalesCustomer.fromJson(Map<String, dynamic> j) => SalesCustomer(id: readInt(j['id']) ?? 0, name: readString(j['name']), customerNumber: readString(j['customerNumber']), creditTermsDays: readInt(j['defaultCreditTermsDays']) ?? 0, isActive: readBool(j['isActive']), isWalkIn: readBool(j['isWalkIn']));
 }
 
-class SalesVariant { const SalesVariant({required this.id, required this.name, required this.isDefault}); final int id; final String name; final bool isDefault; factory SalesVariant.fromJson(Map<String, dynamic> j) => SalesVariant(id: readInt(j['id']) ?? 0, name: readString(j['name']), isDefault: readBool(j['isDefault'])); }
+class SalesVariant { const SalesVariant({required this.id, required this.name, required this.isDefault, this.salePrice = '0.00'}); final int id; final String name; final bool isDefault; final String salePrice; factory SalesVariant.fromJson(Map<String, dynamic> j) => SalesVariant(id: readInt(j['id']) ?? 0, name: readString(j['name']), isDefault: readBool(j['isDefault']), salePrice: readString(j['salePrice'], fallback: '0.00')); }
 class SalesProduct {
   const SalesProduct({required this.id, required this.name, required this.salePrice, this.sku, this.categoryName, this.variants = const <SalesVariant>[]});
   final int id; final String name; final String salePrice; final String? sku; final String? categoryName; final List<SalesVariant> variants;
   factory SalesProduct.fromJson(Map<String, dynamic> j) => SalesProduct(id: readInt(j['id']) ?? 0, name: readString(j['name']), salePrice: readString(j['salePrice']), sku: readString(j['sku']).isEmpty ? null : readString(j['sku']), categoryName: readString(j['categoryName']).isEmpty ? null : readString(j['categoryName']), variants: readMapList(j['variants']).map(SalesVariant.fromJson).toList(growable: false));
 }
+class SalesMaterial {
+  const SalesMaterial({required this.id, required this.name, required this.baseUnit, required this.units, this.sku});
+  final int id; final String name; final String baseUnit; final List<String> units; final String? sku;
+  factory SalesMaterial.fromJson(Map<String, dynamic> j) => SalesMaterial(id: readInt(j['id']) ?? 0, name: readString(j['name']), baseUnit: readString(j['baseUnit']), units: (j['units'] as List<dynamic>? ?? const <dynamic>[]).map((e) => e.toString()).toList(growable: false), sku: readString(j['sku']).isEmpty ? null : readString(j['sku']));
+}
 
 class SalesInvoiceLine {
-  const SalesInvoiceLine({required this.productId, required this.productName, required this.quantity, required this.unitPrice, required this.taxTotal, required this.total, this.variantId, this.baseUnitPrice, this.discountType, this.discountValue, this.discountAmount, this.lineSubtotal, this.cogsTotal});
-  final int productId; final String productName; final String quantity; final String unitPrice; final String taxTotal; final String total; final int? variantId; final String? baseUnitPrice; final String? discountType; final String? discountValue; final String? discountAmount; final String? lineSubtotal; final String? cogsTotal;
-  factory SalesInvoiceLine.fromJson(Map<String, dynamic> j) => SalesInvoiceLine(productId: readInt(j['productId']) ?? 0, productName: readString(j['productName']), quantity: readString(j['quantity']), unitPrice: readString(j['unitPrice']), taxTotal: readString(j['taxTotal']), total: readString(j['total']), variantId: readInt(j['variantId']), baseUnitPrice: readString(j['baseUnitPrice']).isEmpty ? null : readString(j['baseUnitPrice']), discountType: readString(j['discountType']).isEmpty ? null : readString(j['discountType']), discountValue: readString(j['discountValue']).isEmpty ? null : readString(j['discountValue']), discountAmount: readString(j['discountAmount']).isEmpty ? null : readString(j['discountAmount']), lineSubtotal: readString(j['lineSubtotal']).isEmpty ? null : readString(j['lineSubtotal']), cogsTotal: readString(j['cogsTotal']).isEmpty ? null : readString(j['cogsTotal']));
+  const SalesInvoiceLine({required this.productId, required this.productName, required this.quantity, required this.unitPrice, required this.taxTotal, required this.total, this.inventoryItemId, this.unitCode, this.variantId, this.variantName, this.baseUnitPrice, this.discountType, this.discountValue, this.discountAmount, this.lineSubtotal, this.cogsTotal, this.materialOverrides = const <SalesMaterialOverride>[]});
+  final int productId; final int? inventoryItemId; final String? unitCode; final String productName; final String quantity; final String unitPrice; final String taxTotal; final String total; final int? variantId; final String? variantName; final String? baseUnitPrice; final String? discountType; final String? discountValue; final String? discountAmount; final String? lineSubtotal; final String? cogsTotal; final List<SalesMaterialOverride> materialOverrides;
+  factory SalesInvoiceLine.fromJson(Map<String, dynamic> j) => SalesInvoiceLine(productId: readInt(j['productId']) ?? 0, inventoryItemId: readInt(j['inventoryItemId']), unitCode: readString(j['unitCode']).isEmpty ? null : readString(j['unitCode']), productName: readString(j['productName']), quantity: readString(j['quantity']), unitPrice: readString(j['unitPrice']), taxTotal: readString(j['taxTotal']), total: readString(j['total']), variantId: readInt(j['variantId']), variantName: readString(j['variantName']).isEmpty ? null : readString(j['variantName']), baseUnitPrice: readString(j['baseUnitPrice']).isEmpty ? null : readString(j['baseUnitPrice']), discountType: readString(j['discountType']).isEmpty ? null : readString(j['discountType']), discountValue: readString(j['discountValue']).isEmpty ? null : readString(j['discountValue']), discountAmount: readString(j['discountAmount']).isEmpty ? null : readString(j['discountAmount']), lineSubtotal: readString(j['lineSubtotal']).isEmpty ? null : readString(j['lineSubtotal']), cogsTotal: readString(j['cogsTotal']).isEmpty ? null : readString(j['cogsTotal']), materialOverrides: readMapList(j['materialOverrides']).map(SalesMaterialOverride.fromJson).toList(growable: false));
+}
+
+/// A per-invoice-line replacement of the product variant's default recipe
+/// (see backend migration 2026_09_20_122659). Absent means the line still
+/// follows the product's live recipe at posting time.
+class SalesMaterialOverride {
+  const SalesMaterialOverride({required this.inventoryItemId, required this.quantity, required this.unitCode, this.materialName});
+  final int inventoryItemId; final String quantity; final String unitCode; final String? materialName;
+  factory SalesMaterialOverride.fromJson(Map<String, dynamic> j) => SalesMaterialOverride(inventoryItemId: readInt(j['inventoryItemId']) ?? 0, quantity: readString(j['quantity']), unitCode: readString(j['unitCode']), materialName: readString(j['materialName']).isEmpty ? null : readString(j['materialName']));
+}
+
+/// The default recipe for a product variant (read-only), fetched from
+/// `GET finance/sales-products/variants/{variant}/recipe` to pre-fill an
+/// editable per-invoice material list when a product line is added.
+class SalesVariantRecipeComponent {
+  const SalesVariantRecipeComponent({required this.materialId, required this.quantity, required this.unitCode});
+  final int materialId; final String quantity; final String unitCode;
+  factory SalesVariantRecipeComponent.fromJson(Map<String, dynamic> j) => SalesVariantRecipeComponent(materialId: readInt(j['materialId']) ?? 0, quantity: readString(j['quantity']), unitCode: readString(j['unitCode']));
 }
 class SalesInvoiceCharge { const SalesInvoiceCharge({required this.name, required this.amount, required this.taxable, required this.taxTotal}); final String name; final String amount; final bool taxable; final String taxTotal; factory SalesInvoiceCharge.fromJson(Map<String, dynamic> j) => SalesInvoiceCharge(name: readString(j['name']), amount: readString(j['amount']), taxable: readBool(j['taxable']), taxTotal: readString(j['taxTotal'])); }
 

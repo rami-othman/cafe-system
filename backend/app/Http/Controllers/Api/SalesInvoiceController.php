@@ -8,6 +8,8 @@ use App\Services\OperationalAuditService;
 use App\Services\SalesInvoiceService;
 use App\Services\SalesInvoicePostingService;
 use App\Services\SalesReportingQueryService;
+use App\Services\Catalog\RecipeConfigurationService;
+use App\Models\ProductVariant;
 use App\Support\FinanceAccess;
 use App\Support\FinancialActor;
 use App\Support\Money;
@@ -18,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 final class SalesInvoiceController extends Controller
 {
-    public function __construct(private readonly SalesInvoiceService $invoices, private readonly SalesInvoicePostingService $posting, private readonly CustomerReceivableQueryService $receivables, private readonly OperationalAuditService $audit, private readonly SalesReportingQueryService $salesReporting) {}
+    public function __construct(private readonly SalesInvoiceService $invoices, private readonly SalesInvoicePostingService $posting, private readonly CustomerReceivableQueryService $receivables, private readonly OperationalAuditService $audit, private readonly SalesReportingQueryService $salesReporting, private readonly RecipeConfigurationService $recipes) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -127,6 +129,26 @@ final class SalesInvoiceController extends Controller
         return response()->json(['data' => collect($p->items())->map(fn (object $row) => ['id' => (int) $row->id, 'name' => $row->name_ar ?: $row->name, 'sku' => $row->sku, 'barcode' => $row->barcode, 'salePrice' => Money::decimal(Money::cents($row->price)), 'isStockTracked' => (bool) $row->is_stock_tracked, 'categoryName' => $row->category_name, 'variants' => ($variants[(int) $row->id] ?? collect())->map(fn (object $v) => ['id' => (int) $v->id, 'name' => $v->name, 'isDefault' => (bool) $v->is_default, 'salePrice' => Money::decimal(Money::cents($v->base_price))])->values()])->values(), 'meta' => $this->meta($p), 'taxRate' => (string) $taxRate]);
     }
 
+    public function materials(Request $request): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+        $items = DB::table('inventory_items')->where('tenant_id', $tenant)->where('is_active', true)->whereNull('deleted_at')
+            ->whereNotIn('item_type', ['service', 'non_stock_item'])->orderBy('name')->get(['id', 'name', 'name_ar', 'sku', 'unit']);
+        $conversions = DB::table('inventory_item_unit_conversions')->where('tenant_id', $tenant)->whereIn('inventory_item_id', $items->pluck('id'))
+            ->where('is_active', true)->get(['inventory_item_id', 'source_unit'])->groupBy('inventory_item_id');
+        return response()->json(['data' => $items->map(fn (object $item) => [
+            'id' => (int) $item->id, 'name' => $item->name_ar ?: $item->name, 'sku' => $item->sku,
+            'baseUnit' => $item->unit, 'units' => collect([$item->unit])->merge(($conversions[$item->id] ?? collect())->pluck('source_unit'))->unique()->values(),
+        ])->values()]);
+    }
+
+    /** Read-only default recipe for a variant, for the sales invoice line editor to pre-fill an editable per-invoice material list — scoped to finance.sales.view rather than admin/catalog's menu.management, since a sales user needs to see it but not edit the product's standard recipe. */
+    public function variantRecipe(Request $request, int $variant): JsonResponse {
+        $tenant = TenantContext::id($request);
+        $v = ProductVariant::query()->where('tenant_id', $tenant)->findOrFail($variant);
+        return response()->json(['data' => $this->recipes->recipe($v)]);
+    }
+
     private function one(Request $request, int $tenant, int $id): array {
         $invoice = $this->invoices->find($tenant, $id); FinancialActor::assertBranchAccess(FinancialActor::id($request, $tenant), $tenant, $invoice->branch_id);
         $costs = DB::table('sales_invoice_costs as costs')->leftJoin('stock_movements as movements', 'movements.id', '=', 'costs.inventory_movement_id')->leftJoin('inventory_items as items', 'items.id', '=', 'movements.inventory_item_id')->leftJoin('warehouses as warehouses', 'warehouses.id', '=', 'movements.warehouse_id')->where('costs.tenant_id', $tenant)->where('costs.sales_invoice_id', $id)->get(['costs.sales_invoice_line_id', 'costs.cost_amount', 'movements.id as movement_id', 'movements.quantity_out', 'movements.input_unit', 'items.name_ar as item_name', 'warehouses.name as warehouse_name']);
@@ -136,6 +158,9 @@ final class SalesInvoiceController extends Controller
         $creditedArCents = $invoice->status === 'posted' ? $this->receivables->invoiceCreditedArCents($tenant, $id) : 0;
         $creditedTotalCents = $invoice->status === 'posted' ? $this->receivables->invoiceCreditedTotalCents($tenant, $id) : 0;
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
+        $overrides = DB::table('sales_invoice_line_material_overrides as o')->join('inventory_items as m', 'm.id', '=', 'o.inventory_item_id')->where('o.tenant_id', $tenant)->whereIn('o.sales_invoice_line_id', collect($invoice->lines)->pluck('id'))
+            ->orderBy('o.sort_order')->get(['o.sales_invoice_line_id', 'o.inventory_item_id', 'o.quantity', 'o.unit_code', DB::raw('COALESCE(m.name_ar, m.name) as material_name')])
+            ->groupBy('sales_invoice_line_id');
         $collections = DB::table('customer_payment_allocations as a')->join('customer_payments as p', 'p.id', '=', 'a.customer_payment_id')->join('payment_methods as pm', 'pm.id', '=', 'p.payment_method_id')
             ->where('a.tenant_id', $tenant)->where('a.sales_invoice_id', $id)->where('p.status', 'posted')
             ->orderBy('p.payment_date')->orderBy('p.id')
@@ -143,7 +168,8 @@ final class SalesInvoiceController extends Controller
         $creditNotes = DB::table('sales_credit_notes')->where('tenant_id', $tenant)->where('original_sales_invoice_id', $id)->where('status', 'posted')
             ->orderBy('credit_date')->orderBy('id')
             ->get(['id', 'credit_note_number', 'credit_date', 'reason', 'total', 'ar_reduction_amount', 'customer_credit_amount']);
-        return $this->serialize($invoice, $allocatedCents, $creditedArCents, $creditedTotalCents) + ['lines' => collect($invoice->lines)->map(fn (object $l) => ['id' => (int) $l->id, 'lineNumber' => (int) $l->line_number, 'productId' => (int) $l->product_id, 'variantId' => $l->product_variant_id ? (int) $l->product_variant_id : null, 'productName' => $l->product_name, 'productSku' => $l->product_sku, 'quantity' => $l->quantity, 'baseUnitPrice' => $l->base_unit_price, 'unitPrice' => $l->unit_price, 'discountType' => $l->discount_type, 'discountValue' => $l->discount_value, 'discountAmount' => $l->discount_amount, 'discountTotal' => $l->discount_total, 'lineSubtotal' => $l->line_subtotal, 'taxRate' => $l->tax_rate, 'taxTotal' => $l->tax_total, 'subtotal' => $l->subtotal, 'total' => $l->total, 'cogsTotal' => $l->cogs_total])->values(),
+        $variantNames = DB::table('product_variants')->where('tenant_id', $tenant)->whereIn('id', collect($invoice->lines)->pluck('product_variant_id')->filter())->pluck('name', 'id');
+        return $this->serialize($invoice, $allocatedCents, $creditedArCents, $creditedTotalCents) + ['lines' => collect($invoice->lines)->map(fn (object $l) => ['id' => (int) $l->id, 'lineNumber' => (int) $l->line_number, 'productId' => $l->product_id ? (int) $l->product_id : null, 'inventoryItemId' => $l->inventory_item_id ? (int) $l->inventory_item_id : null, 'unitCode' => $l->unit_code, 'baseQuantity' => $l->base_quantity, 'variantId' => $l->product_variant_id ? (int) $l->product_variant_id : null, 'variantName' => $variantNames[$l->product_variant_id] ?? null, 'productName' => $l->product_name, 'productSku' => $l->product_sku, 'quantity' => $l->quantity, 'baseUnitPrice' => $l->base_unit_price, 'unitPrice' => $l->unit_price, 'discountType' => $l->discount_type, 'discountValue' => $l->discount_value, 'discountAmount' => $l->discount_amount, 'discountTotal' => $l->discount_total, 'lineSubtotal' => $l->line_subtotal, 'taxRate' => $l->tax_rate, 'taxTotal' => $l->tax_total, 'subtotal' => $l->subtotal, 'total' => $l->total, 'cogsTotal' => $l->cogs_total, 'materialOverrides' => ($overrides[$l->id] ?? collect())->map(fn (object $o) => ['inventoryItemId' => (int) $o->inventory_item_id, 'materialName' => $o->material_name, 'quantity' => $o->quantity, 'unitCode' => $o->unit_code])->values()])->values(),
             'charges' => collect($invoice->charges)->map(fn (object $c) => ['id' => (int) $c->id, 'name' => $c->name, 'amount' => $c->amount, 'taxable' => (bool) $c->taxable, 'taxTotal' => $c->tax_total, 'sortOrder' => (int) $c->sort_order])->values(),
             'allowedActions' => $this->actions($invoice, $permissions, $allocatedCents, $creditedArCents),
             'accountingStatus' => $invoice->status === 'posted' ? 'posted' : 'unposted',
@@ -174,7 +200,7 @@ final class SalesInvoiceController extends Controller
         $remainingCents = $allocatedCents === null ? null : Money::cents($i->total) - $allocatedCents - $creditedArCents;
         return ['canView' => isset($p['finance.sales.view']), 'canEdit' => $i->status === 'draft' && isset($p['finance.sales.edit']), 'canCancel' => $i->status === 'draft' && isset($p['finance.sales.edit']), 'canPost' => $i->status === 'draft' && isset($p['finance.sales.post']), 'canRegisterPayment' => $i->status === 'posted' && $remainingCents !== null && $remainingCents > 0 && isset($p['finance.customer_payments.create']), 'canCreateCreditNote' => $i->status === 'posted' && isset($p['finance.sales_credit_notes.create'])];
     }
-    private function data(Request $request, bool $creating): array { return $request->validate(['branchId' => [$creating ? 'required' : 'sometimes', 'integer'], 'customerId' => [$creating ? 'required' : 'sometimes', 'integer'], 'invoiceDate' => [$creating ? 'required' : 'sometimes', 'date'], 'dueDate' => ['nullable', 'date'], 'reference' => ['nullable', 'string', 'max:128'], 'notes' => ['nullable', 'string', 'max:5000'], 'idempotencyKey' => [$creating ? 'nullable' : 'prohibited', 'string', 'max:128'], 'invoiceDiscountType' => ['nullable', 'in:percent,fixed'], 'invoiceDiscountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'manualAdjustment' => ['nullable', 'regex:/^-?\d+(\.\d+)?$/'], 'charges' => ['sometimes', 'array'], 'charges.*.name' => ['required_with:charges', 'string', 'max:255'], 'charges.*.amount' => ['required_with:charges', 'regex:/^\d+(\.\d+)?$/'], 'charges.*.taxable' => ['nullable', 'boolean'], 'lines' => [$creating ? 'required' : 'sometimes', 'array', 'min:1'], 'lines.*.productId' => ['required_with:lines', 'integer'], 'lines.*.variantId' => ['nullable', 'integer'], 'lines.*.quantity' => ['required_with:lines', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.unitPrice' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.discountType' => ['nullable', 'in:percent,fixed'], 'lines.*.discountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/']]); }
+    private function data(Request $request, bool $creating): array { return $request->validate(['branchId' => [$creating ? 'required' : 'sometimes', 'integer'], 'customerId' => [$creating ? 'required' : 'sometimes', 'integer'], 'invoiceDate' => [$creating ? 'required' : 'sometimes', 'date'], 'dueDate' => ['nullable', 'date'], 'reference' => ['nullable', 'string', 'max:128'], 'notes' => ['nullable', 'string', 'max:5000'], 'idempotencyKey' => [$creating ? 'nullable' : 'prohibited', 'string', 'max:128'], 'invoiceDiscountType' => ['nullable', 'in:percent,fixed'], 'invoiceDiscountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'manualAdjustment' => ['nullable', 'regex:/^-?\d+(\.\d+)?$/'], 'charges' => ['sometimes', 'array'], 'charges.*.name' => ['required_with:charges', 'string', 'max:255'], 'charges.*.amount' => ['required_with:charges', 'regex:/^\d+(\.\d+)?$/'], 'charges.*.taxable' => ['nullable', 'boolean'], 'lines' => [$creating ? 'required' : 'sometimes', 'array', 'min:1'], 'lines.*.productId' => ['nullable', 'integer'], 'lines.*.inventoryItemId' => ['nullable', 'integer'], 'lines.*.unitCode' => ['nullable', 'string', 'max:40'], 'lines.*.variantId' => ['nullable', 'integer'], 'lines.*.quantity' => ['required_with:lines', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.unitPrice' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.discountType' => ['nullable', 'in:percent,fixed'], 'lines.*.discountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.materialOverrides' => ['nullable', 'array'], 'lines.*.materialOverrides.*.inventoryItemId' => ['required_with:lines.*.materialOverrides', 'integer'], 'lines.*.materialOverrides.*.quantity' => ['required_with:lines.*.materialOverrides', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.materialOverrides.*.unitCode' => ['required_with:lines.*.materialOverrides', 'string', 'max:8']]); }
     /** One 'sales.invoice.price_overridden' audit entry per line whose invoiced unit price diverges from its snapshot default — kept separate from the generic created/updated event so overrides are independently queryable. */
     private function auditPriceOverrides(Request $request, int $tenant, object $invoice, int $actor): void {
         foreach ($invoice->lines ?? [] as $line) {

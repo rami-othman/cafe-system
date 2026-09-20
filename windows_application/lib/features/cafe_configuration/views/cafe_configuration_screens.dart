@@ -524,6 +524,34 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                       if (state.branch!.posCashFinancialLocationId == null)
                         const Text('لم يتم تحديد صندوق نقطة البيع لهذا الفرع.'),
                       _FieldError(state.errors['posCashFinancialLocationId']),
+                      const SizedBox(height: AppSpacing.lg),
+                      const Text('إعدادات إغلاق الوردية'),
+                      DropdownButtonFormField<int>(
+                        key: const Key('branch-shift-close-destination'),
+                        initialValue: state.branch!.availableShiftCloseDestinations.any(
+                          (location) => location.id == state.draft.shiftCloseDestinationFinancialLocationId,
+                        ) ? state.draft.shiftCloseDestinationFinancialLocationId : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'وجهة النقد عند الإغلاق'),
+                        items: state.branch!.availableShiftCloseDestinations.map((location) => DropdownMenuItem<int>(
+                          value: location.id, child: Text(location.name, overflow: TextOverflow.ellipsis),
+                        )).toList(growable: false),
+                        onChanged: (value) => cubit.update(state.draft.copyWith(shiftCloseDestinationFinancialLocationId: value)),
+                      ),
+                      _FieldError(state.errors['shiftCloseDestinationFinancialLocationId']),
+                      TextFormField(
+                        initialValue: state.draft.shiftClosingFloatAmount,
+                        decoration: const InputDecoration(labelText: 'الرصيد المتروك للوردية التالية'),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (value) => cubit.update(state.draft.copyWith(shiftClosingFloatAmount: value)),
+                      ),
+                      _FieldError(state.errors['shiftClosingFloatAmount']),
+                      TextFormField(
+                        initialValue: state.draft.shiftCloseTime ?? '',
+                        decoration: const InputDecoration(labelText: 'وقت الإغلاق التلقائي (HH:mm)'),
+                        onChanged: (value) => cubit.update(state.draft.copyWith(shiftCloseTime: value)),
+                      ),
+                      _FieldError(state.errors['shiftCloseTime']),
                     ],
                     _Fact(
                       label: c.currency,

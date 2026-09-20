@@ -76,6 +76,10 @@ class CafeConfigurationBranch {
     required this.isActive,
     this.posInventoryWarehouseId,
     this.posCashFinancialLocationId,
+    this.shiftCloseDestinationFinancialLocationId,
+    this.shiftClosingFloatAmount = '0.00',
+    this.shiftCloseTime,
+    this.availableShiftCloseDestinations = const <BranchCashLocationOption>[],
     this.availablePosCashLocations = const <BranchCashLocationOption>[],
     this.effectivePosInventoryWarehouseId,
     this.posInventoryWarehouseSource = 'not_configured',
@@ -91,6 +95,10 @@ class CafeConfigurationBranch {
   final bool isActive;
   final int? posInventoryWarehouseId;
   final int? posCashFinancialLocationId;
+  final int? shiftCloseDestinationFinancialLocationId;
+  final String shiftClosingFloatAmount;
+  final String? shiftCloseTime;
+  final List<BranchCashLocationOption> availableShiftCloseDestinations;
   final List<BranchCashLocationOption> availablePosCashLocations;
   final int? effectivePosInventoryWarehouseId;
   final String posInventoryWarehouseSource;
@@ -108,6 +116,11 @@ class CafeConfigurationBranch {
     isActive: json['isActive'] == true,
     posInventoryWarehouseId: (json['posInventoryWarehouseId'] as num?)?.toInt(),
     posCashFinancialLocationId: (json['posCashFinancialLocationId'] as num?)?.toInt(),
+    shiftCloseDestinationFinancialLocationId: (json['shiftCloseDestinationFinancialLocationId'] as num?)?.toInt(),
+    shiftClosingFloatAmount: json['shiftClosingFloatAmount']?.toString() ?? '0.00',
+    shiftCloseTime: json['shiftCloseTime'] as String?,
+    availableShiftCloseDestinations: (json['availableShiftCloseDestinations'] as List? ?? const <dynamic>[])
+        .whereType<Map>().map((row) => BranchCashLocationOption.fromJson(row.cast<String, dynamic>())).toList(growable: false),
     availablePosCashLocations: (json['availablePosCashLocations'] as List? ?? const <dynamic>[])
         .whereType<Map>()
         .map((row) => BranchCashLocationOption.fromJson(row.cast<String, dynamic>()))
@@ -161,6 +174,9 @@ class BranchDraft {
     this.warehouseName = '',
     this.posInventoryWarehouseId,
     this.posCashFinancialLocationId,
+    this.shiftCloseDestinationFinancialLocationId,
+    this.shiftClosingFloatAmount = '0.00',
+    this.shiftCloseTime,
   });
 
   final String name;
@@ -173,6 +189,9 @@ class BranchDraft {
   final String warehouseName;
   final int? posInventoryWarehouseId;
   final int? posCashFinancialLocationId;
+  final int? shiftCloseDestinationFinancialLocationId;
+  final String shiftClosingFloatAmount;
+  final String? shiftCloseTime;
 
   factory BranchDraft.fromBranch(CafeConfigurationBranch branch) => BranchDraft(
     name: branch.name,
@@ -181,6 +200,9 @@ class BranchDraft {
     timezone: branch.timezone,
     posInventoryWarehouseId: branch.posInventoryWarehouseId,
     posCashFinancialLocationId: branch.posCashFinancialLocationId,
+    shiftCloseDestinationFinancialLocationId: branch.shiftCloseDestinationFinancialLocationId,
+    shiftClosingFloatAmount: branch.shiftClosingFloatAmount,
+    shiftCloseTime: branch.shiftCloseTime,
   );
 
   BranchDraft copyWith({
@@ -191,6 +213,9 @@ class BranchDraft {
     String? warehouseName,
     int? posInventoryWarehouseId,
     int? posCashFinancialLocationId,
+    int? shiftCloseDestinationFinancialLocationId,
+    String? shiftClosingFloatAmount,
+    String? shiftCloseTime,
     bool clearPosInventoryWarehouseId = false,
   }) => BranchDraft(
     name: name ?? this.name,
@@ -202,6 +227,9 @@ class BranchDraft {
         ? null
         : posInventoryWarehouseId ?? this.posInventoryWarehouseId,
     posCashFinancialLocationId: posCashFinancialLocationId ?? this.posCashFinancialLocationId,
+    shiftCloseDestinationFinancialLocationId: shiftCloseDestinationFinancialLocationId ?? this.shiftCloseDestinationFinancialLocationId,
+    shiftClosingFloatAmount: shiftClosingFloatAmount ?? this.shiftClosingFloatAmount,
+    shiftCloseTime: shiftCloseTime ?? this.shiftCloseTime,
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -212,6 +240,9 @@ class BranchDraft {
     if (warehouseName.trim().isNotEmpty) 'warehouseName': warehouseName.trim(),
     'posInventoryWarehouseId': posInventoryWarehouseId,
     if (posCashFinancialLocationId != null) 'posCashFinancialLocationId': posCashFinancialLocationId,
+    'shiftCloseDestinationFinancialLocationId': shiftCloseDestinationFinancialLocationId,
+    'shiftClosingFloatAmount': shiftClosingFloatAmount,
+    'shiftCloseTime': shiftCloseTime?.trim().isEmpty == true ? null : shiftCloseTime,
   };
 }
 

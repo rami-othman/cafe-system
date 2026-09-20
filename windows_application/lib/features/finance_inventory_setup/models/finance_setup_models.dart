@@ -128,6 +128,8 @@ class FinancialLocation {
     required this.balance,
     required this.todayIncoming,
     required this.todayOutgoing,
+    this.todayExternalIncoming = '0.00',
+    this.todayExternalOutgoing = '0.00',
     required this.isActive,
     this.branchId,
     this.branchName,
@@ -145,6 +147,8 @@ class FinancialLocation {
   final String balance;
   final String todayIncoming;
   final String todayOutgoing;
+  final String todayExternalIncoming;
+  final String todayExternalOutgoing;
   final bool isActive;
   final int? branchId;
   final String? branchName;
@@ -163,6 +167,8 @@ class FinancialLocation {
         balance: readString(json['balance'], fallback: '0.00'),
         todayIncoming: readString(json['todayIncoming'], fallback: '0.00'),
         todayOutgoing: readString(json['todayOutgoing'], fallback: '0.00'),
+        todayExternalIncoming: readString(json['todayExternalIncoming'], fallback: '0.00'),
+        todayExternalOutgoing: readString(json['todayExternalOutgoing'], fallback: '0.00'),
         isActive: readBool(json['isActive']),
         branchId: readInt(json['branchId']),
         branchName: readString(json['branchName']).isEmpty

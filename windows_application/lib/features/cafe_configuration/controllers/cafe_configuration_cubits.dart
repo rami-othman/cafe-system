@@ -245,6 +245,9 @@ class BranchEditorState extends Equatable {
     draft.timezone,
     draft.posInventoryWarehouseId,
     draft.posCashFinancialLocationId,
+    draft.shiftCloseDestinationFinancialLocationId,
+    draft.shiftClosingFloatAmount,
+    draft.shiftCloseTime,
     errors,
     errorMessage,
     isDirty,
@@ -385,7 +388,10 @@ bool _differentBranch(BranchDraft draft, CafeConfigurationBranch? branch) =>
     draft.phone.trim() != (branch.phone ?? '') ||
     draft.timezone != branch.timezone ||
     draft.posInventoryWarehouseId != branch.posInventoryWarehouseId ||
-    draft.posCashFinancialLocationId != branch.posCashFinancialLocationId;
+    draft.posCashFinancialLocationId != branch.posCashFinancialLocationId ||
+    draft.shiftCloseDestinationFinancialLocationId != branch.shiftCloseDestinationFinancialLocationId ||
+    draft.shiftClosingFloatAmount != branch.shiftClosingFloatAmount ||
+    draft.shiftCloseTime != branch.shiftCloseTime;
 Map<String, String> _fields(Object e) => e is ApiException
     ? <String, String>{
         for (final MapEntry<String, List<String>> entry

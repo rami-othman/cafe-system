@@ -572,6 +572,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('supplier-payments/{payment}', [SupplierPaymentController::class, 'show'])->middleware('finance.permission:finance.supplier_payments.view');
             Route::post('supplier-payments/{payment}/reverse', [SupplierPaymentController::class, 'reverse'])->middleware('finance.permission:finance.supplier_payments.reverse');
             Route::get('sales-products', [SalesInvoiceController::class, 'products'])->middleware('finance.permission:finance.sales.view');
+            Route::get('sales-materials', [SalesInvoiceController::class, 'materials'])->middleware('finance.permission:finance.sales.view');
+            Route::get('sales-products/variants/{variant}/recipe', [SalesInvoiceController::class, 'variantRecipe'])->middleware('finance.permission:finance.sales.view');
             Route::get('sales-invoices', [SalesInvoiceController::class, 'index'])->middleware('finance.permission:finance.sales.view');
             Route::post('sales-invoices', [SalesInvoiceController::class, 'store'])->middleware('finance.permission:finance.sales.create');
             Route::get('sales-invoices/{invoice}/posting-preview', [SalesInvoiceController::class, 'postingPreview'])->middleware('finance.permission:finance.sales.post');

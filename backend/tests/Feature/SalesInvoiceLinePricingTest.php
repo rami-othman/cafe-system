@@ -79,6 +79,35 @@ class SalesInvoiceLinePricingTest extends TestCase
         $this->assertSame(800, $report['grossCents']);
     }
 
+    public function test_raw_coffee_can_be_sold_by_configured_gram_unit_and_posting_consumes_kilograms_once(): void
+    {
+        $s = $this->scenario();
+        $warehouse = (int) DB::table('branches')->where('id', $s['branch'])->value('pos_inventory_warehouse_id');
+        $material = (int) DB::table('inventory_items')->insertGetId(['tenant_id' => $s['tenant'], 'name' => 'Coffee beans', 'name_ar' => 'بن خام', 'name_en' => 'Coffee beans', 'sku' => 'BEANS-'.uniqid(), 'catalog_identity' => 'beans-'.uniqid(), 'item_type' => 'raw_material', 'unit' => 'kilogram', 'minimum_stock' => '0.000', 'reorder_level' => '0.000', 'cost_per_unit' => '2.0000', 'latest_unit_cost' => '2.0000', 'is_active' => true, 'created_by' => $s['owner'], 'updated_by' => $s['owner'], 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('inventory_item_unit_conversions')->insert(['tenant_id' => $s['tenant'], 'inventory_item_id' => $material, 'source_unit' => 'gram', 'target_unit' => 'kilogram', 'factor' => '0.001000', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('inventory_item_warehouses')->insert(['tenant_id' => $s['tenant'], 'inventory_item_id' => $material, 'warehouse_id' => $warehouse, 'created_at' => now(), 'updated_at' => now()]);
+        app(InventoryPostingService::class)->post(Request::create('/stock-in', 'POST'), $s['tenant'], ['warehouseId' => $warehouse, 'branchId' => $s['branch'], 'itemId' => $material, 'type' => 'stock_in', 'quantity' => '10.000', 'unit' => 'kilogram', 'unitCost' => '2.0000', 'idempotencyKey' => 'opening-'.uniqid()], $s['owner']);
+
+        $this->getJson('/api/v1/finance/sales-materials', $s['headers'])->assertOk()->assertJsonFragment(['baseUnit' => 'kilogram']);
+        $invoice = $this->postJson('/api/v1/finance/sales-invoices', $this->payload($s, [['inventoryItemId' => $material, 'unitCode' => 'gram', 'quantity' => '250', 'unitPrice' => '0.04']]), $s['headers'])
+            ->assertCreated()->assertJsonPath('data.lines.0.baseQuantity', '0.250')->assertJsonPath('data.total', '10.00')->json('data.id');
+        $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'beans-post'], $s['headers'])->assertOk();
+        $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'beans-post'], $s['headers'])->assertOk();
+        $this->assertSame('9.750', (string) DB::table('stock_balances')->where('inventory_item_id', $material)->where('warehouse_id', $warehouse)->value('quantity_on_hand'));
+        $this->assertSame('0.50', (string) DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoice)->value('cogs_total'));
+        $this->assertSame(1, DB::table('sales_invoice_costs')->where('sales_invoice_id', $invoice)->count());
+        $this->postJson('/api/v1/finance/sales-invoices', $this->payload($s, [['inventoryItemId' => $material, 'unitCode' => 'box', 'quantity' => '1', 'unitPrice' => '10.00']]), $s['headers'])->assertUnprocessable();
+        $lineId = (int) DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoice)->value('id');
+        $credit = $this->postJson('/api/v1/finance/sales-credit-notes', [
+            'originalSalesInvoiceId' => $invoice, 'reason' => 'Returned beans',
+            'lines' => [['originalSalesInvoiceLineId' => $lineId, 'quantity' => '100', 'restock' => true]],
+        ], $s['headers'])->assertCreated()->assertJsonPath('data.total', '4.00')->json('data.id');
+        $this->postJson("/api/v1/finance/sales-credit-notes/{$credit}/post", ['idempotencyKey' => 'beans-credit'], $s['headers'])->assertOk();
+        $this->assertSame('9.850', (string) DB::table('stock_balances')->where('inventory_item_id', $material)->where('warehouse_id', $warehouse)->value('quantity_on_hand'));
+        $report = app(SalesReportingQueryService::class)->manualInvoiceNetOfCreditNotes($s['tenant'], [$s['branch']], '2026-09-01', '2026-09-30');
+        $this->assertSame(600, $report['grossCents']);
+    }
+
     private function scenario(): array
     {
         $suffix = (string) str()->uuid(); $tenant = (int) DB::table('tenants')->insertGetId(['name' => 'Sales Pricing', 'slug' => "sales-pricing-{$suffix}", 'status' => 'active', 'tax_rate' => '0.000000', 'created_at' => now(), 'updated_at' => now()]);

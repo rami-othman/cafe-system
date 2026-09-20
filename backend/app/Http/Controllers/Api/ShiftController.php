@@ -78,7 +78,8 @@ class ShiftController extends Controller
             DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
             $now = now();
             $drawer = app(\App\Services\BranchPosCashDrawer::class)->resolve($tenantId, (int) $data['branchId'], true);
-            $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'shift_number' => $this->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
+            $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $data['branchId'])->lockForUpdate()->first();
+            $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'close_destination_financial_location_id' => $branch->shift_close_destination_financial_location_id, 'closing_float_amount' => $branch->shift_closing_float_amount, 'shift_number' => $this->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
 
             return DB::table('shifts')->where('id', $id)->first();
         });
@@ -112,7 +113,7 @@ class ShiftController extends Controller
                 abort(422, 'Additional details are required for other.');
             }
             $number = $row->shift_number ?: $this->nextShiftNumber($tenantId, now()->toDateString());
-            DB::table('shifts')->where('id', $row->id)->update(['shift_number' => $number, 'report_number' => 'RPT-'.str_replace('SH-', '', $number), 'closing_cash' => $data['closingCash'], 'expected_cash' => $summary['expectedCash'], 'cash_difference' => Money::decimal($difference), 'cash_difference_reason' => $data['cashDifferenceReason'] ?? null, 'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null, 'status' => 'closed', 'closed_at' => now(), 'notes' => $data['note'] ?? $row->notes, 'updated_at' => now()]);
+            DB::table('shifts')->where('id', $row->id)->update(['shift_number' => $number, 'report_number' => 'RPT-'.str_replace('SH-', '', $number), 'closing_cash' => $data['closingCash'], 'expected_cash' => $summary['expectedCash'], 'cash_difference' => Money::decimal($difference), 'cash_difference_reason' => $data['cashDifferenceReason'] ?? null, 'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null, 'close_type' => 'manual', 'status' => 'closed', 'closed_at' => now(), 'notes' => $data['note'] ?? $row->notes, 'updated_at' => now()]);
 
             return DB::table('shifts')->where('id', $row->id)->first();
         });
@@ -166,12 +167,12 @@ class ShiftController extends Controller
     {
         $snapshot = $this->snapshots->buildSnapshot($tenant, $shift);
 
-        return $this->serialize($shift) + ['snapshot' => $snapshot, 'cash' => ['expected' => $shift->expected_cash, 'actual' => $shift->closing_cash, 'reason' => $shift->cash_difference_reason, 'reasonDetail' => $shift->cash_difference_reason_detail ?? ''], 'closingNotes' => $shift->notes ?? '', 'closedAt' => $this->timestamp($shift->closed_at), 'closedBy' => $snapshot['identity']['closedBy'], 'reportNumber' => $shift->report_number];
+        return $this->serialize($shift) + ['snapshot' => $snapshot, 'cash' => ['expected' => $shift->expected_cash, 'actual' => $shift->closing_cash, 'reason' => $shift->cash_difference_reason, 'reasonDetail' => $shift->cash_difference_reason_detail ?? ''], 'closingNotes' => $shift->notes ?? '', 'closedAt' => $this->timestamp($shift->closed_at), 'closedBy' => $shift->close_type === 'automatic' ? 'System' : $snapshot['identity']['closedBy'], 'reportNumber' => $shift->report_number];
     }
 
     private function serialize(object $shift): array
     {
-        return ['id' => (int) $shift->id, 'shiftNumber' => $shift->shift_number, 'branchId' => (int) $shift->branch_id, 'userId' => (int) $shift->user_id, 'status' => $shift->status, 'openingCash' => (float) $shift->opening_cash, 'closingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash, 'expectedCash' => (float) $shift->expected_cash, 'cashDifference' => (float) $shift->cash_difference, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at)];
+        return ['id' => (int) $shift->id, 'shiftNumber' => $shift->shift_number, 'branchId' => (int) $shift->branch_id, 'userId' => (int) $shift->user_id, 'status' => $shift->status, 'closeType' => $shift->close_type, 'financialLocationId' => $shift->financial_location_id, 'closeDestinationFinancialLocationId' => $shift->close_destination_financial_location_id, 'closeTransferId' => $shift->close_transfer_id, 'openingCash' => (float) $shift->opening_cash, 'closingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash, 'expectedCash' => (float) $shift->expected_cash, 'cashDifference' => (float) $shift->cash_difference, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at)];
     }
 
     private function timestamp(?string $value): ?string
