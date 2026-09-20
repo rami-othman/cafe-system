@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,6 +30,10 @@ import 'pos_state.dart';
 
 enum PaymentCompletionStatus { completed, retryableFailure, uncertain }
 
+class _HoldResponseNotConfirmed implements Exception {
+  const _HoldResponseNotConfirmed();
+}
+
 class PosCubit extends Cubit<PosState> {
   PosCubit({
     required this.repository,
@@ -50,6 +55,9 @@ class PosCubit extends Cubit<PosState> {
   int _queuedCartMutations = 0;
   int? _paymentIdempotencyOrderId;
   String? _paymentIdempotencyKey;
+  Future<void>? _inFlightHold;
+  String? _holdCreationPayloadFingerprint;
+  String? _holdCreationIdempotencyKey;
   int _receiptRequestGeneration = 0;
   int _productDetailRequestVersion = 0;
   int _branchLoadGeneration = 0;
@@ -63,6 +71,9 @@ class PosCubit extends Cubit<PosState> {
   static const String connectionRequiredMessage =
       'pos.connectionRequiredToCompleteOrder';
   static const String menuChangedReviewMessage = 'pos.menuChangedReviewOrder';
+  static const String holdSucceededMessage = 'pos.holdSucceeded';
+  static const String holdRetryableMessage = 'pos.holdRetryable';
+  static const String holdUncertainMessage = 'pos.holdUncertain';
 
   Future<void> loadInitialData() async {
     emit(
@@ -676,18 +687,239 @@ class PosCubit extends Cubit<PosState> {
     _clearCurrentOrderState();
   }
 
-  Future<void> holdCurrentOrder() async {
-    if (state.currentOrderId == null) {
+  Future<void> holdCurrentOrder() {
+    final Future<void>? inFlight = _inFlightHold;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final PosState expectedState = state;
+    if (!expectedState.canHoldCurrentOrder || !repository.usesBackend) {
+      return Future<void>.value();
+    }
+
+    CreateOrderRequest? creationRequest;
+    if (expectedState.currentOrderId == null) {
+      try {
+        final CreateOrderRequest request = _createPublishedOrderRequest(
+          sourceState: expectedState,
+        );
+        final String fingerprint = jsonEncode(request.toJson());
+        if (_holdCreationPayloadFingerprint != fingerprint) {
+          _holdCreationPayloadFingerprint = fingerprint;
+          _holdCreationIdempotencyKey = null;
+        }
+        final String idempotencyKey = _holdCreationIdempotencyKey ??=
+            _operationKey('hold-create');
+        if (idempotencyKey.trim().isEmpty) {
+          throw StateError('Hold creation operation key is empty.');
+        }
+        creationRequest = _createPublishedOrderRequest(
+          sourceState: expectedState,
+          idempotencyKey: idempotencyKey,
+        );
+      } catch (_) {
+        emit(
+          state.copyWith(
+            cartMutationError: holdRetryableMessage,
+            clearHoldSuccessMessage: true,
+            clearUncertainHoldMessage: true,
+          ),
+        );
+        return Future<void>.value();
+      }
+    }
+
+    emit(
+      state.copyWith(
+        clearCartMutationError: true,
+        clearHoldSuccessMessage: true,
+        clearUncertainHoldMessage: true,
+      ),
+    );
+    final Future<void> operation = _holdCurrentOrder(
+      expectedState: expectedState,
+      creationRequest: creationRequest,
+    );
+    _inFlightHold = operation;
+    operation.whenComplete(() {
+      if (identical(_inFlightHold, operation)) {
+        _inFlightHold = null;
+      }
+    });
+    return operation;
+  }
+
+  Future<void> _holdCurrentOrder({
+    required PosState expectedState,
+    required CreateOrderRequest? creationRequest,
+  }) async {
+    await _enqueueCartMutation(
+      fallbackMessage: holdRetryableMessage,
+      exposeApiMessage: false,
+      action: () => _performHold(
+        expectedState: expectedState,
+        creationRequest: creationRequest,
+      ),
+    );
+  }
+
+  Future<void> _performHold({
+    required PosState expectedState,
+    required CreateOrderRequest? creationRequest,
+  }) async {
+    if (!_matchesHoldContext(expectedState)) {
+      _emitHoldRetryableFailure();
       return;
     }
 
-    await _enqueueCartMutation(
-      fallbackMessage: 'Could not hold order. Please try again.',
-      action: () async {
-        await repository.holdOrder(state.currentOrderId!);
-        _clearCurrentOrderState();
-      },
+    int? orderId = expectedState.currentOrderId;
+    if (orderId == null) {
+      try {
+        final CreateOrderRequest request = creationRequest!;
+        final BackendOrder created = await repository.createOrder(request);
+        _validateCreatedHoldOrder(created, expectedState, request);
+        if (!_matchesHoldContext(expectedState)) {
+          _emitHoldRetryableFailure();
+          return;
+        }
+        _emitBackendOrder(created);
+        orderId = created.id;
+      } catch (_) {
+        _emitHoldRetryableFailure();
+        return;
+      }
+    }
+
+    final int holdOrderId = orderId;
+    try {
+      final BackendOrder held = await repository.holdOrder(holdOrderId);
+      _validateHeldOrder(held, holdOrderId, expectedState.branchId);
+      _confirmHeldOrder(held, holdOrderId);
+    } catch (error) {
+      if (_isPotentiallyUncertainHoldFailure(error)) {
+        await _verifyUncertainHold(holdOrderId, expectedState);
+        return;
+      }
+      _emitHoldRetryableFailure();
+    }
+  }
+
+  Future<void> _verifyUncertainHold(int orderId, PosState expectedState) async {
+    try {
+      final BackendOrder verified = await repository.getOrder(orderId);
+      if (verified.id != orderId ||
+          verified.branchId != expectedState.branchId) {
+        throw const _HoldResponseNotConfirmed();
+      }
+
+      final String status = verified.status.toLowerCase();
+      final String paymentStatus = verified.paymentStatus.toLowerCase();
+      if (status == 'held' && paymentStatus == 'unpaid') {
+        _confirmHeldOrder(verified, orderId);
+        return;
+      }
+      if (status == 'draft' && paymentStatus == 'unpaid') {
+        if (state.currentOrderId == orderId) {
+          _emitBackendOrder(verified);
+          emit(
+            state.copyWith(
+              cartMutationError: holdRetryableMessage,
+              clearUncertainHoldMessage: true,
+            ),
+          );
+        } else {
+          _emitHoldUncertainFailure();
+        }
+        return;
+      }
+      _emitHoldRetryableFailure();
+    } catch (_) {
+      _emitHoldUncertainFailure();
+    }
+  }
+
+  void _confirmHeldOrder(BackendOrder order, int orderId) {
+    if (isClosed || state.currentOrderId != orderId) {
+      _emitHoldUncertainFailure();
+      return;
+    }
+    _emitBackendOrder(order);
+    _clearCurrentOrderState();
+    emit(
+      state.copyWith(
+        holdSuccessMessage: holdSucceededMessage,
+        clearCartMutationError: true,
+        clearUncertainHoldMessage: true,
+      ),
     );
+    _holdCreationPayloadFingerprint = null;
+    _holdCreationIdempotencyKey = null;
+  }
+
+  void _emitHoldRetryableFailure() {
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        cartMutationError: holdRetryableMessage,
+        clearUncertainHoldMessage: true,
+      ),
+    );
+  }
+
+  void _emitHoldUncertainFailure() {
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        uncertainHoldMessage: holdUncertainMessage,
+        clearCartMutationError: true,
+      ),
+    );
+  }
+
+  bool _matchesHoldContext(PosState expectedState) {
+    return !isClosed &&
+        state.currentOrderId == expectedState.currentOrderId &&
+        state.branchId == expectedState.branchId &&
+        state.shiftId == expectedState.shiftId &&
+        state.orderType == expectedState.orderType &&
+        state.tableId == expectedState.tableId &&
+        state.orderNote == expectedState.orderNote &&
+        state.publishedMenuVersionId == expectedState.publishedMenuVersionId &&
+        state.selectedCustomer?.backendId ==
+            expectedState.selectedCustomer?.backendId &&
+        identical(state.cartItems, expectedState.cartItems);
+  }
+
+  void _validateCreatedHoldOrder(
+    BackendOrder order,
+    PosState expectedState,
+    CreateOrderRequest request,
+  ) {
+    if (order.id <= 0 ||
+        order.branchId != expectedState.branchId ||
+        order.status.toLowerCase() != 'draft' ||
+        order.paymentStatus.toLowerCase() != 'unpaid' ||
+        order.items.isEmpty ||
+        order.publishedMenuVersionId != request.publishedMenuVersionId) {
+      throw const _HoldResponseNotConfirmed();
+    }
+  }
+
+  void _validateHeldOrder(BackendOrder order, int orderId, int branchId) {
+    if (order.id != orderId ||
+        order.branchId != branchId ||
+        order.status.toLowerCase() != 'held' ||
+        order.paymentStatus.toLowerCase() != 'unpaid') {
+      throw const _HoldResponseNotConfirmed();
+    }
+  }
+
+  bool _isPotentiallyUncertainHoldFailure(Object error) {
+    if (error is _HoldResponseNotConfirmed) return false;
+    if (error is! ApiException) return true;
+    final int? statusCode = error.statusCode;
+    return statusCode == null || statusCode >= 500;
   }
 
   Future<bool> loadExistingOrder(int orderId, {bool allowReplace = false}) {
@@ -1174,6 +1406,7 @@ class PosCubit extends Cubit<PosState> {
       quantity: customization.quantity,
       unitPrice: customization.unitPrice,
       modifiers: customization.modifierLabels,
+      selectedModifiers: customization.selectedModifiers,
       specialInstructions: customization.specialInstructions.trim(),
     );
     if (index < 0) {
@@ -1298,16 +1531,20 @@ class PosCubit extends Cubit<PosState> {
     );
   }
 
-  CreateOrderRequest _createPublishedOrderRequest() {
+  CreateOrderRequest _createPublishedOrderRequest({
+    PosState? sourceState,
+    String? idempotencyKey,
+  }) {
+    final PosState source = sourceState ?? state;
     int? versionId;
-    for (final CartItem item in state.cartItems) {
+    for (final CartItem item in source.cartItems) {
       if (item.publishedMenuVersionId != null) {
         versionId = item.publishedMenuVersionId;
         break;
       }
     }
     if (versionId == null ||
-        state.cartItems.any(
+        source.cartItems.any(
           (CartItem item) =>
               item.publishedMenuVersionId != versionId ||
               item.backendProductId == null ||
@@ -1318,22 +1555,26 @@ class PosCubit extends Cubit<PosState> {
         message: 'MENU_VERSION_STALE: refresh the POS menu before continuing.',
       );
     }
-    if (state.shiftId == null) {
+    if (source.shiftId == null) {
       throw const ApiException(
         message: 'No open shift found. Open a shift before creating an order.',
       );
     }
 
     return CreateOrderRequest(
-      branchId: state.branchId,
-      shiftId: state.shiftId,
-      orderType: state.orderType,
-      customerId: state.selectedCustomer?.backendId,
+      branchId: source.branchId,
+      shiftId: source.shiftId,
+      orderType: source.orderType,
+      tableId: source.tableId,
+      customerId: source.selectedCustomer?.backendId,
+      note: source.orderNote,
       publishedMenuVersionId: versionId,
-      items: state.cartItems
+      idempotencyKey: idempotencyKey,
+      items: source.cartItems
           .map(
             (CartItem item) => AddOrderItemRequest(
               productId: item.backendProductId!,
+              modifiers: item.selectedModifiers,
               placementId: item.placementId,
               variantId: item.variantId,
               modifierOptionIds: item.modifierOptionIds,
@@ -1419,6 +1660,8 @@ class PosCubit extends Cubit<PosState> {
         taxRate: order.totals.taxRate,
         shiftId: order.shiftId,
         publishedMenuVersionId: order.publishedMenuVersionId,
+        currentOrderStatus: order.status,
+        currentOrderPaymentStatus: order.paymentStatus,
         orderType: orderTypeFromApi(order.orderType),
         selectedCustomer: _customerFromBackendOrder(order),
         clearSelectedCustomer: order.customerId == null,

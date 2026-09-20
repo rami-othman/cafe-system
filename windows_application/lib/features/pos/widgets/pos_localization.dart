@@ -38,5 +38,25 @@ String localizedPosFailure(AppLocalizations l10n, Object? failure) {
     return l10n.posOrderUnavailableForBranch;
   }
   if (message.contains('ORDER_NOT_RESUMABLE')) return l10n.posHeldOrderRequired;
+  if (message == 'pos.holdRetryable') return localizedPosHoldRetryable(l10n);
+  if (message == 'pos.holdUncertain') return localizedPosHoldUncertain(l10n);
   return l10n.posOperationFailed;
+}
+
+String localizedPosHoldSucceeded(AppLocalizations l10n) {
+  return l10n.localeName.startsWith('ar')
+      ? 'تم تعليق الطلب بنجاح.'
+      : 'Order held successfully.';
+}
+
+String localizedPosHoldRetryable(AppLocalizations l10n) {
+  return l10n.localeName.startsWith('ar')
+      ? 'تعذر تعليق الطلب. ما زالت السلة متاحة لإعادة المحاولة.'
+      : 'The order could not be held. Your cart is still available to retry.';
+}
+
+String localizedPosHoldUncertain(AppLocalizations l10n) {
+  return l10n.localeName.startsWith('ar')
+      ? 'تعذر تأكيد حالة تعليق الطلب. ما زالت السلة متاحة؛ تحقق من الطلبات قبل إعادة المحاولة.'
+      : 'The hold status could not be confirmed. Your cart is still available; check Orders before retrying.';
 }
