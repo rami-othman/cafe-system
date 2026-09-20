@@ -114,6 +114,29 @@ void main() {
     expect(query['optionName'], isNull);
   });
 
+  testWidgets(
+    'the product recipe editor route returns to the recipe workspace on back',
+    (tester) async {
+      await _pump(
+        tester,
+        '/menu-management/product-variants/7/recipe?productId=1',
+      );
+      expect(find.text('Manage Recipe'), findsOneWidget);
+
+      appRouter.push(
+        '/menu-management/products/1/variants/7/recipe/edit',
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('standalone-recipe-editor')), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('standalone-recipe-editor')), findsNothing);
+      expect(find.text('Manage Recipe'), findsOneWidget);
+    },
+  );
+
   testWidgets('legacy product setup routes redirect to Workspace tabs', (
     tester,
   ) async {

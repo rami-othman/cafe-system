@@ -122,6 +122,26 @@ void main() {
     });
 
     test(
+      'missing optional recipe stays a backend warning and is not blocking',
+      () {
+        final issue = _issue(
+          code: 'VARIANT_RECIPE_MISSING',
+          severity: 'warning',
+        );
+        expect(issue.code, 'VARIANT_RECIPE_MISSING');
+        expect(issue.severityValue, ValidationSeverity.warning);
+        expect(
+          ValidationIssuePresentation.categoryFor(issue),
+          ReadinessIssueCategory.recipesMaterials,
+        );
+        expect(
+          _filter(<ValidationIssue>[issue], severity: ValidationSeverity.error),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
       'recipe conversion issues preserve backend details in Recipes and Materials',
       () {
         final issue = _issue(

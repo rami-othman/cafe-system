@@ -3596,6 +3596,18 @@ abstract class AppLocalizations {
   /// **'Recipe configured · {count} materials'**
   String recipeConfigured(int count);
 
+  /// No description provided for @recipeMaterialId.
+  ///
+  /// In en, this message translates to:
+  /// **'Material #{materialId}'**
+  String recipeMaterialId(int materialId);
+
+  /// No description provided for @recipeSku.
+  ///
+  /// In en, this message translates to:
+  /// **'SKU {sku}'**
+  String recipeSku(String sku);
+
   /// No description provided for @recipeMissing.
   ///
   /// In en, this message translates to:
@@ -3631,6 +3643,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Using Global settings'**
   String get recipeUsingGlobalSettings;
+
+  /// No description provided for @recipeUsingProductSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Product settings'**
+  String get recipeUsingProductSettings;
+
+  /// No description provided for @recipeUsingVariantSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Variant settings'**
+  String get recipeUsingVariantSettings;
 
   /// No description provided for @recipeCustomizedForProduct.
   ///
@@ -3686,6 +3710,30 @@ abstract class AppLocalizations {
   /// **'Use inherited settings again'**
   String get recipeUseInheritedAgain;
 
+  /// No description provided for @recipeClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the product recipe?'**
+  String get recipeClearTitle;
+
+  /// No description provided for @recipeClearBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes every material configured for the product base recipe.'**
+  String get recipeClearBody;
+
+  /// No description provided for @recipeClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear recipe'**
+  String get recipeClearAction;
+
+  /// No description provided for @recipeRemoveOverrideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove override'**
+  String get recipeRemoveOverrideAction;
+
   /// No description provided for @recipeCustomizeFor.
   ///
   /// In en, this message translates to:
@@ -3697,6 +3745,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No material effect for {context}'**
   String recipeNoMaterialEffectFor(String context);
+
+  /// No description provided for @recipeCurrentVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'this Variant'**
+  String get recipeCurrentVariant;
+
+  /// No description provided for @recipeReplacesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces {from} with {to}'**
+  String recipeReplacesSummary(Object from, Object to);
+
+  /// No description provided for @recipeRemovesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes {materials}'**
+  String recipeRemovesSummary(Object materials);
+
+  /// No description provided for @recipeAddsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {materials}'**
+  String recipeAddsSummary(Object materials);
 
   /// No description provided for @recipeRemoves.
   ///
@@ -15421,6 +15493,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The POS operation could not be completed. Please try again.'**
   String get posOperationFailed;
+
+  /// No description provided for @posHoldSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Order held successfully.'**
+  String get posHoldSucceeded;
+
+  /// No description provided for @posHoldRetryable.
+  ///
+  /// In en, this message translates to:
+  /// **'The order could not be held. Your cart is still available to retry.'**
+  String get posHoldRetryable;
+
+  /// No description provided for @posHoldUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'The hold status could not be confirmed. Your cart is still available; check Orders before retrying.'**
+  String get posHoldUncertain;
 
   /// No description provided for @posMenuVersionStale.
   ///

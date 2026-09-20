@@ -51,6 +51,43 @@ class SalesInvoicePhaseTwoApiTest extends TestCase
         $this->assertSame(0, DB::table('journal_entry_lines as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')->where('l.journal_entry_id', $journal->id)->whereIn('a.code', ['5000', '1100'])->count());
     }
 
+    public function test_stock_tracked_product_without_an_effective_recipe_posts_with_zero_cogs_and_no_warehouse_requirement(): void
+    {
+        $s = $this->scenario(true, '100.000');
+        DB::table('variant_recipe_components')->where('tenant_id', $s['tenant'])->delete();
+        DB::table('variant_recipes')->where('tenant_id', $s['tenant'])->delete();
+        DB::table('branches')->where('id', $s['branch'])->update(['pos_inventory_warehouse_id' => null]);
+        $invoice = $this->invoice($s, $s['product'], '2');
+
+        $this->getJson("/api/v1/finance/sales-invoices/{$invoice}/posting-preview", $s['headers'])->assertOk()
+            ->assertJsonPath('data.cogs.totalEstimated', '0.00')
+            ->assertJsonCount(0, 'data.inventory');
+        $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'post-empty-recipe'], $s['headers'])->assertOk();
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $s['tenant'])->where('reference_type', 'sales_invoice_line')->count());
+        $this->assertSame('0.00', DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoice)->value('cogs_total'));
+    }
+
+    public function test_sales_invoice_uses_product_recipe_inheritance_and_variant_override_as_full_replacement(): void
+    {
+        $s = $this->scenario(true, '100.000');
+        $variant = (int) DB::table('product_variants')->where('tenant_id', $s['tenant'])->where('product_id', $s['product'])->value('id');
+        $recipe = (int) DB::table('variant_recipes')->where('tenant_id', $s['tenant'])->where('product_variant_id', $variant)->value('id');
+        DB::table('variant_recipe_components')->where('variant_recipe_id', $recipe)->delete();
+        DB::table('variant_recipes')->where('id', $recipe)->delete();
+
+        $productRecipe = (int) DB::table('product_recipes')->insertGetId(['tenant_id' => $s['tenant'], 'product_id' => $s['product'], 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_recipe_components')->insert(['tenant_id' => $s['tenant'], 'product_recipe_id' => $productRecipe, 'inventory_item_id' => $s['material'], 'quantity' => '3.000000', 'unit_code' => 'piece', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $inherited = $this->invoice($s, $s['product'], '2');
+        $this->postJson("/api/v1/finance/sales-invoices/{$inherited}/post", ['idempotencyKey' => 'product-recipe-inheritance'], $s['headers'])->assertOk();
+        $this->assertSame('6.000', DB::table('stock_movements')->where('tenant_id', $s['tenant'])->where('reference_type', 'sales_invoice_line')->where('reference_id', DB::table('sales_invoice_lines')->where('sales_invoice_id', $inherited)->value('id'))->value('quantity_out'));
+
+        $override = (int) DB::table('variant_recipes')->insertGetId(['tenant_id' => $s['tenant'], 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert(['tenant_id' => $s['tenant'], 'variant_recipe_id' => $override, 'inventory_item_id' => $s['material'], 'quantity' => '2.000000', 'unit_code' => 'piece', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $overridden = $this->invoice($s, $s['product'], '2');
+        $this->postJson("/api/v1/finance/sales-invoices/{$overridden}/post", ['idempotencyKey' => 'variant-recipe-override'], $s['headers'])->assertOk();
+        $this->assertSame('4.000', DB::table('stock_movements')->where('tenant_id', $s['tenant'])->where('reference_type', 'sales_invoice_line')->where('reference_id', DB::table('sales_invoice_lines')->where('sales_invoice_id', $overridden)->value('id'))->value('quantity_out'));
+    }
+
     public function test_insufficient_stock_rolls_back_invoice_posting_ar_and_inventory_and_posted_invoice_is_immutable(): void
     {
         $s = $this->scenario(true, '1.000'); $invoice = $this->invoice($s, $s['product'], '10');

@@ -97,7 +97,7 @@ class MenuValidationService
                 'placements' => fn ($placements) => $placements->withTrashed()->with([
                     'product' => fn ($products) => $products->withTrashed()->with([
                         'category' => fn ($categories) => $categories->withTrashed(), 'reportingCategory' => fn ($categories) => $categories->withTrashed(), 'kitchenStation' => fn ($stations) => $stations->withTrashed(),
-                        'variants' => fn ($variants) => $variants->withTrashed()->with('recipe.components'),
+                        'variants' => fn ($variants) => $variants->withTrashed()->with(['recipe.components', 'product.recipe.components']),
                         'modifierGroups' => fn ($groups) => $groups->withTrashed()->with(['options' => fn ($options) => $options->withTrashed()->with('recipeProfiles.components')]),
                     ]),
                 ]),
@@ -220,7 +220,7 @@ class MenuValidationService
         }
         $this->validateModifiers($result, $menu, $section, $placement, $product, $active, $tenantId);
         foreach ($active as $variant) {
-            if ($product->is_stock_tracked && $variant->recipe?->components->isNotEmpty()) {
+            if ($product->is_stock_tracked && $this->recipes->effectiveRecipe($variant)['effectiveComponents'] !== []) {
                 $this->validateCombinedRecipeRemoves($result, $menu, $section, $placement, $product, $variant);
             }
         }
@@ -247,14 +247,17 @@ class MenuValidationService
         if ($price['matchedScope'] === 'base') {
             $this->issue($result, 'VARIANT_BASE_PRICE_FALLBACK', 'warning', 'The variant is using its base price.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
         }
-        if ($product->is_stock_tracked) {
-            if (! $variant->recipe) {
-                $this->issue($result, 'VARIANT_RECIPE_MISSING', 'error', 'A stock-tracked variant requires a recipe.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
-            } elseif ($variant->recipe->components->isEmpty()) {
-                $this->issue($result, 'VARIANT_RECIPE_EMPTY', 'error', 'A stock-tracked variant recipe cannot be empty.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
-            }
+        $recipe = $this->recipes->effectiveRecipe($variant);
+        if ($recipe['effectiveComponents'] === []) {
+            $this->issue($result, 'VARIANT_RECIPE_MISSING', 'warning', 'The variant has no effective recipe and will consume no inventory.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
         }
-        $this->validateRecipeComponents($result, $menu, $section, $placement, $variant, $tenantId);
+        // Validate the effective source. A product base recipe is just as
+        // authoritative as a variant override, while an override fully
+        // replaces it.
+        $components = $recipe['source'] === 'product'
+            ? ($product->recipe?->components ?? collect())
+            : ($variant->recipe?->components ?? collect());
+        $this->validateRecipeComponents($result, $menu, $section, $placement, $variant, $tenantId, $components);
         $scheduled = $this->scheduled->resolve($tenantId, $product->id, $variant->id, $branch->id, $channel, $at, $branch->timezone ?: config('app.timezone'));
         if (! $scheduled['isScheduledAvailable']) {
             $this->issue($result, 'PRODUCT_OUTSIDE_SCHEDULE', 'warning', 'The product is outside scheduled availability at the requested time.', 'product', $product->id, $menu->id, $section->id, $placement->id);
@@ -265,9 +268,9 @@ class MenuValidationService
         }
     }
 
-    private function validateRecipeComponents(MenuValidationResult $result, Menu $menu, object $section, object $placement, ProductVariant $variant, int $tenantId): void
+    private function validateRecipeComponents(MenuValidationResult $result, Menu $menu, object $section, object $placement, ProductVariant $variant, int $tenantId, iterable $components): void
     {
-        foreach ($variant->recipe?->components ?? [] as $component) {
+        foreach ($components as $component) {
             $material = $this->materials->material($tenantId, $component->inventory_item_id);
             if (! $material || ! $material->is_active || $material->deleted_at) {
                 $unavailable = $this->unavailableMaterialFailure($material, $component);
@@ -339,12 +342,13 @@ class MenuValidationService
         if (! $profile) {
             return;
         }
+        $effectiveBase = $this->recipes->effectiveRecipe($variant)['effectiveComponents'];
         $base = [];
-        foreach ($variant->recipe?->components ?? [] as $component) {
+        foreach ($effectiveBase as $component) {
             try {
-                $material = $this->materials->material($tenantId, $component->inventory_item_id);
+                $material = $this->materials->material($tenantId, (int) $component['materialId']);
                 if ($material) {
-                    $base[$component->inventory_item_id] = $this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'];
+                    $base[(int) $component['materialId']] = $this->conversions->resolveRecipe($tenantId, $material, (string) $component['quantity'], $component['unitCode'])['baseQuantity'];
                 }
             } catch (\Throwable) {
                 // The base-component validator reports the underlying configuration issue.
@@ -385,12 +389,13 @@ class MenuValidationService
     /** Conservative bounded maximum: per group choose the greatest legal remove set, then sum groups. */
     private function validateCombinedRecipeRemoves(MenuValidationResult $result, Menu $menu, object $section, object $placement, Product $product, ProductVariant $variant): void
     {
+        $effectiveBase = $this->recipes->effectiveRecipe($variant)['effectiveComponents'];
         $base = [];
-        foreach ($variant->recipe->components as $component) {
+        foreach ($effectiveBase as $component) {
             try {
-                $material = $this->materials->material($product->tenant_id, $component->inventory_item_id);
+                $material = $this->materials->material($product->tenant_id, (int) $component['materialId']);
                 if ($material) {
-                    $base[$component->inventory_item_id] = $this->conversions->resolveRecipe($product->tenant_id, $material, (string) $component->quantity, $component->unit_code)['baseQuantity'];
+                    $base[(int) $component['materialId']] = $this->conversions->resolveRecipe($product->tenant_id, $material, (string) $component['quantity'], $component['unitCode'])['baseQuantity'];
                 }
             } catch (\Throwable) {
                 continue;

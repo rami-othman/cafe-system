@@ -24,9 +24,26 @@ class RecipeConfigurationController extends Controller
 
     public function recipe(Request $r, int $variant)
     {
-        $v = $this->variant($r, $variant);
+        $v = $this->variant($r, $variant, $r->boolean('includeArchived'));
 
         return response()->json(['data' => $this->recipes->recipe($v)]);
+    }
+
+    public function productRecipe(Request $r, int $product)
+    {
+        return response()->json(['data' => $this->recipes->productRecipe($this->product($r, $product, $r->boolean('includeArchived')))]);
+    }
+
+    public function putProductRecipe(Request $r, int $product)
+    {
+        $data = $r->validate(['components' => ['present', 'array'], 'components.*.materialId' => ['required', 'integer'], 'components.*.quantity' => ['required'], 'components.*.unitCode' => ['required', 'string'], 'components.*.sortOrder' => ['nullable', 'integer']]);
+
+        return response()->json(['data' => $this->recipes->replaceProductRecipe($this->product($r, $product), $data['components'])]);
+    }
+
+    public function deleteProductRecipe(Request $r, int $product)
+    {
+        return response()->json(['data' => $this->recipes->deleteProductRecipe($this->product($r, $product))]);
     }
 
     public function putRecipe(Request $r, int $variant)
@@ -34,6 +51,11 @@ class RecipeConfigurationController extends Controller
         $d = $r->validate(['components' => ['present', 'array'], 'components.*.materialId' => ['required', 'integer'], 'components.*.quantity' => ['required'], 'components.*.unitCode' => ['required', 'string'], 'components.*.sortOrder' => ['nullable', 'integer']]);
 
         return response()->json(['data' => $this->recipes->replaceRecipe($this->variant($r, $variant), $d['components'])]);
+    }
+
+    public function deleteRecipe(Request $r, int $variant)
+    {
+        return response()->json(['data' => $this->recipes->deleteRecipe($this->variant($r, $variant))]);
     }
 
     public function resolve(Request $r, int $variant)
@@ -88,14 +110,14 @@ class RecipeConfigurationController extends Controller
         return response()->json(['message' => 'Recipe adjustment override removed.']);
     }
 
-    private function variant(Request $r, int $id): ProductVariant
+    private function variant(Request $r, int $id, bool $includeArchived = false): ProductVariant
     {
-        return ProductVariant::query()->where('tenant_id', TenantContext::id($r))->with('product')->findOrFail($id);
+        return ProductVariant::query()->when($includeArchived, fn ($query) => $query->withTrashed())->where('tenant_id', TenantContext::id($r))->with(['product' => fn ($query) => $query->withTrashed()])->findOrFail($id);
     }
 
-    private function product(Request $r, int $id): Product
+    private function product(Request $r, int $id, bool $includeArchived = false): Product
     {
-        return Product::query()->where('tenant_id', TenantContext::id($r))->findOrFail($id);
+        return Product::query()->when($includeArchived, fn ($query) => $query->withTrashed())->where('tenant_id', TenantContext::id($r))->findOrFail($id);
     }
 
     private function option(Request $r, int $id): ModifierOption

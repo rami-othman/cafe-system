@@ -68,6 +68,25 @@ class MenuPreviewApiTest extends TestCase
         $this->assertSame('4.00', DB::table('products')->where('id', $product)->value('price'));
     }
 
+    public function test_preview_reports_effective_recipe_source_without_exposing_inherited_components_as_override(): void
+    {
+        [$tenant, $branch, $menu, $product, $variant] = $this->graph();
+        $material = DB::table('inventory_items')->insertGetId(['tenant_id' => $tenant, 'name' => 'Beans', 'sku' => 'PREVIEW-BEANS', 'unit' => 'gram', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $recipe = DB::table('product_recipes')->insertGetId(['tenant_id' => $tenant, 'product_id' => $product, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_recipe_components')->insert(['tenant_id' => $tenant, 'product_recipe_id' => $recipe, 'inventory_item_id' => $material, 'quantity' => '18.000000', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $this->preview($tenant, $menu, $branch)->assertOk()
+            ->assertJsonPath('data.menus.0.sections.0.products.0.variants.0.recipeSource', 'product')
+            ->assertJsonPath('data.menus.0.sections.0.products.0.variants.0.hasRecipeOverride', false)
+            ->assertJsonPath('data.menus.0.sections.0.products.0.variants.0.effectiveRecipeConfigured', true)
+            ->assertJsonPath('data.menus.0.sections.0.products.0.variants.0.effectiveRecipeComponentCount', 1);
+
+        $override = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert(['tenant_id' => $tenant, 'variant_recipe_id' => $override, 'inventory_item_id' => $material, 'quantity' => '9.000000', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $this->preview($tenant, $menu, $branch)->assertOk()
+            ->assertJsonPath('data.menus.0.sections.0.products.0.variants.0.recipeSource', 'variant')
+            ->assertJsonPath('data.menus.0.sections.0.products.0.variants.0.hasRecipeOverride', true);
+    }
+
     public function test_hidden_and_unavailable_products_can_be_included_for_diagnosis(): void
     {
         [$tenant, $branch, $menu, $product, $variant, $section, $placement] = $this->graph();

@@ -1982,6 +1982,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String recipeMaterialId(int materialId) {
+    return 'Material #$materialId';
+  }
+
+  @override
+  String recipeSku(String sku) {
+    return 'SKU $sku';
+  }
+
+  @override
   String get recipeMissing => 'Recipe missing';
 
   @override
@@ -1999,6 +2009,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recipeUsingGlobalSettings => 'Using Global settings';
+
+  @override
+  String get recipeUsingProductSettings => 'Using Product settings';
+
+  @override
+  String get recipeUsingVariantSettings => 'Using Variant settings';
 
   @override
   String get recipeCustomizedForProduct => 'Customized for Product';
@@ -2028,6 +2044,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeUseInheritedAgain => 'Use inherited settings again';
 
   @override
+  String get recipeClearTitle => 'Clear the product recipe?';
+
+  @override
+  String get recipeClearBody =>
+      'This removes every material configured for the product base recipe.';
+
+  @override
+  String get recipeClearAction => 'Clear recipe';
+
+  @override
+  String get recipeRemoveOverrideAction => 'Remove override';
+
+  @override
   String recipeCustomizeFor(String context) {
     return 'Customize for $context';
   }
@@ -2035,6 +2064,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String recipeNoMaterialEffectFor(String context) {
     return 'No material effect for $context';
+  }
+
+  @override
+  String get recipeCurrentVariant => 'this Variant';
+
+  @override
+  String recipeReplacesSummary(Object from, Object to) {
+    return 'Replaces $from with $to';
+  }
+
+  @override
+  String recipeRemovesSummary(Object materials) {
+    return 'Removes $materials';
+  }
+
+  @override
+  String recipeAddsSummary(Object materials) {
+    return 'Adds $materials';
   }
 
   @override
@@ -8631,6 +8678,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get posOperationFailed =>
       'The POS operation could not be completed. Please try again.';
+
+  @override
+  String get posHoldSucceeded => 'Order held successfully.';
+
+  @override
+  String get posHoldRetryable =>
+      'The order could not be held. Your cart is still available to retry.';
+
+  @override
+  String get posHoldUncertain =>
+      'The hold status could not be confirmed. Your cart is still available; check Orders before retrying.';
 
   @override
   String get posMenuVersionStale =>

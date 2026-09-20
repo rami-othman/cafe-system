@@ -30,14 +30,23 @@ abstract class MenuCatalogRepository {
   Future<List<RecipeMaterial>> listRecipeMaterials({
     String search = '',
     bool includeUnavailable = false,
-  }) =>
-      throw UnsupportedError('Recipes are not configured.');
+  }) => throw UnsupportedError('Recipes are not configured.');
   Future<VariantRecipe> getVariantRecipe(int variantId) =>
+      throw UnsupportedError('Recipes are not configured.');
+  Future<ProductRecipe> getProductRecipe(int productId) =>
+      throw UnsupportedError('Recipes are not configured.');
+  Future<ProductRecipe> saveProductRecipe(
+    int productId,
+    List<RecipeComponent> components,
+  ) => throw UnsupportedError('Recipes are not configured.');
+  Future<void> deleteProductRecipe(int productId) =>
       throw UnsupportedError('Recipes are not configured.');
   Future<VariantRecipe> saveVariantRecipe(
     int variantId,
     List<RecipeComponent> components,
   ) => throw UnsupportedError('Recipes are not configured.');
+  Future<void> deleteVariantRecipe(int variantId) =>
+      throw UnsupportedError('Recipes are not configured.');
   Future<ResolvedRecipe> resolveVariantRecipe(
     int variantId,
     List<Map<String, dynamic>> selectedOptions,
@@ -413,6 +422,36 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   }
 
   @override
+  Future<ProductRecipe> getProductRecipe(int productId) async {
+    final dynamic body = await _apiClient.get(
+      'admin/catalog/products/$productId/recipe',
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid product recipe response.');
+    return ProductRecipe.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<ProductRecipe> saveProductRecipe(
+    int productId,
+    List<RecipeComponent> components,
+  ) async {
+    final dynamic body = await _apiClient.put(
+      'admin/catalog/products/$productId/recipe',
+      data: <String, dynamic>{
+        'components': components.map((c) => c.toJson()).toList(),
+      },
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid product recipe response.');
+    return ProductRecipe.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<void> deleteProductRecipe(int productId) =>
+      _apiClient.delete('admin/catalog/products/$productId/recipe');
+
+  @override
   Future<VariantRecipe> saveVariantRecipe(
     int variantId,
     List<RecipeComponent> components,
@@ -426,6 +465,10 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
     if (body is! Map) throw const FormatException('Invalid recipe response.');
     return VariantRecipe.fromJson(Map<String, dynamic>.from(body));
   }
+
+  @override
+  Future<void> deleteVariantRecipe(int variantId) =>
+      _apiClient.delete('admin/catalog/product-variants/$variantId/recipe');
 
   @override
   Future<ResolvedRecipe> resolveVariantRecipe(

@@ -201,6 +201,10 @@ class ProductVariant {
     this.archivedAt,
     this.recipeConfigured,
     this.recipeComponentCount = 0,
+    this.effectiveRecipeConfigured,
+    this.effectiveRecipeComponentCount,
+    this.recipeSource,
+    this.hasRecipeOverride,
   });
 
   factory ProductVariant.fromJson(JsonMap json) => ProductVariant(
@@ -221,6 +225,16 @@ class ProductVariant {
         ? readBool(json['recipeConfigured'])
         : null,
     recipeComponentCount: readInt(json['recipeComponentCount']) ?? 0,
+    effectiveRecipeConfigured: json.containsKey('effectiveRecipeConfigured')
+        ? readBool(json['effectiveRecipeConfigured'])
+        : null,
+    effectiveRecipeComponentCount: readInt(
+      json['effectiveRecipeComponentCount'],
+    ),
+    recipeSource: _optional(json['recipeSource']),
+    hasRecipeOverride: json.containsKey('hasRecipeOverride')
+        ? readBool(json['hasRecipeOverride'])
+        : null,
   );
 
   final int id;
@@ -238,6 +252,10 @@ class ProductVariant {
   final DateTime? archivedAt;
   final bool? recipeConfigured;
   final int recipeComponentCount;
+  final bool? effectiveRecipeConfigured;
+  final int? effectiveRecipeComponentCount;
+  final String? recipeSource;
+  final bool? hasRecipeOverride;
 
   LifecycleStatus get lifecycle =>
       lifecycleStatus(isActive: isActive, archivedAt: archivedAt);

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/features/menu_management/models/catalog_models.dart';
 import 'package:windows_application/features/menu_management/recipes/controllers/recipe_cubits.dart';
 import 'package:windows_application/features/menu_management/recipes/models/recipe_models.dart';
 import 'package:windows_application/features/menu_management/repositories/menu_catalog_repository.dart';
@@ -21,7 +22,7 @@ void main() {
     () async {
       final repository = _RecipeRepository(recipe: recipe);
       final cubit = VariantRecipeCubit(repository);
-      await cubit.load(7);
+      await cubit.load(7, productId: 3);
       expect(cubit.state.draft.single.quantity, '18');
       cubit.updateDraft(const <RecipeComponent>[
         RecipeComponent(materialId: 1, quantity: '18.125', unitCode: 'g'),
@@ -30,6 +31,38 @@ void main() {
       expect(await cubit.save(7), isFalse);
       expect(cubit.state.draft.single.quantity, '18.125');
       expect(cubit.state.error, contains('draft'));
+    },
+  );
+
+  test(
+    'inherited effective rows are display-only and override removal reloads',
+    () async {
+      final repository = _RecipeRepository(
+        recipe: const VariantRecipe(
+          variantId: 7,
+          components: <RecipeComponent>[],
+          hasOverride: false,
+          source: RecipeSource.product,
+          effectiveComponents: <RecipeComponent>[component],
+        ),
+        profile: const ModifierRecipeProfile(
+          optionId: 9,
+          scope: 'variant',
+          hasOverride: false,
+          inheritedFrom: 'product',
+          components: <RecipeComponent>[],
+        ),
+      );
+      final cubit = VariantRecipeCubit(repository);
+      await cubit.load(7, productId: 3);
+      expect(cubit.state.recipe!.effectiveComponents, <RecipeComponent>[
+        component,
+      ]);
+      expect(cubit.state.draft, isEmpty);
+      expect(await cubit.removeOverride(7), isTrue);
+      expect(repository.deleteCalls, 1);
+      expect(repository.lastProductId, 3);
+      expect(cubit.state.profiles, contains(9));
     },
   );
 
@@ -43,6 +76,26 @@ void main() {
     expect(aggregated, hasLength(2));
     expect(aggregated.first.quantity, '36.125');
     expect(aggregated.last.quantity, '30');
+  });
+
+  test('a stale recipe load cannot overwrite the latest response', () async {
+    final repository = _RecipeRepository(recipe: recipe);
+    final first = Completer<VariantRecipe>();
+    final second = Completer<VariantRecipe>();
+    repository.recipeFutures.addAll(<Future<VariantRecipe>>[
+      first.future,
+      second.future,
+    ]);
+    final cubit = VariantRecipeCubit(repository);
+    final loadingFirst = cubit.load(7);
+    final loadingSecond = cubit.load(8);
+    second.complete(
+      const VariantRecipe(variantId: 8, components: <RecipeComponent>[]),
+    );
+    await loadingSecond;
+    first.complete(recipe);
+    await loadingFirst;
+    expect(cubit.state.recipe!.variantId, 8);
   });
 
   test(
@@ -136,6 +189,7 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
       expect(cubit.state.result!.variantId, 8);
+      expect(cubit.state.error, isNull);
     },
   );
 }
@@ -147,7 +201,10 @@ class _RecipeRepository extends MenuCatalogRepository {
   bool saveError = false;
   List<RecipeComponent>? lastProfileComponents;
   Future<ResolvedRecipe>? resolveFuture;
+  final List<Future<VariantRecipe>> recipeFutures = <Future<VariantRecipe>>[];
   int resolveCalls = 0;
+  int deleteCalls = 0;
+  int? lastProductId;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   @override
@@ -169,7 +226,9 @@ class _RecipeRepository extends MenuCatalogRepository {
     ),
   ];
   @override
-  Future<VariantRecipe> getVariantRecipe(int variantId) async => recipe;
+  Future<VariantRecipe> getVariantRecipe(int variantId) => recipeFutures.isEmpty
+      ? Future<VariantRecipe>.value(recipe)
+      : recipeFutures.removeAt(0);
   @override
   Future<VariantRecipe> saveVariantRecipe(
     int variantId,
@@ -178,6 +237,32 @@ class _RecipeRepository extends MenuCatalogRepository {
     if (saveError) throw StateError('no');
     return VariantRecipe(variantId: variantId, components: components);
   }
+
+  @override
+  Future<void> deleteVariantRecipe(int variantId) async => deleteCalls++;
+
+  @override
+  Future<ProductDetail> getProduct(
+    int productId, {
+    bool includeArchived = false,
+  }) async {
+    lastProductId = productId;
+    return ProductDetail.fromJson(<String, dynamic>{
+      'id': productId,
+      'name': 'Coffee',
+      'productType': 'simple',
+      'isActive': true,
+      'variants': <Map<String, dynamic>>[],
+      'modifierGroups': <Map<String, dynamic>>[],
+    });
+  }
+
+  @override
+  Future<List<ModifierRecipeProfile>> getVariantRecipeMaterialEffects(
+    int variantId,
+  ) async => profile == null
+      ? const <ModifierRecipeProfile>[]
+      : <ModifierRecipeProfile>[profile!];
 
   @override
   Future<ModifierRecipeProfile> getModifierRecipeProfile(

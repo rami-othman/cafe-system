@@ -154,71 +154,79 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       );
 
-  Widget _workspaceBody(ProductDetail product, ProductDetailState state) =>
-      switch (widget.tab) {
-        ProductWorkspaceTab.overview => _Overview(product: product),
-        ProductWorkspaceTab.variants =>
-          product.isArchived
-              ? _DestinationPanel(
-                  title: context.l10n.productUxVariants,
-                  message: context.l10n.productDetailArchivedVariantsMessage,
-                  actionLabel: context.l10n.productDetailViewAction,
-                  onPressed: null,
-                )
-              : BlocProvider<VariantsCubit>(
-                  create: (_) => serviceLocator<VariantsCubit>(),
-                  child: VariantsScreen(
-                    productId: product.id,
-                    embedded: true,
-                    onSummaryChanged: context
-                        .read<ProductDetailCubit>()
-                        .replaceProduct,
-                  ),
-                ),
-        ProductWorkspaceTab.modifiers =>
-          product.isArchived
-              ? _DestinationPanel(
-                  title: context.l10n.productUxModifiers,
-                  message: context.l10n.productDetailArchivedModifiersMessage,
-                  actionLabel: context.l10n.productDetailViewAction,
-                  onPressed: null,
-                )
-              : BlocProvider<ProductModifierAssignmentsCubit>(
-                  create: (_) =>
-                      serviceLocator<ProductModifierAssignmentsCubit>(),
-                  child: ProductModifierAssignmentsScreen(
-                    productId: product.id,
-                    embedded: true,
-                    onSummaryChanged: context
-                        .read<ProductDetailCubit>()
-                        .replaceProduct,
-                  ),
-                ),
-        ProductWorkspaceTab.recipe => BlocProvider<VariantRecipeCubit>(
-          create: (_) =>
-              VariantRecipeCubit(context.read<ProductDetailCubit>().repository),
-          child: RecipeMaterialsWorkspace(
-            product: product,
-            readOnly: product.isArchived,
-            selectedVariantId: widget.variantId,
-            onVariantChanged: (variantId) => context.go(
-              MenuManagementRouteLocations.productWorkspace(
-                product.id,
-                tab: ProductWorkspaceTab.recipe,
-                variantId: variantId,
+  Widget _workspaceBody(
+    ProductDetail product,
+    ProductDetailState state,
+  ) => switch (widget.tab) {
+    ProductWorkspaceTab.overview => _Overview(product: product),
+    ProductWorkspaceTab.variants =>
+      product.isArchived
+          ? _DestinationPanel(
+              title: context.l10n.productUxVariants,
+              message: context.l10n.productDetailArchivedVariantsMessage,
+              actionLabel: context.l10n.productDetailViewAction,
+              onPressed: null,
+            )
+          : BlocProvider<VariantsCubit>(
+              create: (_) => serviceLocator<VariantsCubit>(),
+              child: VariantsScreen(
+                productId: product.id,
+                embedded: true,
+                onSummaryChanged: context
+                    .read<ProductDetailCubit>()
+                    .replaceProduct,
               ),
             ),
+    ProductWorkspaceTab.modifiers =>
+      product.isArchived
+          ? _DestinationPanel(
+              title: context.l10n.productUxModifiers,
+              message: context.l10n.productDetailArchivedModifiersMessage,
+              actionLabel: context.l10n.productDetailViewAction,
+              onPressed: null,
+            )
+          : BlocProvider<ProductModifierAssignmentsCubit>(
+              create: (_) => serviceLocator<ProductModifierAssignmentsCubit>(),
+              child: ProductModifierAssignmentsScreen(
+                productId: product.id,
+                embedded: true,
+                onSummaryChanged: context
+                    .read<ProductDetailCubit>()
+                    .replaceProduct,
+              ),
+            ),
+    ProductWorkspaceTab.recipe => MultiBlocProvider(
+      providers: <BlocProvider<dynamic>>[
+        BlocProvider<VariantRecipeCubit>(
+          create: (_) =>
+              VariantRecipeCubit(context.read<ProductDetailCubit>().repository),
+        ),
+        BlocProvider<ProductRecipeCubit>(
+          create: (_) =>
+              ProductRecipeCubit(context.read<ProductDetailCubit>().repository),
+        ),
+      ],
+      child: RecipeMaterialsWorkspace(
+        product: product,
+        readOnly: product.isArchived,
+        selectedVariantId: widget.variantId,
+        onVariantChanged: (variantId) => context.go(
+          MenuManagementRouteLocations.productWorkspace(
+            product.id,
+            tab: ProductWorkspaceTab.recipe,
+            variantId: variantId,
           ),
         ),
-        ProductWorkspaceTab.availability => ProductAvailabilityWorkspace(
-          product: product,
-        ),
-        ProductWorkspaceTab.usage => _UsagePanel(
-          state: state,
-          onRetry: () =>
-              context.read<ProductDetailCubit>().loadUsage(product.id),
-        ),
-      };
+      ),
+    ),
+    ProductWorkspaceTab.availability => ProductAvailabilityWorkspace(
+      product: product,
+    ),
+    ProductWorkspaceTab.usage => _UsagePanel(
+      state: state,
+      onRetry: () => context.read<ProductDetailCubit>().loadUsage(product.id),
+    ),
+  };
 }
 
 class _WorkspaceHeader extends StatelessWidget {

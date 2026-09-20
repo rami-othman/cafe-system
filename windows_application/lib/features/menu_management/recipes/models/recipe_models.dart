@@ -91,16 +91,68 @@ class RecipeComponent {
       };
 }
 
-class VariantRecipe {
-  const VariantRecipe({required this.variantId, required this.components});
-  factory VariantRecipe.fromJson(Map<String, dynamic> json) => VariantRecipe(
-    variantId: readInt(json['variantId']) ?? 0,
+enum RecipeSource { variant, product, none }
+
+RecipeSource recipeSourceFromJson(Object? value) => switch (readString(value)) {
+  'variant' => RecipeSource.variant,
+  'product' => RecipeSource.product,
+  _ => RecipeSource.none,
+};
+
+class ProductRecipe {
+  const ProductRecipe({required this.productId, required this.components});
+  factory ProductRecipe.fromJson(Map<String, dynamic> json) => ProductRecipe(
+    productId: readInt(json['productId']) ?? 0,
     components: readMapList(
       json['components'],
     ).map(RecipeComponent.fromJson).toList(growable: false),
   );
-  final int variantId;
+  final int productId;
   final List<RecipeComponent> components;
+}
+
+class VariantRecipe {
+  const VariantRecipe({
+    required this.variantId,
+    required this.components,
+    this.hasOverride = false,
+    this.source = RecipeSource.none,
+    this.overrideComponents = const <RecipeComponent>[],
+    this.effectiveComponents = const <RecipeComponent>[],
+  });
+  factory VariantRecipe.fromJson(Map<String, dynamic> json) {
+    final List<RecipeComponent> legacy = readMapList(
+      json['components'],
+    ).map(RecipeComponent.fromJson).toList(growable: false);
+    final bool hasExplicit = json.containsKey('overrideComponents');
+    final List<RecipeComponent> overrides = hasExplicit
+        ? readMapList(
+            json['overrideComponents'],
+          ).map(RecipeComponent.fromJson).toList(growable: false)
+        : legacy;
+    return VariantRecipe(
+      variantId: readInt(json['variantId']) ?? 0,
+      components: overrides,
+      hasOverride: json.containsKey('hasOverride')
+          ? readBool(json['hasOverride'])
+          : overrides.isNotEmpty,
+      source: recipeSourceFromJson(json['source']),
+      overrideComponents: overrides,
+      effectiveComponents: json.containsKey('effectiveComponents')
+          ? readMapList(
+              json['effectiveComponents'],
+            ).map(RecipeComponent.fromJson).toList(growable: false)
+          : legacy,
+    );
+  }
+  final int variantId;
+
+  /// Legacy editable alias; never contains inherited components.
+  final List<RecipeComponent> components;
+  final bool hasOverride;
+  final RecipeSource source;
+  final List<RecipeComponent> overrideComponents;
+  final List<RecipeComponent> effectiveComponents;
 }
 
 class ResolvedRecipe {

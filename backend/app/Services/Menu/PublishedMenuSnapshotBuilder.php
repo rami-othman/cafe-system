@@ -27,7 +27,7 @@ class PublishedMenuSnapshotBuilder
                 'placements' => fn ($p) => $p->where('is_visible', true)->orderBy('sort_order')->orderBy('id')->with([
                     'product' => fn ($products) => $products->where('is_active', true)->with([
                         'availabilityRules' => fn ($r) => $r->where('is_active', true)->orderBy('id'),
-                        'variants' => fn ($variants) => $variants->where('is_active', true)->with('recipe.components')->orderBy('sort_order')->orderBy('id'),
+                        'variants' => fn ($variants) => $variants->where('is_active', true)->with(['recipe.components', 'product.recipe.components'])->orderBy('sort_order')->orderBy('id'),
                         'modifierGroups' => fn ($groups) => $groups->where('is_active', true)->with(['options' => fn ($options) => $options->where('is_active', true)->with('recipeProfiles.components')->orderBy('sort_order')->orderBy('id')]),
                     ]),
                 ]),
@@ -70,7 +70,7 @@ class PublishedMenuSnapshotBuilder
 
         return ['id' => $variant->id, 'name' => $this->localized($variant, 'name'), 'sku' => $variant->sku, 'barcode' => $variant->barcode, 'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default,
             'basePrice' => $this->decimal($price['basePrice']), 'effectivePrice' => $this->decimal($price['effectivePrice']), 'matchedPriceScope' => $price['matchedScope'],
-            'baseRecipe' => ($variant->recipe?->components ?? collect())->sortBy('sort_order')->map(fn ($c) => $this->recipeComponent($tenantId, $c))->values()->all(),
+            'baseRecipe' => collect($this->recipes->effectiveRecipe($variant)['effectiveComponents'])->map(fn (array $c) => $this->effectiveRecipeComponent($tenantId, $c))->values()->all(),
             'modifierRecipeAdjustments' => $product->modifierGroups->flatMap->options->map(function ($option) use ($product, $variant, $tenantId): array {
                 $profile = $this->recipes->effective($option, $product->id, $variant->id);
 
@@ -102,6 +102,17 @@ class PublishedMenuSnapshotBuilder
         $canonical = $this->conversions->resolveRecipe($tenantId, $material, (string) $component->quantity, $component->unit_code);
 
         return ['materialId' => $component->inventory_item_id, 'materialName' => $material->name, 'materialSku' => $material->sku, 'quantity' => rtrim(rtrim((string) $component->quantity, '0'), '.'), 'unitCode' => $component->unit_code, 'canonicalQuantity' => InventoryDecimal::quantity($canonical['baseQuantity']), 'baseUnit' => $canonical['baseUnit'], 'sortOrder' => $component->sort_order] + ($hasOperation ? ['operation' => $component->operation] : []);
+    }
+
+    private function effectiveRecipeComponent(int $tenantId, array $component): array
+    {
+        $material = $this->materials->material($tenantId, $component['materialId']);
+        if (! $material) {
+            throw new \LogicException('Published recipes require an inventory material.');
+        }
+        $canonical = $this->conversions->resolveRecipe($tenantId, $material, (string) $component['quantity'], $component['unitCode']);
+
+        return ['materialId' => $component['materialId'], 'materialName' => $material->name, 'materialSku' => $material->sku, 'quantity' => rtrim(rtrim((string) $component['quantity'], '0'), '.'), 'unitCode' => $component['unitCode'], 'canonicalQuantity' => InventoryDecimal::quantity($canonical['baseQuantity']), 'baseUnit' => $canonical['baseUnit'], 'sortOrder' => $component['sortOrder'] ?? 0];
     }
 
     private function localized(object $entity, string $field): array

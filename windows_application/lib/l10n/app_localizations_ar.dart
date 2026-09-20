@@ -2005,6 +2005,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String recipeMaterialId(int materialId) {
+    return 'المادة #$materialId';
+  }
+
+  @override
+  String recipeSku(String sku) {
+    return 'SKU $sku';
+  }
+
+  @override
   String get recipeMissing => 'الوصفة مفقودة';
 
   @override
@@ -2022,6 +2032,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get recipeUsingGlobalSettings => 'باستخدام الإعدادات العامة';
+
+  @override
+  String get recipeUsingProductSettings => 'باستخدام إعدادات المنتج';
+
+  @override
+  String get recipeUsingVariantSettings => 'باستخدام إعدادات النوع';
 
   @override
   String get recipeCustomizedForProduct => 'مخصص للمنتج';
@@ -2051,6 +2067,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get recipeUseInheritedAgain => 'استخدم الإعدادات الموروثة مجدداً';
 
   @override
+  String get recipeClearTitle => 'مسح وصفة المنتج؟';
+
+  @override
+  String get recipeClearBody =>
+      'سيؤدي ذلك إلى إزالة كل المواد المعدة في الوصفة الأساسية للمنتج.';
+
+  @override
+  String get recipeClearAction => 'مسح الوصفة';
+
+  @override
+  String get recipeRemoveOverrideAction => 'إزالة التجاوز';
+
+  @override
   String recipeCustomizeFor(String context) {
     return 'تخصيص لـ $context';
   }
@@ -2058,6 +2087,24 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String recipeNoMaterialEffectFor(String context) {
     return 'لا تأثير مادي لـ $context';
+  }
+
+  @override
+  String get recipeCurrentVariant => 'هذا النوع';
+
+  @override
+  String recipeReplacesSummary(Object from, Object to) {
+    return 'يستبدل $from بـ $to';
+  }
+
+  @override
+  String recipeRemovesSummary(Object materials) {
+    return 'يزيل $materials';
+  }
+
+  @override
+  String recipeAddsSummary(Object materials) {
+    return 'يضيف $materials';
   }
 
   @override
@@ -8623,6 +8670,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get posOperationFailed =>
       'تعذر إكمال عملية نقطة البيع. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get posHoldSucceeded => 'تم تعليق الطلب بنجاح.';
+
+  @override
+  String get posHoldRetryable =>
+      'تعذر تعليق الطلب. ما زالت السلة متاحة لإعادة المحاولة.';
+
+  @override
+  String get posHoldUncertain =>
+      'تعذر تأكيد حالة تعليق الطلب. ما زالت السلة متاحة؛ تحقق من الطلبات قبل إعادة المحاولة.';
 
   @override
   String get posMenuVersionStale =>
