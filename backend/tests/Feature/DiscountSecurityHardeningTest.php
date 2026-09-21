@@ -86,7 +86,8 @@ class DiscountSecurityHardeningTest extends TestCase
         $this->postJson('/api/v1/discounts', $this->managementPayload(['type' => 'bogo']), $headers)->assertUnprocessable()->assertJsonValidationErrors('type');
         $this->postJson('/api/v1/discounts', $this->managementPayload(['applicationMode' => 'automatic']), $headers)->assertUnprocessable()->assertJsonValidationErrors('applicationMode');
         $this->postJson('/api/v1/discounts', $this->managementPayload(['applicationMode' => 'code', 'code' => '']), $headers)->assertUnprocessable()->assertJsonValidationErrors('code');
-        $this->postJson('/api/v1/discounts', $this->managementPayload(['value' => 0]), $headers)->assertUnprocessable()->assertJsonValidationErrors('value');
+        $this->postJson('/api/v1/discounts', $this->managementPayload(['value' => -1]), $headers)->assertUnprocessable()->assertJsonValidationErrors('value');
+        $this->postJson('/api/v1/discounts', $this->managementPayload(['value' => 101]), $headers)->assertUnprocessable()->assertJsonValidationErrors('value');
         $this->postJson('/api/v1/discounts', $this->managementPayload(['scope' => 'order', 'targetProductIds' => [$scope['product']]]), $headers)->assertUnprocessable()->assertJsonValidationErrors('targets');
     }
 

@@ -3597,7 +3597,7 @@
   "discountFormSaved": "Discount saved.",
   "discountFormSaveFailed": "Unable to save discount.",
   "discountValidationName": "Discount name is required.",
-  "discountValidationPositiveValue": "Enter a value greater than zero.",
+  "discountValidationNonNegativeValue": "Enter a value of zero or greater.",
   "discountValidationPercentage": "A percentage discount cannot exceed 100.",
   "discountValidationCode": "A code is required for coupon discounts.",
   "discountValidationProducts": "Select one or more products.",

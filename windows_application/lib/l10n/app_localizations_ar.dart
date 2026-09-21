@@ -8156,7 +8156,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get discountValidationName => 'اسم الخصم مطلوب.';
 
   @override
-  String get discountValidationPositiveValue => 'أدخل قيمة أكبر من صفر.';
+  String get discountValidationNonNegativeValue =>
+      'أدخل قيمة تساوي صفراً أو أكبر.';
 
   @override
   String get discountValidationPercentage =>

@@ -51,6 +51,36 @@ class DiscountManagementApiTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('endsAt');
     }
 
+    public function test_zero_value_percentage_can_be_created_and_fixed_can_be_updated(): void
+    {
+        $this->seed();
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $headers = $this->headers($tenantId);
+
+        $created = $this->postJson('/api/v1/discounts', $this->payload([
+            'name' => 'Zero Percentage', 'code' => 'ZERO-PERCENT', 'value' => 0,
+        ]), $headers)->assertCreated()->assertJsonPath('data.value', 0);
+        $discountId = $created->json('data.id');
+
+        $this->patchJson("/api/v1/discounts/{$discountId}", $this->payload([
+            'name' => 'Zero Fixed', 'code' => 'ZERO-FIXED', 'type' => 'fixed', 'value' => 0,
+        ]), $headers)->assertOk()
+            ->assertJsonPath('data.type', 'fixed')
+            ->assertJsonPath('data.value', 0);
+    }
+
+    public function test_configured_discount_rejects_negative_values_and_percentage_values_above_100(): void
+    {
+        $this->seed();
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $headers = $this->headers($tenantId);
+
+        $this->postJson('/api/v1/discounts', $this->payload(['code' => 'NEGATIVE', 'value' => -1]), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('value');
+        $this->postJson('/api/v1/discounts', $this->payload(['code' => 'OVER-100', 'value' => 101]), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('value');
+    }
+
     public function test_branch_targets_are_tenant_scoped_and_can_be_cleared_for_all_branches(): void
     {
         $this->seed();

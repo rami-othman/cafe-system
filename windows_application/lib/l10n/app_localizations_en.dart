@@ -8177,8 +8177,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discountValidationName => 'Discount name is required.';
 
   @override
-  String get discountValidationPositiveValue =>
-      'Enter a value greater than zero.';
+  String get discountValidationNonNegativeValue =>
+      'Enter a value of zero or greater.';
 
   @override
   String get discountValidationPercentage =>
