@@ -61,6 +61,15 @@ void main() {
     expect(json['paymentMethod'], isNull);
   });
 
+  test('serializes a zero configured discount value as zero', () {
+    final Map<String, dynamic> json = _request(
+      appliesToAllBranches: true,
+      value: 0,
+    ).toJson();
+
+    expect(json['value'], 0);
+  });
+
   test(
     'serializes explicit nullable clears without retaining stale targets',
     () {
@@ -133,12 +142,13 @@ void main() {
 DiscountUpsertRequest _request({
   required bool appliesToAllBranches,
   List<int> branchIds = const <int>[],
+  double value = 10,
 }) => DiscountUpsertRequest(
   name: 'Branch test',
   applicationMode: 'code',
   type: 'percentage',
   scope: 'order',
-  value: 10,
+  value: value,
   isActive: true,
   appliesToAllBranches: appliesToAllBranches,
   branchIds: branchIds,

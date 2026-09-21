@@ -93,6 +93,37 @@ class DiscountRuntimeEligibilityTest extends TestCase
         $this->assertSame(1, (int) DB::table('discounts')->where('id', $discount)->value('used_count'));
     }
 
+    public function test_zero_percentage_and_fixed_discounts_apply_without_changing_authoritative_totals_and_count_as_usage(): void
+    {
+        foreach (['percentage', 'fixed'] as $type) {
+            $scope = $this->scope();
+            $discount = $this->discount($scope, ['type' => $type, 'value' => 0]);
+            $before = DB::table('orders')->where('id', $scope['order'])->first();
+
+            $response = $this->apply($scope, $discount)->assertOk()
+                ->assertJsonPath('data.discount.value', 0)
+                ->assertJsonPath('data.discount.amount', 0);
+            $totals = $response->json('data.totals');
+            $this->assertSame((float) $before->subtotal, (float) $totals['subtotal']);
+            $this->assertSame((float) $before->discount_total, (float) $totals['discountTotal']);
+            $this->assertSame((float) $before->tax_total, (float) $totals['taxTotal']);
+            $this->assertSame((float) $before->total, (float) $totals['total']);
+
+            $snapshot = DB::table('order_discounts')->where('order_id', $scope['order'])->first();
+            $this->assertNotNull($snapshot);
+            $this->assertSame($discount, (int) $snapshot->discount_id);
+            $this->assertSame(0.0, (float) $snapshot->discount_value);
+            $this->assertSame(0.0, (float) $snapshot->discount_amount);
+
+            $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+                'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 100,
+                'idempotencyKey' => "zero-{$type}",
+            ], $this->headers($scope))->assertOk();
+            $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discount)->count());
+            $this->assertSame(1, (int) DB::table('discounts')->where('id', $discount)->value('used_count'));
+        }
+    }
+
     public function test_payment_method_id_is_authoritative_for_discount_eligibility_and_idempotent_retries(): void
     {
         $scope = $this->scope();

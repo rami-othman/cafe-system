@@ -99,4 +99,26 @@ void main() {
       <String, dynamic>{'productId': 12, 'quantity': 2.0},
     ]);
   });
+
+  test('parses a zero configured discount value without converting it', () {
+    final DiscountDetail detail = DiscountDetail.fromJson(<String, dynamic>{
+      'id': 90,
+      'name': 'Zero policy',
+      'applicationMode': 'manual',
+      'type': 'fixed',
+      'scope': 'order',
+      'value': 0,
+      'isActive': true,
+      'appliesToAllBranches': true,
+      'customerEligibilityMode': 'all',
+      'targetProductIds': const <int>[],
+      'targetCategoryIds': const <int>[],
+      'customerGroupIds': const <int>[],
+      'branchIds': const <int>[],
+      'paymentMethodIds': const <int>[],
+    });
+
+    expect(detail.value, 0);
+    expect(detail.toUpsertRequest().toJson()['value'], 0);
+  });
 }

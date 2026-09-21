@@ -219,31 +219,78 @@ void main() {
     }
   });
 
-  testWidgets('percentage 0 cannot activate and uses the not-ready state', (
+  testWidgets('percentage 0 is valid and can activate', (
     WidgetTester tester,
   ) async {
     await _pumpScreen(tester, const Size(1280, 900));
     _fillRequiredFields(tester, name: 'Zero percentage', value: '0');
     await tester.pump();
 
-    expect(_activateButton(tester).onPressed, isNull);
-    expect(find.text('Enter a value greater than zero.'), findsOneWidget);
-    expect(
-      find.text(
-        'Complete the required fields before activating this discount.',
-      ),
-      findsOneWidget,
-    );
+    expect(_activateButton(tester).onPressed, isNotNull);
+    expect(find.text('Enter a value of zero or greater.'), findsNothing);
   });
 
-  testWidgets('fixed 0 cannot activate', (WidgetTester tester) async {
-    await _pumpScreen(tester, const Size(1280, 900));
+  testWidgets('fixed 0 is valid and submitted as zero', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      stallCreates: true,
+    );
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      repository: repository,
+    );
     await _selectValueType(tester, 'Fixed Amount');
     _fillRequiredFields(tester, name: 'Zero fixed', value: '0');
     await tester.pump();
 
+    expect(_activateButton(tester).onPressed, isNotNull);
+    await tester.tap(find.text('Save as Draft'));
+    await tester.pump();
+    expect(repository.lastCreateRequest!.value, 0);
+  });
+
+  testWidgets('negative value remains invalid with the localized message', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, const Size(1280, 900));
+    _fillRequiredFields(tester, name: 'Negative value', value: '-1');
+    await tester.pump();
+
     expect(_activateButton(tester).onPressed, isNull);
-    expect(find.text('Enter a value greater than zero.'), findsOneWidget);
+    expect(find.text('Enter a value of zero or greater.'), findsOneWidget);
+  });
+
+  testWidgets('Arabic negative value uses the localized validation message', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      locale: const Locale('ar'),
+    );
+    _fillRequiredFields(tester, name: 'Negative value', value: '-1');
+    await tester.pump();
+
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CreateDiscountPolicyScreen)),
+    );
+    expect(find.text(l10n.discountValidationNonNegativeValue), findsOneWidget);
+  });
+
+  testWidgets('percentage values above 100 remain invalid', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(tester, const Size(1280, 900));
+    _fillRequiredFields(tester, name: 'Over percentage', value: '101');
+    await tester.pump();
+
+    expect(_activateButton(tester).onPressed, isNull);
+    expect(
+      find.text('A percentage discount cannot exceed 100.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('valid custom percentage and fixed amount become ready', (

@@ -1406,9 +1406,9 @@ class _CreateDiscountPolicyScreenState
       issues.add(_FormValidationIssue('name', l10n.discountValidationName));
     }
     final double? value = _decimalValue(_valueController.text);
-    if (value == null || value <= 0) {
+    if (value == null || value < 0) {
       issues.add(
-        _FormValidationIssue('value', l10n.discountValidationPositiveValue),
+        _FormValidationIssue('value', l10n.discountValidationNonNegativeValue),
       );
     }
     if (_isPercentage && value != null && value > 100) {

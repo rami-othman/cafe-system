@@ -14660,11 +14660,11 @@ abstract class AppLocalizations {
   /// **'Discount name is required.'**
   String get discountValidationName;
 
-  /// No description provided for @discountValidationPositiveValue.
+  /// No description provided for @discountValidationNonNegativeValue.
   ///
   /// In en, this message translates to:
-  /// **'Enter a value greater than zero.'**
-  String get discountValidationPositiveValue;
+  /// **'Enter a value of zero or greater.'**
+  String get discountValidationNonNegativeValue;
 
   /// No description provided for @discountValidationPercentage.
   ///
