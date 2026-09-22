@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
 use App\Http\Controllers\Api\Admin\Catalog\RecipeConfigurationController;
 use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerGroupController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerImportController;
 use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerManagementController;
 use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerRolePermissionController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
@@ -176,6 +177,16 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{group}/eligible-members', 'eligibleMembers')->whereNumber('group');
             Route::post('{group}/members', 'addMembers')->whereNumber('group');
             Route::delete('{group}/members/{customer}', 'removeMember')->whereNumber(['group', 'customer']);
+        });
+
+    Route::middleware(['api.token', 'password.changed', 'customer.permission:customer.manage'])
+        ->prefix('admin/customer-management/customer-imports')
+        ->controller(CustomerImportController::class)
+        ->group(function (): void {
+            Route::post('preview', 'preview');
+            Route::post('{import}/commit', 'commit')->whereNumber('import');
+            Route::get('{import}', 'show')->whereNumber('import');
+            Route::get('{import}/errors', 'errors')->whereNumber('import');
         });
 
     // Tenant operational boundary. Tenant identity comes solely from the

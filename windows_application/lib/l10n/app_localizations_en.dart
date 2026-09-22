@@ -8770,4 +8770,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get posCloseCustomizationDialog => 'Close customization dialog';
+
+  @override
+  String get customerImportAction => 'Import CSV';
+
+  @override
+  String get customerImportTitle => 'Import customers from CSV';
+
+  @override
+  String get customerImportDescription =>
+      'Upload a CSV preview, review warnings, then confirm the server-authoritative import.';
+
+  @override
+  String get customerImportSelectFile => 'Select CSV file';
+
+  @override
+  String get customerImportChooseAnother => 'Choose another file';
+
+  @override
+  String customerImportDetected(String encoding, String delimiter) {
+    return 'Detected $encoding encoding and $delimiter delimiter';
+  }
+
+  @override
+  String get customerImportTotal => 'Total';
+
+  @override
+  String get customerImportReady => 'Ready';
+
+  @override
+  String get customerImportWarnings => 'Warnings';
+
+  @override
+  String get customerImportRejected => 'Rejected';
+
+  @override
+  String get customerImportDuplicateCandidates => 'Duplicate candidates';
+
+  @override
+  String get customerImportCreateMissingGroups => 'Create missing groups';
+
+  @override
+  String get customerImportIssues => 'Representative row issues';
+
+  @override
+  String get customerImportUnnamedRow => 'Unnamed row';
+
+  @override
+  String get customerImportSummary => 'Import summary';
+
+  @override
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  ) {
+    return 'Created $created, skipped $skipped, failed $failed; groups $groups, memberships $memberships.';
+  }
+
+  @override
+  String get customerImportConfirmTitle => 'Confirm customer import';
+
+  @override
+  String get customerImportConfirmMessage =>
+      'The server will create customers and memberships according to this preview. Existing customers are not updated.';
+
+  @override
+  String get customerImportConfirmAction => 'Confirm import';
+
+  @override
+  String get customerImportStart => 'Start import';
+
+  @override
+  String get customerImportCompletedWithErrors => 'Completed with errors';
+
+  @override
+  String get customerImportDownloadErrors => 'Download error report';
+
+  @override
+  String get customerImportValidationFailed =>
+      'The CSV file could not be validated. Check its encoding, columns, and size.';
+
+  @override
+  String get customerImportAlreadyCompleted =>
+      'This CSV import was already completed. Choose a new preview before committing.';
+
+  @override
+  String get customerImportGenericFailure =>
+      'The customer import could not be completed. Please try again safely.';
 }

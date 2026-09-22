@@ -9,6 +9,8 @@ import '../controllers/customer_list_state.dart';
 import '../models/customer_models.dart';
 import '../models/customer_queries.dart';
 import '../repositories/customer_management_repository.dart';
+import '../repositories/customer_import_repository.dart';
+import 'customer_import_dialog.dart';
 import '../widgets/customer_collection.dart';
 import '../widgets/customer_management_page_header.dart';
 import '../widgets/customer_management_state_panel.dart';
@@ -16,9 +18,14 @@ import '../widgets/customer_management_surface.dart';
 import '../widgets/customer_management_visual_tokens.dart';
 
 class CustomerListScreen extends StatefulWidget {
-  const CustomerListScreen({super.key, this.lifecycleRepository});
+  const CustomerListScreen({
+    super.key,
+    this.lifecycleRepository,
+    this.importRepository,
+  });
 
   final CustomerManagementRepository? lifecycleRepository;
+  final CustomerImportRepository? importRepository;
 
   @override
   State<CustomerListScreen> createState() => _CustomerListScreenState();
@@ -62,6 +69,25 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(l10n.customerManagementCreateCustomer),
               ),
+              secondaryAction: widget.importRepository == null
+                  ? null
+                  : OutlinedButton.icon(
+                      key: const Key('customer-import-action'),
+                      onPressed: () async {
+                        final bool? refresh = await showCustomerImportDialog(
+                          context,
+                          repository: widget.importRepository!,
+                          onCompleted: context
+                              .read<CustomerListCubit>()
+                              .refresh,
+                        );
+                        if (refresh == true && context.mounted) {
+                          await context.read<CustomerListCubit>().refresh();
+                        }
+                      },
+                      icon: const Icon(Icons.upload_file_outlined, size: 18),
+                      label: Text(l10n.customerImportAction),
+                    ),
             ),
             const SizedBox(height: 20),
             CustomerManagementSurface(

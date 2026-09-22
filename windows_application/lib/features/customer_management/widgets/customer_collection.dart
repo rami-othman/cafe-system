@@ -54,99 +54,107 @@ class CustomerCollection extends StatelessWidget {
               ),
             )
           : SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: DataTable(
-                  showCheckboxColumn: false,
-                  headingRowHeight: 42,
-                  dataRowMinHeight: 60,
-                  dataRowMaxHeight: 60,
-                  horizontalMargin: 20,
-                  columnSpacing: 20,
-                  dividerThickness: 1,
-                  headingTextStyle: CustomerManagementVisualTokens.tableHeading,
-                  dataTextStyle: CustomerManagementVisualTokens.tableCell,
-                  headingRowColor: WidgetStatePropertyAll<Color>(
-                    CustomerManagementVisualTokens.warmHeader,
-                  ),
-                  columns: <DataColumn>[
-                    DataColumn(
-                      label: Text(
-                        AppLocalizations.of(
-                          context,
-                        ).customerManagementCustomerNumber,
+              key: const Key('customer-list-scroll'),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: DataTable(
+                    showCheckboxColumn: false,
+                    headingRowHeight: 42,
+                    dataRowMinHeight: 60,
+                    dataRowMaxHeight: 60,
+                    horizontalMargin: 20,
+                    columnSpacing: 20,
+                    dividerThickness: 1,
+                    headingTextStyle:
+                        CustomerManagementVisualTokens.tableHeading,
+                    dataTextStyle: CustomerManagementVisualTokens.tableCell,
+                    headingRowColor: WidgetStatePropertyAll<Color>(
+                      CustomerManagementVisualTokens.warmHeader,
+                    ),
+                    columns: <DataColumn>[
+                      DataColumn(
+                        label: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).customerManagementCustomerNumber,
+                        ),
                       ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        AppLocalizations.of(context).customerManagementName,
+                      DataColumn(
+                        label: Text(
+                          AppLocalizations.of(context).customerManagementName,
+                        ),
                       ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        AppLocalizations.of(context).customerManagementPhone,
+                      DataColumn(
+                        label: Text(
+                          AppLocalizations.of(context).customerManagementPhone,
+                        ),
                       ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        AppLocalizations.of(
-                          context,
-                        ).customerManagementGroupsLabel,
+                      DataColumn(
+                        label: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).customerManagementGroupsLabel,
+                        ),
                       ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        AppLocalizations.of(context).customerManagementStatus,
+                      DataColumn(
+                        label: Text(
+                          AppLocalizations.of(context).customerManagementStatus,
+                        ),
                       ),
-                    ),
-                    DataColumn(
-                      label: Text(AppLocalizations.of(context).cmvpMoreActions),
-                    ),
-                  ],
-                  rows: customers
-                      .map(
-                        (Customer customer) => DataRow(
-                          onSelectChanged: (_) => onSelected(customer),
-                          cells: <DataCell>[
-                            DataCell(
-                              CustomerBidiValue(value: customer.customerNumber),
-                            ),
-                            DataCell(
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 190,
+                      DataColumn(
+                        label: Text(
+                          AppLocalizations.of(context).cmvpMoreActions,
+                        ),
+                      ),
+                    ],
+                    rows: customers
+                        .map(
+                          (Customer customer) => DataRow(
+                            onSelectChanged: (_) => onSelected(customer),
+                            cells: <DataCell>[
+                              DataCell(
+                                CustomerBidiValue(
+                                  value: customer.customerNumber,
                                 ),
-                                child: Text(
-                                  customer.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF231005),
-                                    fontFamilyFallback:
-                                        CustomerManagementVisualTokens
-                                            .fontFamilyFallback,
+                              ),
+                              DataCell(
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 190,
+                                  ),
+                                  child: Text(
+                                    customer.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF231005),
+                                      fontFamilyFallback:
+                                          CustomerManagementVisualTokens
+                                              .fontFamilyFallback,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            DataCell(
-                              CustomerBidiValue(
-                                value: _primaryPhone(context, customer),
+                              DataCell(
+                                CustomerBidiValue(
+                                  value: _primaryPhone(context, customer),
+                                ),
                               ),
-                            ),
-                            DataCell(_GroupSummary(customer: customer)),
-                            DataCell(
-                              CustomerLifecycleBadge(
-                                lifecycle: customer.lifecycle,
+                              DataCell(_GroupSummary(customer: customer)),
+                              DataCell(
+                                CustomerLifecycleBadge(
+                                  lifecycle: customer.lifecycle,
+                                ),
                               ),
-                            ),
-                            DataCell(_rowActions(context, customer)),
-                          ],
-                        ),
-                      )
-                      .toList(growable: false),
+                              DataCell(_rowActions(context, customer)),
+                            ],
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
                 ),
               ),
             );

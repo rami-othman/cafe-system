@@ -15,7 +15,6 @@ class CustomerPagination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
     return Container(
       key: const Key('customer-management-pagination-footer'),
       padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8),
@@ -35,14 +34,14 @@ class CustomerPagination extends StatelessWidget {
                 ? () => onPageChanged(meta.currentPage - 1)
                 : null,
             tooltip: l10n.customerManagementPreviousPage,
-            icon: Icon(isRtl ? Icons.chevron_right : Icons.chevron_left),
+            icon: const Icon(Icons.chevron_left),
           ),
           IconButton(
             onPressed: meta.currentPage < meta.lastPage
                 ? () => onPageChanged(meta.currentPage + 1)
                 : null,
             tooltip: l10n.customerManagementNextPage,
-            icon: Icon(isRtl ? Icons.chevron_left : Icons.chevron_right),
+            icon: const Icon(Icons.chevron_right),
           ),
         ],
       ),
