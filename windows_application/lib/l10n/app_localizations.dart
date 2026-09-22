@@ -15661,6 +15661,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close customization dialog'**
   String get posCloseCustomizationDialog;
+
+  /// No description provided for @customerImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import CSV'**
+  String get customerImportAction;
+
+  /// No description provided for @customerImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import customers from CSV'**
+  String get customerImportTitle;
+
+  /// No description provided for @customerImportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a CSV preview, review warnings, then confirm the server-authoritative import.'**
+  String get customerImportDescription;
+
+  /// No description provided for @customerImportSelectFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select CSV file'**
+  String get customerImportSelectFile;
+
+  /// No description provided for @customerImportChooseAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another file'**
+  String get customerImportChooseAnother;
+
+  /// No description provided for @customerImportDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected {encoding} encoding and {delimiter} delimiter'**
+  String customerImportDetected(String encoding, String delimiter);
+
+  /// No description provided for @customerImportTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get customerImportTotal;
+
+  /// No description provided for @customerImportReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get customerImportReady;
+
+  /// No description provided for @customerImportWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get customerImportWarnings;
+
+  /// No description provided for @customerImportRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get customerImportRejected;
+
+  /// No description provided for @customerImportDuplicateCandidates.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate candidates'**
+  String get customerImportDuplicateCandidates;
+
+  /// No description provided for @customerImportCreateMissingGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Create missing groups'**
+  String get customerImportCreateMissingGroups;
+
+  /// No description provided for @customerImportIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Representative row issues'**
+  String get customerImportIssues;
+
+  /// No description provided for @customerImportUnnamedRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed row'**
+  String get customerImportUnnamedRow;
+
+  /// No description provided for @customerImportSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Import summary'**
+  String get customerImportSummary;
+
+  /// No description provided for @customerImportCountsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {created}, skipped {skipped}, failed {failed}; groups {groups}, memberships {memberships}.'**
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  );
+
+  /// No description provided for @customerImportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm customer import'**
+  String get customerImportConfirmTitle;
+
+  /// No description provided for @customerImportConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The server will create customers and memberships according to this preview. Existing customers are not updated.'**
+  String get customerImportConfirmMessage;
+
+  /// No description provided for @customerImportConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm import'**
+  String get customerImportConfirmAction;
+
+  /// No description provided for @customerImportStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start import'**
+  String get customerImportStart;
+
+  /// No description provided for @customerImportCompletedWithErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed with errors'**
+  String get customerImportCompletedWithErrors;
+
+  /// No description provided for @customerImportDownloadErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Download error report'**
+  String get customerImportDownloadErrors;
+
+  /// No description provided for @customerImportValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The CSV file could not be validated. Check its encoding, columns, and size.'**
+  String get customerImportValidationFailed;
+
+  /// No description provided for @customerImportAlreadyCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This CSV import was already completed. Choose a new preview before committing.'**
+  String get customerImportAlreadyCompleted;
+
+  /// No description provided for @customerImportGenericFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer import could not be completed. Please try again safely.'**
+  String get customerImportGenericFailure;
 }
 
 class _AppLocalizationsDelegate

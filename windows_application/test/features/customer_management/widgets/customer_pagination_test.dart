@@ -53,7 +53,7 @@ void main() {
     expect(requestedPage, 3);
   });
 
-  testWidgets('mirrors pagination icons in RTL and disables boundary actions', (
+  testWidgets('uses direction-aware icons in RTL and respects boundaries', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -67,9 +67,9 @@ void main() {
             body: CustomerPagination(
               meta: const CustomerPageMeta(
                 currentPage: 1,
-                lastPage: 1,
+                lastPage: 2,
                 perPage: 25,
-                total: 0,
+                total: 26,
               ),
               onPageChanged: (_) {},
             ),
@@ -78,21 +78,31 @@ void main() {
       ),
     );
 
-    expect(
-      tester
-          .widget<IconButton>(
-            find.widgetWithIcon(IconButton, Icons.chevron_right),
-          )
-          .onPressed,
-      isNull,
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CustomerPagination)),
     );
-    expect(
-      tester
-          .widget<IconButton>(
-            find.widgetWithIcon(IconButton, Icons.chevron_left),
-          )
-          .onPressed,
-      isNull,
+    final Finder previous = find
+        .ancestor(
+          of: find.byTooltip(l10n.customerManagementPreviousPage),
+          matching: find.byType(IconButton),
+        )
+        .first;
+    final Finder next = find
+        .ancestor(
+          of: find.byTooltip(l10n.customerManagementNextPage),
+          matching: find.byType(IconButton),
+        )
+        .first;
+    final Icon previousIcon = tester.widget<Icon>(
+      find.descendant(of: previous, matching: find.byType(Icon)),
     );
+    final Icon nextIcon = tester.widget<Icon>(
+      find.descendant(of: next, matching: find.byType(Icon)),
+    );
+
+    expect(previousIcon.icon, Icons.chevron_left);
+    expect(nextIcon.icon, Icons.chevron_right);
+    expect(tester.widget<IconButton>(previous).onPressed, isNull);
+    expect(tester.widget<IconButton>(next).onPressed, isNotNull);
   });
 }

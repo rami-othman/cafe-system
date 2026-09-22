@@ -8761,4 +8761,94 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get posCloseCustomizationDialog => 'إغلاق نافذة تخصيص المنتج';
+
+  @override
+  String get customerImportAction => 'استيراد CSV';
+
+  @override
+  String get customerImportTitle => 'استيراد العملاء من CSV';
+
+  @override
+  String get customerImportDescription =>
+      'ارفع ملف CSV لمراجعة المعاينة والتحذيرات ثم أكد الاستيراد.';
+
+  @override
+  String get customerImportSelectFile => 'اختر ملف CSV';
+
+  @override
+  String get customerImportChooseAnother => 'اختر ملفاً آخر';
+
+  @override
+  String customerImportDetected(String encoding, String delimiter) {
+    return 'الترميز $encoding والفاصل $delimiter';
+  }
+
+  @override
+  String get customerImportTotal => 'الإجمالي';
+
+  @override
+  String get customerImportReady => 'جاهز';
+
+  @override
+  String get customerImportWarnings => 'تحذيرات';
+
+  @override
+  String get customerImportRejected => 'مرفوض';
+
+  @override
+  String get customerImportDuplicateCandidates => 'مرشحو التكرار';
+
+  @override
+  String get customerImportCreateMissingGroups => 'إنشاء المجموعات المفقودة';
+
+  @override
+  String get customerImportIssues => 'مشكلات صفوف ممثلة';
+
+  @override
+  String get customerImportUnnamedRow => 'صف بلا اسم';
+
+  @override
+  String get customerImportSummary => 'ملخص الاستيراد';
+
+  @override
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  ) {
+    return 'تم إنشاء $created، وتخطي $skipped، وفشل $failed؛ المجموعات $groups، العضويات $memberships.';
+  }
+
+  @override
+  String get customerImportConfirmTitle => 'تأكيد استيراد العملاء';
+
+  @override
+  String get customerImportConfirmMessage =>
+      'سينشئ الخادم العملاء والعضويات وفق المعاينة. لن يتم تحديث العملاء الموجودين.';
+
+  @override
+  String get customerImportConfirmAction => 'تأكيد الاستيراد';
+
+  @override
+  String get customerImportStart => 'بدء الاستيراد';
+
+  @override
+  String get customerImportCompletedWithErrors => 'اكتمل مع أخطاء';
+
+  @override
+  String get customerImportDownloadErrors => 'تنزيل تقرير الأخطاء';
+
+  @override
+  String get customerImportValidationFailed =>
+      'تعذر التحقق من ملف CSV. تحقق من الترميز والأعمدة والحجم.';
+
+  @override
+  String get customerImportAlreadyCompleted =>
+      'اكتمل استيراد ملف CSV هذا مسبقاً. اختر معاينة جديدة قبل التأكيد.';
+
+  @override
+  String get customerImportGenericFailure =>
+      'تعذر إكمال استيراد العملاء. يرجى المحاولة بأمان.';
 }

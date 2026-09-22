@@ -146,6 +146,7 @@ import '../features/customer_management/controllers/customer_form_cubit.dart';
 import '../features/customer_management/controllers/customer_list_cubit.dart';
 import '../features/customer_management/models/customer_management_access.dart';
 import '../features/customer_management/repositories/customer_management_repository.dart';
+import '../features/customer_management/repositories/customer_import_repository.dart';
 import '../features/customer_management/controllers/customer_group_list_cubit.dart';
 import '../features/customer_management/controllers/customer_group_detail_cubit.dart';
 import '../features/customer_management/controllers/customer_group_form_cubit.dart';
@@ -389,6 +390,9 @@ final GoRouter appRouter = GoRouter(
                 child: CustomerListScreen(
                   lifecycleRepository:
                       serviceLocator<CustomerManagementRepository>(),
+                  importRepository:
+                      serviceLocator<CustomerManagementRepository>()
+                          as CustomerImportRepository,
                 ),
               ),
         ),

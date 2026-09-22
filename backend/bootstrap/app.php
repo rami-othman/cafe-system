@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Customer\CustomerDomainException;
+use App\Services\Customer\Import\CustomerImportException;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
@@ -78,6 +79,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (CustomerDomainException $exception, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => $exception->getMessage(), 'code' => $exception->domainCode], $exception->status);
+            }
+        });
+        $exceptions->render(function (CustomerImportException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => 'Customer import request could not be completed.', 'code' => $exception->domainCode], $exception->status);
             }
         });
         $exceptions->render(function (DomainException $exception, Request $request) {
