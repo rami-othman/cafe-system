@@ -10,6 +10,7 @@ enum CafeConfigurationDestination {
   overview('/cafe-configuration/overview', Icons.space_dashboard_outlined),
   profile('/cafe-configuration/profile', Icons.storefront_outlined),
   branches('/cafe-configuration/branches', Icons.account_tree_outlined),
+  printing('/cafe-configuration/printing', Icons.print_outlined),
   team('/cafe-configuration/team', Icons.group_outlined),
   tax('/cafe-configuration/tax', Icons.percent_outlined);
 
@@ -19,6 +20,8 @@ enum CafeConfigurationDestination {
   static CafeConfigurationDestination forPath(String path) =>
       path.contains('/branches')
       ? branches
+      : path.contains('/printing')
+      ? printing
       : path.contains('/team')
       ? team
       : path.contains('/tax')
@@ -139,6 +142,8 @@ class _CafeConfigurationCopy {
       context.maybeL10n?.cafeConfigurationProfile ?? 'Cafe Profile',
     CafeConfigurationDestination.branches =>
       context.maybeL10n?.cafeConfigurationBranches ?? 'Branches',
+    CafeConfigurationDestination.printing =>
+      context.maybeL10n?.cafeConfigurationPrinting ?? 'Printing',
     CafeConfigurationDestination.team =>
       context.maybeL10n?.cafeConfigurationTeamAccess ?? 'Team & Access',
     CafeConfigurationDestination.tax =>

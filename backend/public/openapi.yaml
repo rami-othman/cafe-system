@@ -487,7 +487,7 @@ paths:
   /orders/{orderId}/print:
     post:
       tags: [Receipts]
-      summary: Print receipt or kitchen ticket
+      summary: Queue a local receipt, pre-bill, or kitchen ticket print job
       parameters:
         - $ref: '#/components/parameters/OrderId'
       requestBody:
@@ -503,6 +503,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrintJob'
+
+  /print-jobs/{printJob}:
+    patch:
+      tags: [Receipts]
+      summary: Record a local POS print attempt outcome
+      parameters:
+        - in: path
+          name: printJob
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [printing, completed, failed]
+                failureCode:
+                  type: string
+                  enum: [printer_not_configured, invalid_configuration, configuration_unavailable, receipt_unavailable, rendering_failed, printer_unreachable, printer_timeout, printer_unsupported, printer_failed]
+                  description: Required when status is failed; Laravel stores a safe message for this code.
+      responses:
+        '200':
+          description: Local print job status recorded
 
   /orders/{orderId}/pay:
     post:
@@ -970,8 +999,11 @@ components:
       properties:
         type:
           type: string
-          enum: [receipt, kitchen_ticket]
+          enum: [receipt, pre_bill, kitchen_ticket]
         printerId:
+          type: string
+          nullable: true
+        deviceName:
           type: string
           nullable: true
     PrintJob:
@@ -983,6 +1015,32 @@ components:
         status:
           type: string
           enum: [queued, printing, completed, failed]
+        type:
+          type: string
+          enum: [receipt, pre_bill, kitchen_ticket]
+        printerId:
+          type: string
+          nullable: true
+        deviceName:
+          type: string
+          nullable: true
+        failureCode:
+          type: string
+          nullable: true
+        failureMessage:
+          type: string
+          nullable: true
+        queuedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
     PayOrderRequest:
       type: object
       required: [method, amount]

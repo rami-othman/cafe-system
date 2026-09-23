@@ -184,11 +184,48 @@ class PosApiSmokeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.title', 'Cafe System 618');
 
-        $this->postJson("/api/v1/orders/{$orderId}/print", [
-            'type' => 'receipt',
+        $paymentsBeforePrint = DB::table('payments')->where('order_id', $orderId)->count();
+        $jobId = $this->postJson("/api/v1/orders/{$orderId}/print", [
+            'type' => 'pre_bill',
+            'printerId' => 'Front Counter',
+            'deviceName' => 'windows',
         ])
             ->assertAccepted()
-            ->assertJsonPath('data.status', 'queued');
+            ->assertJsonPath('data.type', 'pre_bill')
+            ->assertJsonPath('data.status', 'queued')
+            ->json('data.id');
+
+        $this->patchJson("/api/v1/print-jobs/{$jobId}", ['status' => 'printing'])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'printing');
+        $this->patchJson("/api/v1/print-jobs/{$jobId}", ['status' => 'completed'])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'completed');
+        $this->assertDatabaseHas('print_jobs', [
+            'id' => $jobId,
+            'order_id' => $orderId,
+            'type' => 'pre_bill',
+            'printer_id' => 'Front Counter',
+            'device_name' => 'windows',
+            'status' => 'completed',
+        ]);
+
+        $failedJobId = $this->postJson("/api/v1/orders/{$orderId}/print", [
+            'type' => 'receipt',
+            'printerId' => 'Front Counter',
+            'deviceName' => 'windows',
+        ])->assertAccepted()->json('data.id');
+        $this->patchJson("/api/v1/print-jobs/{$failedJobId}", [
+            'status' => 'failed',
+            'failureCode' => 'printer_timeout',
+        ])->assertOk()->assertJsonPath('data.failureCode', 'printer_timeout');
+        $this->assertDatabaseHas('print_jobs', [
+            'id' => $failedJobId,
+            'status' => 'failed',
+            'failure_code' => 'printer_timeout',
+            'failure_message' => 'The printer timed out.',
+        ]);
+        $this->assertSame($paymentsBeforePrint, DB::table('payments')->where('order_id', $orderId)->count());
 
         $refundPayload = [
             'type' => 'partial',

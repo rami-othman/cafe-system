@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/printer/controllers/printer_setup_cubit.dart';
 import 'package:windows_application/features/printer/models/printer_config.dart';
+import 'package:windows_application/features/printer/models/receipt_data.dart';
 import 'package:windows_application/features/printer/repositories/device_printer_settings_store.dart';
 import 'package:windows_application/features/printer/services/printer_service.dart';
+import 'package:windows_application/features/printer/services/receipt_renderer.dart';
 
 const PrinterConfig _branch = PrinterConfig(
   ipAddress: '192.168.1.50',
@@ -147,4 +150,18 @@ class _FakePrinter implements PrinterService {
     calls++;
     return result();
   }
+
+  @override
+  Future<PrinterPrintResult> printRaster(
+    PrinterConfig config,
+    ReceiptRaster raster,
+  ) => result();
+
+  @override
+  Future<PrinterPrintResult> printReceipt(
+    PrinterConfig config,
+    ReceiptData receipt,
+    Locale locale, {
+    bool isPreBill = false,
+  }) => result();
 }

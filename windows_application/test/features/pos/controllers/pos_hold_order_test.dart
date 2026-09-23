@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
+import 'package:windows_application/features/pos/controllers/pos_print_cubit.dart';
 import 'package:windows_application/features/pos/controllers/pos_menu_sync_cubit.dart';
 import 'package:windows_application/features/pos/models/backend_order.dart';
 import 'package:windows_application/features/pos/models/backend_order_item.dart';
@@ -25,6 +26,9 @@ import 'package:windows_application/features/pos/repositories/pos_menu_sync_repo
 import 'package:windows_application/features/pos/repositories/pos_repository.dart';
 import 'package:windows_application/features/pos/views/pos_screen.dart';
 import 'package:windows_application/features/pos/widgets/pos_cart_panel.dart';
+import 'package:windows_application/features/printer/models/printer_config.dart';
+import 'package:windows_application/features/printer/repositories/device_printer_settings_store.dart';
+import 'package:windows_application/features/printer/services/printer_service.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 
 void main() {
@@ -267,6 +271,15 @@ void main() {
     (WidgetTester tester) async {
       await cubit.addCustomizedProductToCart(_publishedCustomization());
       repository.holdCompleter = Completer<BackendOrder>();
+      final PosPrintCubit printCubit = PosPrintCubit(
+        repository: PosRepository(),
+        branchSettingsProvider: (_) async =>
+            const PosPrintBranchSettings(printerConfig: PrinterConfig()),
+        deviceSettingsStore: _NoOpPrinterSettingsStore(),
+        printerService: NetworkEscPosPrinterService(),
+        tenantId: 1,
+      );
+      addTearDown(printCubit.close);
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -275,8 +288,11 @@ void main() {
             body: SizedBox(
               width: 900,
               height: 900,
-              child: BlocProvider.value(
-                value: cubit,
+              child: MultiBlocProvider(
+                providers: <BlocProvider<dynamic>>[
+                  BlocProvider<PosCubit>.value(value: cubit),
+                  BlocProvider<PosPrintCubit>.value(value: printCubit),
+                ],
                 child: const PosCartPanel(),
               ),
             ),
@@ -354,6 +370,18 @@ void main() {
 
     expect(find.text('Order held successfully.'), findsOneWidget);
   });
+}
+
+class _NoOpPrinterSettingsStore implements DevicePrinterSettingsStore {
+  @override
+  Future<DevicePrinterSettings> read({required int tenantId}) async =>
+      const DevicePrinterSettings();
+
+  @override
+  Future<void> write({
+    required int tenantId,
+    required DevicePrinterSettings settings,
+  }) async {}
 }
 
 ProductCustomization _publishedCustomization() => ProductCustomization(

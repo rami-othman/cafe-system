@@ -13,9 +13,16 @@ import 'receipt_action_bar.dart';
 import 'receipt_preview_paper.dart';
 
 class ReceiptPreviewDialog extends StatelessWidget {
-  const ReceiptPreviewDialog({super.key, required this.receipt});
+  const ReceiptPreviewDialog({
+    super.key,
+    required this.receipt,
+    required this.onPrintReceipt,
+    this.isPrinting = false,
+  });
 
   final OrderReceipt receipt;
+  final VoidCallback onPrintReceipt;
+  final bool isPrinting;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +84,8 @@ class ReceiptPreviewDialog extends StatelessWidget {
                         context,
                         context.l10n.posWhatsAppPending,
                       ),
-                      onPrintReceipt: () => _completePaymentFeedback(context),
+                      onPrintReceipt: onPrintReceipt,
+                      isPrinting: isPrinting,
                     ),
                   ],
                 ),
@@ -93,14 +101,6 @@ class ReceiptPreviewDialog extends StatelessWidget {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  void _completePaymentFeedback(BuildContext context) {
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    Navigator.of(context).pop();
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(context.l10n.posPaymentCompleted)));
   }
 }
 

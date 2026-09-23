@@ -7,7 +7,6 @@ import '../../../app/localization/localization_extensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/app_text_field.dart';
-import '../../printer/models/printer_config.dart';
 import '../controllers/cafe_configuration_cubits.dart';
 import '../controllers/cafe_configuration_overview_cubit.dart';
 import '../models/cafe_configuration_models.dart';
@@ -603,110 +602,6 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                         ),
                       ),
                       _FieldError(state.errors['shiftCloseTime']),
-                      const SizedBox(height: AppSpacing.xl),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.lg),
-                      const Text('Printing'),
-                      const SizedBox(height: AppSpacing.sm),
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Enable receipt printing'),
-                        subtitle: const Text(
-                          'Sets the default network printer for this branch.',
-                        ),
-                        value: state.draft.printerConfig.enabled,
-                        onChanged: (bool value) => cubit.update(
-                          state.draft.copyWith(
-                            printerConfig: state.draft.printerConfig.copyWith(
-                              enabled: value,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (state.draft.printerConfig.enabled) ...<Widget>[
-                        TextFormField(
-                          initialValue: state.draft.printerConfig.name,
-                          decoration: const InputDecoration(
-                            labelText: 'Printer name',
-                          ),
-                          onChanged: (String value) => cubit.update(
-                            state.draft.copyWith(
-                              printerConfig: state.draft.printerConfig.copyWith(
-                                name: value,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        TextFormField(
-                          initialValue: state.draft.printerConfig.ipAddress,
-                          keyboardType: TextInputType.url,
-                          decoration: const InputDecoration(
-                            labelText: 'Printer IP address or host',
-                          ),
-                          onChanged: (String value) => cubit.update(
-                            state.draft.copyWith(
-                              printerConfig: state.draft.printerConfig.copyWith(
-                                ipAddress: value,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        TextFormField(
-                          initialValue: state.draft.printerConfig.port
-                              .toString(),
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Printer port',
-                          ),
-                          onChanged: (String value) => cubit.update(
-                            state.draft.copyWith(
-                              printerConfig: state.draft.printerConfig.copyWith(
-                                port: int.tryParse(value) ?? 0,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        DropdownButtonFormField<PrinterPaperWidth>(
-                          initialValue: state.draft.printerConfig.paperWidth,
-                          decoration: const InputDecoration(
-                            labelText: 'Default paper width',
-                          ),
-                          items: PrinterPaperWidth.values
-                              .map(
-                                (PrinterPaperWidth width) =>
-                                    DropdownMenuItem<PrinterPaperWidth>(
-                                      value: width,
-                                      child: Text(width.apiValue),
-                                    ),
-                              )
-                              .toList(growable: false),
-                          onChanged: (PrinterPaperWidth? value) {
-                            if (value != null) {
-                              cubit.update(
-                                state.draft.copyWith(
-                                  printerConfig: state.draft.printerConfig
-                                      .copyWith(paperWidth: value),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        SwitchListTile.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Auto print after payment'),
-                          subtitle: const Text(
-                            'Saved as a branch default; order printing is not enabled in this phase.',
-                          ),
-                          value: state.draft.autoPrintAfterPayment,
-                          onChanged: (bool value) => cubit.update(
-                            state.draft.copyWith(autoPrintAfterPayment: value),
-                          ),
-                        ),
-                        _FieldError(state.errors['printerConfig']),
-                      ],
                     ],
                     _Fact(
                       label: c.currency,

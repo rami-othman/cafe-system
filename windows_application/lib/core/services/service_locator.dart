@@ -6,6 +6,7 @@ import '../network/dio_api_client.dart';
 import '../../features/orders/controllers/orders_cubit.dart';
 import '../../features/orders/repositories/orders_repository.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
+import '../../features/pos/controllers/pos_print_cubit.dart';
 import '../../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../../features/pos/repositories/pos_menu_sync_cache.dart';
 import '../../features/pos/repositories/pos_menu_sync_repository.dart';
@@ -68,6 +69,7 @@ import '../../features/auth/repositories/auth_repository.dart';
 import '../../features/auth/repositories/auth_session_storage.dart';
 import '../../features/auth/models/auth_session.dart';
 import '../../features/cafe_configuration/controllers/cafe_configuration_cubits.dart';
+import '../../features/cafe_configuration/controllers/printing_cubit.dart';
 import '../../features/cafe_configuration/controllers/cafe_configuration_overview_cubit.dart';
 import '../../features/cafe_configuration/controllers/tax_cubit.dart';
 import '../../features/cafe_configuration/controllers/team_cubit.dart';
@@ -150,6 +152,25 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<PosCubit>()) {
     serviceLocator.registerFactory<PosCubit>(
       () => PosCubit(repository: serviceLocator<PosRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<PosPrintCubit>()) {
+    serviceLocator.registerFactory<PosPrintCubit>(
+      () => PosPrintCubit(
+        repository: serviceLocator<PosRepository>(),
+        branchSettingsProvider: (int branchId) async {
+          final branch = await serviceLocator<CafeConfigurationRepository>()
+              .getBranch(branchId);
+          return PosPrintBranchSettings(
+            printerConfig: branch.printerConfig,
+            autoPrintAfterPayment: branch.autoPrintAfterPayment,
+          );
+        },
+        deviceSettingsStore: serviceLocator<DevicePrinterSettingsStore>(),
+        printerService: serviceLocator<PrinterService>(),
+        tenantId:
+            serviceLocator<AuthSessionCubit>().state.session?.tenant.id ?? 0,
+      ),
     );
   }
   if (!serviceLocator.isRegistered<PosMenuSyncCache>()) {
@@ -440,6 +461,11 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<BranchEditorCubit>()) {
     serviceLocator.registerFactory<BranchEditorCubit>(
       () => BranchEditorCubit(serviceLocator<CafeConfigurationRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<PrintingCubit>()) {
+    serviceLocator.registerFactory<PrintingCubit>(
+      () => PrintingCubit(serviceLocator<CafeConfigurationRepository>()),
     );
   }
   if (!serviceLocator.isRegistered<CafeConfigurationOverviewCubit>()) {

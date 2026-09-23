@@ -12,10 +12,12 @@ class ReceiptActionBar extends StatelessWidget {
     super.key,
     required this.onSendViaWhatsApp,
     required this.onPrintReceipt,
+    this.isPrinting = false,
   });
 
   final VoidCallback onSendViaWhatsApp;
   final VoidCallback onPrintReceipt;
+  final bool isPrinting;
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +53,18 @@ class ReceiptActionBar extends StatelessWidget {
           SizedBox(
             height: AppSizes.receiptActionButtonHeight,
             child: FilledButton.icon(
-              onPressed: onPrintReceipt,
-              icon: const Icon(Icons.print_outlined, size: 18),
-              label: Text(context.l10n.posPrintReceipt),
+              onPressed: isPrinting ? null : onPrintReceipt,
+              icon: isPrinting
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.print_outlined, size: 18),
+              label: Text(
+                isPrinting
+                    ? context.l10n.posPrinting
+                    : context.l10n.posPrintReceipt,
+              ),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.tertiary,
                 foregroundColor: AppColors.white,

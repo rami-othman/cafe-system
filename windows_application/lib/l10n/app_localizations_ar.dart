@@ -6404,6 +6404,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cafeConfigurationBranches => 'الفروع';
 
   @override
+  String get cafeConfigurationPrinting => 'الطباعة';
+
+  @override
+  String get cafeConfigurationPrintingSubtitle =>
+      'اضبط إعدادات طابعة الإيصالات الافتراضية لكل فرع.';
+
+  @override
+  String get cafeConfigurationReceiptPrinting => 'طباعة الإيصالات';
+
+  @override
+  String get cafeConfigurationReceiptPrintingEnabled => 'تفعيل طباعة الإيصالات';
+
+  @override
+  String get cafeConfigurationPrinterName => 'اسم الطابعة';
+
+  @override
+  String get cafeConfigurationPrinterHost => 'عنوان IP أو اسم المضيف للطابعة';
+
+  @override
+  String get cafeConfigurationPrinterPort => 'منفذ الطابعة';
+
+  @override
+  String get cafeConfigurationPaperWidth => 'عرض الورق';
+
+  @override
+  String get cafeConfigurationAutoPrint => 'الطباعة التلقائية بعد الدفع';
+
+  @override
+  String get cafeConfigurationPrintingSaved =>
+      'تم حفظ إعدادات الطباعة الافتراضية.';
+
+  @override
+  String get cafeConfigurationPrintingDiscard =>
+      'هل تريد تجاهل تغييرات الطباعة غير المحفوظة والانتقال إلى فرع آخر؟';
+
+  @override
+  String get cafeConfigurationPrinterInvalid =>
+      'أدخل عنوان طابعة صالحًا ومنفذًا بين 1 و65535.';
+
+  @override
   String get cafeConfigurationTeamAccess => 'الفريق والوصول';
 
   @override
@@ -8851,4 +8891,51 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get customerImportGenericFailure =>
       'تعذر إكمال استيراد العملاء. يرجى المحاولة بأمان.';
+
+  @override
+  String get posPrinting => 'جارٍ الطباعة...';
+
+  @override
+  String get posRetryPrint => 'إعادة الطباعة';
+
+  @override
+  String get posPrinterSetup => 'إعداد الطابعة';
+
+  @override
+  String get posPrintOrderRequired => 'لا يوجد طلب محفوظ على الخادم للطباعة.';
+
+  @override
+  String get posPrintItemsRequired => 'لا يحتوي هذا الطلب على عناصر للطباعة.';
+
+  @override
+  String get posPreBillUnavailable => 'تتوفر معاينة الطلب قبل الدفع فقط.';
+
+  @override
+  String get posPrintPrinterNotConfigured => 'طابعة الإيصالات غير معدّة.';
+
+  @override
+  String get posPrintInvalidConfiguration =>
+      'إعدادات طابعة الإيصالات غير صالحة.';
+
+  @override
+  String get posPrintConfigurationUnavailable => 'تعذر تحميل إعدادات الطابعة.';
+
+  @override
+  String get posPrintReceiptUnavailable =>
+      'تعذر تحميل إيصال الطلب المعتمد من الخادم.';
+
+  @override
+  String get posPrintRenderingFailed => 'تعذر تجهيز الإيصال للطباعة.';
+
+  @override
+  String get posPrintUnreachable => 'تعذر الاتصال بطابعة الإيصالات.';
+
+  @override
+  String get posPrintTimeout => 'انتهت مهلة الاتصال بالطابعة.';
+
+  @override
+  String get posPrintUnsupported => 'الطباعة غير متاحة على هذا الجهاز.';
+
+  @override
+  String get posPrintFailed => 'فشلت الطباعة. تحقق من الطابعة ثم أعد المحاولة.';
 }

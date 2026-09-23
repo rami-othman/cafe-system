@@ -7,54 +7,86 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../operational_context/controllers/operational_branch_cubit.dart';
+import '../../operational_context/models/operational_branch_state.dart';
 import '../../pos/controllers/pos_cubit.dart';
 import '../../pos/controllers/pos_state.dart';
 import '../controllers/printer_setup_cubit.dart';
 import '../models/printer_config.dart';
 import '../services/printer_service.dart';
 
-class PrinterSetupCard extends StatelessWidget {
+class PrinterSetupCard extends StatefulWidget {
   const PrinterSetupCard({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<PosCubit, PosState>(
-    builder: (BuildContext context, PosState branchState) {
-      final bool selected = branchState.branches.any(
-        (branch) => branch.id == branchState.branchId && branch.isActive,
+  State<PrinterSetupCard> createState() => _PrinterSetupCardState();
+}
+
+class _PrinterSetupCardState extends State<PrinterSetupCard> {
+  @override
+  void initState() {
+    super.initState();
+    final operational = context.read<OperationalBranchCubit>();
+    if (operational.state.branches.isEmpty && !operational.state.isLoading) {
+      operational.loadBranches(
+        preferredBranchId: context.read<PosCubit>().state.branchId,
       );
-      if (!selected) {
+    } else {
+      operational.selectBranch(context.read<PosCubit>().state.branchId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => BlocListener<PosCubit, PosState>(
+    listenWhen: (previous, current) => previous.branchId != current.branchId,
+    listener: (context, state) =>
+        context.read<OperationalBranchCubit>().selectBranch(state.branchId),
+    child: BlocBuilder<OperationalBranchCubit, OperationalBranchState>(
+      builder: (BuildContext context, OperationalBranchState branchState) {
         if (branchState.isLoading) {
           return const _Card(child: Center(child: CircularProgressIndicator()));
         }
-        return _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Text('Printer Setup', style: AppTextStyles.titleMedium),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                branchState.errorMessage == null
-                    ? 'No active branch selected'
-                    : 'Could not load the active branch.',
-              ),
-              if (branchState.errorMessage != null) ...<Widget>[
-                const SizedBox(height: AppSpacing.lg),
-                AppButton(
-                  label: 'Retry',
-                  icon: Icons.refresh,
-                  variant: AppButtonVariant.outlined,
-                  onPressed: context.read<PosCubit>().loadInitialData,
-                ),
-              ],
-            ],
-          ),
+        final bool selected = branchState.branches.any(
+          (branch) =>
+              branch.id == branchState.selectedBranchId && branch.isActive,
         );
-      }
-      return _BranchPrinterSetupCard(
-        key: ValueKey<int>(branchState.branchId),
-        branchId: branchState.branchId,
-      );
-    },
+        if (!selected) {
+          return _Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Text('Printer Setup', style: AppTextStyles.titleMedium),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  branchState.errorMessage == null
+                      ? 'No active branch selected'
+                      : 'Could not load the active branch.',
+                ),
+                ...<Widget>[
+                  const SizedBox(height: AppSpacing.lg),
+                  AppButton(
+                    label: 'Retry',
+                    icon: Icons.refresh,
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () =>
+                        context.read<OperationalBranchCubit>().loadBranches(
+                          preferredBranchId: context
+                              .read<PosCubit>()
+                              .state
+                              .branchId,
+                        ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+        return _BranchPrinterSetupCard(
+          key: ValueKey<int>(branchState.selectedBranchId!),
+          branchId: branchState.selectedBranchId!,
+        );
+      },
+    ),
   );
 }
 

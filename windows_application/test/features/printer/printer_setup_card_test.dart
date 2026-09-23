@@ -11,10 +11,15 @@ import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
 import 'package:windows_application/features/pos/controllers/pos_state.dart';
 import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/features/pos/repositories/pos_repository.dart';
+import 'package:windows_application/features/operational_context/controllers/operational_branch_cubit.dart';
+import 'package:windows_application/features/operational_context/models/operational_branch_state.dart';
+import 'package:windows_application/features/operational_context/repositories/operational_branch_repository.dart';
 import 'package:windows_application/features/printer/controllers/printer_setup_cubit.dart';
 import 'package:windows_application/features/printer/models/printer_config.dart';
 import 'package:windows_application/features/printer/repositories/device_printer_settings_store.dart';
 import 'package:windows_application/features/printer/services/printer_service.dart';
+import 'package:windows_application/features/printer/services/receipt_renderer.dart';
+import 'package:windows_application/features/printer/models/receipt_data.dart';
 import 'package:windows_application/features/printer/views/printer_setup_card.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
 
@@ -35,12 +40,14 @@ const Branch _uptown = Branch(
 
 void main() {
   late _BranchCubit branchCubit;
+  late _OperationalCubit operationalCubit;
   late List<int> requestedBranches;
   late bool failConfig;
 
   setUp(() async {
     await serviceLocator.reset();
     branchCubit = _BranchCubit();
+    operationalCubit = _OperationalCubit();
     requestedBranches = <int>[];
     failConfig = false;
     serviceLocator.registerFactory<PrinterSetupCubit>(
@@ -59,6 +66,7 @@ void main() {
 
   tearDown(() async {
     await branchCubit.close();
+    await operationalCubit.close();
     await serviceLocator.reset();
   });
 
@@ -66,7 +74,7 @@ void main() {
     'Settings printer card loads the selected branch without opening POS',
     (WidgetTester tester) async {
       branchCubit.show(const PosState(branches: <Branch>[_downtown]));
-      await _pumpCard(tester, branchCubit);
+      await _pumpCard(tester, branchCubit, operationalCubit);
 
       expect(requestedBranches, <int>[1]);
       expect(_printerName(tester), 'Printer 1');
@@ -78,7 +86,7 @@ void main() {
     'local override fields enable after branch defaults are turned off',
     (WidgetTester tester) async {
       branchCubit.show(const PosState(branches: <Branch>[_downtown]));
-      await _pumpCard(tester, branchCubit);
+      await _pumpCard(tester, branchCubit, operationalCubit);
 
       expect(
         tester
@@ -123,6 +131,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     branchCubit.show(const PosState(branches: <Branch>[_downtown]));
+    operationalCubit.show(
+      const OperationalBranchState(
+        branches: <Branch>[_downtown],
+        selectedBranchId: 1,
+      ),
+    );
     final AuthSessionCubit auth = AuthSessionCubit(
       repository: OfflineAuthRepository(),
       storage: MemoryAuthSessionStorage(),
@@ -133,6 +147,7 @@ void main() {
       MultiBlocProvider(
         providers: <BlocProvider<dynamic>>[
           BlocProvider<PosCubit>.value(value: branchCubit),
+          BlocProvider<OperationalBranchCubit>.value(value: operationalCubit),
           BlocProvider<AuthSessionCubit>.value(value: auth),
         ],
         child: const MaterialApp(
@@ -162,7 +177,7 @@ void main() {
     WidgetTester tester,
   ) async {
     branchCubit.show(const PosState(branches: <Branch>[_downtown, _uptown]));
-    await _pumpCard(tester, branchCubit);
+    await _pumpCard(tester, branchCubit, operationalCubit);
     branchCubit.show(
       const PosState(branches: <Branch>[_downtown, _uptown], branchId: 2),
     );
@@ -176,13 +191,29 @@ void main() {
     WidgetTester tester,
   ) async {
     branchCubit.show(const PosState(isLoading: true));
-    await _pumpCard(tester, branchCubit, settle: false);
+    operationalCubit.show(const OperationalBranchState(isLoading: true));
+    await _pumpCard(tester, branchCubit, operationalCubit, settle: false);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-    branchCubit.show(const PosState());
+    operationalCubit.show(const OperationalBranchState());
     await tester.pumpAndSettle();
     expect(find.text('No active branch selected'), findsOneWidget);
     expect(requestedBranches, isEmpty);
+  });
+
+  testWidgets('Retry re-resolves branches after a branch lookup failure', (
+    WidgetTester tester,
+  ) async {
+    operationalCubit.reader.fail = true;
+    await _pumpCard(tester, branchCubit, operationalCubit);
+    expect(find.text('Could not load the active branch.'), findsOneWidget);
+
+    operationalCubit.reader.fail = false;
+    operationalCubit.reader.branches = const <Branch>[_downtown];
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(requestedBranches, <int>[1]);
+    expect(_printerName(tester), 'Printer 1');
   });
 
   testWidgets(
@@ -190,7 +221,7 @@ void main() {
     (WidgetTester tester) async {
       failConfig = true;
       branchCubit.show(const PosState(branches: <Branch>[_downtown]));
-      await _pumpCard(tester, branchCubit);
+      await _pumpCard(tester, branchCubit, operationalCubit);
       expect(find.text('Printer setup could not be loaded.'), findsOneWidget);
 
       failConfig = false;
@@ -204,12 +235,25 @@ void main() {
 
 Future<void> _pumpCard(
   WidgetTester tester,
-  PosCubit branchCubit, {
+  PosCubit branchCubit,
+  _OperationalCubit operationalCubit, {
   bool settle = true,
 }) async {
+  if (!operationalCubit.state.isLoading &&
+      branchCubit.state.branches.isNotEmpty) {
+    operationalCubit.show(
+      OperationalBranchState(
+        branches: branchCubit.state.branches,
+        selectedBranchId: branchCubit.state.branchId,
+      ),
+    );
+  }
   await tester.pumpWidget(
-    BlocProvider<PosCubit>.value(
-      value: branchCubit,
+    MultiBlocProvider(
+      providers: <BlocProvider<dynamic>>[
+        BlocProvider<PosCubit>.value(value: branchCubit),
+        BlocProvider<OperationalBranchCubit>.value(value: operationalCubit),
+      ],
       child: const MaterialApp(
         home: Scaffold(body: SingleChildScrollView(child: PrinterSetupCard())),
       ),
@@ -232,6 +276,23 @@ class _BranchCubit extends PosCubit {
   void show(PosState value) => emit(value);
 }
 
+class _OperationalCubit extends OperationalBranchCubit {
+  _OperationalCubit() : this.withReader(_BranchReader());
+  _OperationalCubit.withReader(this.reader) : super(repository: reader);
+  final _BranchReader reader;
+  void show(OperationalBranchState value) => emit(value);
+}
+
+class _BranchReader implements OperationalBranchReader {
+  bool fail = false;
+  List<Branch> branches = const <Branch>[];
+  @override
+  Future<List<Branch>> getActiveBranches() async {
+    if (fail) throw StateError('offline');
+    return branches;
+  }
+}
+
 class _MemoryStore implements DevicePrinterSettingsStore {
   @override
   Future<DevicePrinterSettings> read({required int tenantId}) async =>
@@ -248,4 +309,18 @@ class _FakePrinter implements PrinterService {
   @override
   Future<PrinterPrintResult> printTest(PrinterConfig config) async =>
       const PrinterPrintResult.success();
+
+  @override
+  Future<PrinterPrintResult> printRaster(
+    PrinterConfig config,
+    ReceiptRaster raster,
+  ) async => const PrinterPrintResult.success();
+
+  @override
+  Future<PrinterPrintResult> printReceipt(
+    PrinterConfig config,
+    ReceiptData receipt,
+    Locale locale, {
+    bool isPreBill = false,
+  }) async => const PrinterPrintResult.success();
 }
