@@ -470,12 +470,12 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                           ),
                           ...state.branch!.availablePosWarehouses.map(
                             (warehouse) => DropdownMenuItem<int>(
-                                value: warehouse.id,
-                                child: Text(
-                                  warehouse.name,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                              value: warehouse.id,
+                              child: Text(
+                                warehouse.name,
+                                overflow: TextOverflow.ellipsis,
                               ),
+                            ),
                           ),
                         ],
                         onChanged: (value) => cubit.update(
@@ -506,19 +506,33 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                       const SizedBox(height: AppSpacing.sm),
                       DropdownButtonFormField<int>(
                         key: const Key('branch-pos-cash-drawer'),
-                        initialValue: state.branch!.availablePosCashLocations.any(
-                          (location) => location.id == state.draft.posCashFinancialLocationId,
-                        ) ? state.draft.posCashFinancialLocationId : null,
+                        initialValue:
+                            state.branch!.availablePosCashLocations.any(
+                              (location) =>
+                                  location.id ==
+                                  state.draft.posCashFinancialLocationId,
+                            )
+                            ? state.draft.posCashFinancialLocationId
+                            : null,
                         isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'صندوق نقطة البيع'),
-                        items: state.branch!.availablePosCashLocations.map(
-                          (location) => DropdownMenuItem<int>(
-                            value: location.id,
-                            child: Text(location.name, overflow: TextOverflow.ellipsis),
-                          ),
-                        ).toList(growable: false),
+                        decoration: const InputDecoration(
+                          labelText: 'صندوق نقطة البيع',
+                        ),
+                        items: state.branch!.availablePosCashLocations
+                            .map(
+                              (location) => DropdownMenuItem<int>(
+                                value: location.id,
+                                child: Text(
+                                  location.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
                         onChanged: (value) => cubit.update(
-                          state.draft.copyWith(posCashFinancialLocationId: value),
+                          state.draft.copyWith(
+                            posCashFinancialLocationId: value,
+                          ),
                         ),
                       ),
                       if (state.branch!.posCashFinancialLocationId == null)
@@ -528,28 +542,64 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                       const Text('إعدادات إغلاق الوردية'),
                       DropdownButtonFormField<int>(
                         key: const Key('branch-shift-close-destination'),
-                        initialValue: state.branch!.availableShiftCloseDestinations.any(
-                          (location) => location.id == state.draft.shiftCloseDestinationFinancialLocationId,
-                        ) ? state.draft.shiftCloseDestinationFinancialLocationId : null,
+                        initialValue:
+                            state.branch!.availableShiftCloseDestinations.any(
+                              (location) =>
+                                  location.id ==
+                                  state
+                                      .draft
+                                      .shiftCloseDestinationFinancialLocationId,
+                            )
+                            ? state
+                                  .draft
+                                  .shiftCloseDestinationFinancialLocationId
+                            : null,
                         isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'وجهة النقد عند الإغلاق'),
-                        items: state.branch!.availableShiftCloseDestinations.map((location) => DropdownMenuItem<int>(
-                          value: location.id, child: Text(location.name, overflow: TextOverflow.ellipsis),
-                        )).toList(growable: false),
-                        onChanged: (value) => cubit.update(state.draft.copyWith(shiftCloseDestinationFinancialLocationId: value)),
+                        decoration: const InputDecoration(
+                          labelText: 'وجهة النقد عند الإغلاق',
+                        ),
+                        items: state.branch!.availableShiftCloseDestinations
+                            .map(
+                              (location) => DropdownMenuItem<int>(
+                                value: location.id,
+                                child: Text(
+                                  location.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(
+                            shiftCloseDestinationFinancialLocationId: value,
+                          ),
+                        ),
                       ),
-                      _FieldError(state.errors['shiftCloseDestinationFinancialLocationId']),
+                      _FieldError(
+                        state
+                            .errors['shiftCloseDestinationFinancialLocationId'],
+                      ),
                       TextFormField(
                         initialValue: state.draft.shiftClosingFloatAmount,
-                        decoration: const InputDecoration(labelText: 'الرصيد المتروك للوردية التالية'),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        onChanged: (value) => cubit.update(state.draft.copyWith(shiftClosingFloatAmount: value)),
+                        decoration: const InputDecoration(
+                          labelText: 'الرصيد المتروك للوردية التالية',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(shiftClosingFloatAmount: value),
+                        ),
                       ),
                       _FieldError(state.errors['shiftClosingFloatAmount']),
                       TextFormField(
                         initialValue: state.draft.shiftCloseTime ?? '',
-                        decoration: const InputDecoration(labelText: 'وقت الإغلاق التلقائي (HH:mm)'),
-                        onChanged: (value) => cubit.update(state.draft.copyWith(shiftCloseTime: value)),
+                        decoration: const InputDecoration(
+                          labelText: 'وقت الإغلاق التلقائي (HH:mm)',
+                        ),
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(shiftCloseTime: value),
+                        ),
                       ),
                       _FieldError(state.errors['shiftCloseTime']),
                     ],

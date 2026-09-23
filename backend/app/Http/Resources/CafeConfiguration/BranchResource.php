@@ -24,6 +24,12 @@ class BranchResource extends JsonResource
             'shiftCloseDestinationFinancialLocationId' => $this->shift_close_destination_financial_location_id,
             'shiftClosingFloatAmount' => $this->shift_closing_float_amount,
             'shiftCloseTime' => $this->shift_close_time ? substr($this->shift_close_time, 0, 5) : null,
+            'receiptPrintingEnabled' => $this->receipt_printing_enabled,
+            'defaultPaperWidth' => $this->default_paper_width,
+            'autoPrintAfterPayment' => $this->auto_print_after_payment,
+            'defaultPrinterName' => $this->default_printer_name,
+            'defaultPrinterIp' => $this->default_printer_ip,
+            'defaultPrinterPort' => $this->default_printer_port,
             'availableShiftCloseDestinations' => DB::table('financial_locations as l')
                 ->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
                 ->where('l.tenant_id', $this->tenant_id)->where('l.kind', 'cash')->where('l.is_active', true)

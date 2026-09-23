@@ -20,6 +20,24 @@ import 'package:windows_application/l10n/app_localizations_ar.dart';
 import 'package:windows_application/l10n/app_localizations_en.dart';
 
 void main() {
+  testWidgets('cart PRINT invokes the pre-bill action once', (
+    WidgetTester tester,
+  ) async {
+    var printCalls = 0;
+    await _pump(
+      tester,
+      PosActionButtons(
+        total: 12,
+        onPrint: () => printCalls++,
+        isPrintEnabled: true,
+      ),
+      locale: const Locale('en'),
+    );
+
+    await tester.tap(find.text('Print'));
+    expect(printCalls, 1);
+  });
+
   testWidgets(
     'discount dialog localizes coupon validation search and empty states',
     (WidgetTester tester) async {
@@ -122,9 +140,13 @@ void main() {
   testWidgets('receipt preview and actions render visible Arabic labels', (
     WidgetTester tester,
   ) async {
+    var printCalls = 0;
     await _pump(
       tester,
-      ReceiptPreviewDialog(receipt: _receipt),
+      ReceiptPreviewDialog(
+        receipt: _receipt,
+        onPrintReceipt: () => printCalls++,
+      ),
       locale: const Locale('ar'),
       size: const Size(700, 700),
     );
@@ -135,6 +157,9 @@ void main() {
     expect(find.text('نقداً'), findsOneWidget);
     expect(find.text('إرسال عبر واتساب'), findsOneWidget);
     expect(find.text('طباعة الإيصال'), findsOneWidget);
+    await tester.tap(find.text('طباعة الإيصال'));
+    expect(printCalls, 1);
+    expect(find.text('معاينة الإيصال'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

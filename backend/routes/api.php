@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigur
 use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
 use App\Http\Controllers\Api\CashierDashboardController;
 use App\Http\Controllers\Api\CashierFinanceOptionsController;
+use App\Http\Controllers\Api\CashSourceOptionsController;
 use App\Http\Controllers\Api\CustomerCapabilityController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CustomerGroupLookupController;
@@ -411,6 +412,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
         Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
         Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
+        Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);
         Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
         Route::post('orders/{order}/refunds', [RefundController::class, 'store']);
     });
@@ -467,7 +469,7 @@ Route::prefix('v1')->group(function (): void {
         });
 
         Route::prefix('finance')->group(function (): void {
-            Route::get('cash-source-options', \App\Http\Controllers\Api\CashSourceOptionsController::class)->middleware('finance.permission:finance.cash_sources.view');
+            Route::get('cash-source-options', CashSourceOptionsController::class)->middleware('finance.permission:finance.cash_sources.view');
             Route::get('dashboard', [FinanceDashboardController::class, 'show'])->middleware('finance.permission:finance.view');
             Route::get('dashboard/trends', [FinanceDashboardController::class, 'trends'])->middleware('finance.permission:finance.view');
             Route::get('dashboard/branches', [FinanceDashboardController::class, 'branches'])->middleware('finance.permission:finance.view');

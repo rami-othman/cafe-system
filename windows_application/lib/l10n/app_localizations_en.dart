@@ -6414,6 +6414,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cafeConfigurationBranches => 'Branches';
 
   @override
+  String get cafeConfigurationPrinting => 'Printing';
+
+  @override
+  String get cafeConfigurationPrintingSubtitle =>
+      'Set receipt printer defaults for each branch.';
+
+  @override
+  String get cafeConfigurationReceiptPrinting => 'Receipt printing';
+
+  @override
+  String get cafeConfigurationReceiptPrintingEnabled =>
+      'Receipt Printing Enabled';
+
+  @override
+  String get cafeConfigurationPrinterName => 'Printer Name';
+
+  @override
+  String get cafeConfigurationPrinterHost => 'Printer IP / Host';
+
+  @override
+  String get cafeConfigurationPrinterPort => 'Printer Port';
+
+  @override
+  String get cafeConfigurationPaperWidth => 'Paper Width';
+
+  @override
+  String get cafeConfigurationAutoPrint => 'Auto Print After Payment';
+
+  @override
+  String get cafeConfigurationPrintingSaved => 'Printing defaults saved.';
+
+  @override
+  String get cafeConfigurationPrintingDiscard =>
+      'Discard unsaved printing changes and switch branches?';
+
+  @override
+  String get cafeConfigurationPrinterInvalid =>
+      'Enter a valid printer host and port (1–65535).';
+
+  @override
   String get cafeConfigurationTeamAccess => 'Team & Access';
 
   @override
@@ -8860,4 +8900,57 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get customerImportGenericFailure =>
       'The customer import could not be completed. Please try again safely.';
+
+  @override
+  String get posPrinting => 'Printing...';
+
+  @override
+  String get posRetryPrint => 'Retry Print';
+
+  @override
+  String get posPrinterSetup => 'Printer Setup';
+
+  @override
+  String get posPrintOrderRequired =>
+      'No saved backend order is available to print.';
+
+  @override
+  String get posPrintItemsRequired => 'This order has no items to print.';
+
+  @override
+  String get posPreBillUnavailable =>
+      'A pre-bill is only available before payment.';
+
+  @override
+  String get posPrintPrinterNotConfigured =>
+      'Receipt printer is not configured.';
+
+  @override
+  String get posPrintInvalidConfiguration =>
+      'Receipt printer settings are invalid.';
+
+  @override
+  String get posPrintConfigurationUnavailable =>
+      'Printer settings could not be loaded.';
+
+  @override
+  String get posPrintReceiptUnavailable =>
+      'The authoritative order receipt could not be loaded.';
+
+  @override
+  String get posPrintRenderingFailed => 'The receipt could not be rendered.';
+
+  @override
+  String get posPrintUnreachable => 'Could not connect to the receipt printer.';
+
+  @override
+  String get posPrintTimeout => 'The printer timed out.';
+
+  @override
+  String get posPrintUnsupported =>
+      'Receipt printing is unavailable on this device.';
+
+  @override
+  String get posPrintFailed =>
+      'Printing failed. Check the printer and try again.';
 }

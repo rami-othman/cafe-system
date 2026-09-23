@@ -19,6 +19,7 @@ import '../models/payment_summary.dart';
 import '../models/pos_product.dart';
 import '../models/shift.dart';
 import '../models/update_order_item_request.dart';
+import '../../printer/models/receipt_data.dart';
 
 class PosRepository {
   PosRepository({this.apiClient});
@@ -115,7 +116,16 @@ class PosRepository {
 
   Future<List<Customer>> getCustomers({String? search}) async {
     if (!_usesBackend) {
-      return _fakeCustomers();
+      final customers = _fakeCustomers();
+      final query = search?.trim().toLowerCase() ?? '';
+      if (query.isEmpty) return customers;
+      return customers
+          .where(
+            (customer) =>
+                customer.name.toLowerCase().contains(query) ||
+                customer.phone.toLowerCase().contains(query),
+          )
+          .toList(growable: false);
     }
 
     final Map<String, dynamic> query = <String, dynamic>{};
@@ -354,6 +364,42 @@ class PosRepository {
   Future<OrderReceipt> getReceipt(int orderId) async {
     final dynamic response = await apiClient!.get('orders/$orderId/receipt');
     return orderReceiptFromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  Future<ReceiptData> getPrintableReceipt(int orderId) async {
+    final dynamic response = await apiClient!.get('orders/$orderId/receipt');
+    return ReceiptData.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  Future<int> createPrintJob({
+    required int orderId,
+    required String type,
+    String? printerId,
+    String? deviceName,
+  }) async {
+    final dynamic response = await apiClient!.post(
+      'orders/$orderId/print',
+      data: <String, dynamic>{
+        'type': type,
+        'printerId': printerId,
+        'deviceName': deviceName,
+        'channel': 'local',
+      },
+    );
+    final int? id = readInt((response as Map)['id']);
+    if (id == null || id <= 0) throw const FormatException();
+    return id;
+  }
+
+  Future<void> updatePrintJob({
+    required int printJobId,
+    required String status,
+    String? failureCode,
+  }) async {
+    await apiClient!.patch(
+      'print-jobs/$printJobId',
+      data: <String, dynamic>{'status': status, 'failureCode': ?failureCode},
+    );
   }
 
   PosProduct _productFromJson(Map<String, dynamic> json) {

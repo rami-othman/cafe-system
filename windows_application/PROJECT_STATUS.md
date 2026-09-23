@@ -431,3 +431,40 @@ future work and it is not part of Batch 12.
 - The detail view shows the selling unit and line totals. Credit Note restock uses the original stock movement and cost snapshot.
 - Focused backend pricing and posting tests, new raw-material tests, and targeted Flutter tests pass. The broader sales suites still contain failures in payment widget and sales-reporting fixtures.
 - Deployment was not performed.
+### 2026-09-23 - Printer Setup active branch resolution
+
+- Printer Setup now follows the shell branch selector and loads printer defaults from the selected branch's configuration API. Branch changes reload automatically; loading, no selection, and configuration failures have distinct states, and Retry reloads the selected branch.
+- Focused printer tests cover initial branch loading without visiting POS, branch switching, no branch, and configuration failure with retry. The printer suite passes (15 tests); modified paths pass Flutter analysis, Dart formatting, and `git diff --check`.
+
+### 2026-09-23 - Printer Setup Settings overflow follow-up
+
+- The Settings content now scrolls within its existing page layout so the printer card and actions remain reachable at the reported Windows window height. The local printer fields remain intentionally disabled while branch defaults are selected; turning that switch off enables the device override fields.
+- Added focused widget coverage for the switch and for the full Settings layout at the reported desktop height. All 17 focused printer tests pass, the six modified Flutter paths pass analysis, and formatting and `git diff --check` pass.
+
+### 2026-09-23 - P2 receipt raster printing
+
+- Printer Setup resolves the active branch through the shell's operational branch context independently of visiting POS. Loading, no selection, branch lookup failure, and configuration failure have separate states; Retry re-fetches branches or configuration as appropriate.
+- The receipt renderer reads the backend receipt contract without recalculating totals, shapes Arabic and mixed text with bundled fonts, and emits inspectable PNG plus RGBA raster bytes at 384 dots for 58mm and 576 dots for 80mm. Zero-balance receipts show no payment required and suppress Cash.
+- PrinterService converts the raster to ESC/POS GS v 0 image blocks and reuses the existing TCP connection for initialize, image, feed, and cut. Rendering errors remain separate from network results. POS print actions remain for P3.
+
+### 2026-09-23 - P3 POS printing integration
+
+- The existing cart PRINT action now prints a saved order as a pre-bill using the authoritative receipt endpoint and configured effective printer. It displays ORDER CHECK / NOT PAID, refuses orders without items or orders the backend reports as paid, and does not submit or mutate payment.
+- The post-payment Print Receipt action and branch autoPrintAfterPayment setting use the authoritative receipt, ReceiptRenderer, and local PrinterService. Printing is single-flight, auto print is deduplicated per paid order, failures leave payment state intact, and explicit Retry creates a new print attempt.
+- Zero-total receipts show Total 0 and No payment required; payment labels are read from the backend and zero-balance receipts do not show Cash. Printer configuration, API, rendering, timeout, connection, and write failures map to localized safe messages with Retry, Close, and Printer Setup where applicable.
+- Local print_jobs now record pre_bill/receipt type, effective printer and device, queued/started/completed timestamps, and safe failure codes/messages through queued -> printing -> completed/failed transitions. Laravel records the attempt only and does not print.
+- Verification: focused Flutter POS/printer/payment suites passed (77 tests); the 26 modified Dart paths pass Flutter analyze; Dart formatting and git diff --check pass. PosApiSmokeTest passed (2 tests / 78 assertions), DiscountRuntimeEligibilityTest passed (8 / 91). Windows Release and Android APK builds passed.
+- Additional legacy checks: test/widget_test.dart has five POS shell expectation failures before reaching its print assertions; its static auth fixture has no absolute expiry, so it does not enter the authenticated POS route. SaleAccountingApiTest passed 27 tests but its cash drawer balance assertion failed (actual 0.0, expected 4.86). The zero-balance cases passed in both the dedicated discount suite and SaleAccountingApiTest.
+- Fixed the live ListTile ink/background assertion in the decorated availability panel by placing panel contents on a transparent Material surface.
+
+### 2026-09-23 - P3 POS printing software closure
+
+- The clean Docker/PostgreSQL rerun of `SaleAccountingApiTest` repeated the same result twice: 27 passed, 1 failed, 290 assertions. The failing 4.86 cash sale posts successfully, but its cash journal debit has no `financial_location_id`: `PaymentController::postSale` supplies only `accountCode` and amount, and `SalePaymentMethodResolver` returns no location. `FinancialAccountBalanceQuery` filters cash drawer balances by `financial_location_id`, so the drawer endpoint remains at 0.0. The payment posting and failing test predate P3; zero-balance and card accounting cases passed. Finance posting was left unchanged for separate repair.
+- `widget_test.dart` now uses a current authenticated session with absolute expiry, so it enters POS. Assertions follow the current localized POS labels and still check customization, responsive layout, payment, receipt, print feedback, and customer selection. The offline customer fixture now honors the same search query as the backend. All 6 widget tests pass.
+- Final focused Flutter printer, receipt, POS, payment, and shell group: 87 passed. `DiscountRuntimeEligibilityTest` and `PosApiSmokeTest`: 10 passed, 169 assertions. Affected Flutter paths analyze cleanly; 24 Dart paths are formatted; Pint and `git diff --check` pass. P3 print behavior received no changes in this closure pass. Software P3 can be marked CLOSED with the independent Finance cash drawer defect tracked separately; physical printer output remains a manual acceptance test.
+
+### 2026-09-23 - Cafe Settings Printing tab
+
+- Moved branch receipt printer defaults from Branch Edit into Cafe Settings > Printing. The tab selects a tenant branch, prefers the current operational branch when selected, and reads and saves the existing branch printer fields through CafeConfigurationRepository. Device Printer Setup remains separate.
+- Added English and Arabic strings and focused navigation, controller, and widget coverage. The focused Cafe Settings and printer tests pass (30 tests).
+- Printing UI layout follow-up: capped the content width, narrowed the branch selector, grouped receipt controls, and arranged printer fields in two columns on desktop and one column at narrow widths. Focused Printing widget tests pass, including Arabic RTL geometry; modified UI and test paths pass analysis and Dart formatting.

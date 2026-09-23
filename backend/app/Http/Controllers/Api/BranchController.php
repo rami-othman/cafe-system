@@ -30,6 +30,13 @@ class BranchController extends Controller
                 'timezone' => $branch->timezone,
                 'isActive' => (bool) $branch->is_active,
                 'taxRate' => $taxRate,
+                'printerConfig' => [
+                    'name' => $branch->default_printer_name ?? '',
+                    'ipAddress' => $branch->default_printer_ip ?? '',
+                    'port' => $branch->default_printer_port ?? 9100,
+                    'paperWidth' => $branch->default_paper_width ?? '80mm',
+                    'enabled' => (bool) ($branch->receipt_printing_enabled ?? false),
+                ],
             ]);
 
         return response()->json(['data' => $branches]);

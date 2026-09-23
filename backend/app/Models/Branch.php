@@ -16,7 +16,12 @@ class Branch extends Model
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'receipt_printing_enabled' => 'boolean',
+            'auto_print_after_payment' => 'boolean',
+            'default_printer_port' => 'integer',
+        ];
     }
 
     public function tenant(): BelongsTo

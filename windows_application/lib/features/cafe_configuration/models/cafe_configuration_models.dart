@@ -1,3 +1,5 @@
+import '../../printer/models/printer_config.dart';
+
 class CafeProfile {
   const CafeProfile({
     required this.name,
@@ -84,6 +86,8 @@ class CafeConfigurationBranch {
     this.effectivePosInventoryWarehouseId,
     this.posInventoryWarehouseSource = 'not_configured',
     this.availablePosWarehouses = const <BranchWarehouseOption>[],
+    this.printerConfig = const PrinterConfig(),
+    this.autoPrintAfterPayment = false,
   });
 
   final int id;
@@ -103,6 +107,8 @@ class CafeConfigurationBranch {
   final int? effectivePosInventoryWarehouseId;
   final String posInventoryWarehouseSource;
   final List<BranchWarehouseOption> availablePosWarehouses;
+  final PrinterConfig printerConfig;
+  final bool autoPrintAfterPayment;
 
   factory CafeConfigurationBranch.fromJson(
     Map<String, dynamic> json,
@@ -115,16 +121,31 @@ class CafeConfigurationBranch {
     currency: json['currency'] as String? ?? '',
     isActive: json['isActive'] == true,
     posInventoryWarehouseId: (json['posInventoryWarehouseId'] as num?)?.toInt(),
-    posCashFinancialLocationId: (json['posCashFinancialLocationId'] as num?)?.toInt(),
-    shiftCloseDestinationFinancialLocationId: (json['shiftCloseDestinationFinancialLocationId'] as num?)?.toInt(),
-    shiftClosingFloatAmount: json['shiftClosingFloatAmount']?.toString() ?? '0.00',
+    posCashFinancialLocationId: (json['posCashFinancialLocationId'] as num?)
+        ?.toInt(),
+    shiftCloseDestinationFinancialLocationId:
+        (json['shiftCloseDestinationFinancialLocationId'] as num?)?.toInt(),
+    shiftClosingFloatAmount:
+        json['shiftClosingFloatAmount']?.toString() ?? '0.00',
     shiftCloseTime: json['shiftCloseTime'] as String?,
-    availableShiftCloseDestinations: (json['availableShiftCloseDestinations'] as List? ?? const <dynamic>[])
-        .whereType<Map>().map((row) => BranchCashLocationOption.fromJson(row.cast<String, dynamic>())).toList(growable: false),
-    availablePosCashLocations: (json['availablePosCashLocations'] as List? ?? const <dynamic>[])
-        .whereType<Map>()
-        .map((row) => BranchCashLocationOption.fromJson(row.cast<String, dynamic>()))
-        .toList(growable: false),
+    availableShiftCloseDestinations:
+        (json['availableShiftCloseDestinations'] as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (row) => BranchCashLocationOption.fromJson(
+                row.cast<String, dynamic>(),
+              ),
+            )
+            .toList(growable: false),
+    availablePosCashLocations:
+        (json['availablePosCashLocations'] as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map(
+              (row) => BranchCashLocationOption.fromJson(
+                row.cast<String, dynamic>(),
+              ),
+            )
+            .toList(growable: false),
     effectivePosInventoryWarehouseId:
         (json['effectivePosInventoryWarehouseId'] as num?)?.toInt(),
     posInventoryWarehouseSource:
@@ -137,6 +158,14 @@ class CafeConfigurationBranch {
                   BranchWarehouseOption.fromJson(row.cast<String, dynamic>()),
             )
             .toList(growable: false),
+    printerConfig: PrinterConfig(
+      name: json['defaultPrinterName'] as String? ?? '',
+      ipAddress: json['defaultPrinterIp'] as String? ?? '',
+      port: (json['defaultPrinterPort'] as num?)?.toInt() ?? 9100,
+      paperWidth: PrinterPaperWidth.fromApiValue(json['defaultPaperWidth']),
+      enabled: json['receiptPrintingEnabled'] == true,
+    ),
+    autoPrintAfterPayment: json['autoPrintAfterPayment'] == true,
   );
 }
 
@@ -145,7 +174,10 @@ class BranchCashLocationOption {
   final int id;
   final String name;
   factory BranchCashLocationOption.fromJson(Map<String, dynamic> json) =>
-      BranchCashLocationOption(id: (json['id'] as num).toInt(), name: json['name'] as String? ?? '');
+      BranchCashLocationOption(
+        id: (json['id'] as num).toInt(),
+        name: json['name'] as String? ?? '',
+      );
 }
 
 class BranchWarehouseOption {
@@ -177,6 +209,8 @@ class BranchDraft {
     this.shiftCloseDestinationFinancialLocationId,
     this.shiftClosingFloatAmount = '0.00',
     this.shiftCloseTime,
+    this.printerConfig = const PrinterConfig(),
+    this.autoPrintAfterPayment = false,
   });
 
   final String name;
@@ -192,6 +226,8 @@ class BranchDraft {
   final int? shiftCloseDestinationFinancialLocationId;
   final String shiftClosingFloatAmount;
   final String? shiftCloseTime;
+  final PrinterConfig printerConfig;
+  final bool autoPrintAfterPayment;
 
   factory BranchDraft.fromBranch(CafeConfigurationBranch branch) => BranchDraft(
     name: branch.name,
@@ -200,9 +236,12 @@ class BranchDraft {
     timezone: branch.timezone,
     posInventoryWarehouseId: branch.posInventoryWarehouseId,
     posCashFinancialLocationId: branch.posCashFinancialLocationId,
-    shiftCloseDestinationFinancialLocationId: branch.shiftCloseDestinationFinancialLocationId,
+    shiftCloseDestinationFinancialLocationId:
+        branch.shiftCloseDestinationFinancialLocationId,
     shiftClosingFloatAmount: branch.shiftClosingFloatAmount,
     shiftCloseTime: branch.shiftCloseTime,
+    printerConfig: branch.printerConfig,
+    autoPrintAfterPayment: branch.autoPrintAfterPayment,
   );
 
   BranchDraft copyWith({
@@ -216,6 +255,8 @@ class BranchDraft {
     int? shiftCloseDestinationFinancialLocationId,
     String? shiftClosingFloatAmount,
     String? shiftCloseTime,
+    PrinterConfig? printerConfig,
+    bool? autoPrintAfterPayment,
     bool clearPosInventoryWarehouseId = false,
   }) => BranchDraft(
     name: name ?? this.name,
@@ -226,10 +267,16 @@ class BranchDraft {
     posInventoryWarehouseId: clearPosInventoryWarehouseId
         ? null
         : posInventoryWarehouseId ?? this.posInventoryWarehouseId,
-    posCashFinancialLocationId: posCashFinancialLocationId ?? this.posCashFinancialLocationId,
-    shiftCloseDestinationFinancialLocationId: shiftCloseDestinationFinancialLocationId ?? this.shiftCloseDestinationFinancialLocationId,
-    shiftClosingFloatAmount: shiftClosingFloatAmount ?? this.shiftClosingFloatAmount,
+    posCashFinancialLocationId:
+        posCashFinancialLocationId ?? this.posCashFinancialLocationId,
+    shiftCloseDestinationFinancialLocationId:
+        shiftCloseDestinationFinancialLocationId ??
+        this.shiftCloseDestinationFinancialLocationId,
+    shiftClosingFloatAmount:
+        shiftClosingFloatAmount ?? this.shiftClosingFloatAmount,
     shiftCloseTime: shiftCloseTime ?? this.shiftCloseTime,
+    printerConfig: printerConfig ?? this.printerConfig,
+    autoPrintAfterPayment: autoPrintAfterPayment ?? this.autoPrintAfterPayment,
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -239,10 +286,24 @@ class BranchDraft {
     'timezone': timezone,
     if (warehouseName.trim().isNotEmpty) 'warehouseName': warehouseName.trim(),
     'posInventoryWarehouseId': posInventoryWarehouseId,
-    if (posCashFinancialLocationId != null) 'posCashFinancialLocationId': posCashFinancialLocationId,
-    'shiftCloseDestinationFinancialLocationId': shiftCloseDestinationFinancialLocationId,
+    if (posCashFinancialLocationId != null)
+      'posCashFinancialLocationId': posCashFinancialLocationId,
+    'shiftCloseDestinationFinancialLocationId':
+        shiftCloseDestinationFinancialLocationId,
     'shiftClosingFloatAmount': shiftClosingFloatAmount,
-    'shiftCloseTime': shiftCloseTime?.trim().isEmpty == true ? null : shiftCloseTime,
+    'shiftCloseTime': shiftCloseTime?.trim().isEmpty == true
+        ? null
+        : shiftCloseTime,
+    'receiptPrintingEnabled': printerConfig.enabled,
+    'defaultPaperWidth': printerConfig.paperWidth.apiValue,
+    'autoPrintAfterPayment': autoPrintAfterPayment,
+    'defaultPrinterName': printerConfig.name.trim().isEmpty
+        ? null
+        : printerConfig.name.trim(),
+    'defaultPrinterIp': printerConfig.ipAddress.trim().isEmpty
+        ? null
+        : printerConfig.ipAddress.trim(),
+    'defaultPrinterPort': printerConfig.port,
   };
 }
 
