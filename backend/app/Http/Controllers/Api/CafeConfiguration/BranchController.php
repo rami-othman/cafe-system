@@ -72,7 +72,9 @@ class BranchController extends Controller
                 ->where('l.branch_id', $branch->id)->where('l.kind', 'cash')->where('l.type', 'cash_drawer')
                 ->where('l.is_active', true)->where('a.tenant_id', $branch->tenant_id)
                 ->where('a.is_active', true)->whereNull('a.deleted_at')->exists();
-            if (! $valid) throw ValidationException::withMessages(['posCashFinancialLocationId' => 'Select an active POS cash drawer for this branch.']);
+            if (! $valid) {
+                throw ValidationException::withMessages(['posCashFinancialLocationId' => 'Select an active POS cash drawer for this branch.']);
+            }
             $data['pos_cash_financial_location_id'] = $locationId;
             unset($data['posCashFinancialLocationId']);
         }
@@ -95,7 +97,32 @@ class BranchController extends Controller
             throw ValidationException::withMessages(['posCashFinancialLocationId' => 'The POS drawer cannot be the shift close destination.']);
         }
         foreach (['shiftClosingFloatAmount' => 'shift_closing_float_amount', 'shiftCloseTime' => 'shift_close_time'] as $input => $column) {
-            if (array_key_exists($input, $data)) { $data[$column] = $data[$input]; unset($data[$input]); }
+            if (array_key_exists($input, $data)) {
+                $data[$column] = $data[$input];
+                unset($data[$input]);
+            }
+        }
+        foreach ([
+            'receiptPrintingEnabled' => 'receipt_printing_enabled',
+            'defaultPaperWidth' => 'default_paper_width',
+            'autoPrintAfterPayment' => 'auto_print_after_payment',
+            'defaultPrinterName' => 'default_printer_name',
+            'defaultPrinterIp' => 'default_printer_ip',
+            'defaultPrinterPort' => 'default_printer_port',
+        ] as $input => $column) {
+            if (array_key_exists($input, $data)) {
+                $data[$column] = $data[$input];
+                unset($data[$input]);
+            }
+        }
+        if (($data['receipt_printing_enabled'] ?? $branch->receipt_printing_enabled) === true) {
+            $printerIp = $data['default_printer_ip'] ?? $branch->default_printer_ip;
+            $printerPort = $data['default_printer_port'] ?? $branch->default_printer_port;
+            if (blank($printerIp) || $printerPort === null) {
+                throw ValidationException::withMessages([
+                    'defaultPrinterIp' => 'A printer IP address or host and port are required when receipt printing is enabled.',
+                ]);
+            }
         }
         DB::transaction(function () use ($branch, $data, $financialSetup, $request): void {
             $branch->update($data);

@@ -248,6 +248,8 @@ class BranchEditorState extends Equatable {
     draft.shiftCloseDestinationFinancialLocationId,
     draft.shiftClosingFloatAmount,
     draft.shiftCloseTime,
+    draft.printerConfig,
+    draft.autoPrintAfterPayment,
     errors,
     errorMessage,
     isDirty,
@@ -371,6 +373,9 @@ class BranchEditorCubit extends Cubit<BranchEditorState> {
     final Map<String, String> e = <String, String>{};
     if (d.name.trim().isEmpty) e['name'] = 'required';
     if (d.timezone.trim().isEmpty) e['timezone'] = 'required';
+    if (d.printerConfig.enabled && !d.printerConfig.isValid) {
+      e['printerConfig'] = d.printerConfig.validationError ?? 'invalid';
+    }
     return e;
   }
 }
@@ -389,9 +394,12 @@ bool _differentBranch(BranchDraft draft, CafeConfigurationBranch? branch) =>
     draft.timezone != branch.timezone ||
     draft.posInventoryWarehouseId != branch.posInventoryWarehouseId ||
     draft.posCashFinancialLocationId != branch.posCashFinancialLocationId ||
-    draft.shiftCloseDestinationFinancialLocationId != branch.shiftCloseDestinationFinancialLocationId ||
+    draft.shiftCloseDestinationFinancialLocationId !=
+        branch.shiftCloseDestinationFinancialLocationId ||
     draft.shiftClosingFloatAmount != branch.shiftClosingFloatAmount ||
-    draft.shiftCloseTime != branch.shiftCloseTime;
+    draft.shiftCloseTime != branch.shiftCloseTime ||
+    draft.printerConfig != branch.printerConfig ||
+    draft.autoPrintAfterPayment != branch.autoPrintAfterPayment;
 Map<String, String> _fields(Object e) => e is ApiException
     ? <String, String>{
         for (final MapEntry<String, List<String>> entry

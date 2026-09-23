@@ -72,6 +72,9 @@ import '../../features/cafe_configuration/controllers/cafe_configuration_overvie
 import '../../features/cafe_configuration/controllers/tax_cubit.dart';
 import '../../features/cafe_configuration/controllers/team_cubit.dart';
 import '../../features/cafe_configuration/repositories/cafe_configuration_repository.dart';
+import '../../features/printer/controllers/printer_setup_cubit.dart';
+import '../../features/printer/repositories/device_printer_settings_store.dart';
+import '../../features/printer/services/printer_service.dart';
 import '../../features/customer_management/repositories/customer_management_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
@@ -393,6 +396,30 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<CafeConfigurationRepository>()) {
     serviceLocator.registerLazySingleton<CafeConfigurationRepository>(
       () => ApiCafeConfigurationRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<DevicePrinterSettingsStore>()) {
+    serviceLocator.registerLazySingleton<DevicePrinterSettingsStore>(
+      SharedPreferencesDevicePrinterSettingsStore.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<PrinterService>()) {
+    serviceLocator.registerLazySingleton<PrinterService>(
+      NetworkEscPosPrinterService.new,
+    );
+  }
+  if (!serviceLocator.isRegistered<PrinterSetupCubit>()) {
+    serviceLocator.registerFactory<PrinterSetupCubit>(
+      () => PrinterSetupCubit(
+        tenantId:
+            serviceLocator<AuthSessionCubit>().state.session?.tenant.id ?? 0,
+        branchDefaultsProvider: (int branchId) async =>
+            (await serviceLocator<CafeConfigurationRepository>().getBranch(
+              branchId,
+            )).printerConfig,
+        settingsStore: serviceLocator<DevicePrinterSettingsStore>(),
+        printerService: serviceLocator<PrinterService>(),
+      ),
     );
   }
   if (!serviceLocator.isRegistered<CustomerManagementRepository>()) {

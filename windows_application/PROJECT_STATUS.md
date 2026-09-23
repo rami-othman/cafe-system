@@ -431,3 +431,12 @@ future work and it is not part of Batch 12.
 - The detail view shows the selling unit and line totals. Credit Note restock uses the original stock movement and cost snapshot.
 - Focused backend pricing and posting tests, new raw-material tests, and targeted Flutter tests pass. The broader sales suites still contain failures in payment widget and sales-reporting fixtures.
 - Deployment was not performed.
+### 2026-09-23 - Printer Setup active branch resolution
+
+- Printer Setup now follows the shell branch selector and loads printer defaults from the selected branch's configuration API. Branch changes reload automatically; loading, no selection, and configuration failures have distinct states, and Retry reloads the selected branch.
+- Focused printer tests cover initial branch loading without visiting POS, branch switching, no branch, and configuration failure with retry. The printer suite passes (15 tests); modified paths pass Flutter analysis, Dart formatting, and `git diff --check`.
+
+### 2026-09-23 - Printer Setup Settings overflow follow-up
+
+- The Settings content now scrolls within its existing page layout so the printer card and actions remain reachable at the reported Windows window height. The local printer fields remain intentionally disabled while branch defaults are selected; turning that switch off enables the device override fields.
+- Added focused widget coverage for the switch and for the full Settings layout at the reported desktop height. All 17 focused printer tests pass, the six modified Flutter paths pass analysis, and formatting and `git diff --check` pass.

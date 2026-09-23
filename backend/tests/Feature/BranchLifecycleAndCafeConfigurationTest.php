@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\BranchAccessService;
+use App\Services\FinancialSetupService;
 use App\Services\UserBranchAssignmentService;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -173,6 +174,36 @@ class BranchLifecycleAndCafeConfigurationTest extends TestCase
             ->getJson('/api/v1/cafe-configuration/branches')->assertForbidden();
         $this->assertDatabaseHas('branches', ['id' => $branchA->id, 'tenant_id' => $tenantA->id]);
         $this->assertDatabaseHas('branches', ['id' => $branchB->id, 'tenant_id' => $tenantB->id, 'name' => $branchB->name]);
+    }
+
+    public function test_owner_can_store_tenant_scoped_branch_printer_defaults(): void
+    {
+        [$tenant, $branch, $owner] = $this->tenantBranchUser('printer-defaults', 'owner');
+        app(FinancialSetupService::class)->ensureForTenant($tenant->id);
+        $token = $this->authenticateTenantUser($tenant->id, $owner);
+
+        $this->withToken($token)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}", [
+            'receiptPrintingEnabled' => true,
+            'defaultPaperWidth' => '58mm',
+            'autoPrintAfterPayment' => true,
+            'defaultPrinterName' => 'Counter printer',
+            'defaultPrinterIp' => '192.168.1.50',
+            'defaultPrinterPort' => 9100,
+        ])->assertOk()
+            ->assertJsonPath('data.receiptPrintingEnabled', true)
+            ->assertJsonPath('data.defaultPaperWidth', '58mm')
+            ->assertJsonPath('data.defaultPrinterIp', '192.168.1.50');
+
+        $this->assertDatabaseHas('branches', [
+            'id' => $branch->id, 'tenant_id' => $tenant->id,
+            'receipt_printing_enabled' => true, 'default_printer_port' => 9100,
+        ]);
+        $this->withToken($token)->getJson('/api/v1/branches')->assertOk()
+            ->assertJsonPath('data.0.printerConfig.ipAddress', '192.168.1.50')
+            ->assertJsonPath('data.0.printerConfig.paperWidth', '58mm');
+        $this->withToken($token)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}", [
+            'defaultPrinterIp' => 'not a host',
+        ])->assertUnprocessable()->assertJsonValidationErrors('defaultPrinterIp');
     }
 
     /** @return array{Tenant, Branch, User} */
