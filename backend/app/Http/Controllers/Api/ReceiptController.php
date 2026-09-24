@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CafeConfiguration\ReceiptTemplateResource;
 use App\Services\BranchAccessService;
+use App\Support\ReceiptTemplateResolver;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,17 +18,22 @@ class ReceiptController extends Controller
         $tenantId = TenantContext::id($request);
         $orderRow = $this->findOrder($tenantId, $order);
         $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $orderRow->branch_id)->first();
+        $tenant = DB::table('tenants')->where('id', $tenantId)->first();
         $payment = DB::table('payments')->where('tenant_id', $tenantId)->where('order_id', $order)->whereNull('deleted_at')->latest('paid_at')->first();
         $cashierName = $orderRow->cashier_id ? DB::table('users')->where('tenant_id', $tenantId)->where('id', $orderRow->cashier_id)->value('name') : null;
         $customerName = $orderRow->customer_id ? DB::table('customers')->where('tenant_id', $tenantId)->where('id', $orderRow->customer_id)->value('name') : null;
+        $template = ReceiptTemplateResolver::resolve($tenantId, (int) $orderRow->branch_id);
 
         return response()->json([
             'data' => [
                 'orderId' => $orderRow->id,
                 'orderNumber' => $orderRow->order_number,
-                'title' => 'Cafe System 618',
+                'orderType' => $orderRow->type,
+                'cafeName' => $tenant?->name,
+                'logoUrl' => $tenant?->logo_url,
                 'branchName' => $branch?->name,
-                'addressLines' => array_values(array_filter([$branch?->address, $branch?->phone], fn ($line) => $line !== null && trim($line) !== '')),
+                'address' => $branch?->address,
+                'phone' => $branch?->phone,
                 'cashierName' => $cashierName,
                 'customerName' => $customerName,
                 'date' => $orderRow->created_at,
@@ -42,7 +49,8 @@ class ReceiptController extends Controller
                     'reference' => $payment->reference_number,
                     'paidAt' => $payment->paid_at,
                 ] : null,
-                'footerLines' => [],
+                'footerText' => $template['footer']['text'] ?? null,
+                'template' => ReceiptTemplateResource::fromResolved($template),
             ],
         ]);
     }

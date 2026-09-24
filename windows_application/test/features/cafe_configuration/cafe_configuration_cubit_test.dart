@@ -6,6 +6,7 @@ import 'package:windows_application/features/cafe_configuration/controllers/tax_
 import 'package:windows_application/features/cafe_configuration/models/cafe_configuration_models.dart';
 import 'package:windows_application/features/cafe_configuration/repositories/cafe_configuration_repository.dart';
 import 'package:windows_application/features/cafe_configuration/widgets/cafe_configuration_navigation.dart';
+import 'package:windows_application/features/printer/models/receipt_template.dart';
 
 void main() {
   group('Cafe Configuration navigation', () {
@@ -209,6 +210,14 @@ class _FakeRepository implements CafeConfigurationRepository {
     int id,
     BranchDraft draft,
   ) async => await getBranch(id);
+  @override
+  Future<ReceiptTemplate> getReceiptTemplate(int branchId) async =>
+      const ReceiptTemplate.defaultTemplate();
+  @override
+  Future<ReceiptTemplate> updateReceiptTemplate(
+    int branchId,
+    ReceiptTemplate template,
+  ) async => template;
   @override
   Future<List<TenantRole>> getRoles() async => const <TenantRole>[];
   @override

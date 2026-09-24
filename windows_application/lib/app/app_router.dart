@@ -411,6 +411,14 @@ final GoRouter appRouter = GoRouter(
                           as CustomerImportRepository,
                 ),
               ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'new',
+              parentNavigatorKey: _rootNavigatorKey,
+              redirect: _customerManagementAccessRedirect,
+              pageBuilder: _customerCreateModalPage,
+            ),
+          ],
         ),
         GoRoute(
           path: CustomerManagementRouteLocations.groups,
@@ -467,11 +475,6 @@ final GoRouter appRouter = GoRouter(
               ),
             );
           },
-        ),
-        GoRoute(
-          path: CustomerManagementRouteLocations.customerCreate,
-          redirect: _customerManagementAccessRedirect,
-          pageBuilder: _customerCreateModalPage,
         ),
         GoRoute(
           path: CustomerManagementRouteLocations.customerEdit,
@@ -2527,10 +2530,21 @@ void _returnToRecipeWorkspace(
   );
 }
 
-String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState _) =>
-    serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner'
-    ? null
-    : AppRoutes.pos;
+/// Owner reaches every Cafe Configuration page. Manager is limited to
+/// Printing (branch printer defaults + receipt template), matching the
+/// backend's `cafe.configuration.printing` gate; every other sub-page
+/// (branches, team, tax, profile, ...) stays Owner-only. Employee never
+/// passes either check.
+String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState state) {
+  final role = serviceLocator<AuthSessionCubit>().state.session?.user.role;
+  if (role == 'owner') return null;
+  if (role == 'manager' &&
+      state.uri.path.startsWith(AppRoutes.cafeConfigurationPrinting)) {
+    return null;
+  }
+
+  return AppRoutes.pos;
+}
 
 String? _customerManagementAccessRedirect(BuildContext _, GoRouterState _) =>
     CustomerManagementAccess.allows(

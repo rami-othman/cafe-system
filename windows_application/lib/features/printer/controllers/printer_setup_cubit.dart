@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/printer_config.dart';
@@ -147,7 +148,7 @@ class PrinterSetupCubit extends Cubit<PrinterSetupState> {
     emit(state.copyWith(status: PrinterSetupStatus.ready, clearFailure: true));
   }
 
-  Future<void> testPrint() async {
+  Future<void> testPrint(Locale locale) async {
     if (state.isTesting) return;
     final PrinterConfig? effective = state.effective(_resolver);
     if (effective == null || !effective.isValid) {
@@ -162,8 +163,9 @@ class PrinterSetupCubit extends Cubit<PrinterSetupState> {
     emit(
       state.copyWith(status: PrinterSetupStatus.testing, clearFailure: true),
     );
-    final PrinterPrintResult result = await _printerService.printTest(
+    final PrinterPrintResult result = await _printerService.printTestReceipt(
       effective,
+      locale,
     );
     emit(
       state.copyWith(

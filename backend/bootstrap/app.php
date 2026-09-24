@@ -1,29 +1,30 @@
 <?php
 
 use App\Domain\Customer\CustomerDomainException;
-use App\Services\Customer\Import\CustomerImportException;
 use App\Exceptions\OrderLifecycleException;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
+use App\Http\Middleware\CanAdministerCafePrinting;
 use App\Http\Middleware\CanManageCafeConfiguration;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
+use App\Http\Middleware\EnsureBarCheckPermission;
 use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsureCashierPermission;
 use App\Http\Middleware\EnsureCustomerPermission;
 use App\Http\Middleware\EnsureDiscountPermission;
 use App\Http\Middleware\EnsureFinancePermission;
-use App\Http\Middleware\EnsureBarCheckPermission;
 use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
-use App\Http\Middleware\RequireChangedPassword;
 use App\Http\Middleware\MeasurePaymentPerformance;
+use App\Http\Middleware\RequireChangedPassword;
+use App\Services\Customer\Import\CustomerImportException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -54,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'password.changed' => RequireChangedPassword::class,
             'employees.manage' => CanManageEmployees::class,
             'cafe.configuration' => CanManageCafeConfiguration::class,
+            'cafe.configuration.printing' => CanAdministerCafePrinting::class,
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,
@@ -92,7 +94,9 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
         $exceptions->render(function (ValidationException $exception, Request $request) {
-            if (! $request->is('api/v1/orders/*/pay')) return null;
+            if (! $request->is('api/v1/orders/*/pay')) {
+                return null;
+            }
             $errors = $exception->errors();
             $code = match (true) {
                 isset($errors['shiftId']) => 'NO_OPEN_SHIFT',
@@ -101,6 +105,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 isset($errors['quantity']), isset($errors['warehouseId']) => 'INSUFFICIENT_STOCK',
                 default => 'PAYMENT_VALIDATION_FAILED',
             };
+
             return response()->json(['message' => $exception->getMessage(), 'code' => $code, 'errors' => $errors], 422);
         });
     })->create();

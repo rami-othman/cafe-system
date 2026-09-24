@@ -47,8 +47,8 @@ void main() {
       final PrinterSetupCubit cubit = _cubit(service: service);
       await cubit.load(1);
 
-      final Future<void> first = cubit.testPrint();
-      final Future<void> second = cubit.testPrint();
+      final Future<void> first = cubit.testPrint(const Locale('en'));
+      final Future<void> second = cubit.testPrint(const Locale('en'));
       expect(cubit.state.status, PrinterSetupStatus.testing);
       gate.complete(const PrinterPrintResult.success());
       await Future.wait(<Future<void>>[first, second]);
@@ -70,7 +70,7 @@ void main() {
         ),
       );
       await invalid.load(1);
-      await invalid.testPrint();
+      await invalid.testPrint(const Locale('en'));
       expect(invalid.state.failure, PrinterPrintFailure.invalidConfiguration);
 
       final PrinterSetupCubit unreachable = _cubit(
@@ -80,7 +80,7 @@ void main() {
         ),
       );
       await unreachable.load(1);
-      await unreachable.testPrint();
+      await unreachable.testPrint(const Locale('en'));
       expect(unreachable.state.failure, PrinterPrintFailure.unreachable);
     },
   );
@@ -146,7 +146,10 @@ class _FakePrinter implements PrinterService {
   final Future<PrinterPrintResult> Function() result;
   int calls = 0;
   @override
-  Future<PrinterPrintResult> printTest(PrinterConfig config) {
+  Future<PrinterPrintResult> printTestReceipt(
+    PrinterConfig config,
+    Locale locale,
+  ) {
     calls++;
     return result();
   }

@@ -7,6 +7,7 @@ use App\Http\Requests\CafeConfiguration\StoreBranchRequest;
 use App\Http\Requests\CafeConfiguration\UpdateBranchRequest;
 use App\Http\Resources\CafeConfiguration\BranchResource;
 use App\Models\Branch;
+use App\Services\CafeConfigurationPolicy;
 use App\Services\FinancialSetupService;
 use App\Services\PosInventoryWarehouseResolver;
 use App\Support\TenantContext;
@@ -60,6 +61,17 @@ class BranchController extends Controller
     {
         $branch = $this->branch($request, $branch);
         $data = $request->validated();
+        $actor = $request->attributes->get('auth_user');
+        if (! $actor->isOwner()) {
+            // cafe.configuration.printing already confirmed the actor is at
+            // least a Manager; a non-Owner caller may only ever persist the
+            // printer fields through this shared endpoint. Everything else
+            // in $data (name, financial wiring, shift settings, POS
+            // warehouse, ...) is silently dropped rather than rejected,
+            // since the Flutter Printing screen always submits the full
+            // branch draft even though it only edited printer fields.
+            $data = array_intersect_key($data, array_flip(CafeConfigurationPolicy::PRINTER_FIELDS));
+        }
         if (array_key_exists('posInventoryWarehouseId', $data)) {
             $posWarehouses->assertEligible((int) $branch->tenant_id, (int) $branch->id, $data['posInventoryWarehouseId']);
             $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];

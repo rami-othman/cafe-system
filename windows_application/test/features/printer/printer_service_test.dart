@@ -16,25 +16,37 @@ void main() {
     enabled: true,
   );
 
-  test('sends a test job and always closes the TCP connection', () async {
-    final _FakeConnection connection = _FakeConnection();
-    final NetworkEscPosPrinterService service = NetworkEscPosPrinterService(
-      connectionFactory: _FakeFactory(connection: connection),
-    );
+  test(
+    'test print renders the real receipt pipeline and always closes the TCP connection',
+    () async {
+      final _FakeConnection connection = _FakeConnection();
+      final NetworkEscPosPrinterService service = NetworkEscPosPrinterService(
+        connectionFactory: _FakeFactory(connection: connection),
+      );
 
-    final PrinterPrintResult result = await service.printTest(config);
+      final PrinterPrintResult result = await service.printTestReceipt(
+        config,
+        const Locale('en'),
+      );
 
-    expect(result.isSuccess, isTrue);
-    expect(connection.written, containsAllInOrder(<int>[0x1b, 0x40]));
-    expect(connection.closed, isTrue);
-  });
+      expect(result.isSuccess, isTrue);
+      // printRaster always opens with the ESC/POS init sequence, whatever
+      // the rasterized content is — proves the raster path ran, not a
+      // hand-built diagnostic payload.
+      expect(connection.written, containsAllInOrder(<int>[0x1b, 0x40]));
+      expect(connection.closed, isTrue);
+    },
+  );
 
   test('maps a connection timeout to a safe timeout result', () async {
     final NetworkEscPosPrinterService service = NetworkEscPosPrinterService(
       connectionFactory: _FakeFactory(timeout: true),
     );
 
-    final PrinterPrintResult result = await service.printTest(config);
+    final PrinterPrintResult result = await service.printTestReceipt(
+      config,
+      const Locale('en'),
+    );
 
     expect(result.failure, PrinterPrintFailure.timeout);
   });
@@ -46,9 +58,30 @@ void main() {
         connectionFactory: _FakeFactory(throwsOnConnect: true),
       );
 
-      final PrinterPrintResult result = await service.printTest(config);
+      final PrinterPrintResult result = await service.printTestReceipt(
+        config,
+        const Locale('en'),
+      );
 
       expect(result.failure, PrinterPrintFailure.unreachable);
+    },
+  );
+
+  test(
+    'test print uses the real ReceiptRenderer, not a second renderer',
+    () async {
+      final connection = _FakeConnection();
+      final renderer = _RecordingRenderer();
+      final service = NetworkEscPosPrinterService(
+        connectionFactory: _FakeFactory(connection: connection),
+        receiptRenderer: renderer,
+      );
+
+      final result = await service.printTestReceipt(config, const Locale('ar'));
+
+      expect(result.isSuccess, isTrue);
+      expect(renderer.receivedReceipt?.orderNumber, 'TEST-0000');
+      expect(renderer.receivedLocale, const Locale('ar'));
     },
   );
 
@@ -166,6 +199,8 @@ class _FakeConnection implements PrinterConnection {
 
 class _RecordingRenderer extends ReceiptRenderer {
   bool? receivedPreBill;
+  ReceiptData? receivedReceipt;
+  Locale? receivedLocale;
 
   @override
   Future<ReceiptRaster> render(
@@ -175,6 +210,8 @@ class _RecordingRenderer extends ReceiptRenderer {
     bool isPreBill = false,
   }) async {
     receivedPreBill = isPreBill;
+    receivedReceipt = receipt;
+    receivedLocale = locale;
     return ReceiptRaster(
       width: 8,
       height: 1,

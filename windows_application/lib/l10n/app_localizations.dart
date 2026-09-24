@@ -11534,6 +11534,252 @@ abstract class AppLocalizations {
   /// **'Enter a valid printer host and port (1–65535).'**
   String get cafeConfigurationPrinterInvalid;
 
+  /// No description provided for @cafeConfigurationPrintingBranchDefaultsNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'These are branch defaults: they apply to every device at this branch unless overridden on Settings → Printer Setup on that device.'**
+  String get cafeConfigurationPrintingBranchDefaultsNotice;
+
+  /// No description provided for @cafeConfigurationSavePrinterConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Printer Configuration'**
+  String get cafeConfigurationSavePrinterConfig;
+
+  /// No description provided for @cafeConfigurationSaveReceiptDesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Receipt Design'**
+  String get cafeConfigurationSaveReceiptDesign;
+
+  /// No description provided for @cafeConfigurationPrinterConfigSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer configuration saved.'**
+  String get cafeConfigurationPrinterConfigSaved;
+
+  /// No description provided for @cafeConfigurationReceiptDesignSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt design saved.'**
+  String get cafeConfigurationReceiptDesignSaved;
+
+  /// No description provided for @cafeConfigurationReceiptDesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt Design'**
+  String get cafeConfigurationReceiptDesign;
+
+  /// No description provided for @cafeConfigurationReceiptHeaderSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Header'**
+  String get cafeConfigurationReceiptHeaderSection;
+
+  /// No description provided for @cafeConfigurationReceiptHeaderLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe logo'**
+  String get cafeConfigurationReceiptHeaderLogo;
+
+  /// No description provided for @cafeConfigurationReceiptHeaderCafeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafe name'**
+  String get cafeConfigurationReceiptHeaderCafeName;
+
+  /// No description provided for @cafeConfigurationReceiptHeaderBranchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch name'**
+  String get cafeConfigurationReceiptHeaderBranchName;
+
+  /// No description provided for @cafeConfigurationReceiptHeaderAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get cafeConfigurationReceiptHeaderAddress;
+
+  /// No description provided for @cafeConfigurationReceiptHeaderPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get cafeConfigurationReceiptHeaderPhone;
+
+  /// No description provided for @cafeConfigurationReceiptOrderInfoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Information'**
+  String get cafeConfigurationReceiptOrderInfoSection;
+
+  /// No description provided for @cafeConfigurationReceiptOrderNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order number'**
+  String get cafeConfigurationReceiptOrderNumber;
+
+  /// No description provided for @cafeConfigurationReceiptDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & time'**
+  String get cafeConfigurationReceiptDateTime;
+
+  /// No description provided for @cafeConfigurationReceiptCashier.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashier'**
+  String get cafeConfigurationReceiptCashier;
+
+  /// No description provided for @cafeConfigurationReceiptCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get cafeConfigurationReceiptCustomer;
+
+  /// No description provided for @cafeConfigurationReceiptOrderType.
+  ///
+  /// In en, this message translates to:
+  /// **'Order type'**
+  String get cafeConfigurationReceiptOrderType;
+
+  /// No description provided for @cafeConfigurationReceiptItemsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get cafeConfigurationReceiptItemsSection;
+
+  /// No description provided for @cafeConfigurationReceiptProductName.
+  ///
+  /// In en, this message translates to:
+  /// **'Product name'**
+  String get cafeConfigurationReceiptProductName;
+
+  /// No description provided for @cafeConfigurationReceiptQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get cafeConfigurationReceiptQuantity;
+
+  /// No description provided for @cafeConfigurationReceiptUnitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit price'**
+  String get cafeConfigurationReceiptUnitPrice;
+
+  /// No description provided for @cafeConfigurationReceiptModifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Modifiers'**
+  String get cafeConfigurationReceiptModifiers;
+
+  /// No description provided for @cafeConfigurationReceiptNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Item notes'**
+  String get cafeConfigurationReceiptNotes;
+
+  /// No description provided for @cafeConfigurationReceiptTotalsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Totals'**
+  String get cafeConfigurationReceiptTotalsSection;
+
+  /// No description provided for @cafeConfigurationReceiptSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get cafeConfigurationReceiptSubtotal;
+
+  /// No description provided for @cafeConfigurationReceiptDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get cafeConfigurationReceiptDiscount;
+
+  /// No description provided for @cafeConfigurationReceiptTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get cafeConfigurationReceiptTax;
+
+  /// No description provided for @cafeConfigurationReceiptTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get cafeConfigurationReceiptTotal;
+
+  /// No description provided for @cafeConfigurationReceiptPaymentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get cafeConfigurationReceiptPaymentSection;
+
+  /// No description provided for @cafeConfigurationReceiptPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get cafeConfigurationReceiptPaymentMethod;
+
+  /// No description provided for @cafeConfigurationReceiptPaidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid amount'**
+  String get cafeConfigurationReceiptPaidAmount;
+
+  /// No description provided for @cafeConfigurationReceiptChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get cafeConfigurationReceiptChange;
+
+  /// No description provided for @cafeConfigurationReceiptFooterSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Footer'**
+  String get cafeConfigurationReceiptFooterSection;
+
+  /// No description provided for @cafeConfigurationReceiptFooterEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Show footer'**
+  String get cafeConfigurationReceiptFooterEnabled;
+
+  /// No description provided for @cafeConfigurationReceiptFooterText.
+  ///
+  /// In en, this message translates to:
+  /// **'Footer text'**
+  String get cafeConfigurationReceiptFooterText;
+
+  /// No description provided for @cafeConfigurationReceiptPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview Receipt'**
+  String get cafeConfigurationReceiptPreview;
+
+  /// No description provided for @cafeConfigurationReceiptPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt Preview'**
+  String get cafeConfigurationReceiptPreviewTitle;
+
+  /// No description provided for @cafeConfigurationReceiptMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get cafeConfigurationReceiptMoveUp;
+
+  /// No description provided for @cafeConfigurationReceiptMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get cafeConfigurationReceiptMoveDown;
+
+  /// No description provided for @cafeConfigurationReceiptLockedField.
+  ///
+  /// In en, this message translates to:
+  /// **'Always shown'**
+  String get cafeConfigurationReceiptLockedField;
+
   /// No description provided for @cafeConfigurationTeamAccess.
   ///
   /// In en, this message translates to:
@@ -15979,6 +16225,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Printing failed. Check the printer and try again.'**
   String get posPrintFailed;
+
+  /// No description provided for @printerSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer Setup'**
+  String get printerSetupTitle;
+
+  /// No description provided for @printerSetupThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This Device'**
+  String get printerSetupThisDevice;
+
+  /// No description provided for @printerSetupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure the network thermal printer used by this Windows PC or Android tablet.'**
+  String get printerSetupDescription;
+
+  /// No description provided for @printerSetupNoActiveBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'No active branch selected'**
+  String get printerSetupNoActiveBranch;
+
+  /// No description provided for @printerSetupCouldNotLoadBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the active branch.'**
+  String get printerSetupCouldNotLoadBranch;
+
+  /// No description provided for @printerSetupCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer setup could not be loaded.'**
+  String get printerSetupCouldNotLoad;
+
+  /// No description provided for @printerSetupUseBranchDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Branch Defaults'**
+  String get printerSetupUseBranchDefaults;
+
+  /// No description provided for @printerSetupUsingBranchDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Using the shared default printer for the active branch.'**
+  String get printerSetupUsingBranchDefaults;
+
+  /// No description provided for @printerSetupUsingLocalOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Using this device-only printer override.'**
+  String get printerSetupUsingLocalOverride;
+
+  /// No description provided for @printerSetupSaveDeviceSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Device Settings'**
+  String get printerSetupSaveDeviceSettings;
+
+  /// No description provided for @printerTestPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Print'**
+  String get printerTestPrint;
+
+  /// No description provided for @printerTesting.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing…'**
+  String get printerTesting;
+
+  /// No description provided for @printerRetryTestPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Test Print'**
+  String get printerRetryTestPrint;
+
+  /// No description provided for @printerTestPrintSuccessful.
+  ///
+  /// In en, this message translates to:
+  /// **'Print successful'**
+  String get printerTestPrintSuccessful;
 }
 
 class _AppLocalizationsDelegate

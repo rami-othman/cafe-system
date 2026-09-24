@@ -9,6 +9,13 @@ Future<void> showPosPrintFailure({
   required BuildContext context,
   required PosPrintOutcome outcome,
   required Future<PosPrintOutcome> Function() retry,
+
+  /// Called after the failure dialog itself has been dismissed and before
+  /// navigating to Printer Setup. Callers that raised this dialog from
+  /// inside another modal (e.g. a receipt preview dialog) close that modal
+  /// here, so it doesn't linger over the Settings screen underneath. Callers
+  /// with no such owning modal simply omit this — nothing else is popped.
+  VoidCallback? onOpenPrinterSetup,
 }) async {
   final PosPrintFailure? failure = outcome.failure;
   if (failure == null) return;
@@ -18,7 +25,11 @@ Future<void> showPosPrintFailure({
     builder: (BuildContext dialogContext) => _PosPrintFailureDialog(
       failure: failure,
       retry: retry,
-      onPrinterSetup: () => router.go('/settings'),
+      onPrinterSetup: () {
+        Navigator.of(dialogContext).pop();
+        onOpenPrinterSetup?.call();
+        router.go('/settings');
+      },
     ),
   );
 }

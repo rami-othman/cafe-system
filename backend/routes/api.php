@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\BarCheckController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CafeConfiguration\BranchController as CafeConfigurationBranchController;
 use App\Http\Controllers\Api\CafeConfiguration\ProfileController as CafeConfigurationProfileController;
+use App\Http\Controllers\Api\CafeConfiguration\ReceiptTemplateController as CafeConfigurationReceiptTemplateController;
 use App\Http\Controllers\Api\CafeConfiguration\TaxController as CafeConfigurationTaxController;
 use App\Http\Controllers\Api\CashierDashboardController;
 use App\Http\Controllers\Api\CashierFinanceOptionsController;
@@ -116,14 +117,33 @@ Route::prefix('v1')->group(function (): void {
     // Administrative branch configuration is intentionally outside the
     // operational branch.access middleware: Owners may view inactive branches
     // here, while no inactive branch remains operationally usable.
+    // Branch creation and non-printing edits stay Owner-only.
     Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])
         ->prefix('cafe-configuration/branches')
         ->controller(CafeConfigurationBranchController::class)
         ->group(function (): void {
-            Route::get('/', 'index');
             Route::post('/', 'store');
+        });
+
+    // Owner and Manager: read access (needed to pick a branch and load its
+    // current printer config on the Printing screen) plus branch update,
+    // where BranchController::update() itself restricts a non-Owner caller
+    // to the printer-only fields (see CafeConfigurationPolicy::PRINTER_FIELDS).
+    Route::middleware(['api.token', 'password.changed', 'cafe.configuration.printing'])
+        ->prefix('cafe-configuration/branches')
+        ->controller(CafeConfigurationBranchController::class)
+        ->group(function (): void {
+            Route::get('/', 'index');
             Route::get('{branch}', 'show')->whereNumber('branch');
             Route::put('{branch}', 'update')->whereNumber('branch');
+        });
+
+    Route::middleware(['api.token', 'password.changed', 'cafe.configuration.printing'])
+        ->prefix('cafe-configuration/branches')
+        ->controller(CafeConfigurationReceiptTemplateController::class)
+        ->group(function (): void {
+            Route::get('{branch}/receipt-template', 'show')->whereNumber('branch');
+            Route::put('{branch}/receipt-template', 'update')->whereNumber('branch');
         });
 
     Route::middleware(['api.token', 'password.changed', 'cafe.configuration'])

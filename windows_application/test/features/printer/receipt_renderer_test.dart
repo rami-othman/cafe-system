@@ -1,10 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:windows_application/features/printer/models/printer_config.dart';
 import 'package:windows_application/features/printer/models/receipt_data.dart';
+import 'package:windows_application/features/printer/models/receipt_template.dart';
 import 'package:windows_application/features/printer/services/receipt_renderer.dart';
+
+// A valid 1x1 transparent PNG, used as a stand-in for a tenant logo.
+final _onePixelPng = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,11 +21,13 @@ void main() {
     String name = 'Coffee',
     double total = 10,
     Map<String, dynamic>? payment,
+    String? phone,
   }) => <String, dynamic>{
     'orderNumber': 'ORD-42',
     'date': '2026-09-23T12:00:00Z',
     'branchName': 'Downtown',
     'cashierName': 'Sam',
+    if (phone != null) 'phone': phone,
     'items': <Map<String, dynamic>>[
       <String, dynamic>{
         'name': name,
@@ -146,6 +155,164 @@ void main() {
       isEmpty,
     );
   });
+
+  test('logo renders when showLogo is true and the fetch succeeds', () async {
+    // TestWidgetsFlutterBinding installs an HttpOverrides that makes every
+    // HttpClient request return 400, so the renderer's own logo fetch is
+    // given a real client for the lifetime of this test.
+    final previousOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = previousOverrides);
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) {
+      request.response.headers.contentType = ContentType('image', 'png');
+      request.response.add(_onePixelPng);
+      request.response.close();
+    });
+    addTearDown(server.close);
+    final logoUrl = 'http://127.0.0.1:${server.port}/logo.png';
+
+    final receipt = ReceiptData.fromJson(data()..['logoUrl'] = logoUrl);
+    final withLogo = await renderer.render(
+      receipt,
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+    final withoutLogo = await renderer.render(
+      receipt.copyWith(
+        template: receipt.template.copyWith(
+          header: receipt.template.header.copyWith(showLogo: false),
+        ),
+      ),
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+
+    expect(withLogo.height, greaterThan(withoutLogo.height));
+  });
+
+  test('a failed logo fetch or a missing url is skipped cleanly', () async {
+    final previousOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = previousOverrides);
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) {
+      request.response.statusCode = 404;
+      request.response.close();
+    });
+    addTearDown(server.close);
+    final missingUrl = 'http://127.0.0.1:${server.port}/missing.png';
+
+    final withBadUrl = await renderer.render(
+      ReceiptData.fromJson(data()..['logoUrl'] = missingUrl),
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+    final withNoUrl = await renderer.render(
+      ReceiptData.fromJson(data()),
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+
+    expect(withBadUrl.height, greaterThan(0));
+    expect(withBadUrl.height, withNoUrl.height);
+  });
+
+  test('hidden template fields are not rendered', () async {
+    final receipt = ReceiptData.fromJson(data());
+    final full = await renderer.render(
+      receipt,
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+
+    final reducedTemplate = receipt.template.copyWith(
+      totals: receipt.template.totals.copyWith(
+        showSubtotal: false,
+        showDiscount: false,
+        showTax: false,
+      ),
+      footer: receipt.template.footer.copyWith(enabled: false),
+    );
+    final reduced = await renderer.render(
+      receipt.copyWith(template: reducedTemplate),
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+
+    expect(reduced.height, lessThan(full.height));
+  });
+
+  test('renderer follows template.sectionOrder', () async {
+    final receipt = ReceiptData.fromJson(data());
+    final defaultOrder = await renderer.render(
+      receipt,
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+
+    final reorderedTemplate = receipt.template.copyWith(
+      sectionOrder: const <ReceiptTemplateSection>[
+        ReceiptTemplateSection.footer,
+        ReceiptTemplateSection.header,
+        ReceiptTemplateSection.orderInfo,
+        ReceiptTemplateSection.items,
+        ReceiptTemplateSection.totals,
+        ReceiptTemplateSection.payment,
+      ],
+    );
+    final reordered = await renderer.render(
+      receipt.copyWith(template: reorderedTemplate),
+      locale: const Locale('en'),
+      paperWidth: PrinterPaperWidth.mm58,
+    );
+
+    expect(reordered.png, isNot(defaultOrder.png));
+  });
+
+  test('applyBidiIsolation preserves phone/reference digit-group order', () {
+    final lri = String.fromCharCode(0x2066);
+    final pdi = String.fromCharCode(0x2069);
+    const phone = '+963 11 123 4567';
+    final isolated = applyBidiIsolation(phone);
+    // The digits and separators are untouched and stay in their original
+    // order; only invisible directional-isolate marks are added around
+    // the token, so stripping them must reproduce the source exactly.
+    final stripped = isolated.replaceAll(lri, '').replaceAll(pdi, '');
+    expect(stripped, phone);
+    expect(isolated, '$lri$phone$pdi');
+
+    const orderRef = 'ORD-98765';
+    expect(
+      applyBidiIsolation('Order $orderRef confirmed'),
+      contains('$lri$orderRef$pdi'),
+    );
+
+    const ip = '192.168.1.10';
+    expect(applyBidiIsolation('Printer at $ip'), contains('$lri$ip$pdi'));
+
+    // Plain Arabic prose with no structured token is left unchanged.
+    expect(applyBidiIsolation('شكراً لزيارتكم'), 'شكراً لزيارتكم');
+  });
+
+  test(
+    'Arabic receipts render a phone number without throwing and isolate it',
+    () async {
+      const phone = '+963 11 123 4567';
+      expect(applyBidiIsolation(phone), contains(phone));
+      final receipt = ReceiptData.fromJson(data(phone: phone));
+      expect(receipt.template.header.showPhone, isTrue);
+      final raster = await renderer.render(
+        receipt,
+        locale: const Locale('ar'),
+        paperWidth: PrinterPaperWidth.mm58,
+      );
+      expect(raster.height, greaterThan(0));
+      expect(raster.png.take(8), <int>[137, 80, 78, 71, 13, 10, 26, 10]);
+    },
+  );
 
   test('write development receipt PNG previews when requested', () async {
     if (!const bool.fromEnvironment('receiptPreview')) return;

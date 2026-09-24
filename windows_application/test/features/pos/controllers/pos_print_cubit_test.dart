@@ -473,8 +473,10 @@ class _FakePrinter implements PrinterService {
   bool throwRenderingFailure = false;
 
   @override
-  Future<PrinterPrintResult> printTest(PrinterConfig config) async =>
-      const PrinterPrintResult.success();
+  Future<PrinterPrintResult> printTestReceipt(
+    PrinterConfig config,
+    Locale locale,
+  ) async => const PrinterPrintResult.success();
 
   @override
   Future<PrinterPrintResult> printRaster(
