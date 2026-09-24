@@ -12,6 +12,7 @@ use App\Services\OrderLifecyclePolicy;
 use App\Services\PosInventoryWarehouseResolver;
 use App\Services\PosNumberGenerator;
 use App\Services\PosPricingService;
+use App\Services\ShiftLockService;
 use App\Services\TenantTaxService;
 use App\Support\IdempotencyFingerprint;
 use App\Support\TenantContext;
@@ -32,6 +33,7 @@ class PosOrderController extends Controller
         private readonly PosNumberGenerator $numbers,
         private readonly CustomerOperationalEligibility $customerEligibility,
         private readonly PosInventoryWarehouseResolver $posWarehouses,
+        private readonly ShiftLockService $shiftLocks,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -149,6 +151,12 @@ class PosOrderController extends Controller
                 }
 
                 $this->customerEligibility->assert($tenantId, $data['customerId'] ?? null);
+                // H1: a shared lock on the shift, held for this whole
+                // transaction, so the order can never attach to a shift that
+                // shifts:reconcile-overlap is concurrently closing.
+                if (($data['shiftId'] ?? null) !== null) {
+                    $this->shiftLocks->sharedOpenShift($tenantId, (int) $data['shiftId'], (int) $data['branchId']);
+                }
                 $snapshot = array_key_exists('publishedMenuVersionId', $data) && $data['publishedMenuVersionId'] !== null
                     ? $this->publishedOrders->bindNewOrder($tenantId, (int) $data['branchId'], (int) $data['publishedMenuVersionId'])
                     : null;

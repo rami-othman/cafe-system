@@ -691,6 +691,7 @@ class ShiftClosingResult extends Equatable {
     required this.closedAt,
     required this.closedBy,
     required this.reportNumber,
+    this.closeMode = ShiftCloseMode.manual,
   });
 
   final ShiftSnapshot snapshot;
@@ -699,6 +700,7 @@ class ShiftClosingResult extends Equatable {
   final DateTime closedAt;
   final String closedBy;
   final String reportNumber;
+  final ShiftCloseMode closeMode;
 
   Duration get duration => closedAt.difference(snapshot.identity.openedAt);
 
@@ -710,10 +712,33 @@ class ShiftClosingResult extends Equatable {
     closedAt,
     closedBy,
     reportNumber,
+    closeMode,
   ];
 }
 
 enum ShiftHistoryStatus { closed, closedWithDifference, reopened }
+
+/// How a closed shift was closed (server `closeType`). Only a manual close is
+/// physically counted; automatic and legacy-reconcile closes carry no counted
+/// cash or cash difference and must never be shown as one.
+enum ShiftCloseMode {
+  manual,
+  automatic,
+  legacyReconcile,
+  // A close_type this build does not recognize yet. It must never be
+  // rendered as a manual counted close (M3): an unknown type carries no
+  // known counted-cash/variance contract, so it is always uncounted.
+  unknown;
+
+  static ShiftCloseMode fromApi(Object? value) => switch (value?.toString()) {
+    null || 'manual' => ShiftCloseMode.manual,
+    'automatic' => ShiftCloseMode.automatic,
+    'legacy_reconcile' => ShiftCloseMode.legacyReconcile,
+    _ => ShiftCloseMode.unknown,
+  };
+
+  bool get isCounted => this == ShiftCloseMode.manual;
+}
 
 class ShiftHistoryEntry extends Equatable {
   const ShiftHistoryEntry({
@@ -729,6 +754,7 @@ class ShiftHistoryEntry extends Equatable {
     required this.cashDifference,
     required this.barDifferenceCount,
     required this.status,
+    this.closeMode = ShiftCloseMode.manual,
   });
 
   final String shiftNumber;
@@ -743,14 +769,18 @@ class ShiftHistoryEntry extends Equatable {
   final double cashDifference;
   final int barDifferenceCount;
   final ShiftHistoryStatus status;
+  final ShiftCloseMode closeMode;
 
   Duration get duration => closedAt.difference(openedAt);
 
+  /// Whether the drawer was physically counted at close.
+  bool get isCounted => closeMode.isCounted;
+
   bool get isBalanced => cashDifference.abs() <= 0.5;
 
-  bool get isShortage => cashDifference < -0.5;
+  bool get isShortage => isCounted && cashDifference < -0.5;
 
-  bool get isSurplus => cashDifference > 0.5;
+  bool get isSurplus => isCounted && cashDifference > 0.5;
 
   @override
   List<Object?> get props => <Object?>[
@@ -766,6 +796,7 @@ class ShiftHistoryEntry extends Equatable {
     cashDifference,
     barDifferenceCount,
     status,
+    closeMode,
   ];
 }
 
@@ -793,7 +824,8 @@ class ShiftHistorySummary extends Equatable {
     );
     final double diff = entries.fold(
       0,
-      (double sum, ShiftHistoryEntry e) => sum + e.cashDifference,
+      (double sum, ShiftHistoryEntry e) =>
+          sum + (e.isCounted ? e.cashDifference : 0),
     );
     final int minutes = entries.fold(
       0,

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Support\Money;
+use App\Support\ShiftClosePresentation;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -27,9 +28,12 @@ final class ShiftHistoryQueryService
             $sales = DB::table('orders')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->whereNull('deleted_at')->where('status', 'paid')->selectRaw('COUNT(*) as count, COALESCE(SUM(total),0) as gross, COALESCE(SUM(discount_total),0) as discounts')->first();
             $refunds = Money::cents(DB::table('payment_refunds')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->where('status', 'completed')->sum('amount') ?? '0');
             $barDifferences = DB::table('stock_count_lines as l')->join('stock_counts as c', 'c.id', '=', 'l.stock_count_id')->where('c.tenant_id', $shift->tenant_id)->where('c.shift_id', $shift->id)->where('c.count_type', 'shift_check')->where('l.variance_quantity', '!=', 0)->count();
-            $difference = Money::cents($shift->cash_difference);
+            // Only a physically counted (manual) close can carry a cash difference;
+            // automatic and legacy_reconcile closes report none (null), never a fabricated one.
+            $presentation = ShiftClosePresentation::for($shift);
+            $difference = $presentation['cashDifference'];
 
-            return ['shiftNumber' => $shift->shift_number ?? 'SH-'.str_pad((string) $shift->id, 6, '0', STR_PAD_LEFT), 'date' => $this->timestamp($shift->opened_at), 'cashierName' => $shift->cashier_name, 'branchName' => $shift->branch_name, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at), 'orderCount' => (int) ($sales->count ?? 0), 'netSales' => Money::decimal(Money::cents($sales->gross ?? '0') - Money::cents($sales->discounts ?? '0') - $refunds), 'cashSales' => $cash['cashSales'], 'cashDifference' => Money::decimal($difference), 'barDifferenceCount' => $barDifferences, 'status' => abs($difference) > 50 ? 'closedWithDifference' : 'closed'];
+            return ['shiftNumber' => $shift->shift_number ?? 'SH-'.str_pad((string) $shift->id, 6, '0', STR_PAD_LEFT), 'date' => $this->timestamp($shift->opened_at), 'cashierName' => $shift->cashier_name, 'branchName' => $shift->branch_name, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at), 'orderCount' => (int) ($sales->count ?? 0), 'netSales' => Money::decimal(Money::cents($sales->gross ?? '0') - Money::cents($sales->discounts ?? '0') - $refunds), 'cashSales' => $cash['cashSales'], 'cashDifference' => $difference, 'barDifferenceCount' => $barDifferences, 'closeType' => $presentation['closeMode'], 'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'status' => $presentation['cashCounted'] && abs(Money::cents($difference)) > 50 ? 'closedWithDifference' : 'closed'];
         })->values()->all();
 
         return ['data' => $data, 'meta' => ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()]];

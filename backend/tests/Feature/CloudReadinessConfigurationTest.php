@@ -9,40 +9,36 @@ class CloudReadinessConfigurationTest extends TestCase
 {
     public function test_cors_allows_only_configured_origins_and_authorization_preflight(): void
     {
-        putenv('CORS_ALLOWED_ORIGINS=https://allowed.example.test');
-        $_ENV['CORS_ALLOWED_ORIGINS'] = 'https://allowed.example.test';
-        $_SERVER['CORS_ALLOWED_ORIGINS'] = 'https://allowed.example.test';
-        $this->refreshApplication();
+        // HandleCors::handle() reads config('cors') fresh on every request
+        // (see Illuminate\Http\Middleware\HandleCors), so setting config
+        // directly is sufficient and avoids the env/refreshApplication()
+        // pitfall covered by CorsEnvironmentBootstrapTest.
+        config(['cors.allowed_origins' => ['https://allowed.example.test']]);
 
-        try {
-            $this->assertSame(['https://allowed.example.test'], config('cors.allowed_origins'));
+        $this->assertSame(['https://allowed.example.test'], config('cors.allowed_origins'));
 
-            $allowed = $this->withHeaders([
-                'Origin' => 'https://allowed.example.test',
-                'Access-Control-Request-Method' => 'POST',
-                'Access-Control-Request-Headers' => 'Authorization, Content-Type, Accept',
-            ])->options('/api/v1/auth/login');
+        $allowed = $this->withHeaders([
+            'Origin' => 'https://allowed.example.test',
+            'Access-Control-Request-Method' => 'POST',
+            'Access-Control-Request-Headers' => 'Authorization, Content-Type, Accept',
+        ])->options('/api/v1/auth/login');
 
-            $allowed->assertNoContent();
-            $allowed->assertHeader('Access-Control-Allow-Origin', 'https://allowed.example.test');
-            $this->assertStringContainsStringIgnoringCase(
-                'authorization',
-                (string) $allowed->headers->get('Access-Control-Allow-Headers'),
-            );
+        $allowed->assertNoContent();
+        $allowed->assertHeader('Access-Control-Allow-Origin', 'https://allowed.example.test');
+        $this->assertStringContainsStringIgnoringCase(
+            'authorization',
+            (string) $allowed->headers->get('Access-Control-Allow-Headers'),
+        );
 
-            $unknown = $this->withHeaders([
-                'Origin' => 'https://unknown.example.test',
-                'Access-Control-Request-Method' => 'POST',
-            ])->options('/api/v1/auth/login');
+        $unknown = $this->withHeaders([
+            'Origin' => 'https://unknown.example.test',
+            'Access-Control-Request-Method' => 'POST',
+        ])->options('/api/v1/auth/login');
 
-            $this->assertNotSame(
-                'https://unknown.example.test',
-                $unknown->headers->get('Access-Control-Allow-Origin'),
-            );
-        } finally {
-            putenv('CORS_ALLOWED_ORIGINS');
-            unset($_ENV['CORS_ALLOWED_ORIGINS'], $_SERVER['CORS_ALLOWED_ORIGINS']);
-        }
+        $this->assertNotSame(
+            'https://unknown.example.test',
+            $unknown->headers->get('Access-Control-Allow-Origin'),
+        );
     }
 
     public function test_trusted_render_proxy_forwards_https_and_host_for_url_generation(): void

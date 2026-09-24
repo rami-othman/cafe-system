@@ -384,6 +384,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('inventory', [CashierDashboardController::class, 'inventory'])->middleware('cashier.permission:cashier.inventory.view');
         });
 
+        Route::get('shifts/readiness', [ShiftController::class, 'readiness']);
         Route::get('shifts/current', [ShiftController::class, 'current']);
         Route::get('shifts/current/snapshot', [ShiftController::class, 'snapshot']);
         Route::get('shifts/history', [ShiftController::class, 'history']);

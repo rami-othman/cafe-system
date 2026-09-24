@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\CafeConfiguration;
 
+use App\Services\ShiftDrawerReadinessService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,12 @@ class BranchResource extends JsonResource
             'shiftCloseDestinationFinancialLocationId' => $this->shift_close_destination_financial_location_id,
             'shiftClosingFloatAmount' => $this->shift_closing_float_amount,
             'shiftCloseTime' => $this->shift_close_time ? substr($this->shift_close_time, 0, 5) : null,
+            // Same canonical rules as shift open (ShiftDrawerReadinessService).
+            'shiftDrawerReadiness' => (function (): array {
+                $result = app(ShiftDrawerReadinessService::class)->assess((int) $this->tenant_id, (int) $this->id);
+
+                return ['ready' => $result['ready'], 'issues' => $result['issues']];
+            })(),
             'receiptPrintingEnabled' => $this->receipt_printing_enabled,
             'defaultPaperWidth' => $this->default_paper_width,
             'autoPrintAfterPayment' => $this->auto_print_after_payment,

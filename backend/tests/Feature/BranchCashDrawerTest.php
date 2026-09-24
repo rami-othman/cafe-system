@@ -247,6 +247,8 @@ final class BranchCashDrawerTest extends TestCase
         $shift = (int) $this->postJson('/api/v1/shifts/current', [
             'branchId' => $branch, 'openingCash' => '100.00',
         ], $headers)->assertCreated()->json('data.id');
+        // A2: new shifts cannot open without a destination; simulate a pre-A2 legacy open shift.
+        DB::table('shifts')->where('id', $shift)->update(['close_destination_financial_location_id' => null]);
         $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => '100.00'], $headers)
             ->assertUnprocessable()->assertJsonValidationErrors('destination');
         $this->assertSame('open', DB::table('shifts')->where('id', $shift)->value('status'));
@@ -286,6 +288,8 @@ final class BranchCashDrawerTest extends TestCase
         $shift = (int) $this->postJson('/api/v1/shifts/current', [
             'branchId' => $branch, 'openingCash' => '100.00',
         ], ['Authorization' => 'Bearer '.$token])->assertCreated()->json('data.id');
+        // A2: new shifts cannot open without a destination; simulate a pre-A2 legacy open shift.
+        DB::table('shifts')->where('id', $shift)->update(['close_destination_financial_location_id' => null]);
         try {
             app(\App\Services\AutomaticShiftCloseService::class)->close($tenant, $shift);
             $this->fail('Missing destination must block automatic close.');
@@ -314,11 +318,12 @@ final class BranchCashDrawerTest extends TestCase
         app(FinancialSetupService::class)->ensureForTenant($tenant);
         $token = $this->authenticateTenantUser($tenant);
         $drawer = DB::table('branches')->where('id', $branch)->value('pos_cash_financial_location_id');
+        $before = DB::table('branches')->where('id', $branch)->value('shift_close_destination_financial_location_id');
         $this->putJson("/api/v1/cafe-configuration/branches/{$branch}", [
             'shiftCloseDestinationFinancialLocationId' => $drawer,
         ], ['Authorization' => 'Bearer '.$token])->assertUnprocessable()
             ->assertJsonValidationErrors('shiftCloseDestinationFinancialLocationId');
-        $this->assertNull(DB::table('branches')->where('id', $branch)->value('shift_close_destination_financial_location_id'));
+        $this->assertSame($before, DB::table('branches')->where('id', $branch)->value('shift_close_destination_financial_location_id'));
     }
 
     public function test_setup_is_idempotent_and_cash_method_is_shared_without_replacing_legacy_location(): void

@@ -363,8 +363,53 @@ class _CashSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CashCountResult cash = result.cash;
+    if (!result.closeMode.isCounted) {
+      final bool legacy = result.closeMode == ShiftCloseMode.legacyReconcile;
+      final bool unknown = result.closeMode == ShiftCloseMode.unknown;
+      final String typeLabel = legacy
+          ? ShiftStrings.closeTypeLegacyReconcile
+          : unknown
+          ? ShiftStrings.closeTypeUnknown
+          : ShiftStrings.closeTypeAutomatic;
+      final String notice = legacy
+          ? ShiftStrings.legacyReconcileNotice
+          : unknown
+          ? ShiftStrings.unknownCloseTypeNotice
+          : ShiftStrings.automaticCloseNotice;
+      return Column(
+        children: <Widget>[
+          ShiftKeyValueRow(
+            label: ShiftStrings.closeType,
+            value: typeLabel,
+            numeric: false,
+          ),
+          ShiftKeyValueRow(
+            label: ShiftStrings.openingFloat,
+            value: ShiftFormat.money(result.snapshot.drawer.openingFloat),
+          ),
+          ShiftKeyValueRow(
+            label: ShiftStrings.expectedCash,
+            value: legacy || unknown ? ShiftStrings.notApplicable : ShiftFormat.money(cash.expected),
+          ),
+          ShiftKeyValueRow(label: ShiftStrings.actualCash, value: ShiftStrings.notCounted, numeric: false),
+          ShiftKeyValueRow(label: ShiftStrings.cashDifference, value: ShiftStrings.notApplicable),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(
+              notice,
+              style: ShiftText.tableCell,
+            ),
+          ),
+        ],
+      );
+    }
     return Column(
       children: <Widget>[
+        ShiftKeyValueRow(
+          label: ShiftStrings.closeType,
+          value: ShiftStrings.closeTypeManual,
+          numeric: false,
+        ),
         ShiftKeyValueRow(
           label: ShiftStrings.openingFloat,
           value: ShiftFormat.money(result.snapshot.drawer.openingFloat),
@@ -781,7 +826,7 @@ class _A4Preview extends StatelessWidget {
           Text('${ShiftStrings.cashier}: ${s.identity.cashierName}'),
           const SizedBox(height: AppSpacing.md),
           Text('${ShiftStrings.netSales}: ${ShiftFormat.money(s.sales.netSales)}'),
-          Text('${ShiftStrings.cashDifference}: ${ShiftFormat.signedMoney(result.cash.difference)}'),
+          Text('${ShiftStrings.cashDifference}: ${_differenceText(result)}'),
           Text(
             '${ShiftStrings.barDifferenceCount}: ${ShiftFormat.count(s.barCount.differenceItems)}',
           ),
@@ -808,8 +853,8 @@ class _ReceiptPreview extends StatelessWidget {
           Text(s.identity.shiftNumber),
           const Divider(),
           Text('${ShiftStrings.netSales}: ${ShiftFormat.money(s.sales.netSales)}'),
-          Text('${ShiftStrings.actualCash}: ${ShiftFormat.money(result.cash.actual)}'),
-          Text('${ShiftStrings.cashDifference}: ${ShiftFormat.signedMoney(result.cash.difference)}'),
+          Text('${ShiftStrings.actualCash}: ${result.closeMode.isCounted ? ShiftFormat.money(result.cash.actual) : ShiftStrings.notCounted}'),
+          Text('${ShiftStrings.cashDifference}: ${_differenceText(result)}'),
           const Divider(),
           Text(ShiftFormat.dateTime(result.closedAt)),
         ],
@@ -817,3 +862,8 @@ class _ReceiptPreview extends StatelessWidget {
     );
   }
 }
+
+/// Only a physically counted (manual) close has a cash difference.
+String _differenceText(ShiftClosingResult result) => result.closeMode.isCounted
+    ? ShiftFormat.signedMoney(result.cash.difference)
+    : ShiftStrings.notApplicable;

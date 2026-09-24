@@ -26,7 +26,7 @@ class OperationalAuditService
         ]);
     }
 
-    public function recordContext(int $tenantId, string $action, string $entityType, int $entityId, array $after = [], ?int $actorId = null, ?int $branchId = null, bool $deduplicate = true): void
+    public function recordContext(int $tenantId, string $action, string $entityType, int $entityId, array $after = [], ?int $actorId = null, ?int $branchId = null, bool $deduplicate = true, array $before = []): void
     {
         if ($deduplicate && DB::table('activity_logs')->where('tenant_id', $tenantId)->where('action', $action)->where('entity_type', $entityType)->where('entity_id', $entityId)->exists()) {
             return;
@@ -41,7 +41,7 @@ class OperationalAuditService
             'entity_id' => $entityId,
             'description' => $this->description($action),
             'ip_address' => null,
-            'before_state' => json_encode([]),
+            'before_state' => json_encode($this->redact($before)),
             'after_state' => json_encode($this->redact($after)),
             'created_at' => now(),
             'updated_at' => now(),

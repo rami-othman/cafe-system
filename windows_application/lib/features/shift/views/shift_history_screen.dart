@@ -329,11 +329,17 @@ class _HistoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (ShiftTone diffTone, String diffLabel) = entry.isBalanced
-        ? (ShiftTone.success, ShiftStrings.differenceMatched)
-        : entry.isShortage
-        ? (ShiftTone.warning, ShiftStrings.differenceShort)
-        : (ShiftTone.surplus, ShiftStrings.differenceOver);
+    // Uncounted closes (automatic / legacy reconcile) have no cash difference.
+    final (ShiftTone diffTone, String diffLabel) = switch (entry.closeMode) {
+      ShiftCloseMode.automatic => (ShiftTone.neutral, ShiftStrings.closeTypeAutomatic),
+      ShiftCloseMode.legacyReconcile => (ShiftTone.accent, ShiftStrings.closeTypeLegacyReconcile),
+      ShiftCloseMode.unknown => (ShiftTone.neutral, ShiftStrings.closeTypeUnknown),
+      ShiftCloseMode.manual => entry.isBalanced
+          ? (ShiftTone.success, ShiftStrings.differenceMatched)
+          : entry.isShortage
+          ? (ShiftTone.warning, ShiftStrings.differenceShort)
+          : (ShiftTone.surplus, ShiftStrings.differenceOver),
+    };
 
     return InkWell(
       onTap: () => context.push(ShiftRouteLocations.report(entry.shiftNumber)),
@@ -409,7 +415,9 @@ class _HistoryRow extends StatelessWidget {
             _cell(
               1,
               ShiftValue(
-                ShiftFormat.signedMoney(entry.cashDifference),
+                entry.isCounted
+                    ? ShiftFormat.signedMoney(entry.cashDifference)
+                    : ShiftStrings.notApplicable,
                 align: TextAlign.center,
                 style: ShiftText.bodyStrong,
                 color: diffTone.ink,

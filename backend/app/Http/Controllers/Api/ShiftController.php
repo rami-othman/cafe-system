@@ -5,17 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
-use App\Services\FinancialAccountBalanceQuery;
-use App\Services\ShiftCashSummaryService;
-use App\Services\ShiftCloseTransferService;
+use App\Services\ShiftCloseService;
+use App\Services\ShiftDrawerReadinessService;
 use App\Services\ShiftHistoryQueryService;
 use App\Services\ShiftSnapshotService;
 use App\Services\StockCountService;
 use App\Support\FinancialActor;
 use App\Support\Money;
+use App\Support\ShiftClosePresentation;
 use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,13 +30,12 @@ class ShiftController extends Controller
 
     public function __construct(
         private readonly BarCheckTemplateService $barCheckTemplates,
-        private readonly ShiftCashSummaryService $cashSummary,
-        private readonly ShiftCloseTransferService $closeTransfers,
+        private readonly ShiftCloseService $closer,
+        private readonly ShiftDrawerReadinessService $readiness,
         private readonly ShiftSnapshotService $snapshots,
         private readonly ShiftHistoryQueryService $history,
         private readonly StockCountService $counts,
         private readonly BranchAccessService $branches,
-        private readonly FinancialAccountBalanceQuery $balances,
     ) {}
 
     public function current(Request $request): JsonResponse
@@ -73,35 +73,74 @@ class ShiftController extends Controller
         return response()->json(['data' => $this->closingPayload($tenantId, $shift)]);
     }
 
+    /** Drawer/close configuration readiness for opening a shift on a branch. */
+    public function readiness(Request $request): JsonResponse
+    {
+        $tenantId = TenantContext::id($request);
+        $data = $request->validate(['branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)]]);
+        $this->branches->authorizeRequestBranch($request, (int) $data['branchId']);
+
+        return response()->json(['data' => $this->readiness->payload($tenantId, (int) $data['branchId'])]);
+    }
+
+    /**
+     * Opens a shift on the branch's physical POS drawer.
+     *
+     * Invariant: one open (live) shift per tenant + financial_location_id. The
+     * branch and drawer rows are locked (not the tenant row), so opens on the
+     * same drawer serialize while other drawers proceed in parallel; the
+     * partial unique index shifts_one_open_per_location is the final guarantee
+     * and its violation is reported as the same friendly validation error.
+     */
     public function open(Request $request): JsonResponse
     {
         $tenantId = TenantContext::id($request);
         $data = $request->validate(['branchId' => ['required', 'integer', $this->tenantExists('branches', $tenantId)], 'userId' => ['prohibited'], 'openingCash' => ['required', 'numeric', 'min:0'], 'note' => ['nullable', 'string', 'max:4000']]);
         $this->branches->authorizeRequestBranch($request, (int) $data['branchId']);
         $actor = $request->attributes->get('auth_user');
-        $shift = DB::transaction(function () use ($tenantId, $data, $actor): object {
-            DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
-            $now = now();
-            $drawer = app(\App\Services\BranchPosCashDrawer::class)->resolve($tenantId, (int) $data['branchId'], true);
-            $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $data['branchId'])->lockForUpdate()->first();
-            if (DB::table('shifts')->where('tenant_id', $tenantId)
-                ->where('financial_location_id', $drawer->id)->where('status', 'open')
-                ->whereNull('deleted_at')->exists()) {
-                throw ValidationException::withMessages(['branchId' => 'This cash drawer already has an open shift.']);
-            }
-            $ledgerCash = $this->balances->summary($tenantId, (int) $drawer->financial_account_id,
-                locationId: (int) $drawer->id)['balance'];
-            if (Money::cents($data['openingCash']) !== Money::cents($ledgerCash)) {
-                throw ValidationException::withMessages(['openingCash' => 'Counted opening cash must match the posted drawer ledger balance. Post any safe-to-drawer transfer before opening the shift.']);
-            }
-            $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'close_destination_financial_location_id' => $branch->shift_close_destination_financial_location_id, 'closing_float_amount' => $branch->shift_closing_float_amount, 'shift_number' => $this->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
+        try {
+            $shift = DB::transaction(function () use ($tenantId, $data, $actor): object {
+                // Locks the branch (configuration) row, then only the drawer location row.
+                $config = $this->readiness->assertReady($tenantId, (int) $data['branchId'], true);
+                $drawer = $config['drawer'];
+                if ($this->readiness->openShiftOnDrawer($tenantId, (int) $drawer->id)) {
+                    throw ValidationException::withMessages(['branchId' => __('shifts.drawer_has_open_shift')]);
+                }
+                $ledgerCash = $this->readiness->drawerLedgerBalance($tenantId, $drawer);
+                if (Money::cents($data['openingCash'], 'openingCash') !== Money::cents($ledgerCash)) {
+                    throw ValidationException::withMessages(['openingCash' => __('shifts.opening_cash_mismatch', ['ledger' => $ledgerCash])]);
+                }
+                $this->closer->lockShiftNumbering($tenantId);
+                $now = now();
+                // Snapshot the close configuration: later branch edits never mutate an open shift.
+                $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'close_destination_financial_location_id' => $config['destination']->id, 'closing_float_amount' => $config['closingFloat'], 'shift_number' => $this->closer->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
 
-            return DB::table('shifts')->where('id', $id)->first();
-        });
+                return DB::table('shifts')->where('id', $id)->first();
+            });
+        } catch (QueryException $exception) {
+            if (self::isOpenShiftUniqueViolation($exception)) {
+                throw ValidationException::withMessages(['branchId' => __('shifts.drawer_has_open_shift')]);
+            }
+            throw $exception;
+        }
 
         return response()->json(['data' => $this->serialize($shift)], 201);
     }
 
+    public static function isOpenShiftUniqueViolation(QueryException $exception): bool
+    {
+        $state = $exception->errorInfo[0] ?? $exception->getCode();
+
+        return (string) $state === '23505' && str_contains($exception->getMessage(), 'shifts_one_open_per_location');
+    }
+
+    /**
+     * Canonical manual close: lock -> tenant/branch/owner authorization -> open
+     * -> required bar checks -> ShiftCashSummary -> counted == expected ->
+     * drawer + destination validation -> counted == drawer ledger -> one
+     * transfer (counted - float, key shift-close-transfer:{id}) -> closed, all
+     * in one transaction. Retrying an identical close returns the same result.
+     */
     public function close(Request $request, int $shift): JsonResponse
     {
         $data = $request->validate([
@@ -112,27 +151,24 @@ class ShiftController extends Controller
         $tenantId = TenantContext::id($request);
         $actor = $request->attributes->get('auth_user');
         $closed = DB::transaction(function () use ($request, $data, $tenantId, $actor, $shift): object {
-            $row = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift)->whereNull('deleted_at')->lockForUpdate()->first();
-            abort_if(! $row, 404, 'Shift not found.');
+            $row = $this->closer->lock($tenantId, $shift);
+            abort_if(! $row, 404, __('shifts.shift_not_found'));
             $this->branches->authorizeRequestBranch($request, (int) $row->branch_id);
-            abort_unless((int) $row->user_id === (int) $actor->id, 403, 'Only the shift owner can close this shift.');
-            if ($row->status === 'closed' && $row->close_type === 'manual'
-                && Money::cents($row->closing_cash) === Money::cents($data['closingCash'])) {
+            abort_unless((int) $row->user_id === (int) $actor->id, 403, __('shifts.only_owner_can_close'));
+            if ($row->status === 'closed' && $row->close_type === ShiftCloseService::TYPE_MANUAL
+                && Money::cents($row->closing_cash) === Money::cents($data['closingCash'], 'closingCash')) {
                 return $row;
             }
-            abort_unless($row->status === 'open', 422, 'Only an open shift can be closed.');
-            $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
-            $this->assertNoPendingRequiredBarCheck($tenantId, $row);
-            $summary = $this->cashSummary->summarize($tenantId, $row);
-            $difference = Money::cents($data['closingCash']) - Money::cents($summary['expectedCash']);
-            if ($difference !== 0) {
-                throw ValidationException::withMessages(['closingCash' => 'Counted cash differs from expected cash. Recount and correct missing cash movements; a manager-approved variance policy is required to close with a difference.']);
+            if ($row->status !== 'open') {
+                throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
             }
-            $number = $row->shift_number ?: $this->nextShiftNumber($tenantId, now()->toDateString());
-            $transferId = $this->closeTransfers->create($request, $tenantId, $row, Money::cents($data['closingCash']), 'user');
-            DB::table('shifts')->where('id', $row->id)->update(['shift_number' => $number, 'report_number' => 'RPT-'.str_replace('SH-', '', $number), 'closing_cash' => $data['closingCash'], 'expected_cash' => $summary['expectedCash'], 'cash_difference' => Money::decimal($difference), 'cash_difference_reason' => $data['cashDifferenceReason'] ?? null, 'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null, 'close_type' => 'manual', 'close_transfer_id' => $transferId, 'status' => 'closed', 'closed_at' => now(), 'notes' => $data['note'] ?? $row->notes, 'updated_at' => now()]);
+            $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
 
-            return DB::table('shifts')->where('id', $row->id)->first();
+            return $this->closer->close($request, $tenantId, $row, ShiftCloseService::TYPE_MANUAL, (string) $data['closingCash'], [
+                'cash_difference_reason' => $data['cashDifferenceReason'] ?? null,
+                'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null,
+                'notes' => $data['note'] ?? $row->notes,
+            ]);
         });
 
         return response()->json(['data' => $this->closingPayload($tenantId, $closed)]);
@@ -177,35 +213,25 @@ class ShiftController extends Controller
         }
     }
 
-    private function assertNoPendingRequiredBarCheck(int $tenant, object $shift): void
-    {
-        $pending = DB::table('bar_check_templates as t')->where('t.tenant_id', $tenant)->where('t.branch_id', $shift->branch_id)->where('t.is_active', true)->where('t.required_for_shift_close', true)->whereNotExists(fn ($query) => $query->selectRaw('1')->from('stock_counts as c')->whereColumn('c.bar_check_template_id', 't.id')->where('c.shift_id', $shift->id)->where('c.status', 'posted'))->exists();
-        abort_if($pending, 422, 'Complete the required bar check before closing the shift.');
-    }
-
     /** @return array<string, mixed> */
     private function closingPayload(int $tenant, object $shift): array
     {
         $snapshot = $this->snapshots->buildSnapshot($tenant, $shift);
+        $presentation = ShiftClosePresentation::for($shift);
 
-        return $this->serialize($shift) + ['snapshot' => $snapshot, 'cash' => ['expected' => $shift->expected_cash, 'actual' => $shift->closing_cash, 'reason' => $shift->cash_difference_reason, 'reasonDetail' => $shift->cash_difference_reason_detail ?? ''], 'closingNotes' => $shift->notes ?? '', 'closedAt' => $this->timestamp($shift->closed_at), 'closedBy' => $shift->close_type === 'automatic' ? 'System' : $snapshot['identity']['closedBy'], 'reportNumber' => $shift->report_number];
+        return $this->serialize($shift) + ['snapshot' => $snapshot, 'cash' => ['expected' => $presentation['expectedCash'], 'actual' => $shift->closing_cash, 'difference' => $presentation['cashDifference'], 'counted' => $presentation['cashCounted'], 'reason' => $shift->cash_difference_reason, 'reasonDetail' => $shift->cash_difference_reason_detail ?? ''], 'closingNotes' => $shift->notes ?? '', 'closedAt' => $this->timestamp($shift->closed_at), 'closedBy' => in_array($shift->close_type, [ShiftCloseService::TYPE_AUTOMATIC, ShiftCloseService::TYPE_LEGACY_RECONCILE], true) ? 'System' : $snapshot['identity']['closedBy'], 'reportNumber' => $shift->report_number];
     }
 
     private function serialize(object $shift): array
     {
-        return ['id' => (int) $shift->id, 'shiftNumber' => $shift->shift_number, 'branchId' => (int) $shift->branch_id, 'userId' => (int) $shift->user_id, 'status' => $shift->status, 'closeType' => $shift->close_type, 'financialLocationId' => $shift->financial_location_id, 'closeDestinationFinancialLocationId' => $shift->close_destination_financial_location_id, 'closeTransferId' => $shift->close_transfer_id, 'openingCash' => (float) $shift->opening_cash, 'closingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash, 'expectedCash' => (float) $shift->expected_cash, 'cashDifference' => (float) $shift->cash_difference, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at)];
+        $presentation = ShiftClosePresentation::for($shift);
+
+        return ['id' => (int) $shift->id, 'shiftNumber' => $shift->shift_number, 'branchId' => (int) $shift->branch_id, 'userId' => (int) $shift->user_id, 'status' => $shift->status, 'closeType' => $shift->close_type, 'closeMode' => $presentation['closeMode'], 'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'financialLocationId' => $shift->financial_location_id, 'closeDestinationFinancialLocationId' => $shift->close_destination_financial_location_id, 'closingFloatAmount' => $shift->closing_float_amount, 'closeTransferId' => $shift->close_transfer_id, 'openingCash' => (float) $shift->opening_cash, 'closingCash' => $shift->closing_cash === null ? null : (float) $shift->closing_cash, 'expectedCash' => $presentation['expectedCash'] === null ? null : (float) $presentation['expectedCash'], 'cashDifference' => $presentation['cashDifference'] === null ? null : (float) $presentation['cashDifference'], 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at)];
     }
 
     private function timestamp(?string $value): ?string
     {
         return $value === null ? null : CarbonImmutable::parse($value, 'UTC')->toIso8601String();
-    }
-
-    private function nextShiftNumber(int $tenant, string $date): string
-    {
-        $count = DB::table('shifts')->where('tenant_id', $tenant)->whereDate('opened_at', $date)->count() + 1;
-
-        return sprintf('SH-%s-%03d', str_replace('-', '', $date), $count);
     }
 
     private function tenantExists(string $table, int $tenantId)
