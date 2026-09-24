@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../app/localization/localization_extensions.dart';
 import '../../../core/navigation/unsaved_navigation_guard.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
 
 enum CafeConfigurationDestination {
   overview('/cafe-configuration/overview', Icons.space_dashboard_outlined),
@@ -37,6 +39,19 @@ class CafeConfigurationNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _CafeConfigurationCopy copy = _CafeConfigurationCopy(context);
+    // Manager only has backend access to Printing (see
+    // _cafeConfigurationAccessRedirect); the other tabs would 403 if shown.
+    final String? role = context
+        .watch<AuthSessionCubit>()
+        .state
+        .session
+        ?.user
+        .role;
+    final List<CafeConfigurationDestination> visible = role == 'manager'
+        ? const <CafeConfigurationDestination>[
+            CafeConfigurationDestination.printing,
+          ]
+        : CafeConfigurationDestination.values;
     return Semantics(
       container: true,
       label: copy.moduleTitle,
@@ -54,8 +69,7 @@ class CafeConfigurationNavigation extends StatelessWidget {
             ),
             child: Row(
               children: <Widget>[
-                for (final CafeConfigurationDestination destination
-                    in CafeConfigurationDestination.values)
+                for (final CafeConfigurationDestination destination in visible)
                   _DestinationTab(
                     key: Key('cafe-configuration-${destination.name}'),
                     destination: destination,

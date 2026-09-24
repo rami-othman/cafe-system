@@ -587,6 +587,10 @@ class _PosScreenState extends State<PosScreen> {
         branchId: branchId,
         locale: locale,
       ),
+      // This is invoked while the ReceiptPreviewDialog that owns this print
+      // action is still open (see _showReceiptDialog) — close it too, so it
+      // doesn't linger over the Settings screen once we navigate there.
+      onOpenPrinterSetup: () => Navigator.of(context).pop(),
     );
   }
 

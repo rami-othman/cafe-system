@@ -6444,6 +6444,130 @@ class AppLocalizationsAr extends AppLocalizations {
       'أدخل عنوان طابعة صالحًا ومنفذًا بين 1 و65535.';
 
   @override
+  String get cafeConfigurationPrintingBranchDefaultsNotice =>
+      'هذه إعدادات افتراضية للفرع: تُطبَّق على جميع أجهزة هذا الفرع ما لم يتم تجاوزها من الإعدادات ← إعداد الطابعة على ذلك الجهاز.';
+
+  @override
+  String get cafeConfigurationSavePrinterConfig => 'حفظ إعدادات الطابعة';
+
+  @override
+  String get cafeConfigurationSaveReceiptDesign => 'حفظ تصميم الإيصال';
+
+  @override
+  String get cafeConfigurationPrinterConfigSaved => 'تم حفظ إعدادات الطابعة.';
+
+  @override
+  String get cafeConfigurationReceiptDesignSaved => 'تم حفظ تصميم الإيصال.';
+
+  @override
+  String get cafeConfigurationReceiptDesign => 'تصميم الإيصال';
+
+  @override
+  String get cafeConfigurationReceiptHeaderSection => 'الترويسة';
+
+  @override
+  String get cafeConfigurationReceiptHeaderLogo => 'شعار المقهى';
+
+  @override
+  String get cafeConfigurationReceiptHeaderCafeName => 'اسم المقهى';
+
+  @override
+  String get cafeConfigurationReceiptHeaderBranchName => 'اسم الفرع';
+
+  @override
+  String get cafeConfigurationReceiptHeaderAddress => 'العنوان';
+
+  @override
+  String get cafeConfigurationReceiptHeaderPhone => 'الهاتف';
+
+  @override
+  String get cafeConfigurationReceiptOrderInfoSection => 'معلومات الطلب';
+
+  @override
+  String get cafeConfigurationReceiptOrderNumber => 'رقم الطلب';
+
+  @override
+  String get cafeConfigurationReceiptDateTime => 'التاريخ والوقت';
+
+  @override
+  String get cafeConfigurationReceiptCashier => 'أمين الصندوق';
+
+  @override
+  String get cafeConfigurationReceiptCustomer => 'العميل';
+
+  @override
+  String get cafeConfigurationReceiptOrderType => 'نوع الطلب';
+
+  @override
+  String get cafeConfigurationReceiptItemsSection => 'الأصناف';
+
+  @override
+  String get cafeConfigurationReceiptProductName => 'اسم المنتج';
+
+  @override
+  String get cafeConfigurationReceiptQuantity => 'الكمية';
+
+  @override
+  String get cafeConfigurationReceiptUnitPrice => 'سعر الوحدة';
+
+  @override
+  String get cafeConfigurationReceiptModifiers => 'الإضافات';
+
+  @override
+  String get cafeConfigurationReceiptNotes => 'ملاحظات الصنف';
+
+  @override
+  String get cafeConfigurationReceiptTotalsSection => 'الإجماليات';
+
+  @override
+  String get cafeConfigurationReceiptSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get cafeConfigurationReceiptDiscount => 'الخصم';
+
+  @override
+  String get cafeConfigurationReceiptTax => 'الضريبة';
+
+  @override
+  String get cafeConfigurationReceiptTotal => 'الإجمالي';
+
+  @override
+  String get cafeConfigurationReceiptPaymentSection => 'الدفع';
+
+  @override
+  String get cafeConfigurationReceiptPaymentMethod => 'طريقة الدفع';
+
+  @override
+  String get cafeConfigurationReceiptPaidAmount => 'المبلغ المدفوع';
+
+  @override
+  String get cafeConfigurationReceiptChange => 'الباقي';
+
+  @override
+  String get cafeConfigurationReceiptFooterSection => 'التذييل';
+
+  @override
+  String get cafeConfigurationReceiptFooterEnabled => 'إظهار التذييل';
+
+  @override
+  String get cafeConfigurationReceiptFooterText => 'نص التذييل';
+
+  @override
+  String get cafeConfigurationReceiptPreview => 'معاينة الإيصال';
+
+  @override
+  String get cafeConfigurationReceiptPreviewTitle => 'معاينة الإيصال';
+
+  @override
+  String get cafeConfigurationReceiptMoveUp => 'تحريك لأعلى';
+
+  @override
+  String get cafeConfigurationReceiptMoveDown => 'تحريك لأسفل';
+
+  @override
+  String get cafeConfigurationReceiptLockedField => 'يظهر دائماً';
+
+  @override
   String get cafeConfigurationTeamAccess => 'الفريق والوصول';
 
   @override
@@ -8938,4 +9062,50 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get posPrintFailed => 'فشلت الطباعة. تحقق من الطابعة ثم أعد المحاولة.';
+
+  @override
+  String get printerSetupTitle => 'إعداد الطابعة';
+
+  @override
+  String get printerSetupThisDevice => 'هذا الجهاز';
+
+  @override
+  String get printerSetupDescription =>
+      'قم بتهيئة طابعة الإيصالات الحرارية الشبكية المستخدمة على جهاز الويندوز أو الجهاز اللوحي هذا.';
+
+  @override
+  String get printerSetupNoActiveBranch => 'لا يوجد فرع نشط محدد';
+
+  @override
+  String get printerSetupCouldNotLoadBranch => 'تعذر تحميل الفرع النشط.';
+
+  @override
+  String get printerSetupCouldNotLoad => 'تعذر تحميل إعدادات الطابعة.';
+
+  @override
+  String get printerSetupUseBranchDefaults =>
+      'استخدام إعدادات الفرع الافتراضية';
+
+  @override
+  String get printerSetupUsingBranchDefaults =>
+      'يتم استخدام الطابعة الافتراضية المشتركة لهذا الفرع.';
+
+  @override
+  String get printerSetupUsingLocalOverride =>
+      'يتم استخدام إعداد طابعة خاص بهذا الجهاز فقط.';
+
+  @override
+  String get printerSetupSaveDeviceSettings => 'حفظ إعدادات الجهاز';
+
+  @override
+  String get printerTestPrint => 'طباعة تجريبية';
+
+  @override
+  String get printerTesting => 'جارٍ الطباعة...';
+
+  @override
+  String get printerRetryTestPrint => 'إعادة الطباعة التجريبية';
+
+  @override
+  String get printerTestPrintSuccessful => 'تمت الطباعة بنجاح';
 }

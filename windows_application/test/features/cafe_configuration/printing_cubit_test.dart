@@ -10,6 +10,8 @@ import 'package:windows_application/features/cafe_configuration/widgets/cafe_con
 import 'package:windows_application/features/cafe_configuration/views/cafe_configuration_screens.dart';
 import 'package:windows_application/features/cafe_configuration/views/printing_screen.dart';
 import 'package:windows_application/features/printer/models/printer_config.dart';
+import 'package:windows_application/features/printer/models/receipt_template.dart';
+import 'package:windows_application/features/cafe_configuration/widgets/receipt_template_preview.dart';
 
 void main() {
   test('Printing route selects the top level tab', () {
@@ -50,13 +52,13 @@ void main() {
       ),
       autoPrintAfterPayment: true,
     );
-    await cubit.save();
+    await cubit.savePrinterConfig();
     expect(repo.updatedId, 1);
     expect(repo.updatedDraft!.name, 'Branch One');
     expect(repo.updatedDraft!.timezone, 'Asia/Damascus');
     expect(repo.updatedDraft!.printerConfig.paperWidth, PrinterPaperWidth.mm58);
     expect(repo.updatedDraft!.autoPrintAfterPayment, isTrue);
-    expect(cubit.state.status, CafeConfigurationLoadStatus.success);
+    expect(cubit.state.printerSaveStatus, SectionSaveStatus.success);
     await cubit.close();
   });
 
@@ -65,7 +67,7 @@ void main() {
     final cubit = PrintingCubit(repo);
     await cubit.load(preferredBranchId: 2);
     cubit.update(config: cubit.state.config.copyWith(enabled: false));
-    await cubit.save();
+    await cubit.savePrinterConfig();
     expect(repo.updatedDraft!.printerConfig.enabled, isFalse);
     await cubit.close();
   });
@@ -75,9 +77,149 @@ void main() {
     final cubit = PrintingCubit(repo);
     await cubit.load(preferredBranchId: 1);
     cubit.update(config: cubit.state.config.copyWith(enabled: true));
-    await cubit.save();
-    expect(cubit.state.error, 'validation');
+    await cubit.savePrinterConfig();
+    expect(cubit.state.printerSaveError, 'validation');
     expect(repo.updatedDraft, isNull);
+    await cubit.close();
+  });
+
+  test(
+    'saving the printer configuration never touches the receipt template',
+    () async {
+      final repo = _Repository();
+      final cubit = PrintingCubit(repo);
+      await cubit.load(preferredBranchId: 1);
+      cubit.update(
+        config: cubit.state.config.copyWith(
+          enabled: true,
+          ipAddress: 'printer.local',
+        ),
+        template: cubit.state.template.copyWith(
+          header: cubit.state.template.header.copyWith(showLogo: false),
+        ),
+      );
+      await cubit.savePrinterConfig();
+
+      expect(cubit.state.printerSaveStatus, SectionSaveStatus.success);
+      // The template edit is still only local/dirty — saving the printer
+      // section alone must not have called the template endpoint.
+      expect(repo.updatedTemplateBranchId, isNull);
+      expect(cubit.state.templateSaveStatus, SectionSaveStatus.idle);
+      expect(cubit.state.isTemplateDirty, isTrue);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'a failed printer-config save leaves the receipt template save state untouched',
+    () async {
+      final repo = _Repository()..failBranchUpdate = true;
+      final cubit = PrintingCubit(repo);
+      await cubit.load(preferredBranchId: 1);
+      cubit.update(
+        config: cubit.state.config.copyWith(
+          enabled: true,
+          ipAddress: 'printer.local',
+        ),
+        template: cubit.state.template.copyWith(
+          header: cubit.state.template.header.copyWith(showLogo: false),
+        ),
+      );
+      await cubit.savePrinterConfig();
+      expect(cubit.state.printerSaveStatus, SectionSaveStatus.failure);
+      expect(cubit.state.printerSaveError, 'save');
+      expect(cubit.state.templateSaveStatus, SectionSaveStatus.idle);
+
+      await cubit.saveReceiptTemplate();
+      expect(cubit.state.templateSaveStatus, SectionSaveStatus.success);
+      expect(repo.updatedTemplateBranchId, 1);
+      // The printer section's failure is unaffected by the template save.
+      expect(cubit.state.printerSaveStatus, SectionSaveStatus.failure);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'a failed receipt-design save leaves the printer-config save state untouched',
+    () async {
+      final repo = _Repository()..failTemplateUpdate = true;
+      final cubit = PrintingCubit(repo);
+      await cubit.load(preferredBranchId: 1);
+      cubit.update(
+        config: cubit.state.config.copyWith(
+          enabled: true,
+          ipAddress: 'printer.local',
+        ),
+        template: cubit.state.template.copyWith(
+          header: cubit.state.template.header.copyWith(showLogo: false),
+        ),
+      );
+      await cubit.saveReceiptTemplate();
+      expect(cubit.state.templateSaveStatus, SectionSaveStatus.failure);
+      expect(cubit.state.templateSaveError, 'save');
+      expect(cubit.state.printerSaveStatus, SectionSaveStatus.idle);
+
+      await cubit.savePrinterConfig();
+      expect(cubit.state.printerSaveStatus, SectionSaveStatus.success);
+      expect(repo.updatedId, 1);
+      // The template section's failure is unaffected by the printer save.
+      expect(cubit.state.templateSaveStatus, SectionSaveStatus.failure);
+      await cubit.close();
+    },
+  );
+
+  test('loads the branch receipt template alongside printer config', () async {
+    final repo = _Repository();
+    repo.templates[1] = const ReceiptTemplate(
+      footer: ReceiptTemplateFooter(enabled: true, text: 'Branch one footer'),
+    );
+    final cubit = PrintingCubit(repo);
+    await cubit.load(preferredBranchId: 1);
+    expect(cubit.state.template.footer.text, 'Branch one footer');
+    expect(cubit.state.savedTemplate, cubit.state.template);
+    await cubit.close();
+  });
+
+  test(
+    'template edits mark the form dirty and save independently of the branch',
+    () async {
+      final repo = _Repository();
+      final cubit = PrintingCubit(repo);
+      await cubit.load(preferredBranchId: 1);
+      expect(cubit.state.isDirty, isFalse);
+
+      cubit.update(
+        template: cubit.state.template.copyWith(
+          header: cubit.state.template.header.copyWith(showLogo: false),
+        ),
+      );
+      expect(cubit.state.isDirty, isTrue);
+      expect(cubit.state.isTemplateDirty, isTrue);
+      expect(cubit.state.isPrinterConfigDirty, isFalse);
+
+      await cubit.saveReceiptTemplate();
+      expect(repo.updatedTemplateBranchId, 1);
+      expect(repo.updatedTemplate!.header.showLogo, isFalse);
+      expect(cubit.state.templateSaveStatus, SectionSaveStatus.success);
+      expect(cubit.state.isDirty, isFalse);
+      // Saving the template alone never calls the branch endpoint.
+      expect(repo.updatedId, isNull);
+      await cubit.close();
+    },
+  );
+
+  test('reset restores the saved template', () async {
+    final repo = _Repository();
+    final cubit = PrintingCubit(repo);
+    await cubit.load(preferredBranchId: 1);
+    final saved = cubit.state.template;
+    cubit.update(
+      template: saved.copyWith(footer: saved.footer.copyWith(enabled: false)),
+    );
+    expect(cubit.state.isDirty, isTrue);
+    cubit.reset();
+    expect(cubit.state.template, saved);
+    expect(cubit.state.isDirty, isFalse);
     await cubit.close();
   });
 
@@ -139,6 +281,120 @@ void main() {
     await cubit.close();
   });
 
+  testWidgets(
+    'Receipt Design section toggles a field and marks the form dirty',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(900, 2200);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final cubit = PrintingCubit(_Repository());
+      await cubit.load(preferredBranchId: 2);
+      await tester.pumpWidget(
+        BlocProvider.value(
+          value: cubit,
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: PrintingScreen()),
+          ),
+        ),
+      );
+
+      expect(find.text('Receipt Design'), findsOneWidget);
+      expect(cubit.state.template.header.showLogo, isTrue);
+      final logoToggle = find.byKey(const Key('receipt-header-logo'));
+      await tester.ensureVisible(logoToggle);
+      await tester.pumpAndSettle();
+      await tester.tap(logoToggle);
+      await tester.pump();
+      expect(cubit.state.template.header.showLogo, isFalse);
+      expect(cubit.state.isDirty, isTrue);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await cubit.close();
+    },
+  );
+
+  testWidgets('Receipt Design move buttons reorder sections', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 2200);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final cubit = PrintingCubit(_Repository());
+    await cubit.load(preferredBranchId: 2);
+    await tester.pumpWidget(
+      BlocProvider.value(
+        value: cubit,
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: PrintingScreen()),
+        ),
+      ),
+    );
+
+    expect(
+      cubit.state.template.sectionOrder.first,
+      ReceiptTemplateSection.header,
+    );
+    // Move-down icon buttons appear in section order: header's is first.
+    final moveDown = find.byIcon(Icons.arrow_downward).first;
+    await tester.ensureVisible(moveDown);
+    await tester.pumpAndSettle();
+    await tester.tap(moveDown);
+    await tester.pump();
+    expect(
+      cubit.state.template.sectionOrder.first,
+      ReceiptTemplateSection.orderInfo,
+    );
+    expect(cubit.state.template.sectionOrder[1], ReceiptTemplateSection.header);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await cubit.close();
+  });
+
+  testWidgets('Preview Receipt opens a dialog rendering the current template', (
+    tester,
+  ) async {
+    final cubit = PrintingCubit(_Repository());
+    await cubit.load(preferredBranchId: 2);
+    await tester.pumpWidget(
+      BlocProvider.value(
+        value: cubit,
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: PrintingScreen()),
+        ),
+      ),
+    );
+
+    final Finder previewButton = find.byKey(
+      const Key('printing-receipt-preview'),
+    );
+    await tester.ensureVisible(previewButton);
+    await tester.pumpAndSettle();
+    await tester.tap(previewButton);
+    await tester.pump();
+    expect(find.byType(ReceiptTemplatePreview), findsOneWidget);
+    // Rendering does real font/image work over a platform channel; give the
+    // real event loop turns to finish it instead of pumping the fake clock,
+    // and avoid pumpAndSettle since the spinner's animation never settles.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(seconds: 1)),
+    );
+    await tester.pump();
+    expect(find.byType(Image), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await cubit.close();
+  });
+
   testWidgets('Branch Edit has no Printing section', (tester) async {
     final cubit = BranchEditorCubit(_Repository(), branchId: 1);
     await cubit.initialize();
@@ -163,6 +419,11 @@ class _Repository implements CafeConfigurationRepository {
   final loadedIds = <int>[];
   int? updatedId;
   BranchDraft? updatedDraft;
+  int? updatedTemplateBranchId;
+  ReceiptTemplate? updatedTemplate;
+  final templates = <int, ReceiptTemplate>{};
+  bool failBranchUpdate = false;
+  bool failTemplateUpdate = false;
 
   final branches = <int, CafeConfigurationBranch>{
     1: const CafeConfigurationBranch(
@@ -206,6 +467,7 @@ class _Repository implements CafeConfigurationRepository {
     int id,
     BranchDraft draft,
   ) async {
+    if (failBranchUpdate) throw StateError('network error');
     updatedId = id;
     updatedDraft = draft;
     final old = branches[id]!;
@@ -220,6 +482,22 @@ class _Repository implements CafeConfigurationRepository {
       printerConfig: draft.printerConfig,
       autoPrintAfterPayment: draft.autoPrintAfterPayment,
     );
+  }
+
+  @override
+  Future<ReceiptTemplate> getReceiptTemplate(int branchId) async =>
+      templates[branchId] ?? const ReceiptTemplate.defaultTemplate();
+
+  @override
+  Future<ReceiptTemplate> updateReceiptTemplate(
+    int branchId,
+    ReceiptTemplate template,
+  ) async {
+    if (failTemplateUpdate) throw StateError('network error');
+    updatedTemplateBranchId = branchId;
+    updatedTemplate = template;
+    templates[branchId] = template;
+    return template;
   }
 
   @override

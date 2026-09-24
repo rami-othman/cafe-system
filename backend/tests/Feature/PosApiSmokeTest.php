@@ -180,9 +180,14 @@ class PosApiSmokeTest extends TestCase
         $this->patchJson("/api/v1/orders/{$orderId}", ['note' => 'late edit'])
             ->assertUnprocessable()->assertJsonPath('code', 'ORDER_NOT_EDITABLE');
 
+        $tenantName = DB::table('tenants')->where('id', $tenantId)->value('name');
         $this->getJson("/api/v1/orders/{$orderId}/receipt")
             ->assertOk()
-            ->assertJsonPath('data.title', 'Cafe System 618');
+            ->assertJsonPath('data.cafeName', $tenantName)
+            ->assertJsonPath('data.orderType', 'dine_in')
+            ->assertJsonPath('data.template.header.showCafeName', true)
+            ->assertJsonPath('data.template.sectionOrder', ['header', 'orderInfo', 'items', 'totals', 'payment', 'footer'])
+            ->assertJsonPath('data.footerText', 'Thank you for visiting');
 
         $paymentsBeforePrint = DB::table('payments')->where('order_id', $orderId)->count();
         $jobId = $this->postJson("/api/v1/orders/{$orderId}/print", [

@@ -1,13 +1,13 @@
 <?php
 
 use App\Domain\Customer\CustomerDomainException;
-use App\Services\Customer\Import\CustomerImportException;
 use App\Exceptions\OrderLifecycleException;
 use App\Support\DomainErrorMessages;
 use App\Support\SafeExceptionResponse;
 use App\Support\ValidationErrorPresenter;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticatePlatformAdmin;
+use App\Http\Middleware\CanAdministerCafePrinting;
 use App\Http\Middleware\CanManageCafeConfiguration;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
@@ -21,6 +21,7 @@ use App\Http\Middleware\EnsureInventoryPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\MeasurePaymentPerformance;
 use App\Http\Middleware\RequireChangedPassword;
+use App\Services\Customer\Import\CustomerImportException;
 use App\Http\Middleware\SetLocaleFromRequest;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -59,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'password.changed' => RequireChangedPassword::class,
             'employees.manage' => CanManageEmployees::class,
             'cafe.configuration' => CanManageCafeConfiguration::class,
+            'cafe.configuration.printing' => CanAdministerCafePrinting::class,
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,
