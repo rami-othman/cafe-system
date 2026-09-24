@@ -27,7 +27,7 @@ void main() {
     },
   );
 
-  testWidgets('Granted Manager sees Customers but not Cafe Configuration', (
+  testWidgets('Granted Manager sees Customers and Cafe Configuration', (
     WidgetTester tester,
   ) async {
     final AuthSessionCubit cubit = await _authenticatedCubit(
@@ -38,7 +38,9 @@ void main() {
     await _pumpShell(tester, cubit);
 
     expect(find.text('Customers'), findsOneWidget);
-    expect(find.text('Cafe Configuration'), findsNothing);
+    // Manager's Cafe Configuration entry is scoped to Printing only (see
+    // _cafeConfigurationAccessRedirect); the sidebar link itself still shows.
+    expect(find.text('Cafe Configuration'), findsOneWidget);
     expect(find.text('Menu Management'), findsOneWidget);
     expect(find.text('Reports'), findsOneWidget);
   });
@@ -57,7 +59,7 @@ void main() {
   });
 
   testWidgets(
-    'Ungranted Manager does not see Customers or Cafe Configuration',
+    'Ungranted Manager does not see Customers, but still sees Cafe Configuration',
     (WidgetTester tester) async {
       final AuthSessionCubit cubit = await _authenticatedCubit(
         _session(role: 'manager', canManageCustomers: false),
@@ -67,7 +69,9 @@ void main() {
       await _pumpShell(tester, cubit);
 
       expect(find.text('Customers'), findsNothing);
-      expect(find.text('Cafe Configuration'), findsNothing);
+      // Cafe Configuration/Printing access is role-based, not tied to the
+      // separate customer-management capability grant.
+      expect(find.text('Cafe Configuration'), findsOneWidget);
       expect(find.text('Menu Management'), findsOneWidget);
       expect(find.text('Reports'), findsOneWidget);
     },
@@ -181,12 +185,12 @@ void main() {
     expect(find.text('Cafe Configuration'), findsOneWidget);
   });
 
-  testWidgets('Manager does not see Cafe Configuration', (
+  testWidgets('Manager sees Cafe Configuration, scoped to Printing', (
     WidgetTester tester,
   ) async {
     await _pumpSidebar(tester, 'manager');
 
-    expect(find.text('Cafe Configuration'), findsNothing);
+    expect(find.text('Cafe Configuration'), findsOneWidget);
   });
 
   testWidgets('Employee does not see Cafe Configuration', (

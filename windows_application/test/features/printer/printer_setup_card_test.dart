@@ -22,6 +22,7 @@ import 'package:windows_application/features/printer/services/receipt_renderer.d
 import 'package:windows_application/features/printer/models/receipt_data.dart';
 import 'package:windows_application/features/printer/views/printer_setup_card.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
+import 'package:windows_application/l10n/app_localizations_ar.dart';
 
 const Branch _downtown = Branch(
   id: 1,
@@ -169,7 +170,11 @@ void main() {
         .first;
     await tester.drag(scroll, const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('Save Device Settings'), findsOneWidget);
+    // This test pumps an Arabic locale, so the localized label is expected.
+    expect(
+      find.text(AppLocalizationsAr().printerSetupSaveDeviceSettings),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -255,6 +260,9 @@ Future<void> _pumpCard(
         BlocProvider<OperationalBranchCubit>.value(value: operationalCubit),
       ],
       child: const MaterialApp(
+        locale: Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: SingleChildScrollView(child: PrinterSetupCard())),
       ),
     ),
@@ -307,8 +315,10 @@ class _MemoryStore implements DevicePrinterSettingsStore {
 
 class _FakePrinter implements PrinterService {
   @override
-  Future<PrinterPrintResult> printTest(PrinterConfig config) async =>
-      const PrinterPrintResult.success();
+  Future<PrinterPrintResult> printTestReceipt(
+    PrinterConfig config,
+    Locale locale,
+  ) async => const PrinterPrintResult.success();
 
   @override
   Future<PrinterPrintResult> printRaster(

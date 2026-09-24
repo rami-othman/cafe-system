@@ -6454,6 +6454,131 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter a valid printer host and port (1–65535).';
 
   @override
+  String get cafeConfigurationPrintingBranchDefaultsNotice =>
+      'These are branch defaults: they apply to every device at this branch unless overridden on Settings → Printer Setup on that device.';
+
+  @override
+  String get cafeConfigurationSavePrinterConfig => 'Save Printer Configuration';
+
+  @override
+  String get cafeConfigurationSaveReceiptDesign => 'Save Receipt Design';
+
+  @override
+  String get cafeConfigurationPrinterConfigSaved =>
+      'Printer configuration saved.';
+
+  @override
+  String get cafeConfigurationReceiptDesignSaved => 'Receipt design saved.';
+
+  @override
+  String get cafeConfigurationReceiptDesign => 'Receipt Design';
+
+  @override
+  String get cafeConfigurationReceiptHeaderSection => 'Header';
+
+  @override
+  String get cafeConfigurationReceiptHeaderLogo => 'Cafe logo';
+
+  @override
+  String get cafeConfigurationReceiptHeaderCafeName => 'Cafe name';
+
+  @override
+  String get cafeConfigurationReceiptHeaderBranchName => 'Branch name';
+
+  @override
+  String get cafeConfigurationReceiptHeaderAddress => 'Address';
+
+  @override
+  String get cafeConfigurationReceiptHeaderPhone => 'Phone';
+
+  @override
+  String get cafeConfigurationReceiptOrderInfoSection => 'Order Information';
+
+  @override
+  String get cafeConfigurationReceiptOrderNumber => 'Order number';
+
+  @override
+  String get cafeConfigurationReceiptDateTime => 'Date & time';
+
+  @override
+  String get cafeConfigurationReceiptCashier => 'Cashier';
+
+  @override
+  String get cafeConfigurationReceiptCustomer => 'Customer';
+
+  @override
+  String get cafeConfigurationReceiptOrderType => 'Order type';
+
+  @override
+  String get cafeConfigurationReceiptItemsSection => 'Items';
+
+  @override
+  String get cafeConfigurationReceiptProductName => 'Product name';
+
+  @override
+  String get cafeConfigurationReceiptQuantity => 'Quantity';
+
+  @override
+  String get cafeConfigurationReceiptUnitPrice => 'Unit price';
+
+  @override
+  String get cafeConfigurationReceiptModifiers => 'Modifiers';
+
+  @override
+  String get cafeConfigurationReceiptNotes => 'Item notes';
+
+  @override
+  String get cafeConfigurationReceiptTotalsSection => 'Totals';
+
+  @override
+  String get cafeConfigurationReceiptSubtotal => 'Subtotal';
+
+  @override
+  String get cafeConfigurationReceiptDiscount => 'Discount';
+
+  @override
+  String get cafeConfigurationReceiptTax => 'Tax';
+
+  @override
+  String get cafeConfigurationReceiptTotal => 'Total';
+
+  @override
+  String get cafeConfigurationReceiptPaymentSection => 'Payment';
+
+  @override
+  String get cafeConfigurationReceiptPaymentMethod => 'Payment method';
+
+  @override
+  String get cafeConfigurationReceiptPaidAmount => 'Paid amount';
+
+  @override
+  String get cafeConfigurationReceiptChange => 'Change';
+
+  @override
+  String get cafeConfigurationReceiptFooterSection => 'Footer';
+
+  @override
+  String get cafeConfigurationReceiptFooterEnabled => 'Show footer';
+
+  @override
+  String get cafeConfigurationReceiptFooterText => 'Footer text';
+
+  @override
+  String get cafeConfigurationReceiptPreview => 'Preview Receipt';
+
+  @override
+  String get cafeConfigurationReceiptPreviewTitle => 'Receipt Preview';
+
+  @override
+  String get cafeConfigurationReceiptMoveUp => 'Move up';
+
+  @override
+  String get cafeConfigurationReceiptMoveDown => 'Move down';
+
+  @override
+  String get cafeConfigurationReceiptLockedField => 'Always shown';
+
+  @override
   String get cafeConfigurationTeamAccess => 'Team & Access';
 
   @override
@@ -8953,4 +9078,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get posPrintFailed =>
       'Printing failed. Check the printer and try again.';
+
+  @override
+  String get printerSetupTitle => 'Printer Setup';
+
+  @override
+  String get printerSetupThisDevice => 'This Device';
+
+  @override
+  String get printerSetupDescription =>
+      'Configure the network thermal printer used by this Windows PC or Android tablet.';
+
+  @override
+  String get printerSetupNoActiveBranch => 'No active branch selected';
+
+  @override
+  String get printerSetupCouldNotLoadBranch =>
+      'Could not load the active branch.';
+
+  @override
+  String get printerSetupCouldNotLoad => 'Printer setup could not be loaded.';
+
+  @override
+  String get printerSetupUseBranchDefaults => 'Use Branch Defaults';
+
+  @override
+  String get printerSetupUsingBranchDefaults =>
+      'Using the shared default printer for the active branch.';
+
+  @override
+  String get printerSetupUsingLocalOverride =>
+      'Using this device-only printer override.';
+
+  @override
+  String get printerSetupSaveDeviceSettings => 'Save Device Settings';
+
+  @override
+  String get printerTestPrint => 'Test Print';
+
+  @override
+  String get printerTesting => 'Testing…';
+
+  @override
+  String get printerRetryTestPrint => 'Retry Test Print';
+
+  @override
+  String get printerTestPrintSuccessful => 'Print successful';
 }

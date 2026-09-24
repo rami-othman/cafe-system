@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/localization/localization_extensions.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -13,7 +14,8 @@ import '../../pos/controllers/pos_cubit.dart';
 import '../../pos/controllers/pos_state.dart';
 import '../controllers/printer_setup_cubit.dart';
 import '../models/printer_config.dart';
-import '../services/printer_service.dart';
+import '../widgets/printer_config_fields.dart';
+import '../widgets/printer_test_print_control.dart';
 
 class PrinterSetupCard extends StatefulWidget {
   const PrinterSetupCard({super.key});
@@ -43,6 +45,7 @@ class _PrinterSetupCardState extends State<PrinterSetupCard> {
         context.read<OperationalBranchCubit>().selectBranch(state.branchId),
     child: BlocBuilder<OperationalBranchCubit, OperationalBranchState>(
       builder: (BuildContext context, OperationalBranchState branchState) {
+        final l10n = context.l10n;
         if (branchState.isLoading) {
           return const _Card(child: Center(child: CircularProgressIndicator()));
         }
@@ -55,17 +58,17 @@ class _PrinterSetupCardState extends State<PrinterSetupCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('Printer Setup', style: AppTextStyles.titleMedium),
+                _CardHeader(title: l10n.printerSetupTitle),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   branchState.errorMessage == null
-                      ? 'No active branch selected'
-                      : 'Could not load the active branch.',
+                      ? l10n.printerSetupNoActiveBranch
+                      : l10n.printerSetupCouldNotLoadBranch,
                 ),
                 ...<Widget>[
                   const SizedBox(height: AppSpacing.lg),
                   AppButton(
-                    label: 'Retry',
+                    label: l10n.commonRetry,
                     icon: Icons.refresh,
                     variant: AppButtonVariant.outlined,
                     onPressed: () =>
@@ -110,6 +113,7 @@ class _PrinterSetupPanel extends StatelessWidget {
     BuildContext context,
   ) => BlocBuilder<PrinterSetupCubit, PrinterSetupState>(
     builder: (BuildContext context, PrinterSetupState state) {
+      final l10n = context.l10n;
       final PrinterSetupCubit cubit = context.read<PrinterSetupCubit>();
       if (state.status == PrinterSetupStatus.loading) {
         return const _Card(child: Center(child: CircularProgressIndicator()));
@@ -119,12 +123,12 @@ class _PrinterSetupPanel extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text('Printer Setup', style: AppTextStyles.titleMedium),
+              _CardHeader(title: l10n.printerSetupTitle),
               const SizedBox(height: AppSpacing.sm),
-              const Text('Printer setup could not be loaded.'),
+              Text(l10n.printerSetupCouldNotLoad),
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: 'Retry',
+                label: l10n.commonRetry,
                 icon: Icons.refresh,
                 variant: AppButtonVariant.outlined,
                 onPressed: () => cubit.load(branchId),
@@ -142,89 +146,43 @@ class _PrinterSetupPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text('Printer Setup', style: AppTextStyles.titleMedium),
+            _CardHeader(title: l10n.printerSetupTitle),
             const SizedBox(height: AppSpacing.xs),
-            const Text(
-              'Configure the network thermal printer used by this Windows PC or Android tablet.',
-            ),
+            Text(l10n.printerSetupDescription),
             const SizedBox(height: AppSpacing.lg),
             Material(
               type: MaterialType.transparency,
               child: SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Use Branch Defaults'),
+                title: Text(l10n.printerSetupUseBranchDefaults),
                 subtitle: Text(
                   settings.useBranchDefaults
-                      ? 'Using the shared default printer for the active branch.'
-                      : 'Using this device-only printer override.',
+                      ? l10n.printerSetupUsingBranchDefaults
+                      : l10n.printerSetupUsingLocalOverride,
                 ),
                 value: settings.useBranchDefaults,
                 onChanged: state.isTesting ? null : cubit.setUseBranchDefaults,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextFormField(
-              key: const Key('printer-name'),
+            PrinterConfigFields(
+              nameKey: const Key('printer-name'),
+              hostKey: const Key('printer-ip'),
+              portKey: const Key('printer-port'),
+              paperWidthKey: const Key('printer-paper-width'),
+              config: editable,
               enabled: local && !state.isTesting,
-              initialValue: editable.name,
-              decoration: const InputDecoration(labelText: 'Printer Name'),
-              onChanged: (String value) =>
-                  cubit.updateLocalOverride(editable.copyWith(name: value)),
+              onChanged: cubit.updateLocalOverride,
             ),
             const SizedBox(height: AppSpacing.lg),
-            TextFormField(
-              key: const Key('printer-ip'),
-              enabled: local && !state.isTesting,
-              initialValue: editable.ipAddress,
-              keyboardType: TextInputType.url,
-              decoration: const InputDecoration(labelText: 'IP Address'),
-              onChanged: (String value) => cubit.updateLocalOverride(
-                editable.copyWith(ipAddress: value),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            TextFormField(
-              key: const Key('printer-port'),
-              enabled: local && !state.isTesting,
-              initialValue: editable.port.toString(),
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Port'),
-              onChanged: (String value) => cubit.updateLocalOverride(
-                editable.copyWith(port: int.tryParse(value) ?? 0),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            DropdownButtonFormField<PrinterPaperWidth>(
-              key: const Key('printer-paper-width'),
-              initialValue: editable.paperWidth,
-              decoration: const InputDecoration(labelText: 'Paper Width'),
-              items: PrinterPaperWidth.values
-                  .map(
-                    (PrinterPaperWidth width) =>
-                        DropdownMenuItem<PrinterPaperWidth>(
-                          value: width,
-                          child: Text(width.apiValue),
-                        ),
-                  )
-                  .toList(growable: false),
-              onChanged: local && !state.isTesting
-                  ? (PrinterPaperWidth? width) {
-                      if (width != null) {
-                        cubit.updateLocalOverride(
-                          editable.copyWith(paperWidth: width),
-                        );
-                      }
-                    }
-                  : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            if (state.failure != null) _ResultBanner(failure: state.failure!),
+            if (state.failure != null)
+              PrinterResultBanner(failure: state.failure!),
             if (state.status == PrinterSetupStatus.success)
-              const _SuccessBanner(),
+              const PrinterSuccessBanner(),
             Row(
               children: <Widget>[
                 AppButton(
-                  label: 'Save Device Settings',
+                  label: l10n.printerSetupSaveDeviceSettings,
                   icon: Icons.save_outlined,
                   variant: AppButtonVariant.outlined,
                   onPressed: state.isTesting ? null : cubit.saveDeviceSettings,
@@ -232,12 +190,14 @@ class _PrinterSetupPanel extends StatelessWidget {
                 const SizedBox(width: AppSpacing.md),
                 AppButton(
                   label: state.isTesting
-                      ? 'Testing...'
+                      ? l10n.printerTesting
                       : state.failure == null
-                      ? 'Test Print'
-                      : 'Retry Test Print',
+                      ? l10n.printerTestPrint
+                      : l10n.printerRetryTestPrint,
                   icon: state.isTesting ? null : Icons.print_outlined,
-                  onPressed: state.isTesting ? null : cubit.testPrint,
+                  onPressed: state.isTesting
+                      ? null
+                      : () => cubit.testPrint(Localizations.localeOf(context)),
                 ),
               ],
             ),
@@ -245,6 +205,33 @@ class _PrinterSetupPanel extends StatelessWidget {
         ),
       );
     },
+  );
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: <Widget>[
+      Text(title, style: AppTextStyles.titleMedium),
+      const SizedBox(width: AppSpacing.sm),
+      Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 2,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          borderRadius: AppRadius.pillRadius,
+        ),
+        child: Text(
+          context.l10n.printerSetupThisDevice,
+          style: AppTextStyles.labelSmall.copyWith(color: AppColors.primary),
+        ),
+      ),
+    ],
   );
 }
 
@@ -260,33 +247,5 @@ class _Card extends StatelessWidget {
       border: Border.all(color: AppColors.border),
     ),
     child: child,
-  );
-}
-
-class _SuccessBanner extends StatelessWidget {
-  const _SuccessBanner();
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.only(bottom: AppSpacing.lg),
-    child: Text('Print successful', style: TextStyle(color: AppColors.success)),
-  );
-}
-
-class _ResultBanner extends StatelessWidget {
-  const _ResultBanner({required this.failure});
-  final PrinterPrintFailure failure;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-    child: Text(switch (failure) {
-      PrinterPrintFailure.invalidConfiguration => 'Invalid configuration',
-      PrinterPrintFailure.timeout =>
-        'Printer timeout. Check the printer network and try again.',
-      PrinterPrintFailure.unreachable =>
-        'Printer unreachable. Check the IP address, port, and network.',
-      PrinterPrintFailure.unsupported =>
-        'Network printing is unavailable on this platform.',
-      PrinterPrintFailure.failed => 'Printer setup could not be loaded.',
-    }, style: const TextStyle(color: AppColors.danger)),
   );
 }

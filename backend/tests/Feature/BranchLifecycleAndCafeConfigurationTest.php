@@ -168,12 +168,67 @@ class BranchLifecycleAndCafeConfigurationTest extends TestCase
         $this->withToken($ownerToken)->putJson("/api/v1/cafe-configuration/branches/{$branchB->id}", ['name' => 'Nope'])->assertNotFound();
         $this->withToken($ownerToken)->getJson('/api/v1/cafe-configuration/branches')
             ->assertOk()->assertJsonMissing(['id' => $branchB->id]);
-        $this->withToken($this->authenticateTenantUser($tenantA->id, $manager))
-            ->getJson('/api/v1/cafe-configuration/branches')->assertForbidden();
+        $managerToken = $this->authenticateTenantUser($tenantA->id, $manager);
+        // Manager gets read access (needed for the Printing screen's branch
+        // picker) but branch creation stays Owner-only.
+        $this->withToken($managerToken)
+            ->getJson('/api/v1/cafe-configuration/branches')->assertOk();
+        $this->withToken($managerToken)
+            ->postJson('/api/v1/cafe-configuration/branches', ['name' => 'Nope', 'timezone' => 'UTC'])
+            ->assertForbidden();
         $this->withToken($this->authenticateTenantUser($tenantA->id, $employee))
             ->getJson('/api/v1/cafe-configuration/branches')->assertForbidden();
         $this->assertDatabaseHas('branches', ['id' => $branchA->id, 'tenant_id' => $tenantA->id]);
         $this->assertDatabaseHas('branches', ['id' => $branchB->id, 'tenant_id' => $tenantB->id, 'name' => $branchB->name]);
+    }
+
+    public function test_manager_can_administer_branch_printing_but_not_other_branch_fields(): void
+    {
+        [$tenant, $branch, $owner] = $this->tenantBranchUser('manager-printing', 'owner');
+        app(FinancialSetupService::class)->ensureForTenant($tenant->id);
+        $manager = $this->user($tenant, 'manager');
+        $employee = $this->user($tenant, 'cashier');
+        $managerToken = $this->authenticateTenantUser($tenant->id, $manager);
+        $originalName = $branch->name;
+
+        // Manager can read the branch (needed to load current printer config).
+        $this->withToken($managerToken)->getJson("/api/v1/cafe-configuration/branches/{$branch->id}")
+            ->assertOk()->assertJsonPath('data.name', $originalName);
+
+        // Manager saving printer fields succeeds; a non-printer field sent
+        // alongside them (the Flutter client always submits the full branch
+        // draft) is silently ignored rather than applied or rejected.
+        $this->withToken($managerToken)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}", [
+            'name' => 'Renamed by manager',
+            'receiptPrintingEnabled' => true,
+            'defaultPaperWidth' => '58mm',
+            'autoPrintAfterPayment' => true,
+            'defaultPrinterName' => 'Counter printer',
+            'defaultPrinterIp' => '192.168.1.60',
+            'defaultPrinterPort' => 9100,
+        ])->assertOk()
+            ->assertJsonPath('data.name', $originalName)
+            ->assertJsonPath('data.defaultPrinterIp', '192.168.1.60');
+
+        $this->assertDatabaseHas('branches', [
+            'id' => $branch->id, 'name' => $originalName, 'default_printer_ip' => '192.168.1.60',
+        ]);
+
+        // Employee cannot reach any of this.
+        $employeeToken = $this->authenticateTenantUser($tenant->id, $employee);
+        $this->withToken($employeeToken)->getJson("/api/v1/cafe-configuration/branches/{$branch->id}")->assertForbidden();
+        $this->withToken($employeeToken)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}", [
+            'defaultPrinterIp' => '192.168.1.70',
+        ])->assertForbidden();
+        $this->call('GET', "/api/v1/cafe-configuration/branches/{$branch->id}")->assertUnauthorized();
+
+        // Tenant isolation: a manager in another tenant cannot read or write
+        // this branch's printer configuration.
+        [, $foreignBranch] = $this->tenantBranchUser('manager-printing-foreign', 'owner');
+        $this->withToken($managerToken)->getJson("/api/v1/cafe-configuration/branches/{$foreignBranch->id}")->assertNotFound();
+        $this->withToken($managerToken)->putJson("/api/v1/cafe-configuration/branches/{$foreignBranch->id}", [
+            'defaultPrinterIp' => '10.0.0.5',
+        ])->assertNotFound();
     }
 
     public function test_owner_can_store_tenant_scoped_branch_printer_defaults(): void
@@ -204,6 +259,40 @@ class BranchLifecycleAndCafeConfigurationTest extends TestCase
         $this->withToken($token)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}", [
             'defaultPrinterIp' => 'not a host',
         ])->assertUnprocessable()->assertJsonValidationErrors('defaultPrinterIp');
+    }
+
+    public function test_failed_branch_printer_update_does_not_touch_receipt_template(): void
+    {
+        [$tenant, $branch, $owner] = $this->tenantBranchUser('printer-template-isolation', 'owner');
+        app(FinancialSetupService::class)->ensureForTenant($tenant->id);
+        $token = $this->authenticateTenantUser($tenant->id, $owner);
+
+        // Save a known, distinct receipt template via the receipt-template endpoint first.
+        $templatePayload = [
+            'header' => ['showLogo' => false, 'showCafeName' => true, 'showBranchName' => true, 'showAddress' => true, 'showPhone' => true],
+            'orderInfo' => ['showOrderNumber' => true, 'showDateTime' => true, 'showCashier' => true, 'showCustomer' => true, 'showOrderType' => true],
+            'items' => ['showProductName' => true, 'showQuantity' => true, 'showUnitPrice' => true, 'showModifiers' => true, 'showNotes' => true],
+            'totals' => ['showSubtotal' => true, 'showDiscount' => true, 'showTax' => true, 'showTotal' => true],
+            'payment' => ['showPaymentMethod' => true, 'showPaidAmount' => true, 'showChange' => true],
+            'footer' => ['enabled' => true, 'text' => 'Distinct footer text'],
+            'sectionOrder' => ['header', 'orderInfo', 'items', 'totals', 'payment', 'footer'],
+        ];
+        $this->withToken($token)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}/receipt-template", $templatePayload)
+            ->assertOk()
+            ->assertJsonPath('data.footer.text', 'Distinct footer text');
+
+        $templateBefore = DB::table('receipt_templates')->where('branch_id', $branch->id)->where('tenant_id', $tenant->id)->first();
+        $this->assertNotNull($templateBefore);
+
+        // An invalid branch printer-defaults payload (printing enabled with
+        // no printer IP/port) must be rejected without touching the receipt
+        // template saved above.
+        $this->withToken($token)->putJson("/api/v1/cafe-configuration/branches/{$branch->id}", [
+            'receiptPrintingEnabled' => true,
+        ])->assertUnprocessable()->assertJsonValidationErrors('defaultPrinterIp');
+
+        $templateAfter = DB::table('receipt_templates')->where('branch_id', $branch->id)->where('tenant_id', $tenant->id)->first();
+        $this->assertEquals($templateBefore, $templateAfter);
     }
 
     /** @return array{Tenant, Branch, User} */

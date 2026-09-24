@@ -7,6 +7,7 @@ import '../models/receipt_data.dart';
 import 'printer_connection.dart';
 import 'printer_connection_factory.dart';
 import 'receipt_renderer.dart';
+import 'test_receipt_data.dart';
 
 enum PrinterPrintFailure {
   invalidConfiguration,
@@ -24,7 +25,14 @@ class PrinterPrintResult {
 }
 
 abstract interface class PrinterService {
-  Future<PrinterPrintResult> printTest(PrinterConfig config);
+  /// Prints a fixed sample receipt through the exact same rendering/encoding
+  /// pipeline a real order's receipt uses, so a successful test print proves
+  /// the actual print path (not a diagnostic stand-in) can reach the
+  /// printer. Creates no order and no payment.
+  Future<PrinterPrintResult> printTestReceipt(
+    PrinterConfig config,
+    Locale locale,
+  );
   Future<PrinterPrintResult> printRaster(
     PrinterConfig config,
     ReceiptRaster raster,
@@ -53,8 +61,11 @@ class NetworkEscPosPrinterService implements PrinterService {
   final Duration writeTimeout;
 
   @override
-  Future<PrinterPrintResult> printTest(PrinterConfig config) async {
-    return _send(config, _testJob(config));
+  Future<PrinterPrintResult> printTestReceipt(
+    PrinterConfig config,
+    Locale locale,
+  ) async {
+    return printReceipt(config, buildTestReceiptData(), locale);
   }
 
   @override
@@ -153,21 +164,5 @@ class NetworkEscPosPrinterService implements PrinterService {
         // turn it into an unhandled UI exception.
       }
     }
-  }
-
-  List<int> _testJob(PrinterConfig config) {
-    final String separator = List<String>.filled(
-      config.paperWidth.columns,
-      '-',
-    ).join();
-    return <int>[
-      0x1b, 0x40, // initialize
-      0x1b, 0x61, 0x01, // center alignment
-      ...'CAFE SYSTEM\nPrinter Test\n\nWindows / Android\n${config.paperWidth.apiValue}\n\nPrinter connection successful.\n\n$separator\nTest Print OK\n\n\n'
-          .codeUnits,
-      0x1d,
-      0x56,
-      0x00, // full cut (ignored safely by printers without a cutter)
-    ];
   }
 }

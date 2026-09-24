@@ -102,18 +102,37 @@ class AppSidebar extends StatelessWidget {
     final bool canOpenFinance = financeCapabilities.any(
       CashierAccess.financeWorkspacePermissions.contains,
     );
+    final bool canOpenCafeConfiguration =
+        actorRole == 'owner' || actorRole == 'manager';
     final Iterable<_SidebarDestination> destinations = isCashier
         ? _cashierDestinations.where(
             (_SidebarDestination destination) =>
                 destination.id != 'finance' || canOpenFinance,
           )
-        : _destinations.where(
-            (destination) =>
-                (destination.id != 'menuManagement' ||
-                    _canTemporarilyManageMenus(actorRole)) &&
-                (destination.id != 'customers' || canManageCustomers) &&
-                (destination.id != 'cafeConfiguration' || actorRole == 'owner'),
-          );
+        : _destinations
+              .where(
+                (destination) =>
+                    (destination.id != 'menuManagement' ||
+                        _canTemporarilyManageMenus(actorRole)) &&
+                    (destination.id != 'customers' || canManageCustomers) &&
+                    (destination.id != 'cafeConfiguration' ||
+                        canOpenCafeConfiguration),
+              )
+              .map(
+                // A Manager only has access to the Printing sub-page (see
+                // _cafeConfigurationAccessRedirect), so the entry point
+                // takes them there directly instead of the Owner default.
+                (destination) =>
+                    destination.id == 'cafeConfiguration' &&
+                        actorRole == 'manager'
+                    ? _SidebarDestination(
+                        destination.id,
+                        destination.icon,
+                        '/cafe-configuration/printing',
+                        destination.labelId,
+                      )
+                    : destination,
+              );
     return Container(
       width:
           width ??

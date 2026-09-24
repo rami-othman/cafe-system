@@ -1,4 +1,5 @@
 import '../../../core/network/dio_api_client.dart';
+import '../../printer/models/receipt_template.dart';
 import '../models/cafe_configuration_models.dart';
 
 abstract interface class CafeConfigurationRepository {
@@ -8,6 +9,11 @@ abstract interface class CafeConfigurationRepository {
   Future<CafeConfigurationBranch> getBranch(int id);
   Future<CafeConfigurationBranch> createBranch(BranchDraft draft);
   Future<CafeConfigurationBranch> updateBranch(int id, BranchDraft draft);
+  Future<ReceiptTemplate> getReceiptTemplate(int branchId);
+  Future<ReceiptTemplate> updateReceiptTemplate(
+    int branchId,
+    ReceiptTemplate template,
+  );
   Future<List<TenantRole>> getRoles();
   Future<TeamPage> getEmployees({
     int page = 1,
@@ -89,6 +95,29 @@ class ApiCafeConfigurationRepository implements CafeConfigurationRepository {
       await _apiClient.put(
         'cafe-configuration/branches/$id',
         data: draft.toJson(),
+      ),
+    ),
+  );
+
+  @override
+  Future<ReceiptTemplate> getReceiptTemplate(int branchId) async =>
+      ReceiptTemplate.fromJson(
+        _map(
+          await _apiClient.get(
+            'cafe-configuration/branches/$branchId/receipt-template',
+          ),
+        ),
+      );
+
+  @override
+  Future<ReceiptTemplate> updateReceiptTemplate(
+    int branchId,
+    ReceiptTemplate template,
+  ) async => ReceiptTemplate.fromJson(
+    _map(
+      await _apiClient.put(
+        'cafe-configuration/branches/$branchId/receipt-template',
+        data: template.toJson(),
       ),
     ),
   );
