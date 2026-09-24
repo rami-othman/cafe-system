@@ -3596,6 +3596,18 @@ abstract class AppLocalizations {
   /// **'Recipe configured · {count} materials'**
   String recipeConfigured(int count);
 
+  /// No description provided for @recipeMaterialId.
+  ///
+  /// In en, this message translates to:
+  /// **'Material #{materialId}'**
+  String recipeMaterialId(int materialId);
+
+  /// No description provided for @recipeSku.
+  ///
+  /// In en, this message translates to:
+  /// **'SKU {sku}'**
+  String recipeSku(String sku);
+
   /// No description provided for @recipeMissing.
   ///
   /// In en, this message translates to:
@@ -3631,6 +3643,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Using Global settings'**
   String get recipeUsingGlobalSettings;
+
+  /// No description provided for @recipeUsingProductSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Product settings'**
+  String get recipeUsingProductSettings;
+
+  /// No description provided for @recipeUsingVariantSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Using Variant settings'**
+  String get recipeUsingVariantSettings;
 
   /// No description provided for @recipeCustomizedForProduct.
   ///
@@ -3686,6 +3710,30 @@ abstract class AppLocalizations {
   /// **'Use inherited settings again'**
   String get recipeUseInheritedAgain;
 
+  /// No description provided for @recipeClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the product recipe?'**
+  String get recipeClearTitle;
+
+  /// No description provided for @recipeClearBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes every material configured for the product base recipe.'**
+  String get recipeClearBody;
+
+  /// No description provided for @recipeClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear recipe'**
+  String get recipeClearAction;
+
+  /// No description provided for @recipeRemoveOverrideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove override'**
+  String get recipeRemoveOverrideAction;
+
   /// No description provided for @recipeCustomizeFor.
   ///
   /// In en, this message translates to:
@@ -3697,6 +3745,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No material effect for {context}'**
   String recipeNoMaterialEffectFor(String context);
+
+  /// No description provided for @recipeCurrentVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'this Variant'**
+  String get recipeCurrentVariant;
+
+  /// No description provided for @recipeReplacesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces {from} with {to}'**
+  String recipeReplacesSummary(Object from, Object to);
+
+  /// No description provided for @recipeRemovesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes {materials}'**
+  String recipeRemovesSummary(Object materials);
+
+  /// No description provided for @recipeAddsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {materials}'**
+  String recipeAddsSummary(Object materials);
 
   /// No description provided for @recipeRemoves.
   ///
@@ -11390,6 +11462,78 @@ abstract class AppLocalizations {
   /// **'Branches'**
   String get cafeConfigurationBranches;
 
+  /// No description provided for @cafeConfigurationPrinting.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing'**
+  String get cafeConfigurationPrinting;
+
+  /// No description provided for @cafeConfigurationPrintingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set receipt printer defaults for each branch.'**
+  String get cafeConfigurationPrintingSubtitle;
+
+  /// No description provided for @cafeConfigurationReceiptPrinting.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt printing'**
+  String get cafeConfigurationReceiptPrinting;
+
+  /// No description provided for @cafeConfigurationReceiptPrintingEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt Printing Enabled'**
+  String get cafeConfigurationReceiptPrintingEnabled;
+
+  /// No description provided for @cafeConfigurationPrinterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer Name'**
+  String get cafeConfigurationPrinterName;
+
+  /// No description provided for @cafeConfigurationPrinterHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer IP / Host'**
+  String get cafeConfigurationPrinterHost;
+
+  /// No description provided for @cafeConfigurationPrinterPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer Port'**
+  String get cafeConfigurationPrinterPort;
+
+  /// No description provided for @cafeConfigurationPaperWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper Width'**
+  String get cafeConfigurationPaperWidth;
+
+  /// No description provided for @cafeConfigurationAutoPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Print After Payment'**
+  String get cafeConfigurationAutoPrint;
+
+  /// No description provided for @cafeConfigurationPrintingSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing defaults saved.'**
+  String get cafeConfigurationPrintingSaved;
+
+  /// No description provided for @cafeConfigurationPrintingDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard unsaved printing changes and switch branches?'**
+  String get cafeConfigurationPrintingDiscard;
+
+  /// No description provided for @cafeConfigurationPrinterInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid printer host and port (1–65535).'**
+  String get cafeConfigurationPrinterInvalid;
+
   /// No description provided for @cafeConfigurationTeamAccess.
   ///
   /// In en, this message translates to:
@@ -14588,11 +14732,11 @@ abstract class AppLocalizations {
   /// **'Discount name is required.'**
   String get discountValidationName;
 
-  /// No description provided for @discountValidationPositiveValue.
+  /// No description provided for @discountValidationNonNegativeValue.
   ///
   /// In en, this message translates to:
-  /// **'Enter a value greater than zero.'**
-  String get discountValidationPositiveValue;
+  /// **'Enter a value of zero or greater.'**
+  String get discountValidationNonNegativeValue;
 
   /// No description provided for @discountValidationPercentage.
   ///
@@ -15589,6 +15733,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close customization dialog'**
   String get posCloseCustomizationDialog;
+
+  /// No description provided for @customerImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import CSV'**
+  String get customerImportAction;
+
+  /// No description provided for @customerImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import customers from CSV'**
+  String get customerImportTitle;
+
+  /// No description provided for @customerImportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a CSV preview, review warnings, then confirm the server-authoritative import.'**
+  String get customerImportDescription;
+
+  /// No description provided for @customerImportSelectFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select CSV file'**
+  String get customerImportSelectFile;
+
+  /// No description provided for @customerImportChooseAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another file'**
+  String get customerImportChooseAnother;
+
+  /// No description provided for @customerImportDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected {encoding} encoding and {delimiter} delimiter'**
+  String customerImportDetected(String encoding, String delimiter);
+
+  /// No description provided for @customerImportTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get customerImportTotal;
+
+  /// No description provided for @customerImportReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get customerImportReady;
+
+  /// No description provided for @customerImportWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get customerImportWarnings;
+
+  /// No description provided for @customerImportRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get customerImportRejected;
+
+  /// No description provided for @customerImportDuplicateCandidates.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate candidates'**
+  String get customerImportDuplicateCandidates;
+
+  /// No description provided for @customerImportCreateMissingGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Create missing groups'**
+  String get customerImportCreateMissingGroups;
+
+  /// No description provided for @customerImportIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Representative row issues'**
+  String get customerImportIssues;
+
+  /// No description provided for @customerImportUnnamedRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed row'**
+  String get customerImportUnnamedRow;
+
+  /// No description provided for @customerImportSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Import summary'**
+  String get customerImportSummary;
+
+  /// No description provided for @customerImportCountsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {created}, skipped {skipped}, failed {failed}; groups {groups}, memberships {memberships}.'**
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  );
+
+  /// No description provided for @customerImportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm customer import'**
+  String get customerImportConfirmTitle;
+
+  /// No description provided for @customerImportConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The server will create customers and memberships according to this preview. Existing customers are not updated.'**
+  String get customerImportConfirmMessage;
+
+  /// No description provided for @customerImportConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm import'**
+  String get customerImportConfirmAction;
+
+  /// No description provided for @customerImportStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start import'**
+  String get customerImportStart;
+
+  /// No description provided for @customerImportCompletedWithErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed with errors'**
+  String get customerImportCompletedWithErrors;
+
+  /// No description provided for @customerImportDownloadErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Download error report'**
+  String get customerImportDownloadErrors;
+
+  /// No description provided for @customerImportValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The CSV file could not be validated. Check its encoding, columns, and size.'**
+  String get customerImportValidationFailed;
+
+  /// No description provided for @customerImportAlreadyCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This CSV import was already completed. Choose a new preview before committing.'**
+  String get customerImportAlreadyCompleted;
+
+  /// No description provided for @customerImportGenericFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer import could not be completed. Please try again safely.'**
+  String get customerImportGenericFailure;
+
+  /// No description provided for @posPrinting.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing...'**
+  String get posPrinting;
+
+  /// No description provided for @posRetryPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Print'**
+  String get posRetryPrint;
+
+  /// No description provided for @posPrinterSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer Setup'**
+  String get posPrinterSetup;
+
+  /// No description provided for @posPrintOrderRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved backend order is available to print.'**
+  String get posPrintOrderRequired;
+
+  /// No description provided for @posPrintItemsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This order has no items to print.'**
+  String get posPrintItemsRequired;
+
+  /// No description provided for @posPreBillUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A pre-bill is only available before payment.'**
+  String get posPreBillUnavailable;
+
+  /// No description provided for @posPrintPrinterNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt printer is not configured.'**
+  String get posPrintPrinterNotConfigured;
+
+  /// No description provided for @posPrintInvalidConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt printer settings are invalid.'**
+  String get posPrintInvalidConfiguration;
+
+  /// No description provided for @posPrintConfigurationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Printer settings could not be loaded.'**
+  String get posPrintConfigurationUnavailable;
+
+  /// No description provided for @posPrintReceiptUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The authoritative order receipt could not be loaded.'**
+  String get posPrintReceiptUnavailable;
+
+  /// No description provided for @posPrintRenderingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The receipt could not be rendered.'**
+  String get posPrintRenderingFailed;
+
+  /// No description provided for @posPrintUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to the receipt printer.'**
+  String get posPrintUnreachable;
+
+  /// No description provided for @posPrintTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The printer timed out.'**
+  String get posPrintTimeout;
+
+  /// No description provided for @posPrintUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt printing is unavailable on this device.'**
+  String get posPrintUnsupported;
+
+  /// No description provided for @posPrintFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing failed. Check the printer and try again.'**
+  String get posPrintFailed;
 }
 
 class _AppLocalizationsDelegate

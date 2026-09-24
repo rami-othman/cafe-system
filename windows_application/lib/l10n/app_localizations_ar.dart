@@ -2005,6 +2005,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String recipeMaterialId(int materialId) {
+    return 'المادة #$materialId';
+  }
+
+  @override
+  String recipeSku(String sku) {
+    return 'SKU $sku';
+  }
+
+  @override
   String get recipeMissing => 'الوصفة مفقودة';
 
   @override
@@ -2022,6 +2032,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get recipeUsingGlobalSettings => 'باستخدام الإعدادات العامة';
+
+  @override
+  String get recipeUsingProductSettings => 'باستخدام إعدادات المنتج';
+
+  @override
+  String get recipeUsingVariantSettings => 'باستخدام إعدادات النوع';
 
   @override
   String get recipeCustomizedForProduct => 'مخصص للمنتج';
@@ -2051,6 +2067,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get recipeUseInheritedAgain => 'استخدم الإعدادات الموروثة مجدداً';
 
   @override
+  String get recipeClearTitle => 'مسح وصفة المنتج؟';
+
+  @override
+  String get recipeClearBody =>
+      'سيؤدي ذلك إلى إزالة كل المواد المعدة في الوصفة الأساسية للمنتج.';
+
+  @override
+  String get recipeClearAction => 'مسح الوصفة';
+
+  @override
+  String get recipeRemoveOverrideAction => 'إزالة التجاوز';
+
+  @override
   String recipeCustomizeFor(String context) {
     return 'تخصيص لـ $context';
   }
@@ -2058,6 +2087,24 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String recipeNoMaterialEffectFor(String context) {
     return 'لا تأثير مادي لـ $context';
+  }
+
+  @override
+  String get recipeCurrentVariant => 'هذا النوع';
+
+  @override
+  String recipeReplacesSummary(Object from, Object to) {
+    return 'يستبدل $from بـ $to';
+  }
+
+  @override
+  String recipeRemovesSummary(Object materials) {
+    return 'يزيل $materials';
+  }
+
+  @override
+  String recipeAddsSummary(Object materials) {
+    return 'يضيف $materials';
   }
 
   @override
@@ -6357,6 +6404,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cafeConfigurationBranches => 'الفروع';
 
   @override
+  String get cafeConfigurationPrinting => 'الطباعة';
+
+  @override
+  String get cafeConfigurationPrintingSubtitle =>
+      'اضبط إعدادات طابعة الإيصالات الافتراضية لكل فرع.';
+
+  @override
+  String get cafeConfigurationReceiptPrinting => 'طباعة الإيصالات';
+
+  @override
+  String get cafeConfigurationReceiptPrintingEnabled => 'تفعيل طباعة الإيصالات';
+
+  @override
+  String get cafeConfigurationPrinterName => 'اسم الطابعة';
+
+  @override
+  String get cafeConfigurationPrinterHost => 'عنوان IP أو اسم المضيف للطابعة';
+
+  @override
+  String get cafeConfigurationPrinterPort => 'منفذ الطابعة';
+
+  @override
+  String get cafeConfigurationPaperWidth => 'عرض الورق';
+
+  @override
+  String get cafeConfigurationAutoPrint => 'الطباعة التلقائية بعد الدفع';
+
+  @override
+  String get cafeConfigurationPrintingSaved =>
+      'تم حفظ إعدادات الطباعة الافتراضية.';
+
+  @override
+  String get cafeConfigurationPrintingDiscard =>
+      'هل تريد تجاهل تغييرات الطباعة غير المحفوظة والانتقال إلى فرع آخر؟';
+
+  @override
+  String get cafeConfigurationPrinterInvalid =>
+      'أدخل عنوان طابعة صالحًا ومنفذًا بين 1 و65535.';
+
+  @override
   String get cafeConfigurationTeamAccess => 'الفريق والوصول';
 
   @override
@@ -8109,7 +8196,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get discountValidationName => 'اسم الخصم مطلوب.';
 
   @override
-  String get discountValidationPositiveValue => 'أدخل قيمة أكبر من صفر.';
+  String get discountValidationNonNegativeValue =>
+      'أدخل قيمة تساوي صفراً أو أكبر.';
 
   @override
   String get discountValidationPercentage =>
@@ -8713,4 +8801,141 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get posCloseCustomizationDialog => 'إغلاق نافذة تخصيص المنتج';
+
+  @override
+  String get customerImportAction => 'استيراد CSV';
+
+  @override
+  String get customerImportTitle => 'استيراد العملاء من CSV';
+
+  @override
+  String get customerImportDescription =>
+      'ارفع ملف CSV لمراجعة المعاينة والتحذيرات ثم أكد الاستيراد.';
+
+  @override
+  String get customerImportSelectFile => 'اختر ملف CSV';
+
+  @override
+  String get customerImportChooseAnother => 'اختر ملفاً آخر';
+
+  @override
+  String customerImportDetected(String encoding, String delimiter) {
+    return 'الترميز $encoding والفاصل $delimiter';
+  }
+
+  @override
+  String get customerImportTotal => 'الإجمالي';
+
+  @override
+  String get customerImportReady => 'جاهز';
+
+  @override
+  String get customerImportWarnings => 'تحذيرات';
+
+  @override
+  String get customerImportRejected => 'مرفوض';
+
+  @override
+  String get customerImportDuplicateCandidates => 'مرشحو التكرار';
+
+  @override
+  String get customerImportCreateMissingGroups => 'إنشاء المجموعات المفقودة';
+
+  @override
+  String get customerImportIssues => 'مشكلات صفوف ممثلة';
+
+  @override
+  String get customerImportUnnamedRow => 'صف بلا اسم';
+
+  @override
+  String get customerImportSummary => 'ملخص الاستيراد';
+
+  @override
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  ) {
+    return 'تم إنشاء $created، وتخطي $skipped، وفشل $failed؛ المجموعات $groups، العضويات $memberships.';
+  }
+
+  @override
+  String get customerImportConfirmTitle => 'تأكيد استيراد العملاء';
+
+  @override
+  String get customerImportConfirmMessage =>
+      'سينشئ الخادم العملاء والعضويات وفق المعاينة. لن يتم تحديث العملاء الموجودين.';
+
+  @override
+  String get customerImportConfirmAction => 'تأكيد الاستيراد';
+
+  @override
+  String get customerImportStart => 'بدء الاستيراد';
+
+  @override
+  String get customerImportCompletedWithErrors => 'اكتمل مع أخطاء';
+
+  @override
+  String get customerImportDownloadErrors => 'تنزيل تقرير الأخطاء';
+
+  @override
+  String get customerImportValidationFailed =>
+      'تعذر التحقق من ملف CSV. تحقق من الترميز والأعمدة والحجم.';
+
+  @override
+  String get customerImportAlreadyCompleted =>
+      'اكتمل استيراد ملف CSV هذا مسبقاً. اختر معاينة جديدة قبل التأكيد.';
+
+  @override
+  String get customerImportGenericFailure =>
+      'تعذر إكمال استيراد العملاء. يرجى المحاولة بأمان.';
+
+  @override
+  String get posPrinting => 'جارٍ الطباعة...';
+
+  @override
+  String get posRetryPrint => 'إعادة الطباعة';
+
+  @override
+  String get posPrinterSetup => 'إعداد الطابعة';
+
+  @override
+  String get posPrintOrderRequired => 'لا يوجد طلب محفوظ على الخادم للطباعة.';
+
+  @override
+  String get posPrintItemsRequired => 'لا يحتوي هذا الطلب على عناصر للطباعة.';
+
+  @override
+  String get posPreBillUnavailable => 'تتوفر معاينة الطلب قبل الدفع فقط.';
+
+  @override
+  String get posPrintPrinterNotConfigured => 'طابعة الإيصالات غير معدّة.';
+
+  @override
+  String get posPrintInvalidConfiguration =>
+      'إعدادات طابعة الإيصالات غير صالحة.';
+
+  @override
+  String get posPrintConfigurationUnavailable => 'تعذر تحميل إعدادات الطابعة.';
+
+  @override
+  String get posPrintReceiptUnavailable =>
+      'تعذر تحميل إيصال الطلب المعتمد من الخادم.';
+
+  @override
+  String get posPrintRenderingFailed => 'تعذر تجهيز الإيصال للطباعة.';
+
+  @override
+  String get posPrintUnreachable => 'تعذر الاتصال بطابعة الإيصالات.';
+
+  @override
+  String get posPrintTimeout => 'انتهت مهلة الاتصال بالطابعة.';
+
+  @override
+  String get posPrintUnsupported => 'الطباعة غير متاحة على هذا الجهاز.';
+
+  @override
+  String get posPrintFailed => 'فشلت الطباعة. تحقق من الطابعة ثم أعد المحاولة.';
 }

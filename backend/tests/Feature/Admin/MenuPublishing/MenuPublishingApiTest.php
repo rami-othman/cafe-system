@@ -178,16 +178,18 @@ class MenuPublishingApiTest extends TestCase
     {
         [$tenant, $branch, , $product, $variant] = $this->graph();
         DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true, 'inventory_controlled' => false]);
-        $this->publish($tenant, $branch)->assertUnprocessable()->assertJsonValidationErrors('publish');
+        $emptyVersion = $this->publish($tenant, $branch)->assertOk()->json('data.version.id');
+        $emptyPayload = json_decode((string) DB::table('published_menu_versions')->where('id', $emptyVersion)->value('payload_json'), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(3, $emptyPayload['context']['schemaVersion']);
+        $this->assertSame([], $emptyPayload['menus'][0]['sections'][0]['products'][0]['variants'][0]['baseRecipe']);
         $this->assertStringContainsString('VARIANT_RECIPE_MISSING', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
-        $this->assertSame(0, DB::table('published_menu_versions')->count());
         $beans = $this->material($tenant, 'BEANS', 'kilogram');
         $milk = $this->material($tenant, 'MILK', 'liter');
         $this->conversion($tenant, $beans, 'gram', 'kilogram', '0.001000');
         $this->conversion($tenant, $milk, 'milliliter', 'liter', '0.001000');
         $recipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
-        $this->publish($tenant, $branch)->assertUnprocessable()->assertJsonValidationErrors('publish');
-        $this->assertStringContainsString('VARIANT_RECIPE_EMPTY', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
+        $this->publish($tenant, $branch)->assertOk();
+        $this->assertStringNotContainsString('VARIANT_RECIPE_EMPTY', (string) DB::table('menu_publications')->latest('id')->value('validation_result'));
         DB::table('variant_recipe_components')->insert([
             ['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $milk, 'quantity' => '250', 'unit_code' => 'ml', 'sort_order' => 2, 'created_at' => now(), 'updated_at' => now()],
             ['tenant_id' => $tenant, 'variant_recipe_id' => $recipe, 'inventory_item_id' => $beans, 'quantity' => '18', 'unit_code' => 'g', 'sort_order' => 1, 'created_at' => now(), 'updated_at' => now()],
@@ -211,9 +213,33 @@ class MenuPublishingApiTest extends TestCase
             $this->assertStringNotContainsString($excluded, $text);
         }
         DB::table('variant_recipe_components')->where('variant_recipe_id', $recipe)->where('inventory_item_id', $beans)->update(['quantity' => '20']);
-        $two = $this->publish($tenant, $branch)->assertOk()->assertJsonPath('data.version.versionNumber', 2)->json('data.version');
+        $two = $this->publish($tenant, $branch)->assertOk()->assertJsonPath('data.version.versionNumber', 3)->json('data.version');
         $this->assertNotSame($one['checksum'], $two['checksum']);
         $this->assertEquals($payload, json_decode((string) DB::table('published_menu_versions')->where('id', $one['id'])->value('payload_json'), true));
+    }
+
+    public function test_publish_serializes_product_inheritance_variant_replacement_and_empty_modifier_effects(): void
+    {
+        [$tenant, $branch, , $product, $variant] = $this->graph();
+        $base = $this->material($tenant, 'BASE-G', 'gram');
+        $override = $this->material($tenant, 'OVERRIDE-G', 'gram');
+        $productRecipe = DB::table('product_recipes')->insertGetId(['tenant_id' => $tenant, 'product_id' => $product, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_recipe_components')->insert(['tenant_id' => $tenant, 'product_recipe_id' => $productRecipe, 'inventory_item_id' => $base, 'quantity' => '18.000000', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $group = DB::table('modifier_groups')->insertGetId(['tenant_id' => $tenant, 'name' => 'No material effect', 'selection_type' => 'single', 'max_selections' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $option = DB::table('modifier_options')->insertGetId(['tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Plain', 'is_active' => true, 'is_available' => true, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('product_modifier_group')->insert(['tenant_id' => $tenant, 'product_id' => $product, 'modifier_group_id' => $group, 'created_at' => now(), 'updated_at' => now()]);
+
+        $inherited = $this->publish($tenant, $branch)->assertOk()->json('data.version.id');
+        $inheritedNode = json_decode((string) DB::table('published_menu_versions')->where('id', $inherited)->value('payload_json'), true, 512, JSON_THROW_ON_ERROR)['menus'][0]['sections'][0]['products'][0]['variants'][0];
+        $this->assertSame([$base], array_column($inheritedNode['baseRecipe'], 'materialId'));
+        $this->assertSame([['optionId' => $option, 'components' => []]], $inheritedNode['modifierRecipeAdjustments']);
+
+        $variantRecipe = DB::table('variant_recipes')->insertGetId(['tenant_id' => $tenant, 'product_variant_id' => $variant, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('variant_recipe_components')->insert(['tenant_id' => $tenant, 'variant_recipe_id' => $variantRecipe, 'inventory_item_id' => $override, 'quantity' => '7.000000', 'unit_code' => 'g', 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $replaced = $this->publish($tenant, $branch)->assertOk()->json('data.version.id');
+        $replacedNode = json_decode((string) DB::table('published_menu_versions')->where('id', $replaced)->value('payload_json'), true, 512, JSON_THROW_ON_ERROR)['menus'][0]['sections'][0]['products'][0]['variants'][0];
+        $this->assertSame([$override], array_column($replacedNode['baseRecipe'], 'materialId'));
+        $this->assertSame('7', $replacedNode['baseRecipe'][0]['quantity']);
     }
 
     public function test_publish_rejects_missing_inventory_conversion_and_unrepresentable_canonical_precision(): void

@@ -114,7 +114,7 @@ class _ProductModifierAssignmentsScreenState
                 context,
               ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
             if (state.successMessage != null)
-              context.read<ProductCatalogCubit>().refresh();
+              context.read<ProductCatalogCubit?>()?.refresh();
             if (state.summaryChanged && state.product != null)
               widget.onSummaryChanged?.call(state.product!);
           },

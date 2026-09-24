@@ -24,6 +24,7 @@ import '../features/shift/widgets/shift_module_shell.dart';
 import '../features/orders/controllers/orders_cubit.dart';
 import '../features/orders/views/orders_screen.dart';
 import '../features/pos/controllers/pos_cubit.dart';
+import '../features/pos/controllers/pos_print_cubit.dart';
 import '../features/pos/controllers/pos_state.dart';
 import '../features/pos/controllers/pos_menu_sync_cubit.dart';
 import '../features/pos/views/pos_screen.dart';
@@ -132,11 +133,13 @@ import '../features/auth/views/settings_screen.dart';
 import '../features/auth/controllers/auth_session_cubit.dart';
 import '../features/auth/models/auth_session.dart';
 import '../features/cafe_configuration/controllers/cafe_configuration_cubits.dart';
+import '../features/cafe_configuration/controllers/printing_cubit.dart';
 import '../features/cafe_configuration/controllers/cafe_configuration_overview_cubit.dart';
 import '../features/cafe_configuration/controllers/tax_cubit.dart';
 import '../features/cafe_configuration/controllers/team_cubit.dart';
 import '../features/cafe_configuration/repositories/cafe_configuration_repository.dart';
 import '../features/cafe_configuration/views/cafe_configuration_screens.dart';
+import '../features/cafe_configuration/views/printing_screen.dart';
 import '../features/cafe_configuration/views/team_tax_screens.dart';
 import '../features/cafe_configuration/widgets/cafe_configuration_navigation.dart';
 import '../features/cafe_configuration/widgets/cafe_configuration_scaffold.dart';
@@ -146,6 +149,7 @@ import '../features/customer_management/controllers/customer_form_cubit.dart';
 import '../features/customer_management/controllers/customer_list_cubit.dart';
 import '../features/customer_management/models/customer_management_access.dart';
 import '../features/customer_management/repositories/customer_management_repository.dart';
+import '../features/customer_management/repositories/customer_import_repository.dart';
 import '../features/customer_management/controllers/customer_group_list_cubit.dart';
 import '../features/customer_management/controllers/customer_group_detail_cubit.dart';
 import '../features/customer_management/controllers/customer_group_form_cubit.dart';
@@ -352,6 +356,9 @@ final GoRouter appRouter = GoRouter(
             BlocProvider<PosCubit>(
               create: (_) => serviceLocator<PosCubit>()..loadInitialData(),
             ),
+            BlocProvider<PosPrintCubit>(
+              create: (_) => serviceLocator<PosPrintCubit>(),
+            ),
             BlocProvider<PosMenuSyncCubit>(
               create: (_) => serviceLocator<PosMenuSyncCubit>(),
             ),
@@ -373,9 +380,19 @@ final GoRouter appRouter = GoRouter(
           path: CustomerManagementRouteLocations.customerOrders,
           redirect: _customerManagementAccessRedirect,
           builder: (BuildContext context, GoRouterState state) {
-            final int? id = CustomerManagementRouteLocations.parseId(state.pathParameters['customerId']);
+            final int? id = CustomerManagementRouteLocations.parseId(
+              state.pathParameters['customerId'],
+            );
             if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<CustomerOrderHistoryCubit>(create: (_) => CustomerOrderHistoryCubit(serviceLocator<CustomerManagementRepository>()), child: CustomerOrderHistoryScreen(customerId: id, repository: serviceLocator<CustomerManagementRepository>()));
+            return BlocProvider<CustomerOrderHistoryCubit>(
+              create: (_) => CustomerOrderHistoryCubit(
+                serviceLocator<CustomerManagementRepository>(),
+              ),
+              child: CustomerOrderHistoryScreen(
+                customerId: id,
+                repository: serviceLocator<CustomerManagementRepository>(),
+              ),
+            );
           },
         ),
         GoRoute(
@@ -389,6 +406,9 @@ final GoRouter appRouter = GoRouter(
                 child: CustomerListScreen(
                   lifecycleRepository:
                       serviceLocator<CustomerManagementRepository>(),
+                  importRepository:
+                      serviceLocator<CustomerManagementRepository>()
+                          as CustomerImportRepository,
                 ),
               ),
         ),
@@ -1303,11 +1323,11 @@ final GoRouter appRouter = GoRouter(
               ? AppRoutes.financeReceiptVouchers
               : null,
           builder: (context, state) => BlocProvider<FinanceSetupCubit>(
-                create: (_) => serviceLocator<FinanceSetupCubit>(),
-                child: FinanceOverview.fromRepository(
-                  serviceLocator<FinanceSetupRepository>(),
-                ),
-              ),
+            create: (_) => serviceLocator<FinanceSetupCubit>(),
+            child: FinanceOverview.fromRepository(
+              serviceLocator<FinanceSetupRepository>(),
+            ),
+          ),
         ),
         GoRoute(
           path: AppRoutes.financeReceiptVouchers,
@@ -1920,6 +1940,21 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.cafeConfigurationPrinting,
+          name: AppRouteNames.cafeConfigurationPrinting,
+          redirect: _cafeConfigurationAccessRedirect,
+          builder: (context, state) => BlocProvider<PrintingCubit>(
+            create: (context) => serviceLocator<PrintingCubit>()
+              ..load(
+                preferredBranchId: context
+                    .read<OperationalBranchCubit>()
+                    .state
+                    .selectedBranchId,
+              ),
+            child: const PrintingScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.cafeConfigurationTeam,
           name: AppRouteNames.cafeConfigurationTeam,
           redirect: _cafeConfigurationAccessRedirect,
@@ -2079,10 +2114,10 @@ String _financeActiveTabFor(String path) {
   if (path.startsWith(AppRoutes.financeExpenseCategories)) return 'settings';
   if (path.startsWith(AppRoutes.financeExpenses)) return 'expenses';
   if (path.startsWith(AppRoutes.financePurchases)) return 'purchases';
-if (path.startsWith(AppRoutes.financeSales) ||
-    path.startsWith(AppRoutes.financeCustomersReceivables)) {
-  return 'sales';
-}
+  if (path.startsWith(AppRoutes.financeSales) ||
+      path.startsWith(AppRoutes.financeCustomersReceivables)) {
+    return 'sales';
+  }
   if (path.startsWith(AppRoutes.financePurchaseReceipts)) return 'purchases';
   if (path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
   if (path.startsWith(AppRoutes.financeReconciliationCanonical)) {
@@ -2228,6 +2263,8 @@ abstract final class AppRoutes {
   static const String cafeConfigurationProfile = '/cafe-configuration/profile';
   static const String cafeConfigurationBranches =
       '/cafe-configuration/branches';
+  static const String cafeConfigurationPrinting =
+      '/cafe-configuration/printing';
   static const String cafeConfigurationTeam = '/cafe-configuration/team';
   static const String cafeConfigurationTax = '/cafe-configuration/tax';
   static const String cafeConfigurationBranchCreate =
@@ -2395,6 +2432,7 @@ abstract final class AppRouteNames {
   static const String cafeConfigurationOverview = 'cafe-configuration-overview';
   static const String cafeConfigurationProfile = 'cafe-configuration-profile';
   static const String cafeConfigurationBranches = 'cafe-configuration-branches';
+  static const String cafeConfigurationPrinting = 'cafe-configuration-printing';
   static const String cafeConfigurationTeam = 'cafe-configuration-team';
   static const String cafeConfigurationTax = 'cafe-configuration-tax';
   static const String cafeConfigurationBranchCreate =

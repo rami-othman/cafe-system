@@ -11,6 +11,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../controllers/pos_cubit.dart';
+import '../controllers/pos_print_cubit.dart';
+import '../controllers/pos_print_state.dart';
 import '../controllers/pos_state.dart';
 import '../models/applied_discount.dart';
 import '../models/available_discount.dart';
@@ -28,6 +30,7 @@ import 'payment_dialog.dart';
 import 'order_type_selector.dart';
 import 'pos_action_buttons.dart';
 import 'pos_localization.dart';
+import 'pos_print_failure_dialog.dart';
 import 'select_customer_dialog.dart';
 
 class PosCartPanel extends StatelessWidget {
@@ -95,34 +98,69 @@ class PosCartPanel extends StatelessWidget {
                   },
                 ),
               ),
-              _CartFooter(
-                subtotal: state.subtotal,
-                discountTotal: state.discountTotal,
-                tax: state.tax,
-                taxRate: state.taxRate,
-                total: state.total,
-                itemCount: state.totalItems,
-                hasCartItems: state.hasCartItems,
-                canHoldCurrentOrder: state.canHoldCurrentOrder,
-                appliedDiscount: state.appliedDiscount,
-                onRemoveDiscount: cubit.removeDiscount,
-                onClearCart: cubit.clearCart,
-                onHold: cubit.holdCurrentOrder,
-                onPay:
-                    state.isPaymentSubmitting ||
-                        state.uncertainPaymentOrderId != null
-                    ? null
-                    : () =>
-                          unawaited(_showPaymentDialog(context, state, cubit)),
-                isSyncingOrder:
-                    state.isCartMutationInProgress || state.isPaymentSubmitting,
-                isBackendReachable:
-                    !state.isBackendMode || state.isBackendReachable,
+              BlocBuilder<PosPrintCubit, PosPrintState>(
+                builder: (BuildContext context, PosPrintState printState) =>
+                    _CartFooter(
+                      subtotal: state.subtotal,
+                      discountTotal: state.discountTotal,
+                      tax: state.tax,
+                      taxRate: state.taxRate,
+                      total: state.total,
+                      itemCount: state.totalItems,
+                      hasCartItems: state.hasCartItems,
+                      canHoldCurrentOrder: state.canHoldCurrentOrder,
+                      appliedDiscount: state.appliedDiscount,
+                      onRemoveDiscount: cubit.removeDiscount,
+                      onClearCart: cubit.clearCart,
+                      onHold: cubit.holdCurrentOrder,
+                      onPay:
+                          state.isPaymentSubmitting ||
+                              state.uncertainPaymentOrderId != null
+                          ? null
+                          : () => unawaited(
+                              _showPaymentDialog(context, state, cubit),
+                            ),
+                      onPrint: () => unawaited(_printPreBill(context)),
+                      isPrintEnabled:
+                          state.currentOrderId != null &&
+                          state.hasCartItems &&
+                          state.currentOrderPaymentStatus?.toLowerCase() !=
+                              'paid' &&
+                          state.currentOrderPaymentStatus?.toLowerCase() !=
+                              'completed' &&
+                          !state.isPaymentSubmitting &&
+                          state.uncertainPaymentOrderId == null &&
+                          !state.isCartMutationInProgress &&
+                          (!state.isBackendMode || state.isBackendReachable),
+                      isPrinting: printState.isPrinting,
+                      isSyncingOrder:
+                          state.isCartMutationInProgress ||
+                          state.isPaymentSubmitting,
+                      isBackendReachable:
+                          !state.isBackendMode || state.isBackendReachable,
+                    ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Future<void> _printPreBill(BuildContext context) async {
+    final PosCubit posCubit = context.read<PosCubit>();
+    final PosPrintCubit printCubit = context.read<PosPrintCubit>();
+    final Locale locale = Localizations.localeOf(context);
+    final PosPrintOutcome outcome = await printCubit.printPreBill(
+      orderState: posCubit.state,
+      locale: locale,
+    );
+    if (!context.mounted) return;
+    await showPosPrintFailure(
+      context: context,
+      outcome: outcome,
+      retry: () =>
+          printCubit.printPreBill(orderState: posCubit.state, locale: locale),
     );
   }
 
@@ -422,6 +460,9 @@ class _CartFooter extends StatelessWidget {
     required this.onClearCart,
     required this.onHold,
     required this.onPay,
+    required this.onPrint,
+    required this.isPrintEnabled,
+    required this.isPrinting,
     required this.isSyncingOrder,
     required this.isBackendReachable,
   });
@@ -439,6 +480,9 @@ class _CartFooter extends StatelessWidget {
   final VoidCallback onClearCart;
   final VoidCallback onHold;
   final VoidCallback? onPay;
+  final VoidCallback onPrint;
+  final bool isPrintEnabled;
+  final bool isPrinting;
   final bool isSyncingOrder;
   final bool isBackendReachable;
 
@@ -468,6 +512,9 @@ class _CartFooter extends StatelessWidget {
               onCancel: isSyncingOrder ? null : onClearCart,
               onHold: isSyncingOrder || !canHoldCurrentOrder ? null : onHold,
               onPay: isSyncingOrder ? null : onPay,
+              onPrint: onPrint,
+              isPrintEnabled: isPrintEnabled && !isSyncingOrder,
+              isPrinting: isPrinting,
               isPaymentEnabled:
                   !isSyncingOrder &&
                   isBackendReachable &&

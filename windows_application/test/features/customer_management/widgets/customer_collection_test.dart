@@ -75,6 +75,75 @@ void main() {
     expect(find.byType(ListTile), findsOneWidget);
   });
 
+  testWidgets('keeps the full desktop page reachable above the footer', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(760, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final List<Customer> customers = List<Customer>.generate(
+      10,
+      (int index) => Customer(
+        id: index + 1,
+        customerNumber: 'C-${(index + 1).toString().padLeft(6, '0')}',
+        name: 'Customer ${index + 1}',
+        lifecycle: CustomerLifecycle.active,
+        phones: const <CustomerPhone>[],
+        groups: const <CustomerGroupSummary>[],
+        allowedActions: const <String>{},
+      ),
+    );
+    const CustomerPageMeta meta = CustomerPageMeta(
+      currentPage: 1,
+      lastPage: 2,
+      perPage: 10,
+      total: 20,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: CustomerCollection(
+            customers: customers,
+            onSelected: (_) {},
+            paginationMeta: meta,
+            onPageChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final Finder tableScroll = find.byKey(const Key('customer-list-scroll'));
+    expect(tableScroll, findsOneWidget);
+    expect(
+      find.byKey(const Key('customer-management-pagination-footer')),
+      findsOneWidget,
+    );
+
+    final Finder lastRow = find.text('Customer 10');
+    expect(tester.getTopLeft(lastRow).dy, greaterThan(500));
+
+    await tester.drag(tableScroll, const Offset(0, -400));
+    await tester.pumpAndSettle();
+
+    expect(tester.getBottomRight(lastRow).dy, lessThanOrEqualTo(500));
+    expect(
+      tester
+          .getBottomRight(
+            find.byKey(const Key('customer-management-pagination-footer')),
+          )
+          .dy,
+      lessThanOrEqualTo(500),
+    );
+  });
+
   testWidgets('keeps long bilingual values reachable through semantics', (
     tester,
   ) async {

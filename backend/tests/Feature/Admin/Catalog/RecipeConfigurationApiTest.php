@@ -4,6 +4,8 @@ namespace Tests\Feature\Admin\Catalog;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use App\Models\ProductVariant;
+use App\Services\Catalog\RecipeConfigurationService;
 use Tests\TestCase;
 
 class RecipeConfigurationApiTest extends TestCase
@@ -291,7 +293,7 @@ class RecipeConfigurationApiTest extends TestCase
         $this->assertArrayNotHasKey('components', $after);
     }
 
-    public function test_empty_base_recipe_can_be_saved_and_clears_the_configuration_summary(): void
+    public function test_empty_variant_put_removes_the_override_instead_of_persisting_an_empty_parent(): void
     {
         [$tenant, $product, $variant] = $this->recipeContext('clear-base');
         $material = $this->material($tenant, 'BEANS', 'kilogram');
@@ -302,7 +304,10 @@ class RecipeConfigurationApiTest extends TestCase
         ], $headers)->assertOk();
         $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)
             ->assertOk()
+            ->assertJsonPath('data.hasOverride', false)
+            ->assertJsonPath('data.source', 'none')
             ->assertJsonCount(0, 'data.components');
+        $this->assertDatabaseMissing('variant_recipes', ['tenant_id' => $tenant, 'product_variant_id' => $variant]);
 
         $summary = $this->getJson("/api/v1/admin/catalog/products/$product", $headers)->assertOk()->json('data.variants.0');
         $this->assertFalse($summary['recipeConfigured']);
@@ -477,6 +482,275 @@ class RecipeConfigurationApiTest extends TestCase
         $this->putJson("/api/v1/admin/catalog/products/$product/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertOk();
         DB::table('inventory_items')->where('id', $localMaterial)->update(['is_active' => false]);
         $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $payload, $headers)->assertUnprocessable();
+    }
+
+    public function test_product_recipe_schema_and_component_validation_match_variant_recipes(): void
+    {
+        [$tenant, $product] = $this->recipeContext('product-schema');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [[
+            'materialId' => $material, 'quantity' => '18.125000', 'unitCode' => 'g', 'sortOrder' => 4,
+        ]]], $headers)->assertOk()
+            ->assertJsonPath('data.productId', $product)
+            ->assertJsonPath('data.configured', true)
+            ->assertJsonPath('data.components.0.quantity', '18.125')
+            ->assertJsonPath('data.components.0.sortOrder', 4);
+
+        $this->assertDatabaseCount('product_recipes', 1);
+        $this->assertDatabaseHas('product_recipe_components', ['tenant_id' => $tenant, 'inventory_item_id' => $material, 'quantity' => '18.125000']);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [[
+            'materialId' => $material, 'quantity' => '0', 'unitCode' => 'g',
+        ]]], $headers)->assertUnprocessable();
+    }
+
+    public function test_product_recipe_inheritance_and_variant_override_contract_are_explicit(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('product-inheritance');
+        $inherited = $this->material($tenant, 'BEANS', 'kilogram');
+        $override = $this->material($tenant, 'MILK', 'liter');
+        $headers = $this->headers($tenant);
+
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $headers)->assertOk()
+            ->assertJsonPath('data.configured', false)->assertJsonCount(0, 'data.components');
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [[
+            'materialId' => $inherited, 'quantity' => '18', 'unitCode' => 'g', 'sortOrder' => 2,
+        ]]], $headers)->assertOk();
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $headers)->assertOk()
+            ->assertJsonPath('data.hasOverride', false)->assertJsonPath('data.source', 'product')
+            ->assertJsonCount(0, 'data.components')->assertJsonCount(0, 'data.overrideComponents')
+            ->assertJsonPath('data.effectiveComponents.0.materialId', $inherited);
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [[
+            'materialId' => $override, 'quantity' => '250', 'unitCode' => 'ml', 'sortOrder' => 1,
+        ]]], $headers)->assertOk()
+            ->assertJsonPath('data.hasOverride', true)->assertJsonPath('data.source', 'variant')
+            ->assertJsonPath('data.components.0.materialId', $override)
+            ->assertJsonPath('data.effectiveComponents.0.materialId', $override);
+    }
+
+    public function test_resolve_uses_inherited_base_before_modifier_effects_and_variant_summary_is_effective(): void
+    {
+        [$tenant, $product, $variant, , $option] = $this->recipeContext('inherited-resolve');
+        $base = $this->material($tenant, 'BEANS', 'kilogram');
+        $addition = $this->material($tenant, 'MILK', 'liter');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [[
+            'materialId' => $base, 'quantity' => '18', 'unitCode' => 'g',
+        ]]], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", ['components' => [[
+            'materialId' => $addition, 'operation' => 'add', 'quantity' => '10', 'unitCode' => 'ml',
+        ]]], $headers)->assertOk();
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => [['optionId' => $option]]], $headers)
+            ->assertOk()->assertJsonCount(2, 'data.components');
+
+        $summary = $this->getJson("/api/v1/admin/catalog/products/$product", $headers)->assertOk()->json('data.variants.0');
+        $this->assertTrue($summary['effectiveRecipeConfigured']);
+        $this->assertSame(1, $summary['effectiveRecipeComponentCount']);
+        $this->assertSame('product', $summary['recipeSource']);
+        $this->assertFalse($summary['hasRecipeOverride']);
+        $this->assertTrue($summary['recipeConfigured']);
+    }
+
+    public function test_batch_effective_recipe_resolution_does_not_grow_recipe_queries_per_variant(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('batch-effective-recipes');
+        $second = DB::table('product_variants')->insertGetId([
+            'tenant_id' => $tenant, 'product_id' => $product, 'name' => 'Large', 'base_price' => 5,
+            'is_default' => false, 'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [[
+            'materialId' => $material, 'quantity' => '18', 'unitCode' => 'g',
+        ]]], $this->headers($tenant))->assertOk();
+
+        DB::enableQueryLog();
+        app(RecipeConfigurationService::class)->effectiveRecipes(ProductVariant::query()->whereIn('id', [$variant, $second])->get());
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $recipeQueries = collect($queries)->filter(fn (array $query) => str_contains($query['query'], 'recipe'))->count();
+        $this->assertLessThanOrEqual(4, $recipeQueries);
+    }
+
+    public function test_product_clear_and_delete_are_idempotent_and_do_not_touch_variant_overrides(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('product-clear');
+        $base = $this->material($tenant, 'BEANS', 'kilogram');
+        $override = $this->material($tenant, 'MILK', 'liter');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [['materialId' => $base, 'quantity' => '18', 'unitCode' => 'g']]], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $override, 'quantity' => '100', 'unitCode' => 'ml']]], $headers)->assertOk();
+        $before = DB::table('variant_recipe_components')->where('tenant_id', $tenant)->get()->map(fn ($row) => (array) $row)->all();
+        $auditCount = DB::table('menu_audit_logs')->where('tenant_id', $tenant)->where('entity_id', $product)->count();
+
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => []], $headers)
+            ->assertOk()->assertJsonPath('data.configured', false)->assertJsonCount(0, 'data.components');
+        $this->deleteJson("/api/v1/admin/catalog/products/$product/recipe", [], $headers)
+            ->assertOk()->assertJsonPath('data.configured', false);
+
+        $this->assertDatabaseMissing('product_recipes', ['tenant_id' => $tenant, 'product_id' => $product]);
+        $this->assertSame($before, DB::table('variant_recipe_components')->where('tenant_id', $tenant)->get()->map(fn ($row) => (array) $row)->all());
+        $this->assertSame($auditCount + 1, DB::table('menu_audit_logs')->where('tenant_id', $tenant)->where('entity_id', $product)->count());
+    }
+
+    public function test_variant_clear_and_delete_return_inheritance_and_are_idempotent(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('variant-clear');
+        $base = $this->material($tenant, 'BEANS', 'kilogram');
+        $override = $this->material($tenant, 'MILK', 'liter');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [['materialId' => $base, 'quantity' => '18', 'unitCode' => 'g']]], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $override, 'quantity' => '100', 'unitCode' => 'ml']]], $headers)->assertOk();
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => []], $headers)
+            ->assertOk()->assertJsonPath('data.hasOverride', false)->assertJsonPath('data.source', 'product')
+            ->assertJsonPath('data.effectiveComponents.0.materialId', $base);
+        $this->deleteJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [], $headers)
+            ->assertOk()->assertJsonPath('data.hasOverride', false)->assertJsonPath('data.source', 'product');
+        $this->assertDatabaseMissing('variant_recipes', ['tenant_id' => $tenant, 'product_variant_id' => $variant]);
+    }
+
+    public function test_recipe_writes_are_atomic_and_archived_records_are_read_only_but_diagnosable(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('recipe-lifecycle');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+        $payload = ['components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']]];
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $payload, $headers)->assertOk();
+        $before = DB::table('variant_recipe_components')->where('tenant_id', $tenant)->get()->map(fn ($row) => (array) $row)->all();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $material, 'quantity' => '0', 'unitCode' => 'g']]], $headers)->assertUnprocessable();
+        $this->assertSame($before, DB::table('variant_recipe_components')->where('tenant_id', $tenant)->get()->map(fn ($row) => (array) $row)->all());
+
+        DB::table('product_variants')->where('id', $variant)->update(['deleted_at' => now()]);
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe?includeArchived=true", $headers)->assertOk();
+        $this->deleteJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [], $headers)->assertNotFound();
+        $this->assertSame($before, DB::table('variant_recipe_components')->where('tenant_id', $tenant)->get()->map(fn ($row) => (array) $row)->all());
+        $this->assertNotSame($product, 0);
+    }
+
+    public function test_recipe_replace_rejects_invalid_components_and_preserves_the_previous_complete_recipe(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('invalid-components');
+        $good = $this->material($tenant, 'BEANS', 'kilogram');
+        $foreignTenant = $this->tenant('invalid-components-foreign');
+        $foreignMaterial = $this->material($foreignTenant, 'FOREIGN', 'kilogram');
+        $inactiveMaterial = $this->material($tenant, 'INACTIVE', 'kilogram');
+        DB::table('inventory_items')->where('id', $inactiveMaterial)->update(['is_active' => false]);
+        $archivedMaterial = $this->material($tenant, 'ARCHIVED', 'kilogram');
+        DB::table('inventory_items')->where('id', $archivedMaterial)->update(['deleted_at' => now()]);
+        $ineligibleMaterial = $this->rawMaterial($tenant, 'SERVICE', 'gram', 'service');
+        $headers = $this->headers($tenant);
+
+        $baseline = ['components' => [['materialId' => $good, 'quantity' => '18', 'unitCode' => 'g', 'sortOrder' => 0]]];
+        foreach (['products/'.$product, 'product-variants/'.$variant] as $path) {
+            $this->putJson("/api/v1/admin/catalog/$path/recipe", $baseline, $headers)->assertOk();
+            $before = $path === 'products/'.$product ? $this->getJson("/api/v1/admin/catalog/$path/recipe", $headers)->json('data') : $this->getJson("/api/v1/admin/catalog/$path/recipe", $headers)->json('data');
+
+            $invalidPayloads = [
+                'foreign material' => ['components' => [['materialId' => $foreignMaterial, 'quantity' => '1', 'unitCode' => 'g']]],
+                'inactive material' => ['components' => [['materialId' => $inactiveMaterial, 'quantity' => '1', 'unitCode' => 'g']]],
+                'archived material' => ['components' => [['materialId' => $archivedMaterial, 'quantity' => '1', 'unitCode' => 'g']]],
+                'ineligible item type' => ['components' => [['materialId' => $ineligibleMaterial, 'quantity' => '1', 'unitCode' => 'g']]],
+                'duplicate material' => ['components' => [['materialId' => $good, 'quantity' => '1', 'unitCode' => 'g'], ['materialId' => $good, 'quantity' => '2', 'unitCode' => 'g']]],
+                'zero quantity' => ['components' => [['materialId' => $good, 'quantity' => '0', 'unitCode' => 'g']]],
+                'negative quantity' => ['components' => [['materialId' => $good, 'quantity' => '-1', 'unitCode' => 'g']]],
+                'too many decimal places' => ['components' => [['materialId' => $good, 'quantity' => '1.1234567', 'unitCode' => 'g']]],
+                'unknown unit' => ['components' => [['materialId' => $good, 'quantity' => '1', 'unitCode' => 'not-a-unit']]],
+            ];
+
+            foreach ($invalidPayloads as $case => $payload) {
+                $this->putJson("/api/v1/admin/catalog/$path/recipe", $payload, $headers)->assertUnprocessable();
+                $after = $this->getJson("/api/v1/admin/catalog/$path/recipe", $headers)->json('data');
+                $this->assertSame($before, $after, "Recipe changed after a rejected write: $case ($path)");
+            }
+        }
+    }
+
+    public function test_recipe_routes_enforce_tenant_isolation_and_catalog_management_authorization(): void
+    {
+        [$tenant, $product, $variant, , $option] = $this->recipeContext('authz-matrix');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']]], $headers)->assertOk();
+
+        $foreignTenant = $this->tenant('authz-matrix-foreign');
+        $foreignHeaders = $this->headers($foreignTenant);
+        $foreignMaterialPayload = ['components' => [['materialId' => $material, 'quantity' => '1', 'unitCode' => 'g']]];
+
+        // A different tenant must never see, mutate, or resolve this
+        // tenant's product/variant recipes, and must never learn whether the
+        // nested material id belongs to someone else.
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $foreignHeaders)->assertNotFound();
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", $foreignMaterialPayload, $foreignHeaders)->assertNotFound();
+        $this->deleteJson("/api/v1/admin/catalog/products/$product/recipe", [], $foreignHeaders)->assertNotFound();
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $foreignHeaders)->assertNotFound();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $foreignMaterialPayload, $foreignHeaders)->assertNotFound();
+        $this->deleteJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [], $foreignHeaders)->assertNotFound();
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => []], $foreignHeaders)->assertNotFound();
+
+        // The product recipe must still be intact for the owning tenant.
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $headers)->assertOk()->assertJsonPath('data.configured', true);
+
+        // An authenticated actor without Catalog recipe authority (an
+        // employee, not owner/manager) must be denied on every recipe route,
+        // not silently scoped down by the Flutter client.
+        $employee = \App\Models\User::query()->create([
+            'tenant_id' => $tenant,
+            'name' => 'Line Cook',
+            'email' => 'line-cook-authz-matrix@example.test',
+            'password' => 'testing-password',
+            'role' => 'employee',
+            'is_active' => true,
+            'must_change_password' => false,
+        ]);
+        $employeeHeaders = ['Authorization' => 'Bearer '.$this->authenticateTenantUser($tenant, $employee)];
+
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $employeeHeaders)->assertForbidden();
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", $foreignMaterialPayload, $employeeHeaders)->assertForbidden();
+        $this->deleteJson("/api/v1/admin/catalog/products/$product/recipe", [], $employeeHeaders)->assertForbidden();
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $employeeHeaders)->assertForbidden();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $foreignMaterialPayload, $employeeHeaders)->assertForbidden();
+        $this->deleteJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [], $employeeHeaders)->assertForbidden();
+        $this->postJson("/api/v1/admin/catalog/product-variants/$variant/recipe/resolve", ['selectedOptions' => []], $employeeHeaders)->assertForbidden();
+        $this->getJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", $employeeHeaders)->assertForbidden();
+
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $headers)->assertOk()->assertJsonPath('data.configured', true);
+    }
+
+    public function test_stored_unavailable_material_remains_diagnosable_but_cannot_be_resaved_until_replaced(): void
+    {
+        [$tenant, $product, $variant] = $this->recipeContext('diagnose-unavailable');
+        $material = $this->material($tenant, 'BEANS', 'kilogram');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']]], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $material, 'quantity' => '9', 'unitCode' => 'g']]], $headers)->assertOk();
+
+        DB::table('inventory_items')->where('id', $material)->update(['is_active' => false]);
+
+        // The stored reference is still readable so a manager can diagnose
+        // why the recipe became invalid, for both the product base recipe
+        // and the variant override.
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $headers)->assertOk()
+            ->assertJsonPath('data.configured', true)
+            ->assertJsonPath('data.components.0.materialId', $material);
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $headers)->assertOk()
+            ->assertJsonPath('data.hasOverride', true)
+            ->assertJsonPath('data.components.0.materialId', $material);
+
+        // Resubmitting the very same stored component as new configuration
+        // must still be rejected until it is replaced with an eligible one.
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']]], $headers)->assertUnprocessable();
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", ['components' => [['materialId' => $material, 'quantity' => '9', 'unitCode' => 'g']]], $headers)->assertUnprocessable();
+
+        // Prior stored state must remain untouched by the rejected resave.
+        $this->getJson("/api/v1/admin/catalog/products/$product/recipe", $headers)->assertOk()->assertJsonPath('data.components.0.materialId', $material);
+        $this->getJson("/api/v1/admin/catalog/product-variants/$variant/recipe", $headers)->assertOk()->assertJsonPath('data.components.0.materialId', $material);
+
+        $replacement = $this->material($tenant, 'REPLACEMENT', 'kilogram');
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", ['components' => [['materialId' => $replacement, 'quantity' => '18', 'unitCode' => 'g']]], $headers)
+            ->assertOk()->assertJsonPath('data.components.0.materialId', $replacement);
     }
 
     /** @return array{int, int, int, int, int} */

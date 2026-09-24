@@ -1982,6 +1982,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String recipeMaterialId(int materialId) {
+    return 'Material #$materialId';
+  }
+
+  @override
+  String recipeSku(String sku) {
+    return 'SKU $sku';
+  }
+
+  @override
   String get recipeMissing => 'Recipe missing';
 
   @override
@@ -1999,6 +2009,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recipeUsingGlobalSettings => 'Using Global settings';
+
+  @override
+  String get recipeUsingProductSettings => 'Using Product settings';
+
+  @override
+  String get recipeUsingVariantSettings => 'Using Variant settings';
 
   @override
   String get recipeCustomizedForProduct => 'Customized for Product';
@@ -2028,6 +2044,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeUseInheritedAgain => 'Use inherited settings again';
 
   @override
+  String get recipeClearTitle => 'Clear the product recipe?';
+
+  @override
+  String get recipeClearBody =>
+      'This removes every material configured for the product base recipe.';
+
+  @override
+  String get recipeClearAction => 'Clear recipe';
+
+  @override
+  String get recipeRemoveOverrideAction => 'Remove override';
+
+  @override
   String recipeCustomizeFor(String context) {
     return 'Customize for $context';
   }
@@ -2035,6 +2064,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String recipeNoMaterialEffectFor(String context) {
     return 'No material effect for $context';
+  }
+
+  @override
+  String get recipeCurrentVariant => 'this Variant';
+
+  @override
+  String recipeReplacesSummary(Object from, Object to) {
+    return 'Replaces $from with $to';
+  }
+
+  @override
+  String recipeRemovesSummary(Object materials) {
+    return 'Removes $materials';
+  }
+
+  @override
+  String recipeAddsSummary(Object materials) {
+    return 'Adds $materials';
   }
 
   @override
@@ -6367,6 +6414,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cafeConfigurationBranches => 'Branches';
 
   @override
+  String get cafeConfigurationPrinting => 'Printing';
+
+  @override
+  String get cafeConfigurationPrintingSubtitle =>
+      'Set receipt printer defaults for each branch.';
+
+  @override
+  String get cafeConfigurationReceiptPrinting => 'Receipt printing';
+
+  @override
+  String get cafeConfigurationReceiptPrintingEnabled =>
+      'Receipt Printing Enabled';
+
+  @override
+  String get cafeConfigurationPrinterName => 'Printer Name';
+
+  @override
+  String get cafeConfigurationPrinterHost => 'Printer IP / Host';
+
+  @override
+  String get cafeConfigurationPrinterPort => 'Printer Port';
+
+  @override
+  String get cafeConfigurationPaperWidth => 'Paper Width';
+
+  @override
+  String get cafeConfigurationAutoPrint => 'Auto Print After Payment';
+
+  @override
+  String get cafeConfigurationPrintingSaved => 'Printing defaults saved.';
+
+  @override
+  String get cafeConfigurationPrintingDiscard =>
+      'Discard unsaved printing changes and switch branches?';
+
+  @override
+  String get cafeConfigurationPrinterInvalid =>
+      'Enter a valid printer host and port (1–65535).';
+
+  @override
   String get cafeConfigurationTeamAccess => 'Team & Access';
 
   @override
@@ -8130,8 +8217,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discountValidationName => 'Discount name is required.';
 
   @override
-  String get discountValidationPositiveValue =>
-      'Enter a value greater than zero.';
+  String get discountValidationNonNegativeValue =>
+      'Enter a value of zero or greater.';
 
   @override
   String get discountValidationPercentage =>
@@ -8723,4 +8810,147 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get posCloseCustomizationDialog => 'Close customization dialog';
+
+  @override
+  String get customerImportAction => 'Import CSV';
+
+  @override
+  String get customerImportTitle => 'Import customers from CSV';
+
+  @override
+  String get customerImportDescription =>
+      'Upload a CSV preview, review warnings, then confirm the server-authoritative import.';
+
+  @override
+  String get customerImportSelectFile => 'Select CSV file';
+
+  @override
+  String get customerImportChooseAnother => 'Choose another file';
+
+  @override
+  String customerImportDetected(String encoding, String delimiter) {
+    return 'Detected $encoding encoding and $delimiter delimiter';
+  }
+
+  @override
+  String get customerImportTotal => 'Total';
+
+  @override
+  String get customerImportReady => 'Ready';
+
+  @override
+  String get customerImportWarnings => 'Warnings';
+
+  @override
+  String get customerImportRejected => 'Rejected';
+
+  @override
+  String get customerImportDuplicateCandidates => 'Duplicate candidates';
+
+  @override
+  String get customerImportCreateMissingGroups => 'Create missing groups';
+
+  @override
+  String get customerImportIssues => 'Representative row issues';
+
+  @override
+  String get customerImportUnnamedRow => 'Unnamed row';
+
+  @override
+  String get customerImportSummary => 'Import summary';
+
+  @override
+  String customerImportCountsSummary(
+    int created,
+    int skipped,
+    int failed,
+    int groups,
+    int memberships,
+  ) {
+    return 'Created $created, skipped $skipped, failed $failed; groups $groups, memberships $memberships.';
+  }
+
+  @override
+  String get customerImportConfirmTitle => 'Confirm customer import';
+
+  @override
+  String get customerImportConfirmMessage =>
+      'The server will create customers and memberships according to this preview. Existing customers are not updated.';
+
+  @override
+  String get customerImportConfirmAction => 'Confirm import';
+
+  @override
+  String get customerImportStart => 'Start import';
+
+  @override
+  String get customerImportCompletedWithErrors => 'Completed with errors';
+
+  @override
+  String get customerImportDownloadErrors => 'Download error report';
+
+  @override
+  String get customerImportValidationFailed =>
+      'The CSV file could not be validated. Check its encoding, columns, and size.';
+
+  @override
+  String get customerImportAlreadyCompleted =>
+      'This CSV import was already completed. Choose a new preview before committing.';
+
+  @override
+  String get customerImportGenericFailure =>
+      'The customer import could not be completed. Please try again safely.';
+
+  @override
+  String get posPrinting => 'Printing...';
+
+  @override
+  String get posRetryPrint => 'Retry Print';
+
+  @override
+  String get posPrinterSetup => 'Printer Setup';
+
+  @override
+  String get posPrintOrderRequired =>
+      'No saved backend order is available to print.';
+
+  @override
+  String get posPrintItemsRequired => 'This order has no items to print.';
+
+  @override
+  String get posPreBillUnavailable =>
+      'A pre-bill is only available before payment.';
+
+  @override
+  String get posPrintPrinterNotConfigured =>
+      'Receipt printer is not configured.';
+
+  @override
+  String get posPrintInvalidConfiguration =>
+      'Receipt printer settings are invalid.';
+
+  @override
+  String get posPrintConfigurationUnavailable =>
+      'Printer settings could not be loaded.';
+
+  @override
+  String get posPrintReceiptUnavailable =>
+      'The authoritative order receipt could not be loaded.';
+
+  @override
+  String get posPrintRenderingFailed => 'The receipt could not be rendered.';
+
+  @override
+  String get posPrintUnreachable => 'Could not connect to the receipt printer.';
+
+  @override
+  String get posPrintTimeout => 'The printer timed out.';
+
+  @override
+  String get posPrintUnsupported =>
+      'Receipt printing is unavailable on this device.';
+
+  @override
+  String get posPrintFailed =>
+      'Printing failed. Check the printer and try again.';
 }

@@ -1,9 +1,15 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+
 import '../../../core/network/dio_api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../models/customer_drafts.dart';
 import '../models/customer_group_models.dart';
+import '../models/customer_import_models.dart';
 import '../models/customer_models.dart';
 import '../models/customer_queries.dart';
+import 'customer_import_repository.dart';
 
 abstract interface class CustomerManagementRepository {
   static const Set<String> contractPaths = <String>{
@@ -44,7 +50,8 @@ abstract interface class CustomerManagementRepository {
   Future<CustomerGroup> removeGroupMember(int groupId, int customerId);
 }
 
-class ApiCustomerManagementRepository implements CustomerManagementRepository {
+class ApiCustomerManagementRepository
+    implements CustomerManagementRepository, CustomerImportRepository {
   ApiCustomerManagementRepository(this._apiClient);
 
   final DioApiClient _apiClient;
@@ -234,6 +241,46 @@ class ApiCustomerManagementRepository implements CustomerManagementRepository {
       'admin/customer-management/customer-groups/${_id(groupId)}/members/${_id(customerId)}',
     ),
   );
+
+  @override
+  Future<CustomerImportStatus> previewCustomerImport({
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    final dynamic response = await _apiClient.postMultipart(
+      'admin/customer-management/customer-imports/preview',
+      data: FormData.fromMap(<String, dynamic>{
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      }),
+    );
+    return CustomerImportStatus.fromJson(_map(response));
+  }
+
+  @override
+  Future<CustomerImportStatus> commitCustomerImport({
+    required int importId,
+    required bool createMissingGroups,
+  }) async {
+    final dynamic response = await _apiClient.post(
+      'admin/customer-management/customer-imports/${_id(importId)}/commit',
+      data: <String, dynamic>{'createMissingGroups': createMissingGroups},
+    );
+    return CustomerImportStatus.fromJson(_map(response));
+  }
+
+  @override
+  Future<CustomerImportStatus> getCustomerImport(int importId) async {
+    final dynamic response = await _apiClient.get(
+      'admin/customer-management/customer-imports/${_id(importId)}',
+    );
+    return CustomerImportStatus.fromJson(_map(response));
+  }
+
+  @override
+  Future<Uint8List> downloadCustomerImportErrors(int importId) =>
+      _apiClient.getBytes(
+        'admin/customer-management/customer-imports/${_id(importId)}/errors',
+      );
 
   Future<Customer> _customer(Future<dynamic> data) async =>
       Customer.fromJson(_map(await data));

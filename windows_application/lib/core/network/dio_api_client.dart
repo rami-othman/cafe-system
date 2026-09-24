@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 import 'current_locale.dart';
@@ -119,6 +121,22 @@ class DioApiClient {
         options: Options(contentType: Headers.multipartFormDataContentType),
       ),
     );
+  }
+
+  Future<Uint8List> getBytes(String path) async {
+    try {
+      final Response<List<int>> response = await _dio.get<List<int>>(
+        path,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data ?? const <int>[]);
+    } on DioException catch (error) {
+      final ApiException apiError = _handleDioException(error);
+      if (_isAuthenticatedRequest(error, apiError)) {
+        _notifyAuthenticatedFailure(error, apiError);
+      }
+      throw apiError;
+    }
   }
 
   Future<dynamic> patch(

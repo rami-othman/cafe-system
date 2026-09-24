@@ -215,7 +215,7 @@ class DiscountController extends Controller
             'name' => ['required', 'string', 'max:255'], 'code' => ['nullable', 'string', 'max:100', $codeRule],
             'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code'])],
             'type' => ['required', Rule::in(['percentage', 'fixed'])], 'scope' => ['required', Rule::in(['order', 'product', 'category', 'bundle'])],
-            'value' => ['required', 'numeric', 'gt:0'], 'conditions' => ['nullable', 'string'],
+            'value' => ['required', 'numeric', 'min:0'], 'conditions' => ['nullable', 'string'],
             'startsAt' => ['nullable', 'date'], 'endsAt' => ['nullable', 'date', 'after_or_equal:startsAt'],
             'startDate' => ['nullable', 'date_format:Y-m-d'], 'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
             'activeDays' => ['nullable', 'array'], 'activeDays.*' => ['distinct', Rule::in(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])],

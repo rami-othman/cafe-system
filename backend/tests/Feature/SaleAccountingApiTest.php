@@ -97,7 +97,6 @@ class SaleAccountingApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
-
         $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '2.0000', quantity: '100.000');
         $product = $this->stockTrackedProduct($tenant, name: 'Test Latte', price: '10.00');
         $this->recipe($tenant, $product, [$beans['itemId'] => ['quantity' => '2.000']]);
@@ -343,12 +342,13 @@ class SaleAccountingApiTest extends TestCase
         }
     }
 
-    public function test_missing_recipe_configuration_blocks_the_payment_and_rolls_back_completely(): void
+    public function test_missing_recipe_configuration_completes_as_zero_consumption(): void
     {
         $this->seed();
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
+        DB::table('branches')->where('id', $branchId)->update(['pos_inventory_warehouse_id' => null]);
 
         $product = $this->stockTrackedProduct($tenant, name: 'No Recipe Item', price: '5.00');
         // Deliberately no recipe configured for this product.
@@ -358,13 +358,16 @@ class SaleAccountingApiTest extends TestCase
         $totals = $order->json('data.totals');
 
         $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-no-recipe-1'], $headers)
-            ->assertUnprocessable()->assertJsonValidationErrors('productId');
+            ->assertOk();
+        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-no-recipe-1'], $headers)
+            ->assertOk();
 
         $orderRow = DB::table('orders')->where('id', $orderId)->first();
-        $this->assertSame('unpaid', $orderRow->payment_status);
-        $this->assertNull($orderRow->cogs_total);
-        $this->assertSame(0, DB::table('payments')->where('order_id', $orderId)->count());
-        $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->count());
+        $this->assertSame('paid', $orderRow->payment_status);
+        $this->assertSame('0.00', $orderRow->cogs_total);
+        $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
+        $this->assertSame(0, DB::table('sale_consumptions')->where('order_id', $orderId)->count());
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->count());
     }
 
     /**
@@ -447,9 +450,16 @@ class SaleAccountingApiTest extends TestCase
         $beans = $this->stockIn($tenant, $branchId, headers: $headers, unitCost: '3.0000', quantity: '50.000');
         $goodProduct = $this->stockTrackedProduct($tenant, name: 'Good Item', price: '8.00');
         $this->recipe($tenant, $goodProduct, [$beans['itemId'] => ['quantity' => '1.000']]);
-        $badProduct = $this->stockTrackedProduct($tenant, name: 'Bad Item No Recipe', price: '6.00');
+        $badProduct = $this->stockTrackedProduct($tenant, name: 'Bad Item Incompatible Snapshot', price: '6.00');
 
         $snapshot = $this->publishedSnapshot($tenant, $branchId, [$goodProduct, $badProduct]);
+        $payload = json_decode((string) DB::table('published_menu_versions')->where('id', $snapshot['versionId'])->value('payload_json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($payload['menus'] as &$menu) foreach ($menu['sections'] as &$section) foreach ($section['products'] as &$product) {
+            if ((int) $product['productId'] === $badProduct) {
+                unset($product['variants'][0]['baseRecipe']);
+            }
+        } unset($menu, $section, $product);
+        DB::table('published_menu_versions')->where('id', $snapshot['versionId'])->update(['payload_json' => json_encode($payload, JSON_THROW_ON_ERROR), 'checksum' => hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR))]);
         $shiftId = $this->openShift($tenant, $branchId, $headers);
         $order = $this->postJson('/api/v1/orders', [
             'branchId' => $branchId,
@@ -472,6 +482,116 @@ class SaleAccountingApiTest extends TestCase
         $balance = DB::table('stock_balances')->where('tenant_id', $tenant)->where('inventory_item_id', $beans['itemId'])->first();
         $this->assertSame(50.0, (float) $balance->quantity_on_hand);
         $this->assertSame('unpaid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
+    }
+
+    public function test_exact_empty_pinned_base_recipe_is_valid_zero_consumption(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        DB::table('branches')->where('id', $branchId)->update(['pos_inventory_warehouse_id' => null]);
+
+        $product = $this->stockTrackedProduct($tenant, 'Explicit Empty Snapshot', '5.00');
+        $snapshot = $this->publishedSnapshot($tenant, $branchId, [$product]);
+        $this->assertSame([], $this->snapshotVariant($snapshot['versionId'], $product)['baseRecipe']);
+        $order = $this->createOrderFromSnapshot($tenant, $branchId, $headers, $product, $snapshot);
+        $orderId = $order->json('data.id');
+        $this->assertSame($snapshot['versionId'], (int) DB::table('orders')->where('id', $orderId)->value('published_menu_version_id'));
+        $this->assertSame($product, (int) DB::table('order_items')->where('order_id', $orderId)->value('product_id'));
+        $this->assertSame($snapshot['variants'][$product], (int) DB::table('order_items')->where('order_id', $orderId)->value('product_variant_id'));
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'method' => 'cash',
+            'amount' => $order->json('data.totals.total'),
+            'idempotencyKey' => 'sale-explicit-empty-snapshot',
+        ], $headers)->assertOk();
+
+        $this->assertSame('paid', DB::table('orders')->where('id', $orderId)->value('payment_status'));
+        $this->assertSame('0.00', DB::table('orders')->where('id', $orderId)->value('cogs_total'));
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->count());
+        $this->assertSame(0, DB::table('sale_consumptions')->where('tenant_id', $tenant)->where('order_id', $orderId)->count());
+    }
+
+    /** @return array<string, array{0: array<string, mixed>, 1: bool}> */
+    public static function malformedPinnedRecipeCases(): array
+    {
+        return [
+            'missing material id' => [['quantity' => '1', 'unitCode' => 'g']],
+            'missing quantity' => [['materialId' => '__MATERIAL__', 'unitCode' => 'g']],
+            'missing unit code' => [['materialId' => '__MATERIAL__', 'quantity' => '1']],
+            'invalid material id' => [['materialId' => 0, 'quantity' => '1', 'unitCode' => 'g']],
+            'empty quantity and unit' => [['materialId' => '__MATERIAL__', 'quantity' => '', 'unitCode' => '']],
+        ];
+    }
+
+    #[DataProvider('malformedPinnedRecipeCases')]
+    public function test_malformed_pinned_base_recipe_rows_fail_closed_and_roll_back_payment_effects(array $component): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $material = $this->diagnosticMaterial($tenant, 'MALFORMED-SNAPSHOT');
+        $product = $this->stockTrackedProduct($tenant, 'Malformed Snapshot '.uniqid(), '5.00');
+        $snapshot = $this->publishedSnapshot($tenant, $branchId, [$product]);
+        $component = array_map(fn (mixed $value) => $value === '__MATERIAL__' ? $material : $value, $component);
+        $this->mutateSnapshotVariant($snapshot['versionId'], $product, function (array &$variant) use ($component): void {
+            $variant['baseRecipe'] = [$component];
+        });
+        $this->configureLiveRecipe($tenant, $product, $material);
+        $this->assertSame($component, $this->snapshotVariant($snapshot['versionId'], $product)['baseRecipe'][0]);
+
+        $order = $this->createOrderFromSnapshot($tenant, $branchId, $headers, $product, $snapshot);
+        $orderId = $order->json('data.id');
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'method' => 'cash',
+            'amount' => $order->json('data.totals.total'),
+            'idempotencyKey' => 'malformed-snapshot-'.str_replace(' ', '-', strtolower((string) ($component['unitCode'] ?? 'missing'))),
+        ], $headers)->assertUnprocessable();
+
+        $this->assertPaymentRollback($tenant, $orderId);
+    }
+
+    public function test_malformed_selected_modifier_snapshot_component_fails_closed_and_rolls_back_payment(): void
+    {
+        $this->seed();
+        $tenant = $this->demoTenantId();
+        $headers = $this->headers($tenant);
+        $branchId = $this->downtownBranchId($tenant);
+        $material = $this->diagnosticMaterial($tenant, 'MALFORMED-MODIFIER');
+        $product = $this->stockTrackedProduct($tenant, 'Malformed Modifier Snapshot', '5.00');
+        $now = now();
+        $group = DB::table('modifier_groups')->insertGetId([
+            'tenant_id' => $tenant, 'name' => 'Malformed modifier', 'selection_type' => 'single',
+            'max_selections' => 1, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $option = DB::table('modifier_options')->insertGetId([
+            'tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => 'Broken effect',
+            'is_active' => true, 'is_available' => true, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        DB::table('product_modifier_group')->insert([
+            'tenant_id' => $tenant, 'product_id' => $product, 'modifier_group_id' => $group,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $snapshot = $this->publishedSnapshot($tenant, $branchId, [$product]);
+        $this->mutateSnapshotVariant($snapshot['versionId'], $product, function (array &$variant) use ($option): void {
+            $variant['baseRecipe'] = [];
+            $variant['modifierRecipeAdjustments'] = [[
+                'optionId' => $option,
+                'components' => [['quantity' => '1', 'unitCode' => 'g']],
+            ]];
+        });
+        $this->configureLiveRecipe($tenant, $product, $material);
+
+        $order = $this->createOrderFromSnapshot($tenant, $branchId, $headers, $product, $snapshot, [$option]);
+        $orderId = $order->json('data.id');
+        $this->postJson("/api/v1/orders/{$orderId}/pay", [
+            'method' => 'cash',
+            'amount' => $order->json('data.totals.total'),
+            'idempotencyKey' => 'malformed-modifier-snapshot',
+        ], $headers)->assertUnprocessable();
+
+        $this->assertPaymentRollback($tenant, $orderId);
     }
 
     public function test_configured_pos_bar_is_the_sale_route_even_when_a_legacy_product_setting_points_elsewhere(): void
@@ -593,6 +713,100 @@ class SaleAccountingApiTest extends TestCase
         ], $headers)->assertCreated();
 
         return ['itemId' => $itemId, 'warehouseId' => $warehouseId];
+    }
+
+    private function diagnosticMaterial(int $tenant, string $sku): int
+    {
+        return (int) DB::table('inventory_items')->insertGetId([
+            'tenant_id' => $tenant,
+            'name' => $sku,
+            'sku' => $sku,
+            'item_type' => 'raw_material',
+            'unit' => 'gram',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function configureLiveRecipe(int $tenant, int $productId, int $materialId): void
+    {
+        $product = DB::table('products')->where('tenant_id', $tenant)->where('id', $productId)->firstOrFail();
+        $variant = ProductVariant::query()->where('tenant_id', $tenant)->where('product_id', $productId)->where('is_default', true)->firstOrFail();
+        app(RecipeConfigurationService::class)->replaceRecipe($variant, [['materialId' => $materialId, 'quantity' => '1', 'unitCode' => 'g']]);
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotVariant(int $versionId, int $productId): array
+    {
+        $payload = $this->snapshotPayload($versionId);
+        foreach ($payload['menus'] ?? [] as $menu) {
+            foreach ($menu['sections'] ?? [] as $section) {
+                foreach ($section['products'] ?? [] as $product) {
+                    if ((int) ($product['productId'] ?? 0) === $productId) {
+                        return $product['variants'][0];
+                    }
+                }
+            }
+        }
+        $this->fail('Snapshot product was not found.');
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotPayload(int $versionId): array
+    {
+        return json_decode((string) DB::table('published_menu_versions')->where('id', $versionId)->value('payload_json'), true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    /** @param callable(array<string, mixed>&): void $mutator */
+    private function mutateSnapshotVariant(int $versionId, int $productId, callable $mutator): void
+    {
+        $row = DB::table('published_menu_versions')->where('id', $versionId)->firstOrFail();
+        $payload = json_decode((string) $row->payload_json, true, 512, JSON_THROW_ON_ERROR);
+        $found = false;
+        foreach ($payload['menus'] as &$menu) {
+            foreach ($menu['sections'] as &$section) {
+                foreach ($section['products'] as &$product) {
+                    if ((int) ($product['productId'] ?? 0) !== $productId) {
+                        continue;
+                    }
+                    $mutator($product['variants'][0]);
+                    $found = true;
+                }
+            }
+        }
+        unset($menu, $section, $product);
+        $this->assertTrue($found, 'Snapshot product was not found.');
+        $json = json_encode($payload, JSON_THROW_ON_ERROR);
+        DB::table('published_menu_versions')->where('id', $versionId)->update(['payload_json' => $json, 'checksum' => hash('sha256', $json)]);
+    }
+
+    private function createOrderFromSnapshot(int $tenant, int $branchId, array $headers, int $productId, array $snapshot, array $modifierOptionIds = [])
+    {
+        $shiftId = $this->openShift($tenant, $branchId, $headers);
+
+        return $this->postJson('/api/v1/orders', [
+            'branchId' => $branchId,
+            'shiftId' => $shiftId,
+            'orderType' => 'takeaway',
+            'publishedMenuVersionId' => $snapshot['versionId'],
+            'items' => [[
+                'productId' => $productId,
+                'placementId' => $snapshot['placements'][$productId],
+                'variantId' => $snapshot['variants'][$productId],
+                'quantity' => 1,
+                'modifierOptionIds' => $modifierOptionIds,
+            ]],
+        ], $headers)->assertCreated();
+    }
+
+    private function assertPaymentRollback(int $tenant, int $orderId): void
+    {
+        $this->assertSame('unpaid', DB::table('orders')->where('tenant_id', $tenant)->where('id', $orderId)->value('payment_status'));
+        $this->assertSame(0, DB::table('payments')->where('tenant_id', $tenant)->where('order_id', $orderId)->count());
+        $this->assertSame(0, DB::table('stock_movements')->where('tenant_id', $tenant)->where('type', 'sale_consumption')->count());
+        $this->assertSame(0, DB::table('sale_consumptions')->where('tenant_id', $tenant)->where('order_id', $orderId)->count());
+        $this->assertSame(0, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'pos_order')->where('source_id', $orderId)->count());
     }
 
     private function stockTrackedProduct(int $tenant, string $name, string $price): int

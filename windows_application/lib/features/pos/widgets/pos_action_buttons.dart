@@ -15,14 +15,20 @@ class PosActionButtons extends StatelessWidget {
     this.onCancel,
     this.onHold,
     this.onPay,
+    this.onPrint,
     this.isPaymentEnabled = true,
+    this.isPrintEnabled = false,
+    this.isPrinting = false,
   });
 
   final double total;
   final VoidCallback? onCancel;
   final VoidCallback? onHold;
   final VoidCallback? onPay;
+  final VoidCallback? onPrint;
   final bool isPaymentEnabled;
+  final bool isPrintEnabled;
+  final bool isPrinting;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +54,13 @@ class PosActionButtons extends StatelessWidget {
             Expanded(
               child: _SecondaryActionButton(
                 label: context.l10n.posPrint,
-                onPressed: () {},
+                onPressed: isPrintEnabled && !isPrinting ? onPrint : null,
+                child: isPrinting
+                    ? const SizedBox.square(
+                        dimension: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
               ),
             ),
           ],
@@ -90,11 +102,13 @@ class _SecondaryActionButton extends StatelessWidget {
     required this.label,
     this.foreground = AppColors.textMuted,
     this.onPressed,
+    this.child,
   });
 
   final String label;
   final Color foreground;
   final VoidCallback? onPressed;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -112,12 +126,14 @@ class _SecondaryActionButton extends StatelessWidget {
             letterSpacing: 0.6,
           ),
         ),
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-        ),
+        child:
+            child ??
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
       ),
     );
   }

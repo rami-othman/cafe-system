@@ -860,12 +860,30 @@
       }
     }
   },
+  "recipeMaterialId": "Material #{materialId}",
+  "@recipeMaterialId": {
+    "placeholders": {
+      "materialId": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeSku": "SKU {sku}",
+  "@recipeSku": {
+    "placeholders": {
+      "sku": {
+        "type": "String"
+      }
+    }
+  },
   "recipeMissing": "Recipe missing",
   "recipeNotConfigured": "Recipe not configured",
   "recipeModifierMaterialEffects": "Modifier Material Effects",
   "recipeModifierMaterialEffectsHelp": "See how customer choices change the materials consumed.",
   "recipeNoMaterialChange": "No material change",
   "recipeUsingGlobalSettings": "Using Global settings",
+  "recipeUsingProductSettings": "Using Product settings",
+  "recipeUsingVariantSettings": "Using Variant settings",
   "recipeCustomizedForProduct": "Customized for Product",
   "recipeCustomizedForVariant": "Customized for Variant",
   "recipeTest": "Test Recipe",
@@ -875,6 +893,10 @@
   "recipeCurrentBehavior": "Current Behavior",
   "recipeUseInherited": "Use inherited settings",
   "recipeUseInheritedAgain": "Use inherited settings again",
+  "recipeClearTitle": "Clear the product recipe?",
+  "recipeClearBody": "This removes every material configured for the product base recipe.",
+  "recipeClearAction": "Clear recipe",
+  "recipeRemoveOverrideAction": "Remove override",
   "recipeCustomizeFor": "Customize for {context}",
   "@recipeCustomizeFor": {
     "placeholders": {
@@ -889,6 +911,26 @@
       "context": {
         "type": "String"
       }
+    }
+  },
+  "recipeCurrentVariant": "this Variant",
+  "recipeReplacesSummary": "Replaces {from} with {to}",
+  "@recipeReplacesSummary": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "recipeRemovesSummary": "Removes {materials}",
+  "@recipeRemovesSummary": {
+    "placeholders": {
+      "materials": {}
+    }
+  },
+  "recipeAddsSummary": "Adds {materials}",
+  "@recipeAddsSummary": {
+    "placeholders": {
+      "materials": {}
     }
   },
   "recipeRemoves": "Removes",
@@ -2951,6 +2993,18 @@
   "cafeConfigurationOverview": "Overview",
   "cafeConfigurationProfile": "Cafe Profile",
   "cafeConfigurationBranches": "Branches",
+  "cafeConfigurationPrinting": "Printing",
+  "cafeConfigurationPrintingSubtitle": "Set receipt printer defaults for each branch.",
+  "cafeConfigurationReceiptPrinting": "Receipt printing",
+  "cafeConfigurationReceiptPrintingEnabled": "Receipt Printing Enabled",
+  "cafeConfigurationPrinterName": "Printer Name",
+  "cafeConfigurationPrinterHost": "Printer IP / Host",
+  "cafeConfigurationPrinterPort": "Printer Port",
+  "cafeConfigurationPaperWidth": "Paper Width",
+  "cafeConfigurationAutoPrint": "Auto Print After Payment",
+  "cafeConfigurationPrintingSaved": "Printing defaults saved.",
+  "cafeConfigurationPrintingDiscard": "Discard unsaved printing changes and switch branches?",
+  "cafeConfigurationPrinterInvalid": "Enter a valid printer host and port (1–65535).",
   "cafeConfigurationTeamAccess": "Team & Access",
   "cafeConfigurationTax": "Tax",
   "cafeConfigurationOverviewSubtitle": "A concise summary of your cafe’s operational configuration.",
@@ -3555,7 +3609,7 @@
   "discountFormSaved": "Discount saved.",
   "discountFormSaveFailed": "Unable to save discount.",
   "discountValidationName": "Discount name is required.",
-  "discountValidationPositiveValue": "Enter a value greater than zero.",
+  "discountValidationNonNegativeValue": "Enter a value of zero or greater.",
   "discountValidationPercentage": "A percentage discount cannot exceed 100.",
   "discountValidationCode": "A code is required for coupon discounts.",
   "discountValidationProducts": "Select one or more products.",
@@ -3625,4 +3679,46 @@
   "posReceipt": "Receipt", "posReceiptPreview": "Receipt preview", "posCloseReceiptPreview": "Close receipt preview", "posSendViaWhatsApp": "Send via WhatsApp", "posPrintReceipt": "Print receipt", "posWhatsAppPending": "WhatsApp sending will be added later.", "posPaymentCompleted": "Payment completed", "posReceiptOrder": "Order:", "posReceiptCashier": "Cashier:", "posReceiptCustomer": "Customer:", "posReceiptDate": "Date:", "posReceiptTime": "Time:", "posReceiptPaidVia": "Paid via:", "posReceiptAuthorization": "Authorization:", "posReceiptApproved": "Approved", "posReceiptChange": "Change", "posReceiptNote": "Note: {note}", "@posReceiptNote": {"placeholders": {"note": {"type": "String"}}}, "posReceiptThankYou": "Thank you for visiting!",
   "posOperationFailed": "The POS operation could not be completed. Please try again.", "posHoldSucceeded": "Order held successfully.", "posHoldRetryable": "The order could not be held. Your cart is still available to retry.", "posHoldUncertain": "The hold status could not be confirmed. Your cart is still available; check Orders before retrying.", "posMenuVersionStale": "The menu changed. Refresh the POS menu and review the order.", "posOpenShiftRequired": "Open a shift before continuing.", "posOrderUnavailableForBranch": "This order is not available in the selected branch.", "posHeldOrderRequired": "Only an unpaid held order can be resumed.",
   "posCustomizeItem": "Customize item", "posRequired": "Required", "posHot": "Hot", "posIced": "Iced", "posSmallSize": "Small (8oz)", "posMediumSize": "Medium (12oz)", "posLargeSize": "Large (16oz)", "posWholeMilk": "Whole milk", "posOatMilk": "Oat milk", "posAlmondMilk": "Almond milk", "posDefault": "Default", "posExtraEspresso": "Extra espresso shot", "posCaramelSyrup": "Caramel syrup", "posVanillaSyrup": "Vanilla syrup", "posWhippedCream": "Whipped cream", "posProductDescriptionFallback": "A classic espresso-based beverage.", "posBasePrice": "{variant} base - {price}", "@posBasePrice": {"placeholders": {"variant": {"type": "String"}, "price": {"type": "String"}}}, "posSearchProducts": "Search products...", "posNoItemsAvailable": "No items available.", "posNoCartItems": "No items added yet", "posCloseCustomizationDialog": "Close customization dialog"
+  ,"customerImportAction": "Import CSV",
+  "customerImportTitle": "Import customers from CSV",
+  "customerImportDescription": "Upload a CSV preview, review warnings, then confirm the server-authoritative import.",
+  "customerImportSelectFile": "Select CSV file",
+  "customerImportChooseAnother": "Choose another file",
+  "customerImportDetected": "Detected {encoding} encoding and {delimiter} delimiter",
+  "@customerImportDetected": {"placeholders": {"encoding": {"type": "String"}, "delimiter": {"type": "String"}}},
+  "customerImportTotal": "Total",
+  "customerImportReady": "Ready",
+  "customerImportWarnings": "Warnings",
+  "customerImportRejected": "Rejected",
+  "customerImportDuplicateCandidates": "Duplicate candidates",
+  "customerImportCreateMissingGroups": "Create missing groups",
+  "customerImportIssues": "Representative row issues",
+  "customerImportUnnamedRow": "Unnamed row",
+  "customerImportSummary": "Import summary",
+  "customerImportCountsSummary": "Created {created}, skipped {skipped}, failed {failed}; groups {groups}, memberships {memberships}.",
+  "@customerImportCountsSummary": {"placeholders": {"created": {"type": "int"}, "skipped": {"type": "int"}, "failed": {"type": "int"}, "groups": {"type": "int"}, "memberships": {"type": "int"}}},
+  "customerImportConfirmTitle": "Confirm customer import",
+  "customerImportConfirmMessage": "The server will create customers and memberships according to this preview. Existing customers are not updated.",
+  "customerImportConfirmAction": "Confirm import",
+  "customerImportStart": "Start import",
+  "customerImportCompletedWithErrors": "Completed with errors",
+  "customerImportDownloadErrors": "Download error report",
+  "customerImportValidationFailed": "The CSV file could not be validated. Check its encoding, columns, and size.",
+  "customerImportAlreadyCompleted": "This CSV import was already completed. Choose a new preview before committing.",
+  "customerImportGenericFailure": "The customer import could not be completed. Please try again safely.",
+  "posPrinting": "Printing...",
+  "posRetryPrint": "Retry Print",
+  "posPrinterSetup": "Printer Setup",
+  "posPrintOrderRequired": "No saved backend order is available to print.",
+  "posPrintItemsRequired": "This order has no items to print.",
+  "posPreBillUnavailable": "A pre-bill is only available before payment.",
+  "posPrintPrinterNotConfigured": "Receipt printer is not configured.",
+  "posPrintInvalidConfiguration": "Receipt printer settings are invalid.",
+  "posPrintConfigurationUnavailable": "Printer settings could not be loaded.",
+  "posPrintReceiptUnavailable": "The authoritative order receipt could not be loaded.",
+  "posPrintRenderingFailed": "The receipt could not be rendered.",
+  "posPrintUnreachable": "Could not connect to the receipt printer.",
+  "posPrintTimeout": "The printer timed out.",
+  "posPrintUnsupported": "Receipt printing is unavailable on this device.",
+  "posPrintFailed": "Printing failed. Check the printer and try again."
 }

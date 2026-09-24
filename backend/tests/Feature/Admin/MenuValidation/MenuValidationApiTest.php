@@ -25,6 +25,19 @@ class MenuValidationApiTest extends TestCase
         $this->assertSame(0, DB::table('published_menu_versions')->count());
     }
 
+    public function test_absent_effective_recipe_is_a_non_blocking_warning_and_never_empty_error(): void
+    {
+        [$tenant, $branch, $menu, $product] = $this->menuGraph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+
+        $response = $this->validateMenu($tenant, $menu, $branch)->assertOk()
+            ->assertJsonPath('data.isValid', true);
+        $warnings = collect($response->json('data.warnings'));
+        $this->assertSame(1, $warnings->where('code', 'VARIANT_RECIPE_MISSING')->count());
+        $this->assertSame('warning', $warnings->firstWhere('code', 'VARIANT_RECIPE_MISSING')['severity']);
+        $this->assertFalse(collect($response->json('data.errors'))->contains('code', 'VARIANT_RECIPE_EMPTY'));
+    }
+
     public function test_structural_modifier_and_availability_issues_are_reported_without_writes(): void
     {
         [$tenant, $branch, $menu, $product, $variant, $section] = $this->menuGraph();
@@ -158,6 +171,98 @@ class MenuValidationApiTest extends TestCase
         }
     }
 
+    public function test_individual_remove_validation_uses_product_base_and_variant_replacement_effective_recipe(): void
+    {
+        [$tenant, $branch, $menu, $product, $variant] = $this->menuGraph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+        $material = $this->material($tenant, 'EFFECTIVE-BASE');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $option = $this->removeOption($tenant, $product, 18, 'single-product-remove');
+
+        $valid = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertFalse($valid->contains('MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE'));
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '19', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $overProduct = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertTrue($overProduct->contains('MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE'));
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '10', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '11', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $overVariant = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertTrue($overVariant->contains('MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE'));
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '10', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $validVariant = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertFalse($validVariant->contains('MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE'));
+    }
+
+    public function test_combined_remove_validation_uses_product_base_and_variant_replacement_effective_recipe(): void
+    {
+        [$tenant, $branch, $menu, $product, $variant] = $this->menuGraph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+        $material = $this->material($tenant, 'COMBINED-EFFECTIVE-BASE');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/products/$product/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '18', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+
+        $first = $this->removeOption($tenant, $product, 9, 'combined-first');
+        $second = $this->removeOption($tenant, $product, 9, 'combined-second');
+        $valid = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertFalse($valid->contains('MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE'));
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$second/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '10', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $overProduct = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertTrue($overProduct->contains('MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE'));
+
+        $this->putJson("/api/v1/admin/catalog/product-variants/$variant/recipe", [
+            'components' => [['materialId' => $material, 'quantity' => '10', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$first/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '5', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$second/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '5', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $validVariant = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertFalse($validVariant->contains('MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE'));
+
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$second/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '6', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+        $overVariant = collect($this->validateMenu($tenant, $menu, $branch)->assertOk()->json('data.errors'))->pluck('code');
+        $this->assertTrue($overVariant->contains('MODIFIER_RECIPE_COMBINED_REMOVE_EXCEEDS_BASE'));
+    }
+
+    public function test_remove_from_empty_effective_recipe_remains_the_only_recipe_related_blocker(): void
+    {
+        [$tenant, $branch, $menu, $product] = $this->menuGraph();
+        DB::table('products')->where('id', $product)->update(['is_stock_tracked' => true]);
+        $material = $this->material($tenant, 'EMPTY-EFFECTIVE-BASE');
+        $option = $this->removeOption($tenant, $product, 1, 'empty-base-remove');
+        $headers = $this->headers($tenant);
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => '1', 'unitCode' => 'g']],
+        ], $headers)->assertOk();
+
+        $response = $this->validateMenu($tenant, $menu, $branch)->assertOk();
+        $this->assertTrue(collect($response->json('data.warnings'))->contains('code', 'VARIANT_RECIPE_MISSING'));
+        $this->assertTrue(collect($response->json('data.errors'))->contains('code', 'MODIFIER_RECIPE_REMOVE_EXCEEDS_BASE'));
+    }
+
     private function validateMenu(int $tenant, int $menu, int $branch)
     {
         return $this->postJson('/api/v1/admin/menus/'.$menu.'/validate', ['branchId' => $branch, 'channel' => 'pos', 'at' => '2026-08-01T10:00:00+03:00'], $this->headers($tenant));
@@ -191,5 +296,36 @@ class MenuValidationApiTest extends TestCase
     private function headers(int $tenant): array
     {
         return ['X-Tenant-Id' => (string) $tenant];
+    }
+
+    private function material(int $tenant, string $sku): int
+    {
+        return DB::table('inventory_items')->insertGetId([
+            'tenant_id' => $tenant, 'name' => $sku, 'sku' => $sku, 'unit' => 'gram',
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    private function removeOption(int $tenant, int $product, int $quantity, string $slug): int
+    {
+        $now = now();
+        $group = DB::table('modifier_groups')->insertGetId([
+            'tenant_id' => $tenant, 'name' => $slug, 'selection_type' => 'single',
+            'max_selections' => 1, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $option = DB::table('modifier_options')->insertGetId([
+            'tenant_id' => $tenant, 'modifier_group_id' => $group, 'name' => $slug.' option',
+            'is_active' => true, 'is_available' => true, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        DB::table('product_modifier_group')->insert([
+            'tenant_id' => $tenant, 'product_id' => $product, 'modifier_group_id' => $group,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
+        $material = DB::table('inventory_items')->where('tenant_id', $tenant)->orderByDesc('id')->value('id');
+        $this->putJson("/api/v1/admin/catalog/modifier-options/$option/recipe-adjustments", [
+            'components' => [['materialId' => $material, 'operation' => 'remove', 'quantity' => (string) $quantity, 'unitCode' => 'g']],
+        ], $this->headers($tenant))->assertOk();
+
+        return $option;
     }
 }

@@ -26,6 +26,28 @@ class OperationalAuditService
         ]);
     }
 
+    public function recordContext(int $tenantId, string $action, string $entityType, int $entityId, array $after = [], ?int $actorId = null, ?int $branchId = null, bool $deduplicate = true): void
+    {
+        if ($deduplicate && DB::table('activity_logs')->where('tenant_id', $tenantId)->where('action', $action)->where('entity_type', $entityType)->where('entity_id', $entityId)->exists()) {
+            return;
+        }
+
+        DB::table('activity_logs')->insert([
+            'tenant_id' => $tenantId,
+            'branch_id' => $branchId,
+            'user_id' => $actorId,
+            'action' => $action,
+            'entity_type' => $entityType,
+            'entity_id' => $entityId,
+            'description' => $this->description($action),
+            'ip_address' => null,
+            'before_state' => json_encode([]),
+            'after_state' => json_encode($this->redact($after)),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function description(string $action): string
     {
         return str_replace('.', ' ', $action);

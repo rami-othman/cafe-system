@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Admin\Catalog\ProductCatalogController;
 use App\Http\Controllers\Api\Admin\Catalog\ProductVariantPriceOverrideController;
 use App\Http\Controllers\Api\Admin\Catalog\RecipeConfigurationController;
 use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerGroupController;
+use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerImportController;
 use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerManagementController;
 use App\Http\Controllers\Api\Admin\CustomerManagement\CustomerRolePermissionController;
 use App\Http\Controllers\Api\Admin\Menu\MenuAssignmentController as AdminMenuAssignmentController;
@@ -179,6 +180,16 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('{group}/members/{customer}', 'removeMember')->whereNumber(['group', 'customer']);
         });
 
+    Route::middleware(['api.token', 'password.changed', 'customer.permission:customer.manage'])
+        ->prefix('admin/customer-management/customer-imports')
+        ->controller(CustomerImportController::class)
+        ->group(function (): void {
+            Route::post('preview', 'preview');
+            Route::post('{import}/commit', 'commit')->whereNumber('import');
+            Route::get('{import}', 'show')->whereNumber('import');
+            Route::get('{import}/errors', 'errors')->whereNumber('import');
+        });
+
     // Tenant operational boundary. Tenant identity comes solely from the
     // opaque bearer token; X-Tenant-Id is legacy-only and is never authority
     // inside this group. The public image endpoint above intentionally stays
@@ -233,8 +244,12 @@ Route::prefix('v1')->group(function (): void {
             });
             Route::controller(RecipeConfigurationController::class)->group(function (): void {
                 Route::get('materials', 'materials');
+                Route::get('products/{product}/recipe', 'productRecipe');
+                Route::put('products/{product}/recipe', 'putProductRecipe');
+                Route::delete('products/{product}/recipe', 'deleteProductRecipe');
                 Route::get('product-variants/{variant}/recipe', 'recipe');
                 Route::put('product-variants/{variant}/recipe', 'putRecipe');
+                Route::delete('product-variants/{variant}/recipe', 'deleteRecipe');
                 Route::post('product-variants/{variant}/recipe/resolve', 'resolve');
                 Route::get('product-variants/{variant}/recipe-material-effects', 'profileSummary');
                 Route::get('modifier-groups/{modifierGroup}/recipe-material-effects', 'modifierGroupProfileSummary');
@@ -397,6 +412,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
         Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
         Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
+        Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);
         Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
         Route::post('orders/{order}/refunds', [RefundController::class, 'store']);
     });

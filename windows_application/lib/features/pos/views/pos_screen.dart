@@ -9,6 +9,8 @@ import '../../../app/localization/localization_extensions.dart';
 import '../../../shared/layouts/desktop_page_layout.dart';
 import '../controllers/pos_cubit.dart';
 import '../controllers/pos_state.dart';
+import '../controllers/pos_print_cubit.dart';
+import '../controllers/pos_print_state.dart';
 import '../controllers/pos_menu_sync_cubit.dart';
 import '../controllers/pos_menu_sync_state.dart';
 import '../models/backend_product_detail.dart';
@@ -22,6 +24,7 @@ import '../widgets/product_customization_dialog.dart';
 import '../widgets/pos_product_area.dart';
 import '../widgets/receipt_preview_dialog.dart';
 import '../widgets/pos_localization.dart';
+import '../widgets/pos_print_failure_dialog.dart';
 
 class PosScreen extends StatefulWidget {
   const PosScreen({super.key});
@@ -218,6 +221,21 @@ class _PosScreenState extends State<PosScreen> {
                 unawaited(_showReceiptDialog(context, receipt));
               });
             }
+          },
+        ),
+        BlocListener<PosCubit, PosState>(
+          listenWhen: (PosState previous, PosState current) =>
+              previous.lastPaidOrderId != current.lastPaidOrderId &&
+              current.lastPaidOrderId != null,
+          listener: (BuildContext context, PosState state) {
+            unawaited(
+              _autoPrintPaidOrder(
+                context,
+                orderId: state.lastPaidOrderId!,
+                branchId: state.branchId,
+                locale: Localizations.localeOf(context),
+              ),
+            );
           },
         ),
       ],
@@ -482,12 +500,30 @@ class _PosScreenState extends State<PosScreen> {
       return;
     }
     _isReceiptDialogOpen = true;
+    final PosCubit posCubit = context.read<PosCubit>();
+    final PosPrintCubit printCubit = context.read<PosPrintCubit>();
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierColor: AppColors.black.withValues(alpha: 0.42),
       builder: (BuildContext context) {
-        return ReceiptPreviewDialog(receipt: receipt);
+        return BlocProvider<PosPrintCubit>.value(
+          value: printCubit,
+          child: BlocBuilder<PosPrintCubit, PosPrintState>(
+            builder: (BuildContext context, PosPrintState printState) =>
+                ReceiptPreviewDialog(
+                  receipt: receipt,
+                  isPrinting: printState.isPrinting,
+                  onPrintReceipt: () => unawaited(
+                    _printPaidReceipt(
+                      context,
+                      posCubit: posCubit,
+                      printCubit: printCubit,
+                    ),
+                  ),
+                ),
+          ),
+        );
       },
     );
 
@@ -502,6 +538,56 @@ class _PosScreenState extends State<PosScreen> {
     if (nextReceipt != null && nextReceipt != receipt) {
       unawaited(_showReceiptDialog(context, nextReceipt));
     }
+  }
+
+  Future<void> _autoPrintPaidOrder(
+    BuildContext context, {
+    required int orderId,
+    required int branchId,
+    required Locale locale,
+  }) async {
+    final PosPrintCubit printCubit = context.read<PosPrintCubit>();
+    final PosPrintOutcome outcome = await printCubit.autoPrintReceipt(
+      orderId: orderId,
+      branchId: branchId,
+      locale: locale,
+    );
+    if (!context.mounted || outcome.failure == null) return;
+    await showPosPrintFailure(
+      context: context,
+      outcome: outcome,
+      retry: () => printCubit.printReceipt(
+        orderId: orderId,
+        branchId: branchId,
+        locale: locale,
+      ),
+    );
+  }
+
+  Future<void> _printPaidReceipt(
+    BuildContext context, {
+    required PosCubit posCubit,
+    required PosPrintCubit printCubit,
+  }) async {
+    final PosState state = posCubit.state;
+    final int? orderId = state.lastPaidOrderId;
+    final int branchId = state.branchId;
+    final Locale locale = Localizations.localeOf(context);
+    final PosPrintOutcome outcome = await printCubit.printReceipt(
+      orderId: orderId,
+      branchId: branchId,
+      locale: locale,
+    );
+    if (!context.mounted) return;
+    await showPosPrintFailure(
+      context: context,
+      outcome: outcome,
+      retry: () => printCubit.printReceipt(
+        orderId: orderId,
+        branchId: branchId,
+        locale: locale,
+      ),
+    );
   }
 
   String? _localizedPosMessage(BuildContext context, String message) {
