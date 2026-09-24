@@ -146,7 +146,19 @@ final class CustomerReceivableQueryService
      */
     public function customerOverview(int $tenantId, ?array $branchIds = null): array
     {
-        $totals = DB::table('sales_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
+        // Joined to `customer_receivables` rather than filtered by
+        // `customers.is_walk_in`: the receivable record — inserted by
+        // SalesInvoicePostingService::post() only for a registered
+        // (non-cash) sale — is the actual ground truth for "this invoice
+        // carries AR", not a proxy read off the customer master row. This
+        // also means the query is correct even if a future data anomaly
+        // ever left a registered customer's invoice without one (it would
+        // then be correctly excluded from AR too, not silently included).
+        $totals = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->join('customers as c', 'c.id', '=', 'i.customer_id')
             ->where('i.tenant_id', $tenantId)->whereIn('i.status', self::OPEN_STATUSES)
             ->when($branchIds !== null, fn ($q) => $q->whereIn('i.branch_id', $branchIds))
             ->selectRaw('i.customer_id, c.name as customer_name, c.customer_number, COUNT(*) as invoice_count, SUM(i.total) as total_invoiced')
@@ -154,7 +166,11 @@ final class CustomerReceivableQueryService
         if ($totals->isEmpty()) {
             return [];
         }
-        $invoiceIds = DB::table('sales_invoices as i')->where('i.tenant_id', $tenantId)->whereIn('i.status', self::OPEN_STATUSES)
+        $invoiceIds = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->where('i.tenant_id', $tenantId)->whereIn('i.status', self::OPEN_STATUSES)
             ->whereIn('i.customer_id', $totals->pluck('customer_id'))
             ->when($branchIds !== null, fn ($q) => $q->whereIn('i.branch_id', $branchIds))
             ->pluck('i.id');
@@ -187,10 +203,16 @@ final class CustomerReceivableQueryService
     /** Every open (remaining > 0) posted invoice for one customer, oldest due date first — the default auto-allocation order (§10). */
     public function openInvoices(int $tenantId, int $customerId, ?array $branchIds = null): array
     {
-        $invoices = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('customer_id', $customerId)
-            ->whereIn('status', self::OPEN_STATUSES)->when($branchIds !== null, fn ($q) => $q->whereIn('branch_id', $branchIds))
-            ->orderByRaw('due_date IS NULL')->orderBy('due_date')->orderBy('invoice_date')->orderBy('id')
-            ->get(['id', 'invoice_number', 'invoice_date', 'due_date', 'total']);
+        // Only an invoice with an actual customer_receivables row ever
+        // carries AR — a direct-cash sale never gets one (see class docblock).
+        $invoices = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->where('i.tenant_id', $tenantId)->where('i.customer_id', $customerId)
+            ->whereIn('i.status', self::OPEN_STATUSES)->when($branchIds !== null, fn ($q) => $q->whereIn('i.branch_id', $branchIds))
+            ->orderByRaw('i.due_date IS NULL')->orderBy('i.due_date')->orderBy('i.invoice_date')->orderBy('i.id')
+            ->get(['i.id', 'i.invoice_number', 'i.invoice_date', 'i.due_date', 'i.total']);
         $today = now()->toDateString();
 
         $result = [];
@@ -221,11 +243,14 @@ final class CustomerReceivableQueryService
     /** Sum of outstanding balances on posted invoices already past their due date. */
     public function overdueOutstanding(int $tenantId, ?int $customerId = null): string
     {
-        $invoices = DB::table('sales_invoices')
-            ->where('tenant_id', $tenantId)->whereIn('status', self::OPEN_STATUSES)
-            ->whereNotNull('due_date')->where('due_date', '<', now()->toDateString())
-            ->when($customerId, fn ($q) => $q->where('customer_id', $customerId))
-            ->get(['id', 'total']);
+        $invoices = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->where('i.tenant_id', $tenantId)->whereIn('i.status', self::OPEN_STATUSES)
+            ->whereNotNull('i.due_date')->where('i.due_date', '<', now()->toDateString())
+            ->when($customerId, fn ($q) => $q->where('i.customer_id', $customerId))
+            ->get(['i.id', 'i.total']);
 
         $totalCents = 0;
         foreach ($invoices as $invoice) {
@@ -258,7 +283,17 @@ final class CustomerReceivableQueryService
             return [];
         }
 
-        $query = DB::table('sales_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
+        // Joined to `customer_receivables` (never a `customers.is_walk_in`
+        // filter — see customerOverview()'s docblock): a direct-cash sale
+        // never gets a receivable row, so it is structurally absent from
+        // this join, keeping aging, the customer statement and the AR
+        // snapshot/summary tiles from treating a fully cash-settled sale as
+        // permanently outstanding — without hiding it merely by customer.
+        $query = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->join('customers as c', 'c.id', '=', 'i.customer_id')
             ->where('i.tenant_id', $tenantId)->where('i.status', 'posted')->whereDate('i.invoice_date', '<=', $asOfDate)
             ->when($customerId, fn ($q) => $q->where('i.customer_id', $customerId));
         if ($branchId !== null) {
@@ -311,9 +346,13 @@ final class CustomerReceivableQueryService
     public function summary(int $tenantId, ?array $branchIds = null): array
     {
         $today = now()->toDateString();
-        $invoices = DB::table('sales_invoices')->where('tenant_id', $tenantId)->whereIn('status', self::OPEN_STATUSES)
-            ->when($branchIds !== null, fn ($q) => $q->whereIn('branch_id', $branchIds))
-            ->get(['id', 'customer_id', 'due_date', 'total']);
+        $invoices = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->where('i.tenant_id', $tenantId)->whereIn('i.status', self::OPEN_STATUSES)
+            ->when($branchIds !== null, fn ($q) => $q->whereIn('i.branch_id', $branchIds))
+            ->get(['i.id', 'i.customer_id', 'i.due_date', 'i.total']);
         if ($invoices->isEmpty()) {
             return ['totalOutstanding' => '0.00', 'currentOutstanding' => '0.00', 'overdueOutstanding' => '0.00', 'totalCustomerCredit' => '0.00', 'invoiceCounts' => ['paid' => 0, 'partial' => 0, 'unpaid' => 0]];
         }
@@ -375,8 +414,12 @@ final class CustomerReceivableQueryService
 
     public function openInvoiceCount(int $tenantId, ?int $customerId = null): int
     {
-        $invoices = DB::table('sales_invoices')->where('tenant_id', $tenantId)->whereIn('status', self::OPEN_STATUSES)
-            ->when($customerId, fn ($q) => $q->where('customer_id', $customerId))->get(['id', 'total']);
+        $invoices = DB::table('sales_invoices as i')
+            ->join('customer_receivables as r', function ($join) use ($tenantId): void {
+                $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
+            })
+            ->where('i.tenant_id', $tenantId)->whereIn('i.status', self::OPEN_STATUSES)
+            ->when($customerId, fn ($q) => $q->where('i.customer_id', $customerId))->get(['i.id', 'i.total']);
 
         $count = 0;
         foreach ($invoices as $invoice) {

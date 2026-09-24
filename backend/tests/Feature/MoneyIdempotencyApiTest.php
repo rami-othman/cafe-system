@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use App\Services\FinancialSetupService;
+use App\Services\BranchPosCashDrawer;
 use Tests\TestCase;
 
 /**
@@ -210,11 +211,17 @@ class MoneyIdempotencyApiTest extends TestCase
     private function openShift(int $tenantId, int $branchId): int
     {
         $userId = (int) DB::table('users')->where('tenant_id', $tenantId)->where('role', 'owner')->value('id');
+        $drawer = app(BranchPosCashDrawer::class)->resolve($tenantId, $branchId);
+        $existing = DB::table('shifts')->where('tenant_id', $tenantId)
+            ->where('financial_location_id', $drawer->id)->where('status', 'open')
+            ->whereNull('deleted_at')->value('id');
+        if ($existing) return (int) $existing;
 
         return (int) DB::table('shifts')->insertGetId([
             'tenant_id' => $tenantId,
             'branch_id' => $branchId,
             'user_id' => $userId,
+            'financial_location_id' => $drawer->id,
             'opening_cash' => 0,
             'expected_cash' => 0,
             'status' => 'open',

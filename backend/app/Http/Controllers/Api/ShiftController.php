@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\FinancialAccountBalanceQuery;
 use App\Services\ShiftCashSummaryService;
+use App\Services\ShiftCloseTransferService;
 use App\Services\ShiftHistoryQueryService;
 use App\Services\ShiftSnapshotService;
 use App\Services\StockCountService;
@@ -18,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /** The authenticated operator's shift lifecycle and its canonical read models. */
 class ShiftController extends Controller
@@ -27,10 +30,12 @@ class ShiftController extends Controller
     public function __construct(
         private readonly BarCheckTemplateService $barCheckTemplates,
         private readonly ShiftCashSummaryService $cashSummary,
+        private readonly ShiftCloseTransferService $closeTransfers,
         private readonly ShiftSnapshotService $snapshots,
         private readonly ShiftHistoryQueryService $history,
         private readonly StockCountService $counts,
         private readonly BranchAccessService $branches,
+        private readonly FinancialAccountBalanceQuery $balances,
     ) {}
 
     public function current(Request $request): JsonResponse
@@ -79,6 +84,16 @@ class ShiftController extends Controller
             $now = now();
             $drawer = app(\App\Services\BranchPosCashDrawer::class)->resolve($tenantId, (int) $data['branchId'], true);
             $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $data['branchId'])->lockForUpdate()->first();
+            if (DB::table('shifts')->where('tenant_id', $tenantId)
+                ->where('financial_location_id', $drawer->id)->where('status', 'open')
+                ->whereNull('deleted_at')->exists()) {
+                throw ValidationException::withMessages(['branchId' => 'This cash drawer already has an open shift.']);
+            }
+            $ledgerCash = $this->balances->summary($tenantId, (int) $drawer->financial_account_id,
+                locationId: (int) $drawer->id)['balance'];
+            if (Money::cents($data['openingCash']) !== Money::cents($ledgerCash)) {
+                throw ValidationException::withMessages(['openingCash' => 'Counted opening cash must match the posted drawer ledger balance. Post any safe-to-drawer transfer before opening the shift.']);
+            }
             $id = DB::table('shifts')->insertGetId(['tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'user_id' => $actor->id, 'financial_location_id' => $drawer->id, 'close_destination_financial_location_id' => $branch->shift_close_destination_financial_location_id, 'closing_float_amount' => $branch->shift_closing_float_amount, 'shift_number' => $this->nextShiftNumber($tenantId, $now->toDateString()), 'opening_cash' => $data['openingCash'], 'status' => 'open', 'opened_at' => $now, 'notes' => $data['note'] ?? null, 'created_at' => $now, 'updated_at' => $now]);
 
             return DB::table('shifts')->where('id', $id)->first();
@@ -101,19 +116,21 @@ class ShiftController extends Controller
             abort_if(! $row, 404, 'Shift not found.');
             $this->branches->authorizeRequestBranch($request, (int) $row->branch_id);
             abort_unless((int) $row->user_id === (int) $actor->id, 403, 'Only the shift owner can close this shift.');
+            if ($row->status === 'closed' && $row->close_type === 'manual'
+                && Money::cents($row->closing_cash) === Money::cents($data['closingCash'])) {
+                return $row;
+            }
             abort_unless($row->status === 'open', 422, 'Only an open shift can be closed.');
             $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
             $this->assertNoPendingRequiredBarCheck($tenantId, $row);
             $summary = $this->cashSummary->summarize($tenantId, $row);
             $difference = Money::cents($data['closingCash']) - Money::cents($summary['expectedCash']);
-            if (abs($difference) > 50 && empty($data['cashDifferenceReason'])) {
-                abort(422, 'A cash difference reason is required.');
-            }
-            if (($data['cashDifferenceReason'] ?? null) === 'other' && trim((string) ($data['cashDifferenceReasonDetail'] ?? '')) === '') {
-                abort(422, 'Additional details are required for other.');
+            if ($difference !== 0) {
+                throw ValidationException::withMessages(['closingCash' => 'Counted cash differs from expected cash. Recount and correct missing cash movements; a manager-approved variance policy is required to close with a difference.']);
             }
             $number = $row->shift_number ?: $this->nextShiftNumber($tenantId, now()->toDateString());
-            DB::table('shifts')->where('id', $row->id)->update(['shift_number' => $number, 'report_number' => 'RPT-'.str_replace('SH-', '', $number), 'closing_cash' => $data['closingCash'], 'expected_cash' => $summary['expectedCash'], 'cash_difference' => Money::decimal($difference), 'cash_difference_reason' => $data['cashDifferenceReason'] ?? null, 'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null, 'close_type' => 'manual', 'status' => 'closed', 'closed_at' => now(), 'notes' => $data['note'] ?? $row->notes, 'updated_at' => now()]);
+            $transferId = $this->closeTransfers->create($request, $tenantId, $row, Money::cents($data['closingCash']), 'user');
+            DB::table('shifts')->where('id', $row->id)->update(['shift_number' => $number, 'report_number' => 'RPT-'.str_replace('SH-', '', $number), 'closing_cash' => $data['closingCash'], 'expected_cash' => $summary['expectedCash'], 'cash_difference' => Money::decimal($difference), 'cash_difference_reason' => $data['cashDifferenceReason'] ?? null, 'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null, 'close_type' => 'manual', 'close_transfer_id' => $transferId, 'status' => 'closed', 'closed_at' => now(), 'notes' => $data['note'] ?? $row->notes, 'updated_at' => now()]);
 
             return DB::table('shifts')->where('id', $row->id)->first();
         });
@@ -144,6 +161,10 @@ class ShiftController extends Controller
         $templates = DB::table('bar_check_templates')->where('tenant_id', $tenant)->where('branch_id', $shift->branch_id)->where('is_active', true)->where('required_for_shift_close', true)->get();
         foreach ($templates as $template) {
             if (! $this->barCheckTemplates->isUsable($tenant, $template)) {
+                continue;
+            }
+            if (DB::table('stock_counts')->where('tenant_id', $tenant)->where('shift_id', $shift->id)
+                ->where('bar_check_template_id', $template->id)->where('status', 'posted')->exists()) {
                 continue;
             }
             $countId = $this->counts->startBarCheck($request, $tenant, (int) $shift->id, (int) $template->warehouse_id, $actorId);

@@ -265,6 +265,14 @@ class FinanceDashboardSalesAndCogsTest extends TestCase
         $productId = (int) DB::table('products')->insertGetId(['tenant_id' => $tenant, 'name' => 'Consulting', 'name_ar' => 'استشارة', 'sku' => 'FD-SVC-1', 'price' => '50.00', 'is_active' => true, 'is_stock_tracked' => false, 'inventory_controlled' => false, 'created_at' => now(), 'updated_at' => now()]);
         $invoiceId = (int) DB::table('sales_invoices')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'customer_id' => $customerId, 'invoice_number' => 'FD-SI-1', 'invoice_date' => $date, 'currency_code' => 'SYP', 'status' => 'posted', 'tax_rate' => '0.000000', 'subtotal' => '50.00', 'discount_total' => '0.00', 'tax_total' => '0.00', 'total' => '50.00', 'posted_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
         DB::table('sales_invoice_lines')->insert(['tenant_id' => $tenant, 'sales_invoice_id' => $invoiceId, 'product_id' => $productId, 'line_number' => 1, 'product_name' => 'Consulting', 'quantity' => '1.000', 'unit_price' => '50.00', 'discount_total' => '0.00', 'tax_rate' => '0.000000', 'tax_total' => '0.00', 'subtotal' => '50.00', 'total' => '50.00', 'cogs_total' => '10.00', 'created_at' => now(), 'updated_at' => now()]);
+        // This fixture inserts the invoice directly rather than going through
+        // SalesInvoicePostingService::post(), so it must also insert the
+        // `customer_receivables` row that service creates for every
+        // registered (non-walk-in) customer's posted invoice — AR read
+        // models key off that row's existence, not a raw invoice status scan
+        // (see CustomerReceivableQueryService).
+        $journalId = (int) DB::table('journal_entries')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'entry_number' => 'FD-JE-1', 'entry_date' => $date, 'source_type' => 'sales_invoice', 'source_id' => $invoiceId, 'status' => 'posted', 'posted_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('customer_receivables')->insert(['tenant_id' => $tenant, 'customer_id' => $customerId, 'sales_invoice_id' => $invoiceId, 'journal_entry_id' => $journalId, 'original_amount' => '50.00', 'posted_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
 
         $data = $this->getJson("/api/v1/finance/dashboard?date_from=$date&date_to=$date&branch_id=$branch", $headers)->assertOk()->json('data');
         $this->assertSame('150.00', $data['kpis']['netSales']['current'], 'Union: 100 POS + 50 manual invoice.');

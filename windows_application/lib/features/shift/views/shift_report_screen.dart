@@ -123,7 +123,7 @@ class _ReportBody extends StatelessWidget {
                 Expanded(
                   child: ShiftFactTile(
                     label: ShiftStrings.reportDate,
-                    value: ShiftFormat.dateTime(DateTime.now()),
+                    value: ShiftFormat.dateTime(result.closedAt),
                   ),
                 ),
               ],

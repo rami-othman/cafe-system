@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Tests\Feature\Concerns\DailyClosingFixtures;
@@ -34,12 +35,16 @@ class FinanceDashboardMissingSalesInvoiceTablesTest extends TestCase
         Schema::dropIfExists('customer_receivables');
         Schema::dropIfExists('sales_invoice_postings');
         Schema::dropIfExists('customer_credit_ledger');
+        Schema::table('customer_refunds', fn (Blueprint $table) => $table->dropConstrainedForeignId('sales_credit_note_id'));
         Schema::dropIfExists('sales_credit_note_postings');
         Schema::dropIfExists('sales_credit_note_costs');
         Schema::dropIfExists('sales_credit_note_lines');
         Schema::dropIfExists('sales_credit_notes');
         Schema::dropIfExists('sales_invoice_costs');
+        Schema::dropIfExists('sales_invoice_line_material_overrides');
         Schema::dropIfExists('sales_invoice_lines');
+        Schema::dropIfExists('sales_invoice_charges');
+        Schema::table('customer_payments', fn (Blueprint $table) => $table->dropConstrainedForeignId('direct_sales_invoice_id'));
         Schema::dropIfExists('sales_invoices');
     }
 

@@ -27,7 +27,15 @@ class InventoryItemDetailsScreen extends StatefulWidget {
 
 class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 5, vsync: this);
+  late final TabController _tabs = TabController(length: 5, vsync: this)
+    ..addListener(_onTabChanged);
+  // Each of these tabs' data is fetched once, the first time it is opened,
+  // rather than eagerly alongside the item itself - avoids three extra
+  // requests on every item-details visit for tabs the user may never open.
+  bool _movementHistoryRequested = false;
+  bool _recipeUsageRequested = false;
+  bool _purchaseHistoryRequested = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,8 +43,31 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     Future<void>.microtask(() => cubit.loadItemDetails(widget.itemId));
   }
 
+  void _onTabChanged() {
+    if (_tabs.indexIsChanging) return;
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    switch (_tabs.index) {
+      case 2:
+        if (!_movementHistoryRequested) {
+          _movementHistoryRequested = true;
+          cubit.loadItemMovementHistory(widget.itemId);
+        }
+      case 3:
+        if (!_recipeUsageRequested) {
+          _recipeUsageRequested = true;
+          cubit.loadItemRecipeUsage(widget.itemId);
+        }
+      case 4:
+        if (!_purchaseHistoryRequested) {
+          _purchaseHistoryRequested = true;
+          cubit.loadItemPurchaseHistory(widget.itemId);
+        }
+    }
+  }
+
   @override
   void dispose() {
+    _tabs.removeListener(_onTabChanged);
     _tabs.dispose();
     super.dispose();
   }
@@ -119,11 +150,9 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
                 children: <Widget>[
                   _overview(item),
                   _stock(item),
-                  _movements(state.itemMovements),
-                  const ManagementMessage(
-                    message: 'لا تتوفر بيانات استخدام الوصفات بعد.',
-                  ),
-                  const ManagementMessage(message: 'لا يتوفر سجل شراء بعد.'),
+                  _movementHistory(state),
+                  _recipeUsage(state),
+                  _purchaseHistory(state),
                 ],
               ),
             ),
@@ -205,24 +234,154 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
                 .toList(growable: false),
           ),
         );
-  Widget _movements(List<InventoryMovement> movements) => movements.isEmpty
-      ? const ManagementMessage(message: 'لا توجد حركات مخزون لهذه المادة.')
-      : ListView.separated(
-          itemCount: movements.length,
-          separatorBuilder: (_, _) => const Divider(),
-          itemBuilder: (BuildContext context, int index) {
-            final InventoryMovement movement = movements[index];
-            return ListTile(
-              title: Text(movement.type),
-              subtitle: Text(
-                '${movement.warehouseName} · ${_movementDateTime(movement.occurredAt)}',
+  Widget _movementHistory(InventoryState state) {
+    if (state.itemMovementHistoryLoading && state.itemMovementHistory.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.itemMovementHistory.isEmpty) {
+      return const ManagementMessage(message: 'لا توجد حركات مخزون لهذه المادة.');
+    }
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: ListView.separated(
+            itemCount: state.itemMovementHistory.length,
+            separatorBuilder: (_, _) => const Divider(),
+            itemBuilder: (BuildContext context, int index) {
+              final InventoryMovement movement = state.itemMovementHistory[index];
+              final String? reference = movement.reference;
+              return ListTile(
+                title: Text(inventoryMovementTypeLabel(movement.type)),
+                subtitle: Text(
+                  '${movement.warehouseName} · ${_movementDateTime(movement.occurredAt)}'
+                  '${reference == null ? '' : ' · $reference'}',
+                ),
+                trailing: Text(
+                  '${inventoryNumber(movement.quantityIn == '0.000' ? movement.quantityOut : movement.quantityIn, digits: 3)} ${inventoryUnitLabel(movement.unit)}',
+                ),
+              );
+            },
+          ),
+        ),
+        if (state.itemMovementHistoryLastPage > 1)
+          _ItemDetailsPagination(
+            page: state.itemMovementHistoryPage,
+            lastPage: state.itemMovementHistoryLastPage,
+            total: state.itemMovementHistoryTotal,
+            totalLabel: 'حركة',
+            onPageChanged: (int page) => context
+                .read<InventoryCubit>()
+                .loadItemMovementHistory(widget.itemId, page: page),
+          ),
+      ],
+    );
+  }
+
+  Widget _recipeUsage(InventoryState state) {
+    if (state.itemRecipeUsageLoading && !state.itemRecipeUsageLoaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.itemRecipeUsage.isEmpty) {
+      return const ManagementMessage(
+        message: 'لا توجد وصفات تستخدم هذه المادة.',
+      );
+    }
+    return ManagementTableShell(
+      minWidth: 760,
+      verticalScroll: true,
+      child: DataTable(
+        columns: const <DataColumn>[
+          DataColumn(label: Text('المنتج')),
+          DataColumn(label: Text('الخيار')),
+          DataColumn(label: Text('الكمية')),
+          DataColumn(label: Text('الحالة')),
+        ],
+        rows: state.itemRecipeUsage
+            .map(
+              (InventoryRecipeUsage usage) => DataRow(
+                cells: <DataCell>[
+                  DataCell(Text(usage.productName)),
+                  DataCell(
+                    Text(
+                      usage.condition == null
+                          ? usage.variantName
+                          : '${usage.variantName} (${usage.condition})',
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${inventoryNumber(usage.quantity, digits: 3)} ${inventoryUnitLabel(usage.unit)}',
+                    ),
+                  ),
+                  DataCell(Text(usage.isActive ? 'نشط' : 'غير نشط')),
+                ],
               ),
-              trailing: Text(
-                '${inventoryNumber(movement.quantityIn == '0.000' ? movement.quantityOut : movement.quantityIn, digits: 3)} ${inventoryUnitLabel(movement.unit)}',
-              ),
-            );
-          },
-        );
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _purchaseHistory(InventoryState state) {
+    if (state.itemPurchaseHistoryLoading && state.itemPurchaseHistory.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.itemPurchaseHistory.isEmpty) {
+      return const ManagementMessage(message: 'لا يوجد سجل شراء لهذه المادة.');
+    }
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: ManagementTableShell(
+            minWidth: 900,
+            verticalScroll: true,
+            child: DataTable(
+              columns: const <DataColumn>[
+                DataColumn(label: Text('المورد')),
+                DataColumn(label: Text('رقم الفاتورة')),
+                DataColumn(label: Text('رقم الاستلام')),
+                DataColumn(label: Text('تاريخ الاستلام')),
+                DataColumn(label: Text('المخزن')),
+                DataColumn(label: Text('الكمية')),
+                DataColumn(label: Text('تكلفة الوحدة')),
+                DataColumn(label: Text('الإجمالي')),
+              ],
+              rows: state.itemPurchaseHistory
+                  .map(
+                    (InventoryPurchaseHistoryEntry entry) => DataRow(
+                      cells: <DataCell>[
+                        DataCell(Text(entry.supplierName)),
+                        DataCell(Text(entry.invoiceNumber)),
+                        DataCell(Text(entry.receiptNumber)),
+                        DataCell(Text(_dateOnly(entry.receiptDate))),
+                        DataCell(Text(entry.warehouseName)),
+                        DataCell(
+                          Text(
+                            '${inventoryNumber(entry.quantity, digits: 3)} ${inventoryUnitLabel(entry.unit)}',
+                          ),
+                        ),
+                        DataCell(Text(inventoryMoney(entry.unitCost))),
+                        DataCell(Text(inventoryMoney(entry.lineTotal))),
+                      ],
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+        ),
+        if (state.itemPurchaseHistoryLastPage > 1)
+          _ItemDetailsPagination(
+            page: state.itemPurchaseHistoryPage,
+            lastPage: state.itemPurchaseHistoryLastPage,
+            total: state.itemPurchaseHistoryTotal,
+            totalLabel: 'عملية شراء',
+            onPageChanged: (int page) => context
+                .read<InventoryCubit>()
+                .loadItemPurchaseHistory(widget.itemId, page: page),
+          ),
+      ],
+    );
+  }
   Widget _metric(String label, String value) => SizedBox(
     width: 210,
     child: AppCard(
@@ -251,4 +410,46 @@ String _movementDateTime(String value) {
   return timestamp == null
       ? value
       : DateFormat('MMM d, y · h:mm a').format(timestamp);
+}
+
+String _dateOnly(String value) {
+  final DateTime? date = parseBackendDateTime(value);
+  return date == null ? value : DateFormat('MMM d, y').format(date);
+}
+
+class _ItemDetailsPagination extends StatelessWidget {
+  const _ItemDetailsPagination({
+    required this.page,
+    required this.lastPage,
+    required this.total,
+    required this.totalLabel,
+    required this.onPageChanged,
+  });
+  final int page;
+  final int lastPage;
+  final int total;
+  final String totalLabel;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.sm),
+    child: Row(
+      children: <Widget>[
+        Text('إجمالي $total $totalLabel', style: AppTextStyles.labelSmall),
+        const Spacer(),
+        IconButton(
+          tooltip: 'الصفحة السابقة',
+          onPressed: page > 1 ? () => onPageChanged(page - 1) : null,
+          icon: const Icon(Icons.chevron_right),
+        ),
+        Text('الصفحة $page من $lastPage', style: AppTextStyles.labelSmall),
+        IconButton(
+          tooltip: 'الصفحة التالية',
+          onPressed: page < lastPage ? () => onPageChanged(page + 1) : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+      ],
+    ),
+  );
 }

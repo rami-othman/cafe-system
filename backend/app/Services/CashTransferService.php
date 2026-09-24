@@ -14,7 +14,7 @@ class CashTransferService
 {
     public function __construct(private readonly AccountingPostingService $posting, private readonly JournalEntryService $entries, private readonly OperationalAuditService $audit) {}
 
-    public function create(Request $request, int $tenantId, array $data, ?int $actorId): object
+    public function create(Request $request, int $tenantId, array $data, ?int $actorId, bool $shiftClose = false): object
     {
         $key = $data['idempotencyKey'] ?? null;
         $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
@@ -23,13 +23,18 @@ class CashTransferService
         if ($amount <= 0) throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
 
         try {
-            return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint, $amount): object {
+            return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint, $amount, $shiftClose): object {
                 if ($key && ($existing = $this->byKey($tenantId, $key, true)) !== null) { $this->assertFingerprint($existing, $fingerprint); return $existing; }
                 $location = fn (int $locationId) => DB::table('financial_locations as locations')->join('financial_accounts as accounts', 'accounts.id', '=', 'locations.financial_account_id')->where('locations.tenant_id', $tenantId)->where('locations.id', $locationId)->where('locations.is_active', true)->where('accounts.is_active', true)->whereNull('accounts.deleted_at')->select('locations.*', 'accounts.code as account_code')->lockForUpdate()->first();
                 $from = $location((int) $data['fromFinancialLocationId']);
                 $to = $location((int) $data['toFinancialLocationId']);
                 if (! $from || ! $to) throw ValidationException::withMessages(['account' => 'Both cash or bank accounts must be active and belong to this tenant.']);
                 if ($from->id === $to->id) throw ValidationException::withMessages(['toFinancialLocationId' => 'Source and destination must differ.']);
+                if (! $shiftClose && DB::table('shifts')->where('tenant_id', $tenantId)
+                    ->where('status', 'open')->whereNull('deleted_at')
+                    ->whereIn('financial_location_id', [$from->id, $to->id])->exists()) {
+                    throw ValidationException::withMessages(['transfer' => 'Cash transfers touching an open shift drawer require an approved shift allocation.']);
+                }
                 FinancialActor::assertBranchAccess($actorId, $tenantId, $from->branch_id ? (int) $from->branch_id : null);
                 FinancialActor::assertBranchAccess($actorId, $tenantId, $to->branch_id ? (int) $to->branch_id : null);
                 $branchId = $data['branchId'] ?? $from->branch_id ?? $to->branch_id;
@@ -56,6 +61,19 @@ class CashTransferService
             if ($transfer->status !== 'posted' || ! $transfer->journal_entry_id) throw ValidationException::withMessages(['transfer' => 'Only a posted transfer can be reversed.']);
             if ($transfer->reversal_journal_entry_id) throw ValidationException::withMessages(['transfer' => 'This transfer was already reversed.']);
             FinancialActor::assertBranchAccess($actorId, $tenantId, $transfer->branch_id ? (int) $transfer->branch_id : null);
+            DB::table('financial_locations')->where('tenant_id', $tenantId)
+                ->whereIn('id', [$transfer->from_financial_location_id, $transfer->to_financial_location_id])
+                ->orderBy('id')->lockForUpdate()->get(['id']);
+            if (DB::table('shifts')->where('tenant_id', $tenantId)->where('status', 'closed')
+                ->where('close_transfer_id', $id)->exists()) {
+                throw ValidationException::withMessages(['transfer' => 'A closed shift transfer cannot be reversed directly; an approved correction procedure is required.']);
+            }
+            if (DB::table('shifts')->where('tenant_id', $tenantId)->where('status', 'open')
+                ->whereNull('deleted_at')->whereIn('financial_location_id', [
+                    $transfer->from_financial_location_id, $transfer->to_financial_location_id,
+                ])->exists()) {
+                throw ValidationException::withMessages(['transfer' => 'Reversing a transfer touching an open shift drawer requires an approved shift allocation.']);
+            }
             $reversal = $this->entries->reverse($request, $tenantId, (int) $transfer->journal_entry_id, $actorId);
             DB::table('cash_transfers')->where('tenant_id', $tenantId)->where('id', $id)->update(['status' => 'reversed', 'reversal_journal_entry_id' => $reversal, 'updated_at' => now()]);
             $result = $this->find($tenantId, $id);
@@ -66,5 +84,5 @@ class CashTransferService
 
     public function find(int $tenantId, int $id): object { $row = DB::table('cash_transfers')->where('tenant_id', $tenantId)->where('id', $id)->first(); abort_unless($row, 404, 'Cash transfer not found.'); return $row; }
     private function byKey(int $tenantId, string $key, bool $lock = false): ?object { $query = DB::table('cash_transfers')->where('tenant_id', $tenantId)->where('idempotency_key', $key); if ($lock) $query->lockForUpdate(); return $query->first(); }
-    private function assertFingerprint(object $existing, ?string $fingerprint): void { if ($fingerprint === null || ! $existing->idempotency_fingerprint || ! hash_equals($existing->idempotency_fingerprint, $fingerprint)) abort(409, 'This idempotency key was already used for a different transfer request.'); }
+    private function assertFingerprint(object $existing, ?string $fingerprint): void { if ($fingerprint === null || ! $existing->idempotency_fingerprint || ! hash_equals($existing->idempotency_fingerprint, $fingerprint)) abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب تحويل مختلف.'); }
 }

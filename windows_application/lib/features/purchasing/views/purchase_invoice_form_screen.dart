@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/services/service_locator.dart';
+import '../../../core/utils/numeric_input.dart';
 import '../../finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../../finance_inventory_setup/widgets/finance_components.dart';
@@ -15,6 +16,7 @@ import '../../pos/models/branch.dart';
 import '../controllers/purchasing_cubit.dart';
 import '../models/purchasing_models.dart';
 import '../widgets/inventory_item_search_field.dart';
+import '../widgets/purchase_error_messages.dart';
 import '../widgets/purchase_type_label.dart';
 import '../widgets/purchase_posting_dialog.dart';
 
@@ -47,14 +49,39 @@ class _LineDraft {
   final TextEditingController description = TextEditingController();
   final TextEditingController purchaseUnit = TextEditingController();
   final TextEditingController quantity = TextEditingController(text: '1');
+  // Primary purchase-cost input is the line's total ("إجمالي البند") — that's
+  // what a supplier invoice actually shows and what the client naturally
+  // thinks in; the backend derives the (possibly repeating-decimal) unit cost
+  // from it. `entersUnitCost` switches to the secondary mode for the rarer
+  // workflow that already knows an exact per-unit price.
+  bool entersUnitCost = false;
+  final TextEditingController lineGrossAmount = TextEditingController(
+    text: '0',
+  );
   final TextEditingController unitCost = TextEditingController(text: '0');
   String discountType = 'fixed'; // 'fixed' | 'percentage'
   final TextEditingController discountValue = TextEditingController(text: '0');
   final TextEditingController tax = TextEditingController(text: '0');
   int? warehouseId;
 
-  double _num0(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
-  double get grossAmount => _num0(quantity) * _num0(unitCost);
+  double _num0(TextEditingController c) => NumericInput.parse(c.text) ?? 0;
+  double get quantityValue => _num0(quantity);
+
+  /// The line's gross total. In total-entry mode this is exactly what the
+  /// user typed (never recomputed through a unit cost) so it matches the
+  /// canonical `lineGrossAmount` the backend will store byte-for-byte.
+  double get grossAmount =>
+      entersUnitCost ? quantityValue * _num0(unitCost) : _num0(lineGrossAmount);
+
+  /// Unit cost for on-screen reference only when entering by total — the
+  /// backend derives the stored, precision-correct value; this preview may
+  /// round differently and is never submitted in that mode.
+  double get displayUnitCost {
+    if (entersUnitCost) return _num0(unitCost);
+    final double qty = quantityValue;
+    return qty > 0 ? grossAmount / qty : 0;
+  }
+
   double get taxValue => _num0(tax);
 
   double get discountAmount {
@@ -75,6 +102,7 @@ class _LineDraft {
     description.dispose();
     purchaseUnit.dispose();
     quantity.dispose();
+    lineGrossAmount.dispose();
     unitCost.dispose();
     discountValue.dispose();
     tax.dispose();
@@ -306,12 +334,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 draft.description.text = l.description;
                 draft.purchaseUnit.text = l.purchaseUnit ?? '';
                 draft.quantity.text = l.quantity;
-                final double quantity = double.tryParse(l.quantity) ?? 0;
-                final double gross =
-                    double.tryParse(l.lineGrossAmount ?? '') ?? 0;
-                draft.unitCost.text = quantity > 0
-                    ? (gross / quantity).toStringAsFixed(4)
-                    : l.unitPrice;
+                // Editing always resumes in total-entry mode; the unit cost
+                // field is only seeded (from the backend's own canonical
+                // value, never recomputed locally) so switching to manual
+                // mode later doesn't start from zero.
+                draft.entersUnitCost = false;
+                draft.lineGrossAmount.text = l.lineGrossAmount ?? '0';
+                draft.unitCost.text = l.unitPrice;
                 draft.discountType = l.discountType;
                 draft.discountValue.text = l.discountType == 'percentage'
                     ? (l.discountValue ?? '0')
@@ -443,15 +472,18 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
           line.description.text.trim().isEmpty) {
         return 'أدخل بيان كل بند.';
       }
-      if ((double.tryParse(line.quantity.text.trim()) ?? 0) <= 0) {
+      if (line.quantityValue <= 0) {
         return 'الكمية يجب أن تكون أكبر من صفر.';
       }
-      if ((double.tryParse(line.unitCost.text.trim()) ?? 0) <= 0) {
-        return 'تكلفة الوحدة يجب أن تكون أكبر من صفر.';
+      if (line.entersUnitCost) {
+        if ((NumericInput.parse(line.unitCost.text) ?? 0) <= 0) {
+          return 'تكلفة الوحدة يجب أن تكون أكبر من صفر.';
+        }
+      } else if ((NumericInput.parse(line.lineGrossAmount.text) ?? 0) <= 0) {
+        return 'إجمالي البند يجب أن يكون أكبر من صفر.';
       }
       if (line.discountType == 'percentage') {
-        final double percent =
-            double.tryParse(line.discountValue.text.trim()) ?? 0;
+        final double percent = NumericInput.parse(line.discountValue.text) ?? 0;
         if (percent < 0 || percent > 100) {
           return 'نسبة الخصم يجب أن تكون بين 0 و100.';
         }
@@ -459,7 +491,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     }
     if (_invoiceDiscountType == 'percentage') {
       final double percent =
-          double.tryParse(_invoiceDiscountValue.text.trim()) ?? 0;
+          NumericInput.parse(_invoiceDiscountValue.text) ?? 0;
       if (percent < 0 || percent > 100) {
         return 'نسبة خصم الفاتورة يجب أن تكون بين 0 و100.';
       }
@@ -538,15 +570,20 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 if (l.lineType == 'inventory' &&
                     l.purchaseUnit.text.trim().isNotEmpty)
                   'purchaseUnit': l.purchaseUnit.text.trim(),
-                'quantity': l.quantity.text.trim(),
-                'unitCost': l.unitCost.text.trim(),
+                'quantity': NumericInput.normalize(l.quantity.text) ?? '0',
+                // Total-entry mode (the default) sends only lineGrossAmount —
+                // the backend derives the canonical unit cost from it. Manual
+                // unit-cost mode sends unitCost instead so the backend takes
+                // that branch (see SupplierInvoiceService::buildLines()).
+                if (l.entersUnitCost)
+                  'unitCost': NumericInput.normalize(l.unitCost.text) ?? '0'
+                else
+                  'lineGrossAmount':
+                      NumericInput.normalize(l.lineGrossAmount.text) ?? '0',
                 'discountType': l.discountType,
-                'discountValue': l.discountValue.text.trim().isEmpty
-                    ? '0'
-                    : l.discountValue.text.trim(),
-                'taxAmount': l.tax.text.trim().isEmpty
-                    ? '0'
-                    : l.tax.text.trim(),
+                'discountValue':
+                    NumericInput.normalize(l.discountValue.text) ?? '0',
+                'taxAmount': NumericInput.normalize(l.tax.text) ?? '0',
                 if (l.lineType == 'inventory') 'warehouseId': l.warehouseId,
               },
             )
@@ -575,6 +612,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             'purchase-post-${saved.id}-${DateTime.now().microsecondsSinceEpoch}',
             financialLocationId: choice?.financialLocationId,
             paidAmount: paidAmount,
+            paymentDate: choice?.paymentDate,
+            receiptDate: choice?.receiptDate,
           );
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -592,7 +631,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = '$error';
+        _error = purchaseLineErrorMessage(error);
       });
     }
   }
@@ -1136,8 +1175,8 @@ class _LineEditorRow extends StatelessWidget {
           child: _numberField('الكمية', draft.quantity, onChanged),
         ),
         SizedBox(
-          width: 120,
-          child: _numberField('تكلفة الوحدة', draft.unitCost, onChanged),
+          width: 170,
+          child: _LineCostField(draft: draft, onChanged: onChanged),
         ),
         SizedBox(
           width: 150,
@@ -1295,6 +1334,46 @@ class _PurchaseUnitFieldState extends State<_PurchaseUnitField> {
             },
     );
   }
+}
+
+/// The purchase line's cost input. Defaults to the line's gross total
+/// ("إجمالي البند" — what the supplier invoice actually shows); the toggle
+/// switches to entering a per-unit cost directly for the workflow that
+/// already knows it. Only the active field's value is ever submitted — see
+/// the payload construction in `_save`.
+class _LineCostField extends StatelessWidget {
+  const _LineCostField({required this.draft, required this.onChanged});
+  final _LineDraft draft;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: <Widget>[
+      Expanded(
+        child: TextField(
+          key: ValueKey<bool>(draft.entersUnitCost),
+          controller: draft.entersUnitCost ? draft.unitCost : draft.lineGrossAmount,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: draft.entersUnitCost ? 'تكلفة الوحدة' : 'إجمالي البند',
+            isDense: true,
+          ),
+          onChanged: (_) => onChanged(),
+        ),
+      ),
+      IconButton(
+        tooltip: draft.entersUnitCost
+            ? 'إدخال إجمالي البند بدلاً من تكلفة الوحدة'
+            : 'إدخال تكلفة الوحدة يدوياً بدلاً من الإجمالي',
+        icon: const Icon(Icons.swap_horiz, size: 18),
+        onPressed: () {
+          draft.entersUnitCost = !draft.entersUnitCost;
+          onChanged();
+        },
+      ),
+    ],
+  );
 }
 
 class _DiscountTypeToggle extends StatelessWidget {

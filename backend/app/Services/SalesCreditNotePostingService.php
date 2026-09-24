@@ -34,9 +34,17 @@ final class SalesCreditNotePostingService
         private readonly CustomerReceivableQueryService $receivables,
         private readonly SalesInventoryMovementService $movements,
         private readonly OperationalAuditService $audit,
+        private readonly CustomerPaymentService $payments,
     ) {}
 
-    public function preview(int $tenantId, int $creditNoteId): array
+    /**
+     * $cashSettlement is the resolved [method, location] pair for a
+     * direct-cash credit note's refund source (see CustomerPaymentService::
+     * directSaleSource()) — required when the original invoice was a
+     * direct-cash sale, ignored otherwise. Read-only: no lock, no state
+     * change (mirrors SalesInvoicePostingService::preview()).
+     */
+    public function preview(int $tenantId, int $creditNoteId, ?array $cashSettlement = null): array
     {
         $plan = $this->computePlan($tenantId, $creditNoteId, lock: false);
         $accounts = $plan['accounts'];
@@ -55,17 +63,28 @@ final class SalesCreditNotePostingService
             ];
         }
 
+        $isDirectCash = $plan['directPayment'] !== null;
+        $settlementAccount = $isDirectCash && $cashSettlement
+            ? ['code' => $cashSettlement['accountCode'], 'financialLocationId' => $cashSettlement['locationId']]
+            : null;
+
         return [
             'creditNote' => ['subtotal' => Money::decimal($plan['subtotalCents']), 'tax' => Money::decimal($plan['taxCents']), 'total' => Money::decimal($plan['totalCents'])],
             'accounting' => [
                 'salesReturns' => $account($accounts['salesReturns']), 'taxPayable' => $account($accounts['taxPayable']),
-                'accountsReceivable' => $account($accounts['accountsReceivable']), 'customerCredit' => $account($accounts['customerCredit']),
+                'accountsReceivable' => $isDirectCash ? null : $account($accounts['accountsReceivable']),
+                'customerCredit' => $isDirectCash ? null : $account($accounts['customerCredit']),
+                'settlement' => $settlementAccount,
                 'cogs' => $account($accounts['cogs']), 'inventory' => $account($accounts['inventory']),
                 'salesReturnsDebit' => Money::decimal($plan['subtotalCents']), 'taxDebit' => Money::decimal($plan['taxCents']),
                 'accountsReceivableCredit' => Money::decimal($plan['arReductionCents']), 'customerCreditCredit' => Money::decimal($plan['customerCreditCents']),
+                'settlementCredit' => $isDirectCash ? Money::decimal($plan['refundCents']) : '0.00',
                 'cogsReversalCredit' => Money::decimal($plan['cogsCents']), 'inventoryDebit' => Money::decimal($plan['cogsCents']),
             ],
-            'invoiceImpact' => [
+            'invoiceImpact' => $isDirectCash ? [
+                'refundableBefore' => Money::decimal(max(0, Money::cents($plan['directPayment']->amount) - $this->creditNotes->directSaleRefundedCents($tenantId, (int) $plan['invoice']->id))),
+                'refundAmount' => Money::decimal($plan['refundCents']), 'arReduction' => '0.00', 'customerCreditCreated' => '0.00',
+            ] : [
                 'outstandingBefore' => Money::decimal($this->receivables->invoiceRemainingCents($tenantId, (int) $plan['invoice']->id)),
                 'arReduction' => Money::decimal($plan['arReductionCents']), 'customerCreditCreated' => Money::decimal($plan['customerCreditCents']),
             ],
@@ -99,6 +118,18 @@ final class SalesCreditNotePostingService
             $accounts = $plan['accounts'];
             $now = now();
 
+            // Validate the cash-out source before any effect is created
+            // (mirrors SalesInvoicePostAndCollectService): tenant, branch,
+            // permission, payment method, financial location and shift-drawer
+            // ownership are all checked here, ahead of restocking inventory
+            // or writing any journal line.
+            $isDirectCash = $plan['directPayment'] !== null;
+            $refundSource = null;
+            if ($isDirectCash) {
+                [$method, $location] = $this->payments->directSaleSource($tenantId, $actorId, (int) $note->branch_id, $data, true);
+                $refundSource = ['method' => $method, 'location' => $location];
+            }
+
             foreach ($plan['lineResults'] as $result) {
                 $line = $result['line'];
                 $restockPlan = $result['restockPlan'];
@@ -115,8 +146,12 @@ final class SalesCreditNotePostingService
             $journalLines = [];
             if ($plan['subtotalCents'] > 0) $journalLines[] = ['accountCode' => $accounts['salesReturns'], 'debit' => Money::decimal($plan['subtotalCents']), 'description' => 'Sales Returns'];
             if ($plan['taxCents'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'debit' => Money::decimal($plan['taxCents']), 'description' => 'Sales Tax Reversal'];
-            if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'Accounts Receivable'];
-            if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'Customer Credit Balance'];
+            if ($isDirectCash) {
+                if ($plan['refundCents'] > 0) $journalLines[] = ['accountCode' => $refundSource['location']->account_code, 'credit' => Money::decimal($plan['refundCents']), 'description' => 'Cash/Bank Refunded', 'financialLocationId' => $refundSource['location']->id];
+            } else {
+                if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'Accounts Receivable'];
+                if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'Customer Credit Balance'];
+            }
             if ($plan['cogsCents'] > 0) {
                 $journalLines[] = ['accountCode' => $accounts['inventory'], 'debit' => Money::decimal($plan['cogsCents']), 'description' => 'Inventory Asset'];
                 $journalLines[] = ['accountCode' => $accounts['cogs'], 'credit' => Money::decimal($plan['cogsCents']), 'description' => 'Cost of Goods Sold Reversal'];
@@ -131,15 +166,39 @@ final class SalesCreditNotePostingService
                 DB::table('customer_credit_ledger')->insert(['tenant_id' => $tenantId, 'customer_id' => $note->customer_id, 'sales_credit_note_id' => $creditNoteId, 'amount' => Money::decimal($plan['customerCreditCents']), 'created_at' => $now, 'updated_at' => $now]);
             }
 
+            $refundId = null;
+            if ($isDirectCash && $plan['refundCents'] > 0) {
+                // Shares the credit note's own reversal journal rather than a
+                // second settlement journal — mirrors CustomerPaymentService::
+                // recordDirectSale() sharing the invoice's posting journal.
+                $refundId = DB::table('customer_refunds')->insertGetId([
+                    'tenant_id' => $tenantId, 'branch_id' => $note->branch_id, 'customer_id' => $note->customer_id,
+                    'sales_credit_note_id' => $creditNoteId, 'refund_number' => $this->nextRefundNumber($tenantId),
+                    'refund_date' => $note->credit_date, 'amount' => Money::decimal($plan['refundCents']),
+                    'payment_method_id' => $refundSource['method']->id, 'financial_location_id' => $refundSource['location']->id,
+                    'status' => 'posted', 'journal_entry_id' => $journalId,
+                    'created_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
+                ]);
+            }
+
             DB::table('sales_credit_notes')->where('id', $creditNoteId)->update([
                 'status' => 'posted', 'ar_reduction_amount' => Money::decimal($plan['arReductionCents']), 'customer_credit_amount' => Money::decimal($plan['customerCreditCents']),
                 'posted_journal_entry_id' => $journalId, 'posted_by' => $actorId, 'posted_at' => $now, 'updated_by' => $actorId, 'updated_at' => $now,
             ]);
             DB::table('sales_credit_note_postings')->insert(['tenant_id' => $tenantId, 'sales_credit_note_id' => $creditNoteId, 'idempotency_key' => $data['idempotencyKey'], 'request_fingerprint' => $fingerprint, 'journal_entry_id' => $journalId, 'posted_by' => $actorId, 'created_at' => $now, 'updated_at' => $now]);
-            $this->audit->record($request, $tenantId, 'sales.credit_note.posted', 'sales_credit_note', $creditNoteId, ['status' => 'draft'], ['creditNoteNumber' => $note->credit_note_number, 'journalEntryId' => $journalId, 'arReduction' => Money::decimal($plan['arReductionCents']), 'customerCredit' => Money::decimal($plan['customerCreditCents']), 'cogsReversal' => Money::decimal($plan['cogsCents'])], $note->branch_id, $actorId);
+            $this->audit->record($request, $tenantId, 'sales.credit_note.posted', 'sales_credit_note', $creditNoteId, ['status' => 'draft'], ['creditNoteNumber' => $note->credit_note_number, 'journalEntryId' => $journalId, 'arReduction' => Money::decimal($plan['arReductionCents']), 'customerCredit' => Money::decimal($plan['customerCreditCents']), 'cashRefund' => Money::decimal($plan['refundCents']), 'customerRefundId' => $refundId, 'cogsReversal' => Money::decimal($plan['cogsCents'])], $note->branch_id, $actorId);
 
             return $this->creditNotes->find($tenantId, $creditNoteId);
         }, 3);
+    }
+
+    private function nextRefundNumber(int $tenantId): string
+    {
+        $year = now()->year;
+        DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
+        $count = DB::table('customer_refunds')->where('tenant_id', $tenantId)->where('refund_number', 'like', "RF-{$year}-%")->count() + 1;
+
+        return sprintf('RF-%d-%06d', $year, $count);
     }
 
     /**
@@ -221,14 +280,34 @@ final class SalesCreditNotePostingService
             throw ValidationException::withMessages(['totals' => 'The stored credit note totals no longer match its line snapshots.']);
         }
 
+        // A direct-cash sale never carries AR or unapplied customer credit
+        // (A3's "Direct Cash Refund Contract"): its credit note instead cashes
+        // out directly, capped at what was actually collected on THIS
+        // invoice net of prior posted refunds — never the shared walk-in
+        // customer's AR/credit balance, which does not exist for cash sales.
+        $directPayment = $this->creditNotes->directPayment($tenantId, (int) $invoice->id);
+        if ($directPayment !== null) {
+            $refundedSoFarCents = $this->creditNotes->directSaleRefundedCents($tenantId, (int) $invoice->id, lock: $lock);
+            $refundableCents = max(0, Money::cents($directPayment->amount) - $refundedSoFarCents);
+            if ($totalCents > $refundableCents) {
+                throw ValidationException::withMessages(['lines' => 'مبلغ المرتجع يتجاوز المبلغ القابل للاسترداد من هذه الفاتورة النقدية ('.Money::decimal($refundableCents).').']);
+            }
+            $arReductionCents = 0;
+            $customerCreditCents = 0;
+            $refundCents = $totalCents;
+
+            return compact('note', 'invoice', 'lineResults', 'accounts', 'subtotalCents', 'taxCents', 'totalCents', 'cogsCents', 'arReductionCents', 'customerCreditCents', 'directPayment', 'refundCents');
+        }
+
         // Never negative AR (§9/§27/§28): cap the reduction at the invoice's
         // CURRENT outstanding balance, itself already net of prior payments
         // and prior credit notes. Any excess becomes unapplied customer credit.
         $invoiceOutstandingCents = max(0, $this->receivables->invoiceRemainingCents($tenantId, (int) $invoice->id, lock: $lock));
         $arReductionCents = min($totalCents, $invoiceOutstandingCents);
         $customerCreditCents = $totalCents - $arReductionCents;
+        $refundCents = 0;
 
-        return compact('note', 'invoice', 'lineResults', 'accounts', 'subtotalCents', 'taxCents', 'totalCents', 'cogsCents', 'arReductionCents', 'customerCreditCents');
+        return compact('note', 'invoice', 'lineResults', 'accounts', 'subtotalCents', 'taxCents', 'totalCents', 'cogsCents', 'arReductionCents', 'customerCreditCents', 'directPayment', 'refundCents');
     }
 
     /**

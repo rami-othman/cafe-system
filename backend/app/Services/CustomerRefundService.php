@@ -178,7 +178,7 @@ final class CustomerRefundService
     private function assertFingerprint(object $refund, string $fingerprint): void
     {
         if (! $refund->idempotency_fingerprint || ! hash_equals($refund->idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different customer refund request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب استرداد عميل مختلف.');
         }
     }
 

@@ -35,8 +35,8 @@ class FinancialReportsAndPeriodsTest extends TestCase
         $this->postJson("/api/v1/finance/accounting-periods/$period/close", [], $headers)->assertOk();
         $manual = (int) $this->postJson('/api/v1/finance/journal-entries', ['entryDate' => '2030-11-11', 'lines' => [['accountId' => $cash, 'debit' => '10.00'], ['accountId' => $equity, 'credit' => '10.00']]], $headers)->assertCreated()->json('data.id');
         $failed = $this->postJson("/api/v1/finance/journal-entries/$manual/post", [], $headers)->assertUnprocessable();
-        $this->assertContains('ACCOUNTING_PERIOD_CLOSED', $failed->json('errors.accountingPeriod'));
-        try { app(AccountingPostingService::class)->post(Request::create('/period-automatic', 'POST'), $tenant, ['sourceType' => 'period_test', 'sourceId' => 901, 'sourceEvent' => 'TEST', 'entryDate' => '2030-11-12', 'lines' => [['accountCode' => '1010', 'debit' => '10.00'], ['accountCode' => '3000', 'credit' => '10.00']]], (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id')); $this->fail('Expected period guard.'); } catch (ValidationException $e) { $this->assertContains('ACCOUNTING_PERIOD_CLOSED', $e->errors()['accountingPeriod']); }
+        $this->assertStringContainsString('الفترة المحاسبية', $failed->json('errors.accountingPeriod.0'));
+        try { app(AccountingPostingService::class)->post(Request::create('/period-automatic', 'POST'), $tenant, ['sourceType' => 'period_test', 'sourceId' => 901, 'sourceEvent' => 'TEST', 'entryDate' => '2030-11-12', 'lines' => [['accountCode' => '1010', 'debit' => '10.00'], ['accountCode' => '3000', 'credit' => '10.00']]], (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id')); $this->fail('Expected period guard.'); } catch (ValidationException $e) { $this->assertStringContainsString('الفترة المحاسبية', $e->errors()['accountingPeriod'][0]); }
     }
 
     public function test_ledger_reports_are_balanced_and_formal_profit_and_loss_uses_posted_lines_only(): void

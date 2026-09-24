@@ -10,7 +10,9 @@ use App\Services\DiscountEligibilityService;
 use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
+use App\Services\PosCashLocationResolver;
 use App\Services\SaleConsumptionService;
+use App\Support\BranchLocalDate;
 use App\Support\Money;
 use App\Support\PaymentPerformanceProbe;
 use App\Support\SalePaymentMethodResolver;
@@ -30,6 +32,7 @@ class PaymentController extends Controller
         private readonly OperationalAuditService $audit,
         private readonly SaleConsumptionService $consumption,
         private readonly PaymentPerformanceProbe $performance,
+        private readonly PosCashLocationResolver $cashLocations,
     ) {}
 
     public function summary(Request $request, int $order): JsonResponse
@@ -264,7 +267,14 @@ class PaymentController extends Controller
         $total = Money::cents($order->total);
         // A zero-balance completion deliberately has no tender line. Its
         // discount debit offsets revenue; inventory/COGS stays balanced too.
-        $lines = $method === null ? [] : [['accountCode' => $method->accountCode, 'debit' => Money::decimal($total)]];
+        $lines = [];
+        if ($method !== null) {
+            $tender = ['accountCode' => $method->accountCode, 'debit' => Money::decimal($total)];
+            if ($method->type === 'cash') {
+                $tender['financialLocationId'] = $this->cashLocations->forSale($tenantId, $order, $method->accountCode);
+            }
+            $lines[] = $tender;
+        }
         if ($discount > 0) {
             $lines[] = ['accountCode' => '4010', 'debit' => Money::decimal($discount)];
         }
@@ -281,7 +291,7 @@ class PaymentController extends Controller
             'branchId' => $order->branch_id,
             'sourceId' => $order->id,
             'sourceEvent' => 'POS_ORDER_PAID',
-            'entryDate' => now()->toDateString(),
+            'entryDate' => BranchLocalDate::today($order->branch_id ? (int) $order->branch_id : null),
             'description' => "POS Sale — Order #{$order->order_number}",
             'lines' => $lines,
         ], $actorId);

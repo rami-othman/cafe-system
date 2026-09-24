@@ -203,9 +203,25 @@ class PurchaseController extends Controller
 
     public function post(Request $request, int $purchase): JsonResponse
     {
-        $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:120'], 'financialLocationId' => ['nullable', 'integer'], 'paidAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/']]);
+        $data = $request->validate([
+            'idempotencyKey' => ['required', 'string', 'max:120'],
+            'financialLocationId' => ['nullable', 'integer'],
+            'paidAmount' => ['nullable', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'paymentDate' => ['nullable', 'date_format:Y-m-d'],
+            'receiptDate' => ['nullable', 'date_format:Y-m-d'],
+        ]);
         $tenant = TenantContext::id($request);
-        $this->posting->post($request, $tenant, $purchase, $data['idempotencyKey'], FinancialActor::id($request, $tenant), $data['financialLocationId'] ?? null, $data['paidAmount'] ?? null);
+        $this->posting->post(
+            $request,
+            $tenant,
+            $purchase,
+            $data['idempotencyKey'],
+            FinancialActor::id($request, $tenant),
+            $data['financialLocationId'] ?? null,
+            $data['paidAmount'] ?? null,
+            $data['paymentDate'] ?? null,
+            $data['receiptDate'] ?? null,
+        );
 
         return $this->show($request, $purchase);
     }

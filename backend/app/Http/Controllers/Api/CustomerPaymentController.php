@@ -40,7 +40,7 @@ final class CustomerPaymentController extends Controller
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
         $paginator = $q->orderByDesc('p.payment_date')->orderByDesc('p.id')->paginate($this->perPage($request));
 
-        return response()->json(['data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row) + ['allowedActions' => $row->status === 'posted' && isset($permissions['finance.customer_payments.reverse']) ? ['reverse'] : []])->values(), 'meta' => $this->meta($paginator)]);
+        return response()->json(['data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row) + ['allowedActions' => $row->status === 'posted' && ! $row->direct_sales_invoice_id && isset($permissions['finance.customer_payments.reverse']) ? ['reverse'] : []])->values(), 'meta' => $this->meta($paginator)]);
     }
 
     public function show(Request $request, int $payment): JsonResponse
@@ -87,14 +87,14 @@ final class CustomerPaymentController extends Controller
     {
         $data = $request->validate([
             'postIdempotencyKey' => ['required', 'string', 'max:128'],
-            'paymentDate' => ['required', 'date'],
+            'paymentDate' => ['required', 'date_format:Y-m-d'],
             'amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
             'paymentMethodId' => ['required', 'integer'],
             'financialLocationId' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'paymentIdempotencyKey' => ['required', 'string', 'max:120'],
-            'allocations' => ['required', 'array', 'min:1'],
+            'allocations' => ['sometimes', 'array', 'min:1'],
             'allocations.*.invoiceId' => ['required', 'integer'],
             'allocations.*.amount' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
         ]);
@@ -108,7 +108,7 @@ final class CustomerPaymentController extends Controller
         $result = $this->postAndCollect->postAndCollect($request, $tenant, $invoice, $actor, ['idempotencyKey' => $data['postIdempotencyKey']], [
             'branchId' => (int) $invoiceRow->branch_id, 'customerId' => (int) $invoiceRow->customer_id, 'paymentDate' => $data['paymentDate'], 'amount' => $data['amount'],
             'paymentMethodId' => $data['paymentMethodId'], 'financialLocationId' => $data['financialLocationId'] ?? null, 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null,
-            'idempotencyKey' => $data['paymentIdempotencyKey'], 'allocations' => $data['allocations'],
+            'idempotencyKey' => $data['paymentIdempotencyKey'], 'allocations' => $data['allocations'] ?? [],
         ]);
 
         return response()->json(['data' => ['invoiceId' => (int) $result['invoice']->id, 'paymentId' => (int) $result['payment']->id]]);
@@ -193,7 +193,13 @@ final class CustomerPaymentController extends Controller
 
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
 
-        return $this->serialize($row) + ['allocations' => $allocations->values(), 'allowedActions' => $row->status === 'posted' && isset($permissions['finance.customer_payments.reverse']) ? ['reverse'] : []];
+        if ($row->direct_sales_invoice_id) {
+            $invoice = DB::table('sales_invoices')->where('tenant_id', $tenant)
+                ->where('id', $row->direct_sales_invoice_id)->first(['invoice_number']);
+            $allocations = collect([['invoiceId' => (int) $row->direct_sales_invoice_id,
+                'invoiceNumber' => $invoice?->invoice_number, 'amount' => Money::decimal(Money::cents($row->amount))]]);
+        }
+        return $this->serialize($row) + ['allocations' => $allocations->values(), 'allowedActions' => $row->status === 'posted' && ! $row->direct_sales_invoice_id && isset($permissions['finance.customer_payments.reverse']) ? ['reverse'] : []];
     }
 
     private function serialize(object $row): array
@@ -201,6 +207,7 @@ final class CustomerPaymentController extends Controller
         return [
             'id' => (int) $row->id,
             'paymentNumber' => $row->payment_number,
+            'directSalesInvoiceId' => $row->direct_sales_invoice_id ? (int) $row->direct_sales_invoice_id : null,
             'customerId' => (int) $row->customer_id,
             'customerName' => $row->customer_name,
             'customerNumber' => $row->customer_number,

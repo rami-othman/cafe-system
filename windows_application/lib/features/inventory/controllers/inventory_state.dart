@@ -40,6 +40,19 @@ class InventoryState extends Equatable {
     this.warehouses = const <WarehouseLocation>[],
     this.stockCountWarehouses = const <WarehouseLocation>[],
     this.itemMovements = const <InventoryMovement>[],
+    this.itemMovementHistory = const <InventoryMovement>[],
+    this.itemMovementHistoryPage = 1,
+    this.itemMovementHistoryLastPage = 1,
+    this.itemMovementHistoryTotal = 0,
+    this.itemMovementHistoryLoading = false,
+    this.itemRecipeUsage = const <InventoryRecipeUsage>[],
+    this.itemRecipeUsageLoaded = false,
+    this.itemRecipeUsageLoading = false,
+    this.itemPurchaseHistory = const <InventoryPurchaseHistoryEntry>[],
+    this.itemPurchaseHistoryPage = 1,
+    this.itemPurchaseHistoryLastPage = 1,
+    this.itemPurchaseHistoryTotal = 0,
+    this.itemPurchaseHistoryLoading = false,
     this.barCheckTemplates = const <BarCheckTemplate>[],
     this.selectedBarCheckTemplate,
     this.transfers = const <WarehouseTransfer>[],
@@ -85,6 +98,22 @@ class InventoryState extends Equatable {
   /// warehouses" list another loader last populated, or vice versa.
   final List<WarehouseLocation> stockCountWarehouses;
   final List<InventoryMovement> itemMovements;
+  /// The item details screen's full, paginated "سجل الحركات" tab data -
+  /// distinct from [itemMovements] (the item-show endpoint's fixed 5-row
+  /// recent summary shown elsewhere on that screen).
+  final List<InventoryMovement> itemMovementHistory;
+  final int itemMovementHistoryPage;
+  final int itemMovementHistoryLastPage;
+  final int itemMovementHistoryTotal;
+  final bool itemMovementHistoryLoading;
+  final List<InventoryRecipeUsage> itemRecipeUsage;
+  final bool itemRecipeUsageLoaded;
+  final bool itemRecipeUsageLoading;
+  final List<InventoryPurchaseHistoryEntry> itemPurchaseHistory;
+  final int itemPurchaseHistoryPage;
+  final int itemPurchaseHistoryLastPage;
+  final int itemPurchaseHistoryTotal;
+  final bool itemPurchaseHistoryLoading;
   final List<BarCheckTemplate> barCheckTemplates;
   final BarCheckTemplate? selectedBarCheckTemplate;
   final List<WarehouseTransfer> transfers;
@@ -128,6 +157,19 @@ class InventoryState extends Equatable {
     List<WarehouseLocation>? warehouses,
     List<WarehouseLocation>? stockCountWarehouses,
     List<InventoryMovement>? itemMovements,
+    List<InventoryMovement>? itemMovementHistory,
+    int? itemMovementHistoryPage,
+    int? itemMovementHistoryLastPage,
+    int? itemMovementHistoryTotal,
+    bool? itemMovementHistoryLoading,
+    List<InventoryRecipeUsage>? itemRecipeUsage,
+    bool? itemRecipeUsageLoaded,
+    bool? itemRecipeUsageLoading,
+    List<InventoryPurchaseHistoryEntry>? itemPurchaseHistory,
+    int? itemPurchaseHistoryPage,
+    int? itemPurchaseHistoryLastPage,
+    int? itemPurchaseHistoryTotal,
+    bool? itemPurchaseHistoryLoading,
     List<BarCheckTemplate>? barCheckTemplates,
     BarCheckTemplate? selectedBarCheckTemplate,
     List<WarehouseTransfer>? transfers,
@@ -174,6 +216,28 @@ class InventoryState extends Equatable {
     warehouses: warehouses ?? this.warehouses,
     stockCountWarehouses: stockCountWarehouses ?? this.stockCountWarehouses,
     itemMovements: itemMovements ?? this.itemMovements,
+    itemMovementHistory: itemMovementHistory ?? this.itemMovementHistory,
+    itemMovementHistoryPage:
+        itemMovementHistoryPage ?? this.itemMovementHistoryPage,
+    itemMovementHistoryLastPage:
+        itemMovementHistoryLastPage ?? this.itemMovementHistoryLastPage,
+    itemMovementHistoryTotal:
+        itemMovementHistoryTotal ?? this.itemMovementHistoryTotal,
+    itemMovementHistoryLoading:
+        itemMovementHistoryLoading ?? this.itemMovementHistoryLoading,
+    itemRecipeUsage: itemRecipeUsage ?? this.itemRecipeUsage,
+    itemRecipeUsageLoaded: itemRecipeUsageLoaded ?? this.itemRecipeUsageLoaded,
+    itemRecipeUsageLoading:
+        itemRecipeUsageLoading ?? this.itemRecipeUsageLoading,
+    itemPurchaseHistory: itemPurchaseHistory ?? this.itemPurchaseHistory,
+    itemPurchaseHistoryPage:
+        itemPurchaseHistoryPage ?? this.itemPurchaseHistoryPage,
+    itemPurchaseHistoryLastPage:
+        itemPurchaseHistoryLastPage ?? this.itemPurchaseHistoryLastPage,
+    itemPurchaseHistoryTotal:
+        itemPurchaseHistoryTotal ?? this.itemPurchaseHistoryTotal,
+    itemPurchaseHistoryLoading:
+        itemPurchaseHistoryLoading ?? this.itemPurchaseHistoryLoading,
     barCheckTemplates: barCheckTemplates ?? this.barCheckTemplates,
     selectedBarCheckTemplate: selectedBarCheckTemplate ?? this.selectedBarCheckTemplate,
     transfers: transfers ?? this.transfers,
@@ -216,6 +280,19 @@ class InventoryState extends Equatable {
     warehouses,
     stockCountWarehouses,
     itemMovements,
+    itemMovementHistory,
+    itemMovementHistoryPage,
+    itemMovementHistoryLastPage,
+    itemMovementHistoryTotal,
+    itemMovementHistoryLoading,
+    itemRecipeUsage,
+    itemRecipeUsageLoaded,
+    itemRecipeUsageLoading,
+    itemPurchaseHistory,
+    itemPurchaseHistoryPage,
+    itemPurchaseHistoryLastPage,
+    itemPurchaseHistoryTotal,
+    itemPurchaseHistoryLoading,
     barCheckTemplates,
     selectedBarCheckTemplate,
     transfers,

@@ -22,7 +22,9 @@ final class AccountingPeriodGuard
             return;
         }
 
-        $code = $period->status === 'locked' ? 'ACCOUNTING_PERIOD_LOCKED' : 'ACCOUNTING_PERIOD_CLOSED';
-        throw ValidationException::withMessages(['accountingPeriod' => [$code]]);
+        $message = $period->status === 'locked'
+            ? 'الفترة المحاسبية لهذا التاريخ مقفلة بشكل نهائي ولا يمكن الترحيل إليها.'
+            : 'الفترة المحاسبية لهذا التاريخ مغلقة، يرجى مراجعة المحاسب المسؤول.';
+        throw ValidationException::withMessages(['accountingPeriod' => [$message]]);
     }
 }

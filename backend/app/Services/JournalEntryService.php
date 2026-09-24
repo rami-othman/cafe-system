@@ -115,6 +115,19 @@ class JournalEntryService
             if ($original->status !== 'posted') {
                 throw ValidationException::withMessages(['entry' => 'Only a posted journal entry can be reversed.']);
             }
+            if ($original->source_type === 'sales_invoice'
+                && DB::table('customer_payments')->where('tenant_id', $tenantId)
+                    ->where('journal_entry_id', $entryId)->whereNotNull('direct_sales_invoice_id')->exists()) {
+                throw ValidationException::withMessages(['entry' => 'عكس قيد البيع النقدي يحتاج إلى إجراء رد نقدي معتمد.']);
+            }
+            if ($original->source_type === 'cash_transfer'
+                && DB::table('cash_transfers as transfers')
+                    ->join('shifts', 'shifts.close_transfer_id', '=', 'transfers.id')
+                    ->where('transfers.tenant_id', $tenantId)
+                    ->where('transfers.journal_entry_id', $entryId)
+                    ->where('shifts.tenant_id', $tenantId)->where('shifts.status', 'closed')->exists()) {
+                throw ValidationException::withMessages(['entry' => 'A closed shift transfer cannot be reversed directly; an approved correction procedure is required.']);
+            }
             $this->assertBranch($tenantId, $original->branch_id, $actorId);
             // $original is already locked above, so every concurrent
             // reverse() call against the same entry serializes here — the

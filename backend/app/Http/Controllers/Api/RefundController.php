@@ -9,7 +9,9 @@ use App\Services\AccountingPostingService;
 use App\Services\OperationalAuditService;
 use App\Services\OrderLifecyclePolicy;
 use App\Services\PosNumberGenerator;
+use App\Services\PosCashLocationResolver;
 use App\Support\TenantContext;
+use App\Support\BranchLocalDate;
 use App\Support\Money;
 use App\Support\RefundTaxAllocation;
 use App\Support\SalePaymentMethodResolver;
@@ -24,6 +26,7 @@ class RefundController extends Controller
         private readonly PosNumberGenerator $numbers,
         private readonly AccountingPostingService $posting,
         private readonly OperationalAuditService $audit,
+        private readonly PosCashLocationResolver $cashLocations,
     ) {}
 
     public function store(Request $request, int $order): JsonResponse
@@ -69,6 +72,18 @@ class RefundController extends Controller
                 throw new OrderLifecycleException('REFUND_EXCEEDS_REMAINING', 'Refund amount exceeds the refundable balance.');
             }
 
+            $resolvedMethod = $payment->payment_method_id
+                ? SalePaymentMethodResolver::resolveById($tenantId, (int) $payment->payment_method_id)
+                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $payment->method);
+            if (($resolvedMethod?->type === 'cash' || ($resolvedMethod === null && $payment->method === 'cash'))
+                && $payment->shift_id !== null) {
+                $saleShift = DB::table('shifts')->where('tenant_id', $tenantId)
+                    ->where('id', $payment->shift_id)->lockForUpdate()->first();
+                if ($saleShift && $saleShift->status !== 'open') {
+                    throw new OrderLifecycleException('CASH_REFUND_SHIFT_CLOSED', 'Cash refund after the sale shift closes requires an approved payout procedure.');
+                }
+            }
+
             $now = now();
             $refundId = DB::table('payment_refunds')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'order_id' => $orderRow->id,
@@ -99,20 +114,24 @@ class RefundController extends Controller
                 Money::cents((string) $alreadyRefunded),
                 $amountCents,
             );
-            $resolvedMethod = $payment->payment_method_id
-                ? SalePaymentMethodResolver::resolveById($tenantId, (int) $payment->payment_method_id)
-                : SalePaymentMethodResolver::resolveByLegacyMethod($tenantId, $payment->method);
             if ($resolvedMethod !== null) {
+                $cashLocationId = $payment->method === 'cash' && $resolvedMethod->type === 'cash'
+                    ? $this->cashLocations->forRefund($tenantId, $orderRow, $payment, $resolvedMethod->accountCode)
+                    : null;
+                $settlementLine = ['accountCode' => $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)];
+                if ($cashLocationId !== null) {
+                    $settlementLine['financialLocationId'] = $cashLocationId;
+                }
                 $this->posting->postRefund($request, $tenantId, [
                     'branchId' => $orderRow->branch_id,
                     'sourceId' => $refundId,
                     'sourceEvent' => 'PAYMENT_REFUNDED',
-                    'entryDate' => now()->toDateString(),
+                    'entryDate' => BranchLocalDate::today($orderRow->branch_id ? (int) $orderRow->branch_id : null),
                     'description' => "Refund — {$data['reason']}",
                     'lines' => array_values(array_filter([
                         $amountCents > $taxCents ? ['accountCode' => '4020', 'debit' => Money::decimal($amountCents - $taxCents)] : null,
                         $taxCents > 0 ? ['accountCode' => '2010', 'debit' => Money::decimal($taxCents)] : null,
-                        ['accountCode' => $resolvedMethod->accountCode, 'credit' => Money::decimal($amountCents)],
+                        $settlementLine,
                     ])),
                 ], $actorId);
             } else {

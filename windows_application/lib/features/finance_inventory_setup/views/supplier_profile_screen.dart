@@ -7,6 +7,7 @@ import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_setup_models.dart';
 import '../repositories/finance_setup_repository.dart';
+import '../widgets/cash_source_field.dart';
 import '../widgets/finance_components.dart';
 import '../widgets/finance_design.dart';
 import '../widgets/finance_journal_drawer.dart';
@@ -1235,9 +1236,15 @@ class _PaymentFormDialog extends StatefulWidget {
 class _PaymentFormDialogState extends State<_PaymentFormDialog> {
   bool _loadingOptions = true;
   List<PaymentMethodSetting> _methods = const <PaymentMethodSetting>[];
-  List<FinancialLocation> _locations = const <FinancialLocation>[];
+  List<Branch> _branches = const <Branch>[];
   int? _methodId;
-  int? _locationId;
+  // The cash source (financialLocationId) is never auto-picked — D2: a
+  // shared account like Main Safe must only be used when explicitly chosen
+  // for the correct branch, never defaulted to the first item in a list.
+  int? _cashLocationId;
+  int? _branchId;
+  CashSourceOptions? _cashOptions;
+  bool _loadingCashSources = false;
   String _date = DateTime.now().toIso8601String().substring(0, 10);
   final TextEditingController _amount = TextEditingController();
   final TextEditingController _reference = TextEditingController();
@@ -1261,22 +1268,30 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
       final List<dynamic> results =
           await Future.wait<dynamic>(<Future<dynamic>>[
             widget.repository.getPaymentMethods(),
-            widget.repository.getFinancialLocations('cash'),
-            widget.repository.getFinancialLocations('bank'),
+            widget.repository.getBranches(),
           ]);
       if (!mounted) return;
+      // A branch is required for a cash source, so a bank-type method must
+      // already carry its own fixed location (configured in Payment
+      // Methods) — matching the pattern used for customer/sales payments.
+      final List<PaymentMethodSetting> methods =
+          (results[0] as List<PaymentMethodSetting>)
+              .where(
+                (PaymentMethodSetting m) =>
+                    m.isActive && (m.type == 'cash' || m.financialLocationId != null),
+              )
+              .toList(growable: false);
+      final int? impliedBranchId = _uniqueInvoiceBranch();
       setState(() {
-        _methods = (results[0] as List<PaymentMethodSetting>)
-            .where((PaymentMethodSetting m) => m.isActive)
-            .toList(growable: false);
-        _locations = <FinancialLocation>[
-          ...results[1] as List<FinancialLocation>,
-          ...results[2] as List<FinancialLocation>,
-        ].where((FinancialLocation l) => l.isActive).toList(growable: false);
-        _methodId = _methods.isEmpty ? null : _methods.first.id;
-        _locationId = _locations.isEmpty ? null : _locations.first.id;
+        _methods = methods;
+        _branches = results[1] as List<Branch>;
+        _methodId = methods.isEmpty ? null : methods.first.id;
+        _branchId = impliedBranchId;
         _loadingOptions = false;
       });
+      if (impliedBranchId != null) {
+        await _selectBranch(impliedBranchId);
+      }
     } catch (error) {
       if (mounted) {
         setState(() {
@@ -1285,6 +1300,95 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
         });
       }
     }
+  }
+
+  /// The one branch every eligible invoice belongs to, when there is one —
+  /// used only as a data-driven default, never a hardcoded branch. Invoices
+  /// spanning several branches (or with no branch at all) leave the branch
+  /// unset so the user must choose explicitly.
+  int? _uniqueInvoiceBranch() {
+    final Set<int> branchIds = widget.eligibleInvoices
+        .map((SupplierInvoice inv) => inv.branchId)
+        .whereType<int>()
+        .toSet();
+    return branchIds.length == 1 ? branchIds.first : null;
+  }
+
+  Future<void> _selectBranch(int? branchId) async {
+    setState(() {
+      _branchId = branchId;
+      _cashLocationId = null;
+      _cashOptions = null;
+      _loadingCashSources = branchId != null;
+    });
+    if (branchId == null) return;
+    try {
+      final CashSourceOptions options = await widget.repository
+          .getCashSourceOptions(branchId);
+      if (mounted && _branchId == branchId) {
+        setState(() {
+          _cashOptions = options;
+          _loadingCashSources = false;
+          // The one narrow, explicitly-documented auto-select exception:
+          // when the branch has exactly one authorized cash source, there is
+          // no ambiguity to ask the user to resolve. Any other count (zero,
+          // or more than one — e.g. a branch drawer alongside a shared Main
+          // Safe) requires an explicit pick, never a default.
+          if (options.mode == 'selectable' && options.allowed.length == 1) {
+            _cashLocationId = options.allowed.first.id;
+          }
+        });
+      }
+    } catch (error) {
+      if (mounted && _branchId == branchId) {
+        setState(() {
+          _error = 'تعذر تحميل الصناديق والحسابات البنكية لهذا الفرع: $error';
+          _loadingCashSources = false;
+        });
+      }
+    }
+  }
+
+  PaymentMethodSetting? get _selectedMethod =>
+      _methods.where((PaymentMethodSetting m) => m.id == _methodId).firstOrNull;
+
+  /// Cash: the shared, branch-scoped `CashSourceField` (shift-fixed for a
+  /// cashier, an explicit pick among authorized sources otherwise — never
+  /// auto-selected). Bank: the method's own pre-configured location, shown
+  /// read-only — there is nothing to pick.
+  Widget _buildSourceField() {
+    final PaymentMethodSetting? method = _selectedMethod;
+    if (_branchId == null) {
+      return const Text(
+        'اختر الفرع أولاً لعرض الصناديق والحسابات البنكية المتاحة.',
+        style: FinanceText.small,
+      );
+    }
+    if (method == null) return const SizedBox.shrink();
+    if (method.type != 'cash') {
+      return Text(
+        'الحساب البنكي: ${method.financialLocationName ?? 'غير مهيأ لهذه الطريقة'}',
+        style: FinanceText.body,
+      );
+    }
+    if (_loadingCashSources) {
+      return const Row(
+        children: <Widget>[
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 8),
+          Text('جارٍ تحميل الصناديق المتاحة...', style: FinanceText.small),
+        ],
+      );
+    }
+    return CashSourceField(
+      options: _cashOptions,
+      selectedLocationId: _cashLocationId,
+      onChanged: (int? v) => setState(() => _cashLocationId = v),
+    );
   }
 
   @override
@@ -1318,9 +1422,28 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
     }
   }
 
+  int? get _resolvedLocationId {
+    final PaymentMethodSetting? method = _selectedMethod;
+    if (method == null) return null;
+    return method.type == 'cash' ? _cashLocationId : method.financialLocationId;
+  }
+
   Future<void> _submit() async {
-    if (_methodId == null || _locationId == null) {
-      setState(() => _error = 'اختر طريقة دفع وحساباً نقدياً أو بنكياً نشطاً.');
+    if (_branchId == null) {
+      setState(() => _error = 'اختر الفرع أولاً.');
+      return;
+    }
+    final PaymentMethodSetting? method = _selectedMethod;
+    if (method == null) {
+      setState(() => _error = 'اختر طريقة دفع نشطة.');
+      return;
+    }
+    if (method.type == 'cash' && !cashSourceIsResolved(_cashOptions, _cashLocationId)) {
+      setState(() => _error = 'اختر الصندوق النقدي المصرّح به لهذا الفرع.');
+      return;
+    }
+    if (_resolvedLocationId == null) {
+      setState(() => _error = 'اختر حساباً نقدياً أو بنكياً نشطاً.');
       return;
     }
     if (_paymentAmount <= 0) {
@@ -1366,10 +1489,11 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
     try {
       await widget.repository.paySupplierInvoices(<String, dynamic>{
         'supplierId': widget.supplierId,
+        'branchId': _branchId,
         'paymentDate': _date,
         'amount': _paymentAmount.toStringAsFixed(2),
         'paymentMethodId': _methodId,
-        'financialLocationId': _locationId,
+        'financialLocationId': _resolvedLocationId,
         'externalReference': _reference.text.trim().isEmpty
             ? null
             : _reference.text.trim(),
@@ -1398,13 +1522,22 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
 
   double _amount2(String v) => double.tryParse(v.replaceAll(',', '')) ?? 0;
 
+  String? get _resolvedLocationName {
+    final PaymentMethodSetting? method = _selectedMethod;
+    if (method == null) return null;
+    if (method.type == 'cash') {
+      if (_cashOptions?.mode == 'shift') return _cashOptions?.resolved?.name;
+      return _cashOptions?.allowed
+          .where((CashSourceLocation l) => l.id == _cashLocationId)
+          .firstOrNull
+          ?.name;
+    }
+    return method.financialLocationName;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final FinancialLocation? location = _locationId == null
-        ? null
-        : _locations
-              .where((FinancialLocation l) => l.id == _locationId)
-              .firstOrNull;
+    final String? locationName = _resolvedLocationName;
     return FinanceDialogShell(
       title: 'دفعة مورد جديدة',
       actions: <Widget>[
@@ -1435,10 +1568,10 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
               height: 160,
               child: FinanceLoadingState(label: 'جارٍ تحميل خيارات الدفع…'),
             )
-          : (_methods.isEmpty || _locations.isEmpty)
+          : _methods.isEmpty
           ? const FinanceAlertBanner(
               message:
-                  'لا توجد طريقة دفع أو حساب نقدي/بنكي نشط. أضف واحداً من إعدادات المالية أولاً.',
+                  'لا توجد طريقة دفع نشطة. أضف واحدة من إعدادات المالية أولاً.',
               tone: FinanceTone.warning,
             )
           : SizedBox(
@@ -1448,6 +1581,25 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    DropdownButtonFormField<int?>(
+                      initialValue: _branchId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'الفرع'),
+                      items: <DropdownMenuItem<int?>>[
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('اختر الفرع'),
+                        ),
+                        ..._branches.map(
+                          (Branch b) => DropdownMenuItem<int?>(
+                            value: b.id,
+                            child: Text(b.name, overflow: TextOverflow.ellipsis),
+                          ),
+                        ),
+                      ],
+                      onChanged: (int? v) => _selectBranch(v),
+                    ),
+                    const SizedBox(height: FinanceSpace.md),
                     DropdownButtonFormField<int>(
                       initialValue: _methodId,
                       isExpanded: true,
@@ -1468,25 +1620,7 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                       onChanged: (int? v) => setState(() => _methodId = v),
                     ),
                     const SizedBox(height: FinanceSpace.md),
-                    DropdownButtonFormField<int>(
-                      initialValue: _locationId,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'الحساب النقدي/البنكي (المصدر)',
-                      ),
-                      items: _locations
-                          .map(
-                            (FinancialLocation l) => DropdownMenuItem<int>(
-                              value: l.id,
-                              child: Text(
-                                l.name,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (int? v) => setState(() => _locationId = v),
-                    ),
+                    _buildSourceField(),
                     const SizedBox(height: FinanceSpace.md),
                     InkWell(
                       onTap: _pickDate,
@@ -1574,11 +1708,11 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                       value: _remainingUnallocated,
                       danger: _remainingUnallocated.abs() > 0.0001,
                     ),
-                    if (location != null && _paymentAmount > 0) ...<Widget>[
+                    if (locationName != null && _paymentAmount > 0) ...<Widget>[
                       const SizedBox(height: FinanceSpace.lg),
                       FinanceAccountImpactPreview(
                         toLabel: 'حسابات الموردين الدائنة',
-                        fromLabel: location.name,
+                        fromLabel: locationName,
                         amount: _paymentAmount.toStringAsFixed(2),
                       ),
                     ],

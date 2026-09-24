@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Domain\Purchasing\PurchaseReceivingService;
+use App\Support\BranchLocalDate;
 use App\Support\FinanceAccess;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
@@ -43,11 +44,11 @@ final class PurchasePostingOrchestrator
             + ['cashSourceMode' => $mode, 'allowedCashLocations' => $mode === 'selectable' ? $this->cashSources->allowedLocations($tenantId, $actorId, $branchId) : []];
     }
 
-    public function post(Request $request, int $tenantId, int $invoiceId, string $key, int $actorId, ?int $selectedLocationId = null, ?string $paidAmount = null): object
+    public function post(Request $request, int $tenantId, int $invoiceId, string $key, int $actorId, ?int $selectedLocationId = null, ?string $paidAmount = null, ?string $paymentDate = null, ?string $receiptDate = null): object
     {
         $this->authorize($request, $tenantId, $invoiceId, $paidAmount === null || Money::cents($paidAmount, 'paidAmount') > 0);
 
-        return DB::transaction(function () use ($request, $tenantId, $invoiceId, $key, $actorId, $selectedLocationId, $paidAmount): object {
+        return DB::transaction(function () use ($request, $tenantId, $invoiceId, $key, $actorId, $selectedLocationId, $paidAmount, $paymentDate, $receiptDate): object {
             $invoice = $this->invoice($tenantId, $invoiceId, true);
             $wasDraft = $invoice->status === 'draft';
             $branchId = $this->requiredBranchId($invoice);
@@ -80,7 +81,7 @@ final class PurchasePostingOrchestrator
             }
 
             if ($invoice->receipt_mode === 'immediate' || ($invoice->receipt_mode === null && $wasDraft)) {
-                $this->receiveRemainingInventory($request, $tenantId, $invoice, $actorId);
+                $this->receiveRemainingInventory($request, $tenantId, $invoice, $actorId, $receiptDate ?? BranchLocalDate::today($branchId));
             }
 
             if ($paymentCents === 0) {
@@ -94,7 +95,7 @@ final class PurchasePostingOrchestrator
             $payment = $this->payments->pay($request, $tenantId, [
                 'supplierId' => (int) $invoice->supplier_id,
                 'branchId' => $branchId,
-                'paymentDate' => now()->toDateString(),
+                'paymentDate' => $paymentDate ?? BranchLocalDate::today($branchId),
                 'amount' => Money::decimal($paymentCents),
                 'paymentMethodId' => (int) $source->method->id,
                 'financialLocationId' => (int) $source->location->id,
@@ -127,7 +128,7 @@ final class PurchasePostingOrchestrator
         }, 3);
     }
 
-    private function receiveRemainingInventory(Request $request, int $tenantId, object $invoice, int $actorId): void
+    private function receiveRemainingInventory(Request $request, int $tenantId, object $invoice, int $actorId, string $receiptDate): void
     {
         $lines = DB::table('supplier_invoice_lines')->where('tenant_id', $tenantId)
             ->where('supplier_invoice_id', $invoice->id)->where('line_type', 'inventory')
@@ -153,7 +154,7 @@ final class PurchasePostingOrchestrator
             ];
         }
         $receipt = $this->receiving->create($request, $tenantId, (int) $invoice->id, [
-            'receiptDate' => now()->toDateString(),
+            'receiptDate' => $receiptDate,
             'reference' => $invoice->internal_reference,
             'notes' => 'استلام تلقائي عند ترحيل فاتورة الشراء',
             'idempotencyKey' => "purchase-post:{$invoice->id}:receipt",

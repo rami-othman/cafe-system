@@ -431,6 +431,7 @@ class _FakeBackend {
     'internalReference': 'AP-000010',
     'invoiceNumber': 'INV-777',
     'supplierId': 3,
+    'branchId': 1,
     'supplierName': 'Acme Roasters',
     'invoiceDate': '2026-08-01',
     'dueDate': '2020-01-01',
@@ -450,6 +451,7 @@ class _FakeBackend {
     'internalReference': 'AP-000011',
     'invoiceNumber': 'INV-778',
     'supplierId': 3,
+    'branchId': 1,
     'supplierName': 'Acme Roasters',
     'invoiceDate': '2026-08-02',
     'dueDate': '2026-09-02',
@@ -472,6 +474,7 @@ class _FakeBackend {
     'internalReference': 'AP-000012',
     'invoiceNumber': 'INV-779',
     'supplierId': 3,
+    'branchId': 1,
     'supplierName': 'Acme Roasters',
     'invoiceDate': '2026-08-03',
     'dueDate': '2026-09-03',
@@ -709,6 +712,18 @@ class _FakeBackend {
           'todayOutgoing': '0.00',
         },
       ]);
+    }
+    if (path == 'finance/cash-source-options') {
+      return _ok(options, <String, dynamic>{
+        'cashSourceMode': 'selectable',
+        'resolvedCashLocation': null,
+        // Exactly one authorized source for this branch — the one narrow
+        // case the dialog auto-selects (see D2); anything else requires an
+        // explicit pick.
+        'allowedCashLocations': <Map<String, dynamic>>[
+          <String, dynamic>{'id': 3, 'name': 'Cash Drawer'},
+        ],
+      });
     }
     if (path == 'finance/bank-accounts') {
       return _ok(options, <Map<String, dynamic>>[

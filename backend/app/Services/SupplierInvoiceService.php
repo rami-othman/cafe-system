@@ -154,7 +154,7 @@ class SupplierInvoiceService
         return DB::transaction(function () use ($request, $tenantId, $id, $actorId, $key, $fingerprint): object {
             $used = DB::table('supplier_invoices')->where('tenant_id', $tenantId)->where('posting_idempotency_key', $key)->lockForUpdate()->first();
             if ($used && (int) $used->id !== $id) {
-                abort(409, 'This idempotency key was already used to post a different supplier invoice.');
+                abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لترحيل فاتورة مورد مختلفة.');
             }
             $invoice = $this->find($tenantId, $id, true);
             $this->assertBranch($actorId, $tenantId, $invoice->branch_id);
@@ -295,14 +295,14 @@ class SupplierInvoiceService
     private function assertFingerprint(object $invoice, string $fingerprint): void
     {
         if (! $invoice->idempotency_fingerprint || ! hash_equals($invoice->idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different supplier invoice request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب فاتورة مورد مختلفة.');
         }
     }
 
     private function assertPostingFingerprint(object $invoice, string $fingerprint): void
     {
         if (! $invoice->posting_idempotency_fingerprint || ! hash_equals($invoice->posting_idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different posting request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب ترحيل مختلف.');
         }
     }
 

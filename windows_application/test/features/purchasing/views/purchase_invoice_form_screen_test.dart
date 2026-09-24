@@ -88,7 +88,7 @@ void main() {
   });
 
   testWidgets(
-    'saving a valid service line posts to the supplier-invoices endpoint with lines',
+    'saving a valid service line posts the line total, not a unit cost',
     (WidgetTester tester) async {
       final _FakeBackend backend = _FakeBackend();
       await _pump(tester, backend, preselectedSupplierId: 1);
@@ -100,8 +100,11 @@ void main() {
         find.widgetWithText(TextField, 'البيان'),
         'صيانة آلة الإسبريسو',
       );
+      // The default input is the line's total ("إجمالي البند"), matching
+      // what the supplier invoice actually shows — never a manually
+      // computed unit cost.
       await tester.enterText(
-        find.widgetWithText(TextField, 'تكلفة الوحدة'),
+        find.widgetWithText(TextField, 'إجمالي البند'),
         '60',
       );
       await tester.pumpAndSettle();
@@ -134,35 +137,77 @@ void main() {
           backend.lastCreatePayload!['lines'][0] as Map<String, dynamic>;
       expect(line['lineType'], 'expense');
       expect(line['description'], 'صيانة آلة الإسبريسو');
-      expect(line['unitCost'], '60');
-      expect(line.containsKey('lineGrossAmount'), isFalse);
+      expect(line['lineGrossAmount'], '60');
+      expect(line.containsKey('unitCost'), isFalse);
       expect(backend.lastCreatePayload!.containsKey('invoiceNumber'), isFalse);
     },
   );
 
-  testWidgets('quantity and unit cost update the read-only line gross', (
-    WidgetTester tester,
-  ) async {
-    await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
+  testWidgets(
+    'toggling to manual unit-cost mode sends unitCost instead of lineGrossAmount',
+    (WidgetTester tester) async {
+      final _FakeBackend backend = _FakeBackend();
+      await _pump(tester, backend, preselectedSupplierId: 1);
 
-    await tester.enterText(find.widgetWithText(TextField, 'الكمية'), '12');
-    await tester.enterText(
-      find.widgetWithText(TextField, 'تكلفة الوحدة'),
-      '21.6667',
-    );
-    await tester.pump();
+      await tester.tap(find.text('مصروف / خدمة'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'البيان'),
+        'Fixed unit price item',
+      );
+      // Switch the cost field from total-entry to manual unit-cost entry.
+      await tester.tap(find.byIcon(Icons.swap_horiz));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextField, 'تكلفة الوحدة'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'تكلفة الوحدة'),
+        '15',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('purchase-expense-category-dropdown'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Utilities').last);
+      await tester.pumpAndSettle();
 
-    final Finder grossField = find.byWidgetPredicate(
-      (Widget widget) =>
-          widget is InputDecorator &&
-          widget.decoration.labelText == 'إجمالي الصنف',
-    );
-    expect(
-      find.descendant(of: grossField, matching: find.text('260.00')),
-      findsOneWidget,
-    );
-    expect(find.widgetWithText(TextField, 'إجمالي الصنف'), findsNothing);
-  });
+      await tester.tap(find.text('حفظ كمسودة'));
+      await tester.pumpAndSettle();
+
+      final Map<String, dynamic> line =
+          backend.lastCreatePayload!['lines'][0] as Map<String, dynamic>;
+      expect(line['unitCost'], '15');
+      expect(line.containsKey('lineGrossAmount'), isFalse);
+    },
+  );
+
+  testWidgets(
+    'entering quantity 1850 and total 350 shows the line total unchanged, not a recomputed value',
+    (WidgetTester tester) async {
+      await _pump(tester, _FakeBackend(), preselectedSupplierId: 1);
+
+      await tester.enterText(find.widgetWithText(TextField, 'الكمية'), '1850');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'إجمالي البند'),
+        '350',
+      );
+      await tester.pump();
+
+      final Finder grossField = find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is InputDecorator &&
+            widget.decoration.labelText == 'إجمالي الصنف',
+      );
+      // The gross preview is exactly the typed total — never a lossy
+      // quantity*derived-unit-cost recomputation of the repeating decimal.
+      expect(
+        find.descendant(of: grossField, matching: find.text('350.00')),
+        findsOneWidget,
+      );
+    },
+  );
 
   for (final Size size in <Size>[const Size(1280, 800), const Size(500, 800)]) {
     testWidgets('purchase lines remain overflow-free in RTL at ${size.width}', (
@@ -177,7 +222,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('إجمالي الصنف'), findsOneWidget);
-      expect(find.text('تكلفة الوحدة'), findsOneWidget);
+      expect(find.text('إجمالي البند'), findsOneWidget);
     });
   }
 }

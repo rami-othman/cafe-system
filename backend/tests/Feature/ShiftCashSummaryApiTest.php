@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use App\Services\ShiftCashSummaryService;
 use Tests\TestCase;
 
 /**
@@ -21,6 +22,8 @@ class ShiftCashSummaryApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
+        $this->configureCloseDestination($tenant, $branchId);
+        $this->fundOpeningCash($tenant, $branchId, $headers, '100.00');
 
         $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 100], $headers)->assertCreated();
         $shiftId = $shift->json('data.id');
@@ -33,11 +36,12 @@ class ShiftCashSummaryApiTest extends TestCase
         // A 50.00 cash refund against the second sale.
         $this->postJson("/api/v1/orders/{$orderId2}/refunds", ['type' => 'partial', 'amount' => 50, 'reason' => 'Shift cash test refund', 'idempotencyKey' => 'shift-cash-refund-1'], $headers)->assertCreated();
 
-        $closed = $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 545, 'cashDifferenceReason' => 'change_error'], $headers)->assertOk();
-
-        $this->assertSame(550.0, (float) $closed->json('data.expectedCash'));
-        $this->assertSame(545.0, (float) $closed->json('data.closingCash'));
-        $this->assertSame(-5.0, (float) $closed->json('data.cashDifference'));
+        $summary = app(ShiftCashSummaryService::class)->summarize($tenant, DB::table('shifts')->find($shiftId));
+        $this->assertSame('550.00', $summary['expectedCash']);
+        $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 545, 'cashDifferenceReason' => 'change_error'], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('closingCash');
+        $this->assertSame('open', DB::table('shifts')->where('id', $shiftId)->value('status'));
+        $this->assertSame(0, DB::table('cash_transfers')->where('shift_id', $shiftId)->count());
     }
 
     public function test_card_sales_and_card_refunds_are_excluded_from_the_cash_drawer_figure(): void
@@ -46,10 +50,12 @@ class ShiftCashSummaryApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
+        $this->configureCloseDestination($tenant, $branchId);
         $bankAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1030')->value('id');
         $cardMethodId = $this->postJson('/api/v1/finance/payment-methods', ['code' => 'CARD', 'name' => 'Card', 'type' => 'card', 'financialAccountId' => $bankAccountId, 'isActive' => true], $headers)
             ->assertCreated()->json('data.id');
 
+        $this->fundOpeningCash($tenant, $branchId, $headers, '100.00');
         $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 100], $headers)->assertCreated();
         $shiftId = $shift->json('data.id');
 
@@ -71,7 +77,9 @@ class ShiftCashSummaryApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
+        $this->configureCloseDestination($tenant, $branchId);
         $actorId = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id');
+        $this->fundOpeningCash($tenant, $branchId, $headers, '100.00');
         $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 100], $headers)->assertCreated();
         $shiftId = (int) $shift->json('data.id');
 
@@ -85,8 +93,12 @@ class ShiftCashSummaryApiTest extends TestCase
 
         // 100 - 10 + 5 - 2 = 93. The movement table must never be merely
         // cosmetic: it changes the reconciliation target at close time.
-        $closed = $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 93], $headers)->assertOk();
-        $this->assertSame(93.0, (float) $closed->json('data.expectedCash'));
+        $summary = app(ShiftCashSummaryService::class)->summarize($tenant, DB::table('shifts')->find($shiftId));
+        $this->assertSame('93.00', $summary['expectedCash']);
+        // These legacy shift movements have no posted cash lines; closing
+        // must not transfer against a drawer ledger that cannot reconcile.
+        $this->postJson("/api/v1/shifts/{$shiftId}/close", ['closingCash' => 93], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('closingCash');
     }
 
     public function test_current_snapshot_exposes_the_server_authoritative_shift_shape(): void
@@ -95,6 +107,8 @@ class ShiftCashSummaryApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
+        $this->configureCloseDestination($tenant, $branchId);
+        $this->fundOpeningCash($tenant, $branchId, $headers, '25.00');
         $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 25], $headers)->assertCreated();
 
         $this->getJson('/api/v1/shifts/current/snapshot?branchId='.$branchId, $headers)
@@ -111,7 +125,9 @@ class ShiftCashSummaryApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
+        $this->configureCloseDestination($tenant, $branchId);
 
+        $this->fundOpeningCash($tenant, $branchId, $headers, '50.25');
         $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => '50.25'], $headers)->assertCreated();
         $shiftId = $shift->json('data.id');
 
@@ -134,6 +150,7 @@ class ShiftCashSummaryApiTest extends TestCase
         $headers = $this->headers($tenant);
         $downtown = $this->downtownBranchId($tenant);
         $mainBranch = (int) DB::table('branches')->where('tenant_id', $tenant)->where('name', 'Main Branch')->value('id');
+        $this->configureCloseDestination($tenant, $downtown);
 
         $shiftDowntown = $this->postJson('/api/v1/shifts/current', ['branchId' => $downtown, 'openingCash' => 0], $headers)->assertCreated();
         $shiftMain = $this->postJson('/api/v1/shifts/current', ['branchId' => $mainBranch, 'openingCash' => 0], $headers)->assertCreated();
@@ -177,6 +194,25 @@ class ShiftCashSummaryApiTest extends TestCase
         $this->postJson("/api/v1/orders/{$orderId}/pay", $payload, $headers)->assertOk();
 
         return $orderId;
+    }
+
+    private function configureCloseDestination(int $tenant, int $branchId): void
+    {
+        $safe = DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'MAIN-SAFE')->value('id');
+        DB::table('branches')->where('id', $branchId)->update(['shift_close_destination_financial_location_id' => $safe]);
+    }
+
+    private function fundOpeningCash(int $tenant, int $branchId, array $headers, string $amount): void
+    {
+        $drawer = DB::table('branches')->where('id', $branchId)->value('pos_cash_financial_location_id');
+        $safe = DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'MAIN-SAFE')->value('id');
+        $this->postJson('/api/v1/finance/cash-transfers', [
+            'fromFinancialLocationId' => $safe,
+            'toFinancialLocationId' => $drawer,
+            'amount' => $amount,
+            'transferDate' => now()->toDateString(),
+            'idempotencyKey' => 'shift-opening-'.$branchId,
+        ], $headers)->assertCreated();
     }
 
     private function downtownBranchId(int $tenant): int

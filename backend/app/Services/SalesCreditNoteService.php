@@ -108,6 +108,31 @@ final class SalesCreditNoteService
             ->pluck('l.quantity')->reduce(fn (int $total, mixed $qty): int => $total + $this->milli($qty), 0);
     }
 
+    /** The posted direct-cash payment for this invoice, or null when the original invoice was sold to a registered (credit) customer. */
+    public function directPayment(int $tenantId, int $invoiceId): ?object
+    {
+        return DB::table('customer_payments')->where('tenant_id', $tenantId)
+            ->where('direct_sales_invoice_id', $invoiceId)->where('status', 'posted')->first();
+    }
+
+    /**
+     * Cents already refunded in cash against a direct-cash invoice via prior
+     * POSTED credit notes — the cumulative-safe basis for capping a new
+     * cash refund at what was actually collected (never AR, never
+     * customer credit — §"Direct Cash Refund Contract"). Pass $lock inside
+     * a posting transaction to serialize concurrent partial refunds against
+     * the same invoice.
+     */
+    public function directSaleRefundedCents(int $tenantId, int $invoiceId, bool $lock = false): int
+    {
+        $query = DB::table('sales_credit_notes')->where('tenant_id', $tenantId)->where('original_sales_invoice_id', $invoiceId)->where('status', 'posted');
+        if ($lock) {
+            return $query->lockForUpdate()->pluck('total')->reduce(fn (int $total, mixed $amount): int => $total + Money::cents($amount), 0);
+        }
+
+        return Money::cents($query->sum('total') ?: '0');
+    }
+
     /** @return array<int, array<string, mixed>> */
     private function pricedLines(int $tenantId, int $invoiceId, array $input): array
     {

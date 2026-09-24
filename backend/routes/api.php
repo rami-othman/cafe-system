@@ -455,6 +455,8 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('items/{item}/status', [InventoryItemController::class, 'status'])->middleware('inventory.permission:inventory.items.manage');
             Route::get('items/{item}/stock', [InventoryItemController::class, 'stock'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/movements', [InventoryItemController::class, 'movements'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}/recipe-usage', [InventoryItemController::class, 'recipeUsage'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}/purchase-history', [InventoryItemController::class, 'purchaseHistory'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'index'])->middleware('inventory.permission:inventory.view');
             Route::post('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'store'])->middleware('inventory.permission:inventory.items.manage');
             Route::patch('items/{item}/unit-conversions/{conversion}', [InventoryItemUnitConversionController::class, 'update'])->middleware('inventory.permission:inventory.items.manage');

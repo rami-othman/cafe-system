@@ -975,3 +975,104 @@ class InventoryAlertSummary {
         total: readInt(json['total']) ?? 0,
       );
 }
+
+class InventoryRecipeUsage {
+  const InventoryRecipeUsage({
+    required this.source,
+    required this.productName,
+    required this.variantName,
+    required this.isActive,
+    required this.quantity,
+    required this.unit,
+    this.condition,
+  });
+  final String source;
+  final String productName;
+  final String variantName;
+  final bool isActive;
+  final String quantity;
+  final String unit;
+  final String? condition;
+
+  factory InventoryRecipeUsage.fromJson(Map<String, dynamic> json) =>
+      InventoryRecipeUsage(
+        source: readString(json['source']),
+        productName: readString(json['productName']),
+        variantName: readString(json['variantName']),
+        isActive: readBool(json['isActive']),
+        quantity: readString(json['quantity'], fallback: '0'),
+        unit: readString(json['unit'], fallback: 'unit'),
+        condition: readString(json['condition']).isEmpty
+            ? null
+            : readString(json['condition']),
+      );
+}
+
+class InventoryPurchaseHistoryEntry {
+  const InventoryPurchaseHistoryEntry({
+    required this.receiptId,
+    required this.receiptNumber,
+    required this.receiptDate,
+    required this.supplierName,
+    required this.invoiceNumber,
+    required this.invoiceDate,
+    required this.warehouseName,
+    required this.quantity,
+    required this.unit,
+    required this.unitCost,
+    required this.lineTotal,
+  });
+  final int receiptId;
+  final String receiptNumber;
+  final String receiptDate;
+  final String supplierName;
+  final String invoiceNumber;
+  final String invoiceDate;
+  final String warehouseName;
+  final String quantity;
+  final String unit;
+  final String unitCost;
+  final String lineTotal;
+
+  factory InventoryPurchaseHistoryEntry.fromJson(Map<String, dynamic> json) =>
+      InventoryPurchaseHistoryEntry(
+        receiptId: readInt(json['receiptId']) ?? 0,
+        receiptNumber: readString(json['receiptNumber']),
+        receiptDate: readString(json['receiptDate']),
+        supplierName: readString(json['supplierName']),
+        invoiceNumber: readString(json['invoiceNumber']),
+        invoiceDate: readString(json['invoiceDate']),
+        warehouseName: readString(json['warehouseName']),
+        quantity: readString(json['quantity'], fallback: '0.000'),
+        unit: readString(json['unit'], fallback: 'unit'),
+        unitCost: readString(json['unitCost'], fallback: '0.0000'),
+        lineTotal: readString(json['lineTotal'], fallback: '0.00'),
+      );
+}
+
+class InventoryPurchaseHistoryPage {
+  const InventoryPurchaseHistoryPage({
+    required this.entries,
+    required this.currentPage,
+    required this.lastPage,
+    required this.total,
+  });
+  final List<InventoryPurchaseHistoryEntry> entries;
+  final int currentPage;
+  final int lastPage;
+  final int total;
+
+  factory InventoryPurchaseHistoryPage.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> meta = Map<String, dynamic>.from(
+      json['meta'] as Map? ?? const <String, dynamic>{},
+    );
+    return InventoryPurchaseHistoryPage(
+      entries: readMapList(
+        json['data'],
+      ).map(InventoryPurchaseHistoryEntry.fromJson).toList(growable: false),
+      currentPage: readInt(meta['currentPage']) ?? 1,
+      lastPage: readInt(meta['lastPage']) ?? 1,
+      total: readInt(meta['total']) ?? 0,
+    );
+  }
+}

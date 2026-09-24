@@ -71,6 +71,11 @@ final class CashSourceResolver
             || ($mode === 'selectable' && ! collect($this->allowedLocations($tenantId, $actorId, $branchId))->contains('id', (int) $location->id))) {
             throw ValidationException::withMessages(['financialLocationId' => 'الصندوق المحدد غير متاح لهذا الفرع.']);
         }
+        if ($mode === 'selectable' && $location->type === 'cash_drawer'
+            && DB::table('shifts')->where('tenant_id', $tenantId)->where('financial_location_id', $location->id)
+                ->where('status', 'open')->whereNull('deleted_at')->exists()) {
+            throw ValidationException::withMessages(['financialLocationId' => 'هذا الصندوق مرتبط بوردية مفتوحة. استخدم حركة نقدية معتمدة مرتبطة بالوردية.']);
+        }
         return (object) ['location' => $location, 'shift' => $shift, 'mode' => $mode];
     }
 
