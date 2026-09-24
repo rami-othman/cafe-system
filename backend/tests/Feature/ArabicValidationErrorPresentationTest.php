@@ -185,6 +185,76 @@ class ArabicValidationErrorPresentationTest extends TestCase
         $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
     }
 
+    /**
+     * Locale precedence (see App\Http\Middleware\SetLocaleFromRequest):
+     * no explicit `X-App-Locale` header must still default to Arabic, even
+     * though this exact request goes through Symfony's test HTTP client.
+     */
+    public function test_no_explicit_app_locale_defaults_to_arabic(): void
+    {
+        $tenant = $this->tenant('f-locale-default');
+        $headers = $this->headers($tenant);
+
+        $response = $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
+
+        $this->assertStringContainsString('مطلوب', $response->json('errors.name.0'));
+    }
+
+    public function test_explicit_app_locale_ar_returns_arabic(): void
+    {
+        $tenant = $this->tenant('f-locale-ar');
+        $headers = $this->headers($tenant) + ['X-App-Locale' => 'ar'];
+
+        $response = $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
+
+        $this->assertStringContainsString('مطلوب', $response->json('errors.name.0'));
+    }
+
+    public function test_explicit_app_locale_en_returns_english(): void
+    {
+        $tenant = $this->tenant('f-locale-en');
+        $headers = $this->headers($tenant) + ['X-App-Locale' => 'en'];
+
+        $response = $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
+
+        $this->assertStringContainsString('required', $response->json('errors.name.0'));
+    }
+
+    public function test_unsupported_app_locale_falls_back_to_arabic_default(): void
+    {
+        $tenant = $this->tenant('f-locale-unsupported');
+        $headers = $this->headers($tenant) + ['X-App-Locale' => 'fr-FR'];
+
+        $response = $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
+
+        $this->assertStringContainsString('مطلوب', $response->json('errors.name.0'));
+    }
+
+    public function test_region_qualified_app_locale_is_normalized(): void
+    {
+        $tenant = $this->tenant('f-locale-region');
+        $headers = $this->headers($tenant) + ['X-App-Locale' => 'en-US'];
+
+        $response = $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
+
+        $this->assertStringContainsString('required', $response->json('errors.name.0'));
+    }
+
+    /**
+     * The whole point of X-App-Locale: an ambient Accept-Language header
+     * that the app itself never chose (Symfony's test client always sends
+     * one) must NOT silently override the Arabic default.
+     */
+    public function test_ambient_accept_language_does_not_override_arabic_default(): void
+    {
+        $tenant = $this->tenant('f-locale-ambient');
+        $headers = $this->headers($tenant) + ['Accept-Language' => 'en-us,en;q=0.5'];
+
+        $response = $this->postJson('/api/v1/finance/suppliers', [], $headers)->assertStatus(422);
+
+        $this->assertStringContainsString('مطلوب', $response->json('errors.name.0'));
+    }
+
     private function tenant(string $slug): int
     {
         $tenantId = DB::table('tenants')->insertGetId(['name' => ucfirst($slug), 'slug' => $slug, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);

@@ -29,7 +29,11 @@ class DioApiClient {
       InterceptorsWrapper(
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
-          options.headers['Accept-Language'] = CurrentLocale.languageCode;
+          // A dedicated header, not Accept-Language: the backend must be able
+          // to tell "the app deliberately selected this language" apart from
+          // an ambient Accept-Language a generic HTTP client (or a test tool)
+          // might send on its own without the app ever choosing it.
+          options.headers['X-App-Locale'] = CurrentLocale.languageCode;
           if (options.data is FormData) {
             options.headers.remove(Headers.contentTypeHeader);
           } else {
