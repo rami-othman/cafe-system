@@ -44,8 +44,12 @@ final class PosCashLocationResolver
         }
 
         $locationId = (int) $saleLocationIds[0];
+        // H1: the caller (RefundController) already holds this shift's
+        // exclusive lock for cash refunds before reaching here; a shared lock
+        // is still taken here so this resolver is self-sufficiently race-safe
+        // for any other caller, without escalating an already-exclusive lock.
         $shiftExists = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $payment->shift_id)
-            ->where('branch_id', $order->branch_id)->exists();
+            ->where('branch_id', $order->branch_id)->sharedLock()->first() !== null;
         if (! $shiftExists) {
             return null;
         }

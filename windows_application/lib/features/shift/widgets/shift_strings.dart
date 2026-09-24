@@ -98,6 +98,21 @@ abstract final class ShiftStrings {
   static const String cashShortage = 'عجز في الصندوق';
   static const String cashSurplus = 'زيادة في الصندوق';
 
+  // Close type (A2): only a manual close is physically counted.
+  static const String closeType = 'طريقة الإغلاق';
+  static const String closeTypeManual = 'إغلاق يدوي (معدود)';
+  static const String closeTypeAutomatic = 'إغلاق تلقائي (غير معدود)';
+  static const String closeTypeLegacyReconcile = 'تسوية إدارية لورديات متداخلة';
+  static const String closeTypeUnknown = 'نوع إغلاق غير معروف';
+  static const String notCounted = 'غير معدود';
+  static const String notApplicable = '—';
+  static const String automaticCloseNotice =
+      'أُغلقت الوردية تلقائيًا بالمبلغ المتوقع دون عدّ فعلي للصندوق.';
+  static const String legacyReconcileNotice =
+      'أُغلقت الوردية إداريًا ضمن تسوية ورديات متداخلة على الصندوق نفسه؛ لا يوجد عدّ أو فرق أو تحويل خاص بهذه الوردية وبقيت النقدية في الصندوق.';
+  static const String unknownCloseTypeNotice =
+      'نوع إغلاق هذه الوردية غير معروف لهذا الإصدار من التطبيق، لذلك لا تُعرض تفاصيل العدّ أو الفرق. يرجى تحديث التطبيق.';
+
   // Bar count
   static const String barCount = 'جرد البار';
   static const String barCountStatus = 'حالة جرد البار';

@@ -112,6 +112,7 @@ class FinancialSetupService
                 ->where('is_active', true)->whereNull('deleted_at')->pluck('id');
             foreach ($branchIds as $branchId) {
                 $this->ensureBranchCashDrawer($tenantId, (int) $branchId, $actorId);
+                $this->ensureDefaultShiftCloseDestination($tenantId, (int) $branchId);
             }
             $this->ensureSalesDefaults($tenantId, $actorId);
             $this->ensureDefaultInvoiceTypes($tenantId);
@@ -228,6 +229,35 @@ class FinancialSetupService
         if (isset($accounts['1010'])) {
             DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => null, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
         }
+    }
+
+    /**
+     * Provisioning default only: a branch with NO shift close destination gets
+     * the tenant's protected global MAIN-SAFE, so a freshly provisioned branch
+     * can run a closable shift. An explicit destination is never replaced, and
+     * already-open shifts are never touched (they keep their snapshot).
+     */
+    public function ensureDefaultShiftCloseDestination(int $tenantId, int $branchId): ?int
+    {
+        if (! Schema::hasColumn('branches', 'shift_close_destination_financial_location_id')) {
+            return null;
+        }
+        $branch = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->first();
+        if (! $branch || $branch->shift_close_destination_financial_location_id) {
+            return $branch?->shift_close_destination_financial_location_id ? (int) $branch->shift_close_destination_financial_location_id : null;
+        }
+        $safe = DB::table('financial_locations as l')->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+            ->where('l.tenant_id', $tenantId)->where('l.code', 'MAIN-SAFE')->whereNull('l.branch_id')
+            ->where('l.kind', 'cash')->where('l.is_active', true)
+            ->where('a.tenant_id', $tenantId)->where('a.is_active', true)->whereNull('a.deleted_at')
+            ->value('l.id');
+        if (! $safe || (int) $safe === (int) $branch->pos_cash_financial_location_id) {
+            return null;
+        }
+        DB::table('branches')->where('id', $branchId)->whereNull('shift_close_destination_financial_location_id')
+            ->update(['shift_close_destination_financial_location_id' => $safe, 'updated_at' => now()]);
+
+        return (int) $safe;
     }
 
     /** Keep an existing branch drawer's ID and account; never substitute the global legacy drawer. */

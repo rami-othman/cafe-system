@@ -12,6 +12,7 @@ use App\Services\OrderLifecyclePolicy;
 use App\Services\PosPricingService;
 use App\Services\PosCashLocationResolver;
 use App\Services\SaleConsumptionService;
+use App\Services\ShiftLockService;
 use App\Support\BranchLocalDate;
 use App\Support\Money;
 use App\Support\PaymentPerformanceProbe;
@@ -33,6 +34,7 @@ class PaymentController extends Controller
         private readonly SaleConsumptionService $consumption,
         private readonly PaymentPerformanceProbe $performance,
         private readonly PosCashLocationResolver $cashLocations,
+        private readonly ShiftLockService $shiftLocks,
     ) {}
 
     public function summary(Request $request, int $order): JsonResponse
@@ -232,18 +234,24 @@ class PaymentController extends Controller
         ]];
     }
 
+    /**
+     * Acquires a shared row lock on the order's shift, held for the rest of
+     * this transaction (H1). This is what stops the shift being observed as
+     * "open" here after shifts:reconcile-overlap has already exclusively
+     * locked it to close it: the reconciliation's FOR UPDATE either blocks
+     * until this transaction commits, or this lock blocks until reconciliation
+     * commits and this SELECT then sees the shift already closed.
+     */
     private function assertActorHasOpenShift(int $tenantId, object $order, int $actorId): void
     {
-        $hasOpenShift = $order->shift_id !== null && DB::table('shifts')
-            ->where('tenant_id', $tenantId)
-            ->where('id', $order->shift_id)
-            ->where('branch_id', $order->branch_id)
-            ->where('user_id', $actorId)
-            ->where('status', 'open')
-            ->whereNull('deleted_at')
-            ->exists();
-
-        if (! $hasOpenShift) {
+        if ($order->shift_id === null) {
+            throw ValidationException::withMessages([
+                'shiftId' => 'No open shift found. Open a shift before paying.',
+            ]);
+        }
+        try {
+            $this->shiftLocks->sharedOpenShift($tenantId, (int) $order->shift_id, (int) $order->branch_id, $actorId);
+        } catch (ValidationException) {
             throw ValidationException::withMessages([
                 'shiftId' => 'No open shift found. Open a shift before paying.',
             ]);

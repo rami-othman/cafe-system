@@ -2,39 +2,36 @@
 
 namespace App\Services;
 
-use App\Support\Money;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
+/**
+ * Unattended close at the branch's configured shift_close_time. It uses the
+ * exact same primitives as the manual close (ShiftCloseService ->
+ * ShiftCashSummaryService -> ShiftCloseTransferService); there is no separate
+ * accounting algorithm here.
+ *
+ * No physical count exists, so closing_cash stays NULL and close_type is
+ * `automatic`: reports present it as an expected (uncounted) close.
+ */
 final class AutomaticShiftCloseService
 {
-    public function __construct(private readonly ShiftCashSummaryService $cash, private readonly ShiftCloseTransferService $transfers) {}
+    public function __construct(private readonly ShiftCloseService $closer) {}
 
-    public function close(int $tenantId, int $shiftId): void
+    /** @return bool true when this call closed the shift, false when it was already closed/absent */
+    public function close(int $tenantId, int $shiftId): bool
     {
-        DB::transaction(function () use ($tenantId, $shiftId): void {
-            $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shiftId)->lockForUpdate()->first();
-            if (! $shift || $shift->status !== 'open') return;
-            $pendingCheck = DB::table('bar_check_templates as t')
-                ->where('t.tenant_id', $tenantId)->where('t.branch_id', $shift->branch_id)
-                ->where('t.is_active', true)->where('t.required_for_shift_close', true)
-                ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('stock_counts as c')
-                    ->whereColumn('c.bar_check_template_id', 't.id')->where('c.shift_id', $shift->id)
-                    ->where('c.status', 'posted'))->exists();
-            if ($pendingCheck) {
-                throw ValidationException::withMessages(['barCheck' => 'Complete the required bar check before closing the shift.']);
+        return DB::transaction(function () use ($tenantId, $shiftId): bool {
+            $shift = $this->closer->lock($tenantId, $shiftId);
+            if (! $shift || $shift->status !== 'open') {
+                return false;
             }
-            $summary = $this->cash->summarize($tenantId, $shift);
             $request = Request::create('/internal/shift-close', 'POST');
-            $request->attributes->set('auth_user', \App\Models\User::query()->where('tenant_id', $tenantId)->findOrFail($shift->user_id));
-            $transferId = $this->transfers->create($request, $tenantId, $shift, Money::cents($summary['expectedCash']), 'system');
-            DB::table('shifts')->where('id', $shift->id)->update([
-                'expected_cash' => $summary['expectedCash'], 'closing_cash' => null,
-                'cash_difference' => '0.00', 'close_type' => 'automatic',
-                'close_transfer_id' => $transferId, 'status' => 'closed',
-                'closed_at' => now(), 'updated_at' => now(),
-            ]);
+            $request->attributes->set('auth_user', User::query()->where('tenant_id', $tenantId)->findOrFail($shift->user_id));
+            $this->closer->close($request, $tenantId, $shift, ShiftCloseService::TYPE_AUTOMATIC, null);
+
+            return true;
         });
     }
 }

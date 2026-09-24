@@ -40,7 +40,7 @@ class ShiftRepository {
       }
       return snapshot;
     } on ApiException catch (error) {
-      throw ShiftDataException(error.message);
+      throw ShiftDataException(_lifecycleMessage(error));
     }
   }
 
@@ -67,7 +67,7 @@ class ShiftRepository {
       );
       return _closing(_map(response));
     } on ApiException catch (error) {
-      throw ShiftDataException(error.message);
+      throw ShiftDataException(_lifecycleMessage(error));
     }
   }
 
@@ -94,6 +94,22 @@ class ShiftRepository {
       if (error.statusCode == 404) return null;
       throw ShiftDataException(error.message);
     }
+  }
+
+  /// Open/close failures carry the actionable, server-localized reason in a
+  /// field error (drawer not configured, close destination missing, drawer
+  /// already has an open shift, opening count differs from the drawer ledger,
+  /// ...). Surface that instead of the generic "please correct the input".
+  String _lifecycleMessage(ApiException error) {
+    final Map<String, List<String>>? fields = error.validationErrors;
+    if (fields != null) {
+      for (final List<String> messages in fields.values) {
+        if (messages.isNotEmpty && messages.first.trim().isNotEmpty) {
+          return messages.first;
+        }
+      }
+    }
+    return error.message;
   }
 
   DioApiClient get _client {
@@ -156,8 +172,8 @@ class ShiftRepository {
   PendingOperation _pending(Map<String, dynamic> json) => PendingOperation(kind: PendingOperationKind.barCount, reference: json['reference']?.toString() ?? '', detail: json['detail']?.toString() ?? '', blocking: json['blocking'] == true, amount: json['amount'] == null ? null : _double(json['amount']));
   ShiftRefundEntry _refund(Map<String, dynamic> json) => ShiftRefundEntry(orderNumber: json['orderNumber']?.toString() ?? '', occurredAt: _date(json['occurredAt']), amount: _double(json['amount']), reason: json['reason']?.toString() ?? '', channel: _channel(json['channel']));
   ShiftDiscountEntry _discount(Map<String, dynamic> json) => ShiftDiscountEntry(policyName: json['policyName']?.toString() ?? '', appliedCount: _int(json['appliedCount']), amount: _double(json['amount']));
-  ShiftHistoryEntry _history(Map<String, dynamic> json) => ShiftHistoryEntry(shiftNumber: json['shiftNumber']?.toString() ?? '', date: _date(json['date']), cashierName: json['cashierName']?.toString() ?? '', branchName: json['branchName']?.toString() ?? '', openedAt: _date(json['openedAt']), closedAt: _date(json['closedAt']), orderCount: _int(json['orderCount']), netSales: _double(json['netSales']), cashSales: _double(json['cashSales']), cashDifference: _double(json['cashDifference']), barDifferenceCount: _int(json['barDifferenceCount']), status: json['status'] == 'closedWithDifference' ? ShiftHistoryStatus.closedWithDifference : ShiftHistoryStatus.closed);
-  ShiftClosingResult _closing(Map<String, dynamic> json) { final Map<String, dynamic> cash = _map(json['cash']); return ShiftClosingResult(snapshot: _snapshot(_map(json['snapshot'])), cash: CashCountResult(expected: _double(cash['expected']), actual: _double(cash['actual']), reason: _nullableReason(cash['reason']), reasonDetail: cash['reasonDetail']?.toString() ?? ''), closingNotes: json['closingNotes']?.toString() ?? '', closedAt: _date(json['closedAt']), closedBy: json['closedBy']?.toString() ?? '', reportNumber: json['reportNumber']?.toString() ?? ''); }
+  ShiftHistoryEntry _history(Map<String, dynamic> json) => ShiftHistoryEntry(shiftNumber: json['shiftNumber']?.toString() ?? '', date: _date(json['date']), cashierName: json['cashierName']?.toString() ?? '', branchName: json['branchName']?.toString() ?? '', openedAt: _date(json['openedAt']), closedAt: _date(json['closedAt']), orderCount: _int(json['orderCount']), netSales: _double(json['netSales']), cashSales: _double(json['cashSales']), cashDifference: _double(json['cashDifference']), barDifferenceCount: _int(json['barDifferenceCount']), status: json['status'] == 'closedWithDifference' ? ShiftHistoryStatus.closedWithDifference : ShiftHistoryStatus.closed, closeMode: ShiftCloseMode.fromApi(json['closeType']));
+  ShiftClosingResult _closing(Map<String, dynamic> json) { final Map<String, dynamic> cash = _map(json['cash']); return ShiftClosingResult(snapshot: _snapshot(_map(json['snapshot'])), cash: CashCountResult(expected: _double(cash['expected']), actual: _double(cash['actual']), reason: _nullableReason(cash['reason']), reasonDetail: cash['reasonDetail']?.toString() ?? ''), closingNotes: json['closingNotes']?.toString() ?? '', closedAt: _date(json['closedAt']), closedBy: json['closedBy']?.toString() ?? '', reportNumber: json['reportNumber']?.toString() ?? '', closeMode: ShiftCloseMode.fromApi(json['closeType'])); }
 
   PaymentChannel _channel(Object? value) => switch (value?.toString()) { 'cash' => PaymentChannel.cash, 'card' => PaymentChannel.card, 'transfer' => PaymentChannel.transfer, 'customerCredit' => PaymentChannel.customerCredit, _ => PaymentChannel.other };
   CashMovementKind _movement(Object? value) => switch (value?.toString()) { 'cashSale' => CashMovementKind.cashSale, 'cashRefund' => CashMovementKind.cashRefund, 'withdrawal' => CashMovementKind.withdrawal, 'deposit' => CashMovementKind.deposit, 'expense' => CashMovementKind.expense, _ => CashMovementKind.openingFloat };

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Services\PosNumberGenerator;
+use App\Services\ShiftOverlapReconciliationService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
@@ -44,6 +45,18 @@ try {
     $result = match ($mode) {
         'payment' => authenticatedResponse('/api/v1/orders/'.$payload['orderId'].'/pay', $payload),
         'refund' => authenticatedResponse('/api/v1/orders/'.$payload['orderId'].'/refunds', $payload),
+        'shift-open' => authenticatedResponse('/api/v1/shifts/current', $payload),
+        'order-create' => authenticatedResponse('/api/v1/orders', $payload),
+        // Runs the reconciliation service in-process (not over HTTP) so the
+        // race is against the exact transaction shifts:reconcile-overlap runs.
+        'reconcile' => (function () use ($payload): array {
+            $report = app(ShiftOverlapReconciliationService::class)->reconcile(
+                (int) $payload['tenantId'], (int) $payload['financialLocationId'],
+                $payload['confirmedCash'], $payload['reason'], (int) $payload['actorId'], true,
+            );
+
+            return ['applied' => $report['applied'], 'blockers' => $report['blockers']];
+        })(),
         'order-number' => DB::transaction(function () use ($payload): array {
             $number = app(PosNumberGenerator::class)->nextOrderNumber($payload['tenantId'], $payload['branchId']);
             $now = now();
@@ -68,7 +81,7 @@ try {
     if ($result instanceof JsonResponse) {
         $body = json_decode((string) $result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         if ($result->getStatusCode() >= 400) {
-            echo json_encode(['ok' => false, 'code' => $body['code'] ?? null, 'message' => $body['message'] ?? 'Request failed.'], JSON_THROW_ON_ERROR);
+            echo json_encode(['ok' => false, 'code' => $body['code'] ?? null, 'message' => $body['message'] ?? 'Request failed.', 'status' => $result->getStatusCode(), 'errors' => $body['errors'] ?? null], JSON_THROW_ON_ERROR);
             exit(1);
         }
         $result = $body;

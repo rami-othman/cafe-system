@@ -187,6 +187,8 @@ class ReportsOverviewController extends Controller
         $filter = $branchId ? [$branchId] : $allowedBranchIds;
         $cash = DB::table('shifts as shifts')->join('branches', 'branches.id', '=', 'shifts.branch_id')
             ->where('shifts.tenant_id', $tenantId)->whereIn('shifts.branch_id', $filter)->where('shifts.status', 'closed')->where('shifts.cash_difference', '!=', 0)
+            // Only physically counted closes can be cash differences (never automatic/legacy_reconcile).
+            ->whereNotNull('shifts.closing_cash')->where(fn ($q) => $q->whereNull('shifts.close_type')->orWhere('shifts.close_type', 'manual'))
             ->whereBetween('shifts.closed_at', [$from, $to])->select(['shifts.id', 'shifts.cash_difference', 'shifts.closed_at', 'branches.name as branch'])
             ->get()->map(fn (object $shift) => ['severity' => 'critical', 'description' => 'Cash difference of '.number_format((float) $shift->cash_difference, 2).' on closed shift #'.$shift->id, 'branch' => $shift->branch, 'occurredAt' => $shift->closed_at]);
         $stock = DB::table('inventory_items as items')->leftJoin('stock_balances as balances', function ($join) use ($tenantId): void {
