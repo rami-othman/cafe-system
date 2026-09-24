@@ -8625,6 +8625,17 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذر إكمال عملية نقطة البيع. يرجى المحاولة مرة أخرى.';
 
   @override
+  String get posHoldSucceeded => 'تم تعليق الطلب بنجاح.';
+
+  @override
+  String get posHoldRetryable =>
+      'تعذر تعليق الطلب. ما زالت السلة متاحة لإعادة المحاولة.';
+
+  @override
+  String get posHoldUncertain =>
+      'تعذر تأكيد حالة تعليق الطلب. ما زالت السلة متاحة؛ تحقق من الطلبات قبل إعادة المحاولة.';
+
+  @override
   String get posMenuVersionStale =>
       'تغيرت القائمة. حدّث قائمة نقطة البيع وراجع الطلب.';
 

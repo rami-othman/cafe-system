@@ -138,31 +138,92 @@ class _SalesCreditNoteDetailScreenState extends State<SalesCreditNoteDetailScree
   Future<void> _confirmPost() async {
     final n = note!;
     try {
-      final preview = await cubit.repository.creditNotePostingPreview(n.id);
+      // A direct-cash sales invoice's credit note pays cash back out at
+      // posting time instead of touching AR/customer credit — collect the
+      // refund's cash/bank source first (mirrors the sales invoice's own
+      // cash-post-and-collect flow).
+      int? methodId; int? locationId;
+      if (n.isDirectCashRefund) {
+        final source = await showDialog<Map<String, dynamic>>(context: context, builder: (_) => _CashRefundSourceDialog(
+          financeSetupRepository: context.read<FinanceSetupCubit>().repository, branchId: n.branchId,
+        ));
+        if (source == null || !mounted) return;
+        methodId = source['paymentMethodId'] as int?;
+        locationId = source['financialLocationId'] as int?;
+      }
+      final preview = await cubit.repository.creditNotePostingPreview(n.id, paymentMethodId: methodId, financialLocationId: locationId);
       if (!mounted) return;
       final approved = await showDialog<bool>(context: context, builder: (BuildContext dialogContext) => AlertDialog(
         title: const Text('تأكيد ترحيل الإشعار الدائن'),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Text('الإجمالي المُعتمد: ${preview.total}'), const SizedBox(height: 10),
           const Text('الأثر المحاسبي'), Text('مرتجعات المبيعات (مدين): ${preview.subtotal}\nالضريبة (مدين): ${preview.tax}'),
-          Text('تخفيض الذمم المدينة: ${preview.arReduction}'), if (double.tryParse(preview.customerCreditCreated) != null && double.parse(preview.customerCreditCreated) > 0) Text('رصيد ائتماني جديد للعميل: ${preview.customerCreditCreated}'),
+          if (n.isDirectCashRefund) Text('استرداد نقدي/بنكي للعميل: ${preview.total}') else ...<Widget>[
+            Text('تخفيض الذمم المدينة: ${preview.arReduction}'),
+            if (double.tryParse(preview.customerCreditCreated) != null && double.parse(preview.customerCreditCreated) > 0) Text('رصيد ائتماني جديد للعميل: ${preview.customerCreditCreated}'),
+          ],
           const SizedBox(height: 10), const Text('بنود المرتجع'),
           ...preview.lines.map((l) => Text('${l.productName}: ${l.quantity} — ${l.restock ? "إعادة للمخزون (تكلفة: ${l.cogsReversal})" : "بدون إعادة للمخزون"}')),
         ])),
         actions: <Widget>[TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')), ElevatedButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('ترحيل'))],
       ));
       if (approved != true) return;
-      await cubit.repository.postCreditNote(n.id, 'cn-post-${n.id}-${DateTime.now().microsecondsSinceEpoch}');
+      await cubit.repository.postCreditNote(n.id, 'cn-post-${n.id}-${DateTime.now().microsecondsSinceEpoch}', paymentMethodId: methodId, financialLocationId: locationId);
       if (mounted) {
         await load();
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم ترحيل الإشعار الدائن بنجاح.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(n.isDirectCashRefund ? 'تم ترحيل الإشعار وتسجيل الاسترداد النقدي بنجاح.' : 'تم ترحيل الإشعار الدائن بنجاح.')));
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعذر معاينة/ترحيل الإشعار: $e')));
     }
   }
   Widget _field(String l, String v) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Text(l, style: FinanceText.small), Text(v, style: FinanceText.body)]);
+}
+
+/// Cash/bank source picker for a direct-cash credit note's refund — the same
+/// tenant/branch/shift-drawer ownership rules as any other cash movement are
+/// enforced server-side; this only collects the choice, never the amount or
+/// date (those are fixed by the credit note itself).
+class _CashRefundSourceDialog extends StatefulWidget {
+  const _CashRefundSourceDialog({required this.financeSetupRepository, required this.branchId});
+  final FinanceSetupRepository financeSetupRepository; final int branchId;
+  @override State<_CashRefundSourceDialog> createState() => _CashRefundSourceDialogState();
+}
+class _CashRefundSourceDialogState extends State<_CashRefundSourceDialog> {
+  List<PaymentMethodSetting> methods = const <PaymentMethodSetting>[];
+  CashSourceOptions? cashOptions;
+  int? methodId; int? cashLocationId; bool loading = true; Object? error;
+  @override void initState() { super.initState(); bootstrap(); }
+  Future<void> bootstrap() async {
+    try {
+      final results = await Future.wait<dynamic>(<Future<dynamic>>[widget.financeSetupRepository.getPaymentMethods(), widget.financeSetupRepository.getCashSourceOptions(widget.branchId)]);
+      if (!mounted) return;
+      final ms = (results[0] as List<PaymentMethodSetting>).where((m) => m.isActive && (m.type == 'cash' || m.financialLocationId != null)).toList();
+      setState(() { methods = ms; methodId = ms.firstOrNull?.id; cashOptions = results[1] as CashSourceOptions; loading = false; });
+    } catch (e) { if (mounted) setState(() { error = e; loading = false; }); }
+  }
+  @override Widget build(BuildContext context) {
+    final method = methods.where((m) => m.id == methodId).firstOrNull;
+    return AlertDialog(
+      title: const Text('مصدر الاسترداد النقدي/البنكي'),
+      content: SizedBox(width: 380, child: loading
+          ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+          : error != null
+              ? Text('تعذر تحميل طرق الدفع: $error')
+              : Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                  DropdownButtonFormField<int>(initialValue: methodId, decoration: const InputDecoration(labelText: 'طريقة الاسترداد'), items: methods.map((m) => DropdownMenuItem(value: m.id, child: Text(m.name))).toList(), onChanged: (v) => setState(() => methodId = v)),
+                  if (method?.type == 'cash' && cashOptions?.mode == 'shift') Text('الصندوق: ${cashOptions?.resolved?.name ?? 'غير محدد'}'),
+                  if (method?.type == 'cash' && cashOptions?.mode == 'selectable')
+                    CashSourceField(options: cashOptions, selectedLocationId: cashLocationId, onChanged: (value) => setState(() => cashLocationId = value)),
+                  if (method != null && method.type != 'cash') Padding(padding: const EdgeInsets.only(top: 6), child: Text('الحساب: ${method.financialLocationName ?? '—'}', style: FinanceText.small)),
+                ])),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+        ElevatedButton(onPressed: (loading || methodId == null || (method?.type == 'cash' && cashOptions?.mode == 'selectable' && cashLocationId == null)) ? null : () { final selected = methods.firstWhere((m) => m.id == methodId); Navigator.pop(context, <String, dynamic>{'paymentMethodId': methodId, 'financialLocationId': selected.type == 'cash' ? (cashOptions?.mode == 'selectable' ? cashLocationId : null) : selected.financialLocationId}); }, child: const Text('متابعة')),
+      ],
+    );
+  }
 }
 
 /// §35 — "+ رد مبلغ للعميل": settles unapplied customer credit only. It

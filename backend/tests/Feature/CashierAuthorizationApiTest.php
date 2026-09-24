@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Database\Seeders\TenantAccessSeeder;
+use App\Services\FinancialSetupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -203,8 +204,10 @@ class CashierAuthorizationApiTest extends TestCase
     private function bootTenant(): int
     {
         $this->seed(TenantAccessSeeder::class);
+        $tenant = $this->tenant('cafe-618');
+        app(FinancialSetupService::class)->ensureForTenant($tenant);
 
-        return $this->tenant('cafe-618');
+        return $tenant;
     }
 
     private function tenant(string $slug): int
@@ -241,6 +244,10 @@ class CashierAuthorizationApiTest extends TestCase
 
     private function openShift(int $tenant, int $branch, int $user): int
     {
+        app(FinancialSetupService::class)->ensureBranchCashDrawer($tenant, $branch);
+        $safe = DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'MAIN-SAFE')->value('id');
+        DB::table('branches')->where('tenant_id', $tenant)->where('id', $branch)
+            ->update(['shift_close_destination_financial_location_id' => $safe]);
         return (int) $this->postJson('/api/v1/shifts/current', ['branchId' => $branch, 'openingCash' => '0.00'], $this->headers($tenant, $user))
             ->assertCreated()
             ->json('data.id');

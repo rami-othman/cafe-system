@@ -9,10 +9,9 @@ use Illuminate\Validation\ValidationException;
 final class SalesAccountResolver
 {
     /** @return array{accountsReceivable:string,revenue:string,additionalChargeRevenue:string,manualAdjustment:string,taxPayable:string,cogs:string,inventory:string} */
-    public function postingAccounts(int $tenantId): array
+    public function postingAccounts(int $tenantId, bool $includeReceivable = true): array
     {
-        return [
-            'accountsReceivable' => $this->accountsReceivable($tenantId),
+        return ($includeReceivable ? ['accountsReceivable' => $this->accountsReceivable($tenantId)] : []) + [
             'revenue' => $this->code($tenantId, 'sales.revenue', 'revenue', 'credit'),
             'additionalChargeRevenue' => $this->code($tenantId, 'sales.additional_charge_revenue', 'revenue', 'credit'),
             'manualAdjustment' => $this->code($tenantId, 'sales.manual_adjustment', 'revenue', 'credit'),

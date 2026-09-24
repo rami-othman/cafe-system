@@ -61,13 +61,14 @@ final class PurchaseReceivingService
             FinancialActor::assertBranchAccess($actorId, $tenantId, $invoice->branch_id ? (int) $invoice->branch_id : null);
 
             $rows = $this->buildLines($tenantId, $invoiceId, $data['lines'] ?? []);
+            $receiptDate = $data['receiptDate'] ?? \App\Support\BranchLocalDate::today($invoice->branch_id ? (int) $invoice->branch_id : null);
 
             $id = (int) DB::table('purchase_receipts')->insertGetId([
                 'tenant_id' => $tenantId,
                 'branch_id' => $invoice->branch_id,
                 'supplier_invoice_id' => $invoiceId,
-                'receipt_number' => $this->nextReceiptNumber($tenantId, $data['receiptDate'] ?? now()->toDateString()),
-                'receipt_date' => $data['receiptDate'] ?? now()->toDateString(),
+                'receipt_number' => $this->nextReceiptNumber($tenantId, $receiptDate),
+                'receipt_date' => $receiptDate,
                 'status' => 'draft',
                 'reference' => $data['reference'] ?? null,
                 'notes' => $data['notes'] ?? null,
@@ -125,7 +126,7 @@ final class PurchaseReceivingService
         return DB::transaction(function () use ($request, $tenantId, $id, $actorId, $key, $fingerprint): object {
             $used = DB::table('purchase_receipts')->where('tenant_id', $tenantId)->where('posting_idempotency_key', $key)->lockForUpdate()->first();
             if ($used && (int) $used->id !== $id) {
-                abort(409, 'This idempotency key was already used to post a different goods receipt.');
+                abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لترحيل إذن استلام مختلف.');
             }
             $receipt = $this->row($tenantId, $id, true);
             if ($receipt->status === 'posted' && $receipt->posting_idempotency_key === $key) {
@@ -405,14 +406,14 @@ final class PurchaseReceivingService
     private function assertFingerprint(object $receipt, ?string $fingerprint): void
     {
         if (! $receipt->idempotency_fingerprint || ! $fingerprint || ! hash_equals($receipt->idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different goods receipt request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب إذن استلام مختلف.');
         }
     }
 
     private function assertPostingFingerprint(object $receipt, string $fingerprint): void
     {
         if (! $receipt->posting_idempotency_fingerprint || ! hash_equals($receipt->posting_idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different posting request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب ترحيل مختلف.');
         }
     }
 

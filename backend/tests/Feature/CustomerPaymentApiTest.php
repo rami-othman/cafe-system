@@ -425,6 +425,77 @@ class CustomerPaymentApiTest extends TestCase
 
     // ---- scenario builders -------------------------------------------------
 
+    public function test_walk_in_draft_has_no_effect_and_direct_sale_has_one_payment_and_no_receivable(): void
+    {
+        $s = $this->scenario();
+        $walkIn = (int) DB::table('customers')->where('tenant_id', $s['tenant'])->where('is_walk_in', true)->value('id');
+        $product = $this->productPriced($s, '100.00');
+        $draft = $this->postJson('/api/v1/finance/sales-invoices', [
+            'branchId' => $s['branch'], 'customerId' => $walkIn, 'invoiceDate' => '2026-09-12',
+            'lines' => [['productId' => $product, 'quantity' => '1']],
+        ], $s['headers'])->assertCreated()->assertJsonPath('data.status', 'draft')->assertJsonPath('data.isWalkIn', true);
+        $invoiceId = $draft->json('data.id');
+        $this->assertSame(0, DB::table('journal_entries')->where('source_type', 'sales_invoice')->where('source_id', $invoiceId)->count());
+        $this->assertSame(0, DB::table('customer_payments')->where('direct_sales_invoice_id', $invoiceId)->count());
+        $this->assertSame(0, DB::table('sales_invoice_costs')->where('sales_invoice_id', $invoiceId)->count());
+        [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
+        $payload = ['postIdempotencyKey' => 'cash-post-1', 'paymentIdempotencyKey' => 'cash-pay-1',
+            'paymentDate' => '2026-09-12', 'amount' => '100.00', 'paymentMethodId' => $methodId,
+            'financialLocationId' => $locationId];
+        $this->postJson("/api/v1/finance/sales-invoices/{$invoiceId}/post", ['idempotencyKey' => 'direct-block'], $s['headers'])
+            ->assertUnprocessable()->assertJsonValidationErrors('payment');
+        $first = $this->postJson("/api/v1/finance/sales-invoices/{$invoiceId}/post-and-collect", $payload, $s['headers'])->assertOk();
+        $paymentId = $first->json('data.paymentId');
+        $this->postJson("/api/v1/finance/sales-invoices/{$invoiceId}/post-and-collect", $payload, $s['headers'])
+            ->assertOk()->assertJsonPath('data.paymentId', $paymentId);
+        $this->assertSame(1, DB::table('customer_payments')->where('direct_sales_invoice_id', $invoiceId)->count());
+        $this->assertSame(0, DB::table('customer_receivables')->where('sales_invoice_id', $invoiceId)->count());
+        $this->assertSame(0, DB::table('customer_payment_allocations')->where('customer_payment_id', $paymentId)->count());
+        $this->assertSame(1, DB::table('journal_entries')->where('source_type', 'sales_invoice')->where('source_id', $invoiceId)->count());
+        $payment = DB::table('customer_payments')->where('id', $paymentId)->first();
+        $invoice = DB::table('sales_invoices')->where('id', $invoiceId)->first();
+        $this->assertSame((int) $invoice->posted_journal_entry_id, (int) $payment->journal_entry_id);
+        $lines = DB::table('journal_entry_lines')->where('journal_entry_id', $invoice->posted_journal_entry_id)->get();
+        $this->assertSame('100.00', $lines->firstWhere('financial_location_id', $locationId)->debit);
+        $this->assertSame($lines->sum('debit'), $lines->sum('credit'));
+        $this->getJson("/api/v1/finance/sales-invoices/{$invoiceId}", $s['headers'])->assertOk()
+            ->assertJsonPath('data.paymentStatus', 'paid')->assertJsonPath('data.paidAmount', '100.00')
+            ->assertJsonPath('data.remainingAmount', '0.00')->assertJsonPath('data.directPaymentId', $paymentId)
+            // A posted direct-cash invoice CAN be credited/refunded (the approved
+            // cash-refund procedure — see SalesCreditNoteDirectCashApiTest), it
+            // simply never opens the AAR/allocation path used by registered customers.
+            ->assertJsonPath('data.allowedActions.canCreateCreditNote', true);
+        $this->getJson("/api/v1/finance/customer-payments/{$paymentId}", $s['headers'])->assertOk()
+            ->assertJsonPath('data.directSalesInvoiceId', $invoiceId);
+        $this->postJson("/api/v1/finance/customer-payments/{$paymentId}/reverse", [], $s['headers'])->assertUnprocessable();
+    }
+
+    public function test_direct_sale_rejects_wrong_amount_and_date_without_partial_effect(): void
+    {
+        $s = $this->scenario();
+        $walkIn = (int) DB::table('customers')->where('tenant_id', $s['tenant'])->where('is_walk_in', true)->value('id');
+        $product = $this->productPriced($s, '100.00');
+        $invoiceId = $this->postJson('/api/v1/finance/sales-invoices', [
+            'branchId' => $s['branch'], 'customerId' => $walkIn, 'invoiceDate' => '2026-09-12',
+            'lines' => [['productId' => $product, 'quantity' => '1']],
+        ], $s['headers'])->assertCreated()->json('data.id');
+        [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
+        $payload = ['postIdempotencyKey' => 'cash-post-2', 'paymentIdempotencyKey' => 'cash-pay-2',
+            'paymentDate' => '2026-09-12', 'amount' => '99.00', 'paymentMethodId' => $methodId,
+            'financialLocationId' => $locationId];
+        foreach (['99.00', '101.00'] as $amount) {
+            $payload['amount'] = $amount;
+            $this->postJson("/api/v1/finance/sales-invoices/{$invoiceId}/post-and-collect", $payload, $s['headers'])
+                ->assertUnprocessable()->assertJsonValidationErrors('amount');
+        }
+        $payload['amount'] = '100.00'; $payload['paymentDate'] = '2026-09-13';
+        $this->postJson("/api/v1/finance/sales-invoices/{$invoiceId}/post-and-collect", $payload, $s['headers'])
+            ->assertUnprocessable()->assertJsonValidationErrors('paymentDate');
+        $this->assertSame('draft', DB::table('sales_invoices')->where('id', $invoiceId)->value('status'));
+        $this->assertSame(0, DB::table('journal_entries')->where('source_type', 'sales_invoice')->where('source_id', $invoiceId)->count());
+        $this->assertSame(0, DB::table('customer_payments')->where('direct_sales_invoice_id', $invoiceId)->count());
+    }
+
     private function scenario(bool $tracked = false): array
     {
         $suffix = (string) str()->uuid();

@@ -443,6 +443,56 @@ class PurchasingPhase2ApiTest extends TestCase
         $this->assertSame(1, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
     }
 
+    /** C1/C2: the caller-supplied paymentDate/receiptDate must reach the
+     * payment journal entry and the stock movement — not `now()`. */
+    public function test_unified_purchase_post_honours_explicit_payment_and_receipt_dates(): void
+    {
+        [$tenant, $headers, $branchId, $invoiceId, $warehouseId, $itemId] = $this->unifiedInventoryFixture('explicit-dates');
+        // Invoice date is 2026-09-17. Payment and receipt happen on different,
+        // deliberately distinct, earlier-in-the-open-period dates.
+        $posted = $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", [
+            'idempotencyKey' => 'explicit-dates-1',
+            'financialLocationId' => $this->drawer($branchId),
+            'paymentDate' => '2026-09-20',
+            'receiptDate' => '2026-09-21',
+        ], $headers)->assertOk()->json('data');
+        $this->assertSame('paid', $posted['paymentStatus']);
+
+        $paymentId = (int) DB::table('payment_allocations')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->value('supplier_payment_id');
+        $this->assertNotSame(0, $paymentId, 'Expected an auto-created supplier payment.');
+        $payment = DB::table('supplier_payments')->where('id', $paymentId)->first();
+        $this->assertSame('2026-09-20', $payment->payment_date);
+        $this->assertNotSame('2026-09-17', $payment->payment_date);
+
+        $paymentJournal = DB::table('journal_entries')->where('id', $payment->journal_entry_id)->first();
+        $this->assertNotNull($paymentJournal);
+        $this->assertSame('2026-09-20', substr((string) $paymentJournal->entry_date, 0, 10));
+
+        $receiptId = (int) DB::table('purchase_receipts')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->value('id');
+        $this->assertSame('2026-09-21', DB::table('purchase_receipts')->where('id', $receiptId)->value('receipt_date'));
+        $movement = DB::table('stock_movements')->where('tenant_id', $tenant)->where('warehouse_id', $warehouseId)
+            ->where('inventory_item_id', $itemId)->where('type', 'stock_in')->first();
+        $this->assertNotNull($movement);
+        $this->assertSame('2026-09-21', substr((string) $movement->occurred_at, 0, 10));
+    }
+
+    /** C1: a payment date landing inside a closed accounting period must be
+     * rejected — never silently moved to today. */
+    public function test_unified_purchase_post_rejects_payment_date_in_a_closed_period(): void
+    {
+        [, $headers, $branchId, $invoiceId] = $this->unifiedInventoryFixture('closed-period-dates');
+        $this->postJson('/api/v1/finance/accounting-periods', ['name' => 'August', 'startDate' => '2026-08-01', 'endDate' => '2026-08-31'], $headers)
+            ->assertCreated();
+        $period = (int) DB::table('accounting_periods')->where('name', 'August')->value('id');
+        $this->postJson("/api/v1/finance/accounting-periods/{$period}/close", [], $headers)->assertOk();
+
+        $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", [
+            'idempotencyKey' => 'closed-period-1',
+            'financialLocationId' => $this->drawer($branchId),
+            'paymentDate' => '2026-08-15',
+        ], $headers)->assertUnprocessable()->assertJsonValidationErrors('accountingPeriod');
+    }
+
     public function test_direct_purchase_receives_all_stock_with_partial_or_no_payment(): void
     {
         foreach (['100.00' => 'partial', '0.00' => 'unpaid'] as $paid => $status) {
@@ -573,6 +623,7 @@ class PurchasingPhase2ApiTest extends TestCase
     {
         [$tenant, $ownerHeaders, $branchId, $invoiceId] = $this->unifiedInventoryFixture('cashier-open-shift');
         $cashierHeaders = $this->cashierHeaders($tenant, $branchId, 'open-shift');
+        $this->fundDrawerForShift($tenant, $branchId, $ownerHeaders, '1000.00');
         $shift = $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => '1000.00'], $cashierHeaders)
             ->assertCreated()->json('data');
 
@@ -590,6 +641,7 @@ class PurchasingPhase2ApiTest extends TestCase
     {
         [$tenant, $ownerHeaders, $branchId, $invoiceId] = $this->unifiedInventoryFixture('cashier-drawer-override');
         $cashierHeaders = $this->cashierHeaders($tenant, $branchId, 'drawer-override');
+        $this->fundDrawerForShift($tenant, $branchId, $ownerHeaders, '1000.00');
         $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => '1000.00'], $cashierHeaders)->assertCreated();
         $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", [
             'idempotencyKey' => 'drawer-override', 'financialLocationId' => $this->drawer($branchId),
@@ -896,5 +948,18 @@ class PurchasingPhase2ApiTest extends TestCase
     private function drawer(int $branchId): int
     {
         return (int) DB::table('branches')->where('id', $branchId)->value('pos_cash_financial_location_id');
+    }
+
+    private function fundDrawerForShift(int $tenant, int $branchId, array $headers, string $amount): void
+    {
+        $safe = (int) DB::table('financial_locations')->where('tenant_id', $tenant)
+            ->where('code', 'MAIN-SAFE')->value('id');
+        $this->postJson('/api/v1/finance/cash-transfers', [
+            'fromFinancialLocationId' => $safe,
+            'toFinancialLocationId' => $this->drawer($branchId),
+            'amount' => $amount,
+            'transferDate' => now()->toDateString(),
+            'idempotencyKey' => 'purchase-opening-float-'.$tenant.'-'.$branchId,
+        ], $headers)->assertCreated();
     }
 }

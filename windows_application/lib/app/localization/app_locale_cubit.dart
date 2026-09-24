@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/network/current_locale.dart';
 import 'app_locale_repository.dart';
 import 'app_locale_state.dart';
 
@@ -27,6 +28,7 @@ class AppLocaleCubit extends Cubit<AppLocaleState> {
     }
     final Locale locale =
         _localeFromCode(savedCode) ?? resolveSystemLocale(_systemLocale());
+    CurrentLocale.languageCode = locale.languageCode;
     emit(AppLocaleState(locale: locale, isLoaded: true));
   }
 
@@ -39,6 +41,7 @@ class AppLocaleCubit extends Cubit<AppLocaleState> {
     if (state.locale == resolved && state.isLoaded) {
       return;
     }
+    CurrentLocale.languageCode = resolved.languageCode;
     emit(AppLocaleState(locale: resolved, isLoaded: true));
     try {
       await repository.saveLocaleCode(resolved.languageCode);

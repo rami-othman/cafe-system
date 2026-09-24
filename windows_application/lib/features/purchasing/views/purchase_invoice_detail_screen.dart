@@ -8,6 +8,7 @@ import '../../finance_inventory_setup/widgets/finance_design.dart';
 import '../../finance_inventory_setup/widgets/finance_shell.dart';
 import '../controllers/purchasing_cubit.dart';
 import '../models/purchasing_models.dart';
+import '../widgets/purchase_error_messages.dart';
 import '../widgets/purchase_type_label.dart';
 import '../widgets/purchase_posting_dialog.dart';
 
@@ -73,6 +74,8 @@ class _PurchaseInvoiceDetailScreenState
         'purchase-post-${widget.purchaseId}-${DateTime.now().millisecondsSinceEpoch}',
         financialLocationId: choice.financialLocationId,
         paidAmount: choice.paidAmount,
+        paymentDate: choice.paymentDate,
+        receiptDate: choice.receiptDate,
       );
       if (!mounted) return;
       setState(() {
@@ -138,7 +141,7 @@ class _PurchaseInvoiceDetailScreenState
   void _showError(Object error) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('$error')));
+    ).showSnackBar(SnackBar(content: Text(purchaseLineErrorMessage(error))));
   }
 
   @override

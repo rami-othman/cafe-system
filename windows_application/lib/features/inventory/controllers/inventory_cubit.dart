@@ -202,10 +202,93 @@ class InventoryCubit extends Cubit<InventoryState> {
       state.copyWith(
         selectedItem: item,
         itemMovements: item.recentMovements,
+        // A newly opened item's other tabs have not been fetched yet -
+        // reset so a previously viewed item's lazy-loaded data can never
+        // flash under a different item while its own tabs are loading.
+        itemMovementHistory: const <InventoryMovement>[],
+        itemMovementHistoryPage: 1,
+        itemMovementHistoryLastPage: 1,
+        itemMovementHistoryTotal: 0,
+        itemRecipeUsage: const <InventoryRecipeUsage>[],
+        itemRecipeUsageLoaded: false,
+        itemPurchaseHistory: const <InventoryPurchaseHistoryEntry>[],
+        itemPurchaseHistoryPage: 1,
+        itemPurchaseHistoryLastPage: 1,
+        itemPurchaseHistoryTotal: 0,
         clearError: true,
       ),
     );
   });
+
+  /// The item details screen's "سجل الحركات" tab: the full, paginated
+  /// history behind [InventoryItem.recentMovements]'s fixed 5-row summary.
+  Future<void> loadItemMovementHistory(
+    int itemId, {
+    int page = 1,
+    String? from,
+    String? to,
+  }) async {
+    emit(state.copyWith(itemMovementHistoryLoading: true, clearError: true));
+    try {
+      final InventoryMovementsPage result = await repository
+          .itemMovementHistory(itemId, page: page, from: from, to: to);
+      emit(
+        state.copyWith(
+          itemMovementHistory: result.movements,
+          itemMovementHistoryPage: result.currentPage,
+          itemMovementHistoryLastPage: result.lastPage,
+          itemMovementHistoryTotal: result.total,
+          clearError: true,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(error: error.toString()));
+    } finally {
+      emit(state.copyWith(itemMovementHistoryLoading: false));
+    }
+  }
+
+  /// The item details screen's "استخدام الوصفات" tab.
+  Future<void> loadItemRecipeUsage(int itemId) async {
+    emit(state.copyWith(itemRecipeUsageLoading: true, clearError: true));
+    try {
+      final List<InventoryRecipeUsage> usage = await repository
+          .itemRecipeUsage(itemId);
+      emit(
+        state.copyWith(
+          itemRecipeUsage: usage,
+          itemRecipeUsageLoaded: true,
+          clearError: true,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(error: error.toString()));
+    } finally {
+      emit(state.copyWith(itemRecipeUsageLoading: false));
+    }
+  }
+
+  /// The item details screen's "سجل الشراء" tab.
+  Future<void> loadItemPurchaseHistory(int itemId, {int page = 1}) async {
+    emit(state.copyWith(itemPurchaseHistoryLoading: true, clearError: true));
+    try {
+      final InventoryPurchaseHistoryPage result = await repository
+          .itemPurchaseHistory(itemId, page: page);
+      emit(
+        state.copyWith(
+          itemPurchaseHistory: result.entries,
+          itemPurchaseHistoryPage: result.currentPage,
+          itemPurchaseHistoryLastPage: result.lastPage,
+          itemPurchaseHistoryTotal: result.total,
+          clearError: true,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(error: error.toString()));
+    } finally {
+      emit(state.copyWith(itemPurchaseHistoryLoading: false));
+    }
+  }
   Future<void> loadUnitConversions({int? itemId}) => _load(() async {
     final Future<List<InventoryItem>> itemsFuture = repository
         .conversionItems();

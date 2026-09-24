@@ -274,7 +274,7 @@ class SupplierPaymentService
     private function assertFingerprint(object $payment, string $fingerprint): void
     {
         if (! $payment->idempotency_fingerprint || ! hash_equals($payment->idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different supplier payment request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب دفعة مورد مختلفة.');
         }
     }
 

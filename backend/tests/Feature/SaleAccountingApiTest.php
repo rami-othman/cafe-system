@@ -567,12 +567,12 @@ class SaleAccountingApiTest extends TestCase
         $tenant = $this->demoTenantId();
         $headers = $this->headers($tenant);
         $branchId = $this->downtownBranchId($tenant);
-        $drawerId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
-        $before = (float) $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->json('data.location.balance');
-
         $product = DB::table('products')->where('tenant_id', $tenant)->where('name', 'Cappuccino')->first();
         $order = $this->createOrder($tenant, $branchId, $headers, $product->id, quantity: 1, withDefaultModifiers: true);
         $orderId = $order->json('data.id');
+        $shiftId = DB::table('orders')->where('id', $orderId)->value('shift_id');
+        $drawerId = (int) DB::table('shifts')->where('id', $shiftId)->value('financial_location_id');
+        $before = (float) $this->getJson('/api/v1/finance/cash-accounts/'.$drawerId.'/transactions', $headers)->json('data.location.balance');
         $totals = $order->json('data.totals');
         $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $totals['total'], 'idempotencyKey' => 'sale-ledger-balance-1'], $headers)->assertOk();
 
@@ -660,6 +660,9 @@ class SaleAccountingApiTest extends TestCase
 
     private function openShift(int $tenant, int $branchId, array $headers): int
     {
+        $existing = DB::table('shifts')->where('tenant_id', $tenant)->where('branch_id', $branchId)
+            ->where('status', 'open')->whereNull('deleted_at')->value('id');
+        if ($existing) return (int) $existing;
         return (int) $this->postJson('/api/v1/shifts/current', ['branchId' => $branchId, 'openingCash' => 0], $headers)
             ->assertCreated()->json('data.id');
     }

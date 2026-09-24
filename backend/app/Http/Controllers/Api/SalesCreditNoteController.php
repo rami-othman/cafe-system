@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\CustomerPaymentService;
 use App\Services\OperationalAuditService;
 use App\Services\SalesCreditNotePostingService;
 use App\Services\SalesCreditNoteService;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 final class SalesCreditNoteController extends Controller
 {
-    public function __construct(private readonly SalesCreditNoteService $creditNotes, private readonly SalesCreditNotePostingService $posting, private readonly OperationalAuditService $audit) {}
+    public function __construct(private readonly SalesCreditNoteService $creditNotes, private readonly SalesCreditNotePostingService $posting, private readonly OperationalAuditService $audit, private readonly CustomerPaymentService $payments) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -83,16 +84,30 @@ final class SalesCreditNoteController extends Controller
         $draft = $this->creditNotes->find($tenant, $creditNote);
         FinancialActor::assertBranchAccess($actor, $tenant, $draft->branch_id);
 
-        return response()->json(['data' => $this->posting->preview($tenant, $creditNote)]);
+        $settlement = null;
+        if ($this->creditNotes->directPayment($tenant, (int) $draft->original_sales_invoice_id) !== null) {
+            $data = $request->validate([
+                'paymentMethodId' => ['required', 'integer'],
+                'financialLocationId' => ['nullable', 'integer'],
+            ]);
+            [, $location] = $this->payments->directSaleSource($tenant, $actor, (int) $draft->branch_id, $data, false);
+            $settlement = ['accountCode' => $location->account_code, 'locationId' => (int) $location->id];
+        }
+
+        return response()->json(['data' => $this->posting->preview($tenant, $creditNote, $settlement)]);
     }
 
     public function post(Request $request, int $creditNote): JsonResponse
     {
-        $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:128']]);
-        $tenant = TenantContext::id($request);
+        $before = $this->creditNotes->find($tenant = TenantContext::id($request), $creditNote);
         $actor = FinancialActor::id($request, $tenant);
-        $before = $this->creditNotes->find($tenant, $creditNote);
         FinancialActor::assertBranchAccess($actor, $tenant, $before->branch_id);
+        $isDirectCash = $this->creditNotes->directPayment($tenant, (int) $before->original_sales_invoice_id) !== null;
+        $data = $request->validate([
+            'idempotencyKey' => ['required', 'string', 'max:128'],
+            'paymentMethodId' => [$isDirectCash ? 'required' : 'prohibited', 'integer'],
+            'financialLocationId' => ['nullable', 'integer'],
+        ]);
         $this->posting->post($request, $tenant, $creditNote, $actor, $data);
 
         return response()->json(['data' => $this->one($request, $tenant, $creditNote)]);
@@ -108,11 +123,21 @@ final class SalesCreditNoteController extends Controller
             ->get(['costs.sales_credit_note_line_id', 'costs.cost_amount', 'movements.quantity_in', 'movements.input_unit', 'items.name_ar as item_name', 'warehouses.name as warehouse_name']);
         $journal = $note->posted_journal_entry_id ? DB::table('journal_entries')->where('tenant_id', $tenant)->where('id', $note->posted_journal_entry_id)->first(['id', 'entry_number']) : null;
         $permissions = array_fill_keys(FinanceAccess::capabilities($request), true);
+        $isDirectCash = $this->creditNotes->directPayment($tenant, (int) $note->original_sales_invoice_id) !== null;
+        $cashRefund = $isDirectCash
+            ? DB::table('customer_refunds as r')->join('payment_methods as pm', 'pm.id', '=', 'r.payment_method_id')
+                ->where('r.tenant_id', $tenant)->where('r.sales_credit_note_id', $note->id)->where('r.status', 'posted')
+                ->first(['r.id', 'r.refund_number', 'r.refund_date', 'r.amount', 'pm.name as payment_method_name'])
+            : null;
 
         return $this->serialize($note) + [
             'lines' => collect($note->lines)->map(fn (object $l) => ['id' => (int) $l->id, 'lineNumber' => (int) $l->line_number, 'originalSalesInvoiceLineId' => (int) $l->original_sales_invoice_line_id, 'productId' => (int) $l->product_id, 'productName' => $l->product_name, 'productSku' => $l->product_sku, 'quantity' => $l->quantity, 'unitPrice' => $l->unit_price, 'taxRate' => $l->tax_rate, 'subtotal' => $l->subtotal, 'taxTotal' => $l->tax_total, 'total' => $l->total, 'restock' => (bool) $l->restock, 'cogsTotal' => $l->cogs_total])->values(),
             'allowedActions' => $this->actions($note, $permissions),
             'journalEntryId' => $journal?->id, 'journalReference' => $journal?->entry_number,
+            'isDirectCashRefund' => $isDirectCash,
+            'cashRefundId' => $cashRefund?->id,
+            'cashRefundNumber' => $cashRefund?->refund_number,
+            'cashRefundMethodName' => $cashRefund?->payment_method_name,
             'inventoryImpacts' => $movements->map(fn (object $m) => ['lineId' => (int) $m->sales_credit_note_line_id, 'itemName' => $m->item_name, 'quantityIn' => $m->quantity_in, 'unit' => $m->input_unit, 'warehouseName' => $m->warehouse_name, 'costAmount' => $m->cost_amount])->values(),
         ];
     }

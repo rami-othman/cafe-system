@@ -53,10 +53,19 @@ class PurchasingRepository {
     ),
   );
 
-  Future<PurchaseInvoice> postPurchase(int id, String idempotencyKey, {int? financialLocationId, String? paidAmount}) async {
+  Future<PurchaseInvoice> postPurchase(
+    int id,
+    String idempotencyKey, {
+    int? financialLocationId,
+    String? paidAmount,
+    String? paymentDate,
+    String? receiptDate,
+  }) async {
     final data = <String, dynamic>{'idempotencyKey': idempotencyKey};
     if (financialLocationId != null) data['financialLocationId'] = financialLocationId;
     if (paidAmount != null) data['paidAmount'] = paidAmount;
+    if (paymentDate != null) data['paymentDate'] = paymentDate;
+    if (receiptDate != null) data['receiptDate'] = receiptDate;
     return PurchaseInvoice.fromJson(
       Map<String, dynamic>.from(await _api.post('finance/purchases/$id/post', data: data) as Map),
     );

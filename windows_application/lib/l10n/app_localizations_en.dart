@@ -8633,6 +8633,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'The POS operation could not be completed. Please try again.';
 
   @override
+  String get posHoldSucceeded => 'Order held successfully.';
+
+  @override
+  String get posHoldRetryable =>
+      'The order could not be held. Your cart is still available to retry.';
+
+  @override
+  String get posHoldUncertain =>
+      'The hold status could not be confirmed. Your cart is still available; check Orders before retrying.';
+
+  @override
   String get posMenuVersionStale =>
       'The menu changed. Refresh the POS menu and review the order.';
 

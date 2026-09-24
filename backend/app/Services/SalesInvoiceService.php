@@ -24,8 +24,8 @@ final class SalesInvoiceService
                 $existing = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('idempotency_key', $data['idempotencyKey'])->first();
                 if ($existing) { if ($existing->request_fingerprint !== $fingerprint) throw ValidationException::withMessages(['idempotencyKey' => 'This idempotency key was already used for a different request.']); return $existing; }
             }
-            $this->assertAccountsReceivableMapping($tenantId);
             $customer = $this->customer($tenantId, (int) $data['customerId']);
+            if (! $customer->is_walk_in) $this->assertAccountsReceivableMapping($tenantId);
             $lines = $this->pricedLines($tenantId, $data['lines']); $charges = $this->charges($data['charges'] ?? []); $totals = $this->totals($lines, $charges, $data);
             $date = CarbonImmutable::parse($data['invoiceDate'])->toDateString();
             $due = ! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString();
@@ -65,7 +65,7 @@ final class SalesInvoiceService
 
     public function find(int $tenantId, int $invoiceId): object
     {
-        $invoice = DB::table('sales_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')->join('branches as b', 'b.id', '=', 'i.branch_id')->leftJoin('users as u', 'u.id', '=', 'i.created_by')->where('i.tenant_id', $tenantId)->where('i.id', $invoiceId)->select('i.*', 'c.name as customer_name', 'c.customer_number', 'b.name as branch_name', 'u.name as creator_name')->first(); abort_unless($invoice, 404, 'Sales invoice not found.');
+        $invoice = DB::table('sales_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')->join('branches as b', 'b.id', '=', 'i.branch_id')->leftJoin('users as u', 'u.id', '=', 'i.created_by')->where('i.tenant_id', $tenantId)->where('i.id', $invoiceId)->select('i.*', 'c.name as customer_name', 'c.customer_number', 'c.is_walk_in', 'b.name as branch_name', 'u.name as creator_name')->first(); abort_unless($invoice, 404, 'Sales invoice not found.');
         $invoice->lines = DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoiceId)->orderBy('line_number')->get();
         $invoice->charges = DB::table('sales_invoice_charges')->where('sales_invoice_id', $invoiceId)->orderBy('sort_order')->orderBy('id')->get(); return $invoice;
     }

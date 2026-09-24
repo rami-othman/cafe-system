@@ -106,9 +106,51 @@ class InventoryRepository {
         await _api.get('inventory/items/$itemId/unit-conversions'),
       ).map(InventoryItemUnitConversion.fromJson).toList(growable: false);
 
-  Future<List<InventoryMovement>> itemMovements(int id) async => readMapList(
-    await _api.get('inventory/items/$id/movements'),
-  ).map(InventoryMovement.fromJson).toList(growable: false);
+  /// The item detail screen's full, paginated movement history - not to be
+  /// confused with [InventoryItem.recentMovements], which the item-show
+  /// endpoint deliberately caps at 5 rows for a quick summary.
+  Future<InventoryMovementsPage> itemMovementHistory(
+    int id, {
+    int page = 1,
+    int perPage = 25,
+    String? from,
+    String? to,
+  }) async => InventoryMovementsPage.fromJson(
+    Map<String, dynamic>.from(
+      await _api.getEnvelope(
+            'inventory/items/$id/movements',
+            queryParameters: <String, dynamic>{
+              'page': page,
+              'perPage': perPage,
+              if (from != null && from.isNotEmpty) 'from': from,
+              if (to != null && to.isNotEmpty) 'to': to,
+            },
+          )
+          as Map,
+    ),
+  );
+
+  Future<List<InventoryRecipeUsage>> itemRecipeUsage(int id) async =>
+      readMapList(
+        await _api.get(
+          'inventory/items/$id/recipe-usage',
+          queryParameters: const <String, dynamic>{'perPage': 200},
+        ),
+      ).map(InventoryRecipeUsage.fromJson).toList(growable: false);
+
+  Future<InventoryPurchaseHistoryPage> itemPurchaseHistory(
+    int id, {
+    int page = 1,
+    int perPage = 25,
+  }) async => InventoryPurchaseHistoryPage.fromJson(
+    Map<String, dynamic>.from(
+      await _api.getEnvelope(
+            'inventory/items/$id/purchase-history',
+            queryParameters: <String, dynamic>{'page': page, 'perPage': perPage},
+          )
+          as Map,
+    ),
+  );
 
   Future<List<InventoryBalance>> balances({
     int? branchId,

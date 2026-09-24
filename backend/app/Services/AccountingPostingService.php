@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\BranchLocalDate;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -87,7 +88,7 @@ class AccountingPostingService
 
                 $entryId = $this->entries->createDraft($request, $tenantId, [
                     'branchId' => $data['branchId'] ?? null,
-                    'entryDate' => $data['entryDate'] ?? now()->toDateString(),
+                    'entryDate' => $data['entryDate'] ?? BranchLocalDate::today($data['branchId'] ?? null),
                     'sourceType' => $sourceType,
                     'sourceId' => $sourceId,
                     'sourceEvent' => $sourceEvent,

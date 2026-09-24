@@ -39,8 +39,15 @@ class SalesRepository {
   Future<SalesCreditNote> saveCreditNote(Map<String, dynamic> data) async => SalesCreditNote.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-credit-notes', data: data) as Map));
   Future<SalesCreditNote> creditNote(int id) async => SalesCreditNote.fromJson(Map<String, dynamic>.from(await _api.get('finance/sales-credit-notes/$id') as Map));
   Future<SalesCreditNote> cancelCreditNote(int id) async => SalesCreditNote.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-credit-notes/$id/cancel', data: const <String, dynamic>{}) as Map));
-  Future<SalesCreditNotePreview> creditNotePostingPreview(int id) async => SalesCreditNotePreview.fromJson(Map<String, dynamic>.from(await _api.get('finance/sales-credit-notes/$id/posting-preview') as Map));
-  Future<SalesCreditNote> postCreditNote(int id, String idempotencyKey) async => SalesCreditNote.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-credit-notes/$id/post', data: <String, dynamic>{'idempotencyKey': idempotencyKey}) as Map));
+  Future<SalesCreditNotePreview> creditNotePostingPreview(int id, {int? paymentMethodId, int? financialLocationId}) async => SalesCreditNotePreview.fromJson(Map<String, dynamic>.from(await _api.get('finance/sales-credit-notes/$id/posting-preview', queryParameters: <String, dynamic>{
+        if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
+        if (financialLocationId != null) 'financialLocationId': financialLocationId,
+      }) as Map));
+  Future<SalesCreditNote> postCreditNote(int id, String idempotencyKey, {int? paymentMethodId, int? financialLocationId}) async => SalesCreditNote.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-credit-notes/$id/post', data: <String, dynamic>{
+        'idempotencyKey': idempotencyKey,
+        if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
+        if (financialLocationId != null) 'financialLocationId': financialLocationId,
+      }) as Map));
 
   Future<CustomerCreditInfo> customerCredit(int customerId) async => CustomerCreditInfo.fromJson(Map<String, dynamic>.from(await _api.get('finance/customers/$customerId/credit') as Map));
   Future<CustomerRefundPreview> previewRefund(Map<String, dynamic> data) async => CustomerRefundPreview.fromJson(Map<String, dynamic>.from(await _api.post('finance/customer-refunds/preview', data: data) as Map));

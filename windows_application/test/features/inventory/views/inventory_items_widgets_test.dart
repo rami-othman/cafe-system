@@ -110,4 +110,37 @@ void main() {
     expect(item.warehouseIds, <int>[1, 2]);
     expect(item.stockStatus, 'active');
   });
+
+  group('inventoryMoney', () {
+    test('uses the app-wide currency formatter, never a hardcoded \$', () {
+      expect(inventoryMoney('45.5'), isNot(contains(r'$')));
+      expect(inventoryMoney('45.5'), contains('SYP'));
+    });
+  });
+
+  group('inventoryMovementTypeLabel', () {
+    test('maps every movement type the backend can actually write to Arabic', () {
+      const Map<String, String> known = <String, String>{
+        'opening_balance': 'رصيد افتتاحي',
+        'stock_in': 'إدخال مخزون',
+        'stock_out': 'إخراج مخزون',
+        'adjustment_in': 'تسوية إضافة',
+        'adjustment_out': 'تسوية خصم',
+        'waste': 'هدر',
+        'stock_count_variance': 'فرق جرد',
+        'transfer_in': 'تحويل وارد',
+        'transfer_out': 'تحويل صادر',
+        'sale_consumption': 'استهلاك مبيعات',
+        'return_in': 'إرجاع وارد',
+        'return_out': 'إرجاع صادر',
+      };
+      known.forEach((String type, String label) {
+        expect(inventoryMovementTypeLabel(type), label);
+      });
+    });
+
+    test('an unknown future movement type degrades to the raw value instead of crashing', () {
+      expect(inventoryMovementTypeLabel('some_future_type'), 'some_future_type');
+    });
+  });
 }

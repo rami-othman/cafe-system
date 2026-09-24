@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
+import 'current_locale.dart';
 import 'api_exception.dart';
 import 'api_response_parser.dart';
 
@@ -26,6 +27,7 @@ class DioApiClient {
       InterceptorsWrapper(
         onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
           options.headers[Headers.acceptHeader] = 'application/json';
+          options.headers['Accept-Language'] = CurrentLocale.languageCode;
           if (options.data is FormData) {
             options.headers.remove(Headers.contentTypeHeader);
           } else {

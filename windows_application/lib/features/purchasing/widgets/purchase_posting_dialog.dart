@@ -3,11 +3,21 @@ import 'package:flutter/material.dart';
 import '../models/purchasing_models.dart';
 
 class PurchasePostingChoice {
-  const PurchasePostingChoice(this.financialLocationId, this.paidAmount);
+  const PurchasePostingChoice(
+    this.financialLocationId,
+    this.paidAmount, {
+    required this.paymentDate,
+    required this.receiptDate,
+  });
 
   final int? financialLocationId;
   final String paidAmount;
+  final String paymentDate;
+  final String receiptDate;
 }
+
+String _dateOnly(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 Future<PurchasePostingChoice?> showPurchasePostingDialog(
   BuildContext context, {
@@ -18,6 +28,8 @@ Future<PurchasePostingChoice?> showPurchasePostingDialog(
   int? selected = preview.financialLocationId;
   final selectable = preview.cashSourceMode == 'selectable';
   final amountController = TextEditingController(text: paidAmount ?? preview.amount);
+  DateTime paymentDate = DateTime.now();
+  DateTime receiptDate = DateTime.now();
   return showDialog<PurchasePostingChoice>(
     context: context,
     builder: (dialog) => StatefulBuilder(
@@ -40,6 +52,37 @@ Future<PurchasePostingChoice?> showPurchasePostingDialog(
                   onChanged: (_) => setState(() {}),
                 ),
                 Text('المتبقي: ${(double.tryParse(preview.amount) ?? 0) - (double.tryParse(amountController.text) ?? 0)} SYP'),
+                InkWell(
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: receiptDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2035),
+                    );
+                    if (picked != null) setState(() => receiptDate = picked);
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(labelText: 'تاريخ الاستلام'),
+                    child: Text(_dateOnly(receiptDate)),
+                  ),
+                ),
+                if ((double.tryParse(amountController.text) ?? 0) > 0)
+                  InkWell(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: paymentDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2035),
+                      );
+                      if (picked != null) setState(() => paymentDate = picked);
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(labelText: 'تاريخ الدفع'),
+                      child: Text(_dateOnly(paymentDate)),
+                    ),
+                  ),
                 if (selectable)
                   DropdownButtonFormField<int>(
                     initialValue: selected,
@@ -68,7 +111,15 @@ Future<PurchasePostingChoice?> showPurchasePostingDialog(
                         (double.tryParse(amountController.text) ?? 0) > (double.tryParse(preview.amount) ?? 0) ||
                         (selectable && selected == null && (double.tryParse(amountController.text) ?? 0) > 0))
                 ? null
-                : () => Navigator.pop(dialog, PurchasePostingChoice(selected, amountController.text)),
+                : () => Navigator.pop(
+                    dialog,
+                    PurchasePostingChoice(
+                      selected,
+                      amountController.text,
+                      paymentDate: _dateOnly(paymentDate),
+                      receiptDate: _dateOnly(receiptDate),
+                    ),
+                  ),
             child: const Text('ترحيل فاتورة الشراء'),
           ),
         ],

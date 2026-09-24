@@ -185,6 +185,10 @@ final class FinanceDocumentService
                     ->where('financial_location_id', $document->financial_location_id)
                     ->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
                 if (! $shift) throw ValidationException::withMessages(['shift' => 'Open the original drawer shift before posting this voucher.']);
+            } elseif ($document->financial_location_id && DB::table('shifts')
+                ->where('tenant_id', $tenantId)->where('financial_location_id', $document->financial_location_id)
+                ->where('status', 'open')->whereNull('deleted_at')->exists()) {
+                throw ValidationException::withMessages(['shift' => 'A voucher touching an open drawer must be assigned to its shift.']);
             }
             $lines = DB::table('finance_document_lines as lines')->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')
                 ->where('lines.tenant_id', $tenantId)->where('lines.finance_document_id', $id)
@@ -223,6 +227,11 @@ final class FinanceDocumentService
                 throw ValidationException::withMessages(['document' => 'Reverse the linked supplier payment so its invoice allocation and voucher remain consistent.']);
             }
             FinancialActor::assertBranchAccess($actorId, $tenantId, $document->branch_id ? (int) $document->branch_id : null);
+            if ($document->shift_id) {
+                $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $document->shift_id)
+                    ->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
+                if (! $shift) throw ValidationException::withMessages(['shift' => 'A voucher assigned to a closed shift requires an approved correction procedure.']);
+            }
             $reversal = $this->entries->reverse($request, $tenantId, (int) $document->journal_entry_id, $actorId);
             DB::table('finance_documents')->where('tenant_id', $tenantId)->where('id', $id)->update([
                 'status' => 'reversed', 'reversal_journal_entry_id' => $reversal,
@@ -339,7 +348,7 @@ final class FinanceDocumentService
     private function assertFingerprint(object $existing, ?string $fingerprint): void
     {
         if ($fingerprint === null || ! $existing->idempotency_fingerprint || ! hash_equals($existing->idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different voucher request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب سند مختلف.');
         }
     }
 }

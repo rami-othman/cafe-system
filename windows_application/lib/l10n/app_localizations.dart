@@ -15422,6 +15422,24 @@ abstract class AppLocalizations {
   /// **'The POS operation could not be completed. Please try again.'**
   String get posOperationFailed;
 
+  /// No description provided for @posHoldSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Order held successfully.'**
+  String get posHoldSucceeded;
+
+  /// No description provided for @posHoldRetryable.
+  ///
+  /// In en, this message translates to:
+  /// **'The order could not be held. Your cart is still available to retry.'**
+  String get posHoldRetryable;
+
+  /// No description provided for @posHoldUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'The hold status could not be confirmed. Your cart is still available; check Orders before retrying.'**
+  String get posHoldUncertain;
+
   /// No description provided for @posMenuVersionStale.
   ///
   /// In en, this message translates to:

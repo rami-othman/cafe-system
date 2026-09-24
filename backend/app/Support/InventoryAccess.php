@@ -35,13 +35,9 @@ final class InventoryAccess
             'inventory.counts.post',
             'inventory.adjustments.create',
         ],
-        // Employees (cashiers) get read-only inventory access so item search
-        // works in screens like the purchase invoice form. Their only other
-        // inventory-adjacent capability is the scoped "own shift bar check"
-        // flow authorized separately by BarCheckAccess.
-        'employee' => [
-            'inventory.view',
-        ],
+        // Own-shift bar checks are authorized separately by BarCheckAccess.
+        // The full inventory API is not part of the cashier surface.
+        'employee' => [],
     ];
 
     public static function authorize(Request $request, string $permission): void

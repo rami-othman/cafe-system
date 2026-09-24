@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/inventory_text_styles.dart';
 import '../../../../core/utils/backend_datetime.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/management_ui.dart';
 import '../../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../../models/inventory_models.dart';
@@ -19,12 +20,33 @@ String inventoryItemTypeLabel(String type) => switch (type) {
   _ => 'أخرى',
 };
 
+/// Every `stock_movements.type` value the backend can actually write (see
+/// StockMovementRequest's validated list plus the POS-only types
+/// InventoryPostingService accepts internally). An unrecognized future
+/// type degrades to the raw value instead of crashing or hiding the row.
+String inventoryMovementTypeLabel(String type) => switch (type) {
+  'opening_balance' => 'رصيد افتتاحي',
+  'stock_in' => 'إدخال مخزون',
+  'stock_out' => 'إخراج مخزون',
+  'adjustment_in' => 'تسوية إضافة',
+  'adjustment_out' => 'تسوية خصم',
+  'waste' => 'هدر',
+  'stock_count_variance' => 'فرق جرد',
+  'transfer_in' => 'تحويل وارد',
+  'transfer_out' => 'تحويل صادر',
+  'sale_consumption' => 'استهلاك مبيعات',
+  'return_in' => 'إرجاع وارد',
+  'return_out' => 'إرجاع صادر',
+  _ => type,
+};
+
 String inventoryUnitLabel(String unit) => InventoryUnit.labelFor(unit);
 
 String inventoryNumber(String value, {int digits = 2}) =>
     (double.tryParse(value) ?? 0).toStringAsFixed(digits);
 
-String inventoryMoney(String value) => '\$${inventoryNumber(value)}';
+String inventoryMoney(String value) =>
+    CurrencyFormatter.format(double.tryParse(value) ?? 0);
 
 class ItemStatusBadge extends StatelessWidget {
   const ItemStatusBadge({super.key, required this.status});

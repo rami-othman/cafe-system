@@ -57,8 +57,8 @@ final class CustomerPaymentService
 
                 FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $data['branchId']);
                 $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'])->where('is_active', true)->whereNull('deleted_at')->first();
-                if (! $customer) {
-                    throw ValidationException::withMessages(['customerId' => 'Select an active tenant customer.']);
+                if (! $customer || $customer->is_walk_in) {
+                    throw ValidationException::withMessages(['customerId' => 'تسوية الذمم متاحة للعميل المسجل فقط. استخدم ترحيل البيع النقدي للعميل النقدي.']);
                 }
 
                 $requestedMethod = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->first();
@@ -184,6 +184,57 @@ final class CustomerPaymentService
         ];
     }
 
+    /** Validate the physical settlement before any direct-sale posting effect. */
+    public function directSaleSource(int $tenantId, int $actorId, int $branchId, array $data, bool $lock = true): array
+    {
+        FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId);
+        $method = DB::table('payment_methods')->where('tenant_id', $tenantId)
+            ->where('id', $data['paymentMethodId'] ?? 0)->where('is_active', true)->first();
+        if (! $method) throw ValidationException::withMessages(['paymentMethodId' => 'اختر طريقة دفع فعالة.']);
+        $cashSource = $this->cashSources->forPaymentMethod($tenantId, $actorId, $branchId,
+            $method, $data['financialLocationId'] ?? null, $lock);
+        $locationId = $cashSource?->location?->id ?? $data['financialLocationId'] ?? null;
+        [$method, $location] = $this->resolveSettlement($tenantId, [
+            'paymentMethodId' => $method->id, 'financialLocationId' => $locationId,
+        ]);
+        if (($location->branch_id && (int) $location->branch_id !== $branchId)
+            || ($method->type !== 'cash' && (int) $method->financial_location_id !== (int) $location->id)) {
+            throw ValidationException::withMessages(['financialLocationId' => 'مصدر الدفع غير صالح لهذا الفرع أو طريقة الدفع.']);
+        }
+
+        return [$method, $location, $cashSource?->shift];
+    }
+
+    /** A direct cash sale has one payment record and shares its sales journal. */
+    public function recordDirectSale(int $tenantId, object $invoice, int $actorId, array $data,
+        object $method, object $location, ?object $shift): object
+    {
+        $key = $data['idempotencyKey'];
+        $fingerprint = IdempotencyFingerprint::from($data);
+        $existing = $this->byKey($tenantId, $key, true);
+        if ($existing) {
+            $this->assertFingerprint($existing, $fingerprint);
+            if ((int) $existing->direct_sales_invoice_id !== (int) $invoice->id) {
+                throw ValidationException::withMessages(['idempotencyKey' => 'مفتاح الدفع مستخدم لفاتورة أخرى.']);
+            }
+            return $existing;
+        }
+        $now = now();
+        $paymentId = DB::table('customer_payments')->insertGetId([
+            'tenant_id' => $tenantId, 'branch_id' => $invoice->branch_id,
+            'customer_id' => $invoice->customer_id, 'direct_sales_invoice_id' => $invoice->id,
+            'payment_number' => $this->nextNumber($tenantId), 'payment_date' => $data['paymentDate'],
+            'amount' => $invoice->total, 'payment_method_id' => $method->id,
+            'financial_location_id' => $location->id, 'shift_id' => $shift?->id,
+            'external_reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null,
+            'status' => 'posted', 'idempotency_key' => $key,
+            'idempotency_fingerprint' => $fingerprint,
+            'journal_entry_id' => $invoice->posted_journal_entry_id,
+            'created_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
+        ]);
+        return $this->find($tenantId, (int) $paymentId);
+    }
+
     /**
      * Reverses a posted customer payment: a new reversing journal (Dr AR;
      * Cr cash/bank) plus removing its allocations so the invoice's live
@@ -196,6 +247,9 @@ final class CustomerPaymentService
         return DB::transaction(function () use ($request, $tenantId, $id, $actorId, $reason): object {
             $payment = $this->find($tenantId, $id, true);
             FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $payment->branch_id);
+            if ($payment->direct_sales_invoice_id) {
+                throw ValidationException::withMessages(['payment' => 'استرداد أو عكس دفعة فاتورة نقدية يحتاج إلى إجراء مرتجع نقدي معتمد.']);
+            }
             if ($payment->status !== 'posted' || ! $payment->journal_entry_id) {
                 throw ValidationException::withMessages(['status' => 'Only a posted, unreversed customer payment can be reversed.']);
             }
@@ -310,7 +364,7 @@ final class CustomerPaymentService
     private function assertFingerprint(object $payment, string $fingerprint): void
     {
         if (! $payment->idempotency_fingerprint || ! hash_equals($payment->idempotency_fingerprint, $fingerprint)) {
-            abort(409, 'This idempotency key was already used for a different customer payment request.');
+            abort(409, 'تم استخدام مفتاح العملية هذا مسبقًا لطلب دفعة عميل مختلفة.');
         }
     }
 
