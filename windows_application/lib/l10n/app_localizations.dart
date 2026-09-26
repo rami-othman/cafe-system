@@ -12068,6 +12068,12 @@ abstract class AppLocalizations {
   /// **'Employee'**
   String get teamEmployee;
 
+  /// No description provided for @teamFactoryManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Factory Manager'**
+  String get teamFactoryManager;
+
   /// No description provided for @teamNoMembers.
   ///
   /// In en, this message translates to:

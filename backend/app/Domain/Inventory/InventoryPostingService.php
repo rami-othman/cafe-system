@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 final class InventoryPostingService
 {
-    private const INCOMING = ['opening_balance', 'stock_in', 'adjustment_in', 'transfer_in', 'return_in'];
+    private const INCOMING = ['opening_balance', 'stock_in', 'adjustment_in', 'transfer_in', 'return_in', 'production_output', 'conversion_output'];
 
     public function __construct(
         private readonly OperationalAuditService $audit,
@@ -83,10 +83,18 @@ final class InventoryPostingService
                 }
                 $oldCost = InventoryDecimal::cost($balance->average_unit_cost);
                 $inputCost = InventoryDecimal::cost($data['unitCost'] ?? $item->latest_unit_cost);
-                $cost = $incoming ? $inputCost : $oldCost;
+                // A Manufacturing reversal removes an untouched, identified batch
+                // at that batch's original cost. This internal flag is never part
+                // of StockMovementRequest's public validated input.
+                $reversalOutput = $data['type'] === 'stock_out'
+                    && ($data['referenceType'] ?? null) === 'manufacturing_order_reversal'
+                    && ! empty($data['revalueAfterRemoval']);
+                $cost = ($incoming || $reversalOutput) ? $inputCost : $oldCost;
                 $after = $incoming ? $before + $quantity : $before - $quantity;
                 if (! $incoming) {
-                    $average = $oldCost;
+                    $average = $reversalOutput
+                        ? ($after > 0 ? max(0, intdiv($before * $oldCost - $quantity * $cost, $after)) : 0)
+                        : $oldCost;
                 } elseif ($before < 0) {
                     // Incoming stock first settles a POS-created deficit. There
                     // is no positive inventory pool to average until the
@@ -105,7 +113,7 @@ final class InventoryPostingService
                 ];
                 // `stock_in` is the purchase-receiving movement. It is the
                 // authoritative place to record the most recent buy price.
-                if ($data['type'] === 'stock_in') {
+                if ($data['type'] === 'stock_in' && ($data['referenceType'] ?? null) !== 'manufacturing_order_reversal') {
                     $itemUpdate['last_purchase_cost'] = InventoryDecimal::unitCost($inputCost);
                 }
                 DB::table('inventory_items')->where('id', $item->id)->update($itemUpdate);
@@ -113,6 +121,15 @@ final class InventoryPostingService
                 $movement = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('id', $id)->first();
                 $impact = $this->accounting->postForFinalMovement($request, $tenantId, $movement, $actorId);
                 $this->audit->record($request, $tenantId, 'stock_movement.posted', 'stock_movement', $id, [], ['type' => $data['type'], 'quantityBefore' => InventoryDecimal::quantity($before), 'quantityAfter' => InventoryDecimal::quantity($after), 'financeImpact' => $impact['classification']], $warehouse->branch_id, $actorId);
+
+                // Manufacturing reversal handles its own batch's remaining_quantity
+                // explicitly (it must target that specific order's batch, not
+                // whichever batch FEFO would pick) — skip the generic decrement here
+                // to avoid double-counting or decrementing the wrong batch.
+                if (! $incoming && in_array($item->item_type, ['semi_finished_good', 'finished_good'], true)
+                    && ($data['referenceType'] ?? null) !== 'manufacturing_order_reversal') {
+                    $this->decrementManufacturingBatchesFefo($tenantId, (int) $warehouse->id, (int) $item->id, $quantity);
+                }
 
                 return new MovementPostingResult($id);
             });
@@ -141,6 +158,45 @@ final class InventoryPostingService
             }
             DB::table('stock_balances')->where('id', $balance->id)->update(['reserved_quantity' => InventoryDecimal::quantity($after), 'updated_at' => now()]);
         });
+    }
+
+    /**
+     * Additive, Manufacturing-scoped lot tracking. Decrements manufacturing_batches
+     * rows FEFO (earliest expiry first, then oldest production date) for outbound
+     * finished and semi-finished goods. Items with no manufacturing_batches row
+     * are unaffected by the lookup. It never
+     * blocks the movement and never affects quantity_on_hand/WAC — it is purely
+     * a parallel remaining-quantity bookkeeping ledger for batch/expiry reporting
+     * and reversal eligibility.
+     */
+    private function decrementManufacturingBatchesFefo(int $tenantId, int $warehouseId, int $itemId, int $quantityBaseUnits): void
+    {
+        $remainingToConsume = $quantityBaseUnits;
+        $batches = DB::table('manufacturing_batches')
+            ->where('tenant_id', $tenantId)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $itemId)
+            ->where('remaining_quantity', '>', 0)
+            ->orderByRaw('expiry_date IS NULL, expiry_date ASC, production_date ASC')
+            ->lockForUpdate()->get();
+
+        foreach ($batches as $batch) {
+            if ($remainingToConsume <= 0) {
+                break;
+            }
+            $batchRemaining = InventoryDecimal::signedUnits($batch->remaining_quantity);
+            $take = min($batchRemaining, $remainingToConsume);
+            if ($take <= 0) {
+                continue;
+            }
+            DB::table('manufacturing_batches')->where('id', $batch->id)->update([
+                'remaining_quantity' => InventoryDecimal::quantity($batchRemaining - $take),
+                'updated_at' => now(),
+            ]);
+            $remainingToConsume -= $take;
+        }
+        // If $remainingToConsume > 0 here, the outbound quantity exceeded the sum
+        // of known batch remaining quantities (e.g. stock pre-dating batch
+        // tracking, or a manual adjustment). That is expected and not an error —
+        // batches only ever floor at 0, they never go negative.
     }
 
     private function byIdempotencyKey(int $tenantId, string $key, bool $lock = false): ?int

@@ -85,6 +85,26 @@ import '../features/inventory/views/inventory_screens.dart'
 import '../features/inventory/views/inventory_workflow_screens.dart';
 import '../features/inventory/views/item_details_screen.dart';
 import '../features/inventory/views/item_form_screen.dart';
+import '../features/manufacturing/controllers/manufacturing_conversion_cubit.dart';
+import '../features/manufacturing/controllers/manufacturing_cubit.dart';
+import '../features/manufacturing/controllers/manufacturing_production_cubit.dart';
+import '../features/manufacturing/controllers/manufacturing_recipe_cubit.dart';
+import '../features/manufacturing/controllers/manufacturing_reports_cubit.dart';
+import '../features/manufacturing/views/manufacturing_conversion_details_screen.dart';
+import '../features/manufacturing/views/manufacturing_conversion_form_screen.dart';
+import '../features/manufacturing/views/manufacturing_materials_screen.dart';
+import '../features/manufacturing/views/manufacturing_overview_screen.dart';
+import '../features/manufacturing/views/manufacturing_production_complete_screen.dart';
+import '../features/manufacturing/views/manufacturing_production_details_screen.dart';
+import '../features/manufacturing/views/manufacturing_production_history_screen.dart';
+import '../features/manufacturing/views/manufacturing_production_new_screen.dart';
+import '../features/manufacturing/views/manufacturing_production_result_screen.dart';
+import '../features/manufacturing/views/manufacturing_recipe_details_screen.dart';
+import '../features/manufacturing/views/manufacturing_recipe_form_screen.dart';
+import '../features/manufacturing/views/manufacturing_recipes_screen.dart';
+import '../features/manufacturing/views/manufacturing_reports_screen.dart';
+import '../features/manufacturing/views/manufacturing_stock_receipt_screen.dart';
+import '../features/manufacturing/widgets/manufacturing_module_shell.dart';
 import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../features/menu_management/controllers/product_catalog_cubit.dart';
 import '../features/menu_management/controllers/product_detail_cubit.dart';
@@ -261,11 +281,53 @@ CashierAccess _cashierAccess() {
 String? _cashierRouteGuard(BuildContext _, GoRouterState state) =>
     _cashierAccess().redirectFor(state.uri.path);
 
+/// The cafe's operational surface (POS, orders, shift, discounts, menu
+/// management, the cafe dashboard, cashier inventory, and cafe
+/// configuration) is unreachable for a factory user — the backend blocks all
+/// of it (`EnsureCafeOperationalAccess`, plus the owner/manager-only cafe
+/// configuration and menu management policies), so this guard sends a
+/// factory user straight to Manufacturing instead of letting a deep link
+/// resolve into a 403. A no-op for every non-factory role.
+const List<String> _cafeOnlyPathsForFactoryUser = <String>[
+  AppRoutes.pos,
+  AppRoutes.orders,
+  AppRoutes.discounts,
+  AppRoutes.menuManagement,
+  AppRoutes.dashboard,
+  AppRoutes.cafeConfiguration,
+  AppRoutes.cashierInventory,
+];
+
+String? _factoryRouteGuard(GoRouterState state) {
+  final AuthUser? user = serviceLocator<AuthSessionCubit>().state.session?.user;
+  if (user?.isFactoryUser != true) return null;
+
+  final String path = state.uri.path;
+  if (path == AppRoutes.manufacturing ||
+      path.startsWith('${AppRoutes.manufacturing}/')) {
+    return null;
+  }
+  if (ShiftRouteLocations.isShiftLocation(path)) return AppRoutes.manufacturing;
+
+  final bool isCafeOnly = _cafeOnlyPathsForFactoryUser.any(
+    (String cafePath) => path == cafePath || path.startsWith('$cafePath/'),
+  );
+
+  return isCafeOnly ? AppRoutes.manufacturing : null;
+}
+
+String? _topLevelRouteGuard(BuildContext context, GoRouterState state) =>
+    _cashierRouteGuard(context, state) ?? _factoryRouteGuard(state);
+
 /// Evaluated lazily on first router use, which is after the session restores.
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: _cashierAccess().homeRoute,
-  redirect: _cashierRouteGuard,
+  initialLocation:
+      serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ==
+          true
+      ? AppRoutes.manufacturing
+      : _cashierAccess().homeRoute,
+  redirect: _topLevelRouteGuard,
   routes: <RouteBase>[
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
@@ -278,6 +340,9 @@ final GoRouter appRouter = GoRouter(
         final bool isReports = state.uri.path.startsWith(AppRoutes.reports);
         final bool isFinance = state.uri.path.startsWith(AppRoutes.finance);
         final bool isInventory = state.uri.path.startsWith(AppRoutes.inventory);
+        final bool isManufacturing = state.uri.path.startsWith(
+          AppRoutes.manufacturing,
+        );
         final bool isCustomerManagement = state.uri.path.startsWith(
           CustomerManagementRouteLocations.customers,
         );
@@ -323,6 +388,11 @@ final GoRouter appRouter = GoRouter(
               : isInventory
               ? InventoryModuleShell(
                   selectedTab: _inventoryActiveTabFor(state.uri.path),
+                  child: child,
+                )
+              : isManufacturing
+              ? ManufacturingModuleShell(
+                  selectedTab: _manufacturingActiveTabFor(state.uri.path),
                   child: child,
                 )
               : isShift
@@ -1320,6 +1390,241 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.manufacturing,
+          name: AppRouteNames.manufacturing,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<ManufacturingCubit>(
+            create: (_) => serviceLocator<ManufacturingCubit>(),
+            child: const ManufacturingOverviewScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingMaterials,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const ManufacturingMaterialsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingMaterialCreate,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const ItemFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingMaterialEdit,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? itemId = parsePositiveRouteId(
+              state.pathParameters['itemId'],
+            );
+            if (itemId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: ItemFormScreen(itemId: itemId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingMaterialDetail,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? itemId = parsePositiveRouteId(
+              state.pathParameters['itemId'],
+            );
+            if (itemId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: InventoryItemDetailsScreen(itemId: itemId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingStockReceiptCreate,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const ManufacturingStockReceiptScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingRecipes,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<ManufacturingRecipeCubit>(
+            create: (_) => serviceLocator<ManufacturingRecipeCubit>(),
+            child: const ManufacturingRecipesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingRecipeCreate,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<ManufacturingRecipeCubit>(
+            create: (_) => serviceLocator<ManufacturingRecipeCubit>(),
+            child: const ManufacturingRecipeFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingRecipeEdit,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? recipeId = parsePositiveRouteId(
+              state.pathParameters['recipeId'],
+            );
+            if (recipeId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ManufacturingRecipeCubit>(
+              create: (_) => serviceLocator<ManufacturingRecipeCubit>(),
+              child: ManufacturingRecipeFormScreen(recipeId: recipeId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingRecipeDetail,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? recipeId = parsePositiveRouteId(
+              state.pathParameters['recipeId'],
+            );
+            if (recipeId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ManufacturingRecipeCubit>(
+              create: (_) => serviceLocator<ManufacturingRecipeCubit>(),
+              child: ManufacturingRecipeDetailsScreen(recipeId: recipeId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingProduction,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<ManufacturingProductionCubit>(
+                create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+              ),
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+            ],
+            child: const ManufacturingProductionHistoryScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingProductionNew,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<ManufacturingProductionCubit>(
+                create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+              ),
+              BlocProvider<ManufacturingRecipeCubit>(
+                create: (_) => serviceLocator<ManufacturingRecipeCubit>(),
+              ),
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+            ],
+            child: const ManufacturingProductionNewScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingProductionNewForRecipe,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? recipeId = parsePositiveRouteId(
+              state.pathParameters['recipeId'],
+            );
+            return MultiBlocProvider(
+              providers: <BlocProvider<dynamic>>[
+                BlocProvider<ManufacturingProductionCubit>(
+                  create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+                ),
+                BlocProvider<ManufacturingRecipeCubit>(
+                  create: (_) => serviceLocator<ManufacturingRecipeCubit>(),
+                ),
+                BlocProvider<InventoryCubit>(
+                  create: (_) => serviceLocator<InventoryCubit>(),
+                ),
+              ],
+              child: ManufacturingProductionNewScreen(recipeId: recipeId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingProductionComplete,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? draftId = parsePositiveRouteId(
+              state.pathParameters['draftId'],
+            );
+            if (draftId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<ManufacturingProductionCubit>(
+              create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+              child: ManufacturingProductionCompleteScreen(draftId: draftId),
+            );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingProductionResult,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<ManufacturingProductionCubit>(
+            create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+            child: ManufacturingProductionResultScreen(
+              idOrReference: state.pathParameters['id'] ?? '',
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingProductionDetail,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<ManufacturingProductionCubit>(
+            create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+            child: ManufacturingProductionDetailsScreen(
+              idOrReference: state.pathParameters['id'] ?? '',
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingConversionCreate,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<ManufacturingConversionCubit>(
+                create: (_) => serviceLocator<ManufacturingConversionCubit>(),
+              ),
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+            ],
+            child: const ManufacturingConversionFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingConversionDetail,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<ManufacturingConversionCubit>(
+            create: (_) => serviceLocator<ManufacturingConversionCubit>(),
+            child: ManufacturingConversionDetailsScreen(
+              idOrReference: state.pathParameters['id'] ?? '',
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingReports,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => MultiBlocProvider(
+            providers: <BlocProvider<dynamic>>[
+              BlocProvider<ManufacturingReportsCubit>(
+                create: (_) => serviceLocator<ManufacturingReportsCubit>(),
+              ),
+              BlocProvider<InventoryCubit>(
+                create: (_) => serviceLocator<InventoryCubit>(),
+              ),
+            ],
+            child: const ManufacturingReportsScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
           redirect: (_, _) => _cashierAccess().isCashier
@@ -2152,6 +2457,20 @@ String _inventoryActiveTabFor(String path) {
   return 'overview';
 }
 
+String _manufacturingActiveTabFor(String path) {
+  if (path.startsWith(AppRoutes.manufacturingMaterials) ||
+      path.startsWith('/manufacturing/stock-receipts')) {
+    return 'materials';
+  }
+  if (path.startsWith(AppRoutes.manufacturingRecipes)) return 'recipes';
+  if (path.startsWith(AppRoutes.manufacturingProduction) ||
+      path.startsWith('/manufacturing/conversions')) {
+    return 'production';
+  }
+  if (path.startsWith(AppRoutes.manufacturingReports)) return 'reports';
+  return 'overview';
+}
+
 // The default AppTopBar (branch tabs, ShiftStatusBadge, language,
 // notifications, profile) is the one shell chrome shared by every module —
 // Inventory, Finance, Reports, and Menu Management all render the exact
@@ -2214,6 +2533,9 @@ String _activeDestinationFor(GoRouterState state) {
   if (state.uri.path.startsWith(AppRoutes.inventory)) {
     return 'inventory';
   }
+  if (state.uri.path.startsWith(AppRoutes.manufacturing)) {
+    return 'manufacturing';
+  }
   if (state.uri.path.startsWith(AppRoutes.finance)) {
     return 'finance';
   }
@@ -2275,6 +2597,40 @@ abstract final class AppRoutes {
   static const String cafeConfigurationBranchEdit =
       '/cafe-configuration/branches/:branchId/edit';
   static const String inventory = '/inventory';
+
+  static const String manufacturing = '/manufacturing';
+  static const String manufacturingMaterials = '/manufacturing/materials';
+  static const String manufacturingMaterialCreate =
+      '/manufacturing/materials/new';
+  static const String manufacturingMaterialDetail =
+      '/manufacturing/materials/:itemId';
+  static const String manufacturingMaterialEdit =
+      '/manufacturing/materials/:itemId/edit';
+  static const String manufacturingStockReceiptCreate =
+      '/manufacturing/stock-receipts/new';
+  static const String manufacturingRecipes = '/manufacturing/recipes';
+  static const String manufacturingRecipeCreate =
+      '/manufacturing/recipes/new';
+  static const String manufacturingRecipeDetail =
+      '/manufacturing/recipes/:recipeId';
+  static const String manufacturingRecipeEdit =
+      '/manufacturing/recipes/:recipeId/edit';
+  static const String manufacturingProduction = '/manufacturing/production';
+  static const String manufacturingProductionNew =
+      '/manufacturing/production/new';
+  static const String manufacturingProductionNewForRecipe =
+      '/manufacturing/production/new/:recipeId';
+  static const String manufacturingProductionComplete =
+      '/manufacturing/production/complete/:draftId';
+  static const String manufacturingProductionResult =
+      '/manufacturing/production/result/:id';
+  static const String manufacturingProductionDetail =
+      '/manufacturing/production/:id';
+  static const String manufacturingConversionCreate =
+      '/manufacturing/conversions/new';
+  static const String manufacturingConversionDetail =
+      '/manufacturing/conversions/:id';
+  static const String manufacturingReports = '/manufacturing/reports';
   static const String finance = '/finance';
   static const String financeReceiptVouchers = '/finance/receipt-vouchers';
   static const String financePaymentVouchers = '/finance/payment-vouchers';
@@ -2353,6 +2709,25 @@ abstract final class AppRoutes {
   static const String barCheckTemplates = '/inventory/bar-check-templates';
   static const String barCheckTemplateDetail =
       '/inventory/bar-check-templates/:templateId';
+
+  static String manufacturingMaterialDetailPath(int itemId) =>
+      '/manufacturing/materials/$itemId';
+  static String manufacturingMaterialEditPath(int itemId) =>
+      '/manufacturing/materials/$itemId/edit';
+  static String manufacturingRecipeDetailPath(int recipeId) =>
+      '/manufacturing/recipes/$recipeId';
+  static String manufacturingRecipeEditPath(int recipeId) =>
+      '/manufacturing/recipes/$recipeId/edit';
+  static String manufacturingProductionNewForRecipePath(int recipeId) =>
+      '/manufacturing/production/new/$recipeId';
+  static String manufacturingProductionCompletePath(int draftId) =>
+      '/manufacturing/production/complete/$draftId';
+  static String manufacturingProductionResultPath(String id) =>
+      '/manufacturing/production/result/$id';
+  static String manufacturingProductionDetailPath(String id) =>
+      '/manufacturing/production/$id';
+  static String manufacturingConversionDetailPath(String id) =>
+      '/manufacturing/conversions/$id';
 
   static String inventoryItemDetailPath(int itemId) =>
       '/inventory/items/$itemId';
@@ -2443,6 +2818,7 @@ abstract final class AppRouteNames {
   static const String cafeConfigurationBranchEdit =
       'cafe-configuration-branch-edit';
   static const String inventory = 'inventory';
+  static const String manufacturing = 'manufacturing';
   static const String finance = 'finance';
   static const String menuManagementProducts = 'menu-management-products';
   static const String menuManagementModifiers = 'menu-management-modifiers';
@@ -2530,11 +2906,23 @@ void _returnToRecipeWorkspace(
   );
 }
 
-/// Owner reaches every Cafe Configuration page. Manager is limited to
-/// Printing (branch printer defaults + receipt template), matching the
-/// backend's `cafe.configuration.printing` gate; every other sub-page
-/// (branches, team, tax, profile, ...) stays Owner-only. Employee never
-/// passes either check.
+/// Manufacturing access is capability-driven, mirroring how Finance screens
+/// key off `financeCapabilities` rather than a role check: the backend is the
+/// source of truth (`ManufacturingAccess`), and grants `manufacturing.view`
+/// only to Owner and to a `factory_manager` who actually has a factory branch
+/// assigned. A cafe user who fails this check goes to POS; a factory user
+/// (`isFactoryUser`) never does — the cafe's POS/shift/discount surface is
+/// blocked for them at the backend (see `EnsureCafeOperationalAccess`), so
+/// bouncing them there would just trade one 403 for another.
+String? _manufacturingAccessRedirect(BuildContext _, GoRouterState _) {
+  final user = serviceLocator<AuthSessionCubit>().state.session?.user;
+  if (user != null && user.manufacturingCapabilities.contains('manufacturing.view')) {
+    return null;
+  }
+
+  return (user?.isFactoryUser ?? false) ? AppRoutes.settings : AppRoutes.pos;
+}
+
 String? _cafeConfigurationAccessRedirect(BuildContext _, GoRouterState state) {
   final role = serviceLocator<AuthSessionCubit>().state.session?.user.role;
   if (role == 'owner') return null;

@@ -391,9 +391,14 @@ class PurchasePostingPreview {
         financialLocationId: readInt(json['financialLocationId']),
         financialLocationName: json['financialLocationName']?.toString(),
         cashSourceMode: readString(json['cashSourceMode']),
-        allowedCashLocations: (json['allowedCashLocations'] as List<dynamic>? ?? const [])
-            .map((value) => PurchaseCashLocation.fromJson(Map<String, dynamic>.from(value as Map)))
-            .toList(growable: false),
+        allowedCashLocations:
+            (json['allowedCashLocations'] as List<dynamic>? ?? const [])
+                .map(
+                  (value) => PurchaseCashLocation.fromJson(
+                    Map<String, dynamic>.from(value as Map),
+                  ),
+                )
+                .toList(growable: false),
         shiftId: readInt(json['shiftId']),
         shiftNumber: readString(json['shiftNumber']).isEmpty
             ? null
@@ -408,7 +413,10 @@ class PurchaseCashLocation {
   final String name;
 
   factory PurchaseCashLocation.fromJson(Map<String, dynamic> json) =>
-      PurchaseCashLocation(id: readInt(json['id']) ?? 0, name: readString(json['name']));
+      PurchaseCashLocation(
+        id: readInt(json['id']) ?? 0,
+        name: readString(json['name']),
+      );
 }
 
 /// A Purchasing Center row/detail. This is a READ shape of the existing
@@ -445,6 +453,7 @@ class PurchaseInvoice {
     this.supplierInvoiceNumber,
     this.supplierInternalReference,
     this.branchId,
+    this.branchType = 'cafe',
     this.branchName,
     this.warehouseName,
     this.invoiceTypeId,
@@ -474,6 +483,7 @@ class PurchaseInvoice {
   final int supplierId;
   final String supplierName;
   final int? branchId;
+  final String branchType;
   final String? branchName;
   final String? warehouseName;
   final String invoiceDate;
@@ -538,12 +548,14 @@ class PurchaseInvoice {
     supplierInvoiceNumber: readString(json['supplierInvoiceNumber']).isEmpty
         ? null
         : readString(json['supplierInvoiceNumber']),
-    supplierInternalReference: readString(json['supplierInternalReference']).isEmpty
+    supplierInternalReference:
+        readString(json['supplierInternalReference']).isEmpty
         ? null
         : readString(json['supplierInternalReference']),
     supplierId: readInt(json['supplierId']) ?? 0,
     supplierName: readString(json['supplierName']),
     branchId: readInt(json['branchId']),
+    branchType: readString(json['branchType'], fallback: 'cafe'),
     branchName: readString(json['branchName']).isEmpty
         ? null
         : readString(json['branchName']),
@@ -589,7 +601,9 @@ class PurchaseInvoice {
       json['receiptStatus'],
       fallback: 'not_applicable',
     ),
-    receiptMode: json['receiptMode'] == null ? null : readString(json['receiptMode']),
+    receiptMode: json['receiptMode'] == null
+        ? null
+        : readString(json['receiptMode']),
     status: readString(json['status']),
     isOverdue: readBool(json['isOverdue']),
     description: readString(json['description']).isEmpty

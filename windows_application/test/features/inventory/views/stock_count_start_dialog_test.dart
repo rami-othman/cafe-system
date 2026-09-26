@@ -15,6 +15,29 @@ void main() {
     isLegacy: false,
   );
 
+  testWidgets('factory default warehouse enables a full count immediately', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: StockCountStartDialog(
+            warehouses: [warehouse],
+            categories: [],
+            initialWarehouseId: 1,
+          ),
+        ),
+      ),
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'بدء الجرد'))
+          .onPressed,
+      isNotNull,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'cycle count reveals real category chips and validates selection',
     (WidgetTester tester) async {

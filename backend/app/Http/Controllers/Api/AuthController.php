@@ -7,10 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiToken;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\BranchAccessService;
 use App\Services\DefaultTenantRoleService;
 use App\Services\TenantOperationalPolicy;
 use App\Support\FinanceAccess;
+use App\Support\ManufacturingAccess;
 use App\Services\UserLifecycleService;
+use App\Models\Branch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -144,11 +147,32 @@ class AuthController extends Controller
 
     private function sessionPayload(User $user, Tenant $tenant, ApiToken $token, bool $includeAccessToken = true): array
     {
+        $isFactoryUser = $user->effectiveRoleCode() === DefaultTenantRoleService::FACTORY_MANAGER;
+        $accessibleBranchIds = app(BranchAccessService::class)->accessibleBranchIds($user);
+        $factoryBranchIds = $accessibleBranchIds === [] ? [] : Branch::query()
+            ->whereIn('id', $accessibleBranchIds)
+            ->where('branch_type', 'factory')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
         $data = [
             'tokenType' => 'Bearer',
             'expiresAt' => $token->expires_at?->toIso8601String(),
             'mustChangePassword' => $user->must_change_password,
-            'user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'username' => $user->username, 'status' => $user->is_active ? 'active' : 'deactivated', 'role' => $user->effectiveRoleCode(), 'financeCapabilities' => FinanceAccess::permissionsFor((int) $tenant->id, app(DefaultTenantRoleService::class)->canonicalLegacyRole($user->effectiveRoleCode()))],
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'status' => $user->is_active ? 'active' : 'deactivated',
+                'role' => $user->effectiveRoleCode(),
+                'financeCapabilities' => FinanceAccess::permissionsFor((int) $tenant->id, app(DefaultTenantRoleService::class)->canonicalLegacyRole($user->effectiveRoleCode())),
+                'manufacturingCapabilities' => ManufacturingAccess::capabilities($user),
+                'isFactoryUser' => $isFactoryUser,
+                'factoryBranchIds' => $factoryBranchIds,
+            ],
             'tenant' => ['id' => $tenant->id, 'name' => $tenant->name, 'status' => $tenant->status],
             'capabilities' => ['customer' => ['manage' => $this->customerAccess->allowsUser($user, 'customer.manage')]],
             'session' => ['id' => $token->id, 'deviceName' => $token->name, 'authenticatedAt' => $token->created_at?->toIso8601String(), 'lastValidatedAt' => now()->toIso8601String(), 'expiresAt' => $token->expires_at?->toIso8601String(), 'offlineSessionMaxAgeSeconds' => self::OFFLINE_SESSION_MAX_AGE_SECONDS],

@@ -54,12 +54,14 @@ class InventoryRepository {
     category: category,
     status: status ?? (activeOnly ? 'active' : null),
     warehouseId: warehouseId,
+    branchId: branchId,
     perPage: 100,
   )).items;
 
   Future<InventoryItemsPage> itemsPage({
     String? search,
     String? type,
+    List<String>? types,
     String? category,
     String? status,
     String? stockStatus,
@@ -76,6 +78,7 @@ class InventoryRepository {
               'perPage': perPage,
               if (search != null && search.isNotEmpty) 'search': search,
               if (type != null && type.isNotEmpty) 'type': type,
+              if (types != null && types.isNotEmpty) 'types': types,
               if (category != null && category.isNotEmpty) 'category': category,
               if (status != null && status.isNotEmpty) 'status': status,
               if (stockStatus != null && stockStatus.isNotEmpty)
@@ -146,7 +149,10 @@ class InventoryRepository {
     Map<String, dynamic>.from(
       await _api.getEnvelope(
             'inventory/items/$id/purchase-history',
-            queryParameters: <String, dynamic>{'page': page, 'perPage': perPage},
+            queryParameters: <String, dynamic>{
+              'page': page,
+              'perPage': perPage,
+            },
           )
           as Map,
     ),

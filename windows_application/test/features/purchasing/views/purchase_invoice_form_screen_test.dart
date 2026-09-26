@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:windows_application/features/operational_context/controllers/operational_branch_cubit.dart';
+import 'package:windows_application/features/operational_context/repositories/fake_operational_branch_repository.dart';
+import 'package:windows_application/features/pos/models/branch.dart';
 import 'package:windows_application/core/network/dio_api_client.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/finance_inventory_setup/controllers/finance_setup_cubit.dart';
@@ -12,6 +15,29 @@ import 'package:windows_application/features/purchasing/repositories/purchasing_
 import 'package:windows_application/features/purchasing/views/purchase_invoice_form_screen.dart';
 
 void main() {
+  testWidgets(
+    'new purchase uses the active factory branch and its private warehouse',
+    (tester) async {
+      await _pump(
+        tester,
+        _FakeBackend(withWarehouses: true, factory: true),
+        factory: true,
+      );
+      final selector = find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownButtonFormField<int> &&
+            widget.decoration.labelText == 'مخزن الاستلام',
+      );
+      expect(
+        tester.widget<DropdownButtonFormField<int>>(selector).initialValue,
+        2,
+      );
+      await tester.tap(selector);
+      await tester.pumpAndSettle();
+      expect(find.text('Downtown Warehouse'), findsWidgets);
+      expect(find.text('Main Warehouse'), findsNothing);
+    },
+  );
   setUp(() {
     if (serviceLocator.isRegistered<InventoryRepository>()) {
       serviceLocator.unregister<InventoryRepository>();
@@ -231,6 +257,7 @@ Future<void> _pump(
   WidgetTester tester,
   _FakeBackend backend, {
   int? preselectedSupplierId,
+  bool factory = false,
   Size surfaceSize = const Size(1600, 1200),
 }) async {
   await tester.binding.setSurfaceSize(surfaceSize);
@@ -258,6 +285,25 @@ Future<void> _pump(
   final FinanceSetupCubit financeCubit = FinanceSetupCubit(
     repository: FinanceSetupRepository(client),
   );
+  final branchCubit = OperationalBranchCubit(
+    repository: FakeOperationalBranchRepository(
+      branches: factory
+          ? const <Branch>[
+              Branch(
+                id: 2,
+                name: 'المعمل',
+                currency: 'SYP',
+                timezone: 'Asia/Damascus',
+                isActive: true,
+                branchType: 'factory',
+                defaultWarehouseId: 2,
+              ),
+            ]
+          : const <Branch>[],
+    ),
+  );
+  await branchCubit.loadBranches();
+  addTearDown(branchCubit.close);
 
   await tester.pumpWidget(
     MaterialApp(
@@ -268,6 +314,7 @@ Future<void> _pump(
             providers: <BlocProvider<dynamic>>[
               BlocProvider<PurchasingCubit>.value(value: purchasingCubit),
               BlocProvider<FinanceSetupCubit>.value(value: financeCubit),
+              BlocProvider<OperationalBranchCubit>.value(value: branchCubit),
             ],
             child: PurchaseInvoiceFormScreen(
               preselectedSupplierId: preselectedSupplierId,
@@ -281,8 +328,9 @@ Future<void> _pump(
 }
 
 class _FakeBackend {
-  _FakeBackend({this.withWarehouses = false});
+  _FakeBackend({this.withWarehouses = false, this.factory = false});
   final bool withWarehouses;
+  final bool factory;
   Map<String, dynamic>? lastCreatePayload;
 
   Response<dynamic> respond(RequestOptions options) {
@@ -313,7 +361,20 @@ class _FakeBackend {
       );
     }
     if (path == 'branches') {
-      return _ok(options, <Map<String, dynamic>>[]);
+      return _ok(
+        options,
+        factory
+            ? <Map<String, dynamic>>[
+                {
+                  'id': 2,
+                  'name': 'المعمل',
+                  'branchType': 'factory',
+                  'defaultWarehouseId': 2,
+                  'isActive': true,
+                },
+              ]
+            : <Map<String, dynamic>>[],
+      );
     }
     if (path == 'warehouses') {
       return _ok(

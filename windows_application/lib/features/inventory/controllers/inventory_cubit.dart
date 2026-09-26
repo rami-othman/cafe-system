@@ -102,6 +102,7 @@ class InventoryCubit extends Cubit<InventoryState> {
     int? branchId,
     String? search,
     String? type,
+    List<String>? types,
     String? category,
     String? status,
     String? stockStatus,
@@ -112,6 +113,7 @@ class InventoryCubit extends Cubit<InventoryState> {
       repository.itemsPage(
         search: search,
         type: type,
+        types: types,
         category: category,
         status: status,
         stockStatus: stockStatus,
@@ -252,8 +254,9 @@ class InventoryCubit extends Cubit<InventoryState> {
   Future<void> loadItemRecipeUsage(int itemId) async {
     emit(state.copyWith(itemRecipeUsageLoading: true, clearError: true));
     try {
-      final List<InventoryRecipeUsage> usage = await repository
-          .itemRecipeUsage(itemId);
+      final List<InventoryRecipeUsage> usage = await repository.itemRecipeUsage(
+        itemId,
+      );
       emit(
         state.copyWith(
           itemRecipeUsage: usage,
@@ -289,6 +292,7 @@ class InventoryCubit extends Cubit<InventoryState> {
       emit(state.copyWith(itemPurchaseHistoryLoading: false));
     }
   }
+
   Future<void> loadUnitConversions({int? itemId}) => _load(() async {
     final Future<List<InventoryItem>> itemsFuture = repository
         .conversionItems();

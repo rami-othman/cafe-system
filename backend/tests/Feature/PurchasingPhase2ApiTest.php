@@ -22,6 +22,69 @@ class PurchasingPhase2ApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_factory_immediate_purchase_reuses_material_and_receives_cost_once_in_private_warehouse(): void
+    {
+        [$tenant, $headers, $oldBranch, $unused, $oldWarehouse, $item] = $this->unifiedInventoryFixture('factory-immediate');
+        $factory = $this->postJson('/api/v1/cafe-configuration/branches', [
+            'name' => 'المعمل', 'branchType' => 'factory', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'مخزن المعمل',
+        ], $headers)->assertCreated()->json('data');
+        $warehouse = $factory['posInventoryWarehouseId'];
+        $this->patchJson('/api/v1/inventory/items/'.$item, [
+            'nameAr' => 'صنف اختبار', 'itemType' => 'raw_material', 'unit' => 'kg',
+            'isActive' => true, 'warehouseIds' => [$oldWarehouse, $warehouse],
+        ], $headers)->assertOk();
+        $this->stockIn($headers, $item, $oldWarehouse, '4.000', '5.0000');
+        $supplier = $this->supplier($headers);
+        $payload = ['supplierId' => $supplier, 'branchId' => $factory['id'], 'invoiceType' => 'inventory',
+            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'immediate', 'discountType' => 'fixed', 'discountValue' => '10.00',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Existing material', 'inventoryItemId' => $item,
+                'quantity' => '10.000', 'lineGrossAmount' => '100.00', 'warehouseId' => $warehouse]],
+            'charges' => [['description' => 'Freight', 'treatment' => 'capitalize', 'amount' => '20.00']]];
+        $invoice = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertCreated()->json('data.id');
+        $post = ['idempotencyKey' => 'factory-purchase-post', 'paidAmount' => '0.00'];
+        $this->postJson("/api/v1/finance/purchases/$invoice/post", $post, $headers)->assertOk()->assertJsonPath('data.receiptStatus', 'received');
+        $this->postJson("/api/v1/finance/purchases/$invoice/post", $post, $headers)->assertOk();
+        $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '10.000', 'average_unit_cost' => '11.0000']);
+        $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $oldWarehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '4.000', 'average_unit_cost' => '5.0000']);
+        $this->assertSame(1, DB::table('purchase_receipts')->where('supplier_invoice_id', $invoice)->count());
+        $this->assertSame(1, DB::table('inventory_items')->where('tenant_id', $tenant)->count());
+        $this->assertSame(1, DB::table('stock_movements')->where('warehouse_id', $warehouse)->where('inventory_item_id', $item)->count());
+        $payload['lines'][0]['warehouseId'] = $oldWarehouse;
+        $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertUnprocessable()->assertJsonValidationErrors('warehouseId');
+    }
+
+    public function test_factory_delayed_receipts_reject_other_branch_and_support_partial_receipt_retry(): void
+    {
+        [$tenant, $headers, $branch, $unused, $oldWarehouse, $item] = $this->unifiedInventoryFixture('factory-delayed');
+        $factory = $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'المعمل', 'branchType' => 'factory', 'timezone' => 'Asia/Damascus'], $headers)->assertCreated()->json('data');
+        $warehouse = $factory['posInventoryWarehouseId'];
+        $this->patchJson('/api/v1/inventory/items/'.$item, [
+            'nameAr' => 'صنف اختبار', 'itemType' => 'raw_material', 'unit' => 'kg',
+            'isActive' => true, 'warehouseIds' => [$oldWarehouse, $warehouse],
+        ], $headers)->assertOk();
+        $created = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $this->supplier($headers),
+            'branchId' => $factory['id'], 'invoiceType' => 'inventory', 'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'receive_later',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Material', 'inventoryItemId' => $item,
+                'quantity' => '10.000', 'lineGrossAmount' => '100.00', 'warehouseId' => $warehouse]]], $headers)->assertCreated()->json('data');
+        $invoice = $created['id'];
+        $this->postJson("/api/v1/finance/purchases/$invoice/post", ['idempotencyKey' => 'factory-later', 'paidAmount' => '0.00'], $headers)->assertOk();
+        $this->assertSame(0, DB::table('stock_movements')->where('warehouse_id', $warehouse)->count());
+        $line = ['supplierInvoiceLineId' => $created['lines'][0]['id'], 'quantity' => '4.000', 'warehouseId' => $oldWarehouse];
+        $this->postJson("/api/v1/finance/purchases/$invoice/receipts", ['idempotencyKey' => 'wrong-factory-receipt', 'lines' => [$line]], $headers)->assertUnprocessable();
+        foreach (['4.000', '6.000'] as $index => $quantity) {
+            $line['quantity'] = $quantity; $line['warehouseId'] = $warehouse;
+            $receiptData = ['idempotencyKey' => 'factory-receipt-'.$index, 'lines' => [$line]];
+            $receipt = $this->postJson("/api/v1/finance/purchases/$invoice/receipts", $receiptData, $headers)->assertCreated()->json('data.id');
+            $this->postJson("/api/v1/finance/purchases/$invoice/receipts", $receiptData, $headers)->assertCreated()->assertJsonPath('data.id', $receipt);
+            $post = ['idempotencyKey' => 'factory-receipt-post-'.$index];
+            $this->postJson("/api/v1/finance/purchase-receipts/$receipt/post", $post, $headers)->assertOk();
+            $this->postJson("/api/v1/finance/purchase-receipts/$receipt/post", $post, $headers)->assertOk();
+        }
+        $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '10.000', 'average_unit_cost' => '10.0000']);
+        $this->assertSame(2, DB::table('stock_movements')->where('warehouse_id', $warehouse)->count());
+        $this->assertDatabaseHas('supplier_invoices', ['id' => $invoice, 'receipt_status' => 'received']);
+    }
+
     public function test_full_lifecycle_partial_then_multiple_receipts_update_stock_wac_and_receipt_status(): void
     {
         $tenant = $this->tenant('phase2-lifecycle');

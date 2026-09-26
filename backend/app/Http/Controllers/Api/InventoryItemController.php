@@ -97,6 +97,10 @@ class InventoryItemController extends Controller
                 $query->where('items.'.$column, $request->query($key));
             }
         }
+        if ($request->filled('types')) {
+            $data = $request->validate(['types' => ['array'], 'types.*' => ['string']]);
+            $query->whereIn('items.item_type', $data['types']);
+        }
         if ($request->filled('status')) {
             $query->where('items.is_active', $request->query('status') === 'active');
         }

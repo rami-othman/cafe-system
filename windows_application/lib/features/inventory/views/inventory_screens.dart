@@ -1887,10 +1887,12 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
           builder: (BuildContext dialogContext) => StockCountStartDialog(
             warehouses: warehouses,
             categories: categories,
+            initialWarehouseId: activeFactoryWarehouseId(context),
           ),
         );
     if (request == null || !context.mounted) return;
     final bool saved = await cubit.createCount(<String, dynamic>{
+      'branchId': activeInventoryBranchId(context),
       'warehouseId': request.warehouseId,
       'countDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
       'countType': request.countType,
@@ -2048,10 +2050,12 @@ class StockCountStartDialog extends StatefulWidget {
     super.key,
     required this.warehouses,
     required this.categories,
+    this.initialWarehouseId,
   });
 
   final List<WarehouseLocation> warehouses;
   final List<String> categories;
+  final int? initialWarehouseId;
 
   @override
   State<StockCountStartDialog> createState() => _StockCountStartDialogState();
@@ -2062,6 +2066,16 @@ class _StockCountStartDialogState extends State<StockCountStartDialog> {
   String _countType = 'full';
   final Set<String> _categories = <String>{};
   final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.warehouses.any(
+      (warehouse) => warehouse.id == widget.initialWarehouseId,
+    )) {
+      _warehouseId = widget.initialWarehouseId;
+    }
+  }
 
   @override
   void dispose() {

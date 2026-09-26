@@ -76,7 +76,7 @@ class User extends Authenticatable
 
     public function usesEmailLogin(): bool
     {
-        return in_array($this->effectiveRoleCode(), [DefaultTenantRoleService::OWNER, DefaultTenantRoleService::MANAGER], true);
+        return in_array($this->effectiveRoleCode(), [DefaultTenantRoleService::OWNER, DefaultTenantRoleService::MANAGER, DefaultTenantRoleService::FACTORY_MANAGER], true);
     }
 
     public function effectiveRoleCode(): string

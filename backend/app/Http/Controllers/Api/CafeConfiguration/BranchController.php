@@ -37,6 +37,8 @@ class BranchController extends Controller
         $data = $request->validated();
         $warehouseName = $data['warehouseName'] ?? null;
         unset($data['warehouseName']);
+        $data['branch_type'] = $data['branchType'] ?? 'cafe';
+        unset($data['branchType']);
         $branch = DB::transaction(function () use ($data, $tenantId, $financialSetup, $warehouseName, $request): Branch {
             $branch = Branch::query()->create([
                 ...$data,
@@ -51,7 +53,7 @@ class BranchController extends Controller
             return $branch;
         });
 
-        return (new BranchResource($this->withPosWarehouses($branch)))->response()->setStatusCode(201);
+        return (new BranchResource($this->withPosWarehouses($branch->fresh())))->response()->setStatusCode(201);
     }
 
     public function show(Request $request, int $branch): BranchResource
@@ -78,6 +80,10 @@ class BranchController extends Controller
             $posWarehouses->assertEligible((int) $branch->tenant_id, (int) $branch->id, $data['posInventoryWarehouseId']);
             $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];
             unset($data['posInventoryWarehouseId']);
+        }
+        if (array_key_exists('branchType', $data)) {
+            $data['branch_type'] = $data['branchType'];
+            unset($data['branchType']);
         }
         // Drawer / close configuration is validated by the same canonical
         // service shift open uses, but only when one of those fields changes.

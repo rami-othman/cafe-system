@@ -343,13 +343,14 @@ class FinancialSetupService
         }
 
         $now = now();
-        $warehouseName = $name !== null && trim($name) !== '' ? trim($name) : $branch->name.' — البار';
+        $isFactory = ($branch->branch_type ?? 'cafe') === 'factory';
+        $warehouseName = $name !== null && trim($name) !== '' ? trim($name) : $branch->name.($isFactory ? ' — المخزن' : ' — البار');
         $warehouseId = DB::table('warehouses')->insertGetId([
             'tenant_id' => $tenantId,
             'branch_id' => $branchId,
             'name' => $warehouseName,
             'code' => 'BR-'.$branchId.'-1',
-            'type' => 'bar',
+            'type' => $isFactory ? 'other' : 'bar',
             'is_active' => true,
             'notes' => null,
             'updated_by' => $actorId,

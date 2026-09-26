@@ -25,6 +25,7 @@ final class SalesInvoiceService
                 if ($existing) { if ($existing->request_fingerprint !== $fingerprint) throw ValidationException::withMessages(['idempotencyKey' => 'This idempotency key was already used for a different request.']); return $existing; }
             }
             $customer = $this->customer($tenantId, (int) $data['customerId']);
+            \App\Support\FactorySalesPolicy::assertLines($tenantId, (int) $data['branchId'], $data['lines']);
             if (! $customer->is_walk_in) $this->assertAccountsReceivableMapping($tenantId);
             $lines = $this->pricedLines($tenantId, $data['lines']); $charges = $this->charges($data['charges'] ?? []); $totals = $this->totals($lines, $charges, $data);
             $date = CarbonImmutable::parse($data['invoiceDate'])->toDateString();
@@ -43,6 +44,7 @@ final class SalesInvoiceService
             if ($invoice->status !== 'draft') throw ValidationException::withMessages(['status' => 'Only draft sales invoices can be edited.']);
             $customer = $this->customer($tenantId, (int) ($data['customerId'] ?? $invoice->customer_id));
             $lines = array_key_exists('lines', $data) ? $this->pricedLines($tenantId, $data['lines']) : $this->currentLines($invoiceId);
+            \App\Support\FactorySalesPolicy::assertLines($tenantId, (int) ($data['branchId'] ?? $invoice->branch_id), $lines);
             $charges = array_key_exists('charges', $data) ? $this->charges($data['charges']) : $this->currentCharges($invoiceId);
             $totals = $this->totals($lines, $charges, ['invoiceDiscountType' => $data['invoiceDiscountType'] ?? $invoice->invoice_discount_type, 'invoiceDiscountValue' => $data['invoiceDiscountValue'] ?? $invoice->invoice_discount_value, 'manualAdjustment' => $data['manualAdjustment'] ?? $invoice->manual_adjustment]);
             $date = array_key_exists('invoiceDate', $data) ? CarbonImmutable::parse($data['invoiceDate'])->toDateString() : $invoice->invoice_date;

@@ -14,6 +14,7 @@ String inventoryItemTypeLabel(String type) => switch (type) {
   'non_stock_item' => 'صنف غير مخزني',
   'service' => 'خدمة',
   'raw_material' => 'مادة خام',
+  'semi_finished_good' => 'نصف مصنع',
   'packaging' => 'تغليف',
   'supply' => 'مستلزمات',
   'finished_good' => 'منتج جاهز',

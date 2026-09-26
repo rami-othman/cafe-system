@@ -14,6 +14,7 @@ class StockCountRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'branchId' => ['nullable', 'integer'],
             'warehouseId' => ['required', 'integer'],
             'countDate' => ['required', 'date_format:Y-m-d'],
             'countType' => ['nullable', 'in:full,cycle'],

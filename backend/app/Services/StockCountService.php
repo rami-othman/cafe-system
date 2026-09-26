@@ -25,6 +25,14 @@ class StockCountService
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
         $warehouse = $this->warehouse($tenantId, (int) $data['warehouseId']);
+        $branchId = isset($data['branchId']) ? (int) $data['branchId'] : null;
+        if ($branchId) {
+            FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId);
+            \App\Support\FactoryWarehouseScope::assertDestination($tenantId, $branchId, (int) $warehouse->id);
+            if ($warehouse->branch_id !== null && (int) $warehouse->branch_id !== $branchId) {
+                throw ValidationException::withMessages(['warehouseId' => 'The selected warehouse does not belong to the selected branch.']);
+            }
+        }
         FinancialActor::assertBranchAccess($actorId, $tenantId, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
 
         return DB::transaction(function () use ($tenantId, $warehouse, $data, $actorId): int {

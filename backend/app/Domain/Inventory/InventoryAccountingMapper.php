@@ -67,6 +67,14 @@ final class InventoryAccountingMapper
         if (in_array($type, ['transfer_in', 'transfer_out'], true)) {
             return $this->nonPosting('NOT_APPLICABLE', 'INTERNAL_TRANSFER', 'Internal transfer — no P&L impact.');
         }
+        // Manufacturing consumption/output and Conversion are inventory-to-inventory
+        // value movements (raw material asset -> finished/semi-finished asset, or
+        // source item -> result item), both mapped to the same Inventory Asset
+        // account today. No revenue or expense event occurs. See
+        // ManufacturingProductionService/ManufacturingConversionService docblocks.
+        if (in_array($type, ['production_consumption', 'production_output', 'conversion_consumption', 'conversion_output'], true)) {
+            return $this->nonPosting('NOT_APPLICABLE', 'MANUFACTURING_INVENTORY_TRANSFORMATION', 'Manufacturing/Conversion inventory movement — no P&L impact.');
+        }
         if (in_array($type, ['opening_balance', 'stock_in', 'stock_out', 'return_in', 'return_out'], true)) {
             return $this->nonPosting('NOT_APPLICABLE', 'UNMAPPED_RECEIPT_OR_MOVEMENT', 'This inventory movement has no approved Finance business mapping.');
         }

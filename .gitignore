@@ -1,2 +1,4 @@
 .vscode/
 old_cafe_data/
+backups/
+windows_application/test/features/customer_management/goldens/failures/

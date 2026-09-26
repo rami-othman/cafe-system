@@ -17,6 +17,7 @@ class UpdateBranchRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'branchType' => ['sometimes', 'in:cafe,factory'],
             'address' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:255'],
             'timezone' => ['sometimes', 'required', 'string', 'timezone:all'],

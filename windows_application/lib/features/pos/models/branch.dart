@@ -13,12 +13,16 @@ class Branch extends Equatable {
     required this.isActive,
     this.taxRate = TaxConfig.defaultTaxRate,
     this.printerConfig = const PrinterConfig(),
+    this.branchType = 'cafe',
+    this.defaultWarehouseId,
   });
 
   factory Branch.fromJson(Map<String, dynamic> json) {
     return Branch(
       id: readInt(json['id']) ?? 0,
       name: readString(json['name']),
+      branchType: readString(json['branchType'], fallback: 'cafe'),
+      defaultWarehouseId: readInt(json['defaultWarehouseId']),
       currency: readString(json['currency'], fallback: 'SYP'),
       timezone: readString(json['timezone']),
       isActive: readBool(json['isActive'], fallback: true),
@@ -33,6 +37,9 @@ class Branch extends Equatable {
 
   final int id;
   final String name;
+  final String branchType;
+  final int? defaultWarehouseId;
+  bool get isFactory => branchType == 'factory';
   final String currency;
   final String timezone;
   final bool isActive;
@@ -43,6 +50,8 @@ class Branch extends Equatable {
   List<Object?> get props => <Object?>[
     id,
     name,
+    branchType,
+    defaultWarehouseId,
     currency,
     timezone,
     isActive,

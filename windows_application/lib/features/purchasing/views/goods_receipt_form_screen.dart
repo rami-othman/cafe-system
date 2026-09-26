@@ -77,15 +77,25 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
       _loadError = null;
     });
     try {
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _cubit.repository.getPurchase(widget.purchaseId),
-        _inventory.warehouses(),
-      ]);
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          _cubit.repository.getPurchase(widget.purchaseId),
+          _inventory.warehouses(),
+        ],
+      );
       if (!mounted) return;
       final PurchaseInvoice purchase = results[0] as PurchaseInvoice;
       setState(() {
         _purchase = purchase;
-        _warehouses = results[1] as List<WarehouseLocation>;
+        _warehouses = (results[1] as List<WarehouseLocation>)
+            .where(
+              (warehouse) =>
+                  warehouse.isActive &&
+                  !warehouse.isLegacy &&
+                  (purchase.branchType != 'factory' ||
+                      warehouse.branchId == purchase.branchId),
+            )
+            .toList(growable: false);
         for (final _ReceiptLineDraft l in _lines) {
           l.dispose();
         }
@@ -97,7 +107,14 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
                 .map(
                   (PurchaseInvoiceLine l) => _ReceiptLineDraft(
                     l,
-                    warehouseId: l.warehouseId,
+                    warehouseId:
+                        _warehouses.any(
+                          (warehouse) => warehouse.id == l.warehouseId,
+                        )
+                        ? l.warehouseId
+                        : (_warehouses.length == 1
+                              ? _warehouses.single.id
+                              : null),
                   )..quantity.text = l.remainingQuantity ?? '0',
                 ),
           );
@@ -151,7 +168,9 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
   }
 
   String? _validate() {
-    if (_lines.isEmpty) return 'لا توجد بنود مخزون قابلة للاستلام في هذه الفاتورة.';
+    if (_lines.isEmpty) {
+      return 'لا توجد بنود مخزون قابلة للاستلام في هذه الفاتورة.';
+    }
     for (final _ReceiptLineDraft line in _lines) {
       final double qty = double.tryParse(line.quantity.text.trim()) ?? 0;
       final double remaining =
@@ -176,14 +195,13 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
       _formError = null;
     });
     try {
-      final int stamp = DateTime.now().microsecondsSinceEpoch;
-      final PurchaseReceipt draft = await _cubit.repository.createReceipt(
+      final PurchaseReceipt posted = await _cubit.receiveAndPost(
         widget.purchaseId,
         <String, dynamic>{
           'receiptDate': _isoDate(_receiptDate),
-          if (_reference.text.trim().isNotEmpty) 'reference': _reference.text.trim(),
+          if (_reference.text.trim().isNotEmpty)
+            'reference': _reference.text.trim(),
           if (_notes.text.trim().isNotEmpty) 'notes': _notes.text.trim(),
-          'idempotencyKey': 'grn-create-$stamp',
           'lines': _lines
               .map(
                 (_ReceiptLineDraft l) => <String, dynamic>{
@@ -195,13 +213,11 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
               .toList(growable: false),
         },
       );
-      final PurchaseReceipt posted = await _cubit.repository.postReceipt(
-        draft.id,
-        'grn-post-$stamp',
-      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم ترحيل الاستلام رقم ${posted.receiptNumber} بنجاح.')),
+        SnackBar(
+          content: Text('تم ترحيل الاستلام رقم ${posted.receiptNumber} بنجاح.'),
+        ),
       );
       context.go('${AppRoutes.financePurchases}/${widget.purchaseId}');
     } catch (error) {
@@ -216,12 +232,18 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const FinanceShell(title: 'استلام مخزون', child: FinanceLoadingState());
+      return const FinanceShell(
+        title: 'استلام مخزون',
+        child: FinanceLoadingState(),
+      );
     }
     if (_loadError != null || _purchase == null) {
       return FinanceShell(
         title: 'استلام مخزون',
-        child: FinanceErrorState(message: 'تعذّر تحميل بيانات الفاتورة.', onRetry: _load),
+        child: FinanceErrorState(
+          message: 'تعذّر تحميل بيانات الفاتورة.',
+          onRetry: _load,
+        ),
       );
     }
     final PurchaseInvoice purchase = _purchase!;
@@ -232,18 +254,26 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
         TextButton(
           onPressed: _saving
               ? null
-              : () => context.go('${AppRoutes.financePurchases}/${widget.purchaseId}'),
+              : () => context.go(
+                  '${AppRoutes.financePurchases}/${widget.purchaseId}',
+                ),
           child: const Text('إلغاء'),
         ),
         const SizedBox(width: FinanceSpace.sm),
         ElevatedButton.icon(
           onPressed: _saving || _lines.isEmpty ? null : _submit,
-          style: ElevatedButton.styleFrom(backgroundColor: FinanceColors.primary, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: FinanceColors.primary,
+            foregroundColor: Colors.white,
+          ),
           icon: _saving
               ? const SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Icon(Icons.inventory_2_outlined, size: 16),
           label: const Text('ترحيل الاستلام'),
@@ -254,7 +284,10 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             if (_formError != null) ...<Widget>[
-              FinanceAlertBanner(message: _formError!, tone: FinanceTone.danger),
+              FinanceAlertBanner(
+                message: _formError!,
+                tone: FinanceTone.danger,
+              ),
               const SizedBox(height: FinanceSpace.md),
             ],
             FinanceInfoGrid(
@@ -336,10 +369,12 @@ class _ReceiptLineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PurchaseInvoiceLine line = draft.invoiceLine;
-    final InventoryBalance? balance = draft.warehouseId != null && line.inventoryItemId != null
+    final InventoryBalance? balance =
+        draft.warehouseId != null && line.inventoryItemId != null
         ? balanceLookup(draft.warehouseId!, line.inventoryItemId!)
         : null;
-    final double enteredQuantity = double.tryParse(draft.quantity.text.trim()) ?? 0;
+    final double enteredQuantity =
+        double.tryParse(draft.quantity.text.trim()) ?? 0;
     final double? preview = balance == null || enteredQuantity <= 0
         ? null
         : _estimatedNewWac(
@@ -383,9 +418,12 @@ class _ReceiptLineCard extends StatelessWidget {
                 width: 160,
                 child: TextField(
                   controller: draft.quantity,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
-                    labelText: 'الكمية المستلمة الآن (${line.purchaseUnit ?? line.baseUnit ?? ''})',
+                    labelText:
+                        'الكمية المستلمة الآن (${line.purchaseUnit ?? line.baseUnit ?? ''})',
                   ),
                   onChanged: (_) => onChanged(),
                 ),
@@ -398,8 +436,10 @@ class _ReceiptLineCard extends StatelessWidget {
                   decoration: const InputDecoration(labelText: 'المخزن'),
                   items: warehouses
                       .map(
-                        (WarehouseLocation w) =>
-                            DropdownMenuItem<int>(value: w.id, child: Text(w.displayName)),
+                        (WarehouseLocation w) => DropdownMenuItem<int>(
+                          value: w.id,
+                          child: Text(w.displayName),
+                        ),
                       )
                       .toList(growable: false),
                   onChanged: (int? v) {
@@ -450,7 +490,8 @@ class _ReceiptLineCard extends StatelessWidget {
   }) {
     final double totalQuantity = currentQuantity + incomingQuantity;
     if (totalQuantity <= 0) return incomingCost;
-    return ((currentQuantity * currentCost) + (incomingQuantity * incomingCost)) /
+    return ((currentQuantity * currentCost) +
+            (incomingQuantity * incomingCost)) /
         totalQuantity;
   }
 }

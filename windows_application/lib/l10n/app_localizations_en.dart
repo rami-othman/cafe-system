@@ -6732,6 +6732,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamEmployee => 'Employee';
 
   @override
+  String get teamFactoryManager => 'Factory Manager';
+
+  @override
   String get teamNoMembers => 'No Managers or Employees yet.';
 
   @override

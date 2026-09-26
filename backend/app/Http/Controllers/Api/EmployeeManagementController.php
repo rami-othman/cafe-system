@@ -20,7 +20,7 @@ class EmployeeManagementController extends Controller
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', Rule::in(['active', 'deactivated', 'archived'])],
-            'role' => ['nullable', Rule::in(['owner', 'manager', 'employee'])],
+            'role' => ['nullable', Rule::in(['owner', 'manager', 'employee', 'factory_manager'])],
             'branchId' => ['nullable', 'integer'],
             'page' => ['nullable', 'integer', 'min:1'],
             'perPage' => ['nullable', 'integer', 'min:1', 'max:100'],

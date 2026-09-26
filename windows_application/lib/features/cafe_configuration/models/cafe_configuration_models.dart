@@ -77,6 +77,7 @@ class CafeConfigurationBranch {
     required this.currency,
     required this.isActive,
     this.posInventoryWarehouseId,
+    this.branchType = 'cafe',
     this.posCashFinancialLocationId,
     this.shiftCloseDestinationFinancialLocationId,
     this.shiftClosingFloatAmount = '0.00',
@@ -98,6 +99,7 @@ class CafeConfigurationBranch {
   final String currency;
   final bool isActive;
   final int? posInventoryWarehouseId;
+  final String branchType;
   final int? posCashFinancialLocationId;
   final int? shiftCloseDestinationFinancialLocationId;
   final String shiftClosingFloatAmount;
@@ -121,6 +123,7 @@ class CafeConfigurationBranch {
     currency: json['currency'] as String? ?? '',
     isActive: json['isActive'] == true,
     posInventoryWarehouseId: (json['posInventoryWarehouseId'] as num?)?.toInt(),
+    branchType: json['branchType'] as String? ?? 'cafe',
     posCashFinancialLocationId: (json['posCashFinancialLocationId'] as num?)
         ?.toInt(),
     shiftCloseDestinationFinancialLocationId:
@@ -204,6 +207,7 @@ class BranchDraft {
     this.phone = '',
     this.timezone = 'UTC',
     this.warehouseName = '',
+    this.branchType = 'cafe',
     this.posInventoryWarehouseId,
     this.posCashFinancialLocationId,
     this.shiftCloseDestinationFinancialLocationId,
@@ -221,6 +225,7 @@ class BranchDraft {
   // a place to hold stock, so its one warehouse is named right here — there
   // is no separate "main"/"primary" warehouse concept to configure later.
   final String warehouseName;
+  final String branchType;
   final int? posInventoryWarehouseId;
   final int? posCashFinancialLocationId;
   final int? shiftCloseDestinationFinancialLocationId;
@@ -231,6 +236,7 @@ class BranchDraft {
 
   factory BranchDraft.fromBranch(CafeConfigurationBranch branch) => BranchDraft(
     name: branch.name,
+    branchType: branch.branchType,
     address: branch.address ?? '',
     phone: branch.phone ?? '',
     timezone: branch.timezone,
@@ -250,6 +256,7 @@ class BranchDraft {
     String? phone,
     String? timezone,
     String? warehouseName,
+    String? branchType,
     int? posInventoryWarehouseId,
     int? posCashFinancialLocationId,
     int? shiftCloseDestinationFinancialLocationId,
@@ -264,6 +271,7 @@ class BranchDraft {
     phone: phone ?? this.phone,
     timezone: timezone ?? this.timezone,
     warehouseName: warehouseName ?? this.warehouseName,
+    branchType: branchType ?? this.branchType,
     posInventoryWarehouseId: clearPosInventoryWarehouseId
         ? null
         : posInventoryWarehouseId ?? this.posInventoryWarehouseId,
@@ -285,6 +293,7 @@ class BranchDraft {
     'phone': phone.trim().isEmpty ? null : phone.trim(),
     'timezone': timezone,
     if (warehouseName.trim().isNotEmpty) 'warehouseName': warehouseName.trim(),
+    'branchType': branchType,
     'posInventoryWarehouseId': posInventoryWarehouseId,
     if (posCashFinancialLocationId != null)
       'posCashFinancialLocationId': posCashFinancialLocationId,
@@ -367,7 +376,11 @@ class TeamMember {
   final bool mustChangePassword;
 
   bool get isOwner => role.code == 'owner' || isProtectedOwner;
-  bool get isManager => role.code == 'manager';
+  // factory_manager shares manager's email-login identity and 10-char
+  // password minimum (see DefaultTenantRoleService/TenantEmployeeService on
+  // the backend); the name stays isManager since every caller here means
+  // "this role logs in by email, not username".
+  bool get isManager => role.code == 'manager' || role.code == 'factory_manager';
   bool get isEmployee => role.code == 'employee';
   bool get isActive => status == 'active';
   bool get isDeactivated => status == 'deactivated';
@@ -428,7 +441,7 @@ class TeamMemberDraft {
   final String temporaryPassword;
   final String temporaryPasswordConfirmation;
 
-  bool get isManager => roleCode == 'manager';
+  bool get isManager => roleCode == 'manager' || roleCode == 'factory_manager';
   int get passwordMinimum => isManager ? 10 : 8;
 
   TeamMemberDraft copyWith({

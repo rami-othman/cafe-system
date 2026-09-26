@@ -419,6 +419,7 @@ class SupplierInvoiceService
                         throw ValidationException::withMessages(['lines' => 'Select a warehouse that belongs to this tenant.']);
                     }
                     $warehouseId = (int) $line['warehouseId'];
+                    \App\Support\FactoryWarehouseScope::assertDestination($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $warehouseId);
                 }
             } elseif (! empty($line['inventoryItemId']) || ! empty($line['warehouseId'])) {
                 throw ValidationException::withMessages(['lines' => 'Inventory item and warehouse selection only apply to inventory-type lines.']);

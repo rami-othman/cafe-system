@@ -22,6 +22,7 @@ final class SalesInvoiceInventoryConsumptionService
     /** @param iterable<object> $lines @return array<int, array<string,mixed>> */
     public function preview(int $tenantId, object $invoice, iterable $lines): array
     {
+        \App\Support\FactorySalesPolicy::assertLines($tenantId, (int) $invoice->branch_id, $lines);
         $results = [];
         foreach ($lines as $line) {
             if ($line->inventory_item_id) {
@@ -140,7 +141,7 @@ if ($components->isEmpty()) {
             $plans[$lineId]['movements'] = array_map(function (array $planned) use ($actualByItem): array {
                 $written = $actualByItem->get($planned['materialId']);
 
-                return $planned + ['movementId' => $written['movementId'] ?? null, 'costCents' => $written['costCents'] ?? $planned['costCents']];
+                return array_replace($planned, ['movementId' => $written['movementId'] ?? null, 'costCents' => $written['costCents'] ?? $planned['costCents']]);
             }, $plan['movements']);
         }
 

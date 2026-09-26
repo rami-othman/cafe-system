@@ -85,6 +85,10 @@ use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\TenantRoleController;
 use App\Http\Controllers\Api\WarehouseController;
 use App\Http\Controllers\Api\WarehouseTransferController;
+use App\Http\Controllers\Api\Manufacturing\ManufacturingConversionController;
+use App\Http\Controllers\Api\Manufacturing\ManufacturingProductionController;
+use App\Http\Controllers\Api\Manufacturing\ManufacturingRecipeController;
+use App\Http\Controllers\Api\Manufacturing\ManufacturingReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -379,18 +383,25 @@ Route::prefix('v1')->group(function (): void {
         // The Cashier's operational surface. Narrow, read-only permissions that
         // grant no finance/inventory/reports ability of their own; branch and
         // shift scope are enforced inside the controller and its services.
-        Route::prefix('cashier')->group(function (): void {
+        // Decision 1/6 (26/09/2026): also cafe-only — factory_manager blocked
+        // centrally, same as shifts/orders/discounts below.
+        Route::middleware('cafe.operations')->prefix('cashier')->group(function (): void {
             Route::get('dashboard', [CashierDashboardController::class, 'show'])->middleware('cashier.permission:cashier.dashboard.view');
             Route::get('inventory', [CashierDashboardController::class, 'inventory'])->middleware('cashier.permission:cashier.inventory.view');
         });
 
-        Route::get('shifts/readiness', [ShiftController::class, 'readiness']);
-        Route::get('shifts/current', [ShiftController::class, 'current']);
-        Route::get('shifts/current/snapshot', [ShiftController::class, 'snapshot']);
-        Route::get('shifts/history', [ShiftController::class, 'history']);
-        Route::get('shifts/{shiftNumber}/report', [ShiftController::class, 'report']);
-        Route::post('shifts/current', [ShiftController::class, 'open']);
-        Route::post('shifts/{shift}/close', [ShiftController::class, 'close']);
+        // Decision 1/6 (26/09/2026): the factory has no shift concept —
+        // block factory_manager centrally rather than teaching ShiftController
+        // about tenant roles.
+        Route::middleware('cafe.operations')->group(function (): void {
+            Route::get('shifts/readiness', [ShiftController::class, 'readiness']);
+            Route::get('shifts/current', [ShiftController::class, 'current']);
+            Route::get('shifts/current/snapshot', [ShiftController::class, 'snapshot']);
+            Route::get('shifts/history', [ShiftController::class, 'history']);
+            Route::get('shifts/{shiftNumber}/report', [ShiftController::class, 'report']);
+            Route::post('shifts/current', [ShiftController::class, 'open']);
+            Route::post('shifts/{shift}/close', [ShiftController::class, 'close']);
+        });
 
         // Deprecated compatibility endpoints. Production POS uses pos/menu-sync
         // and snapshot-aware orders; retain these while external consumers migrate.
@@ -405,37 +416,43 @@ Route::prefix('v1')->group(function (): void {
         Route::get('customer-groups', [CustomerGroupLookupController::class, 'index'])->middleware('customer.permission:customer.memberships');
         Route::get('tables', [TableController::class, 'index']);
         Route::get('pos/state', [PosStateController::class, 'show']);
-        Route::get('discounts/available', [DiscountController::class, 'available'])->middleware('discount.permission:discounts.view');
-        Route::post('discounts/generate-code', [DiscountController::class, 'generateCode'])->middleware('discount.permission:discounts.manage');
-        Route::get('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'show']);
-        Route::put('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'replace']);
-        Route::get('discounts', [DiscountController::class, 'index'])->middleware('discount.permission:discounts.view');
-        Route::post('discounts', [DiscountController::class, 'store'])->middleware('discount.permission:discounts.manage');
-        Route::get('discounts/{discount}', [DiscountController::class, 'show'])->middleware('discount.permission:discounts.view');
-        Route::put('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
-        Route::patch('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
-        Route::patch('discounts/{discount}/status', [DiscountController::class, 'updateStatus'])->middleware('discount.permission:discounts.manage');
-        Route::delete('discounts/{discount}', [DiscountController::class, 'destroy'])->middleware('discount.permission:discounts.manage');
+        // Decision 1/6 (26/09/2026): discounts, POS orders, and payments are
+        // cafe-only — block factory_manager centrally rather than teaching
+        // DiscountController/PosOrderController/PaymentController about tenant
+        // roles.
+        Route::middleware('cafe.operations')->group(function (): void {
+            Route::get('discounts/available', [DiscountController::class, 'available'])->middleware('discount.permission:discounts.view');
+            Route::post('discounts/generate-code', [DiscountController::class, 'generateCode'])->middleware('discount.permission:discounts.manage');
+            Route::get('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'show']);
+            Route::put('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'replace']);
+            Route::get('discounts', [DiscountController::class, 'index'])->middleware('discount.permission:discounts.view');
+            Route::post('discounts', [DiscountController::class, 'store'])->middleware('discount.permission:discounts.manage');
+            Route::get('discounts/{discount}', [DiscountController::class, 'show'])->middleware('discount.permission:discounts.view');
+            Route::put('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
+            Route::patch('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
+            Route::patch('discounts/{discount}/status', [DiscountController::class, 'updateStatus'])->middleware('discount.permission:discounts.manage');
+            Route::delete('discounts/{discount}', [DiscountController::class, 'destroy'])->middleware('discount.permission:discounts.manage');
 
-        Route::get('orders', [PosOrderController::class, 'index']);
-        Route::post('orders', [PosOrderController::class, 'store']);
-        Route::get('orders/{order}', [PosOrderController::class, 'show']);
-        Route::patch('orders/{order}', [PosOrderController::class, 'update']);
-        Route::delete('orders/{order}', [PosOrderController::class, 'cancel']);
-        Route::post('orders/{order}/items', [PosOrderController::class, 'addItem']);
-        Route::patch('orders/{order}/items/{item}', [PosOrderController::class, 'updateItem']);
-        Route::delete('orders/{order}/items/{item}', [PosOrderController::class, 'removeItem']);
-        Route::post('orders/{order}/hold', [PosOrderController::class, 'hold']);
-        Route::put('orders/{order}/discount', [PosOrderController::class, 'discount'])->middleware('discount.permission:discounts.apply_manual');
-        Route::delete('orders/{order}/discount', [PosOrderController::class, 'removeDiscount'])->middleware('discount.permission:discounts.apply_manual');
-        Route::post('orders/{order}/discounts/apply', [DiscountController::class, 'apply'])->middleware('discount.permission:discounts.apply_configured');
-        Route::delete('orders/{order}/discounts', [DiscountController::class, 'remove'])->middleware('discount.permission:discounts.apply_configured');
-        Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
-        Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
-        Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
-        Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);
-        Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
-        Route::post('orders/{order}/refunds', [RefundController::class, 'store']);
+            Route::get('orders', [PosOrderController::class, 'index']);
+            Route::post('orders', [PosOrderController::class, 'store']);
+            Route::get('orders/{order}', [PosOrderController::class, 'show']);
+            Route::patch('orders/{order}', [PosOrderController::class, 'update']);
+            Route::delete('orders/{order}', [PosOrderController::class, 'cancel']);
+            Route::post('orders/{order}/items', [PosOrderController::class, 'addItem']);
+            Route::patch('orders/{order}/items/{item}', [PosOrderController::class, 'updateItem']);
+            Route::delete('orders/{order}/items/{item}', [PosOrderController::class, 'removeItem']);
+            Route::post('orders/{order}/hold', [PosOrderController::class, 'hold']);
+            Route::put('orders/{order}/discount', [PosOrderController::class, 'discount'])->middleware('discount.permission:discounts.apply_manual');
+            Route::delete('orders/{order}/discount', [PosOrderController::class, 'removeDiscount'])->middleware('discount.permission:discounts.apply_manual');
+            Route::post('orders/{order}/discounts/apply', [DiscountController::class, 'apply'])->middleware('discount.permission:discounts.apply_configured');
+            Route::delete('orders/{order}/discounts', [DiscountController::class, 'remove'])->middleware('discount.permission:discounts.apply_configured');
+            Route::get('orders/{order}/payment-summary', [PaymentController::class, 'summary']);
+            Route::get('orders/{order}/receipt', [ReceiptController::class, 'show']);
+            Route::post('orders/{order}/print', [ReceiptController::class, 'print']);
+            Route::patch('print-jobs/{printJob}', [ReceiptController::class, 'updatePrintJob']);
+            Route::post('orders/{order}/pay', [PaymentController::class, 'pay']);
+            Route::post('orders/{order}/refunds', [RefundController::class, 'store']);
+        });
     });
 
     // Inventory and Finance extend the authenticated operational boundary;
@@ -652,6 +669,32 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('accounting-periods/{period}', [AccountingPeriodController::class, 'update'])->middleware('finance.permission:finance.periods.manage');
             Route::post('accounting-periods/{period}/close', [AccountingPeriodController::class, 'close'])->middleware('finance.permission:finance.periods.close');
             Route::post('accounting-periods/{period}/lock', [AccountingPeriodController::class, 'lock'])->middleware('finance.permission:finance.periods.lock');
+        });
+
+        // Manufacturing: recipes, production preview/draft/completion/reversal,
+        // conversion, overview/reports. Every write route is behind
+        // manufacturing.permission; see API_CONTRACT.md for the frontend mapping.
+        Route::prefix('manufacturing')->group(function (): void {
+            Route::get('overview', [ManufacturingReportController::class, 'overview'])->middleware('manufacturing.permission:manufacturing.view');
+            Route::get('reports', [ManufacturingReportController::class, 'reports'])->middleware('manufacturing.permission:manufacturing.reports.view');
+
+            Route::get('recipes', [ManufacturingRecipeController::class, 'index'])->middleware('manufacturing.permission:manufacturing.recipe.view');
+            Route::post('recipes', [ManufacturingRecipeController::class, 'store'])->middleware('manufacturing.permission:manufacturing.recipe.create');
+            Route::get('recipes/{recipe}', [ManufacturingRecipeController::class, 'show'])->middleware('manufacturing.permission:manufacturing.recipe.view');
+            Route::put('recipes/{recipe}', [ManufacturingRecipeController::class, 'update'])->middleware('manufacturing.permission:manufacturing.recipe.edit');
+            Route::patch('recipes/{recipe}/status', [ManufacturingRecipeController::class, 'status'])->middleware('manufacturing.permission:manufacturing.recipe.edit');
+            Route::post('recipes/{recipe}/duplicate', [ManufacturingRecipeController::class, 'duplicate'])->middleware('manufacturing.permission:manufacturing.recipe.create');
+
+            Route::get('production/preview', [ManufacturingProductionController::class, 'preview'])->middleware('manufacturing.permission:manufacturing.production.create');
+            Route::post('production/drafts', [ManufacturingProductionController::class, 'storeDraft'])->middleware('manufacturing.permission:manufacturing.production.create');
+            Route::get('production/drafts/{draft}', [ManufacturingProductionController::class, 'showDraft'])->middleware('manufacturing.permission:manufacturing.production.create');
+            Route::post('production/drafts/{draft}/complete', [ManufacturingProductionController::class, 'complete'])->middleware('manufacturing.permission:manufacturing.production.complete');
+            Route::get('production', [ManufacturingProductionController::class, 'index'])->middleware('manufacturing.permission:manufacturing.view');
+            Route::get('production/{production}', [ManufacturingProductionController::class, 'show'])->middleware('manufacturing.permission:manufacturing.view');
+            Route::post('production/{production}/reverse', [ManufacturingProductionController::class, 'reverse'])->middleware('manufacturing.permission:manufacturing.production.reverse');
+
+            Route::post('conversions', [ManufacturingConversionController::class, 'store'])->middleware('manufacturing.permission:manufacturing.conversion.create');
+            Route::get('conversions/{conversion}', [ManufacturingConversionController::class, 'show'])->middleware('manufacturing.permission:manufacturing.view');
         });
     });
 });

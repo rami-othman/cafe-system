@@ -8,6 +8,16 @@ import '../../operational_context/models/operational_branch_state.dart';
 int? activeInventoryBranchId(BuildContext context) =>
     context.read<OperationalBranchCubit>().state.selectedBranchId;
 
+int? activeFactoryWarehouseId(BuildContext context) {
+  final state = context.read<OperationalBranchCubit>().state;
+  return state.branches
+      .where(
+        (branch) => branch.id == state.selectedBranchId && branch.isFactory,
+      )
+      .firstOrNull
+      ?.defaultWarehouseId;
+}
+
 /// Warehouses belonging to the currently active branch (the top-level
 /// [OperationalBranchCubit] selection), excluding inactive/legacy ones. This
 /// is the single rule for "which warehouses can this screen offer" - every
@@ -18,13 +28,18 @@ List<WarehouseLocation> branchWarehouses(
   List<WarehouseLocation> warehouses,
 ) {
   final int? branchId = activeInventoryBranchId(context);
+  final branchState = context.read<OperationalBranchCubit>().state;
+  final bool isFactory = branchState.branches.any(
+    (branch) => branch.id == branchId && branch.isFactory,
+  );
 
   return warehouses
       .where(
         (WarehouseLocation warehouse) =>
             !warehouse.isLegacy &&
             warehouse.isActive &&
-            (warehouse.branchId == null || warehouse.branchId == branchId),
+            ((!isFactory && warehouse.branchId == null) ||
+                warehouse.branchId == branchId),
       )
       .toList(growable: false);
 }

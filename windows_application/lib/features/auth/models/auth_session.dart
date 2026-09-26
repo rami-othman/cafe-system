@@ -8,6 +8,9 @@ class AuthUser {
     this.email,
     this.username,
     this.financeCapabilities = const <String>{},
+    this.manufacturingCapabilities = const <String>{},
+    this.isFactoryUser = false,
+    this.factoryBranchIds = const <int>[],
   });
 
   final int id;
@@ -17,6 +20,20 @@ class AuthUser {
   final String? username;
   final Set<String> financeCapabilities;
 
+  /// The factory (manufacturing module) surface: mirrors `financeCapabilities`
+  /// but for `ManufacturingAccess`. Empty for every non-factory role, and for
+  /// a factory_manager with no factory branch assigned.
+  final Set<String> manufacturingCapabilities;
+
+  /// True only for the `factory_manager` tenant role. Drives the client's
+  /// "factory context" — default landing route, redirects away from the
+  /// cafe's POS/shift/discount surface, and the factory sidebar.
+  final bool isFactoryUser;
+
+  /// The user's accessible branches that are `branch_type == 'factory'`
+  /// (a subset of `branchAccess.branchIds`/Owner's implicit all-branches).
+  final List<int> factoryBranchIds;
+
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
     id: (json['id'] as num?)?.toInt() ?? 0,
     name: json['name'] as String? ?? '',
@@ -24,6 +41,9 @@ class AuthUser {
     email: json['email'] as String?,
     username: json['username'] as String?,
     financeCapabilities: _stringSet(json['financeCapabilities']),
+    manufacturingCapabilities: _stringSet(json['manufacturingCapabilities']),
+    isFactoryUser: json['isFactoryUser'] == true,
+    factoryBranchIds: _intList(json['factoryBranchIds']),
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -33,6 +53,11 @@ class AuthUser {
     'email': email,
     'username': username,
     'financeCapabilities': financeCapabilities.toList(growable: false),
+    'manufacturingCapabilities': manufacturingCapabilities.toList(
+      growable: false,
+    ),
+    'isFactoryUser': isFactoryUser,
+    'factoryBranchIds': factoryBranchIds,
   };
 }
 
@@ -303,6 +328,13 @@ AuthSession _sessionFromAuthoritativeContract(
   final Set<String> financeCapabilities = _requiredStringSet(
     user['financeCapabilities'],
   );
+  final Set<String> manufacturingCapabilities = _requiredStringSet(
+    user['manufacturingCapabilities'],
+  );
+  final bool isFactoryUser = user['isFactoryUser'] == true;
+  final List<int> factoryBranchIds = _requiredIntList(
+    user['factoryBranchIds'],
+  );
   final int tenantId = _requiredPositiveInt(tenant['id']);
   final String tenantName = _requiredNonBlankString(tenant['name']);
   _requiredNonBlankString(tenant['status']);
@@ -331,6 +363,9 @@ AuthSession _sessionFromAuthoritativeContract(
       email: email,
       username: username,
       financeCapabilities: financeCapabilities,
+      manufacturingCapabilities: manufacturingCapabilities,
+      isFactoryUser: isFactoryUser,
+      factoryBranchIds: factoryBranchIds,
     ),
     tenant: AuthTenant(id: tenantId, name: tenantName),
     mustChangePassword: json['mustChangePassword'] as bool,
@@ -396,6 +431,14 @@ bool _hasOnlyStringMapKeys(dynamic value) {
 bool _customerManagementAllowed(Map<String, dynamic> json) =>
     _map(_map(json['capabilities'])['customer'])['manage'] == true;
 
+List<int> _intList(dynamic value) => value is List
+    ? value
+          .whereType<num>()
+          .map((num item) => item.toInt())
+          .where((int item) => item > 0)
+          .toList(growable: false)
+    : const <int>[];
+
 Set<String> _stringSet(dynamic value) => value is List
     ? value
           .map((dynamic item) => item.toString().trim())
@@ -408,6 +451,22 @@ Set<String> _stringSet(dynamic value) => value is List
 /// predate this field, but a *present* value that is not a list, or that
 /// contains anything other than non-empty permission strings, fails the
 /// whole response closed rather than guessing at Finance access.
+/// Same absent-is-empty tolerance as `_requiredStringSet`, for the factory
+/// branch id list: a present value must be a list of unique positive ints.
+List<int> _requiredIntList(dynamic value) {
+  if (value == null) return const <int>[];
+  final List<dynamic> items = _requiredList(value);
+  final List<int> result = <int>[];
+  for (final dynamic item in items) {
+    if (item is! int || item <= 0) throw const AuthInvalidResponseException();
+    result.add(item);
+  }
+  if (result.toSet().length != result.length) {
+    throw const AuthInvalidResponseException();
+  }
+  return result;
+}
+
 Set<String> _requiredStringSet(dynamic value) {
   if (value == null) return const <String>{};
   final List<dynamic> items = _requiredList(value);

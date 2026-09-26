@@ -26,6 +26,8 @@ class BranchController extends Controller
             ->map(fn ($branch) => [
                 'id' => $branch->id,
                 'name' => $branch->name,
+                'branchType' => $branch->branch_type ?? 'cafe',
+                'defaultWarehouseId' => $branch->pos_inventory_warehouse_id,
                 'currency' => $branch->currency,
                 'timezone' => $branch->timezone,
                 'isActive' => (bool) $branch->is_active,
