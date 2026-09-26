@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
 import '../../operational_context/controllers/operational_branch_cubit.dart';
 import '../../pos/controllers/pos_cubit.dart';
 import '../../pos/controllers/pos_state.dart';
@@ -24,10 +25,34 @@ class InventoryModuleShell extends StatefulWidget {
 }
 
 class _InventoryModuleShellState extends State<InventoryModuleShell> {
+  bool get _isFactoryUser {
+    try {
+      return context.read<AuthSessionCubit>().state.session?.user.isFactoryUser ??
+          false;
+    } catch (_) {
+      // Standalone shell tests/previews do not always provide AuthSessionCubit.
+      return false;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadAndSynchronizeBranch();
+    if (_isFactoryUser) {
+      // A factory_manager reaching the shared Inventory module (e.g. via a
+      // deep link) must never have its branch flipped to a cafe one by
+      // syncing with PosCubit — it has no POS branch of its own at all.
+      context.read<OperationalBranchCubit>().ensureFactoryBranch(
+        preferredIds: context
+            .read<AuthSessionCubit>()
+            .state
+            .session
+            ?.user
+            .factoryBranchIds,
+      );
+    } else {
+      _loadAndSynchronizeBranch();
+    }
   }
 
   Future<void> _loadAndSynchronizeBranch() async {
@@ -41,13 +66,8 @@ class _InventoryModuleShellState extends State<InventoryModuleShell> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocListener<PosCubit, PosState>(
-    listenWhen: (PosState previous, PosState current) =>
-        previous.branchId != current.branchId,
-    listener: (BuildContext context, PosState state) {
-      context.read<OperationalBranchCubit>().selectBranch(state.branchId);
-    },
-    child: ColoredBox(
+  Widget build(BuildContext context) {
+    final Widget shell = ColoredBox(
       color: AppColors.contentBackground,
       child: Column(
         children: <Widget>[
@@ -55,6 +75,15 @@ class _InventoryModuleShellState extends State<InventoryModuleShell> {
           Expanded(child: widget.child),
         ],
       ),
-    ),
-  );
+    );
+    if (_isFactoryUser) return shell;
+    return BlocListener<PosCubit, PosState>(
+      listenWhen: (PosState previous, PosState current) =>
+          previous.branchId != current.branchId,
+      listener: (BuildContext context, PosState state) {
+        context.read<OperationalBranchCubit>().selectBranch(state.branchId);
+      },
+      child: shell,
+    );
+  }
 }

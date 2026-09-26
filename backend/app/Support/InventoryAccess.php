@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\DefaultTenantRoleService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -18,6 +19,22 @@ final class InventoryAccess
     /** @var array<string, list<string>> */
     private const ROLE_PERMISSIONS = [
         'owner' => ['*'],
+        // factory_manager (Phase 2 gap fix, 26/09/2026): the Manufacturing
+        // "materials" and "stock counts" tabs both go through the shared
+        // Inventory API (InventoryItemController/StockCountController), so
+        // without this the factory user got a 403 on every inventory call.
+        // No inventory.locations.manage (warehouse creation stays Owner-only)
+        // and no inventory.transfers.* (branch-to-branch transfers are
+        // banned for the factory by Decision 3 — it is a supplier, not a
+        // transfer partner).
+        DefaultTenantRoleService::FACTORY_MANAGER => [
+            'inventory.view',
+            'inventory.items.manage',
+            'inventory.counts.view',
+            'inventory.counts.create',
+            'inventory.counts.post',
+            'inventory.adjustments.create',
+        ],
         'manager' => [
             'inventory.view',
             'inventory.items.manage',

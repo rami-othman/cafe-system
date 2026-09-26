@@ -22,6 +22,7 @@ class AppSidebar extends StatelessWidget {
     this.manufacturingCapabilities = const <String>{},
     this.brandIdentity,
     this.isFactory = false,
+    this.isFactoryUser = false,
   });
 
   final String activeLabel;
@@ -33,6 +34,13 @@ class AppSidebar extends StatelessWidget {
   final Set<String> manufacturingCapabilities;
   final BrandIdentity? brandIdentity;
   final bool isFactory;
+
+  /// The account is `factory_manager` (Phase 2): the sidebar switches
+  /// entirely to [_factoryDestinations] — a dedicated, more restrictive
+  /// list than the `isFactory` branch-context filtering below, which is
+  /// unchanged and still governs how an Owner's shared sidebar behaves
+  /// while browsing a factory branch.
+  final bool isFactoryUser;
 
   /// The Cashier's navigation: the operational home, the till, and the
   /// Cashier-safe views of Finance and Inventory. "Inventory" here lands on the
@@ -111,8 +119,74 @@ class AppSidebar extends StatelessWidget {
     _SidebarDestination('reports', Icons.bar_chart_outlined, '/reports'),
   ];
 
+  /// The factory_manager's own navigation (Phase 2): every destination is
+  /// one of the Manufacturing tabs, or a Finance/purchases/sales workspace
+  /// scoped by the operational (factory) branch — never a cafe screen.
+  /// Customers is deliberately absent for now (the factory's internal
+  /// customer arrives with the "factory as supplier" work, prompt 10);
+  /// [_showFactoryCustomersDestination] is the one flag to flip then.
+  static const bool _showFactoryCustomersDestination = false;
+
+  static const List<_SidebarDestination> _factoryDestinations =
+      <_SidebarDestination>[
+        _SidebarDestination(
+          'factoryHome',
+          Icons.dashboard_outlined,
+          '/manufacturing',
+        ),
+        _SidebarDestination(
+          'factoryMaterials',
+          Icons.inventory_2_outlined,
+          '/manufacturing/materials',
+        ),
+        _SidebarDestination(
+          'factoryRecipes',
+          Icons.receipt_long_outlined,
+          '/manufacturing/recipes',
+        ),
+        _SidebarDestination(
+          'factoryProduction',
+          Icons.precision_manufacturing_outlined,
+          '/manufacturing/production',
+        ),
+        _SidebarDestination(
+          'factoryStockCounts',
+          Icons.fact_check_outlined,
+          '/manufacturing/stock-counts',
+        ),
+        if (_showFactoryCustomersDestination)
+          _SidebarDestination(
+            'customers',
+            Icons.groups_outlined,
+            '/customers',
+          ),
+        _SidebarDestination(
+          'purchases',
+          Icons.shopping_cart_outlined,
+          '/finance/purchases',
+        ),
+        _SidebarDestination(
+          'sales',
+          Icons.receipt_long_outlined,
+          '/finance/sales',
+        ),
+        _SidebarDestination(
+          'finance',
+          Icons.account_balance_wallet_outlined,
+          '/finance',
+        ),
+        _SidebarDestination(
+          'factoryReports',
+          Icons.bar_chart_outlined,
+          '/manufacturing/reports',
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
+    if (isFactoryUser) {
+      return _buildFrame(context, _factoryDestinations);
+    }
     final bool isCashier = CashierAccess.isCashierRole(actorRole);
     final bool canOpenFinance = financeCapabilities.any(
       CashierAccess.financeWorkspacePermissions.contains,
@@ -170,6 +244,13 @@ class AppSidebar extends StatelessWidget {
                       )
                     : destination,
               );
+    return _buildFrame(context, destinations);
+  }
+
+  Widget _buildFrame(
+    BuildContext context,
+    Iterable<_SidebarDestination> destinations,
+  ) {
     return Container(
       width:
           width ??
@@ -289,8 +370,14 @@ String _labelFor(BuildContext context, String id) {
   // Manufacturing has no ARB entries yet; hardcode Arabic here per the
   // Shift precedent above rather than regenerating AppLocalizations.
   if (id == 'manufacturing') return 'التصنيع';
+  if (id == 'factoryHome') return 'المعمل';
   if (id == 'purchases') return 'المشتريات';
   if (id == 'sales') return 'المبيعات';
+  if (id == 'factoryMaterials') return 'المواد والأرصدة';
+  if (id == 'factoryRecipes') return 'الوصفات';
+  if (id == 'factoryProduction') return 'الإنتاج';
+  if (id == 'factoryStockCounts') return 'الجرد';
+  if (id == 'factoryReports') return 'تقارير المعمل';
   if (l10n == null) return _englishLabel(id);
   return switch (id) {
     'cashierHome' => l10n.cashierHomeTitle,
@@ -341,6 +428,12 @@ String _englishLabel(String id) => switch (id) {
   'finance' => 'Finance',
   'reports' => 'Reports',
   'shift' => 'Shift',
+  'factoryHome' => 'Factory',
+  'factoryMaterials' => 'Materials',
+  'factoryRecipes' => 'Recipes',
+  'factoryProduction' => 'Production',
+  'factoryStockCounts' => 'Stock Counts',
+  'factoryReports' => 'Factory Reports',
   _ => '',
 };
 

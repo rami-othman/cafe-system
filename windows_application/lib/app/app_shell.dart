@@ -27,6 +27,7 @@ class AppShell extends StatefulWidget {
     this.topBar,
     this.onRefresh,
     this.prioritizeContentWidth = false,
+    this.isManufacturingRoute = false,
   });
 
   final Widget child;
@@ -35,6 +36,12 @@ class AppShell extends StatefulWidget {
   final Widget? topBar;
   final Future<void> Function(BuildContext context)? onRefresh;
   final bool prioritizeContentWidth;
+
+  /// Whether the current route is under `/manufacturing`. Combined with
+  /// `isFactoryUser`, this is what decides `isFactory` below — never the
+  /// [OperationalBranchCubit] state alone, which can still be empty on the
+  /// very first frame before it finishes loading.
+  final bool isManufacturingRoute;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -115,15 +122,22 @@ class _AppShellState extends State<AppShell> {
         .session;
 
     final AuthUser? user = session?.user;
-    bool isFactory = false;
-    try {
-      final branchState = context.watch<OperationalBranchCubit>().state;
-      isFactory = branchState.branches.any(
-        (branch) =>
-            branch.id == branchState.selectedBranchId && branch.isFactory,
-      );
-    } catch (_) {
-      // Shell previews may not provide an operational branch context.
+    // Phase 2: driven by the account (`isFactoryUser`) or the route
+    // (`isManufacturingRoute`), never by OperationalBranchCubit's state
+    // alone — that cubit can still be empty/loading on the very first
+    // frame, which previously made `isFactory` flicker to false right
+    // after navigating into /manufacturing.
+    bool isFactory = user?.isFactoryUser ?? false;
+    if (!isFactory && widget.isManufacturingRoute) {
+      try {
+        final branchState = context.watch<OperationalBranchCubit>().state;
+        isFactory = branchState.branches.any(
+          (branch) =>
+              branch.id == branchState.selectedBranchId && branch.isFactory,
+        );
+      } catch (_) {
+        // Shell previews may not provide an operational branch context.
+      }
     }
 
     PosState? pos;
@@ -183,6 +197,7 @@ class _AppShellState extends State<AppShell> {
                   child: AppSidebar(
                     activeLabel: widget.activeLabel,
                     isFactory: isFactory,
+                    isFactoryUser: user?.isFactoryUser ?? false,
                     isCollapsed: sidebarCollapsed,
                     width: sidebarWidth,
                     actorRole: user?.role,

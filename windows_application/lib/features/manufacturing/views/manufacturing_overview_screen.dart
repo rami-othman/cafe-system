@@ -51,7 +51,7 @@ class _ManufacturingOverviewScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const ManagementPageHeader(
-                  title: 'التصنيع',
+                  title: 'نظرة عامة',
                   subtitle: 'نظرة عامة على الإنتاج اليومي وتكلفته وتنبيهاته.',
                 ),
                 const SizedBox(height: AppSpacing.lg),

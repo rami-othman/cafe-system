@@ -161,6 +161,49 @@ class FactoryManagerRoleTest extends TestCase
         $this->assertNotEmpty($ownerMe['manufacturingCapabilities']);
     }
 
+    /**
+     * Phase 2 gap fix: InventoryAccess had no factory_manager entry at all,
+     * so every inventory call (materials, warehouses, stock counts) 403'd
+     * for the role that the Manufacturing "materials"/"الجرد" tabs actually
+     * run as. Also verifies FactoryWarehouseScope rejects a stock count
+     * against a warehouse outside the factory branch (shared or another
+     * branch's), matching what the UI relies on for "the factory warehouse
+     * is picked automatically, nothing else is offered".
+     */
+    public function test_factory_manager_reaches_inventory_and_stock_counts_scoped_to_the_factory_warehouse(): void
+    {
+        $owner = $this->user('owner', 'OwnerPassword1');
+        app(FinancialSetupService::class)->ensureForTenant($this->tenant->id, $this->cafeBranch->id, $owner->id);
+        app(FinancialSetupService::class)->ensureForTenant($this->tenant->id, $this->factoryBranch->id, $owner->id);
+        $factoryWarehouseId = (int) DB::table('branches')->where('id', $this->factoryBranch->id)->value('pos_inventory_warehouse_id');
+        $cafeWarehouseId = (int) DB::table('branches')->where('id', $this->cafeBranch->id)->value('pos_inventory_warehouse_id');
+        $this->assertNotSame(0, $factoryWarehouseId);
+        $this->assertNotSame($factoryWarehouseId, $cafeWarehouseId);
+
+        $factoryManager = $this->user(DefaultTenantRoleService::FACTORY_MANAGER, 'FactoryPass1');
+        app(UserBranchAssignmentService::class)->assign($factoryManager, $this->factoryBranch);
+        $token = $this->loginEmail($factoryManager, 'FactoryPass1');
+
+        // Was a flat 403 before the InventoryAccess fix.
+        $this->withToken($token)->getJson('/api/v1/inventory/items')->assertOk();
+        $this->withToken($token)->getJson('/api/v1/warehouses')->assertOk();
+
+        // The factory's own warehouse is accepted.
+        $this->withToken($token)->postJson('/api/v1/inventory/counts', [
+            'branchId' => $this->factoryBranch->id,
+            'warehouseId' => $factoryWarehouseId,
+            'countDate' => now()->toDateString(),
+        ])->assertCreated();
+
+        // A cafe (or any non-factory) warehouse is rejected server-side, not
+        // just hidden from the picker.
+        $this->withToken($token)->postJson('/api/v1/inventory/counts', [
+            'branchId' => $this->factoryBranch->id,
+            'warehouseId' => $cafeWarehouseId,
+            'countDate' => now()->toDateString(),
+        ])->assertUnprocessable();
+    }
+
     public function test_finance_permission_grant_migration_is_idempotent(): void
     {
         $before = DB::table('finance_role_permissions')->where('tenant_id', $this->tenant->id)->where('role', 'factory_manager')->count();

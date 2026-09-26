@@ -359,6 +359,7 @@ final GoRouter appRouter = GoRouter(
           activeLabel: _activeDestinationFor(state),
           rightPanel: _rightPanelFor(state),
           topBar: _topBarFor(context, state),
+          isManufacturingRoute: isManufacturing,
           onRefresh:
               state.uri.path == AppRoutes.pos || isReports || isCashierSurface
               ? _refreshActionFor(state)
@@ -1625,6 +1626,33 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: AppRoutes.manufacturingStockCounts,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => BlocProvider<InventoryCubit>(
+            create: (_) => serviceLocator<InventoryCubit>(),
+            child: const InventoryCountsScreen(
+              scope: StockCountRouteScope.manufacturing,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingStockCountDetail,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final int? countId = parsePositiveRouteId(
+              state.pathParameters['countId'],
+            );
+            if (countId == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<InventoryCubit>(
+              create: (_) => serviceLocator<InventoryCubit>(),
+              child: InventoryCountDetailsScreen(
+                countId: countId,
+                scope: StockCountRouteScope.manufacturing,
+              ),
+            );
+          },
+        ),
+        GoRoute(
           path: AppRoutes.finance,
           name: AppRouteNames.finance,
           redirect: (_, _) => _cashierAccess().isCashier
@@ -2468,6 +2496,7 @@ String _manufacturingActiveTabFor(String path) {
     return 'production';
   }
   if (path.startsWith(AppRoutes.manufacturingReports)) return 'reports';
+  if (path.startsWith(AppRoutes.manufacturingStockCounts)) return 'stockCounts';
   return 'overview';
 }
 
@@ -2481,6 +2510,21 @@ Widget? _topBarFor(BuildContext context, GoRouterState state) {
     return AppTopBar(
       showOperationalBranchTabs: false,
       contextTitle: AppLocalizations.of(context).cafeConfigurationTitle,
+    );
+  }
+  // The Manufacturing context (Phase 2): no shift badge (the factory has no
+  // shift concept), and branch tabs are sourced from the operational
+  // (factory) branch, never from PosCubit. This applies to every route while
+  // isFactoryUser — not only /manufacturing/* — since a factory_manager can
+  // still reach shared Finance screens.
+  final bool isFactoryUser =
+      serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ??
+      false;
+  if (state.uri.path.startsWith(AppRoutes.manufacturing) || isFactoryUser) {
+    return const AppTopBar(
+      showShiftStatus: false,
+      branchSource: AppTopBarBranchSource.operationalFactory,
+      contextTitle: 'المعمل',
     );
   }
   return null;
@@ -2534,7 +2578,22 @@ String _activeDestinationFor(GoRouterState state) {
     return 'inventory';
   }
   if (state.uri.path.startsWith(AppRoutes.manufacturing)) {
-    return 'manufacturing';
+    // The Owner's shared sidebar has one 'manufacturing' entry for the
+    // whole module; factory_manager's dedicated sidebar (Phase 2) has one
+    // entry per Manufacturing tab, so only its highlighting needs the
+    // finer-grained id.
+    final bool isFactoryUser =
+        serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ??
+        false;
+    if (!isFactoryUser) return 'manufacturing';
+    return switch (_manufacturingActiveTabFor(state.uri.path)) {
+      'materials' => 'factoryMaterials',
+      'recipes' => 'factoryRecipes',
+      'production' => 'factoryProduction',
+      'stockCounts' => 'factoryStockCounts',
+      'reports' => 'factoryReports',
+      _ => 'factoryHome',
+    };
   }
   if (state.uri.path.startsWith(AppRoutes.finance)) {
     return 'finance';
@@ -2631,6 +2690,11 @@ abstract final class AppRoutes {
   static const String manufacturingConversionDetail =
       '/manufacturing/conversions/:id';
   static const String manufacturingReports = '/manufacturing/reports';
+  static const String manufacturingStockCounts = '/manufacturing/stock-counts';
+  static const String manufacturingStockCountDetail =
+      '/manufacturing/stock-counts/:countId';
+  static String manufacturingStockCountDetailPath(int countId) =>
+      '/manufacturing/stock-counts/$countId';
   static const String finance = '/finance';
   static const String financeReceiptVouchers = '/finance/receipt-vouchers';
   static const String financePaymentVouchers = '/finance/payment-vouchers';

@@ -8,8 +8,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 /// The Manufacturing workspace's tab bar, mirroring
-/// [InventoryNavigationBar]'s route-driven pattern. All five tabs route to
-/// real screens as of Phase 2-7.
+/// [InventoryNavigationBar]'s route-driven pattern. All tabs route to real
+/// screens.
 class ManufacturingNavigationBar extends StatelessWidget {
   const ManufacturingNavigationBar({super.key, required this.selected});
 
@@ -43,6 +43,13 @@ class ManufacturingNavigationBar extends StatelessWidget {
           AppRoutes.manufacturingProduction,
           'الإنتاج',
           Icons.precision_manufacturing_outlined,
+          enabled: true,
+        ),
+        _ManufacturingDestination(
+          'stockCounts',
+          AppRoutes.manufacturingStockCounts,
+          'الجرد',
+          Icons.fact_check_outlined,
           enabled: true,
         ),
         _ManufacturingDestination(

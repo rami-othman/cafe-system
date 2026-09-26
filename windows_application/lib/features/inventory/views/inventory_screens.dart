@@ -1672,8 +1672,39 @@ class _InventoryMovementCreateState
   }
 }
 
+/// Where the stock-count screens navigate for "list" and "detail", so the
+/// same screens can be mounted inside the Inventory module or, unmodified,
+/// inside the Manufacturing shell (Phase 2) without duplicating them. The
+/// default is the existing Inventory module; a caller opting into a
+/// different shell passes its own [StockCountRouteScope.manufacturing].
+class StockCountRouteScope {
+  const StockCountRouteScope({
+    required this.listPath,
+    required this.detailPath,
+  });
+
+  final String listPath;
+  final String Function(int countId) detailPath;
+
+  static const StockCountRouteScope inventory = StockCountRouteScope(
+    listPath: AppRoutes.inventoryCounts,
+    detailPath: AppRoutes.inventoryCountDetailPath,
+  );
+
+  static const StockCountRouteScope manufacturing = StockCountRouteScope(
+    listPath: AppRoutes.manufacturingStockCounts,
+    detailPath: AppRoutes.manufacturingStockCountDetailPath,
+  );
+}
+
 class InventoryCountsScreen extends StatefulWidget {
-  const InventoryCountsScreen({super.key});
+  const InventoryCountsScreen({
+    super.key,
+    this.scope = StockCountRouteScope.inventory,
+  });
+
+  final StockCountRouteScope scope;
+
   @override
   State<InventoryCountsScreen> createState() => _InventoryCountsState();
 }
@@ -1852,7 +1883,7 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
                           child: _CountsTable(
                             items: state.counts,
                             onOpen: (InventoryCount count) => context.go(
-                              AppRoutes.inventoryCountDetailPath(count.id),
+                              widget.scope.detailPath(count.id),
                             ),
                           ),
                         ),
@@ -1907,7 +1938,7 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
     );
     if (saved && cubit.state.selectedCount != null) {
       context.go(
-        AppRoutes.inventoryCountDetailPath(cubit.state.selectedCount!.id),
+        widget.scope.detailPath(cubit.state.selectedCount!.id),
       );
     }
   }
@@ -1929,8 +1960,13 @@ class _InventoryCountsState extends State<InventoryCountsScreen> {
 }
 
 class InventoryCountDetailsScreen extends StatefulWidget {
-  const InventoryCountDetailsScreen({super.key, required this.countId});
+  const InventoryCountDetailsScreen({
+    super.key,
+    required this.countId,
+    this.scope = StockCountRouteScope.inventory,
+  });
   final int countId;
+  final StockCountRouteScope scope;
 
   @override
   State<InventoryCountDetailsScreen> createState() =>
@@ -1965,7 +2001,7 @@ class _InventoryCountDetailsScreenState
         final bool renderApprovedWorkspace =
             state.selectedCount?.id == widget.countId;
         if (renderApprovedWorkspace) {
-          return _StockCountWorkspace(count: count);
+          return _StockCountWorkspace(count: count, scope: widget.scope);
         }
         return SingleChildScrollView(
           child: Column(
@@ -1979,7 +2015,7 @@ class _InventoryCountDetailsScreenState
                     label: 'العودة للجرد',
                     icon: Icons.arrow_back,
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => context.go(AppRoutes.inventoryCounts),
+                    onPressed: () => context.go(widget.scope.listPath),
                   ),
                   if (_countIsEditable(count.status))
                     AppButton(
@@ -2254,8 +2290,9 @@ class _CountTypeOption extends StatelessWidget {
 }
 
 class _StockCountWorkspace extends StatefulWidget {
-  const _StockCountWorkspace({required this.count});
+  const _StockCountWorkspace({required this.count, required this.scope});
   final InventoryCount count;
+  final StockCountRouteScope scope;
 
   @override
   State<_StockCountWorkspace> createState() => _StockCountWorkspaceState();
@@ -2337,12 +2374,12 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
             spacing: 6,
             children: <Widget>[
               TextButton(
-                onPressed: () => context.go(AppRoutes.inventoryCounts),
+                onPressed: () => context.go(widget.scope.listPath),
                 child: const Text('إدارة المخزون'),
               ),
               const Text('/'),
               TextButton(
-                onPressed: () => context.go(AppRoutes.inventoryCounts),
+                onPressed: () => context.go(widget.scope.listPath),
                 child: const Text('الجرد المخزني'),
               ),
               const Text('/'),
@@ -2734,7 +2771,7 @@ class _StockCountWorkspaceState extends State<_StockCountWorkspace> {
     if (confirmed != true || !context.mounted) return;
     await context.read<InventoryCubit>().countAction(count.id, 'cancel');
     if (!context.mounted) return;
-    context.go(AppRoutes.inventoryCounts);
+    context.go(widget.scope.listPath);
   }
 }
 

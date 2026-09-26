@@ -10,10 +10,18 @@ import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../app/shift_route_locations.dart';
+import '../../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../../features/pos/controllers/pos_cubit.dart';
 import '../../features/pos/controllers/pos_state.dart';
 import '../../features/pos/models/branch.dart';
 import 'shift_status_badge.dart';
+
+/// Which branch context the top bar's tab strip is driven by. [pos] (the
+/// default) is the Cashier/POS branch used everywhere in the cafe.
+/// [operationalFactory] is the Manufacturing context (Phase 2): tabs (if
+/// shown at all) list only `branch_type == 'factory'` branches from
+/// [OperationalBranchCubit], and selecting one never touches [PosCubit].
+enum AppTopBarBranchSource { pos, operationalFactory }
 
 class AppTopBar extends StatefulWidget {
   const AppTopBar({
@@ -23,6 +31,7 @@ class AppTopBar extends StatefulWidget {
     this.showOperationalBranchTabs = true,
     this.showShiftStatus = true,
     this.contextTitle,
+    this.branchSource = AppTopBarBranchSource.pos,
   });
 
   final bool showCartButton;
@@ -30,6 +39,7 @@ class AppTopBar extends StatefulWidget {
   final bool showOperationalBranchTabs;
   final bool showShiftStatus;
   final String? contextTitle;
+  final AppTopBarBranchSource branchSource;
 
   @override
   State<AppTopBar> createState() => _AppTopBarState();
@@ -57,8 +67,10 @@ class _AppTopBarState extends State<AppTopBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
+        final bool useOperationalFactory =
+            widget.branchSource == AppTopBarBranchSource.operationalFactory;
         PosCubit? posCubit;
-        if (widget.showOperationalBranchTabs) {
+        if (widget.showOperationalBranchTabs && !useOperationalFactory) {
           try {
             posCubit = context.watch<PosCubit>();
           } catch (_) {
@@ -66,6 +78,30 @@ class _AppTopBarState extends State<AppTopBar> {
           }
         }
         final PosState? posState = posCubit?.state;
+
+        List<Branch> factoryBranches = const <Branch>[];
+        String? factoryContextTitle;
+        if (useOperationalFactory) {
+          try {
+            final state = context.watch<OperationalBranchCubit>().state;
+            factoryBranches = state.branches
+                .where((Branch branch) => branch.isFactory)
+                .toList(growable: false);
+            final Branch? selected = factoryBranches
+                .where((Branch branch) => branch.id == state.selectedBranchId)
+                .firstOrNull;
+            factoryContextTitle = selected?.name ?? widget.contextTitle;
+          } catch (_) {
+            // Previews/tests may not provide OperationalBranchCubit.
+            factoryContextTitle = widget.contextTitle;
+          }
+        }
+        // A single factory branch (today's only real case — one factory,
+        // one factory_manager) has no tabs to switch between: the branch
+        // name is shown as a plain context title instead, matching how
+        // Cafe Configuration shows its own contextTitle.
+        final bool showFactoryTabs = factoryBranches.length > 1;
+
         final bool isVeryCompact =
             constraints.maxWidth < AppSizes.topBarVeryCompactWidth;
         final bool isCompact =
@@ -86,7 +122,27 @@ class _AppTopBarState extends State<AppTopBar> {
           child: Row(
             children: <Widget>[
               Expanded(
-                child: widget.showOperationalBranchTabs && posState != null
+                child: showFactoryTabs
+                    ? ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: <Widget>[
+                          for (final Branch branch in factoryBranches)
+                            _BranchTab(
+                              label: branch.name,
+                              isActive:
+                                  branch.id ==
+                                  context
+                                      .watch<OperationalBranchCubit>()
+                                      .state
+                                      .selectedBranchId,
+                              onTap: () =>
+                                  _selectOperationalBranch(context, branch.id),
+                            ),
+                        ],
+                      )
+                    : (widget.showOperationalBranchTabs &&
+                          !useOperationalFactory &&
+                          posState != null)
                     ? ListView(
                         scrollDirection: Axis.horizontal,
                         children: <Widget>[
@@ -103,7 +159,9 @@ class _AppTopBarState extends State<AppTopBar> {
                         child: Align(
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(
-                            widget.contextTitle ??
+                            (useOperationalFactory
+                                    ? factoryContextTitle
+                                    : widget.contextTitle) ??
                                 context.l10n.navigationMenuManagement,
                             style: AppTextStyles.titleMedium,
                           ),
@@ -169,6 +227,13 @@ class _AppTopBarState extends State<AppTopBar> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.posBranchSwitchBlockedWithCart)),
     );
+  }
+
+  // Unlike the POS branch, the operational (factory) branch never has a
+  // cart or shift to block a switch on, so there is no async confirmation
+  // to await here — just select it.
+  void _selectOperationalBranch(BuildContext context, int branchId) {
+    context.read<OperationalBranchCubit>().selectBranch(branchId);
   }
 }
 
