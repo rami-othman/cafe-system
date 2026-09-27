@@ -79,7 +79,8 @@ class InventoryRepository {
               'perPage': perPage,
               if (search != null && search.isNotEmpty) 'search': search,
               if (type != null && type.isNotEmpty) 'type': type,
-              if (types != null && types.isNotEmpty) 'types': types,
+              // PHP needs bracketed keys to preserve a repeated query list.
+              if (types != null && types.isNotEmpty) 'types[]': types,
               if (category != null && category.isNotEmpty) 'category': category,
               if (status != null && status.isNotEmpty) 'status': status,
               if (stockStatus != null && stockStatus.isNotEmpty)
