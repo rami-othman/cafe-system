@@ -122,7 +122,7 @@ class CafeConfigurationBranch {
     timezone: json['timezone'] as String? ?? 'UTC',
     currency: json['currency'] as String? ?? '',
     isActive: json['isActive'] == true,
-    posInventoryWarehouseId: (json['posInventoryWarehouseId'] as num?)?.toInt(),
+    posInventoryWarehouseId: ((json['branchType'] == 'factory' ? json['defaultWarehouseId'] : json['posInventoryWarehouseId']) as num?)?.toInt(),
     branchType: json['branchType'] as String? ?? 'cafe',
     posCashFinancialLocationId: (json['posCashFinancialLocationId'] as num?)
         ?.toInt(),

@@ -2,9 +2,9 @@ import '../../pos/models/json_helpers.dart';
 import 'sales_profitability.dart';
 
 class SalesCustomer {
-  const SalesCustomer({required this.id, required this.name, required this.customerNumber, required this.creditTermsDays, required this.isActive, required this.isWalkIn});
-  final int id; final String name; final String customerNumber; final int creditTermsDays; final bool isActive; final bool isWalkIn;
-  factory SalesCustomer.fromJson(Map<String, dynamic> j) => SalesCustomer(id: readInt(j['id']) ?? 0, name: readString(j['name']), customerNumber: readString(j['customerNumber']), creditTermsDays: readInt(j['defaultCreditTermsDays']) ?? 0, isActive: readBool(j['isActive']), isWalkIn: readBool(j['isWalkIn']));
+  const SalesCustomer({required this.id, required this.name, required this.customerNumber, required this.creditTermsDays, required this.isActive, required this.isWalkIn, this.isInternal = false, this.internalBranchId});
+  final int id; final String name; final String customerNumber; final int creditTermsDays; final bool isActive; final bool isWalkIn; final bool isInternal; final int? internalBranchId;
+  factory SalesCustomer.fromJson(Map<String, dynamic> j) => SalesCustomer(id: readInt(j['id']) ?? 0, name: readString(j['name']), customerNumber: readString(j['customerNumber']), creditTermsDays: readInt(j['defaultCreditTermsDays']) ?? 0, isActive: readBool(j['isActive']), isWalkIn: readBool(j['isWalkIn']), isInternal: readBool(j['isInternal']), internalBranchId: readInt(j['internalBranchId']));
 }
 
 class SalesVariant { const SalesVariant({required this.id, required this.name, required this.isDefault, this.salePrice = '0.00'}); final int id; final String name; final bool isDefault; final String salePrice; factory SalesVariant.fromJson(Map<String, dynamic> j) => SalesVariant(id: readInt(j['id']) ?? 0, name: readString(j['name']), isDefault: readBool(j['isDefault']), salePrice: readString(j['salePrice'], fallback: '0.00')); }

@@ -31,8 +31,10 @@ class ManufacturingCoreFlowTest extends TestCase
         parent::setUp();
         $this->seed();
         $this->tenant = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
-        $this->branchId = (int) DB::table('branches')->where('tenant_id', $this->tenant)->where('name', 'Downtown')->value('id');
-        $this->warehouseId = (int) DB::table('branches')->where('id', $this->branchId)->value('pos_inventory_warehouse_id');
+        $this->branchId = (int) DB::table('branches')->insertGetId(['tenant_id' => $this->tenant, 'name' => 'Factory test', 'branch_type' => 'factory', 'timezone' => 'Asia/Damascus', 'currency' => 'SYP', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        app(\App\Services\FinancialSetupService::class)->ensureForTenant($this->tenant, $this->branchId);
+        $this->artisan('factory:setup-catalogs', ['--apply' => true])->assertSuccessful();
+        $this->warehouseId = (int) DB::table('branches')->where('id', $this->branchId)->value('default_warehouse_id');
         $userId = (int) DB::table('users')->where('tenant_id', $this->tenant)->where('role', 'owner')->value('id');
         $token = 'mfg-test-token-'.uniqid();
         DB::table('api_tokens')->insert(['tenant_id' => $this->tenant, 'user_id' => $userId, 'name' => 'mfg-test', 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addDay(), 'created_at' => now(), 'updated_at' => now()]);
@@ -178,7 +180,7 @@ class ManufacturingCoreFlowTest extends TestCase
         $this->assertSame(45.0, $milkBalanceFinal);
     }
 
-    public function test_completed_production_sold_through_pos_decrements_only_finished_stock_never_raw_ingredients_again(): void
+    public function test_completed_production_sold_directly_decrements_only_finished_stock_never_raw_ingredients_again(): void
     {
         $flour = $this->createItem('raw_material', 'kilogram');
         $sugar = $this->createItem('raw_material', 'kilogram');
@@ -221,35 +223,10 @@ class ManufacturingCoreFlowTest extends TestCase
         $cakeBalanceAfterProduction = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $cake)->value('quantity_on_hand');
         $this->assertSame(7.0, $cakeBalanceAfterProduction);
 
-        // Configure Chocolate Cake as a real POS product whose recipe consumes ONLY itself.
-        $category = $this->postJson('/api/v1/admin/catalog/categories', ['name' => 'Mfg Test Cakes'], $this->headers)->assertCreated()->json('data.id');
-        $product = $this->postJson('/api/v1/admin/catalog/products', [
-            'name' => 'Manufactured Chocolate Cake', 'productType' => 'standard', 'categoryId' => $category, 'isStockTracked' => true,
-            'variants' => [['name' => 'Regular', 'basePrice' => '150000.00', 'costPrice' => '73142.51', 'isDefault' => true, 'isActive' => true, 'sortOrder' => 0]],
-        ], $this->headers)->assertCreated()->json('data');
-        $variantId = (int) DB::table('product_variants')->where('tenant_id', $this->tenant)->where('product_id', $product['id'])->value('id');
-
-        $this->putJson("/api/v1/admin/catalog/product-variants/{$variantId}/recipe", [
-            'components' => [['materialId' => $cake, 'quantity' => '1.000', 'unitCode' => 'piece', 'sortOrder' => 0]],
-        ], $this->headers)->assertOk();
-
-        $menu = $this->postJson('/api/v1/admin/menus', ['name' => 'Mfg Test Menu', 'status' => 'draft'], $this->headers)->assertCreated()->json('data.id');
-        $section = $this->postJson("/api/v1/admin/menus/{$menu}/sections", ['name' => 'Cakes', 'sortOrder' => 0], $this->headers)->assertCreated()->json('data.id');
-        $placement = $this->postJson("/api/v1/admin/menu-sections/{$section}/placements", ['productId' => $product['id'], 'sortOrder' => 0, 'isVisible' => true], $this->headers)->assertCreated()->json('data.id');
-        $this->putJson('/api/v1/admin/menu-management/assignments', ['branchId' => $this->branchId, 'channel' => 'pos', 'assignments' => [['menuId' => $menu, 'priority' => 0, 'isActive' => true]]], $this->headers)->assertOk();
-        $this->putJson("/api/v1/admin/menus/{$menu}/availability-rules", ['rules' => [['branchId' => $this->branchId, 'channel' => 'pos', 'startDate' => '2020-01-01', 'endDate' => '2099-12-31', 'priority' => 0, 'isActive' => true]]], $this->headers)->assertOk();
-        $context = ['branchId' => $this->branchId, 'channel' => 'pos', 'menuIds' => [$menu]];
-        $published = $this->postJson('/api/v1/admin/menu-management/publish', $context, $this->headers)->assertOk()->assertJsonPath('data.published', true)->json('data.version');
-
-        $shiftId = $this->postJson('/api/v1/shifts/current', ['branchId' => $this->branchId, 'openingCash' => 0], $this->headers)->assertCreated()->json('data.id');
-        $order = $this->postJson('/api/v1/orders', [
-            'branchId' => $this->branchId, 'shiftId' => $shiftId, 'orderType' => 'takeaway', 'publishedMenuVersionId' => $published['id'],
-            'items' => [['productId' => $product['id'], 'placementId' => $placement, 'variantId' => $variantId, 'quantity' => 1]],
-        ], $this->headers)->assertCreated();
-        $orderId = $order->json('data.id');
-        $total = $order->json('data.totals.total');
-        $this->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => $total, 'idempotencyKey' => 'mfg-pos-sale-1'], $this->headers)->assertOk()->assertJsonPath('data.payment.status', 'completed');
-
+        // Factory finished stock is sold directly without a POS shift.
+        $customer = $this->postJson('/api/v1/finance/customers', ['branchId' => $this->branchId, 'name' => 'Factory buyer'], $this->headers)->assertCreated()->json('data.id');
+        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $this->branchId, 'customerId' => $customer, 'invoiceDate' => now()->toDateString(), 'lines' => [['inventoryItemId' => $cake, 'quantity' => '1', 'unitPrice' => '150000.00']]], $this->headers)->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/finance/sales-invoices/'.$invoice.'/post', ['idempotencyKey' => 'mfg-direct-sale'], $this->headers)->assertOk();
         // THE critical regression assertions:
         $cakeBalanceAfterSale = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $cake)->value('quantity_on_hand');
         $this->assertSame(6.0, $cakeBalanceAfterSale, 'Selling one cake must decrement finished Cake stock by exactly 1.');
@@ -261,8 +238,7 @@ class ManufacturingCoreFlowTest extends TestCase
         $this->assertFalse($saleConsumptionOnFlour, 'Flour must never receive a sale_consumption movement — it was already consumed at production time.');
 
         // COGS must come from the Cake's own inventory cost (its manufacturing unit cost), once.
-        $orderRow = DB::table('orders')->where('id', $orderId)->first();
-        $this->assertGreaterThan(0.0, (float) $orderRow->cogs_total);
+        $this->assertGreaterThan(0.0, (float) DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoice)->value('cogs_total'));
     }
 
     public function test_production_manufacturing_movements_never_post_a_finance_journal(): void
@@ -574,7 +550,7 @@ class ManufacturingCoreFlowTest extends TestCase
 
         // a second, unrelated tenant with its own owner + warehouse
         $tenantB = (int) DB::table('tenants')->insertGetId(['name' => 'mfg-isolation-b', 'slug' => 'mfg-isolation-b-'.uniqid(), 'status' => 'active', 'plan' => 'starter', 'currency' => 'SYP', 'timezone' => 'Asia/Damascus', 'created_at' => now(), 'updated_at' => now()]);
-        $branchB = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenantB, 'name' => 'Branch B', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $branchB = (int) DB::table('branches')->insertGetId(['tenant_id' => $tenantB, 'name' => 'Branch B', 'branch_type' => 'factory', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $warehouseB = (int) DB::table('warehouses')->insertGetId(['tenant_id' => $tenantB, 'branch_id' => $branchB, 'name' => 'Warehouse B', 'code' => "MFG-ISO-B-$tenantB", 'type' => 'other', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $userB = (int) DB::table('users')->insertGetId(['tenant_id' => $tenantB, 'name' => 'Owner B', 'email' => 'owner-b-'.uniqid().'@example.test', 'password' => bcrypt('password'), 'role' => 'owner', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $tokenB = 'mfg-isolation-token-'.uniqid();
@@ -588,7 +564,7 @@ class ManufacturingCoreFlowTest extends TestCase
         $this->assertEmpty($this->getJson('/api/v1/manufacturing/production', $headersB)->assertOk()->json('data'));
 
         // tenant B cannot start production against tenant A's recipe, even scoped to its own warehouse
-        $this->postJson('/api/v1/manufacturing/production/drafts', ['recipeId' => $recipe['id'], 'qty' => '4', 'warehouseId' => $warehouseB], $headersB)
+        $this->postJson('/api/v1/manufacturing/production/drafts', ['branchId' => $branchB, 'recipeId' => $recipe['id'], 'qty' => '4', 'warehouseId' => $warehouseB], $headersB)
             ->assertStatus(404);
 
         // tenant B cannot reverse tenant A's completed production
@@ -777,6 +753,14 @@ class ManufacturingCoreFlowTest extends TestCase
         $this->assertEquals(0.0, $reportsB['kpis']['totalQty']);
     }
 
+    public function json($method, $uri, array $data = [], array $headers = [], $options = 0)
+    {
+        if (($headers['X-Tenant-Id'] ?? null) == $this->tenant && (str_contains($uri, '/manufacturing/') || str_contains($uri, '/inventory/') || str_contains($uri, '/finance/'))) {
+            if (strtoupper($method) === 'GET') $uri .= (str_contains($uri, '?') ? '&' : '?').'scopeBranchId='.$this->branchId;
+            else $data += ['scopeBranchId' => $this->branchId, 'branchId' => $this->branchId];
+        }
+        return parent::json($method, $uri, $data, $headers, $options);
+    }
     // ---- helpers ----
 
     public function test_factory_purchase_production_sale_posts_finished_stock_cost_and_margin_with_returns(): void

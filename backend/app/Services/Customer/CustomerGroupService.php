@@ -21,6 +21,7 @@ class CustomerGroupService
         $this->access->assertCanAdminister($request);
         $tenantId = TenantContext::id($request);
         $query = CustomerGroup::withTrashed()->forTenant($tenantId)->withCount('customers');
+\App\Support\DataScope::apply($query, 'owner_branch_id', \App\Support\DataScope::resolve($request));
         $status = $filters['status'] ?? 'active';
         if ($status === 'active') {
             $query->whereNull('deleted_at')->where('is_active', true);
@@ -42,10 +43,10 @@ class CustomerGroupService
 
         return DB::transaction(function () use ($request, $tenantId, $data): CustomerGroup {
             $name = CustomerNameNormalizer::normalize($data['name']);
-            if (CustomerGroup::withTrashed()->forTenant($tenantId)->where('normalized_name', $name['normalizedName'])->exists()) {
+            if (CustomerGroup::withTrashed()->forTenant($tenantId)->when(\App\Support\DataScope::resolve($request) !== null, fn ($q) => $q->where('owner_branch_id', \App\Support\DataScope::resolve($request)), fn ($q) => $q->whereNull('owner_branch_id'))->where('normalized_name', $name['normalizedName'])->exists()) {
                 throw ValidationException::withMessages(['name' => 'A group with this name already exists.']);
             }
-            $group = CustomerGroup::create(['tenant_id' => $tenantId, 'name' => $name['displayName'], 'normalized_name' => $name['normalizedName'], 'is_active' => true]);
+            $group = CustomerGroup::create(['owner_branch_id' => \App\Support\DataScope::resolve($request), 'tenant_id' => $tenantId, 'name' => $name['displayName'], 'normalized_name' => $name['normalizedName'], 'is_active' => true]);
             $this->audit->record($request, $tenantId, 'customer.group.created', 'customer_group', $group->id, [], ['groupId' => $group->id, 'status' => 'active'], actorId: $this->access->actor($request)->id);
 
             return $group->fresh();
@@ -56,7 +57,8 @@ class CustomerGroupService
     {
         $this->access->assertCanAdminister($request);
 
-        return CustomerGroup::withTrashed()->forTenant(TenantContext::id($request))->whereKey($id)->firstOrFail();
+        $group = CustomerGroup::withTrashed()->forTenant(TenantContext::id($request))->whereKey($id)->firstOrFail();
+\App\Support\DataScope::assertOwned($group, \App\Support\DataScope::resolve($request)); return $group;
     }
 
     public function members(Request $request, int $groupId, array $filters)
@@ -82,6 +84,7 @@ class CustomerGroupService
                 ->where('customer_group_memberships.tenant_id', $tenantId)
                 ->where('customer_group_memberships.customer_group_id', $group->id));
 
+        \App\Support\DataScope::apply($query, 'customers.owner_branch_id', $group->owner_branch_id === null ? null : (int) $group->owner_branch_id);
         return $this->applyCustomerSearch($query, $filters['search'] ?? null)
             ->orderBy('customers.normalized_name')->orderBy('customers.id')
             ->paginate($this->perPage($filters), ['customers.*'], 'page', $this->page($filters));
@@ -95,11 +98,13 @@ class CustomerGroupService
 
         return DB::transaction(function () use ($request, $tenantId, $groupId, $ids): CustomerGroup {
             $group = CustomerGroup::query()->forTenant($tenantId)->whereKey($groupId)->lockForUpdate()->firstOrFail();
+\App\Support\DataScope::assertOwned($group, \App\Support\DataScope::resolve($request));
             if (! $group->is_active) {
                 throw ValidationException::withMessages(['group' => 'New members may only be added to an active group.']);
             }
             $customers = Customer::withTrashed()->forTenant($tenantId)->whereIn('id', $ids)->lockForUpdate()->get();
-            if ($customers->count() !== count($ids) || $customers->contains(fn (Customer $customer): bool => $customer->trashed() || ! $customer->is_active)) {
+            foreach ($customers as $customer) \App\Support\DataScope::assertOwned($customer, \App\Support\DataScope::resolve($request));
+if ($customers->count() !== count($ids) || $customers->contains(fn (Customer $customer): bool => $customer->trashed() || ! $customer->is_active)) {
                 throw ValidationException::withMessages(['customerIds' => 'Every customer must be active and belong to the authenticated tenant.']);
             }
             if (DB::table('customer_group_memberships')->where('tenant_id', $tenantId)->where('customer_group_id', $group->id)->whereIn('customer_id', $ids)->exists()) {
@@ -120,6 +125,7 @@ class CustomerGroupService
 
         return DB::transaction(function () use ($request, $tenantId, $groupId, $customerId): CustomerGroup {
             $group = CustomerGroup::withTrashed()->forTenant($tenantId)->whereKey($groupId)->lockForUpdate()->firstOrFail();
+\App\Support\DataScope::assertOwned($group, \App\Support\DataScope::resolve($request));
             Customer::withTrashed()->forTenant($tenantId)->whereKey($customerId)->lockForUpdate()->firstOrFail();
             $deleted = DB::table('customer_group_memberships')->where('tenant_id', $tenantId)->where('customer_group_id', $group->id)->where('customer_id', $customerId)->delete();
             if ($deleted !== 1) {
@@ -138,8 +144,9 @@ class CustomerGroupService
 
         return DB::transaction(function () use ($request, $tenantId, $id, $data): CustomerGroup {
             $group = CustomerGroup::withTrashed()->forTenant($tenantId)->whereKey($id)->lockForUpdate()->firstOrFail();
+\App\Support\DataScope::assertOwned($group, \App\Support\DataScope::resolve($request));
             $name = CustomerNameNormalizer::normalize($data['name']);
-            if (CustomerGroup::withTrashed()->forTenant($tenantId)->where('normalized_name', $name['normalizedName'])->where('id', '<>', $id)->exists()) {
+            if (CustomerGroup::withTrashed()->forTenant($tenantId)->when(\App\Support\DataScope::resolve($request) !== null, fn ($q) => $q->where('owner_branch_id', \App\Support\DataScope::resolve($request)), fn ($q) => $q->whereNull('owner_branch_id'))->where('normalized_name', $name['normalizedName'])->where('id', '<>', $id)->exists()) {
                 throw ValidationException::withMessages(['name' => 'A group with this name already exists.']);
             }
             $group->update(['name' => $name['displayName'], 'normalized_name' => $name['normalizedName']]);
@@ -166,6 +173,7 @@ class CustomerGroupService
 
         return DB::transaction(function () use ($request, $tenantId, $id, $action): CustomerGroup {
             $group = CustomerGroup::withTrashed()->forTenant($tenantId)->whereKey($id)->lockForUpdate()->firstOrFail();
+\App\Support\DataScope::assertOwned($group, \App\Support\DataScope::resolve($request));
             if ($action === 'archive' && $group->trashed()) {
                 return $group->fresh();
             }

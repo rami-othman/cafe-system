@@ -24,6 +24,7 @@ final class WarehouseConfigurationRepairService
         $findings = [];
         $fixed = 0;
         $branches = DB::table('branches')
+            ->where('branch_type', '!=', 'factory')
             ->where('is_active', true)
             ->whereNull('deleted_at')
             ->when($tenantId, fn ($query) => $query->where('tenant_id', $tenantId))

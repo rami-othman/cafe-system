@@ -49,6 +49,7 @@ class SupplierPaymentService
                 }
 
                 $supplier = DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $data['supplierId'])->where('is_active', true)->whereNull('deleted_at')->first();
+                \App\Support\DataScope::assertReference($tenantId, 'suppliers', (int) $data['supplierId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
                 if (! $supplier) {
                     throw ValidationException::withMessages(['supplierId' => 'Select an active tenant supplier.']);
                 }
@@ -119,7 +120,7 @@ class SupplierPaymentService
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'] ?? null,
                     'supplier_id' => $supplier->id,
-                    'payment_number' => $this->nextNumber($tenantId),
+                    'payment_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId)),
                     'payment_date' => $data['paymentDate'],
                     'amount' => Money::decimal($amountCents),
                     'payment_method_id' => $method->id,

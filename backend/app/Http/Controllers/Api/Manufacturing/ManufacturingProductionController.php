@@ -40,6 +40,7 @@ class ManufacturingProductionController extends Controller
     public function showDraft(Request $request, int $draft): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        \App\Support\ManufacturingRecordScope::find($request, $tenantId, 'manufacturing_orders', $draft);
         $data = $this->production->getDraft($tenantId, $draft);
         if (! $data) {
             throw ManufacturingDomainException::draftNotFound();
@@ -51,6 +52,7 @@ class ManufacturingProductionController extends Controller
     public function complete(ProductionCompleteRequest $request, int $draft): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        \App\Support\ManufacturingRecordScope::find($request, $tenantId, 'manufacturing_orders', $draft);
         $record = $this->production->complete($request, $tenantId, $draft, $request->validated(), FinancialActor::id($request, $tenantId));
 
         return response()->json(['data' => $record]);
@@ -63,12 +65,13 @@ class ManufacturingProductionController extends Controller
         if ($request->filled('branchId')) {
             FinancialActor::assertBranchAccess(FinancialActor::id($request, $tenantId), $tenantId, (int) $request->input('branchId'));
         }
-        return response()->json(['data' => $this->production->list($tenantId, $request->only(['search', 'warehouseId', 'branchId', 'status', 'type']))]);
+        return response()->json(['data' => $this->production->list($tenantId, $request->only(['search', 'warehouseId', 'branchId', 'status', 'type']) + ['accessibleBranchIds' => FinancialActor::operationalBranchIds(FinancialActor::id($request, $tenantId), $tenantId)])]);
     }
 
     public function show(Request $request, string $production): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        \App\Support\ManufacturingRecordScope::find($request, $tenantId, 'manufacturing_orders', $production);
         $data = $this->production->get($tenantId, is_numeric($production) ? (int) $production : $production);
         if (! $data) {
             throw ManufacturingDomainException::draftNotFound();
@@ -80,6 +83,7 @@ class ManufacturingProductionController extends Controller
     public function reverse(ReverseProductionRequest $request, string $production): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        \App\Support\ManufacturingRecordScope::find($request, $tenantId, 'manufacturing_orders', $production);
         $recordId = $this->resolveOrderId($tenantId, $production);
         $record = $this->production->reverse($request, $tenantId, $recordId, $request->validated()['reason'], FinancialActor::id($request, $tenantId), $request->validated()['idempotencyKey'] ?? null);
 

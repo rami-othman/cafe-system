@@ -24,6 +24,7 @@ final class PosInventoryWarehouseResolver
      */
     public function resolutionForBranch(int $tenantId, int $branchId): object
     {
+        if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) throw new OrderLifecycleException('FACTORY_POS_FORBIDDEN', 'نقطة البيع غير متاحة في فرع المعمل.');
         $branch = DB::table('branches')->where('id', $branchId)->where('tenant_id', $tenantId)
             ->where('is_active', true)->whereNull('deleted_at')->first(['id', 'tenant_id', 'pos_inventory_warehouse_id']);
 

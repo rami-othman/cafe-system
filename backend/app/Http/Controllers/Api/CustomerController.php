@@ -25,6 +25,7 @@ class CustomerController extends Controller
         $this->access->assertCanUseOperationalLookup($request);
 
         $query = $this->eligibility->scope(DB::table('customers'), $tenantId);
+        \App\Support\DataScope::apply($query, 'owner_branch_id', \App\Support\DataScope::resolve($request));
 
         $search = $request->query('search');
         $searchFields = [

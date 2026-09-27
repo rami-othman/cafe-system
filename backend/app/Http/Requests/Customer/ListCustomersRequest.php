@@ -20,7 +20,7 @@ class ListCustomersRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->query()), ['search', 'status', 'groupId', 'page', 'perPage']) !== []) {
+            if (array_diff(array_diff(array_keys($this->query()), ['scopeBranchId']), ['search', 'status', 'groupId', 'page', 'perPage']) !== []) {
                 $validator->errors()->add('query', 'Unknown customer list filters were submitted.');
             }
         });

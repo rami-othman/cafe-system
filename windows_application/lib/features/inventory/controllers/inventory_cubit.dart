@@ -106,6 +106,7 @@ class InventoryCubit extends Cubit<InventoryState> {
     String? category,
     String? status,
     String? stockStatus,
+    bool inStockOnly = false,
     int? warehouseId,
     int page = 1,
   }) => _loadLatest('items', (bool Function() isCurrent) async {
@@ -117,6 +118,7 @@ class InventoryCubit extends Cubit<InventoryState> {
         category: category,
         status: status,
         stockStatus: stockStatus,
+        inStockOnly: inStockOnly,
         warehouseId: warehouseId,
         branchId: branchId,
         page: page,
@@ -154,6 +156,7 @@ class InventoryCubit extends Cubit<InventoryState> {
         warehouseId: warehouseId,
         search: search,
         stockStatus: stockStatus,
+
       ),
       repository.warehouses(),
     ]);
@@ -366,7 +369,8 @@ class InventoryCubit extends Cubit<InventoryState> {
   });
   Future<bool> saveItem(Map<String, dynamic> payload, {int? id}) =>
       _save(() async {
-        await repository.saveItem(payload, id: id);
+        final item = await repository.saveItem(payload, id: id);
+        emit(state.copyWith(selectedItem: item));
       });
   Future<bool> saveUnitConversion(
     int itemId,

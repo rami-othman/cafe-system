@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/branding/app_brand.dart';
+import '../core/network/dio_api_client.dart';
+import '../core/services/service_locator.dart';
 import '../core/branding/brand_title_synchronizer.dart';
 import '../core/constants/app_sizes.dart';
 import '../core/theme/app_colors.dart';
@@ -122,6 +124,13 @@ class _AppShellState extends State<AppShell> {
         .session;
 
     final AuthUser? user = session?.user;
+    int? dataScope;
+    try {
+      context.watch<OperationalBranchCubit>();
+      if (serviceLocator.isRegistered<DioApiClient>()) dataScope = serviceLocator<DioApiClient>().scopeBranchId;
+    } catch (_) {
+      // Shell previews may not have an operational context.
+    }
     // Phase 2: driven by the account (`isFactoryUser`) or the route
     // (`isManufacturingRoute`), never by OperationalBranchCubit's state
     // alone — that cubit can still be empty/loading on the very first
@@ -227,7 +236,7 @@ class _AppShellState extends State<AppShell> {
                                 isCompact && widget.rightPanel != null,
                             onRefresh: widget.onRefresh,
                           ),
-                      Expanded(child: widget.child),
+                      Expanded(child: KeyedSubtree(key: ValueKey<int?>(dataScope), child: widget.child)),
                     ],
                   ),
                 ),

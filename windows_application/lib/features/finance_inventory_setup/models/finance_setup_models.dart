@@ -612,6 +612,8 @@ class Supplier {
     required this.supplierNumber,
     required this.name,
     required this.isActive,
+    this.isInternal = false,
+    this.internalBranchId,
     this.phone,
     this.email,
     this.address,
@@ -629,6 +631,8 @@ class Supplier {
   });
   final int id;
   final String supplierNumber;
+  final bool isInternal;
+  final int? internalBranchId;
   final String name;
   final bool isActive;
   final String? phone;
@@ -648,6 +652,8 @@ class Supplier {
   factory Supplier.fromJson(Map<String, dynamic> json) => Supplier(
     id: readInt(json['id']) ?? 0,
     supplierNumber: readString(json['supplierNumber']),
+    isInternal: readBool(json['isInternal']),
+    internalBranchId: readInt(json['internalBranchId']),
     name: readString(json['name']),
     isActive: readBool(json['isActive'], fallback: true),
     phone: readString(json['phone']).isEmpty ? null : readString(json['phone']),

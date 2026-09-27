@@ -20,7 +20,7 @@ class CustomerGroupRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->all()), ['name', 'isActive']) !== []) {
+            if (array_diff(array_keys($this->except('scopeBranchId')), ['name', 'isActive']) !== []) {
                 $validator->errors()->add('payload', 'Unknown group fields were submitted.');
             }
         });

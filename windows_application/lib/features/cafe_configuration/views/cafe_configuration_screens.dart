@@ -478,8 +478,8 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             )
                             ? state.draft.posInventoryWarehouseId
                             : null,
-                        decoration: const InputDecoration(
-                          labelText: 'مخزن نقطة البيع',
+                        decoration: InputDecoration(
+                          labelText: state.draft.branchType == 'factory' ? 'مخزن المعمل' : 'مخزن نقطة البيع',
                           helperText:
                               'يُستخدم تلقائياً لاستهلاك مبيعات هذا الفرع.',
                         ),

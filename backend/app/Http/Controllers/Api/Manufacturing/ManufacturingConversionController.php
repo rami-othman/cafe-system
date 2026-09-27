@@ -26,6 +26,7 @@ class ManufacturingConversionController extends Controller
     public function show(Request $request, string $conversion): JsonResponse
     {
         $tenantId = TenantContext::id($request);
+        \App\Support\ManufacturingRecordScope::find($request, $tenantId, 'manufacturing_conversions', $conversion);
         $data = $this->conversions->get($tenantId, is_numeric($conversion) ? (int) $conversion : $conversion);
         if (! $data) {
             throw ManufacturingDomainException::validationFailed('id', 'Conversion not found.');

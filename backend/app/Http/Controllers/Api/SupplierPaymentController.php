@@ -21,7 +21,7 @@ class SupplierPaymentController extends Controller
         $tenant = TenantContext::id($request);
         $actor = FinancialActor::id($request, $tenant);
         $q = $this->rows($tenant);
-        if (DB::table('users')->where('tenant_id', $tenant)->where('id', $actor)->value('role') !== 'owner') $q->where(fn ($scope) => $scope->whereIn('p.branch_id', FinancialActor::operationalBranchIds($actor, $tenant))->orWhereNull('p.branch_id'));
+        if (DB::table('users')->where('tenant_id', $tenant)->where('id', $actor)->value('role') !== 'owner') \App\Support\BranchScope::applyFinancial($q, 'p.branch_id', FinancialActor::user($actor, $tenant));
         foreach (['supplierId' => 'p.supplier_id', 'branchId' => 'p.branch_id', 'status' => 'p.status'] as $input => $column) {
             if ($request->filled($input)) {
                 $q->where($column, $request->input($input));

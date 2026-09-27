@@ -52,6 +52,7 @@ class BranchResource extends JsonResource
                 ->where('a.tenant_id', $this->tenant_id)->where('a.is_active', true)->whereNull('a.deleted_at')
                 ->orderBy('l.name')->get(['l.id', 'l.name'])->map(fn ($l) => ['id' => (int) $l->id, 'name' => $l->name]),
             'posInventoryWarehouseId' => $this->pos_inventory_warehouse_id,
+            'defaultWarehouseId' => $this->default_warehouse_id ?? $this->pos_inventory_warehouse_id,
             'posInventoryWarehouse' => $this->whenLoaded('posInventoryWarehouse', fn () => $this->posInventoryWarehouse ? [
                 'id' => $this->posInventoryWarehouse->id,
                 'name' => $this->posInventoryWarehouse->name,
@@ -85,6 +86,7 @@ class BranchResource extends JsonResource
      */
     private function effectivePosWarehouse(): array
     {
+        if ($this->branch_type === 'factory') return ['warehouse' => null, 'source' => 'factory'];
         if (! $this->relationLoaded('warehouses')) {
             return ['warehouse' => null, 'source' => 'not_loaded'];
         }

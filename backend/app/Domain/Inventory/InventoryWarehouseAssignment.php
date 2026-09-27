@@ -10,6 +10,10 @@ final class InventoryWarehouseAssignment
 {
     public function assertAssigned(int $tenantId, int $itemId, int $warehouseId, string $field = 'warehouseId'): void
     {
+        $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $itemId)->first();
+        $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $warehouseId)->first();
+        if (! $item || ! $warehouse) throw ValidationException::withMessages([$field => 'المادة أو المخزن غير موجود.']);
+        \App\Support\InventoryItemScope::assertForBranch($tenantId, $item, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
         if (! Schema::hasTable('inventory_item_warehouses')) {
             return;
         }

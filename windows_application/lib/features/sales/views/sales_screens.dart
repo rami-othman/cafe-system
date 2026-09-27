@@ -1262,7 +1262,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           customerId,
                           customers,
                           (c) => c.id,
-                          (c) => '${c.name} (${c.customerNumber})',
+                          (c) => '${c.name} (${c.customerNumber})${c.isInternal ? ' • داخلي • فرع ${c.internalBranchId}' : ''}',
                           (v) => setState(() => customerId = v),
                         ),
                         TextButton.icon(

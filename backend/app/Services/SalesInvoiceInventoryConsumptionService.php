@@ -156,6 +156,7 @@ if ($components->isEmpty()) {
     /** No "main"/"primary" warehouse concept — same resolution POS uses (App\Services\PosInventoryWarehouseResolver). */
     private function warehouse(int $tenantId, int $branchId): ?object
     {
+        if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) return app(FactoryInventoryWarehouseResolver::class)->forBranch($tenantId, $branchId);
         try {
             return $this->warehouseResolver->forBranch($tenantId, $branchId);
         } catch (OrderLifecycleException) {

@@ -29,6 +29,7 @@ final class FinancialActor
             throw new HttpException(401, 'Authenticated actor is required.');
         }
         if (! $branchId) {
+            abort_if(self::user($actorId, $tenantId)->effectiveRoleCode() === 'factory_manager', 403, 'هذه العملية تتطلب فرع المعمل');
             return;
         }
 
@@ -41,7 +42,7 @@ final class FinancialActor
         return app(BranchAccessService::class)->accessibleBranchIds(self::user($actorId, $tenantId));
     }
 
-    private static function user(int $actorId, int $tenantId): User
+    public static function user(int $actorId, int $tenantId): User
     {
         $actor = User::query()->with('tenantRole')->where('tenant_id', $tenantId)->where('id', $actorId)->where('is_active', true)->first();
         if (! $actor) {

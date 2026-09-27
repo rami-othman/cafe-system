@@ -9,10 +9,17 @@ final class FactorySalesPolicy
 {
     public static function assertLines(int $tenantId, int $branchId, iterable $lines): void
     {
-        if (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('branch_type') !== 'factory') {
-            return;
+        $factory = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('branch_type') === 'factory';
+        foreach ($lines as $line) {
+            $id = is_array($line) ? ($line['inventoryItemId'] ?? $line['inventory_item_id'] ?? null) : ($line->inventory_item_id ?? null);
+            if ($id) {
+                $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $id)->whereNull('deleted_at')->first();
+                if (! $item) throw ValidationException::withMessages(['lines' => 'المادة غير موجودة.']);
+                InventoryItemScope::assertForBranch($tenantId, $item, $branchId);
+            }
         }
-        $warehouse = app(\App\Services\PosInventoryWarehouseResolver::class)->forBranch($tenantId, $branchId);
+        if (! $factory) return;
+        $warehouse = app(\App\Services\FactoryInventoryWarehouseResolver::class)->forBranch($tenantId, $branchId);
         foreach ($lines as $line) {
             $itemId = is_array($line) ? ($line['inventoryItemId'] ?? $line['inventory_item_id'] ?? null) : ($line->inventory_item_id ?? null);
             if (! $itemId) {

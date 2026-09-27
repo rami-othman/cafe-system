@@ -31,6 +31,7 @@ class StockMovementController extends Controller
         $warehouseId = isset($filters['warehouseId']) ? (int) $filters['warehouseId'] : null;
         $query = DB::table('stock_movements as movements')->join('inventory_items as items', 'items.id', '=', 'movements.inventory_item_id')->join('warehouses as warehouses', 'warehouses.id', '=', 'movements.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->leftJoin('users', 'users.id', '=', 'movements.created_by')->where('movements.tenant_id', $tenant)->where('warehouses.code', 'not like', 'LEGACY-%')->select('movements.*', 'items.name_ar as item_name_ar', 'items.name_en as item_name_en', 'items.sku', 'items.unit', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name', 'users.name as user_name');
         InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
+        \App\Support\DataScope::apply($query, 'items.owner_branch_id', \App\Support\DataScope::resolve($request));
         if ($branchId) {
             InventoryAccess::assertBranchAccess($request, $branchId);
         }
@@ -83,6 +84,9 @@ class StockMovementController extends Controller
     {
         $tenant = TenantContext::id($request);
         $row = $this->find($tenant, $movement);
+        $item = DB::table('inventory_items')->where('tenant_id', $tenant)->where('id', $row->inventory_item_id)->first();
+        abort_unless($item, 404);
+        \App\Support\DataScope::assertOwned($item, \App\Support\DataScope::resolve($request));
         InventoryAccess::assertBranchAccess($request, DB::table('warehouses')->where('id', $row->warehouse_id)->value('branch_id'));
 
         return response()->json(['data' => $this->serialize($row)]);

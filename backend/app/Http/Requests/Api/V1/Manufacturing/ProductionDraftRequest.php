@@ -17,7 +17,7 @@ class ProductionDraftRequest extends FormRequest
             'recipeId' => ['required', 'integer'],
             'qty' => ['required', 'regex:/^\d+(\.\d{1,3})?$/'],
             'warehouseId' => ['required', 'integer'],
-            'branchId' => ['nullable', 'integer'],
+            'branchId' => ['required', 'integer'],
             'date' => ['nullable', 'date'],
             'idempotencyKey' => ['nullable', 'string', 'min:1', 'max:120'],
         ];

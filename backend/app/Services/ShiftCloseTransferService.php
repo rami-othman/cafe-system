@@ -27,7 +27,7 @@ final class ShiftCloseTransferService
         return 'shift-close-transfer:'.$shiftId;
     }
 
-    public function create(Request $request, int $tenantId, object $shift, int $countedCents, string $actorType): ?int
+    public function create(Request $request, int $tenantId, object $shift, int $countedCents, string $actorType, ?string $transferDate = null): ?int
     {
         $floatCents = Money::cents($shift->closing_float_amount ?? '0');
         if ($floatCents < 0 || $countedCents < 0 || $countedCents < $floatCents) {
@@ -67,7 +67,7 @@ final class ShiftCloseTransferService
             'fromFinancialLocationId' => (int) $source->id,
             'toFinancialLocationId' => (int) $destination->id,
             'amount' => Money::decimal($amount),
-            'transferDate' => now()->toDateString(),
+            'transferDate' => $transferDate ?? now()->toDateString(),
             'description' => ucfirst($actorType).' shift close '.$shift->id,
             'idempotencyKey' => self::idempotencyKey((int) $shift->id),
         ], (int) $shift->user_id, true);

@@ -45,38 +45,28 @@ class ManufacturingRecipeCubit extends Cubit<ManufacturingRecipeState> {
     }
   }
 
-  /// Loads the raw_material/semi_finished_good/packaging items usable as
-  /// recipe ingredients, via `InventoryRepository` - never a parallel
-  /// Manufacturing ingredient-search endpoint.
-  Future<void> loadIngredientCandidates() async {
+  int ingredientPage = 1;
+  int ingredientLastPage = 1;
+  String ingredientSearch = '';
+  int _ingredientRequest = 0;
+
+  Future<void> loadIngredientCandidates({String? search, bool nextPage = false}) async {
+    final request = ++_ingredientRequest;
+    ingredientSearch = search ?? ingredientSearch;
+    final page = nextPage ? ingredientPage + 1 : 1;
     try {
-      final List<InventoryItem> rawMaterials = await inventoryRepository.items(
-        type: 'raw_material',
-        activeOnly: true,
-      );
-      final List<InventoryItem> semiFinished = await inventoryRepository.items(
-        type: 'semi_finished_good',
-        activeOnly: true,
-      );
-      final List<InventoryItem> packaging = await inventoryRepository.items(
-        type: 'packaging',
-        activeOnly: true,
-      );
-      emit(
-        state.copyWith(
-          ingredientCandidates: <InventoryItem>[
-            ...rawMaterials,
-            ...semiFinished,
-            ...packaging,
-          ],
-        ),
-      );
-    } catch (_) {
-      // Non-fatal: the ingredient picker degrades to an empty list rather
-      // than blocking the whole recipe form.
+      final response = await repository.ingredients(search: ingredientSearch, page: page);
+      if (request != _ingredientRequest || isClosed) return;
+      ingredientPage = page;
+      ingredientLastPage = (response['meta'] as Map)['lastPage'] as int;
+      final candidates = (response['data'] as List).map((dynamic row) => InventoryItem.fromJson(Map<String, dynamic>.from(row as Map)));
+      final byId = <int, InventoryItem>{for (final item in state.ingredientCandidates) item.id: item};
+      for (final item in candidates) { byId[item.id] = item; }
+      emit(state.copyWith(ingredientCandidates: byId.values.toList(), clearError: true));
+    } catch (error) {
+      if (request == _ingredientRequest && !isClosed) emit(state.copyWith(error: _messageFor(error)));
     }
   }
-
   /// finished_good / semi_finished_good items eligible as a recipe's output
   /// product - loaded the same way as ingredients, via `InventoryRepository`.
   Future<void> loadOutputItemCandidates() async {
@@ -94,8 +84,8 @@ class ManufacturingRecipeCubit extends Cubit<ManufacturingRecipeState> {
           outputItemCandidates: <InventoryItem>[...finished, ...semiFinished],
         ),
       );
-    } catch (_) {
-      // Non-fatal, same rationale as loadIngredientCandidates.
+    } catch (error) {
+      emit(state.copyWith(error: _messageFor(error)));
     }
   }
 

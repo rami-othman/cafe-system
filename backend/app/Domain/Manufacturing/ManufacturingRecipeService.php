@@ -38,6 +38,7 @@ final class ManufacturingRecipeService
             ->select('r.id', 'r.status', 'r.product_item_id', 'i.name_en', 'i.name_ar', 'i.item_type', 'v.id as version_id', 'v.version_number', 'v.output_quantity', 'v.output_unit', 'r.updated_at');
 
         if (! empty($filters['search'])) {
+            // Search remains inside the selected branch scope.
             $search = '%'.strtolower((string) $filters['search']).'%';
             $query->where(fn ($q) => $q->whereRaw('LOWER(i.name_en) LIKE ?', [$search])->orWhereRaw('LOWER(i.name_ar) LIKE ?', [$search]));
         }
@@ -48,6 +49,8 @@ final class ManufacturingRecipeService
             $query->where('r.status', $filters['status']);
         }
 
+        $query->whereIn('r.branch_id', $filters['accessibleBranchIds'] ?? []);
+        if (! empty($filters['branchId'])) $query->where('r.branch_id', $filters['branchId']);
         return $query->orderByDesc('r.updated_at')->get()->map(fn ($row) => $this->summarize($tenantId, $row))->all();
     }
 
@@ -63,6 +66,8 @@ final class ManufacturingRecipeService
 
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
+        \App\Support\FactoryWarehouseScope::assertFactoryBranch($tenantId, $data['branchId'] ?? null);
+        \App\Support\FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $data['branchId']);
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId) {
             $item = $this->loadOutputItem($tenantId, (int) $data['productItemId']);
             if (DB::table('manufacturing_recipes')->where('tenant_id', $tenantId)->where('product_item_id', $item->id)->whereNull('deleted_at')->exists()) {
@@ -70,10 +75,11 @@ final class ManufacturingRecipeService
             }
 
             $lines = $this->validateLines($tenantId, $item, $data['lines']);
+            \App\Support\InventoryItemScope::assertForBranch($tenantId, $item, (int) $data['branchId']);
             $this->assertNoCircularDependency($tenantId, (int) $item->id, array_column($lines, 'inventory_item_id'));
 
             $recipeId = DB::table('manufacturing_recipes')->insertGetId([
-                'tenant_id' => $tenantId, 'product_item_id' => $item->id, 'status' => 'active',
+                'tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'product_item_id' => $item->id, 'status' => 'active',
                 'created_by' => $actorId, 'updated_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
             ]);
             $versionId = $this->insertVersion($tenantId, $recipeId, 1, $data, $lines, $actorId);
@@ -93,6 +99,8 @@ final class ManufacturingRecipeService
                 throw ManufacturingDomainException::recipeNotFound();
             }
             $item = $this->loadOutputItem($tenantId, (int) $recipe->product_item_id);
+            \App\Support\FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $recipe->branch_id);
+            abort_unless((int) $data['branchId'] === (int) $recipe->branch_id, 422, 'فرع الوصفة ثابت.');
 
             $lines = $this->validateLines($tenantId, $item, $data['lines']);
             $this->assertNoCircularDependency($tenantId, (int) $item->id, array_column($lines, 'inventory_item_id'));
@@ -136,7 +144,7 @@ final class ManufacturingRecipeService
             $lines = DB::table('manufacturing_recipe_version_lines')->where('tenant_id', $tenantId)->where('manufacturing_recipe_version_id', $version->id)->orderBy('sort_order')->get();
 
             $data = [
-                'outputQuantity' => $version->output_quantity, 'outputUnit' => $version->output_unit,
+                'branchId' => $source->branch_id, 'outputQuantity' => $version->output_quantity, 'outputUnit' => $version->output_unit,
                 'shelfLifeValue' => $version->shelf_life_value, 'shelfLifeUnit' => $version->shelf_life_unit,
                 'estimatedExtraCosts' => $version->estimated_extra_costs ? json_decode((string) $version->estimated_extra_costs, true) : null,
                 'lines' => $lines->map(fn ($l) => ['inventoryItemId' => $l->inventory_item_id, 'quantity' => (string) $l->quantity, 'unit' => $l->unit])->all(),
@@ -157,6 +165,7 @@ final class ManufacturingRecipeService
         if (! in_array($item->item_type, ['finished_good', 'semi_finished_good'], true)) {
             throw ManufacturingDomainException::validationFailed('productItemId', 'Only finished_good or semi_finished_good items can have a manufacturing recipe.');
         }
+        if ($item->owner_branch_id === null) throw ManufacturingDomainException::validationFailed('productItemId', 'الناتج يجب أن يكون مادة مملوكة للمعمل.');
 
         return $item;
     }
@@ -187,6 +196,9 @@ final class ManufacturingRecipeService
             $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $itemId)->whereNull('deleted_at')->first();
             if (! $item) {
                 throw ManufacturingDomainException::validationFailed('inventoryItemId', 'Ingredient not found.');
+            }
+            if ($outputItem->owner_branch_id === null || $item->owner_branch_id === null || (int) $outputItem->owner_branch_id !== (int) $item->owner_branch_id) {
+                throw ManufacturingDomainException::validationFailed('inventoryItemId', 'المكونات والناتج يجب أن تكون مواد المعمل نفسه.');
             }
             if (! RecipeMaterialEligibility::allows($item)) {
                 throw ManufacturingDomainException::validationFailed('inventoryItemId', "\"{$item->name_en}\" cannot be used as a recipe ingredient.");

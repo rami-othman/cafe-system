@@ -47,6 +47,7 @@ class ShiftClosingState extends Equatable {
     this.barSort = BarCountSort.name,
     this.barCountSubmitted = false,
     this.closingNotes = '',
+    this.closingDate,
     this.acknowledged = false,
     this.result,
     this.savedAt,
@@ -77,6 +78,7 @@ class ShiftClosingState extends Equatable {
   final bool barCountSubmitted;
 
   final String closingNotes;
+  final DateTime? closingDate;
   final bool acknowledged;
   final ShiftClosingResult? result;
 
@@ -161,7 +163,9 @@ class ShiftClosingState extends Equatable {
     final List<BarCountLine> sorted = lines.toList();
     switch (barSort) {
       case BarCountSort.name:
-        sorted.sort((BarCountLine a, BarCountLine b) => a.name.compareTo(b.name));
+        sorted.sort(
+          (BarCountLine a, BarCountLine b) => a.name.compareTo(b.name),
+        );
       case BarCountSort.category:
         sorted.sort((BarCountLine a, BarCountLine b) {
           final int byCategory = a.category.compareTo(b.category);
@@ -219,6 +223,7 @@ class ShiftClosingState extends Equatable {
     BarCountSort? barSort,
     bool? barCountSubmitted,
     String? closingNotes,
+    DateTime? closingDate,
     bool? acknowledged,
     ShiftClosingResult? result,
     DateTime? savedAt,
@@ -248,6 +253,7 @@ class ShiftClosingState extends Equatable {
     barSort: barSort ?? this.barSort,
     barCountSubmitted: barCountSubmitted ?? this.barCountSubmitted,
     closingNotes: closingNotes ?? this.closingNotes,
+    closingDate: closingDate ?? this.closingDate,
     acknowledged: acknowledged ?? this.acknowledged,
     result: result ?? this.result,
     savedAt: savedAt ?? this.savedAt,
@@ -273,6 +279,7 @@ class ShiftClosingState extends Equatable {
     barSort,
     barCountSubmitted,
     closingNotes,
+    closingDate,
     acknowledged,
     result,
     savedAt,

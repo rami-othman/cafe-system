@@ -1,3 +1,4 @@
+import '../../../app/purchase_route_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -61,7 +62,7 @@ class _GoodsReceiptDetailScreenState extends State<GoodsReceiptDetailScreen> {
       subtitle: 'فاتورة ${r.invoiceNumber}',
       actions: <Widget>[
         TextButton.icon(
-          onPressed: () => context.go('/finance/purchases/${r.supplierInvoiceId}'),
+          onPressed: () => context.go('${PurchaseRouteScope.of(context).listPath}/${r.supplierInvoiceId}'),
           icon: const Icon(Icons.arrow_back, size: 18),
           label: const Text('فاتورة الشراء'),
         ),

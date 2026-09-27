@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/network/dio_api_client.dart';
+import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../auth/controllers/auth_session_cubit.dart';
@@ -56,8 +58,11 @@ class _ManufacturingModuleShellState extends State<ManufacturingModuleShell> {
         .watch<OperationalBranchCubit>()
         .state;
     final bool hasFactoryBranch = branchState.branches.any(
-      (branch) => branch.isFactory,
+      (branch) => branch.isFactory && branch.id == branchState.selectedBranchId,
     );
+    if (serviceLocator.isRegistered<DioApiClient>()) {
+      serviceLocator<DioApiClient>().scopeBranchId = hasFactoryBranch ? branchState.selectedBranchId : null;
+    }
 
     if (!hasFactoryBranch) {
       if (branchState.isLoading) {

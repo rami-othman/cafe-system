@@ -475,6 +475,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('items/{item}/movements', [InventoryItemController::class, 'movements'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/recipe-usage', [InventoryItemController::class, 'recipeUsage'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/purchase-history', [InventoryItemController::class, 'purchaseHistory'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}/production-batches', [InventoryItemController::class, 'productionBatches'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'index'])->middleware('inventory.permission:inventory.view');
             Route::post('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'store'])->middleware('inventory.permission:inventory.items.manage');
             Route::patch('items/{item}/unit-conversions/{conversion}', [InventoryItemUnitConversionController::class, 'update'])->middleware('inventory.permission:inventory.items.manage');
@@ -528,6 +529,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('reports/general-ledger', [FinancialReportController::class, 'generalLedger'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/supplier-aging', [FinancialReportController::class, 'supplierAging'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/supplier-statement', [FinancialReportController::class, 'supplierStatement'])->middleware('finance.permission:finance.reports.view');
+            Route::get('reports/internal-reconciliation', [\App\Http\Controllers\Api\InternalReconciliationController::class, 'index'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/customer-aging', [FinancialReportController::class, 'customerAging'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/customer-statement', [FinancialReportController::class, 'customerStatement'])->middleware('finance.permission:finance.reports.view');
             Route::get('reports/sales-profitability', [SalesReportController::class, 'salesProfitability'])->middleware('finance.permission:finance.reports.view');
@@ -679,6 +681,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('reports', [ManufacturingReportController::class, 'reports'])->middleware('manufacturing.permission:manufacturing.reports.view');
 
             Route::get('recipes', [ManufacturingRecipeController::class, 'index'])->middleware('manufacturing.permission:manufacturing.recipe.view');
+            Route::get('ingredients', [\App\Http\Controllers\Api\Manufacturing\ManufacturingIngredientController::class, 'index'])->middleware('manufacturing.permission:manufacturing.recipe.view');
             Route::post('recipes', [ManufacturingRecipeController::class, 'store'])->middleware('manufacturing.permission:manufacturing.recipe.create');
             Route::get('recipes/{recipe}', [ManufacturingRecipeController::class, 'show'])->middleware('manufacturing.permission:manufacturing.recipe.view');
             Route::put('recipes/{recipe}', [ManufacturingRecipeController::class, 'update'])->middleware('manufacturing.permission:manufacturing.recipe.edit');

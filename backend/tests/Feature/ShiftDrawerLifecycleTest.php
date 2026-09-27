@@ -639,6 +639,83 @@ final class ShiftDrawerLifecycleTest extends TestCase
         $this->assertSame([], array_values(array_filter($exceptions, fn ($e) => str_contains($e['description'] ?? '', 'Cash difference'))));
     }
 
+    public function test_discount_and_refund_are_deducted_once_in_snapshot_and_history(): void
+    {
+        $this->configureClose($this->branchA, $this->safe(), '0.00');
+        $shift = (int) $this->open($this->branchA, '0.00')->assertCreated()->json('data.id');
+        $order = $this->order($shift, 'paid', 'paid', '90.00', true);
+        DB::table('orders')->where('id', $order)->update(['subtotal' => '100.00', 'discount_total' => '10.00']);
+        $snapshot = $this->getJson('/api/v1/shifts/current/snapshot', $this->headers)->assertOk();
+        $snapshot->assertJsonPath('data.sales.grossSales', '100.00')->assertJsonPath('data.sales.discounts', '10.00')
+            ->assertJsonPath('data.drawer.cashSales', '90.00')->assertJsonPath('data.drawer.expectedCash', '90.00');
+        $payment = (int) DB::table('payments')->where('order_id', $order)->value('id');
+        DB::table('payment_refunds')->insert(['tenant_id' => $this->tenant, 'branch_id' => $this->branchA, 'order_id' => $order, 'payment_id' => $payment, 'shift_id' => $shift, 'refund_number' => 'SHIFT-REFUND', 'type' => 'full', 'amount' => '90.00', 'status' => 'completed', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('orders')->where('id', $order)->update(['status' => 'refunded', 'payment_status' => 'refunded']);
+        $this->getJson('/api/v1/shifts/current/snapshot', $this->headers)->assertOk()->assertJsonPath('data.sales.grossSales', '100.00')
+            ->assertJsonPath('data.sales.refunds', '90.00')->assertJsonPath('data.drawer.expectedCash', '0.00');
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 0], $this->headers)->assertOk();
+        $this->getJson('/api/v1/shifts/history', $this->headers)->assertOk()->assertJsonPath('data.0.netSales', '0.00');
+    }
+
+    public function test_reversed_voucher_and_replacement_change_drawer_once_and_close_successfully(): void
+    {
+        $this->configureClose($this->branchA, $this->safe(), '0.00');
+        $this->fund($this->branchA, '200.00');
+        $cashier = $this->cashier($this->branchA);
+        $headers = $this->bearer($this->tenant, $cashier);
+        $shift = (int) $this->open($this->branchA, '200.00', $headers)->assertCreated()->json('data.id');
+        $request = \Illuminate\Http\Request::create('/');
+        $request->attributes->set('auth_user', $cashier);
+        $service = app(\App\Services\FinanceDocumentService::class);
+        $account = (int) DB::table('financial_accounts')->where('tenant_id', $this->tenant)->where('code', '6100')->value('id');
+        $payload = ['documentType' => 'payment', 'documentDate' => now()->toDateString(), 'branchId' => $this->branchA,
+            'amount' => '40.00', 'description' => 'Correctable voucher',
+            'lines' => [['accountId' => $account, 'amount' => '40.00']]];
+        $old = $service->createDraft($request, $this->tenant, $payload, $cashier->id);
+        $this->getJson('/api/v1/shifts/current/snapshot', $headers)->assertOk()->assertJsonPath('data.drawer.expectedCash', '200.00');
+        $service->post($request, $this->tenant, $old->id, $cashier->id);
+        $service->reverse($request, $this->tenant, $old->id, 'Incorrect original', $cashier->id);
+        $replacement = $service->createDraft($request, $this->tenant, $payload, $cashier->id);
+        $service->post($request, $this->tenant, $replacement->id, $cashier->id);
+        try {
+            $service->post($request, $this->tenant, $replacement->id, $cashier->id);
+            $this->fail('Posting an already posted voucher must be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('document', $exception->errors());
+        }
+        $this->getJson('/api/v1/shifts/current/snapshot', $headers)->assertOk()->assertJsonPath('data.drawer.expectedCash', '160.00');
+        $this->assertSame('160.00', $this->ledger($this->branchA));
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 160], $headers)->assertOk();
+        $this->assertSame('0.00', $this->ledger($this->branchA));
+        $this->assertSame(1, DB::table('cash_transfers')->where('shift_id', $shift)->count());
+    }
+
+    public function test_historical_close_date_is_used_by_shift_and_close_transfer(): void
+    {
+        $this->travelTo(\Carbon\CarbonImmutable::parse('2026-09-26 07:00:00', 'UTC'));
+        DB::table('branches')->where('id', $this->branchA)->update(['timezone' => 'Asia/Damascus']);
+        $this->configureClose($this->branchA, $this->safe(), '0.00');
+        $this->fund($this->branchA, '150.00');
+        $shift = (int) $this->open($this->branchA, '150.00')->assertCreated()->json('data.id');
+        $this->travelTo(\Carbon\CarbonImmutable::parse('2026-09-27 08:00:00', 'UTC'));
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-26'], $this->headers)->assertOk();
+        $this->assertSame('2026-09-26 20:59:59', DB::table('shifts')->where('id', $shift)->value('closed_at'));
+        $this->assertDatabaseHas('cash_transfers', ['shift_id' => $shift, 'transfer_date' => '2026-09-26']);
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-26'], $this->headers)->assertOk();
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-27'], $this->headers)->assertUnprocessable()->assertJsonValidationErrors('closingDate');
+        $this->assertSame(1, DB::table('cash_transfers')->where('shift_id', $shift)->count());
+    }
+
+    public function test_close_date_cannot_precede_activity_or_be_in_the_future(): void
+    {
+        $this->configureClose($this->branchA, $this->safe(), '0.00');
+        $shift = (int) $this->open($this->branchA, '0.00')->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 0, 'closingDate' => now()->subDay()->toDateString()], $this->headers)->assertUnprocessable()->assertJsonValidationErrors('closingDate');
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 0, 'closingDate' => now()->addDays(2)->toDateString()], $this->headers)->assertUnprocessable()->assertJsonValidationErrors('closingDate');
+        $this->assertDatabaseHas('shifts', ['id' => $shift, 'status' => 'open']);
+        $this->assertSame(0, DB::table('cash_transfers')->where('shift_id', $shift)->count());
+    }
+
     // ---- helpers ---------------------------------------------------------------
 
     private function open(int $branch, string $cash, ?array $headers = null)

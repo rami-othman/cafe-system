@@ -157,10 +157,12 @@ final class SalesInvoiceController extends Controller
         $tenant = TenantContext::id($request);
         $query = DB::table('inventory_items')->where('tenant_id', $tenant)->where('is_active', true)->whereNull('deleted_at')
             ->whereNotIn('item_type', ['service', 'non_stock_item']);
+        \App\Support\DataScope::apply($query, 'inventory_items.owner_branch_id', \App\Support\DataScope::resolve($request));
         if ($request->filled('branchId')) {
             $branchId = (int) $request->validate(['branchId' => ['required', 'integer']])['branchId'];
             FinancialActor::assertBranchAccess(FinancialActor::id($request, $tenant), $tenant, $branchId);
-            $warehouse = app(\App\Services\PosInventoryWarehouseResolver::class)->forBranch($tenant, $branchId);
+            $isFactory = DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->value('branch_type') === 'factory';
+            $warehouse = $isFactory ? app(\App\Services\FactoryInventoryWarehouseResolver::class)->forBranch($tenant, $branchId) : app(\App\Services\PosInventoryWarehouseResolver::class)->forBranch($tenant, $branchId);
             $query->whereExists(fn ($q) => $q->selectRaw('1')->from('inventory_item_warehouses as a')->whereColumn('a.inventory_item_id', 'inventory_items.id')->where('a.tenant_id', $tenant)->where('a.warehouse_id', $warehouse->id));
         }
         $items = $query->orderBy('name')->get(['id', 'name', 'name_ar', 'sku', 'unit', 'item_type']);

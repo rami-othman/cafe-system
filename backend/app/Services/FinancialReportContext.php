@@ -11,6 +11,7 @@ final class FinancialReportContext
     {
         return $this->finance->resolve($tenantId, $actorId, [
             'branchId' => $filters['branchId'] ?? null,
+            'includeInternal' => $filters['includeInternal'] ?? false,
             'dateFrom' => $filters['dateFrom'] ?? ($filters['asOfDate'] ?? now()->toDateString()),
             'dateTo' => $filters['dateTo'] ?? ($filters['asOfDate'] ?? now()->toDateString()),
             'comparison' => $filters['comparison'] ?? 'previous_period',

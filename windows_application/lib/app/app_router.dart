@@ -1,3 +1,5 @@
+import 'item_route_scope.dart';
+import 'purchase_route_scope.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -1400,6 +1402,61 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: '${AppRoutes.manufacturingPurchases}/new',
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => MultiBlocProvider(
+            providers: [BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>()), BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>())],
+            child: const PurchaseInvoiceFormScreen(routeScope: PurchaseRouteScope.manufacturing),
+          ),
+        ),
+        GoRoute(
+          path: '${AppRoutes.manufacturingPurchases}/:purchaseId/edit',
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return MultiBlocProvider(
+              providers: [BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>()), BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>())],
+              child: PurchaseInvoiceFormScreen(editId: id, routeScope: PurchaseRouteScope.manufacturing),
+            );
+          },
+        ),
+        GoRoute(
+          path: '${AppRoutes.manufacturingPurchases}/:purchaseId/receive',
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>(), child: GoodsReceiptFormScreen(purchaseId: id));
+          },
+        ),
+        GoRoute(
+          path: '${AppRoutes.manufacturingPurchaseReceipts}/:receiptId',
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['receiptId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>(), child: GoodsReceiptDetailScreen(receiptId: id));
+          },
+        ),
+        GoRoute(
+          path: '${AppRoutes.manufacturingPurchases}/:purchaseId',
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) {
+            final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
+            if (id == null) return const _InvalidCatalogRouteScreen();
+            return BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>(), child: PurchaseInvoiceDetailScreen(purchaseId: id));
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manufacturingPurchases,
+          redirect: _manufacturingAccessRedirect,
+          builder: (context, state) => MultiBlocProvider(
+            providers: [BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>()), BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>())],
+            child: const PurchasingCenterScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutes.manufacturingMaterials,
           redirect: _manufacturingAccessRedirect,
           builder: (context, state) => BlocProvider<InventoryCubit>(
@@ -1412,7 +1469,7 @@ final GoRouter appRouter = GoRouter(
           redirect: _manufacturingAccessRedirect,
           builder: (context, state) => BlocProvider<InventoryCubit>(
             create: (_) => serviceLocator<InventoryCubit>(),
-            child: const ItemFormScreen(),
+            child: const ItemFormScreen(scope: ItemRouteScope.manufacturing),
           ),
         ),
         GoRoute(
@@ -1425,7 +1482,7 @@ final GoRouter appRouter = GoRouter(
             if (itemId == null) return const _InvalidCatalogRouteScreen();
             return BlocProvider<InventoryCubit>(
               create: (_) => serviceLocator<InventoryCubit>(),
-              child: ItemFormScreen(itemId: itemId),
+              child: ItemFormScreen(itemId: itemId, scope: ItemRouteScope.manufacturing),
             );
           },
         ),
@@ -1439,7 +1496,7 @@ final GoRouter appRouter = GoRouter(
             if (itemId == null) return const _InvalidCatalogRouteScreen();
             return BlocProvider<InventoryCubit>(
               create: (_) => serviceLocator<InventoryCubit>(),
-              child: InventoryItemDetailsScreen(itemId: itemId),
+              child: InventoryItemDetailsScreen(itemId: itemId, scope: ItemRouteScope.manufacturing),
             );
           },
         ),
@@ -2658,6 +2715,8 @@ abstract final class AppRoutes {
   static const String inventory = '/inventory';
 
   static const String manufacturing = '/manufacturing';
+  static const String manufacturingPurchases = '/manufacturing/purchases';
+  static const String manufacturingPurchaseReceipts = '/manufacturing/purchase-receipts';
   static const String manufacturingMaterials = '/manufacturing/materials';
   static const String manufacturingMaterialCreate =
       '/manufacturing/materials/new';

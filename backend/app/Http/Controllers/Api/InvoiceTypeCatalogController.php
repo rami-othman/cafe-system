@@ -14,19 +14,20 @@ class InvoiceTypeCatalogController extends Controller
     public function groups(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        return response()->json(['data' => DB::table('invoice_groups')->where('tenant_id', $tenant)->orderBy('name')->get()->map(fn (object $row) => $this->group($row))->values()]);
+        return response()->json(['data' => DB::table('invoice_groups')->where('tenant_id', $tenant)->when(\App\Support\DataScope::resolve($request) !== null, fn ($q) => $q->where('owner_branch_id', \App\Support\DataScope::resolve($request)), fn ($q) => $q->whereNull('owner_branch_id'))->orderBy('name')->get()->map(fn (object $row) => $this->group($row))->values()]);
     }
 
     public function storeGroup(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
         $data = $this->groupData($request, $tenant);
-        $id = (int) DB::table('invoice_groups')->insertGetId($data + ['tenant_id' => $tenant, 'created_at' => now(), 'updated_at' => now()]);
+        $id = (int) DB::table('invoice_groups')->insertGetId(\App\Support\DataScope::stamp($data, \App\Support\DataScope::resolve($request)) + ['tenant_id' => $tenant, 'created_at' => now(), 'updated_at' => now()]);
         return response()->json(['data' => $this->group(DB::table('invoice_groups')->find($id))], 201);
     }
 
     public function updateGroup(Request $request, int $group): JsonResponse
     {
+        \App\Support\DataScope::find($request, TenantContext::id($request), 'invoice_groups', $group);
         $tenant = TenantContext::id($request);
         abort_unless(DB::table('invoice_groups')->where('tenant_id', $tenant)->where('id', $group)->exists(), 404);
         DB::table('invoice_groups')->where('tenant_id', $tenant)->where('id', $group)->update($this->groupData($request, $tenant, $group) + ['updated_at' => now()]);
@@ -38,6 +39,7 @@ class InvoiceTypeCatalogController extends Controller
         $tenant = TenantContext::id($request);
         $query = DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
             ->where('t.tenant_id', $tenant)->where('g.tenant_id', $tenant);
+        \App\Support\DataScope::apply($query, 't.owner_branch_id', \App\Support\DataScope::resolve($request));
         if ($request->filled('groupId')) $query->where('t.invoice_group_id', (int) $request->input('groupId'));
         if ($request->boolean('activeOnly')) $query->where('t.is_active', true)->where('g.is_active', true);
         return response()->json(['data' => $query->orderBy('g.name')->orderBy('t.name')->select('t.*', 'g.code as group_code', 'g.name as group_name', 'g.is_active as group_is_active')->get()->map(fn (object $row) => $this->type($row))->values()]);
@@ -47,12 +49,13 @@ class InvoiceTypeCatalogController extends Controller
     {
         $tenant = TenantContext::id($request);
         $data = $this->typeData($request, $tenant);
-        $id = (int) DB::table('invoice_types')->insertGetId($data + ['tenant_id' => $tenant, 'created_at' => now(), 'updated_at' => now()]);
+        $id = (int) DB::table('invoice_types')->insertGetId(\App\Support\DataScope::stamp($data, \App\Support\DataScope::resolve($request)) + ['tenant_id' => $tenant, 'created_at' => now(), 'updated_at' => now()]);
         return response()->json(['data' => $this->typeRow($tenant, $id)], 201);
     }
 
     public function updateType(Request $request, int $type): JsonResponse
     {
+        \App\Support\DataScope::find($request, TenantContext::id($request), 'invoice_types', $type);
         $tenant = TenantContext::id($request);
         abort_unless(DB::table('invoice_types')->where('tenant_id', $tenant)->where('id', $type)->exists(), 404);
         DB::table('invoice_types')->where('tenant_id', $tenant)->where('id', $type)->update($this->typeData($request, $tenant, $type) + ['updated_at' => now()]);
@@ -79,6 +82,7 @@ class InvoiceTypeCatalogController extends Controller
             'isPostable' => ['required', 'boolean'], 'isActive' => ['sometimes', 'boolean'], 'isPurchase' => ['sometimes', 'boolean'],
         ]);
         abort_unless(DB::table('invoice_groups')->where('tenant_id', $tenant)->where('id', $data['groupId'])->exists(), 422, 'Select a group belonging to this tenant.');
+        \App\Support\DataScope::find($request, $tenant, 'invoice_groups', (int) $data['groupId']);
         if ($data['postingBehavior'] === 'none' && $data['isPostable']) abort(422, 'A non-financial invoice type cannot be postable.');
         $active = array_key_exists('isActive', $data)
             ? (bool) $data['isActive']

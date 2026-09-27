@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/app_router.dart';
+
+import '../../../app/purchase_route_scope.dart';
 import '../../../core/services/service_locator.dart';
 import '../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../../finance_inventory_setup/widgets/finance_components.dart';
@@ -219,7 +220,7 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
           content: Text('تم ترحيل الاستلام رقم ${posted.receiptNumber} بنجاح.'),
         ),
       );
-      context.go('${AppRoutes.financePurchases}/${widget.purchaseId}');
+      context.go('${PurchaseRouteScope.of(context).listPath}/${widget.purchaseId}');
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -255,7 +256,7 @@ class _GoodsReceiptFormScreenState extends State<GoodsReceiptFormScreen> {
           onPressed: _saving
               ? null
               : () => context.go(
-                  '${AppRoutes.financePurchases}/${widget.purchaseId}',
+                  '${PurchaseRouteScope.of(context).listPath}/${widget.purchaseId}',
                 ),
           child: const Text('إلغاء'),
         ),

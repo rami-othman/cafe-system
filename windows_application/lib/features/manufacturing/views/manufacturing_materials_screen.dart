@@ -13,6 +13,7 @@ import '../../inventory/models/inventory_models.dart';
 import '../../inventory/views/widgets/inventory_item_widgets.dart';
 import '../../inventory/widgets/warehouse_dropdown.dart';
 
+
 /// Manufacturing's Materials tab: the same `InventoryItem` list Inventory
 /// itself uses (`ItemTable`/`ItemFilters`), scoped to the four item types
 /// Manufacturing actually cares about (raw material / semi-finished /
@@ -32,6 +33,7 @@ class _ManufacturingMaterialsScreenState
   final TextEditingController _search = TextEditingController();
   String _type = '';
   int? _warehouseId;
+  bool _inStockOnly = false;
 
   static const Set<String> _materialTypes = <String>{
     'raw_material',
@@ -60,6 +62,7 @@ class _ManufacturingMaterialsScreenState
       type: _type.isEmpty ? null : _type,
       types: _materialTypes.toList(growable: false),
       warehouseId: _warehouseId,
+      inStockOnly: _inStockOnly,
       page: page,
     );
   }
@@ -92,7 +95,7 @@ class _ManufacturingMaterialsScreenState
                     label: 'شراء مواد',
                     icon: Icons.move_to_inbox_outlined,
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => context.go(AppRoutes.financePurchasesNew),
+                    onPressed: () => context.go('${AppRoutes.manufacturingPurchases}/new'),
                   ),
                   AppButton(
                     label: 'إضافة مادة',
@@ -145,16 +148,11 @@ class _ManufacturingMaterialsScreenState
                       _load();
                     },
                   ),
-                  WarehouseDropdown(
-                    value: _warehouseId,
-                    warehouses: state.warehouses,
-                    allLabel: 'كل المخازن',
-                    onChanged: (int? value) {
-                      setState(() => _warehouseId = value);
-                      _load();
-                    },
-                  ),
-                ],
+                  FilterChip(
+                    label: const Text('المتوفر فقط'),
+                    selected: _inStockOnly,
+                    onSelected: (bool value) { setState(() => _inStockOnly = value); _load(); },
+                  ),                ],
               ),
               const SizedBox(height: AppSpacing.lg),
               if (state.loading && materials.isEmpty)
@@ -170,6 +168,7 @@ class _ManufacturingMaterialsScreenState
               else
                 ItemTable(
                   items: materials,
+                  showStock: true,
                   onOpen: (InventoryItem item) => context.go(
                     AppRoutes.manufacturingMaterialDetailPath(item.id),
                   ),

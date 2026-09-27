@@ -44,7 +44,9 @@ final class ManufacturingProductionService
 
     public function preview(int $tenantId, array $data): array
     {
+        FactoryWarehouseScope::assertFactoryBranch($tenantId, ! empty($data['branchId']) ? (int) $data['branchId'] : null);
         $recipe = $this->loadActiveRecipeOrThrow($tenantId, (int) $data['recipeId']);
+        abort_unless((int) $recipe->branch_id === (int) $data['branchId'], 422, 'الوصفة تتبع فرع معمل آخر.');
         $version = DB::table('manufacturing_recipe_versions')->where('id', $recipe->current_version_id)->first();
         $qty = (string) $data['qty'];
         if (! preg_match('/^\d+(\.\d{1,3})?$/', trim($qty)) || (float) $qty <= 0) {
@@ -61,6 +63,7 @@ final class ManufacturingProductionService
 
     public function createDraft(Request $request, int $tenantId, array $data, ?int $actorId): array
     {
+        FactoryWarehouseScope::assertFactoryBranch($tenantId, ! empty($data['branchId']) ? (int) $data['branchId'] : null);
         $fingerprint = IdempotencyFingerprint::from($data);
         if (! empty($data['idempotencyKey'])) {
             $existing = DB::table('manufacturing_orders')->where('tenant_id', $tenantId)->where('idempotency_key', $data['idempotencyKey'])->first();
@@ -75,6 +78,7 @@ final class ManufacturingProductionService
 
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $fingerprint) {
             $recipe = $this->loadActiveRecipeOrThrow($tenantId, (int) $data['recipeId']);
+            abort_unless((int) $recipe->branch_id === (int) $data['branchId'], 422, 'الوصفة تتبع فرع معمل آخر.');
             $version = DB::table('manufacturing_recipe_versions')->where('id', $recipe->current_version_id)->first();
             $warehouse = $this->loadWarehouse($tenantId, (int) $data['warehouseId']);
             FactoryWarehouseScope::assertDestination($tenantId, ! empty($data['branchId']) ? (int) $data['branchId'] : null, (int) $warehouse->id);
@@ -169,6 +173,7 @@ final class ManufacturingProductionService
             }
 
             $warehouse = $this->loadWarehouse($tenantId, (int) $order->warehouse_id);
+            FactoryWarehouseScope::assertFactoryBranch($tenantId, $order->branch_id ? (int) $order->branch_id : null);
             FactoryWarehouseScope::assertDestination($tenantId, $order->branch_id ? (int) $order->branch_id : null, (int) $warehouse->id);
             FinancialActor::assertBranchAccess($actorId, $tenantId, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
             $outputItem = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $order->output_item_id)->first();
@@ -303,6 +308,7 @@ final class ManufacturingProductionService
             $query->where('i.item_type', $filters['type']);
         }
 
+        $query->whereIn('o.branch_id', $filters['accessibleBranchIds'] ?? []);
         return $query->orderByDesc('o.created_at')->get()->map(fn ($row) => [
             'id' => $row->reference ?: ('draft_'.$row->id), 'recordId' => (int) $row->id,
             'product' => $row->name_ar ?: $row->name_en, 'type' => $row->item_type, 'warehouseId' => (int) $row->warehouse_id, 'warehouse' => $row->warehouse_name,

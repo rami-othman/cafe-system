@@ -27,7 +27,7 @@ class BranchController extends Controller
                 'id' => $branch->id,
                 'name' => $branch->name,
                 'branchType' => $branch->branch_type ?? 'cafe',
-                'defaultWarehouseId' => $branch->pos_inventory_warehouse_id,
+                'defaultWarehouseId' => $branch->default_warehouse_id ?? $branch->pos_inventory_warehouse_id,
                 'currency' => $branch->currency,
                 'timezone' => $branch->timezone,
                 'isActive' => (bool) $branch->is_active,

@@ -77,8 +77,15 @@ class BranchController extends Controller
             $data = array_intersect_key($data, array_flip(CafeConfigurationPolicy::PRINTER_FIELDS));
         }
         if (array_key_exists('posInventoryWarehouseId', $data)) {
+            if (($data['branchType'] ?? $branch->branch_type) === 'factory') {
+                \App\Support\FactoryWarehouseScope::assertWarehouseForBranch((int) $branch->tenant_id, (int) $branch->id, $data['posInventoryWarehouseId']);
+                $data['default_warehouse_id'] = $data['posInventoryWarehouseId'];
+                $data['pos_inventory_warehouse_id'] = null;
+            } else {
             $posWarehouses->assertEligible((int) $branch->tenant_id, (int) $branch->id, $data['posInventoryWarehouseId']);
             $data['pos_inventory_warehouse_id'] = $data['posInventoryWarehouseId'];
+            $data['default_warehouse_id'] = $data['posInventoryWarehouseId'];
+            }
             unset($data['posInventoryWarehouseId']);
         }
         if (array_key_exists('branchType', $data)) {

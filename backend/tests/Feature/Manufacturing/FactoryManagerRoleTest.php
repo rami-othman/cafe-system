@@ -175,7 +175,7 @@ class FactoryManagerRoleTest extends TestCase
         $owner = $this->user('owner', 'OwnerPassword1');
         app(FinancialSetupService::class)->ensureForTenant($this->tenant->id, $this->cafeBranch->id, $owner->id);
         app(FinancialSetupService::class)->ensureForTenant($this->tenant->id, $this->factoryBranch->id, $owner->id);
-        $factoryWarehouseId = (int) DB::table('branches')->where('id', $this->factoryBranch->id)->value('pos_inventory_warehouse_id');
+        $factoryWarehouseId = (int) DB::table('branches')->where('id', $this->factoryBranch->id)->value('default_warehouse_id');
         $cafeWarehouseId = (int) DB::table('branches')->where('id', $this->cafeBranch->id)->value('pos_inventory_warehouse_id');
         $this->assertNotSame(0, $factoryWarehouseId);
         $this->assertNotSame($factoryWarehouseId, $cafeWarehouseId);

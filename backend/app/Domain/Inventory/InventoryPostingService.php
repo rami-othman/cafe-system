@@ -30,6 +30,8 @@ final class InventoryPostingService
         if ($key !== null) {
             $existing = $this->byIdempotencyKey($tenantId, $key);
             if ($existing !== null) {
+                $row = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('id', $existing)->first();
+                FinancialActor::assertBranchAccess($actorId, $tenantId, $row->branch_id ? (int) $row->branch_id : null);
                 return new MovementPostingResult($existing, true);
             }
         }
@@ -47,7 +49,14 @@ final class InventoryPostingService
                 if (! $warehouse || ! $item) {
                     throw ValidationException::withMessages(['warehouseId' => 'The warehouse or item does not belong to the current tenant.']);
                 }
+                $warehouseBranch = $warehouse->branch_id ? DB::table('branches')->where('tenant_id', $tenantId)->where('id', $warehouse->branch_id)->first() : null;
+                $scope = ($warehouseBranch->branch_type ?? 'cafe') === 'factory' ? (int) $warehouse->branch_id : null;
+                $owner = $item->owner_branch_id === null ? null : (int) $item->owner_branch_id;
+                if ($owner !== $scope) {
+                    throw ValidationException::withMessages(['itemId' => 'هذه المادة تتبع نطاقاً آخر (المعمل/المقهى).']);
+                }
                 $this->assignments->assertAssigned($tenantId, (int) $item->id, (int) $warehouse->id);
+                \App\Support\FactoryWarehouseScope::assertWarehouseForBranch($tenantId, ! empty($data['branchId']) ? (int) $data['branchId'] : null, (int) $warehouse->id);
                 if (WarehousePresentation::isLegacy($warehouse->code)) {
                     throw ValidationException::withMessages(['warehouseId' => 'Legacy warehouses are read-only and cannot receive new movements.']);
                 }

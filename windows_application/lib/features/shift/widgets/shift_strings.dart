@@ -20,6 +20,9 @@ abstract final class ShiftStrings {
   static const String employeeCode = 'الرقم الوظيفي';
   static const String openedAt = 'وقت الفتح';
   static const String closedAt = 'وقت الإغلاق';
+  static const String closingDate = 'تاريخ الإغلاق';
+  static const String customerCollections = 'تحصيلات العملاء';
+  static const String customerCashRefunds = 'رد مبالغ للعملاء';
   static const String date = 'التاريخ';
   static const String duration = 'مدة الوردية';
   static const String status = 'الحالة';
@@ -77,9 +80,8 @@ abstract final class ShiftStrings {
   static const String allOrdersSettled =
       'جميع طلبات الوردية مكتملة ولا يوجد طلب مفتوح';
 
-  static String unfinishedOrdersWarning(int count) => count == 1
-      ? 'يوجد طلب واحد غير مكتمل'
-      : 'يوجد $count طلبات غير مكتملة';
+  static String unfinishedOrdersWarning(int count) =>
+      count == 1 ? 'يوجد طلب واحد غير مكتمل' : 'يوجد $count طلبات غير مكتملة';
 
   // Cash drawer
   static const String cashDrawer = 'الصندوق';
@@ -170,9 +172,8 @@ abstract final class ShiftStrings {
   static String countedOf(int counted, int total) =>
       '$counted من $total مادة تم جردها';
 
-  static String uncountedRemaining(int count) => count == 1
-      ? 'لم يتم جرد مادة واحدة بعد'
-      : 'لم يتم جرد $count مواد بعد';
+  static String uncountedRemaining(int count) =>
+      count == 1 ? 'لم يتم جرد مادة واحدة بعد' : 'لم يتم جرد $count مواد بعد';
 
   // Alerts and readiness
   static const String shiftAlerts = 'تنبيهات الوردية';

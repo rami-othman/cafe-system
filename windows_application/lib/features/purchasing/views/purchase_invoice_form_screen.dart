@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/app_router.dart';
+
+import '../../../app/purchase_route_scope.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/numeric_input.dart';
 import '../../finance_inventory_setup/controllers/finance_setup_cubit.dart';
@@ -33,9 +34,11 @@ class PurchaseInvoiceFormScreen extends StatefulWidget {
     super.key,
     this.editId,
     this.preselectedSupplierId,
+    this.routeScope = PurchaseRouteScope.finance,
   });
   final int? editId;
   final int? preselectedSupplierId;
+  final PurchaseRouteScope routeScope;
 
   @override
   State<PurchaseInvoiceFormScreen> createState() =>
@@ -322,6 +325,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
           _editing = results[5] as PurchaseInvoice;
           _applyEditingData(_editing!);
         }
+        if (widget.routeScope.isManufacturing) {
+          _branches = _branches.where((b) => b.id == _branchId).toList(growable: false);
+          _warehouses = _warehouses.where((w) => w.id == _destinationWarehouseId).toList(growable: false);
+        }
         _loadingReferenceData = false;
       });
       if (_isEdit) {
@@ -331,6 +338,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       if (!mounted) return;
       setState(() {
         _error = '$error';
+        if (widget.routeScope.isManufacturing) {
+          _branches = _branches.where((b) => b.id == _branchId).toList(growable: false);
+          _warehouses = _warehouses.where((w) => w.id == _destinationWarehouseId).toList(growable: false);
+        }
         _loadingReferenceData = false;
       });
     }
@@ -674,7 +685,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         }
       }
       if (!mounted) return;
-      context.go('${AppRoutes.financePurchases}/${saved.id}');
+      context.go('${widget.routeScope.listPath}/${saved.id}');
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -713,7 +724,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
         child: FinanceErrorState(
           message: 'لا يمكن تعديل فاتورة مُرحّلة. عرض الفاتورة فقط.',
           onRetry: () =>
-              context.go('${AppRoutes.financePurchases}/${widget.editId}'),
+              context.go('${widget.routeScope.listPath}/${widget.editId}'),
         ),
       );
     }
@@ -961,7 +972,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                 TextButton(
                   onPressed: _saving
                       ? null
-                      : () => context.go(AppRoutes.financePurchases),
+                      : () => context.go(widget.routeScope.listPath),
                   child: const Text('إلغاء'),
                 ),
               ],

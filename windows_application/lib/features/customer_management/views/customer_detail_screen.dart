@@ -12,6 +12,7 @@ import '../widgets/customer_detail_sections.dart';
 import '../widgets/customer_lifecycle_actions.dart';
 import '../widgets/customer_management_state_panel.dart';
 import '../widgets/customer_management_visual_tokens.dart';
+import '../../finance_inventory_setup/widgets/internal_party_fields.dart';
 
 class CustomerDetailScreen extends StatefulWidget {
   const CustomerDetailScreen({
@@ -120,6 +121,7 @@ class _CustomerProfile extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
+              InternalCustomerEditor(id: customer.id, internal: customer.isInternal, branchId: customer.internalBranchId, onSaved: () => context.read<CustomerDetailCubit>().load(customer.id)),
               if (lifecycleRepository != null)
                 CustomerLifecycleActions(
                   repository: lifecycleRepository!,

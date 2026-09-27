@@ -42,12 +42,16 @@ final class FinanceRoutePermissionMapTest extends TestCase
             'GET api/v1/finance/sales-invoices/{invoice}/returnable-lines' => 'finance.sales_credit_notes.view', 'GET api/v1/finance/sales-credit-notes' => 'finance.sales_credit_notes.view', 'POST api/v1/finance/sales-credit-notes' => 'finance.sales_credit_notes.create', 'GET api/v1/finance/sales-credit-notes/{creditNote}/posting-preview' => 'finance.sales_credit_notes.post', 'GET api/v1/finance/sales-credit-notes/{creditNote}' => 'finance.sales_credit_notes.view', 'POST api/v1/finance/sales-credit-notes/{creditNote}/cancel' => 'finance.sales_credit_notes.create', 'POST api/v1/finance/sales-credit-notes/{creditNote}/post' => 'finance.sales_credit_notes.post',
             'GET api/v1/finance/customers/{customer}/credit' => 'finance.customer_refunds.view', 'GET api/v1/finance/customer-refunds' => 'finance.customer_refunds.view', 'POST api/v1/finance/customer-refunds/preview' => 'finance.customer_refunds.create', 'POST api/v1/finance/customer-refunds' => 'finance.customer_refunds.create', 'GET api/v1/finance/customer-refunds/{refund}' => 'finance.customer_refunds.view',
         ];
+        $expected['GET api/v1/finance/reports/internal-reconciliation'] = 'finance.reports.view';
+        $expected['GET api/v1/finance/sales-materials'] = 'finance.sales.view';
+        $expected['GET api/v1/finance/sales-products/variants/{variant}/recipe'] = 'finance.sales.view';
         $routes = collect($this->app['router']->getRoutes())->flatMap(function ($route) { return collect($route->methods())->reject(fn (string $method) => in_array($method, ['HEAD', 'OPTIONS'], true))->mapWithKeys(fn (string $method) => [$method.' '.$route->uri() => $route]); });
         foreach ($expected as $key => $permission) {
             $this->assertTrue($routes->has($key), "Missing registered route: $key");
             $this->assertContains('finance.permission:'.$permission, $routes[$key]->gatherMiddleware(), "Wrong Finance middleware: $key");
         }
         $sensitive = $routes->filter(fn ($route, string $key) => str_contains($key, ' api/v1/finance/') || in_array($key, ['GET api/v1/reports/daily', 'GET api/v1/reports/overview'], true));
-        $this->assertSame(count($expected), $sensitive->count(), 'Add every new Finance-sensitive route to this canonical map.');
+        $missing = $sensitive->keys()->diff(array_keys($expected))->implode(', ');
+        $this->assertSame(count($expected), $sensitive->count(), 'Add every Finance-sensitive route to this canonical map: '.$missing);
     }
 }

@@ -9,10 +9,10 @@ use Illuminate\Support\Facades\DB;
  * uses (quantity_on_hand <= reorder_level) — rather than a second low-stock engine. */
 final class ManufacturingReportService
 {
-    public function overview(int $tenantId, ?int $warehouseId): array
+    public function overview(int $tenantId, ?int $warehouseId, array $branchIds = []): array
     {
         $today = now()->toDateString();
-        $orders = DB::table('manufacturing_orders')->where('tenant_id', $tenantId)->when($warehouseId, fn ($q) => $q->where('warehouse_id', $warehouseId));
+        $orders = DB::table('manufacturing_orders')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->when($warehouseId, fn ($q) => $q->where('warehouse_id', $warehouseId));
         $todays = (clone $orders)->where('status', 'completed')->whereDate('production_date', $today)->get();
 
         $producedToday = (float) $todays->sum('actual_quantity');
@@ -23,6 +23,7 @@ final class ManufacturingReportService
 
         $balanceQuery = DB::table('stock_balances as b')->join('inventory_items as i', 'i.id', '=', 'b.inventory_item_id')
             ->where('b.tenant_id', $tenantId)->where('i.is_active', true)->whereNull('i.deleted_at')
+            ->whereIn('i.owner_branch_id', $branchIds)
             ->whereIn('i.item_type', ['raw_material', 'packaging', 'semi_finished_good'])
             ->whereColumn('b.quantity_on_hand', '<=', 'i.reorder_level');
         if ($warehouseId) {
@@ -37,6 +38,7 @@ final class ManufacturingReportService
             ->join('manufacturing_orders as o', 'o.id', '=', 'b.manufacturing_order_id')
             ->join('inventory_items as i', 'i.id', '=', 'b.inventory_item_id')
             ->where('b.tenant_id', $tenantId)->where('o.tenant_id', $tenantId)
+            ->whereIn('o.branch_id', $branchIds)
             ->where('o.status', 'completed')->where('b.remaining_quantity', '>', 0)
             ->whereNotNull('b.expiry_date')->whereDate('b.expiry_date', '>=', $today)
             ->when($warehouseId, fn ($q) => $q->where('b.warehouse_id', $warehouseId))
@@ -58,10 +60,11 @@ final class ManufacturingReportService
         ];
     }
 
-    public function reports(int $tenantId, ?int $warehouseId, ?string $type, ?string $dateFrom, ?string $dateTo): array
+    public function reports(int $tenantId, ?int $warehouseId, ?string $type, ?string $dateFrom, ?string $dateTo, array $branchIds = []): array
     {
         $query = DB::table('manufacturing_orders as o')->join('inventory_items as i', 'i.id', '=', 'o.output_item_id')
             ->where('o.tenant_id', $tenantId)->where('o.status', 'completed');
+        $query->whereIn('o.branch_id', $branchIds);
         if ($warehouseId) {
             $query->where('o.warehouse_id', $warehouseId);
         }

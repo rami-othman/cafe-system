@@ -26,6 +26,9 @@ final class FinanceDashboardContext
         abort_if($authorized->isEmpty(), 404, 'No branches are available for this user.');
 
         $branchId = $filters['branchId'] ?? null;
+        if ($branchId === null && FinancialActor::user($actorId, $tenantId)->effectiveRoleCode() === 'factory_manager') {
+            $branchId = (int) $authorized->first()->id;
+        }
         if ($branchId !== null) {
             FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId);
             if (! $authorized->contains('id', $branchId)) {
@@ -53,6 +56,7 @@ final class FinanceDashboardContext
         return [
             'tenantId' => $tenantId,
             'actorId' => $actorId,
+            'includeInternal' => filter_var($filters['includeInternal'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'branchId' => $branchId,
             'authorizedBranchIds' => $authorizedBranchIds,
             'authorizedBranches' => $authorized->map(fn (object $b) => ['id' => (int) $b->id, 'name' => $b->name])->values()->all(),

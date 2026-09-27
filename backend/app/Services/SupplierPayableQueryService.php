@@ -23,7 +23,7 @@ class SupplierPayableQueryService
     /** Historical invoice-level AP evidence for ageing and statement reports. */
     public function invoicesAsOf(int $tenantId, string $asOfDate, ?int $branchId = null, array $authorizedBranchIds = [], ?int $supplierId = null): array
     {
-        $query = DB::table('supplier_invoices as invoices')->join('suppliers as suppliers', 'suppliers.id', '=', 'invoices.supplier_id')
+        $query = \App\Support\InternalReportingScope::party(DB::table('supplier_invoices as invoices'), 'invoices.supplier_id', 'suppliers')->join('suppliers as suppliers', 'suppliers.id', '=', 'invoices.supplier_id')
             ->leftJoin('journal_entries as posting', 'posting.id', '=', 'invoices.journal_entry_id')
             ->leftJoin('journal_entries as reversal', 'reversal.id', '=', 'invoices.reversal_journal_entry_id')
             ->where('invoices.tenant_id', $tenantId)->when($supplierId, fn ($q) => $q->where('invoices.supplier_id', $supplierId));
@@ -119,9 +119,9 @@ class SupplierPayableQueryService
      *
      * @return array{outstanding: string, overdue: string, openInvoiceCount: int, overdueInvoiceCount: int}
      */
-    public function snapshotAsOf(int $tenantId, string $asOfDate): array
+    public function snapshotAsOf(int $tenantId, string $asOfDate, ?array $context = null): array
     {
-        $invoices = DB::table('supplier_invoices as invoices')
+        $invoices = \App\Support\InternalReportingScope::party(DB::table('supplier_invoices as invoices'), 'invoices.supplier_id', 'suppliers', $context)->when($context !== null && ($context['branchId'] ?? null) !== null && \App\Support\FinancialActor::user($context['actorId'], $tenantId)->effectiveRoleCode() === 'factory_manager', fn ($q) => $q->where('invoices.branch_id', $context['branchId']))
             ->leftJoin('journal_entries as posting', 'posting.id', '=', 'invoices.journal_entry_id')
             ->leftJoin('journal_entries as reversal', 'reversal.id', '=', 'invoices.reversal_journal_entry_id')
             ->where('invoices.tenant_id', $tenantId)

@@ -65,6 +65,7 @@ class InventoryRepository {
     String? category,
     String? status,
     String? stockStatus,
+    bool inStockOnly = false,
     int? warehouseId,
     int? branchId,
     int page = 1,
@@ -83,6 +84,7 @@ class InventoryRepository {
               if (status != null && status.isNotEmpty) 'status': status,
               if (stockStatus != null && stockStatus.isNotEmpty)
                 'stockStatus': stockStatus,
+              if (inStockOnly) 'inStockOnly': '1',
               if (warehouseId case final int value) 'warehouseId': value,
               if (branchId case final int value) 'branchId': value,
             },
@@ -132,6 +134,9 @@ class InventoryRepository {
           as Map,
     ),
   );
+
+  Future<Map<String, dynamic>> itemProductionBatches(int id, {int page = 1}) async =>
+      Map<String, dynamic>.from(await _api.getEnvelope('inventory/items/$id/production-batches', queryParameters: {'page': page}) as Map);
 
   Future<List<InventoryRecipeUsage>> itemRecipeUsage(int id) async =>
       readMapList(
@@ -276,11 +281,11 @@ class InventoryRepository {
           .map(WarehouseLocation.fromJson)
           .where((WarehouseLocation warehouse) => !warehouse.isLegacy)
           .toList(growable: false);
-  Future<void> saveItem(Map<String, dynamic> payload, {int? id}) async {
+  Future<InventoryItem> saveItem(Map<String, dynamic> payload, {int? id}) async {
     if (id == null) {
-      await _api.post('inventory/items', data: payload);
+      return InventoryItem.fromJson(Map<String, dynamic>.from(await _api.post('inventory/items', data: payload) as Map));
     } else {
-      await _api.patch('inventory/items/$id', data: payload);
+      return InventoryItem.fromJson(Map<String, dynamic>.from(await _api.patch('inventory/items/$id', data: payload) as Map));
     }
   }
 

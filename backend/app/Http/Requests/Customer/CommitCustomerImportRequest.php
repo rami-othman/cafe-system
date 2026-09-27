@@ -20,7 +20,7 @@ class CommitCustomerImportRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $unknown = array_diff(array_keys($this->all()), ['createMissingGroups']);
+            $unknown = array_diff(array_keys($this->except('scopeBranchId')), ['createMissingGroups']);
             if ($unknown !== []) {
                 $validator->errors()->add('payload', 'Unknown or prohibited import fields were submitted.');
             }

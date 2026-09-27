@@ -14,6 +14,14 @@ use Illuminate\Database\Query\Builder;
  */
 final class BranchScope
 {
+    public static function applyFinancial(Builder $query, string $column, \App\Models\User $actor): Builder
+    {
+        if ($actor->isOwner()) return $query;
+        $ids = FinancialActor::operationalBranchIds((int) $actor->id, (int) $actor->tenant_id);
+        if ($actor->effectiveRoleCode() === 'factory_manager') return $query->whereIn($column, $ids);
+        // Preserve the existing cafe role policy for company-wide records.
+        return $query->where(fn (Builder $q) => $q->whereIn($column, $ids)->orWhereNull($column));
+    }
     public static function apply(Builder $query, string $column, ?int $branchId, array $authorizedBranchIds): Builder
     {
         if ($branchId !== null) {

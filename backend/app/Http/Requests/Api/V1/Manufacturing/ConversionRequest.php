@@ -14,6 +14,7 @@ class ConversionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'branchId' => ['required', 'integer'],
             'warehouseId' => ['required', 'integer'],
             'sourceItemId' => ['required', 'integer'],
             'sourceQty' => ['required', 'regex:/^\d+(\.\d{1,3})?$/'],

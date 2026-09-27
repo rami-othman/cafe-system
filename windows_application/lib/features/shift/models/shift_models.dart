@@ -98,8 +98,7 @@ class ShiftSalesSummary extends Equatable {
 
   double get netSales => grossSales - discounts - refunds;
 
-  double get averageOrderValue =>
-      orderCount == 0 ? 0 : netSales / orderCount;
+  double get averageOrderValue => orderCount == 0 ? 0 : netSales / orderCount;
 
   double get discountRatio => grossSales == 0 ? 0 : discounts / grossSales;
 
@@ -142,8 +141,10 @@ class PaymentBreakdown extends Equatable {
   double get total =>
       lines.fold(0, (double sum, PaymentBreakdownLine l) => sum + l.amount);
 
-  int get transactionCount =>
-      lines.fold(0, (int sum, PaymentBreakdownLine l) => sum + l.transactionCount);
+  int get transactionCount => lines.fold(
+    0,
+    (int sum, PaymentBreakdownLine l) => sum + l.transactionCount,
+  );
 
   double amountFor(PaymentChannel channel) => lines
       .where((PaymentBreakdownLine l) => l.channel == channel)
@@ -268,6 +269,9 @@ class CashDrawerSnapshot extends Equatable {
     required this.deposits,
     required this.expenses,
     required this.movements,
+    this.customerPayments = 0,
+    this.customerRefunds = 0,
+    this.expectedCash,
   });
 
   final double openingFloat;
@@ -277,9 +281,20 @@ class CashDrawerSnapshot extends Equatable {
   final double deposits;
   final double expenses;
   final List<CashMovement> movements;
+  final double customerPayments;
+  final double customerRefunds;
+  final double? expectedCash;
 
   double get expected =>
-      openingFloat + cashSales + deposits - cashRefunds - withdrawals - expenses;
+      expectedCash ??
+      openingFloat +
+          cashSales +
+          customerPayments +
+          deposits -
+          cashRefunds -
+          customerRefunds -
+          withdrawals -
+          expenses;
 
   @override
   List<Object?> get props => <Object?>[
@@ -290,6 +305,9 @@ class CashDrawerSnapshot extends Equatable {
     deposits,
     expenses,
     movements,
+    customerPayments,
+    customerRefunds,
+    expectedCash,
   ];
 }
 
@@ -331,8 +349,7 @@ class BarCountLine extends Equatable {
 
   bool get hasNegativeTheoretical => theoretical < -kShiftEpsilon;
 
-  double? get difference =>
-      counted == null ? null : counted! - theoretical;
+  double? get difference => counted == null ? null : counted! - theoretical;
 
   /// Approximate monetary impact of the variance, for reporting only.
   double? get differenceValue {
@@ -395,14 +412,12 @@ class BarCountTemplate extends Equatable {
 
   int get totalItems => lines.length;
 
-  int get countedItems =>
-      lines.where((BarCountLine l) => l.isCounted).length;
+  int get countedItems => lines.where((BarCountLine l) => l.isCounted).length;
 
   int get uncountedItems => totalItems - countedItems;
 
-  int get matchedItems => lines
-      .where((BarCountLine l) => l.status == BarCountStatus.match)
-      .length;
+  int get matchedItems =>
+      lines.where((BarCountLine l) => l.status == BarCountStatus.match).length;
 
   int get shortageItems => lines
       .where((BarCountLine l) => l.status == BarCountStatus.shortage)
@@ -674,12 +689,7 @@ class CashCountResult extends Equatable {
   bool get isSurplus => difference > 0.5;
 
   @override
-  List<Object?> get props => <Object?>[
-    expected,
-    actual,
-    reason,
-    reasonDetail,
-  ];
+  List<Object?> get props => <Object?>[expected, actual, reason, reasonDetail];
 }
 
 /// The sealed outcome of a closed shift: what the report renders.
@@ -692,6 +702,7 @@ class ShiftClosingResult extends Equatable {
     required this.closedBy,
     required this.reportNumber,
     this.closeMode = ShiftCloseMode.manual,
+    this.closingDate,
   });
 
   final ShiftSnapshot snapshot;
@@ -701,6 +712,7 @@ class ShiftClosingResult extends Equatable {
   final String closedBy;
   final String reportNumber;
   final ShiftCloseMode closeMode;
+  final DateTime? closingDate;
 
   Duration get duration => closedAt.difference(snapshot.identity.openedAt);
 
@@ -713,6 +725,7 @@ class ShiftClosingResult extends Equatable {
     closedBy,
     reportNumber,
     closeMode,
+    closingDate,
   ];
 }
 

@@ -20,7 +20,8 @@ class ShiftClosingStep4Review extends StatefulWidget {
   const ShiftClosingStep4Review({super.key});
 
   @override
-  State<ShiftClosingStep4Review> createState() => _ShiftClosingStep4ReviewState();
+  State<ShiftClosingStep4Review> createState() =>
+      _ShiftClosingStep4ReviewState();
 }
 
 class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
@@ -33,7 +34,9 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
     builder: (BuildContext context, ShiftClosingState state) {
       final ShiftClosingCubit cubit = context.read<ShiftClosingCubit>();
       final ShiftSnapshot snapshot = state.snapshot!;
@@ -47,7 +50,8 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
           const ShiftWizardStepHeader(title: ShiftStrings.finalReviewTitle),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              final bool wide = constraints.maxWidth >= ShiftLayout.desktopBreakpoint;
+              final bool wide =
+                  constraints.maxWidth >= ShiftLayout.desktopBreakpoint;
               final List<Widget> sections = <Widget>[
                 ShiftReviewSection(
                   title: ShiftStrings.salesSummary,
@@ -124,12 +128,16 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
                       ShiftKeyValueRow(
                         label: ShiftStrings.statusShortage,
                         value: ShiftFormat.count(bar.shortageItems),
-                        valueColor: bar.shortageItems > 0 ? ShiftColors.shortageInk : null,
+                        valueColor: bar.shortageItems > 0
+                            ? ShiftColors.shortageInk
+                            : null,
                       ),
                       ShiftKeyValueRow(
                         label: ShiftStrings.statusSurplus,
                         value: ShiftFormat.count(bar.surplusItems),
-                        valueColor: bar.surplusItems > 0 ? ShiftColors.surplusInk : null,
+                        valueColor: bar.surplusItems > 0
+                            ? ShiftColors.surplusInk
+                            : null,
                       ),
                       if (bar.differenceLines.isNotEmpty) ...<Widget>[
                         const ShiftDividerLine(),
@@ -147,7 +155,10 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
                       ] else
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.sm),
-                          child: Text(ShiftStrings.noDifferences, style: ShiftText.label),
+                          child: Text(
+                            ShiftStrings.noDifferences,
+                            style: ShiftText.label,
+                          ),
                         ),
                     ],
                   ),
@@ -170,7 +181,8 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
                   children: <Widget>[
                     for (int i = 0; i < sections.length; i++) ...<Widget>[
                       Expanded(child: sections[i]),
-                      if (i < sections.length - 1) const SizedBox(width: AppSpacing.lg),
+                      if (i < sections.length - 1)
+                        const SizedBox(width: AppSpacing.lg),
                     ],
                   ],
                 ),
@@ -188,6 +200,28 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
               hintText: ShiftStrings.closingNotesHint,
               onChanged: cubit.updateClosingNotes,
             ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          OutlinedButton.icon(
+            key: const Key('shift-closing-date'),
+            icon: const Icon(Icons.calendar_today_outlined),
+            label: Text(
+              '${ShiftStrings.closingDate}: ${(state.closingDate ?? DateTime.now()).toIso8601String().substring(0, 10)}',
+            ),
+            onPressed: () async {
+              final today = DateUtils.dateOnly(DateTime.now());
+              final opened = DateUtils.dateOnly(snapshot.identity.openedAt);
+              final first = opened.isAfter(today) ? today : opened;
+              final date = await showDatePicker(
+                context: context,
+                initialDate: state.closingDate ?? today,
+                firstDate: first,
+                lastDate: today,
+              );
+              if (date != null && context.mounted) {
+                cubit.selectClosingDate(date);
+              }
+            },
           ),
           const SizedBox(height: AppSpacing.xl),
           Align(
@@ -216,16 +250,25 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
     final ShiftClosingCubit cubit = context.read<ShiftClosingCubit>();
     await showDialog<void>(
       context: context,
-      builder: (BuildContext dialogContext) => BlocProvider<ShiftClosingCubit>.value(
-        value: cubit,
-        child: _ConfirmCloseDialog(snapshot: snapshot, cash: cash, bar: bar),
-      ),
+      builder: (BuildContext dialogContext) =>
+          BlocProvider<ShiftClosingCubit>.value(
+            value: cubit,
+            child: _ConfirmCloseDialog(
+              snapshot: snapshot,
+              cash: cash,
+              bar: bar,
+            ),
+          ),
     );
   }
 }
 
 class _ConfirmCloseDialog extends StatefulWidget {
-  const _ConfirmCloseDialog({required this.snapshot, required this.cash, required this.bar});
+  const _ConfirmCloseDialog({
+    required this.snapshot,
+    required this.cash,
+    required this.bar,
+  });
 
   final ShiftSnapshot snapshot;
   final CashCountResult cash;
@@ -293,7 +336,8 @@ class _ConfirmCloseDialogState extends State<_ConfirmCloseDialog> {
                   Checkbox(
                     key: const Key('shift-close-acknowledge-checkbox'),
                     value: _acknowledged,
-                    onChanged: (bool? v) => setState(() => _acknowledged = v ?? false),
+                    onChanged: (bool? v) =>
+                        setState(() => _acknowledged = v ?? false),
                   ),
                   Expanded(
                     child: Padding(
@@ -326,7 +370,9 @@ class _ConfirmCloseDialogState extends State<_ConfirmCloseDialog> {
                         ? null
                         : () async {
                             setState(() => _submitting = true);
-                            await context.read<ShiftClosingCubit>().closeShift();
+                            await context
+                                .read<ShiftClosingCubit>()
+                                .closeShift();
                             if (context.mounted) Navigator.of(context).pop();
                           },
                   ),

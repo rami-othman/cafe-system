@@ -26,7 +26,7 @@ final class ListCustomerOrdersRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->query()), ['from', 'to', 'branchId', 'status', 'paymentStatus', 'page', 'perPage']) !== []) {
+            if (array_diff(array_diff(array_keys($this->query()), ['scopeBranchId']), ['from', 'to', 'branchId', 'status', 'paymentStatus', 'page', 'perPage']) !== []) {
                 $validator->errors()->add('query', 'Unknown customer order filters were submitted.');
             }
             if ($this->filled('branchId')) {

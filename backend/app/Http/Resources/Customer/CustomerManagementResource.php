@@ -14,6 +14,8 @@ class CustomerManagementResource extends JsonResource
         return [
             'id' => (int) $this->id,
             'customerNumber' => $this->customer_number,
+            'isInternal' => (bool) $this->is_internal,
+            'internalBranchId' => $this->internal_branch_id ? (int) $this->internal_branch_id : null,
             'name' => $this->name,
             'email' => $this->email,
             'birthDate' => $this->birth_date?->format('Y-m-d'),

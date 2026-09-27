@@ -27,7 +27,11 @@ final class CashSourceResolver
             $join->on('a.id', '=', 'l.financial_account_id')->where('a.tenant_id', '=', $tenantId);
         })->where('l.tenant_id', $tenantId)->where('l.kind', 'cash')->where('l.is_active', true)
             ->where('a.is_active', true)->whereNull('a.deleted_at')
-            ->where(function ($q) use ($branchId): void {
+            ->where(function ($q) use ($branchId, $tenantId): void {
+                if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) {
+                    $q->where('l.branch_id', $branchId);
+                    return;
+                }
                 $q->where('l.branch_id', $branchId)
                     ->orWhere(fn ($global) => $global->whereNull('l.branch_id')->where('l.code', '!=', 'CASH-DRAWER'));
             })->orderBy('l.name')->get(['l.id', 'l.name', 'l.branch_id', 'l.type'])->map(fn ($l) => [
@@ -56,7 +60,13 @@ final class CashSourceResolver
             }
             $selectedLocationId = (int) $shift->financial_location_id;
         } elseif ($selectedLocationId === null) {
+            if (\App\Support\DataScope::forBranch($tenantId, $branchId) !== null) {
+                $selectedLocationId = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('pos_cash_financial_location_id');
+                $selectedLocationId = $selectedLocationId ? (int) $selectedLocationId : null;
+            }
+            if ($selectedLocationId === null) {
             throw ValidationException::withMessages(['financialLocationId' => 'يرجى اختيار الصندوق.']);
+            }
         }
 
         $query = DB::table('financial_locations as l')->join('financial_accounts as a', function ($join) use ($tenantId): void {

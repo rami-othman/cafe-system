@@ -16,18 +16,20 @@ class ExpenseService
 
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): object
     {
+        \App\Support\DataScope::assertReference($tenantId, 'expense_categories', (int) $data['expenseCategoryId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
         $key = $data['idempotencyKey'] ?? null; $fingerprint = $key ? IdempotencyFingerprint::from($data) : null;
         if ($key && ($existing = $this->byKey($tenantId, $key))) { $this->assertFingerprint($existing, $fingerprint); return $existing; }
         try { return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $key, $fingerprint): object {
             if ($key && ($existing = $this->byKey($tenantId, $key, true))) { $this->assertFingerprint($existing, $fingerprint); return $existing; }
             $this->assertDraftReferences($tenantId, $data, $actorId); [$amount, $tax] = $this->money($data);
-            $id = (int) DB::table('expenses')->insertGetId($this->draftPayload($data, $amount, $tax, $actorId) + ['tenant_id' => $tenantId, 'expense_number' => $this->nextNumber($tenantId), 'status' => 'draft', 'payment_status' => 'unpaid', 'idempotency_key' => $key, 'idempotency_fingerprint' => $fingerprint, 'created_by' => $actorId, 'created_at' => now(), 'updated_at' => now()]);
+            $id = (int) DB::table('expenses')->insertGetId($this->draftPayload($data, $amount, $tax, $actorId) + ['tenant_id' => $tenantId, 'expense_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId)), 'status' => 'draft', 'payment_status' => 'unpaid', 'idempotency_key' => $key, 'idempotency_fingerprint' => $fingerprint, 'created_by' => $actorId, 'created_at' => now(), 'updated_at' => now()]);
             $expense = $this->find($tenantId, $id); $this->audit->record($request, $tenantId, 'expense.created', 'expense', $id, [], (array) $expense, $expense->branch_id, $actorId); return $expense;
         }); } catch (QueryException $e) { if ($key && ($existing = $this->byKey($tenantId, $key))) { $this->assertFingerprint($existing, $fingerprint); return $existing; } throw $e; }
     }
 
     public function update(Request $request, int $tenantId, int $id, array $data, ?int $actorId): object
     {
+        \App\Support\DataScope::assertReference($tenantId, 'expense_categories', (int) $data['expenseCategoryId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
         return DB::transaction(function () use ($request, $tenantId, $id, $data, $actorId): object {
             $before = $this->find($tenantId, $id, true); $this->assertBranch($actorId, $tenantId, $before->branch_id);
             if ($before->status !== 'draft') throw ValidationException::withMessages(['expense' => 'Only draft expenses can be edited.']);

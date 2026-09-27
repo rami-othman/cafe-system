@@ -66,7 +66,7 @@ final class ManufacturingDemoSeeder extends Seeder
             'created_at' => now(), 'updated_at' => now(),
         ]);
         app(FinancialSetupService::class)->ensureForTenant($this->tenantId, $this->branchId, $this->ownerId);
-        $this->warehouseId = (int) DB::table('branches')->where('id', $this->branchId)->value('pos_inventory_warehouse_id');
+        $this->warehouseId = (int) DB::table('branches')->where('id', $this->branchId)->value('default_warehouse_id');
         \App\Support\FactoryWarehouseScope::assertDestination($this->tenantId, $this->branchId, $this->warehouseId);
         if (! $this->warehouseId) {
             throw new RuntimeException('The demo factory needs its private warehouse.');
@@ -77,6 +77,8 @@ final class ManufacturingDemoSeeder extends Seeder
         ]);
         $this->request = Request::create('/', 'POST');
         $this->request->attributes->set('tenant_id', $this->tenantId);
+        $this->request->attributes->set('auth_user', \App\Models\User::query()->findOrFail($this->ownerId));
+        $this->request->merge(['scopeBranchId' => $this->branchId]);
 
         $items = app(InventoryItemService::class);
         $movements = app(StockMovementService::class);
@@ -217,6 +219,7 @@ final class ManufacturingDemoSeeder extends Seeder
             return;
         }
         $recipes->create($this->request, $this->tenantId, [
+            'branchId' => $this->branchId,
             'productItemId' => $productItemId, 'outputQuantity' => $outputQty, 'outputUnit' => $outputUnit,
             'shelfLifeValue' => $shelfDays, 'shelfLifeUnit' => $shelfUnit,
             'lines' => array_map(fn ($l) => ['inventoryItemId' => $l[0], 'quantity' => $l[1], 'unit' => $l[2]], $lines),

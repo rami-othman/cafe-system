@@ -19,8 +19,8 @@ final class ShiftSnapshotService
             ->where('s.id', $shift->id)->first(['s.*', 'b.name as branch_name', 'u.name as cashier_name', 'u.username as cashier_code']);
         $shiftId = (int) $shift->id;
         $cash = $this->cashSummary->summarize($tenantId, $shift);
-        $paid = DB::table('orders')->where('tenant_id', $tenantId)->where('shift_id', $shiftId)->whereNull('deleted_at')->where('status', 'paid')
-            ->selectRaw('COUNT(*) as order_count, COALESCE(SUM(total), 0) as gross, COALESCE(SUM(discount_total), 0) as discounts')->first();
+        $paid = DB::table('orders')->where('tenant_id', $tenantId)->where('shift_id', $shiftId)->whereNull('deleted_at')->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])
+            ->selectRaw('COUNT(*) as order_count, COALESCE(SUM(total + COALESCE(discount_total, 0)), 0) as gross, COALESCE(SUM(discount_total), 0) as discounts')->first();
         $refunds = DB::table('payment_refunds')->where('tenant_id', $tenantId)->where('shift_id', $shiftId)->where('status', 'completed');
         $refundTotal = Money::cents((clone $refunds)->sum('amount') ?? '0');
         $statuses = DB::table('orders')->where('tenant_id', $tenantId)->where('shift_id', $shiftId)->whereNull('deleted_at')->groupBy('status')->selectRaw('status, COUNT(*) as count')->pluck('count', 'status');
@@ -40,7 +40,7 @@ final class ShiftSnapshotService
             'sales' => ['grossSales' => Money::decimal(Money::cents($paid->gross ?? '0')), 'discounts' => Money::decimal(Money::cents($paid->discounts ?? '0')), 'refunds' => Money::decimal($refundTotal), 'refundCount' => (int) (clone $refunds)->count(), 'orderCount' => (int) ($paid->order_count ?? 0), 'cancelledOrderCount' => (int) ($statuses['cancelled'] ?? 0), 'discountPolicyCount' => $this->discounts($tenantId, $shiftId)->count()],
             'payments' => ['lines' => $paymentLines],
             'orders' => ['completed' => (int) ($statuses['paid'] ?? 0), 'paid' => (int) ($statuses['paid'] ?? 0), 'preparing' => (int) ($statuses['held'] ?? 0), 'open' => (int) ($statuses['draft'] ?? 0), 'cancelled' => (int) ($statuses['cancelled'] ?? 0), 'partiallyRefunded' => $partial, 'fullyRefunded' => $full, 'openOrders' => $this->openOrders($tenantId, $shiftId)],
-            'drawer' => ['openingFloat' => $cash['openingCash'], 'cashSales' => $cash['cashSales'], 'cashRefunds' => $cash['cashRefunds'], 'withdrawals' => $cash['withdrawals'], 'deposits' => $cash['deposits'], 'expenses' => $cash['expenses'], 'movements' => $this->movements($tenantId, $shiftId, $shift, $cash)],
+            'drawer' => ['openingFloat' => $cash['openingCash'], 'cashSales' => $cash['cashSales'], 'cashRefunds' => $cash['cashRefunds'], 'customerPayments' => $cash['customerPayments'], 'customerRefunds' => $cash['customerRefunds'], 'expectedCash' => $cash['expectedCash'], 'withdrawals' => $cash['withdrawals'], 'deposits' => $cash['deposits'], 'expenses' => $cash['expenses'], 'movements' => $this->movements($tenantId, $shiftId, $shift, $cash)],
             'barCount' => $this->barCount($tenantId, $shift),
             'pendingOperations' => $this->pendingBarChecks($tenantId, $shift),
             'refunds' => $this->refundEntries($tenantId, $shiftId),

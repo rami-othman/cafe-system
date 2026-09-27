@@ -14,6 +14,7 @@ class CustomerImport extends Model
     protected $table = 'customer_imports';
 
     protected $fillable = [
+        'owner_branch_id',
         'tenant_id', 'actor_user_id', 'original_filename', 'file_fingerprint',
         'detected_encoding', 'detected_delimiter', 'status', 'create_missing_groups',
         'total_rows', 'ready_rows', 'warning_rows', 'rejected_rows',

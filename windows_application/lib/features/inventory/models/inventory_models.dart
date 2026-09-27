@@ -137,6 +137,7 @@ class InventoryItem {
     required this.reorderLevel,
     required this.minimumStock,
     required this.active,
+    this.ownerBranchId,
     this.totalValue = '0.00',
     this.recentMovements = const <InventoryMovement>[],
     this.barcode = '',
@@ -165,6 +166,7 @@ class InventoryItem {
   final String reorderLevel;
   final String minimumStock;
   final bool active;
+  final int? ownerBranchId;
   final String totalValue;
   final List<InventoryMovement> recentMovements;
   final String barcode;
@@ -182,6 +184,7 @@ class InventoryItem {
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) => InventoryItem(
     id: readInt(json['id']) ?? 0,
+    ownerBranchId: readInt(json['ownerBranchId']),
     name: readString(json['displayName'], fallback: readString(json['nameEn'])),
     sku: readString(json['sku']),
     unit: readString(json['unit'], fallback: 'unit'),

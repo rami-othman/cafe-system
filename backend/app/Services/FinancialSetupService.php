@@ -335,10 +335,17 @@ class FinancialSetupService
         if (! $branch) {
             return;
         }
+        if (($branch->branch_type ?? 'cafe') === 'factory') {
+            app(FactoryCatalogService::class)->ensureForBranch($tenantId, $branchId);
+        }
         if ($branch->is_active) {
             $this->ensureBranchCashDrawer($tenantId, $branchId, $actorId);
         }
         if (DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->whereNull('deleted_at')->exists()) {
+            if (($branch->branch_type ?? 'cafe') === 'factory' && ! $branch->default_warehouse_id) {
+                $existingId = DB::table('warehouses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('is_active', true)->whereNull('deleted_at')->orderBy('id')->value('id');
+                if ($existingId) DB::table('branches')->where('id', $branchId)->update(['default_warehouse_id' => $existingId, 'pos_inventory_warehouse_id' => null, 'updated_at' => now()]);
+            }
             return;
         }
 
@@ -350,7 +357,7 @@ class FinancialSetupService
             'branch_id' => $branchId,
             'name' => $warehouseName,
             'code' => 'BR-'.$branchId.'-1',
-            'type' => $isFactory ? 'other' : 'bar',
+            'type' => $isFactory ? 'factory' : 'bar',
             'is_active' => true,
             'notes' => null,
             'updated_by' => $actorId,
@@ -359,7 +366,8 @@ class FinancialSetupService
             'created_at' => $now,
         ]);
         DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->update([
-            'pos_inventory_warehouse_id' => $warehouseId,
+            'default_warehouse_id' => $warehouseId,
+            'pos_inventory_warehouse_id' => $isFactory ? null : $warehouseId,
             'updated_at' => $now,
         ]);
     }

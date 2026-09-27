@@ -173,10 +173,12 @@ class ItemTable extends StatelessWidget {
     required this.items,
     required this.onOpen,
     required this.onEdit,
+    this.showStock = false,
   });
   final List<InventoryItem> items;
   final ValueChanged<InventoryItem> onOpen;
   final ValueChanged<InventoryItem> onEdit;
+  final bool showStock;
 
   @override
   Widget build(BuildContext context) => ManagementTableShell(
@@ -186,12 +188,13 @@ class ItemTable extends StatelessWidget {
       headingRowColor: const WidgetStatePropertyAll<Color>(
         AppColors.menuTableHeader,
       ),
-      columns: const <DataColumn>[
+      columns: <DataColumn>[
         DataColumn(label: Text('المادة')),
-        DataColumn(label: Text('الفئة')),
+        if (showStock) const DataColumn(label: Text('الكود')) else const DataColumn(label: Text('الفئة')),
         DataColumn(label: Text('النوع')),
         DataColumn(label: Text('الوحدة الأساسية')),
-        DataColumn(label: Text('الحالة')),
+        if (showStock) ...const <DataColumn>[DataColumn(label: Text('الكمية المتاحة')), DataColumn(label: Text('متوسط التكلفة (ل.س)')), DataColumn(label: Text('القيمة (ل.س)'))],
+        const DataColumn(label: Text('الحالة')),
         DataColumn(label: Text('آخر تحديث')),
         DataColumn(label: Text('الإجراءات')),
       ],
@@ -213,9 +216,14 @@ class ItemTable extends StatelessWidget {
                     ],
                   ),
                 ),
-                DataCell(Text(item.category.isEmpty ? '—' : item.category)),
+                DataCell(Text(showStock ? item.sku : (item.category.isEmpty ? '—' : item.category))),
                 DataCell(Text(inventoryItemTypeLabel(item.itemType))),
                 DataCell(Text(inventoryUnitLabel(item.unit))),
+                if (showStock) ...<DataCell>[
+                  DataCell(Text(item.availableQuantity)),
+                  DataCell(Text(inventoryMoney((double.tryParse(item.quantity) ?? 0) > 0 ? ((double.tryParse(item.totalValue) ?? 0) / double.parse(item.quantity)).toStringAsFixed(4) : '0'))),
+                  DataCell(Text(inventoryMoney(item.totalValue))),
+                ],
                 DataCell(ItemStatusBadge(status: item.stockStatus)),
                 DataCell(Text(_date(item.lastUpdatedAt))),
                 DataCell(

@@ -57,6 +57,9 @@ class StockCountService
                 ->leftJoin('stock_balances as balances', function ($join) use ($tenantId, $warehouse): void {
                     $join->on('balances.inventory_item_id', '=', 'items.id')->where('balances.tenant_id', $tenantId)->where('balances.warehouse_id', $warehouse->id);
                 })->where('items.tenant_id', $tenantId)->where('items.is_active', true)->whereNull('items.deleted_at')
+                ->when(DB::table('branches')->where('tenant_id', $tenantId)->where('id', $warehouse->branch_id)->value('branch_type') === 'factory',
+                    fn ($query) => $query->where('items.owner_branch_id', $warehouse->branch_id),
+                    fn ($query) => $query->whereNull('items.owner_branch_id'))
                 ->whereNotIn('items.item_type', ['non_stock_item', 'service'])->when($categories !== [], fn ($query) => $query->whereIn('items.category', $categories))
                 ->when(Schema::hasTable('inventory_item_warehouses'), fn ($query) => $query->whereExists(fn ($assigned) => $assigned->selectRaw('1')->from('inventory_item_warehouses as availability')->whereColumn('availability.inventory_item_id', 'items.id')->where('availability.tenant_id', $tenantId)->where('availability.warehouse_id', $warehouse->id)))
                 ->orderBy('items.name_en')->get(['items.id', 'items.unit', 'balances.quantity_on_hand', 'balances.average_unit_cost']);
@@ -116,6 +119,7 @@ class StockCountService
             abort_unless($line, 404, 'The item is not part of this count.');
             $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->where('is_active', true)->whereNull('deleted_at')->first();
             abort_unless($item, 422, 'The inventory item is no longer active.');
+            \App\Support\InventoryItemScope::assertForBranch($tenantId, $item, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
             $entered = InventoryDecimal::units($data['countedQuantity'], 'countedQuantity');
             $converted = $this->conversions->resolve($tenantId, $item, $data['countedQuantity'], $data['unit'] ?? $line->entered_unit ?? $item->unit);
             $expected = InventoryDecimal::units($line->expected_quantity);

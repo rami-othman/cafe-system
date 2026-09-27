@@ -25,12 +25,13 @@ final class SalesInvoiceService
                 if ($existing) { if ($existing->request_fingerprint !== $fingerprint) throw ValidationException::withMessages(['idempotencyKey' => 'This idempotency key was already used for a different request.']); return $existing; }
             }
             $customer = $this->customer($tenantId, (int) $data['customerId']);
+            \App\Support\DataScope::assertReference($tenantId, 'customers', (int) $customer->id, (int) $data['branchId']);
             \App\Support\FactorySalesPolicy::assertLines($tenantId, (int) $data['branchId'], $data['lines']);
             if (! $customer->is_walk_in) $this->assertAccountsReceivableMapping($tenantId);
             $lines = $this->pricedLines($tenantId, $data['lines']); $charges = $this->charges($data['charges'] ?? []); $totals = $this->totals($lines, $charges, $data);
             $date = CarbonImmutable::parse($data['invoiceDate'])->toDateString();
             $due = ! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString();
-            $year = CarbonImmutable::parse($date)->year; $sequence = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('invoice_number', 'like', "SI-{$year}-%")->count() + 1;
+            $year = CarbonImmutable::parse($date)->year; $sequence = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('invoice_number', 'like', "%SI-{$year}-%")->count() + 1;
             $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals));
             $this->replaceLines($tenantId, $id, $lines); $this->replaceCharges($tenantId, $id, $charges, $totals['rate']);
             return $this->find($tenantId, $id);
@@ -43,6 +44,7 @@ final class SalesInvoiceService
             $invoice = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('id', $invoiceId)->lockForUpdate()->first(); abort_unless($invoice, 404, 'Sales invoice not found.');
             if ($invoice->status !== 'draft') throw ValidationException::withMessages(['status' => 'Only draft sales invoices can be edited.']);
             $customer = $this->customer($tenantId, (int) ($data['customerId'] ?? $invoice->customer_id));
+            \App\Support\DataScope::assertReference($tenantId, 'customers', (int) $customer->id, (int) ($data['branchId'] ?? $invoice->branch_id));
             $lines = array_key_exists('lines', $data) ? $this->pricedLines($tenantId, $data['lines']) : $this->currentLines($invoiceId);
             \App\Support\FactorySalesPolicy::assertLines($tenantId, (int) ($data['branchId'] ?? $invoice->branch_id), $lines);
             $charges = array_key_exists('charges', $data) ? $this->charges($data['charges']) : $this->currentCharges($invoiceId);
@@ -73,7 +75,7 @@ final class SalesInvoiceService
     }
 
     private function header(int $tenant, int $actor, array $data, object $customer, string $date, string $due, int $year, int $sequence, string $fingerprint, array $totals): array
-    { return $this->totalValues($totals) + ['tenant_id' => $tenant, 'branch_id' => $data['branchId'], 'customer_id' => $customer->id, 'invoice_number' => sprintf('SI-%d-%06d', $year, $sequence), 'invoice_date' => $date, 'due_date' => $due, 'currency_code' => 'SYP', 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null, 'status' => 'draft', 'idempotency_key' => $data['idempotencyKey'] ?? null, 'request_fingerprint' => $fingerprint, 'created_by' => $actor, 'updated_by' => $actor, 'created_at' => now(), 'updated_at' => now()]; }
+    { return $this->totalValues($totals) + ['tenant_id' => $tenant, 'branch_id' => $data['branchId'], 'customer_id' => $customer->id, 'invoice_number' => \App\Support\DataScope::documentNumber($tenant, (int) $data['branchId'], sprintf('SI-%d-%06d', $year, $sequence)), 'invoice_date' => $date, 'due_date' => $due, 'currency_code' => 'SYP', 'reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null, 'status' => 'draft', 'idempotency_key' => $data['idempotencyKey'] ?? null, 'request_fingerprint' => $fingerprint, 'created_by' => $actor, 'updated_by' => $actor, 'created_at' => now(), 'updated_at' => now()]; }
     private function totalValues(array $t): array
     { return ['tax_rate' => $this->rateDecimal($t['rate']), 'gross_subtotal' => Money::decimal($t['gross']), 'line_discount_total' => Money::decimal($t['lineDiscount']), 'invoice_discount_type' => $t['invoiceDiscountType'], 'invoice_discount_value' => Money::decimal($t['invoiceDiscountValue']), 'invoice_discount_total' => Money::decimal($t['invoiceDiscount']), 'additional_charges_total' => Money::decimal($t['charges']), 'manual_adjustment' => Money::decimal($t['adjustment']), 'taxable_amount' => Money::decimal($t['taxable']), 'subtotal' => Money::decimal($t['netProducts']), 'discount_total' => Money::decimal($t['lineDiscount'] + $t['invoiceDiscount']), 'tax_total' => Money::decimal($t['tax']), 'total' => Money::decimal($t['total'])]; }
     private function customer(int $tenant, int $id): object { $c = DB::table('customers')->where('tenant_id', $tenant)->where('id', $id)->where('is_active', true)->whereNull('deleted_at')->first(); if (! $c) throw ValidationException::withMessages(['customerId' => 'Select an active customer belonging to this tenant.']); return $c; }

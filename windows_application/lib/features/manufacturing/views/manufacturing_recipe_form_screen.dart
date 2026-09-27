@@ -256,6 +256,15 @@ class _ManufacturingRecipeFormScreenState
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    decoration: const InputDecoration(labelText: 'بحث المكونات', prefixIcon: Icon(Icons.search)),
+                    onChanged: (value) => context.read<ManufacturingRecipeCubit>().loadIngredientCandidates(search: value),
+                  ),
+                  Row(children: [
+                    TextButton(onPressed: () => context.read<ManufacturingRecipeCubit>().loadIngredientCandidates(), child: const Text('إعادة المحاولة')),
+                    if (context.read<ManufacturingRecipeCubit>().ingredientPage < context.read<ManufacturingRecipeCubit>().ingredientLastPage)
+                      TextButton(onPressed: () => context.read<ManufacturingRecipeCubit>().loadIngredientCandidates(nextPage: true), child: const Text('المزيد من المكونات')),
+                  ]),
                   ..._lines.asMap().entries.map(
                     (MapEntry<int, _RecipeLineDraft> entry) => Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -273,7 +282,7 @@ class _ManufacturingRecipeFormScreenState
                                     (InventoryItem item) =>
                                         DropdownMenuItem<int>(
                                           value: item.id,
-                                          child: Text(item.name),
+                                          child: Text('${item.name} — ${item.quantity} ${item.unit}'),
                                         ),
                                   )
                                   .toList(growable: false),

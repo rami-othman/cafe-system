@@ -25,7 +25,7 @@ class WarehouseRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/', $code],
-            'type' => ['required', Rule::in(['branch_main', 'bar', 'kitchen', 'other'])],
+            'type' => ['required', Rule::in(['branch_main', 'bar', 'kitchen', 'other', 'factory'])],
             'branchId' => ['required', 'integer'],
             'isActive' => ['required', 'boolean'],
             'notes' => ['nullable', 'string', 'max:4000'],

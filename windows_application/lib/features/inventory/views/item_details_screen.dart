@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../app/app_router.dart';
+
+import '../../../app/item_route_scope.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/inventory_text_styles.dart';
@@ -15,11 +16,13 @@ import '../../../shared/widgets/management_ui.dart';
 import '../controllers/inventory_cubit.dart';
 import '../controllers/inventory_state.dart';
 import '../models/inventory_models.dart';
+import '../widgets/item_production_batches.dart';
 import 'widgets/inventory_item_widgets.dart';
 
 class InventoryItemDetailsScreen extends StatefulWidget {
-  const InventoryItemDetailsScreen({super.key, required this.itemId});
+  const InventoryItemDetailsScreen({super.key, required this.itemId, this.scope = ItemRouteScope.inventory});
   final int itemId;
+  final ItemRouteScope scope;
   @override
   State<InventoryItemDetailsScreen> createState() =>
       _InventoryItemDetailsScreenState();
@@ -27,7 +30,7 @@ class InventoryItemDetailsScreen extends StatefulWidget {
 
 class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 5, vsync: this)
+  late final TabController _tabs = TabController(length: widget.scope.isManufacturing ? 6 : 5, vsync: this)
     ..addListener(_onTabChanged);
   // Each of these tabs' data is fetched once, the first time it is opened,
   // rather than eagerly alongside the item itself - avoids three extra
@@ -107,14 +110,14 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
                 AppButton(
                   label: 'العودة للمواد',
                   variant: AppButtonVariant.outlined,
-                  onPressed: () => context.go(AppRoutes.inventoryItems),
+                  onPressed: () => context.go(widget.scope.listPath),
                 ),
                 AppButton(
                   label: 'تعديل المادة',
                   icon: Icons.edit_outlined,
                   variant: AppButtonVariant.outlined,
                   onPressed: () =>
-                      context.go(AppRoutes.inventoryItemEditPath(item.id)),
+                      context.go(widget.scope.editPath(item.id)),
                 ),
               ],
             ),
@@ -135,12 +138,13 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
             TabBar(
               controller: _tabs,
               isScrollable: true,
-              tabs: const <Tab>[
+              tabs: <Tab>[
                 Tab(text: 'نظرة عامة'),
                 Tab(text: 'المخزون حسب المخزن'),
                 Tab(text: 'سجل الحركات'),
                 Tab(text: 'استخدام الوصفات'),
                 Tab(text: 'سجل الشراء'),
+                if (widget.scope.isManufacturing) const Tab(text: 'دفعات الإنتاج'),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -153,6 +157,7 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
                   _movementHistory(state),
                   _recipeUsage(state),
                   _purchaseHistory(state),
+                  if (widget.scope.isManufacturing) ItemProductionBatches(itemId: widget.itemId),
                 ],
               ),
             ),

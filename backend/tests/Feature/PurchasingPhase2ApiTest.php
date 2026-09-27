@@ -22,19 +22,21 @@ class PurchasingPhase2ApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_factory_immediate_purchase_reuses_material_and_receives_cost_once_in_private_warehouse(): void
+    public function test_factory_immediate_purchase_uses_private_material_and_receives_cost_once_in_private_warehouse(): void
     {
         [$tenant, $headers, $oldBranch, $unused, $oldWarehouse, $item] = $this->unifiedInventoryFixture('factory-immediate');
         $factory = $this->postJson('/api/v1/cafe-configuration/branches', [
             'name' => 'المعمل', 'branchType' => 'factory', 'timezone' => 'Asia/Damascus', 'warehouseName' => 'مخزن المعمل',
         ], $headers)->assertCreated()->json('data');
-        $warehouse = $factory['posInventoryWarehouseId'];
+        $warehouse = $factory['defaultWarehouseId'];
+        $cafeItem = $item;
         $this->patchJson('/api/v1/inventory/items/'.$item, [
             'nameAr' => 'صنف اختبار', 'itemType' => 'raw_material', 'unit' => 'kg',
             'isActive' => true, 'warehouseIds' => [$oldWarehouse, $warehouse],
-        ], $headers)->assertOk();
-        $this->stockIn($headers, $item, $oldWarehouse, '4.000', '5.0000');
-        $supplier = $this->supplier($headers);
+        ], $headers)->assertUnprocessable();
+        $this->stockIn($headers, $cafeItem, $oldWarehouse, '4.000', '5.0000');
+        $item = $this->inventoryItem($headers, 'kg', [$warehouse], $factory['id']);
+        $supplier = $this->supplier($headers, $factory['id']);
         $payload = ['supplierId' => $supplier, 'branchId' => $factory['id'], 'invoiceType' => 'inventory',
             'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'immediate', 'discountType' => 'fixed', 'discountValue' => '10.00',
             'lines' => [['lineType' => 'inventory', 'description' => 'Existing material', 'inventoryItemId' => $item,
@@ -45,9 +47,11 @@ class PurchasingPhase2ApiTest extends TestCase
         $this->postJson("/api/v1/finance/purchases/$invoice/post", $post, $headers)->assertOk()->assertJsonPath('data.receiptStatus', 'received');
         $this->postJson("/api/v1/finance/purchases/$invoice/post", $post, $headers)->assertOk();
         $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $warehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '10.000', 'average_unit_cost' => '11.0000']);
-        $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $oldWarehouse, 'inventory_item_id' => $item, 'quantity_on_hand' => '4.000', 'average_unit_cost' => '5.0000']);
+        $this->assertDatabaseHas('stock_balances', ['warehouse_id' => $oldWarehouse, 'inventory_item_id' => $cafeItem, 'quantity_on_hand' => '4.000', 'average_unit_cost' => '5.0000']);
         $this->assertSame(1, DB::table('purchase_receipts')->where('supplier_invoice_id', $invoice)->count());
-        $this->assertSame(1, DB::table('inventory_items')->where('tenant_id', $tenant)->count());
+        $this->assertSame(2, DB::table('inventory_items')->where('tenant_id', $tenant)->count());
+        $this->assertDatabaseHas('inventory_items', ['id' => $item, 'owner_branch_id' => $factory['id']]);
+        $this->assertDatabaseHas('inventory_items', ['id' => $cafeItem, 'owner_branch_id' => null]);
         $this->assertSame(1, DB::table('stock_movements')->where('warehouse_id', $warehouse)->where('inventory_item_id', $item)->count());
         $payload['lines'][0]['warehouseId'] = $oldWarehouse;
         $this->postJson('/api/v1/finance/supplier-invoices', $payload, $headers)->assertUnprocessable()->assertJsonValidationErrors('warehouseId');
@@ -57,12 +61,13 @@ class PurchasingPhase2ApiTest extends TestCase
     {
         [$tenant, $headers, $branch, $unused, $oldWarehouse, $item] = $this->unifiedInventoryFixture('factory-delayed');
         $factory = $this->postJson('/api/v1/cafe-configuration/branches', ['name' => 'المعمل', 'branchType' => 'factory', 'timezone' => 'Asia/Damascus'], $headers)->assertCreated()->json('data');
-        $warehouse = $factory['posInventoryWarehouseId'];
+        $warehouse = $factory['defaultWarehouseId'];
         $this->patchJson('/api/v1/inventory/items/'.$item, [
             'nameAr' => 'صنف اختبار', 'itemType' => 'raw_material', 'unit' => 'kg',
             'isActive' => true, 'warehouseIds' => [$oldWarehouse, $warehouse],
-        ], $headers)->assertOk();
-        $created = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $this->supplier($headers),
+        ], $headers)->assertUnprocessable();
+        $item = $this->inventoryItem($headers, 'kg', [$warehouse], $factory['id']);
+        $created = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $this->supplier($headers, $factory['id']),
             'branchId' => $factory['id'], 'invoiceType' => 'inventory', 'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'receive_later',
             'lines' => [['lineType' => 'inventory', 'description' => 'Material', 'inventoryItemId' => $item,
                 'quantity' => '10.000', 'lineGrossAmount' => '100.00', 'warehouseId' => $warehouse]]], $headers)->assertCreated()->json('data');
@@ -921,9 +926,9 @@ class PurchasingPhase2ApiTest extends TestCase
         return ['Authorization' => "Bearer $plainToken", 'X-Tenant-Id' => $tenantId];
     }
 
-    private function supplier(array $headers): int
+    private function supplier(array $headers, ?int $scope = null): int
     {
-        return (int) $this->postJson('/api/v1/finance/suppliers', ['name' => 'Phase2 Test Supplier '.uniqid()], $headers)->assertCreated()->json('data.id');
+        return (int) $this->postJson('/api/v1/finance/suppliers'.($scope ? '?scopeBranchId='.$scope : ''), ['name' => 'Phase2 Test Supplier '.uniqid()], $headers)->assertCreated()->json('data.id');
     }
 
     private function expenseCategory(int $tenant, array $headers, string $accountCode): int
@@ -942,9 +947,9 @@ class PurchasingPhase2ApiTest extends TestCase
         ], $headers)->assertCreated()->json('data.id');
     }
 
-    private function inventoryItem(array $headers, string $unit, array $warehouseIds = []): int
+    private function inventoryItem(array $headers, string $unit, array $warehouseIds = [], ?int $scope = null): int
     {
-        return (int) $this->postJson('/api/v1/inventory/items', [
+        return (int) $this->postJson('/api/v1/inventory/items'.($scope ? '?scopeBranchId='.$scope : ''), [
             'nameAr' => 'صنف اختبار', 'nameEn' => 'Phase2 Test Item '.uniqid(), 'sku' => 'P2-'.strtoupper(uniqid()),
             'itemType' => 'raw_material', 'unit' => $unit, 'minimumStock' => '0.000', 'reorderLevel' => '0.000',
             'latestUnitCost' => '1.0000', 'isActive' => true, 'warehouseIds' => $warehouseIds,

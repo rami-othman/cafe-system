@@ -32,6 +32,7 @@ class RecipeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'branchId' => ['required', 'integer'],
             'productItemId' => ['required', 'integer'],
             'outputQuantity' => ['required', 'regex:/^\d+(\.\d{1,3})?$/'],
             'outputUnit' => ['required', Rule::in(InventoryUnitCatalog::codes())],

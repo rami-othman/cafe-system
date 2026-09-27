@@ -163,7 +163,7 @@ class AppSidebar extends StatelessWidget {
         _SidebarDestination(
           'purchases',
           Icons.shopping_cart_outlined,
-          '/finance/purchases',
+          '/manufacturing/purchases',
         ),
         _SidebarDestination(
           'sales',

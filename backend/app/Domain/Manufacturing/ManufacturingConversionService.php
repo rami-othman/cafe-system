@@ -25,6 +25,8 @@ final class ManufacturingConversionService
 
     public function convert(Request $request, int $tenantId, array $data, ?int $actorId): array
     {
+        \App\Support\FactoryWarehouseScope::assertFactoryBranch($tenantId, ! empty($data['branchId']) ? (int) $data['branchId'] : null);
+        \App\Support\FactoryWarehouseScope::assertWarehouseForBranch($tenantId, (int) $data['branchId'], (int) $data['warehouseId']);
         if (! empty($data['idempotencyKey'])) {
             $existing = DB::table('manufacturing_conversions')->where('tenant_id', $tenantId)->where('idempotency_key', $data['idempotencyKey'])->first();
             if ($existing) {

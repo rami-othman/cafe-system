@@ -20,6 +20,7 @@ class CustomerQueryService
         $this->access->assertCanAdminister($request);
         $tenantId = TenantContext::id($request);
         $query = Customer::withTrashed()->forTenant($tenantId)->with(['phones', 'groups']);
+        \App\Support\DataScope::apply($query, 'customers.owner_branch_id', \App\Support\DataScope::resolve($request));
         $status = $filters['status'] ?? null;
         if ($status === null) {
             $query->whereNull('deleted_at');
@@ -33,7 +34,9 @@ class CustomerQueryService
 
         if (isset($filters['groupId'])) {
             $groupId = (int) $filters['groupId'];
-            if (! DB::table('customer_groups')->where('tenant_id', $tenantId)->where('id', $groupId)->where('is_active', true)->whereNull('deleted_at')->exists()) {
+            $groupQuery = DB::table('customer_groups')->where('tenant_id', $tenantId)->where('id', $groupId)->where('is_active', true)->whereNull('deleted_at');
+            \App\Support\DataScope::apply($groupQuery, 'owner_branch_id', \App\Support\DataScope::resolve($request));
+            if (! $groupQuery->exists()) {
                 throw ValidationException::withMessages(['groupId' => 'The group must be active and belong to the authenticated tenant.']);
             }
             $query->whereExists(fn ($subquery) => $subquery->from('customer_group_memberships')->whereColumn('customer_group_memberships.customer_id', 'customers.id')->where('customer_group_memberships.tenant_id', $tenantId)->where('customer_group_memberships.customer_group_id', $groupId));

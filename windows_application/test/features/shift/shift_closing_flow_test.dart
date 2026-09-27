@@ -8,6 +8,8 @@ import 'package:windows_application/features/shift/controllers/shift_closing_sta
 import 'package:windows_application/features/shift/repositories/shift_mock_repository.dart';
 import 'package:windows_application/features/shift/views/shift_closing_screen.dart';
 import 'package:windows_application/l10n/app_localizations.dart';
+import 'package:windows_application/features/pos/controllers/pos_cubit.dart';
+import 'package:windows_application/features/pos/repositories/pos_repository.dart';
 
 /// One integration-level test walking the full five-step closing wizard for
 /// the balanced scenario: operations review -> cash count (exact match,
@@ -62,13 +64,16 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(
-        routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ar'),
-        builder: (context, child) =>
-            Directionality(textDirection: TextDirection.rtl, child: child!),
+      BlocProvider<PosCubit>(
+        create: (_) => PosCubit(repository: PosRepository()),
+        child: MaterialApp.router(
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ar'),
+          builder: (context, child) =>
+              Directionality(textDirection: TextDirection.rtl, child: child!),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -99,7 +104,9 @@ void main() {
     // Step 4 — final review: the confirm button sits below the fold on a
     // short test surface, same as it would on a small window — scroll it
     // into view before opening the confirmation dialog.
-    final Finder confirmCloseButton = find.byKey(const Key('shift-open-confirm-close'));
+    final Finder confirmCloseButton = find.byKey(
+      const Key('shift-open-confirm-close'),
+    );
     expect(confirmCloseButton, findsOneWidget);
     await tester.ensureVisible(confirmCloseButton);
     await tester.pumpAndSettle();
@@ -111,7 +118,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Step 5 — success.
-    final Finder viewReportButton = find.byKey(const Key('shift-success-view-report'));
+    final Finder viewReportButton = find.byKey(
+      const Key('shift-success-view-report'),
+    );
     expect(viewReportButton, findsOneWidget);
     expect(cubit.state.status, ShiftClosingStatus.closed);
     expect(cubit.state.result, isNotNull);

@@ -33,7 +33,7 @@ class StoreCustomerRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $unknown = array_diff(array_keys($this->all()), ['name', 'email', 'birthDate', 'notes', 'isActive', 'phones', 'groupIds']);
+            $unknown = array_diff(array_keys($this->except('scopeBranchId')), ['name', 'email', 'birthDate', 'notes', 'isActive', 'phones', 'groupIds']);
             if ($unknown !== []) {
                 $validator->errors()->add('payload', 'Unknown or prohibited customer fields were submitted.');
             }

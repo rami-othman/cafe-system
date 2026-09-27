@@ -100,9 +100,8 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
 
   void setCashMode(CashCountMode mode) => emit(state.copyWith(cashMode: mode));
 
-  void updateActualCash(String value) => emit(
-    state.copyWith(cashActualInput: value, clearCashActualError: true),
-  );
+  void updateActualCash(String value) =>
+      emit(state.copyWith(cashActualInput: value, clearCashActualError: true));
 
   void updateDenomination(int denomination, String quantity) {
     final Map<int, String> next = Map<int, String>.of(state.denominationCounts)
@@ -263,6 +262,9 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
 
   /// Seals the shift. Guarded by [ShiftClosingState.assessment] having no
   /// blockers and by the acknowledgement checkbox in the dialog.
+  void selectClosingDate(DateTime date) =>
+      emit(state.copyWith(closingDate: date));
+
   Future<ShiftClosingResult?> closeShift() async {
     final ShiftSnapshot? snapshot = state.snapshot;
     final CashCountResult? cash = state.cashCount;
@@ -285,11 +287,14 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
       closingNotes: state.closingNotes.trim(),
       closedAt: closedAt,
       closedBy: snapshot.identity.cashierName,
+      closingDate: state.closingDate,
       reportNumber:
           'RPT-${snapshot.identity.shiftNumber.replaceFirst('SH-', '')}',
     );
     try {
-      final ShiftClosingResult sealedResult = await repository.closeShift(result);
+      final ShiftClosingResult sealedResult = await repository.closeShift(
+        result,
+      );
       if (isClosed) return result;
       emit(
         state.copyWith(

@@ -27,10 +27,12 @@ class BranchLifecycleAndCafeConfigurationTest extends TestCase
             'name' => 'المعمل', 'branchType' => 'factory', 'warehouseName' => 'مخزن المعمل', 'timezone' => 'Asia/Damascus',
         ])->assertCreated()->assertJsonPath('data.branchType', 'factory');
         $branchId = $created->json('data.id');
-        $warehouseId = $created->json('data.posInventoryWarehouseId');
+        $warehouseId = $created->json('data.defaultWarehouseId');
+        $created->assertJsonPath('data.posInventoryWarehouseId', null);
+        $this->assertSame(4, DB::table('invoice_types')->where('owner_branch_id', $branchId)->count());
         $this->assertNotNull($warehouseId);
         $this->assertSame(1, DB::table('warehouses')->where('branch_id', $branchId)->count());
-        $this->assertDatabaseHas('warehouses', ['id' => $warehouseId, 'branch_id' => $branchId, 'tenant_id' => $tenant->id, 'type' => 'other', 'name' => 'مخزن المعمل']);
+        $this->assertDatabaseHas('warehouses', ['id' => $warehouseId, 'branch_id' => $branchId, 'tenant_id' => $tenant->id, 'type' => 'factory', 'name' => 'مخزن المعمل']);
         $rows = $this->withToken($token)->getJson('/api/v1/branches')->assertOk()->json('data');
         $factory = collect($rows)->firstWhere('id', $branchId);
         $this->assertSame('factory', $factory['branchType']);
