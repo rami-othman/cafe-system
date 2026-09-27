@@ -43,6 +43,7 @@ class StockCountController extends Controller
         InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
         if ($branchId) InventoryAccess::assertBranchAccess($request, $branchId);
         if ($warehouseId) {
+            \App\Support\FactoryWarehouseScope::assertDestination($tenant, $branchId, $warehouseId);
             $warehouseBranchId = DB::table('warehouses')->where('tenant_id', $tenant)->where('id', $warehouseId)->value('branch_id');
             InventoryAccess::assertBranchAccess($request, $warehouseBranchId ? (int) $warehouseBranchId : null);
             if ($branchId && $warehouseBranchId !== null && (int) $warehouseBranchId !== $branchId) abort(422, 'The selected warehouse does not belong to the selected branch.');

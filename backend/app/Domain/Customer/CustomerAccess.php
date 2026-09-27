@@ -41,7 +41,7 @@ final class CustomerAccess
     public function allowsUser(User $actor, string $permission): bool
     {
         return match ($permission) {
-            'customer.manage' => $actor->isOwner() ||
+            'customer.manage' => $actor->isOwner() || $actor->effectiveRoleCode() === 'factory_manager' ||
                 ($actor->effectiveRoleCode() === 'manager' && $this->managerHasPermission($actor)),
             default => false,
         };
@@ -90,7 +90,7 @@ final class CustomerAccess
     private function assertOperationalRole(Request $request): void
     {
         $role = $this->actor($request)->effectiveRoleCode();
-        if (! in_array($role, ['owner', 'manager', 'employee'], true)) {
+        if (! in_array($role, ['owner', 'manager', 'employee', 'factory_manager'], true)) {
             throw CustomerDomainException::permissionDenied();
         }
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Customer\CustomerDomainException;
+use App\Domain\Manufacturing\ManufacturingDomainException;
 use App\Exceptions\OrderLifecycleException;
 use App\Support\DomainErrorMessages;
 use App\Support\SafeExceptionResponse;
@@ -11,6 +12,7 @@ use App\Http\Middleware\CanAdministerCafePrinting;
 use App\Http\Middleware\CanManageCafeConfiguration;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
+use App\Http\Middleware\EnsureCafeOperationalAccess;
 use App\Http\Middleware\EnsureBarCheckPermission;
 use App\Http\Middleware\EnsureBranchAccess;
 use App\Http\Middleware\EnsureCashierPermission;
@@ -18,6 +20,7 @@ use App\Http\Middleware\EnsureCustomerPermission;
 use App\Http\Middleware\EnsureDiscountPermission;
 use App\Http\Middleware\EnsureFinancePermission;
 use App\Http\Middleware\EnsureInventoryPermission;
+use App\Http\Middleware\EnsureManufacturingPermission;
 use App\Http\Middleware\EnsurePlatformPermission;
 use App\Http\Middleware\MeasurePaymentPerformance;
 use App\Http\Middleware\RequireChangedPassword;
@@ -63,7 +66,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'cafe.configuration.printing' => CanAdministerCafePrinting::class,
             'menu.management' => CanManageMenuManagement::class,
             'branch.access' => EnsureBranchAccess::class,
+            'cafe.operations' => EnsureCafeOperationalAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,
+            'manufacturing.permission' => EnsureManufacturingPermission::class,
             'barcheck.permission' => EnsureBarCheckPermission::class,
             'finance.permission' => EnsureFinancePermission::class,
             'customer.permission' => EnsureCustomerPermission::class,
@@ -91,6 +96,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (CustomerImportException $exception, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => 'Customer import request could not be completed.', 'code' => $exception->domainCode], $exception->status);
+            }
+        });
+        $exceptions->render(function (ManufacturingDomainException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => DomainErrorMessages::forCode($exception->domainCode), 'code' => $exception->domainCode, 'meta' => $exception->meta], $exception->status);
             }
         });
         $exceptions->render(function (DomainException $exception, Request $request) {

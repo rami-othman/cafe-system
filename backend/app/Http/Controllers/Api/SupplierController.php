@@ -22,6 +22,7 @@ class SupplierController extends Controller
     {
         $tenant = TenantContext::id($request);
         $q = DB::table('suppliers')->where('tenant_id', $tenant)->whereNull('deleted_at');
+        \App\Support\DataScope::apply($q, 'owner_branch_id', \App\Support\DataScope::resolve($request));
         if ($request->filled('status')) {
             $q->where('is_active', $request->input('status') === 'active');
         }
@@ -83,6 +84,7 @@ class SupplierController extends Controller
 
     public function show(Request $request, int $supplier): JsonResponse
     {
+        \App\Support\DataScope::find($request, TenantContext::id($request), 'suppliers', $supplier);
         $tenant = TenantContext::id($request);
 
         return response()->json(['data' => $this->profile($tenant, $supplier) + ['allowedActions' => $this->actions(array_fill_keys(FinanceAccess::capabilities($request), true))]]);
@@ -90,6 +92,7 @@ class SupplierController extends Controller
 
     public function statement(Request $request, int $supplier): JsonResponse
     {
+        \App\Support\DataScope::find($request, TenantContext::id($request), 'suppliers', $supplier);
         $tenant = TenantContext::id($request);
         $this->suppliers->find($tenant, $supplier);
 
@@ -124,6 +127,7 @@ class SupplierController extends Controller
     private function data(Request $request): array
     {
         return $request->validate([
+            'isInternal' => ['sometimes', 'boolean'], 'internalBranchId' => ['nullable', 'integer'],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -153,6 +157,8 @@ class SupplierController extends Controller
         return [
             'id' => (int) $row->id,
             'supplierNumber' => $row->supplier_number,
+            'isInternal' => (bool) $row->is_internal,
+            'internalBranchId' => $row->internal_branch_id ? (int) $row->internal_branch_id : null,
             'name' => $row->name,
             'phone' => $row->phone,
             'email' => $row->email,

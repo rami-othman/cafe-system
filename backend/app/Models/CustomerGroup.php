@@ -13,7 +13,7 @@ class CustomerGroup extends Model
 
     protected $table = 'customer_groups';
 
-    protected $fillable = ['tenant_id', 'name', 'normalized_name', 'is_active'];
+    protected $fillable = ['owner_branch_id', 'tenant_id', 'name', 'normalized_name', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
 

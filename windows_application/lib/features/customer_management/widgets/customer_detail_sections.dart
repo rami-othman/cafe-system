@@ -50,7 +50,7 @@ class CustomerDetailHeader extends StatelessWidget {
           children: <Widget>[
             Flexible(
               child: Text(
-                customer.name,
+                '${customer.name}${customer.isInternal ? ' • داخلي' : ''}',
                 key: const ValueKey<String>('customer-management-page-title'),
                 overflow: TextOverflow.ellipsis,
                 style: CustomerManagementVisualTokens.pageTitle,

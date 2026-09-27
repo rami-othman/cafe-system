@@ -15,6 +15,7 @@ final class WarehousePresentation
             'branch_main', 'main' => 'رئيسي',
             'bar' => 'البار',
             'kitchen' => 'المطبخ',
+            'factory' => 'المعمل',
             default => 'مخزن',
         };
     }

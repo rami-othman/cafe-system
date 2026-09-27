@@ -102,9 +102,11 @@ class InventoryCubit extends Cubit<InventoryState> {
     int? branchId,
     String? search,
     String? type,
+    List<String>? types,
     String? category,
     String? status,
     String? stockStatus,
+    bool inStockOnly = false,
     int? warehouseId,
     int page = 1,
   }) => _loadLatest('items', (bool Function() isCurrent) async {
@@ -112,9 +114,11 @@ class InventoryCubit extends Cubit<InventoryState> {
       repository.itemsPage(
         search: search,
         type: type,
+        types: types,
         category: category,
         status: status,
         stockStatus: stockStatus,
+        inStockOnly: inStockOnly,
         warehouseId: warehouseId,
         branchId: branchId,
         page: page,
@@ -152,6 +156,7 @@ class InventoryCubit extends Cubit<InventoryState> {
         warehouseId: warehouseId,
         search: search,
         stockStatus: stockStatus,
+
       ),
       repository.warehouses(),
     ]);
@@ -252,8 +257,9 @@ class InventoryCubit extends Cubit<InventoryState> {
   Future<void> loadItemRecipeUsage(int itemId) async {
     emit(state.copyWith(itemRecipeUsageLoading: true, clearError: true));
     try {
-      final List<InventoryRecipeUsage> usage = await repository
-          .itemRecipeUsage(itemId);
+      final List<InventoryRecipeUsage> usage = await repository.itemRecipeUsage(
+        itemId,
+      );
       emit(
         state.copyWith(
           itemRecipeUsage: usage,
@@ -289,6 +295,7 @@ class InventoryCubit extends Cubit<InventoryState> {
       emit(state.copyWith(itemPurchaseHistoryLoading: false));
     }
   }
+
   Future<void> loadUnitConversions({int? itemId}) => _load(() async {
     final Future<List<InventoryItem>> itemsFuture = repository
         .conversionItems();
@@ -362,7 +369,8 @@ class InventoryCubit extends Cubit<InventoryState> {
   });
   Future<bool> saveItem(Map<String, dynamic> payload, {int? id}) =>
       _save(() async {
-        await repository.saveItem(payload, id: id);
+        final item = await repository.saveItem(payload, id: id);
+        emit(state.copyWith(selectedItem: item));
       });
   Future<bool> saveUnitConversion(
     int itemId,

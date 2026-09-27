@@ -6718,6 +6718,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get teamEmployee => 'موظف';
 
   @override
+  String get teamFactoryManager => 'مدير معمل';
+
+  @override
   String get teamNoMembers => 'لا يوجد مديرون أو موظفون بعد.';
 
   @override

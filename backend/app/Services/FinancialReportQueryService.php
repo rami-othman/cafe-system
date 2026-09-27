@@ -24,6 +24,17 @@ final class FinancialReportQueryService
 
     public function context(int $tenant, int $actor, array $filters): array { return $this->contexts->resolve($tenant, $actor, $filters); }
 
+    private function reportParty(array $ctx, string $table, int $id): object
+    {
+        $row = DB::table($table)->where('tenant_id', $ctx['tenantId'])->where('id', $id)->first();
+        if (! $row) throw ValidationException::withMessages([($table === 'customers' ? 'customerId' : 'supplierId') => 'The party was not found for this tenant.']);
+        $actor = \App\Support\FinancialActor::user($ctx['actorId'], $ctx['tenantId']);
+        if (! $actor->isOwner() || $ctx['branchId'] !== null) {
+            \App\Support\DataScope::assertOwned($row, \App\Support\DataScope::forBranch($ctx['tenantId'], $ctx['branchId']));
+        }
+        return $row;
+    }
+
     public function profitAndLoss(array $ctx): array
     {
         $current = $this->profitAndLossRange($ctx, $ctx['dateFrom'], $ctx['dateTo']);
@@ -108,7 +119,7 @@ final class FinancialReportQueryService
 
     public function supplierAging(array $ctx, string $asOf, ?int $supplierId = null): array
     {
-        if ($supplierId && ! DB::table('suppliers')->where('tenant_id', $ctx['tenantId'])->where('id', $supplierId)->exists()) throw ValidationException::withMessages(['supplierId' => 'Supplier was not found for this tenant.']);
+        if ($supplierId) $this->reportParty($ctx, 'suppliers', $supplierId);
         $invoices = $this->payables->invoicesAsOf($ctx['tenantId'], $asOf, $ctx['branchId'], $ctx['authorizedBranchIds'], $supplierId); $buckets = ['current' => 0, 'days1To30' => 0, 'days31To60' => 0, 'days61To90' => 0, 'days90Plus' => 0]; $suppliers = [];
         foreach ($invoices as $invoice) { if ($invoice['remainingCents'] <= 0) continue; $age = max(0, now()->parse($asOf)->diffInDays(now()->parse($invoice['dueDate']), false) * -1); $key = $invoice['dueDate'] >= $asOf ? 'current' : ($age <= 30 ? 'days1To30' : ($age <= 60 ? 'days31To60' : ($age <= 90 ? 'days61To90' : 'days90Plus'))); $id = $invoice['supplierId']; if (! isset($suppliers[$id])) $suppliers[$id] = ['supplier' => ['id' => $id, 'name' => $invoice['supplierName']], 'current' => 0, 'days1To30' => 0, 'days31To60' => 0, 'days61To90' => 0, 'days90Plus' => 0, 'totalOutstanding' => 0]; $suppliers[$id][$key] += $invoice['remainingCents']; $suppliers[$id]['totalOutstanding'] += $invoice['remainingCents']; $buckets[$key] += $invoice['remainingCents']; }
         $format = fn (array $row): array => collect($row)->map(fn ($v, $k) => is_int($v) ? Money::decimal($v) : $v)->all(); return ['asOfDate' => $asOf, 'suppliers' => array_values(array_map($format, $suppliers)), 'totals' => $format($buckets + ['totalOutstanding' => array_sum($buckets)])];
@@ -116,7 +127,7 @@ final class FinancialReportQueryService
 
     public function supplierStatement(array $ctx, int $supplierId): array
     {
-        if (! DB::table('suppliers')->where('tenant_id', $ctx['tenantId'])->where('id', $supplierId)->exists()) throw ValidationException::withMessages(['supplierId' => 'Supplier was not found for this tenant.']);
+        $this->reportParty($ctx, 'suppliers', $supplierId);
         $before = now()->parse($ctx['dateFrom'])->subDay()->toDateString();
         $opening = array_sum(array_column($this->payables->invoicesAsOf($ctx['tenantId'], $before, $ctx['branchId'], $ctx['authorizedBranchIds'], $supplierId), 'remainingCents'));
         $events = [];
@@ -124,6 +135,7 @@ final class FinancialReportQueryService
             if ($invoice['postedDate'] >= $ctx['dateFrom'] && $invoice['postedDate'] <= $ctx['dateTo']) $events[] = ['date' => $invoice['postedDate'], 'type' => 'supplier_invoice', 'reference' => $invoice['reference'], 'description' => 'Supplier invoice', 'debitCents' => $invoice['totalCents'], 'creditCents' => 0, 'resourceKind' => 'supplier_invoice', 'id' => $invoice['id']];
         }
         $payments = DB::table('payment_allocations as allocations')->join('supplier_payments as payments', 'payments.id', '=', 'allocations.supplier_payment_id')->join('supplier_invoices as invoices', 'invoices.id', '=', 'allocations.supplier_invoice_id')->where('allocations.tenant_id', $ctx['tenantId'])->where('invoices.supplier_id', $supplierId)->whereBetween('payments.payment_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        \App\Support\InternalReportingScope::party($payments, 'invoices.supplier_id', 'suppliers', $ctx);
         if ($ctx['branchId'] !== null) $payments->where('payments.branch_id', $ctx['branchId']); else $payments->where(fn ($q) => $q->whereIn('payments.branch_id', $ctx['authorizedBranchIds'])->orWhereNull('payments.branch_id'));
         foreach ($payments->get(['payments.id', 'payments.payment_number', 'payments.payment_date', 'allocations.amount']) as $payment) $events[] = ['date' => $payment->payment_date, 'type' => 'supplier_payment', 'reference' => $payment->payment_number, 'description' => 'Supplier payment allocation', 'debitCents' => 0, 'creditCents' => Money::cents($payment->amount), 'resourceKind' => 'supplier_payment', 'id' => (int) $payment->id];
         usort($events, fn (array $a, array $b) => [$a['date'], $a['type'], $a['id']] <=> [$b['date'], $b['type'], $b['id']]); $running = $opening;
@@ -133,7 +145,7 @@ final class FinancialReportQueryService
 
     public function customerAging(array $ctx, string $asOf, ?int $customerId = null): array
     {
-        if ($customerId && ! DB::table('customers')->where('tenant_id', $ctx['tenantId'])->where('id', $customerId)->exists()) throw ValidationException::withMessages(['customerId' => 'Customer was not found for this tenant.']);
+        if ($customerId) $this->reportParty($ctx, 'customers', $customerId);
         $invoices = $this->receivables->invoicesAsOf($ctx['tenantId'], $asOf, $ctx['branchId'], $ctx['authorizedBranchIds'], $customerId); $buckets = ['current' => 0, 'days1To30' => 0, 'days31To60' => 0, 'days61To90' => 0, 'days90Plus' => 0]; $customers = [];
         foreach ($invoices as $invoice) { if ($invoice['remainingCents'] <= 0) continue; $age = max(0, now()->parse($asOf)->diffInDays(now()->parse($invoice['dueDate']), false) * -1); $key = $invoice['dueDate'] >= $asOf ? 'current' : ($age <= 30 ? 'days1To30' : ($age <= 60 ? 'days31To60' : ($age <= 90 ? 'days61To90' : 'days90Plus'))); $id = $invoice['customerId']; if (! isset($customers[$id])) $customers[$id] = ['customer' => ['id' => $id, 'name' => $invoice['customerName']], 'current' => 0, 'days1To30' => 0, 'days31To60' => 0, 'days61To90' => 0, 'days90Plus' => 0, 'totalOutstanding' => 0]; $customers[$id][$key] += $invoice['remainingCents']; $customers[$id]['totalOutstanding'] += $invoice['remainingCents']; $buckets[$key] += $invoice['remainingCents']; }
         $format = fn (array $row): array => collect($row)->map(fn ($v, $k) => is_int($v) ? Money::decimal($v) : $v)->all(); return ['asOfDate' => $asOf, 'customers' => collect(array_map($format, $customers))->sortByDesc('totalOutstanding')->values()->all(), 'totals' => $format($buckets + ['totalOutstanding' => array_sum($buckets)])];
@@ -153,30 +165,34 @@ final class FinancialReportQueryService
      */
     public function customerStatement(array $ctx, int $customerId): array
     {
-        if (! DB::table('customers')->where('tenant_id', $ctx['tenantId'])->where('id', $customerId)->exists()) throw ValidationException::withMessages(['customerId' => 'Customer was not found for this tenant.']);
+        $party = $this->reportParty($ctx, 'customers', $customerId);
         $before = now()->parse($ctx['dateFrom'])->subDay()->toDateString();
         $openingAr = array_sum(array_column($this->receivables->invoicesAsOf($ctx['tenantId'], $before, $ctx['branchId'], $ctx['authorizedBranchIds'], $customerId), 'remainingCents'));
-        $openingCredit = $this->customerCredit->balanceCentsAsOf($ctx['tenantId'], $customerId, $before);
+        $openingCredit = $party->is_internal && \App\Support\InternalReportingScope::consolidated($ctx) ? 0 : $this->customerCredit->balanceCentsAsOf($ctx['tenantId'], $customerId, $before);
         $opening = $openingAr - $openingCredit;
         $events = [];
 
         $invoices = DB::table('sales_invoices')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
             ->whereBetween('invoice_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        \App\Support\InternalReportingScope::party($invoices, 'customer_id', 'customers', $ctx);
         if ($ctx['branchId'] !== null) $invoices->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $invoices->whereIn('branch_id', $ctx['authorizedBranchIds']);
         foreach ($invoices->get(['id', 'invoice_number', 'invoice_date', 'total']) as $invoice) $events[] = ['date' => $invoice->invoice_date, 'type' => 'sales_invoice', 'reference' => $invoice->invoice_number, 'description' => 'Sales invoice', 'debitCents' => Money::cents($invoice->total), 'creditCents' => 0, 'resourceKind' => 'sales_invoice', 'id' => (int) $invoice->id];
 
         $payments = DB::table('customer_payments')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
             ->whereBetween('payment_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        \App\Support\InternalReportingScope::party($payments, 'customer_id', 'customers', $ctx);
         if ($ctx['branchId'] !== null) $payments->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $payments->whereIn('branch_id', $ctx['authorizedBranchIds']);
         foreach ($payments->get(['id', 'payment_number', 'payment_date', 'amount']) as $payment) $events[] = ['date' => $payment->payment_date, 'type' => 'customer_payment', 'reference' => $payment->payment_number, 'description' => 'Customer payment', 'debitCents' => 0, 'creditCents' => Money::cents($payment->amount), 'resourceKind' => 'customer_payment', 'id' => (int) $payment->id];
 
         $creditNotes = DB::table('sales_credit_notes')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
             ->whereBetween('credit_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        \App\Support\InternalReportingScope::party($creditNotes, 'customer_id', 'customers', $ctx);
         if ($ctx['branchId'] !== null) $creditNotes->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $creditNotes->whereIn('branch_id', $ctx['authorizedBranchIds']);
         foreach ($creditNotes->get(['id', 'credit_note_number', 'credit_date', 'total']) as $note) $events[] = ['date' => $note->credit_date, 'type' => 'sales_credit_note', 'reference' => $note->credit_note_number, 'description' => 'Credit note', 'debitCents' => 0, 'creditCents' => Money::cents($note->total), 'resourceKind' => 'sales_credit_note', 'id' => (int) $note->id];
 
         $refunds = DB::table('customer_refunds')->where('tenant_id', $ctx['tenantId'])->where('customer_id', $customerId)->where('status', 'posted')
             ->whereBetween('refund_date', [$ctx['dateFrom'], $ctx['dateTo']]);
+        \App\Support\InternalReportingScope::party($refunds, 'customer_id', 'customers', $ctx);
         if ($ctx['branchId'] !== null) $refunds->where('branch_id', $ctx['branchId']); elseif ($ctx['authorizedBranchIds'] !== []) $refunds->whereIn('branch_id', $ctx['authorizedBranchIds']);
         foreach ($refunds->get(['id', 'refund_number', 'refund_date', 'amount']) as $refund) $events[] = ['date' => $refund->refund_date, 'type' => 'customer_refund', 'reference' => $refund->refund_number, 'description' => 'Customer refund', 'debitCents' => Money::cents($refund->amount), 'creditCents' => 0, 'resourceKind' => 'customer_refund', 'id' => (int) $refund->id];
 
@@ -189,7 +205,7 @@ final class FinancialReportQueryService
     private function profitAndLossRange(array $ctx, string $from, string $to): array { $rows = $this->accountRows($ctx, $from, $to, false); $sections = ['revenue' => [], 'costOfSales' => [], 'operatingExpenses' => []]; $totals = ['revenue' => 0, 'costOfSales' => 0, 'operatingExpenses' => 0]; foreach ($rows as $row) { $key = match ($row['group']) { 'revenue' => 'revenue', 'cost_of_sales' => 'costOfSales', 'expenses', 'expense' => 'operatingExpenses', default => null }; if (! $key) continue; $amount = $this->incomeStatementAmount($row); $row['normalisedCents'] = $amount; $row['normalisedBalance'] = Money::decimal($amount); $sections[$key][] = $row; $totals[$key] += $amount; } $totals['grossProfit'] = $totals['revenue'] - $totals['costOfSales']; $totals['netOperatingProfit'] = $totals['grossProfit'] - $totals['operatingExpenses']; return ['dateFrom' => $from, 'dateTo' => $to, 'sections' => array_map(fn ($rows) => array_map(fn ($r) => $this->withoutCents($r), $rows), $sections), 'totals' => $this->decimalMap($totals)]; }
     private function accountRows(array $ctx, ?string $from, string $to, bool $withOpening): array { $accounts = DB::table('financial_accounts')->where('tenant_id', $ctx['tenantId'])->whereNull('deleted_at')->orderBy('account_group')->orderBy('code')->get(); $period = $this->accountAggregates($ctx, $from, $to); $opening = $withOpening && $from ? $this->accountAggregates($ctx, null, now()->parse($from)->subDay()->toDateString()) : collect(); $all = $withOpening ? $this->accountAggregates($ctx, null, $to) : collect(); return $accounts->map(function (object $a) use ($period, $opening, $all): array { $p = $period[$a->id] ?? (object) ['debit' => '0', 'credit' => '0']; $o = $opening[$a->id] ?? (object) ['debit' => '0', 'credit' => '0']; $c = $all[$a->id] ?? $p; $pd = Money::cents($p->debit); $pc = Money::cents($p->credit); $od = Money::cents($o->debit); $oc = Money::cents($o->credit); $cd = Money::cents($c->debit); $cc = Money::cents($c->credit); return ['id' => (int) $a->id, 'code' => $a->code, 'name' => $a->name_en, 'group' => $a->account_group, 'normalBalance' => $a->normal_balance, 'parentAccountId' => $a->parent_account_id ? (int) $a->parent_account_id : null, 'debit' => Money::decimal($pd), 'credit' => Money::decimal($pc), 'normalisedBalance' => Money::decimal($this->normalised($a->normal_balance, $pd, $pc)), 'normalisedCents' => $this->normalised($a->normal_balance, $pd, $pc), 'openingDebit' => Money::decimal($od), 'openingCredit' => Money::decimal($oc), 'periodDebit' => Money::decimal($pd), 'periodCredit' => Money::decimal($pc), 'closingDebit' => Money::decimal(max(0, $cd - $cc)), 'closingCredit' => Money::decimal(max(0, $cc - $cd)), 'closingDebitCents' => max(0, $cd - $cc), 'closingCreditCents' => max(0, $cc - $cd)]; })->all(); }
     private function accountAggregates(array $ctx, ?string $from, string $to) { $q = $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->where('lines.tenant_id', $ctx['tenantId'])->whereDate('entries.entry_date', '<=', $to); if ($from) $q->whereDate('entries.entry_date', '>=', $from); return $q->groupBy('lines.financial_account_id')->selectRaw('lines.financial_account_id, SUM(lines.debit) debit, SUM(lines.credit) credit')->get()->keyBy('financial_account_id'); }
-    private function posted(array $ctx): Builder { $q = DB::table('journal_entries as entries')->where('entries.tenant_id', $ctx['tenantId'])->where('entries.status', 'posted'); return BranchScope::apply($q, 'entries.branch_id', $ctx['branchId'], $ctx['authorizedBranchIds']); }
+    private function posted(array $ctx): Builder { $q = DB::table('journal_entries as entries')->where('entries.tenant_id', $ctx['tenantId'])->where('entries.status', 'posted'); \App\Support\InternalReportingScope::journals($q, $ctx); return BranchScope::apply($q, 'entries.branch_id', $ctx['branchId'], $ctx['authorizedBranchIds']); }
     private function ledgerLines(array $ctx, int $account): Builder { return $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->where('lines.tenant_id', $ctx['tenantId'])->where('lines.financial_account_id', $account)->select('lines.id', 'lines.journal_entry_id', 'lines.debit', 'lines.credit', 'lines.description as line_description', 'entries.id as entry_id', 'entries.entry_date', 'entries.entry_number', 'entries.source_type', 'entries.source_id', 'entries.description as entry_description'); }
     private function accountNormalised(array $ctx, int $account, ?string $from, string $to, string $normal): int { $q = $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->where('lines.tenant_id', $ctx['tenantId'])->where('lines.financial_account_id', $account)->whereDate('entries.entry_date', '<=', $to); if ($from) $q->whereDate('entries.entry_date', '>=', $from); $row = $q->selectRaw('COALESCE(SUM(lines.debit),0) debit, COALESCE(SUM(lines.credit),0) credit')->first(); return $this->normalised($normal, Money::cents($row->debit), Money::cents($row->credit)); }
     private function cashBalance(array $ctx, array $accounts, string $to): int { if ($accounts === []) return 0; $rows = $this->posted($ctx)->join('journal_entry_lines as lines', 'lines.journal_entry_id', '=', 'entries.id')->join('financial_accounts as accounts', 'accounts.id', '=', 'lines.financial_account_id')->where('lines.tenant_id', $ctx['tenantId'])->whereIn('lines.financial_account_id', $accounts)->whereDate('entries.entry_date', '<=', $to)->groupBy('accounts.normal_balance')->selectRaw('accounts.normal_balance, SUM(lines.debit) debit, SUM(lines.credit) credit')->get(); return $rows->sum(fn ($r) => $this->normalised($r->normal_balance, Money::cents($r->debit), Money::cents($r->credit))); }

@@ -298,6 +298,10 @@ class _TeamFiltersState extends State<_TeamFilters> {
             DropdownMenuItem(value: 'owner', child: Text('Owner')),
             DropdownMenuItem(value: 'manager', child: Text('Manager')),
             DropdownMenuItem(value: 'employee', child: Text('Employee')),
+            DropdownMenuItem(
+              value: 'factory_manager',
+              child: Text('Factory Manager'),
+            ),
           ],
           onChanged: (String? value) => context.read<TeamCubit>().setFilters(
             role: value,
@@ -608,8 +612,19 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     final bool editing = widget.member != null;
     final bool roleChanged =
         editing && _draft.roleCode != widget.member!.role.code;
+    // Decision 4 (26/09/2026): factory_manager is bound to the factory only
+    // — its branch picker offers factory branches, never cafe ones (see
+    // TenantEmployeeService::assertBranchTypeForRole on the backend, which
+    // rejects a cafe branch here with a 422 regardless of what the UI sends).
+    final bool isFactoryManagerRole = _draft.roleCode == 'factory_manager';
     final List<CafeConfigurationBranch> activeBranches = state.branches
-        .where((CafeConfigurationBranch b) => b.isActive)
+        .where(
+          (CafeConfigurationBranch b) =>
+              b.isActive &&
+              (isFactoryManagerRole
+                  ? b.branchType == 'factory'
+                  : b.branchType != 'factory'),
+        )
         .toList();
     final Set<int> activeIds = activeBranches
         .map((CafeConfigurationBranch b) => b.id)
@@ -654,7 +669,9 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                     .where(
                       (TenantRole r) =>
                           r.assignable &&
-                          (r.code == 'manager' || r.code == 'employee'),
+                          (r.code == 'manager' ||
+                              r.code == 'employee' ||
+                              r.code == 'factory_manager'),
                     )
                     .map(
                       (TenantRole role) => DropdownMenuItem<TenantRole>(
@@ -669,6 +686,11 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                       () => _draft = _draft.copyWith(
                         roleId: role.id,
                         roleCode: role.code,
+                        // The branch picker's options are role-scoped (cafe
+                        // vs. factory branches) — a role switch clears the
+                        // previous selection instead of silently keeping now-
+                        // hidden branch ids.
+                        branchIds: const <int>[],
                       ),
                     );
                   }
@@ -987,6 +1009,7 @@ class _RoleBadge extends StatelessWidget {
 String _roleLabel(String code, _TeamCopy c) => switch (code) {
   'owner' => c.owner,
   'manager' => c.manager,
+  'factory_manager' => c.factoryManager,
   _ => c.employee,
 };
 
@@ -1178,6 +1201,8 @@ class _TeamCopy {
   String get owner => context.maybeL10n?.teamOwner ?? 'Owner';
   String get manager => context.maybeL10n?.teamManager ?? 'Manager';
   String get employee => context.maybeL10n?.teamEmployee ?? 'Employee';
+  String get factoryManager =>
+      context.maybeL10n?.teamFactoryManager ?? 'Factory Manager';
   String get noMembers =>
       context.maybeL10n?.teamNoMembers ?? 'No Managers or Employees yet.';
   String get noResults =>

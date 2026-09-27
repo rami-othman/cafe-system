@@ -68,18 +68,18 @@ final class CustomerCreditQueryService
     }
 
     /** Tenant-wide unapplied customer credit as of a cutoff date, for the Finance Dashboard tile. */
-    public function totalBalanceCentsAsOf(int $tenantId, string $asOfDate): int
+    public function totalBalanceCentsAsOf(int $tenantId, string $asOfDate, ?array $context = null): int
     {
         if (! Schema::hasTable('customer_credit_ledger')) {
             return 0;
         }
         $grants = Schema::hasTable('sales_credit_notes')
             ? DB::table('customer_credit_ledger as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
-                ->where('l.tenant_id', $tenantId)->whereDate('n.credit_date', '<=', $asOfDate)->sum('l.amount') ?: '0'
+                ->when($context !== null && ($context['branchId'] ?? null) !== null && \App\Support\FinancialActor::user($context['actorId'], $tenantId)->effectiveRoleCode() === 'factory_manager', fn ($q) => $q->where('n.branch_id', $context['branchId']))->when(\App\Support\InternalReportingScope::consolidated($context), fn ($q) => \App\Support\InternalReportingScope::party($q, 'n.customer_id', 'customers', $context))->where('l.tenant_id', $tenantId)->whereDate('n.credit_date', '<=', $asOfDate)->sum('l.amount') ?: '0'
             : '0';
         $consumptions = Schema::hasTable('customer_refunds')
             ? DB::table('customer_credit_ledger as l')->join('customer_refunds as r', 'r.id', '=', 'l.customer_refund_id')
-                ->where('l.tenant_id', $tenantId)->whereDate('r.refund_date', '<=', $asOfDate)->sum('l.amount') ?: '0'
+                ->when($context !== null && ($context['branchId'] ?? null) !== null && \App\Support\FinancialActor::user($context['actorId'], $tenantId)->effectiveRoleCode() === 'factory_manager', fn ($q) => $q->where('r.branch_id', $context['branchId']))->when(\App\Support\InternalReportingScope::consolidated($context), fn ($q) => \App\Support\InternalReportingScope::party($q, 'r.customer_id', 'customers', $context))->where('l.tenant_id', $tenantId)->whereDate('r.refund_date', '<=', $asOfDate)->sum('l.amount') ?: '0'
             : '0';
 
         return Money::cents($grants) + Money::cents($consumptions);

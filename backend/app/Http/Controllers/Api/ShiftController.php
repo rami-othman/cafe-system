@@ -144,6 +144,7 @@ class ShiftController extends Controller
     public function close(Request $request, int $shift): JsonResponse
     {
         $data = $request->validate([
+            'closingDate' => ['nullable', 'date_format:Y-m-d'],
             'closingCash' => ['required', 'numeric', 'min:0'], 'note' => ['nullable', 'string', 'max:4000'],
             'cashDifferenceReason' => ['nullable', Rule::in(self::DIFFERENCE_REASONS)], 'cashDifferenceReasonDetail' => ['nullable', 'string', 'max:4000'],
             'barCountLines' => ['nullable', 'array'], 'barCountLines.*.inventoryItemId' => ['required_with:barCountLines', 'integer'], 'barCountLines.*.counted' => ['required_with:barCountLines', 'numeric', 'min:0'],
@@ -157,18 +158,44 @@ class ShiftController extends Controller
             abort_unless((int) $row->user_id === (int) $actor->id, 403, __('shifts.only_owner_can_close'));
             if ($row->status === 'closed' && $row->close_type === ShiftCloseService::TYPE_MANUAL
                 && Money::cents($row->closing_cash) === Money::cents($data['closingCash'], 'closingCash')) {
+                if (! empty($data['closingDate'])) {
+                    $timezone = DB::table('branches')->where('id', $row->branch_id)->value('timezone') ?: 'UTC';
+                    if (CarbonImmutable::parse($row->closed_at, 'UTC')->setTimezone($timezone)->toDateString() !== $data['closingDate']) {
+                        throw ValidationException::withMessages(['closingDate' => 'الوردية مغلقة بالفعل بتاريخ مختلف.']);
+                    }
+                }
                 return $row;
             }
             if ($row->status !== 'open') {
                 throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
             }
+            $closedAt = null;
+            if (! empty($data['closingDate'])) {
+                $timezone = DB::table('branches')->where('id', $row->branch_id)->value('timezone') ?: 'UTC';
+                $selected = CarbonImmutable::parse($data['closingDate'], $timezone)->endOfDay()->utc();
+                $current = CarbonImmutable::now('UTC');
+                if ($data['closingDate'] > $current->setTimezone($timezone)->toDateString()) {
+                    throw ValidationException::withMessages(['closingDate' => 'تاريخ الإغلاق لا يمكن أن يكون في المستقبل.']);
+                }
+                $selected = $selected->min($current);
+                $latest = CarbonImmutable::parse($row->opened_at, 'UTC');
+                foreach (['orders', 'payments', 'payment_refunds', 'shift_cash_movements', 'customer_payments', 'customer_refunds', 'supplier_payments', 'expenses', 'finance_documents'] as $table) {
+                    $value = DB::table($table)->where('tenant_id', $tenantId)->where('shift_id', $row->id)->max(DB::raw('COALESCE(updated_at, created_at)'));
+                    if ($value) $latest = $latest->max(CarbonImmutable::parse($value, 'UTC'));
+                }
+                if ($selected->lessThan($latest)) {
+                    throw ValidationException::withMessages(['closingDate' => 'تاريخ الإغلاق يجب أن يكون بعد فتح الوردية وآخر حركة عليها.']);
+                }
+                $closedAt = $selected->format('Y-m-d H:i:s');
+            }
             $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
 
             return $this->closer->close($request, $tenantId, $row, ShiftCloseService::TYPE_MANUAL, (string) $data['closingCash'], [
+                ...($closedAt ? ['closed_at' => $closedAt] : []),
                 'cash_difference_reason' => $data['cashDifferenceReason'] ?? null,
                 'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null,
                 'notes' => $data['note'] ?? $row->notes,
-            ]);
+            ], $data['closingDate'] ?? null);
         });
 
         return response()->json(['data' => $this->closingPayload($tenantId, $closed)]);

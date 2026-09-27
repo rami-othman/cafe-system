@@ -30,6 +30,7 @@ class CustomerService
         return DB::transaction(function () use ($request, $tenantId, $data): Customer {
             $name = CustomerNameNormalizer::normalize($data['name']);
             $customer = Customer::query()->create([
+                'owner_branch_id' => \App\Support\DataScope::resolve($request),
                 'tenant_id' => $tenantId,
                 'name' => $name['displayName'],
                 'normalized_name' => $name['normalizedName'],
@@ -61,6 +62,7 @@ class CustomerService
 
         return DB::transaction(function () use ($request, $tenantId, $id, $data): Customer {
             $customer = Customer::withTrashed()->where('tenant_id', $tenantId)->whereKey($id)->lockForUpdate()->firstOrFail();
+            \App\Support\DataScope::assertOwned($customer, \App\Support\DataScope::resolve($request));
             $before = $this->auditState($customer);
             $updates = [];
             if (array_key_exists('name', $data)) {
@@ -98,6 +100,7 @@ class CustomerService
             $name = CustomerNameNormalizer::normalize($data['name']);
             $phone = CustomerPhoneNormalizer::normalize($data['phone']);
             $customer = Customer::query()->create([
+                'owner_branch_id' => \App\Support\DataScope::resolve($request),
                 'tenant_id' => $tenantId,
                 'name' => $name['displayName'],
                 'normalized_name' => $name['normalizedName'],
@@ -123,6 +126,7 @@ class CustomerService
 
         return DB::transaction(function () use ($request, $tenantId, $customerId, $groupIds): Customer {
             $customer = Customer::withTrashed()->where('tenant_id', $tenantId)->whereKey($customerId)->lockForUpdate()->firstOrFail();
+            \App\Support\DataScope::assertOwned($customer, \App\Support\DataScope::resolve($request));
             $this->replaceGroups($request, $tenantId, $customer->id, $groupIds);
 
             return $this->fresh($tenantId, $customerId);
@@ -156,6 +160,7 @@ class CustomerService
 
         return DB::transaction(function () use ($request, $tenantId, $id, $action): Customer {
             $customer = Customer::withTrashed()->where('tenant_id', $tenantId)->whereKey($id)->lockForUpdate()->firstOrFail();
+            \App\Support\DataScope::assertOwned($customer, \App\Support\DataScope::resolve($request));
             $archived = $customer->trashed();
             $state = $customer->lifecycleState();
             if ($action === 'activate') {
@@ -202,7 +207,9 @@ class CustomerService
     {
         $this->access->assertCanAdminister($request);
 
-        return Customer::withTrashed()->where('tenant_id', TenantContext::id($request))->whereKey($id)->with(['phones', 'groups'])->firstOrFail();
+        $customer = Customer::withTrashed()->where('tenant_id', TenantContext::id($request))->whereKey($id)->with(['phones', 'groups'])->firstOrFail();
+        \App\Support\DataScope::assertOwned($customer, \App\Support\DataScope::resolve($request));
+        return $customer;
     }
 
     private function fresh(int $tenantId, int $id): Customer
@@ -219,6 +226,7 @@ class CustomerService
     {
         $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
         $groups = CustomerGroup::query()->forTenant($tenantId)->whereIn('id', $groupIds)->where('is_active', true)->whereNull('deleted_at')->lockForUpdate()->get();
+        foreach ($groups as $group) \App\Support\DataScope::assertOwned($group, \App\Support\DataScope::resolve($request));
         if ($groups->count() !== count($groupIds)) {
             throw ValidationException::withMessages(['groupIds' => 'Every group must be active and belong to the authenticated tenant.']);
         }

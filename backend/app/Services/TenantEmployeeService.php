@@ -26,6 +26,7 @@ class TenantEmployeeService
             $this->assertUsernameAvailable($tenantId, $data['username'] ?? null);
             $this->assertRoleIdentity($role, $data['email'] ?? null, $data['username'] ?? null);
             $this->assertBranchIds($data['branchIds']);
+            $this->assertBranchTypeForRole($tenantId, $role, $data['branchIds']);
 
             $user = User::query()->create([
                 'tenant_id' => $tenantId,
@@ -66,8 +67,15 @@ class TenantEmployeeService
             }
             if (array_key_exists('branchIds', $data)) {
                 $this->assertBranchIds($data['branchIds']);
+                $this->assertBranchTypeForRole((int) $user->tenant_id, $role, $data['branchIds']);
             } elseif ($user->is_active && $user->branches->isEmpty()) {
                 throw new DomainException('Active non-owner users require at least one branch assignment.');
+            } elseif ($role->code === DefaultTenantRoleService::FACTORY_MANAGER) {
+                // Role is changing (or already is) factory_manager without a
+                // branchIds payload: the user's existing assignment must
+                // already be factory-only, otherwise a factory_manager could
+                // end up keeping a cafe branch from before the role change.
+                $this->assertBranchTypeForRole((int) $user->tenant_id, $role, $user->branches->pluck('id')->all());
             }
 
             $payload = ['tenant_role_id' => $role->id, 'role' => $this->roles->canonicalLegacyRole($role->code)];
@@ -139,7 +147,7 @@ class TenantEmployeeService
 
     private function assertRoleIdentity(TenantRole $role, ?string $email, ?string $username): void
     {
-        if ($role->code === DefaultTenantRoleService::MANAGER && ! filled($email)) {
+        if (in_array($role->code, [DefaultTenantRoleService::MANAGER, DefaultTenantRoleService::FACTORY_MANAGER], true) && ! filled($email)) {
             throw ValidationException::withMessages(['email' => 'Managers require an email address.']);
         }
         if ($role->code === DefaultTenantRoleService::EMPLOYEE && ! filled($username)) {
@@ -149,7 +157,7 @@ class TenantEmployeeService
 
     private function assertPassword(TenantRole $role, string $password): void
     {
-        $minimum = $role->code === DefaultTenantRoleService::MANAGER ? 10 : 8;
+        $minimum = in_array($role->code, [DefaultTenantRoleService::MANAGER, DefaultTenantRoleService::FACTORY_MANAGER], true) ? 10 : 8;
         if (mb_strlen($password) < $minimum) {
             throw ValidationException::withMessages(['temporaryPassword' => "Temporary password must be at least {$minimum} characters."]);
         }
@@ -160,6 +168,33 @@ class TenantEmployeeService
     {
         if ($branchIds === [] || count($branchIds) !== count(array_unique(array_map('intval', $branchIds)))) {
             throw ValidationException::withMessages(['branchIds' => 'Provide one or more unique branch IDs.']);
+        }
+    }
+
+    /**
+     * Decision 4/6.1: factory_manager is bound to the factory only. It may
+     * never be assigned a cafe branch (branch_type != 'factory'). Other
+     * roles are left untouched here — this migration phase does not yet
+     * forbid cafe roles from holding a factory branch.
+     *
+     * @param array<int, mixed> $branchIds
+     */
+    private function assertBranchTypeForRole(int $tenantId, TenantRole $role, array $branchIds): void
+    {
+        if ($role->code !== DefaultTenantRoleService::FACTORY_MANAGER || $branchIds === []) {
+            return;
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $branchIds)));
+        $factoryCount = DB::table('branches')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->whereIn('id', $ids)
+            ->where('branch_type', 'factory')
+            ->count();
+
+        if ($factoryCount !== count($ids)) {
+            throw ValidationException::withMessages(['branchIds' => 'مدير المعمل يُربط بفروع المعمل فقط.']);
         }
     }
 

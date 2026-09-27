@@ -37,6 +37,9 @@ class ShiftDrawerReadinessService
      */
     public function assess(int $tenantId, int $branchId, bool $lock = false): array
     {
+        if (DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->value('branch_type') === 'factory') {
+            return $this->result(null, null, null, '0.00', [$this->issue('FACTORY_POS_FORBIDDEN', 'branchId', 'branch_unavailable')]);
+        }
         $branchQuery = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)
             ->where('is_active', true)->whereNull('deleted_at');
         if ($lock) {

@@ -30,9 +30,9 @@ final class FinanceDashboardQueryService
         $current = $this->kpi->salesAndProfit($context, $context['dateFrom'], $context['dateTo']);
         $currentExpenses = $this->kpi->operatingExpenses($context, $context['dateFrom'], $context['dateTo']);
         $currentCashBanks = $this->kpi->cashBanks($context, $context['dateTo']);
-        $currentPayables = $this->kpi->supplierPayables($context['tenantId'], $context['dateTo']);
+        $currentPayables = $this->kpi->supplierPayables($context['tenantId'], $context['dateTo'], $context);
         $currentReceivables = $this->kpi->customerReceivables($context, $context['dateTo']);
-        $currentCustomerCredit = $this->kpi->customerCredit($context['tenantId'], $context['dateTo']);
+        $currentCustomerCredit = $this->kpi->customerCredit($context['tenantId'], $context['dateTo'], $context);
 
         $comparison = null;
         $comparisonExpenses = null;
@@ -44,9 +44,9 @@ final class FinanceDashboardQueryService
             $comparison = $this->kpi->salesAndProfit($context, $context['comparisonFrom'], $context['comparisonTo']);
             $comparisonExpenses = $this->kpi->operatingExpenses($context, $context['comparisonFrom'], $context['comparisonTo']);
             $comparisonCashBanks = $this->kpi->cashBanks($context, $context['comparisonTo']);
-            $comparisonPayables = $this->kpi->supplierPayables($context['tenantId'], $context['comparisonTo']);
+            $comparisonPayables = $this->kpi->supplierPayables($context['tenantId'], $context['comparisonTo'], $context);
             $comparisonReceivables = $this->kpi->customerReceivables($context, $context['comparisonTo']);
-            $comparisonCustomerCredit = $this->kpi->customerCredit($context['tenantId'], $context['comparisonTo']);
+            $comparisonCustomerCredit = $this->kpi->customerCredit($context['tenantId'], $context['comparisonTo'], $context);
         }
 
         $operatingProfitCents = $current['grossProfitCents'] - $currentExpenses['amountCents'];

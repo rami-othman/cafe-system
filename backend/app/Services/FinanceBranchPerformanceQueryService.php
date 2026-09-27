@@ -38,7 +38,8 @@ final class FinanceBranchPerformanceQueryService
             ];
         }
 
-        return ['branches' => $branches, 'unallocatedCompanyExpenses' => $this->unallocatedCompanyExpenses($context['tenantId'], $dateFrom, $dateTo)];
+        $factory = isset($context['actorId']) && \App\Support\FinancialActor::user($context['actorId'], $context['tenantId'])->effectiveRoleCode() === 'factory_manager';
+        return ['branches' => $branches, 'unallocatedCompanyExpenses' => $factory ? '0.00' : $this->unallocatedCompanyExpenses($context['tenantId'], $dateFrom, $dateTo)];
     }
 
     private function unallocatedCompanyExpenses(int $tenantId, string $dateFrom, string $dateTo): string

@@ -168,6 +168,7 @@ final class PurchaseReceivingService
 
                 $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->first();
                 $warehouseBranchId = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $line->warehouse_id)->value('branch_id');
+                \App\Support\FactoryWarehouseScope::assertDestination($tenantId, $invoice->branch_id ? (int) $invoice->branch_id : null, (int) $line->warehouse_id);
                 FinancialActor::assertBranchAccess($actorId, $tenantId, $warehouseBranchId ? (int) $warehouseBranchId : null);
                 $movement = $this->posting->post($request, $tenantId, [
                     'warehouseId' => $line->warehouse_id,
@@ -289,6 +290,7 @@ final class PurchaseReceivingService
         }
 
         $rows = [];
+        $invoiceBranchId = DB::table('supplier_invoices')->where('tenant_id', $tenantId)->where('id', $invoiceId)->value('branch_id');
         foreach ($lines as $input) {
             $invoiceLineId = (int) ($input['supplierInvoiceLineId'] ?? 0);
             $invoiceLine = DB::table('supplier_invoice_lines')
@@ -319,6 +321,7 @@ final class PurchaseReceivingService
             if ($warehouseId <= 0) {
                 throw ValidationException::withMessages(['lines' => 'يرجى اختيار مخزن الاستلام لهذا البند.']);
             }
+            \App\Support\FactoryWarehouseScope::assertDestination($tenantId, $invoiceBranchId ? (int) $invoiceBranchId : null, $warehouseId);
             $warehouse = DB::table('warehouses')->where('tenant_id', $tenantId)->where('id', $warehouseId)->where('is_active', true)->whereNull('deleted_at')->first();
             if (! $warehouse) {
                 throw ValidationException::withMessages(['lines' => 'لا يمكن الوصول إلى هذا المخزن. يرجى اختيار مخزن نشط يتبع لهذه المنشأة.']);
@@ -326,10 +329,9 @@ final class PurchaseReceivingService
 
             // Unit cost per base unit, derived once from the invoice line's
             // own unit_price ÷ conversion_factor using exact decimal
-            // arithmetic (no floating point). Discount/tax are intentionally
-            // excluded from the inventory cost basis, matching the existing
-            // manual stock_in workflow and InventoryPostingService's own
-            // unitCost contract (cost per base unit).
+            // arithmetic (no floating point). unit_price already includes
+            // allocated discounts and capitalized charges; invoice tax is
+            // excluded under the existing purchasing cost policy.
             $unitCost = BigDecimal::of($invoiceLine->unit_price)
                 ->dividedBy(BigDecimal::of($invoiceLine->conversion_factor ?? '1.000000'), 4, RoundingMode::HALF_UP)
                 ->__toString();

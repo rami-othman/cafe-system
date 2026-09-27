@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Domain\Discount\DiscountAccess;
 use App\Models\TenantRole;
+use App\Support\FinanceAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -15,11 +16,26 @@ class DefaultTenantRoleService
 
     public const EMPLOYEE = 'employee';
 
+    public const FACTORY_MANAGER = 'factory_manager';
+
+    /**
+     * Decision 6 (26/09/2026): factory_manager sees Finance in full, minus
+     * permissions that are facility-wide rather than branch-operational (see
+     * the 2026_10_05_000002 migration for the per-permission rationale).
+     */
+    public const FACTORY_MANAGER_FINANCE_EXCLUDED_PERMISSIONS = [
+        'finance.settings.view',
+        'finance.settings.manage',
+        'finance.periods.manage',
+        'finance.periods.lock',
+        'finance.accounts.manage',
+    ];
+
     /** @return array<string, TenantRole> */
     public function ensureForTenant(int $tenantId): array
     {
         $now = now();
-        foreach ([self::OWNER => 'Owner', self::MANAGER => 'Manager', self::EMPLOYEE => 'Employee'] as $code => $name) {
+        foreach ([self::OWNER => 'Owner', self::MANAGER => 'Manager', self::EMPLOYEE => 'Employee', self::FACTORY_MANAGER => 'Factory Manager'] as $code => $name) {
             DB::table('tenant_roles')->updateOrInsert(
                 ['tenant_id' => $tenantId, 'code' => $code],
                 ['name' => $name, 'is_system' => true, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
@@ -41,7 +57,21 @@ class DefaultTenantRoleService
             }
         }
 
-        return TenantRole::query()->forTenant($tenantId)->whereIn('code', [self::OWNER, self::MANAGER, self::EMPLOYEE])->get()->keyBy('code')->all();
+        // factory_manager's Finance grant is seeded here (not just by a
+        // one-time migration) so it also reaches tenants created after the
+        // migration ran — the same gap that already exists for manager's
+        // Finance defaults would otherwise repeat for every new tenant.
+        if (Schema::hasTable('finance_role_permissions')) {
+            $permissions = array_values(array_diff(FinanceAccess::CATALOG, self::FACTORY_MANAGER_FINANCE_EXCLUDED_PERMISSIONS));
+            foreach ($permissions as $permission) {
+                DB::table('finance_role_permissions')->updateOrInsert(
+                    ['tenant_id' => $tenantId, 'role' => self::FACTORY_MANAGER, 'permission' => $permission],
+                    ['created_at' => $now, 'updated_at' => $now],
+                );
+            }
+        }
+
+        return TenantRole::query()->forTenant($tenantId)->whereIn('code', [self::OWNER, self::MANAGER, self::EMPLOYEE, self::FACTORY_MANAGER])->get()->keyBy('code')->all();
     }
 
     public function canonicalLegacyRole(string $code): string
@@ -51,6 +81,6 @@ class DefaultTenantRoleService
 
     public function isAssignable(TenantRole $role): bool
     {
-        return $role->is_active && in_array($role->code, [self::MANAGER, self::EMPLOYEE], true);
+        return $role->is_active && in_array($role->code, [self::MANAGER, self::EMPLOYEE, self::FACTORY_MANAGER], true);
     }
 }

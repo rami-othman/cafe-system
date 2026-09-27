@@ -15,7 +15,7 @@ class Customer extends Model
     protected $table = 'customers';
 
     protected $fillable = [
-        'tenant_id', 'name', 'customer_number', 'normalized_name', 'phone', 'email',
+        'owner_branch_id', 'tenant_id', 'name', 'customer_number', 'normalized_name', 'phone', 'email',
         'birth_date', 'notes', 'total_spent', 'visits_count', 'is_active',
     ];
 

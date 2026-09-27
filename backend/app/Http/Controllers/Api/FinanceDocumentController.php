@@ -27,7 +27,7 @@ final class FinanceDocumentController extends Controller
             ->where('documents.tenant_id', $tenantId)
             ->select('documents.*', 'branches.name as branch_name', 'locations.name as location_name');
         if (DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role') !== 'owner') {
-            $query->where(fn (Builder $scope) => $scope->whereNull('documents.branch_id')->orWhereIn('documents.branch_id', FinancialActor::operationalBranchIds($actorId, $tenantId)));
+            \App\Support\BranchScope::applyFinancial($query, 'documents.branch_id', FinancialActor::user($actorId, $tenantId));
         }
         foreach (['type' => 'documents.document_type', 'status' => 'documents.status', 'branchId' => 'documents.branch_id', 'financialLocationId' => 'documents.financial_location_id'] as $input => $column) {
             if ($request->filled($input)) {

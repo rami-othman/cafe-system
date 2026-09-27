@@ -45,7 +45,7 @@ class PurchaseController extends Controller
         $actor = FinancialActor::id($request, $tenant);
         $q = $this->rows($tenant);
         if (DB::table('users')->where('tenant_id', $tenant)->where('id', $actor)->value('role') !== 'owner') {
-            $q->where(fn ($scope) => $scope->whereIn('i.branch_id', FinancialActor::operationalBranchIds($actor, $tenant))->orWhereNull('i.branch_id'));
+            \App\Support\BranchScope::applyFinancial($q, 'i.branch_id', FinancialActor::user($actor, $tenant));
         }
         foreach (['supplierId' => 'i.supplier_id', 'branchId' => 'i.branch_id'] as $input => $column) {
             if ($request->filled($input)) {
@@ -300,6 +300,7 @@ class PurchaseController extends Controller
             'supplierName' => $row->supplier_name,
             'supplierNumber' => $row->supplier_number,
             'branchId' => $row->branch_id ? (int) $row->branch_id : null,
+            'branchType' => $row->branch_id ? (DB::table('branches')->where('tenant_id', $row->tenant_id)->where('id', $row->branch_id)->value('branch_type') ?? 'cafe') : 'cafe',
             'branchName' => $row->branch_name,
             'warehouseName' => $row->warehouse_name,
             'invoiceDate' => $row->invoice_date,

@@ -78,7 +78,8 @@ class ShiftKpiGrid extends StatelessWidget {
         label: ShiftStrings.totalRefunds,
         value: ShiftFormat.money(sales.refunds),
         icon: Icons.replay_outlined,
-        context_: '${ShiftFormat.percent(sales.refundRatio)} ${ShiftStrings.ofGrossSales}',
+        context_:
+            '${ShiftFormat.percent(sales.refundRatio)} ${ShiftStrings.ofGrossSales}',
         tone: ShiftTone.warning,
       ),
       ShiftMetricCard(
@@ -148,11 +149,18 @@ class PaymentBreakdownCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: <Widget>[
-                  Icon(_iconFor(line.channel), size: 16, color: ShiftColors.inkMuted),
+                  Icon(
+                    _iconFor(line.channel),
+                    size: 16,
+                    color: ShiftColors.inkMuted,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     flex: 2,
-                    child: Text(_labelFor(line.channel), style: ShiftText.bodyStrong),
+                    child: Text(
+                      _labelFor(line.channel),
+                      style: ShiftText.bodyStrong,
+                    ),
                   ),
                   Expanded(
                     child: ShiftValue(
@@ -230,7 +238,11 @@ class OrdersStatusCard extends StatelessWidget {
         orders.partiallyRefunded,
         ShiftTone.surplus,
       ),
-      (ShiftStrings.ordersFullyRefunded, orders.fullyRefunded, ShiftTone.surplus),
+      (
+        ShiftStrings.ordersFullyRefunded,
+        orders.fullyRefunded,
+        ShiftTone.surplus,
+      ),
     ];
 
     return ShiftCard(
@@ -301,7 +313,11 @@ class OrdersStatusCard extends StatelessWidget {
 }
 
 class _OrderStatusChip extends StatelessWidget {
-  const _OrderStatusChip({required this.label, required this.count, required this.tone});
+  const _OrderStatusChip({
+    required this.label,
+    required this.count,
+    required this.tone,
+  });
 
   final String label;
   final int count;
@@ -357,6 +373,16 @@ class CashDrawerStatusCard extends StatelessWidget {
           value: ShiftFormat.money(drawer.cashSales),
           valueColor: ShiftColors.matchInk,
         ),
+        if (drawer.customerPayments > 0)
+          ShiftKeyValueRow(
+            label: '+ ${ShiftStrings.customerCollections}',
+            value: ShiftFormat.money(drawer.customerPayments),
+          ),
+        if (drawer.customerRefunds > 0)
+          ShiftKeyValueRow(
+            label: '- ${ShiftStrings.customerCashRefunds}',
+            value: ShiftFormat.money(drawer.customerRefunds),
+          ),
         if (drawer.cashRefunds > 0)
           ShiftKeyValueRow(
             label: '- ${ShiftStrings.cashRefunds}',
@@ -397,7 +423,11 @@ class CashDrawerStatusCard extends StatelessWidget {
 /// Bar-count status preview, shown on the overview before the closing wizard
 /// is entered.
 class BarCountStatusCard extends StatelessWidget {
-  const BarCountStatusCard({super.key, required this.template, required this.now});
+  const BarCountStatusCard({
+    super.key,
+    required this.template,
+    required this.now,
+  });
 
   final BarCountTemplate template;
   final DateTime now;
@@ -422,7 +452,11 @@ class BarCountStatusCard extends StatelessWidget {
           ShiftSectionHeader(
             title: ShiftStrings.barCountStatus,
             icon: Icons.inventory_2_outlined,
-            trailing: ShiftBadge(label: statusLabel, tone: statusTone, dense: true),
+            trailing: ShiftBadge(
+              label: statusLabel,
+              tone: statusTone,
+              dense: true,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -454,7 +488,10 @@ class BarCountStatusCard extends StatelessWidget {
                   label: ShiftStrings.lastCount,
                   value: template.lastCountedAt == null
                       ? '—'
-                      : ShiftFormat.relativeDayTime(template.lastCountedAt!, now),
+                      : ShiftFormat.relativeDayTime(
+                          template.lastCountedAt!,
+                          now,
+                        ),
                   numeric: false,
                 ),
               ),

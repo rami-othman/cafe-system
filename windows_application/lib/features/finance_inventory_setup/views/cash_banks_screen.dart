@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_router.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
+import '../../operational_context/controllers/operational_branch_cubit.dart';
 import '../../pos/controllers/pos_cubit.dart';
 import '../../pos/models/branch.dart';
 import '../models/finance_setup_models.dart';
@@ -737,8 +739,17 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
     _accountId = current?.financialAccountId ??
         (widget.ledgerAccounts.isEmpty ? null : widget.ledgerAccounts.first.id);
     // New accounts default to the signed-in actor's own branch — a cashier
-    // or manager scoped to one branch has no reason to pick it manually.
-    _branchId = current?.branchId ?? context.read<PosCubit>().state.branchId;
+    // or manager scoped to one branch has no reason to pick it manually. A
+    // factory_manager has no POS branch at all, so its default comes from
+    // the operational (factory) branch instead.
+    final bool isFactoryUser =
+        context.read<AuthSessionCubit>().state.session?.user.isFactoryUser ??
+        false;
+    _branchId =
+        current?.branchId ??
+        (isFactoryUser
+            ? context.read<OperationalBranchCubit>().state.selectedBranchId
+            : context.read<PosCubit>().state.branchId);
     _active = current?.isActive ?? true;
   }
 

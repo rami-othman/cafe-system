@@ -64,7 +64,7 @@ final class ShiftCloseService
      *
      * @param  array<string, mixed>  $extra  additional non-financial shift columns (notes, reasons)
      */
-    public function close(Request $request, int $tenantId, object $shift, string $closeType, ?string $countedCash, array $extra = []): object
+    public function close(Request $request, int $tenantId, object $shift, string $closeType, ?string $countedCash, array $extra = [], ?string $transferDate = null): object
     {
         if ($shift->status !== 'open') {
             throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
@@ -86,7 +86,7 @@ final class ShiftCloseService
             throw new \InvalidArgumentException("Unsupported shift close type [{$closeType}].");
         }
 
-        $transferId = $this->transfers->create($request, $tenantId, $shift, $countedCents, $actorType);
+        $transferId = $this->transfers->create($request, $tenantId, $shift, $countedCents, $actorType, $transferDate);
         if (! $shift->shift_number) {
             $this->lockShiftNumbering($tenantId);
         }

@@ -11,6 +11,7 @@ use App\Support\InventoryDecimal;
 use App\Support\TenantContext;
 use App\Support\InventoryUnitCatalog;
 use App\Support\InventoryAccess;
+use App\Support\DataScope;
 use App\Support\WarehousePresentation;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -25,8 +26,10 @@ class InventoryItemController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
+        $scope = DataScope::resolve($request);
         $branchId = $request->filled('branchId') ? (int) $request->query('branchId') : null;
         $warehouseId = $request->filled('warehouseId') ? (int) $request->query('warehouseId') : null;
+        if ($scope !== null) $branchId = $scope;
         if ($branchId) {
             abort_unless(DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->whereNull('deleted_at')->exists(), 404);
             InventoryAccess::assertBranchAccess($request, $branchId);
@@ -71,6 +74,12 @@ class InventoryItemController extends Controller
             ->where('items.tenant_id', $tenant)
             ->whereNull('items.deleted_at')
             ->select('items.*', 'stock_totals.total_quantity', 'stock_totals.available_quantity', 'stock_totals.total_value');
+        $actor = $request->attributes->get('auth_user');
+        if (! ($actor->isOwner() && ! $branchId && $request->query('scope') === 'all')) {
+            if ($actor->isOwner() && ! $branchId && $request->query('scope') === 'factory') $query->whereNotNull('items.owner_branch_id');
+            else DataScope::apply($query, 'items.owner_branch_id', $scope);
+        }
+        if ($request->boolean('inStockOnly')) $query->whereRaw('COALESCE(stock_totals.available_quantity, 0) > 0');
         if ($warehouseId && Schema::hasTable('inventory_item_warehouses')) {
             $query->whereExists(fn (Builder $assigned) => $assigned
                 ->selectRaw('1')
@@ -96,6 +105,10 @@ class InventoryItemController extends Controller
             if ($request->filled($key)) {
                 $query->where('items.'.$column, $request->query($key));
             }
+        }
+        if ($request->filled('types')) {
+            $data = $request->validate(['types' => ['array'], 'types.*' => ['string']]);
+            $query->whereIn('items.item_type', $data['types']);
         }
         if ($request->filled('status')) {
             $query->where('items.is_active', $request->query('status') === 'active');
@@ -128,7 +141,7 @@ class InventoryItemController extends Controller
             'data' => [
                 'items' => collect($paginator->items())->map(fn (object $row) => $this->serialize($tenant, $row))->values(),
                 'meta' => $this->meta($paginator),
-                'filters' => $this->filters($tenant),
+                'filters' => $this->filters($tenant, $scope),
             ],
         ]);
     }
@@ -145,6 +158,7 @@ class InventoryItemController extends Controller
             ->where('tenant_id', $tenant)
             ->where('is_active', true)
             ->whereNull('deleted_at');
+        DataScope::apply($query, 'owner_branch_id', DataScope::resolve($request));
         $conversionSearch = $request->query('search');
         $conversionSearchFields = [
             ['column' => 'name_ar', 'weight' => 3],
@@ -180,9 +194,10 @@ class InventoryItemController extends Controller
         // Branch users obtain branch-filtered stock and movement details from
         // the dedicated endpoints below. Do not expose tenant-wide detail
         // aggregates from this catalogue endpoint.
-        $detail = InventoryAccess::actor($request)->isOwner();
+        $actor = InventoryAccess::actor($request);
+        $detail = $actor->isOwner() || $actor->effectiveRoleCode() === 'factory_manager';
 
-        return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $item), $detail)]);
+        return response()->json(['data' => $this->serialize($tenant, $this->scopedItem($request, $tenant, $item), $detail)]);
     }
 
     public function store(InventoryItemRequest $request): JsonResponse
@@ -190,7 +205,7 @@ class InventoryItemController extends Controller
         $tenant = TenantContext::id($request);
         $id = $this->items->save($request, $tenant, $request->validated(), FinancialActor::id($request, $tenant));
 
-        return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $id), true)], 201);
+        return response()->json(['data' => $this->serialize($tenant, $this->scopedItem($request, $tenant, $id), true)], 201);
     }
 
     public function update(InventoryItemRequest $request, int $item): JsonResponse
@@ -198,7 +213,7 @@ class InventoryItemController extends Controller
         $tenant = TenantContext::id($request);
         $this->items->save($request, $tenant, $request->validated(), FinancialActor::id($request, $tenant), $item);
 
-        return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $item), true)]);
+        return response()->json(['data' => $this->serialize($tenant, $this->scopedItem($request, $tenant, $item), true)]);
     }
 
     public function status(Request $request, int $item): JsonResponse
@@ -207,13 +222,13 @@ class InventoryItemController extends Controller
         $tenant = TenantContext::id($request);
         $this->items->setStatus($request, $tenant, $item, (bool) $data['isActive'], FinancialActor::id($request, $tenant));
 
-        return response()->json(['data' => $this->serialize($tenant, $this->items->find($tenant, $item), true)]);
+        return response()->json(['data' => $this->serialize($tenant, $this->scopedItem($request, $tenant, $item), true)]);
     }
 
     public function stock(Request $request, int $item): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $this->items->find($tenant, $item);
+        $this->scopedItem($request, $tenant, $item);
         $query = DB::table('stock_balances as balances')->join('warehouses as warehouses', 'warehouses.id', '=', 'balances.warehouse_id')->leftJoin('branches as branches', 'branches.id', '=', 'warehouses.branch_id')->where('balances.tenant_id', $tenant)->where('balances.inventory_item_id', $item)->whereNull('warehouses.deleted_at')->where('warehouses.code', 'not like', 'LEGACY-%')->orderBy('warehouses.name');
         InventoryAccess::scopeWarehouseBranches($query, $request, 'warehouses.branch_id');
         $rows = $query->get(['balances.*', 'warehouses.name as warehouse_name', 'warehouses.code as warehouse_code', 'warehouses.type as warehouse_type', 'branches.name as branch_name']);
@@ -231,7 +246,7 @@ class InventoryItemController extends Controller
     public function movements(Request $request, int $item): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $itemRow = $this->items->find($tenant, $item);
+        $itemRow = $this->scopedItem($request, $tenant, $item);
         $query = DB::table('stock_movements as movements')
             ->join('warehouses', 'warehouses.id', '=', 'movements.warehouse_id')
             ->leftJoin('users', 'users.id', '=', 'movements.created_by')
@@ -279,7 +294,21 @@ class InventoryItemController extends Controller
     public function recipeUsage(Request $request, int $item): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $this->items->find($tenant, $item);
+        $material = $this->scopedItem($request, $tenant, $item);
+        if ($material->owner_branch_id !== null) {
+            $rows = DB::table('manufacturing_recipes as r')->join('manufacturing_recipe_versions as v', 'v.id', '=', 'r.current_version_id')
+                ->join('inventory_items as p', 'p.id', '=', 'r.product_item_id')
+                ->leftJoin('manufacturing_recipe_version_lines as l', 'l.manufacturing_recipe_version_id', '=', 'v.id')
+                ->where('r.tenant_id', $tenant)->whereNull('r.deleted_at')->where('p.owner_branch_id', $material->owner_branch_id)
+                ->where(fn ($q) => $q->where('r.product_item_id', $item)->orWhere('l.inventory_item_id', $item))
+                ->get(['r.id', 'r.product_item_id', 'r.status', 'p.name_ar', 'v.version_number', 'v.output_quantity', 'v.output_unit', 'l.quantity', 'l.unit'])
+                ->unique('id')->map(fn ($r) => [
+                    'source' => 'manufacturing_recipe', 'productName' => $r->name_ar, 'variantName' => 'إصدار '.$r->version_number,
+                    'isActive' => $r->status === 'active', 'quantity' => (int) $r->product_item_id === $item ? $r->output_quantity : $r->quantity,
+                    'unit' => (int) $r->product_item_id === $item ? $r->output_unit : $r->unit, 'condition' => null,
+                ])->values();
+            return response()->json(['data' => $rows, 'meta' => ['currentPage' => 1, 'lastPage' => 1, 'total' => $rows->count()]]);
+        }
 
         $variantLines = DB::table('variant_recipe_components as c')
             ->join('variant_recipes as r', 'r.id', '=', 'c.variant_recipe_id')
@@ -350,7 +379,20 @@ class InventoryItemController extends Controller
     public function purchaseHistory(Request $request, int $item): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $this->items->find($tenant, $item);
+        $material = $this->scopedItem($request, $tenant, $item);
+        if ($material->owner_branch_id !== null) {
+            $page = DB::table('supplier_invoice_lines as l')->join('supplier_invoices as i', 'i.id', '=', 'l.supplier_invoice_id')
+                ->join('suppliers as s', 's.id', '=', 'i.supplier_id')->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id')
+                ->where('l.tenant_id', $tenant)->where('l.inventory_item_id', $item)->where('i.branch_id', $material->owner_branch_id)
+                ->whereNull('i.deleted_at')->orderByDesc('i.invoice_date')->orderByDesc('l.id')
+                ->paginate($this->perPage($request), ['l.*', 'i.id as invoice_id', 'i.invoice_number', 'i.invoice_date', 's.name as supplier_name', 'w.name as warehouse_name']);
+            return response()->json(['data' => collect($page->items())->map(fn ($r) => [
+                'receiptId' => (int) $r->invoice_id, 'receiptNumber' => $r->invoice_number, 'receiptDate' => $r->invoice_date,
+                'supplierName' => $r->supplier_name, 'invoiceNumber' => $r->invoice_number, 'invoiceDate' => $r->invoice_date,
+                'warehouseName' => $r->warehouse_name, 'quantity' => $r->quantity, 'unit' => $r->purchase_unit,
+                'unitCost' => $r->unit_price, 'lineTotal' => $r->line_total,
+            ])->values(), 'meta' => $this->meta($page)]);
+        }
         $query = DB::table('purchase_receipt_lines as l')
             ->join('purchase_receipts as r', 'r.id', '=', 'l.purchase_receipt_id')
             ->join('supplier_invoices as si', 'si.id', '=', 'r.supplier_invoice_id')
@@ -388,8 +430,27 @@ class InventoryItemController extends Controller
         ]);
     }
 
+    public function productionBatches(Request $request, int $item): JsonResponse
+    {
+        $tenant = TenantContext::id($request);
+        $material = $this->scopedItem($request, $tenant, $item);
+        abort_if($material->owner_branch_id === null, 404);
+        $page = DB::table('manufacturing_batches as b')->join('manufacturing_orders as o', 'o.id', '=', 'b.manufacturing_order_id')
+            ->where('b.tenant_id', $tenant)->where('b.inventory_item_id', $item)->where('o.branch_id', $material->owner_branch_id)
+            ->orderByDesc('b.id')->paginate($this->perPage($request), ['b.*', 'o.reference', 'o.actual_unit_cost']);
+        return response()->json(['data' => $page->items(), 'meta' => $this->meta($page)]);
+    }
+
+    private function scopedItem(Request $request, int $tenant, int $id): object
+    {
+        $item = $this->items->find($tenant, $id);
+        DataScope::assertOwned($item, DataScope::resolve($request));
+        return $item;
+    }
+
     private function serialize(int $tenant, object $item, bool $detail = false): array
     {
+
         // Must mirror the same warehouse scope as $data['stockByWarehouse']
         // below (active, not soft-deleted, not a read-only LEGACY-% bucket):
         // a bare unscoped SUM() here previously let stock sitting in a
@@ -416,7 +477,7 @@ class InventoryItemController extends Controller
             : ($availableQuantity <= 0
                 ? 'out_of_stock'
                 : ($availableQuantity <= (float) $item->reorder_level ? 'low_stock' : 'active'));
-        $data = ['id' => (int) $item->id, 'nameAr' => $item->name_ar, 'nameEn' => $item->name_en, 'displayName' => $item->name_en ?: $item->sku, 'sku' => $item->sku, 'barcode' => $item->barcode, 'itemType' => $item->item_type, 'category' => $item->category, 'unit' => $item->unit, 'purchaseUnit' => $item->purchase_unit ?? null, 'consumptionUnit' => $item->consumption_unit ?? null, 'minimumStock' => InventoryDecimal::quantity(InventoryDecimal::units($item->minimum_stock)), 'reorderLevel' => InventoryDecimal::quantity(InventoryDecimal::units($item->reorder_level)), 'latestUnitCost' => InventoryDecimal::unitCost(InventoryDecimal::cost($item->latest_unit_cost)), 'lastPurchaseCost' => $item->last_purchase_cost === null ? null : InventoryDecimal::unitCost(InventoryDecimal::cost($item->last_purchase_cost, 'lastPurchaseCost')), 'preferredSupplierName' => $item->preferred_supplier_name ?? null, 'trackExpiry' => (bool) ($item->track_expiry ?? false), 'trackBatch' => (bool) ($item->track_batch ?? false), 'stockStatus' => $stockStatus, 'lastUpdatedAt' => $item->updated_at, 'totalQuantity' => number_format((float) ($totals->total_quantity ?? 0), 3, '.', ''), 'availableQuantity' => number_format($availableQuantity, 3, '.', ''), 'totalValue' => number_format((float) ($totals->total_value ?? 0), 2, '.', ''), 'isActive' => (bool) $item->is_active, 'notes' => $item->notes];
+        $data = ['ownerBranchId' => $item->owner_branch_id === null ? null : (int) $item->owner_branch_id, 'id' => (int) $item->id, 'nameAr' => $item->name_ar, 'nameEn' => $item->name_en, 'displayName' => $item->name_en ?: $item->sku, 'sku' => $item->sku, 'barcode' => $item->barcode, 'itemType' => $item->item_type, 'category' => $item->category, 'unit' => $item->unit, 'purchaseUnit' => $item->purchase_unit ?? null, 'consumptionUnit' => $item->consumption_unit ?? null, 'minimumStock' => InventoryDecimal::quantity(InventoryDecimal::units($item->minimum_stock)), 'reorderLevel' => InventoryDecimal::quantity(InventoryDecimal::units($item->reorder_level)), 'latestUnitCost' => InventoryDecimal::unitCost(InventoryDecimal::cost($item->latest_unit_cost)), 'lastPurchaseCost' => $item->last_purchase_cost === null ? null : InventoryDecimal::unitCost(InventoryDecimal::cost($item->last_purchase_cost, 'lastPurchaseCost')), 'preferredSupplierName' => $item->preferred_supplier_name ?? null, 'trackExpiry' => (bool) ($item->track_expiry ?? false), 'trackBatch' => (bool) ($item->track_batch ?? false), 'stockStatus' => $stockStatus, 'lastUpdatedAt' => $item->updated_at, 'totalQuantity' => number_format((float) ($totals->total_quantity ?? 0), 3, '.', ''), 'availableQuantity' => number_format($availableQuantity, 3, '.', ''), 'totalValue' => number_format((float) ($totals->total_value ?? 0), 2, '.', ''), 'isActive' => (bool) $item->is_active, 'notes' => $item->notes];
         if ($detail) {
             $data['warehouseIds'] = Schema::hasTable('inventory_item_warehouses') ? DB::table('inventory_item_warehouses')
                 ->where('tenant_id', $tenant)
@@ -454,12 +515,13 @@ class InventoryItemController extends Controller
         return ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()];
     }
 
-    private function filters(int $tenant): array
+    private function filters(int $tenant, ?int $scope): array
     {
         $items = DB::table('inventory_items')
             ->where('tenant_id', $tenant)
             ->whereNull('deleted_at');
 
+        DataScope::apply($items, 'owner_branch_id', $scope);
         return [
             'categories' => (clone $items)->whereNotNull('category')->where('category', '!=', '')->distinct()->orderBy('category')->pluck('category')->values(),
         ];

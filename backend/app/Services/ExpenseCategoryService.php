@@ -15,9 +15,10 @@ class ExpenseCategoryService
         $this->assertAccount($tenantId, (int) $data['financialAccountId']);
         return DB::transaction(function () use ($request, $tenantId, $data, $id, $actorId): int {
             $before = $id ? $this->find($tenantId, $id) : null;
+            if ($before) \App\Support\DataScope::assertOwned($before, \App\Support\DataScope::resolve($request));
             $payload = ['code' => strtoupper($data['code']), 'name' => $data['name'], 'financial_account_id' => (int) $data['financialAccountId'], 'is_active' => (bool) $data['isActive'], 'sort_order' => (int) ($data['sortOrder'] ?? 0), 'updated_by' => $actorId, 'updated_at' => now()];
             if ($id) { DB::table('expense_categories')->where('tenant_id', $tenantId)->where('id', $id)->update($payload); $this->audit->record($request, $tenantId, 'expense_category.updated', 'expense_category', $id, (array) $before, (array) $this->find($tenantId, $id), null, $actorId); return $id; }
-            $id = (int) DB::table('expense_categories')->insertGetId($payload + ['tenant_id' => $tenantId, 'created_by' => $actorId, 'created_at' => now()]);
+            $id = (int) DB::table('expense_categories')->insertGetId(\App\Support\DataScope::stamp($payload, \App\Support\DataScope::resolve($request)) + ['tenant_id' => $tenantId, 'created_by' => $actorId, 'created_at' => now()]);
             $this->audit->record($request, $tenantId, 'expense_category.created', 'expense_category', $id, [], (array) $this->find($tenantId, $id), null, $actorId);
             return $id;
         });
@@ -26,6 +27,7 @@ class ExpenseCategoryService
     public function status(Request $request, int $tenantId, int $id, bool $active, ?int $actorId): void
     {
         $before = $this->find($tenantId, $id);
+        \App\Support\DataScope::assertOwned($before, \App\Support\DataScope::resolve($request));
         DB::table('expense_categories')->where('tenant_id', $tenantId)->where('id', $id)->update(['is_active' => $active, 'updated_by' => $actorId, 'updated_at' => now()]);
         $this->audit->record($request, $tenantId, $active ? 'expense_category.activated' : 'expense_category.deactivated', 'expense_category', $id, (array) $before, (array) $this->find($tenantId, $id), null, $actorId);
     }

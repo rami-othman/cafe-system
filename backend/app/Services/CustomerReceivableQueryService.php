@@ -289,7 +289,7 @@ final class CustomerReceivableQueryService
         // this join, keeping aging, the customer statement and the AR
         // snapshot/summary tiles from treating a fully cash-settled sale as
         // permanently outstanding — without hiding it merely by customer.
-        $query = DB::table('sales_invoices as i')
+        $query = \App\Support\InternalReportingScope::party(DB::table('sales_invoices as i'), 'i.customer_id', 'customers')
             ->join('customer_receivables as r', function ($join) use ($tenantId): void {
                 $join->on('r.sales_invoice_id', '=', 'i.id')->where('r.tenant_id', '=', $tenantId);
             })

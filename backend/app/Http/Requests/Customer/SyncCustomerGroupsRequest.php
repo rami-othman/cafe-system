@@ -20,7 +20,7 @@ class SyncCustomerGroupsRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->all()), ['groupIds']) !== []) {
+            if (array_diff(array_keys($this->except('scopeBranchId')), ['groupIds']) !== []) {
                 $validator->errors()->add('payload', 'Unknown membership fields were submitted.');
             }
         });

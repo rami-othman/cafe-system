@@ -23,6 +23,28 @@ class InventoryItemDetailsApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_manufacturing_types_are_filtered_before_pagination(): void
+    {
+        $tenant = $this->tenant('manufacturing-type-pagination');
+        $headers = $this->headers($tenant);
+        $warehouse = $this->warehouse($headers);
+        $raw = $this->inventoryItem($headers, 'kg', [$warehouse]);
+        $finished = $this->inventoryItem($headers, 'kg', [$warehouse]);
+        $excluded = $this->inventoryItem($headers, 'kg', [$warehouse]);
+        DB::table('inventory_items')->where('id', $raw)->update(['name_en' => 'B Raw']);
+        DB::table('inventory_items')->where('id', $finished)->update(['name_en' => 'C Finished', 'item_type' => 'finished_good']);
+        DB::table('inventory_items')->where('id', $excluded)->update(['name_en' => 'A Excluded', 'item_type' => 'stock_item']);
+
+        $query = http_build_query(['types' => ['raw_material', 'finished_good'], 'warehouseId' => $warehouse, 'perPage' => 1]);
+        $first = $this->getJson('/api/v1/inventory/items?'.$query, $headers)->assertOk();
+        $first->assertJsonPath('data.meta.total', 2)->assertJsonPath('data.meta.lastPage', 2)
+            ->assertJsonPath('data.items.0.id', $raw);
+        $this->getJson('/api/v1/inventory/items?'.$query.'&page=2', $headers)->assertOk()
+            ->assertJsonPath('data.items.0.id', $finished);
+        $this->getJson('/api/v1/inventory/items?'.$query.'&type=finished_good', $headers)->assertOk()
+            ->assertJsonPath('data.meta.total', 1)->assertJsonPath('data.items.0.id', $finished);
+    }
+
     // ---------------------------------------------------------------
     // E1 — full movement history
     // ---------------------------------------------------------------

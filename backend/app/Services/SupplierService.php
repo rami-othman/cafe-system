@@ -12,7 +12,8 @@ class SupplierService
     public function create(Request $request, int $tenantId, array $data, ?int $actorId): int
     {
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId): int {
-            $id = (int) DB::table('suppliers')->insertGetId($this->payload($data) + [
+            $internal = \App\Support\InternalCounterparty::values($request, $tenantId, 'supplier', \App\Support\DataScope::resolve($request), $data);
+            $id = (int) DB::table('suppliers')->insertGetId(\App\Support\DataScope::stamp($this->payload($data), \App\Support\DataScope::resolve($request)) + $internal + [
                 'tenant_id' => $tenantId,
                 'supplier_number' => $this->nextNumber($tenantId),
                 'is_active' => true,
@@ -31,7 +32,9 @@ class SupplierService
     {
         DB::transaction(function () use ($request, $tenantId, $id, $data, $actorId): void {
             $before = $this->find($tenantId, $id);
-            DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $id)->update($this->payload($data) + ['updated_by' => $actorId, 'updated_at' => now()]);
+            \App\Support\DataScope::assertOwned($before, \App\Support\DataScope::resolve($request));
+            $internal = \App\Support\InternalCounterparty::values($request, $tenantId, 'supplier', $before->owner_branch_id ? (int) $before->owner_branch_id : null, $data);
+            DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $id)->update(\App\Support\DataScope::stamp($this->payload($data), \App\Support\DataScope::resolve($request)) + $internal + ['updated_by' => $actorId, 'updated_at' => now()]);
             $this->audit->record($request, $tenantId, 'supplier.updated', 'supplier', $id, (array) $before, (array) $this->find($tenantId, $id), null, $actorId);
         });
     }
@@ -39,6 +42,7 @@ class SupplierService
     public function status(Request $request, int $tenantId, int $id, bool $active, ?int $actorId): void
     {
         $before = $this->find($tenantId, $id);
+        \App\Support\DataScope::assertOwned($before, \App\Support\DataScope::resolve($request));
         DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $id)->update(['is_active' => $active, 'updated_by' => $actorId, 'updated_at' => now()]);
         $this->audit->record($request, $tenantId, $active ? 'supplier.activated' : 'supplier.deactivated', 'supplier', $id, (array) $before, (array) $this->find($tenantId, $id), null, $actorId);
     }

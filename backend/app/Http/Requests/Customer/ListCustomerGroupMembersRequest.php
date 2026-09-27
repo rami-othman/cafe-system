@@ -24,7 +24,7 @@ final class ListCustomerGroupMembersRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->query()), ['search', 'page', 'perPage']) !== []) {
+            if (array_diff(array_diff(array_keys($this->query()), ['scopeBranchId']), ['search', 'page', 'perPage']) !== []) {
                 $validator->errors()->add('query', 'Unknown customer group member filters were submitted.');
             }
         });

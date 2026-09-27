@@ -118,6 +118,8 @@ class Customer extends Equatable {
     required this.phones,
     required this.groups,
     required this.allowedActions,
+    this.isInternal = false,
+    this.internalBranchId,
     this.email,
     this.birthDate,
     this.notes,
@@ -126,6 +128,8 @@ class Customer extends Equatable {
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
     id: _requiredInt(json, 'id'),
     customerNumber: _requiredString(json, 'customerNumber'),
+    isInternal: json['isInternal'] == true,
+    internalBranchId: (json['internalBranchId'] as num?)?.toInt(),
     name: _requiredString(json, 'name'),
     lifecycle: _lifecycle(json),
     email: json['email'] as String?,
@@ -145,6 +149,8 @@ class Customer extends Equatable {
 
   final int id;
   final String customerNumber;
+  final bool isInternal;
+  final int? internalBranchId;
   final String name;
   final CustomerLifecycle lifecycle;
   final String? email;

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
+import '../../../core/services/service_locator.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
 import '../../pos/models/branch.dart';
 import '../controllers/finance_setup_cubit.dart';
 import '../models/finance_report_models.dart';
@@ -62,6 +64,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   late String _from;
   late String _to;
   bool _includeZero = false;
+  bool _includeInternal = false;
 
   dynamic _report;
   String _reportType = 'profit-loss';
@@ -110,6 +113,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
   }
 
   Map<String, dynamic> get _baseFilters => <String, dynamic>{
+    'includeInternal': _includeInternal ? 1 : 0,
     if (_from.isNotEmpty) 'dateFrom': _from,
     if (_to.isNotEmpty) 'dateTo': _to,
     if (_branchId != null) 'branchId': _branchId,
@@ -313,6 +317,7 @@ class _FinancialReportsScreenState extends State<FinancialReportsScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        if (serviceLocator.isRegistered<AuthSessionCubit>() && serviceLocator<AuthSessionCubit>().state.session?.user.role == 'owner') SwitchListTile(title: const Text('إظهار الحركات الداخلية'), value: _includeInternal, onChanged: (value) { setState(() => _includeInternal = value); _load(); }),
         Wrap(
           spacing: FinanceSpace.sm,
           runSpacing: FinanceSpace.sm,

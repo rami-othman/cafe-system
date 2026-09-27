@@ -411,6 +411,7 @@ class SupplierInvoiceService
                     throw ValidationException::withMessages(['lines' => 'Select a valid inventory item that belongs to this tenant.']);
                 }
                 $resolved = $this->unitConversion->resolve($tenantId, $item, InventoryDecimal::quantity($quantityUnits), $line['purchaseUnit'] ?? null);
+                \App\Support\InventoryItemScope::assertForBranch($tenantId, $item, isset($data['branchId']) ? (int) $data['branchId'] : null);
                 $purchaseUnit = $resolved['inputUnit'];
                 $conversionFactor = InventoryDecimal::conversionFactor($resolved['factor']);
                 $baseQuantity = InventoryDecimal::quantity($resolved['baseQuantity']);
@@ -419,6 +420,7 @@ class SupplierInvoiceService
                         throw ValidationException::withMessages(['lines' => 'Select a warehouse that belongs to this tenant.']);
                     }
                     $warehouseId = (int) $line['warehouseId'];
+                    \App\Support\FactoryWarehouseScope::assertDestination($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $warehouseId);
                 }
             } elseif (! empty($line['inventoryItemId']) || ! empty($line['warehouseId'])) {
                 throw ValidationException::withMessages(['lines' => 'Inventory item and warehouse selection only apply to inventory-type lines.']);
@@ -815,10 +817,13 @@ class SupplierInvoiceService
     {
         $query = DB::table('invoice_types as t')->join('invoice_groups as g', 'g.id', '=', 't.invoice_group_id')
             ->where('t.tenant_id', $tenantId)->where('g.tenant_id', $tenantId)->where('t.is_active', true)->where('g.is_active', true);
+        \App\Support\DataScope::apply($query, 't.owner_branch_id', \App\Support\DataScope::forBranch($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null));
         if (! empty($data['invoiceTypeId'])) {
             $query->where('t.id', (int) $data['invoiceTypeId']);
         } else {
-            $query->where('t.code', $data['invoiceType'] ?? '');
+            $scope = \App\Support\DataScope::forBranch($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null);
+            $code = $data['invoiceType'] ?? '';
+            $query->where('t.code', $scope === null ? $code : 'f'.$scope.'_'.$code);
         }
         $type = $query->select('t.*', 'g.is_active as group_is_active')->first();
         if (! $type) {
@@ -842,6 +847,11 @@ class SupplierInvoiceService
 
     private function assertSupplierAndBranch(int $tenantId, array $data, ?int $actorId): void
     {
+        \App\Support\DataScope::assertReference($tenantId, 'suppliers', (int) ($data['supplierId'] ?? 0), isset($data['branchId']) ? (int) $data['branchId'] : null);
+        if (! empty($data['expenseCategoryId'])) \App\Support\DataScope::assertReference($tenantId, 'expense_categories', (int) $data['expenseCategoryId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
+        foreach ($data['charges'] ?? [] as $charge) {
+            if (! empty($charge['expenseCategoryId'])) \App\Support\DataScope::assertReference($tenantId, 'expense_categories', (int) $charge['expenseCategoryId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
+        }
         $supplier = DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $data['supplierId'] ?? null)->where('is_active', true)->whereNull('deleted_at')->exists();
         if (! $supplier) {
             throw ValidationException::withMessages(['supplierId' => 'Select an active tenant supplier.']);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../operational_context/controllers/operational_branch_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -351,6 +352,7 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
               content: Text(widget.isEdit ? c.branchSaved : c.branchCreated),
             ),
           );
+          context.read<OperationalBranchCubit>().loadBranches();
           context.go('/cafe-configuration/branches');
         }
       },
@@ -398,6 +400,24 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                           cubit.update(state.draft.copyWith(name: v)),
                     ),
                     _FieldError(state.errors['name']),
+                    const SizedBox(height: AppSpacing.lg),
+                    DropdownButtonFormField<String>(
+                      initialValue: state.draft.branchType,
+                      decoration: const InputDecoration(labelText: 'نوع الفرع'),
+                      items: const <DropdownMenuItem<String>>[
+                        DropdownMenuItem(
+                          value: 'cafe',
+                          child: Text('فرع مقهى'),
+                        ),
+                        DropdownMenuItem(value: 'factory', child: Text('معمل')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          cubit.update(state.draft.copyWith(branchType: value));
+                        }
+                      },
+                    ),
+                    _FieldError(state.errors['branchType']),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
                       controller: _address,
@@ -458,8 +478,8 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                             )
                             ? state.draft.posInventoryWarehouseId
                             : null,
-                        decoration: const InputDecoration(
-                          labelText: 'مخزن نقطة البيع',
+                        decoration: InputDecoration(
+                          labelText: state.draft.branchType == 'factory' ? 'مخزن المعمل' : 'مخزن نقطة البيع',
                           helperText:
                               'يُستخدم تلقائياً لاستهلاك مبيعات هذا الفرع.',
                         ),

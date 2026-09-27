@@ -21,6 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class CustomerImportService
 {
+    private ?int $ownerBranchId = null;
     private const PREVIEW_ROW_ISSUE_LIMIT = 25;
 
     public function __construct(
@@ -34,11 +35,13 @@ final class CustomerImportService
     {
         $actor = $this->access->actor($request);
         $tenantId = TenantContext::id($request);
+        $this->ownerBranchId = \App\Support\DataScope::resolve($request);
         $parsed = $this->parser->parse($file);
         $rows = $this->classifyPreviewRows($tenantId, $parsed['rows']);
 
         $import = DB::transaction(function () use ($request, $actor, $tenantId, $file, $parsed, $rows): CustomerImport {
             $import = CustomerImport::query()->create([
+                'owner_branch_id' => $this->ownerBranchId,
                 'tenant_id' => $tenantId,
                 'actor_user_id' => $actor->id,
                 'original_filename' => mb_substr($file->getClientOriginalName() ?: 'customers.csv', 0, 255),
@@ -89,6 +92,7 @@ final class CustomerImportService
 
     public function commit(Request $request, int $id, bool $createMissingGroups): CustomerImport
     {
+        $this->find($request, $id);
         $actor = $this->access->actor($request);
         $tenantId = TenantContext::id($request);
         $shouldDispatch = false;
@@ -102,6 +106,7 @@ final class CustomerImportService
             }
             if ($import->status === 'preview_ready' || $import->status === 'failed') {
                 $completed = CustomerImport::query()->forTenant($tenantId)
+                    ->when($import->owner_branch_id !== null, fn ($q) => $q->where('owner_branch_id', $import->owner_branch_id), fn ($q) => $q->whereNull('owner_branch_id'))
                     ->where('file_fingerprint', $import->file_fingerprint)
                     ->whereIn('status', ['completed', 'completed_with_errors'])
                     ->where('id', '<>', $import->id)
@@ -136,7 +141,9 @@ final class CustomerImportService
     {
         $this->access->assertCanAdminister($request);
 
-        return $this->loadImport(TenantContext::id($request), $id);
+        $import = $this->loadImport(TenantContext::id($request), $id);
+        \App\Support\DataScope::assertOwned($import, \App\Support\DataScope::resolve($request));
+        return $import;
     }
 
     public function errors(Request $request, int $id): StreamedResponse
@@ -170,6 +177,7 @@ final class CustomerImportService
     public function process(int $tenantId, int $id, int $actorId): void
     {
         $import = $this->loadImport($tenantId, $id);
+        $this->ownerBranchId = $import->owner_branch_id ? (int) $import->owner_branch_id : null;
         if (in_array($import->status, ['completed', 'completed_with_errors'], true)) {
             return;
         }
@@ -211,8 +219,8 @@ final class CustomerImportService
                 $phones[] = $phone['normalizedNumber'];
             }
         }
-        $existingCustomers = DB::table('customers')->where('tenant_id', $tenantId)->whereIn('normalized_name', $names)->get(['id', 'normalized_name']);
-        $existingPhones = DB::table('customer_phones')->where('tenant_id', $tenantId)->whereIn('normalized_number', array_values(array_unique($phones)))->get(['customer_id', 'normalized_number']);
+        $existingCustomers = DB::table('customers')->when($this->ownerBranchId !== null, fn ($q) => $q->where('customers.owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('customers.owner_branch_id'))->where('tenant_id', $tenantId)->whereIn('normalized_name', $names)->get(['id', 'normalized_name']);
+        $existingPhones = DB::table('customer_phones')->whereIn('customer_id', DB::table('customers')->when($this->ownerBranchId !== null, fn ($q) => $q->where('owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('owner_branch_id'))->select('id'))->where('tenant_id', $tenantId)->whereIn('normalized_number', array_values(array_unique($phones)))->get(['customer_id', 'normalized_number']);
         $customerNames = $existingCustomers->groupBy('normalized_name');
         $phonesByNumber = $existingPhones->groupBy('normalized_number');
         $groupNames = [];
@@ -221,7 +229,7 @@ final class CustomerImportService
                 $groupNames[] = $candidate['payload']['groupNormalizedName'];
             }
         }
-        $groupRows = DB::table('customer_groups')->where('tenant_id', $tenantId)->whereIn('normalized_name', array_values(array_unique($groupNames)))->get(['id', 'name', 'normalized_name', 'is_active', 'deleted_at']);
+        $groupRows = DB::table('customer_groups')->when($this->ownerBranchId !== null, fn ($q) => $q->where('customer_groups.owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('customer_groups.owner_branch_id'))->where('tenant_id', $tenantId)->whereIn('normalized_name', array_values(array_unique($groupNames)))->get(['id', 'name', 'normalized_name', 'is_active', 'deleted_at']);
 
         foreach ($rows as &$row) {
             if ($row['status'] === 'rejected') {
@@ -291,11 +299,11 @@ final class CustomerImportService
                     $row->update(['classification' => 'duplicate', 'status' => 'skipped_existing', 'matched_customer_id' => $existing->id]);
                     return;
                 }
-                if (DB::table('customers')->where('tenant_id', $tenantId)->where('normalized_name', $row->normalized_name)->exists()) {
+                if (DB::table('customers')->when($this->ownerBranchId !== null, fn ($q) => $q->where('customers.owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('customers.owner_branch_id'))->where('tenant_id', $tenantId)->where('normalized_name', $row->normalized_name)->exists()) {
                     $warnings[] = 'SAME_NAME_WITHOUT_MATCHING_PHONE';
                 }
                 foreach (array_column($payload['phones'] ?? [], 'normalizedNumber') as $number) {
-                    if (DB::table('customer_phones')->where('tenant_id', $tenantId)->where('normalized_number', $number)->whereNotExists(function ($query) use ($tenantId, $row): void {
+                    if (DB::table('customer_phones')->whereIn('customer_id', DB::table('customers')->when($this->ownerBranchId !== null, fn ($q) => $q->where('owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('owner_branch_id'))->select('id'))->where('tenant_id', $tenantId)->where('normalized_number', $number)->whereNotExists(function ($query) use ($tenantId, $row): void {
                         $query->select(DB::raw(1))->from('customers')->whereColumn('customers.id', 'customer_phones.customer_id')->where('customers.tenant_id', $tenantId)->where('customers.normalized_name', $row->normalized_name);
                     })->exists()) {
                         $warnings[] = 'SHARED_PHONE_WITH_DIFFERENT_NAME';
@@ -304,6 +312,7 @@ final class CustomerImportService
                 }
 
                 $customer = Customer::query()->create([
+                    'owner_branch_id' => $this->ownerBranchId,
                     'tenant_id' => $tenantId,
                     'name' => $payload['displayName'],
                     'normalized_name' => $payload['normalizedName'],
@@ -383,7 +392,7 @@ final class CustomerImportService
         if ($numbers === []) {
             return null;
         }
-        return DB::table('customers')->join('customer_phones', function ($join) use ($tenantId, $numbers): void {
+        return DB::table('customers')->when($this->ownerBranchId !== null, fn ($q) => $q->where('customers.owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('customers.owner_branch_id'))->join('customer_phones', function ($join) use ($tenantId, $numbers): void {
             $join->on('customer_phones.customer_id', '=', 'customers.id')->where('customer_phones.tenant_id', $tenantId)->whereIn('customer_phones.normalized_number', $numbers);
         })->where('customers.tenant_id', $tenantId)->where('customers.normalized_name', $normalizedName)->select('customers.id')->first();
     }
@@ -391,7 +400,7 @@ final class CustomerImportService
     /** @return array{0:?object,1:?int,2:?string} */
     private function resolveGroup(int $tenantId, string $name, string $normalizedName, bool $create, int $actorId): array
     {
-        $existing = DB::table('customer_groups')->where('tenant_id', $tenantId)->where('normalized_name', $normalizedName)->lockForUpdate()->first();
+        $existing = DB::table('customer_groups')->when($this->ownerBranchId !== null, fn ($q) => $q->where('customer_groups.owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('customer_groups.owner_branch_id'))->where('tenant_id', $tenantId)->where('normalized_name', $normalizedName)->lockForUpdate()->first();
         if ($existing) {
             return [$existing, null, ($existing->is_active && $existing->deleted_at === null) ? null : 'GROUP_UNAVAILABLE'];
         }
@@ -399,9 +408,9 @@ final class CustomerImportService
             return [null, null, 'MISSING_GROUP_NOT_CREATED'];
         }
         try {
-            $group = CustomerGroup::query()->create(['tenant_id' => $tenantId, 'name' => $name, 'normalized_name' => $normalizedName, 'is_active' => true]);
+            $group = CustomerGroup::query()->create(['owner_branch_id' => $this->ownerBranchId, 'tenant_id' => $tenantId, 'name' => $name, 'normalized_name' => $normalizedName, 'is_active' => true]);
         } catch (\Throwable $exception) {
-            $group = DB::table('customer_groups')->where('tenant_id', $tenantId)->where('normalized_name', $normalizedName)->lockForUpdate()->first();
+            $group = DB::table('customer_groups')->when($this->ownerBranchId !== null, fn ($q) => $q->where('customer_groups.owner_branch_id', $this->ownerBranchId), fn ($q) => $q->whereNull('customer_groups.owner_branch_id'))->where('tenant_id', $tenantId)->where('normalized_name', $normalizedName)->lockForUpdate()->first();
             if (! $group) {
                 throw $exception;
             }

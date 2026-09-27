@@ -3094,6 +3094,7 @@
   "teamOwner": "Owner",
   "teamManager": "Manager",
   "teamEmployee": "Employee",
+  "teamFactoryManager": "Factory Manager",
   "teamNoMembers": "No Managers or Employees yet.",
   "teamNoResults": "No team members match these filters.",
   "teamEditMember": "Edit Team Member",

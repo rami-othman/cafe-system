@@ -57,6 +57,7 @@ final class CustomerPaymentService
 
                 FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $data['branchId']);
                 $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'])->where('is_active', true)->whereNull('deleted_at')->first();
+                \App\Support\DataScope::assertReference($tenantId, 'customers', (int) $data['customerId'], (int) $data['branchId']);
                 if (! $customer || $customer->is_walk_in) {
                     throw ValidationException::withMessages(['customerId' => 'تسوية الذمم متاحة للعميل المسجل فقط. استخدم ترحيل البيع النقدي للعميل النقدي.']);
                 }
@@ -82,7 +83,7 @@ final class CustomerPaymentService
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'],
                     'customer_id' => $customer->id,
-                    'payment_number' => $this->nextNumber($tenantId),
+                    'payment_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId)),
                     'payment_date' => $data['paymentDate'],
                     'amount' => Money::decimal($amountCents),
                     'payment_method_id' => $method->id,
@@ -223,7 +224,7 @@ final class CustomerPaymentService
         $paymentId = DB::table('customer_payments')->insertGetId([
             'tenant_id' => $tenantId, 'branch_id' => $invoice->branch_id,
             'customer_id' => $invoice->customer_id, 'direct_sales_invoice_id' => $invoice->id,
-            'payment_number' => $this->nextNumber($tenantId), 'payment_date' => $data['paymentDate'],
+            'payment_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId)), 'payment_date' => $data['paymentDate'],
             'amount' => $invoice->total, 'payment_method_id' => $method->id,
             'financial_location_id' => $location->id, 'shift_id' => $shift?->id,
             'external_reference' => $data['reference'] ?? null, 'notes' => $data['notes'] ?? null,
@@ -375,7 +376,7 @@ final class CustomerPaymentService
         // lock and per-tenant numbering serializes, matching the existing
         // SalesInvoiceService/JournalEntryService numbering convention.
         DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
-        $count = DB::table('customer_payments')->where('tenant_id', $tenantId)->where('payment_number', 'like', "CR-{$year}-%")->count() + 1;
+        $count = DB::table('customer_payments')->where('tenant_id', $tenantId)->where('payment_number', 'like', "%CR-{$year}-%")->count() + 1;
 
         return sprintf('CR-%d-%06d', $year, $count);
     }

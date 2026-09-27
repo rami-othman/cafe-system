@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/branding/app_brand.dart';
+import '../core/network/dio_api_client.dart';
+import '../core/services/service_locator.dart';
 import '../core/branding/brand_title_synchronizer.dart';
 import '../core/constants/app_sizes.dart';
 import '../core/theme/app_colors.dart';
@@ -13,6 +15,7 @@ import '../features/customer_management/models/customer_management_access.dart';
 import '../features/pos/controllers/pos_cubit.dart';
 import '../features/pos/controllers/pos_state.dart';
 import '../features/pos/models/branch.dart';
+import '../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/widgets/app_sidebar.dart';
 import '../shared/widgets/app_top_bar.dart';
@@ -26,6 +29,7 @@ class AppShell extends StatefulWidget {
     this.topBar,
     this.onRefresh,
     this.prioritizeContentWidth = false,
+    this.isManufacturingRoute = false,
   });
 
   final Widget child;
@@ -34,6 +38,12 @@ class AppShell extends StatefulWidget {
   final Widget? topBar;
   final Future<void> Function(BuildContext context)? onRefresh;
   final bool prioritizeContentWidth;
+
+  /// Whether the current route is under `/manufacturing`. Combined with
+  /// `isFactoryUser`, this is what decides `isFactory` below — never the
+  /// [OperationalBranchCubit] state alone, which can still be empty on the
+  /// very first frame before it finishes loading.
+  final bool isManufacturingRoute;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -56,14 +66,17 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> _restoreSidebarPreference() async {
     try {
-      final SharedPreferences preferences = await SharedPreferences.getInstance();
-      final double width = preferences.getDouble(_sidebarWidthPreference) ?? _sidebarWidth;
+      final SharedPreferences preferences =
+          await SharedPreferences.getInstance();
+      final double width =
+          preferences.getDouble(_sidebarWidthPreference) ?? _sidebarWidth;
       final bool collapsed =
           preferences.getBool(_sidebarCollapsedPreference) ?? _sidebarCollapsed;
       if (!mounted) return;
       setState(() {
-        _sidebarWidth =
-            width.clamp(_sidebarMinWidth, _sidebarMaxWidth).toDouble();
+        _sidebarWidth = width
+            .clamp(_sidebarMinWidth, _sidebarMaxWidth)
+            .toDouble();
         _sidebarCollapsed = collapsed;
       });
     } catch (_) {
@@ -74,7 +87,8 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> _saveSidebarPreference() async {
     try {
-      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      final SharedPreferences preferences =
+          await SharedPreferences.getInstance();
       await preferences.setDouble(_sidebarWidthPreference, _sidebarWidth);
       await preferences.setBool(_sidebarCollapsedPreference, _sidebarCollapsed);
     } catch (_) {
@@ -88,26 +102,52 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _resizeSidebar(double delta, TextDirection direction) {
-    final double directionalDelta =
-        direction == TextDirection.rtl ? -delta : delta;
+    final double directionalDelta = direction == TextDirection.rtl
+        ? -delta
+        : delta;
     setState(() {
       if (_sidebarCollapsed) {
         _sidebarCollapsed = false;
       }
-      _sidebarWidth =
-          (_sidebarWidth + directionalDelta)
-              .clamp(_sidebarMinWidth, _sidebarMaxWidth)
-              .toDouble();
+      _sidebarWidth = (_sidebarWidth + directionalDelta)
+          .clamp(_sidebarMinWidth, _sidebarMaxWidth)
+          .toDouble();
     });
     _saveSidebarPreference();
   }
 
   @override
   Widget build(BuildContext context) {
-    final AuthSession? session =
-        context.watch<AuthSessionCubit>().state.session;
+    final AuthSession? session = context
+        .watch<AuthSessionCubit>()
+        .state
+        .session;
 
     final AuthUser? user = session?.user;
+    int? dataScope;
+    try {
+      context.watch<OperationalBranchCubit>();
+      if (serviceLocator.isRegistered<DioApiClient>()) dataScope = serviceLocator<DioApiClient>().scopeBranchId;
+    } catch (_) {
+      // Shell previews may not have an operational context.
+    }
+    // Phase 2: driven by the account (`isFactoryUser`) or the route
+    // (`isManufacturingRoute`), never by OperationalBranchCubit's state
+    // alone — that cubit can still be empty/loading on the very first
+    // frame, which previously made `isFactory` flicker to false right
+    // after navigating into /manufacturing.
+    bool isFactory = user?.isFactoryUser ?? false;
+    if (!isFactory && widget.isManufacturingRoute) {
+      try {
+        final branchState = context.watch<OperationalBranchCubit>().state;
+        isFactory = branchState.branches.any(
+          (branch) =>
+              branch.id == branchState.selectedBranchId && branch.isFactory,
+        );
+      } catch (_) {
+        // Shell previews may not provide an operational branch context.
+      }
+    }
 
     PosState? pos;
     try {
@@ -117,14 +157,12 @@ class _AppShellState extends State<AppShell> {
       // tests. Authenticated application routes normally provide PosCubit.
     }
 
-    final AppLocalizations? l10n =
-        Localizations.of<AppLocalizations>(
-          context,
-          AppLocalizations,
-        );
+    final AppLocalizations? l10n = Localizations.of<AppLocalizations>(
+      context,
+      AppLocalizations,
+    );
 
-    final bool isArabic =
-        Localizations.localeOf(context).languageCode == 'ar';
+    final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final BrandIdentity identity = AppBrand.resolve(
       user: user,
@@ -167,14 +205,19 @@ class _AppShellState extends State<AppShell> {
                   width: sidebarWidth,
                   child: AppSidebar(
                     activeLabel: widget.activeLabel,
+                    isFactory: isFactory,
+                    isFactoryUser: user?.isFactoryUser ?? false,
                     isCollapsed: sidebarCollapsed,
                     width: sidebarWidth,
                     actorRole: user?.role,
                     financeCapabilities:
                         user?.financeCapabilities ?? const <String>{},
+                    manufacturingCapabilities:
+                        user?.manufacturingCapabilities ?? const <String>{},
                     brandIdentity: identity,
-                    canManageCustomers:
-                        CustomerManagementAccess.allows(session),
+                    canManageCustomers: CustomerManagementAccess.allows(
+                      session,
+                    ),
                   ),
                 ),
                 if (isLarge)
@@ -193,7 +236,7 @@ class _AppShellState extends State<AppShell> {
                                 isCompact && widget.rightPanel != null,
                             onRefresh: widget.onRefresh,
                           ),
-                      Expanded(child: widget.child),
+                      Expanded(child: KeyedSubtree(key: ValueKey<int?>(dataScope), child: widget.child)),
                     ],
                   ),
                 ),
@@ -236,7 +279,10 @@ class _SidebarResizeHandle extends StatelessWidget {
                   ? (isArabic ? 'توسيع الشريط الجانبي' : 'Expand sidebar')
                   : (isArabic ? 'طي الشريط الجانبي' : 'Collapse sidebar'),
               child: IconButton(
-                constraints: const BoxConstraints.tightFor(width: 20, height: 32),
+                constraints: const BoxConstraints.tightFor(
+                  width: 20,
+                  height: 32,
+                ),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 iconSize: 16,

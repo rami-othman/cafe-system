@@ -131,6 +131,7 @@ final class CustomerPaymentController extends Controller
         $actor = FinancialActor::id($request, $tenant);
         $row = DB::table('customers')->where('tenant_id', $tenant)->where('id', $customer)->whereNull('deleted_at')->first();
         abort_unless($row, 404, 'Customer not found.');
+        \App\Support\DataScope::assertOwned($row, \App\Support\DataScope::resolve($request));
         $branchIds = FinancialActor::operationalBranchIds($actor, $tenant);
         $invoices = $this->receivables->openInvoices($tenant, $customer, $branchIds);
         $outstandingCents = array_sum(array_column($invoices, 'remainingCents'));

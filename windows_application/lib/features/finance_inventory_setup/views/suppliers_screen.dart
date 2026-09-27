@@ -12,6 +12,7 @@ import '../widgets/finance_components.dart';
 import '../widgets/finance_design.dart';
 import '../widgets/finance_pagination.dart';
 import '../widgets/finance_shell.dart';
+import '../widgets/internal_party_fields.dart';
 
 /// Canonical Suppliers & Accounts Payable list (`/finance/suppliers`).
 /// Laravel supplies every balance, overdue amount, and allowed-action list;
@@ -422,7 +423,7 @@ class _SuppliersTable extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(s.name, style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
+            Text('${s.name}${s.isInternal ? ' • داخلي' : ''}', style: FinanceText.body.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 2),
             FinanceReference(reference: s.supplierNumber),
           ],
@@ -474,6 +475,7 @@ class _SupplierFormDialogState extends State<_SupplierFormDialog> {
   late final TextEditingController _notes;
   String? _error;
   bool _saving = false;
+  Map<String, dynamic> _internalValues = {};
 
   @override
   void initState() {
@@ -513,6 +515,7 @@ class _SupplierFormDialogState extends State<_SupplierFormDialog> {
     });
     try {
       await widget.onSubmit(<String, dynamic>{
+        ..._internalValues,
         'name': _name.text.trim(),
         'phone': _phone.text.trim().isEmpty ? null : _phone.text.trim(),
         'email': _email.text.trim().isEmpty ? null : _email.text.trim(),
@@ -562,6 +565,7 @@ class _SupplierFormDialogState extends State<_SupplierFormDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           TextField(controller: _name, decoration: const InputDecoration(labelText: 'الاسم')),
+          InternalPartyFields(customer: false, initialInternal: widget.current?.isInternal ?? false, initialBranchId: widget.current?.internalBranchId, onChanged: (internal, branch) => _internalValues = {'isInternal': internal, 'internalBranchId': branch}),
           const SizedBox(height: FinanceSpace.md),
           TextField(controller: _phone, decoration: const InputDecoration(labelText: 'الهاتف')),
           const SizedBox(height: FinanceSpace.md),

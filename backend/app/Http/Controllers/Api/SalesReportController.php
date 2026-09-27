@@ -31,7 +31,7 @@ final class SalesReportController extends Controller
     public function salesProfitability(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $filters = $request->validate(['dateFrom' => ['nullable', 'date_format:Y-m-d'], 'dateTo' => ['nullable', 'date_format:Y-m-d'], 'branchId' => ['nullable', 'integer'], 'comparison' => ['nullable', 'in:previous_period,none']]);
+        $filters = $request->validate(['includeInternal' => ['sometimes', 'boolean'], 'dateFrom' => ['nullable', 'date_format:Y-m-d'], 'dateTo' => ['nullable', 'date_format:Y-m-d'], 'branchId' => ['nullable', 'integer'], 'comparison' => ['nullable', 'in:previous_period,none']]);
         $ctx = $this->contexts->resolve($tenant, FinancialActor::id($request, $tenant), $filters);
         $branchIds = $ctx['branchId'] !== null ? [$ctx['branchId']] : $ctx['authorizedBranchIds'];
 
@@ -82,6 +82,7 @@ final class SalesReportController extends Controller
             ->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])->whereNull('deleted_at')
             ->whereBetween('closed_at', [$range['start'], $range['end']])->count();
         $invoices = DB::table('sales_invoices')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'customer_id', 'customers'))
             ->whereBetween('invoice_date', [$dateFrom, $dateTo])->count();
 
         return $orders + $invoices;

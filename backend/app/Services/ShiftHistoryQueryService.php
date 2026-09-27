@@ -25,7 +25,7 @@ final class ShiftHistoryQueryService
             ->orderByDesc('s.closed_at')->paginate($perPage, ['s.*', 'b.name as branch_name', 'u.name as cashier_name'], 'page', $page);
         $data = collect($paginator->items())->map(function (object $shift): array {
             $cash = $this->cashSummary->summarize((int) $shift->tenant_id, $shift);
-            $sales = DB::table('orders')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->whereNull('deleted_at')->where('status', 'paid')->selectRaw('COUNT(*) as count, COALESCE(SUM(total),0) as gross, COALESCE(SUM(discount_total),0) as discounts')->first();
+            $sales = DB::table('orders')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->whereNull('deleted_at')->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])->selectRaw('COUNT(*) as count, COALESCE(SUM(total + COALESCE(discount_total, 0)),0) as gross, COALESCE(SUM(discount_total),0) as discounts')->first();
             $refunds = Money::cents(DB::table('payment_refunds')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->where('status', 'completed')->sum('amount') ?? '0');
             $barDifferences = DB::table('stock_count_lines as l')->join('stock_counts as c', 'c.id', '=', 'l.stock_count_id')->where('c.tenant_id', $shift->tenant_id)->where('c.shift_id', $shift->id)->where('c.count_type', 'shift_check')->where('l.variance_quantity', '!=', 0)->count();
             // Only a physically counted (manual) close can carry a cash difference;

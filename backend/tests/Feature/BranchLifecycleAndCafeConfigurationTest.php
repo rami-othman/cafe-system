@@ -18,6 +18,33 @@ class BranchLifecycleAndCafeConfigurationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_factory_branch_uses_one_private_default_warehouse_and_operational_metadata(): void
+    {
+        [$tenant, $existing, $owner] = $this->tenantBranchUser('simple-factory', 'owner');
+        app(FinancialSetupService::class)->ensureForTenant($tenant->id);
+        $token = $this->authenticateTenantUser($tenant->id, $owner);
+        $created = $this->withToken($token)->postJson('/api/v1/cafe-configuration/branches', [
+            'name' => 'المعمل', 'branchType' => 'factory', 'warehouseName' => 'مخزن المعمل', 'timezone' => 'Asia/Damascus',
+        ])->assertCreated()->assertJsonPath('data.branchType', 'factory');
+        $branchId = $created->json('data.id');
+        $warehouseId = $created->json('data.defaultWarehouseId');
+        $created->assertJsonPath('data.posInventoryWarehouseId', null);
+        $this->assertSame(4, DB::table('invoice_types')->where('owner_branch_id', $branchId)->count());
+        $this->assertNotNull($warehouseId);
+        $this->assertSame(1, DB::table('warehouses')->where('branch_id', $branchId)->count());
+        $this->assertDatabaseHas('warehouses', ['id' => $warehouseId, 'branch_id' => $branchId, 'tenant_id' => $tenant->id, 'type' => 'factory', 'name' => 'مخزن المعمل']);
+        $rows = $this->withToken($token)->getJson('/api/v1/branches')->assertOk()->json('data');
+        $factory = collect($rows)->firstWhere('id', $branchId);
+        $this->assertSame('factory', $factory['branchType']);
+        $this->assertSame($warehouseId, $factory['defaultWarehouseId']);
+        $this->assertSame('cafe', collect($rows)->firstWhere('id', $existing->id)['branchType']);
+        $this->withToken($token)->putJson('/api/v1/cafe-configuration/branches/'.$branchId, ['branchType' => 'invalid'])
+            ->assertUnprocessable()->assertJsonValidationErrors('branchType');
+        $this->withToken($token)->putJson('/api/v1/cafe-configuration/branches/'.$branchId, ['name' => 'المعمل الجديد'])
+            ->assertOk()->assertJsonPath('data.branchType', 'factory');
+        $this->assertSame(1, DB::table('warehouses')->where('branch_id', $branchId)->count());
+    }
+
     public function test_inactive_branches_stop_operational_access_without_removing_assignments_or_history(): void
     {
         [$tenant, $branch, $owner] = $this->tenantBranchUser('lifecycle', 'owner');
@@ -109,6 +136,7 @@ class BranchLifecycleAndCafeConfigurationTest extends TestCase
     public function test_owner_can_administrate_same_tenant_branches_and_sensitive_fields_are_rejected(): void
     {
         [$tenant, $active, $owner] = $this->tenantBranchUser('configuration', 'owner');
+        app(FinancialSetupService::class)->ensureForTenant($tenant->id);
         $inactive = Branch::query()->create([
             'tenant_id' => $tenant->id,
             'name' => 'Inactive branch',

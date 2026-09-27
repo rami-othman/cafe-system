@@ -40,6 +40,12 @@ import '../../features/cashier_dashboard/controllers/cashier_inventory_cubit.dar
 import '../../features/cashier_dashboard/repositories/cashier_dashboard_repository.dart';
 import '../../features/inventory/controllers/inventory_cubit.dart';
 import '../../features/inventory/repositories/inventory_repository.dart';
+import '../../features/manufacturing/controllers/manufacturing_conversion_cubit.dart';
+import '../../features/manufacturing/controllers/manufacturing_cubit.dart';
+import '../../features/manufacturing/controllers/manufacturing_production_cubit.dart';
+import '../../features/manufacturing/controllers/manufacturing_recipe_cubit.dart';
+import '../../features/manufacturing/controllers/manufacturing_reports_cubit.dart';
+import '../../features/manufacturing/repositories/manufacturing_repository.dart';
 import '../../features/operational_context/controllers/operational_branch_cubit.dart';
 import '../../features/operational_context/repositories/fake_operational_branch_repository.dart';
 import '../../features/operational_context/repositories/operational_branch_repository.dart';
@@ -389,6 +395,47 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<InventoryCubit>()) {
     serviceLocator.registerFactory<InventoryCubit>(
       () => InventoryCubit(repository: serviceLocator<InventoryRepository>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ManufacturingRepository>()) {
+    serviceLocator.registerLazySingleton<ManufacturingRepository>(
+      () => ManufacturingRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<ManufacturingCubit>()) {
+    serviceLocator.registerFactory<ManufacturingCubit>(
+      () => ManufacturingCubit(
+        repository: serviceLocator<ManufacturingRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ManufacturingRecipeCubit>()) {
+    serviceLocator.registerFactory<ManufacturingRecipeCubit>(
+      () => ManufacturingRecipeCubit(
+        repository: serviceLocator<ManufacturingRepository>(),
+        inventoryRepository: serviceLocator<InventoryRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ManufacturingProductionCubit>()) {
+    serviceLocator.registerFactory<ManufacturingProductionCubit>(
+      () => ManufacturingProductionCubit(
+        repository: serviceLocator<ManufacturingRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ManufacturingConversionCubit>()) {
+    serviceLocator.registerFactory<ManufacturingConversionCubit>(
+      () => ManufacturingConversionCubit(
+        repository: serviceLocator<ManufacturingRepository>(),
+      ),
+    );
+  }
+  if (!serviceLocator.isRegistered<ManufacturingReportsCubit>()) {
+    serviceLocator.registerFactory<ManufacturingReportsCubit>(
+      () => ManufacturingReportsCubit(
+        repository: serviceLocator<ManufacturingRepository>(),
+      ),
     );
   }
   if (!serviceLocator.isRegistered<OperationalBranchReader>()) {

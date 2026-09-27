@@ -62,6 +62,26 @@ final class DomainErrorMessages
 
         // Generic PHP DomainException fallback code (see bootstrap/app.php)
         'DOMAIN_RULE_VIOLATION' => 'لا يمكن إتمام هذه العملية وفق قواعد النظام الحالية.',
+
+        // ManufacturingDomainException
+        'MANUFACTURING_RECIPE_NOT_FOUND' => 'وصفة التصنيع غير موجودة.',
+        'RECIPE_INACTIVE' => 'هذه الوصفة غير نشطة حاليًا.',
+        'ITEM_INACTIVE' => 'هذه المادة غير نشطة.',
+        'MISSING_UNIT_CONVERSION' => 'لا يوجد تحويل وحدة معرف لهذه المادة.',
+        'CIRCULAR_RECIPE' => 'هذه الوصفة تؤدي إلى ترابط دائري في التصنيع.',
+        'WAREHOUSE_NOT_ALLOWED' => 'المخزن المحدد غير مسموح لهذه العملية.',
+        'INSUFFICIENT_STOCK' => 'الكمية المتوفرة في المخزون غير كافية.',
+        'INVALID_ACTUAL_OUTPUT' => 'يجب أن تكون الكمية الفعلية المنتجة أكبر من صفر.',
+        'PRODUCTION_DRAFT_NOT_FOUND' => 'لم يتم العثور على عملية التصنيع أو أنها اكتملت بالفعل.',
+        'PRODUCTION_ALREADY_COMPLETED' => 'تم إتمام عملية التصنيع هذه مسبقًا.',
+        'PRODUCTION_ALREADY_REVERSED' => 'تم عكس عملية التصنيع هذه مسبقًا.',
+        'PRODUCTION_NOT_REVERSIBLE' => 'لا يمكن عكس عملية التصنيع هذه لأن الناتج تم استهلاكه أو بيعه بالكامل.',
+        'COST_UNAVAILABLE' => 'تكلفة هذه المادة غير متوفرة.',
+        'DUPLICATE_INGREDIENT' => 'هذه المادة مضافة بالفعل إلى الوصفة.',
+        'MANUFACTURING_VALIDATION_FAILED' => 'تحقق من بيانات الوصفة قبل الحفظ.',
+        'MANUFACTURING_IDEMPOTENCY_CONFLICT' => 'تم استخدام مفتاح العملية هذا مسبقًا لطلب مختلف.',
+        'CONVERSION_SAME_ITEM' => 'لا يمكن أن يكون المنتج المصدر والمنتج الناتج نفس العنصر.',
+        'CONVERSION_NOT_REVERSIBLE' => 'لا يمكن عكس عملية التحويل هذه.',
     ];
 
     public static function forCode(string $domainCode, string $fallback = 'لا يمكن إتمام هذه العملية حاليًا.'): string

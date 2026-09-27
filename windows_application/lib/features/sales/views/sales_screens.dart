@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../operational_context/controllers/operational_branch_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,6 +18,8 @@ import '../controllers/sales_cubit.dart';
 import '../models/sales_models.dart';
 import '../models/sales_draft_preview.dart';
 import '../repositories/sales_repository.dart';
+import '../widgets/sales_profit_summary.dart';
+import '../../inventory/widgets/warehouse_dropdown.dart';
 
 class SalesCenterScreen extends StatefulWidget {
   const SalesCenterScreen({super.key});
@@ -29,10 +32,14 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
   Object? error;
   bool loading = false;
   int currentPage = 1;
+  int _listGeneration = 0;
   String search = '';
   String? status;
   final searchController = TextEditingController();
   SalesCubit get cubit => context.read<SalesCubit>();
+  int? get _activeBranchId {
+    try { return context.read<OperationalBranchCubit>().state.selectedBranchId; } catch (_) { return null; }
+  }
   @override
   void initState() {
     super.initState();
@@ -46,6 +53,7 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
   }
 
   Future<void> load() async {
+    final generation = ++_listGeneration;
     setState(() => loading = true);
     try {
       final result = await cubit.repository.invoices(
@@ -54,16 +62,17 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
           'perPage': 25,
           if (search.isNotEmpty) 'search': search,
           if (status != null) 'status': status,
+          if (_activeBranchId case final int value) 'branchId': value,
         },
       );
-      if (mounted)
+      if (mounted && generation == _listGeneration)
         setState(() {
           page = result;
           error = null;
           loading = false;
         });
     } catch (e) {
-      if (mounted)
+      if (mounted && generation == _listGeneration)
         setState(() {
           error = e;
           loading = false;
@@ -72,7 +81,7 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => FinanceShell(
+  Widget build(BuildContext context) => _branchScoped(FinanceShell(
     title: 'المبيعات',
     subtitle: 'فواتير المبيعات والذمم والتحصيلات.',
     actions: <Widget>[
@@ -205,7 +214,14 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
         Expanded(child: _body()),
       ],
     ),
-  );
+  ));
+  Widget _branchScoped(Widget child) {
+    if (_activeBranchId == null) return child;
+    return BranchChangeReload(onBranchChanged: () {
+      setState(() { currentPage = 1; page = null; });
+      load();
+    }, child: child);
+  }
   Widget _kpi(String label, String value) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -477,6 +493,10 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
                 if (posted) _field('مرجع القيد', i.journalReference ?? '—'),
               ],
             ),
+            if (i.profitability != null) ...[
+              const SizedBox(height: FinanceSpace.lg),
+              SalesProfitSummary(profit: i.profitability!),
+            ],
             if (posted) ...<Widget>[
               const SizedBox(height: 20),
               Wrap(
@@ -824,6 +844,9 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       'sales-${DateTime.now().microsecondsSinceEpoch}-${Random().nextInt(1 << 20)}';
   bool saving = false;
   String? catalogError;
+  bool loadingMaterials = false;
+  int _materialsGeneration = 0;
+  bool get _isFactory => branches.any((branch) => branch.id == branchId && branch.isFactory);
   SalesCubit get cubit => context.read<SalesCubit>();
   @override
   void initState() {
@@ -883,10 +906,16 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
         errors.add('لا توجد منتجات أو مواد خام متاحة للفوترة.');
       }
       catalogError = errors.isEmpty ? null : errors.join('\n');
-      if (widget.id == null && branchId == null && branches.isNotEmpty)
-        branchId = branches.first.id;
+      if (widget.id == null && branchId == null && branches.isNotEmpty) {
+        int? selectedId;
+        try { selectedId = context.read<OperationalBranchCubit>().state.selectedBranchId; } catch (_) {}
+        branchId = branches.where((branch) => branch.id == selectedId).firstOrNull?.id ?? branches.first.id;
+      }
     });
-    if (widget.id == null) return;
+    if (widget.id == null) {
+      await _refreshMaterials();
+      return;
+    }
     try {
       final i = await cubit.repository.invoice(widget.id!);
       if (!mounted) return;
@@ -933,9 +962,41 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
     } catch (error) {
       if (mounted) setState(() => catalogError = 'تعذر تحميل الفاتورة: $error');
     }
+    if (mounted) await _refreshMaterials();
+  }
+
+  Future<void> _refreshMaterials({bool clearInvalid = false}) async {
+    final generation = ++_materialsGeneration;
+    final selectedBranch = branchId;
+    setState(() => loadingMaterials = true);
+    try {
+      final result = await cubit.repository.materials(branchId: _isFactory ? selectedBranch : null);
+      if (!mounted || generation != _materialsGeneration) return;
+      setState(() {
+        materials = result;
+        if (clearInvalid) {
+          for (final line in lines) {
+            if ((_isFactory && line.productId != null) || (line.inventoryItemId != null && !materials.any((item) => item.id == line.inventoryItemId))) {
+              line.productId = null;
+              line.inventoryItemId = null;
+              line.variantId = null;
+              for (final component in line.materialOverrides) { component.dispose(); }
+              line.materialOverrides.clear();
+              line.materialOverridesTouched = false;
+            }
+          }
+        }
+      });
+    } catch (error) {
+      if (!mounted || generation != _materialsGeneration) return;
+      setState(() { materials = const []; catalogError = 'تعذر تحميل أصناف مخزن الفرع: $error'; });
+    } finally {
+      if (mounted && generation == _materialsGeneration) setState(() => loadingMaterials = false);
+    }
   }
 
   void _addLine() {
+    if (loadingMaterials) return;
     if (products.isEmpty && materials.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -950,6 +1011,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   }
 
   Future<void> save({bool postAfterSave = false}) async {
+    if (loadingMaterials || saving) return;
     if (!(form.currentState?.validate() ?? false) ||
         customerId == null ||
         branchId == null ||
@@ -1200,7 +1262,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           customerId,
                           customers,
                           (c) => c.id,
-                          (c) => '${c.name} (${c.customerNumber})',
+                          (c) => '${c.name} (${c.customerNumber})${c.isInternal ? ' • داخلي • فرع ${c.internalBranchId}' : ''}',
                           (v) => setState(() => customerId = v),
                         ),
                         TextButton.icon(
@@ -1214,7 +1276,10 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           branches,
                           (b) => b.id,
                           (b) => b.name,
-                          (v) => setState(() => branchId = v),
+                          (v) {
+                            setState(() => branchId = v);
+                            _refreshMaterials(clearInvalid: true);
+                          },
                         ),
                         OutlinedButton.icon(
                           onPressed: () async {
@@ -1420,8 +1485,8 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
     ),
   );
   List<_CatalogEntry> get _catalogEntries => <_CatalogEntry>[
-    ...products.map(_CatalogEntry.product),
-    ...materials.map(_CatalogEntry.material),
+    if (!loadingMaterials && !_isFactory) ...products.map(_CatalogEntry.product),
+    if (!loadingMaterials) ...materials.map(_CatalogEntry.material),
   ];
 
   /// Pre-fills a product line's editable recipe section with the variant's live default recipe, unless the user already customized it for this invoice.

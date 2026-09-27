@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Support\InventoryDecimal;
 use App\Support\InventoryCatalogIdentity;
+use App\Support\DataScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -17,12 +18,30 @@ class InventoryItemService
     {
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId, $itemId): int {
             $before = $itemId ? $this->find($tenantId, $itemId) : null;
+            $scope = DataScope::resolve($request);
+            if ($before) DataScope::assertOwned($before, $scope);
+            $warehouseIds = array_map('intval', $data['warehouseIds'] ?? []);
+            if ($scope !== null && ! $warehouseIds) {
+                $warehouseId = DB::table('branches')->where('tenant_id', $tenantId)->where('id', $scope)->value('default_warehouse_id');
+                abort_unless($warehouseId, 422, 'يجب إعداد مخزن المعمل أولاً.');
+                $warehouseIds = [(int) $warehouseId];
+            }
+            foreach ($warehouseIds as $warehouseId) {
+                $warehouse = DB::table('warehouses as w')->leftJoin('branches as b', 'b.id', '=', 'w.branch_id')
+                    ->where('w.tenant_id', $tenantId)->where('w.id', $warehouseId)->whereNull('w.deleted_at')->where('w.is_active', true)
+                    ->first(['w.branch_id', 'b.branch_type']);
+                abort_unless($warehouse, 422, 'المخزن غير متاح.');
+                \App\Support\InventoryAccess::assertBranchAccess($request, $warehouse->branch_id);
+                abort_if($scope !== null ? (int) $warehouse->branch_id !== $scope : $warehouse->branch_type === 'factory', 422, 'المخزن يتبع نطاقاً آخر (المعمل/المقهى).');
+            }
+            if ($scope !== null || array_key_exists('warehouseIds', $data)) $data['warehouseIds'] = $warehouseIds;
+            if (! $before && $scope !== null && empty($data['sku'])) $data['sku'] = 'MFG-'.strtoupper((string) \Illuminate\Support\Str::ulid());
             if ($before && $before->unit !== $data['unit'] && $this->baseUnitIsLocked($tenantId, $itemId)) {
                 throw ValidationException::withMessages([
                     'unit' => 'The base unit cannot change after stock history, unit conversions, or active recipe references exist.',
                 ]);
             }
-            $payload = $this->payload($data, $actorId) + ['updated_at' => now()];
+            $payload = DataScope::stamp($this->payload($data, $actorId), $scope) + ['updated_at' => now()];
             if ($itemId) {
                 DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $itemId)->update($payload);
                 $id = $itemId;
@@ -61,6 +80,7 @@ class InventoryItemService
     public function setStatus(Request $request, int $tenantId, int $itemId, bool $active, ?int $actorId): void
     {
         $before = $this->find($tenantId, $itemId);
+        DataScope::assertOwned($before, DataScope::resolve($request));
         DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $itemId)->update(['is_active' => $active, 'updated_by' => $actorId, 'updated_at' => now()]);
         $this->audit->record($request, $tenantId, $active ? 'inventory_item.activated' : 'inventory_item.deactivated', 'inventory_item', $itemId, (array) $before, (array) $this->find($tenantId, $itemId), null, $actorId);
     }

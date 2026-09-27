@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
+import '../../../app/purchase_route_scope.dart';
 import '../../finance_inventory_setup/widgets/finance_components.dart';
 import '../../finance_inventory_setup/widgets/finance_design.dart';
 import '../../finance_inventory_setup/widgets/finance_shell.dart';
@@ -167,7 +168,7 @@ class _PurchaseInvoiceDetailScreenState
       subtitle: p.internalReference,
       actions: <Widget>[
         TextButton.icon(
-          onPressed: () => context.go(AppRoutes.financePurchases),
+          onPressed: () => context.go(PurchaseRouteScope.of(context).listPath),
           icon: const Icon(Icons.arrow_back, size: 18),
           label: const Text('كل المشتريات'),
         ),
@@ -175,7 +176,7 @@ class _PurchaseInvoiceDetailScreenState
           const SizedBox(width: FinanceSpace.sm),
           OutlinedButton.icon(
             onPressed: () =>
-                context.go('${AppRoutes.financePurchases}/${p.id}/edit'),
+                context.go('${PurchaseRouteScope.of(context).listPath}/${p.id}/edit'),
             icon: const Icon(Icons.edit_outlined, size: 16),
             label: const Text('تعديل'),
           ),
@@ -209,7 +210,7 @@ class _PurchaseInvoiceDetailScreenState
             onPressed: _busy
                 ? null
                 : () => context.go(
-                    '${AppRoutes.financePurchases}/${p.id}/receive',
+                    '${PurchaseRouteScope.of(context).listPath}/${p.id}/receive',
                   ),
             style: ElevatedButton.styleFrom(
               backgroundColor: FinanceColors.success,
@@ -394,7 +395,7 @@ class _ReceiptsTable extends StatelessWidget {
     ],
     minWidth: 760,
     onRowTap: (int index) => context.go(
-      '${AppRoutes.financePurchaseReceipts}/${receipts[index].id}',
+      '${PurchaseRouteScope.of(context).receiptsPath}/${receipts[index].id}',
     ),
     rows: receipts
         .map(

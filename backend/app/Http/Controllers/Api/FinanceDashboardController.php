@@ -98,6 +98,7 @@ final class FinanceDashboardController extends Controller
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'comparison' => ['nullable', Rule::in(['previous_period', 'previous_year', 'none'])],
+            'includeInternal' => ['sometimes', 'boolean'],
         ];
         if ($allowBranch) {
             $rules['branch_id'] = ['nullable', 'integer'];
@@ -107,7 +108,8 @@ final class FinanceDashboardController extends Controller
         return [
             'dateFrom' => $data['date_from'] ?? null,
             'dateTo' => $data['date_to'] ?? null,
-            'branchId' => isset($data['branch_id']) ? (int) $data['branch_id'] : null,
+            'branchId' => $request->filled('branchId') ? (int) $request->input('branchId') : (isset($data['branch_id']) ? (int) $data['branch_id'] : null),
+            'includeInternal' => $request->boolean('includeInternal'),
             'comparison' => $data['comparison'] ?? 'previous_period',
         ];
     }

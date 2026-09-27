@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/app_router.dart';
+
+import '../../../app/purchase_route_scope.dart';
 import '../../finance_inventory_setup/controllers/finance_setup_cubit.dart';
 import '../../finance_inventory_setup/widgets/finance_components.dart';
 import '../../finance_inventory_setup/widgets/finance_design.dart';
@@ -36,7 +37,7 @@ class _PurchasingCenterScreenState extends State<PurchasingCenterScreen> {
     subtitle: 'كل فاتورة شراء هنا هي نفسها فاتورة المورد — لا يوجد سجل مالي مواز',
     actions: <Widget>[
       ElevatedButton.icon(
-        onPressed: () => context.go(AppRoutes.financePurchasesNew),
+        onPressed: () => context.go(PurchaseRouteScope.of(context).createPath),
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(0, 36),
           backgroundColor: FinanceColors.primary,
@@ -245,7 +246,7 @@ class _PurchasingOverviewTabState extends State<_PurchasingOverviewTab> {
     );
   }
 
-  void _openInvoice(PurchaseInvoice p) => context.go('${AppRoutes.financePurchases}/${p.id}');
+  void _openInvoice(PurchaseInvoice p) => context.go('${PurchaseRouteScope.of(context).listPath}/${p.id}');
 }
 
 class _PurchasingInvoicesTab extends StatefulWidget {
@@ -513,7 +514,7 @@ class _PurchasingInvoicesTabState extends State<_PurchasingInvoicesTab> {
               else ...<Widget>[
                 _PurchasesTable(
                   rows: page.items,
-                  onOpen: (PurchaseInvoice p) => context.go('${AppRoutes.financePurchases}/${p.id}'),
+                  onOpen: (PurchaseInvoice p) => context.go('${PurchaseRouteScope.of(context).listPath}/${p.id}'),
                 ),
                 FinancePagination(
                   meta: page.meta,
@@ -875,7 +876,7 @@ class _PurchasingReceiptsTabState extends State<_PurchasingReceiptsTab> {
                 _ReceiptsCenterTable(
                   rows: page.items,
                   onOpen: (PurchaseReceipt r) =>
-                      context.go('${AppRoutes.financePurchaseReceipts}/${r.id}'),
+                      context.go('${PurchaseRouteScope.of(context).receiptsPath}/${r.id}'),
                 ),
                 FinancePagination(
                   meta: page.meta,

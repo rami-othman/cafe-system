@@ -25,6 +25,19 @@ class _FakeBranchCubit extends OperationalBranchCubit {
 
   void setSelectedBranch(int? branchId) =>
       emit(state.copyWith(selectedBranchId: branchId));
+
+  void setFactory() => emit(
+    state.copyWith(
+      branches: [
+        Branch.fromJson({
+          'id': 1,
+          'name': 'المعمل',
+          'branchType': 'factory',
+          'defaultWarehouseId': 10,
+        }),
+      ],
+    ),
+  );
 }
 
 WarehouseLocation _warehouse({
@@ -45,6 +58,37 @@ WarehouseLocation _warehouse({
 );
 
 void main() {
+  testWidgets(
+    'factory warehouse options exclude shared and foreign warehouses',
+    (tester) async {
+      final cubit = _FakeBranchCubit(1);
+      cubit.setFactory();
+      addTearDown(cubit.close);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<OperationalBranchCubit>.value(
+            value: cubit,
+            child: Scaffold(
+              body: WarehouseDropdown(
+                value: 10,
+                warehouses: [
+                  _warehouse(id: 10, branchId: 1, name: 'مخزن المعمل'),
+                  _warehouse(id: 20, branchId: null, name: 'المخزن المشترك'),
+                  _warehouse(id: 30, branchId: 2, name: 'مخزن فرع آخر'),
+                ],
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(DropdownButtonFormField<int?>));
+      await tester.pumpAndSettle();
+      expect(find.text('مخزن المعمل'), findsWidgets);
+      expect(find.text('المخزن المشترك'), findsNothing);
+      expect(find.text('مخزن فرع آخر'), findsNothing);
+    },
+  );
   group('WarehouseDropdown', () {
     testWidgets(
       'a value not present in the current options is shown as "all", not a crash',

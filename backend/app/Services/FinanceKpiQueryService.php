@@ -119,6 +119,7 @@ final class FinanceKpiQueryService
             ->where('entries.status', 'posted')->where('accounts.account_group', 'expenses')
             ->where('entries.entry_date', '>=', $dateFrom)->where('entries.entry_date', '<=', $dateTo);
         BranchScope::apply($query, 'entries.branch_id', $context['branchId'], $context['authorizedBranchIds']);
+        \App\Support\InternalReportingScope::journals($query, $context);
         $row = $query->selectRaw('COALESCE(SUM(lines.debit),0) debit, COALESCE(SUM(lines.credit),0) credit, COUNT(DISTINCT entries.id) count')->first();
 
         $cents = Money::cents($row->debit ?: '0') - Money::cents($row->credit ?: '0');
@@ -182,9 +183,9 @@ final class FinanceKpiQueryService
      * (no branch-allocation rule exists for AP, and inventing one is out of
      * scope per policy), so a branch filter never changes this number.
      */
-    public function supplierPayables(int $tenantId, string $asOfDate): array
+    public function supplierPayables(int $tenantId, string $asOfDate, ?array $context = null): array
     {
-        $snapshot = $this->payables->snapshotAsOf($tenantId, $asOfDate);
+        $snapshot = $this->payables->snapshotAsOf($tenantId, $asOfDate, $context);
 
         return [
             'outstanding' => $snapshot['outstanding'],
@@ -210,9 +211,9 @@ final class FinanceKpiQueryService
     }
 
     /** Tenant-wide unapplied Customer Credit balance (a liability we owe customers, never revenue) — parallel to customerReceivables() above. */
-    public function customerCredit(int $tenantId, string $asOfDate): array
+    public function customerCredit(int $tenantId, string $asOfDate, ?array $context = null): array
     {
-        return ['balance' => Money::decimal(max(0, $this->customerCredit->totalBalanceCentsAsOf($tenantId, $asOfDate))), 'asOfDate' => $asOfDate, 'scope' => 'tenant'];
+        return ['balance' => Money::decimal(max(0, $this->customerCredit->totalBalanceCentsAsOf($tenantId, $asOfDate, $context))), 'asOfDate' => $asOfDate, 'scope' => 'tenant'];
     }
 
     /** Operating expenses grouped by real Expense Category (the `expenses` domain's own canonical categorization). */

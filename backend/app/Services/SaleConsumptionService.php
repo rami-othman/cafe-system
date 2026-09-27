@@ -395,6 +395,7 @@ class SaleConsumptionService
         if (! $material) {
             throw ValidationException::withMessages(['productId' => 'A published recipe material is unavailable.']);
         }
+        \App\Support\InventoryItemScope::assertForBranch($tenantId, $material, null);
         if (! RecipeMaterialEligibility::allows($material)) {
             throw ValidationException::withMessages(['productId' => 'A published recipe material is ineligible for recipe consumption.']);
         }

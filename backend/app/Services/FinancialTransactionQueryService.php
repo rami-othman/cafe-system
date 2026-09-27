@@ -88,7 +88,7 @@ final class FinancialTransactionQueryService
         $role = DB::table('users')->where('tenant_id', $tenantId)->where('id', $actorId)->value('role');
         if ($role !== 'owner') {
             $branchIds = FinancialActor::operationalBranchIds($actorId, $tenantId);
-            $query->where(fn (Builder $scope) => $scope->whereNull('entries.branch_id')->orWhereIn('entries.branch_id', $branchIds ?: [-1]));
+            \App\Support\BranchScope::applyFinancial($query, 'entries.branch_id', FinancialActor::user($actorId, $tenantId));
         }
         return $query;
     }

@@ -155,13 +155,23 @@ final class SalesInvoiceController extends Controller
     public function materials(Request $request): JsonResponse
     {
         $tenant = TenantContext::id($request);
-        $items = DB::table('inventory_items')->where('tenant_id', $tenant)->where('is_active', true)->whereNull('deleted_at')
-            ->whereNotIn('item_type', ['service', 'non_stock_item'])->orderBy('name')->get(['id', 'name', 'name_ar', 'sku', 'unit']);
+        $query = DB::table('inventory_items')->where('tenant_id', $tenant)->where('is_active', true)->whereNull('deleted_at')
+            ->whereNotIn('item_type', ['service', 'non_stock_item']);
+        \App\Support\DataScope::apply($query, 'inventory_items.owner_branch_id', \App\Support\DataScope::resolve($request));
+        if ($request->filled('branchId')) {
+            $branchId = (int) $request->validate(['branchId' => ['required', 'integer']])['branchId'];
+            FinancialActor::assertBranchAccess(FinancialActor::id($request, $tenant), $tenant, $branchId);
+            $isFactory = DB::table('branches')->where('tenant_id', $tenant)->where('id', $branchId)->value('branch_type') === 'factory';
+            $warehouse = $isFactory ? app(\App\Services\FactoryInventoryWarehouseResolver::class)->forBranch($tenant, $branchId) : app(\App\Services\PosInventoryWarehouseResolver::class)->forBranch($tenant, $branchId);
+            $query->whereExists(fn ($q) => $q->selectRaw('1')->from('inventory_item_warehouses as a')->whereColumn('a.inventory_item_id', 'inventory_items.id')->where('a.tenant_id', $tenant)->where('a.warehouse_id', $warehouse->id));
+        }
+        $items = $query->orderBy('name')->get(['id', 'name', 'name_ar', 'sku', 'unit', 'item_type']);
         $conversions = DB::table('inventory_item_unit_conversions')->where('tenant_id', $tenant)->whereIn('inventory_item_id', $items->pluck('id'))
             ->where('is_active', true)->get(['inventory_item_id', 'source_unit'])->groupBy('inventory_item_id');
         return response()->json(['data' => $items->map(fn (object $item) => [
             'id' => (int) $item->id, 'name' => $item->name_ar ?: $item->name, 'sku' => $item->sku,
             'baseUnit' => $item->unit, 'units' => collect([$item->unit])->merge(($conversions[$item->id] ?? collect())->pluck('source_unit'))->unique()->values(),
+            'itemType' => $item->item_type,
         ])->values()]);
     }
 
@@ -215,6 +225,7 @@ final class SalesInvoiceController extends Controller
             'charges' => collect($invoice->charges)->map(fn (object $c) => ['id' => (int) $c->id, 'name' => $c->name, 'amount' => $c->amount, 'taxable' => (bool) $c->taxable, 'taxTotal' => $c->tax_total, 'sortOrder' => (int) $c->sort_order])->values(),
             'allowedActions' => $this->actions($invoice, $permissions, $allocatedCents, $creditedArCents),
             'accountingStatus' => $invoice->status === 'posted' ? 'posted' : 'unposted',
+            'profitability' => app(\App\Services\SalesInvoiceProfitabilityService::class)->forInvoice($tenant, $invoice),
             'inventoryStatus' => $invoice->status !== 'posted' ? 'not_consumed' : ($costs->isEmpty() ? 'not_applicable' : 'consumed'),
             'journalEntryId' => $journal?->id, 'journalReference' => $journal?->entry_number, 'receivableAmount' => $receivable?->original_amount,
             'inventoryImpacts' => $costs->map(fn (object $c) => ['lineId' => (int) $c->sales_invoice_line_id, 'movementId' => $c->movement_id ? (int) $c->movement_id : null, 'itemName' => $c->item_name, 'quantityOut' => $c->quantity_out, 'unit' => $c->input_unit, 'warehouseName' => $c->warehouse_name, 'costAmount' => $c->cost_amount])->values(),

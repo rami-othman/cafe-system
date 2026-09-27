@@ -34,6 +34,9 @@ class DioApiClient {
           // an ambient Accept-Language a generic HTTP client (or a test tool)
           // might send on its own without the app ever choosing it.
           options.headers['X-App-Locale'] = CurrentLocale.languageCode;
+          if (scopeBranchId != null) {
+            options.queryParameters.putIfAbsent('scopeBranchId', () => scopeBranchId);
+          }
           if (options.data is FormData) {
             options.headers.remove(Headers.contentTypeHeader);
           } else {
@@ -49,6 +52,7 @@ class DioApiClient {
   }
 
   final Dio _dio;
+  int? scopeBranchId;
   int? _authenticatedTenantId;
   String? _accessToken;
   void Function(ApiException error)? onAuthenticationFailure;
@@ -62,6 +66,7 @@ class DioApiClient {
   /// supplied by the auth session owner after a secure-store restore or login.
   void setAccessToken(String? token) {
     if (token == null || token.isEmpty) {
+      scopeBranchId = null;
       _accessToken = null;
       _dio.options.headers.remove('Authorization');
       return;

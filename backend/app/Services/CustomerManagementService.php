@@ -8,14 +8,16 @@ use Illuminate\Validation\ValidationException;
 
 final class CustomerManagementService
 {
-    public function create(int $tenantId, int $actorId, array $data): object
+    public function create(int $tenantId, int $actorId, array $data, ?\Illuminate\Http\Request $request = null): object
     {
-        return DB::transaction(function () use ($tenantId, $actorId, $data): object {
+        return DB::transaction(function () use ($tenantId, $actorId, $data, $request): object {
             DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
             $next = (int) DB::table('customers')->where('tenant_id', $tenantId)->count() + 1;
             $normalizedName = CustomerNameNormalizer::normalize($data['name']);
             $id = DB::table('customers')->insertGetId([
+                ...($request ? \App\Support\InternalCounterparty::values($request, $tenantId, 'customer', \App\Support\DataScope::resolve($request), $data) : []),
                 'tenant_id' => $tenantId,
+'owner_branch_id' => $request ? \App\Support\DataScope::resolve($request) : null,
                 'customer_number' => sprintf('CUS-%06d', $next),
                 'name' => $data['name'], 'customer_type' => 'registered',
                 'normalized_name' => $normalizedName['normalizedName'],
@@ -37,6 +39,10 @@ final class CustomerManagementService
             throw ValidationException::withMessages(['isActive' => 'The protected walk-in customer must remain active.']);
         }
         $values = [];
+        if (array_key_exists('isInternal', $data) || array_key_exists('internalBranchId', $data)) {
+            $request = request();
+            $values += \App\Support\InternalCounterparty::values($request, $tenantId, 'customer', $customer->owner_branch_id ? (int) $customer->owner_branch_id : null, $data);
+        }
         foreach (['name' => 'name', 'phone' => 'phone', 'email' => 'email', 'taxNumber' => 'tax_number', 'notes' => 'notes', 'defaultCreditTermsDays' => 'default_credit_terms_days', 'isActive' => 'is_active'] as $input => $column) {
             if (array_key_exists($input, $data)) $values[$column] = $data[$input];
         }

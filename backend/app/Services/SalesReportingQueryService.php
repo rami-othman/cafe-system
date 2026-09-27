@@ -108,10 +108,12 @@ final class SalesReportingQueryService
             ->first();
 
         $customerPaymentsByKind = DB::table('customer_payments as p')->join('financial_locations as l', 'l.id', '=', 'p.financial_location_id')
+            ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'p.customer_id', 'customers'))
             ->where('p.tenant_id', $tenantId)->whereIn('p.branch_id', $branchIds)->where('p.status', 'posted')
             ->whereBetween('p.payment_date', [$dateFrom, $dateTo])
             ->selectRaw('l.kind, COALESCE(SUM(p.amount),0) total')->groupBy('l.kind')->pluck('total', 'kind');
         $customerRefundsByKind = DB::table('customer_refunds as r')->join('financial_locations as l', 'l.id', '=', 'r.financial_location_id')
+            ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'r.customer_id', 'customers'))
             ->where('r.tenant_id', $tenantId)->whereIn('r.branch_id', $branchIds)->where('r.status', 'posted')
             ->whereBetween('r.refund_date', [$dateFrom, $dateTo])
             ->selectRaw('l.kind, COALESCE(SUM(r.amount),0) total')->groupBy('l.kind')->pluck('total', 'kind');
@@ -143,6 +145,7 @@ final class SalesReportingQueryService
 
         $manual = Schema::hasTable('sales_invoice_lines') && Schema::hasTable('sales_invoices')
             ? DB::table('sales_invoice_lines as l')->join('sales_invoices as inv', 'inv.id', '=', 'l.sales_invoice_id')
+                ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'inv.customer_id', 'customers'))
                 ->where('inv.tenant_id', $tenantId)->whereIn('inv.branch_id', $branchIds)->where('inv.status', 'posted')
                 ->whereBetween('inv.invoice_date', [$dateFrom, $dateTo])
                 ->selectRaw('l.product_id, l.product_name, SUM(l.quantity) quantity, SUM(l.subtotal + l.discount_total) gross, SUM(l.discount_total) discounts, COALESCE(SUM(l.cogs_total),0) cogs')
@@ -151,7 +154,7 @@ final class SalesReportingQueryService
 
         $credit = Schema::hasTable('sales_credit_note_lines') && Schema::hasTable('sales_credit_notes')
             ? DB::table('sales_credit_note_lines as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
-                ->where('n.tenant_id', $tenantId)->whereIn('n.branch_id', $branchIds)->where('n.status', 'posted')
+                ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'n.customer_id', 'customers'))->where('n.tenant_id', $tenantId)->whereIn('n.branch_id', $branchIds)->where('n.status', 'posted')
                 ->whereBetween('n.credit_date', [$dateFrom, $dateTo])
                 ->selectRaw('l.product_id, l.product_name, SUM(l.quantity) quantity, SUM(l.subtotal) net, COALESCE(SUM(l.cogs_total),0) cogs')
                 ->groupBy('l.product_id', 'l.product_name')->get()
@@ -245,11 +248,11 @@ final class SalesReportingQueryService
             return ['grossCents' => 0, 'discountsCents' => 0, 'taxCents' => 0, 'netCents' => 0, 'cogsCents' => 0];
         }
 
-        $header = DB::table('sales_invoices')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+        $header = \App\Support\InternalReportingScope::party(DB::table('sales_invoices'), 'sales_invoices.customer_id', 'customers')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('invoice_date', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(subtotal),0) subtotal, COALESCE(SUM(discount_total),0) discounts, COALESCE(SUM(tax_total),0) tax')->first();
         $cogs = DB::table('sales_invoice_lines as l')->join('sales_invoices as i', 'i.id', '=', 'l.sales_invoice_id')
-            ->where('i.tenant_id', $tenantId)->whereIn('i.branch_id', $branchIds)->where('i.status', 'posted')
+            ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'i.customer_id', 'customers'))->where('i.tenant_id', $tenantId)->whereIn('i.branch_id', $branchIds)->where('i.status', 'posted')
             ->whereBetween('i.invoice_date', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(l.cogs_total),0) cogs')->value('cogs');
 
@@ -270,11 +273,11 @@ final class SalesReportingQueryService
             return ['netCents' => 0, 'taxCents' => 0, 'cogsCents' => 0];
         }
 
-        $header = DB::table('sales_credit_notes')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+        $header = \App\Support\InternalReportingScope::party(DB::table('sales_credit_notes'), 'sales_credit_notes.customer_id', 'customers')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('credit_date', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(subtotal),0) subtotal, COALESCE(SUM(tax_total),0) tax')->first();
         $cogs = DB::table('sales_credit_note_lines as l')->join('sales_credit_notes as n', 'n.id', '=', 'l.sales_credit_note_id')
-            ->where('n.tenant_id', $tenantId)->whereIn('n.branch_id', $branchIds)->where('n.status', 'posted')
+            ->when(\App\Support\InternalReportingScope::consolidated(), fn ($q) => \App\Support\InternalReportingScope::party($q, 'n.customer_id', 'customers'))->where('n.tenant_id', $tenantId)->whereIn('n.branch_id', $branchIds)->where('n.status', 'posted')
             ->whereBetween('n.credit_date', [$dateFrom, $dateTo])
             ->selectRaw('COALESCE(SUM(l.cogs_total),0) cogs')->value('cogs');
 

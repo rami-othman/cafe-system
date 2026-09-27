@@ -26,7 +26,7 @@ class QuickCreateCustomerRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if (array_diff(array_keys($this->all()), ['name', 'phone', 'notes', 'groupIds']) !== []) {
+            if (array_diff(array_keys($this->except('scopeBranchId')), ['name', 'phone', 'notes', 'groupIds']) !== []) {
                 $validator->errors()->add('payload', 'Quick-create accepts only its operational fields.');
             }
         });

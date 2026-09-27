@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/app_router.dart';
+
+import '../../../app/item_route_scope.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/inventory_text_styles.dart';
@@ -14,11 +15,13 @@ import '../../finance_inventory_setup/models/finance_setup_models.dart';
 import '../controllers/inventory_cubit.dart';
 import '../controllers/inventory_state.dart';
 import '../models/inventory_models.dart';
+import '../widgets/warehouse_dropdown.dart';
 import 'widgets/inventory_item_widgets.dart';
 
 class ItemFormScreen extends StatefulWidget {
-  const ItemFormScreen({super.key, this.itemId});
+  const ItemFormScreen({super.key, this.itemId, this.scope = ItemRouteScope.inventory});
   final int? itemId;
+  final ItemRouteScope scope;
   @override
   State<ItemFormScreen> createState() => _ItemFormScreenState();
 }
@@ -143,8 +146,8 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                       variant: AppButtonVariant.outlined,
                       onPressed: () => context.go(
                         widget.itemId == null
-                            ? AppRoutes.inventoryItems
-                            : AppRoutes.inventoryItemDetailPath(widget.itemId!),
+                            ? widget.scope.listPath
+                            : widget.scope.detailPath(widget.itemId!),
                       ),
                     ),
                     AppButton(
@@ -167,6 +170,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                           'non_stock_item': 'صنف غير مخزني',
                           'service': 'خدمة',
                           'raw_material': 'مادة خام',
+                          'semi_finished_good': 'نصف مصنع',
                           'packaging': 'تغليف',
                           'supply': 'مستلزمات',
                           'finished_good': 'منتج جاهز',
@@ -277,7 +281,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                     ],
                   ),
                 ),
-                _section(
+                if (activeFactoryWarehouseId(context) == null) _section(
                   title: 'إتاحة المخازن',
                   child: state.warehouses.isEmpty
                       ? const ManagementMessage(
@@ -286,7 +290,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
                       : Wrap(
                           spacing: AppSpacing.lg,
                           runSpacing: AppSpacing.xs,
-                          children: state.warehouses
+                          children: branchWarehouses(context, state.warehouses)
                               .map(
                                 (WarehouseLocation warehouse) => SizedBox(
                                   width: 260,
@@ -338,7 +342,9 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
           'preferredSupplierName': _supplier.text.trim(),
           'trackExpiry': _trackExpiry,
           'trackBatch': _trackBatch,
-          'warehouseIds': _warehouseIds.toList(growable: false),
+          'branchId': activeInventoryBranchId(context),
+          'ownerBranchId': activeFactoryWarehouseId(context) == null ? null : activeInventoryBranchId(context),
+          'warehouseIds': activeFactoryWarehouseId(context) == null ? _warehouseIds.toList(growable: false) : <int>[activeFactoryWarehouseId(context)!],
           'isActive': _active,
         }, id: current?.id);
     if (!mounted) {
@@ -346,9 +352,11 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
     }
     if (saved) {
       context.go(
-        current == null
-            ? AppRoutes.inventoryItems
-            : AppRoutes.inventoryItemDetailPath(current.id),
+        widget.scope.isManufacturing
+            ? widget.scope.detailPath(context.read<InventoryCubit>().state.selectedItem!.id)
+            : current == null
+            ? widget.scope.listPath
+            : widget.scope.detailPath(current.id),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

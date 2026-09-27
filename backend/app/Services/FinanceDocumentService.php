@@ -52,7 +52,7 @@ final class FinanceDocumentService
             $id = (int) DB::table('finance_documents')->insertGetId([
                 'tenant_id' => $tenantId,
                 'branch_id' => $data['branchId'] ?? null,
-                'document_number' => $this->nextNumber($tenantId, $data['documentType'], $data['documentDate']),
+                'document_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId, $data['documentType'], $data['documentDate'])),
                 'document_type' => $data['documentType'],
                 'status' => 'draft',
                 'document_date' => $data['documentDate'],

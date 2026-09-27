@@ -1,0 +1,11 @@
+# Cash drawer closing correction (2026-09-27)
+
+- Snapshot/history gross sales include the discount before deriving net sales; fully refunded orders remain in the sales base before deducting refunds. Discounts and refunds are deducted once.
+- Flutter uses the backend's authoritative expected cash, including customer collections and cash refunds. Legacy snapshot fallback includes these movements too.
+- Final review supports selecting a closing date. Backend rejects future dates and dates before opening or the latest linked financial activity; closing transfer uses the selected branch-local date. Audit update time remains actual time. Duplicate close requests do not duplicate transfers and conflicting retry dates are rejected.
+- Real voucher draft/post/reverse/replacement regression proves the old reversed payment has zero net effect and the replacement changes both drawer snapshot and ledger once. A repeated posting is rejected.
+- Validation: Laravel ShiftDrawerLifecycleTest + ShiftCashSummaryApiTest: 45 passed, 389 assertions. Flutter affected shift directory: 8 passed, including the complete closing wizard. Analyzer: zero errors/warnings, 28 existing informational findings. Windows Release built successfully in 91.1 seconds.
+- Backend restarted to reload code. Authenticated local current snapshot HTTP 200 and history loaded. Local business database has no open shifts; the screenshot's specific load failure has not been reproduced against its affected user's data. Validation field details now reach the UI instead of being replaced by a generic message. This does not establish the root cause of an unknown server-side loading failure.
+- No business-data correction or destructive database migration was performed. A replacement voucher must be paired with reversal of the incorrect posted voucher; merely creating another voucher does not cancel the first.
+- Release: windows_application/build/windows/x64/runner/Release. Distribute the complete folder. Git push publishes source code; it does not deploy the backend or install the Windows release remotely.
+- User authorized push after closing verification. This follow-up accompanies the completed factory phases in the single final commit.
