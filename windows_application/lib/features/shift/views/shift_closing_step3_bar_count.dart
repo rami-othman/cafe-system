@@ -5,6 +5,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../controllers/shift_closing_cubit.dart';
 import '../controllers/shift_closing_state.dart';
 import '../models/shift_models.dart';
+import '../models/shift_close_preview.dart';
 import '../widgets/shift_bar_count_row.dart';
 import '../widgets/shift_design.dart';
 import '../widgets/shift_format.dart';
@@ -20,7 +21,8 @@ class ShiftClosingStep3BarCount extends StatefulWidget {
   const ShiftClosingStep3BarCount({super.key});
 
   @override
-  State<ShiftClosingStep3BarCount> createState() => _ShiftClosingStep3BarCountState();
+  State<ShiftClosingStep3BarCount> createState() =>
+      _ShiftClosingStep3BarCountState();
 }
 
 class _ShiftClosingStep3BarCountState extends State<ShiftClosingStep3BarCount> {
@@ -33,7 +35,9 @@ class _ShiftClosingStep3BarCountState extends State<ShiftClosingStep3BarCount> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
     builder: (BuildContext context, ShiftClosingState state) {
       final ShiftClosingCubit cubit = context.read<ShiftClosingCubit>();
       final BarCountTemplate template = state.barTemplate!;
@@ -43,6 +47,15 @@ class _ShiftClosingStep3BarCountState extends State<ShiftClosingStep3BarCount> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const ShiftWizardStepHeader(title: ShiftStrings.barCount),
+          if (state.preview?.historical == true) ...<Widget>[
+            Text(
+              state.barCountBasis == ShiftCountBasis.current
+                  ? 'عدّ الموجود الآن؛ سيُحسب جرد نهاية الفترة بطرح صافي حركات المخزون اللاحقة. قيمة الفرق تقديرية بالتكلفة الحالية.'
+                  : 'أدخل أعداد الجرد المحفوظة لنهاية الفترة المختارة. قيمة الفرق تقديرية بالتكلفة الحالية.',
+              style: ShiftText.bodyStrong,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           _MetaStrip(template: template),
           const SizedBox(height: AppSpacing.lg),
           _Toolbar(
@@ -72,8 +85,10 @@ class _ShiftClosingStep3BarCountState extends State<ShiftClosingStep3BarCount> {
                         line: line,
                         onCountedChanged: (String v) =>
                             cubit.updateCountedQuantity(line.id, v),
-                        onNoteChanged: (String v) => cubit.updateLineNote(line.id, v),
-                        onFillTheoretical: () => cubit.fillWithTheoretical(line.id),
+                        onNoteChanged: (String v) =>
+                            cubit.updateLineNote(line.id, v),
+                        onFillTheoretical: () =>
+                            cubit.fillWithTheoretical(line.id),
                         onClear: () => cubit.clearCount(line.id),
                       ),
                     ),
@@ -115,7 +130,8 @@ class _MetaStrip extends StatelessWidget {
         Expanded(
           child: ShiftFactTile(
             label: ShiftStrings.itemsCounted,
-            value: '${ShiftFormat.count(template.countedItems)}/${ShiftFormat.count(template.totalItems)}',
+            value:
+                '${ShiftFormat.count(template.countedItems)}/${ShiftFormat.count(template.totalItems)}',
           ),
         ),
         Expanded(
@@ -131,7 +147,10 @@ class _MetaStrip extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(ShiftFormat.percent(template.progress), style: ShiftText.metricValueSmall),
+              Text(
+                ShiftFormat.percent(template.progress),
+                style: ShiftText.metricValueSmall,
+              ),
               const SizedBox(height: 6),
               ShiftProgressBar(value: template.progress),
             ],
@@ -155,14 +174,15 @@ class _Toolbar extends StatelessWidget {
   final ShiftClosingCubit cubit;
   final int uncountedCount;
 
-  static const List<(BarCountFilter, String)> _filters = <(BarCountFilter, String)>[
-    (BarCountFilter.all, ShiftStrings.filterAll),
-    (BarCountFilter.uncounted, ShiftStrings.filterUncounted),
-    (BarCountFilter.matched, ShiftStrings.filterMatched),
-    (BarCountFilter.shortage, ShiftStrings.filterShortage),
-    (BarCountFilter.surplus, ShiftStrings.filterSurplus),
-    (BarCountFilter.differences, ShiftStrings.filterDifferencesOnly),
-  ];
+  static const List<(BarCountFilter, String)> _filters =
+      <(BarCountFilter, String)>[
+        (BarCountFilter.all, ShiftStrings.filterAll),
+        (BarCountFilter.uncounted, ShiftStrings.filterUncounted),
+        (BarCountFilter.matched, ShiftStrings.filterMatched),
+        (BarCountFilter.shortage, ShiftStrings.filterShortage),
+        (BarCountFilter.surplus, ShiftStrings.filterSurplus),
+        (BarCountFilter.differences, ShiftStrings.filterDifferencesOnly),
+      ];
 
   @override
   Widget build(BuildContext context) => ShiftCard(
@@ -185,7 +205,10 @@ class _Toolbar extends StatelessWidget {
               value: state.barSort,
               hint: ShiftStrings.sortBy,
               items: const <ShiftDropdownItem<BarCountSort>>[
-                ShiftDropdownItem(value: BarCountSort.name, label: ShiftStrings.sortByName),
+                ShiftDropdownItem(
+                  value: BarCountSort.name,
+                  label: ShiftStrings.sortByName,
+                ),
                 ShiftDropdownItem(
                   value: BarCountSort.category,
                   label: ShiftStrings.sortByCategory,
@@ -195,7 +218,8 @@ class _Toolbar extends StatelessWidget {
                   label: ShiftStrings.sortByLargestDifference,
                 ),
               ],
-              onChanged: (BarCountSort? v) => cubit.setBarSort(v ?? BarCountSort.name),
+              onChanged: (BarCountSort? v) =>
+                  cubit.setBarSort(v ?? BarCountSort.name),
             ),
             if (uncountedCount > 0)
               ShiftButton(
@@ -284,10 +308,26 @@ class _DesktopTable extends StatelessWidget {
   static const List<ShiftTableCell> _headers = <ShiftTableCell>[
     ShiftTableCell(ShiftStrings.item, flex: 3.2),
     ShiftTableCell(ShiftStrings.unit, flex: 1.2),
-    ShiftTableCell(ShiftStrings.theoreticalQty, flex: 1.8, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.actualQty, flex: 2, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.difference, flex: 1.6, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.differenceStatus, flex: 1.8, alignment: Alignment.center),
+    ShiftTableCell(
+      ShiftStrings.theoreticalQty,
+      flex: 1.8,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.actualQty,
+      flex: 2,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.difference,
+      flex: 1.6,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.differenceStatus,
+      flex: 1.8,
+      alignment: Alignment.center,
+    ),
   ];
 
   @override
@@ -300,7 +340,8 @@ class _DesktopTable extends StatelessWidget {
           if (i > 0) const Divider(height: 1, color: ShiftColors.border),
           BarCountRow(
             line: lines[i],
-            onCountedChanged: (String v) => cubit.updateCountedQuantity(lines[i].id, v),
+            onCountedChanged: (String v) =>
+                cubit.updateCountedQuantity(lines[i].id, v),
             onNoteChanged: (String v) => cubit.updateLineNote(lines[i].id, v),
             onFillTheoretical: () => cubit.fillWithTheoretical(lines[i].id),
             onClear: () => cubit.clearCount(lines[i].id),
@@ -337,15 +378,18 @@ class _CompletionSummary extends StatelessWidget {
           runSpacing: AppSpacing.sm,
           children: <Widget>[
             ShiftBadge(
-              label: '${ShiftStrings.statusMatch}: ${ShiftFormat.count(template.matchedItems)}',
+              label:
+                  '${ShiftStrings.statusMatch}: ${ShiftFormat.count(template.matchedItems)}',
               tone: ShiftTone.success,
             ),
             ShiftBadge(
-              label: '${ShiftStrings.statusShortage}: ${ShiftFormat.count(template.shortageItems)}',
+              label:
+                  '${ShiftStrings.statusShortage}: ${ShiftFormat.count(template.shortageItems)}',
               tone: ShiftTone.warning,
             ),
             ShiftBadge(
-              label: '${ShiftStrings.statusSurplus}: ${ShiftFormat.count(template.surplusItems)}',
+              label:
+                  '${ShiftStrings.statusSurplus}: ${ShiftFormat.count(template.surplusItems)}',
               tone: ShiftTone.surplus,
             ),
           ],

@@ -39,19 +39,21 @@ class _ShiftOverviewScreenState extends State<ShiftOverviewScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocListener<ShiftOverviewCubit, ShiftOverviewState>(
-    listenWhen: (ShiftOverviewState previous, ShiftOverviewState current) =>
-        previous.status != current.status &&
-        (current.status == ShiftOverviewStatus.ready || current.status == ShiftOverviewStatus.empty),
-    listener: (BuildContext context, ShiftOverviewState state) {
-      unawaited(context.read<PosCubit>().refreshShiftStatus());
-    },
-    child: BlocBuilder<ShiftOverviewCubit, ShiftOverviewState>(
-      builder: (BuildContext context, ShiftOverviewState state) => Column(
-        children: <Widget>[Expanded(child: _buildBody(context, state))],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      BlocListener<ShiftOverviewCubit, ShiftOverviewState>(
+        listenWhen: (ShiftOverviewState previous, ShiftOverviewState current) =>
+            previous.status != current.status &&
+            (current.status == ShiftOverviewStatus.ready ||
+                current.status == ShiftOverviewStatus.empty),
+        listener: (BuildContext context, ShiftOverviewState state) {
+          unawaited(context.read<PosCubit>().refreshShiftStatus());
+        },
+        child: BlocBuilder<ShiftOverviewCubit, ShiftOverviewState>(
+          builder: (BuildContext context, ShiftOverviewState state) => Column(
+            children: <Widget>[Expanded(child: _buildBody(context, state))],
+          ),
+        ),
+      );
 
   Widget _buildBody(BuildContext context, ShiftOverviewState state) {
     switch (state.status) {
@@ -104,13 +106,20 @@ class _ShiftReadyView extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
                 ShiftIdentityHeader(identity: snapshot.identity),
                 const SizedBox(height: AppSpacing.lg),
-                Text(ShiftStrings.kpiSectionTitle, style: ShiftText.sectionTitle),
+                Text(
+                  ShiftStrings.kpiSectionTitle,
+                  style: ShiftText.sectionTitle,
+                ),
                 const SizedBox(height: AppSpacing.md),
-                ShiftKpiGrid(sales: snapshot.sales, payments: snapshot.payments),
+                ShiftKpiGrid(
+                  sales: snapshot.sales,
+                  payments: snapshot.payments,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
-                    final bool wide = constraints.maxWidth >= ShiftLayout.desktopBreakpoint;
+                    final bool wide =
+                        constraints.maxWidth >= ShiftLayout.desktopBreakpoint;
                     final List<Widget> left = <Widget>[
                       PaymentBreakdownCard(breakdown: snapshot.payments),
                       const SizedBox(height: AppSpacing.lg),
@@ -345,14 +354,17 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
                         hasError: state.openingFloatError != null,
                         hintText: ShiftStrings.openingFloatHint,
                         suffix: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Center(
                             widthFactor: 1,
                             child: Text('ل.س', style: ShiftText.bodyStrong),
                           ),
                         ),
-                        onChanged: (String v) =>
-                            context.read<ShiftOverviewCubit>().updateOpeningFloat(v),
+                        onChanged: (String v) => context
+                            .read<ShiftOverviewCubit>()
+                            .updateOpeningFloat(v),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -362,11 +374,20 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
                         controller: _noteController,
                         hintText: ShiftStrings.openingNotesHint,
                         minLines: 2,
-                        onChanged: (String v) =>
-                            context.read<ShiftOverviewCubit>().updateOpeningNote(v),
+                        onChanged: (String v) => context
+                            .read<ShiftOverviewCubit>()
+                            .updateOpeningNote(v),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
+                    if (state.errorMessage != null) ...<Widget>[
+                      ShiftNotice(
+                        key: const Key('shift-opening-error'),
+                        message: state.errorMessage!,
+                        tone: ShiftTone.blocker,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                     ShiftButton(
                       buttonKey: const Key('shift-open-submit-button'),
                       label: ShiftStrings.openShift,
@@ -398,7 +419,8 @@ class _NoOpenShiftViewState extends State<_NoOpenShiftView> {
     if (!context.mounted) return;
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) => _OpenShiftConfirmDialog(amount: amount),
+      builder: (BuildContext dialogContext) =>
+          _OpenShiftConfirmDialog(amount: amount),
     );
     if (confirmed == true) await cubit.openShift();
   }
@@ -421,8 +443,16 @@ class _OpenShiftConfirmDialog extends StatelessWidget {
           children: <Widget>[
             Text(ShiftStrings.confirmOpenShift, style: ShiftText.sectionTitle),
             const SizedBox(height: AppSpacing.lg),
-            ShiftKeyValueRow(label: ShiftStrings.branch, value: '618TierFour', numeric: false),
-            const ShiftKeyValueRow(label: ShiftStrings.cashier, value: 'tf-pos', numeric: false),
+            ShiftKeyValueRow(
+              label: ShiftStrings.branch,
+              value: '618TierFour',
+              numeric: false,
+            ),
+            const ShiftKeyValueRow(
+              label: ShiftStrings.cashier,
+              value: 'tf-pos',
+              numeric: false,
+            ),
             ShiftKeyValueRow(
               label: ShiftStrings.openingFloat,
               value: ShiftFormat.money(amount),
@@ -476,7 +506,10 @@ class _LastShiftCard extends StatelessWidget {
         Row(
           children: <Widget>[
             Expanded(
-              child: ShiftFactTile(label: ShiftStrings.shiftNumber, value: entry.shiftNumber),
+              child: ShiftFactTile(
+                label: ShiftStrings.shiftNumber,
+                value: entry.shiftNumber,
+              ),
             ),
             Expanded(
               child: ShiftFactTile(

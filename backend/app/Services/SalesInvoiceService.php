@@ -24,6 +24,7 @@ final class SalesInvoiceService
                 $existing = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('idempotency_key', $data['idempotencyKey'])->first();
                 if ($existing) { if ($existing->request_fingerprint !== $fingerprint) throw ValidationException::withMessages(['idempotencyKey' => 'This idempotency key was already used for a different request.']); return $existing; }
             }
+            $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'sales');
             $customer = $this->customer($tenantId, (int) $data['customerId']);
             \App\Support\DataScope::assertReference($tenantId, 'customers', (int) $customer->id, (int) $data['branchId']);
             \App\Support\FactorySalesPolicy::assertLines($tenantId, (int) $data['branchId'], $data['lines']);
@@ -32,7 +33,7 @@ final class SalesInvoiceService
             $date = CarbonImmutable::parse($data['invoiceDate'])->toDateString();
             $due = ! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString();
             $year = CarbonImmutable::parse($date)->year; $sequence = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('invoice_number', 'like', "%SI-{$year}-%")->count() + 1;
-            $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals));
+            $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals) + \App\Support\FactoryCurrency::columns($data));
             $this->replaceLines($tenantId, $id, $lines); $this->replaceCharges($tenantId, $id, $charges, $totals['rate']);
             return $this->find($tenantId, $id);
         });
@@ -43,6 +44,10 @@ final class SalesInvoiceService
         return DB::transaction(function () use ($tenantId, $invoiceId, $actorId, $data): object {
             $invoice = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('id', $invoiceId)->lockForUpdate()->first(); abort_unless($invoice, 404, 'Sales invoice not found.');
             if ($invoice->status !== 'draft') throw ValidationException::withMessages(['status' => 'Only draft sales invoices can be edited.']);
+            if ($invoice->factory_currency && ! isset($data['documentCurrency'])) throw ValidationException::withMessages(['documentCurrency' => 'أرسل عملة المستند وسعره المحفوظ عند تعديل المسودة.']);
+            $data['branchId'] ??= $invoice->branch_id;
+            if (isset($data['documentCurrency']) && (! isset($data['lines']) || ! array_key_exists('charges', $data))) throw ValidationException::withMessages(['lines' => 'أعد إرسال جميع بنود الفاتورة وتكاليفها عند تعديل العملة.']);
+            $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'sales');
             $customer = $this->customer($tenantId, (int) ($data['customerId'] ?? $invoice->customer_id));
             \App\Support\DataScope::assertReference($tenantId, 'customers', (int) $customer->id, (int) ($data['branchId'] ?? $invoice->branch_id));
             $lines = array_key_exists('lines', $data) ? $this->pricedLines($tenantId, $data['lines']) : $this->currentLines($invoiceId);
@@ -53,7 +58,7 @@ final class SalesInvoiceService
             $due = array_key_exists('dueDate', $data) ? (! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString()) : $invoice->due_date;
             $values = $this->totalValues($totals) + ['customer_id' => $customer->id, 'invoice_date' => $date, 'due_date' => $due, 'updated_by' => $actorId, 'updated_at' => now()];
             foreach (['branchId' => 'branch_id', 'reference' => 'reference', 'notes' => 'notes'] as $input => $column) if (array_key_exists($input, $data)) $values[$column] = $data[$input];
-            DB::table('sales_invoices')->where('id', $invoiceId)->update($values);
+            DB::table('sales_invoices')->where('id', $invoiceId)->update($values + \App\Support\FactoryCurrency::columns($data));
             if (array_key_exists('lines', $data)) { DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoiceId)->delete(); $this->replaceLines($tenantId, $invoiceId, $lines); }
             if (array_key_exists('charges', $data)) { DB::table('sales_invoice_charges')->where('sales_invoice_id', $invoiceId)->delete(); $this->replaceCharges($tenantId, $invoiceId, $charges, $totals['rate']); }
             return $this->find($tenantId, $invoiceId);

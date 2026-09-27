@@ -1,0 +1,1962 @@
+
+  ............................................................................
+  ............................................................................
+  ..................................................⨯⨯.⨯..⨯...................
+  ..........................⨯.........⨯.⨯⨯....................................
+  ................................................s...........................
+  ...............................................⨯⨯.⨯.........................
+  ⨯⨯............................⨯..⨯........................⨯.....⨯⨯..........
+  ............................................................................
+  ....................⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯......⨯⨯⨯....................
+  ..........⨯..........⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯...............................⨯..⨯⨯........
+  ............................................................................
+  .....................................................................⨯......
+  ....................................⨯⨯⨯⨯⨯.....⨯.⨯.....⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯........⨯⨯⨯⨯
+  ⨯⨯...⨯...
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AuthPhaseFourOperationalCutoverTest > assigned bran…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "cashSource": [
+            "لا يمكن فتح الوردية لأن صندوق نقطة البيع غير محدد لهذا الفرع."
+        ],
+        "shiftCloseDestinationFinancialLocationId": [
+            "لا يمكن فتح الوردية لأن وجهة تحويل النقدية عند إغلاق الوردية غير محددة لهذا الفرع."
+        ]
+    }
+}
+
+  at tests/Feature/AuthPhaseFourOperationalCutoverTest.php:49
+     45▕         $this->withToken($token)->getJson('/api/v1/branches')->assertOk()
+     46▕             ->assertJsonPath('data.0.id', $allowed->id)->assertJsonCount(1, 'data');
+     47▕         $this->withToken($token)->postJson('/api/v1/shifts/current', ['branchId' => $blocked->id, 'openingCash' => 0])->assertForbidden();
+     48▕         $this->withToken($token)->postJson('/api/v1/shifts/current', ['branchId' => $allowed->id, 'openingCash' => 0, 'userId' => 999])->assertUnprocessable();
+  ➜  49▕         $opened = $this->withToken($token)->postJson('/api/v1/shifts/current', ['branchId' => $allowed->id, 'openingCash' => 0])->assertCreated();
+     50▕         $this->assertDatabaseHas('shifts', ['id' => $opened->json('data.id'), 'user_id' => $employee->id, 'branch_id' => $allowed->id]);
+     51▕     }
+     52▕ 
+     53▕     public function test_order_payment_and_availability_use_authenticated_actor(): void
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AuthPhaseFourOperationalCutoverTest > order payment…   
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يجب فتح وردية قبل تنفيذ هذه العملية.",
+    "code": "NO_OPEN_SHIFT",
+    "errors": {
+        "shiftId": [
+            "The order shift has no valid cash drawer."
+        ]
+    }
+}
+
+  at tests/Feature/AuthPhaseFourOperationalCutoverTest.php:73
+     69▕             'shift_id' => $shiftId,
+     70▕             'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now,
+     71▕         ]);
+     72▕ 
+  ➜  73▕         $this->withToken($token)->postJson("/api/v1/orders/{$orderId}/pay", ['method' => 'cash', 'amount' => 10, 'idempotencyKey' => 'auth4-payment'])->assertOk();
+     74▕         $this->assertDatabaseHas('payments', ['order_id' => $orderId, 'cashier_id' => $owner->id]);
+     75▕ 
+     76▕         $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->orderBy('id')->value('id');
+     77▕         $this->withToken($token)->putJson("/api/v1/admin/catalog/products/{$productId}/operational-availability", ['branchId' => $branchId, 'channel' => 'pos', 'status' => 'sold_out'])->assertOk();
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AuthPhaseFourOperationalCutoverTest > payment requi…   
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يجب فتح وردية قبل تنفيذ هذه العملية.",
+    "code": "NO_OPEN_SHIFT",
+    "errors": {
+        "shiftId": [
+            "The order shift has no valid cash drawer."
+        ]
+    }
+}
+
+  at tests/Feature/AuthPhaseFourOperationalCutoverTest.php:166
+    162▕         ]);
+    163▕         $validOrder = $this->createPayableOrder($tenant->id, $branch->id, $validShift, 'SHIFT-VALID', $now);
+    164▕         $this->withToken($token)->postJson("/api/v1/orders/{$validOrder}/pay", [
+    165▕             'method' => 'cash', 'amount' => 10, 'idempotencyKey' => 'shift-valid',
+  ➜ 166▕         ])->assertOk();
+    167▕         $this->assertDatabaseHas('payments', [
+    168▕             'order_id' => $validOrder, 'shift_id' => $validShift, 'cashier_id' => $owner->id,
+    169▕         ]);
+    170▕     }
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\AuthPhaseOneTest > role aware login hashes tokens a…   
+  Failed asserting that two strings are identical.
+  -'finance.vouchers.view'
+  +'finance.cash_sources.view'
+  
+
+  at tests/Feature/AuthPhaseOneTest.php:51
+     47▕         $this->postJson('/api/v1/auth/login', ['email' => $manager->email, 'password' => 'ManagerPass'])->assertOk();
+     48▕         $employeeResponse = $this->postJson('/api/v1/auth/login', ['username' => 'rami', 'password' => 'Cashier1'])->assertOk()
+     49▕             ->assertJsonPath('data.user.id', $employee->id)->assertJsonPath('data.branchAccess.allBranches', false)
+     50▕             ->assertJsonPath('data.branchAccess.branchIds.0', $branch->id)
+  ➜  51▕             ->assertJsonPath('data.user.financeCapabilities.0', 'finance.vouchers.view');
+     52▕ 
+     53▕         $token = $ownerResponse->json('data.accessToken');
+     54▕         $ownerResponse->assertJsonPath('data.capabilities.customer.manage', true);
+     55▕         $this->withToken($token)->getJson('/api/v1/auth/me')
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BranchLifecycleAndCafeConfigurationTest > factory b…   
+  Failed asserting that null is not null.
+
+  at tests/Feature/BranchLifecycleAndCafeConfigurationTest.php:31
+     27▕             'name' => 'المعمل', 'branchType' => 'factory', 'warehouseName' => 'مخزن المعمل', 'timezone' => 'Asia/Damascus',
+     28▕         ])->assertCreated()->assertJsonPath('data.branchType', 'factory');
+     29▕         $branchId = $created->json('data.id');
+     30▕         $warehouseId = $created->json('data.posInventoryWarehouseId');
+  ➜  31▕         $this->assertNotNull($warehouseId);
+     32▕         $this->assertSame(1, DB::table('warehouses')->where('branch_id', $branchId)->count());
+     33▕         $this->assertDatabaseHas('warehouses', ['id' => $warehouseId, 'branch_id' => $branchId, 'tenant_id' => $tenant->id, 'type' => 'other', 'name' => 'مخزن المعمل']);
+     34▕         $rows = $this->withToken($token)->getJson('/api/v1/branches')->assertOk()->json('data');
+     35▕         $factory = collect($rows)->firstWhere('id', $branchId);
+
+  1   tests/Feature/BranchLifecycleAndCafeConfigurationTest.php:31
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Cafe618FinanceOperationsDemoSe…  ValidationException   
+  الصندوق المحدد غير متاح لهذا الفرع.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/CashSourceResolver.php:82
+  3   app/Services/ExpenseService.php:68
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Cafe618PosSalesDemoSeederTest…   ValidationException   
+  يوجد وردية مفتوحة بالفعل على صندوق النقدية هذا.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Http/Controllers/Api/ShiftController.php:107
+      +3 vendor frames 
+  6   app/Http/Controllers/Api/ShiftController.php:102
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Cafe618ReportsDemoSeederTest >…  ValidationException   
+  النقدية الافتتاحية المعدودة يجب أن تساوي الرصيد المرحّل لصندوق النقدية (0.00). رحّل أي تحويل من الخزنة إلى الصندوق قبل فتح الوردية.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Http/Controllers/Api/ShiftController.php:111
+      +3 vendor frames 
+  6   app/Http/Controllers/Api/ShiftController.php:102
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\DiscountRuntimeEligibilityTest > zero percentage an…   
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يجب فتح وردية قبل تنفيذ هذه العملية.",
+    "code": "NO_OPEN_SHIFT",
+    "errors": {
+        "shiftId": [
+            "The order shift has no valid cash drawer."
+        ]
+    }
+}
+
+  at tests/Feature/DiscountRuntimeEligibilityTest.php:121
+    117▕ 
+    118▕             $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+    119▕                 'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 100,
+    120▕                 'idempotencyKey' => "zero-{$type}",
+  ➜ 121▕             ], $this->headers($scope))->assertOk();
+    122▕             $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discount)->count());
+    123▕             $this->assertSame(1, (int) DB::table('discounts')->where('id', $discount)->value('used_count'));
+    124▕         }
+    125▕     }
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\DiscountRuntimeEligibilityTest > payment method id…    
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يجب فتح وردية قبل تنفيذ هذه العملية.",
+    "code": "NO_OPEN_SHIFT",
+    "errors": {
+        "shiftId": [
+            "The order shift has no valid cash drawer."
+        ]
+    }
+}
+
+  at tests/Feature/DiscountRuntimeEligibilityTest.php:134
+    130▕         $cashOnly = $this->discount($scope, ['payment_method' => 'cash']);
+    131▕         $this->apply($scope, $cashOnly)->assertOk();
+    132▕         $paid = $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+    133▕             'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 100, 'idempotencyKey' => 'matching-method-id',
+  ➜ 134▕         ], $this->headers($scope))->assertOk();
+    135▕         $this->assertSame($scope['cashMethod'], (int) DB::table('payments')->where('id', $paid->json('data.payment.id'))->value('payment_method_id'));
+    136▕ 
+    137▕         // A completed replay remains recoverable even if an administrator
+    138▕         // deactivates the method after the original successful payment.
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\DiscountRuntimeEligibilityTest > paid order retains…   
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يجب فتح وردية قبل تنفيذ هذه العملية.",
+    "code": "NO_OPEN_SHIFT",
+    "errors": {
+        "shiftId": [
+            "The order shift has no valid cash drawer."
+        ]
+    }
+}
+
+  at tests/Feature/DiscountRuntimeEligibilityTest.php:209
+    205▕         $discount = $this->discount($scope, ['name' => 'Original 10%', 'value' => 10]);
+    206▕         $this->apply($scope, $discount)->assertOk()->assertJsonPath('data.discount.amount', 10);
+    207▕         $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+    208▕             'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'], 'amount' => 90, 'idempotencyKey' => 'historical-discount-snapshot',
+  ➜ 209▕         ], $this->headers($scope))->assertOk();
+    210▕ 
+    211▕         $snapshot = DB::table('order_discounts')->where('order_id', $scope['order'])->first();
+    212▕         DB::table('discounts')->where('id', $discount)->update([
+    213▕             'name' => 'Changed after payment', 'value' => 75, 'is_active' => false, 'updated_at' => now(),
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceDashboardBreakdownAndBr…  ValidationException   
+  الصندوق المحدد غير متاح لهذا الفرع.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/CashSourceResolver.php:82
+  3   app/Services/ExpenseService.php:68
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceDashboardBreakdownAndBr…  ValidationException   
+  الصندوق المحدد غير متاح لهذا الفرع.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/CashSourceResolver.php:82
+  3   app/Services/ExpenseService.php:68
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceDashboardExpensesAndApT…  ValidationException   
+  الصندوق المحدد غير متاح لهذا الفرع.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/CashSourceResolver.php:82
+  3   app/Services/ExpenseService.php:68
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceDashboardExpensesAndApT…  ValidationException   
+  الصندوق المحدد غير متاح لهذا الفرع.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/CashSourceResolver.php:82
+  3   app/Services/ExpenseService.php:68
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceDashboardSalesAndCogsTe…  ValidationException   
+  الصندوق المحدد غير متاح لهذا الفرع.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/CashSourceResolver.php:82
+  3   app/Services/ExpenseService.php:68
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceOperationsDemoSeederTes…  ValidationException   
+  The order shift has no valid cash drawer.
+
+  at vendor/laravel/framework/src/Illuminate/Validation/ValidationException.php:70
+     66▕      * @return static
+     67▕      */
+     68▕     public static function withMessages(array $messages)
+     69▕     {
+  ➜  70▕         return new static(tap(ValidatorFacade::make([], []), function ($validator) use ($messages) {
+     71▕             foreach ($messages as $key => $value) {
+     72▕                 foreach (Arr::wrap($value) as $message) {
+     73▕                     $validator->errors()->add($key, $message);
+     74▕                 }
+
+      +1 vendor frames 
+  2   app/Services/PosCashLocationResolver.php:17
+  3   app/Http/Controllers/Api/PaymentController.php:282
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\FinanceRoutePermissionMapTest > every finance sensi…   
+  Add every new Finance-sensitive route to this canonical map.
+Failed asserting that 167 is identical to 164.
+
+  at tests/Feature/FinanceRoutePermissionMapTest.php:51
+     47▕             $this->assertTrue($routes->has($key), "Missing registered route: $key");
+     48▕             $this->assertContains('finance.permission:'.$permission, $routes[$key]->gatherMiddleware(), "Wrong Finance middleware: $key");
+     49▕         }
+     50▕         $sensitive = $routes->filter(fn ($route, string $key) => str_contains($key, ' api/v1/finance/') || in_array($key, ['GET api/v1/reports/daily', 'GET api/v1/reports/overview'], true));
+  ➜  51▕         $this->assertSame(count($expected), $sensitive->count(), 'Add every new Finance-sensitive route to this canonical map.');
+     52▕     }
+     53▕ }
+     54▕
+
+  1   tests/Feature/FinanceRoutePermissionMapTest.php:51
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\FactoryManagerRoleTest > factory mana…   
+  Failed asserting that 0 is not identical to 0.
+
+  at tests/Feature/Manufacturing/FactoryManagerRoleTest.php:180
+    176▕         app(FinancialSetupService::class)->ensureForTenant($this->tenant->id, $this->cafeBranch->id, $owner->id);
+    177▕         app(FinancialSetupService::class)->ensureForTenant($this->tenant->id, $this->factoryBranch->id, $owner->id);
+    178▕         $factoryWarehouseId = (int) DB::table('branches')->where('id', $this->factoryBranch->id)->value('default_warehouse_id');
+    179▕         $cafeWarehouseId = (int) DB::table('branches')->where('id', $this->cafeBranch->id)->value('pos_inventory_warehouse_id');
+  ➜ 180▕         $this->assertNotSame(0, $factoryWarehouseId);
+    181▕         $this->assertNotSame($factoryWarehouseId, $cafeWarehouseId);
+    182▕ 
+    183▕         $factoryManager = $this->user(DefaultTenantRoleService::FACTORY_MANAGER, 'FactoryPass1');
+    184▕         app(UserBranchAssignmentService::class)->assign($factoryManager, $this->factoryBranch);
+
+  1   tests/Feature/Manufacturing/FactoryManagerRoleTest.php:180
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > recipe va…   
+  Failed asserting that null is identical to 'MANUFACTURING_VALIDATION_FAILED'.
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:51
+     47▕ 
+     48▕         // zero output quantity
+     49▕         $this->postJson('/api/v1/manufacturing/recipes', [
+     50▕             'productItemId' => $cake, 'outputQuantity' => '0', 'outputUnit' => 'piece',
+  ➜  51▕             'lines' => [['inventoryItemId' => $flour, 'quantity' => '1', 'unit' => 'kilogram']],
+     52▕         ], $this->headers)->assertStatus(422)->assertJsonPath('code', 'MANUFACTURING_VALIDATION_FAILED');
+     53▕ 
+     54▕         // no ingredients
+     55▕         $this->postJson('/api/v1/manufacturing/recipes', [
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > recipe ed…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:105
+    101▕         $cake = $this->createItem('finished_good', 'piece');
+    102▕ 
+    103▕         $recipe = $this->postJson('/api/v1/manufacturing/recipes', [
+    104▕             'productItemId' => $cake, 'outputQuantity' => '4', 'outputUnit' => 'piece',
+  ➜ 105▕             'lines' => [['inventoryItemId' => $flour, 'quantity' => '2', 'unit' => 'kilogram']],
+    106▕         ], $this->headers)->assertCreated()->json('data');
+    107▕         $this->assertSame(1, $recipe['version']);
+    108▕ 
+    109▕         $draft = $this->postJson('/api/v1/manufacturing/production/drafts', ['recipeId' => $recipe['id'], 'qty' => '4', 'warehouseId' => $this->warehouseId], $this->headers)->assertCreated()->json('data');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > semi fini…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:142
+    138▕             'lines' => [
+    139▕                 ['inventoryItemId' => $milk, 'quantity' => '5', 'unit' => 'liter'],
+    140▕                 ['inventoryItemId' => $sugar, 'quantity' => '3', 'unit' => 'kilogram'],
+    141▕                 ['inventoryItemId' => $starch, 'quantity' => '0.8', 'unit' => 'kilogram'],
+  ➜ 142▕             ],
+    143▕         ], $this->headers)->assertCreated()->json('data');
+    144▕ 
+    145▕         $preview = $this->getJson('/api/v1/manufacturing/production/preview?recipeId='.$recipe['id'].'&qty=8&warehouseId='.$this->warehouseId, $this->headers)->assertOk()->json('data');
+    146▕         $this->assertFalse($preview['hasConversionIssue']);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > completed…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:208
+    204▕                 ['inventoryItemId' => $chocolate, 'quantity' => '800', 'unit' => 'gram'],
+    205▕                 ['inventoryItemId' => $cream, 'quantity' => '2', 'unit' => 'kilogram'],
+    206▕                 ['inventoryItemId' => $box, 'quantity' => '4', 'unit' => 'piece'],
+    207▕             ],
+  ➜ 208▕             'shelfLifeValue' => 3, 'shelfLifeUnit' => 'days',
+    209▕         ], $this->headers)->assertCreated()->json('data');
+    210▕ 
+    211▕         $draft = $this->postJson('/api/v1/manufacturing/production/drafts', ['recipeId' => $recipe['id'], 'qty' => '8', 'warehouseId' => $this->warehouseId], $this->headers)->assertCreated()->json('data');
+    212▕         $completed = $this->postJson("/api/v1/manufacturing/production/drafts/{$draft['id']}/complete", [
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > productio…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:276
+    272▕         $this->stockIn($flour, '150', '1');
+    273▕         $flourBeforeReverse = (float) DB::table('stock_balances')->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $flour)->value('quantity_on_hand');
+    274▕ 
+    275▕         $reversed = $this->postJson("/api/v1/manufacturing/production/{$completed['id']}/reverse", ['reason' => 'test reversal'], $this->headers)->assertOk()->json('data');
+  ➜ 276▕         $this->assertSame('reversed', $reversed['status']);
+    277▕ 
+    278▕         $cakeAfterReverse = (float) DB::table('stock_balances')->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $cake)->value('quantity_on_hand');
+    279▕         $this->assertSame(0.0, $cakeAfterReverse);
+    280▕         $flourAfterReverse = (float) DB::table('stock_balances')->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $flour)->value('quantity_on_hand');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > reversal…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:293
+    289▕     public function test_reversing_an_untouched_batch_restores_remaining_finished_good_wac(): void
+    290▕     {
+    291▕         $flour = $this->createItem('raw_material', 'kilogram');
+    292▕         $this->stockIn($flour, '100', '20');
+  ➜ 293▕         $cake = $this->createItem('finished_good', 'piece');
+    294▕         $recipe = $this->postJson('/api/v1/manufacturing/recipes', [
+    295▕             'productItemId' => $cake, 'outputQuantity' => '4', 'outputUnit' => 'piece',
+    296▕             'lines' => [['inventoryItemId' => $flour, 'quantity' => '2', 'unit' => 'kilogram']],
+    297▕         ], $this->headers)->assertCreated()->json('data');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > reversing…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:322
+    318▕     {
+    319▕         $flour = $this->createItem('raw_material', 'kilogram');
+    320▕         $this->stockIn($flour, '100', '10');
+    321▕         $cake = $this->createItem('finished_good', 'piece');
+  ➜ 322▕         $recipe = $this->postJson('/api/v1/manufacturing/recipes', [
+    323▕             'productItemId' => $cake, 'outputQuantity' => '4', 'outputUnit' => 'piece',
+    324▕             'lines' => [['inventoryItemId' => $flour, 'quantity' => '2', 'unit' => 'kilogram']],
+    325▕         ], $this->headers)->assertCreated()->json('data');
+    326▕         $draft = $this->postJson('/api/v1/manufacturing/production/drafts', ['recipeId' => $recipe['id'], 'qty' => '4', 'warehouseId' => $this->warehouseId], $this->headers)->assertCreated()->json('data');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > reversal…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:350
+    346▕         ], $this->headers)->assertCreated()->json('data');
+    347▕         $draft = $this->postJson('/api/v1/manufacturing/production/drafts', ['recipeId' => $recipe['id'], 'qty' => '7', 'warehouseId' => $this->warehouseId], $this->headers)->assertCreated()->json('data');
+    348▕         $completed = $this->postJson("/api/v1/manufacturing/production/drafts/{$draft['id']}/complete", ['actualQty' => '7'], $this->headers)->assertOk()->json('data');
+    349▕ 
+  ➜ 350▕         // sell/consume 5 of the 7 produced cakes, leaving 2 remaining
+    351▕         $this->postJson('/api/v1/inventory/movements', [
+    352▕             'warehouseId' => $this->warehouseId, 'itemId' => $cake, 'type' => 'stock_out', 'quantity' => '5', 'reason' => 'simulated partial consumption',
+    353▕         ], $this->headers)->assertCreated();
+    354▕
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > reversal…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:371
+    367▕         $flourAfter = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $flour)->value('quantity_on_hand');
+    368▕         $cakeAfter = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $cake)->value('quantity_on_hand');
+    369▕         $this->assertSame($flourBefore, $flourAfter);
+    370▕         $this->assertSame($cakeBefore, $cakeAfter);
+  ➜ 371▕ 
+    372▕         // Original production remains completed, not reversed.
+    373▕         $this->assertSame('completed', DB::table('manufacturing_orders')->where('id', $completed['recordId'])->value('status'));
+    374▕     }
+    375▕
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > manufactu…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:410
+    406▕         // An expiring-batch query (as used by the overview report) finds this batch.
+    407▕         $expiringBatches = DB::table('manufacturing_batches')->where('tenant_id', $this->tenant)->where('inventory_item_id', $cake)->whereDate('expiry_date', $expectedExpiry)->get();
+    408▕         $this->assertCount(1, $expiringBatches);
+    409▕         $overview = $this->getJson('/api/v1/manufacturing/overview?warehouseId='.$this->warehouseId, $this->headers)->assertOk()->json('data');
+  ➜ 410▕         $this->assertNotEmpty(array_filter($overview['expiring'], fn ($e) => $e['id'] === $completed['id']));
+    411▕         $remaining = collect($overview['expiring'])->firstWhere('id', $completed['id']);
+    412▕         $this->assertSame(5.0, (float) $remaining['remaining']);
+    413▕ 
+    414▕         $this->postJson('/api/v1/inventory/movements', [
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > reversal…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:454
+    450▕ 
+    451▕         // Production 1 must be blocked (its own batch is fully consumed) even though item-level on-hand (4) would otherwise look "reversible".
+    452▕         $this->postJson("/api/v1/manufacturing/production/{$completed1['id']}/reverse", ['reason' => 'batch 1 attempt'], $this->headers)
+    453▕             ->assertStatus(409)->assertJsonPath('code', 'PRODUCTION_NOT_REVERSIBLE');
+  ➜ 454▕ 
+    455▕         // Production 2 must be allowed — its own batch is fully untouched.
+    456▕         $reversed2 = $this->postJson("/api/v1/manufacturing/production/{$completed2['id']}/reverse", ['reason' => 'batch 2 attempt'], $this->headers)->assertOk()->json('data');
+    457▕         $this->assertSame('reversed', $reversed2['status']);
+    458▕         $onHandAfter = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $cake)->value('quantity_on_hand');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > conversio…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:495
+    491▕         // insufficient source stock rejected (whole cake is now at 0)
+    492▕         $this->postJson('/api/v1/manufacturing/conversions', [
+    493▕             'warehouseId' => $this->warehouseId, 'sourceItemId' => $whole, 'sourceQty' => '1', 'targetItemId' => $slice, 'resultQty' => '8',
+    494▕         ], $this->headers)->assertStatus(422)->assertJsonPath('code', 'INSUFFICIENT_STOCK');
+  ➜ 495▕     }
+    496▕ 
+    497▕     public function test_duplicate_draft_completion_and_reversal_requests_are_idempotent_and_never_double_post(): void
+    498▕     {
+    499▕         $flour = $this->createItem('raw_material', 'kilogram');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > duplicate…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:530
+    526▕         // duplicate reversal with the same idempotencyKey must return the SAME reversed record and restore stock exactly once
+    527▕         $reversePayload = ['reason' => 'idempotency test', 'idempotencyKey' => 'mfg-idem-reverse-1'];
+    528▕         $reversed1 = $this->postJson("/api/v1/manufacturing/production/{$completed1['recordId']}/reverse", $reversePayload, $this->headers)->assertOk()->json('data');
+    529▕         $reversed2 = $this->postJson("/api/v1/manufacturing/production/{$completed1['recordId']}/reverse", $reversePayload, $this->headers)->assertOk()->json('data');
+  ➜ 530▕         $this->assertSame('reversed', $reversed1['status']);
+    531▕         $this->assertSame($reversed1['recordId'], $reversed2['recordId']);
+    532▕         $flourAfterReverse = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $flour)->value('quantity_on_hand');
+    533▕         $this->assertSame(10.0, $flourAfterReverse); // restored exactly once, back to the original 10
+    534▕         $cakeAfterReverse = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $cake)->value('quantity_on_hand');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > tenant ca…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:571
+    567▕             ->assertStatus(404);
+    568▕ 
+    569▕         // tenant B cannot reverse tenant A's completed production
+    570▕         $this->postJson("/api/v1/manufacturing/production/{$completed['recordId']}/reverse", ['reason' => 'cross tenant attempt'], $headersB)
+  ➜ 571▕             ->assertStatus(404);
+    572▕ 
+    573▕         // tenant A's stock must be completely untouched by tenant B's rejected attempts
+    574▕         $flourFinal = (float) DB::table('stock_balances')->where('tenant_id', $this->tenant)->where('warehouse_id', $this->warehouseId)->where('inventory_item_id', $flour)->value('quantity_on_hand');
+    575▕         $this->assertSame(8.0, $flourFinal);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > permissio…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:611
+    607▕         ], $employeeHeaders)->assertStatus(403);
+    608▕         $this->postJson("/api/v1/manufacturing/production/{$completed['id']}/reverse", ['reason' => 'employee attempt'], $employeeHeaders)->assertStatus(403);
+    609▕         $this->getJson('/api/v1/manufacturing/reports', $employeeHeaders)->assertStatus(403);
+    610▕ 
+  ➜ 611▕         // manager (per Decision 1: the cafe does not manufacture): no manufacturing ability either, same as employee.
+    612▕         $this->postJson('/api/v1/manufacturing/recipes', [
+    613▕             'productItemId' => $cake2, 'outputQuantity' => '4', 'outputUnit' => 'piece',
+    614▕             'lines' => [['inventoryItemId' => $flour, 'quantity' => '2', 'unit' => 'kilogram']],
+    615▕         ], $managerHeaders)->assertStatus(403);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > overview…    
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "التصنيع متاح في فروع المعمل فقط."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:669
+    665▕         ], $this->headers)->assertOk()->json('data');
+    666▕ 
+    667▕         $overview = $this->getJson('/api/v1/manufacturing/overview?warehouseId='.$this->warehouseId, $this->headers)->assertOk()->json('data');
+    668▕         $this->assertEquals(3.0, $overview['kpis']['producedToday']);
+  ➜ 669▕         $this->assertGreaterThan(0.0, $overview['kpis']['productionCostToday']);
+    670▕         $this->assertEquals(75.0, $overview['kpis']['avgEfficiency']); // 3 actual / 4 planned * 100
+    671▕         $this->assertSame(1, $overview['kpis']['wasteToday']);
+    672▕         $this->assertNotEmpty(array_filter($overview['attention'], fn ($a) => str_contains($a['need'], '5'))); // flour below its 5kg reorder level
+    673▕         $this->assertNotEmpty(array_filter($overview['expiring'], fn ($e) => $e['id'] === $completed['id']));
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > reports e…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:726
+    722▕         $this->assertNotEmpty($full['materialConsumption']);
+    723▕         $this->assertEquals(4.0, collect($full['materialConsumption'])->firstWhere('unit', 'kilogram')['qty']); // 2kg * 2 productions
+    724▕         $this->assertNotEmpty($full['byProduct']);
+    725▕         $this->assertNotEmpty($full['byWarehouse']);
+  ➜ 726▕         $this->assertTrue($full['hasData']);
+    727▕ 
+    728▕         // product/type filter: matching type keeps both productions, the complementary type excludes them entirely
+    729▕         $filteredByType = $this->getJson('/api/v1/manufacturing/reports?dateFrom=2026-01-01&dateTo=2026-12-31&warehouseId='.$this->warehouseId.'&type=finished_good', $this->headers)->assertOk()->json('data');
+    730▕         $this->assertEquals(8.0, $filteredByType['kpis']['totalQty']);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > factory p…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:1025
+
+
+  1   tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:786
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > factory s…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:1025
+
+
+  1   tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:834
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > factory p…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:1025
+
+
+  1   tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:849
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > factory s…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:1025
+
+
+  1   tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:891
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > productio…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:918
+    914▕     {
+    915▕         $material = $this->createItem('raw_material', 'kilogram');
+    916▕         $other = $this->createItem('packaging', 'piece');
+    917▕         $product = $this->createItem('finished_good', 'piece');
+  ➜ 918▕         $this->stockIn($material, '10', '10');
+    919▕         $recipe = $this->postJson('/api/v1/manufacturing/recipes', ['productItemId' => $product, 'outputQuantity' => '4', 'outputUnit' => 'piece',
+    920▕             'lines' => [['inventoryItemId' => $material, 'quantity' => '2', 'unit' => 'kilogram'], ['inventoryItemId' => $other, 'quantity' => '1', 'unit' => 'piece']]], $this->headers)->assertCreated()->json('data');
+    921▕         $draft = $this->postJson('/api/v1/manufacturing/production/drafts', ['recipeId' => $recipe['id'], 'qty' => '4', 'warehouseId' => $this->warehouseId], $this->headers)->assertCreated()->json('data');
+    922▕         $url = "/api/v1/manufacturing/production/drafts/{$draft['id']}/complete";
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > productio…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "حقل الفرع مطلوب."
+        ]
+    }
+}
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:937
+    933▕     {
+    934▕         DB::table('branches')->where('id', $this->branchId)->update(['branch_type' => 'factory']);
+    935▕         $raw = $this->createItem('raw_material', 'kilogram');
+    936▕         $finished = $this->createItem('finished_good', 'piece');
+  ➜ 937▕         $foreign = $this->createItem('packaging', 'piece');
+    938▕         DB::table('inventory_item_warehouses')->where('inventory_item_id', $foreign)->delete();
+    939▕         $this->stockIn($raw, '10', '10');
+    940▕         $this->stockIn($finished, '5', '4');
+    941▕         $this->assertSame('factory', DB::table('branches')->where('id', $this->branchId)->value('branch_type'));
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingCoreFlowTest > factory c…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:1025
+
+
+  1   tests/Feature/Manufacturing/ManufacturingCoreFlowTest.php:952
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Manufacturing\ManufacturingDemoSeederTest > demo ha…   
+  Failed asserting that 0 is identical to 17.
+
+  at tests/Feature/Manufacturing/ManufacturingDemoSeederTest.php:24
+     20▕         $this->assertSame('factory', $branch->branch_type);
+     21▕         $this->assertSame(1, DB::table('warehouses')->where('branch_id', $branch->id)->count());
+     22▕         $items = DB::table('inventory_items')->where('tenant_id', $tenant)->where('sku', 'like', 'MFGDEMO-%')->pluck('id');
+     23▕         $this->assertCount(17, $items);
+  ➜  24▕         $this->assertSame(17, DB::table('inventory_item_warehouses')->where('warehouse_id', $branch->default_warehouse_id)->whereIn('inventory_item_id', $items)->count());
+     25▕         $this->assertSame(4, DB::table('manufacturing_recipes')->where('tenant_id', $tenant)->whereIn('product_item_id', $items)->count());
+     26▕         $before = DB::table('stock_balances')->where('warehouse_id', $branch->default_warehouse_id)->orderBy('inventory_item_id')->get()->toJson();
+     27▕         $versions = DB::table('manufacturing_recipe_versions')->count();
+     28▕         $movementCount = DB::table('stock_movements')->where('tenant_id', $tenant)->where('idempotency_key', 'like', 'mfgdemo-opening-%')->count();
+
+  1   tests/Feature/Manufacturing/ManufacturingDemoSeederTest.php:24
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MenuPublishConcurrencyTest > same s…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MenuPublishConcurrencyTest > valida…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MenuPublishConcurrencyTest > cross…   QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Phase12AuthorizationApiTest > explicit permissions…    
+  Failed asserting that two arrays are identical.
+   Array &0 [
+  -    0 => 'finance.transactions.view',
+  +    0 => 'finance.cash_sources.view',
+  +    1 => 'finance.vouchers.create',
+  +    2 => 'finance.vouchers.post',
+  +    3 => 'finance.receipts.create',
+  +    4 => 'finance.payments.create',
+  +    5 => 'finance.purchases.create',
+  +    6 => 'finance.purchases.edit',
+  +    7 => 'finance.purchases.post',
+  +    8 => 'finance.purchases.receive',
+  +    9 => 'finance.supplier_invoices.view',
+  +    10 => 'finance.supplier_invoices.create',
+  +    11 => 'finance.supplier_invoices.edit',
+  +    12 => 'finance.supplier_invoices.post',
+  +    13 => 'finance.sales.create',
+  +    14 => 'finance.sales.edit',
+  +    15 => 'finance.sales.post',
+  +    16 => 'finance.customers.view',
+  +    17 => 'finance.suppliers.view',
+  +    18 => 'finance.transactions.view',
+   ]
+  
+
+  at tests/Feature/Phase12AuthorizationApiTest.php:25
+     21▕         DB::table('finance_role_permissions')->insert(['tenant_id' => $tenant, 'role' => 'cashier', 'permission' => 'finance.view', 'created_at' => now(), 'updated_at' => now()]);
+     22▕         $this->getJson('/api/v1/finance/transactions', $this->headers($tenant, $cashier))->assertForbidden();
+     23▕         $this->putJson('/api/v1/finance/settings/role-permissions/cashier', ['permissions' => ['finance.transactions.view']], $this->headers($tenant, $owner))->assertOk()->assertJsonPath('data.permissions.0', 'finance.transactions.view');
+     24▕         $this->getJson('/api/v1/finance/transactions', $this->headers($tenant, $cashier))->assertOk();
+  ➜  25▕         $this->assertSame(['finance.transactions.view'], FinanceAccess::permissionsFor($tenant, 'cashier'));
+     26▕         $this->assertDatabaseHas('activity_logs', ['tenant_id' => $tenant, 'action' => 'finance_role_permissions.replaced']);
+     27▕     }
+     28▕ 
+     29▕     public function test_role_permission_administration_is_owner_only_and_validates_input(): void
+
+  1   tests/Feature/Phase12AuthorizationApiTest.php:25
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > concurrent differ…   
+  Failed asserting that actual size 0 matches expected size 1.
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:44
+     40▕             $this->paymentPayload($tenantId, $orderId, 'payment-a'),
+     41▕             $this->paymentPayload($tenantId, $orderId, 'payment-b'),
+     42▕         ]);
+     43▕ 
+  ➜  44▕         $this->assertCount(1, array_filter($results, fn (array $result): bool => $result['ok']));
+     45▕         $loser = collect($results)->first(fn (array $result): bool => ! $result['ok']);
+     46▕         $this->assertContains($loser['code'], ['PAYMENT_ALREADY_COMPLETED', 'ORDER_ALREADY_PAID']);
+     47▕         $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->where('status', 'completed')->count());
+     48▕         $this->assertSame(100.0, (float) DB::table('payments')->where('order_id', $orderId)->sum('amount'));
+
+  1   tests/Feature/PreAuthFinancialConcurrencyTest.php:44
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > concurrent same k…   
+  Failed asserting that actual size 0 matches expected size 2.
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:60
+     56▕         $payload = $this->paymentPayload($tenantId, $orderId, 'same-payment-key');
+     57▕ 
+     58▕         $results = $this->runConcurrently('payment', [$payload, $payload]);
+     59▕ 
+  ➜  60▕         $this->assertCount(2, array_filter($results, fn (array $result): bool => $result['ok']));
+     61▕         $paymentIds = collect($results)->pluck('result.data.payment.id')->unique()->values();
+     62▕         $this->assertCount(1, $paymentIds);
+     63▕         $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
+     64▕     }
+
+  1   tests/Feature/PreAuthFinancialConcurrencyTest.php:60
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > concurrent final…    
+  Failed asserting that actual size 0 matches expected size 1.
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:83
+     79▕             $this->paymentPayload($tenantId, $firstOrder, 'final-discount-a'),
+     80▕             $this->paymentPayload($tenantId, $secondOrder, 'final-discount-b'),
+     81▕         ]);
+     82▕ 
+  ➜  83▕         $this->assertCount(1, array_filter($results, fn (array $result): bool => $result['ok']));
+     84▕         $loser = collect($results)->first(fn (array $result): bool => ! $result['ok']);
+     85▕         $this->assertSame('DISCOUNT_USAGE_LIMIT_REACHED', $loser['code']);
+     86▕         $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discountId)->count());
+     87▕         $this->assertSame(1, (int) DB::table('discounts')->where('id', $discountId)->value('used_count'));
+
+  1   tests/Feature/PreAuthFinancialConcurrencyTest.php:83
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > concurrent same c…   
+  Failed asserting that actual size 0 matches expected size 1.
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:103
+     99▕             $this->paymentPayload($tenantId, $firstOrder, 'daily-limit-one-a'),
+    100▕             $this->paymentPayload($tenantId, $secondOrder, 'daily-limit-one-b'),
+    101▕         ]);
+    102▕ 
+  ➜ 103▕         $this->assertCount(1, array_filter($results, fn (array $result): bool => $result['ok']));
+    104▕         $loser = collect($results)->first(fn (array $result): bool => ! $result['ok']);
+    105▕         $this->assertSame('DISCOUNT_DAILY_USAGE_LIMIT_REACHED', $loser['code']);
+    106▕         $this->assertSame(1, DB::table('payments')->whereIn('order_id', [$firstOrder, $secondOrder])->where('status', 'completed')->count());
+    107▕         $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discountId)->count());
+
+  1   tests/Feature/PreAuthFinancialConcurrencyTest.php:103
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > concurrent same c…   
+  Failed asserting that actual size 0 matches expected size 2.
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:124
+    120▕             $this->paymentPayload($tenantId, $firstOrder, 'daily-limit-two-a'),
+    121▕             $this->paymentPayload($tenantId, $secondOrder, 'daily-limit-two-b'),
+    122▕         ]);
+    123▕ 
+  ➜ 124▕         $this->assertCount(2, array_filter($results, fn (array $result): bool => $result['ok']));
+    125▕         $thirdOrder = $this->makeDiscountedOrder($tenantId, $branchId, $discountId, $customerId);
+    126▕         $this->postJson("/api/v1/orders/{$thirdOrder}/pay", $this->paymentPayload($tenantId, $thirdOrder, 'daily-limit-two-c')['request'], $this->headers($tenantId))
+    127▕             ->assertUnprocessable()->assertJsonPath('code', 'DISCOUNT_DAILY_USAGE_LIMIT_REACHED');
+    128▕         $this->assertSame(2, DB::table('payments')->whereIn('order_id', [$firstOrder, $secondOrder, $thirdOrder])->where('status', 'completed')->count());
+
+  1   tests/Feature/PreAuthFinancialConcurrencyTest.php:124
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > lost response ret…   
+  Failed asserting that false is true.
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:143
+    139▕ 
+    140▕         // The first successful response is discarded exactly as it would be
+    141▕         // when the network fails after the transaction commits.
+    142▕         $results = $this->runConcurrently('payment', [$payload]);
+  ➜ 143▕         $this->assertTrue($results[0]['ok']);
+    144▕         $paymentId = DB::table('payments')->where('order_id', $orderId)->value('id');
+    145▕ 
+    146▕         $this->postJson("/api/v1/orders/{$orderId}/pay", $payload['request'], $this->headers($tenantId))
+    147▕             ->assertOk()->assertJsonPath('data.payment.id', $paymentId);
+
+  1   tests/Feature/PreAuthFinancialConcurrencyTest.php:143
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > payment conflict…    
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يجب فتح وردية قبل تنفيذ هذه العملية.",
+    "code": "NO_OPEN_SHIFT",
+    "errors": {
+        "shiftId": [
+            "The order shift has no valid cash drawer."
+        ]
+    }
+}
+
+  at tests/Feature/PreAuthFinancialConcurrencyTest.php:166
+    162▕         ]]);
+    163▕         $existingId = DB::table('payments')->where('order_id', $orderId)->value('id');
+    164▕ 
+    165▕         $this->postJson("/api/v1/orders/{$orderId}/pay", $payload, $this->headers($tenantId))
+  ➜ 166▕             ->assertOk()->assertJsonPath('data.payment.id', $existingId);
+    167▕         $this->postJson("/api/v1/orders/{$orderId}/pay", [...$payload, 'method' => 'card'], $this->headers($tenantId))
+    168▕             ->assertStatus(409)->assertJsonPath('code', 'PAYMENT_IDEMPOTENCY_CONFLICT');
+    169▕         $this->assertSame(1, DB::table('payments')->where('order_id', $orderId)->count());
+    170▕     }
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > c…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > c…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > o…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PreAuthFinancialConcurrencyTest > h…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PurchasingPhase1ApiTest > purchasing center show re…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/PurchasingPhase1ApiTest.php:263
+    259▕         $method = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id');
+    260▕         $this->postJson('/api/v1/finance/supplier-payments', [
+    261▕             'supplierId' => $supplierId, 'paymentDate' => '2026-09-05', 'amount' => '30.00', 'paymentMethodId' => $method, 'financialLocationId' => $cash,
+    262▕             'idempotencyKey' => 'show-pay-1', 'allocations' => [['invoiceId' => $id, 'amount' => '30.00']],
+  ➜ 263▕         ], $headers)->assertCreated();
+    264▕ 
+    265▕         $detail = $this->getJson("/api/v1/finance/purchases/{$id}", $headers)->assertOk()->json('data');
+    266▕         $this->assertCount(1, $detail['lines']);
+    267▕         $this->assertSame('Beans', $detail['lines'][0]['description']);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PurchasingPhase2ApiTest > factory immediate purchas…   
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "warehouseIds.1": [
+            "warehouseIds.1 المحدد غير موجود."
+        ]
+    }
+}
+
+  at tests/Feature/PurchasingPhase2ApiTest.php:35
+     31▕         $warehouse = $factory['posInventoryWarehouseId'];
+     32▕         $this->patchJson('/api/v1/inventory/items/'.$item, [
+     33▕             'nameAr' => 'صنف اختبار', 'itemType' => 'raw_material', 'unit' => 'kg',
+     34▕             'isActive' => true, 'warehouseIds' => [$oldWarehouse, $warehouse],
+  ➜  35▕         ], $headers)->assertOk();
+     36▕         $this->stockIn($headers, $item, $oldWarehouse, '4.000', '5.0000');
+     37▕         $supplier = $this->supplier($headers);
+     38▕         $payload = ['supplierId' => $supplier, 'branchId' => $factory['id'], 'invoiceType' => 'inventory',
+     39▕             'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'immediate', 'discountType' => 'fixed', 'discountValue' => '10.00',
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\PurchasingPhase2ApiTest > factory delayed receipts…    
+  Expected response status code [200] but received 422.
+Failed asserting that 422 is identical to 200.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "warehouseIds.1": [
+            "warehouseIds.1 المحدد غير موجود."
+        ]
+    }
+}
+
+  at tests/Feature/PurchasingPhase2ApiTest.php:64
+     60▕         $warehouse = $factory['posInventoryWarehouseId'];
+     61▕         $this->patchJson('/api/v1/inventory/items/'.$item, [
+     62▕             'nameAr' => 'صنف اختبار', 'itemType' => 'raw_material', 'unit' => 'kg',
+     63▕             'isActive' => true, 'warehouseIds' => [$oldWarehouse, $warehouse],
+  ➜  64▕         ], $headers)->assertOk();
+     65▕         $created = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $this->supplier($headers),
+     66▕             'branchId' => $factory['id'], 'invoiceType' => 'inventory', 'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'receive_later',
+     67▕             'lines' => [['lineType' => 'inventory', 'description' => 'Material', 'inventoryItemId' => $item,
+     68▕                 'quantity' => '10.000', 'lineGrossAmount' => '100.00', 'warehouseId' => $warehouse]]], $headers)->assertCreated()->json('data');
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SalesReportingUnionTest > pos plus manual union nev…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "financialLocationId": [
+            "الصندوق المحدد غير متاح لهذا الفرع."
+        ]
+    }
+}
+
+  at tests/Feature/SalesReportingUnionTest.php:43
+     39▕         $this->postJson('/api/v1/finance/customer-payments', [
+     40▕             'branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => $date, 'amount' => '300.00',
+     41▕             'paymentMethodId' => $cashMethod, 'financialLocationId' => $cashLocation, 'idempotencyKey' => 'union-pay-1',
+     42▕             'allocations' => [['invoiceId' => $invoice, 'amount' => '300.00']],
+  ➜  43▕         ], $s['headers'])->assertCreated();
+     44▕ 
+     45▕         $report = fn () => $this->getJson('/api/v1/finance/reports/sales-profitability?dateFrom='.$date.'&dateTo='.$date.'&branchId='.$s['branch'].'&comparison=none', $s['headers'])->assertOk()->json('data');
+     46▕ 
+     47▕         // §32 proof: Revenue = 800 (500 POS + 300 manual), Cash collected = 800 — never 1100 (500+300+300 payment double-counted as new revenue).
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\ShiftOpenConcurrencyTest > 03 concu…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\ShiftOpenConcurrencyTest > 05b conc…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\ShiftReconciliationRaceTest > recon…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\ShiftReconciliationRaceTest > recon…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\ShiftReconciliationRaceTest > recon…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SmartSearchApiTest > tenant isolati…  QueryException   
+  SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "customer_number" of relation "customers" violates not-null constraint
+DETAIL:  Failing row contains (2541, 639, Unique Customer Name, 0944111111, null, null, null, 0.00, 0, t, 2026-09-26 16:55:28, 2026-09-26 16:55:28, null, null, null, registered, null, 0, f, f, null, null, null, f, null). (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: insert into "customers" ("tenant_id", "name", "phone", "is_active", "created_at", "updated_at") values (639, Unique Customer Name, 0944111111, 1, 2026-09-26 16:55:28, 2026-09-26 16:55:28) returning "id")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +9 vendor frames 
+  10  tests/Feature/SmartSearchApiTest.php:146
+  11  tests/Feature/SmartSearchApiTest.php:87
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SmartSearchApiTest > phone search i…  QueryException   
+  SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "customer_number" of relation "customers" violates not-null constraint
+DETAIL:  Failing row contains (2542, 642, Formatted Phone Customer, +963 944 123 456, null, null, null, 0.00, 0, t, 2026-09-26 16:55:29, 2026-09-26 16:55:29, null, null, null, registered, null, 0, f, f, null, null, null, f, null). (Connection: pgsql, Host: postgres, Port: 5432, Database: cafe_system_618_testing, SQL: insert into "customers" ("tenant_id", "name", "phone", "is_active", "created_at", "updated_at") values (642, Formatted Phone Customer, +963 944 123 456, 1, 2026-09-26 16:55:29, 2026-09-26 16:55:29) returning "id")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +9 vendor frames 
+  10  tests/Feature/SmartSearchApiTest.php:146
+  11  tests/Feature/SmartSearchApiTest.php:113
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > publishing…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > successful…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > manager br…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > employee c…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > owner uses…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > re running…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > cross tena…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > failed ini…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > publication failure leaves…   
+  Failed asserting that 4 is identical to 3.
+
+  at tests/Feature/StagingInitializerTest.php:179
+    175▕         $tenant = Tenant::query()->where('slug', 'cafe-system-618-staging')->firstOrFail();
+    176▕         $counts = $this->tenantDomainCounts($tenant->id);
+    177▕         $this->assertSame(3, $counts['users']);
+    178▕         $this->assertSame(2, $counts['user_branches']);
+  ➜ 179▕         $this->assertSame(3, $counts['tenant_roles']);
+    180▕         $this->assertSame(1, $counts['branches']);
+    181▕         $this->assertSame(1, $counts['categories']);
+    182▕         $this->assertSame(3, $counts['products']);
+    183▕         $this->assertSame(3, $counts['product_variants']);
+
+  1   tests/Feature/StagingInitializerTest.php:179
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\StagingInitializerTest > rerun afte…  QueryException   
+  SQLSTATE[42803]: Grouping error: 7 ERROR:  column "customer_groups.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select exists(select * from "customer_groups" group by "tena...
+                             ^ (Connection: pgsql_migrations, Host: postgres, Port: 5432, Database: cafe_system_618_testing_migrations, SQL: select exists(select * from "customer_groups" group by "tenant_id", "normalized_name" having COUNT(*) > 1) as "exists")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+      +7 vendor frames 
+  8   database/migrations/2026_10_06_000007_scope_customer_imports_and_group_names.php:14
+      +26 vendor frames 
+  35  tests/Feature/StagingInitializerTest.php:30
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SupplierAccountsPayableApiTest > partial then full…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/SupplierAccountsPayableApiTest.php:161
+    157▕         $first = $this->postJson('/api/v1/finance/supplier-payments', [
+    158▕             'supplierId' => $supplierId, 'paymentDate' => '2026-08-21', 'amount' => '200.00',
+    159▕             'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-partial-1',
+    160▕             'allocations' => [['invoiceId' => $invoiceId, 'amount' => '200.00']],
+  ➜ 161▕         ], $headers)->assertCreated()->assertJsonPath('data.status', 'posted');
+    162▕ 
+    163▕         $this->getJson("/api/v1/finance/supplier-invoices/{$invoiceId}", $headers)
+    164▕             ->assertOk()->assertJsonPath('data.status', 'partially_paid')->assertJsonPath('data.remainingAmount', '300.00');
+    165▕
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SupplierAccountsPayableApiTest > one payment alloca…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/SupplierAccountsPayableApiTest.php:203
+    199▕         $this->postJson('/api/v1/finance/supplier-payments', [
+    200▕             'supplierId' => $supplierId, 'paymentDate' => '2026-08-21', 'amount' => '600.00',
+    201▕             'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-multi-1',
+    202▕             'allocations' => [['invoiceId' => $invoiceA, 'amount' => '300.00'], ['invoiceId' => $invoiceB, 'amount' => '300.00']],
+  ➜ 203▕         ], $headers)->assertCreated();
+    204▕ 
+    205▕         $this->getJson("/api/v1/finance/supplier-invoices/{$invoiceA}", $headers)->assertOk()->assertJsonPath('data.status', 'paid');
+    206▕         $this->getJson("/api/v1/finance/supplier-invoices/{$invoiceB}", $headers)->assertOk()->assertJsonPath('data.status', 'partially_paid')->assertJsonPath('data.remainingAmount', '200.00');
+    207▕         $this->assertSame('200.00', $this->getJson("/api/v1/finance/suppliers/{$supplierId}", $headers)->json('data.outstandingBalance'));
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SupplierAccountsPayableApiTest > allocation across…    
+  Failed to find a validation error in the response for key: 'allocations'
+
+Response has the following JSON validation errors:
+
+{
+    "branchId": [
+        "A branch is required for cash payment."
+    ]
+}
+
+Failed asserting that an array has the key 'allocations'.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/SupplierAccountsPayableApiTest.php:253
+    249▕         $this->postJson('/api/v1/finance/supplier-payments', [
+    250▕             'supplierId' => $supplierId, 'paymentDate' => '2026-08-21', 'amount' => '50.00',
+    251▕             'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-wrong-supplier-1',
+    252▕             'allocations' => [['invoiceId' => $foreignInvoice, 'amount' => '50.00']],
+  ➜ 253▕         ], $headers)->assertUnprocessable()->assertJsonValidationErrors('allocations');
+    254▕         $this->assertSame(0, DB::table('supplier_payments')->where('tenant_id', $tenant)->where('idempotency_key', 'pay-wrong-supplier-1')->count());
+    255▕     }
+    256▕ 
+    257▕     public function test_supplier_payment_idempotency_replay_and_conflict(): void
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SupplierAccountsPayableApiTest > supplier payment i…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/SupplierAccountsPayableApiTest.php:268
+    264▕         $methodId = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('code', 'CASH')->value('id');
+    265▕         $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+    266▕         $payload = ['supplierId' => $supplierId, 'paymentDate' => '2026-08-21', 'amount' => '200.00', 'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-idem-1', 'allocations' => [['invoiceId' => $invoiceId, 'amount' => '200.00']]];
+    267▕ 
+  ➜ 268▕         $first = $this->postJson('/api/v1/finance/supplier-payments', $payload, $headers)->assertCreated();
+    269▕         $this->postJson('/api/v1/finance/supplier-payments', $payload, $headers)->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
+    270▕         $this->assertSame(1, DB::table('journal_entries')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->where('source_id', $first->json('data.id'))->count());
+    271▕ 
+    272▕         $this->postJson('/api/v1/finance/supplier-payments', [...$payload, 'amount' => '150.00', 'allocations' => [['invoiceId' => $invoiceId, 'amount' => '150.00']]], $headers)->assertConflict();
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SupplierAccountsPayableApiTest > reversing a posted…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/SupplierAccountsPayableApiTest.php:294
+    290▕         $locationId = (int) DB::table('financial_locations')->where('tenant_id', $tenant)->where('code', 'CASH-DRAWER')->value('id');
+    291▕         $this->postJson('/api/v1/finance/supplier-payments', [
+    292▕             'supplierId' => $supplierId, 'paymentDate' => '2026-08-21', 'amount' => '150.00', 'paymentMethodId' => $methodId, 'financialLocationId' => $locationId,
+    293▕             'idempotencyKey' => 'pay-block-reverse-1', 'allocations' => [['invoiceId' => $allocatedInvoiceId, 'amount' => '150.00']],
+  ➜ 294▕         ], $headers)->assertCreated();
+    295▕         $this->postJson("/api/v1/finance/supplier-invoices/{$allocatedInvoiceId}/reverse", [], $headers)->assertUnprocessable();
+    296▕     }
+    297▕ 
+    298▕     public function test_reversing_a_supplier_payment_restores_invoice_balance_and_cash(): void
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\SupplierAccountsPayableApiTest > reversing a suppli…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+The following errors occurred during the last request:
+
+{
+    "message": "يرجى تصحيح البيانات المدخلة.",
+    "errors": {
+        "branchId": [
+            "A branch is required for cash payment."
+        ]
+    }
+}
+
+  at tests/Feature/SupplierAccountsPayableApiTest.php:312
+    308▕ 
+    309▕         $payment = $this->postJson('/api/v1/finance/supplier-payments', [
+    310▕             'supplierId' => $supplierId, 'paymentDate' => '2026-08-21', 'amount' => '400.00', 'paymentMethodId' => $methodId, 'financialLocationId' => $locationId,
+    311▕             'idempotencyKey' => 'pay-reverse-1', 'allocations' => [['invoiceId' => $invoiceId, 'amount' => '400.00']],
+  ➜ 312▕         ], $headers)->assertCreated();
+    313▕         $this->getJson("/api/v1/finance/supplier-invoices/{$invoiceId}", $headers)->assertOk()->assertJsonPath('data.status', 'paid');
+    314▕ 
+    315▕         $reversed = $this->postJson("/api/v1/finance/supplier-payments/{$payment->json('data.id')}/reverse", [], $headers)->assertOk();
+    316▕         $this->assertSame('reversed', $reversed->json('data.status'));
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\WarehouseConfigurationRepairTest…   RuntimeException   
+  Tenant 667 has no active cash account 1010.
+
+  at app/Services/FinancialSetupService.php:310
+    306▕             }
+    307▕             $accountId = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', '1010')
+    308▕                 ->where('is_active', true)->whereNull('deleted_at')->value('id');
+    309▕             if (! $accountId) {
+  ➜ 310▕                 throw new \RuntimeException("Tenant {$tenantId} has no active cash account 1010.");
+    311▕             }
+    312▕             $id = (int) DB::table('financial_locations')->insertGetId([
+    313▕                 'tenant_id' => $tenantId, 'branch_id' => $branchId, 'financial_account_id' => $accountId,
+    314▕                 'code' => 'CASH-DRAWER-BR-'.$branchId, 'name' => $branch->name.' Cash Drawer',
+
+  1   app/Services/FinancialSetupService.php:310
+      +3 vendor frames 
+  5   app/Services/FinancialSetupService.php:266
+
+
+  Tests:    87 failed, 1 skipped, 909 passed (9370 assertions)
+  Duration: 1963.53s
+

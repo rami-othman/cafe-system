@@ -36,6 +36,7 @@ class _ManufacturingRecipeFormScreenState
     text: '1',
   );
   final TextEditingController _shelfLifeValue = TextEditingController();
+  final TextEditingController _productName = TextEditingController();
   int? _productItemId;
   String _outputUnit = 'piece';
   String _shelfLifeUnit = 'days';
@@ -50,7 +51,6 @@ class _ManufacturingRecipeFormScreenState
         .read<ManufacturingRecipeCubit>();
     Future<void>.microtask(() {
       cubit.loadIngredientCandidates();
-      cubit.loadOutputItemCandidates();
       if (widget.recipeId != null) {
         cubit.loadRecipe(widget.recipeId!);
       }
@@ -61,6 +61,7 @@ class _ManufacturingRecipeFormScreenState
   void dispose() {
     _outputQuantity.dispose();
     _shelfLifeValue.dispose();
+    _productName.dispose();
     for (final _RecipeLineDraft line in _lines) {
       line.quantityController.dispose();
     }
@@ -71,6 +72,7 @@ class _ManufacturingRecipeFormScreenState
     if (_hydrated) return;
     _hydrated = true;
     _productItemId = recipe.productItemId;
+    _productName.text = recipe.name;
     _outputQuantity.text = recipe.yieldQuantity;
     _outputUnit = recipe.yieldUnit.isEmpty ? _outputUnit : recipe.yieldUnit;
     _trackShelfLife = recipe.shelfLife;
@@ -139,20 +141,14 @@ class _ManufacturingRecipeFormScreenState
                 children: <Widget>[
                   const Text('المنتج الناتج', style: AppTextStyles.titleMedium),
                   const SizedBox(height: AppSpacing.sm),
-                  DropdownButtonFormField<int>(
-                    initialValue: _productItemId,
-                    decoration: const InputDecoration(labelText: 'المنتج'),
-                    items: state.outputItemCandidates
-                        .map(
-                          (InventoryItem item) => DropdownMenuItem<int>(
-                            value: item.id,
-                            child: Text(item.name),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: widget.recipeId == null
-                        ? (int? value) => setState(() => _productItemId = value)
-                        : null,
+                  TextFormField(
+                    controller: _productName,
+                    readOnly: widget.recipeId != null,
+                    maxLength: 255,
+                    decoration: const InputDecoration(
+                      labelText: 'اسم المنتج الناتج',
+                      hintText: 'اكتب اسم المنتج',
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Row(
@@ -257,14 +253,36 @@ class _ManufacturingRecipeFormScreenState
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
-                    decoration: const InputDecoration(labelText: 'بحث المكونات', prefixIcon: Icon(Icons.search)),
-                    onChanged: (value) => context.read<ManufacturingRecipeCubit>().loadIngredientCandidates(search: value),
+                    decoration: const InputDecoration(
+                      labelText: 'بحث عن مادة',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) => context
+                        .read<ManufacturingRecipeCubit>()
+                        .loadIngredientCandidates(search: value),
                   ),
-                  Row(children: [
-                    TextButton(onPressed: () => context.read<ManufacturingRecipeCubit>().loadIngredientCandidates(), child: const Text('إعادة المحاولة')),
-                    if (context.read<ManufacturingRecipeCubit>().ingredientPage < context.read<ManufacturingRecipeCubit>().ingredientLastPage)
-                      TextButton(onPressed: () => context.read<ManufacturingRecipeCubit>().loadIngredientCandidates(nextPage: true), child: const Text('المزيد من المكونات')),
-                  ]),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => context
+                            .read<ManufacturingRecipeCubit>()
+                            .loadIngredientCandidates(),
+                        child: const Text('إعادة المحاولة'),
+                      ),
+                      if (context
+                              .read<ManufacturingRecipeCubit>()
+                              .ingredientPage <
+                          context
+                              .read<ManufacturingRecipeCubit>()
+                              .ingredientLastPage)
+                        TextButton(
+                          onPressed: () => context
+                              .read<ManufacturingRecipeCubit>()
+                              .loadIngredientCandidates(nextPage: true),
+                          child: const Text('المزيد من المكونات'),
+                        ),
+                    ],
+                  ),
                   ..._lines.asMap().entries.map(
                     (MapEntry<int, _RecipeLineDraft> entry) => Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -272,21 +290,24 @@ class _ManufacturingRecipeFormScreenState
                         children: <Widget>[
                           Expanded(
                             flex: 3,
-                            child: DropdownButtonFormField<int>(
-                              initialValue: entry.value.materialId,
-                              decoration: const InputDecoration(
-                                labelText: 'المادة',
-                              ),
-                              items: state.ingredientCandidates
+                            child: DropdownMenu<int>(
+                              initialSelection: entry.value.materialId,
+                              expandedInsets: EdgeInsets.zero,
+                              enableFilter: true,
+                              enableSearch: true,
+                              requestFocusOnTap: true,
+                              label: const Text('المادة'),
+                              hintText: 'ابحث باسم المادة',
+                              dropdownMenuEntries: state.ingredientCandidates
                                   .map(
                                     (InventoryItem item) =>
-                                        DropdownMenuItem<int>(
+                                        DropdownMenuEntry<int>(
                                           value: item.id,
-                                          child: Text('${item.name} — ${item.quantity} ${item.unit}'),
+                                          label: item.name,
                                         ),
                                   )
                                   .toList(growable: false),
-                              onChanged: (int? value) => setState(() {
+                              onSelected: (int? value) => setState(() {
                                 entry.value.materialId = value;
                                 entry.value.unit ??= state.ingredientCandidates
                                     .where(
@@ -353,10 +374,10 @@ class _ManufacturingRecipeFormScreenState
   );
 
   Future<void> _save(BuildContext context) async {
-    if (_productItemId == null) {
+    if (_productName.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اختر المنتج الناتج.')));
+      ).showSnackBar(const SnackBar(content: Text('اكتب اسم المنتج الناتج.')));
       return;
     }
     final List<Map<String, dynamic>> lines = _lines
@@ -383,7 +404,8 @@ class _ManufacturingRecipeFormScreenState
     final ManufacturingRecipeCubit cubit = context
         .read<ManufacturingRecipeCubit>();
     final bool saved = await cubit.saveRecipe(<String, dynamic>{
-      'productItemId': _productItemId,
+      if (widget.recipeId == null) 'productName': _productName.text.trim(),
+      if (widget.recipeId != null) 'productItemId': _productItemId,
       'outputQuantity': _outputQuantity.text.trim(),
       'outputUnit': _outputUnit,
       if (_trackShelfLife &&

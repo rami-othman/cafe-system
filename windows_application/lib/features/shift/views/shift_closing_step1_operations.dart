@@ -13,6 +13,7 @@ import '../widgets/shift_identity_header.dart';
 import '../widgets/shift_primitives.dart';
 import '../widgets/shift_strings.dart';
 import '../widgets/shift_summary_cards.dart';
+import '../widgets/shift_closing_period_card.dart';
 import 'shift_closing_screen.dart';
 
 /// Step 1 — a complete operations review before any counting starts:
@@ -22,7 +23,9 @@ class ShiftClosingStep1Operations extends StatelessWidget {
   const ShiftClosingStep1Operations({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
     builder: (BuildContext context, ShiftClosingState state) {
       final ShiftSnapshot snapshot = state.snapshot!;
       final ShiftAssessment assessment = state.assessment!;
@@ -31,6 +34,8 @@ class ShiftClosingStep1Operations extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const ShiftWizardStepHeader(title: ShiftStrings.operationsReview),
+          const ShiftClosingPeriodCard(),
+          const SizedBox(height: AppSpacing.lg),
           ShiftIdentityHeader(identity: snapshot.identity, compact: true),
           const SizedBox(height: AppSpacing.lg),
           ShiftReviewSection(
@@ -38,17 +43,33 @@ class ShiftClosingStep1Operations extends StatelessWidget {
             icon: Icons.trending_up,
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                final int columns = constraints.maxWidth >= ShiftLayout.desktopBreakpoint
+                final int columns =
+                    constraints.maxWidth >= ShiftLayout.desktopBreakpoint
                     ? 6
                     : constraints.maxWidth >= ShiftLayout.tabletBreakpoint
                     ? 3
                     : 2;
                 final List<(String, String)> rows = <(String, String)>[
-                  (ShiftStrings.grossSales, ShiftFormat.money(snapshot.sales.grossSales)),
-                  (ShiftStrings.totalDiscounts, ShiftFormat.money(snapshot.sales.discounts)),
-                  (ShiftStrings.totalRefunds, ShiftFormat.money(snapshot.sales.refunds)),
-                  (ShiftStrings.netSales, ShiftFormat.money(snapshot.sales.netSales)),
-                  (ShiftStrings.orderCount, ShiftFormat.count(snapshot.sales.orderCount)),
+                  (
+                    ShiftStrings.grossSales,
+                    ShiftFormat.money(snapshot.sales.grossSales),
+                  ),
+                  (
+                    ShiftStrings.totalDiscounts,
+                    ShiftFormat.money(snapshot.sales.discounts),
+                  ),
+                  (
+                    ShiftStrings.totalRefunds,
+                    ShiftFormat.money(snapshot.sales.refunds),
+                  ),
+                  (
+                    ShiftStrings.netSales,
+                    ShiftFormat.money(snapshot.sales.netSales),
+                  ),
+                  (
+                    ShiftStrings.orderCount,
+                    ShiftFormat.count(snapshot.sales.orderCount),
+                  ),
                   (
                     ShiftStrings.averageOrder,
                     ShiftFormat.money(snapshot.sales.averageOrderValue),
@@ -88,11 +109,14 @@ class ShiftClosingStep1Operations extends StatelessWidget {
                   )
                 : Column(
                     children: <Widget>[
-                      for (final PendingOperation op in snapshot.pendingOperations)
+                      for (final PendingOperation op
+                          in snapshot.pendingOperations)
                         Padding(
                           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                           child: ShiftNotice(
-                            tone: op.blocking ? ShiftTone.blocker : ShiftTone.warning,
+                            tone: op.blocking
+                                ? ShiftTone.blocker
+                                : ShiftTone.warning,
                             message:
                                 '${ShiftAssessment.pendingLabel(op.kind)} — ${op.reference}',
                             detail: op.amount == null

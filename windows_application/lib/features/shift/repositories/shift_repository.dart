@@ -2,6 +2,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_api_client.dart';
 import '../../../core/utils/backend_datetime.dart';
 import '../models/shift_models.dart';
+import '../models/shift_close_preview.dart';
 
 /// Real shift API client. It intentionally maps one aggregate server payload
 /// to the existing view models, keeping all calculation authority in Laravel.
@@ -17,6 +18,46 @@ class ShiftRepository {
       final dynamic response = await client.get('shifts/current/snapshot');
       if (response == null) return null;
       return _snapshot(_map(response));
+    } on ApiException catch (error) {
+      throw ShiftDataException(_lifecycleMessage(error));
+    }
+  }
+
+  Future<ShiftClosePreview> loadClosePreview(
+    int shiftId, {
+    DateTime? date,
+  }) async {
+    try {
+      final String query = date == null
+          ? ''
+          : '?closingDate=${date.toIso8601String().substring(0, 10)}';
+      final Map<String, dynamic> json = _map(
+        await _client.get('shifts/$shiftId/close-preview$query'),
+      );
+      final Map<String, dynamic> period = _map(json['period']);
+      return ShiftClosePreview(
+        snapshot: _snapshot(_map(json['snapshot'])),
+        date: DateTime.parse(period['closingDate'].toString()),
+        openingDate: DateTime.parse(period['openingDate'].toString()),
+        today: DateTime.parse(period['today'].toString()),
+        timezone: period['timezone'].toString(),
+        endExclusive: _date(period['periodEndExclusive']),
+        historical: period['historical'] == true,
+        version: period['version'].toString(),
+        currentLedgerCash: _double(period['currentLedgerCash']),
+        laterNetCash: _double(period['laterNetCash']),
+        transferAmount: _double(period['transferAmount']),
+        continuationCashAfterTransfer: _double(
+          period['continuationCashAfterTransfer'],
+        ),
+        willContinue: period['willContinue'] == true,
+        laterRecordCount: _map(
+          period['laterRecords'],
+        ).values.fold<int>(0, (sum, value) => sum + _int(value)),
+        issues: (period['issues'] as List<dynamic>? ?? <dynamic>[])
+            .map((dynamic value) => value.toString())
+            .toList(),
+      );
     } on ApiException catch (error) {
       throw ShiftDataException(_lifecycleMessage(error));
     }
@@ -54,7 +95,12 @@ class ShiftRepository {
       final dynamic response = await _client.post(
         'shifts/${draft.snapshot.identity.id}/close',
         data: <String, dynamic>{
-          'closingCash': draft.cash.actual,
+          'closingCash': draft.countedCashInput ?? draft.cash.actual,
+          if (draft.previewVersion != null)
+            'previewVersion': draft.previewVersion,
+          if (draft.cashCountBasis != null)
+            'cashCountBasis': draft.cashCountBasis,
+          if (draft.barCountBasis != null) 'barCountBasis': draft.barCountBasis,
           if (draft.closingDate != null)
             'closingDate': draft.closingDate!.toIso8601String().substring(
               0,
@@ -72,6 +118,7 @@ class ShiftRepository {
                 (BarCountLine line) => <String, dynamic>{
                   'inventoryItemId': int.tryParse(line.id),
                   'counted': line.counted,
+                  if (line.note.trim().isNotEmpty) 'reason': line.note.trim(),
                 },
               )
               .where(
@@ -253,6 +300,7 @@ class ShiftRepository {
             theoretical: _double(row['theoretical']),
             unitCost: _double(row['unitCost']),
             counted: row['counted'] == null ? null : _double(row['counted']),
+            laterNetQuantity: _double(row['laterNetQuantity']),
           ),
         )
         .toList(growable: false),
@@ -295,6 +343,7 @@ class ShiftRepository {
   );
   ShiftClosingResult _closing(Map<String, dynamic> json) {
     final Map<String, dynamic> cash = _map(json['cash']);
+    final Map<String, dynamic> period = _map(_map(json['snapshot'])['period']);
     return ShiftClosingResult(
       snapshot: _snapshot(_map(json['snapshot'])),
       cash: CashCountResult(
@@ -308,6 +357,17 @@ class ShiftRepository {
       closedBy: json['closedBy']?.toString() ?? '',
       reportNumber: json['reportNumber']?.toString() ?? '',
       closeMode: ShiftCloseMode.fromApi(json['closeType']),
+      closingDate: period['closingDate'] == null
+          ? null
+          : DateTime.parse(period['closingDate'].toString()),
+      cashCountBasis: period['cashCountBasis']?.toString(),
+      barCountBasis: period['barCountBasis']?.toString(),
+      continuationShiftId: period['continuationShiftId'] == null
+          ? null
+          : _int(period['continuationShiftId']),
+      closeExecutedAt: period['closeExecutedAt'] == null
+          ? null
+          : _date(period['closeExecutedAt']),
     );
   }
 

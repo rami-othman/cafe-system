@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../manufacturing/widgets/factory_currency_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -66,7 +67,11 @@ class _PurchaseInvoiceDetailScreenState
       return;
     }
     if (!mounted) return;
-    final choice = await showPurchasePostingDialog(context, preview: preview, branchName: _purchase?.branchName ?? "—");
+    final choice = await showPurchasePostingDialog(
+      context,
+      preview: preview,
+      branchName: _purchase?.branchName ?? "—",
+    );
     if (choice == null) return;
     setState(() => _busy = true);
     try {
@@ -86,7 +91,7 @@ class _PurchaseInvoiceDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-          'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${updated.paidAmount} SYP بنجاح.',
+            'تم ترحيل فاتورة الشراء واستلام المواد ودفع ${updated.paidAmount} SYP بنجاح.',
           ),
         ),
       );
@@ -175,8 +180,9 @@ class _PurchaseInvoiceDetailScreenState
         if (p.allowedActions.contains('edit')) ...<Widget>[
           const SizedBox(width: FinanceSpace.sm),
           OutlinedButton.icon(
-            onPressed: () =>
-                context.go('${PurchaseRouteScope.of(context).listPath}/${p.id}/edit'),
+            onPressed: () => context.go(
+              '${PurchaseRouteScope.of(context).listPath}/${p.id}/edit',
+            ),
             icon: const Icon(Icons.edit_outlined, size: 16),
             label: const Text('تعديل'),
           ),
@@ -233,6 +239,10 @@ class _PurchaseInvoiceDetailScreenState
                 PurchaseTypeBadge(purchaseType: p.purchaseType),
               ],
             ),
+            FactoryCurrencyDocument(
+              snapshot: p.factoryCurrency,
+              baseAmount: p.totalAmount,
+            ),
             const SizedBox(height: FinanceSpace.lg),
             FinanceInfoGrid(
               items: <FinanceInfoItem>[
@@ -266,13 +276,18 @@ class _PurchaseInvoiceDetailScreenState
                   ),
               ],
             ),
-            if (p.hasInventoryLines && p.receiptStatus == 'received') ...<Widget>[
+            if (p.hasInventoryLines &&
+                p.receiptStatus == 'received') ...<Widget>[
               const SizedBox(height: FinanceSpace.md),
               Text('تم الاستلام', style: FinanceText.page),
               Text(
-                p.lines.where((line) => line.isInventory).map((line) =>
-                  '${line.receivedQuantity} ${line.baseUnit ?? line.purchaseUnit ?? ''} ${line.inventoryItemName ?? line.description}'
-                ).join('، '),
+                p.lines
+                    .where((line) => line.isInventory)
+                    .map(
+                      (line) =>
+                          '${line.receivedQuantity} ${line.baseUnit ?? line.purchaseUnit ?? ''} ${line.inventoryItemName ?? line.description}',
+                    )
+                    .join('، '),
                 style: FinanceText.body,
               ),
               if (p.documentStatus == 'posted')

@@ -37,35 +37,37 @@ class _ShiftReportScreenState extends State<ShiftReportScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftReportCubit, ShiftReportState>(
-    builder: (BuildContext context, ShiftReportState state) {
-      switch (state.status) {
-        case ShiftReportStatus.loading:
-          return const SingleChildScrollView(
-            padding: EdgeInsets.all(AppSpacing.xl),
-            child: ShiftTableSkeleton(label: ShiftStrings.loadingShift),
-          );
-        case ShiftReportStatus.error:
-        case ShiftReportStatus.missing:
-          return ShiftErrorView(
-            title: ShiftStrings.errorLoadingShift,
-            detail: state.errorMessage,
-            onRetry: () => context.read<ShiftReportCubit>().load(widget.shiftNumber),
-          );
-        case ShiftReportStatus.ready:
-          break;
-      }
+  Widget build(BuildContext context) =>
+      BlocBuilder<ShiftReportCubit, ShiftReportState>(
+        builder: (BuildContext context, ShiftReportState state) {
+          switch (state.status) {
+            case ShiftReportStatus.loading:
+              return const SingleChildScrollView(
+                padding: EdgeInsets.all(AppSpacing.xl),
+                child: ShiftTableSkeleton(label: ShiftStrings.loadingShift),
+              );
+            case ShiftReportStatus.error:
+            case ShiftReportStatus.missing:
+              return ShiftErrorView(
+                title: ShiftStrings.errorLoadingShift,
+                detail: state.errorMessage,
+                onRetry: () =>
+                    context.read<ShiftReportCubit>().load(widget.shiftNumber),
+              );
+            case ShiftReportStatus.ready:
+              break;
+          }
 
-      final ShiftClosingResult result = state.result!;
-      return Stack(
-        children: <Widget>[
-          _ReportBody(result: result),
-          if (state.showPrintPreview)
-            _PrintPreviewOverlay(result: result, layout: state.printLayout),
-        ],
+          final ShiftClosingResult result = state.result!;
+          return Stack(
+            children: <Widget>[
+              _ReportBody(result: result),
+              if (state.showPrintPreview)
+                _PrintPreviewOverlay(result: result, layout: state.printLayout),
+            ],
+          );
+        },
       );
-    },
-  );
 }
 
 class _ReportBody extends StatelessWidget {
@@ -93,7 +95,10 @@ class _ReportBody extends StatelessWidget {
                 color: ShiftColors.inkSoft,
               ),
               Expanded(
-                child: Text(ShiftStrings.reportTitle, style: ShiftText.pageTitle),
+                child: Text(
+                  ShiftStrings.reportTitle,
+                  style: ShiftText.pageTitle,
+                ),
               ),
               ShiftButton(
                 label: ShiftStrings.print,
@@ -111,6 +116,16 @@ class _ReportBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
+          if (result.closeExecutedAt != null) ...<Widget>[
+            ShiftNotice(
+              message:
+                  'إغلاق فترة ${result.closingDate?.toIso8601String().substring(0, 10)}',
+              detail:
+                  'تم التنفيذ ${ShiftFormat.longDate(result.closeExecutedAt!)}. النقدية: ${result.cashCountBasis == "current" ? "مستنتجة من عدّ وقت التنفيذ" : "عدّ محفوظ للفترة"}. البار: ${result.barCountBasis == "current" ? "مستنتج من عدّ وقت التنفيذ" : "جرد محفوظ للفترة"}.',
+              tone: ShiftTone.accent,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           ShiftCard(
             child: Row(
               children: <Widget>[
@@ -190,7 +205,9 @@ class _ReportBody extends StatelessWidget {
             title: ShiftStrings.reportSectionNotes,
             icon: Icons.notes_outlined,
             child: Text(
-              result.closingNotes.isEmpty ? ShiftStrings.noNotes : result.closingNotes,
+              result.closingNotes.isEmpty
+                  ? ShiftStrings.noNotes
+                  : result.closingNotes,
               style: ShiftText.body,
             ),
           ),
@@ -267,7 +284,9 @@ class _SalesTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (BuildContext context, BoxConstraints constraints) {
-      final int columns = constraints.maxWidth >= ShiftLayout.desktopBreakpoint ? 4 : 2;
+      final int columns = constraints.maxWidth >= ShiftLayout.desktopBreakpoint
+          ? 4
+          : 2;
       final List<(String, String)> rows = <(String, String)>[
         (ShiftStrings.grossSales, ShiftFormat.money(sales.grossSales)),
         (ShiftStrings.totalDiscounts, ShiftFormat.money(sales.discounts)),
@@ -275,7 +294,10 @@ class _SalesTable extends StatelessWidget {
         (ShiftStrings.netSales, ShiftFormat.money(sales.netSales)),
         (ShiftStrings.orderCount, ShiftFormat.count(sales.orderCount)),
         (ShiftStrings.averageOrder, ShiftFormat.money(sales.averageOrderValue)),
-        (ShiftStrings.cancelledOrders, ShiftFormat.count(sales.cancelledOrderCount)),
+        (
+          ShiftStrings.cancelledOrders,
+          ShiftFormat.count(sales.cancelledOrderCount),
+        ),
         (ShiftStrings.refundCount, ShiftFormat.count(sales.refundCount)),
       ];
       return GridView.count(
@@ -305,11 +327,13 @@ class _OrdersTable extends StatelessWidget {
     runSpacing: AppSpacing.sm,
     children: <Widget>[
       ShiftBadge(
-        label: '${ShiftStrings.ordersCompleted}: ${ShiftFormat.count(orders.completed)}',
+        label:
+            '${ShiftStrings.ordersCompleted}: ${ShiftFormat.count(orders.completed)}',
         tone: ShiftTone.success,
       ),
       ShiftBadge(
-        label: '${ShiftStrings.ordersCancelled}: ${ShiftFormat.count(orders.cancelled)}',
+        label:
+            '${ShiftStrings.ordersCancelled}: ${ShiftFormat.count(orders.cancelled)}',
         tone: ShiftTone.neutral,
       ),
       ShiftBadge(
@@ -318,7 +342,8 @@ class _OrdersTable extends StatelessWidget {
         tone: ShiftTone.surplus,
       ),
       ShiftBadge(
-        label: '${ShiftStrings.ordersFullyRefunded}: ${ShiftFormat.count(orders.fullyRefunded)}',
+        label:
+            '${ShiftStrings.ordersFullyRefunded}: ${ShiftFormat.count(orders.fullyRefunded)}',
         tone: ShiftTone.surplus,
       ),
     ],
@@ -343,7 +368,8 @@ class _PaymentsTable extends StatelessWidget {
             PaymentChannel.other => ShiftStrings.paymentOther,
           },
           value: ShiftFormat.money(line.amount),
-          secondary: '${ShiftFormat.count(line.transactionCount)} ${ShiftStrings.operationsUnit}',
+          secondary:
+              '${ShiftFormat.count(line.transactionCount)} ${ShiftStrings.operationsUnit}',
         ),
       const ShiftDividerLine(),
       ShiftKeyValueRow(
@@ -389,16 +415,22 @@ class _CashSection extends StatelessWidget {
           ),
           ShiftKeyValueRow(
             label: ShiftStrings.expectedCash,
-            value: legacy || unknown ? ShiftStrings.notApplicable : ShiftFormat.money(cash.expected),
+            value: legacy || unknown
+                ? ShiftStrings.notApplicable
+                : ShiftFormat.money(cash.expected),
           ),
-          ShiftKeyValueRow(label: ShiftStrings.actualCash, value: ShiftStrings.notCounted, numeric: false),
-          ShiftKeyValueRow(label: ShiftStrings.cashDifference, value: ShiftStrings.notApplicable),
+          ShiftKeyValueRow(
+            label: ShiftStrings.actualCash,
+            value: ShiftStrings.notCounted,
+            numeric: false,
+          ),
+          ShiftKeyValueRow(
+            label: ShiftStrings.cashDifference,
+            value: ShiftStrings.notApplicable,
+          ),
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.sm),
-            child: Text(
-              notice,
-              style: ShiftText.tableCell,
-            ),
+            child: Text(notice, style: ShiftText.tableCell),
           ),
         ],
       );
@@ -414,8 +446,14 @@ class _CashSection extends StatelessWidget {
           label: ShiftStrings.openingFloat,
           value: ShiftFormat.money(result.snapshot.drawer.openingFloat),
         ),
-        ShiftKeyValueRow(label: ShiftStrings.expectedCash, value: ShiftFormat.money(cash.expected)),
-        ShiftKeyValueRow(label: ShiftStrings.actualCash, value: ShiftFormat.money(cash.actual)),
+        ShiftKeyValueRow(
+          label: ShiftStrings.expectedCash,
+          value: ShiftFormat.money(cash.expected),
+        ),
+        ShiftKeyValueRow(
+          label: ShiftStrings.actualCash,
+          value: ShiftFormat.money(cash.actual),
+        ),
         ShiftKeyValueRow(
           label: ShiftStrings.cashDifference,
           value: ShiftFormat.signedMoney(cash.difference),
@@ -438,9 +476,17 @@ class _CashMovementsTable extends StatelessWidget {
 
   static const List<ShiftTableCell> _headers = <ShiftTableCell>[
     ShiftTableCell(ShiftStrings.movementType, flex: 1.4),
-    ShiftTableCell(ShiftStrings.movementTime, flex: .8, alignment: Alignment.center),
+    ShiftTableCell(
+      ShiftStrings.movementTime,
+      flex: .8,
+      alignment: Alignment.center,
+    ),
     ShiftTableCell(ShiftStrings.movementDescription, flex: 1.6),
-    ShiftTableCell(ShiftStrings.movementValue, flex: 1, alignment: Alignment.center),
+    ShiftTableCell(
+      ShiftStrings.movementValue,
+      flex: 1,
+      alignment: Alignment.center,
+    ),
   ];
 
   @override
@@ -462,12 +508,18 @@ class _CashMovementsTable extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   flex: 14,
-                  child: Text(_movementLabel(m.kind), style: ShiftText.tableCell),
+                  child: Text(
+                    _movementLabel(m.kind),
+                    style: ShiftText.tableCell,
+                  ),
                 ),
                 Expanded(
                   flex: 8,
                   child: Center(
-                    child: ShiftValue(ShiftFormat.time(m.occurredAt), style: ShiftText.tableCell),
+                    child: ShiftValue(
+                      ShiftFormat.time(m.occurredAt),
+                      style: ShiftText.tableCell,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -480,7 +532,9 @@ class _CashMovementsTable extends StatelessWidget {
                     child: ShiftValue(
                       ShiftFormat.signedMoney(m.amount),
                       style: ShiftText.bodyStrong,
-                      color: m.amount >= 0 ? ShiftColors.matchInk : ShiftColors.blockerInk,
+                      color: m.amount >= 0
+                          ? ShiftColors.matchInk
+                          : ShiftColors.blockerInk,
                     ),
                   ),
                 ),
@@ -509,10 +563,16 @@ class _BarCountTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (BuildContext context, BoxConstraints constraints) {
-      final int columns = constraints.maxWidth >= ShiftLayout.desktopBreakpoint ? 5 : 2;
+      final int columns = constraints.maxWidth >= ShiftLayout.desktopBreakpoint
+          ? 5
+          : 2;
       final List<(String, String, Color?)> rows = <(String, String, Color?)>[
         (ShiftStrings.itemsToCount, ShiftFormat.count(bar.totalItems), null),
-        (ShiftStrings.statusMatch, ShiftFormat.count(bar.matchedItems), ShiftColors.matchInk),
+        (
+          ShiftStrings.statusMatch,
+          ShiftFormat.count(bar.matchedItems),
+          ShiftColors.matchInk,
+        ),
         (
           ShiftStrings.statusShortage,
           ShiftFormat.count(bar.shortageItems),
@@ -553,10 +613,26 @@ class _BarDifferencesTable extends StatelessWidget {
   static const List<ShiftTableCell> _headers = <ShiftTableCell>[
     ShiftTableCell(ShiftStrings.item, flex: 2.4),
     ShiftTableCell(ShiftStrings.unit, flex: .8, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.theoreticalQty, flex: 1, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.actualQty, flex: 1, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.difference, flex: 1, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.differenceStatus, flex: 1.2, alignment: Alignment.center),
+    ShiftTableCell(
+      ShiftStrings.theoreticalQty,
+      flex: 1,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.actualQty,
+      flex: 1,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.difference,
+      flex: 1,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.differenceStatus,
+      flex: 1.2,
+      alignment: Alignment.center,
+    ),
     ShiftTableCell(ShiftStrings.differenceNote, flex: 1.8),
   ];
 
@@ -585,10 +661,15 @@ class _BarDifferencesTable extends StatelessWidget {
               ),
               child: Row(
                 children: <Widget>[
-                  Expanded(flex: 24, child: Text(line.name, style: ShiftText.tableCell)),
+                  Expanded(
+                    flex: 24,
+                    child: Text(line.name, style: ShiftText.tableCell),
+                  ),
                   Expanded(
                     flex: 8,
-                    child: Center(child: Text(line.unit, style: ShiftText.tableCell)),
+                    child: Center(
+                      child: Text(line.unit, style: ShiftText.tableCell),
+                    ),
                   ),
                   Expanded(
                     flex: 10,
@@ -612,7 +693,10 @@ class _BarDifferencesTable extends StatelessWidget {
                     flex: 10,
                     child: Center(
                       child: ShiftValue(
-                        ShiftFormat.signedQuantity(line.difference!, line.decimals),
+                        ShiftFormat.signedQuantity(
+                          line.difference!,
+                          line.decimals,
+                        ),
                         style: ShiftText.bodyStrong,
                         color: line.status == BarCountStatus.shortage
                             ? ShiftColors.shortageInk
@@ -679,7 +763,10 @@ class _RefundsTable extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: ShiftValue(ShiftFormat.time(r.occurredAt), style: ShiftText.tableCell),
+                  child: ShiftValue(
+                    ShiftFormat.time(r.occurredAt),
+                    style: ShiftText.tableCell,
+                  ),
                 ),
                 ShiftValue(
                   ShiftFormat.money(r.amount),
@@ -710,7 +797,8 @@ class _DiscountsTable extends StatelessWidget {
           ShiftKeyValueRow(
             label: d.policyName,
             value: ShiftFormat.money(d.amount),
-            secondary: '${ShiftFormat.count(d.appliedCount)} ${ShiftStrings.operationsUnit}',
+            secondary:
+                '${ShiftFormat.count(d.appliedCount)} ${ShiftStrings.operationsUnit}',
           ),
       ],
     );
@@ -719,9 +807,12 @@ class _DiscountsTable extends StatelessWidget {
 
 String _reasonLabel(CashDifferenceReason reason) => switch (reason) {
   CashDifferenceReason.changeError => ShiftStrings.reasonChangeError,
-  CashDifferenceReason.unrecordedTransaction => ShiftStrings.reasonUnrecordedTransaction,
-  CashDifferenceReason.unrecordedWithdrawal => ShiftStrings.reasonUnrecordedWithdrawal,
-  CashDifferenceReason.unrecordedExpense => ShiftStrings.reasonUnrecordedExpense,
+  CashDifferenceReason.unrecordedTransaction =>
+    ShiftStrings.reasonUnrecordedTransaction,
+  CashDifferenceReason.unrecordedWithdrawal =>
+    ShiftStrings.reasonUnrecordedWithdrawal,
+  CashDifferenceReason.unrecordedExpense =>
+    ShiftStrings.reasonUnrecordedExpense,
   CashDifferenceReason.unknownSurplus => ShiftStrings.reasonUnknownSurplus,
   CashDifferenceReason.unknownShortage => ShiftStrings.reasonUnknownShortage,
   CashDifferenceReason.other => ShiftStrings.reasonOther,
@@ -745,7 +836,9 @@ class _PrintPreviewOverlay extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 640),
             child: Container(
-              width: layout == ShiftPrintLayout.a4 ? ShiftLayout.reportPageWidth : 320,
+              width: layout == ShiftPrintLayout.a4
+                  ? ShiftLayout.reportPageWidth
+                  : 320,
               margin: const EdgeInsets.all(AppSpacing.xl),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -759,12 +852,17 @@ class _PrintPreviewOverlay extends StatelessWidget {
                       vertical: AppSpacing.sm,
                     ),
                     decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: ShiftColors.border)),
+                      border: Border(
+                        bottom: BorderSide(color: ShiftColors.border),
+                      ),
                     ),
                     child: Row(
                       children: <Widget>[
                         Expanded(
-                          child: Text(ShiftStrings.printPreview, style: ShiftText.cardTitle),
+                          child: Text(
+                            ShiftStrings.printPreview,
+                            style: ShiftText.cardTitle,
+                          ),
                         ),
                         ShiftSegmentedControl<ShiftPrintLayout>(
                           selected: layout,
@@ -818,14 +916,19 @@ class _A4Preview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text('Cafe 6:18', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          const Text(
+            'Cafe 6:18',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          ),
           Text(ShiftStrings.reportTitle),
           const SizedBox(height: AppSpacing.md),
           Text('${ShiftStrings.shiftNumber}: ${s.identity.shiftNumber}'),
           Text('${ShiftStrings.branch}: ${s.identity.branchName}'),
           Text('${ShiftStrings.cashier}: ${s.identity.cashierName}'),
           const SizedBox(height: AppSpacing.md),
-          Text('${ShiftStrings.netSales}: ${ShiftFormat.money(s.sales.netSales)}'),
+          Text(
+            '${ShiftStrings.netSales}: ${ShiftFormat.money(s.sales.netSales)}',
+          ),
           Text('${ShiftStrings.cashDifference}: ${_differenceText(result)}'),
           Text(
             '${ShiftStrings.barDifferenceCount}: ${ShiftFormat.count(s.barCount.differenceItems)}',
@@ -845,15 +948,25 @@ class _ReceiptPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final ShiftSnapshot s = result.snapshot;
     return DefaultTextStyle(
-      style: ShiftText.tableCell.copyWith(color: Colors.black, fontFamily: 'monospace'),
+      style: ShiftText.tableCell.copyWith(
+        color: Colors.black,
+        fontFamily: 'monospace',
+      ),
       textAlign: TextAlign.center,
       child: Column(
         children: <Widget>[
-          const Text('CAFE 6:18', style: TextStyle(fontWeight: FontWeight.w800)),
+          const Text(
+            'CAFE 6:18',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
           Text(s.identity.shiftNumber),
           const Divider(),
-          Text('${ShiftStrings.netSales}: ${ShiftFormat.money(s.sales.netSales)}'),
-          Text('${ShiftStrings.actualCash}: ${result.closeMode.isCounted ? ShiftFormat.money(result.cash.actual) : ShiftStrings.notCounted}'),
+          Text(
+            '${ShiftStrings.netSales}: ${ShiftFormat.money(s.sales.netSales)}',
+          ),
+          Text(
+            '${ShiftStrings.actualCash}: ${result.closeMode.isCounted ? ShiftFormat.money(result.cash.actual) : ShiftStrings.notCounted}',
+          ),
           Text('${ShiftStrings.cashDifference}: ${_differenceText(result)}'),
           const Divider(),
           Text(ShiftFormat.dateTime(result.closedAt)),

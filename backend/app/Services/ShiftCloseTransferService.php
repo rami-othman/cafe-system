@@ -27,7 +27,7 @@ final class ShiftCloseTransferService
         return 'shift-close-transfer:'.$shiftId;
     }
 
-    public function create(Request $request, int $tenantId, object $shift, int $countedCents, string $actorType, ?string $transferDate = null): ?int
+    public function create(Request $request, int $tenantId, object $shift, int $countedCents, string $actorType, ?string $transferDate = null, ?int $currentCashCents = null, ?int $allocationShiftId = null): ?int
     {
         $floatCents = Money::cents($shift->closing_float_amount ?? '0');
         if ($floatCents < 0 || $countedCents < 0 || $countedCents < $floatCents) {
@@ -53,11 +53,14 @@ final class ShiftCloseTransferService
         }
 
         $ledgerCents = Money::cents($this->readiness->drawerLedgerBalance($tenantId, $source));
-        if ($ledgerCents !== $countedCents) {
+        if ($ledgerCents !== ($currentCashCents ?? $countedCents)) {
             throw ValidationException::withMessages(['closingCash' => __('shifts.drawer_ledger_mismatch')]);
         }
 
         $amount = $countedCents - $floatCents;
+        if ($amount > $ledgerCents) {
+            throw ValidationException::withMessages(['closingCash' => __('shifts.historical_transfer_insufficient')]);
+        }
         if ($amount === 0) {
             return null;
         }
@@ -72,7 +75,7 @@ final class ShiftCloseTransferService
             'idempotencyKey' => self::idempotencyKey((int) $shift->id),
         ], (int) $shift->user_id, true);
         DB::table('cash_transfers')->where('tenant_id', $tenantId)->where('id', $transfer->id)
-            ->update(['shift_id' => $shift->id, 'actor_type' => $actorType, 'updated_at' => now()]);
+            ->update(['shift_id' => $allocationShiftId ?? $shift->id, 'actor_type' => $actorType, 'updated_at' => now()]);
 
         return (int) $transfer->id;
     }

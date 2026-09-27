@@ -188,8 +188,14 @@ class _StageDot extends StatelessWidget {
     final (Color fill, Color ink) = switch (step.status) {
       ShiftStageStatus.done => (ShiftColors.matchInk, Colors.white),
       ShiftStageStatus.current => (ShiftColors.ink, Colors.white),
-      ShiftStageStatus.warning => (ShiftColors.shortageFill, ShiftColors.shortageInk),
-      ShiftStageStatus.pending => (ShiftColors.neutralFill, ShiftColors.inkMuted),
+      ShiftStageStatus.warning => (
+        ShiftColors.shortageFill,
+        ShiftColors.shortageInk,
+      ),
+      ShiftStageStatus.pending => (
+        ShiftColors.neutralFill,
+        ShiftColors.inkMuted,
+      ),
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -203,10 +209,7 @@ class _StageDot extends StatelessWidget {
             decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
             child: step.status == ShiftStageStatus.done
                 ? Icon(Icons.check, size: 13, color: ink)
-                : Text(
-                    '$number',
-                    style: ShiftText.badge.copyWith(color: ink),
-                  ),
+                : Text('$number', style: ShiftText.badge.copyWith(color: ink)),
           ),
           const SizedBox(width: 6),
           Text(

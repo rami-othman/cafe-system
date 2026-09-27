@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/shift_models.dart';
+import '../models/shift_close_preview.dart';
 import '../repositories/shift_repository.dart';
 import '../widgets/shift_strings.dart';
 import 'shift_closing_state.dart';
@@ -15,6 +16,7 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
     : super(const ShiftClosingState());
 
   final ShiftRepository repository;
+  int _previewRequest = 0;
 
   Future<void> load() async {
     emit(state.copyWith(status: ShiftClosingStatus.loading));
@@ -38,6 +40,7 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
           clearErrorMessage: true,
         ),
       );
+      await selectClosingDate(null);
     } on ShiftDataException catch (error) {
       if (isClosed) return;
       emit(
@@ -54,6 +57,9 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
   /// Advances one step when the current step validates. Returns false (and
   /// emits field errors) when it does not.
   bool goNext() {
+    if (!state.periodReady || !state.countBasesReady || state.isSubmitting) {
+      return false;
+    }
     switch (state.step) {
       case ShiftClosingStep.operations:
         _goTo(ShiftClosingStep.cashCount);
@@ -262,13 +268,97 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
 
   /// Seals the shift. Guarded by [ShiftClosingState.assessment] having no
   /// blockers and by the acknowledgement checkbox in the dialog.
-  void selectClosingDate(DateTime date) =>
-      emit(state.copyWith(closingDate: date));
+  Future<void> selectClosingDate(DateTime? date) async {
+    final ShiftSnapshot? current = state.snapshot;
+    if (current == null ||
+        state.isSubmitting ||
+        state.status == ShiftClosingStatus.closed) {
+      return;
+    }
+    final int request = ++_previewRequest;
+    emit(
+      state.copyWith(
+        closingDate: date,
+        isPreviewLoading: true,
+        step: ShiftClosingStep.operations,
+        acknowledged: false,
+        cashActualInput: '',
+        denominationCounts: const <int, String>{},
+        clearCashReason: true,
+        cashReasonDetail: '',
+        clearCashActualError: true,
+        clearCashReasonError: true,
+        clearCashReasonDetailError: true,
+        barCountSubmitted: false,
+        barLines: const <BarCountLine>[],
+        clearCountBases: true,
+        clearErrorMessage: true,
+      ),
+    );
+    try {
+      final ShiftClosePreview preview = await repository.loadClosePreview(
+        current.identity.id,
+        date: date,
+      );
+      if (isClosed || request != _previewRequest) return;
+      emit(
+        state.copyWith(
+          preview: preview,
+          closingDate: preview.date,
+          snapshot: preview.snapshot,
+          barLines: List<BarCountLine>.of(preview.snapshot.barCount.lines),
+          isPreviewLoading: false,
+          clearErrorMessage: true,
+        ),
+      );
+    } on ShiftDataException catch (error) {
+      if (!isClosed && request == _previewRequest) {
+        emit(
+          state.copyWith(isPreviewLoading: false, errorMessage: error.message),
+        );
+      }
+    }
+  }
+
+  void selectCashCountBasis(ShiftCountBasis basis) => emit(
+    state.copyWith(
+      cashCountBasis: basis,
+      cashActualInput: '',
+      denominationCounts: const <int, String>{},
+      clearCashReason: true,
+      cashReasonDetail: '',
+      clearCashActualError: true,
+    ),
+  );
+
+  void selectBarCountBasis(ShiftCountBasis basis) {
+    final List<BarCountLine> original =
+        state.preview?.snapshot.barCount.lines ?? <BarCountLine>[];
+    emit(
+      state.copyWith(
+        barCountBasis: basis,
+        barCountSubmitted: false,
+        barLines: original
+            .map(
+              (BarCountLine line) => line.copyWith(
+                theoretical: basis == ShiftCountBasis.current
+                    ? line.theoretical + line.laterNetQuantity
+                    : line.theoretical,
+                clearCounted: true,
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
 
   Future<ShiftClosingResult?> closeShift() async {
     final ShiftSnapshot? snapshot = state.snapshot;
     final CashCountResult? cash = state.cashCount;
     if (snapshot == null || cash == null) return null;
+    if (!state.periodReady || !state.countBasesReady || state.isSubmitting) {
+      return null;
+    }
     if (state.assessment?.canClose != true) return null;
 
     emit(state.copyWith(status: ShiftClosingStatus.submitting));
@@ -288,6 +378,10 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
       closedAt: closedAt,
       closedBy: snapshot.identity.cashierName,
       closingDate: state.closingDate,
+      previewVersion: state.preview?.version,
+      cashCountBasis: state.cashCountBasis?.apiValue,
+      barCountBasis: state.barCountBasis?.apiValue,
+      countedCashInput: state.actualCash,
       reportNumber:
           'RPT-${snapshot.identity.shiftNumber.replaceFirst('SH-', '')}',
     );
@@ -309,7 +403,7 @@ class ShiftClosingCubit extends Cubit<ShiftClosingState> {
       if (!isClosed) {
         emit(
           state.copyWith(
-            status: ShiftClosingStatus.error,
+            status: ShiftClosingStatus.ready,
             errorMessage: error.message,
           ),
         );

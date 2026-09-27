@@ -13,7 +13,6 @@ import '../../inventory/models/inventory_models.dart';
 import '../../inventory/views/widgets/inventory_item_widgets.dart';
 import '../../inventory/widgets/warehouse_dropdown.dart';
 
-
 /// Manufacturing's Materials tab: the same `InventoryItem` list Inventory
 /// itself uses (`ItemTable`/`ItemFilters`), scoped to the four item types
 /// Manufacturing actually cares about (raw material / semi-finished /
@@ -95,7 +94,8 @@ class _ManufacturingMaterialsScreenState
                     label: 'شراء مواد',
                     icon: Icons.move_to_inbox_outlined,
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => context.go('${AppRoutes.manufacturingPurchases}/new'),
+                    onPressed: () =>
+                        context.go('${AppRoutes.manufacturingPurchases}/new'),
                   ),
                   AppButton(
                     label: 'إضافة مادة',
@@ -151,8 +151,12 @@ class _ManufacturingMaterialsScreenState
                   FilterChip(
                     label: const Text('المتوفر فقط'),
                     selected: _inStockOnly,
-                    onSelected: (bool value) { setState(() => _inStockOnly = value); _load(); },
-                  ),                ],
+                    onSelected: (bool value) {
+                      setState(() => _inStockOnly = value);
+                      _load();
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.lg),
               if (state.loading && materials.isEmpty)

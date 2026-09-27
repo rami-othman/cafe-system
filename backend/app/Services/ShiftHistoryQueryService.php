@@ -24,6 +24,9 @@ final class ShiftHistoryQueryService
             ->where('s.tenant_id', $actor->tenant_id)->whereIn('s.branch_id', $branchIds)->where('s.status', 'closed')->whereNull('s.deleted_at')
             ->orderByDesc('s.closed_at')->paginate($perPage, ['s.*', 'b.name as branch_name', 'u.name as cashier_name'], 'page', $page);
         $data = collect($paginator->items())->map(function (object $shift): array {
+            if (! empty($shift->close_snapshot)) {
+                return $this->frozenEntry($shift);
+            }
             $cash = $this->cashSummary->summarize((int) $shift->tenant_id, $shift);
             $sales = DB::table('orders')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->whereNull('deleted_at')->whereIn('payment_status', ['paid', 'partially_refunded', 'refunded'])->selectRaw('COUNT(*) as count, COALESCE(SUM(total + COALESCE(discount_total, 0)),0) as gross, COALESCE(SUM(discount_total),0) as discounts')->first();
             $refunds = Money::cents(DB::table('payment_refunds')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->where('status', 'completed')->sum('amount') ?? '0');
@@ -42,5 +45,25 @@ final class ShiftHistoryQueryService
     private function timestamp(?string $value): ?string
     {
         return $value === null ? null : CarbonImmutable::parse($value, 'UTC')->toIso8601String();
+    }
+
+    private function frozenEntry(object $shift): array
+    {
+        $snapshot = json_decode($shift->close_snapshot, true, 512, JSON_THROW_ON_ERROR);
+        $sales = $snapshot['sales'];
+        $presentation = ShiftClosePresentation::for($shift);
+        $differences = collect($snapshot['barCount']['lines'])->filter(fn ($line) => $line['counted'] !== null && abs((float) $line['counted'] - (float) $line['theoretical']) > 0.0001)->count();
+
+        return [
+            'shiftNumber' => $shift->shift_number, 'date' => $this->timestamp($shift->opened_at),
+            'cashierName' => $snapshot['identity']['cashierName'], 'branchName' => $snapshot['identity']['branchName'],
+            'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at),
+            'orderCount' => (int) $sales['orderCount'],
+            'netSales' => Money::decimal(Money::cents($sales['grossSales']) - Money::cents($sales['discounts']) - Money::cents($sales['refunds'])),
+            'cashSales' => $snapshot['drawer']['cashSales'], 'cashDifference' => $presentation['cashDifference'],
+            'barDifferenceCount' => $differences, 'closeType' => $presentation['closeMode'],
+            'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'status' => 'closed',
+            'businessDate' => $shift->business_date, 'closeExecutedAt' => $this->timestamp($shift->close_executed_at),
+        ];
     }
 }

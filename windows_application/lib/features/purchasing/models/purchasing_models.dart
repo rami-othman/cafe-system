@@ -427,6 +427,7 @@ class PurchaseCashLocation {
 class PurchaseInvoice {
   const PurchaseInvoice({
     required this.id,
+    this.factoryCurrency,
     required this.internalReference,
     required this.invoiceNumber,
     required this.supplierId,
@@ -475,6 +476,7 @@ class PurchaseInvoice {
     this.receipts = const <PurchaseReceiptSummary>[],
   });
 
+  final Map<String, dynamic>? factoryCurrency;
   final int id;
   final String internalReference;
   final String invoiceNumber;
@@ -543,6 +545,9 @@ class PurchaseInvoice {
     Map<String, dynamic> json,
   ) => PurchaseInvoice(
     id: readInt(json['id']) ?? 0,
+    factoryCurrency: json['factoryCurrency'] is Map
+        ? Map<String, dynamic>.from(json['factoryCurrency'] as Map)
+        : null,
     internalReference: readString(json['internalReference']),
     invoiceNumber: readString(json['invoiceNumber']),
     supplierInvoiceNumber: readString(json['supplierInvoiceNumber']).isEmpty

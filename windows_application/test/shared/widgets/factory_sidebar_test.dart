@@ -18,6 +18,7 @@ void main() {
               financeCapabilities: <String>{
                 'finance.purchases.view',
                 'finance.sales.view',
+                'finance.suppliers.view',
               },
               manufacturingCapabilities: <String>{'manufacturing.view'},
             ),
@@ -26,6 +27,9 @@ void main() {
       );
       expect(find.text('المشتريات'), findsOneWidget);
       expect(find.text('المبيعات'), findsOneWidget);
+      expect(find.text('سندات الموردين'), findsOneWidget);
+      expect(find.text('Finance'), findsNothing);
+      expect(find.text('Settings'), findsNothing);
       expect(find.text('التصنيع'), findsOneWidget);
       expect(find.text('POS'), findsNothing);
       expect(find.text('Orders'), findsNothing);
@@ -52,8 +56,7 @@ void main() {
   });
 
   testWidgets(
-    'factory_manager account gets its own dedicated menu labelled المعمل, '
-    'not the owner shared menu',
+    'factory_manager gets the compact production and trade menu',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(1440, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -67,21 +70,25 @@ void main() {
               financeCapabilities: <String>{
                 'finance.purchases.view',
                 'finance.sales.view',
+                'finance.suppliers.view',
               },
               manufacturingCapabilities: <String>{'manufacturing.view'},
             ),
           ),
         ),
       );
-      expect(find.text('المعمل'), findsOneWidget);
-      expect(find.text('التصنيع'), findsNothing);
-      expect(find.text('المواد والأرصدة'), findsOneWidget);
-      expect(find.text('الوصفات'), findsOneWidget);
-      expect(find.text('الإنتاج'), findsOneWidget);
-      expect(find.text('الجرد'), findsOneWidget);
+      expect(find.text('المعمل'), findsNothing);
+      expect(find.text('التصنيع'), findsOneWidget);
+      expect(find.text('المواد والأرصدة'), findsNothing);
+      expect(find.text('الوصفات'), findsNothing);
+      expect(find.text('الإنتاج'), findsNothing);
+      expect(find.text('الجرد'), findsNothing);
       expect(find.text('المشتريات'), findsOneWidget);
       expect(find.text('المبيعات'), findsOneWidget);
-      expect(find.text('تقارير المعمل'), findsOneWidget);
+      expect(find.text('سندات الموردين'), findsOneWidget);
+      expect(find.text('Finance'), findsNothing);
+      expect(find.text('Settings'), findsNothing);
+      expect(find.text('تقارير المعمل'), findsNothing);
       // Nothing from the cafe surface.
       expect(find.text('POS'), findsNothing);
       expect(find.text('Orders'), findsNothing);

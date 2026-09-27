@@ -6,6 +6,18 @@
  * (X-App-Locale, default Arabic).
  */
 return [
+    'historical_busy' => 'Cash or inventory is being updated concurrently. Reload the preview and retry closing.',
+    'invalid_closing_date' => 'Closing date must be between the shift opening date and today in the branch timezone.',
+    'historical_bar_incomplete' => 'The inventory ledger does not reconcile to the current stock balance; historical stock cannot be reconstructed.',
+    'historical_bar_adjusted' => 'A later stock-count adjustment requires review before a historical count can be accepted.',
+    'historical_transfer_insufficient' => 'Current drawer cash is insufficient to transfer the selected period proceeds.',
+    'historical_reversed_settlement' => 'An earlier settlement was reversed after the selected date and requires review before splitting.',
+    'historical_multiple_bars' => 'Historical closing requires separate counts for the multiple mandatory bar templates.',
+    'historical_split_payment' => 'An order has receipts before the boundary but completed later. Review its receipt allocation before splitting.',
+    'historical_preview_required' => 'Load the selected date closing preview and review cash and stock counts.',
+    'historical_preview_changed' => 'Movements changed after the preview. Reload and review the counts before confirming.',
+    'historical_retry_changed' => 'This period was already closed with different inputs. Review its closing report.',
+    'historical_invalid_basis' => 'Choose a recorded period-end count or a count performed now.',
     'branch_unavailable' => 'The branch is unavailable or inactive.',
     'drawer_not_configured' => 'A shift cannot be opened because this branch has no POS cash drawer configured.',
     'drawer_invalid' => 'The branch POS cash drawer configuration is incomplete. It must be an active cash drawer that belongs to this branch.',

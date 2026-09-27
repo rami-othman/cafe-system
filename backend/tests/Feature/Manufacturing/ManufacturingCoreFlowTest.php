@@ -41,6 +41,108 @@ class ManufacturingCoreFlowTest extends TestCase
         $this->headers = ['Authorization' => "Bearer $token", 'X-Tenant-Id' => $this->tenant];
     }
 
+    public function test_factory_currency_settings_validate_scope_and_preserve_document_rate(): void
+    {
+        $url = '/api/v1/manufacturing/currency-settings';
+        $this->getJson($url, $this->headers)->assertOk()->assertJsonPath('data.defaultCurrency', 'SYP');
+        $this->putJson($url, ['defaultCurrency' => 'USD', 'usdToSyp' => '0'], $this->headers)->assertUnprocessable();
+        $this->putJson($url, ['defaultCurrency' => 'USD', 'usdToSyp' => '10000'], $this->headers)->assertOk();
+        $supplier = $this->postJson('/api/v1/finance/suppliers', ['name' => 'Currency supplier'], $this->headers)->assertCreated()->json('data.id');
+        $material = $this->createItem('raw_material', 'kilogram');
+        $payload = ['supplierId' => $supplier, 'invoiceType' => 'inventory', 'documentCurrency' => 'USD',
+            'invoiceDate' => '2026-09-27', 'dueDate' => '2026-09-27', 'receiptMode' => 'immediate', 'idempotencyKey' => 'usd-purchase',
+            'lines' => [['lineType' => 'inventory', 'description' => 'Currency material', 'inventoryItemId' => $material,
+                'quantity' => '10', 'unitCost' => '2.5', 'warehouseId' => $this->warehouseId]]];
+        $invoice = $this->postJson('/api/v1/finance/supplier-invoices', $payload, $this->headers)->assertCreated()
+            ->assertJsonPath('data.totalAmount', '250000.00')->assertJsonPath('data.factoryCurrency.currency', 'USD')->json('data.id');
+        $this->putJson($url, ['defaultCurrency' => 'SYP', 'usdToSyp' => '12000'], $this->headers)->assertOk();
+        $this->postJson('/api/v1/finance/supplier-invoices', $payload, $this->headers)->assertCreated()->assertJsonPath('data.id', $invoice)->assertJsonPath('data.totalAmount', '250000.00');
+        $this->getJson("/api/v1/finance/purchases/$invoice", $this->headers)->assertOk()->assertJsonPath('data.factoryCurrency.rate', '10000.000000');
+        $this->postJson("/api/v1/finance/purchases/$invoice/post", ['idempotencyKey' => 'usd-purchase-post', 'paidAmount' => '0.00'], $this->headers)->assertOk();
+        $this->assertDatabaseHas('stock_balances', ['inventory_item_id' => $material, 'warehouse_id' => $this->warehouseId, 'average_unit_cost' => '25000.0000']);
+
+        $location = DB::table('financial_locations')->where('tenant_id', $this->tenant)->where('branch_id', $this->branchId)->where('kind', 'cash')->first();
+        $equity = DB::table('financial_accounts')->where('tenant_id', $this->tenant)->where('account_group', 'equity')->value('id');
+        $receipt = $this->postJson('/api/v1/finance/vouchers', ['documentType' => 'receipt', 'documentDate' => '2026-09-27',
+            'financialLocationId' => $location->id, 'documentCurrency' => 'USD', 'usdToSyp' => '10000', 'amount' => '30.00',
+            'lines' => [['accountId' => $equity, 'amount' => '30.00']]], $this->headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/vouchers/$receipt/post", [], $this->headers)->assertOk();
+        $method = DB::table('payment_methods')->where('tenant_id', $this->tenant)->where('type', 'cash')->value('id');
+        $payment = ['supplierId' => $supplier, 'paymentDate' => '2026-09-27', 'amount' => '25.00', 'documentCurrency' => 'USD',
+            'usdToSyp' => '10000', 'paymentMethodId' => $method, 'financialLocationId' => $location->id, 'idempotencyKey' => 'usd-supplier-payment',
+            'allocations' => [['invoiceId' => $invoice, 'amount' => '250000.00']]];
+        $result = $this->postJson('/api/v1/finance/supplier-payments', $payment, $this->headers)->assertCreated()
+            ->assertJsonPath('data.amount', '250000.00')->assertJsonPath('data.factoryCurrency.input.amount', '25.00')->json('data');
+        $this->postJson('/api/v1/finance/supplier-payments', $payment, $this->headers)->assertCreated()->assertJsonPath('data.id', $result['id']);
+        $this->postJson('/api/v1/finance/supplier-payments/'.$result['id'].'/reverse', [], $this->headers)->assertOk();
+        $this->assertDatabaseHas('supplier_invoices', ['id' => $invoice, 'status' => 'posted']);
+    }
+
+    public function test_factory_automatic_purchase_payment_voucher_keeps_invoice_dollars(): void
+    {
+        $supplier = $this->postJson('/api/v1/finance/suppliers', ['name' => 'Automatic USD supplier'], $this->headers)->assertCreated()->json('data.id');
+        $material = $this->createItem('raw_material', 'kilogram');
+        $location = DB::table('financial_locations')->where('tenant_id', $this->tenant)->where('branch_id', $this->branchId)->where('kind', 'cash')->first();
+        $equity = DB::table('financial_accounts')->where('tenant_id', $this->tenant)->where('account_group', 'equity')->value('id');
+        $receipt = $this->postJson('/api/v1/finance/vouchers', ['documentType' => 'receipt', 'documentDate' => '2026-09-27', 'financialLocationId' => $location->id,
+            'amount' => '100000.00', 'lines' => [['accountId' => $equity, 'amount' => '100000.00']]], $this->headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/vouchers/$receipt/post", [], $this->headers)->assertOk();
+        $invoice = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $supplier, 'invoiceType' => 'inventory', 'documentCurrency' => 'USD', 'usdToSyp' => '10000',
+            'invoiceDate' => '2026-09-27', 'dueDate' => '2026-09-27', 'receiptMode' => 'immediate',
+            'lines' => [['lineType' => 'inventory', 'description' => 'USD material', 'inventoryItemId' => $material, 'quantity' => '10', 'lineGrossAmount' => '10.00', 'warehouseId' => $this->warehouseId]]], $this->headers)->assertCreated()->json('data.id');
+        $this->postJson("/api/v1/finance/purchases/$invoice/post", ['idempotencyKey' => 'automatic-usd', 'financialLocationId' => $location->id, 'paidAmount' => '50000.00'], $this->headers)->assertOk();
+        $payment = DB::table('supplier_payments')->where('supplier_id', $supplier)->first();
+        $voucher = DB::table('finance_documents')->where('source_type', 'supplier_payment')->where('source_id', $payment->id)->first();
+        $this->assertSame('USD', \App\Support\FactoryCurrency::snapshot($payment)['currency']);
+        $this->assertSame('5.000000', \App\Support\FactoryCurrency::snapshot($voucher)['input']['amount']);
+        $this->assertSame('10000', \App\Support\FactoryCurrency::snapshot($voucher)['rate']);
+        $this->assertEquals(50000, $payment->amount);
+        $this->assertEquals(50000, $voucher->amount);
+    }
+
+    public function test_factory_usd_sales_keep_syp_totals_and_reject_cafe_currency_selection(): void
+    {
+        $product = $this->createItem('finished_good', 'piece');
+        $customer = $this->postJson('/api/v1/finance/customers', ['name' => 'Currency customer', 'isWalkIn' => false], $this->headers)->assertCreated()->json('data.id');
+        $payload = ['customerId' => $customer, 'branchId' => $this->branchId, 'invoiceDate' => '2026-09-27',
+            'documentCurrency' => 'USD', 'usdToSyp' => '10000.123456', 'charges' => [],
+            'lines' => [['inventoryItemId' => $product, 'quantity' => '2', 'unitCode' => 'piece', 'unitPrice' => '1.25']]];
+        $sale = $this->postJson('/api/v1/finance/sales-invoices', $payload, $this->headers)->assertCreated()->json('data');
+        $this->assertSame('25000.30', $sale['subtotal']);
+        $this->assertSame('1.25', $sale['factoryCurrency']['input']['lines'][0]['unitPrice']);
+        $this->patchJson('/api/v1/finance/sales-invoices/'.$sale['id'], $payload, $this->headers)->assertOk()->assertJsonPath('data.subtotal', '25000.30');
+        $payload['usdToSyp'] = '0';
+        $this->postJson('/api/v1/finance/sales-invoices', $payload, $this->headers)->assertUnprocessable();
+        $cafe = DB::table('branches')->where('tenant_id', $this->tenant)->where('branch_type', 'cafe')->value('id');
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        \App\Support\FactoryCurrency::normalize($this->tenant, ['branchId' => $cafe, 'documentCurrency' => 'USD', 'usdToSyp' => '10000'], 'sales');
+    }
+
+    public function test_typed_product_name_creates_factory_product_atomically_without_duplicates(): void
+    {
+        $flour = $this->createItem('raw_material', 'kilogram');
+        $payload = [
+            'branchId' => $this->branchId, 'productName' => '  كيك جديد  ',
+            'outputQuantity' => '1', 'outputUnit' => 'piece',
+            'lines' => [['inventoryItemId' => $flour, 'quantity' => '1', 'unit' => 'kilogram']],
+        ];
+        $recipe = $this->postJson('/api/v1/manufacturing/recipes', $payload, $this->headers)
+            ->assertCreated()->json('data');
+        $this->assertDatabaseHas('inventory_items', [
+            'id' => $recipe['productItemId'], 'name_ar' => 'كيك جديد',
+            'owner_branch_id' => $this->branchId, 'item_type' => 'finished_good', 'unit' => 'piece',
+        ]);
+        $this->assertDatabaseHas('inventory_item_warehouses', [
+            'inventory_item_id' => $recipe['productItemId'], 'warehouse_id' => $this->warehouseId,
+        ]);
+        $this->postJson('/api/v1/manufacturing/recipes', $payload, $this->headers)->assertStatus(422);
+        $this->assertSame(1, DB::table('inventory_items')->where('owner_branch_id', $this->branchId)->where('name_ar', 'كيك جديد')->count());
+        $payload['productName'] = 'منتج يجب التراجع عنه';
+        $payload['lines'][0]['inventoryItemId'] = 99999999;
+        $this->postJson('/api/v1/manufacturing/recipes', $payload, $this->headers)->assertStatus(422);
+        $this->assertDatabaseMissing('inventory_items', ['owner_branch_id' => $this->branchId, 'name_ar' => $payload['productName']]);
+    }
+
     public function test_recipe_validation_rejects_zero_quantity_duplicate_ingredient_self_reference_and_circular_dependency(): void
     {
         $flour = $this->createItem('raw_material', 'kilogram');

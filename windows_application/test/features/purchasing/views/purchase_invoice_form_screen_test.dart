@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../support/factory_currency_fixture.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -276,6 +277,7 @@ Future<void> _pump(
     ),
   );
   final DioApiClient client = DioApiClient(dio: dio);
+  registerFactoryCurrencyFixture(client);
   serviceLocator.registerLazySingleton<InventoryRepository>(
     () => InventoryRepository(client),
   );

@@ -26,22 +26,23 @@ class ShiftCashSummaryService
     /**
      * @return array{openingCash:string,cashSales:string,cashRefunds:string,withdrawals:string,deposits:string,expenses:string,expectedCash:string}
      */
-    public function summarize(int $tenantId, object $shift): array
+    public function summarize(int $tenantId, object $shift, ?ShiftClosePeriod $period = null): array
     {
         $openingCents = Money::cents($shift->opening_cash);
-        $cashSalesCents = Money::cents($this->cashPaymentsQuery($tenantId, $shift->id)->sum('p.amount') ?? '0');
-        $cashRefundsCents = Money::cents($this->cashRefundsQuery($tenantId, $shift->id)->sum('r.amount') ?? '0');
+        $cashSalesCents = Money::cents($this->cashPaymentsQuery($tenantId, $shift->id)->when($period, fn ($q) => $period->before($q, 'payments', 'p'))->sum('p.amount') ?? '0');
+        $cashRefundsCents = Money::cents($this->cashRefundsQuery($tenantId, $shift->id)->when($period, fn ($q) => $period->before($q, 'payment_refunds', 'r'))->sum('r.amount') ?? '0');
         $customerPaymentsCents = Money::cents(DB::table('customer_payments')->where('tenant_id', $tenantId)
             ->where('shift_id', $shift->id)->where('financial_location_id', $shift->financial_location_id)
-            ->where('status', 'posted')->sum('amount') ?? '0');
+            ->where('status', 'posted')->when($period, fn ($q) => $period->before($q, 'customer_payments'))->sum('amount') ?? '0');
         $customerRefundsCents = Money::cents(DB::table('customer_refunds')->where('tenant_id', $tenantId)
             ->where('shift_id', $shift->id)->where('financial_location_id', $shift->financial_location_id)
-            ->where('status', 'posted')->sum('amount') ?? '0');
+            ->where('status', 'posted')->when($period, fn ($q) => $period->before($q, 'customer_refunds'))->sum('amount') ?? '0');
         $operationalExpensesCents = Money::cents(DB::table('expenses')->where('tenant_id', $tenantId)
             ->where('shift_id', $shift->id)->where('paid_from_financial_location_id', $shift->financial_location_id)
-            ->where('status', 'paid')->whereNull('deleted_at')->sum('total_amount') ?? '0');
+            ->where('status', 'paid')->whereNull('deleted_at')->when($period, fn ($q) => $period->before($q, 'expenses'))->sum('total_amount') ?? '0');
         $movements = DB::table('shift_cash_movements')
             ->where('tenant_id', $tenantId)->where('shift_id', $shift->id)
+            ->when($period, fn ($q) => $period->before($q, 'shift_cash_movements'))
             ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'withdrawal' THEN amount ELSE 0 END), 0) as withdrawals")
             ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'deposit' THEN amount ELSE 0 END), 0) as deposits")
             ->selectRaw("COALESCE(SUM(CASE WHEN kind = 'expense' THEN amount ELSE 0 END), 0) as expenses")

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'factory_currency_field.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/network/dio_api_client.dart';
@@ -61,7 +62,9 @@ class _ManufacturingModuleShellState extends State<ManufacturingModuleShell> {
       (branch) => branch.isFactory && branch.id == branchState.selectedBranchId,
     );
     if (serviceLocator.isRegistered<DioApiClient>()) {
-      serviceLocator<DioApiClient>().scopeBranchId = hasFactoryBranch ? branchState.selectedBranchId : null;
+      serviceLocator<DioApiClient>().scopeBranchId = hasFactoryBranch
+          ? branchState.selectedBranchId
+          : null;
     }
 
     if (!hasFactoryBranch) {
@@ -72,8 +75,7 @@ class _ManufacturingModuleShellState extends State<ManufacturingModuleShell> {
         );
       }
       final bool isOwner =
-          context.read<AuthSessionCubit>().state.session?.user.role ==
-          'owner';
+          context.read<AuthSessionCubit>().state.session?.user.role == 'owner';
       return ColoredBox(
         color: AppColors.contentBackground,
         child: Center(
@@ -95,7 +97,36 @@ class _ManufacturingModuleShellState extends State<ManufacturingModuleShell> {
       color: AppColors.contentBackground,
       child: Column(
         children: <Widget>[
-          ManufacturingNavigationBar(selected: widget.selectedTab),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ManufacturingNavigationBar(selected: widget.selectedTab),
+              ),
+              IconButton(
+                tooltip: 'إعدادات عملة المعمل',
+                icon: const Icon(Icons.currency_exchange),
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('إعدادات عملة المعمل'),
+                    content: SizedBox(
+                      width: 600,
+                      child: FactoryCurrencyField(
+                        branchId: branchState.selectedBranchId!,
+                        onChanged: (_) {},
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('إغلاق'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           Expanded(child: widget.child),
         ],
       ),

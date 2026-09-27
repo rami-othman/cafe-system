@@ -93,6 +93,7 @@ final class PurchasePostingOrchestrator
                 throw ValidationException::withMessages(['payment' => 'فاتورة الشراء مدفوعة بالكامل بالفعل.']);
             }
             $payment = $this->payments->pay($request, $tenantId, [
+                ...\App\Support\FactoryCurrency::paymentDisplay($invoice, Money::decimal($paymentCents)),
                 'supplierId' => (int) $invoice->supplier_id,
                 'branchId' => $branchId,
                 'paymentDate' => $paymentDate ?? BranchLocalDate::today($branchId),

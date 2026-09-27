@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\HistoricalShiftCloseService;
+use App\Services\ShiftClosePeriod;
+use App\Services\ShiftClosePreviewService;
 use App\Services\ShiftCloseService;
 use App\Services\ShiftDrawerReadinessService;
 use App\Services\ShiftHistoryQueryService;
@@ -36,6 +39,8 @@ class ShiftController extends Controller
         private readonly ShiftHistoryQueryService $history,
         private readonly StockCountService $counts,
         private readonly BranchAccessService $branches,
+        private readonly ShiftClosePreviewService $previews,
+        private readonly HistoricalShiftCloseService $historicalCloser,
     ) {}
 
     public function current(Request $request): JsonResponse
@@ -61,6 +66,24 @@ class ShiftController extends Controller
         $data = $request->validate(['page' => ['nullable', 'integer', 'min:1'], 'perPage' => ['nullable', 'integer', 'min:1', 'max:100']]);
 
         return response()->json($this->history->list($request->attributes->get('auth_user'), (int) ($data['page'] ?? 1), (int) ($data['perPage'] ?? 25)));
+    }
+
+    public function closePreview(Request $request, int $shift): JsonResponse
+    {
+        $data = $request->validate(['closingDate' => ['nullable', 'date_format:Y-m-d']]);
+        $tenant = TenantContext::id($request);
+        $actor = $request->attributes->get('auth_user');
+        $row = DB::table('shifts')->where('tenant_id', $tenant)->where('id', $shift)->whereNull('deleted_at')->first();
+        abort_if(! $row, 404, __('shifts.shift_not_found'));
+        $this->branches->authorizeRequestBranch($request, (int) $row->branch_id);
+        abort_unless((int) $row->user_id === (int) $actor->id, 403, __('shifts.only_owner_can_close'));
+        if ($row->status !== 'open') {
+            throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
+        }
+        $timezone = DB::table('branches')->where('tenant_id', $tenant)->where('id', $row->branch_id)->value('timezone') ?: 'UTC';
+        $period = ShiftClosePeriod::forShift($tenant, $row, $data['closingDate'] ?? CarbonImmutable::now('UTC')->setTimezone($timezone)->toDateString());
+
+        return response()->json(['data' => $this->previews->build($tenant, $row, $period)]);
     }
 
     public function report(Request $request, string $shiftNumber): JsonResponse
@@ -145,58 +168,87 @@ class ShiftController extends Controller
     {
         $data = $request->validate([
             'closingDate' => ['nullable', 'date_format:Y-m-d'],
+            'previewVersion' => ['nullable', 'string', 'size:64'],
+            'cashCountBasis' => ['nullable', Rule::in(['period_recorded', 'current'])],
+            'barCountBasis' => ['nullable', Rule::in(['period_recorded', 'current'])],
             'closingCash' => ['required', 'numeric', 'min:0'], 'note' => ['nullable', 'string', 'max:4000'],
             'cashDifferenceReason' => ['nullable', Rule::in(self::DIFFERENCE_REASONS)], 'cashDifferenceReasonDetail' => ['nullable', 'string', 'max:4000'],
-            'barCountLines' => ['nullable', 'array'], 'barCountLines.*.inventoryItemId' => ['required_with:barCountLines', 'integer'], 'barCountLines.*.counted' => ['required_with:barCountLines', 'numeric', 'min:0'],
+            'barCountLines' => ['nullable', 'array'], 'barCountLines.*.inventoryItemId' => ['required_with:barCountLines', 'integer', 'distinct'], 'barCountLines.*.counted' => ['required_with:barCountLines', 'numeric', 'min:0'],
+            'barCountLines.*.reason' => ['nullable', 'string', 'max:4000'],
         ]);
         $tenantId = TenantContext::id($request);
         $actor = $request->attributes->get('auth_user');
-        $closed = DB::transaction(function () use ($request, $data, $tenantId, $actor, $shift): object {
-            $row = $this->closer->lock($tenantId, $shift);
-            abort_if(! $row, 404, __('shifts.shift_not_found'));
-            $this->branches->authorizeRequestBranch($request, (int) $row->branch_id);
-            abort_unless((int) $row->user_id === (int) $actor->id, 403, __('shifts.only_owner_can_close'));
-            if ($row->status === 'closed' && $row->close_type === ShiftCloseService::TYPE_MANUAL
-                && Money::cents($row->closing_cash) === Money::cents($data['closingCash'], 'closingCash')) {
+        try {
+            $closed = DB::transaction(function () use ($request, $data, $tenantId, $actor, $shift): object {
                 if (! empty($data['closingDate'])) {
-                    $timezone = DB::table('branches')->where('id', $row->branch_id)->value('timezone') ?: 'UTC';
-                    if (CarbonImmutable::parse($row->closed_at, 'UTC')->setTimezone($timezone)->toDateString() !== $data['closingDate']) {
-                        throw ValidationException::withMessages(['closingDate' => 'الوردية مغلقة بالفعل بتاريخ مختلف.']);
+                    $candidate = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shift)->whereNull('deleted_at')->first();
+                    abort_if(! $candidate, 404, __('shifts.shift_not_found'));
+                    $this->branches->authorizeRequestBranch($request, (int) $candidate->branch_id);
+                    abort_unless((int) $candidate->user_id === (int) $actor->id, 403, __('shifts.only_owner_can_close'));
+                    if (! empty($candidate->close_request)) {
+                        $this->historicalCloser->assertSameRetry($candidate, $data);
+
+                        return $candidate;
+                    }
+                    $period = ShiftClosePeriod::forShift($tenantId, $candidate, $data['closingDate']);
+                    if ($period->historical()) {
+                        $this->historicalCloser->lockInputs();
                     }
                 }
-                return $row;
-            }
-            if ($row->status !== 'open') {
-                throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
-            }
-            $closedAt = null;
-            if (! empty($data['closingDate'])) {
-                $timezone = DB::table('branches')->where('id', $row->branch_id)->value('timezone') ?: 'UTC';
-                $selected = CarbonImmutable::parse($data['closingDate'], $timezone)->endOfDay()->utc();
-                $current = CarbonImmutable::now('UTC');
-                if ($data['closingDate'] > $current->setTimezone($timezone)->toDateString()) {
-                    throw ValidationException::withMessages(['closingDate' => 'تاريخ الإغلاق لا يمكن أن يكون في المستقبل.']);
-                }
-                $selected = $selected->min($current);
-                $latest = CarbonImmutable::parse($row->opened_at, 'UTC');
-                foreach (['orders', 'payments', 'payment_refunds', 'shift_cash_movements', 'customer_payments', 'customer_refunds', 'supplier_payments', 'expenses', 'finance_documents'] as $table) {
-                    $value = DB::table($table)->where('tenant_id', $tenantId)->where('shift_id', $row->id)->max(DB::raw('COALESCE(updated_at, created_at)'));
-                    if ($value) $latest = $latest->max(CarbonImmutable::parse($value, 'UTC'));
-                }
-                if ($selected->lessThan($latest)) {
-                    throw ValidationException::withMessages(['closingDate' => 'تاريخ الإغلاق يجب أن يكون بعد فتح الوردية وآخر حركة عليها.']);
-                }
-                $closedAt = $selected->format('Y-m-d H:i:s');
-            }
-            $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
+                $row = $this->closer->lock($tenantId, $shift);
+                abort_if(! $row, 404, __('shifts.shift_not_found'));
+                $this->branches->authorizeRequestBranch($request, (int) $row->branch_id);
+                abort_unless((int) $row->user_id === (int) $actor->id, 403, __('shifts.only_owner_can_close'));
+                if (! empty($row->close_request)) {
+                    $this->historicalCloser->assertSameRetry($row, $data);
 
-            return $this->closer->close($request, $tenantId, $row, ShiftCloseService::TYPE_MANUAL, (string) $data['closingCash'], [
-                ...($closedAt ? ['closed_at' => $closedAt] : []),
-                'cash_difference_reason' => $data['cashDifferenceReason'] ?? null,
-                'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null,
-                'notes' => $data['note'] ?? $row->notes,
-            ], $data['closingDate'] ?? null);
-        });
+                    return $row;
+                }
+                if ($row->status === 'closed' && $row->close_type === ShiftCloseService::TYPE_MANUAL
+                    && Money::cents($row->closing_cash) === Money::cents($data['closingCash'], 'closingCash')) {
+                    if (! empty($data['closingDate'])) {
+                        $timezone = DB::table('branches')->where('id', $row->branch_id)->value('timezone') ?: 'UTC';
+                        if (CarbonImmutable::parse($row->closed_at, 'UTC')->setTimezone($timezone)->toDateString() !== $data['closingDate']) {
+                            throw ValidationException::withMessages(['closingDate' => 'الوردية مغلقة بالفعل بتاريخ مختلف.']);
+                        }
+                    }
+
+                    return $row;
+                }
+                if ($row->status !== 'open') {
+                    throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
+                }
+                $closedAt = null;
+                if (! empty($data['closingDate'])) {
+                    $period = ShiftClosePeriod::forShift($tenantId, $row, $data['closingDate']);
+                    if ($period->historical()) {
+                        return $this->historicalCloser->close($request, $tenantId, $row, $period, $data);
+                    }
+                    if (! empty($data['previewVersion'])) {
+                        $preview = $this->previews->build($tenantId, $row, $period);
+                        if (! hash_equals($preview['period']['version'], $data['previewVersion'])) {
+                            throw ValidationException::withMessages(['previewVersion' => __('shifts.historical_preview_changed')]);
+                        }
+                        if (! $preview['period']['canClose']) {
+                            throw ValidationException::withMessages(['closingDate' => $preview['period']['issues']]);
+                        }
+                    }
+                }
+                $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
+
+                return $this->closer->close($request, $tenantId, $row, ShiftCloseService::TYPE_MANUAL, (string) $data['closingCash'], [
+                    ...($closedAt ? ['closed_at' => $closedAt] : []),
+                    'cash_difference_reason' => $data['cashDifferenceReason'] ?? null,
+                    'cash_difference_reason_detail' => $data['cashDifferenceReasonDetail'] ?? null,
+                    'notes' => $data['note'] ?? $row->notes,
+                ], $data['closingDate'] ?? null);
+            }, 3);
+        } catch (QueryException $error) {
+            if (in_array($error->errorInfo[0] ?? null, ['55P03', '40P01'], true)) {
+                return response()->json(['message' => __('shifts.historical_busy')], 409);
+            }
+            throw $error;
+        }
 
         return response()->json(['data' => $this->closingPayload($tenantId, $closed)]);
     }

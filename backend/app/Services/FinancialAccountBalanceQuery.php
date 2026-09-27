@@ -12,6 +12,18 @@ use Illuminate\Validation\ValidationException;
  */
 class FinancialAccountBalanceQuery
 {
+    /** Actual posted cash movements before a UTC instant, independent of date-only labels. */
+    public function balanceBefore(int $tenantId, int $accountId, int $locationId, string $end): string
+    {
+        $account = $this->account($tenantId, $accountId);
+        $lines = $this->baseLines($tenantId, $accountId, null, null, $locationId)
+            ->whereRaw('COALESCE(entries.posted_at, entries.created_at) < ?', [$end])->get(['lines.debit', 'lines.credit']);
+
+        return Money::decimal($this->normalisedBalance($account->normal_balance,
+            $lines->sum(fn ($line) => Money::cents($line->debit)),
+            $lines->sum(fn ($line) => Money::cents($line->credit))));
+    }
+
     public function summary(int $tenantId, int $accountId, ?string $from = null, ?string $to = null, ?int $locationId = null, bool $externalOnly = false): array
     {
         $account = $this->account($tenantId, $accountId);
@@ -55,15 +67,22 @@ class FinancialAccountBalanceQuery
     private function lines(int $tenantId, int $accountId, ?string $from, ?string $to, ?int $locationId = null, bool $externalOnly = false)
     {
         $query = $this->baseLines($tenantId, $accountId, $from, $to, $locationId);
-        if ($externalOnly) $query->where('entries.source_type', '<>', 'cash_transfer')->whereNotExists(fn ($reversal) => $reversal->selectRaw('1')->from('journal_entries as originals')->whereColumn('originals.id', 'entries.reversal_of_id')->where('originals.tenant_id', $tenantId)->where('originals.source_type', 'cash_transfer'));
+        if ($externalOnly) {
+            $query->where('entries.source_type', '<>', 'cash_transfer')->whereNotExists(fn ($reversal) => $reversal->selectRaw('1')->from('journal_entries as originals')->whereColumn('originals.id', 'entries.reversal_of_id')->where('originals.tenant_id', $tenantId)->where('originals.source_type', 'cash_transfer'));
+        }
+
         return $query->get(['lines.debit', 'lines.credit']);
     }
 
     private function baseLines(int $tenantId, int $accountId, ?string $from, ?string $to, ?int $locationId = null)
     {
         $query = DB::table('journal_entry_lines as lines')->join('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')->where('lines.tenant_id', $tenantId)->where('lines.financial_account_id', $accountId)->where('entries.tenant_id', $tenantId)->where('entries.status', 'posted')->select('lines.*', 'entries.entry_date', 'entries.entry_number', 'entries.source_type', 'entries.description as entry_description', 'lines.description as line_description', 'entries.status');
-        if ($from) $query->whereDate('entries.entry_date', '>=', $from);
-        if ($to) $query->whereDate('entries.entry_date', '<=', $to);
+        if ($from) {
+            $query->whereDate('entries.entry_date', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('entries.entry_date', '<=', $to);
+        }
         if ($locationId !== null) {
             $query->where('lines.financial_location_id', $locationId);
         }
@@ -74,7 +93,9 @@ class FinancialAccountBalanceQuery
     private function account(int $tenantId, int $accountId): object
     {
         $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $accountId)->whereNull('deleted_at')->first();
-        if (! $account) throw ValidationException::withMessages(['financialAccountId' => 'Financial account was not found for this tenant.']);
+        if (! $account) {
+            throw ValidationException::withMessages(['financialAccountId' => 'Financial account was not found for this tenant.']);
+        }
 
         return $account;
     }

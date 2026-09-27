@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../manufacturing/models/factory_currency.dart';
+import '../../manufacturing/widgets/factory_currency_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -660,16 +662,17 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
 
   Future<void> _loadOptions() async {
     try {
-      final List<dynamic> results =
-          await Future.wait<dynamic>(<Future<dynamic>>[
-            widget.repository.getExpenseCategories(),
-            widget.repository.getAccounts(status: 'active'),
-            widget.repository.getBranches(),
-            widget.repository.getFinanceList(
-              'finance/invoice-types',
-              queryParameters: const <String, dynamic>{'activeOnly': true},
-            ),
-          ]);
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          widget.repository.getExpenseCategories(),
+          widget.repository.getAccounts(status: 'active'),
+          widget.repository.getBranches(),
+          widget.repository.getFinanceList(
+            'finance/invoice-types',
+            queryParameters: const <String, dynamic>{'activeOnly': true},
+          ),
+        ],
+      );
       if (!mounted) return;
       setState(() {
         _categories = (results[0] as List<ExpenseCategory>)
@@ -1172,6 +1175,10 @@ class _PaymentDetailDialog extends StatelessWidget {
             reference: payment.supplierName,
             status: payment.status,
           ),
+          FactoryCurrencyDocument(
+            snapshot: payment.factoryCurrency,
+            baseAmount: payment.amount,
+          ),
           const SizedBox(height: FinanceSpace.md),
           FinanceInfoGrid(
             items: <FinanceInfoItem>[
@@ -1234,6 +1241,9 @@ class _PaymentFormDialog extends StatefulWidget {
 }
 
 class _PaymentFormDialogState extends State<_PaymentFormDialog> {
+  FactoryCurrencySelection _currency = const FactoryCurrencySelection();
+  bool get _isFactoryPayment =>
+      _branches.any((branch) => branch.id == _branchId && branch.isFactory);
   bool _loadingOptions = true;
   List<PaymentMethodSetting> _methods = const <PaymentMethodSetting>[];
   List<Branch> _branches = const <Branch>[];
@@ -1265,11 +1275,12 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
 
   Future<void> _loadOptions() async {
     try {
-      final List<dynamic> results =
-          await Future.wait<dynamic>(<Future<dynamic>>[
-            widget.repository.getPaymentMethods(),
-            widget.repository.getBranches(),
-          ]);
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          widget.repository.getPaymentMethods(),
+          widget.repository.getBranches(),
+        ],
+      );
       if (!mounted) return;
       // A branch is required for a cash source, so a bank-type method must
       // already carry its own fixed location (configured in Payment
@@ -1278,7 +1289,8 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
           (results[0] as List<PaymentMethodSetting>)
               .where(
                 (PaymentMethodSetting m) =>
-                    m.isActive && (m.type == 'cash' || m.financialLocationId != null),
+                    m.isActive &&
+                    (m.type == 'cash' || m.financialLocationId != null),
               )
               .toList(growable: false);
       final int? impliedBranchId = _uniqueInvoiceBranch();
@@ -1403,12 +1415,16 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
   }
 
   double get _paymentAmount => double.tryParse(_amount.text.trim()) ?? 0;
+  double get _paymentBaseAmount => double.parse(
+    (_paymentAmount * (_isFactoryPayment ? _currency.multiplier : 1))
+        .toStringAsFixed(2),
+  );
   double get _allocatedAmount => _allocations.values.fold<double>(
     0,
     (double sum, TextEditingController c) =>
         sum + (double.tryParse(c.text.trim()) ?? 0),
   );
-  double get _remainingUnallocated => _paymentAmount - _allocatedAmount;
+  double get _remainingUnallocated => _paymentBaseAmount - _allocatedAmount;
 
   Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
@@ -1429,6 +1445,10 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
   }
 
   Future<void> _submit() async {
+    if (_isFactoryPayment && !_currency.valid) {
+      setState(() => _error = 'أدخل سعر الدولار الصحيح قبل الحفظ.');
+      return;
+    }
     if (_branchId == null) {
       setState(() => _error = 'اختر الفرع أولاً.');
       return;
@@ -1438,7 +1458,8 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
       setState(() => _error = 'اختر طريقة دفع نشطة.');
       return;
     }
-    if (method.type == 'cash' && !cashSourceIsResolved(_cashOptions, _cashLocationId)) {
+    if (method.type == 'cash' &&
+        !cashSourceIsResolved(_cashOptions, _cashLocationId)) {
       setState(() => _error = 'اختر الصندوق النقدي المصرّح به لهذا الفرع.');
       return;
     }
@@ -1488,6 +1509,7 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
     });
     try {
       await widget.repository.paySupplierInvoices(<String, dynamic>{
+        if (_isFactoryPayment) ..._currency.payload,
         'supplierId': widget.supplierId,
         'branchId': _branchId,
         'paymentDate': _date,
@@ -1581,7 +1603,19 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    if (_isFactoryPayment && _branchId != null)
+                      FactoryCurrencyField(
+                        key: ValueKey('supplier-payment-currency-$_branchId'),
+                        branchId: _branchId!,
+                        amount: _paymentAmount,
+                        onChanged: (value) => setState(() => _currency = value),
+                      ),
+                    if (_isFactoryPayment)
+                      const Text(
+                        'تخصيص الدفعة على الفواتير بالليرة السورية SYP',
+                      ),
                     DropdownButtonFormField<int?>(
+                      key: const ValueKey('supplier-payment-branch'),
                       initialValue: _branchId,
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'الفرع'),
@@ -1593,7 +1627,10 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                         ..._branches.map(
                           (Branch b) => DropdownMenuItem<int?>(
                             value: b.id,
-                            child: Text(b.name, overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              b.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                       ],
@@ -1697,7 +1734,7 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                     const Divider(),
                     _AllocationSummaryRow(
                       label: 'مبلغ الدفعة',
-                      value: _paymentAmount,
+                      value: _paymentBaseAmount,
                     ),
                     _AllocationSummaryRow(
                       label: 'المبلغ المخصص',
@@ -1713,7 +1750,7 @@ class _PaymentFormDialogState extends State<_PaymentFormDialog> {
                       FinanceAccountImpactPreview(
                         toLabel: 'حسابات الموردين الدائنة',
                         fromLabel: locationName,
-                        amount: _paymentAmount.toStringAsFixed(2),
+                        amount: _paymentBaseAmount.toStringAsFixed(2),
                       ),
                     ],
                     if (_error != null) ...<Widget>[

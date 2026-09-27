@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../manufacturing/models/factory_currency.dart';
+import '../../manufacturing/widgets/factory_currency_field.dart';
 import '../../operational_context/controllers/operational_branch_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -38,8 +40,13 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
   final searchController = TextEditingController();
   SalesCubit get cubit => context.read<SalesCubit>();
   int? get _activeBranchId {
-    try { return context.read<OperationalBranchCubit>().state.selectedBranchId; } catch (_) { return null; }
+    try {
+      return context.read<OperationalBranchCubit>().state.selectedBranchId;
+    } catch (_) {
+      return null;
+    }
   }
+
   @override
   void initState() {
     super.initState();
@@ -81,147 +88,162 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => _branchScoped(FinanceShell(
-    title: 'المبيعات',
-    subtitle: 'فواتير المبيعات والذمم والتحصيلات.',
-    actions: <Widget>[
-      OutlinedButton.icon(
-        onPressed: () => context.go(AppRoutes.financeCustomersReceivables),
-        icon: const Icon(Icons.groups_2_outlined),
-        label: const Text('العملاء والمستحقات'),
-      ),
-      const SizedBox(width: 8),
-      OutlinedButton.icon(
-        onPressed: () => context.go(AppRoutes.financeSalesCreditNotes),
-        icon: const Icon(Icons.assignment_return_outlined),
-        label: const Text('الإشعارات الدائنة / المرتجعات'),
-      ),
-      const SizedBox(width: 8),
-      ElevatedButton.icon(
-        onPressed: () => context.go(AppRoutes.financeSalesNew),
-        icon: const Icon(Icons.add),
-        label: const Text('فاتورة مبيع'),
-      ),
-    ],
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        if (page?.financialSummary != null) ...<Widget>[
-          Text(
-            'هذا الشهر (${page!.financialSummary!.periodFrom} — ${page!.financialSummary!.periodTo})',
-            style: FinanceText.small,
-          ),
-          const SizedBox(height: 8),
+  Widget build(BuildContext context) => _branchScoped(
+    FinanceShell(
+      title: 'المبيعات',
+      subtitle: 'فواتير المبيعات والذمم والتحصيلات.',
+      actions: <Widget>[
+        OutlinedButton.icon(
+          onPressed: () => context.go(AppRoutes.financeCustomersReceivables),
+          icon: const Icon(Icons.groups_2_outlined),
+          label: const Text('العملاء والمستحقات'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: () => context.go(AppRoutes.financeSalesCreditNotes),
+          icon: const Icon(Icons.assignment_return_outlined),
+          label: const Text('الإشعارات الدائنة / المرتجعات'),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
+          onPressed: () => context.go(AppRoutes.financeSalesNew),
+          icon: const Icon(Icons.add),
+          label: const Text('فاتورة مبيع'),
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (page?.financialSummary != null) ...<Widget>[
+            Text(
+              'هذا الشهر (${page!.financialSummary!.periodFrom} — ${page!.financialSummary!.periodTo})',
+              style: FinanceText.small,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _kpi(
+                    'صافي المبيعات',
+                    page!.financialSummary!.netSales,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _kpi(
+                    'عدد الفواتير المُرحّلة',
+                    '${page!.financialSummary!.postedInvoicesCount}',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _kpi(
+                    'الذمم المستحقة',
+                    page!.financialSummary!.outstandingAr,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _kpi(
+                    'المُحصّل',
+                    page!.financialSummary!.collectedTotal,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _kpi(
+                    'الإشعارات الدائنة',
+                    page!.financialSummary!.creditNotesTotal,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             children: <Widget>[
               Expanded(
-                child: _kpi('صافي المبيعات', page!.financialSummary!.netSales),
+                child: _kpi('عدد فواتير المبيعات', '${page?.draftCount ?? 0}'),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _kpi(
-                  'عدد الفواتير المُرحّلة',
-                  '${page!.financialSummary!.postedInvoicesCount}',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _kpi(
-                  'الذمم المستحقة',
-                  page!.financialSummary!.outstandingAr,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _kpi('المُحصّل', page!.financialSummary!.collectedTotal),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _kpi(
-                  'الإشعارات الدائنة',
-                  page!.financialSummary!.creditNotesTotal,
+                  'إجمالي الفواتير المسودة',
+                  page?.draftTotal ?? '0.00',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-        ],
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: _kpi('عدد فواتير المبيعات', '${page?.draftCount ?? 0}'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _kpi(
-                'إجمالي الفواتير المسودة',
-                page?.draftTotal ?? '0.00',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <Widget>[
-            SizedBox(
-              width: 280,
-              child: TextField(
-                controller: searchController,
-                onSubmitted: (v) {
-                  search = v.trim();
-                  currentPage = 1;
-                  load();
-                },
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'رقم الفاتورة، العميل أو المرجع',
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              SizedBox(
+                width: 280,
+                child: TextField(
+                  controller: searchController,
+                  onSubmitted: (v) {
+                    search = v.trim();
+                    currentPage = 1;
+                    load();
+                  },
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'رقم الفاتورة، العميل أو المرجع',
+                  ),
                 ),
               ),
-            ),
-            DropdownButton<String>(
-              value: status,
-              hint: const Text('الحالة: الكل'),
-              items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem(value: null, child: Text('الحالة: الكل')),
-                DropdownMenuItem(value: 'draft', child: Text('مسودة')),
-                DropdownMenuItem(value: 'cancelled', child: Text('ملغاة')),
-              ],
-              onChanged: (v) {
-                setState(() {
-                  status = v;
-                  currentPage = 1;
-                });
-                load();
-              },
-            ),
-            OutlinedButton(
-              onPressed: () {
-                searchController.clear();
-                setState(() {
-                  search = '';
-                  status = null;
-                  currentPage = 1;
-                });
-                load();
-              },
-              child: const Text('إعادة تعيين'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Expanded(child: _body()),
-      ],
+              DropdownButton<String>(
+                value: status,
+                hint: const Text('الحالة: الكل'),
+                items: const <DropdownMenuItem<String>>[
+                  DropdownMenuItem(value: null, child: Text('الحالة: الكل')),
+                  DropdownMenuItem(value: 'draft', child: Text('مسودة')),
+                  DropdownMenuItem(value: 'cancelled', child: Text('ملغاة')),
+                ],
+                onChanged: (v) {
+                  setState(() {
+                    status = v;
+                    currentPage = 1;
+                  });
+                  load();
+                },
+              ),
+              OutlinedButton(
+                onPressed: () {
+                  searchController.clear();
+                  setState(() {
+                    search = '';
+                    status = null;
+                    currentPage = 1;
+                  });
+                  load();
+                },
+                child: const Text('إعادة تعيين'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(child: _body()),
+        ],
+      ),
     ),
-  ));
+  );
   Widget _branchScoped(Widget child) {
     if (_activeBranchId == null) return child;
-    return BranchChangeReload(onBranchChanged: () {
-      setState(() { currentPage = 1; page = null; });
-      load();
-    }, child: child);
+    return BranchChangeReload(
+      onBranchChanged: () {
+        setState(() {
+          currentPage = 1;
+          page = null;
+        });
+        load();
+      },
+      child: child,
+    );
   }
+
   Widget _kpi(String label, String value) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -379,6 +401,7 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
   SalesInvoice? invoice;
   Object? error;
   SalesCubit get cubit => context.read<SalesCubit>();
+
   @override
   void initState() {
     super.initState();
@@ -499,6 +522,10 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
             ],
             if (posted) ...<Widget>[
               const SizedBox(height: 20),
+              FactoryCurrencyDocument(
+                snapshot: i.factoryCurrency,
+                baseAmount: i.total,
+              ),
               Wrap(
                 spacing: 28,
                 runSpacing: 10,
@@ -822,6 +849,8 @@ class SalesInvoiceFormScreen extends StatefulWidget {
 }
 
 class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
+  FactoryCurrencySelection _currency = const FactoryCurrencySelection();
+  FactoryCurrencySelection? _initialCurrency;
   final form = GlobalKey<FormState>();
   final reference = TextEditingController();
   final notes = TextEditingController();
@@ -846,8 +875,47 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   String? catalogError;
   bool loadingMaterials = false;
   int _materialsGeneration = 0;
-  bool get _isFactory => branches.any((branch) => branch.id == branchId && branch.isFactory);
+  bool get _isFactory =>
+      branches.any((branch) => branch.id == branchId && branch.isFactory);
   SalesCubit get cubit => context.read<SalesCubit>();
+
+  void _changeCurrency(FactoryCurrencySelection value) {
+    setState(() {
+      if (_currency.currency != value.currency && value.multiplier > 0) {
+        for (final line in lines) {
+          line.unitPrice.text = _currency.switchAmount(
+            line.unitPrice.text,
+            value,
+            precision: value.currency == 'USD' ? 6 : 2,
+          );
+          if (line.discountType != 'percent') {
+            line.discountValue.text = _currency.switchAmount(
+              line.discountValue.text,
+              value,
+            );
+          }
+        }
+        for (final charge in charges) {
+          charge.amount.text = _currency.switchAmount(
+            charge.amount.text,
+            value,
+          );
+        }
+        if (invoiceDiscountType != 'percent') {
+          invoiceDiscount.text = _currency.switchAmount(
+            invoiceDiscount.text,
+            value,
+          );
+        }
+        manualAdjustment.text = _currency.switchAmount(
+          manualAdjustment.text,
+          value,
+        );
+      }
+      _currency = value;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -908,8 +976,18 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       catalogError = errors.isEmpty ? null : errors.join('\n');
       if (widget.id == null && branchId == null && branches.isNotEmpty) {
         int? selectedId;
-        try { selectedId = context.read<OperationalBranchCubit>().state.selectedBranchId; } catch (_) {}
-        branchId = branches.where((branch) => branch.id == selectedId).firstOrNull?.id ?? branches.first.id;
+        try {
+          selectedId = context
+              .read<OperationalBranchCubit>()
+              .state
+              .selectedBranchId;
+        } catch (_) {}
+        branchId =
+            branches
+                .where((branch) => branch.id == selectedId)
+                .firstOrNull
+                ?.id ??
+            branches.first.id;
       }
     });
     if (widget.id == null) {
@@ -921,6 +999,10 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       if (!mounted) return;
       setState(() {
         customerId = i.customerId;
+        _initialCurrency = FactoryCurrencySelection.fromSnapshot(
+          i.factoryCurrency,
+        );
+        _currency = _initialCurrency!;
         branchId = i.branchId;
         reference.text = i.reference ?? '';
         notes.text = i.notes ?? '';
@@ -958,6 +1040,27 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
         charges.addAll(
           i.charges.map((c) => _EditCharge(name: c.name, amount: c.amount)),
         );
+        if (_currency.currency == 'USD') {
+          final input = i.factoryCurrency?['input'] as Map?;
+          final rows = input?['lines'] as List? ?? const [];
+          for (var index = 0; index < lines.length; index++) {
+            final row = index < rows.length ? rows[index] as Map : const {};
+            lines[index].unitPrice.text =
+                '${row['unitPrice'] ?? lines[index].unitPrice.text}';
+            lines[index].discountValue.text = '${row['discountValue'] ?? '0'}';
+          }
+          invoiceDiscount.text = '${input?['invoiceDiscountValue'] ?? '0'}';
+          manualAdjustment.text = '${input?['manualAdjustment'] ?? '0'}';
+          final chargeRows = input?['charges'] as List? ?? const [];
+          for (
+            var index = 0;
+            index < charges.length && index < chargeRows.length;
+            index++
+          ) {
+            charges[index].amount.text =
+                '${(chargeRows[index] as Map)['amount'] ?? '0'}';
+          }
+        }
       });
     } catch (error) {
       if (mounted) setState(() => catalogError = 'تعذر تحميل الفاتورة: $error');
@@ -970,17 +1073,25 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
     final selectedBranch = branchId;
     setState(() => loadingMaterials = true);
     try {
-      final result = await cubit.repository.materials(branchId: _isFactory ? selectedBranch : null);
+      final result = await cubit.repository.materials(
+        branchId: _isFactory ? selectedBranch : null,
+      );
       if (!mounted || generation != _materialsGeneration) return;
       setState(() {
         materials = result;
         if (clearInvalid) {
           for (final line in lines) {
-            if ((_isFactory && line.productId != null) || (line.inventoryItemId != null && !materials.any((item) => item.id == line.inventoryItemId))) {
+            if ((_isFactory && line.productId != null) ||
+                (line.inventoryItemId != null &&
+                    !materials.any(
+                      (item) => item.id == line.inventoryItemId,
+                    ))) {
               line.productId = null;
               line.inventoryItemId = null;
               line.variantId = null;
-              for (final component in line.materialOverrides) { component.dispose(); }
+              for (final component in line.materialOverrides) {
+                component.dispose();
+              }
               line.materialOverrides.clear();
               line.materialOverridesTouched = false;
             }
@@ -989,9 +1100,13 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       });
     } catch (error) {
       if (!mounted || generation != _materialsGeneration) return;
-      setState(() { materials = const []; catalogError = 'تعذر تحميل أصناف مخزن الفرع: $error'; });
+      setState(() {
+        materials = const [];
+        catalogError = 'تعذر تحميل أصناف مخزن الفرع: $error';
+      });
     } finally {
-      if (mounted && generation == _materialsGeneration) setState(() => loadingMaterials = false);
+      if (mounted && generation == _materialsGeneration)
+        setState(() => loadingMaterials = false);
     }
   }
 
@@ -1011,6 +1126,10 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   }
 
   Future<void> save({bool postAfterSave = false}) async {
+    if (_isFactory && !_currency.valid) {
+      setState(() => catalogError = 'أدخل سعر الدولار الصحيح قبل الحفظ.');
+      return;
+    }
     if (loadingMaterials || saving) return;
     if (!(form.currentState?.validate() ?? false) ||
         customerId == null ||
@@ -1060,6 +1179,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
             ),
           );
       final r = await cubit.repository.save(<String, dynamic>{
+        if (_isFactory) ..._currency.payload,
         'branchId': branchId,
         'customerId': customerId,
         'invoiceDate': _date(date),
@@ -1093,7 +1213,8 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                 if (l.inventoryItemId != null) 'unitCode': l.unitCode,
                 if (l.variantId != null) 'variantId': l.variantId,
                 'quantity': l.quantity.text.trim(),
-                if (l.inventoryItemId != null ||
+                if (_isFactory ||
+                    l.inventoryItemId != null ||
                     l.unitPrice.text.trim() != l.defaultPrice)
                   'unitPrice': l.unitPrice.text.trim(),
                 'discountType': l.discountType,
@@ -1220,6 +1341,16 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            if (_isFactory && branchId != null)
+              FactoryCurrencyField(
+                key: ValueKey(
+                  'sale-currency-$branchId-${widget.id}-${_initialCurrency?.currency}',
+                ),
+                branchId: branchId!,
+                initial: _initialCurrency,
+                amount: _totalPreview,
+                onChanged: _changeCurrency,
+              ),
             if (catalogError != null)
               Card(
                 child: Padding(
@@ -1262,7 +1393,8 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           customerId,
                           customers,
                           (c) => c.id,
-                          (c) => '${c.name} (${c.customerNumber})${c.isInternal ? ' • داخلي • فرع ${c.internalBranchId}' : ''}',
+                          (c) =>
+                              '${c.name} (${c.customerNumber})${c.isInternal ? ' • داخلي • فرع ${c.internalBranchId}' : ''}',
                           (v) => setState(() => customerId = v),
                         ),
                         TextButton.icon(
@@ -1485,7 +1617,8 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
     ),
   );
   List<_CatalogEntry> get _catalogEntries => <_CatalogEntry>[
-    if (!loadingMaterials && !_isFactory) ...products.map(_CatalogEntry.product),
+    if (!loadingMaterials && !_isFactory)
+      ...products.map(_CatalogEntry.product),
     if (!loadingMaterials) ...materials.map(_CatalogEntry.material),
   ];
 
@@ -1572,7 +1705,9 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                             .firstOrNull;
                         line.variantId = selected?.id;
                         line.defaultPrice = selected?.salePrice ?? p.salePrice;
-                        line.unitPrice.text = line.defaultPrice;
+                        line.unitPrice.text = _isFactory
+                            ? _currency.fromBase(line.defaultPrice)
+                            : line.defaultPrice;
                       });
                       if (entry != null &&
                           !entry.isMaterial &&
@@ -1628,7 +1763,9 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                                   ?.salePrice ??
                               product?.salePrice ??
                               '0.00';
-                          line.unitPrice.text = line.defaultPrice;
+                          line.unitPrice.text = _isFactory
+                              ? _currency.fromBase(line.defaultPrice)
+                              : line.defaultPrice;
                         });
                         if (v != null) _loadDefaultRecipe(line, v);
                       },
@@ -2847,6 +2984,7 @@ class _CustomerReceivablesScreenState extends State<CustomerReceivablesScreen> {
   CustomerArOverviewSummary summary = CustomerArOverviewSummary.empty;
   CustomerArAgingTotals aging = CustomerArAgingTotals.empty;
   SalesCubit get cubit => context.read<SalesCubit>();
+
   @override
   void initState() {
     super.initState();

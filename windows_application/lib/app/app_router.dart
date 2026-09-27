@@ -1405,8 +1405,17 @@ final GoRouter appRouter = GoRouter(
           path: '${AppRoutes.manufacturingPurchases}/new',
           redirect: _manufacturingAccessRedirect,
           builder: (context, state) => MultiBlocProvider(
-            providers: [BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>()), BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>())],
-            child: const PurchaseInvoiceFormScreen(routeScope: PurchaseRouteScope.manufacturing),
+            providers: [
+              BlocProvider<PurchasingCubit>(
+                create: (_) => serviceLocator<PurchasingCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
+            ],
+            child: const PurchaseInvoiceFormScreen(
+              routeScope: PurchaseRouteScope.manufacturing,
+            ),
           ),
         ),
         GoRoute(
@@ -1416,8 +1425,18 @@ final GoRouter appRouter = GoRouter(
             final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
             return MultiBlocProvider(
-              providers: [BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>()), BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>())],
-              child: PurchaseInvoiceFormScreen(editId: id, routeScope: PurchaseRouteScope.manufacturing),
+              providers: [
+                BlocProvider<PurchasingCubit>(
+                  create: (_) => serviceLocator<PurchasingCubit>(),
+                ),
+                BlocProvider<FinanceSetupCubit>(
+                  create: (_) => serviceLocator<FinanceSetupCubit>(),
+                ),
+              ],
+              child: PurchaseInvoiceFormScreen(
+                editId: id,
+                routeScope: PurchaseRouteScope.manufacturing,
+              ),
             );
           },
         ),
@@ -1427,7 +1446,10 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>(), child: GoodsReceiptFormScreen(purchaseId: id));
+            return BlocProvider<PurchasingCubit>(
+              create: (_) => serviceLocator<PurchasingCubit>(),
+              child: GoodsReceiptFormScreen(purchaseId: id),
+            );
           },
         ),
         GoRoute(
@@ -1436,7 +1458,10 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['receiptId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>(), child: GoodsReceiptDetailScreen(receiptId: id));
+            return BlocProvider<PurchasingCubit>(
+              create: (_) => serviceLocator<PurchasingCubit>(),
+              child: GoodsReceiptDetailScreen(receiptId: id),
+            );
           },
         ),
         GoRoute(
@@ -1445,14 +1470,24 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) {
             final id = parsePositiveRouteId(state.pathParameters['purchaseId']);
             if (id == null) return const _InvalidCatalogRouteScreen();
-            return BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>(), child: PurchaseInvoiceDetailScreen(purchaseId: id));
+            return BlocProvider<PurchasingCubit>(
+              create: (_) => serviceLocator<PurchasingCubit>(),
+              child: PurchaseInvoiceDetailScreen(purchaseId: id),
+            );
           },
         ),
         GoRoute(
           path: AppRoutes.manufacturingPurchases,
           redirect: _manufacturingAccessRedirect,
           builder: (context, state) => MultiBlocProvider(
-            providers: [BlocProvider<PurchasingCubit>(create: (_) => serviceLocator<PurchasingCubit>()), BlocProvider<FinanceSetupCubit>(create: (_) => serviceLocator<FinanceSetupCubit>())],
+            providers: [
+              BlocProvider<PurchasingCubit>(
+                create: (_) => serviceLocator<PurchasingCubit>(),
+              ),
+              BlocProvider<FinanceSetupCubit>(
+                create: (_) => serviceLocator<FinanceSetupCubit>(),
+              ),
+            ],
             child: const PurchasingCenterScreen(),
           ),
         ),
@@ -1482,7 +1517,10 @@ final GoRouter appRouter = GoRouter(
             if (itemId == null) return const _InvalidCatalogRouteScreen();
             return BlocProvider<InventoryCubit>(
               create: (_) => serviceLocator<InventoryCubit>(),
-              child: ItemFormScreen(itemId: itemId, scope: ItemRouteScope.manufacturing),
+              child: ItemFormScreen(
+                itemId: itemId,
+                scope: ItemRouteScope.manufacturing,
+              ),
             );
           },
         ),
@@ -1496,7 +1534,10 @@ final GoRouter appRouter = GoRouter(
             if (itemId == null) return const _InvalidCatalogRouteScreen();
             return BlocProvider<InventoryCubit>(
               create: (_) => serviceLocator<InventoryCubit>(),
-              child: InventoryItemDetailsScreen(itemId: itemId, scope: ItemRouteScope.manufacturing),
+              child: InventoryItemDetailsScreen(
+                itemId: itemId,
+                scope: ItemRouteScope.manufacturing,
+              ),
             );
           },
         ),
@@ -1625,22 +1666,24 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.manufacturingProductionResult,
           redirect: _manufacturingAccessRedirect,
-          builder: (context, state) => BlocProvider<ManufacturingProductionCubit>(
-            create: (_) => serviceLocator<ManufacturingProductionCubit>(),
-            child: ManufacturingProductionResultScreen(
-              idOrReference: state.pathParameters['id'] ?? '',
-            ),
-          ),
+          builder: (context, state) =>
+              BlocProvider<ManufacturingProductionCubit>(
+                create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+                child: ManufacturingProductionResultScreen(
+                  idOrReference: state.pathParameters['id'] ?? '',
+                ),
+              ),
         ),
         GoRoute(
           path: AppRoutes.manufacturingProductionDetail,
           redirect: _manufacturingAccessRedirect,
-          builder: (context, state) => BlocProvider<ManufacturingProductionCubit>(
-            create: (_) => serviceLocator<ManufacturingProductionCubit>(),
-            child: ManufacturingProductionDetailsScreen(
-              idOrReference: state.pathParameters['id'] ?? '',
-            ),
-          ),
+          builder: (context, state) =>
+              BlocProvider<ManufacturingProductionCubit>(
+                create: (_) => serviceLocator<ManufacturingProductionCubit>(),
+                child: ManufacturingProductionDetailsScreen(
+                  idOrReference: state.pathParameters['id'] ?? '',
+                ),
+              ),
         ),
         GoRoute(
           path: AppRoutes.manufacturingConversionCreate,
@@ -1660,12 +1703,13 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: AppRoutes.manufacturingConversionDetail,
           redirect: _manufacturingAccessRedirect,
-          builder: (context, state) => BlocProvider<ManufacturingConversionCubit>(
-            create: (_) => serviceLocator<ManufacturingConversionCubit>(),
-            child: ManufacturingConversionDetailsScreen(
-              idOrReference: state.pathParameters['id'] ?? '',
-            ),
-          ),
+          builder: (context, state) =>
+              BlocProvider<ManufacturingConversionCubit>(
+                create: (_) => serviceLocator<ManufacturingConversionCubit>(),
+                child: ManufacturingConversionDetailsScreen(
+                  idOrReference: state.pathParameters['id'] ?? '',
+                ),
+              ),
         ),
         GoRoute(
           path: AppRoutes.manufacturingReports,
@@ -2635,24 +2679,24 @@ String _activeDestinationFor(GoRouterState state) {
     return 'inventory';
   }
   if (state.uri.path.startsWith(AppRoutes.manufacturing)) {
-    // The Owner's shared sidebar has one 'manufacturing' entry for the
-    // whole module; factory_manager's dedicated sidebar (Phase 2) has one
-    // entry per Manufacturing tab, so only its highlighting needs the
-    // finer-grained id.
-    final bool isFactoryUser =
-        serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ??
-        false;
-    if (!isFactoryUser) return 'manufacturing';
-    return switch (_manufacturingActiveTabFor(state.uri.path)) {
-      'materials' => 'factoryMaterials',
-      'recipes' => 'factoryRecipes',
-      'production' => 'factoryProduction',
-      'stockCounts' => 'factoryStockCounts',
-      'reports' => 'factoryReports',
-      _ => 'factoryHome',
-    };
+    return state.uri.path.startsWith(AppRoutes.manufacturingPurchases)
+        ? 'purchases'
+        : 'manufacturing';
   }
   if (state.uri.path.startsWith(AppRoutes.finance)) {
+    final branchState = serviceLocator.isRegistered<OperationalBranchCubit>()
+        ? serviceLocator<OperationalBranchCubit>().state
+        : null;
+    final factoryUser = serviceLocator.isRegistered<AuthSessionCubit>() &&
+        (serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ?? false);
+    final factoryBranch = branchState?.branches.any(
+          (branch) => branch.id == branchState.selectedBranchId && branch.isFactory,
+        ) ?? false;
+    if (factoryUser || factoryBranch) {
+      if (state.uri.path.startsWith(AppRoutes.financeSales)) return 'sales';
+      if (state.uri.path.startsWith(AppRoutes.financePurchases)) return 'purchases';
+      if (state.uri.path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
+    }
     return 'finance';
   }
   if (state.uri.path.startsWith(AppRoutes.menuManagement)) {
@@ -2716,7 +2760,8 @@ abstract final class AppRoutes {
 
   static const String manufacturing = '/manufacturing';
   static const String manufacturingPurchases = '/manufacturing/purchases';
-  static const String manufacturingPurchaseReceipts = '/manufacturing/purchase-receipts';
+  static const String manufacturingPurchaseReceipts =
+      '/manufacturing/purchase-receipts';
   static const String manufacturingMaterials = '/manufacturing/materials';
   static const String manufacturingMaterialCreate =
       '/manufacturing/materials/new';
@@ -2727,8 +2772,7 @@ abstract final class AppRoutes {
   static const String manufacturingStockReceiptCreate =
       '/manufacturing/stock-receipts/new';
   static const String manufacturingRecipes = '/manufacturing/recipes';
-  static const String manufacturingRecipeCreate =
-      '/manufacturing/recipes/new';
+  static const String manufacturingRecipeCreate = '/manufacturing/recipes/new';
   static const String manufacturingRecipeDetail =
       '/manufacturing/recipes/:recipeId';
   static const String manufacturingRecipeEdit =
@@ -3039,7 +3083,8 @@ void _returnToRecipeWorkspace(
 /// bouncing them there would just trade one 403 for another.
 String? _manufacturingAccessRedirect(BuildContext _, GoRouterState _) {
   final user = serviceLocator<AuthSessionCubit>().state.session?.user;
-  if (user != null && user.manufacturingCapabilities.contains('manufacturing.view')) {
+  if (user != null &&
+      user.manufacturingCapabilities.contains('manufacturing.view')) {
     return null;
   }
 

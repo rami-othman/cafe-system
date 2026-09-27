@@ -88,6 +88,7 @@ final class FinanceDocumentController extends Controller
     private function validated(Request $request): array
     {
         return $request->validate([
+            ...\App\Support\FactoryCurrency::rules(),
             'documentType' => ['required', 'in:receipt,payment'],
             'documentDate' => ['required', 'date_format:Y-m-d'],
             'branchId' => ['nullable', 'integer'],
@@ -117,6 +118,7 @@ final class FinanceDocumentController extends Controller
             'id' => (int) $row->id, 'documentNumber' => $row->document_number, 'documentType' => $row->document_type,
             'status' => $row->status, 'documentDate' => $row->document_date, 'branchId' => $row->branch_id ? (int) $row->branch_id : null,
             'amount' => Money::decimal(Money::cents($row->amount)), 'currencyCode' => $row->currency_code,
+            'factoryCurrency' => \App\Support\FactoryCurrency::snapshot($row),
             'financialLocationId' => (int) $row->financial_location_id, 'description' => $row->description,
             'externalReference' => $row->external_reference, 'journalEntryId' => $row->journal_entry_id ? (int) $row->journal_entry_id : null,
             'shiftId' => isset($row->shift_id) && $row->shift_id ? (int) $row->shift_id : null,

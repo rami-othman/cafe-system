@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import '../../features/manufacturing/controllers/factory_currency_cubit.dart';
+import '../../features/manufacturing/repositories/factory_currency_repository.dart';
 
 import '../../app/localization/app_locale_cubit.dart';
 import '../../app/localization/app_locale_repository.dart';
@@ -400,6 +402,14 @@ void setupServiceLocator({bool useBackend = true}) {
   if (!serviceLocator.isRegistered<ManufacturingRepository>()) {
     serviceLocator.registerLazySingleton<ManufacturingRepository>(
       () => ManufacturingRepository(serviceLocator<DioApiClient>()),
+    );
+  }
+  if (!serviceLocator.isRegistered<FactoryCurrencyRepository>()) {
+    serviceLocator.registerLazySingleton<FactoryCurrencyRepository>(
+      () => FactoryCurrencyRepository(serviceLocator<DioApiClient>()),
+    );
+    serviceLocator.registerFactory<FactoryCurrencyCubit>(
+      () => FactoryCurrencyCubit(serviceLocator<FactoryCurrencyRepository>()),
     );
   }
   if (!serviceLocator.isRegistered<ManufacturingCubit>()) {

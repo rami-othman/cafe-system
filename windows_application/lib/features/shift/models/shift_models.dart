@@ -327,6 +327,7 @@ class BarCountLine extends Equatable {
     required this.unitCost,
     this.counted,
     this.note = '',
+    this.laterNetQuantity = 0,
   });
 
   final String id;
@@ -344,6 +345,7 @@ class BarCountLine extends Equatable {
   final double unitCost;
   final double? counted;
   final String note;
+  final double laterNetQuantity;
 
   bool get isCounted => counted != null;
 
@@ -368,6 +370,7 @@ class BarCountLine extends Equatable {
       status == BarCountStatus.shortage || status == BarCountStatus.surplus;
 
   BarCountLine copyWith({
+    double? theoretical,
     double? counted,
     bool clearCounted = false,
     String? note,
@@ -378,10 +381,11 @@ class BarCountLine extends Equatable {
     category: category,
     unit: unit,
     decimals: decimals,
-    theoretical: theoretical,
+    theoretical: theoretical ?? this.theoretical,
     unitCost: unitCost,
     counted: clearCounted ? null : counted ?? this.counted,
     note: note ?? this.note,
+    laterNetQuantity: laterNetQuantity,
   );
 
   @override
@@ -396,6 +400,7 @@ class BarCountLine extends Equatable {
     unitCost,
     counted,
     note,
+    laterNetQuantity,
   ];
 }
 
@@ -703,6 +708,12 @@ class ShiftClosingResult extends Equatable {
     required this.reportNumber,
     this.closeMode = ShiftCloseMode.manual,
     this.closingDate,
+    this.previewVersion,
+    this.cashCountBasis,
+    this.barCountBasis,
+    this.countedCashInput,
+    this.continuationShiftId,
+    this.closeExecutedAt,
   });
 
   final ShiftSnapshot snapshot;
@@ -713,6 +724,12 @@ class ShiftClosingResult extends Equatable {
   final String reportNumber;
   final ShiftCloseMode closeMode;
   final DateTime? closingDate;
+  final String? previewVersion;
+  final String? cashCountBasis;
+  final String? barCountBasis;
+  final double? countedCashInput;
+  final int? continuationShiftId;
+  final DateTime? closeExecutedAt;
 
   Duration get duration => closedAt.difference(snapshot.identity.openedAt);
 
@@ -726,6 +743,12 @@ class ShiftClosingResult extends Equatable {
     reportNumber,
     closeMode,
     closingDate,
+    previewVersion,
+    cashCountBasis,
+    barCountBasis,
+    countedCashInput,
+    continuationShiftId,
+    closeExecutedAt,
   ];
 }
 
