@@ -52,13 +52,6 @@ class ManufacturingNavigationBar extends StatelessWidget {
           Icons.fact_check_outlined,
           enabled: true,
         ),
-        _ManufacturingDestination(
-          'reports',
-          AppRoutes.manufacturingReports,
-          'التقارير',
-          Icons.bar_chart_outlined,
-          enabled: true,
-        ),
       ];
 
   @override

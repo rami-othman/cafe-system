@@ -37,6 +37,10 @@ if (config('database.default') !== 'pgsql' || config('database.connections.pgsql
 }
 
 // The parent holds this session lock until every worker is waiting on it.
+if (! empty($payload['nowUtc'])) {
+    \Carbon\Carbon::setTestNow(\Carbon\Carbon::parse($payload['nowUtc'], 'UTC'));
+    \Carbon\CarbonImmutable::setTestNow(\Carbon\CarbonImmutable::parse($payload['nowUtc'], 'UTC'));
+}
 // Releasing it provides a deterministic start gate without timing sleeps.
 DB::select('select pg_advisory_lock(?)', [$payload['barrier']]);
 DB::select('select pg_advisory_unlock(?)', [$payload['barrier']]);
@@ -46,6 +50,7 @@ try {
         'payment' => authenticatedResponse('/api/v1/orders/'.$payload['orderId'].'/pay', $payload),
         'refund' => authenticatedResponse('/api/v1/orders/'.$payload['orderId'].'/refunds', $payload),
         'shift-open' => authenticatedResponse('/api/v1/shifts/current', $payload),
+        'shift-close' => authenticatedResponse('/api/v1/shifts/'.$payload['shiftId'].'/close', $payload),
         'order-create' => authenticatedResponse('/api/v1/orders', $payload),
         // Runs the reconciliation service in-process (not over HTTP) so the
         // race is against the exact transaction shifts:reconcile-overlap runs.

@@ -11,6 +11,7 @@ import '../widgets/shift_design.dart';
 import '../widgets/shift_format.dart';
 import '../widgets/shift_primitives.dart';
 import '../widgets/shift_strings.dart';
+import '../widgets/shift_closing_period_card.dart';
 import 'shift_closing_screen.dart';
 
 /// Step 4 — the closing control center: every section the cashier and the
@@ -48,6 +49,8 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const ShiftWizardStepHeader(title: ShiftStrings.finalReviewTitle),
+          const ShiftClosingPeriodCard(editable: false),
+          const SizedBox(height: AppSpacing.lg),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               final bool wide =
@@ -202,28 +205,6 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          OutlinedButton.icon(
-            key: const Key('shift-closing-date'),
-            icon: const Icon(Icons.calendar_today_outlined),
-            label: Text(
-              '${ShiftStrings.closingDate}: ${(state.closingDate ?? DateTime.now()).toIso8601String().substring(0, 10)}',
-            ),
-            onPressed: () async {
-              final today = DateUtils.dateOnly(DateTime.now());
-              final opened = DateUtils.dateOnly(snapshot.identity.openedAt);
-              final first = opened.isAfter(today) ? today : opened;
-              final date = await showDatePicker(
-                context: context,
-                initialDate: state.closingDate ?? today,
-                firstDate: first,
-                lastDate: today,
-              );
-              if (date != null && context.mounted) {
-                cubit.selectClosingDate(date);
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.xl),
           Align(
             alignment: AlignmentDirectional.centerEnd,
             child: ShiftButton(
@@ -231,7 +212,11 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
               label: ShiftStrings.confirmCloseShift,
               icon: Icons.lock_outline,
               large: true,
-              onPressed: assessment.canClose
+              onPressed:
+                  assessment.canClose &&
+                      state.periodReady &&
+                      state.countBasesReady &&
+                      !state.isSubmitting
                   ? () => _openConfirmDialog(context, snapshot, cash, bar)
                   : null,
             ),

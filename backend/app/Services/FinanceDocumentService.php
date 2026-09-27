@@ -30,6 +30,7 @@ final class FinanceDocumentService
             $this->assertFingerprint($existing, $fingerprint);
             return $existing;
         }
+        $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'voucher');
         $mode = $this->cashSources->mode($tenantId, (int) $actorId);
         $selected = isset($data['financialLocationId'])
             ? DB::table('financial_locations')->where('tenant_id', $tenantId)->where('id', $data['financialLocationId'])->first()
@@ -49,7 +50,7 @@ final class FinanceDocumentService
                 return $existing;
             }
             $now = now();
-            $id = (int) DB::table('finance_documents')->insertGetId([
+            $id = (int) DB::table('finance_documents')->insertGetId(\App\Support\FactoryCurrency::columns($data) + [
                 'tenant_id' => $tenantId,
                 'branch_id' => $data['branchId'] ?? null,
                 'document_number' => \App\Support\DataScope::documentNumber($tenantId, isset($data['branchId']) ? (int) $data['branchId'] : null, $this->nextNumber($tenantId, $data['documentType'], $data['documentDate'])),
@@ -135,6 +136,7 @@ final class FinanceDocumentService
             'amount' => $payment->amount,
             'external_reference' => $invoice->internal_reference,
             'source_type' => 'supplier_payment',
+            'factory_currency' => $payment->factory_currency ?? null,
             'source_id' => $payment->id,
             'purchase_invoice_id' => $invoice->id,
             'description' => $description,

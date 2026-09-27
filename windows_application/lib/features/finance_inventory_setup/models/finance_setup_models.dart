@@ -167,8 +167,14 @@ class FinancialLocation {
         balance: readString(json['balance'], fallback: '0.00'),
         todayIncoming: readString(json['todayIncoming'], fallback: '0.00'),
         todayOutgoing: readString(json['todayOutgoing'], fallback: '0.00'),
-        todayExternalIncoming: readString(json['todayExternalIncoming'], fallback: '0.00'),
-        todayExternalOutgoing: readString(json['todayExternalOutgoing'], fallback: '0.00'),
+        todayExternalIncoming: readString(
+          json['todayExternalIncoming'],
+          fallback: '0.00',
+        ),
+        todayExternalOutgoing: readString(
+          json['todayExternalOutgoing'],
+          fallback: '0.00',
+        ),
         isActive: readBool(json['isActive']),
         branchId: readInt(json['branchId']),
         branchName: readString(json['branchName']).isEmpty
@@ -177,7 +183,8 @@ class FinancialLocation {
         bankName: readString(json['bankName']).isEmpty
             ? null
             : readString(json['bankName']),
-        financialAccountNameAr: readString(json['financialAccountNameAr']).isEmpty
+        financialAccountNameAr:
+            readString(json['financialAccountNameAr']).isEmpty
             ? null
             : readString(json['financialAccountNameAr']),
         maskedReference: readString(json['maskedReference']).isEmpty
@@ -339,6 +346,7 @@ class ExpenseRecord {
   final String? rejectionReason;
   final String? createdAt;
   final String? updatedAt;
+
   /// Backend-computed, permission- and approval-policy-aware transitions
   /// (e.g. never includes `approve` for the expense's own creator). The
   /// canonical source for which lifecycle actions to render — never
@@ -815,6 +823,7 @@ class SupplierInvoice {
 class SupplierPayment {
   const SupplierPayment({
     required this.id,
+    this.factoryCurrency,
     required this.paymentNumber,
     required this.supplierId,
     required this.supplierName,
@@ -830,6 +839,7 @@ class SupplierPayment {
     this.allocations = const <PaymentAllocationLine>[],
     this.allowedActions = const <String>[],
   });
+  final Map<String, dynamic>? factoryCurrency;
   final int id;
   final String paymentNumber;
   final int supplierId;
@@ -848,6 +858,9 @@ class SupplierPayment {
   factory SupplierPayment.fromJson(Map<String, dynamic> json) =>
       SupplierPayment(
         id: readInt(json['id']) ?? 0,
+        factoryCurrency: json['factoryCurrency'] is Map
+            ? Map<String, dynamic>.from(json['factoryCurrency'] as Map)
+            : null,
         paymentNumber: readString(json['paymentNumber']),
         supplierId: readInt(json['supplierId']) ?? 0,
         supplierName: readString(json['supplierName']),
@@ -942,8 +955,12 @@ class ReconciliationAccount {
         financialAccountCode: readString(json['financialAccountCode']),
         financialAccountName: readString(json['financialAccountName']),
         financialLocationId: readInt(json['financialLocationId']),
-        name: readString(json['name']).isEmpty ? null : readString(json['name']),
-        locationType: readString(json['type']).isEmpty ? null : readString(json['type']),
+        name: readString(json['name']).isEmpty
+            ? null
+            : readString(json['name']),
+        locationType: readString(json['type']).isEmpty
+            ? null
+            : readString(json['type']),
         branchId: readInt(json['branchId']),
         branchName: readString(json['branchName']).isEmpty
             ? null
@@ -970,16 +987,24 @@ class ReconciliationBalances {
   final String? differenceDirection;
   factory ReconciliationBalances.fromJson(Map<String, dynamic> json) =>
       ReconciliationBalances(
-        bookOpening: json['bookOpening'] == null ? null : readString(json['bookOpening']),
-        bookClosing: json['bookClosing'] == null ? null : readString(json['bookClosing']),
+        bookOpening: json['bookOpening'] == null
+            ? null
+            : readString(json['bookOpening']),
+        bookClosing: json['bookClosing'] == null
+            ? null
+            : readString(json['bookClosing']),
         externalOpening: json['externalOpening'] == null
             ? null
             : readString(json['externalOpening']),
         externalClosing: json['externalClosing'] == null
             ? null
             : readString(json['externalClosing']),
-        actualCash: json['actualCash'] == null ? null : readString(json['actualCash']),
-        difference: json['difference'] == null ? null : readString(json['difference']),
+        actualCash: json['actualCash'] == null
+            ? null
+            : readString(json['actualCash']),
+        difference: json['difference'] == null
+            ? null
+            : readString(json['difference']),
         differenceDirection: json['differenceDirection'] == null
             ? null
             : readString(json['differenceDirection']),
@@ -1013,7 +1038,10 @@ class ReconciliationSummary {
         unmatchedSystemCount: readInt(json['unmatchedSystemCount']) ?? 0,
         unmatchedStatementCount: readInt(json['unmatchedStatementCount']) ?? 0,
         matchedAmount: readString(json['matchedAmount'], fallback: '0.00'),
-        unmatchedSystemAmount: readString(json['unmatchedSystemAmount'], fallback: '0.00'),
+        unmatchedSystemAmount: readString(
+          json['unmatchedSystemAmount'],
+          fallback: '0.00',
+        ),
         unmatchedStatementAmount: readString(
           json['unmatchedStatementAmount'],
           fallback: '0.00',
@@ -1026,7 +1054,9 @@ class ReconciliationSummary {
   /// statement lines at all — 100% (nothing left to match) in that case.
   double get progressPercent => statementLinesCount == 0
       ? 100
-      : (statementLinesCount - unmatchedStatementCount) / statementLinesCount * 100;
+      : (statementLinesCount - unmatchedStatementCount) /
+            statementLinesCount *
+            100;
 }
 
 class ReconciliationSession {
@@ -1079,22 +1109,32 @@ class ReconciliationSession {
       type: readString(json['type']),
       status: readString(json['status']),
       account: ReconciliationAccount.fromJson(
-        json['account'] is Map ? Map<String, dynamic>.from(json['account'] as Map) : const <String, dynamic>{},
+        json['account'] is Map
+            ? Map<String, dynamic>.from(json['account'] as Map)
+            : const <String, dynamic>{},
       ),
       periodFrom: readString(period['from']),
       periodTo: readString(period['to']),
       balances: ReconciliationBalances.fromJson(
-        json['balances'] is Map ? Map<String, dynamic>.from(json['balances'] as Map) : const <String, dynamic>{},
+        json['balances'] is Map
+            ? Map<String, dynamic>.from(json['balances'] as Map)
+            : const <String, dynamic>{},
       ),
       summary: ReconciliationSummary.fromJson(
-        json['summary'] is Map ? Map<String, dynamic>.from(json['summary'] as Map) : const <String, dynamic>{},
+        json['summary'] is Map
+            ? Map<String, dynamic>.from(json['summary'] as Map)
+            : const <String, dynamic>{},
       ),
       canComplete: readBool(json['canComplete']),
       blockingReasons: readStringList(json['blockingReasons']),
       createdBy: readInt(json['createdBy']),
       completedBy: readInt(json['completedBy']),
-      createdAt: readString(json['createdAt']).isEmpty ? null : readString(json['createdAt']),
-      completedAt: readString(json['completedAt']).isEmpty ? null : readString(json['completedAt']),
+      createdAt: readString(json['createdAt']).isEmpty
+          ? null
+          : readString(json['createdAt']),
+      completedAt: readString(json['completedAt']).isEmpty
+          ? null
+          : readString(json['completedAt']),
       allowedActions: readStringList(json['allowedActions']),
       statementLines: readMapList(
         json['statementLines'],
@@ -1133,7 +1173,9 @@ class ReconciliationStatementLine {
       ReconciliationStatementLine(
         id: readInt(json['id']) ?? 0,
         transactionDate: readString(json['transactionDate']),
-        valueDate: readString(json['valueDate']).isEmpty ? null : readString(json['valueDate']),
+        valueDate: readString(json['valueDate']).isEmpty
+            ? null
+            : readString(json['valueDate']),
         reference: readString(json['reference']),
         description: readString(json['description']),
         amount: readString(json['amount']),
@@ -1210,7 +1252,9 @@ class ReconciliationSuggestion {
   factory ReconciliationSuggestion.fromJson(Map<String, dynamic> json) =>
       ReconciliationSuggestion(
         statementLineId: readInt(json['statementLineId']) ?? 0,
-        confidence: readString(json['confidence']).isEmpty ? null : readString(json['confidence']),
+        confidence: readString(json['confidence']).isEmpty
+            ? null
+            : readString(json['confidence']),
         candidates: readMapList(
           json['candidates'],
         ).map(ReconciliationSystemTransaction.fromJson).toList(growable: false),
@@ -1267,11 +1311,19 @@ class DailyClosingListItem {
       readiness: readString(json['readiness']),
       warningsCount: readInt(json['warningsCount']) ?? 0,
       netSales: readString(json['netSales'], fallback: '0.00'),
-      expectedCash: readString(json['expectedCash']).isEmpty ? null : readString(json['expectedCash']),
-      actualCash: readString(json['actualCash']).isEmpty ? null : readString(json['actualCash']),
-      difference: readString(json['difference']).isEmpty ? null : readString(json['difference']),
+      expectedCash: readString(json['expectedCash']).isEmpty
+          ? null
+          : readString(json['expectedCash']),
+      actualCash: readString(json['actualCash']).isEmpty
+          ? null
+          : readString(json['actualCash']),
+      difference: readString(json['difference']).isEmpty
+          ? null
+          : readString(json['difference']),
       closedBy: readInt(json['closedBy']),
-      closedAt: readString(json['closedAt']).isEmpty ? null : readString(json['closedAt']),
+      closedAt: readString(json['closedAt']).isEmpty
+          ? null
+          : readString(json['closedAt']),
       allowedActions: readStringList(json['allowedActions']),
     );
   }
@@ -1294,15 +1346,16 @@ class DailyClosingSales {
   final String cashSales;
   final String cardSales;
   final String otherSales;
-  factory DailyClosingSales.fromJson(Map<String, dynamic> json) => DailyClosingSales(
-    grossSales: readString(json['grossSales'], fallback: '0.00'),
-    discounts: readString(json['discounts'], fallback: '0.00'),
-    refunds: readString(json['refunds'], fallback: '0.00'),
-    netSales: readString(json['netSales'], fallback: '0.00'),
-    cashSales: readString(json['cashSales'], fallback: '0.00'),
-    cardSales: readString(json['cardSales'], fallback: '0.00'),
-    otherSales: readString(json['otherSales'], fallback: '0.00'),
-  );
+  factory DailyClosingSales.fromJson(Map<String, dynamic> json) =>
+      DailyClosingSales(
+        grossSales: readString(json['grossSales'], fallback: '0.00'),
+        discounts: readString(json['discounts'], fallback: '0.00'),
+        refunds: readString(json['refunds'], fallback: '0.00'),
+        netSales: readString(json['netSales'], fallback: '0.00'),
+        cashSales: readString(json['cashSales'], fallback: '0.00'),
+        cardSales: readString(json['cardSales'], fallback: '0.00'),
+        otherSales: readString(json['otherSales'], fallback: '0.00'),
+      );
 }
 
 class DailyClosingCashFigures {
@@ -1330,19 +1383,29 @@ class DailyClosingCashFigures {
   final String? actualCash;
   final String? difference;
   final String? differenceState;
-  factory DailyClosingCashFigures.fromJson(Map<String, dynamic> json) => DailyClosingCashFigures(
-    openingCash: readString(json['openingCash'], fallback: '0.00'),
-    cashSales: readString(json['cashSales'], fallback: '0.00'),
-    cashRefunds: readString(json['cashRefunds'], fallback: '0.00'),
-    expensesCash: readString(json['expensesCash'], fallback: '0.00'),
-    supplierPaymentsCash: readString(json['supplierPaymentsCash'], fallback: '0.00'),
-    transfersIn: readString(json['transfersIn'], fallback: '0.00'),
-    transfersOut: readString(json['transfersOut'], fallback: '0.00'),
-    expectedCash: readString(json['expectedCash'], fallback: '0.00'),
-    actualCash: readString(json['actualCash']).isEmpty ? null : readString(json['actualCash']),
-    difference: readString(json['difference']).isEmpty ? null : readString(json['difference']),
-    differenceState: readString(json['differenceState']).isEmpty ? null : readString(json['differenceState']),
-  );
+  factory DailyClosingCashFigures.fromJson(Map<String, dynamic> json) =>
+      DailyClosingCashFigures(
+        openingCash: readString(json['openingCash'], fallback: '0.00'),
+        cashSales: readString(json['cashSales'], fallback: '0.00'),
+        cashRefunds: readString(json['cashRefunds'], fallback: '0.00'),
+        expensesCash: readString(json['expensesCash'], fallback: '0.00'),
+        supplierPaymentsCash: readString(
+          json['supplierPaymentsCash'],
+          fallback: '0.00',
+        ),
+        transfersIn: readString(json['transfersIn'], fallback: '0.00'),
+        transfersOut: readString(json['transfersOut'], fallback: '0.00'),
+        expectedCash: readString(json['expectedCash'], fallback: '0.00'),
+        actualCash: readString(json['actualCash']).isEmpty
+            ? null
+            : readString(json['actualCash']),
+        difference: readString(json['difference']).isEmpty
+            ? null
+            : readString(json['difference']),
+        differenceState: readString(json['differenceState']).isEmpty
+            ? null
+            : readString(json['differenceState']),
+      );
 }
 
 class DailyClosingOperations {
@@ -1360,26 +1423,41 @@ class DailyClosingOperations {
   final String wasteValue;
   final String stockShortageValue;
   final String stockSurplusValue;
-  factory DailyClosingOperations.fromJson(Map<String, dynamic> json) => DailyClosingOperations(
-    expensesTotal: readString(json['expensesTotal'], fallback: '0.00'),
-    pendingExpensesCount: readInt(json['pendingExpensesCount']) ?? 0,
-    supplierPaymentsTotal: readString(json['supplierPaymentsTotal'], fallback: '0.00'),
-    wasteValue: readString(json['wasteValue'], fallback: '0.00'),
-    stockShortageValue: readString(json['stockShortageValue'], fallback: '0.00'),
-    stockSurplusValue: readString(json['stockSurplusValue'], fallback: '0.00'),
-  );
+  factory DailyClosingOperations.fromJson(Map<String, dynamic> json) =>
+      DailyClosingOperations(
+        expensesTotal: readString(json['expensesTotal'], fallback: '0.00'),
+        pendingExpensesCount: readInt(json['pendingExpensesCount']) ?? 0,
+        supplierPaymentsTotal: readString(
+          json['supplierPaymentsTotal'],
+          fallback: '0.00',
+        ),
+        wasteValue: readString(json['wasteValue'], fallback: '0.00'),
+        stockShortageValue: readString(
+          json['stockShortageValue'],
+          fallback: '0.00',
+        ),
+        stockSurplusValue: readString(
+          json['stockSurplusValue'],
+          fallback: '0.00',
+        ),
+      );
 }
 
 class DailyClosingShiftsSummary {
-  const DailyClosingShiftsSummary({required this.total, required this.open, required this.closed});
+  const DailyClosingShiftsSummary({
+    required this.total,
+    required this.open,
+    required this.closed,
+  });
   final int total;
   final int open;
   final int closed;
-  factory DailyClosingShiftsSummary.fromJson(Map<String, dynamic> json) => DailyClosingShiftsSummary(
-    total: readInt(json['total']) ?? 0,
-    open: readInt(json['open']) ?? 0,
-    closed: readInt(json['closed']) ?? 0,
-  );
+  factory DailyClosingShiftsSummary.fromJson(Map<String, dynamic> json) =>
+      DailyClosingShiftsSummary(
+        total: readInt(json['total']) ?? 0,
+        open: readInt(json['open']) ?? 0,
+        closed: readInt(json['closed']) ?? 0,
+      );
 }
 
 class DailyClosingReconciliationSummary {
@@ -1399,16 +1477,17 @@ class DailyClosingReconciliationSummary {
   final int completedCount;
   final int incompleteCount;
   final List<Map<String, dynamic>> accounts;
-  factory DailyClosingReconciliationSummary.fromJson(Map<String, dynamic> json) =>
-      DailyClosingReconciliationSummary(
-        required_: readBool(json['required']),
-        complete: readBool(json['complete']),
-        unresolvedCount: readInt(json['unresolvedCount']) ?? 0,
-        requiredCount: readInt(json['requiredCount']) ?? 0,
-        completedCount: readInt(json['completedCount']) ?? 0,
-        incompleteCount: readInt(json['incompleteCount']) ?? 0,
-        accounts: readMapList(json['accounts']),
-      );
+  factory DailyClosingReconciliationSummary.fromJson(
+    Map<String, dynamic> json,
+  ) => DailyClosingReconciliationSummary(
+    required_: readBool(json['required']),
+    complete: readBool(json['complete']),
+    unresolvedCount: readInt(json['unresolvedCount']) ?? 0,
+    requiredCount: readInt(json['requiredCount']) ?? 0,
+    completedCount: readInt(json['completedCount']) ?? 0,
+    incompleteCount: readInt(json['incompleteCount']) ?? 0,
+    accounts: readMapList(json['accounts']),
+  );
 }
 
 class DailyClosingFinancialIntegrity {
@@ -1422,24 +1501,33 @@ class DailyClosingFinancialIntegrity {
   final int missingPostings;
   final int failedPostings;
   final int lateActivityAfterClose;
-  factory DailyClosingFinancialIntegrity.fromJson(Map<String, dynamic> json) => DailyClosingFinancialIntegrity(
-    draftJournals: readInt(json['draftJournals']) ?? 0,
-    missingPostings: readInt(json['missingPostings']) ?? 0,
-    failedPostings: readInt(json['failedPostings']) ?? 0,
-    lateActivityAfterClose: readInt(json['lateActivityAfterClose']) ?? 0,
-  );
+  factory DailyClosingFinancialIntegrity.fromJson(Map<String, dynamic> json) =>
+      DailyClosingFinancialIntegrity(
+        draftJournals: readInt(json['draftJournals']) ?? 0,
+        missingPostings: readInt(json['missingPostings']) ?? 0,
+        failedPostings: readInt(json['failedPostings']) ?? 0,
+        lateActivityAfterClose: readInt(json['lateActivityAfterClose']) ?? 0,
+      );
 }
 
 /// A backend readiness blocker/warning row. Extra fields (`count`, `amount`,
 /// `items`, `financialAccountId`, …) vary by `code` and are kept raw — the
 /// UI reads only what a given code defines rather than modelling every shape.
 class DailyClosingIssue {
-  const DailyClosingIssue({required this.code, required this.severity, required this.raw});
+  const DailyClosingIssue({
+    required this.code,
+    required this.severity,
+    required this.raw,
+  });
   final String code;
   final String severity;
   final Map<String, dynamic> raw;
   factory DailyClosingIssue.fromJson(Map<String, dynamic> json) =>
-      DailyClosingIssue(code: readString(json['code']), severity: readString(json['severity']), raw: json);
+      DailyClosingIssue(
+        code: readString(json['code']),
+        severity: readString(json['severity']),
+        raw: json,
+      );
 }
 
 class DailyClosingLateActivity {
@@ -1457,14 +1545,19 @@ class DailyClosingLateActivity {
   final int? sourceId;
   final String? amount;
   final String postedAt;
-  factory DailyClosingLateActivity.fromJson(Map<String, dynamic> json) => DailyClosingLateActivity(
-    journalId: readInt(json['journalId']) ?? 0,
-    reference: readString(json['reference']),
-    sourceType: readString(json['sourceType']).isEmpty ? null : readString(json['sourceType']),
-    sourceId: readInt(json['sourceId']),
-    amount: readString(json['amount']).isEmpty ? null : readString(json['amount']),
-    postedAt: readString(json['postedAt']),
-  );
+  factory DailyClosingLateActivity.fromJson(Map<String, dynamic> json) =>
+      DailyClosingLateActivity(
+        journalId: readInt(json['journalId']) ?? 0,
+        reference: readString(json['reference']),
+        sourceType: readString(json['sourceType']).isEmpty
+            ? null
+            : readString(json['sourceType']),
+        sourceId: readInt(json['sourceId']),
+        amount: readString(json['amount']).isEmpty
+            ? null
+            : readString(json['amount']),
+        postedAt: readString(json['postedAt']),
+      );
 }
 
 /// Daily Closing detail/workspace (`GET finance/daily-closings/{id}` and the
@@ -1542,16 +1635,26 @@ class DailyClosingDetail {
       cash: DailyClosingCashFigures.fromJson(_map(json['cash'])),
       operations: DailyClosingOperations.fromJson(_map(json['operations'])),
       shifts: DailyClosingShiftsSummary.fromJson(_map(json['shifts'])),
-      reconciliation: DailyClosingReconciliationSummary.fromJson(_map(json['reconciliation'])),
-      financialIntegrity: DailyClosingFinancialIntegrity.fromJson(_map(json['financialIntegrity'])),
+      reconciliation: DailyClosingReconciliationSummary.fromJson(
+        _map(json['reconciliation']),
+      ),
+      financialIntegrity: DailyClosingFinancialIntegrity.fromJson(
+        _map(json['financialIntegrity']),
+      ),
       paymentBreakdown: readMapList(json['paymentBreakdown']),
       lateActivity: readMapList(
         integrityIssues['lateActivity'],
       ).map(DailyClosingLateActivity.fromJson).toList(growable: false),
-      blockers: readMapList(json['blockers']).map(DailyClosingIssue.fromJson).toList(growable: false),
-      warnings: readMapList(json['warnings']).map(DailyClosingIssue.fromJson).toList(growable: false),
+      blockers: readMapList(
+        json['blockers'],
+      ).map(DailyClosingIssue.fromJson).toList(growable: false),
+      warnings: readMapList(
+        json['warnings'],
+      ).map(DailyClosingIssue.fromJson).toList(growable: false),
       closedBy: readInt(json['closedBy']),
-      closedAt: readString(json['closedAt']).isEmpty ? null : readString(json['closedAt']),
+      closedAt: readString(json['closedAt']).isEmpty
+          ? null
+          : readString(json['closedAt']),
       allowedActions: readStringList(json['allowedActions']),
     );
   }
@@ -1559,26 +1662,41 @@ class DailyClosingDetail {
 
 Map<String, dynamic> _map(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};
+
 class CashSourceLocation {
   const CashSourceLocation({required this.id, required this.name});
   final int id;
   final String name;
   factory CashSourceLocation.fromJson(Map<String, dynamic> json) =>
-      CashSourceLocation(id: readInt(json['id']) ?? 0, name: readString(json['name']));
+      CashSourceLocation(
+        id: readInt(json['id']) ?? 0,
+        name: readString(json['name']),
+      );
 }
 
 class CashSourceOptions {
-  const CashSourceOptions({required this.mode, this.resolved, required this.allowed});
+  const CashSourceOptions({
+    required this.mode,
+    this.resolved,
+    required this.allowed,
+  });
   final String mode;
   final CashSourceLocation? resolved;
   final List<CashSourceLocation> allowed;
-  factory CashSourceOptions.fromJson(Map<String, dynamic> json) => CashSourceOptions(
+  factory CashSourceOptions.fromJson(Map<String, dynamic> json) =>
+      CashSourceOptions(
         mode: readString(json['cashSourceMode']),
         resolved: json['resolvedCashLocation'] is Map
-            ? CashSourceLocation.fromJson(Map<String, dynamic>.from(json['resolvedCashLocation'] as Map))
+            ? CashSourceLocation.fromJson(
+                Map<String, dynamic>.from(json['resolvedCashLocation'] as Map),
+              )
             : null,
         allowed: (json['allowedCashLocations'] as List<dynamic>? ?? const [])
-            .map((value) => CashSourceLocation.fromJson(Map<String, dynamic>.from(value as Map)))
+            .map(
+              (value) => CashSourceLocation.fromJson(
+                Map<String, dynamic>.from(value as Map),
+              ),
+            )
             .toList(growable: false),
       );
 }

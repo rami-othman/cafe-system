@@ -690,7 +690,7 @@ final class ShiftDrawerLifecycleTest extends TestCase
         $this->assertSame(1, DB::table('cash_transfers')->where('shift_id', $shift)->count());
     }
 
-    public function test_historical_close_date_is_used_by_shift_and_close_transfer(): void
+    public function test_historical_close_date_defines_period_but_transfer_has_actual_execution_date(): void
     {
         $this->travelTo(\Carbon\CarbonImmutable::parse('2026-09-26 07:00:00', 'UTC'));
         DB::table('branches')->where('id', $this->branchA)->update(['timezone' => 'Asia/Damascus']);
@@ -698,12 +698,14 @@ final class ShiftDrawerLifecycleTest extends TestCase
         $this->fund($this->branchA, '150.00');
         $shift = (int) $this->open($this->branchA, '150.00')->assertCreated()->json('data.id');
         $this->travelTo(\Carbon\CarbonImmutable::parse('2026-09-27 08:00:00', 'UTC'));
-        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-26'], $this->headers)->assertOk();
+        $preview = $this->getJson("/api/v1/shifts/{$shift}/close-preview?closingDate=2026-09-26", $this->headers)->assertOk()->json('data');
+        $data = ['closingCash' => 150, 'closingDate' => '2026-09-26', 'previewVersion' => $preview['period']['version'], 'cashCountBasis' => 'period_recorded', 'barCountBasis' => 'period_recorded'];
+        $response = $this->postJson("/api/v1/shifts/{$shift}/close", $data, $this->headers)->assertOk();
         $this->assertSame('2026-09-26 20:59:59', DB::table('shifts')->where('id', $shift)->value('closed_at'));
-        $this->assertDatabaseHas('cash_transfers', ['shift_id' => $shift, 'transfer_date' => '2026-09-26']);
-        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-26'], $this->headers)->assertOk();
+        $this->assertDatabaseHas('cash_transfers', ['id' => $response->json('data.closeTransferId'), 'transfer_date' => '2026-09-27']);
+        $this->postJson("/api/v1/shifts/{$shift}/close", $data, $this->headers)->assertOk();
         $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-27'], $this->headers)->assertUnprocessable()->assertJsonValidationErrors('closingDate');
-        $this->assertSame(1, DB::table('cash_transfers')->where('shift_id', $shift)->count());
+        $this->assertSame(1, DB::table('cash_transfers')->where('idempotency_key', 'shift-close-transfer:'.$shift)->count());
     }
 
     public function test_close_date_cannot_precede_activity_or_be_in_the_future(): void

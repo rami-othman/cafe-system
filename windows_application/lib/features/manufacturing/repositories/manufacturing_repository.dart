@@ -14,8 +14,20 @@ import '../models/manufacturing_report_models.dart';
 class ManufacturingRepository {
   const ManufacturingRepository(this._api);
   final DioApiClient _api;
-  Future<Map<String, dynamic>> ingredients({String search = '', int page = 1}) async =>
-      Map<String, dynamic>.from(await _api.getEnvelope('manufacturing/ingredients', queryParameters: {'search': search, 'page': page, 'branchId': _api.scopeBranchId}) as Map);
+  Future<Map<String, dynamic>> ingredients({
+    String search = '',
+    int page = 1,
+  }) async => Map<String, dynamic>.from(
+    await _api.getEnvelope(
+          'manufacturing/ingredients',
+          queryParameters: {
+            'search': search,
+            'page': page,
+            'branchId': _api.scopeBranchId,
+          },
+        )
+        as Map,
+  );
 
   /// `GET /manufacturing/overview`. The backend returns a flat
   /// `{"data": {...}}` envelope with no pagination `meta`, so this uses

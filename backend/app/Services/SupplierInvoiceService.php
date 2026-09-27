@@ -58,6 +58,7 @@ class SupplierInvoiceService
 
                 return $existing;
             }
+            $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'purchase');
             $data = $this->withResolvedType($tenantId, $data);
             $this->assertSupplierAndBranch($tenantId, $data, $actorId);
             $debitAccountId = $this->resolveDebitAccount($tenantId, $data);
@@ -70,7 +71,7 @@ class SupplierInvoiceService
             $supplierCode = (string) DB::table('suppliers')->where('tenant_id', $tenantId)
                 ->where('id', $data['supplierId'])->value('supplier_number');
 
-            $id = (int) DB::table('supplier_invoices')->insertGetId($this->draftPayload($data, $debitAccountId, $totals) + [
+            $id = (int) DB::table('supplier_invoices')->insertGetId($this->draftPayload($data, $debitAccountId, $totals) + \App\Support\FactoryCurrency::columns($data) + [
                 'tenant_id' => $tenantId,
                 'internal_reference' => $this->nextReference($tenantId),
                 'supplier_internal_reference' => $this->numbers->nextSupplierInvoiceNumber($tenantId, (int) $data['supplierId'], $supplierCode),
@@ -101,9 +102,11 @@ class SupplierInvoiceService
             if ($before->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only draft supplier invoices can be edited.']);
             }
+            if ($before->factory_currency && ! isset($data['documentCurrency'])) throw ValidationException::withMessages(['documentCurrency' => 'أرسل عملة المستند وسعره المحفوظ عند تعديل المسودة.']);
             if ((int) $before->supplier_id !== (int) $data['supplierId']) {
                 throw ValidationException::withMessages(['supplierId' => 'A saved invoice cannot change supplier. Create a new draft for the other supplier.']);
             }
+            $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'purchase');
             $data = $this->withResolvedType($tenantId, $data);
             $this->assertSupplierAndBranch($tenantId, $data, $actorId);
             $debitAccountId = $this->resolveDebitAccount($tenantId, $data);
@@ -123,7 +126,7 @@ class SupplierInvoiceService
             $totals = $this->resolveTotals($tenantId, $data, $built);
 
             DB::table('supplier_invoices')->where('tenant_id', $tenantId)->where('id', $id)
-                ->update($this->draftPayload($data, $debitAccountId, $totals) + ['updated_by' => $actorId, 'updated_at' => now()]);
+                ->update($this->draftPayload($data, $debitAccountId, $totals) + \App\Support\FactoryCurrency::columns($data) + ['updated_by' => $actorId, 'updated_at' => now()]);
             if ($built !== null) {
                 $this->replaceLines($tenantId, $id, $totals['rows']);
                 $this->replaceCharges($tenantId, $id, $totals['chargeRows']);

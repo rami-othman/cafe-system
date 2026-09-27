@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Domain\Inventory\InventoryPostingService;
 use App\Domain\Inventory\InventoryWarehouseAssignment;
 use App\Domain\Inventory\UnitConversionResolver;
+use App\Support\FactoryWarehouseScope;
 use App\Support\FinancialActor;
 use App\Support\InventoryDecimal;
+use App\Support\InventoryItemScope;
 use App\Support\WarehousePresentation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +30,7 @@ class StockCountService
         $branchId = isset($data['branchId']) ? (int) $data['branchId'] : null;
         if ($branchId) {
             FinancialActor::assertBranchAccess($actorId, $tenantId, $branchId);
-            \App\Support\FactoryWarehouseScope::assertDestination($tenantId, $branchId, (int) $warehouse->id);
+            FactoryWarehouseScope::assertDestination($tenantId, $branchId, (int) $warehouse->id);
             if ($warehouse->branch_id !== null && (int) $warehouse->branch_id !== $branchId) {
                 throw ValidationException::withMessages(['warehouseId' => 'The selected warehouse does not belong to the selected branch.']);
             }
@@ -69,9 +71,9 @@ class StockCountService
         });
     }
 
-    public function startBarCheck(Request $request, int $tenantId, int $shiftId, int $warehouseId, ?int $actorId): int
+    public function startBarCheck(Request $request, int $tenantId, int $shiftId, int $warehouseId, ?int $actorId, ?ShiftClosePeriod $period = null, ?string $basis = null): int
     {
-        return DB::transaction(function () use ($tenantId, $shiftId, $warehouseId, $actorId): int {
+        return DB::transaction(function () use ($tenantId, $shiftId, $warehouseId, $actorId, $period, $basis): int {
             $shift = DB::table('shifts')->where('tenant_id', $tenantId)->where('id', $shiftId)->where('status', 'open')->whereNull('deleted_at')->lockForUpdate()->first();
             abort_unless($shift, 422, 'There is no valid open shift for this bar check.');
             $warehouse = $this->warehouse($tenantId, $warehouseId);
@@ -86,17 +88,21 @@ class StockCountService
             if ($templateLines->isEmpty()) {
                 throw ValidationException::withMessages(['template' => 'An active bar check template must contain at least one valid line.']);
             }
-            $existing = DB::table('stock_counts')->where('tenant_id', $tenantId)->where('shift_id', $shift->id)->where('warehouse_id', $warehouseId)->where('count_type', 'shift_check')->lockForUpdate()->first();
+            $existing = DB::table('stock_counts')->where('tenant_id', $tenantId)->where('shift_id', $shift->id)->where('warehouse_id', $warehouseId)->where('count_type', 'shift_check')
+                ->when($period, fn ($q) => $q->where('period_end_exclusive', $period->timestamp()))->lockForUpdate()->first();
             if ($existing) {
                 return (int) $existing->id;
             }
-            $id = (int) DB::table('stock_counts')->insertGetId(['tenant_id' => $tenantId, 'warehouse_id' => $warehouseId, 'branch_id' => $shift->branch_id, 'shift_id' => $shift->id, 'bar_check_template_id' => $template->id, 'count_date' => now()->toDateString(), 'count_type' => 'shift_check', 'status' => 'in_progress', 'counted_by' => $actorId, 'created_at' => now(), 'updated_at' => now()]);
-            $items = $templateLines->map(function (object $line) use ($tenantId, $warehouseId): object {
+            $id = (int) DB::table('stock_counts')->insertGetId(['tenant_id' => $tenantId, 'warehouse_id' => $warehouseId, 'branch_id' => $shift->branch_id, 'shift_id' => $shift->id, 'bar_check_template_id' => $template->id, 'count_date' => $period?->date ?? now()->toDateString(), 'count_type' => 'shift_check', 'status' => 'in_progress', 'counted_by' => $actorId, 'created_at' => now(), 'updated_at' => now(), ...($period ? ['period_end_exclusive' => $period->timestamp(), 'count_basis' => $basis] : [])]);
+            $items = $templateLines->map(function (object $line) use ($tenantId, $warehouseId, $period): object {
                 $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->first();
                 $this->assertItemAssigned($tenantId, $warehouseId, $item, 'lines');
                 $conversion = $this->conversions->resolve($tenantId, $item, '1.000', $line->count_unit);
                 $balance = DB::table('stock_balances')->where('tenant_id', $tenantId)->where('warehouse_id', $warehouseId)->where('inventory_item_id', $item->id)->first();
                 $line->quantity_on_hand = $balance->quantity_on_hand ?? '0.000';
+                if ($period) {
+                    $line->quantity_on_hand = InventoryDecimal::quantity(app(HistoricalBarBalanceService::class)->quantities($tenantId, $warehouseId, (int) $item->id, $period)['historical']);
+                }
                 $line->average_unit_cost = $balance->average_unit_cost ?? '0.0000';
                 $line->conversion_factor_snapshot = $conversion['factor'];
 
@@ -119,7 +125,7 @@ class StockCountService
             abort_unless($line, 404, 'The item is not part of this count.');
             $item = DB::table('inventory_items')->where('tenant_id', $tenantId)->where('id', $line->inventory_item_id)->where('is_active', true)->whereNull('deleted_at')->first();
             abort_unless($item, 422, 'The inventory item is no longer active.');
-            \App\Support\InventoryItemScope::assertForBranch($tenantId, $item, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
+            InventoryItemScope::assertForBranch($tenantId, $item, $warehouse->branch_id ? (int) $warehouse->branch_id : null);
             $entered = InventoryDecimal::units($data['countedQuantity'], 'countedQuantity');
             $converted = $this->conversions->resolve($tenantId, $item, $data['countedQuantity'], $data['unit'] ?? $line->entered_unit ?? $item->unit);
             $expected = InventoryDecimal::units($line->expected_quantity);
@@ -258,7 +264,7 @@ class StockCountService
             throw ValidationException::withMessages(['warehouseId' => 'Legacy warehouses are read-only and cannot be counted.']);
         }
 
-return $warehouse;
+        return $warehouse;
     }
 
     private function assertEditable(object $count): void

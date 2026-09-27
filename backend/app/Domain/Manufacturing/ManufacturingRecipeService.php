@@ -69,7 +69,9 @@ final class ManufacturingRecipeService
         \App\Support\FactoryWarehouseScope::assertFactoryBranch($tenantId, $data['branchId'] ?? null);
         \App\Support\FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $data['branchId']);
         return DB::transaction(function () use ($request, $tenantId, $data, $actorId) {
-            $item = $this->loadOutputItem($tenantId, (int) $data['productItemId']);
+            $item = $this->loadOutputItem($tenantId, ! empty($data['productItemId'])
+                ? (int) $data['productItemId']
+                : $this->resolveNamedProduct($request, $tenantId, $data, $actorId));
             if (DB::table('manufacturing_recipes')->where('tenant_id', $tenantId)->where('product_item_id', $item->id)->whereNull('deleted_at')->exists()) {
                 throw ManufacturingDomainException::validationFailed('productItemId', 'A recipe already exists for this product — edit it instead of creating a new one.');
             }
@@ -155,6 +157,34 @@ final class ManufacturingRecipeService
     }
 
     // ---- validation ----
+
+    private function resolveNamedProduct(Request $request, int $tenantId, array $data, ?int $actorId): int
+    {
+        $branchId = (int) $data['branchId'];
+        // Serialize name lookup and creation within this factory; recipe failure rolls both back.
+        DB::table('branches')->where('tenant_id', $tenantId)->where('id', $branchId)->lockForUpdate()->first();
+        $name = trim($data['productName']);
+        $matches = DB::table('inventory_items')->where('tenant_id', $tenantId)
+            ->where('owner_branch_id', $branchId)->whereNull('deleted_at')
+            ->where(fn ($query) => $query->whereRaw('LOWER(TRIM(name_ar)) = ?', [mb_strtolower($name)])
+                ->orWhereRaw('LOWER(TRIM(name_en)) = ?', [mb_strtolower($name)]))->get();
+        if ($matches->count() > 1) {
+            throw ManufacturingDomainException::validationFailed('productName', 'يوجد أكثر من منتج بهذا الاسم. استخدم اسماً مميزاً.');
+        }
+        if ($matches->isNotEmpty()) {
+            $item = $matches->first();
+            if (! $item->is_active) {
+                throw ManufacturingDomainException::validationFailed('productName', 'المنتج بهذا الاسم غير نشط.');
+            }
+            return (int) $item->id;
+        }
+        $scopedRequest = clone $request;
+        $scopedRequest->merge(['scopeBranchId' => $branchId]);
+        return app(\App\Services\InventoryItemService::class)->save($scopedRequest, $tenantId, [
+            'nameAr' => $name, 'unit' => $data['outputUnit'],
+            'itemType' => 'finished_good', 'isActive' => true,
+        ], $actorId);
+    }
 
     private function loadOutputItem(int $tenantId, int $itemId): object
     {

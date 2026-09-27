@@ -96,32 +96,35 @@ class ShiftOverviewCubit extends Cubit<ShiftOverviewState> {
     final double? amount = validateOpeningFloat();
     if (amount == null) return false;
 
-    emit(state.copyWith(isOpeningShift: true));
+    emit(state.copyWith(isOpeningShift: true, clearErrorMessage: true));
     try {
       final ShiftSnapshot snapshot = await repository.openShift(
         openingFloat: amount,
         note: state.openingNoteInput.trim(),
         branchId: branchId,
       );
-    if (isClosed) return false;
-    emit(
-      state.copyWith(
-        status: ShiftOverviewStatus.ready,
-        snapshot: snapshot,
-        assessment: ShiftAssessment.build(
+      if (isClosed) return false;
+      emit(
+        state.copyWith(
+          status: ShiftOverviewStatus.ready,
           snapshot: snapshot,
-          currentStage: ShiftStage.selling,
+          assessment: ShiftAssessment.build(
+            snapshot: snapshot,
+            currentStage: ShiftStage.selling,
+          ),
+          isOpeningShift: false,
+          openingFloatInput: '',
+          openingNoteInput: '',
+          clearOpeningFloatError: true,
+          clearErrorMessage: true,
         ),
-        isOpeningShift: false,
-        openingFloatInput: '',
-        openingNoteInput: '',
-        clearOpeningFloatError: true,
-      ),
-    );
+      );
       return true;
     } on ShiftDataException catch (error) {
       if (!isClosed) {
-        emit(state.copyWith(isOpeningShift: false, errorMessage: error.message));
+        emit(
+          state.copyWith(isOpeningShift: false, errorMessage: error.message),
+        );
       }
       return false;
     }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../manufacturing/models/factory_currency.dart';
+import '../../manufacturing/widgets/factory_currency_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
 
 import '../../../app/purchase_route_scope.dart';
 import '../../../core/services/service_locator.dart';
@@ -147,6 +148,7 @@ class _ChargeDraft {
 }
 
 class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
+  FactoryCurrencySelection _currency = const FactoryCurrencySelection();
   final TextEditingController _invoiceNumber = TextEditingController();
   final TextEditingController _notes = TextEditingController();
   final TextEditingController _paidNow = TextEditingController(text: '0');
@@ -178,6 +180,45 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   String? _error;
 
   bool get _isEdit => widget.editId != null;
+  void _changeCurrency(FactoryCurrencySelection value) {
+    setState(() {
+      if (_currency.currency != value.currency && value.multiplier > 0) {
+        for (final line in _lines) {
+          line.unitCost.text = _currency.switchAmount(
+            line.unitCost.text,
+            value,
+            precision: 4,
+          );
+          line.lineGrossAmount.text = _currency.switchAmount(
+            line.lineGrossAmount.text,
+            value,
+          );
+          line.tax.text = _currency.switchAmount(line.tax.text, value);
+          if (line.discountType != 'percentage') {
+            line.discountValue.text = _currency.switchAmount(
+              line.discountValue.text,
+              value,
+            );
+          }
+        }
+        for (final charge in _charges) {
+          charge.amount.text = _currency.switchAmount(
+            charge.amount.text,
+            value,
+          );
+          charge.tax.text = _currency.switchAmount(charge.tax.text, value);
+        }
+        if (_invoiceDiscountType != 'percentage') {
+          _invoiceDiscountValue.text = _currency.switchAmount(
+            _invoiceDiscountValue.text,
+            value,
+          );
+        }
+      }
+      _currency = value;
+    });
+  }
+
   bool get _isFactory =>
       _branches.any((branch) => branch.id == _branchId && branch.isFactory);
 
@@ -326,8 +367,12 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
           _applyEditingData(_editing!);
         }
         if (widget.routeScope.isManufacturing) {
-          _branches = _branches.where((b) => b.id == _branchId).toList(growable: false);
-          _warehouses = _warehouses.where((w) => w.id == _destinationWarehouseId).toList(growable: false);
+          _branches = _branches
+              .where((b) => b.id == _branchId)
+              .toList(growable: false);
+          _warehouses = _warehouses
+              .where((w) => w.id == _destinationWarehouseId)
+              .toList(growable: false);
         }
         _loadingReferenceData = false;
       });
@@ -339,8 +384,12 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
       setState(() {
         _error = '$error';
         if (widget.routeScope.isManufacturing) {
-          _branches = _branches.where((b) => b.id == _branchId).toList(growable: false);
-          _warehouses = _warehouses.where((w) => w.id == _destinationWarehouseId).toList(growable: false);
+          _branches = _branches
+              .where((b) => b.id == _branchId)
+              .toList(growable: false);
+          _warehouses = _warehouses
+              .where((w) => w.id == _destinationWarehouseId)
+              .toList(growable: false);
         }
         _loadingReferenceData = false;
       });
@@ -417,6 +466,35 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
           return draft;
         }),
       );
+    _currency = FactoryCurrencySelection.fromSnapshot(p.factoryCurrency);
+    if (_currency.currency == 'USD') {
+      final input = p.factoryCurrency?['input'] as Map?;
+      final rows = input?['lines'] as List? ?? const [];
+      for (
+        var index = 0;
+        index < _lines.length && index < rows.length;
+        index++
+      ) {
+        final row = rows[index] as Map;
+        final line = _lines[index];
+        line.entersUnitCost = row.containsKey('unitCost');
+        line.unitCost.text = '${row['unitCost'] ?? '0'}';
+        line.lineGrossAmount.text = '${row['lineGrossAmount'] ?? '0'}';
+        line.discountValue.text = '${row['discountValue'] ?? '0'}';
+        line.tax.text = '${row['taxAmount'] ?? '0'}';
+      }
+      _invoiceDiscountValue.text = '${input?['discountValue'] ?? '0'}';
+      final chargeRows = input?['charges'] as List? ?? const [];
+      for (
+        var index = 0;
+        index < _charges.length && index < chargeRows.length;
+        index++
+      ) {
+        final row = chargeRows[index] as Map;
+        _charges[index].amount.text = '${row['amount'] ?? '0'}';
+        _charges[index].tax.text = '${row['taxAmount'] ?? '0'}';
+      }
+    }
   }
 
   /// Edit mode only: the item search field shows nothing until the user
@@ -488,7 +566,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     if (forPosting &&
         ((double.tryParse(_paidNow.text.trim()) ?? -1) < 0 ||
             (double.tryParse(_paidNow.text.trim()) ?? 0) >
-                _grandTotalPreview + 0.001)) {
+                _grandTotalPreview * (_isFactory ? _currency.multiplier : 1) +
+                    0.001)) {
       return 'المبلغ المدفوع الآن يجب أن يكون بين صفر وإجمالي الفاتورة.';
     }
     if (_supplierId == null) {
@@ -565,6 +644,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   }
 
   Future<void> _save({bool postAfterSave = false}) async {
+    if (_isFactory && !_currency.valid) {
+      setState(() => _error = 'أدخل سعر الدولار الصحيح قبل الحفظ.');
+      return;
+    }
     final String? validationError = _validate(forPosting: postAfterSave);
     if (validationError != null) {
       setState(() => _error = validationError);
@@ -576,6 +659,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     });
     try {
       final Map<String, dynamic> payload = <String, dynamic>{
+        if (_isFactory) ..._currency.payload,
         'supplierId': _supplierId,
         'receiptMode': _purchaseType == 'inventory'
             ? _receiptMode
@@ -749,6 +833,18 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               FinanceAlertBanner(message: _error!, tone: FinanceTone.danger),
               const SizedBox(height: FinanceSpace.md),
             ],
+            if (_isFactory && _branchId != null)
+              FactoryCurrencyField(
+                key: ValueKey('purchase-currency-$_branchId-${_editing?.id}'),
+                branchId: _branchId!,
+                initial: _editing == null
+                    ? null
+                    : FactoryCurrencySelection.fromSnapshot(
+                        _editing!.factoryCurrency,
+                      ),
+                amount: _grandTotalPreview,
+                onChanged: _changeCurrency,
+              ),
             _HeaderSection(
               internalReference: _editing?.internalReference,
               supplierInternalReference: _editing?.supplierInternalReference,
@@ -952,13 +1048,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: 'المبلغ المدفوع الآن',
+                  labelText: 'المبلغ المدفوع الآن بالليرة السورية SYP',
                 ),
                 onChanged: (_) => setState(() {}),
               ),
             ),
             Text(
-              'المتبقي: ${(_grandTotalPreview - (double.tryParse(_paidNow.text) ?? 0)).clamp(0, double.infinity).toStringAsFixed(2)} SYP',
+              'المتبقي: ${(_grandTotalPreview * (_isFactory ? _currency.multiplier : 1) - (double.tryParse(_paidNow.text) ?? 0)).clamp(0, double.infinity).toStringAsFixed(2)} SYP',
             ),
             const SizedBox(height: FinanceSpace.md),
             Wrap(

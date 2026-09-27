@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../models/shift_assessment.dart';
 import '../models/shift_models.dart';
+import '../models/shift_close_preview.dart';
 
 enum ShiftClosingStatus { loading, ready, submitting, closed, error }
 
@@ -52,6 +53,10 @@ class ShiftClosingState extends Equatable {
     this.result,
     this.savedAt,
     this.errorMessage,
+    this.preview,
+    this.isPreviewLoading = false,
+    this.cashCountBasis,
+    this.barCountBasis,
   });
 
   final ShiftClosingStatus status;
@@ -85,6 +90,20 @@ class ShiftClosingState extends Equatable {
   /// Drives the "تم الحفظ تلقائيًا" indicator in the wizard footer.
   final DateTime? savedAt;
   final String? errorMessage;
+  final ShiftClosePreview? preview;
+  final bool isPreviewLoading;
+  final ShiftCountBasis? cashCountBasis;
+  final ShiftCountBasis? barCountBasis;
+
+  bool get periodReady =>
+      !isPreviewLoading &&
+      errorMessage == null &&
+      preview != null &&
+      preview!.canClose &&
+      closingDate == preview!.date;
+  bool get countBasesReady =>
+      preview?.historical != true ||
+      (cashCountBasis != null && barCountBasis != null);
 
   bool get isLoading => status == ShiftClosingStatus.loading;
 
@@ -118,7 +137,11 @@ class ShiftClosingState extends Equatable {
     if (actual == null) return null;
     return CashCountResult(
       expected: expectedCash,
-      actual: actual,
+      actual:
+          preview?.historical == true &&
+              cashCountBasis == ShiftCountBasis.current
+          ? actual - preview!.laterNetCash
+          : actual,
       reason: cashReason,
       reasonDetail: cashReasonDetail,
     );
@@ -229,6 +252,11 @@ class ShiftClosingState extends Equatable {
     DateTime? savedAt,
     String? errorMessage,
     bool clearErrorMessage = false,
+    ShiftClosePreview? preview,
+    bool? isPreviewLoading,
+    ShiftCountBasis? cashCountBasis,
+    ShiftCountBasis? barCountBasis,
+    bool clearCountBases = false,
   }) => ShiftClosingState(
     status: status ?? this.status,
     step: step ?? this.step,
@@ -258,6 +286,12 @@ class ShiftClosingState extends Equatable {
     result: result ?? this.result,
     savedAt: savedAt ?? this.savedAt,
     errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
+    preview: preview ?? this.preview,
+    isPreviewLoading: isPreviewLoading ?? this.isPreviewLoading,
+    cashCountBasis: clearCountBases
+        ? null
+        : cashCountBasis ?? this.cashCountBasis,
+    barCountBasis: clearCountBases ? null : barCountBasis ?? this.barCountBasis,
   );
 
   @override
@@ -284,5 +318,9 @@ class ShiftClosingState extends Equatable {
     result,
     savedAt,
     errorMessage,
+    preview,
+    isPreviewLoading,
+    cashCountBasis,
+    barCountBasis,
   ];
 }

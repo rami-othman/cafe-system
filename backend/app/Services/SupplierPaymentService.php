@@ -48,6 +48,7 @@ class SupplierPaymentService
                     return $existing;
                 }
 
+                $data = \App\Support\FactoryCurrency::normalize($tenantId, $data, 'payment');
                 $supplier = DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $data['supplierId'])->where('is_active', true)->whereNull('deleted_at')->first();
                 \App\Support\DataScope::assertReference($tenantId, 'suppliers', (int) $data['supplierId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
                 if (! $supplier) {
@@ -116,7 +117,7 @@ class SupplierPaymentService
                 }
 
                 $now = now();
-                $paymentId = DB::table('supplier_payments')->insertGetId([
+                $paymentId = DB::table('supplier_payments')->insertGetId(\App\Support\FactoryCurrency::columns($data) + [
                     'tenant_id' => $tenantId,
                     'branch_id' => $data['branchId'] ?? null,
                     'supplier_id' => $supplier->id,

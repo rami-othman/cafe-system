@@ -5,6 +5,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../controllers/shift_closing_cubit.dart';
 import '../controllers/shift_closing_state.dart';
 import '../models/shift_models.dart';
+import '../models/shift_close_preview.dart';
 import '../repositories/shift_mock_repository.dart';
 import '../widgets/shift_design.dart';
 import '../widgets/shift_format.dart';
@@ -25,16 +26,21 @@ class ShiftClosingStep2Cash extends StatefulWidget {
 class _ShiftClosingStep2CashState extends State<ShiftClosingStep2Cash> {
   late TextEditingController _amountController;
   late final TextEditingController _reasonDetailController;
-  final Map<int, TextEditingController> _denomControllers = <int, TextEditingController>{};
+  final Map<int, TextEditingController> _denomControllers =
+      <int, TextEditingController>{};
 
   @override
   void initState() {
     super.initState();
     final ShiftClosingState state = context.read<ShiftClosingCubit>().state;
     _amountController = TextEditingController(text: state.cashActualInput);
-    _reasonDetailController = TextEditingController(text: state.cashReasonDetail);
+    _reasonDetailController = TextEditingController(
+      text: state.cashReasonDetail,
+    );
     for (final int d in ShiftMockData.denominations) {
-      _denomControllers[d] = TextEditingController(text: state.denominationCounts[d] ?? '');
+      _denomControllers[d] = TextEditingController(
+        text: state.denominationCounts[d] ?? '',
+      );
     }
   }
 
@@ -49,7 +55,9 @@ class _ShiftClosingStep2CashState extends State<ShiftClosingStep2Cash> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
     builder: (BuildContext context, ShiftClosingState state) {
       final ShiftClosingCubit cubit = context.read<ShiftClosingCubit>();
       final CashCountResult? cash = state.cashCount;
@@ -66,6 +74,15 @@ class _ShiftClosingStep2CashState extends State<ShiftClosingStep2Cash> {
             title: ShiftStrings.cashCountTitle,
             subtitle: ShiftStrings.cashCountSubtitle,
           ),
+          if (state.preview?.historical == true) ...<Widget>[
+            Text(
+              state.cashCountBasis == ShiftCountBasis.current
+                  ? 'أدخل النقدية الموجودة الآن. المقارنة أدناه تخص نهاية الفترة بعد طرح الحركات اللاحقة.'
+                  : 'أدخل مبلغ العدّ المحفوظ لنهاية الفترة المختارة.',
+              style: ShiftText.bodyStrong,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: Column(
@@ -166,7 +183,10 @@ class _DenominationPanel extends StatelessWidget {
               children: <Widget>[
                 SizedBox(
                   width: 90,
-                  child: ShiftValue(ShiftFormat.amount(denom), style: ShiftText.bodyStrong),
+                  child: ShiftValue(
+                    ShiftFormat.amount(denom),
+                    style: ShiftText.bodyStrong,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text('×', style: ShiftText.body),
@@ -183,7 +203,9 @@ class _DenominationPanel extends StatelessWidget {
                 ),
                 const Spacer(),
                 ShiftValue(
-                  ShiftFormat.money((int.tryParse(controllers[denom]!.text) ?? 0) * denom),
+                  ShiftFormat.money(
+                    (int.tryParse(controllers[denom]!.text) ?? 0) * denom,
+                  ),
                   style: ShiftText.bodyStrong,
                 ),
               ],
@@ -208,7 +230,11 @@ class _DenominationPanel extends StatelessWidget {
 }
 
 class _Reconciliation extends StatelessWidget {
-  const _Reconciliation({required this.cash, required this.state, required this.cubit});
+  const _Reconciliation({
+    required this.cash,
+    required this.state,
+    required this.cubit,
+  });
 
   final CashCountResult cash;
   final ShiftClosingState state;
@@ -260,17 +286,31 @@ class _Reconciliation extends StatelessWidget {
 }
 
 class _ReasonSection extends StatelessWidget {
-  const _ReasonSection({required this.state, required this.cubit, required this.controller});
+  const _ReasonSection({
+    required this.state,
+    required this.cubit,
+    required this.controller,
+  });
 
   final ShiftClosingState state;
   final ShiftClosingCubit cubit;
   final TextEditingController controller;
 
-  static const List<(CashDifferenceReason, String)> _reasons = <(CashDifferenceReason, String)>[
+  static const List<(CashDifferenceReason, String)>
+  _reasons = <(CashDifferenceReason, String)>[
     (CashDifferenceReason.changeError, ShiftStrings.reasonChangeError),
-    (CashDifferenceReason.unrecordedTransaction, ShiftStrings.reasonUnrecordedTransaction),
-    (CashDifferenceReason.unrecordedWithdrawal, ShiftStrings.reasonUnrecordedWithdrawal),
-    (CashDifferenceReason.unrecordedExpense, ShiftStrings.reasonUnrecordedExpense),
+    (
+      CashDifferenceReason.unrecordedTransaction,
+      ShiftStrings.reasonUnrecordedTransaction,
+    ),
+    (
+      CashDifferenceReason.unrecordedWithdrawal,
+      ShiftStrings.reasonUnrecordedWithdrawal,
+    ),
+    (
+      CashDifferenceReason.unrecordedExpense,
+      ShiftStrings.reasonUnrecordedExpense,
+    ),
     (CashDifferenceReason.unknownSurplus, ShiftStrings.reasonUnknownSurplus),
     (CashDifferenceReason.unknownShortage, ShiftStrings.reasonUnknownShortage),
     (CashDifferenceReason.other, ShiftStrings.reasonOther),

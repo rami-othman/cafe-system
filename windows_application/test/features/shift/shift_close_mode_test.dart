@@ -9,7 +9,10 @@ void main() {
     test('maps known server values', () {
       expect(ShiftCloseMode.fromApi('manual'), ShiftCloseMode.manual);
       expect(ShiftCloseMode.fromApi('automatic'), ShiftCloseMode.automatic);
-      expect(ShiftCloseMode.fromApi('legacy_reconcile'), ShiftCloseMode.legacyReconcile);
+      expect(
+        ShiftCloseMode.fromApi('legacy_reconcile'),
+        ShiftCloseMode.legacyReconcile,
+      );
     });
 
     test('null preserves the historical manual-only default', () {
@@ -17,7 +20,9 @@ void main() {
     });
 
     test('an unrecognized close_type fails safe to unknown, never manual', () {
-      final ShiftCloseMode mode = ShiftCloseMode.fromApi('future_close_type_v2');
+      final ShiftCloseMode mode = ShiftCloseMode.fromApi(
+        'future_close_type_v2',
+      );
 
       expect(mode, ShiftCloseMode.unknown);
       expect(mode.isCounted, isFalse);

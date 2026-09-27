@@ -401,6 +401,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('shifts/{shiftNumber}/report', [ShiftController::class, 'report']);
             Route::post('shifts/current', [ShiftController::class, 'open']);
             Route::post('shifts/{shift}/close', [ShiftController::class, 'close']);
+            Route::get('shifts/{shift}/close-preview', [ShiftController::class, 'closePreview']);
         });
 
         // Deprecated compatibility endpoints. Production POS uses pos/menu-sync
@@ -677,6 +678,8 @@ Route::prefix('v1')->group(function (): void {
         // conversion, overview/reports. Every write route is behind
         // manufacturing.permission; see API_CONTRACT.md for the frontend mapping.
         Route::prefix('manufacturing')->group(function (): void {
+            Route::get('currency-settings', [\App\Http\Controllers\Api\Manufacturing\FactoryCurrencyController::class, 'show'])->middleware('manufacturing.permission:manufacturing.view');
+            Route::put('currency-settings', [\App\Http\Controllers\Api\Manufacturing\FactoryCurrencyController::class, 'update'])->middleware('manufacturing.permission:manufacturing.view');
             Route::get('overview', [ManufacturingReportController::class, 'overview'])->middleware('manufacturing.permission:manufacturing.view');
             Route::get('reports', [ManufacturingReportController::class, 'reports'])->middleware('manufacturing.permission:manufacturing.reports.view');
 

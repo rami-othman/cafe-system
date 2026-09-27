@@ -48,6 +48,7 @@ class SupplierPaymentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
+            ...\App\Support\FactoryCurrency::rules(),
             'branchId' => ['nullable', 'integer'],
             'supplierId' => ['required', 'integer'],
             'paymentDate' => ['required', 'date'],
@@ -112,6 +113,7 @@ class SupplierPaymentController extends Controller
         return [
             'id' => (int) $row->id,
             'paymentNumber' => $row->payment_number,
+            'factoryCurrency' => \App\Support\FactoryCurrency::snapshot($row),
             'supplierId' => (int) $row->supplier_id,
             'supplierName' => $row->supplier_name,
             'supplierNumber' => $row->supplier_number,

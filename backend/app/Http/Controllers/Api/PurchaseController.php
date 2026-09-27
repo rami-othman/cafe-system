@@ -320,6 +320,7 @@ class PurchaseController extends Controller
             'discountAmount' => Money::decimal(Money::cents($row->discount_amount)),
             'chargesAmount' => Money::decimal(Money::cents($row->charges_amount)),
             'totalAmount' => Money::decimal($totalCents),
+            'factoryCurrency' => \App\Support\FactoryCurrency::snapshot($row),
             'paidAmount' => Money::decimal($paidCents),
             'remainingAmount' => Money::decimal($remaining),
             // documentStatus: the lifecycle of the document itself.

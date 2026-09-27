@@ -103,9 +103,7 @@ class ShiftCard extends StatelessWidget {
               : tone!.ink.withValues(alpha: 0.24),
         ),
       ),
-      child: onTap == null
-          ? content
-          : InkWell(onTap: onTap, child: content),
+      child: onTap == null ? content : InkWell(onTap: onTap, child: content),
     );
   }
 }
@@ -185,10 +183,7 @@ class ShiftBadge extends StatelessWidget {
           Icon(icon, size: 12, color: tone.ink),
           const SizedBox(width: 4),
         ],
-        Text(
-          label,
-          style: ShiftText.badge.copyWith(color: tone.ink),
-        ),
+        Text(label, style: ShiftText.badge.copyWith(color: tone.ink)),
       ],
     ),
   );
@@ -370,7 +365,9 @@ class ShiftKeyValueRow extends StatelessWidget {
         else
           Text(
             value,
-            style: emphasize ? ShiftText.metricValueSmall : ShiftText.bodyStrong,
+            style: emphasize
+                ? ShiftText.metricValueSmall
+                : ShiftText.bodyStrong,
           ),
       ],
     ),
@@ -651,10 +648,9 @@ class ShiftNumberField extends StatelessWidget {
           allowDecimal ? RegExp(r'[0-9.]') : RegExp(r'[0-9]'),
         ),
       ],
-      style:
-          (large ? ShiftText.metricValue : ShiftText.bodyStrong).copyWith(
-            color: ShiftColors.ink,
-          ),
+      style: (large ? ShiftText.metricValue : ShiftText.bodyStrong).copyWith(
+        color: ShiftColors.ink,
+      ),
       decoration: InputDecoration(
         isDense: true,
         hintText: hintText,
@@ -773,10 +769,7 @@ class ShiftSearchField extends StatelessWidget {
           size: 17,
           color: ShiftColors.inkMuted,
         ),
-        prefixIconConstraints: const BoxConstraints(
-          minWidth: 38,
-          minHeight: 0,
-        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 0),
         filled: true,
         fillColor: ShiftColors.surface,
         contentPadding: const EdgeInsets.symmetric(
@@ -927,7 +920,11 @@ class ShiftButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDisabled = onPressed == null;
-    final (Color background, Color foreground, Color border) = switch (variant) {
+    final (
+      Color background,
+      Color foreground,
+      Color border,
+    ) = switch (variant) {
       ShiftButtonVariant.primary => (
         ShiftColors.ink,
         Colors.white,
@@ -970,9 +967,7 @@ class ShiftButton extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: AppRadius.control,
-            border: Border.all(
-              color: isDisabled ? ShiftColors.border : border,
-            ),
+            border: Border.all(color: isDisabled ? ShiftColors.border : border),
           ),
           alignment: Alignment.center,
           child: Row(
@@ -1051,10 +1046,7 @@ class ShiftNotice extends StatelessWidget {
               ),
               if (detail != null) ...<Widget>[
                 const SizedBox(height: 3),
-                Text(
-                  detail!,
-                  style: ShiftText.body.copyWith(color: tone.ink),
-                ),
+                Text(detail!, style: ShiftText.body.copyWith(color: tone.ink)),
               ],
             ],
           ),
@@ -1071,11 +1063,7 @@ class ShiftNotice extends StatelessWidget {
 /// Horizontally scrollable table frame with a minimum content width, so a
 /// dense desktop table degrades to a scroll instead of overflowing.
 class ShiftTableFrame extends StatelessWidget {
-  const ShiftTableFrame({
-    super.key,
-    required this.child,
-    this.minWidth = 900,
-  });
+  const ShiftTableFrame({super.key, required this.child, this.minWidth = 900});
 
   final Widget child;
   final double minWidth;

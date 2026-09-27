@@ -41,23 +41,28 @@ class _ShiftHistoryScreenState extends State<ShiftHistoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftHistoryCubit, ShiftHistoryState>(
-    builder: (BuildContext context, ShiftHistoryState state) => SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(ShiftStrings.historyTitle, style: ShiftText.pageTitle),
-          const SizedBox(height: AppSpacing.xs),
-          Text(ShiftStrings.historySubtitle, style: ShiftText.body),
-          const SizedBox(height: AppSpacing.lg),
-          _HistoryFilters(state: state, searchController: _searchController),
-          const SizedBox(height: AppSpacing.lg),
-          _buildBody(context, state),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      BlocBuilder<ShiftHistoryCubit, ShiftHistoryState>(
+        builder: (BuildContext context, ShiftHistoryState state) =>
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(ShiftStrings.historyTitle, style: ShiftText.pageTitle),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(ShiftStrings.historySubtitle, style: ShiftText.body),
+                  const SizedBox(height: AppSpacing.lg),
+                  _HistoryFilters(
+                    state: state,
+                    searchController: _searchController,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildBody(context, state),
+                ],
+              ),
+            ),
+      );
 
   Widget _buildBody(BuildContext context, ShiftHistoryState state) {
     final ShiftHistoryCubit cubit = context.read<ShiftHistoryCubit>();
@@ -101,7 +106,11 @@ class _ShiftHistoryScreenState extends State<ShiftHistoryScreen> {
         else ...<Widget>[
           _HistoryTable(entries: pageEntries),
           const SizedBox(height: AppSpacing.md),
-          _Pagination(page: state.page.clamp(1, pages), pages: pages, onPage: cubit.goToPage),
+          _Pagination(
+            page: state.page.clamp(1, pages),
+            pages: pages,
+            onPage: cubit.goToPage,
+          ),
         ],
       ],
     );
@@ -133,7 +142,10 @@ class _HistoryFilters extends StatelessWidget {
             width: 150,
             value: state.period,
             items: const <ShiftDropdownItem<ShiftHistoryPeriod>>[
-              ShiftDropdownItem(value: ShiftHistoryPeriod.today, label: ShiftStrings.periodToday),
+              ShiftDropdownItem(
+                value: ShiftHistoryPeriod.today,
+                label: ShiftStrings.periodToday,
+              ),
               ShiftDropdownItem(
                 value: ShiftHistoryPeriod.yesterday,
                 label: ShiftStrings.periodYesterday,
@@ -165,7 +177,10 @@ class _HistoryFilters extends StatelessWidget {
             value: state.cashier,
             hint: ShiftStrings.allCashiers,
             items: <ShiftDropdownItem<String>>[
-              const ShiftDropdownItem(value: null, label: ShiftStrings.allCashiers),
+              const ShiftDropdownItem(
+                value: null,
+                label: ShiftStrings.allCashiers,
+              ),
               for (final String c in state.cashierOptions)
                 ShiftDropdownItem(value: c, label: c),
             ],
@@ -176,7 +191,10 @@ class _HistoryFilters extends StatelessWidget {
             value: state.branch,
             hint: ShiftStrings.allBranches,
             items: <ShiftDropdownItem<String>>[
-              const ShiftDropdownItem(value: null, label: ShiftStrings.allBranches),
+              const ShiftDropdownItem(
+                value: null,
+                label: ShiftStrings.allBranches,
+              ),
               for (final String b in state.branchOptions)
                 ShiftDropdownItem(value: b, label: b),
             ],
@@ -222,7 +240,10 @@ class _HistoryFilters extends StatelessWidget {
     );
   }
 
-  Future<void> _pickCustomRange(BuildContext context, ShiftHistoryCubit cubit) async {
+  Future<void> _pickCustomRange(
+    BuildContext context,
+    ShiftHistoryCubit cubit,
+  ) async {
     final DateTime now = cubit.now;
     final DateTimeRange? range = await showDateRangePicker(
       context: context,
@@ -298,16 +319,48 @@ class _HistoryTable extends StatelessWidget {
     ShiftTableCell(ShiftStrings.date, flex: 1),
     ShiftTableCell(ShiftStrings.cashier, flex: 1),
     ShiftTableCell(ShiftStrings.branch, flex: 1),
-    ShiftTableCell(ShiftStrings.openedAt, flex: .8, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.closedAt, flex: .8, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.duration, flex: .8, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.orderCount, flex: .7, alignment: Alignment.center),
+    ShiftTableCell(
+      ShiftStrings.openedAt,
+      flex: .8,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.closedAt,
+      flex: .8,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.duration,
+      flex: .8,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.orderCount,
+      flex: .7,
+      alignment: Alignment.center,
+    ),
     ShiftTableCell(ShiftStrings.netSales, flex: 1, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.cashSales, flex: 1, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.cashDifference, flex: 1, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.barDifferences, flex: .8, alignment: Alignment.center),
+    ShiftTableCell(
+      ShiftStrings.cashSales,
+      flex: 1,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.cashDifference,
+      flex: 1,
+      alignment: Alignment.center,
+    ),
+    ShiftTableCell(
+      ShiftStrings.barDifferences,
+      flex: .8,
+      alignment: Alignment.center,
+    ),
     ShiftTableCell(ShiftStrings.status, flex: .9, alignment: Alignment.center),
-    ShiftTableCell(ShiftStrings.details, flex: .8, alignment: AlignmentDirectional.centerEnd),
+    ShiftTableCell(
+      ShiftStrings.details,
+      flex: .8,
+      alignment: AlignmentDirectional.centerEnd,
+    ),
   ];
 
   @override
@@ -316,7 +369,8 @@ class _HistoryTable extends StatelessWidget {
     child: Column(
       children: <Widget>[
         ShiftTableHeader(cells: _headers),
-        for (final ShiftHistoryEntry entry in entries) _HistoryRow(entry: entry),
+        for (final ShiftHistoryEntry entry in entries)
+          _HistoryRow(entry: entry),
       ],
     ),
   );
@@ -331,14 +385,24 @@ class _HistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     // Uncounted closes (automatic / legacy reconcile) have no cash difference.
     final (ShiftTone diffTone, String diffLabel) = switch (entry.closeMode) {
-      ShiftCloseMode.automatic => (ShiftTone.neutral, ShiftStrings.closeTypeAutomatic),
-      ShiftCloseMode.legacyReconcile => (ShiftTone.accent, ShiftStrings.closeTypeLegacyReconcile),
-      ShiftCloseMode.unknown => (ShiftTone.neutral, ShiftStrings.closeTypeUnknown),
-      ShiftCloseMode.manual => entry.isBalanced
-          ? (ShiftTone.success, ShiftStrings.differenceMatched)
-          : entry.isShortage
-          ? (ShiftTone.warning, ShiftStrings.differenceShort)
-          : (ShiftTone.surplus, ShiftStrings.differenceOver),
+      ShiftCloseMode.automatic => (
+        ShiftTone.neutral,
+        ShiftStrings.closeTypeAutomatic,
+      ),
+      ShiftCloseMode.legacyReconcile => (
+        ShiftTone.accent,
+        ShiftStrings.closeTypeLegacyReconcile,
+      ),
+      ShiftCloseMode.unknown => (
+        ShiftTone.neutral,
+        ShiftStrings.closeTypeUnknown,
+      ),
+      ShiftCloseMode.manual =>
+        entry.isBalanced
+            ? (ShiftTone.success, ShiftStrings.differenceMatched)
+            : entry.isShortage
+            ? (ShiftTone.warning, ShiftStrings.differenceShort)
+            : (ShiftTone.surplus, ShiftStrings.differenceOver),
     };
 
     return InkWell(
@@ -354,8 +418,14 @@ class _HistoryRow extends StatelessWidget {
         ),
         child: Row(
           children: <Widget>[
-            _cell(1.2, ShiftValue(entry.shiftNumber, style: ShiftText.bodyStrong)),
-            _cell(1, Text(ShiftFormat.isoDate(entry.date), style: ShiftText.tableCell)),
+            _cell(
+              1.2,
+              ShiftValue(entry.shiftNumber, style: ShiftText.bodyStrong),
+            ),
+            _cell(
+              1,
+              Text(ShiftFormat.isoDate(entry.date), style: ShiftText.tableCell),
+            ),
             _cell(1, Text(entry.cashierName, style: ShiftText.tableCell)),
             _cell(1, Text(entry.branchName, style: ShiftText.tableCell)),
             _cell(
@@ -436,7 +506,16 @@ class _HistoryRow extends StatelessWidget {
               ),
               center: true,
             ),
-            _cell(.9, Center(child: ShiftBadge(label: diffLabel, tone: diffTone, dense: true))),
+            _cell(
+              .9,
+              Center(
+                child: ShiftBadge(
+                  label: diffLabel,
+                  tone: diffTone,
+                  dense: true,
+                ),
+              ),
+            ),
             _cell(
               .8,
               Align(
@@ -444,8 +523,9 @@ class _HistoryRow extends StatelessWidget {
                 child: ShiftButton(
                   label: ShiftStrings.viewReport,
                   variant: ShiftButtonVariant.quiet,
-                  onPressed: () =>
-                      context.push(ShiftRouteLocations.report(entry.shiftNumber)),
+                  onPressed: () => context.push(
+                    ShiftRouteLocations.report(entry.shiftNumber),
+                  ),
                 ),
               ),
             ),
@@ -462,7 +542,11 @@ class _HistoryRow extends StatelessWidget {
 }
 
 class _Pagination extends StatelessWidget {
-  const _Pagination({required this.page, required this.pages, required this.onPage});
+  const _Pagination({
+    required this.page,
+    required this.pages,
+    required this.onPage,
+  });
 
   final int page;
   final int pages;
@@ -478,13 +562,19 @@ class _Pagination extends StatelessWidget {
         color: ShiftColors.inkSoft,
       ),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: ShiftColors.surface,
           borderRadius: AppRadius.control,
           border: Border.all(color: ShiftColors.border),
         ),
-        child: Text(ShiftStrings.pageOf(page, pages), style: ShiftText.bodyStrong),
+        child: Text(
+          ShiftStrings.pageOf(page, pages),
+          style: ShiftText.bodyStrong,
+        ),
       ),
       IconButton(
         onPressed: page < pages ? () => onPage(page + 1) : null,

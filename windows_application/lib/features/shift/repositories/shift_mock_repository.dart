@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../models/shift_models.dart';
+import '../models/shift_close_preview.dart';
 import '../models/shift_scenario.dart';
 import 'shift_repository.dart';
 
@@ -65,6 +66,41 @@ class ShiftMockRepository extends ShiftRepository {
   }
 
   /// Opens a shift with the given float. Returns the new snapshot.
+  @override
+  Future<ShiftClosePreview> loadClosePreview(
+    int shiftId, {
+    DateTime? date,
+  }) async {
+    final ShiftSnapshot snapshot = (await loadOpenShift())!;
+    final DateTime today = DateTime(
+      _clock().year,
+      _clock().month,
+      _clock().day,
+    );
+    final DateTime selected = date ?? today;
+    return ShiftClosePreview(
+      snapshot: snapshot,
+      date: selected,
+      timezone: 'UTC',
+      openingDate: DateTime(
+        snapshot.identity.openedAt.year,
+        snapshot.identity.openedAt.month,
+        snapshot.identity.openedAt.day,
+      ),
+      today: today,
+      endExclusive: selected.add(const Duration(days: 1)),
+      historical: selected.isBefore(today),
+      version: 'mock',
+      currentLedgerCash: snapshot.drawer.expected,
+      laterNetCash: 0,
+      transferAmount: 0,
+      continuationCashAfterTransfer: snapshot.drawer.expected,
+      willContinue: false,
+      laterRecordCount: 0,
+      issues: const <String>[],
+    );
+  }
+
   @override
   Future<ShiftSnapshot> openShift({
     required double openingFloat,
@@ -242,7 +278,9 @@ abstract final class ShiftMockData {
       ),
       barCount: BarCountTemplate(
         warehouseName: warehouseName,
-        lastCountedAt: openedAt.subtract(const Duration(hours: 16, minutes: 10)),
+        lastCountedAt: openedAt.subtract(
+          const Duration(hours: 16, minutes: 10),
+        ),
         lines: _barLines(scenario),
       ),
       pendingOperations: blocked
@@ -555,7 +593,8 @@ abstract final class ShiftMockData {
     final DateTime today = DateTime(now.year, now.month, now.day);
     return <ShiftHistoryEntry>[
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 1)))}-002',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 1)))}-002',
         day: today.subtract(const Duration(days: 1)),
         cashier: 'tf-pos',
         openHour: 16,
@@ -569,7 +608,8 @@ abstract final class ShiftMockData {
         barDifferences: 0,
       ),
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 1)))}-001',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 1)))}-001',
         day: today.subtract(const Duration(days: 1)),
         cashier: 'sm-pos',
         openHour: 8,
@@ -583,7 +623,8 @@ abstract final class ShiftMockData {
         barDifferences: 2,
       ),
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 2)))}-002',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 2)))}-002',
         day: today.subtract(const Duration(days: 2)),
         cashier: 'tf-pos',
         openHour: 15,
@@ -597,7 +638,8 @@ abstract final class ShiftMockData {
         barDifferences: 1,
       ),
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 3)))}-001',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 3)))}-001',
         day: today.subtract(const Duration(days: 3)),
         cashier: 'sm-pos',
         openHour: 8,
@@ -611,7 +653,8 @@ abstract final class ShiftMockData {
         barDifferences: 0,
       ),
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 6)))}-001',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 6)))}-001',
         day: today.subtract(const Duration(days: 6)),
         cashier: 'nb-pos',
         openHour: 8,
@@ -625,7 +668,8 @@ abstract final class ShiftMockData {
         barDifferences: 1,
       ),
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 12)))}-001',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 12)))}-001',
         day: today.subtract(const Duration(days: 12)),
         cashier: 'tf-pos',
         openHour: 8,
@@ -639,7 +683,8 @@ abstract final class ShiftMockData {
         barDifferences: 0,
       ),
       _historyEntry(
-        number: 'SH-${_compactDate(today.subtract(const Duration(days: 19)))}-001',
+        number:
+            'SH-${_compactDate(today.subtract(const Duration(days: 19)))}-001',
         day: today.subtract(const Duration(days: 19)),
         cashier: 'sm-pos',
         openHour: 8,

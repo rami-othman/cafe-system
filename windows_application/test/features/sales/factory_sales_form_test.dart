@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../support/factory_currency_fixture.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,6 +83,7 @@ void main() {
         ),
       );
       final client = DioApiClient(dio: dio);
+      registerFactoryCurrencyFixture(client);
       final sales = SalesCubit(repository: SalesRepository(client));
       final finance = FinanceSetupCubit(
         repository: FinanceSetupRepository(client),

@@ -103,6 +103,7 @@ class SupplierInvoiceController extends Controller
     private function draftData(Request $request): array
     {
         return $request->validate([
+            ...\App\Support\FactoryCurrency::rules(),
             'branchId' => ['nullable', 'integer'],
             'receiptMode' => ['nullable', 'in:immediate,receive_later'],
             'supplierId' => ['required', 'integer'],
@@ -277,6 +278,7 @@ class SupplierInvoiceController extends Controller
             'discountAmount' => Money::decimal(Money::cents($row->discount_amount)),
             'chargesAmount' => Money::decimal(Money::cents($row->charges_amount)),
             'totalAmount' => Money::decimal(Money::cents($row->total_amount)),
+            'factoryCurrency' => \App\Support\FactoryCurrency::snapshot($row),
             'remainingAmount' => number_format($remaining / 100, 2, '.', ''),
             'status' => $row->status,
             'isOverdue' => $isOverdue,

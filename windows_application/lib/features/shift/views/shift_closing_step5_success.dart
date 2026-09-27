@@ -18,7 +18,9 @@ class ShiftClosingStep5Success extends StatelessWidget {
   const ShiftClosingStep5Success({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
     builder: (BuildContext context, ShiftClosingState state) {
       final ShiftClosingResult result = state.result!;
       final ShiftSnapshot snapshot = result.snapshot;
@@ -57,6 +59,24 @@ class ShiftClosingStep5Success extends StatelessWidget {
                     style: ShiftText.body,
                     textAlign: TextAlign.center,
                   ),
+                  if (result.closeExecutedAt != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'تاريخ الفترة: ${result.closingDate?.toIso8601String().substring(0, 10)} — تم التنفيذ: ${ShiftFormat.longDate(result.closeExecutedAt!)}',
+                    ),
+                  ],
+                  if (result.continuationShiftId != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    const ShiftNotice(
+                      message:
+                          'وردية المتابعة مفتوحة على نفس الصندوق، وحركات الفترة اللاحقة محفوظة فيها.',
+                      tone: ShiftTone.accent,
+                    ),
+                    TextButton(
+                      onPressed: () => context.go(ShiftRouteLocations.current),
+                      child: const Text('فتح وردية المتابعة'),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.xl),
                   Container(
                     width: double.infinity,
@@ -68,20 +88,49 @@ class ShiftClosingStep5Success extends StatelessWidget {
                     ),
                     child: Column(
                       children: <Widget>[
-                        _row(ShiftStrings.shiftNumber, snapshot.identity.shiftNumber),
-                        _row(ShiftStrings.branch, snapshot.identity.branchName, numeric: false),
-                        _row(ShiftStrings.cashier, snapshot.identity.cashierName, numeric: false),
+                        _row(
+                          ShiftStrings.shiftNumber,
+                          snapshot.identity.shiftNumber,
+                        ),
+                        _row(
+                          ShiftStrings.branch,
+                          snapshot.identity.branchName,
+                          numeric: false,
+                        ),
+                        _row(
+                          ShiftStrings.cashier,
+                          snapshot.identity.cashierName,
+                          numeric: false,
+                        ),
                         _row(
                           ShiftStrings.openedAt,
                           ShiftFormat.timeOfDay(snapshot.identity.openedAt),
                         ),
-                        _row(ShiftStrings.closedAt, ShiftFormat.timeOfDay(result.closedAt)),
-                        _row(ShiftStrings.duration, ShiftFormat.humanDuration(result.duration)),
+                        _row(
+                          ShiftStrings.closedAt,
+                          ShiftFormat.timeOfDay(result.closedAt),
+                        ),
+                        _row(
+                          ShiftStrings.duration,
+                          ShiftFormat.humanDuration(result.duration),
+                        ),
                         const ShiftDividerLine(),
-                        _row(ShiftStrings.orderCount, ShiftFormat.count(snapshot.sales.orderCount)),
-                        _row(ShiftStrings.netSales, ShiftFormat.money(snapshot.sales.netSales)),
-                        _row(ShiftStrings.cashSales, ShiftFormat.money(snapshot.drawer.cashSales)),
-                        _row(ShiftStrings.actualCash, ShiftFormat.money(result.cash.actual)),
+                        _row(
+                          ShiftStrings.orderCount,
+                          ShiftFormat.count(snapshot.sales.orderCount),
+                        ),
+                        _row(
+                          ShiftStrings.netSales,
+                          ShiftFormat.money(snapshot.sales.netSales),
+                        ),
+                        _row(
+                          ShiftStrings.cashSales,
+                          ShiftFormat.money(snapshot.drawer.cashSales),
+                        ),
+                        _row(
+                          ShiftStrings.actualCash,
+                          ShiftFormat.money(result.cash.actual),
+                        ),
                         _row(
                           ShiftStrings.cashDifference,
                           ShiftFormat.signedMoney(result.cash.difference),
@@ -106,21 +155,28 @@ class ShiftClosingStep5Success extends StatelessWidget {
                         label: ShiftStrings.printShiftReport,
                         variant: ShiftButtonVariant.secondary,
                         icon: Icons.print_outlined,
-                        onPressed: () =>
-                            context.push(ShiftRouteLocations.report(snapshot.identity.shiftNumber)),
+                        onPressed: () => context.push(
+                          ShiftRouteLocations.report(
+                            snapshot.identity.shiftNumber,
+                          ),
+                        ),
                       ),
                       ShiftButton(
                         buttonKey: const Key('shift-success-view-report'),
                         label: ShiftStrings.viewReport,
                         icon: Icons.description_outlined,
-                        onPressed: () =>
-                            context.push(ShiftRouteLocations.report(snapshot.identity.shiftNumber)),
+                        onPressed: () => context.push(
+                          ShiftRouteLocations.report(
+                            snapshot.identity.shiftNumber,
+                          ),
+                        ),
                       ),
                       ShiftButton(
                         label: ShiftStrings.backToHistory,
                         variant: ShiftButtonVariant.quiet,
                         icon: Icons.history_outlined,
-                        onPressed: () => context.go(ShiftRouteLocations.history),
+                        onPressed: () =>
+                            context.go(ShiftRouteLocations.history),
                       ),
                     ],
                   ),
@@ -133,7 +189,12 @@ class ShiftClosingStep5Success extends StatelessWidget {
     },
   );
 
-  Widget _row(String label, String value, {bool numeric = true, Color? color}) => Padding(
+  Widget _row(
+    String label,
+    String value, {
+    bool numeric = true,
+    Color? color,
+  }) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
       children: <Widget>[

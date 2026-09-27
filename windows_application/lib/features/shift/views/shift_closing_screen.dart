@@ -40,58 +40,70 @@ class _ShiftClosingScreenState extends State<ShiftClosingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      BlocListener<ShiftClosingCubit, ShiftClosingState>(
-        listenWhen: (ShiftClosingState previous, ShiftClosingState current) =>
-            previous.status != current.status &&
-            current.status == ShiftClosingStatus.closed,
-        listener: (BuildContext context, ShiftClosingState state) {
-          unawaited(context.read<PosCubit>().refreshShiftStatus());
-        },
-        child: BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
-          builder: (BuildContext context, ShiftClosingState state) {
-            if (state.status == ShiftClosingStatus.loading) {
-              return const SingleChildScrollView(
-                padding: EdgeInsets.all(AppSpacing.xl),
-                child: ShiftTableSkeleton(label: ShiftStrings.loadingShift),
-              );
-            }
-            if (state.status == ShiftClosingStatus.error) {
-              return ShiftErrorView(
-                title: ShiftStrings.errorLoadingShift,
-                detail: state.errorMessage,
-                onRetry: () => context.go(ShiftRouteLocations.current),
-              );
-            }
+  Widget build(
+    BuildContext context,
+  ) => BlocListener<ShiftClosingCubit, ShiftClosingState>(
+    listenWhen: (ShiftClosingState previous, ShiftClosingState current) =>
+        previous.status != current.status &&
+        current.status == ShiftClosingStatus.closed,
+    listener: (BuildContext context, ShiftClosingState state) {
+      unawaited(context.read<PosCubit>().refreshShiftStatus());
+    },
+    child: BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+      builder: (BuildContext context, ShiftClosingState state) {
+        if (state.status == ShiftClosingStatus.loading) {
+          return const SingleChildScrollView(
+            padding: EdgeInsets.all(AppSpacing.xl),
+            child: ShiftTableSkeleton(label: ShiftStrings.loadingShift),
+          );
+        }
+        if (state.status == ShiftClosingStatus.error) {
+          return ShiftErrorView(
+            title: ShiftStrings.errorLoadingShift,
+            detail: state.errorMessage,
+            onRetry: () => context.go(ShiftRouteLocations.current),
+          );
+        }
 
-            final bool isDone = state.step == ShiftClosingStep.done;
+        final bool isDone = state.step == ShiftClosingStep.done;
 
-            return Column(
-              children: <Widget>[
-                if (!isDone) _WizardHeader(state: state),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.xl,
-                      AppSpacing.lg,
-                      AppSpacing.xl,
-                      AppSpacing.xxxl,
-                    ),
-                    child: switch (state.step) {
-                      ShiftClosingStep.operations => const ShiftClosingStep1Operations(),
-                      ShiftClosingStep.cashCount => const ShiftClosingStep2Cash(),
-                      ShiftClosingStep.barCount => const ShiftClosingStep3BarCount(),
-                      ShiftClosingStep.finalReview => const ShiftClosingStep4Review(),
-                      ShiftClosingStep.done => const ShiftClosingStep5Success(),
-                    },
-                  ),
+        return Column(
+          children: <Widget>[
+            if (!isDone) _WizardHeader(state: state),
+            if (!isDone && state.errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                child: ShiftNotice(
+                  message: state.errorMessage!,
+                  tone: ShiftTone.blocker,
                 ),
-                if (!isDone) const _WizardFooter(),
-              ],
-            );
-          },
-        ),
-      );
+              ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  AppSpacing.xxxl,
+                ),
+                child: switch (state.step) {
+                  ShiftClosingStep.operations =>
+                    const ShiftClosingStep1Operations(),
+                  ShiftClosingStep.cashCount => const ShiftClosingStep2Cash(),
+                  ShiftClosingStep.barCount =>
+                    const ShiftClosingStep3BarCount(),
+                  ShiftClosingStep.finalReview =>
+                    const ShiftClosingStep4Review(),
+                  ShiftClosingStep.done => const ShiftClosingStep5Success(),
+                },
+              ),
+            ),
+            if (!isDone) const _WizardFooter(),
+          ],
+        );
+      },
+    ),
+  );
 }
 
 class _WizardHeader extends StatelessWidget {
@@ -101,19 +113,35 @@ class _WizardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, 0),
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.xl,
+      AppSpacing.lg,
+      AppSpacing.xl,
+      0,
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
           children: <Widget>[
-            Expanded(child: Text(ShiftStrings.closingTitle, style: ShiftText.pageTitle)),
+            Expanded(
+              child: Text(
+                ShiftStrings.closingTitle,
+                style: ShiftText.pageTitle,
+              ),
+            ),
             TextButton.icon(
               onPressed: () => context.go(ShiftRouteLocations.current),
-              icon: const Icon(Icons.close, size: 16, color: ShiftColors.blockerInk),
+              icon: const Icon(
+                Icons.close,
+                size: 16,
+                color: ShiftColors.blockerInk,
+              ),
               label: Text(
                 ShiftStrings.cancelAndReturn,
-                style: ShiftText.bodyStrong.copyWith(color: ShiftColors.blockerInk),
+                style: ShiftText.bodyStrong.copyWith(
+                  color: ShiftColors.blockerInk,
+                ),
               ),
             ),
           ],
@@ -167,7 +195,9 @@ class _Stepper extends StatelessWidget {
                 child: Container(
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  color: i + 1 < current ? ShiftColors.matchInk : ShiftColors.border,
+                  color: i + 1 < current
+                      ? ShiftColors.matchInk
+                      : ShiftColors.border,
                 ),
               ),
           ],
@@ -243,7 +273,9 @@ class _WizardFooter extends StatelessWidget {
   const _WizardFooter();
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ShiftClosingCubit, ShiftClosingState>(
     builder: (BuildContext context, ShiftClosingState state) {
       final ShiftClosingCubit cubit = context.read<ShiftClosingCubit>();
       final bool isFirst = state.step.isFirst;
@@ -273,7 +305,11 @@ class _WizardFooter extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: <Widget>[
-                    const Icon(Icons.cloud_done_outlined, size: 14, color: ShiftColors.inkMuted),
+                    const Icon(
+                      Icons.cloud_done_outlined,
+                      size: 14,
+                      color: ShiftColors.inkMuted,
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -292,7 +328,12 @@ class _WizardFooter extends StatelessWidget {
                 buttonKey: const Key('shift-wizard-next'),
                 label: ShiftStrings.next,
                 icon: Icons.arrow_back,
-                onPressed: cubit.goNext,
+                onPressed:
+                    state.periodReady &&
+                        state.countBasesReady &&
+                        !state.isSubmitting
+                    ? cubit.goNext
+                    : null,
               ),
           ],
         ),

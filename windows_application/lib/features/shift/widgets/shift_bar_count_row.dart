@@ -108,12 +108,12 @@ class _BarCountRowState extends State<BarCountRow> {
                           ),
                           Row(
                             children: <Widget>[
-                              ShiftValue(
-                                line.sku,
+                              ShiftValue(line.sku, style: ShiftText.label),
+                              const SizedBox(width: 6),
+                              Text(
+                                '· ${line.category}',
                                 style: ShiftText.label,
                               ),
-                              const SizedBox(width: 6),
-                              Text('· ${line.category}', style: ShiftText.label),
                             ],
                           ),
                         ],
@@ -162,16 +162,25 @@ class _BarCountRowState extends State<BarCountRow> {
                   child: ShiftValue(
                     line.difference == null
                         ? '—'
-                        : ShiftFormat.signedQuantity(line.difference!, line.decimals),
+                        : ShiftFormat.signedQuantity(
+                            line.difference!,
+                            line.decimals,
+                          ),
                     style: ShiftText.bodyStrong,
-                    color: line.difference == null ? ShiftColors.inkMuted : tone.ink,
+                    color: line.difference == null
+                        ? ShiftColors.inkMuted
+                        : tone.ink,
                   ),
                 ),
               ),
               Expanded(
                 flex: 9,
                 child: Center(
-                  child: ShiftBadge(label: _labelFor(line.status), tone: tone, dense: true),
+                  child: ShiftBadge(
+                    label: _labelFor(line.status),
+                    tone: tone,
+                    dense: true,
+                  ),
                 ),
               ),
             ],
@@ -180,12 +189,18 @@ class _BarCountRowState extends State<BarCountRow> {
             const SizedBox(height: 6),
             Row(
               children: <Widget>[
-                const Icon(Icons.info_outline, size: 13, color: ShiftColors.shortageInk),
+                const Icon(
+                  Icons.info_outline,
+                  size: 13,
+                  color: ShiftColors.shortageInk,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     ShiftStrings.negativeTheoretical,
-                    style: ShiftText.label.copyWith(color: ShiftColors.shortageInk),
+                    style: ShiftText.label.copyWith(
+                      color: ShiftColors.shortageInk,
+                    ),
                   ),
                 ),
               ],
@@ -245,7 +260,9 @@ class _BarCountRowState extends State<BarCountRow> {
                   onPressed: widget.onClear,
                   child: Text(
                     ShiftStrings.clearValue,
-                    style: ShiftText.label.copyWith(color: ShiftColors.blockerInk),
+                    style: ShiftText.label.copyWith(
+                      color: ShiftColors.blockerInk,
+                    ),
                   ),
                 ),
             ],
@@ -358,7 +375,10 @@ class _BarCountCardState extends State<BarCountCard> {
             const SizedBox(height: AppSpacing.sm),
             ShiftKeyValueRow(
               label: ShiftStrings.difference,
-              value: ShiftFormat.signedQuantity(line.difference!, line.decimals),
+              value: ShiftFormat.signedQuantity(
+                line.difference!,
+                line.decimals,
+              ),
               valueColor: tone.ink,
             ),
           ],
@@ -386,7 +406,9 @@ class _BarCountCardState extends State<BarCountCard> {
                   onPressed: widget.onClear,
                   child: Text(
                     ShiftStrings.clearValue,
-                    style: ShiftText.label.copyWith(color: ShiftColors.blockerInk),
+                    style: ShiftText.label.copyWith(
+                      color: ShiftColors.blockerInk,
+                    ),
                   ),
                 ),
             ],

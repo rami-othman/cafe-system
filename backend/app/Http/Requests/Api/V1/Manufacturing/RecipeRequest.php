@@ -15,6 +15,9 @@ class RecipeRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if (is_string($this->input('productName'))) {
+            $this->merge(['productName' => trim($this->input('productName'))]);
+        }
         if ($this->has('outputUnit')) {
             $this->merge(['outputUnit' => InventoryUnitCatalog::normalize($this->input('outputUnit'))]);
         }
@@ -33,7 +36,8 @@ class RecipeRequest extends FormRequest
     {
         return [
             'branchId' => ['required', 'integer'],
-            'productItemId' => ['required', 'integer'],
+            'productItemId' => [$this->isMethod('POST') ? 'required_without:productName' : 'required', 'nullable', 'integer'],
+            'productName' => [$this->isMethod('POST') ? 'required_without:productItemId' : 'prohibited', 'nullable', 'string', 'max:255'],
             'outputQuantity' => ['required', 'regex:/^\d+(\.\d{1,3})?$/'],
             'outputUnit' => ['required', Rule::in(InventoryUnitCatalog::codes())],
             'shelfLifeValue' => ['nullable', 'integer', 'min:1'],
