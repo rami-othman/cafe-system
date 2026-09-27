@@ -43,7 +43,7 @@ void main() {
             if (options.path == 'inventory/items') {
               expect(options.queryParameters['branchId'], 1);
               expect(
-                options.queryParameters['types'],
+                options.queryParameters['types[]'],
                 containsAll(<String>[
                   'raw_material',
                   'semi_finished_good',
