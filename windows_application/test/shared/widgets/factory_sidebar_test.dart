@@ -29,7 +29,7 @@ void main() {
       expect(find.text('المبيعات'), findsOneWidget);
       expect(find.text('سندات الموردين'), findsOneWidget);
       expect(find.text('Finance'), findsNothing);
-      expect(find.text('Settings'), findsNothing);
+      expect(find.text('Settings'), findsOneWidget);
       expect(find.text('التصنيع'), findsOneWidget);
       expect(find.text('POS'), findsNothing);
       expect(find.text('Orders'), findsNothing);
@@ -87,7 +87,7 @@ void main() {
       expect(find.text('المبيعات'), findsOneWidget);
       expect(find.text('سندات الموردين'), findsOneWidget);
       expect(find.text('Finance'), findsNothing);
-      expect(find.text('Settings'), findsNothing);
+      expect(find.text('Settings'), findsOneWidget);
       expect(find.text('تقارير المعمل'), findsNothing);
       // Nothing from the cafe surface.
       expect(find.text('POS'), findsNothing);

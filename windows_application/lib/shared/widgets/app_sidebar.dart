@@ -277,7 +277,7 @@ class AppSidebar extends StatelessWidget {
                               ? null
                               : () => context.guardedGo(destination.routePath!),
                         ),
-                      if (!pinSettings && !isFactoryUser && !isFactory)
+                      if (!pinSettings)
                         AppSidebarItem(
                           icon: Icons.settings_outlined,
                           label: _settingsLabel(context),
@@ -288,7 +288,7 @@ class AppSidebar extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (pinSettings && !isFactoryUser && !isFactory)
+                if (pinSettings)
                   AppSidebarItem(
                     icon: Icons.settings_outlined,
                     label: _settingsLabel(context),

@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../app/localization/app_locale_cubit.dart';
 import '../../app/localization/localization_extensions.dart';
 import '../../core/constants/app_sizes.dart';
-import '../../core/network/dio_api_client.dart';
-import '../../core/services/service_locator.dart';
-import '../../features/auth/controllers/auth_session_cubit.dart';
+
+
+
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
@@ -171,7 +171,7 @@ class _AppTopBarState extends State<AppTopBar> {
                         ),
                       ),
               ),
-              const _OwnerDataScopeSelector(),
+
               if (showShiftBadge) ...<Widget>[
                 const SizedBox(width: AppSpacing.lg),
                 ShiftStatusBadge(
@@ -238,49 +238,6 @@ class _AppTopBarState extends State<AppTopBar> {
   // to await here — just select it.
   void _selectOperationalBranch(BuildContext context, int branchId) {
     context.read<OperationalBranchCubit>().selectBranch(branchId);
-  }
-}
-
-class _OwnerDataScopeSelector extends StatelessWidget {
-  const _OwnerDataScopeSelector();
-
-  @override
-  Widget build(BuildContext context) {
-    AuthSessionCubit? auth;
-    OperationalBranchCubit? operational;
-    String path;
-    try {
-      auth = context.watch<AuthSessionCubit>();
-      operational = context.watch<OperationalBranchCubit>();
-      path = GoRouterState.of(context).uri.path;
-    } catch (_) {
-      return const SizedBox.shrink();
-    }
-    if (auth.state.session?.user.role != 'owner' ||
-        !(path.startsWith('/finance') || path.startsWith('/inventory')) ||
-        !serviceLocator.isRegistered<DioApiClient>()) {
-      return const SizedBox.shrink();
-    }
-    final api = serviceLocator<DioApiClient>();
-    final factories = operational.state.branches.where((b) => b.isFactory).toList();
-    final selected = factories.any((b) => b.id == api.scopeBranchId) ? api.scopeBranchId! : 0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: DropdownButton<int>(
-        value: selected,
-        items: <DropdownMenuItem<int>>[
-          const DropdownMenuItem(value: 0, child: Text('المقهى')),
-          for (final branch in factories) DropdownMenuItem(value: branch.id, child: Text(branch.name)),
-        ],
-        onChanged: (id) {
-          api.scopeBranchId = id == 0 ? null : id;
-          final branchId = id == 0
-              ? operational!.state.branches.where((b) => !b.isFactory).firstOrNull?.id
-              : id;
-          if (branchId != null) operational!.selectBranch(branchId);
-        },
-      ),
-    );
   }
 }
 
