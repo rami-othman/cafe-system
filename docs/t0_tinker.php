@@ -6,16 +6,30 @@
  * For every open shift: compares ShiftCashSummaryService::summarize()'s
  * expectedCash against ShiftDrawerReadinessService::drawerLedgerBalance()
  * and prints the difference, plus any journal_entry_lines posted on that
- * drawer's financial_location_id since the shift opened that are not tied
- * to this shift as their source (i.e. cash movement the shift's own
- * summary never saw).
+ * drawer's financial_location_id since the shift opened whose source_type
+ * is not one of the shift's own known cash-movement sources and that
+ * aren't this shift's own close/continuation transfer.
  *
  * Does not save/update/delete anything.
  */
 
 use App\Services\ShiftCashSummaryService;
 use App\Services\ShiftDrawerReadinessService;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
+
+// Actual AccountingPostingService::post* source types that legitimately move
+// a shift's own drawer (see app/Services/AccountingPostingService.php).
+// Note: there is no 'sale' or 'refund' source_type in this codebase — sales
+// post as 'pos_order' and refunds as 'payment_refund'.
+$knownShiftCashSourceTypes = [
+    'pos_order',
+    'payment_refund',
+    'expense',
+    'customer_payment',
+    'customer_refund',
+    'supplier_payment',
+];
 
 $cashSummary = app(ShiftCashSummaryService::class);
 $readiness = app(ShiftDrawerReadinessService::class);
@@ -35,7 +49,8 @@ foreach ($openShifts as $shift) {
     $drawer = $readiness->drawerLocation($tenantId, $branchId, $locationId);
     $ledgerBalance = $drawer ? $readiness->drawerLedgerBalance($tenantId, $drawer) : null;
 
-    $diff = $drawer ? bcsub($ledgerBalance, $expectedFromSummary, 2) : null;
+    $diffCents = $drawer ? Money::cents($ledgerBalance) - Money::cents($expectedFromSummary) : null;
+    $diff = $diffCents !== null ? Money::decimal($diffCents) : null;
 
     echo sprintf(
         "shift #%s (id=%d, branch=%d, location=%d): expectedCash(summary)=%s  drawerLedgerBalance=%s  diff=%s\n",
@@ -48,22 +63,29 @@ foreach ($openShifts as $shift) {
         $diff ?? 'N/A'
     );
 
-    if ($diff !== null && bccomp($diff, '0.00', 2) !== 0) {
+    if ($diffCents !== null && $diffCents !== 0) {
+        $shiftCashTransferIds = DB::table('cash_transfers')
+            ->where('tenant_id', $tenantId)
+            ->where('shift_id', $shift->id)
+            ->pluck('id');
+
         $unexplained = DB::table('journal_entry_lines as l')
             ->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')
             ->where('l.tenant_id', $tenantId)
             ->where('l.financial_location_id', $locationId)
             ->where('e.status', 'posted')
             ->where('e.created_at', '>=', $shift->opened_at)
-            ->where(function ($q) use ($shift) {
-                $q->where('e.source_type', '<>', 'shift_close')
-                    ->orWhere('e.source_id', '<>', $shift->id);
+            ->whereNotIn('e.source_type', $knownShiftCashSourceTypes)
+            ->where(function ($q) use ($shiftCashTransferIds) {
+                $q->where('e.source_type', '<>', 'cash_transfer')
+                    ->orWhereNotIn('e.source_id', $shiftCashTransferIds->all() ?: [0]);
             })
             ->select('e.id', 'e.source_type', 'e.source_id', 'e.description', 'l.debit', 'l.credit', 'e.entry_date')
+            ->limit(30)
             ->get();
 
         if ($unexplained->isNotEmpty()) {
-            echo "  حركات على الصندوق منذ فتح الوردية وغير مرتبطة بها كمصدر:\n";
+            echo "  حركات على الصندوق منذ فتح الوردية غير مفسّرة بمصادرها المعروفة (أول 30):\n";
             foreach ($unexplained as $line) {
                 echo sprintf(
                     "    entry #%d [%s#%s] %s — debit=%s credit=%s (%s)\n",
