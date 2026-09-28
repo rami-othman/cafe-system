@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Support\Money;
+use App\Support\SalesTotals;
 use App\Support\ShiftClosePresentation;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -35,8 +36,14 @@ final class ShiftHistoryQueryService
             // automatic and legacy_reconcile closes report none (null), never a fabricated one.
             $presentation = ShiftClosePresentation::for($shift);
             $difference = $presentation['cashDifference'];
+            // Same purchases/expenses split as ShiftSnapshotService (T5):
+            // shift_cash_movements' `expenses` figure already folds supplier
+            // payments in, so purchasesPaid is subtracted back out of it.
+            $purchasesPaidCents = Money::cents((string) DB::table('shift_cash_movements')->where('tenant_id', $shift->tenant_id)->where('shift_id', $shift->id)->where('source_type', 'supplier_payment')->sum('amount') ?: '0');
+            $expensesPaidCents = max(0, Money::cents($cash['expenses']) - $purchasesPaidCents);
+            $salesTotals = SalesTotals::make(Money::cents($sales->gross ?? '0'), $refunds, Money::cents($sales->discounts ?? '0'), $purchasesPaidCents, $expensesPaidCents);
 
-            return ['shiftNumber' => $shift->shift_number ?? 'SH-'.str_pad((string) $shift->id, 6, '0', STR_PAD_LEFT), 'date' => $this->timestamp($shift->opened_at), 'cashierName' => $shift->cashier_name, 'branchName' => $shift->branch_name, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at), 'orderCount' => (int) ($sales->count ?? 0), 'netSales' => Money::decimal(Money::cents($sales->gross ?? '0') - Money::cents($sales->discounts ?? '0') - $refunds), 'cashSales' => $cash['cashSales'], 'cashDifference' => $difference, 'barDifferenceCount' => $barDifferences, 'closeType' => $presentation['closeMode'], 'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'status' => $presentation['cashCounted'] && abs(Money::cents($difference)) > 50 ? 'closedWithDifference' : 'closed'];
+            return ['shiftNumber' => $shift->shift_number ?? 'SH-'.str_pad((string) $shift->id, 6, '0', STR_PAD_LEFT), 'date' => $this->timestamp($shift->opened_at), 'cashierName' => $shift->cashier_name, 'branchName' => $shift->branch_name, 'openedAt' => $this->timestamp($shift->opened_at), 'closedAt' => $this->timestamp($shift->closed_at), 'orderCount' => (int) ($sales->count ?? 0), 'netSales' => Money::decimal(Money::cents($sales->gross ?? '0') - Money::cents($sales->discounts ?? '0') - $refunds), 'cashSales' => $cash['cashSales'], 'cashDifference' => $difference, 'barDifferenceCount' => $barDifferences, 'closeType' => $presentation['closeMode'], 'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'status' => $presentation['cashCounted'] && abs(Money::cents($difference)) > 50 ? 'closedWithDifference' : 'closed'] + $salesTotals;
         })->values()->all();
 
         return ['data' => $data, 'meta' => ['currentPage' => $paginator->currentPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'lastPage' => $paginator->lastPage()]];
@@ -64,6 +71,15 @@ final class ShiftHistoryQueryService
             'barDifferenceCount' => $differences, 'closeType' => $presentation['closeMode'],
             'cashCounted' => $presentation['cashCounted'], 'administrativeClose' => $presentation['administrativeClose'], 'status' => 'closed',
             'businessDate' => $shift->business_date, 'closeExecutedAt' => $this->timestamp($shift->close_executed_at),
+            // A snapshot frozen before T5 has no salesSum/salesTotal/salesNet
+            // of its own — salesTotal already equals the netSales above, so
+            // it is the only safe fallback (purchases/expenses are not
+            // reconstructable from an old snapshot without re-deriving them).
+            'salesSum' => $sales['salesSum'] ?? Money::decimal(Money::cents($sales['grossSales'])),
+            'salesTotal' => $sales['salesTotal'] ?? Money::decimal(Money::cents($sales['grossSales']) - Money::cents($sales['discounts']) - Money::cents($sales['refunds'])),
+            'salesNet' => $sales['salesNet'] ?? Money::decimal(Money::cents($sales['grossSales']) - Money::cents($sales['discounts']) - Money::cents($sales['refunds'])),
+            'purchasesPaid' => $sales['purchasesPaid'] ?? '0.00',
+            'expensesPaid' => $sales['expensesPaid'] ?? '0.00',
         ];
     }
 }

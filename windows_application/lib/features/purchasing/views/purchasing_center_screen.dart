@@ -606,7 +606,17 @@ class _PurchasesTable extends StatelessWidget {
                 FinanceReference(reference: p.internalReference),
               ],
             ),
-            Text(p.invoiceDate, style: FinanceText.small),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(p.invoiceDate, style: FinanceText.small),
+                if (p.isBackdated)
+                  const Text(
+                    'بتاريخ سابق',
+                    style: TextStyle(fontSize: 11, color: Colors.orange),
+                  ),
+              ],
+            ),
             Text(p.supplierName, style: FinanceText.body),
             Text(p.branchName ?? 'كل الفروع', style: FinanceText.small),
             Text(p.warehouseName ?? '—', style: FinanceText.small),

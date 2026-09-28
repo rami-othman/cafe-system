@@ -339,6 +339,7 @@ class _HistoryTable extends StatelessWidget {
       flex: .7,
       alignment: Alignment.center,
     ),
+    ShiftTableCell(ShiftStrings.salesTotal, flex: 1, alignment: Alignment.center),
     ShiftTableCell(ShiftStrings.netSales, flex: 1, alignment: Alignment.center),
     ShiftTableCell(
       ShiftStrings.cashSales,
@@ -365,7 +366,7 @@ class _HistoryTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ShiftTableFrame(
-    minWidth: 1500,
+    minWidth: 1600,
     child: Column(
       children: <Widget>[
         ShiftTableHeader(cells: _headers),
@@ -468,6 +469,15 @@ class _HistoryRow extends StatelessWidget {
               1,
               ShiftValue(
                 ShiftFormat.money(entry.netSales),
+                align: TextAlign.center,
+                style: ShiftText.bodyStrong,
+              ),
+              center: true,
+            ),
+            _cell(
+              1,
+              ShiftValue(
+                ShiftFormat.money(entry.salesNet),
                 align: TextAlign.center,
                 style: ShiftText.bodyStrong,
               ),

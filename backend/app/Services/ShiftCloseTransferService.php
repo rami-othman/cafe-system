@@ -71,7 +71,7 @@ final class ShiftCloseTransferService
             'toFinancialLocationId' => (int) $destination->id,
             'amount' => Money::decimal($amount),
             'transferDate' => $transferDate ?? now()->toDateString(),
-            'description' => ucfirst($actorType).' shift close '.$shift->id,
+            'description' => 'تحويل إغلاق الوردية '.($shift->shift_number ?? $shift->id),
             'idempotencyKey' => self::idempotencyKey((int) $shift->id),
         ], (int) $shift->user_id, true);
         DB::table('cash_transfers')->where('tenant_id', $tenantId)->where('id', $transfer->id)

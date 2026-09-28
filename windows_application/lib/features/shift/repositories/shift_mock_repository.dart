@@ -200,6 +200,9 @@ abstract final class ShiftMockData {
       identity: identity,
       sales: const ShiftSalesSummary(
         grossSales: 24850,
+        salesSum: 24850,
+        salesTotal: 24150,
+        salesNet: 24150,
         discounts: 450,
         refunds: 250,
         refundCount: 2,
@@ -343,6 +346,9 @@ abstract final class ShiftMockData {
     ),
     sales: const ShiftSalesSummary(
       grossSales: 0,
+      salesSum: 0,
+      salesTotal: 0,
+      salesNet: 0,
       discounts: 0,
       refunds: 0,
       refundCount: 0,

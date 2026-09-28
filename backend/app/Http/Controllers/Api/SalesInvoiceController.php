@@ -14,6 +14,7 @@ use App\Models\ProductVariant;
 use App\Support\FinanceAccess;
 use App\Support\FinancialActor;
 use App\Support\Money;
+use App\Support\SalesTotals;
 use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,19 +64,28 @@ final class SalesInvoiceController extends Controller
     private function financialSummary(int $tenant, array $branchIds): array
     {
         $from = now()->startOfMonth()->toDateString(); $to = now()->toDateString();
-        $netSalesCents = DB::table('sales_invoices')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
-            ->whereBetween('invoice_date', [$from, $to])->sum('subtotal');
+        $sales = DB::table('sales_invoices')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('invoice_date', [$from, $to])
+            ->selectRaw('COALESCE(SUM(gross_subtotal), 0) as gross, COALESCE(SUM(line_discount_total + invoice_discount_total), 0) as discounts')->first();
         $postedCount = DB::table('sales_invoices')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('invoice_date', [$from, $to])->count();
         $collectedCents = DB::table('customer_payments')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('payment_date', [$from, $to])->sum('amount');
         $creditNotesCents = DB::table('sales_credit_notes')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
             ->whereBetween('credit_date', [$from, $to])->sum('total');
+        $creditRevenue = DB::table('sales_credit_notes')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('credit_date', [$from, $to])->sum('subtotal');
+        $purchasesPaid = DB::table('supplier_payments')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'posted')
+            ->whereBetween('payment_date', [$from, $to])->sum('amount');
+        $expensesPaid = DB::table('expenses')->where('tenant_id', $tenant)->whereIn('branch_id', $branchIds)->where('status', 'paid')->whereNull('deleted_at')
+            ->whereBetween('expense_date', [$from, $to])->sum('total_amount');
+        $totals = SalesTotals::make(Money::cents($sales->gross), Money::cents($creditRevenue), Money::cents($sales->discounts), Money::cents($purchasesPaid), Money::cents($expensesPaid));
         $outstanding = $this->receivables->snapshotAsOf($tenant, $to, $branchIds);
 
         return ['financialSummary' => [
             'periodFrom' => $from, 'periodTo' => $to,
-            'netSales' => Money::decimal(Money::cents($netSalesCents ?: '0')),
+            'netSales' => $totals['salesTotal'],
+            ...$totals,
             'postedInvoicesCount' => (int) $postedCount,
             'outstandingAr' => $outstanding['outstanding'],
             'collectedTotal' => Money::decimal(Money::cents($collectedCents ?: '0')),
@@ -115,7 +125,8 @@ final class SalesInvoiceController extends Controller
         $tenant = TenantContext::id($request); $actor = FinancialActor::id($request, $tenant);
         $before = $this->invoices->find($tenant, $invoice); FinancialActor::assertBranchAccess($actor, $tenant, $before->branch_id);
         $this->posting->post($request, $tenant, $invoice, $actor, $data);
-        return response()->json(['data' => $this->one($request, $tenant, $invoice)]);
+        $warning = \App\Support\BackdatePolicy::closedDayWarning($tenant, $before->branch_id ? (int) $before->branch_id : null, $before->invoice_date);
+        return response()->json(['data' => $this->one($request, $tenant, $invoice), 'warnings' => $warning ? [$warning] : []]);
     }
 
     public function postingPreview(Request $request, int $invoice): JsonResponse
@@ -248,12 +259,12 @@ final class SalesInvoiceController extends Controller
         $isOverdue = $remainingCents !== null && $remainingCents > 0 && $i->due_date !== null && $i->due_date < now()->toDateString();
         $paymentStatus = $paidOnlyRemainingCents === null ? 'not_applicable' : ($isOverdue ? 'overdue' : $this->receivables->paymentStatus($totalCents, $paidOnlyRemainingCents));
         $creditStatus = $this->receivables->creditStatus($totalCents, $creditedTotalCents);
-        return ['id' => (int) $i->id, 'invoiceNumber' => $i->invoice_number, 'branchId' => (int) $i->branch_id, 'branchName' => $i->branch_name, 'customerId' => (int) $i->customer_id, 'customerName' => $i->customer_name, 'customerNumber' => $i->customer_number, 'invoiceDate' => $i->invoice_date, 'dueDate' => $i->due_date, 'currencyCode' => $i->currency_code, 'factoryCurrency' => \App\Support\FactoryCurrency::snapshot($i), 'reference' => $i->reference, 'notes' => $i->notes, 'status' => $i->status, 'grossSubtotal' => $i->gross_subtotal, 'lineDiscountTotal' => $i->line_discount_total, 'subtotal' => $i->subtotal, 'invoiceDiscountType' => $i->invoice_discount_type, 'invoiceDiscountValue' => $i->invoice_discount_value, 'invoiceDiscountTotal' => $i->invoice_discount_total, 'additionalChargesTotal' => $i->additional_charges_total, 'manualAdjustment' => $i->manual_adjustment, 'taxableAmount' => $i->taxable_amount, 'discountTotal' => $i->discount_total, 'taxRate' => $i->tax_rate, 'taxTotal' => $i->tax_total, 'total' => $i->total, 'paidAmount' => $allocatedCents === null ? null : Money::decimal($allocatedCents), 'remainingAmount' => $remainingCents === null ? null : Money::decimal($remainingCents), 'paymentStatus' => $paymentStatus, 'isOverdue' => $isOverdue, 'creditedAmount' => $allocatedCents === null ? null : Money::decimal($creditedTotalCents), 'creditStatus' => $allocatedCents === null ? 'not_applicable' : $creditStatus, 'createdBy' => $i->creator_name, 'createdAt' => $i->created_at, 'updatedAt' => $i->updated_at]; }
+        return ['id' => (int) $i->id, 'invoiceNumber' => $i->invoice_number, 'branchId' => (int) $i->branch_id, 'branchName' => $i->branch_name, 'customerId' => (int) $i->customer_id, 'customerName' => $i->customer_name, 'customerNumber' => $i->customer_number, 'invoiceDate' => $i->invoice_date, 'dueDate' => $i->due_date, 'currencyCode' => $i->currency_code, 'factoryCurrency' => \App\Support\FactoryCurrency::snapshot($i), 'reference' => $i->reference, 'notes' => $i->notes, 'status' => $i->status, 'grossSubtotal' => $i->gross_subtotal, 'lineDiscountTotal' => $i->line_discount_total, 'subtotal' => $i->subtotal, 'invoiceDiscountType' => $i->invoice_discount_type, 'invoiceDiscountValue' => $i->invoice_discount_value, 'invoiceDiscountTotal' => $i->invoice_discount_total, 'additionalChargesTotal' => $i->additional_charges_total, 'manualAdjustment' => $i->manual_adjustment, 'taxableAmount' => $i->taxable_amount, 'discountTotal' => $i->discount_total, 'taxRate' => $i->tax_rate, 'taxTotal' => $i->tax_total, 'total' => $i->total, 'paidAmount' => $allocatedCents === null ? null : Money::decimal($allocatedCents), 'remainingAmount' => $remainingCents === null ? null : Money::decimal($remainingCents), 'paymentStatus' => $paymentStatus, 'isOverdue' => $isOverdue, 'creditedAmount' => $allocatedCents === null ? null : Money::decimal($creditedTotalCents), 'creditStatus' => $allocatedCents === null ? 'not_applicable' : $creditStatus, 'createdBy' => $i->creator_name, 'createdAt' => $i->created_at, 'updatedAt' => $i->updated_at, 'backdateReason' => $i->backdate_reason, 'isBackdated' => $i->invoice_date < substr((string) $i->created_at, 0, 10)]; }
     private function actions(object $i, array $p, ?int $allocatedCents = null, int $creditedArCents = 0): array {
         $remainingCents = $allocatedCents === null ? null : Money::cents($i->total) - $allocatedCents - $creditedArCents;
         return ['canView' => isset($p['finance.sales.view']), 'canEdit' => $i->status === 'draft' && isset($p['finance.sales.edit']), 'canCancel' => $i->status === 'draft' && isset($p['finance.sales.edit']), 'canPost' => $i->status === 'draft' && isset($p['finance.sales.post']), 'canRegisterPayment' => ! $i->is_walk_in && $i->status === 'posted' && $remainingCents !== null && $remainingCents > 0 && isset($p['finance.customer_payments.create']), 'canCreateCreditNote' => $i->status === 'posted' && isset($p['finance.sales_credit_notes.create'])];
     }
-    private function data(Request $request, bool $creating): array { return $request->validate([...\App\Support\FactoryCurrency::rules(), 'branchId' => [$creating ? 'required' : 'sometimes', 'integer'], 'customerId' => [$creating ? 'required' : 'sometimes', 'integer'], 'invoiceDate' => [$creating ? 'required' : 'sometimes', 'date'], 'dueDate' => ['nullable', 'date'], 'reference' => ['nullable', 'string', 'max:128'], 'notes' => ['nullable', 'string', 'max:5000'], 'idempotencyKey' => [$creating ? 'nullable' : 'prohibited', 'string', 'max:128'], 'invoiceDiscountType' => ['nullable', 'in:percent,fixed'], 'invoiceDiscountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'manualAdjustment' => ['nullable', 'regex:/^-?\d+(\.\d+)?$/'], 'charges' => ['sometimes', 'array'], 'charges.*.name' => ['required_with:charges', 'string', 'max:255'], 'charges.*.amount' => ['required_with:charges', 'regex:/^\d+(\.\d+)?$/'], 'charges.*.taxable' => ['nullable', 'boolean'], 'lines' => [$creating ? 'required' : 'sometimes', 'array', 'min:1'], 'lines.*.productId' => ['nullable', 'integer'], 'lines.*.inventoryItemId' => ['nullable', 'integer'], 'lines.*.unitCode' => ['nullable', 'string', 'max:40'], 'lines.*.variantId' => ['nullable', 'integer'], 'lines.*.quantity' => ['required_with:lines', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.unitPrice' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.discountType' => ['nullable', 'in:percent,fixed'], 'lines.*.discountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.materialOverrides' => ['nullable', 'array'], 'lines.*.materialOverrides.*.inventoryItemId' => ['required_with:lines.*.materialOverrides', 'integer'], 'lines.*.materialOverrides.*.quantity' => ['required_with:lines.*.materialOverrides', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.materialOverrides.*.unitCode' => ['required_with:lines.*.materialOverrides', 'string', 'max:8']]); }
+    private function data(Request $request, bool $creating): array { return $request->validate([...\App\Support\FactoryCurrency::rules(), 'branchId' => [$creating ? 'required' : 'sometimes', 'integer'], 'customerId' => [$creating ? 'required' : 'sometimes', 'integer'], 'invoiceDate' => [$creating ? 'required' : 'sometimes', 'date'], 'dueDate' => ['nullable', 'date'], 'reference' => ['nullable', 'string', 'max:128'], 'notes' => ['nullable', 'string', 'max:5000'], 'backdateReason' => ['nullable', 'string', 'max:1000'], 'idempotencyKey' => [$creating ? 'nullable' : 'prohibited', 'string', 'max:128'], 'invoiceDiscountType' => ['nullable', 'in:percent,fixed'], 'invoiceDiscountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'manualAdjustment' => ['nullable', 'regex:/^-?\d+(\.\d+)?$/'], 'charges' => ['sometimes', 'array'], 'charges.*.name' => ['required_with:charges', 'string', 'max:255'], 'charges.*.amount' => ['required_with:charges', 'regex:/^\d+(\.\d+)?$/'], 'charges.*.taxable' => ['nullable', 'boolean'], 'lines' => [$creating ? 'required' : 'sometimes', 'array', 'min:1'], 'lines.*.productId' => ['nullable', 'integer'], 'lines.*.inventoryItemId' => ['nullable', 'integer'], 'lines.*.unitCode' => ['nullable', 'string', 'max:40'], 'lines.*.variantId' => ['nullable', 'integer'], 'lines.*.quantity' => ['required_with:lines', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.unitPrice' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.discountType' => ['nullable', 'in:percent,fixed'], 'lines.*.discountValue' => ['nullable', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.materialOverrides' => ['nullable', 'array'], 'lines.*.materialOverrides.*.inventoryItemId' => ['required_with:lines.*.materialOverrides', 'integer'], 'lines.*.materialOverrides.*.quantity' => ['required_with:lines.*.materialOverrides', 'regex:/^\d+(\.\d+)?$/'], 'lines.*.materialOverrides.*.unitCode' => ['required_with:lines.*.materialOverrides', 'string', 'max:8']]); }
     /** One 'sales.invoice.price_overridden' audit entry per line whose invoiced unit price diverges from its snapshot default — kept separate from the generic created/updated event so overrides are independently queryable. */
     private function auditPriceOverrides(Request $request, int $tenant, object $invoice, int $actor): void {
         foreach ($invoice->lines ?? [] as $line) {

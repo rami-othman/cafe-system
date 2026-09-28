@@ -17,7 +17,7 @@ final class DailyClosingReadinessService
         $blockers=[]; $warn=[]; $add=function(string $code,string $severity,array $extra=[]) use (&$blockers,&$warn):void { $row=['code'=>$code,'severity'=>$severity]+$extra; if ($severity === 'blocking') $blockers[]=$row; else $warn[]=$row; };
         if ($summary['shifts']['open'] > 0) $add('OPEN_SHIFTS','blocking',['count'=>$summary['shifts']['open']]);
         if ($summary['operations']['pendingExpensesCount'] > 0) $add('PENDING_EXPENSE_APPROVAL','blocking',['count'=>$summary['operations']['pendingExpensesCount']]);
-        if ($actualCash === null) $add('MISSING_ACTUAL_CASH','blocking'); else { $d=Money::cents($actualCash)-Money::cents($summary['cash']['expectedCash']); if ($d !== 0) $add('CASH_DIFFERENCE','blocking',['amount'=>Money::decimal($d)]); }
+        if ($actualCash === null) $add('MISSING_ACTUAL_CASH','blocking'); else { $d=Money::cents($actualCash)-Money::cents($summary['cash']['expectedCash']); if ($d !== 0) $add('CASH_DIFFERENCE','warning',['amount'=>Money::decimal($d)]); }
         $drafts=DB::table('journal_entries')->where('tenant_id',$tenant)->where('branch_id',$branch)->where('status','draft')->whereDate('entry_date',$date)->count(); if ($drafts) $add('DRAFT_JOURNALS','blocking',['count'=>$drafts]);
 
         $inventoryIssues = $this->integrity->inventoryPostingIssues($tenant, $branch, $date);

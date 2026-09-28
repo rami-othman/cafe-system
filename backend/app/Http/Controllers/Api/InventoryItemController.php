@@ -358,73 +358,78 @@ class InventoryItemController extends Controller
             ]);
 
         $all = $variantLines->concat($modifierLines)->sortBy('productName')->values();
+        $hint = null;
+        if ($all->isEmpty()) {
+            $similar = DB::table('inventory_items as i')
+                ->where('i.tenant_id', $tenant)->where('i.id', '!=', $item)->whereNull('i.deleted_at')
+                ->where(function ($query) use ($material): void {
+                    if ($material->sku) $query->where('i.sku', $material->sku);
+                    if ($material->name_ar) $query->orWhere('i.name_ar', $material->name_ar);
+                })->where(function ($query) use ($tenant): void {
+                    $query->whereExists(fn ($q) => $q->selectRaw('1')->from('variant_recipe_components as c')->whereColumn('c.inventory_item_id', 'i.id')->where('c.tenant_id', $tenant))
+                        ->orWhereExists(fn ($q) => $q->selectRaw('1')->from('modifier_option_recipe_profile_components as c')->whereColumn('c.inventory_item_id', 'i.id')->where('c.tenant_id', $tenant));
+                })->first(['i.id']);
+            if ($similar) {
+                $count = DB::table('variant_recipe_components')->where('tenant_id', $tenant)->where('inventory_item_id', $similar->id)->distinct()->count('variant_recipe_id')
+                    + DB::table('modifier_option_recipe_profile_components')->where('tenant_id', $tenant)->where('inventory_item_id', $similar->id)->distinct()->count('modifier_option_recipe_profile_id');
+                $hint = "هذه المادة غير مستخدمة بوصفات، يوجد مادة مشابهة (#{$similar->id}) مستخدمة في {$count} وصفة";
+            }
+        }
         $perPage = min(max((int) $request->query('perPage', 50), 1), 200);
         $page = max(1, (int) $request->query('page', 1));
 
         return response()->json([
             'data' => $all->forPage($page, $perPage)->values(),
-            'meta' => ['currentPage' => $page, 'perPage' => $perPage, 'total' => $all->count(), 'lastPage' => max(1, (int) ceil($all->count() / $perPage))],
+            'meta' => ['currentPage' => $page, 'perPage' => $perPage, 'total' => $all->count(), 'lastPage' => max(1, (int) ceil($all->count() / $perPage)), 'hint' => $hint],
         ]);
     }
 
-    /**
-     * Read-only "سجل الشراء" tab data. `purchase_receipt_lines` is the one
-     * unambiguous "a purchase actually moved this item's stock" record: it
-     * is created 1:1 with the `stock_movements` row it produces
-     * (referenceType='purchase_receipt_line', see PurchaseReceivingService)
-     * and only exists once its parent goods receipt is posted, so a single
-     * purchase can never be counted twice here even though the invoice line
-     * it came from may be split across several receipts.
-     */
+    /** Purchase invoice lines include posted but not-yet-received purchases. */
     public function purchaseHistory(Request $request, int $item): JsonResponse
     {
         $tenant = TenantContext::id($request);
         $material = $this->scopedItem($request, $tenant, $item);
-        if ($material->owner_branch_id !== null) {
-            $page = DB::table('supplier_invoice_lines as l')->join('supplier_invoices as i', 'i.id', '=', 'l.supplier_invoice_id')
-                ->join('suppliers as s', 's.id', '=', 'i.supplier_id')->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id')
-                ->where('l.tenant_id', $tenant)->where('l.inventory_item_id', $item)->where('i.branch_id', $material->owner_branch_id)
-                ->whereNull('i.deleted_at')->orderByDesc('i.invoice_date')->orderByDesc('l.id')
-                ->paginate($this->perPage($request), ['l.*', 'i.id as invoice_id', 'i.invoice_number', 'i.invoice_date', 's.name as supplier_name', 'w.name as warehouse_name']);
-            return response()->json(['data' => collect($page->items())->map(fn ($r) => [
-                'receiptId' => (int) $r->invoice_id, 'receiptNumber' => $r->invoice_number, 'receiptDate' => $r->invoice_date,
-                'supplierName' => $r->supplier_name, 'invoiceNumber' => $r->invoice_number, 'invoiceDate' => $r->invoice_date,
-                'warehouseName' => $r->warehouse_name, 'quantity' => $r->quantity, 'unit' => $r->purchase_unit,
-                'unitCost' => $r->unit_price, 'lineTotal' => $r->line_total,
-            ])->values(), 'meta' => $this->meta($page)]);
-        }
-        $query = DB::table('purchase_receipt_lines as l')
-            ->join('purchase_receipts as r', 'r.id', '=', 'l.purchase_receipt_id')
-            ->join('supplier_invoices as si', 'si.id', '=', 'r.supplier_invoice_id')
-            ->join('suppliers as s', 's.id', '=', 'si.supplier_id')
-            ->join('warehouses as w', 'w.id', '=', 'l.warehouse_id')
-            ->where('l.tenant_id', $tenant)
-            ->where('l.inventory_item_id', $item)
-            ->where('r.status', 'posted');
-        InventoryAccess::scopeWarehouseBranches($query, $request, 'w.branch_id');
+        $latestReceipts = DB::table('purchase_receipt_lines as rl')->join('purchase_receipts as r', 'r.id', '=', 'rl.purchase_receipt_id')
+            ->where('r.tenant_id', $tenant)->where('r.status', 'posted')
+            ->groupBy('rl.supplier_invoice_line_id')
+            ->selectRaw('rl.supplier_invoice_line_id, MAX(r.id) as receipt_id');
+        $query = DB::table('supplier_invoice_lines as l')
+            ->join('supplier_invoices as i', 'i.id', '=', 'l.supplier_invoice_id')
+            ->join('suppliers as s', 's.id', '=', 'i.supplier_id')
+            ->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id')
+            ->leftJoinSub($latestReceipts, 'latest_receipt', 'latest_receipt.supplier_invoice_line_id', '=', 'l.id')
+            ->leftJoin('purchase_receipts as r', 'r.id', '=', 'latest_receipt.receipt_id')
+            ->where('l.tenant_id', $tenant)->where('l.inventory_item_id', $item)
+            ->whereNotIn('i.status', ['draft', 'cancelled'])->whereNull('i.deleted_at');
+        if ($material->owner_branch_id !== null) $query->where('i.branch_id', $material->owner_branch_id);
+        else InventoryAccess::scopeWarehouseBranches($query, $request, 'w.branch_id');
         $paginator = $query
-            ->orderByDesc('r.receipt_date')
+            ->orderByDesc('i.invoice_date')
             ->orderByDesc('l.id')
             ->paginate(
                 min(max((int) $request->query('perPage', 25), 1), 100),
-                ['l.*', 'r.receipt_number', 'r.receipt_date', 's.name as supplier_name', 'si.invoice_number', 'si.invoice_date', 'w.name as warehouse_name'],
+                ['l.*', 'i.id as invoice_id', 'i.invoice_number', 'i.invoice_date', 'r.id as receipt_id', 'r.receipt_number', 'r.receipt_date', 's.name as supplier_name', 'w.name as warehouse_name'],
                 'page',
                 max(1, (int) $request->query('page', 1)),
             );
 
         return response()->json([
             'data' => collect($paginator->items())->map(fn (object $row) => [
-                'receiptId' => (int) $row->purchase_receipt_id,
+                'invoiceId' => (int) $row->invoice_id,
+                'receiptId' => $row->receipt_id ? (int) $row->receipt_id : null,
                 'receiptNumber' => $row->receipt_number,
                 'receiptDate' => $row->receipt_date,
                 'supplierName' => $row->supplier_name,
                 'invoiceNumber' => $row->invoice_number,
                 'invoiceDate' => $row->invoice_date,
                 'warehouseName' => $row->warehouse_name,
-                'quantity' => InventoryDecimal::quantity(InventoryDecimal::units($row->received_quantity)),
-                'unit' => $row->received_unit,
-                'unitCost' => InventoryDecimal::unitCost(InventoryDecimal::cost($row->unit_cost)),
-                'lineTotal' => InventoryDecimal::totalCost(InventoryDecimal::units($row->received_quantity), InventoryDecimal::cost($row->unit_cost)),
+                'quantity' => $row->quantity,
+                'unit' => $row->purchase_unit ?: $material->unit,
+                'unitCost' => $row->unit_price,
+                'lineTotal' => $row->line_total,
+                'receivedQuantity' => $row->received_quantity,
+                'receivedUnit' => $material->unit,
+                'receiptStatus' => InventoryDecimal::units($row->received_quantity) >= InventoryDecimal::units($row->base_quantity ?? $row->quantity) ? 'received' : (InventoryDecimal::units($row->received_quantity) > 0 ? 'partial' : 'not_received'),
             ])->values(),
             'meta' => $this->meta($paginator),
         ]);
@@ -501,7 +506,23 @@ class InventoryItemController extends Controller
 
     private function movement(object $row, ?object $item = null): array
     {
-        return ['id' => (int) $row->id, 'warehouseName' => $row->warehouse_name, 'itemNameEn' => $item->name_en ?? null, 'itemNameAr' => $item->name_ar ?? null, 'unit' => $item->unit ?? null, 'type' => $row->type, 'quantityIn' => $row->quantity_in, 'quantityOut' => $row->quantity_out, 'quantityBefore' => $row->quantity_before, 'quantityAfter' => $row->quantity_after, 'unitCost' => $row->unit_cost, 'totalCost' => $row->total_cost, 'reason' => $row->reason, 'referenceType' => $row->reference_type ?? null, 'referenceId' => isset($row->reference_id) && $row->reference_id ? (int) $row->reference_id : null, 'userName' => $row->user_name ?? null, 'occurredAt' => $row->occurred_at, 'createdAt' => $row->created_at ?? null];
+        $type = $row->reference_type ?? null;
+        $id = isset($row->reference_id) && $row->reference_id ? (int) $row->reference_id : null;
+        $document = null;
+        if ($id && $type === 'purchase_receipt_line') {
+            $document = DB::table('purchase_receipt_lines as l')->join('purchase_receipts as r', 'r.id', '=', 'l.purchase_receipt_id')
+                ->where('l.tenant_id', $row->tenant_id)->where('l.id', $id)->first(['r.id', 'r.receipt_number as number']);
+            $type = 'purchase_receipt';
+        } elseif ($id && $type === 'sales_invoice_line') {
+            $document = DB::table('sales_invoice_lines as l')->join('sales_invoices as i', 'i.id', '=', 'l.sales_invoice_id')
+                ->where('l.tenant_id', $row->tenant_id)->where('l.id', $id)->first(['i.id', 'i.invoice_number as number']);
+            $type = 'sales_invoice';
+        } elseif ($id && $type === 'order_item') {
+            $document = DB::table('order_items as l')->join('orders as o', 'o.id', '=', 'l.order_id')
+                ->where('l.tenant_id', $row->tenant_id)->where('l.id', $id)->first(['o.id', 'o.order_number as number']);
+            $type = 'order';
+        }
+        return ['id' => (int) $row->id, 'warehouseName' => $row->warehouse_name, 'itemNameEn' => $item->name_en ?? null, 'itemNameAr' => $item->name_ar ?? null, 'unit' => $item->unit ?? null, 'type' => $row->type, 'quantityIn' => $row->quantity_in, 'quantityOut' => $row->quantity_out, 'quantityBefore' => $row->quantity_before, 'quantityAfter' => $row->quantity_after, 'unitCost' => $row->unit_cost, 'totalCost' => $row->total_cost, 'reason' => $row->reason, 'referenceType' => $type, 'referenceId' => $document ? (int) $document->id : $id, 'referenceNumber' => $document->number ?? ($id ? (string) $id : null), 'userName' => $row->user_name ?? null, 'occurredAt' => $row->occurred_at, 'createdAt' => $row->created_at ?? null];
     }
 
 

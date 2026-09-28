@@ -52,7 +52,7 @@ class SupplierPaymentService
                 $supplier = DB::table('suppliers')->where('tenant_id', $tenantId)->where('id', $data['supplierId'])->where('is_active', true)->whereNull('deleted_at')->first();
                 \App\Support\DataScope::assertReference($tenantId, 'suppliers', (int) $data['supplierId'], isset($data['branchId']) ? (int) $data['branchId'] : null);
                 if (! $supplier) {
-                    throw ValidationException::withMessages(['supplierId' => 'Select an active tenant supplier.']);
+                    throw ValidationException::withMessages(['supplierId' => 'اختر مورداً نشطاً تابعاً لهذا المستأجر.']);
                 }
                 if (! empty($data['branchId'])) {
                     FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $data['branchId']);
@@ -61,7 +61,7 @@ class SupplierPaymentService
                 $method = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->lockForUpdate()->first();
                 $cashSource = null;
                 if ($method?->type === 'cash') {
-                    if (empty($data['branchId'])) throw ValidationException::withMessages(['branchId' => 'A branch is required for cash payment.']);
+                    if (empty($data['branchId'])) throw ValidationException::withMessages(['branchId' => 'يجب تحديد الفرع للدفع النقدي.']);
                     $cashSource = $trustedCashSource ?? $this->cashSources->resolve(
                         $tenantId, (int) $actorId, (int) $data['branchId'], $data['financialLocationId'] ?? null, true,
                     );
@@ -74,45 +74,45 @@ class SupplierPaymentService
                 if (! $method || ! $location || ($method->type === 'cash'
                     ? $location->kind !== 'cash'
                     : (int) $method->financial_account_id !== (int) $location->financial_account_id)) {
-                    throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
+                    throw ValidationException::withMessages(['payment' => 'اختر طريقة دفع نشطة وحساب نقد أو بنك مطابقاً لهذا المستأجر.']);
                 }
                 if ($location->branch_id && (int) $location->branch_id !== (int) ($data['branchId'] ?? 0)) {
-                    throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the payment branch.']);
+                    throw ValidationException::withMessages(['financialLocationId' => 'الموقع المالي لا يتبع فرع الدفع.']);
                 }
 
                 $amountCents = Money::cents($data['amount']);
                 if ($amountCents <= 0) {
-                    throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+                    throw ValidationException::withMessages(['amount' => 'يجب أن يكون المبلغ أكبر من الصفر.']);
                 }
 
                 $allocations = collect($data['allocations'] ?? [])
                     ->map(fn (array $line) => ['invoiceId' => (int) $line['invoiceId'], 'amountCents' => Money::cents($line['amount'])])
                     ->sortBy('invoiceId')->values();
                 if ($allocations->isEmpty()) {
-                    throw ValidationException::withMessages(['allocations' => 'At least one invoice allocation is required.']);
+                    throw ValidationException::withMessages(['allocations' => 'يجب توزيع الدفعة على فاتورة واحدة على الأقل.']);
                 }
                 if ($allocations->pluck('invoiceId')->unique()->count() !== $allocations->count()) {
-                    throw ValidationException::withMessages(['allocations' => 'The same invoice cannot be allocated twice in one payment.']);
+                    throw ValidationException::withMessages(['allocations' => 'لا يمكن توزيع الدفعة على الفاتورة نفسها مرتين.']);
                 }
                 $allocatedTotalCents = $allocations->sum('amountCents');
                 if ($allocatedTotalCents !== $amountCents) {
-                    throw ValidationException::withMessages(['allocations' => 'Allocations must add up to exactly the payment amount.']);
+                    throw ValidationException::withMessages(['allocations' => 'يجب أن يساوي مجموع التوزيعات مبلغ الدفعة تماماً.']);
                 }
 
                 foreach ($allocations as $line) {
                     if ($line['amountCents'] <= 0) {
-                        throw ValidationException::withMessages(['allocations' => 'Each allocation must be greater than zero.']);
+                        throw ValidationException::withMessages(['allocations' => 'يجب أن يكون كل مبلغ موزّع أكبر من الصفر.']);
                     }
                     $invoice = DB::table('supplier_invoices')->where('tenant_id', $tenantId)->where('id', $line['invoiceId'])->lockForUpdate()->first();
                     if (! $invoice || (int) $invoice->supplier_id !== (int) $supplier->id) {
-                        throw ValidationException::withMessages(['allocations' => "Invoice #{$line['invoiceId']} does not belong to the selected supplier."]);
+                        throw ValidationException::withMessages(['allocations' => "الفاتورة رقم {$line['invoiceId']} لا تتبع المورد المحدد."]);
                     }
                     if (! in_array($invoice->status, ['posted', 'partially_paid'], true)) {
-                        throw ValidationException::withMessages(['allocations' => "Invoice {$invoice->internal_reference} is not open for payment."]);
+                        throw ValidationException::withMessages(['allocations' => "الفاتورة {$invoice->internal_reference} غير متاحة للدفع."]);
                     }
                     $remainingCents = $this->payable->invoiceRemainingCents($tenantId, $invoice->id, lock: true);
                     if ($line['amountCents'] > $remainingCents) {
-                        throw ValidationException::withMessages(['allocations' => "Allocation for {$invoice->internal_reference} exceeds its remaining balance of ".Money::decimal($remainingCents).'.']);
+                        throw ValidationException::withMessages(['allocations' => "المبلغ الموزّع على {$invoice->internal_reference} يتجاوز الرصيد المتبقي ".Money::decimal($remainingCents).'.']);
                     }
                 }
 
@@ -154,7 +154,7 @@ class SupplierPaymentService
                     'sourceId' => $paymentId,
                     'sourceEvent' => 'SUPPLIER_PAYMENT_POSTED',
                     'entryDate' => $data['paymentDate'],
-                    'description' => "Supplier Payment — {$supplier->name}",
+                    'description' => "دفعة مورد — {$supplier->name}",
                     'lines' => [
                         ['accountCode' => '2000', 'debit' => Money::decimal($amountCents), 'credit' => '0.00'],
                         ['accountCode' => $location->account_code, 'debit' => '0.00', 'credit' => Money::decimal($amountCents), 'financialLocationId' => $location->id],
@@ -166,7 +166,7 @@ class SupplierPaymentService
                     DB::table('shift_cash_movements')->insertOrIgnore([
                         'tenant_id' => $tenantId, 'branch_id' => $data['branchId'], 'shift_id' => $cashSource->shift->id,
                         'kind' => 'expense', 'amount' => Money::decimal($amountCents),
-                        'description' => "Supplier payment {$paymentId}", 'source_type' => 'supplier_payment',
+                        'description' => "دفعة مورد {$paymentId}", 'source_type' => 'supplier_payment',
                         'source_id' => $paymentId, 'created_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
                     ]);
                 }
@@ -194,7 +194,7 @@ class SupplierPaymentService
                 FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $payment->branch_id);
             }
             if ($payment->status !== 'posted' || ! $payment->journal_entry_id) {
-                throw ValidationException::withMessages(['status' => 'Only a posted, unreversed supplier payment can be reversed.']);
+                throw ValidationException::withMessages(['status' => 'يمكن عكس دفعة مورد مرحّلة وغير معكوسة فقط.']);
             }
 
             $allocations = DB::table('payment_allocations')->where('tenant_id', $tenantId)->where('supplier_payment_id', $id)->orderBy('supplier_invoice_id')->lockForUpdate()->get();
@@ -224,7 +224,7 @@ class SupplierPaymentService
                 DB::table('shift_cash_movements')->insertOrIgnore([
                     'tenant_id' => $tenantId, 'branch_id' => $payment->branch_id, 'shift_id' => $payment->shift_id,
                     'kind' => 'deposit', 'amount' => $payment->amount,
-                    'description' => "Reversal of supplier payment {$payment->payment_number}",
+                    'description' => "عكس دفعة المورد {$payment->payment_number}",
                     'source_type' => 'supplier_payment_reversal', 'source_id' => $payment->id,
                     'created_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
                 ]);
@@ -246,7 +246,7 @@ class SupplierPaymentService
             $query->lockForUpdate();
         }
         $row = $query->first();
-        abort_unless($row, 404, 'Supplier payment not found.');
+        abort_unless($row, 404, 'دفعة المورد غير موجودة.');
 
         return $row;
     }

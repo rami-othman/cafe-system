@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Domain\Purchasing\PurchaseReceivingService;
-use App\Support\BranchLocalDate;
 use App\Support\FinanceAccess;
 use App\Support\InventoryDecimal;
 use App\Support\Money;
@@ -63,7 +62,7 @@ final class PurchasePostingOrchestrator
             $remainingBeforePost = $this->payable->invoiceRemainingCents($tenantId, $invoiceId);
             $paymentCents = $paidAmount === null ? $remainingBeforePost : Money::cents($paidAmount, 'paidAmount');
             if ($paymentCents > $remainingBeforePost) {
-                throw ValidationException::withMessages(['paidAmount' => 'Payment exceeds the outstanding invoice amount.']);
+                throw ValidationException::withMessages(['paidAmount' => 'الدفعة تتجاوز المبلغ المتبقي على الفاتورة.']);
             }
 
             $source = $paymentCents > 0
@@ -81,7 +80,11 @@ final class PurchasePostingOrchestrator
             }
 
             if ($invoice->receipt_mode === 'immediate' || ($invoice->receipt_mode === null && $wasDraft)) {
-                $this->receiveRemainingInventory($request, $tenantId, $invoice, $actorId, $receiptDate ?? BranchLocalDate::today($branchId));
+                // Client decision 2026-09-28 (T7): a purchase's receipt and
+                // payment always land on the invoice's own accounting date —
+                // never today's date, and never a separately-picked date —
+                // so a backdated invoice's inventory and cash move together.
+                $this->receiveRemainingInventory($request, $tenantId, $invoice, $actorId, $invoice->invoice_date);
             }
 
             if ($paymentCents === 0) {
@@ -96,7 +99,7 @@ final class PurchasePostingOrchestrator
                 ...\App\Support\FactoryCurrency::paymentDisplay($invoice, Money::decimal($paymentCents)),
                 'supplierId' => (int) $invoice->supplier_id,
                 'branchId' => $branchId,
-                'paymentDate' => $paymentDate ?? BranchLocalDate::today($branchId),
+                'paymentDate' => $invoice->invoice_date,
                 'amount' => Money::decimal($paymentCents),
                 'paymentMethodId' => (int) $source->method->id,
                 'financialLocationId' => (int) $source->location->id,
@@ -190,7 +193,7 @@ final class PurchasePostingOrchestrator
             $query->lockForUpdate();
         }
         $invoice = $query->first();
-        abort_unless($invoice, 404, 'Purchase invoice not found.');
+        abort_unless($invoice, 404, 'فاتورة الشراء غير موجودة.');
 
         return $invoice;
     }

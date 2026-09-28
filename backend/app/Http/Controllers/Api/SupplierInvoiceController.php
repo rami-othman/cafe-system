@@ -83,13 +83,15 @@ class SupplierInvoiceController extends Controller
     {
         $data = $request->validate(['idempotencyKey' => ['required', 'string', 'max:120']]);
         $tenant = TenantContext::id($request);
-        if ($this->invoices->find($tenant, $invoice)->receipt_mode === 'immediate') {
+        $before = $this->invoices->find($tenant, $invoice);
+        if ($before->receipt_mode === 'immediate') {
             $this->purchasePosting->post($request, $tenant, $invoice, $data['idempotencyKey'], FinancialActor::id($request, $tenant), paidAmount: '0.00');
         } else {
             $this->invoices->post($request, $tenant, $invoice, $data, FinancialActor::id($request, $tenant));
         }
+        $warning = \App\Support\BackdatePolicy::closedDayWarning($tenant, $before->branch_id ? (int) $before->branch_id : null, $before->invoice_date);
 
-        return response()->json(['data' => $this->one($tenant, $invoice, $request)]);
+        return response()->json(['data' => $this->one($tenant, $invoice, $request), 'warnings' => $warning ? [$warning] : []]);
     }
 
     public function reverse(Request $request, int $invoice): JsonResponse
@@ -124,6 +126,7 @@ class SupplierInvoiceController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'idempotencyKey' => ['nullable', 'string', 'max:120'],
+            'backdateReason' => ['nullable', 'string', 'max:1000'],
             // Whole-invoice discount — allocated proportionally into the lines' cost
             // basis (and their commercial total) when lines are present; see
             // SupplierInvoiceService::invoiceDiscount()/allocateAndFinalize().
@@ -288,6 +291,8 @@ class SupplierInvoiceController extends Controller
             'reversalJournalEntryId' => $row->reversal_journal_entry_id ? (int) $row->reversal_journal_entry_id : null,
             'postedAt' => $row->posted_at,
             'createdAt' => $row->created_at,
+            'backdateReason' => $row->backdate_reason,
+            'isBackdated' => $row->invoice_date < substr((string) $row->created_at, 0, 10),
         ];
     }
 }

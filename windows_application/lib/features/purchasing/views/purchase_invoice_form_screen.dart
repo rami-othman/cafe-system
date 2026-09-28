@@ -16,6 +16,7 @@ import '../../inventory/models/inventory_models.dart';
 import '../../inventory/repositories/inventory_repository.dart';
 import '../../pos/models/branch.dart';
 import '../../operational_context/controllers/operational_branch_cubit.dart';
+import '../../../shared/widgets/backdate_reason_field.dart';
 import '../controllers/purchasing_cubit.dart';
 import '../models/purchasing_models.dart';
 import '../widgets/inventory_item_search_field.dart';
@@ -151,6 +152,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   FactoryCurrencySelection _currency = const FactoryCurrencySelection();
   final TextEditingController _invoiceNumber = TextEditingController();
   final TextEditingController _notes = TextEditingController();
+  final TextEditingController _backdateReason = TextEditingController();
   final TextEditingController _paidNow = TextEditingController(text: '0');
   String _receiptMode = 'immediate';
   DateTime _invoiceDate = DateTime.now();
@@ -241,6 +243,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
   void dispose() {
     _invoiceNumber.dispose();
     _notes.dispose();
+    _backdateReason.dispose();
     _paidNow.dispose();
     _invoiceDiscountValue.dispose();
     for (final _LineDraft line in _lines) {
@@ -408,6 +411,7 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     _invoiceNumber.text = p.supplierInvoiceNumber ?? '';
     _notes.text = p.notes ?? '';
     _invoiceDate = DateTime.tryParse(p.invoiceDate) ?? _invoiceDate;
+    _backdateReason.text = p.backdateReason ?? '';
     _dueDate = DateTime.tryParse(p.dueDate) ?? _dueDate;
     _supplierId = p.supplierId;
     _branchId = p.branchId;
@@ -576,6 +580,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
     if (forPosting && _branchId == null) {
       return 'اختر الفرع قبل الترحيل.';
     }
+    if (BackdateReasonField.isRequired(_invoiceDate) &&
+        _backdateReason.text.trim().length < 3) {
+      return 'التاريخ سابق لليوم — اكتب سبب التاريخ السابق.';
+    }
     if (_purchaseType == 'expense' && _expenseCategoryId == null) {
       return 'اختر فئة المصروف.';
     }
@@ -669,6 +677,8 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
           'supplierInvoiceNumber': _invoiceNumber.text.trim(),
         'invoiceDate': _isoDate(_invoiceDate),
         'dueDate': _isoDate(_dueDate),
+        if (_backdateReason.text.trim().isNotEmpty)
+          'backdateReason': _backdateReason.text.trim(),
         'invoiceType': _purchaseType == 'inventory'
             ? 'inventory'
             : _purchaseType == 'expense'
@@ -746,11 +756,13 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
             context,
             preview: preview,
             branchName: _selectedBranchName,
+            invoiceDate: _isoDate(_invoiceDate),
             paidAmount: paidAmount,
           );
         }
         if (!hasPayment || choice != null) {
-          final PurchaseInvoice posted = await _cubit.repository.postPurchase(
+          final (PurchaseInvoice posted, List<Map<String, dynamic>> warnings) =
+              await _cubit.repository.postPurchase(
             saved.id,
             'purchase-post-${saved.id}-${DateTime.now().microsecondsSinceEpoch}',
             financialLocationId: choice?.financialLocationId,
@@ -766,6 +778,14 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               ),
             ),
           );
+          for (final Map<String, dynamic> warning in warnings) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: Colors.orange,
+                content: Text('${warning['message'] ?? ''}'),
+              ),
+            );
+          }
         }
       }
       if (!mounted) return;
@@ -884,6 +904,10 @@ class _PurchaseInvoiceFormScreenState extends State<PurchaseInvoiceFormScreen> {
               }),
               onPickInvoiceDate: () => _pickDate(isInvoiceDate: true),
               onPickDueDate: () => _pickDate(isInvoiceDate: false),
+            ),
+            BackdateReasonField(
+              documentDate: _invoiceDate,
+              controller: _backdateReason,
             ),
             const SizedBox(height: FinanceSpace.lg),
             Text('نوع الشراء', style: FinanceText.page),

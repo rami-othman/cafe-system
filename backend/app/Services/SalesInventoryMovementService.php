@@ -21,7 +21,7 @@ final class SalesInventoryMovementService
      *   consumption never sets this — it keeps blocking on insufficient
      *   stock exactly as before.
      */
-    public function consume(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $consumptions, ?int $actorId, bool $allowNegativeStock = false): array
+    public function consume(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $consumptions, ?int $actorId, bool $allowNegativeStock = false, ?string $occurredAt = null): array
     {
         $cost = 0; $movements = [];
         foreach ($consumptions as $consumption) {
@@ -31,6 +31,7 @@ final class SalesInventoryMovementService
                 'quantity' => InventoryDecimal::quantity($consumption['quantity']), 'unit' => $consumption['baseUnit'], 'branchId' => $branchId,
                 'referenceType' => $referenceType, 'referenceId' => $referenceId,
                 'allowNegativeStock' => $allowNegativeStock,
+                'occurredAt' => $occurredAt,
                 'idempotencyKey' => $referenceType === 'order_item'
                     ? "sale-consumption-{$tenantId}-{$referenceId}-{$consumption['materialId']}"
                     : "sale-consumption-{$tenantId}-{$referenceType}-{$referenceId}-{$consumption['materialId']}",
@@ -55,7 +56,7 @@ final class SalesInventoryMovementService
      *
      * @param array<int, array{materialId:int,baseUnit:string,quantity:int,unitCostCents:int}> $restorations
      */
-    public function restore(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $restorations, ?int $actorId): array
+    public function restore(Request $request, int $tenantId, int $branchId, int $warehouseId, string $referenceType, int $referenceId, array $restorations, ?int $actorId, ?string $occurredAt = null): array
     {
         $cost = 0; $movements = [];
         foreach ($restorations as $index => $restoration) {
@@ -65,6 +66,7 @@ final class SalesInventoryMovementService
                 'quantity' => InventoryDecimal::quantity($restoration['quantity']), 'unit' => $restoration['baseUnit'], 'branchId' => $branchId,
                 'unitCost' => InventoryDecimal::unitCost($restoration['unitCostCents']),
                 'referenceType' => $referenceType, 'referenceId' => $referenceId,
+                'occurredAt' => $occurredAt,
                 'idempotencyKey' => "sale-return-{$tenantId}-{$referenceType}-{$referenceId}-{$restoration['materialId']}-{$index}",
             ], $actorId);
             $movement = DB::table('stock_movements')->where('tenant_id', $tenantId)->where('id', $result->movementId)->first();

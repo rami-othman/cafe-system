@@ -66,14 +66,14 @@ class FinancialSetupService
     public function defaultAccounts(): array
     {
         return [
-            ['code' => '1010', 'name_ar' => 'درج النقدية', 'name_en' => 'Cash Drawer', 'account_group' => 'assets', 'normal_balance' => 'debit'],
+            ['code' => '1010', 'name_ar' => 'صندوق نقطة البيع', 'name_en' => 'Cash Drawer', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1020', 'name_ar' => 'الخزنة الرئيسية', 'name_en' => 'Main Safe', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1030', 'name_ar' => 'الحساب البنكي', 'name_en' => 'Bank Account', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1100', 'name_ar' => 'أصل المخزون', 'name_en' => 'Inventory Asset', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1200', 'name_ar' => 'الذمم المدينة', 'name_en' => 'Accounts Receivable', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1500', 'name_ar' => 'الأصول الثابتة', 'name_en' => 'Fixed Assets', 'account_group' => 'assets', 'normal_balance' => 'debit'],
             ['code' => '1590', 'name_ar' => 'مجمع الإهلاك', 'name_en' => 'Accumulated Depreciation', 'account_group' => 'assets', 'normal_balance' => 'credit'],
-            ['code' => '2000', 'name_ar' => 'الحسابات الدائنة', 'name_en' => 'Accounts Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
+            ['code' => '2000', 'name_ar' => 'الذمم الدائنة – الموردون', 'name_en' => 'Accounts Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
             ['code' => '2010', 'name_ar' => 'ضريبة المبيعات المستحقة', 'name_en' => 'Sales Tax Payable', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
             ['code' => '2020', 'name_ar' => 'أرصدة دائنة للعملاء', 'name_en' => 'Customer Credit Balance', 'account_group' => 'liabilities', 'normal_balance' => 'credit'],
             ['code' => '3000', 'name_ar' => 'حقوق الملكية', 'name_en' => 'Equity', 'account_group' => 'equity', 'normal_balance' => 'credit'],
@@ -102,6 +102,11 @@ class FinancialSetupService
         DB::transaction(function () use ($tenantId, $initialBranchId, $actorId, $warehouseName): void {
             $now = now();
             foreach ($this->defaultAccounts() as $account) {
+                $existingNames = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('code', $account['code'])->first(['name_ar', 'name_en']);
+                if ($existingNames) {
+                    $account['name_ar'] = $existingNames->name_ar;
+                    $account['name_en'] = $existingNames->name_en;
+                }
                 DB::table('financial_accounts')->updateOrInsert(
                     ['tenant_id' => $tenantId, 'code' => $account['code']],
                     $account + ['is_active' => true, 'is_system_protected' => true, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now],
@@ -214,9 +219,9 @@ class FinancialSetupService
         $now = now();
         $accounts = DB::table('financial_accounts')->where('tenant_id', $tenantId)->whereIn('code', ['1010', '1020', '1030'])->pluck('id', 'code');
         foreach ([
-            ['code' => 'CASH-DRAWER', 'name' => 'Cash Drawer', 'kind' => 'cash', 'type' => 'cash_drawer', 'accountCode' => '1010'],
-            ['code' => 'MAIN-SAFE', 'name' => 'Main Safe', 'kind' => 'cash', 'type' => 'main_safe', 'accountCode' => '1020'],
-            ['code' => 'BANK', 'name' => 'Bank', 'kind' => 'bank', 'type' => 'bank', 'accountCode' => '1030'],
+            ['code' => 'CASH-DRAWER', 'name' => 'صندوق نقطة البيع', 'kind' => 'cash', 'type' => 'cash_drawer', 'accountCode' => '1010'],
+            ['code' => 'MAIN-SAFE', 'name' => 'الخزنة الرئيسية', 'kind' => 'cash', 'type' => 'main_safe', 'accountCode' => '1020'],
+            ['code' => 'BANK', 'name' => 'البنك', 'kind' => 'bank', 'type' => 'bank', 'accountCode' => '1030'],
         ] as $location) {
             $accountId = $accounts[$location['accountCode']] ?? null;
             if (! $accountId) {
@@ -225,10 +230,13 @@ class FinancialSetupService
             if ($location['code'] === 'CASH-DRAWER' && DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', 'CASH-DRAWER')->exists()) {
                 continue;
             }
+            $existingName = DB::table('financial_locations')->where('tenant_id', $tenantId)->where('code', $location['code'])->value('name');
+            if ($existingName !== null) $location['name'] = $existingName;
             DB::table('financial_locations')->updateOrInsert(['tenant_id' => $tenantId, 'code' => $location['code']], ['branch_id' => null, 'financial_account_id' => $accountId, 'name' => $location['name'], 'kind' => $location['kind'], 'type' => $location['type'], 'bank_name' => null, 'masked_reference' => null, 'is_active' => true, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
         }
         if (isset($accounts['1010'])) {
-            DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => 'Cash', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => null, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
+            $existingName = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('code', 'CASH')->value('name');
+            DB::table('payment_methods')->updateOrInsert(['tenant_id' => $tenantId, 'code' => 'CASH'], ['name' => $existingName ?? 'نقدي', 'type' => 'cash', 'financial_account_id' => $accounts['1010'], 'financial_location_id' => null, 'is_active' => true, 'sort_order' => 1, 'updated_by' => $actorId, 'updated_at' => $now, 'created_by' => $actorId, 'created_at' => $now]);
         }
     }
 
@@ -312,7 +320,7 @@ class FinancialSetupService
             }
             $id = (int) DB::table('financial_locations')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $branchId, 'financial_account_id' => $accountId,
-                'code' => 'CASH-DRAWER-BR-'.$branchId, 'name' => $branch->name.' Cash Drawer',
+                'code' => 'CASH-DRAWER-BR-'.$branchId, 'name' => 'صندوق '.$branch->name,
                 'kind' => 'cash', 'type' => 'cash_drawer', 'bank_name' => null, 'masked_reference' => null,
                 'is_active' => true, 'created_by' => $actorId, 'updated_by' => $actorId,
                 'created_at' => now(), 'updated_at' => now(),

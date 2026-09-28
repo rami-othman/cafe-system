@@ -291,7 +291,8 @@ class _SalesTable extends StatelessWidget {
         (ShiftStrings.grossSales, ShiftFormat.money(sales.grossSales)),
         (ShiftStrings.totalDiscounts, ShiftFormat.money(sales.discounts)),
         (ShiftStrings.totalRefunds, ShiftFormat.money(sales.refunds)),
-        (ShiftStrings.netSales, ShiftFormat.money(sales.netSales)),
+        (ShiftStrings.salesTotal, ShiftFormat.money(sales.salesTotal)),
+        (ShiftStrings.netSales, ShiftFormat.money(sales.salesNet)),
         (ShiftStrings.orderCount, ShiftFormat.count(sales.orderCount)),
         (ShiftStrings.averageOrder, ShiftFormat.money(sales.averageOrderValue)),
         (
@@ -464,6 +465,46 @@ class _CashSection extends StatelessWidget {
               : ShiftColors.surplusInk,
           emphasize: true,
         ),
+        if (result.variance != null && !result.variance!.isZero)
+          ShiftKeyValueRow(
+            label: ShiftStrings.cashDifferenceAccount,
+            value: result.variance!.accountCode == null
+                ? ShiftStrings.notApplicable
+                : result.variance!.journalEntryId == null
+                ? '${result.variance!.accountCode} — ${result.variance!.accountName ?? ''}'
+                : ShiftStrings.variancePosted(
+                    result.variance!.accountCode!,
+                    result.variance!.accountName ?? '',
+                    result.variance!.journalEntryId!,
+                  ),
+            numeric: false,
+          ),
+        if (result.transfer != null) ...<Widget>[
+          ShiftKeyValueRow(
+            label: ShiftStrings.closeTransferDestination,
+            value: result.transfer!.wasSkipped
+                ? (result.transfer!.skippedReason ??
+                      ShiftStrings.notApplicable)
+                : (result.transfer!.destinationName ??
+                      ShiftStrings.notApplicable),
+            numeric: false,
+          ),
+          if (!result.transfer!.wasSkipped)
+            ShiftKeyValueRow(
+              label: ShiftStrings.closeTransferAmount,
+              value: ShiftFormat.money(result.transfer!.amount ?? 0),
+            ),
+        ],
+        if (result.unexplainedCash.abs() > kShiftEpsilon)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: ShiftNotice(
+              tone: ShiftTone.warning,
+              message: ShiftStrings.unexplainedCashWarning(
+                ShiftFormat.money(result.unexplainedCash.abs()),
+              ),
+            ),
+          ),
       ],
     );
   }

@@ -5047,7 +5047,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reportsOverviewAllBranches => 'كل الفروع';
 
   @override
-  String get reportsOverviewKpiNetSales => 'صافي المبيعات';
+  String get reportsOverviewKpiNetSales => 'الإجمالي';
+
+  @override
+  String get reportsOverviewKpiSalesSum => 'مجموع المبيعات';
+
+  @override
+  String get reportsOverviewKpiSalesNet => 'صافي المبيعات';
+
+  @override
+  String get reportsOverviewKpiInfoSalesSum =>
+      'المبيعات المكتملة قبل الخصومات والمرتجعات.';
+
+  @override
+  String get reportsOverviewKpiInfoSalesNet =>
+      'الإجمالي بعد المشتريات والمصروفات المدفوعة.';
 
   @override
   String get reportsOverviewKpiGrossProfit => 'إجمالي الربح';
@@ -5063,15 +5077,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reportsOverviewKpiInfoNetSales =>
-      'إجمالي المبيعات بعد الخصومات والاستردادات، قبل الضريبة.';
+      'مجموع المبيعات بعد المرتجعات والخصومات.';
 
   @override
   String get reportsOverviewKpiInfoGrossProfit =>
-      'صافي المبيعات مطروحاً منه تكلفة البضاعة المباعة.';
+      'الإجمالي مطروحاً منه تكلفة البضاعة المباعة.';
 
   @override
   String get reportsOverviewKpiInfoGrossMargin =>
-      'إجمالي الربح كنسبة من صافي المبيعات.';
+      'إجمالي الربح كنسبة من الإجمالي.';
 
   @override
   String get reportsOverviewKpiInfoTotalExpenses =>
@@ -5210,10 +5224,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'سيتم تفعيل التصدير بعد ربط التقرير بمصدر البيانات.';
 
   @override
-  String get salesProfitabilityGrossSales => 'إجمالي المبيعات';
+  String get salesProfitabilityGrossSales => 'مجموع المبيعات';
 
   @override
-  String get salesProfitabilityNetSales => 'صافي المبيعات';
+  String get salesProfitabilityNetSales => 'الإجمالي';
 
   @override
   String get salesProfitabilityDiscounts => 'الخصومات';
@@ -5326,7 +5340,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cashShiftsAllEmployees => 'كل الموظفين';
 
   @override
-  String get cashShiftsTotalSales => 'إجمالي المبيعات';
+  String get cashShiftsTotalSales => 'مجموع المبيعات';
 
   @override
   String get cashShiftsExpectedCash => 'النقد المتوقع';
@@ -7434,7 +7448,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get expensesReportAverageDaily => 'متوسط المصروف اليومي';
 
   @override
-  String get expensesReportRatio => 'نسبة المصروفات إلى صافي المبيعات';
+  String get expensesReportRatio => 'نسبة المصروفات إلى الإجمالي';
 
   @override
   String get expensesReportLargestCategory => 'أكبر فئة مصروفات';
@@ -7482,7 +7496,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get expensesReportStatus => 'الحالة';
 
   @override
-  String get expensesReportNetSales => 'صافي المبيعات';
+  String get expensesReportNetSales => 'الإجمالي';
 
   @override
   String get expensesReportExpenseSales => 'المصروفات / المبيعات';

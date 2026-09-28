@@ -31,8 +31,11 @@ abstract final class ShiftStrings {
 
   // KPIs
   static const String kpiSectionTitle = 'مؤشرات الوردية';
-  static const String grossSales = 'إجمالي المبيعات';
+  static const String grossSales = 'مجموع المبيعات';
+  static const String salesTotal = 'الإجمالي';
+  static const String salesTotalHint = 'بعد المرتجعات والخصومات';
   static const String netSales = 'صافي المبيعات';
+  static const String netSalesHint = 'بعد المرتجعات والخصومات والمشتريات والمصروفات';
   static const String orderCount = 'عدد الطلبات';
   static const String averageOrder = 'متوسط قيمة الطلب';
   static const String cashSales = 'المبيعات النقدية';
@@ -44,7 +47,7 @@ abstract final class ShiftStrings {
   static const String cancelledOrders = 'عدد الطلبات الملغاة';
   static const String afterDiscountsAndRefunds = 'بعد الخصومات والمرتجعات';
   static const String perOrderAverage = 'لكل طلب مكتمل';
-  static const String ofGrossSales = 'من إجمالي المبيعات';
+  static const String ofGrossSales = 'من مجموع المبيعات';
   static const String ordersPaidInCash = 'طلب مدفوع نقدًا';
   static const String ordersPaidByCard = 'طلب مدفوع بالبطاقة';
   static const String ordersPaidOther = 'عملية دفع أخرى';
@@ -99,6 +102,30 @@ abstract final class ShiftStrings {
   static const String cashMatched = 'الصندوق متطابق';
   static const String cashShortage = 'عجز في الصندوق';
   static const String cashSurplus = 'زيادة في الصندوق';
+
+  // Cash variance posting + close transfer (T2)
+  static String varianceWillPost(
+    String signedAmount,
+    String code,
+    String name,
+  ) => 'الفرق: $signedAmount — سيُرحّل تلقائيًا إلى حساب $code — $name';
+  static String variancePosted(String code, String name, int journalEntryId) =>
+      'رُحّل إلى حساب $code — $name (قيد رقم $journalEntryId)';
+  static String transferWillMove(String amount, String destination) =>
+      'سيُحوَّل $amount إلى $destination';
+  static String transferMoved(String amount, String destination) =>
+      'تم تحويل $amount إلى $destination';
+  static String transferFloatLeft(String amount) =>
+      'ويبقى $amount عهدة بالصندوق';
+  static const String transferNoneNeeded =
+      'لا يوجد مبلغ للتحويل، المعدود يساوي العهدة';
+  static String unexplainedCashWarning(String amount) =>
+      'حركات على الصندوق غير مرتبطة بهذه الوردية: $amount — راجع كشف حساب الصندوق';
+  static const String openDrawerLedger = 'كشف حساب الصندوق';
+  static const String cashVarianceDefaultAccountName = 'عجز وزيادة الصندوق';
+  static const String cashDifferenceAccount = 'حساب فرق الصندوق';
+  static const String closeTransferDestination = 'وجهة تحويل الإغلاق';
+  static const String closeTransferAmount = 'مبلغ التحويل';
 
   // Close type (A2): only a manual close is physically counted.
   static const String closeType = 'طريقة الإغلاق';
@@ -328,7 +355,7 @@ abstract final class ShiftStrings {
   static const String differenceOver = 'زيادة';
   static const String clearFilters = 'مسح عوامل التصفية';
   static const String shiftsCount = 'عدد الورديات';
-  static const String totalNetSales = 'إجمالي صافي المبيعات';
+  static const String totalNetSales = 'مجموع صافي المبيعات';
   static const String totalCashDifferences = 'إجمالي فروقات الصندوق';
   static const String averageShiftDuration = 'متوسط مدة الوردية';
   static const String barDifferences = 'فروقات البار';

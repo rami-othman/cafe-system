@@ -63,16 +63,16 @@ final class CustomerPaymentService
                 }
 
                 $requestedMethod = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->first();
-                if (! $requestedMethod) throw ValidationException::withMessages(['paymentMethodId' => 'Select an active payment method.']);
+                if (! $requestedMethod) throw ValidationException::withMessages(['paymentMethodId' => 'اختر طريقة دفع نشطة.']);
                 $cashSource = $this->cashSources->forPaymentMethod($tenantId, (int) $actorId, (int) $data['branchId'], $requestedMethod, $data['financialLocationId'] ?? null, true);
                 if ($cashSource) $data['financialLocationId'] = (int) $cashSource->location->id;
                 [$method, $location] = $this->resolveSettlement($tenantId, $data);
                 if ($location->branch_id && (int) $location->branch_id !== (int) $data['branchId']) {
-                    throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the payment branch.']);
+                    throw ValidationException::withMessages(['financialLocationId' => 'الموقع المالي لا يتبع فرع الدفع.']);
                 }
                 $amountCents = Money::cents($data['amount']);
                 if ($amountCents <= 0) {
-                    throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+                    throw ValidationException::withMessages(['amount' => 'يجب أن يكون المبلغ أكبر من الصفر.']);
                 }
 
                 $allocations = $this->validatedAllocations($tenantId, (int) $customer->id, $data['allocations'] ?? [], $amountCents, lock: true);
@@ -115,10 +115,10 @@ final class CustomerPaymentService
                     'sourceId' => $paymentId,
                     'sourceEvent' => 'CUSTOMER_PAYMENT_POSTED',
                     'entryDate' => $data['paymentDate'],
-                    'description' => "Customer Payment — {$customer->name}",
+                    'description' => "تحصيل من عميل — {$customer->name}",
                     'lines' => [
-                        ['accountCode' => $location->account_code, 'debit' => Money::decimal($amountCents), 'description' => 'Cash/Bank Received', 'financialLocationId' => $location->id],
-                        ['accountCode' => $arCode, 'credit' => Money::decimal($amountCents), 'description' => 'Accounts Receivable'],
+                        ['accountCode' => $location->account_code, 'debit' => Money::decimal($amountCents), 'description' => 'نقد أو بنك مستلم', 'financialLocationId' => $location->id],
+                        ['accountCode' => $arCode, 'credit' => Money::decimal($amountCents), 'description' => 'الذمم المدينة'],
                     ],
                 ], $actorId);
 
@@ -150,12 +150,12 @@ final class CustomerPaymentService
     {
         $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'] ?? 0)->where('is_active', true)->whereNull('deleted_at')->first();
         if (! $customer) {
-            throw ValidationException::withMessages(['customerId' => 'Select an active tenant customer.']);
+            throw ValidationException::withMessages(['customerId' => 'اختر عميلاً نشطاً تابعاً لهذا المستأجر.']);
         }
         [$method, $location] = $this->resolveSettlement($tenantId, $data);
         $amountCents = Money::cents($data['amount'] ?? '0');
         if ($amountCents <= 0) {
-            throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+            throw ValidationException::withMessages(['amount' => 'يجب أن يكون المبلغ أكبر من الصفر.']);
         }
         $allocations = $this->validatedAllocations($tenantId, (int) $customer->id, $data['allocations'] ?? [], $amountCents, lock: false);
         $arCode = $this->accounts->accountsReceivable($tenantId);
@@ -252,7 +252,7 @@ final class CustomerPaymentService
                 throw ValidationException::withMessages(['payment' => 'استرداد أو عكس دفعة فاتورة نقدية يحتاج إلى إجراء مرتجع نقدي معتمد.']);
             }
             if ($payment->status !== 'posted' || ! $payment->journal_entry_id) {
-                throw ValidationException::withMessages(['status' => 'Only a posted, unreversed customer payment can be reversed.']);
+                throw ValidationException::withMessages(['status' => 'يمكن عكس دفعة عميل مرحّلة وغير معكوسة فقط.']);
             }
 
             $allocations = DB::table('customer_payment_allocations')->where('tenant_id', $tenantId)->where('customer_payment_id', $id)->orderBy('sales_invoice_id')->lockForUpdate()->get();
@@ -305,31 +305,31 @@ final class CustomerPaymentService
             ->map(fn (array $line) => ['invoiceId' => (int) ($line['invoiceId'] ?? $line['salesInvoiceId'] ?? 0), 'amountCents' => Money::cents($line['amount'])])
             ->sortBy('invoiceId')->values();
         if ($allocations->isEmpty()) {
-            throw ValidationException::withMessages(['allocations' => 'At least one invoice allocation is required.']);
+            throw ValidationException::withMessages(['allocations' => 'يجب توزيع الدفعة على فاتورة واحدة على الأقل.']);
         }
         if ($allocations->pluck('invoiceId')->unique()->count() !== $allocations->count()) {
-            throw ValidationException::withMessages(['allocations' => 'The same invoice cannot be allocated twice in one payment.']);
+            throw ValidationException::withMessages(['allocations' => 'لا يمكن توزيع الدفعة على الفاتورة نفسها مرتين.']);
         }
         $allocatedTotalCents = $allocations->sum('amountCents');
         if ($allocatedTotalCents !== $amountCents) {
-            throw ValidationException::withMessages(['allocations' => 'Allocations must add up to exactly the payment amount.']);
+            throw ValidationException::withMessages(['allocations' => 'يجب أن يساوي مجموع التوزيعات مبلغ الدفعة تماماً.']);
         }
 
         foreach ($allocations as $line) {
             if ($line['amountCents'] <= 0) {
-                throw ValidationException::withMessages(['allocations' => 'Each allocation must be greater than zero.']);
+                throw ValidationException::withMessages(['allocations' => 'يجب أن يكون كل مبلغ موزّع أكبر من الصفر.']);
             }
             $invoiceQuery = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('id', $line['invoiceId']);
             $invoice = $lock ? $invoiceQuery->lockForUpdate()->first() : $invoiceQuery->first();
             if (! $invoice || (int) $invoice->customer_id !== $customerId) {
-                throw ValidationException::withMessages(['allocations' => "Invoice #{$line['invoiceId']} does not belong to the selected customer."]);
+                throw ValidationException::withMessages(['allocations' => "الفاتورة رقم {$line['invoiceId']} لا تتبع العميل المحدد."]);
             }
             if (! in_array($invoice->status, CustomerReceivableQueryService::OPEN_STATUSES, true)) {
-                throw ValidationException::withMessages(['allocations' => "Invoice {$invoice->invoice_number} is not open for payment."]);
+                throw ValidationException::withMessages(['allocations' => "الفاتورة {$invoice->invoice_number} غير متاحة للدفع."]);
             }
             $remainingCents = $this->receivables->invoiceRemainingCents($tenantId, (int) $invoice->id, lock: $lock);
             if ($line['amountCents'] > $remainingCents) {
-                throw ValidationException::withMessages(['allocations' => "Allocation for {$invoice->invoice_number} exceeds its remaining balance of ".Money::decimal($remainingCents).'.']);
+                throw ValidationException::withMessages(['allocations' => "المبلغ الموزّع على {$invoice->invoice_number} يتجاوز رصيدها المتبقي وقدره ".Money::decimal($remainingCents).'.']);
             }
         }
 
@@ -346,7 +346,7 @@ final class CustomerPaymentService
         if (! $method || ! $location || ($method->type === 'cash'
             ? $location->kind !== 'cash'
             : (int) $method->financial_account_id !== (int) $location->financial_account_id)) {
-            throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
+            throw ValidationException::withMessages(['payment' => 'اختر طريقة دفع نشطة وحساب نقد أو بنك مطابقاً لهذا المستأجر.']);
         }
 
         return [$method, $location];

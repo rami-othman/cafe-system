@@ -113,6 +113,7 @@ final class SalesCreditNotePostingService
             if ($note->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only a draft credit note can be posted.']);
             }
+            \App\Support\BackdatePolicy::reason($note->branch_id, $note->credit_date, $note->backdate_reason);
 
             $plan = $this->computePlan($tenantId, $creditNoteId, lock: true);
             $accounts = $plan['accounts'];
@@ -136,7 +137,7 @@ final class SalesCreditNotePostingService
                 if (! $restockPlan || $restockPlan['materials'] === []) {
                     continue;
                 }
-                $restored = $this->movements->restore($request, $tenantId, $restockPlan['branchId'], $restockPlan['warehouseId'], 'sales_credit_note_line', (int) $line->id, $restockPlan['materials'], $actorId);
+                $restored = $this->movements->restore($request, $tenantId, $restockPlan['branchId'], $restockPlan['warehouseId'], 'sales_credit_note_line', (int) $line->id, $restockPlan['materials'], $actorId, occurredAt: $note->credit_date);
                 DB::table('sales_credit_note_lines')->where('id', $line->id)->update(['cogs_total' => Money::decimal($restored['cogsCents']), 'updated_at' => $now]);
                 foreach ($restored['movements'] as $movement) {
                     DB::table('sales_credit_note_costs')->insert(['tenant_id' => $tenantId, 'sales_credit_note_id' => $creditNoteId, 'sales_credit_note_line_id' => $line->id, 'inventory_movement_id' => $movement['movementId'], 'cost_amount' => Money::decimal($movement['costCents']), 'created_at' => $now, 'updated_at' => $now]);
@@ -144,22 +145,22 @@ final class SalesCreditNotePostingService
             }
 
             $journalLines = [];
-            if ($plan['subtotalCents'] > 0) $journalLines[] = ['accountCode' => $accounts['salesReturns'], 'debit' => Money::decimal($plan['subtotalCents']), 'description' => 'Sales Returns'];
-            if ($plan['taxCents'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'debit' => Money::decimal($plan['taxCents']), 'description' => 'Sales Tax Reversal'];
+            if ($plan['subtotalCents'] > 0) $journalLines[] = ['accountCode' => $accounts['salesReturns'], 'debit' => Money::decimal($plan['subtotalCents']), 'description' => 'مرتجعات المبيعات'];
+            if ($plan['taxCents'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'debit' => Money::decimal($plan['taxCents']), 'description' => 'عكس ضريبة المبيعات'];
             if ($isDirectCash) {
-                if ($plan['refundCents'] > 0) $journalLines[] = ['accountCode' => $refundSource['location']->account_code, 'credit' => Money::decimal($plan['refundCents']), 'description' => 'Cash/Bank Refunded', 'financialLocationId' => $refundSource['location']->id];
+                if ($plan['refundCents'] > 0) $journalLines[] = ['accountCode' => $refundSource['location']->account_code, 'credit' => Money::decimal($plan['refundCents']), 'description' => 'رد نقد أو بنك', 'financialLocationId' => $refundSource['location']->id];
             } else {
-                if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'Accounts Receivable'];
-                if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'Customer Credit Balance'];
+                if ($plan['arReductionCents'] > 0) $journalLines[] = ['accountCode' => $accounts['accountsReceivable'], 'credit' => Money::decimal($plan['arReductionCents']), 'description' => 'الذمم المدينة'];
+                if ($plan['customerCreditCents'] > 0) $journalLines[] = ['accountCode' => $accounts['customerCredit'], 'credit' => Money::decimal($plan['customerCreditCents']), 'description' => 'رصيد العميل الدائن'];
             }
             if ($plan['cogsCents'] > 0) {
-                $journalLines[] = ['accountCode' => $accounts['inventory'], 'debit' => Money::decimal($plan['cogsCents']), 'description' => 'Inventory Asset'];
-                $journalLines[] = ['accountCode' => $accounts['cogs'], 'credit' => Money::decimal($plan['cogsCents']), 'description' => 'Cost of Goods Sold Reversal'];
+                $journalLines[] = ['accountCode' => $accounts['inventory'], 'debit' => Money::decimal($plan['cogsCents']), 'description' => 'أصل المخزون'];
+                $journalLines[] = ['accountCode' => $accounts['cogs'], 'credit' => Money::decimal($plan['cogsCents']), 'description' => 'عكس تكلفة البضاعة المباعة'];
             }
 
             $journalId = $this->posting->postSalesCreditNote($request, $tenantId, [
                 'branchId' => $note->branch_id, 'sourceId' => $creditNoteId, 'sourceEvent' => 'SALES_CREDIT_NOTE_POSTED',
-                'entryDate' => $note->credit_date, 'description' => "Sales Credit Note {$note->credit_note_number}", 'lines' => $journalLines,
+                'entryDate' => $note->credit_date, 'description' => "إشعار دائن مبيعات {$note->credit_note_number}", 'lines' => $journalLines,
             ], $actorId);
 
             if ($plan['customerCreditCents'] > 0) {

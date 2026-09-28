@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Domain\Inventory\BarCheckTemplateService;
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Services\CashVarianceService;
 use App\Services\HistoricalShiftCloseService;
 use App\Services\ShiftClosePeriod;
 use App\Services\ShiftClosePreviewService;
@@ -41,6 +42,7 @@ class ShiftController extends Controller
         private readonly BranchAccessService $branches,
         private readonly ShiftClosePreviewService $previews,
         private readonly HistoricalShiftCloseService $historicalCloser,
+        private readonly CashVarianceService $variance,
     ) {}
 
     public function current(Request $request): JsonResponse
@@ -224,15 +226,11 @@ class ShiftController extends Controller
                     if ($period->historical()) {
                         return $this->historicalCloser->close($request, $tenantId, $row, $period, $data);
                     }
-                    if (! empty($data['previewVersion'])) {
-                        $preview = $this->previews->build($tenantId, $row, $period);
-                        if (! hash_equals($preview['period']['version'], $data['previewVersion'])) {
-                            throw ValidationException::withMessages(['previewVersion' => __('shifts.historical_preview_changed')]);
-                        }
-                        if (! $preview['period']['canClose']) {
-                            throw ValidationException::withMessages(['closingDate' => $preview['period']['issues']]);
-                        }
-                    }
+                    // Today's close never checks previewVersion: it is only a
+                    // staleness guard for a historical close's frozen snapshot
+                    // (handled above by historicalCloser, which requires it).
+                    // POS sales and cash movements between opening the closing
+                    // wizard and confirming it are expected on the current day.
                 }
                 $this->submitRequiredBarCounts($request, $tenantId, $row, $data['barCountLines'] ?? [], FinancialActor::id($request, $tenantId));
 
@@ -297,8 +295,47 @@ class ShiftController extends Controller
     {
         $snapshot = $this->snapshots->buildSnapshot($tenant, $shift);
         $presentation = ShiftClosePresentation::for($shift);
+        // The account shown here must be the one the variance was actually
+        // posted to, not the branch's *current* configured account — a later
+        // branch settings change must never rewrite an already-closed shift's
+        // report. Read it off the posted journal entry's own unlocated line.
+        $varianceLine = $shift->cash_variance_journal_entry_id
+            ? DB::table('journal_entry_lines as l')
+                ->join('financial_accounts as a', 'a.id', '=', 'l.financial_account_id')
+                ->where('l.tenant_id', $tenant)->where('l.journal_entry_id', $shift->cash_variance_journal_entry_id)
+                ->whereNull('l.financial_location_id')
+                ->first(['a.code', 'a.name_ar'])
+            : null;
+        $transferRow = $shift->close_transfer_id
+            ? DB::table('cash_transfers')->where('tenant_id', $tenant)->where('id', $shift->close_transfer_id)->first()
+            : null;
+        $destinationName = $shift->close_destination_financial_location_id
+            ? DB::table('financial_locations')->where('tenant_id', $tenant)->where('id', $shift->close_destination_financial_location_id)->value('name')
+            : null;
 
-        return $this->serialize($shift) + ['snapshot' => $snapshot, 'cash' => ['expected' => $presentation['expectedCash'], 'actual' => $shift->closing_cash, 'difference' => $presentation['cashDifference'], 'counted' => $presentation['cashCounted'], 'reason' => $shift->cash_difference_reason, 'reasonDetail' => $shift->cash_difference_reason_detail ?? ''], 'closingNotes' => $shift->notes ?? '', 'closedAt' => $this->timestamp($shift->closed_at), 'closedBy' => in_array($shift->close_type, [ShiftCloseService::TYPE_AUTOMATIC, ShiftCloseService::TYPE_LEGACY_RECONCILE], true) ? 'System' : $snapshot['identity']['closedBy'], 'reportNumber' => $shift->report_number];
+        return $this->serialize($shift) + [
+            'snapshot' => $snapshot,
+            'cash' => ['expected' => $presentation['expectedCash'], 'actual' => $shift->closing_cash, 'difference' => $presentation['cashDifference'], 'counted' => $presentation['cashCounted'], 'reason' => $shift->cash_difference_reason, 'reasonDetail' => $shift->cash_difference_reason_detail ?? ''],
+            'variance' => [
+                'amount' => $shift->cash_difference,
+                'journalEntryId' => $shift->cash_variance_journal_entry_id,
+                'accountCode' => $varianceLine->code ?? null,
+                'accountName' => $varianceLine->name_ar ?? null,
+            ],
+            'transfer' => [
+                'id' => $shift->close_transfer_id,
+                'amount' => $transferRow->amount ?? null,
+                'date' => $transferRow->transfer_date ?? null,
+                'destinationName' => $destinationName,
+                'floatLeft' => $shift->closing_float_amount,
+                'skippedReason' => $shift->close_transfer_id ? null : 'المبلغ المعدود يساوي العهدة المتبقية، لا يوجد ما يُحوَّل',
+            ],
+            'unexplainedCash' => Money::decimal(Money::cents($shift->expected_cash ?? '0') - Money::cents($snapshot['drawer']['expectedCash'] ?? '0')),
+            'closingNotes' => $shift->notes ?? '',
+            'closedAt' => $this->timestamp($shift->closed_at),
+            'closedBy' => in_array($shift->close_type, [ShiftCloseService::TYPE_AUTOMATIC, ShiftCloseService::TYPE_LEGACY_RECONCILE], true) ? 'System' : $snapshot['identity']['closedBy'],
+            'reportNumber' => $shift->report_number,
+        ];
     }
 
     private function serialize(object $shift): array

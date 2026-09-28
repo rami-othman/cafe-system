@@ -33,7 +33,8 @@ final class SalesInvoiceService
             $date = CarbonImmutable::parse($data['invoiceDate'])->toDateString();
             $due = ! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString();
             $year = CarbonImmutable::parse($date)->year; $sequence = DB::table('sales_invoices')->where('tenant_id', $tenantId)->where('invoice_number', 'like', "%SI-{$year}-%")->count() + 1;
-            $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals) + \App\Support\FactoryCurrency::columns($data));
+            $backdateReason = \App\Support\BackdatePolicy::reason((int) $data['branchId'], $date, $data['backdateReason'] ?? null);
+            $id = DB::table('sales_invoices')->insertGetId($this->header($tenantId, $actorId, $data, $customer, $date, $due, $year, $sequence, $fingerprint, $totals) + \App\Support\FactoryCurrency::columns($data) + ['backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null]);
             $this->replaceLines($tenantId, $id, $lines); $this->replaceCharges($tenantId, $id, $charges, $totals['rate']);
             return $this->find($tenantId, $id);
         });
@@ -56,7 +57,8 @@ final class SalesInvoiceService
             $totals = $this->totals($lines, $charges, ['invoiceDiscountType' => $data['invoiceDiscountType'] ?? $invoice->invoice_discount_type, 'invoiceDiscountValue' => $data['invoiceDiscountValue'] ?? $invoice->invoice_discount_value, 'manualAdjustment' => $data['manualAdjustment'] ?? $invoice->manual_adjustment]);
             $date = array_key_exists('invoiceDate', $data) ? CarbonImmutable::parse($data['invoiceDate'])->toDateString() : $invoice->invoice_date;
             $due = array_key_exists('dueDate', $data) ? (! empty($data['dueDate']) ? CarbonImmutable::parse($data['dueDate'])->toDateString() : CarbonImmutable::parse($date)->addDays((int) $customer->default_credit_terms_days)->toDateString()) : $invoice->due_date;
-            $values = $this->totalValues($totals) + ['customer_id' => $customer->id, 'invoice_date' => $date, 'due_date' => $due, 'updated_by' => $actorId, 'updated_at' => now()];
+            $backdateReason = \App\Support\BackdatePolicy::reason((int) ($data['branchId'] ?? $invoice->branch_id), $date, $data['backdateReason'] ?? $invoice->backdate_reason);
+            $values = $this->totalValues($totals) + ['customer_id' => $customer->id, 'invoice_date' => $date, 'due_date' => $due, 'backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null, 'updated_by' => $actorId, 'updated_at' => now()];
             foreach (['branchId' => 'branch_id', 'reference' => 'reference', 'notes' => 'notes'] as $input => $column) if (array_key_exists($input, $data)) $values[$column] = $data[$input];
             DB::table('sales_invoices')->where('id', $invoiceId)->update($values + \App\Support\FactoryCurrency::columns($data));
             if (array_key_exists('lines', $data)) { DB::table('sales_invoice_lines')->where('sales_invoice_id', $invoiceId)->delete(); $this->replaceLines($tenantId, $invoiceId, $lines); }

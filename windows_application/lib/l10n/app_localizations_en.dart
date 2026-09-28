@@ -5054,7 +5054,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsOverviewAllBranches => 'All branches';
 
   @override
-  String get reportsOverviewKpiNetSales => 'Net Sales';
+  String get reportsOverviewKpiNetSales => 'Total';
+
+  @override
+  String get reportsOverviewKpiSalesSum => 'Gross sales';
+
+  @override
+  String get reportsOverviewKpiSalesNet => 'Net sales';
+
+  @override
+  String get reportsOverviewKpiInfoSalesSum =>
+      'Completed sales before discounts and refunds.';
+
+  @override
+  String get reportsOverviewKpiInfoSalesNet =>
+      'Total after paid purchases and expenses.';
 
   @override
   String get reportsOverviewKpiGrossProfit => 'Gross Profit';
@@ -5070,15 +5084,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsOverviewKpiInfoNetSales =>
-      'Total sales after discounts and refunds, before tax.';
+      'Gross sales after refunds and discounts.';
 
   @override
   String get reportsOverviewKpiInfoGrossProfit =>
-      'Net sales minus the cost of goods sold.';
+      'Total minus the cost of goods sold.';
 
   @override
   String get reportsOverviewKpiInfoGrossMargin =>
-      'Gross profit as a percentage of net sales.';
+      'Gross profit as a percentage of total.';
 
   @override
   String get reportsOverviewKpiInfoTotalExpenses =>
@@ -5218,10 +5232,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Export will be enabled after the report is connected to a data source.';
 
   @override
-  String get salesProfitabilityGrossSales => 'Gross Sales';
+  String get salesProfitabilityGrossSales => 'Gross sales';
 
   @override
-  String get salesProfitabilityNetSales => 'Net Sales';
+  String get salesProfitabilityNetSales => 'Total';
 
   @override
   String get salesProfitabilityDiscounts => 'Discounts';
@@ -5335,7 +5349,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashShiftsAllEmployees => 'All employees';
 
   @override
-  String get cashShiftsTotalSales => 'Total Sales';
+  String get cashShiftsTotalSales => 'Gross sales';
 
   @override
   String get cashShiftsExpectedCash => 'Expected Cash';
@@ -7445,7 +7459,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensesReportAverageDaily => 'Average daily expense';
 
   @override
-  String get expensesReportRatio => 'Expense-to-net-sales ratio';
+  String get expensesReportRatio => 'Expense-to-total ratio';
 
   @override
   String get expensesReportLargestCategory => 'Largest expense category';
@@ -7493,7 +7507,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensesReportStatus => 'Status';
 
   @override
-  String get expensesReportNetSales => 'Net sales';
+  String get expensesReportNetSales => 'Total';
 
   @override
   String get expensesReportExpenseSales => 'Expense / sales';

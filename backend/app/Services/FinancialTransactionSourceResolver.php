@@ -51,6 +51,8 @@ final class FinancialTransactionSourceResolver
                 ->where('payments.tenant_id', $tenantId)->whereIn('payments.id', $ids)->select('payments.id', 'payments.payment_number as reference', 'payments.amount', 'payments.payment_method_id', 'methods.code as payment_method_code', 'methods.name as payment_method_name')->get()->keyBy('id')->all(),
             'inventory_movement' => DB::table('stock_movements')->where('tenant_id', $tenantId)->whereIn('id', $ids)->select('id', DB::raw("CONCAT('SM-', id) as reference"), 'total_cost as amount')->get()->keyBy('id')->all(),
             'journal_reversal' => DB::table('journal_entries')->where('tenant_id', $tenantId)->whereIn('id', $ids)->select('id', 'entry_number as reference')->get()->keyBy('id')->all(),
+            'shift_cash_variance' => DB::table('shifts')->where('tenant_id', $tenantId)->whereIn('id', $ids)->select('id', 'shift_number as reference', 'cash_difference as amount')->get()->keyBy('id')->all(),
+            'daily_closing_cash_variance' => DB::table('daily_closings')->where('tenant_id', $tenantId)->whereIn('id', $ids)->select('id', 'reference', 'cash_difference as amount')->get()->keyBy('id')->all(),
             default => [],
         };
     }
@@ -77,7 +79,8 @@ final class FinancialTransactionSourceResolver
         return match ($type) {
             'pos_order' => 'sale', 'payment_refund' => 'refund', 'expense' => 'expense', 'cash_transfer' => 'cash_transfer',
             'supplier_invoice' => 'supplier_invoice', 'supplier_payment' => 'supplier_payment', 'manual' => 'manual_journal',
-            'journal_reversal' => 'journal_reversal', default => 'journal',
+            'journal_reversal' => 'journal_reversal', 'shift_cash_variance' => 'shift_cash_variance',
+            'daily_closing_cash_variance' => 'daily_closing_cash_variance', default => 'journal',
         };
     }
 
@@ -86,7 +89,8 @@ final class FinancialTransactionSourceResolver
         return match ($normalized) {
             'sale' => 'order', 'refund' => 'refund', 'expense' => 'expense', 'cash_transfer' => 'cash_transfer',
             'supplier_invoice' => 'supplier_invoice', 'supplier_payment' => 'supplier_payment',
-            'inventory_waste', 'stock_count_variance' => 'inventory_movement', default => 'journal',
+            'inventory_waste', 'stock_count_variance' => 'inventory_movement',
+            'shift_cash_variance' => 'shift', 'daily_closing_cash_variance' => 'daily_closing', default => 'journal',
         };
     }
 }

@@ -300,7 +300,7 @@ class PaymentController extends Controller
             'sourceId' => $order->id,
             'sourceEvent' => 'POS_ORDER_PAID',
             'entryDate' => BranchLocalDate::today($order->branch_id ? (int) $order->branch_id : null),
-            'description' => "POS Sale — Order #{$order->order_number}",
+            'description' => "بيع نقطة البيع — طلب رقم {$order->order_number}",
             'lines' => $lines,
         ], $actorId);
     }

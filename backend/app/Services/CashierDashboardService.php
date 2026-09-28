@@ -159,7 +159,7 @@ class CashierDashboardService
     {
         if ($shift === null) {
             return [
-                'sales' => ['available' => false, 'netSales' => null, 'grossSales' => null, 'discounts' => null, 'refunds' => null, 'orderCount' => 0, 'averageOrderValue' => null, 'byMethod' => []],
+                'sales' => ['available' => false, 'netSales' => null, 'grossSales' => null, 'discounts' => null, 'refunds' => null, 'orderCount' => 0, 'averageOrderValue' => null, 'byMethod' => [], 'salesSum' => null, 'salesTotal' => null, 'salesNet' => null, 'purchasesPaid' => null, 'expensesPaid' => null],
                 'orders' => ['active' => 0, 'held' => 0, 'completed' => 0, 'blockingCount' => 0],
             ];
         }
@@ -198,16 +198,23 @@ class CashierDashboardService
         $active = (int) ($statuses['draft'] ?? 0);
         $held = (int) ($statuses['held'] ?? 0);
 
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet — the
+        // Cashier Dashboard is sales-only, so purchasesPaid/expensesPaid are
+        // always zero here and salesNet always equals salesTotal.
+        $discountsCents = Money::cents($paid->discounts ?? '0');
+        $salesTotalCents = $grossCents - $refundCents;
+
         return [
             'sales' => [
                 'available' => true,
-                'netSales' => Money::decimal($grossCents - $refundCents),
+                'netSales' => Money::decimal($salesTotalCents),
                 'grossSales' => Money::decimal($grossCents),
-                'discounts' => Money::decimal(Money::cents($paid->discounts ?? '0')),
+                'discounts' => Money::decimal($discountsCents),
                 'refunds' => Money::decimal($refundCents),
                 'orderCount' => $orderCount,
                 'averageOrderValue' => Money::decimal($orderCount > 0 ? intdiv($grossCents, $orderCount) : 0),
                 'byMethod' => $byMethod,
+                ...\App\Support\SalesTotals::make($grossCents + $discountsCents, $refundCents, $discountsCents, 0, 0),
             ],
             'orders' => [
                 'active' => $active,

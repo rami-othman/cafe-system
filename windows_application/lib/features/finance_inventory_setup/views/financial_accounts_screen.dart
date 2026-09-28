@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/management_ui.dart';
 import '../controllers/finance_setup_cubit.dart';
@@ -228,6 +229,8 @@ class _AccountsState extends State<FinancialAccountsScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
+            _balanceCard(account),
+            const SizedBox(height: AppSpacing.lg),
             ManagementTableShell(
               minWidth: 0,
               child: Padding(
@@ -278,6 +281,59 @@ class _AccountsState extends State<FinancialAccountsScreen> {
     },
   );
 
+  Widget _balanceCard(FinancialAccount account) {
+    final double balance = double.tryParse(account.balance) ?? 0;
+    final bool isReversed =
+        (account.normalBalance == 'debit' && balance < 0) ||
+        (account.normalBalance == 'credit' && balance < 0);
+    final Color balanceColor = isReversed
+        ? Colors.red.shade700
+        : Theme.of(context).colorScheme.primary;
+    return ManagementTableShell(
+      minWidth: 0,
+      child: Padding(
+        padding: AppSpacing.allLg,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text('الرصيد الحالي', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              CurrencyFormatter.formatForContext(context, balance),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: balanceColor,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.xl,
+              runSpacing: AppSpacing.sm,
+              children: <Widget>[
+                _detailValue(
+                  'إجمالي المدين',
+                  CurrencyFormatter.formatForContext(
+                    context,
+                    double.tryParse(account.totalDebit) ?? 0,
+                  ),
+                ),
+                _detailValue(
+                  'إجمالي الدائن',
+                  CurrencyFormatter.formatForContext(
+                    context,
+                    double.tryParse(account.totalCredit) ?? 0,
+                  ),
+                ),
+                _detailValue('آخر حركة', account.lastMovementDate ?? '—'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _detailValue(String label, String value) => SizedBox(
     width: 230,
     child: Column(
@@ -323,6 +379,7 @@ class _AccountsState extends State<FinancialAccountsScreen> {
           DataColumn(label: Text('اسم الحساب')),
           DataColumn(label: Text('المجموعة')),
           DataColumn(label: Text('الرصيد الطبيعي')),
+          DataColumn(label: Text('الرصيد')),
           DataColumn(label: Text('الحساب الأب')),
           DataColumn(label: Text('الحالة')),
           DataColumn(label: Text('محمي')),
@@ -394,6 +451,19 @@ class _AccountsState extends State<FinancialAccountsScreen> {
       ),
       DataCell(Text(_groupLabel(a.accountGroup))),
       DataCell(Text(a.normalBalance == 'debit' ? 'مدين' : 'دائن')),
+      DataCell(
+        Text(
+          CurrencyFormatter.formatForContext(
+            context,
+            double.tryParse(a.balance) ?? 0,
+          ),
+          style: TextStyle(
+            color: (double.tryParse(a.balance) ?? 0) < 0
+                ? Colors.red.shade700
+                : null,
+          ),
+        ),
+      ),
       DataCell(
         Text(
           a.parentCode == null

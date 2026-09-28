@@ -18,6 +18,7 @@ final class ShiftClosePreviewService
         private readonly ShiftDrawerReadinessService $readiness,
         private readonly FinancialAccountBalanceQuery $balances,
         private readonly HistoricalBarBalanceService $bar,
+        private readonly CashVarianceService $variance,
     ) {}
 
     public function build(int $tenant, object $shift, ShiftClosePeriod $period): array
@@ -33,14 +34,8 @@ final class ShiftClosePreviewService
         $ledger = $drawer ? $this->readiness->drawerLedgerBalance($tenant, $drawer) : '0.00';
         $previousLedger = $drawer && $historical ? $this->balances->balanceBefore($tenant, (int) $drawer->financial_account_id, (int) $drawer->id, $period->timestamp()) : $ledger;
         $cash = $this->cash->summarize($tenant, $shift, $historical ? $period : null);
-        $current = $this->cash->summarize($tenant, $shift);
-        if (Money::cents($cash['expectedCash']) !== Money::cents($previousLedger)) {
-            $issues[] = __('shifts.drawer_ledger_mismatch');
-        }
-        if (Money::cents($current['expectedCash']) !== Money::cents($ledger)) {
-            $issues[] = __('shifts.drawer_ledger_mismatch');
-        }
-        $transfer = Money::cents($cash['expectedCash']) - Money::cents($shift->closing_float_amount ?? '0');
+        $expected = $historical ? $previousLedger : $ledger;
+        $transfer = Money::cents($expected) - Money::cents($shift->closing_float_amount ?? '0');
         if ($transfer < 0) {
             $issues[] = __('shifts.counted_below_float');
         }
@@ -84,28 +79,47 @@ final class ShiftClosePreviewService
                 $snapshot['barCount']['lines'] = [];
             }
         }
-        $snapshot['drawer']['expectedCash'] = $cash['expectedCash'];
+        $snapshot['drawer']['expectedCash'] = $expected;
+        $varianceAccount = null;
+        try {
+            $varianceAccount = $this->variance->account($tenant, (int) $shift->branch_id);
+        } catch (ValidationException) {
+            // No variance account configured yet; the preview still renders,
+            // just without a named destination for the difference.
+        }
         $metadata = [
             'closingDate' => $period->date, 'timezone' => $period->timezone,
             'openingDate' => CarbonImmutable::parse($shift->opened_at, 'UTC')->setTimezone($period->timezone)->toDateString(),
             'today' => CarbonImmutable::now('UTC')->setTimezone($period->timezone)->toDateString(),
             'openedAt' => $snapshot['identity']['openedAt'],
             'periodEndExclusive' => $period->end->toIso8601String(), 'historical' => $historical,
-            'expectedCash' => $cash['expectedCash'], 'ledgerAtPeriodEnd' => $previousLedger,
+            'expectedCash' => $expected, 'ledgerAtPeriodEnd' => $previousLedger,
             'currentLedgerCash' => $ledger,
-            'laterNetCash' => Money::decimal(Money::cents($current['expectedCash']) - Money::cents($cash['expectedCash'])),
+            'summaryExpectedCash' => $cash['expectedCash'],
+            'unexplainedCash' => Money::decimal(Money::cents($expected) - Money::cents($cash['expectedCash'])),
+            'laterNetCash' => Money::decimal(Money::cents($ledger) - Money::cents($previousLedger)),
             'transferAmount' => Money::decimal(max(0, $transfer)),
             'continuationCashAfterTransfer' => Money::decimal(Money::cents($ledger) - max(0, $transfer)),
+            'destinationName' => $destination->name ?? null,
+            'varianceAccountCode' => $varianceAccount->code ?? null,
+            'varianceAccountName' => $varianceAccount->name_ar ?? null,
             'laterRecords' => $later, 'willContinue' => $historical && (array_sum($later) > 0 || $transfer > 0),
             'issues' => array_values(array_unique($issues)), 'canClose' => $issues === [],
         ];
         // Include all relevant posted location lines and warehouse movements,
-        // not just the shift row timestamp, for stale-preview detection.
-        $ledgerRows = DB::table('journal_entry_lines as l')->join('journal_entries as j', 'j.id', '=', 'l.journal_entry_id')
-            ->where('l.tenant_id', $tenant)->where('l.financial_location_id', $shift->financial_location_id)->orderBy('l.id')
-            ->get(['l.*', 'j.status as entry_status', 'j.posted_at as entry_posted_at', 'j.entry_date'])->all();
-        $warehouseIds = DB::table('bar_check_templates')->where('tenant_id', $tenant)->where('branch_id', $shift->branch_id)->where('is_active', true)->pluck('warehouse_id');
-        $inventoryRows = DB::table('stock_movements')->where('tenant_id', $tenant)->whereIn('warehouse_id', $warehouseIds)->orderBy('id')->get()->all();
+        // not just the shift row timestamp, for stale-preview detection. This
+        // only applies to a historical close: for today's close, POS sales and
+        // bar movements between opening the preview and confirming it are
+        // expected and must not fail the version check.
+        $ledgerRows = [];
+        $inventoryRows = [];
+        if ($historical) {
+            $ledgerRows = DB::table('journal_entry_lines as l')->join('journal_entries as j', 'j.id', '=', 'l.journal_entry_id')
+                ->where('l.tenant_id', $tenant)->where('l.financial_location_id', $shift->financial_location_id)->orderBy('l.id')
+                ->get(['l.*', 'j.status as entry_status', 'j.posted_at as entry_posted_at', 'j.entry_date'])->all();
+            $warehouseIds = DB::table('bar_check_templates')->where('tenant_id', $tenant)->where('branch_id', $shift->branch_id)->where('is_active', true)->pluck('warehouse_id');
+            $inventoryRows = DB::table('stock_movements')->where('tenant_id', $tenant)->whereIn('warehouse_id', $warehouseIds)->orderBy('id')->get()->all();
+        }
         $metadata['version'] = hash('sha256', json_encode([$shift, $drawer, $destination, $sources, $snapshot, $metadata, $ledgerRows, $inventoryRows], JSON_THROW_ON_ERROR));
 
         return ['snapshot' => $snapshot, 'period' => $metadata];

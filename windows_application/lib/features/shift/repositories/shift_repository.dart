@@ -57,6 +57,10 @@ class ShiftRepository {
         issues: (period['issues'] as List<dynamic>? ?? <dynamic>[])
             .map((dynamic value) => value.toString())
             .toList(),
+        unexplainedCash: _double(period['unexplainedCash']),
+        destinationName: period['destinationName']?.toString(),
+        varianceAccountCode: period['varianceAccountCode']?.toString(),
+        varianceAccountName: period['varianceAccountName']?.toString(),
       );
     } on ApiException catch (error) {
       throw ShiftDataException(_lifecycleMessage(error));
@@ -243,6 +247,11 @@ class ShiftRepository {
     orderCount: _int(json['orderCount']),
     cancelledOrderCount: _int(json['cancelledOrderCount']),
     discountPolicyCount: _int(json['discountPolicyCount']),
+    salesSum: _double(json['salesSum']),
+    salesTotal: _double(json['salesTotal']),
+    salesNet: _double(json['salesNet']),
+    purchasesPaid: _double(json['purchasesPaid']),
+    expensesPaid: _double(json['expensesPaid']),
   );
   OrdersStatusSummary _orders(Map<String, dynamic> json) => OrdersStatusSummary(
     completed: _int(json['completed']),
@@ -340,10 +349,20 @@ class ShiftRepository {
         ? ShiftHistoryStatus.closedWithDifference
         : ShiftHistoryStatus.closed,
     closeMode: ShiftCloseMode.fromApi(json['closeType']),
+    salesSum: json['salesSum'] == null ? null : _double(json['salesSum']),
+    salesNet: json['salesNet'] == null ? null : _double(json['salesNet']),
+    purchasesPaid: _double(json['purchasesPaid']),
+    expensesPaid: _double(json['expensesPaid']),
   );
   ShiftClosingResult _closing(Map<String, dynamic> json) {
     final Map<String, dynamic> cash = _map(json['cash']);
     final Map<String, dynamic> period = _map(_map(json['snapshot'])['period']);
+    final Map<String, dynamic>? varianceJson = json['variance'] is Map
+        ? _map(json['variance'])
+        : null;
+    final Map<String, dynamic>? transferJson = json['transfer'] is Map
+        ? _map(json['transfer'])
+        : null;
     return ShiftClosingResult(
       snapshot: _snapshot(_map(json['snapshot'])),
       cash: CashCountResult(
@@ -368,6 +387,31 @@ class ShiftRepository {
       closeExecutedAt: period['closeExecutedAt'] == null
           ? null
           : _date(period['closeExecutedAt']),
+      variance: varianceJson == null
+          ? null
+          : ShiftCloseVariance(
+              amount: _double(varianceJson['amount']),
+              journalEntryId: varianceJson['journalEntryId'] == null
+                  ? null
+                  : _int(varianceJson['journalEntryId']),
+              accountCode: varianceJson['accountCode']?.toString(),
+              accountName: varianceJson['accountName']?.toString(),
+            ),
+      transfer: transferJson == null
+          ? null
+          : ShiftCloseTransfer(
+              id: transferJson['id'] == null ? null : _int(transferJson['id']),
+              amount: transferJson['amount'] == null
+                  ? null
+                  : _double(transferJson['amount']),
+              date: transferJson['date'] == null
+                  ? null
+                  : _nullableDate(transferJson['date']),
+              destinationName: transferJson['destinationName']?.toString(),
+              floatLeft: _double(transferJson['floatLeft']),
+              skippedReason: transferJson['skippedReason']?.toString(),
+            ),
+      unexplainedCash: _double(json['unexplainedCash']),
     );
   }
 

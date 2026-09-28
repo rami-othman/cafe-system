@@ -54,7 +54,9 @@ final class FinanceDashboardQueryService
         $operatingProfitReliable = $current['grossProfitReliable'];
 
         $kpis = [
+            'salesSum' => $this->change(Money::cents($current['netSales']['salesSum']), isset($comparison['netSales']['salesSum']) ? Money::cents($comparison['netSales']['salesSum']) : null),
             'netSales' => [...$this->change($current['netSalesCents'], $comparison['netSalesCents'] ?? null), 'breakdown' => $current['netSales']],
+            'salesNet' => $this->change(Money::cents($current['netSales']['salesNet']), isset($comparison['netSales']['salesNet']) ? Money::cents($comparison['netSales']['salesNet']) : null),
             'grossProfit' => [...$this->change($current['grossProfitCents'], $comparison['grossProfitCents'] ?? null), 'reliable' => $current['grossProfitReliable'], 'marginPercentage' => $current['grossProfit']['marginPercentage'], 'cogs' => $current['cogs']],
             'operatingExpenses' => [...$this->change($currentExpenses['amountCents'], $comparisonExpenses['amountCents'] ?? null), 'expenseCount' => $currentExpenses['count']],
             'operatingProfit' => [...$this->change($operatingProfitCents, $comparisonOperatingProfitCents), 'reliable' => $operatingProfitReliable, 'marginPercentage' => $operatingProfitReliable ? SafeMath::ratioPercentage($operatingProfitCents, $current['netSalesCents']) : null],

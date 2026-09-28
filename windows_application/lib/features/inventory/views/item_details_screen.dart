@@ -46,6 +46,19 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     Future<void>.microtask(() => cubit.loadItemDetails(widget.itemId));
   }
 
+  @override
+  void didUpdateWidget(covariant InventoryItemDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.itemId == widget.itemId) return;
+    _movementHistoryRequested = false;
+    _recipeUsageRequested = false;
+    _purchaseHistoryRequested = false;
+    _tabs.index = 0;
+    final InventoryCubit cubit = context.read<InventoryCubit>();
+    final int itemId = widget.itemId;
+    Future<void>.microtask(() => cubit.loadItemDetails(itemId));
+  }
+
   void _onTabChanged() {
     if (_tabs.indexIsChanging) return;
     final InventoryCubit cubit = context.read<InventoryCubit>();
@@ -243,6 +256,10 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     if (state.itemMovementHistoryLoading && state.itemMovementHistory.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (state.error != null) {
+      return ManagementMessage(message: state.error!, error: true,
+        onRetry: () => context.read<InventoryCubit>().loadItemMovementHistory(widget.itemId));
+    }
     if (state.itemMovementHistory.isEmpty) {
       return const ManagementMessage(message: 'لا توجد حركات مخزون لهذه المادة.');
     }
@@ -255,11 +272,17 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
             itemBuilder: (BuildContext context, int index) {
               final InventoryMovement movement = state.itemMovementHistory[index];
               final String? reference = movement.reference;
+              final String? route = _movementRoute(movement);
               return ListTile(
                 title: Text(inventoryMovementTypeLabel(movement.type)),
-                subtitle: Text(
-                  '${movement.warehouseName} · ${_movementDateTime(movement.occurredAt)}'
-                  '${reference == null ? '' : ' · $reference'}',
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('${movement.warehouseName} · ${_movementDateTime(movement.occurredAt)}'),
+                    if (reference != null) route == null
+                        ? Text('المرجع: $reference')
+                        : TextButton(onPressed: () => context.go(route), child: Text('المرجع: $reference')),
+                  ],
                 ),
                 trailing: Text(
                   '${inventoryNumber(movement.quantityIn == '0.000' ? movement.quantityOut : movement.quantityIn, digits: 3)} ${inventoryUnitLabel(movement.unit)}',
@@ -282,13 +305,31 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     );
   }
 
+  String? _movementRoute(InventoryMovement movement) {
+    final int? id = movement.referenceId;
+    if (id == null) return null;
+    return switch (movement.referenceType) {
+      'purchase_receipt' => '${widget.scope.isManufacturing ? '/manufacturing/purchase-receipts' : '/finance/purchase-receipts'}/$id',
+      'sales_invoice' => '/finance/sales/$id',
+      'manufacturing_order' || 'manufacturing_order_reversal' => '/manufacturing/production/$id',
+      'stock_count' => '${widget.scope.isManufacturing ? '/manufacturing/stock-counts' : '/inventory/counts'}/$id',
+      'warehouse_transfer' => '/inventory/transfers/$id',
+      'order' => '/orders',
+      _ => null,
+    };
+  }
+
   Widget _recipeUsage(InventoryState state) {
     if (state.itemRecipeUsageLoading && !state.itemRecipeUsageLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (state.error != null) {
+      return ManagementMessage(message: state.error!, error: true,
+        onRetry: () => context.read<InventoryCubit>().loadItemRecipeUsage(widget.itemId));
+    }
     if (state.itemRecipeUsage.isEmpty) {
-      return const ManagementMessage(
-        message: 'لا توجد وصفات تستخدم هذه المادة.',
+      return ManagementMessage(
+        message: state.itemRecipeHint ?? 'لا توجد وصفات تستخدم هذه المادة.',
       );
     }
     return ManagementTableShell(
@@ -331,6 +372,10 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
     if (state.itemPurchaseHistoryLoading && state.itemPurchaseHistory.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (state.error != null) {
+      return ManagementMessage(message: state.error!, error: true,
+        onRetry: () => context.read<InventoryCubit>().loadItemPurchaseHistory(widget.itemId));
+    }
     if (state.itemPurchaseHistory.isEmpty) {
       return const ManagementMessage(message: 'لا يوجد سجل شراء لهذه المادة.');
     }
@@ -348,6 +393,8 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
                 DataColumn(label: Text('تاريخ الاستلام')),
                 DataColumn(label: Text('المخزن')),
                 DataColumn(label: Text('الكمية')),
+                DataColumn(label: Text('المستلم')),
+                DataColumn(label: Text('حالة الاستلام')),
                 DataColumn(label: Text('تكلفة الوحدة')),
                 DataColumn(label: Text('الإجمالي')),
               ],
@@ -356,15 +403,21 @@ class _InventoryItemDetailsScreenState extends State<InventoryItemDetailsScreen>
                     (InventoryPurchaseHistoryEntry entry) => DataRow(
                       cells: <DataCell>[
                         DataCell(Text(entry.supplierName)),
-                        DataCell(Text(entry.invoiceNumber)),
-                        DataCell(Text(entry.receiptNumber)),
-                        DataCell(Text(_dateOnly(entry.receiptDate))),
+                        DataCell(TextButton(onPressed: entry.invoiceId == 0 ? null : () => context.go('${widget.scope.isManufacturing ? '/manufacturing/purchases' : '/finance/purchases'}/${entry.invoiceId}'), child: Text(entry.invoiceNumber))),
+                        DataCell(Text(entry.receiptNumber.isEmpty ? '—' : entry.receiptNumber)),
+                        DataCell(Text(entry.receiptDate.isEmpty ? '—' : _dateOnly(entry.receiptDate))),
                         DataCell(Text(entry.warehouseName)),
                         DataCell(
                           Text(
                             '${inventoryNumber(entry.quantity, digits: 3)} ${inventoryUnitLabel(entry.unit)}',
                           ),
                         ),
+                        DataCell(Text('${inventoryNumber(entry.receivedQuantity, digits: 3)} ${inventoryUnitLabel(entry.receivedUnit)}')),
+                        DataCell(Text(switch (entry.receiptStatus) {
+                          'received' => 'مستلم',
+                          'partial' => 'مستلم جزئياً',
+                          _ => 'غير مستلم',
+                        })),
                         DataCell(Text(inventoryMoney(entry.unitCost))),
                         DataCell(Text(inventoryMoney(entry.lineTotal))),
                       ],

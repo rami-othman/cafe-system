@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\FinancialAccountRequest;
+use App\Services\FinancialAccountBalanceQuery;
 use App\Services\FinancialAccountService;
 use App\Support\FinancialActor;
 use App\Support\TenantContext;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialAccountController extends Controller
 {
-    public function __construct(private readonly FinancialAccountService $accounts) {}
+    public function __construct(private readonly FinancialAccountService $accounts, private readonly FinancialAccountBalanceQuery $balances) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -34,8 +35,10 @@ class FinancialAccountController extends Controller
             $query->where('accounts.is_system_protected', $request->query('system') === 'system');
         }
         $paginator = $query->orderBy('accounts.account_group')->orderBy('accounts.code')->paginate($this->perPage($request));
+        $rows = collect($paginator->items());
+        $balances = $this->balances->balancesForAccounts($tenantId, $rows->pluck('id')->map(fn ($id) => (int) $id)->all());
 
-        return response()->json(['data' => collect($paginator->items())->map(fn (object $row) => $this->serialize($row))->values(), 'meta' => $this->meta($paginator)]);
+        return response()->json(['data' => $rows->map(fn (object $row) => $this->serialize($row, $balances[(int) $row->id] ?? null))->values(), 'meta' => $this->meta($paginator)]);
     }
 
     public function store(FinancialAccountRequest $request): JsonResponse
@@ -63,8 +66,9 @@ class FinancialAccountController extends Controller
             ->first();
 
         abort_unless($row, 404, 'Financial account not found.');
+        $balance = $this->balances->balanceWithChildren($tenantId, $account);
 
-        return response()->json(['data' => $this->serialize($row)]);
+        return response()->json(['data' => $this->serialize($row, $balance)]);
     }
 
     public function update(FinancialAccountRequest $request, int $account): JsonResponse
@@ -84,9 +88,9 @@ class FinancialAccountController extends Controller
         return response()->json(['data' => $this->serialize($this->accounts->find($tenantId, $account))]);
     }
 
-    private function serialize(object $row): array
+    private function serialize(object $row, ?array $balance = null): array
     {
-        return ['id' => (int) $row->id, 'parentAccountId' => $row->parent_account_id ? (int) $row->parent_account_id : null, 'parentCode' => $row->parent_code ?? null, 'parentNameAr' => $row->parent_name_ar ?? null, 'code' => $row->code, 'nameAr' => $row->name_ar, 'nameEn' => $row->name_en, 'accountGroup' => $row->account_group, 'normalBalance' => $row->normal_balance, 'isActive' => (bool) $row->is_active, 'isSystemProtected' => (bool) $row->is_system_protected, 'createdAt' => $row->created_at, 'updatedAt' => $row->updated_at];
+        return ['id' => (int) $row->id, 'parentAccountId' => $row->parent_account_id ? (int) $row->parent_account_id : null, 'parentCode' => $row->parent_code ?? null, 'parentNameAr' => $row->parent_name_ar ?? null, 'code' => $row->code, 'nameAr' => $row->name_ar, 'nameEn' => $row->name_en, 'accountGroup' => $row->account_group, 'normalBalance' => $row->normal_balance, 'isActive' => (bool) $row->is_active, 'isSystemProtected' => (bool) $row->is_system_protected, 'createdAt' => $row->created_at, 'updatedAt' => $row->updated_at, 'balance' => $balance['balance'] ?? '0.00', 'totalDebit' => $balance['totalDebit'] ?? '0.00', 'totalCredit' => $balance['totalCredit'] ?? '0.00', 'lastMovementDate' => $balance['lastMovementDate'] ?? null];
     }
 
     private function perPage(Request $request): int

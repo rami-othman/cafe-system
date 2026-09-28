@@ -53,7 +53,9 @@ class PurchasingRepository {
     ),
   );
 
-  Future<PurchaseInvoice> postPurchase(
+  /// Returns the posted invoice plus any non-blocking warnings (e.g. posting
+  /// onto an already-closed day — see `App\Support\BackdatePolicy`).
+  Future<(PurchaseInvoice, List<Map<String, dynamic>>)> postPurchase(
     int id,
     String idempotencyKey, {
     int? financialLocationId,
@@ -66,8 +68,12 @@ class PurchasingRepository {
     if (paidAmount != null) data['paidAmount'] = paidAmount;
     if (paymentDate != null) data['paymentDate'] = paymentDate;
     if (receiptDate != null) data['receiptDate'] = receiptDate;
-    return PurchaseInvoice.fromJson(
-      Map<String, dynamic>.from(await _api.post('finance/purchases/$id/post', data: data) as Map),
+    final envelope = Map<String, dynamic>.from(
+      await _api.postEnvelope('finance/purchases/$id/post', data: data) as Map,
+    );
+    return (
+      PurchaseInvoice.fromJson(Map<String, dynamic>.from(envelope['data'] as Map)),
+      readMapList(envelope['warnings']),
     );
   }
 

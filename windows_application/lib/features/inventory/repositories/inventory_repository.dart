@@ -139,13 +139,19 @@ class InventoryRepository {
   Future<Map<String, dynamic>> itemProductionBatches(int id, {int page = 1}) async =>
       Map<String, dynamic>.from(await _api.getEnvelope('inventory/items/$id/production-batches', queryParameters: {'page': page}) as Map);
 
-  Future<List<InventoryRecipeUsage>> itemRecipeUsage(int id) async =>
-      readMapList(
-        await _api.get(
-          'inventory/items/$id/recipe-usage',
-          queryParameters: const <String, dynamic>{'perPage': 200},
-        ),
-      ).map(InventoryRecipeUsage.fromJson).toList(growable: false);
+  Future<(List<InventoryRecipeUsage>, String?)> itemRecipeUsage(int id) async {
+    final Map<String, dynamic> response = Map<String, dynamic>.from(
+      await _api.getEnvelope('inventory/items/$id/recipe-usage',
+        queryParameters: const <String, dynamic>{'perPage': 200}) as Map,
+    );
+    final Map<String, dynamic> meta = Map<String, dynamic>.from(
+      response['meta'] as Map? ?? const <String, dynamic>{},
+    );
+    return (
+      readMapList(response['data']).map(InventoryRecipeUsage.fromJson).toList(growable: false),
+      readString(meta['hint']).isEmpty ? null : readString(meta['hint']),
+    );
+  }
 
   Future<InventoryPurchaseHistoryPage> itemPurchaseHistory(
     int id, {

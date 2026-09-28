@@ -38,11 +38,13 @@ final class SalesCreditNoteService
             $creditDate = CarbonImmutable::parse($data['creditDate'] ?? now())->toDateString();
             $year = CarbonImmutable::parse($creditDate)->year;
             $sequence = DB::table('sales_credit_notes')->where('tenant_id', $tenantId)->where('credit_note_number', 'like', "CN-{$year}-%")->count() + 1;
+            $backdateReason = \App\Support\BackdatePolicy::reason((int) $invoice->branch_id, $creditDate, $data['backdateReason'] ?? null);
             $id = DB::table('sales_credit_notes')->insertGetId([
                 'tenant_id' => $tenantId, 'branch_id' => $invoice->branch_id, 'customer_id' => $invoice->customer_id,
                 'original_sales_invoice_id' => $invoice->id, 'credit_note_number' => sprintf('CN-%d-%06d', $year, $sequence),
                 'credit_date' => $creditDate, 'reason' => $data['reason'] ?? null, 'status' => 'draft',
                 'subtotal' => Money::decimal($totals['subtotal']), 'tax_total' => Money::decimal($totals['tax']), 'total' => Money::decimal($totals['total']),
+                'backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null,
                 'idempotency_key' => $data['idempotencyKey'] ?? null, 'request_fingerprint' => $fingerprint,
                 'created_by' => $actorId, 'updated_by' => $actorId, 'created_at' => now(), 'updated_at' => now(),
             ]);

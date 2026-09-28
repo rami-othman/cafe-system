@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Support\InventoryUnitCatalog;
 use App\Support\Money;
+use App\Support\SalesTotals;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -45,10 +46,21 @@ final class ShiftSnapshotService
         if ($period) {
             $statuses['paid'] = max(0, (int) ($paid->order_count ?? 0) - $full);
         }
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet are
+        // the one shared definition (App\Support\SalesTotals) across every
+        // sales/shift/closing screen. Purchases-paid is isolated from
+        // ShiftCashSummaryService::summarize()'s `expenses` figure, which
+        // already folds supplier payments into its `kind = 'expense'` sum
+        // (see SupplierPaymentService::pay()) — subtracting it back out
+        // avoids double-counting the same cash movement as both a purchase
+        // and an expense.
+        $purchasesPaidCents = Money::cents((string) DB::table('shift_cash_movements')->where('tenant_id', $tenantId)->where('shift_id', $shiftId)->where('source_type', 'supplier_payment')->when($period, fn ($q) => $period->before($q, 'shift_cash_movements'))->sum('amount') ?: '0');
+        $expensesPaidCents = max(0, Money::cents($cash['expenses']) - $purchasesPaidCents);
+        $salesTotals = SalesTotals::make(Money::cents($paid->gross ?? '0'), $refundTotal, Money::cents($paid->discounts ?? '0'), $purchasesPaidCents, $expensesPaidCents);
 
         return [
             'identity' => ['id' => $shiftId, 'shiftNumber' => $identity->shift_number ?? 'SH-'.str_pad((string) $shiftId, 6, '0', STR_PAD_LEFT), 'branchName' => $identity->branch_name, 'cashierName' => $identity->cashier_name, 'cashierCode' => $identity->cashier_code ?? '', 'openedAt' => $this->timestamp($identity->opened_at), 'openedBy' => $identity->cashier_name, 'lifecycle' => $identity->status, 'closedAt' => $this->timestamp($identity->closed_at), 'closedBy' => $identity->status === 'closed' ? $identity->cashier_name : null],
-            'sales' => ['grossSales' => Money::decimal(Money::cents($paid->gross ?? '0')), 'discounts' => Money::decimal(Money::cents($paid->discounts ?? '0')), 'refunds' => Money::decimal($refundTotal), 'refundCount' => (int) (clone $refunds)->count(), 'orderCount' => (int) ($paid->order_count ?? 0), 'cancelledOrderCount' => (int) ($statuses['cancelled'] ?? 0), 'discountPolicyCount' => $this->discounts($tenantId, $shiftId, $period)->count()],
+            'sales' => ['grossSales' => Money::decimal(Money::cents($paid->gross ?? '0')), 'discounts' => Money::decimal(Money::cents($paid->discounts ?? '0')), 'refunds' => Money::decimal($refundTotal), 'netSales' => $salesTotals['salesTotal'], 'refundCount' => (int) (clone $refunds)->count(), 'orderCount' => (int) ($paid->order_count ?? 0), 'cancelledOrderCount' => (int) ($statuses['cancelled'] ?? 0), 'discountPolicyCount' => $this->discounts($tenantId, $shiftId, $period)->count()] + $salesTotals,
             'payments' => ['lines' => $paymentLines],
             'orders' => ['completed' => (int) ($statuses['paid'] ?? 0), 'paid' => (int) ($statuses['paid'] ?? 0), 'preparing' => (int) ($statuses['held'] ?? 0), 'open' => (int) ($statuses['draft'] ?? 0), 'cancelled' => (int) ($statuses['cancelled'] ?? 0), 'partiallyRefunded' => $partial, 'fullyRefunded' => $full, 'openOrders' => $period ? [] : $this->openOrders($tenantId, $shiftId)],
             'drawer' => ['openingFloat' => $cash['openingCash'], 'cashSales' => $cash['cashSales'], 'cashRefunds' => $cash['cashRefunds'], 'customerPayments' => $cash['customerPayments'], 'customerRefunds' => $cash['customerRefunds'], 'expectedCash' => $cash['expectedCash'], 'withdrawals' => $cash['withdrawals'], 'deposits' => $cash['deposits'], 'expenses' => $cash['expenses'], 'movements' => $this->movements($tenantId, $shiftId, $shift, $cash, $period)],
@@ -72,7 +84,7 @@ final class ShiftSnapshotService
 
     private function movements(int $tenant, int $shiftId, object $shift, array $cash, ?ShiftClosePeriod $period = null): array
     {
-        $rows = [['kind' => 'openingFloat', 'occurredAt' => $this->timestamp($shift->opened_at), 'description' => 'Opening float', 'amount' => $cash['openingCash']]];
+        $rows = [['kind' => 'openingFloat', 'occurredAt' => $this->timestamp($shift->opened_at), 'description' => 'العهدة الافتتاحية', 'amount' => $cash['openingCash']]];
         foreach (DB::table('shift_cash_movements')->where('tenant_id', $tenant)->where('shift_id', $shiftId)->when($period, fn ($q) => $period->before($q, 'shift_cash_movements'))->orderBy('created_at')->get() as $row) {
             $rows[] = ['kind' => $row->kind, 'occurredAt' => $this->timestamp($row->created_at), 'description' => $row->description ?? $row->kind, 'amount' => Money::decimal(Money::cents($row->amount) * (in_array($row->kind, ['withdrawal', 'expense'], true) ? -1 : 1))];
         }

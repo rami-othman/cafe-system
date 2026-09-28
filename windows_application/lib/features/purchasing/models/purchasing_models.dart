@@ -470,6 +470,8 @@ class PurchaseInvoice {
     this.reversalJournalEntryId,
     this.postedAt,
     this.createdAt,
+    this.backdateReason,
+    this.isBackdated = false,
     this.allowedActions = const <String>[],
     this.lines = const <PurchaseInvoiceLine>[],
     this.payments = const <PurchasePayment>[],
@@ -531,6 +533,8 @@ class PurchaseInvoice {
   final int? reversalJournalEntryId;
   final String? postedAt;
   final String? createdAt;
+  final String? backdateReason;
+  final bool isBackdated;
   final List<String> allowedActions;
   final List<PurchaseInvoiceLine> lines;
   final List<PurchasePayment> payments;
@@ -626,6 +630,10 @@ class PurchaseInvoice {
     createdAt: readString(json['createdAt']).isEmpty
         ? null
         : readString(json['createdAt']),
+    backdateReason: readString(json['backdateReason']).isEmpty
+        ? null
+        : readString(json['backdateReason']),
+    isBackdated: readBool(json['isBackdated']),
     allowedActions: readStringList(json['allowedActions']),
     lines: readMapList(
       json['lines'],

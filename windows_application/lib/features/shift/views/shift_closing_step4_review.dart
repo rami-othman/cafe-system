@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/app_router.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../controllers/shift_closing_cubit.dart';
 import '../controllers/shift_closing_state.dart';
@@ -74,8 +76,12 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
                         value: ShiftFormat.money(snapshot.sales.refunds),
                       ),
                       ShiftKeyValueRow(
+                        label: ShiftStrings.salesTotal,
+                        value: ShiftFormat.money(snapshot.sales.salesTotal),
+                      ),
+                      ShiftKeyValueRow(
                         label: ShiftStrings.netSales,
-                        value: ShiftFormat.money(snapshot.sales.netSales),
+                        value: ShiftFormat.money(snapshot.sales.salesNet),
                         emphasize: true,
                       ),
                       ShiftKeyValueRow(
@@ -193,6 +199,51 @@ class _ShiftClosingStep4ReviewState extends State<ShiftClosingStep4Review> {
             },
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (!cash.isBalanced) ...<Widget>[
+            ShiftNotice(
+              tone: ShiftTone.warning,
+              message: ShiftStrings.varianceWillPost(
+                ShiftFormat.signedMoney(cash.difference),
+                state.preview?.varianceAccountCode ?? '6180',
+                state.preview?.varianceAccountName ??
+                    ShiftStrings.cashVarianceDefaultAccountName,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          if (state.preview?.destinationName != null) ...<Widget>[
+            ShiftNotice(
+              tone: ShiftTone.neutral,
+              message: () {
+                final double transferAmount =
+                    cash.actual - state.preview!.continuationCashAfterTransfer;
+                return transferAmount <= kShiftEpsilon
+                    ? ShiftStrings.transferNoneNeeded
+                    : ShiftStrings.transferWillMove(
+                        ShiftFormat.money(transferAmount),
+                        state.preview!.destinationName!,
+                      );
+              }(),
+              detail: ShiftStrings.transferFloatLeft(
+                ShiftFormat.money(state.preview!.continuationCashAfterTransfer),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          if ((state.preview?.unexplainedCash ?? 0).abs() >
+              kShiftEpsilon) ...<Widget>[
+            ShiftNotice(
+              tone: ShiftTone.warning,
+              message: ShiftStrings.unexplainedCashWarning(
+                ShiftFormat.money(state.preview!.unexplainedCash.abs()),
+              ),
+              action: TextButton(
+                onPressed: () => context.go(AppRoutes.financeCashBanks),
+                child: const Text(ShiftStrings.openDrawerLedger),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           ShiftReadinessChecklist(items: assessment.readiness),
           const SizedBox(height: AppSpacing.lg),
           ShiftField(
@@ -289,8 +340,8 @@ class _ConfirmCloseDialogState extends State<_ConfirmCloseDialog> {
               numeric: false,
             ),
             ShiftKeyValueRow(
-              label: ShiftStrings.netSales,
-              value: ShiftFormat.money(widget.snapshot.sales.netSales),
+              label: ShiftStrings.salesTotal,
+              value: ShiftFormat.money(widget.snapshot.sales.salesTotal),
             ),
             ShiftKeyValueRow(
               label: ShiftStrings.actualCash,

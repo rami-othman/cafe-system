@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\BranchAccessService;
+use App\Support\Money;
+use App\Support\SalesTotals;
 use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -38,6 +40,11 @@ class DailyReportController extends Controller
         $discounts = (float) $orders->sum('discount_total');
         $tax = (float) $orders->sum('tax_total');
         $netSales = round((float) $orders->sum('total') - (float) $refundTotal, 2);
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet — the
+        // existing grossSales/netSales above already ARE salesSum/salesTotal.
+        $purchasesPaid = (float) DB::table('supplier_payments')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('status', 'posted')->whereBetween('payment_date', [$start->toDateString(), $end->toDateString()])->sum('amount');
+        $expensesPaid = (float) DB::table('expenses')->where('tenant_id', $tenantId)->where('branch_id', $branchId)->where('status', 'paid')->whereNull('deleted_at')->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])->sum('total_amount');
+        $totals = SalesTotals::make(Money::cents($grossSales), Money::cents($refundTotal), Money::cents($discounts), Money::cents($purchasesPaid), Money::cents($expensesPaid));
 
         return response()->json(['data' => [
             'date' => $date->toDateString(),
@@ -52,6 +59,7 @@ class DailyReportController extends Controller
                 'tax' => $tax,
                 'refunds' => (float) $refundTotal,
                 'expectedCash' => $this->expectedCash($tenantId, (int) $branchId, $start, $end),
+                ...$totals,
             ],
             'hourlySales' => $this->hourlySales($orders),
             'paymentMethods' => $this->paymentMethods($tenantId, (int) $branchId, $start, $end),

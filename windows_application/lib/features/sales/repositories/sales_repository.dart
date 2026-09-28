@@ -8,7 +8,8 @@ class SalesRepository {
   Future<SalesInvoice> invoice(int id) async => SalesInvoice.fromJson(Map<String, dynamic>.from(await _api.get('finance/sales-invoices/$id') as Map));
   Future<SalesInvoice> save(Map<String, dynamic> data, {int? id}) async => SalesInvoice.fromJson(Map<String, dynamic>.from((id == null ? await _api.post('finance/sales-invoices', data: data) : await _api.patch('finance/sales-invoices/$id', data: data)) as Map));
   Future<SalesInvoice> cancel(int id, {String? reason}) async => SalesInvoice.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-invoices/$id/cancel', data: <String, dynamic>{'reason': ?reason}) as Map));
-  Future<SalesInvoice> post(int id, String idempotencyKey) async => SalesInvoice.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-invoices/$id/post', data: <String, dynamic>{'idempotencyKey': idempotencyKey}) as Map));
+  /// Returns the posted invoice plus any non-blocking warnings (e.g. posting onto an already-closed day — see `App\Support\BackdatePolicy`).
+  Future<(SalesInvoice, List<Map<String, dynamic>>)> post(int id, String idempotencyKey) async { final Map<String, dynamic> r = Map<String, dynamic>.from(await _api.postEnvelope('finance/sales-invoices/$id/post', data: <String, dynamic>{'idempotencyKey': idempotencyKey}) as Map); return (SalesInvoice.fromJson(Map<String, dynamic>.from(r['data'] as Map)), readMapList(r['warnings'])); }
   Future<SalesPostingPreview> postingPreview(int id) async => SalesPostingPreview.fromJson(Map<String, dynamic>.from(await _api.get('finance/sales-invoices/$id/posting-preview') as Map));
   Future<List<SalesCustomer>> customers({String? search}) async { final Map<String, dynamic> r = Map<String, dynamic>.from(await _api.getEnvelope('finance/customers', queryParameters: <String, dynamic>{'status': 'active', if (search != null && search.isNotEmpty) 'search': search, 'perPage': 100}) as Map); return readMapList(r['data']).map(SalesCustomer.fromJson).toList(growable: false); }
   Future<SalesCustomer> createCustomer(Map<String, dynamic> data) async => SalesCustomer.fromJson(Map<String, dynamic>.from(await _api.post('finance/customers', data: data) as Map));
@@ -43,11 +44,15 @@ class SalesRepository {
         if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
         if (financialLocationId != null) 'financialLocationId': financialLocationId,
       }) as Map));
-  Future<SalesCreditNote> postCreditNote(int id, String idempotencyKey, {int? paymentMethodId, int? financialLocationId}) async => SalesCreditNote.fromJson(Map<String, dynamic>.from(await _api.post('finance/sales-credit-notes/$id/post', data: <String, dynamic>{
+  /// Returns the posted credit note plus any non-blocking warnings (e.g. posting onto an already-closed day — see `App\Support\BackdatePolicy`).
+  Future<(SalesCreditNote, List<Map<String, dynamic>>)> postCreditNote(int id, String idempotencyKey, {int? paymentMethodId, int? financialLocationId}) async {
+    final Map<String, dynamic> r = Map<String, dynamic>.from(await _api.postEnvelope('finance/sales-credit-notes/$id/post', data: <String, dynamic>{
         'idempotencyKey': idempotencyKey,
         if (paymentMethodId != null) 'paymentMethodId': paymentMethodId,
         if (financialLocationId != null) 'financialLocationId': financialLocationId,
-      }) as Map));
+      }) as Map);
+    return (SalesCreditNote.fromJson(Map<String, dynamic>.from(r['data'] as Map)), readMapList(r['warnings']));
+  }
 
   Future<CustomerCreditInfo> customerCredit(int customerId) async => CustomerCreditInfo.fromJson(Map<String, dynamic>.from(await _api.get('finance/customers/$customerId/credit') as Map));
   Future<CustomerRefundPreview> previewRefund(Map<String, dynamic> data) async => CustomerRefundPreview.fromJson(Map<String, dynamic>.from(await _api.post('finance/customer-refunds/preview', data: data) as Map));

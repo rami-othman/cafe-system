@@ -16,6 +16,7 @@ import '../../finance_inventory_setup/widgets/finance_pagination.dart';
 import '../../finance_inventory_setup/widgets/finance_shell.dart';
 import '../../pos/models/branch.dart';
 import '../../../shared/widgets/searchable_select_field.dart';
+import '../../../shared/widgets/backdate_reason_field.dart';
 import '../controllers/sales_cubit.dart';
 import '../models/sales_models.dart';
 import '../models/sales_draft_preview.dart';
@@ -124,10 +125,29 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
               children: <Widget>[
                 Expanded(
                   child: _kpi(
-                    'صافي المبيعات',
-                    page!.financialSummary!.netSales,
+                    'مجموع المبيعات',
+                    page!.financialSummary!.salesSum,
                   ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _kpi(
+                    'الإجمالي',
+                    page!.financialSummary!.salesTotal,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _kpi(
+                    'صافي المبيعات',
+                    page!.financialSummary!.salesNet,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
                 const SizedBox(width: 12),
                 Expanded(
                   child: _kpi(
@@ -304,7 +324,20 @@ class _SalesCenterScreenState extends State<SalesCenterScreen> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      Text(i.invoiceDate, style: FinanceText.small),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(i.invoiceDate, style: FinanceText.small),
+                          if (i.isBackdated)
+                            const Text(
+                              'بتاريخ سابق',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.orange,
+                              ),
+                            ),
+                        ],
+                      ),
                       Text(i.customerName, style: FinanceText.body),
                       Text(i.branchName, style: FinanceText.small),
                       FinanceAmount(value: i.total),
@@ -510,10 +543,16 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
               children: <Widget>[
                 _field('العميل', i.customerName),
                 _field('الفرع', i.branchName),
-                _field('التاريخ', i.invoiceDate),
+                _field(
+                  'التاريخ',
+                  i.isBackdated ? '${i.invoiceDate} (بتاريخ سابق)' : i.invoiceDate,
+                ),
+                _field('تاريخ الإنشاء', i.createdAt ?? '—'),
                 _field('الاستحقاق', i.dueDate ?? '—'),
                 _field('المرجع', i.reference ?? '—'),
                 if (posted) _field('مرجع القيد', i.journalReference ?? '—'),
+                if (i.isBackdated)
+                  _field('سبب التاريخ السابق', i.backdateReason ?? '—'),
               ],
             ),
             if (i.profitability != null) ...[
@@ -756,7 +795,7 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
         ),
       );
       if (approved != true) return;
-      await cubit.repository.post(
+      final (_, List<Map<String, dynamic>> warnings) = await cubit.repository.post(
         i.id,
         'sales-post-${i.id}-${DateTime.now().microsecondsSinceEpoch}',
       );
@@ -766,6 +805,14 @@ class _SalesInvoiceDetailScreenState extends State<SalesInvoiceDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم ترحيل الفاتورة بنجاح.')),
         );
+        for (final Map<String, dynamic> warning in warnings) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.orange,
+              content: Text('${warning['message'] ?? ''}'),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted)
@@ -854,6 +901,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   final form = GlobalKey<FormState>();
   final reference = TextEditingController();
   final notes = TextEditingController();
+  final backdateReason = TextEditingController();
   final invoiceDiscount = TextEditingController();
   final manualAdjustment = TextEditingController();
   String? invoiceDiscountType;
@@ -926,6 +974,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
   void dispose() {
     reference.dispose();
     notes.dispose();
+    backdateReason.dispose();
     invoiceDiscount.dispose();
     manualAdjustment.dispose();
     for (final l in lines) {
@@ -1006,6 +1055,7 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
         branchId = i.branchId;
         reference.text = i.reference ?? '';
         notes.text = i.notes ?? '';
+        backdateReason.text = i.backdateReason ?? '';
         date = DateTime.tryParse(i.invoiceDate) ?? date;
         dueDate = DateTime.tryParse(i.dueDate ?? '');
         invoiceDiscountType = i.invoiceDiscountType;
@@ -1164,6 +1214,15 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
       );
       return;
     }
+    if (BackdateReasonField.isRequired(date) &&
+        backdateReason.text.trim().length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('التاريخ سابق لليوم — اكتب سبب التاريخ السابق.'),
+        ),
+      );
+      return;
+    }
     setState(() => saving = true);
     try {
       final due =
@@ -1188,6 +1247,8 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
             ? null
             : reference.text.trim(),
         'notes': notes.text.trim().isEmpty ? null : notes.text.trim(),
+        if (backdateReason.text.trim().isNotEmpty)
+          'backdateReason': backdateReason.text.trim(),
         if (widget.id == null && savedId == null) 'idempotencyKey': createKey,
         'invoiceDiscountType': invoiceDiscountType,
         'invoiceDiscountValue': invoiceDiscountType == null
@@ -1442,6 +1503,10 @@ class _SalesInvoiceFormScreenState extends State<SalesInvoiceFormScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    BackdateReasonField(
+                      documentDate: date,
+                      controller: backdateReason,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(

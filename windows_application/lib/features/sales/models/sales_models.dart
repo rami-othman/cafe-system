@@ -402,6 +402,9 @@ class SalesInvoice {
     this.netCollectedAmount,
     this.remainingRefundableAmount,
     this.profitability,
+    this.createdAt,
+    this.backdateReason,
+    this.isBackdated = false,
   });
   final Map<String, dynamic>? factoryCurrency;
   final int id;
@@ -445,6 +448,9 @@ class SalesInvoice {
   final String? netCollectedAmount;
   final String? remainingRefundableAmount;
   final SalesProfitability? profitability;
+  final String? createdAt;
+  final String? backdateReason;
+  final bool isBackdated;
   bool get canEdit => allowedActions['canEdit'] ?? false;
   bool get canCancel => allowedActions['canCancel'] ?? false;
   bool get canPost => allowedActions['canPost'] ?? false;
@@ -553,6 +559,13 @@ class SalesInvoice {
         readString(j['remainingRefundableAmount']).isEmpty
         ? null
         : readString(j['remainingRefundableAmount']),
+    createdAt: readString(j['createdAt']).isEmpty
+        ? null
+        : readString(j['createdAt']),
+    backdateReason: readString(j['backdateReason']).isEmpty
+        ? null
+        : readString(j['backdateReason']),
+    isBackdated: readBool(j['isBackdated']),
   );
 }
 
@@ -582,6 +595,9 @@ class SalesCenterFinancialSummary {
     required this.periodFrom,
     required this.periodTo,
     required this.netSales,
+    required this.salesSum,
+    required this.salesTotal,
+    required this.salesNet,
     required this.postedInvoicesCount,
     required this.outstandingAr,
     required this.collectedTotal,
@@ -590,6 +606,9 @@ class SalesCenterFinancialSummary {
   final String periodFrom;
   final String periodTo;
   final String netSales;
+  final String salesSum;
+  final String salesTotal;
+  final String salesNet;
   final int postedInvoicesCount;
   final String outstandingAr;
   final String collectedTotal;
@@ -599,6 +618,9 @@ class SalesCenterFinancialSummary {
         periodFrom: readString(j['periodFrom']),
         periodTo: readString(j['periodTo']),
         netSales: readString(j['netSales'], fallback: '0.00'),
+        salesSum: readString(j['salesSum'] ?? j['netSales'], fallback: '0.00'),
+        salesTotal: readString(j['salesTotal'] ?? j['netSales'], fallback: '0.00'),
+        salesNet: readString(j['salesNet'] ?? j['netSales'], fallback: '0.00'),
         postedInvoicesCount: readInt(j['postedInvoicesCount']) ?? 0,
         outstandingAr: readString(j['outstandingAr'], fallback: '0.00'),
         collectedTotal: readString(j['collectedTotal'], fallback: '0.00'),
@@ -1047,6 +1069,9 @@ class SalesCreditNote {
     this.isDirectCashRefund = false,
     this.cashRefundNumber,
     this.cashRefundMethodName,
+    this.createdAt,
+    this.backdateReason,
+    this.isBackdated = false,
   });
   final int id;
   final String creditNoteNumber;
@@ -1071,6 +1096,9 @@ class SalesCreditNote {
   final bool isDirectCashRefund;
   final String? cashRefundNumber;
   final String? cashRefundMethodName;
+  final String? createdAt;
+  final String? backdateReason;
+  final bool isBackdated;
   bool get canCancel => allowedActions['canCancel'] ?? false;
   bool get canPost => allowedActions['canPost'] ?? false;
   factory SalesCreditNote.fromJson(Map<String, dynamic> j) => SalesCreditNote(
@@ -1115,6 +1143,13 @@ class SalesCreditNote {
     cashRefundMethodName: readString(j['cashRefundMethodName']).isEmpty
         ? null
         : readString(j['cashRefundMethodName']),
+    createdAt: readString(j['createdAt']).isEmpty
+        ? null
+        : readString(j['createdAt']),
+    backdateReason: readString(j['backdateReason']).isEmpty
+        ? null
+        : readString(j['backdateReason']),
+    isBackdated: readBool(j['isBackdated']),
   );
 }
 

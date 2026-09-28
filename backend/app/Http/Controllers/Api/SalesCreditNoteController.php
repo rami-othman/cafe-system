@@ -109,8 +109,9 @@ final class SalesCreditNoteController extends Controller
             'financialLocationId' => ['nullable', 'integer'],
         ]);
         $this->posting->post($request, $tenant, $creditNote, $actor, $data);
+        $warning = \App\Support\BackdatePolicy::closedDayWarning($tenant, $before->branch_id ? (int) $before->branch_id : null, $before->credit_date);
 
-        return response()->json(['data' => $this->one($request, $tenant, $creditNote)]);
+        return response()->json(['data' => $this->one($request, $tenant, $creditNote), 'warnings' => $warning ? [$warning] : []]);
     }
 
     private function one(Request $request, int $tenant, int $id): array
@@ -159,6 +160,8 @@ final class SalesCreditNoteController extends Controller
             'subtotal' => $n->subtotal, 'taxTotal' => $n->tax_total, 'total' => $n->total,
             'arReductionAmount' => $n->ar_reduction_amount, 'customerCreditAmount' => $n->customer_credit_amount,
             'createdBy' => $n->creator_name, 'createdAt' => $n->created_at, 'postedAt' => $n->posted_at,
+            'backdateReason' => $n->backdate_reason,
+            'isBackdated' => $n->credit_date < substr((string) $n->created_at, 0, 10),
         ];
     }
 
@@ -177,6 +180,7 @@ final class SalesCreditNoteController extends Controller
             'originalSalesInvoiceId' => ['required', 'integer'],
             'creditDate' => ['nullable', 'date'],
             'reason' => ['nullable', 'string', 'max:500'],
+            'backdateReason' => ['nullable', 'string', 'max:1000'],
             'idempotencyKey' => ['nullable', 'string', 'max:128'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.originalSalesInvoiceLineId' => ['required', 'integer'],

@@ -12,24 +12,27 @@ class PurchasePostingChoice {
 
   final int? financialLocationId;
   final String paidAmount;
+
+  /// Client decision 2026-09-28 (T7): a purchase's receipt and payment
+  /// always land on the invoice's own accounting date — kept here (equal to
+  /// [invoiceDate]) only for API-shape compatibility; the backend now
+  /// ignores whatever it is sent and always uses the invoice date itself.
   final String paymentDate;
   final String receiptDate;
 }
-
-String _dateOnly(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 Future<PurchasePostingChoice?> showPurchasePostingDialog(
   BuildContext context, {
   required PurchasePostingPreview preview,
   required String branchName,
+  required String invoiceDate,
   String? paidAmount,
 }) {
   int? selected = preview.financialLocationId;
   final selectable = preview.cashSourceMode == 'selectable';
-  final amountController = TextEditingController(text: paidAmount ?? preview.amount);
-  DateTime paymentDate = DateTime.now();
-  DateTime receiptDate = DateTime.now();
+  final amountController = TextEditingController(
+    text: paidAmount ?? preview.amount,
+  );
   return showDialog<PurchasePostingChoice>(
     context: context,
     builder: (dialog) => StatefulBuilder(
@@ -47,52 +50,36 @@ Future<PurchasePostingChoice?> showPurchasePostingDialog(
                 TextField(
                   controller: amountController,
                   readOnly: paidAmount != null,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(labelText: 'المدفوع الآن'),
                   onChanged: (_) => setState(() {}),
                 ),
-                Text('المتبقي: ${(double.tryParse(preview.amount) ?? 0) - (double.tryParse(amountController.text) ?? 0)} SYP'),
-                InkWell(
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: receiptDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2035),
-                    );
-                    if (picked != null) setState(() => receiptDate = picked);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'تاريخ الاستلام'),
-                    child: Text(_dateOnly(receiptDate)),
-                  ),
+                Text(
+                  'المتبقي: ${(double.tryParse(preview.amount) ?? 0) - (double.tryParse(amountController.text) ?? 0)} SYP',
                 ),
-                if ((double.tryParse(amountController.text) ?? 0) > 0)
-                  InkWell(
-                    onTap: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: paymentDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2035),
-                      );
-                      if (picked != null) setState(() => paymentDate = picked);
-                    },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'تاريخ الدفع'),
-                      child: Text(_dateOnly(paymentDate)),
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                Text(
+                  'التاريخ المحاسبي: $invoiceDate (الاستلام والدفع بنفس التاريخ)',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
                 if (selectable)
                   DropdownButtonFormField<int>(
                     initialValue: selected,
                     isExpanded: true,
                     decoration: const InputDecoration(labelText: 'الصندوق'),
                     items: preview.allowedCashLocations
-                        .map((location) => DropdownMenuItem<int>(
-                              value: location.id,
-                              child: Text(location.name, overflow: TextOverflow.ellipsis),
-                            ))
+                        .map(
+                          (location) => DropdownMenuItem<int>(
+                            value: location.id,
+                            child: Text(
+                              location.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
                         .toList(growable: false),
                     onChanged: (value) => setState(() => selected = value),
                   )
@@ -105,19 +92,26 @@ Future<PurchasePostingChoice?> showPurchasePostingDialog(
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialog), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('إلغاء'),
+          ),
           ElevatedButton(
-            onPressed: ((double.tryParse(amountController.text) ?? -1) < 0 ||
-                        (double.tryParse(amountController.text) ?? 0) > (double.tryParse(preview.amount) ?? 0) ||
-                        (selectable && selected == null && (double.tryParse(amountController.text) ?? 0) > 0))
+            onPressed:
+                ((double.tryParse(amountController.text) ?? -1) < 0 ||
+                    (double.tryParse(amountController.text) ?? 0) >
+                        (double.tryParse(preview.amount) ?? 0) ||
+                    (selectable &&
+                        selected == null &&
+                        (double.tryParse(amountController.text) ?? 0) > 0))
                 ? null
                 : () => Navigator.pop(
                     dialog,
                     PurchasePostingChoice(
                       selected,
                       amountController.text,
-                      paymentDate: _dateOnly(paymentDate),
-                      receiptDate: _dateOnly(receiptDate),
+                      paymentDate: invoiceDate,
+                      receiptDate: invoiceDate,
                     ),
                   ),
             child: const Text('ترحيل فاتورة الشراء'),

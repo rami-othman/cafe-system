@@ -215,6 +215,7 @@ class InventoryCubit extends Cubit<InventoryState> {
         itemMovementHistoryLastPage: 1,
         itemMovementHistoryTotal: 0,
         itemRecipeUsage: const <InventoryRecipeUsage>[],
+        clearItemRecipeHint: true,
         itemRecipeUsageLoaded: false,
         itemPurchaseHistory: const <InventoryPurchaseHistoryEntry>[],
         itemPurchaseHistoryPage: 1,
@@ -257,12 +258,14 @@ class InventoryCubit extends Cubit<InventoryState> {
   Future<void> loadItemRecipeUsage(int itemId) async {
     emit(state.copyWith(itemRecipeUsageLoading: true, clearError: true));
     try {
-      final List<InventoryRecipeUsage> usage = await repository.itemRecipeUsage(
+      final (List<InventoryRecipeUsage> usage, String? hint) = await repository.itemRecipeUsage(
         itemId,
       );
       emit(
         state.copyWith(
           itemRecipeUsage: usage,
+          itemRecipeHint: hint,
+          clearItemRecipeHint: hint == null,
           itemRecipeUsageLoaded: true,
           clearError: true,
         ),

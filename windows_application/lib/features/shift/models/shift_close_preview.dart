@@ -28,6 +28,10 @@ class ShiftClosePreview extends Equatable {
     required this.issues,
     required this.openingDate,
     required this.today,
+    this.unexplainedCash = 0,
+    this.destinationName,
+    this.varianceAccountCode,
+    this.varianceAccountName,
   });
 
   final ShiftSnapshot snapshot;
@@ -45,6 +49,16 @@ class ShiftClosePreview extends Equatable {
   final List<String> issues;
   final DateTime openingDate;
   final DateTime today;
+
+  /// Cash movements on the drawer that this shift's own summary does not
+  /// explain; a non-blocking warning shown before closing.
+  final double unexplainedCash;
+
+  /// Where the close transfer will land, and which account a counted
+  /// difference will post to. Null when not configured yet.
+  final String? destinationName;
+  final String? varianceAccountCode;
+  final String? varianceAccountName;
 
   bool get canClose => issues.isEmpty;
 
@@ -65,5 +79,9 @@ class ShiftClosePreview extends Equatable {
     issues,
     openingDate,
     today,
+    unexplainedCash,
+    destinationName,
+    varianceAccountCode,
+    varianceAccountName,
   ];
 }

@@ -176,7 +176,7 @@ class ShiftAssessment extends Equatable {
     final BarCountTemplate bar = snapshot.barCount;
     final bool paymentsMatch =
         (snapshot.payments.total -
-                (snapshot.sales.grossSales - snapshot.sales.discounts))
+                snapshot.sales.salesTotal)
             .abs() <=
         1;
 
@@ -197,7 +197,7 @@ class ShiftAssessment extends Equatable {
         label: 'تمت مطابقة المدفوعات',
         detail: paymentsMatch
             ? null
-            : 'إجمالي المدفوعات لا يطابق صافي المبيعات',
+            : 'إجمالي المدفوعات لا يطابق الإجمالي',
       ),
       ShiftReadinessItem(
         status: snapshot.pendingOperations.isEmpty

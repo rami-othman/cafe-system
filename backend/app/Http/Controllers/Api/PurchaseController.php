@@ -211,6 +211,7 @@ class PurchaseController extends Controller
             'receiptDate' => ['nullable', 'date_format:Y-m-d'],
         ]);
         $tenant = TenantContext::id($request);
+        $before = $this->invoices->find($tenant, $purchase);
         $this->posting->post(
             $request,
             $tenant,
@@ -222,8 +223,14 @@ class PurchaseController extends Controller
             $data['paymentDate'] ?? null,
             $data['receiptDate'] ?? null,
         );
+        $warning = \App\Support\BackdatePolicy::closedDayWarning($tenant, $before->branch_id ? (int) $before->branch_id : null, $before->invoice_date);
+        if ($warning === null) {
+            return $this->show($request, $purchase);
+        }
+        $payload = $this->show($request, $purchase)->getData(true);
+        $payload['warnings'] = [$warning];
 
-        return $this->show($request, $purchase);
+        return response()->json($payload);
     }
 
     private function perPage(Request $request): int
@@ -350,6 +357,8 @@ class PurchaseController extends Controller
             'reversalJournalEntryId' => $row->reversal_journal_entry_id ? (int) $row->reversal_journal_entry_id : null,
             'postedAt' => $row->posted_at,
             'createdAt' => $row->created_at,
+            'backdateReason' => $row->backdate_reason,
+            'isBackdated' => $row->invoice_date < substr((string) $row->created_at, 0, 10),
         ];
     }
 }

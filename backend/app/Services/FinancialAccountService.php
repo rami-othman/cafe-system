@@ -33,7 +33,7 @@ class FinancialAccountService
     {
         $before = $this->find($tenantId, $accountId);
         if ($before->is_system_protected && (strtoupper($data['code']) !== $before->code || $data['accountGroup'] !== $before->account_group || $data['normalBalance'] !== $before->normal_balance)) {
-            throw ValidationException::withMessages(['account' => 'System-protected accounts cannot change code, group, or normal balance.']);
+            throw ValidationException::withMessages(['account' => 'لا يمكن تغيير رمز الحساب المحمي أو مجموعته أو طبيعته.']);
         }
         $this->assertParent($tenantId, $data['parentAccountId'] ?? null, $accountId);
         DB::transaction(function () use ($request, $tenantId, $accountId, $data, $actorId, $before): void {
@@ -46,7 +46,7 @@ class FinancialAccountService
     {
         $before = $this->find($tenantId, $accountId);
         if ($before->is_system_protected && ! $isActive) {
-            throw ValidationException::withMessages(['isActive' => 'System-protected accounts cannot be deactivated.']);
+            throw ValidationException::withMessages(['isActive' => 'لا يمكن تعطيل حساب محمي.']);
         }
         DB::transaction(function () use ($request, $tenantId, $accountId, $isActive, $actorId, $before): void {
             DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $accountId)->update(['is_active' => $isActive, 'updated_by' => $actorId, 'updated_at' => now()]);
@@ -57,7 +57,7 @@ class FinancialAccountService
     public function find(int $tenantId, int $accountId): object
     {
         $account = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $accountId)->whereNull('deleted_at')->first();
-        abort_unless($account, 404, 'Financial account not found.');
+        abort_unless($account, 404, 'الحساب المالي غير موجود.');
 
         return $account;
     }
@@ -68,14 +68,14 @@ class FinancialAccountService
             return;
         }
         if ($accountId && (int) $parentId === $accountId) {
-            throw ValidationException::withMessages(['parentAccountId' => 'An account cannot be its own parent.']);
+            throw ValidationException::withMessages(['parentAccountId' => 'لا يمكن جعل الحساب أباً لنفسه.']);
         }
         $parent = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $parentId)->whereNull('deleted_at')->first();
         if (! $parent) {
-            throw ValidationException::withMessages(['parentAccountId' => 'The parent account does not belong to this tenant.']);
+            throw ValidationException::withMessages(['parentAccountId' => 'الحساب الأب لا يتبع هذا المستأجر.']);
         }
         if (! $parent->is_active) {
-            throw ValidationException::withMessages(['parentAccountId' => 'The parent account must be active.']);
+            throw ValidationException::withMessages(['parentAccountId' => 'يجب أن يكون الحساب الأب نشطاً.']);
         }
 
         // Parent links are tenant-local and may be nested. Walk the existing
@@ -85,7 +85,7 @@ class FinancialAccountService
         $cursor = (int) $parent->id;
         while ($cursor) {
             if (isset($visited[$cursor]) || ($accountId && $cursor === $accountId)) {
-                throw ValidationException::withMessages(['parentAccountId' => 'The selected parent would create a circular account hierarchy.']);
+                throw ValidationException::withMessages(['parentAccountId' => 'اختيار هذا الحساب الأب ينشئ دورة في شجرة الحسابات.']);
             }
             $visited[$cursor] = true;
             $cursor = (int) (DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('id', $cursor)->value('parent_account_id') ?? 0);

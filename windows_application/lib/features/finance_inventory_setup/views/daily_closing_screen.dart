@@ -388,6 +388,8 @@ class _DailyClosingTable extends StatelessWidget {
     headers: const <String>[
       'التاريخ',
       'الفرع',
+      'مجموع المبيعات',
+      'الإجمالي',
       'صافي المبيعات',
       'النقد المتوقع',
       'النقد الفعلي',
@@ -396,7 +398,7 @@ class _DailyClosingTable extends StatelessWidget {
       'حالة الإغلاق',
       'أُغلق في',
     ],
-    minWidth: 1300,
+    minWidth: 1600,
     onRowTap: (int index) => onOpen(rows[index]),
     rows: rows.map((DailyClosingListItem d) {
       final DailyClosingReadinessState state = dailyClosingReadinessState(
@@ -407,7 +409,9 @@ class _DailyClosingTable extends StatelessWidget {
       return <Widget>[
         Text(d.businessDate, style: FinanceText.body),
         Text(d.branchName, style: FinanceText.body),
-        FinanceAmount(value: d.netSales),
+        FinanceAmount(value: d.salesSum),
+        FinanceAmount(value: d.salesTotal),
+        FinanceAmount(value: d.salesNet),
         FinanceAmount(value: d.expectedCash ?? '—'),
         FinanceAmount(value: d.actualCash ?? '—'),
         Text(

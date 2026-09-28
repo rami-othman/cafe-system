@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Support\BranchLocalDate;
+use App\Support\FinancialActor;
 use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +32,8 @@ final class ShiftCloseService
     public function __construct(
         private readonly ShiftCashSummaryService $cashSummary,
         private readonly ShiftCloseTransferService $transfers,
+        private readonly ShiftDrawerReadinessService $readiness,
+        private readonly CashVarianceService $variance,
     ) {}
 
     /** Locks a tenant's shift row (live rows only) inside the caller's transaction. */
@@ -70,17 +74,29 @@ final class ShiftCloseService
             throw ValidationException::withMessages(['shift' => __('shifts.shift_not_open')]);
         }
         $this->assertRequiredBarChecksComplete($tenantId, $shift);
-        $summary = $this->cashSummary->summarize($tenantId, $shift);
-        $expectedCents = Money::cents($summary['expectedCash']);
+        $drawer = $this->readiness->drawerLocation($tenantId, (int) $shift->branch_id, (int) $shift->financial_location_id, true);
+        if (! $drawer) {
+            throw ValidationException::withMessages(['destination' => __('shifts.close_configuration_missing')]);
+        }
+        $expectedCents = Money::cents($this->readiness->drawerLedgerBalance($tenantId, $drawer));
 
         if ($closeType === self::TYPE_MANUAL) {
             $countedCents = Money::cents((string) $countedCash, 'closingCash');
-            if ($countedCents !== $expectedCents) {
-                throw ValidationException::withMessages(['closingCash' => __('shifts.counted_differs_from_expected')]);
+            $differenceCents = $countedCents - $expectedCents;
+            if ($differenceCents !== 0 && empty($extra['cash_difference_reason'])) {
+                throw ValidationException::withMessages(['cashDifferenceReason' => __('shifts.difference_reason_required')]);
             }
+            // Post the variance entry before the close transfer: it brings the
+            // drawer ledger balance to exactly the counted amount, so the
+            // transfer's own ledger-vs-counted check below passes unmodified.
+            $varianceEntryId = $this->variance->post($request, $tenantId, (int) $shift->branch_id, (int) $shift->financial_location_id,
+                $differenceCents, $transferDate ?? BranchLocalDate::today((int) $shift->branch_id), 'shift_cash_variance', (int) $shift->id,
+                'فرق صندوق الوردية '.($shift->shift_number ?? $shift->id), FinancialActor::id($request, $tenantId));
             $actorType = 'user';
         } elseif ($closeType === self::TYPE_AUTOMATIC) {
             $countedCents = $expectedCents;
+            $differenceCents = 0;
+            $varianceEntryId = null;
             $actorType = 'system';
         } else {
             throw new \InvalidArgumentException("Unsupported shift close type [{$closeType}].");
@@ -96,8 +112,9 @@ final class ShiftCloseService
             'shift_number' => $number,
             'report_number' => $shift->report_number ?: 'RPT-'.str_replace('SH-', '', $number),
             'closing_cash' => $closeType === self::TYPE_MANUAL ? Money::decimal($countedCents) : null,
-            'expected_cash' => $summary['expectedCash'],
-            'cash_difference' => '0.00',
+            'expected_cash' => Money::decimal($expectedCents),
+            'cash_difference' => Money::decimal($differenceCents),
+            'cash_variance_journal_entry_id' => $varianceEntryId,
             'close_type' => $closeType,
             'close_transfer_id' => $transferId,
             'status' => 'closed',

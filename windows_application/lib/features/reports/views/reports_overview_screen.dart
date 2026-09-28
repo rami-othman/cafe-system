@@ -330,10 +330,26 @@ class _KpiGrid extends StatelessWidget {
           })
         >[
           (
+            label: context.l10n.reportsOverviewKpiSalesSum,
+            info: context.l10n.reportsOverviewKpiInfoSalesSum,
+            icon: Icons.receipt_outlined,
+            metric: kpis.salesSum,
+            percent: false,
+            increaseIsGood: true,
+          ),
+          (
             label: context.l10n.reportsOverviewKpiNetSales,
             info: context.l10n.reportsOverviewKpiInfoNetSales,
             icon: Icons.payments_outlined,
             metric: kpis.netSales,
+            percent: false,
+            increaseIsGood: true,
+          ),
+          (
+            label: context.l10n.reportsOverviewKpiSalesNet,
+            info: context.l10n.reportsOverviewKpiInfoSalesNet,
+            icon: Icons.payments_outlined,
+            metric: kpis.salesNet,
             percent: false,
             increaseIsGood: true,
           ),

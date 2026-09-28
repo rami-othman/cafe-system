@@ -63,8 +63,12 @@ class ShiftClosingStep1Operations extends StatelessWidget {
                     ShiftFormat.money(snapshot.sales.refunds),
                   ),
                   (
+                    ShiftStrings.salesTotal,
+                    ShiftFormat.money(snapshot.sales.salesTotal),
+                  ),
+                  (
                     ShiftStrings.netSales,
-                    ShiftFormat.money(snapshot.sales.netSales),
+                    ShiftFormat.money(snapshot.sales.salesNet),
                   ),
                   (
                     ShiftStrings.orderCount,

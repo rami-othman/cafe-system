@@ -52,8 +52,11 @@ final class SalesReportController extends Controller
             'currency' => $ctx['currency'],
             'branches' => DB::table('branches')->whereIn('id', $ctx['authorizedBranchIds'])->get(['id', 'name'])->map(fn (object $b) => ['id' => (int) $b->id, 'name' => $b->name])->all(),
             'kpis' => [
+                'salesSum' => $metric(Money::cents($summary['salesSum']), isset($comparison['salesSum']) ? Money::cents($comparison['salesSum']) : null),
                 'grossSales' => $metric($summary['grossSalesCents'], $comparison['grossSalesCents'] ?? null),
                 'netSales' => $metric($summary['netSalesCents'], $comparison['netSalesCents'] ?? null),
+                'salesTotal' => $metric(Money::cents($summary['salesTotal']), isset($comparison['salesTotal']) ? Money::cents($comparison['salesTotal']) : null),
+                'salesNet' => $metric(Money::cents($summary['salesNet']), isset($comparison['salesNet']) ? Money::cents($comparison['salesNet']) : null),
                 'discounts' => $metric($summary['discountsCents'], $comparison['discountsCents'] ?? null),
                 'refunds' => $metric($summary['reductionsCents'], $comparison['reductionsCents'] ?? null),
                 'cogs' => $metric($summary['cogsCents'], $comparison['cogsCents'] ?? null),

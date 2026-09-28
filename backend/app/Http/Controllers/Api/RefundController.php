@@ -80,7 +80,7 @@ class RefundController extends Controller
                 $saleShift = DB::table('shifts')->where('tenant_id', $tenantId)
                     ->where('id', $payment->shift_id)->lockForUpdate()->first();
                 if ($saleShift && $saleShift->status !== 'open') {
-                    throw new OrderLifecycleException('CASH_REFUND_SHIFT_CLOSED', 'Cash refund after the sale shift closes requires an approved payout procedure.');
+                    throw new OrderLifecycleException('CASH_REFUND_SHIFT_CLOSED', 'رد النقد بعد إغلاق وردية البيع يحتاج إجراء صرف معتمداً.');
                 }
             }
 
@@ -101,7 +101,7 @@ class RefundController extends Controller
             DB::table('activity_logs')->insert([
                 'tenant_id' => $tenantId, 'branch_id' => $orderRow->branch_id, 'action' => 'order.refunded',
                 'user_id' => $actorId, 'entity_type' => 'order', 'entity_id' => $orderRow->id,
-                'description' => "Refunded \${$amount} for {$data['reason']}.", 'created_at' => $now, 'updated_at' => $now,
+                'description' => "مرتجع بقيمة {$amount} بسبب {$data['reason']}.", 'created_at' => $now, 'updated_at' => $now,
             ]);
 
             // A payment refund contains no item/restock detail, so it must
@@ -127,7 +127,7 @@ class RefundController extends Controller
                     'sourceId' => $refundId,
                     'sourceEvent' => 'PAYMENT_REFUNDED',
                     'entryDate' => BranchLocalDate::today($orderRow->branch_id ? (int) $orderRow->branch_id : null),
-                    'description' => "Refund — {$data['reason']}",
+                    'description' => "مرتجع — {$data['reason']}",
                     'lines' => array_values(array_filter([
                         $amountCents > $taxCents ? ['accountCode' => '4020', 'debit' => Money::decimal($amountCents - $taxCents)] : null,
                         $taxCents > 0 ? ['accountCode' => '2010', 'debit' => Money::decimal($taxCents)] : null,

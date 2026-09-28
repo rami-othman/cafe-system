@@ -17,6 +17,7 @@ final class HistoricalShiftCloseService
         private readonly ShiftClosePreviewService $previews,
         private readonly ShiftCloseService $closer,
         private readonly ShiftCloseTransferService $transfers,
+        private readonly CashVarianceService $variance,
         private readonly StockCountService $counts,
         private readonly HistoricalBarBalanceService $bar,
         private readonly UnitConversionResolver $conversions,
@@ -83,8 +84,9 @@ final class HistoricalShiftCloseService
         if ($data['cashCountBasis'] === 'current') {
             $counted -= Money::cents($metadata['laterNetCash']);
         }
-        if ($counted !== $expected) {
-            throw ValidationException::withMessages(['closingCash' => __('shifts.counted_differs_from_expected')]);
+        $differenceCents = $counted - $expected;
+        if ($differenceCents !== 0 && empty($data['cashDifferenceReason'])) {
+            throw ValidationException::withMessages(['cashDifferenceReason' => __('shifts.difference_reason_required')]);
         }
         $snapshot = $preview['snapshot'];
         if (! $shift->shift_number) {
@@ -92,6 +94,9 @@ final class HistoricalShiftCloseService
             $shift->shift_number = $this->closer->nextShiftNumber($tenant, CarbonImmutable::parse($shift->opened_at, 'UTC')->toDateString());
             $snapshot['identity']['shiftNumber'] = $shift->shift_number;
         }
+        $varianceEntryId = $this->variance->post($request, $tenant, (int) $shift->branch_id, (int) $shift->financial_location_id,
+            $differenceCents, $period->date, 'shift_cash_variance', (int) $shift->id,
+            'فرق صندوق الوردية '.$shift->shift_number, (int) $shift->user_id);
         $this->submitCounts($request, $tenant, $shift, $period, $data, $snapshot);
         $this->closer->assertRequiredBarChecksComplete($tenant, $shift);
 
@@ -99,7 +104,8 @@ final class HistoricalShiftCloseService
         // Release the unique open-drawer constraint within the transaction.
         DB::table('shifts')->where('tenant_id', $tenant)->where('id', $shift->id)->update([
             'status' => 'closed', 'close_type' => ShiftCloseService::TYPE_MANUAL, 'shift_number' => $shift->shift_number,
-            'closing_cash' => Money::decimal($counted), 'expected_cash' => Money::decimal($expected), 'cash_difference' => '0.00',
+            'closing_cash' => Money::decimal($counted), 'expected_cash' => Money::decimal($expected), 'cash_difference' => Money::decimal($differenceCents),
+            'cash_variance_journal_entry_id' => $varianceEntryId,
             'closed_at' => $closedAt, 'close_executed_at' => now(), 'business_date' => $period->date,
             'period_end_exclusive' => $period->timestamp(), 'cash_count_basis' => $data['cashCountBasis'], 'bar_count_basis' => $data['barCountBasis'],
             'notes' => $data['note'] ?? $shift->notes, 'report_number' => $shift->report_number ?: 'RPT-'.str_replace('SH-', '', $shift->shift_number),
@@ -114,10 +120,10 @@ final class HistoricalShiftCloseService
             $continuation = (int) DB::table('shifts')->insertGetId([
                 'tenant_id' => $tenant, 'branch_id' => $shift->branch_id, 'user_id' => $shift->user_id,
                 'financial_location_id' => $shift->financial_location_id, 'close_destination_financial_location_id' => $shift->close_destination_financial_location_id,
-                'closing_float_amount' => $shift->closing_float_amount, 'opening_cash' => Money::decimal($expected),
+                'closing_float_amount' => $shift->closing_float_amount, 'opening_cash' => Money::decimal($counted),
                 'shift_number' => $this->closer->nextShiftNumber($tenant, $period->end->setTimezone($period->timezone)->toDateString()),
                 'status' => 'open', 'opened_at' => $period->timestamp(), 'continuation_of_shift_id' => $shift->id,
-                'notes' => 'Continuation of '.$shift->shift_number, 'created_at' => now(), 'updated_at' => now(),
+                'notes' => 'استمرار الوردية '.$shift->shift_number, 'created_at' => now(), 'updated_at' => now(),
             ]);
             foreach (ShiftClosePreviewService::TABLES as $table) {
                 $query = $this->previews->laterQuery($tenant, (int) $shift->id, $table, $period);
@@ -137,16 +143,17 @@ final class HistoricalShiftCloseService
             }
         }
         $transfer = $this->transfers->create($request, $tenant, $shift, $counted, 'user',
-            CarbonImmutable::now('UTC')->setTimezone($period->timezone)->toDateString(), Money::cents($metadata['currentLedgerCash']), $continuation);
+            $period->date, Money::cents($metadata['currentLedgerCash']) + $differenceCents, $continuation);
         if ($continuation && $transfer) {
             DB::table('shift_cash_movements')->insert([
                 'tenant_id' => $tenant, 'branch_id' => $shift->branch_id, 'shift_id' => $continuation,
-                'kind' => 'withdrawal', 'amount' => $metadata['transferAmount'],
-                'description' => 'Close transfer for '.$shift->shift_number,
+                'kind' => 'withdrawal', 'amount' => Money::decimal($counted - Money::cents($shift->closing_float_amount)),
+                'description' => 'تحويل إغلاق الوردية '.$shift->shift_number,
                 'source_type' => 'historical_shift_close_transfer', 'source_id' => $transfer,
                 'created_by' => $shift->user_id, 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
+        $metadata['transferAmount'] = Money::decimal($counted - Money::cents($shift->closing_float_amount));
         $snapshot['identity']['lifecycle'] = 'closed';
         $snapshot['identity']['closedAt'] = $period->end->subSecond()->toIso8601String();
         $snapshot['identity']['closedBy'] = $snapshot['identity']['cashierName'];

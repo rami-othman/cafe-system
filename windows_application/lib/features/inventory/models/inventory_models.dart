@@ -364,6 +364,8 @@ class InventoryMovement {
     this.createdAt,
     this.employee,
     this.reference,
+    this.referenceType,
+    this.referenceId,
   });
   final int id;
   final int itemId;
@@ -383,6 +385,8 @@ class InventoryMovement {
   final String? createdAt;
   final String? employee;
   final String? reference;
+  final String? referenceType;
+  final int? referenceId;
 
   double get quantity {
     final double incoming = double.tryParse(quantityIn) ?? 0;
@@ -418,16 +422,9 @@ class InventoryMovement {
         employee: readString(json['userName']).isEmpty
             ? null
             : readString(json['userName']),
-        reference:
-            readString(
-              json['reference'],
-              fallback: readString(json['referenceType']),
-            ).isEmpty
-            ? null
-            : readString(
-                json['reference'],
-                fallback: readString(json['referenceType']),
-              ),
+        reference: readString(json['referenceNumber']).isEmpty ? null : readString(json['referenceNumber']),
+        referenceType: readString(json['referenceType']).isEmpty ? null : readString(json['referenceType']),
+        referenceId: readInt(json['referenceId']),
       );
 }
 
@@ -1013,6 +1010,7 @@ class InventoryRecipeUsage {
 
 class InventoryPurchaseHistoryEntry {
   const InventoryPurchaseHistoryEntry({
+    required this.invoiceId,
     required this.receiptId,
     required this.receiptNumber,
     required this.receiptDate,
@@ -1024,7 +1022,11 @@ class InventoryPurchaseHistoryEntry {
     required this.unit,
     required this.unitCost,
     required this.lineTotal,
+    required this.receivedQuantity,
+    required this.receivedUnit,
+    required this.receiptStatus,
   });
+  final int invoiceId;
   final int receiptId;
   final String receiptNumber;
   final String receiptDate;
@@ -1036,9 +1038,13 @@ class InventoryPurchaseHistoryEntry {
   final String unit;
   final String unitCost;
   final String lineTotal;
+  final String receivedQuantity;
+  final String receivedUnit;
+  final String receiptStatus;
 
   factory InventoryPurchaseHistoryEntry.fromJson(Map<String, dynamic> json) =>
       InventoryPurchaseHistoryEntry(
+        invoiceId: readInt(json['invoiceId']) ?? 0,
         receiptId: readInt(json['receiptId']) ?? 0,
         receiptNumber: readString(json['receiptNumber']),
         receiptDate: readString(json['receiptDate']),
@@ -1050,6 +1056,9 @@ class InventoryPurchaseHistoryEntry {
         unit: readString(json['unit'], fallback: 'unit'),
         unitCost: readString(json['unitCost'], fallback: '0.0000'),
         lineTotal: readString(json['lineTotal'], fallback: '0.00'),
+        receivedQuantity: readString(json['receivedQuantity'], fallback: '0.000'),
+        receivedUnit: readString(json['receivedUnit'], fallback: readString(json['unit'])),
+        receiptStatus: readString(json['receiptStatus'], fallback: 'not_received'),
       );
 }
 

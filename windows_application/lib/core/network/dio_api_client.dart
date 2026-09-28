@@ -122,6 +122,23 @@ class DioApiClient {
     );
   }
 
+  /// Returns the complete response body (see [getEnvelope]) instead of
+  /// unwrapping `data` — for endpoints whose sibling keys (e.g. a
+  /// non-blocking `warnings` array) the caller also needs.
+  Future<dynamic> postEnvelope(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+  }) {
+    return _sendEnvelope(
+      () => _dio.post<dynamic>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+      ),
+    );
+  }
+
   Future<dynamic> postMultipart(String path, {required FormData data}) {
     return _send(
       () => _dio.post<dynamic>(

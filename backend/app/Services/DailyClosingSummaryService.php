@@ -3,14 +3,19 @@
 namespace App\Services;
 
 use App\Support\Money;
+use App\Support\SalesTotals;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 final class DailyClosingSummaryService
 {
-    public function __construct(private readonly BusinessDayRangeResolver $days) {}
+    public function __construct(
+        private readonly BusinessDayRangeResolver $days,
+        private readonly FinancialAccountBalanceQuery $balances,
+    ) {}
 
-    /** Per-request memo of cash financial_location ids, keyed by "tenant:branch" — date-independent, but summarize() runs once per date. */
-    private static array $cashLocationIdsCache = [];
+    /** Per-request memo of cash financial_location rows (id + financial_account_id), keyed by "tenant:branch" — date-independent, but summarize() runs once per date. */
+    private static array $cashLocationsCache = [];
 
     /**
      * $includeBreakdown controls the 2 extra payment-breakdown queries.
@@ -24,9 +29,10 @@ final class DailyClosingSummaryService
     {
         $range = $this->days->resolve($tenant, $branch, $date); $start = $range['start']; $end = $range['end']; $day = $range['date'];
         $cacheKey = $tenant.':'.$branch;
-        $cashLocationIds = self::$cashLocationIdsCache[$cacheKey] ??= DB::table('financial_locations')->where('tenant_id',$tenant)->where('kind','cash')->where('is_active',true)->where(fn ($q) => $q->where('branch_id',$branch)->orWhereNull('branch_id'))->pluck('id');
+        $cashLocations = self::$cashLocationsCache[$cacheKey] ??= DB::table('financial_locations')->where('tenant_id',$tenant)->where('kind','cash')->where('is_active',true)->where(fn ($q) => $q->where('branch_id',$branch)->orWhereNull('branch_id'))->get(['id','financial_account_id']);
+        $cashLocationIds = $cashLocations->pluck('id');
         $row = $this->aggregates($tenant, $branch, $start, $end, $day, $cashLocationIds);
-        $m = fn ($v) => Money::cents($v ?? '0'); $gross=$m($row->orders_gross); $discounts=$m($row->orders_discounts); $refunds=$m($row->refund_total); $cashSales=$m($row->payment_cash); $cardSales=$m($row->payment_card); $other=$m($row->payment_total)-$cashSales-$cardSales; $opening=$m($row->shifts_opening);
+        $m = fn ($v) => Money::cents($v ?? '0'); $gross=$m($row->orders_gross); $discounts=$m($row->orders_discounts); $refunds=$m($row->refund_total); $cashSales=$m($row->payment_cash); $cardSales=$m($row->payment_card); $other=$m($row->payment_total)-$cashSales-$cardSales;
         // Customer Payment cash collections (Dr cash/bank, Cr AR — never a
         // second "sale") are added here exactly once, on the receipt's own
         // business date, mirroring how supplier_cash_paid is subtracted:
@@ -39,8 +45,27 @@ final class DailyClosingSummaryService
         // actually leaves the drawer, exactly mirroring supplier_cash_paid.
         // The originating Credit Note itself never moves cash (§30).
         $customerRefundsCash = $m($row->customer_refund_cash_paid);
-        $expected=$opening+$cashSales-$m($row->refund_cash)-$m($row->expense_cash_paid)-$m($row->supplier_cash_paid)+$customerPaymentsCash-$customerRefundsCash+$m($row->transfers_incoming)-$m($row->transfers_outgoing);
-        return ['businessDate'=>$day,'timezone'=>$range['timezone'],'branch'=>['id'=>$branch,'name'=>$range['branch']->name],'sales'=>['grossSales'=>Money::decimal($gross),'discounts'=>Money::decimal($discounts),'refunds'=>Money::decimal($refunds),'netSales'=>Money::decimal($gross-$discounts-$refunds),'cashSales'=>Money::decimal($cashSales),'cardSales'=>Money::decimal($cardSales),'otherSales'=>Money::decimal($other)],'refunds'=>['total'=>Money::decimal($refunds),'cash'=>Money::decimal($m($row->refund_cash)),'card'=>Money::decimal($m($row->refund_card)),'other'=>Money::decimal($refunds-$m($row->refund_cash)-$m($row->refund_card))],'cash'=>['openingCash'=>Money::decimal($opening),'cashSales'=>Money::decimal($cashSales),'cashRefunds'=>Money::decimal($m($row->refund_cash)),'expensesCash'=>Money::decimal($m($row->expense_cash_paid)),'supplierPaymentsCash'=>Money::decimal($m($row->supplier_cash_paid)),'customerPaymentsCash'=>Money::decimal($customerPaymentsCash),'customerRefundsCash'=>Money::decimal($customerRefundsCash),'transfersIn'=>Money::decimal($m($row->transfers_incoming)),'transfersOut'=>Money::decimal($m($row->transfers_outgoing)),'expectedCash'=>Money::decimal($expected)],'operations'=>['expensesTotal'=>Money::decimal($m($row->expense_paid)),'pendingExpensesCount'=>(int)$row->expense_pending_count,'supplierPaymentsTotal'=>Money::decimal($m($row->supplier_total)),'customerPaymentsTotal'=>Money::decimal($m($row->customer_payment_total)),'customerRefundsTotal'=>Money::decimal($m($row->customer_refund_total)),'wasteValue'=>Money::decimal($m($row->inv_waste)),'stockShortageValue'=>Money::decimal($m($row->inv_shortage)),'stockSurplusValue'=>Money::decimal($m($row->inv_surplus))],'shifts'=>['total'=>(int)$row->shifts_total,'open'=>(int)$row->shifts_open,'closed'=>(int)$row->shifts_closed],'paymentBreakdown'=>$includeBreakdown ? $this->paymentBreakdown($tenant,$branch,$start,$end) : []];
+        // Expected/opening cash is the accounting ledger's own balance for
+        // every cash financial_location (client fix 2026-09-28 T4): the old
+        // formula summed only POS shift opening_cash + the movement rows
+        // below, silently excluding the vault's opening balance and any
+        // manual ledger postings — a permanent, unexplained difference. The
+        // ledger balance is the source of truth; the movement rows below
+        // stay as a breakdown, with otherMovements reconciling the two.
+        $previousDay = CarbonImmutable::parse($day)->subDay()->toDateString();
+        $ledgerOpeningCents = 0; $ledgerClosingCents = 0;
+        foreach ($cashLocations as $loc) {
+            $ledgerOpeningCents += $m($this->balances->summary($tenant, (int) $loc->financial_account_id, null, $previousDay, (int) $loc->id)['balance']);
+            $ledgerClosingCents += $m($this->balances->summary($tenant, (int) $loc->financial_account_id, null, $day, (int) $loc->id)['balance']);
+        }
+        $itemsExpected=$ledgerOpeningCents+$cashSales-$m($row->refund_cash)-$m($row->expense_cash_paid)-$m($row->supplier_cash_paid)+$customerPaymentsCash-$customerRefundsCash+$m($row->transfers_incoming)-$m($row->transfers_outgoing);
+        $otherMovements=$ledgerClosingCents-$itemsExpected;
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet are the
+        // one shared definition (App\Support\SalesTotals). The legacy
+        // `netSales` key is kept byte-for-byte (it already equals salesTotal)
+        // so older screens keep working unmodified.
+        $salesTotals=SalesTotals::make($gross,$refunds,$discounts,$m($row->supplier_total),$m($row->expense_paid));
+        return ['businessDate'=>$day,'timezone'=>$range['timezone'],'branch'=>['id'=>$branch,'name'=>$range['branch']->name],'sales'=>['grossSales'=>Money::decimal($gross),'discounts'=>Money::decimal($discounts),'refunds'=>Money::decimal($refunds),'netSales'=>Money::decimal($gross-$discounts-$refunds),'cashSales'=>Money::decimal($cashSales),'cardSales'=>Money::decimal($cardSales),'otherSales'=>Money::decimal($other)]+$salesTotals,'refunds'=>['total'=>Money::decimal($refunds),'cash'=>Money::decimal($m($row->refund_cash)),'card'=>Money::decimal($m($row->refund_card)),'other'=>Money::decimal($refunds-$m($row->refund_cash)-$m($row->refund_card))],'cash'=>['openingCash'=>Money::decimal($ledgerOpeningCents),'cashSales'=>Money::decimal($cashSales),'cashRefunds'=>Money::decimal($m($row->refund_cash)),'expensesCash'=>Money::decimal($m($row->expense_cash_paid)),'supplierPaymentsCash'=>Money::decimal($m($row->supplier_cash_paid)),'customerPaymentsCash'=>Money::decimal($customerPaymentsCash),'customerRefundsCash'=>Money::decimal($customerRefundsCash),'transfersIn'=>Money::decimal($m($row->transfers_incoming)),'transfersOut'=>Money::decimal($m($row->transfers_outgoing)),'otherMovements'=>Money::decimal($otherMovements),'expectedCash'=>Money::decimal($ledgerClosingCents)],'operations'=>['expensesTotal'=>Money::decimal($m($row->expense_paid)),'pendingExpensesCount'=>(int)$row->expense_pending_count,'supplierPaymentsTotal'=>Money::decimal($m($row->supplier_total)),'customerPaymentsTotal'=>Money::decimal($m($row->customer_payment_total)),'customerRefundsTotal'=>Money::decimal($m($row->customer_refund_total)),'wasteValue'=>Money::decimal($m($row->inv_waste)),'stockShortageValue'=>Money::decimal($m($row->inv_shortage)),'stockSurplusValue'=>Money::decimal($m($row->inv_surplus))],'shifts'=>['total'=>(int)$row->shifts_total,'open'=>(int)$row->shifts_open,'closed'=>(int)$row->shifts_closed],'paymentBreakdown'=>$includeBreakdown ? $this->paymentBreakdown($tenant,$branch,$start,$end) : []];
     }
 
     /**

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Money;
+use App\Support\SalesTotals;
 use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -79,13 +81,23 @@ class ReportsOverviewController extends Controller
             ->orderBy('name')->get(['id', 'name', 'currency']);
     }
 
-    /** @return array{netSales: float, cogs: float, expenses: float, cogsAvailable: bool, expensesAvailable: bool} */
+    /** @return array{netSales: float, cogs: float, expenses: float, cogsAvailable: bool, expensesAvailable: bool, salesSum: float, salesTotal: float, salesNet: float, purchasesPaid: float, expensesPaid: float} */
     private function period(int $tenantId, array $allowedBranchIds, ?int $branchId, Carbon $from, Carbon $to): array
     {
         $orders = $this->orders($tenantId, $allowedBranchIds, $branchId, $from, $to)
-            ->selectRaw('COALESCE(SUM(total), 0) as sales, COALESCE(SUM(cogs_total), 0) as cogs, COUNT(*) as order_count, SUM(CASE WHEN cogs_total IS NULL THEN 1 ELSE 0 END) as missing_cogs')
+            ->selectRaw('COALESCE(SUM(total), 0) as sales, COALESCE(SUM(discount_total), 0) as discounts, COALESCE(SUM(cogs_total), 0) as cogs, COUNT(*) as order_count, SUM(CASE WHEN cogs_total IS NULL THEN 1 ELSE 0 END) as missing_cogs')
             ->first();
         $refunds = $this->refunds($tenantId, $allowedBranchIds, $branchId, $from, $to)->sum('amount');
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet —
+        // the same App\Support\SalesTotals definitions everywhere else.
+        // "Purchases" here means amounts actually PAID to suppliers during
+        // the period (not invoiced), per the client's own default.
+        $branchFilter = $branchId ? [$branchId] : $allowedBranchIds;
+        $purchasesPaid = DB::table('supplier_payments')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchFilter)->where('status', 'posted')
+            ->whereBetween('payment_date', [$from->toDateString(), $to->toDateString()])->sum('amount');
+        $expensesPaid = DB::table('expenses')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchFilter)->where('status', 'paid')->whereNull('deleted_at')
+            ->whereBetween('expense_date', [$from->toDateString(), $to->toDateString()])->sum('total_amount');
+        $totals = SalesTotals::make(Money::cents($orders->sales) + Money::cents($orders->discounts), Money::cents($refunds), Money::cents($orders->discounts), Money::cents($purchasesPaid), Money::cents($expensesPaid));
         $hasExpenseAccounts = DB::table('financial_accounts')->where('tenant_id', $tenantId)->where('account_group', 'expenses')->where('is_active', true)->whereNull('deleted_at')->exists();
         $expenseLines = DB::table('journal_entry_lines as lines')
             ->join('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')
@@ -103,11 +115,12 @@ class ReportsOverviewController extends Controller
             ->selectRaw('COALESCE(SUM(lines.debit - lines.credit), 0) as total')->value('total');
 
         return [
-            'netSales' => round((float) $orders->sales - (float) $refunds, 2),
+            'netSales' => (float) $totals['salesTotal'],
             'cogs' => round((float) $orders->cogs, 2),
             'expenses' => round((float) $expenseLines, 2),
             'cogsAvailable' => (int) $orders->order_count === 0 || (int) $orders->missing_cogs === 0,
             'expensesAvailable' => $hasExpenseAccounts,
+            ...$totals,
         ];
     }
 
@@ -117,16 +130,22 @@ class ReportsOverviewController extends Controller
         $grossProfit = $grossProfitAvailable ? round($current['netSales'] - $current['cogs'], 2) : null;
         $netProfitAvailable = $grossProfitAvailable && $current['expensesAvailable'];
         $values = [
+            'salesSum' => [$current['salesSum'], true, null],
             'netSales' => [$current['netSales'], true, null],
-            'grossProfit' => [$grossProfit, $grossProfitAvailable, 'Cost of goods sold has not been recorded for every paid order.'],
-            'grossMargin' => [$grossProfitAvailable && $current['netSales'] != 0 ? round(($grossProfit / $current['netSales']) * 100, 2) : null, $grossProfitAvailable && $current['netSales'] != 0, 'Gross margin needs recorded cost of goods sold and net sales.'],
-            'totalExpenses' => [$current['expensesAvailable'] ? $current['expenses'] : null, $current['expensesAvailable'], 'No active operating expense accounts are configured.'],
-            'netProfit' => [$netProfitAvailable ? round($grossProfit - $current['expenses'], 2) : null, $netProfitAvailable, 'Net profit needs recorded cost of goods sold and operating expenses.'],
+            'salesTotal' => [$current['salesTotal'], true, null],
+            'salesNet' => [$current['salesNet'], true, null],
+            'grossProfit' => [$grossProfit, $grossProfitAvailable, 'لم تُسجّل تكلفة البضاعة المباعة لكل طلب مدفوع.'],
+            'grossMargin' => [$grossProfitAvailable && $current['netSales'] != 0 ? round(($grossProfit / $current['netSales']) * 100, 2) : null, $grossProfitAvailable && $current['netSales'] != 0, 'هامش الربح يحتاج تكلفة البضاعة المباعة والإجمالي المسجلين.'],
+            'totalExpenses' => [$current['expensesAvailable'] ? $current['expenses'] : null, $current['expensesAvailable'], 'لا توجد حسابات مصروفات تشغيلية نشطة.'],
+            'netProfit' => [$netProfitAvailable ? round($grossProfit - $current['expenses'], 2) : null, $netProfitAvailable, 'صافي الربح يحتاج تكلفة البضاعة المباعة والمصروفات التشغيلية المسجلة.'],
         ];
 
         $previousGrossProfit = $previous && $previous['cogsAvailable'] ? round($previous['netSales'] - $previous['cogs'], 2) : null;
         $previousValues = [
+            'salesSum' => $previous['salesSum'] ?? null,
             'netSales' => $previous['netSales'] ?? null,
+            'salesTotal' => $previous['salesTotal'] ?? null,
+            'salesNet' => $previous['salesNet'] ?? null,
             'grossProfit' => $previousGrossProfit,
             'grossMargin' => $previousGrossProfit !== null && $previous['netSales'] != 0 ? round(($previousGrossProfit / $previous['netSales']) * 100, 2) : null,
             'totalExpenses' => $previous && $previous['expensesAvailable'] ? $previous['expenses'] : null,
@@ -190,14 +209,14 @@ class ReportsOverviewController extends Controller
             // Only physically counted closes can be cash differences (never automatic/legacy_reconcile).
             ->whereNotNull('shifts.closing_cash')->where(fn ($q) => $q->whereNull('shifts.close_type')->orWhere('shifts.close_type', 'manual'))
             ->whereBetween('shifts.closed_at', [$from, $to])->select(['shifts.id', 'shifts.cash_difference', 'shifts.closed_at', 'branches.name as branch'])
-            ->get()->map(fn (object $shift) => ['severity' => 'critical', 'description' => 'Cash difference of '.number_format((float) $shift->cash_difference, 2).' on closed shift #'.$shift->id, 'branch' => $shift->branch, 'occurredAt' => $shift->closed_at]);
+            ->get()->map(fn (object $shift) => ['severity' => 'critical', 'description' => 'فرق نقدي بقيمة '.Money::decimal(Money::cents($shift->cash_difference)).' في الوردية المغلقة رقم '.$shift->id, 'branch' => $shift->branch, 'occurredAt' => $shift->closed_at]);
         $stock = DB::table('inventory_items as items')->leftJoin('stock_balances as balances', function ($join) use ($tenantId): void {
             $join->on('balances.inventory_item_id', '=', 'items.id')->where('balances.tenant_id', '=', $tenantId);
         })->leftJoin('warehouses', 'warehouses.id', '=', 'balances.warehouse_id')
             ->where('items.tenant_id', $tenantId)->where('items.is_active', true)->where(fn ($query) => $query->whereNull('warehouses.branch_id')->orWhereIn('warehouses.branch_id', $filter))
             ->selectRaw('COALESCE(items.name_en, items.name) as name, SUM(COALESCE(balances.quantity_on_hand, 0)) as quantity, items.reorder_level, MAX(balances.updated_at) as occurred_at')
             ->groupBy('items.id', 'items.name', 'items.name_en', 'items.reorder_level')->havingRaw('SUM(COALESCE(balances.quantity_on_hand, 0)) <= items.reorder_level')->get()
-            ->map(fn (object $item) => ['severity' => (float) $item->quantity <= 0 ? 'critical' : 'warning', 'description' => ((float) $item->quantity <= 0 ? 'Out of stock: ' : 'Low stock: ').$item->name, 'branch' => $branchId ? DB::table('branches')->where('id', $branchId)->value('name') : 'Inventory', 'occurredAt' => $item->occurred_at]);
+            ->map(fn (object $item) => ['severity' => (float) $item->quantity <= 0 ? 'critical' : 'warning', 'description' => ((float) $item->quantity <= 0 ? 'نفد المخزون: ' : 'مخزون منخفض: ').$item->name, 'branch' => $branchId ? DB::table('branches')->where('id', $branchId)->value('name') : 'المخزون', 'occurredAt' => $item->occurred_at]);
         return $cash->concat($stock)->sortByDesc('occurredAt')->take(10)->values()->all();
     }
 

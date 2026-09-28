@@ -71,11 +71,13 @@ class _PurchaseInvoiceDetailScreenState
       context,
       preview: preview,
       branchName: _purchase?.branchName ?? "—",
+      invoiceDate: _purchase?.invoiceDate ?? '—',
     );
     if (choice == null) return;
     setState(() => _busy = true);
     try {
-      final PurchaseInvoice updated = await _cubit.repository.postPurchase(
+      final (PurchaseInvoice updated, List<Map<String, dynamic>> warnings) =
+          await _cubit.repository.postPurchase(
         widget.purchaseId,
         'purchase-post-${widget.purchaseId}-${DateTime.now().millisecondsSinceEpoch}',
         financialLocationId: choice.financialLocationId,
@@ -95,6 +97,14 @@ class _PurchaseInvoiceDetailScreenState
           ),
         ),
       );
+      for (final Map<String, dynamic> warning in warnings) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.orange,
+            content: Text('${warning['message'] ?? ''}'),
+          ),
+        );
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
@@ -260,7 +270,11 @@ class _PurchaseInvoiceDetailScreenState
                 FinanceInfoItem('الفرع', p.branchName ?? 'كل الفروع'),
                 if (p.hasInventoryLines)
                   FinanceInfoItem('المخزن', p.warehouseName ?? '—'),
-                FinanceInfoItem('تاريخ الفاتورة', p.invoiceDate),
+                FinanceInfoItem(
+                  'تاريخ الفاتورة',
+                  p.isBackdated ? '${p.invoiceDate} (بتاريخ سابق)' : p.invoiceDate,
+                ),
+                FinanceInfoItem('تاريخ الإنشاء', p.createdAt ?? '—'),
                 FinanceInfoItem('تاريخ الاستحقاق', p.dueDate),
                 FinanceInfoItem(
                   'الحساب',
@@ -269,6 +283,11 @@ class _PurchaseInvoiceDetailScreenState
                 ),
                 FinanceInfoItem('أنشأ بواسطة', p.createdByName ?? '—'),
                 FinanceInfoItem('تاريخ الترحيل', p.postedAt ?? '—'),
+                if (p.isBackdated)
+                  FinanceInfoItem(
+                    'سبب التاريخ السابق',
+                    p.backdateReason ?? '—',
+                  ),
                 if (p.hasInventoryLines)
                   FinanceInfoItem(
                     'حالة الاستلام',

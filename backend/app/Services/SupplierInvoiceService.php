@@ -67,6 +67,7 @@ class SupplierInvoiceService
                 $this->assertLinesMatchInvoiceType($tenantId, $built['lineType'], $data['invoiceType'], $debitAccountId);
             }
             $totals = $this->resolveTotals($tenantId, $data, $built);
+            $backdateReason = \App\Support\BackdatePolicy::reason($data['branchId'] ?? null, $data['invoiceDate'], $data['backdateReason'] ?? null);
 
             $supplierCode = (string) DB::table('suppliers')->where('tenant_id', $tenantId)
                 ->where('id', $data['supplierId'])->value('supplier_number');
@@ -76,6 +77,8 @@ class SupplierInvoiceService
                 'internal_reference' => $this->nextReference($tenantId),
                 'supplier_internal_reference' => $this->numbers->nextSupplierInvoiceNumber($tenantId, (int) $data['supplierId'], $supplierCode),
                 'status' => 'draft',
+                'backdate_reason' => $backdateReason,
+                'backdated_by' => $backdateReason ? $actorId : null,
                 'idempotency_key' => $key,
                 'idempotency_fingerprint' => $fingerprint,
                 'created_by' => $actorId,
@@ -124,9 +127,10 @@ class SupplierInvoiceService
                 $this->assertLinesMatchInvoiceType($tenantId, $built['lineType'], $data['invoiceType'], $debitAccountId);
             }
             $totals = $this->resolveTotals($tenantId, $data, $built);
+            $backdateReason = \App\Support\BackdatePolicy::reason($data['branchId'] ?? null, $data['invoiceDate'], $data['backdateReason'] ?? null);
 
             DB::table('supplier_invoices')->where('tenant_id', $tenantId)->where('id', $id)
-                ->update($this->draftPayload($data, $debitAccountId, $totals) + \App\Support\FactoryCurrency::columns($data) + ['updated_by' => $actorId, 'updated_at' => now()]);
+                ->update($this->draftPayload($data, $debitAccountId, $totals) + \App\Support\FactoryCurrency::columns($data) + ['backdate_reason' => $backdateReason, 'backdated_by' => $backdateReason ? $actorId : null, 'updated_by' => $actorId, 'updated_at' => now()]);
             if ($built !== null) {
                 $this->replaceLines($tenantId, $id, $totals['rows']);
                 $this->replaceCharges($tenantId, $id, $totals['chargeRows']);
@@ -169,6 +173,7 @@ class SupplierInvoiceService
             if ($invoice->status !== 'draft') {
                 throw ValidationException::withMessages(['status' => 'Only a draft supplier invoice can be posted.']);
             }
+            \App\Support\BackdatePolicy::reason($invoice->branch_id, $invoice->invoice_date, $invoice->backdate_reason);
             $type = $this->typeForInvoice($tenantId, $invoice);
             if (! $type->is_active || ! $type->group_is_active || ! $type->is_postable || $type->posting_behavior === 'none') {
                 throw ValidationException::withMessages(['invoiceTypeId' => 'This invoice type is non-financial and cannot be posted.']);
@@ -190,7 +195,7 @@ class SupplierInvoiceService
                 'sourceId' => $invoice->id,
                 'sourceEvent' => 'SUPPLIER_INVOICE_POSTED',
                 'entryDate' => $invoice->invoice_date,
-                'description' => "Supplier Invoice {$invoice->internal_reference} — {$supplier->name}",
+                'description' => "فاتورة شراء {$invoice->internal_reference} — {$supplier->name}",
                 'lines' => $journalLines,
             ], $actorId);
 

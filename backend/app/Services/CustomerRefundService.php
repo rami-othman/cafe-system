@@ -50,24 +50,24 @@ final class CustomerRefundService
                 FinancialActor::assertBranchAccess($actorId, $tenantId, (int) $data['branchId']);
                 $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'])->where('is_active', true)->whereNull('deleted_at')->first();
                 if (! $customer) {
-                    throw ValidationException::withMessages(['customerId' => 'Select an active tenant customer.']);
+                    throw ValidationException::withMessages(['customerId' => 'اختر عميلاً نشطاً تابعاً لهذا المستأجر.']);
                 }
 
                 $requestedMethod = DB::table('payment_methods')->where('tenant_id', $tenantId)->where('id', $data['paymentMethodId'])->where('is_active', true)->first();
-                if (! $requestedMethod) throw ValidationException::withMessages(['paymentMethodId' => 'Select an active payment method.']);
+                if (! $requestedMethod) throw ValidationException::withMessages(['paymentMethodId' => 'اختر طريقة دفع نشطة.']);
                 $cashSource = $this->cashSources->forPaymentMethod($tenantId, (int) $actorId, (int) $data['branchId'], $requestedMethod, $data['financialLocationId'] ?? null, true);
                 if ($cashSource) $data['financialLocationId'] = (int) $cashSource->location->id;
                 [$method, $location] = $this->resolveSettlement($tenantId, $data);
                 if ($location->branch_id && (int) $location->branch_id !== (int) $data['branchId']) {
-                    throw ValidationException::withMessages(['financialLocationId' => 'The location does not belong to the refund branch.']);
+                    throw ValidationException::withMessages(['financialLocationId' => 'الموقع المالي لا يتبع فرع المرتجع.']);
                 }
                 $amountCents = Money::cents($data['amount']);
                 if ($amountCents <= 0) {
-                    throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+                    throw ValidationException::withMessages(['amount' => 'يجب أن يكون المبلغ أكبر من الصفر.']);
                 }
                 $availableCents = $this->credit->balanceCents($tenantId, (int) $customer->id, lock: true);
                 if ($amountCents > $availableCents) {
-                    throw ValidationException::withMessages(['amount' => 'Refund amount exceeds the customer\'s available credit of '.Money::decimal($availableCents).'.']);
+                    throw ValidationException::withMessages(['amount' => 'مبلغ المرتجع يتجاوز رصيد العميل المتاح وقدره '.Money::decimal($availableCents).'.']);
                 }
 
                 $customerCreditCode = $this->accounts->customerCredit($tenantId);
@@ -85,10 +85,10 @@ final class CustomerRefundService
 
                 $journalId = $this->posting->postCustomerRefund($request, $tenantId, [
                     'branchId' => $data['branchId'], 'sourceId' => $refundId, 'sourceEvent' => 'CUSTOMER_REFUND_POSTED',
-                    'entryDate' => $data['refundDate'], 'description' => "Customer Refund — {$customer->name}",
+                    'entryDate' => $data['refundDate'], 'description' => "رد مبلغ لعميل — {$customer->name}",
                     'lines' => [
-                        ['accountCode' => $customerCreditCode, 'debit' => Money::decimal($amountCents), 'description' => 'Customer Credit Balance'],
-                        ['accountCode' => $location->account_code, 'credit' => Money::decimal($amountCents), 'description' => 'Cash/Bank Paid', 'financialLocationId' => $location->id],
+                        ['accountCode' => $customerCreditCode, 'debit' => Money::decimal($amountCents), 'description' => 'رصيد العميل الدائن'],
+                        ['accountCode' => $location->account_code, 'credit' => Money::decimal($amountCents), 'description' => 'نقد أو بنك مدفوع', 'financialLocationId' => $location->id],
                     ],
                 ], $actorId);
 
@@ -114,16 +114,16 @@ final class CustomerRefundService
     {
         $customer = DB::table('customers')->where('tenant_id', $tenantId)->where('id', $data['customerId'] ?? 0)->where('is_active', true)->whereNull('deleted_at')->first();
         if (! $customer) {
-            throw ValidationException::withMessages(['customerId' => 'Select an active tenant customer.']);
+            throw ValidationException::withMessages(['customerId' => 'اختر عميلاً نشطاً تابعاً لهذا المستأجر.']);
         }
         [$method, $location] = $this->resolveSettlement($tenantId, $data);
         $amountCents = Money::cents($data['amount'] ?? '0');
         if ($amountCents <= 0) {
-            throw ValidationException::withMessages(['amount' => 'Amount must be greater than zero.']);
+            throw ValidationException::withMessages(['amount' => 'يجب أن يكون المبلغ أكبر من الصفر.']);
         }
         $availableCents = $this->credit->balanceCents($tenantId, (int) $customer->id);
         if ($amountCents > $availableCents) {
-            throw ValidationException::withMessages(['amount' => 'Refund amount exceeds the customer\'s available credit of '.Money::decimal($availableCents).'.']);
+            throw ValidationException::withMessages(['amount' => 'مبلغ المرتجع يتجاوز رصيد العميل المتاح وقدره '.Money::decimal($availableCents).'.']);
         }
         $customerCreditCode = $this->accounts->customerCredit($tenantId);
 
@@ -159,7 +159,7 @@ final class CustomerRefundService
         if (! $method || ! $location || ($method->type === 'cash'
             ? $location->kind !== 'cash'
             : (int) $method->financial_account_id !== (int) $location->financial_account_id)) {
-            throw ValidationException::withMessages(['payment' => 'Select an active payment method and matching cash or bank account from this tenant.']);
+            throw ValidationException::withMessages(['payment' => 'اختر طريقة دفع نشطة وحساب نقد أو بنك مطابقاً لهذا المستأجر.']);
         }
 
         return [$method, $location];

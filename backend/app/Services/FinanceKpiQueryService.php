@@ -71,9 +71,17 @@ final class FinanceKpiQueryService
         $grossProfitCents = $netSalesCents - $cogsCents;
         $reliable = $coverageStatus === 'complete';
 
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet —
+        // grossCents/netSalesCents above already ARE salesSum/salesTotal;
+        // grossProfit stays derived from netSalesCents (salesTotal), never
+        // salesNet, so purchases are never deducted twice.
+        $purchasesPaidCents = Money::cents((string) DB::table('supplier_payments')->where('tenant_id', $context['tenantId'])->whereIn('branch_id', $context['scopeBranchIds'])->where('status', 'posted')->whereBetween('payment_date', [$dateFrom, $dateTo])->sum('amount') ?: '0');
+        $expensesPaidCents = Money::cents((string) DB::table('expenses')->where('tenant_id', $context['tenantId'])->whereIn('branch_id', $context['scopeBranchIds'])->where('status', 'paid')->whereNull('deleted_at')->whereBetween('expense_date', [$dateFrom, $dateTo])->sum('total_amount') ?: '0');
+        $salesTotals = \App\Support\SalesTotals::make($grossCents, $grossCents - $discountsCents - $netSalesCents, $discountsCents, $purchasesPaidCents, $expensesPaidCents);
+
         return [
             'netSalesCents' => $netSalesCents,
-            'netSales' => ['grossSales' => Money::decimal($grossCents), 'discounts' => Money::decimal($discountsCents), 'refunds' => Money::decimal($refundsCents), 'tax' => Money::decimal($taxCents), 'netSales' => Money::decimal($netSalesCents)],
+            'netSales' => ['grossSales' => Money::decimal($grossCents), 'discounts' => Money::decimal($discountsCents), 'refunds' => Money::decimal($refundsCents), 'tax' => Money::decimal($taxCents), 'netSales' => $salesTotals['salesTotal']] + $salesTotals,
             'cogsCents' => $cogsCents,
             'cogs' => ['amount' => Money::decimal($cogsCents), 'coverageStatus' => $coverageStatus, 'coveredSalesCount' => $covered, 'uncoveredSalesCount' => $uncovered, 'coveragePercentage' => $orderCount === 0 ? null : SafeMath::ratioPercentage($covered, $orderCount)],
             'grossProfitCents' => $grossProfitCents,

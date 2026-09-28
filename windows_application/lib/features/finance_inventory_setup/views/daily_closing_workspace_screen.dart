@@ -166,7 +166,7 @@ class _DailyClosingWorkspaceScreenState
             items: <FinanceKpiData>[
               FinanceKpiData(
                 label: 'صافي المبيعات',
-                value: detail.sales.netSales,
+                value: detail.sales.salesNet,
               ),
               FinanceKpiData(
                 label: 'المرتجعات',
@@ -203,7 +203,8 @@ class _DailyClosingWorkspaceScreenState
             FinanceAlertBanner(
               tone: FinanceTone.success,
               message:
-                  'تم إغلاق هذا اليوم في ${detail.closedAt ?? '—'} — صافي المبيعات ${detail.sales.netSales}، النقد المتوقع ${detail.cash.expectedCash}، الفعلي ${detail.cash.actualCash ?? '—'}، الفرق ${detail.cash.difference ?? '—'}.',
+                  'تم إغلاق هذا اليوم في ${detail.closedAt ?? '—'} — صافي المبيعات ${detail.sales.salesNet}، النقد المتوقع ${detail.cash.expectedCash}، الفعلي ${detail.cash.actualCash ?? '—'}، الفرق ${detail.cash.difference ?? '—'}.'
+                  '${detail.variance.journalEntryId != null ? ' رُحّل الفرق إلى حساب ${detail.variance.accountName ?? '—'} بقيد رقم ${detail.variance.journalEntryId}.' : ''}',
             )
           else
             _ReadinessPanel(
@@ -228,24 +229,26 @@ class _DailyClosingWorkspaceScreenState
           const SizedBox(height: FinanceSpace.sm),
           FinanceTable(
             headers: const <String>[
-              'الإجمالي',
+              'مجموع المبيعات',
               'الخصومات',
               'المرتجعات',
+              'الإجمالي',
               'صافي المبيعات',
             ],
             minWidth: 700,
             rows: <List<Widget>>[
               <Widget>[
-                FinanceAmount(value: detail.sales.grossSales),
+                FinanceAmount(value: detail.sales.salesSum),
                 FinanceAmount(value: detail.sales.discounts),
                 Text(
                   detail.sales.refunds,
                   style: FinanceText.body.copyWith(color: FinanceColors.danger),
                 ),
                 Text(
-                  detail.sales.netSales,
+                  detail.sales.salesTotal,
                   style: FinanceText.body.copyWith(fontWeight: FontWeight.w700),
                 ),
+                FinanceAmount(value: detail.sales.salesNet),
               ],
             ],
           ),
@@ -365,13 +368,34 @@ class _DailyClosingWorkspaceScreenState
       _showError('لا يمكن إغلاق اليوم — يوجد حاجز يجب حسمه أولاً.');
       return;
     }
+    final double? diff = double.tryParse(
+      (detail.cash.difference ?? '').replaceAll(',', ''),
+    );
+    final bool hasDifference = diff != null && diff.abs() >= 0.005;
+    String? reason;
+    String? reasonDetail;
+    if (hasDifference) {
+      final _CashDifferenceReasonResult? result =
+          await showDialog<_CashDifferenceReasonResult>(
+            context: context,
+            builder: (BuildContext dialog) => _CashDifferenceReasonDialog(
+              difference: detail.cash.difference!,
+              accountName: detail.variance.accountName,
+            ),
+          );
+      if (result == null || !mounted) return;
+      reason = result.reason;
+      reasonDetail = result.detail;
+    }
     final bool hasWarnings = detail.warnings.isNotEmpty;
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialog) => AlertDialog(
         title: const Text('إغلاق اليوم'),
         content: Text(
-          hasWarnings
+          hasDifference
+              ? 'سيُرحّل فرق الصندوق ${detail.cash.difference} تلقائياً إلى حساب ${detail.variance.accountName ?? 'فروقات الصندوق'}. بعد الإغلاق تصبح اللقطة للقراءة فقط ولا يمكن التراجع.'
+              : hasWarnings
               ? 'يمكن إغلاق اليوم مع وجود تحذيرات غير حاجبة. بعد الإغلاق تصبح اللقطة للقراءة فقط ولا يمكن التراجع.'
               : 'كل الفحوصات جاهزة. بعد الإغلاق تصبح اللقطة للقراءة فقط ولا يمكن التراجع.',
         ),
@@ -396,7 +420,11 @@ class _DailyClosingWorkspaceScreenState
     try {
       final DailyClosingDetail closed = await _repository.closeDailyClosing(
         widget.closingId,
-        const <String, dynamic>{},
+        <String, dynamic>{
+          'cashDifferenceReason': ?reason,
+          if (reasonDetail?.isNotEmpty ?? false)
+            'cashDifferenceReasonDetail': reasonDetail,
+        },
       );
       if (!mounted) return;
       setState(() {
@@ -544,14 +572,15 @@ class _CashBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FinanceInfoGrid(
     items: <FinanceInfoItem>[
-      FinanceInfoItem('الرصيد الافتتاحي', cash.openingCash),
+      FinanceInfoItem('الرصيد الافتتاحي (من الدفاتر)', cash.openingCash),
       FinanceInfoItem('+ مبيعات نقدية', cash.cashSales),
       FinanceInfoItem('- مرتجعات نقدية', cash.cashRefunds),
       FinanceInfoItem('- مصروفات نقدية', cash.expensesCash),
       FinanceInfoItem('- دفعات موردين نقدية', cash.supplierPaymentsCash),
       FinanceInfoItem('- تحويلات خارجة', cash.transfersOut),
       FinanceInfoItem('+ تحويلات داخلة', cash.transfersIn),
-      FinanceInfoItem('= النقد المتوقع', cash.expectedCash),
+      FinanceInfoItem('حركات أخرى غير مفسّرة', cash.otherMovements),
+      FinanceInfoItem('= النقد المتوقع (رصيد الدفاتر)', cash.expectedCash),
     ],
   );
 }
@@ -862,6 +891,123 @@ class _ClosedNotice extends StatelessWidget {
     tone: FinanceTone.neutral,
     message:
         'هذا الإغلاق مغلق — اللقطة للقراءة فقط ولا يمكن تعديل أي قيمة فيها.',
+  );
+}
+
+/// Same reason codes as `ShiftController::DIFFERENCE_REASONS` /
+/// `CashDifferenceReason` (shift closing) — kept local instead of importing
+/// the shift feature, matching the backend's own literal duplication.
+const List<(String, String)> _cashDifferenceReasons = <(String, String)>[
+  ('change_error', 'خطأ في الباقي'),
+  ('unrecorded_transaction', 'عملية غير مسجلة'),
+  ('unrecorded_withdrawal', 'سحب نقدي غير مسجل'),
+  ('unrecorded_expense', 'مصروف غير مسجل'),
+  ('unknown_surplus', 'زيادة غير معروفة'),
+  ('unknown_shortage', 'عجز غير معروف'),
+  ('other', 'سبب آخر'),
+];
+
+class _CashDifferenceReasonResult {
+  const _CashDifferenceReasonResult(this.reason, this.detail);
+  final String reason;
+  final String? detail;
+}
+
+class _CashDifferenceReasonDialog extends StatefulWidget {
+  const _CashDifferenceReasonDialog({
+    required this.difference,
+    required this.accountName,
+  });
+  final String difference;
+  final String? accountName;
+
+  @override
+  State<_CashDifferenceReasonDialog> createState() =>
+      _CashDifferenceReasonDialogState();
+}
+
+class _CashDifferenceReasonDialogState
+    extends State<_CashDifferenceReasonDialog> {
+  String? _reason;
+  final TextEditingController _detailController = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _detailController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_reason == null) {
+      setState(() => _error = 'اختر سبب الفرق أولاً.');
+      return;
+    }
+    if (_reason == 'other' && _detailController.text.trim().isEmpty) {
+      setState(() => _error = 'اكتب تفصيل السبب.');
+      return;
+    }
+    Navigator.pop(
+      context,
+      _CashDifferenceReasonResult(_reason!, _detailController.text.trim()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => FinanceDialogShell(
+    title: 'سبب فرق الصندوق',
+    actions: <Widget>[
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إلغاء'),
+      ),
+      ElevatedButton(
+        onPressed: _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: FinanceColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        child: const Text('متابعة'),
+      ),
+    ],
+    child: SizedBox(
+      width: 380,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'يوجد فرق نقدي بقيمة ${widget.difference} — سيُرحّل تلقائياً إلى حساب ${widget.accountName ?? 'فروقات الصندوق'}.',
+            style: FinanceText.body,
+          ),
+          const SizedBox(height: FinanceSpace.md),
+          DropdownButtonFormField<String>(
+            initialValue: _reason,
+            decoration: const InputDecoration(labelText: 'سبب فرق الصندوق'),
+            items: <DropdownMenuItem<String>>[
+              for (final (String code, String label) in _cashDifferenceReasons)
+                DropdownMenuItem<String>(value: code, child: Text(label)),
+            ],
+            onChanged: (String? value) => setState(() {
+              _reason = value;
+              _error = null;
+            }),
+          ),
+          if (_reason == 'other') ...<Widget>[
+            const SizedBox(height: FinanceSpace.md),
+            TextField(
+              controller: _detailController,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'تفصيل السبب'),
+            ),
+          ],
+          if (_error != null) ...<Widget>[
+            const SizedBox(height: FinanceSpace.sm),
+            Text(_error!, style: const TextStyle(color: FinanceColors.danger)),
+          ],
+        ],
+      ),
+    ),
   );
 }
 

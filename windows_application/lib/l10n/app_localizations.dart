@@ -9002,8 +9002,32 @@ abstract class AppLocalizations {
   /// No description provided for @reportsOverviewKpiNetSales.
   ///
   /// In en, this message translates to:
-  /// **'Net Sales'**
+  /// **'Total'**
   String get reportsOverviewKpiNetSales;
+
+  /// No description provided for @reportsOverviewKpiSalesSum.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross sales'**
+  String get reportsOverviewKpiSalesSum;
+
+  /// No description provided for @reportsOverviewKpiSalesNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net sales'**
+  String get reportsOverviewKpiSalesNet;
+
+  /// No description provided for @reportsOverviewKpiInfoSalesSum.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed sales before discounts and refunds.'**
+  String get reportsOverviewKpiInfoSalesSum;
+
+  /// No description provided for @reportsOverviewKpiInfoSalesNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Total after paid purchases and expenses.'**
+  String get reportsOverviewKpiInfoSalesNet;
 
   /// No description provided for @reportsOverviewKpiGrossProfit.
   ///
@@ -9032,19 +9056,19 @@ abstract class AppLocalizations {
   /// No description provided for @reportsOverviewKpiInfoNetSales.
   ///
   /// In en, this message translates to:
-  /// **'Total sales after discounts and refunds, before tax.'**
+  /// **'Gross sales after refunds and discounts.'**
   String get reportsOverviewKpiInfoNetSales;
 
   /// No description provided for @reportsOverviewKpiInfoGrossProfit.
   ///
   /// In en, this message translates to:
-  /// **'Net sales minus the cost of goods sold.'**
+  /// **'Total minus the cost of goods sold.'**
   String get reportsOverviewKpiInfoGrossProfit;
 
   /// No description provided for @reportsOverviewKpiInfoGrossMargin.
   ///
   /// In en, this message translates to:
-  /// **'Gross profit as a percentage of net sales.'**
+  /// **'Gross profit as a percentage of total.'**
   String get reportsOverviewKpiInfoGrossMargin;
 
   /// No description provided for @reportsOverviewKpiInfoTotalExpenses.
@@ -9284,13 +9308,13 @@ abstract class AppLocalizations {
   /// No description provided for @salesProfitabilityGrossSales.
   ///
   /// In en, this message translates to:
-  /// **'Gross Sales'**
+  /// **'Gross sales'**
   String get salesProfitabilityGrossSales;
 
   /// No description provided for @salesProfitabilityNetSales.
   ///
   /// In en, this message translates to:
-  /// **'Net Sales'**
+  /// **'Total'**
   String get salesProfitabilityNetSales;
 
   /// No description provided for @salesProfitabilityDiscounts.
@@ -9500,7 +9524,7 @@ abstract class AppLocalizations {
   /// No description provided for @cashShiftsTotalSales.
   ///
   /// In en, this message translates to:
-  /// **'Total Sales'**
+  /// **'Gross sales'**
   String get cashShiftsTotalSales;
 
   /// No description provided for @cashShiftsExpectedCash.
@@ -13331,7 +13355,7 @@ abstract class AppLocalizations {
   /// No description provided for @expensesReportRatio.
   ///
   /// In en, this message translates to:
-  /// **'Expense-to-net-sales ratio'**
+  /// **'Expense-to-total ratio'**
   String get expensesReportRatio;
 
   /// No description provided for @expensesReportLargestCategory.
@@ -13427,7 +13451,7 @@ abstract class AppLocalizations {
   /// No description provided for @expensesReportNetSales.
   ///
   /// In en, this message translates to:
-  /// **'Net sales'**
+  /// **'Total'**
   String get expensesReportNetSales;
 
   /// No description provided for @expensesReportExpenseSales.

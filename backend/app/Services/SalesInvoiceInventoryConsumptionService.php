@@ -128,14 +128,14 @@ if ($components->isEmpty()) {
     }
 
     /** @param iterable<object> $lines @return array<int, array<string,mixed>> */
-    public function consume(Request $request, int $tenantId, object $invoice, iterable $lines, ?int $actorId): array
+    public function consume(Request $request, int $tenantId, object $invoice, iterable $lines, ?int $actorId, ?string $occurredAt = null): array
     {
         $plans = $this->preview($tenantId, $invoice, $lines);
         foreach ($plans as $lineId => $plan) {
             if ($plan['movements'] === []) {
                 continue;
             }
-            $actual = $this->movements->consume($request, $tenantId, (int) $invoice->branch_id, $plan['warehouseId'], 'sales_invoice_line', $lineId, array_map(fn (array $m): array => ['materialId' => $m['materialId'], 'baseUnit' => $m['baseUnit'], 'quantity' => $m['quantity']], $plan['movements']), $actorId);
+            $actual = $this->movements->consume($request, $tenantId, (int) $invoice->branch_id, $plan['warehouseId'], 'sales_invoice_line', $lineId, array_map(fn (array $m): array => ['materialId' => $m['materialId'], 'baseUnit' => $m['baseUnit'], 'quantity' => $m['quantity']], $plan['movements']), $actorId, allowNegativeStock: false, occurredAt: $occurredAt);
             $actualByItem = collect($actual['movements'])->keyBy('itemId');
             $plans[$lineId]['cogsCents'] = $actual['cogsCents'];
             $plans[$lineId]['movements'] = array_map(function (array $planned) use ($actualByItem): array {

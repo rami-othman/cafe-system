@@ -67,6 +67,7 @@ final class SalesInvoicePostingService
             if (! $customer) throw ValidationException::withMessages(['customerId' => 'Select an active customer.']);
             if ($customer->is_walk_in && ! $directSettlement) throw ValidationException::withMessages(['payment' => 'العميل النقدي يحتاج إلى دفع كامل ومصدر دفع عند الترحيل.']);
             if (! $customer->is_walk_in && $directSettlement) throw ValidationException::withMessages(['payment' => 'الفاتورة الآجلة تستخدم مسار الذمم القائم.']);
+            \App\Support\BackdatePolicy::reason($invoice->branch_id, $invoice->invoice_date, $invoice->backdate_reason);
             $this->periods->assertPostingAllowed($tenantId, $invoice->invoice_date);
             $lines = DB::table('sales_invoice_lines')->where('tenant_id', $tenantId)->where('sales_invoice_id', $invoiceId)->orderBy('line_number')->get();
             if ($lines->isEmpty()) throw ValidationException::withMessages(['lines' => 'A sales invoice requires at least one line before posting.']);
@@ -76,21 +77,21 @@ final class SalesInvoicePostingService
                 throw ValidationException::withMessages(['totals' => 'The stored invoice totals no longer match its immutable line snapshots.']);
             }
             $accounts = $this->accounts->postingAccounts($tenantId, ! $customer->is_walk_in);
-            $costs = $this->inventory->consume($request, $tenantId, $invoice, $lines, $actorId);
+            $costs = $this->inventory->consume($request, $tenantId, $invoice, $lines, $actorId, $invoice->invoice_date);
             $cogs = array_sum(array_map(fn (array $line): int => $line['cogsCents'], $costs));
             $journalLines = [$customer->is_walk_in
-                ? ['accountCode' => $directSettlement['accountCode'], 'debit' => Money::decimal($totals['total']), 'financialLocationId' => $directSettlement['locationId'], 'description' => 'Direct sale collected']
-                : ['accountCode' => $accounts['accountsReceivable'], 'debit' => Money::decimal($totals['total']), 'description' => 'Accounts Receivable']];
-            if ($totals['subtotal'] > 0) $journalLines[] = ['accountCode' => $accounts['revenue'], 'credit' => Money::decimal($totals['subtotal']), 'description' => 'Sales Revenue'];
-            if ($totals['charges'] > 0) $journalLines[] = ['accountCode' => $accounts['additionalChargeRevenue'], 'credit' => Money::decimal($totals['charges']), 'description' => 'Customer-billed charges revenue'];
-            if ($totals['adjustment'] > 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'credit' => Money::decimal($totals['adjustment']), 'description' => 'Commercial adjustment'];
-            if ($totals['adjustment'] < 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'debit' => Money::decimal(-$totals['adjustment']), 'description' => 'Commercial adjustment'];
-            if ($totals['tax'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'credit' => Money::decimal($totals['tax']), 'description' => 'Sales Tax Payable'];
+                ? ['accountCode' => $directSettlement['accountCode'], 'debit' => Money::decimal($totals['total']), 'financialLocationId' => $directSettlement['locationId'], 'description' => 'تحصيل بيع مباشر']
+                : ['accountCode' => $accounts['accountsReceivable'], 'debit' => Money::decimal($totals['total']), 'description' => 'الذمم المدينة']];
+            if ($totals['subtotal'] > 0) $journalLines[] = ['accountCode' => $accounts['revenue'], 'credit' => Money::decimal($totals['subtotal']), 'description' => 'إيرادات المبيعات'];
+            if ($totals['charges'] > 0) $journalLines[] = ['accountCode' => $accounts['additionalChargeRevenue'], 'credit' => Money::decimal($totals['charges']), 'description' => 'إيرادات الرسوم المحمّلة على العميل'];
+            if ($totals['adjustment'] > 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'credit' => Money::decimal($totals['adjustment']), 'description' => 'تسوية تجارية'];
+            if ($totals['adjustment'] < 0) $journalLines[] = ['accountCode' => $accounts['manualAdjustment'], 'debit' => Money::decimal(-$totals['adjustment']), 'description' => 'تسوية تجارية'];
+            if ($totals['tax'] > 0) $journalLines[] = ['accountCode' => $accounts['taxPayable'], 'credit' => Money::decimal($totals['tax']), 'description' => 'ضريبة المبيعات المستحقة'];
             if ($cogs > 0) {
-                $journalLines[] = ['accountCode' => $accounts['cogs'], 'debit' => Money::decimal($cogs), 'description' => 'Cost of Goods Sold'];
-                $journalLines[] = ['accountCode' => $accounts['inventory'], 'credit' => Money::decimal($cogs), 'description' => 'Inventory Asset'];
+                $journalLines[] = ['accountCode' => $accounts['cogs'], 'debit' => Money::decimal($cogs), 'description' => 'تكلفة البضاعة المباعة'];
+                $journalLines[] = ['accountCode' => $accounts['inventory'], 'credit' => Money::decimal($cogs), 'description' => 'أصل المخزون'];
             }
-            $journalId = $this->posting->post($request, $tenantId, ['sourceType' => 'sales_invoice', 'sourceId' => $invoiceId, 'sourceEvent' => 'SALES_INVOICE_POSTED', 'branchId' => $invoice->branch_id, 'entryDate' => $invoice->invoice_date, 'description' => "Sales Invoice {$invoice->invoice_number}", 'lines' => $journalLines], $actorId);
+            $journalId = $this->posting->post($request, $tenantId, ['sourceType' => 'sales_invoice', 'sourceId' => $invoiceId, 'sourceEvent' => 'SALES_INVOICE_POSTED', 'branchId' => $invoice->branch_id, 'entryDate' => $invoice->invoice_date, 'description' => "فاتورة بيع {$invoice->invoice_number}", 'lines' => $journalLines], $actorId);
             $now = now();
             foreach ($costs as $lineId => $cost) {
                 $firstMovementId = $cost['movements'][0]['movementId'] ?? null;

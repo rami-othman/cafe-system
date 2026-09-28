@@ -125,7 +125,7 @@ class _SalesCreditNoteDetailScreenState extends State<SalesCreditNoteDetailScree
         if (refundable) ElevatedButton.icon(onPressed: () async { final ok = await CustomerRefundDialog.show(context, api: cubit.repository, financeSetupRepository: context.read<FinanceSetupCubit>().repository, customerId: n.customerId, customerName: n.customerName, branchId: n.branchId); if (ok == true) load(); }, icon: const Icon(Icons.payments_outlined), label: const Text('+ رد مبلغ للعميل')),
       ],
       child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        Wrap(spacing: 28, runSpacing: 10, children: <Widget>[_field('التاريخ', n.creditDate), _field('السبب', n.reason ?? '—'), _field('الحالة', n.status == 'posted' ? 'مُرحّل' : (n.status == 'draft' ? 'مسودة' : 'ملغى'))]),
+        Wrap(spacing: 28, runSpacing: 10, children: <Widget>[_field('التاريخ', n.isBackdated ? '${n.creditDate} (بتاريخ سابق)' : n.creditDate), _field('تاريخ الإنشاء', n.createdAt ?? '—'), _field('السبب', n.reason ?? '—'), _field('الحالة', n.status == 'posted' ? 'مُرحّل' : (n.status == 'draft' ? 'مسودة' : 'ملغى')), if (n.isBackdated) _field('سبب التاريخ السابق', n.backdateReason ?? '—')]),
         if (n.status == 'posted') ...<Widget>[const SizedBox(height: 16), Wrap(spacing: 28, runSpacing: 10, children: <Widget>[_field('تخفيض الذمم المدينة', n.arReductionAmount ?? '0.00'), _field('رصيد ائتماني للعميل', n.customerCreditAmount ?? '0.00')])],
         const SizedBox(height: 24),
         DataTable(columns: const <DataColumn>[DataColumn(label: Text('المنتج')), DataColumn(label: Text('الكمية')), DataColumn(label: Text('سعر الوحدة')), DataColumn(label: Text('الضريبة')), DataColumn(label: Text('الإجمالي')), DataColumn(label: Text('إعادة للمخزون'))],
@@ -168,11 +168,14 @@ class _SalesCreditNoteDetailScreenState extends State<SalesCreditNoteDetailScree
         actions: <Widget>[TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')), ElevatedButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('ترحيل'))],
       ));
       if (approved != true) return;
-      await cubit.repository.postCreditNote(n.id, 'cn-post-${n.id}-${DateTime.now().microsecondsSinceEpoch}', paymentMethodId: methodId, financialLocationId: locationId);
+      final (_, List<Map<String, dynamic>> warnings) = await cubit.repository.postCreditNote(n.id, 'cn-post-${n.id}-${DateTime.now().microsecondsSinceEpoch}', paymentMethodId: methodId, financialLocationId: locationId);
       if (mounted) {
         await load();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(n.isDirectCashRefund ? 'تم ترحيل الإشعار وتسجيل الاسترداد النقدي بنجاح.' : 'تم ترحيل الإشعار الدائن بنجاح.')));
+        for (final Map<String, dynamic> warning in warnings) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.orange, content: Text('${warning['message'] ?? ''}')));
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعذر معاينة/ترحيل الإشعار: $e')));

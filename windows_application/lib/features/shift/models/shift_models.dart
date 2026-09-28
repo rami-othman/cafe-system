@@ -84,6 +84,11 @@ class ShiftSalesSummary extends Equatable {
     required this.orderCount,
     required this.cancelledOrderCount,
     required this.discountPolicyCount,
+    required this.salesSum,
+    required this.salesTotal,
+    required this.salesNet,
+    this.purchasesPaid = 0,
+    this.expensesPaid = 0,
   });
 
   final double grossSales;
@@ -96,7 +101,21 @@ class ShiftSalesSummary extends Equatable {
   final int cancelledOrderCount;
   final int discountPolicyCount;
 
-  double get netSales => grossSales - discounts - refunds;
+  /// مجموع المبيعات — every completed sale before any deduction.
+  final double salesSum;
+
+  /// الإجمالي — salesSum − refunds − discounts. Gross profit/margin are
+  /// always computed from this, never from [salesNet].
+  final double salesTotal;
+
+  /// صافي المبيعات — salesTotal − purchasesPaid − expensesPaid.
+  final double salesNet;
+  final double purchasesPaid;
+  final double expensesPaid;
+
+  /// Client decision 2026-09-28 (T5): kept as an alias for [salesTotal] —
+  /// every existing screen that reads `.netSales` already means "الإجمالي".
+  double get netSales => salesTotal;
 
   double get averageOrderValue => orderCount == 0 ? 0 : netSales / orderCount;
 
@@ -113,6 +132,11 @@ class ShiftSalesSummary extends Equatable {
     orderCount,
     cancelledOrderCount,
     discountPolicyCount,
+    salesSum,
+    salesTotal,
+    salesNet,
+    purchasesPaid,
+    expensesPaid,
   ];
 }
 
@@ -697,6 +721,66 @@ class CashCountResult extends Equatable {
   List<Object?> get props => <Object?>[expected, actual, reason, reasonDetail];
 }
 
+/// The variance entry automatically posted when counted cash differs from the
+/// drawer ledger at close — always to a manager-configured account (default
+/// 6180 "عجز وزيادة الصندوق"). Null when the shift closed with no difference.
+class ShiftCloseVariance extends Equatable {
+  const ShiftCloseVariance({
+    required this.amount,
+    this.journalEntryId,
+    this.accountCode,
+    this.accountName,
+  });
+
+  final double amount;
+  final int? journalEntryId;
+  final String? accountCode;
+  final String? accountName;
+
+  bool get isZero => amount.abs() <= kShiftEpsilon;
+
+  @override
+  List<Object?> get props => <Object?>[
+    amount,
+    journalEntryId,
+    accountCode,
+    accountName,
+  ];
+}
+
+/// The one cash movement (counted − closing float) from the drawer to its
+/// configured destination at close. [id] is null when nothing was moved
+/// because the counted amount equalled the float left behind.
+class ShiftCloseTransfer extends Equatable {
+  const ShiftCloseTransfer({
+    this.id,
+    this.amount,
+    this.date,
+    this.destinationName,
+    this.floatLeft = 0,
+    this.skippedReason,
+  });
+
+  final int? id;
+  final double? amount;
+  final DateTime? date;
+  final String? destinationName;
+  final double floatLeft;
+  final String? skippedReason;
+
+  bool get wasSkipped => id == null;
+
+  @override
+  List<Object?> get props => <Object?>[
+    id,
+    amount,
+    date,
+    destinationName,
+    floatLeft,
+    skippedReason,
+  ];
+}
+
 /// The sealed outcome of a closed shift: what the report renders.
 class ShiftClosingResult extends Equatable {
   const ShiftClosingResult({
@@ -714,6 +798,9 @@ class ShiftClosingResult extends Equatable {
     this.countedCashInput,
     this.continuationShiftId,
     this.closeExecutedAt,
+    this.variance,
+    this.transfer,
+    this.unexplainedCash = 0,
   });
 
   final ShiftSnapshot snapshot;
@@ -730,6 +817,12 @@ class ShiftClosingResult extends Equatable {
   final double? countedCashInput;
   final int? continuationShiftId;
   final DateTime? closeExecutedAt;
+  final ShiftCloseVariance? variance;
+  final ShiftCloseTransfer? transfer;
+
+  /// Cash movements on the drawer that this shift's own summary does not
+  /// explain (e.g. a manual movement posted outside the shift lifecycle).
+  final double unexplainedCash;
 
   Duration get duration => closedAt.difference(snapshot.identity.openedAt);
 
@@ -749,6 +842,9 @@ class ShiftClosingResult extends Equatable {
     countedCashInput,
     continuationShiftId,
     closeExecutedAt,
+    variance,
+    transfer,
+    unexplainedCash,
   ];
 }
 
@@ -791,7 +887,12 @@ class ShiftHistoryEntry extends Equatable {
     required this.barDifferenceCount,
     required this.status,
     this.closeMode = ShiftCloseMode.manual,
-  });
+    double? salesSum,
+    double? salesNet,
+    this.purchasesPaid = 0,
+    this.expensesPaid = 0,
+  }) : salesSum = salesSum ?? netSales,
+       salesNet = salesNet ?? netSales;
 
   final String shiftNumber;
   final DateTime date;
@@ -800,12 +901,19 @@ class ShiftHistoryEntry extends Equatable {
   final DateTime openedAt;
   final DateTime closedAt;
   final int orderCount;
+
+  /// الإجمالي — see `ShiftSalesSummary.salesTotal` for the full three-tier
+  /// definition (client decision 2026-09-28, T5).
   final double netSales;
   final double cashSales;
   final double cashDifference;
   final int barDifferenceCount;
   final ShiftHistoryStatus status;
   final ShiftCloseMode closeMode;
+  final double salesSum;
+  final double salesNet;
+  final double purchasesPaid;
+  final double expensesPaid;
 
   Duration get duration => closedAt.difference(openedAt);
 

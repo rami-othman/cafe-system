@@ -471,6 +471,10 @@ class FinancialAccount {
     this.parentAccountId,
     this.parentCode,
     this.parentNameAr,
+    this.balance = '0.00',
+    this.totalDebit = '0.00',
+    this.totalCredit = '0.00',
+    this.lastMovementDate,
   });
   final int id;
   final int? parentAccountId;
@@ -483,6 +487,13 @@ class FinancialAccount {
   final String normalBalance;
   final bool isActive;
   final bool isSystemProtected;
+
+  /// Rolled up with all descendant accounts, posted lines only (see
+  /// `FinancialAccountBalanceQuery::balanceWithChildren()`).
+  final String balance;
+  final String totalDebit;
+  final String totalCredit;
+  final String? lastMovementDate;
 
   factory FinancialAccount.fromJson(Map<String, dynamic> json) =>
       FinancialAccount(
@@ -501,6 +512,12 @@ class FinancialAccount {
         normalBalance: readString(json['normalBalance']),
         isActive: readBool(json['isActive']),
         isSystemProtected: readBool(json['isSystemProtected']),
+        balance: readString(json['balance'], fallback: '0.00'),
+        totalDebit: readString(json['totalDebit'], fallback: '0.00'),
+        totalCredit: readString(json['totalCredit'], fallback: '0.00'),
+        lastMovementDate: readString(json['lastMovementDate']).isEmpty
+            ? null
+            : readString(json['lastMovementDate']),
       );
 }
 
@@ -1274,6 +1291,9 @@ class DailyClosingListItem {
     required this.readiness,
     required this.warningsCount,
     required this.netSales,
+    required this.salesSum,
+    required this.salesTotal,
+    required this.salesNet,
     required this.expectedCash,
     required this.actualCash,
     required this.difference,
@@ -1290,6 +1310,9 @@ class DailyClosingListItem {
   final String readiness;
   final int warningsCount;
   final String netSales;
+  final String salesSum;
+  final String salesTotal;
+  final String salesNet;
   final String? expectedCash;
   final String? actualCash;
   final String? difference;
@@ -1311,6 +1334,9 @@ class DailyClosingListItem {
       readiness: readString(json['readiness']),
       warningsCount: readInt(json['warningsCount']) ?? 0,
       netSales: readString(json['netSales'], fallback: '0.00'),
+      salesSum: readString(json['salesSum'] ?? json['netSales'], fallback: '0.00'),
+      salesTotal: readString(json['salesTotal'] ?? json['netSales'], fallback: '0.00'),
+      salesNet: readString(json['salesNet'] ?? json['netSales'], fallback: '0.00'),
       expectedCash: readString(json['expectedCash']).isEmpty
           ? null
           : readString(json['expectedCash']),
@@ -1335,6 +1361,9 @@ class DailyClosingSales {
     required this.discounts,
     required this.refunds,
     required this.netSales,
+    required this.salesSum,
+    required this.salesTotal,
+    required this.salesNet,
     required this.cashSales,
     required this.cardSales,
     required this.otherSales,
@@ -1343,6 +1372,9 @@ class DailyClosingSales {
   final String discounts;
   final String refunds;
   final String netSales;
+  final String salesSum;
+  final String salesTotal;
+  final String salesNet;
   final String cashSales;
   final String cardSales;
   final String otherSales;
@@ -1352,6 +1384,9 @@ class DailyClosingSales {
         discounts: readString(json['discounts'], fallback: '0.00'),
         refunds: readString(json['refunds'], fallback: '0.00'),
         netSales: readString(json['netSales'], fallback: '0.00'),
+        salesSum: readString(json['salesSum'] ?? json['grossSales'], fallback: '0.00'),
+        salesTotal: readString(json['salesTotal'] ?? json['netSales'], fallback: '0.00'),
+        salesNet: readString(json['salesNet'] ?? json['netSales'], fallback: '0.00'),
         cashSales: readString(json['cashSales'], fallback: '0.00'),
         cardSales: readString(json['cardSales'], fallback: '0.00'),
         otherSales: readString(json['otherSales'], fallback: '0.00'),
@@ -1367,6 +1402,7 @@ class DailyClosingCashFigures {
     required this.supplierPaymentsCash,
     required this.transfersIn,
     required this.transfersOut,
+    required this.otherMovements,
     required this.expectedCash,
     this.actualCash,
     this.difference,
@@ -1379,6 +1415,7 @@ class DailyClosingCashFigures {
   final String supplierPaymentsCash;
   final String transfersIn;
   final String transfersOut;
+  final String otherMovements;
   final String expectedCash;
   final String? actualCash;
   final String? difference;
@@ -1395,6 +1432,7 @@ class DailyClosingCashFigures {
         ),
         transfersIn: readString(json['transfersIn'], fallback: '0.00'),
         transfersOut: readString(json['transfersOut'], fallback: '0.00'),
+        otherMovements: readString(json['otherMovements'], fallback: '0.00'),
         expectedCash: readString(json['expectedCash'], fallback: '0.00'),
         actualCash: readString(json['actualCash']).isEmpty
             ? null
@@ -1405,6 +1443,35 @@ class DailyClosingCashFigures {
         differenceState: readString(json['differenceState']).isEmpty
             ? null
             : readString(json['differenceState']),
+      );
+}
+
+/// The variance account/journal `DailyClosingService::present()` resolves for
+/// this branch (`CashVarianceService::account()`), and — once closed — the
+/// posted `CASH_VARIANCE_POSTED` journal entry id.
+class DailyClosingVariance {
+  const DailyClosingVariance({
+    this.amount,
+    this.accountCode,
+    this.accountName,
+    this.journalEntryId,
+  });
+  final String? amount;
+  final String? accountCode;
+  final String? accountName;
+  final int? journalEntryId;
+  factory DailyClosingVariance.fromJson(Map<String, dynamic> json) =>
+      DailyClosingVariance(
+        amount: readString(json['amount']).isEmpty
+            ? null
+            : readString(json['amount']),
+        accountCode: readString(json['accountCode']).isEmpty
+            ? null
+            : readString(json['accountCode']),
+        accountName: readString(json['accountName']).isEmpty
+            ? null
+            : readString(json['accountName']),
+        journalEntryId: readInt(json['journalEntryId']),
       );
 }
 
@@ -1581,6 +1648,7 @@ class DailyClosingDetail {
     required this.shifts,
     required this.reconciliation,
     required this.financialIntegrity,
+    required this.variance,
     this.paymentBreakdown = const <Map<String, dynamic>>[],
     this.lateActivity = const <DailyClosingLateActivity>[],
     this.blockers = const <DailyClosingIssue>[],
@@ -1604,6 +1672,7 @@ class DailyClosingDetail {
   final DailyClosingShiftsSummary shifts;
   final DailyClosingReconciliationSummary reconciliation;
   final DailyClosingFinancialIntegrity financialIntegrity;
+  final DailyClosingVariance variance;
   final List<Map<String, dynamic>> paymentBreakdown;
   final List<DailyClosingLateActivity> lateActivity;
   final List<DailyClosingIssue> blockers;
@@ -1641,6 +1710,7 @@ class DailyClosingDetail {
       financialIntegrity: DailyClosingFinancialIntegrity.fromJson(
         _map(json['financialIntegrity']),
       ),
+      variance: DailyClosingVariance.fromJson(_map(json['variance'])),
       paymentBreakdown: readMapList(json['paymentBreakdown']),
       lateActivity: readMapList(
         integrityIssues['lateActivity'],

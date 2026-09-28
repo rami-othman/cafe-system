@@ -342,9 +342,21 @@ class _OverviewBody extends StatelessWidget {
 
     return <FinanceKpiData>[
       card(
+        'salesSum',
+        'مجموع المبيعات',
+        Icons.receipt_outlined,
+        route: AppRoutes.financeTransactions,
+      ),
+      card(
         'netSales',
-        'صافي المبيعات',
+        'الإجمالي',
         Icons.receipt_long_outlined,
+        route: AppRoutes.financeTransactions,
+      ),
+      card(
+        'salesNet',
+        'صافي المبيعات',
+        Icons.payments_outlined,
         route: AppRoutes.financeTransactions,
       ),
       card(

@@ -45,6 +45,13 @@ final class SalesReportingQueryService
         $netSalesCents = $grossCents - $discountsCents - $reductionsCents;
         $cogsCents = $pos['cogsCents'] + $manual['cogsCents'] - $credit['cogsCents'];
         $grossProfitCents = $netSalesCents - $cogsCents;
+        // Client decision 2026-09-28 (T5): salesSum/salesTotal/salesNet —
+        // grossCents/netSalesCents above already ARE salesSum/salesTotal;
+        // grossProfitCents stays derived from netSalesCents (salesTotal),
+        // never salesNet, so purchases are never deducted twice.
+        $purchasesPaidCents = Money::cents((string) DB::table('supplier_payments')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'posted')->whereBetween('payment_date', [$dateFrom, $dateTo])->sum('amount') ?: '0');
+        $expensesPaidCents = Money::cents((string) DB::table('expenses')->where('tenant_id', $tenantId)->whereIn('branch_id', $branchIds)->where('status', 'paid')->whereNull('deleted_at')->whereBetween('expense_date', [$dateFrom, $dateTo])->sum('total_amount') ?: '0');
+        $salesTotals = \App\Support\SalesTotals::make($grossCents, $reductionsCents, $discountsCents, $purchasesPaidCents, $expensesPaidCents);
 
         return [
             'grossSalesCents' => $grossCents,
@@ -57,6 +64,7 @@ final class SalesReportingQueryService
             'marginPercentage' => SafeMath::ratioPercentage($grossProfitCents, $netSalesCents),
             'pos' => ['netSalesCents' => $pos['netCents']],
             'manualInvoice' => ['netSalesCents' => $manual['netCents'] - $credit['netCents']],
+            ...$salesTotals,
         ];
     }
 

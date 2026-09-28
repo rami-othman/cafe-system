@@ -87,6 +87,8 @@ class ReportsDateRange extends Equatable {
 class ReportsKpis extends Equatable {
   const ReportsKpis({
     required this.netSales,
+    required this.salesSum,
+    required this.salesNet,
     required this.grossProfit,
     required this.grossMargin,
     required this.totalExpenses,
@@ -94,12 +96,16 @@ class ReportsKpis extends Equatable {
   });
   factory ReportsKpis.fromJson(Map<String, dynamic> json) => ReportsKpis(
     netSales: ReportMetric.fromJson(_map(json['netSales'])),
+    salesSum: ReportMetric.fromJson(_map(json['salesSum'])),
+    salesNet: ReportMetric.fromJson(_map(json['salesNet'])),
     grossProfit: ReportMetric.fromJson(_map(json['grossProfit'])),
     grossMargin: ReportMetric.fromJson(_map(json['grossMargin'])),
     totalExpenses: ReportMetric.fromJson(_map(json['totalExpenses'])),
     netProfit: ReportMetric.fromJson(_map(json['netProfit'])),
   );
   final ReportMetric netSales;
+  final ReportMetric salesSum;
+  final ReportMetric salesNet;
   final ReportMetric grossProfit;
   final ReportMetric grossMargin;
   final ReportMetric totalExpenses;
@@ -107,6 +113,8 @@ class ReportsKpis extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     netSales,
+    salesSum,
+    salesNet,
     grossProfit,
     grossMargin,
     totalExpenses,

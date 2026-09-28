@@ -46,6 +46,7 @@ class InventoryState extends Equatable {
     this.itemMovementHistoryTotal = 0,
     this.itemMovementHistoryLoading = false,
     this.itemRecipeUsage = const <InventoryRecipeUsage>[],
+    this.itemRecipeHint,
     this.itemRecipeUsageLoaded = false,
     this.itemRecipeUsageLoading = false,
     this.itemPurchaseHistory = const <InventoryPurchaseHistoryEntry>[],
@@ -107,6 +108,7 @@ class InventoryState extends Equatable {
   final int itemMovementHistoryTotal;
   final bool itemMovementHistoryLoading;
   final List<InventoryRecipeUsage> itemRecipeUsage;
+  final String? itemRecipeHint;
   final bool itemRecipeUsageLoaded;
   final bool itemRecipeUsageLoading;
   final List<InventoryPurchaseHistoryEntry> itemPurchaseHistory;
@@ -163,6 +165,8 @@ class InventoryState extends Equatable {
     int? itemMovementHistoryTotal,
     bool? itemMovementHistoryLoading,
     List<InventoryRecipeUsage>? itemRecipeUsage,
+    String? itemRecipeHint,
+    bool clearItemRecipeHint = false,
     bool? itemRecipeUsageLoaded,
     bool? itemRecipeUsageLoading,
     List<InventoryPurchaseHistoryEntry>? itemPurchaseHistory,
@@ -226,6 +230,7 @@ class InventoryState extends Equatable {
     itemMovementHistoryLoading:
         itemMovementHistoryLoading ?? this.itemMovementHistoryLoading,
     itemRecipeUsage: itemRecipeUsage ?? this.itemRecipeUsage,
+    itemRecipeHint: clearItemRecipeHint ? null : itemRecipeHint ?? this.itemRecipeHint,
     itemRecipeUsageLoaded: itemRecipeUsageLoaded ?? this.itemRecipeUsageLoaded,
     itemRecipeUsageLoading:
         itemRecipeUsageLoading ?? this.itemRecipeUsageLoading,
@@ -286,6 +291,7 @@ class InventoryState extends Equatable {
     itemMovementHistoryTotal,
     itemMovementHistoryLoading,
     itemRecipeUsage,
+    itemRecipeHint,
     itemRecipeUsageLoaded,
     itemRecipeUsageLoading,
     itemPurchaseHistory,

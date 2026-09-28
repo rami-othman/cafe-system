@@ -120,8 +120,12 @@ class ShiftClosingStep5Success extends StatelessWidget {
                           ShiftFormat.count(snapshot.sales.orderCount),
                         ),
                         _row(
+                          ShiftStrings.salesTotal,
+                          ShiftFormat.money(snapshot.sales.salesTotal),
+                        ),
+                        _row(
                           ShiftStrings.netSales,
-                          ShiftFormat.money(snapshot.sales.netSales),
+                          ShiftFormat.money(snapshot.sales.salesNet),
                         ),
                         _row(
                           ShiftStrings.cashSales,
@@ -138,6 +142,37 @@ class ShiftClosingStep5Success extends StatelessWidget {
                               ? ShiftColors.matchInk
                               : ShiftColors.shortageInk,
                         ),
+                        if (result.variance != null &&
+                            !result.variance!.isZero)
+                          _row(
+                            ShiftStrings.cashDifferenceAccount,
+                            result.variance!.accountCode == null
+                                ? ShiftStrings.notApplicable
+                                : result.variance!.journalEntryId == null
+                                ? '${result.variance!.accountCode} — ${result.variance!.accountName ?? ''}'
+                                : ShiftStrings.variancePosted(
+                                    result.variance!.accountCode!,
+                                    result.variance!.accountName ?? '',
+                                    result.variance!.journalEntryId!,
+                                  ),
+                            numeric: false,
+                          ),
+                        if (result.transfer != null) ...<Widget>[
+                          _row(
+                            ShiftStrings.closeTransferDestination,
+                            result.transfer!.wasSkipped
+                                ? (result.transfer!.skippedReason ??
+                                      ShiftStrings.notApplicable)
+                                : (result.transfer!.destinationName ??
+                                      ShiftStrings.notApplicable),
+                            numeric: false,
+                          ),
+                          if (!result.transfer!.wasSkipped)
+                            _row(
+                              ShiftStrings.closeTransferAmount,
+                              ShiftFormat.money(result.transfer!.amount ?? 0),
+                            ),
+                        ],
                         _row(
                           ShiftStrings.barDifferenceCount,
                           ShiftFormat.count(snapshot.barCount.differenceItems),
@@ -145,6 +180,20 @@ class ShiftClosingStep5Success extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if ((result.unexplainedCash).abs() > kShiftEpsilon) ...<Widget>[
+                    const SizedBox(height: AppSpacing.lg),
+                    ShiftNotice(
+                      tone: ShiftTone.warning,
+                      message: ShiftStrings.unexplainedCashWarning(
+                        ShiftFormat.money(result.unexplainedCash.abs()),
+                      ),
+                      action: TextButton(
+                        onPressed: () =>
+                            context.go('/finance/cash-banks'),
+                        child: const Text(ShiftStrings.openDrawerLedger),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.xl),
                   Wrap(
                     alignment: WrapAlignment.center,

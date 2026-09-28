@@ -148,7 +148,7 @@ class JournalEntryService
                 'source_id' => $entryId,
                 'source_event' => null,
                 'reversal_of_id' => $entryId,
-                'description' => 'Reversal of '.$original->entry_number.($original->description ? ' — '.$original->description : ''),
+                'description' => 'عكس القيد '.$original->entry_number.($original->description ? ' — '.$original->description : ''),
                 'status' => 'draft',
                 'created_by' => $actorId,
                 'created_at' => $now,
