@@ -9,6 +9,9 @@ abstract interface class CafeConfigurationRepository {
   Future<CafeConfigurationBranch> getBranch(int id);
   Future<CafeConfigurationBranch> createBranch(BranchDraft draft);
   Future<CafeConfigurationBranch> updateBranch(int id, BranchDraft draft);
+  Future<List<BranchFinancialAccountOption>> getFinancialAccounts({
+    String status = 'active',
+  });
   Future<ReceiptTemplate> getReceiptTemplate(int branchId);
   Future<ReceiptTemplate> updateReceiptTemplate(
     int branchId,
@@ -98,6 +101,22 @@ class ApiCafeConfigurationRepository implements CafeConfigurationRepository {
       ),
     ),
   );
+
+  @override
+  Future<List<BranchFinancialAccountOption>> getFinancialAccounts({
+    String status = 'active',
+  }) async {
+    final dynamic response = await _apiClient.get(
+      'finance/accounts',
+      queryParameters: <String, dynamic>{'status': status, 'perPage': 200},
+    );
+    final List<dynamic> rows = response is List ? response : const <dynamic>[];
+    return rows
+        .map(
+          (dynamic row) => BranchFinancialAccountOption.fromJson(_map(row)),
+        )
+        .toList(growable: false);
+  }
 
   @override
   Future<ReceiptTemplate> getReceiptTemplate(int branchId) async =>

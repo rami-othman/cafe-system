@@ -38,4 +38,5 @@ return [
     'close_destination_invalid' => 'The close destination must be an active cash location for this tenant, different from the shift drawer.',
     'drawer_ledger_mismatch' => 'The drawer ledger balance does not match counted cash. Reconcile the opening cash and posted cash movements before closing.',
     'close_transfer_exists' => 'A close transfer is already recorded for this shift.',
+    'variance_account_missing' => 'No cash variance account configured. Set one in branch settings or activate account 6180.',
 ];

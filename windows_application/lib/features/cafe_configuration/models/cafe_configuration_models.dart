@@ -80,6 +80,7 @@ class CafeConfigurationBranch {
     this.branchType = 'cafe',
     this.posCashFinancialLocationId,
     this.shiftCloseDestinationFinancialLocationId,
+    this.cashVarianceAccountId,
     this.shiftClosingFloatAmount = '0.00',
     this.shiftCloseTime,
     this.availableShiftCloseDestinations = const <BranchCashLocationOption>[],
@@ -102,6 +103,7 @@ class CafeConfigurationBranch {
   final String branchType;
   final int? posCashFinancialLocationId;
   final int? shiftCloseDestinationFinancialLocationId;
+  final int? cashVarianceAccountId;
   final String shiftClosingFloatAmount;
   final String? shiftCloseTime;
   final List<BranchCashLocationOption> availableShiftCloseDestinations;
@@ -128,6 +130,7 @@ class CafeConfigurationBranch {
         ?.toInt(),
     shiftCloseDestinationFinancialLocationId:
         (json['shiftCloseDestinationFinancialLocationId'] as num?)?.toInt(),
+    cashVarianceAccountId: (json['cashVarianceAccountId'] as num?)?.toInt(),
     shiftClosingFloatAmount:
         json['shiftClosingFloatAmount']?.toString() ?? '0.00',
     shiftCloseTime: json['shiftCloseTime'] as String?,
@@ -183,6 +186,24 @@ class BranchCashLocationOption {
       );
 }
 
+class BranchFinancialAccountOption {
+  const BranchFinancialAccountOption({
+    required this.id,
+    required this.code,
+    required this.nameAr,
+  });
+  final int id;
+  final String code;
+  final String nameAr;
+  String get label => '$code — $nameAr';
+  factory BranchFinancialAccountOption.fromJson(Map<String, dynamic> json) =>
+      BranchFinancialAccountOption(
+        id: (json['id'] as num).toInt(),
+        code: json['code'] as String? ?? '',
+        nameAr: json['nameAr'] as String? ?? '',
+      );
+}
+
 class BranchWarehouseOption {
   const BranchWarehouseOption({
     required this.id,
@@ -211,6 +232,7 @@ class BranchDraft {
     this.posInventoryWarehouseId,
     this.posCashFinancialLocationId,
     this.shiftCloseDestinationFinancialLocationId,
+    this.cashVarianceAccountId,
     this.shiftClosingFloatAmount = '0.00',
     this.shiftCloseTime,
     this.printerConfig = const PrinterConfig(),
@@ -229,6 +251,7 @@ class BranchDraft {
   final int? posInventoryWarehouseId;
   final int? posCashFinancialLocationId;
   final int? shiftCloseDestinationFinancialLocationId;
+  final int? cashVarianceAccountId;
   final String shiftClosingFloatAmount;
   final String? shiftCloseTime;
   final PrinterConfig printerConfig;
@@ -244,6 +267,7 @@ class BranchDraft {
     posCashFinancialLocationId: branch.posCashFinancialLocationId,
     shiftCloseDestinationFinancialLocationId:
         branch.shiftCloseDestinationFinancialLocationId,
+    cashVarianceAccountId: branch.cashVarianceAccountId,
     shiftClosingFloatAmount: branch.shiftClosingFloatAmount,
     shiftCloseTime: branch.shiftCloseTime,
     printerConfig: branch.printerConfig,
@@ -260,11 +284,13 @@ class BranchDraft {
     int? posInventoryWarehouseId,
     int? posCashFinancialLocationId,
     int? shiftCloseDestinationFinancialLocationId,
+    int? cashVarianceAccountId,
     String? shiftClosingFloatAmount,
     String? shiftCloseTime,
     PrinterConfig? printerConfig,
     bool? autoPrintAfterPayment,
     bool clearPosInventoryWarehouseId = false,
+    bool clearCashVarianceAccountId = false,
   }) => BranchDraft(
     name: name ?? this.name,
     address: address ?? this.address,
@@ -280,6 +306,9 @@ class BranchDraft {
     shiftCloseDestinationFinancialLocationId:
         shiftCloseDestinationFinancialLocationId ??
         this.shiftCloseDestinationFinancialLocationId,
+    cashVarianceAccountId: clearCashVarianceAccountId
+        ? null
+        : cashVarianceAccountId ?? this.cashVarianceAccountId,
     shiftClosingFloatAmount:
         shiftClosingFloatAmount ?? this.shiftClosingFloatAmount,
     shiftCloseTime: shiftCloseTime ?? this.shiftCloseTime,
@@ -299,6 +328,7 @@ class BranchDraft {
       'posCashFinancialLocationId': posCashFinancialLocationId,
     'shiftCloseDestinationFinancialLocationId':
         shiftCloseDestinationFinancialLocationId,
+    'cashVarianceAccountId': cashVarianceAccountId,
     'shiftClosingFloatAmount': shiftClosingFloatAmount,
     'shiftCloseTime': shiftCloseTime?.trim().isEmpty == true
         ? null

@@ -24,6 +24,7 @@ class UpdateBranchRequest extends FormRequest
             'posInventoryWarehouseId' => ['sometimes', 'nullable', 'integer'],
             'posCashFinancialLocationId' => ['sometimes', 'required', 'integer'],
             'shiftCloseDestinationFinancialLocationId' => ['sometimes', 'nullable', 'integer'],
+            'cashVarianceAccountId' => ['sometimes', 'nullable', 'integer'],
             'shiftClosingFloatAmount' => ['sometimes', 'required', 'numeric', 'min:0'],
             'shiftCloseTime' => ['sometimes', 'nullable', 'date_format:H:i'],
             'receiptPrintingEnabled' => ['sometimes', 'boolean'],

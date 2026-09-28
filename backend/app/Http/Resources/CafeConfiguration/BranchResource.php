@@ -24,6 +24,7 @@ class BranchResource extends JsonResource
             'isActive' => $this->is_active,
             'posCashFinancialLocationId' => $this->pos_cash_financial_location_id,
             'shiftCloseDestinationFinancialLocationId' => $this->shift_close_destination_financial_location_id,
+            'cashVarianceAccountId' => $this->cash_variance_account_id,
             'shiftClosingFloatAmount' => $this->shift_closing_float_amount,
             'shiftCloseTime' => $this->shift_close_time ? substr($this->shift_close_time, 0, 5) : null,
             // Same canonical rules as shift open (ShiftDrawerReadinessService).

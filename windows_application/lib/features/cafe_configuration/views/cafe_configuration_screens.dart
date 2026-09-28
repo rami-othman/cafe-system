@@ -599,6 +599,45 @@ class _BranchEditorScreenState extends State<BranchEditorScreen> {
                         state
                             .errors['shiftCloseDestinationFinancialLocationId'],
                       ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const Text('حساب فروقات الصندوق (عجز / زيادة)'),
+                      DropdownButtonFormField<int?>(
+                        key: const Key('branch-cash-variance-account'),
+                        initialValue:
+                            state.cashVarianceAccounts.any(
+                              (account) =>
+                                  account.id ==
+                                  state.draft.cashVarianceAccountId,
+                            )
+                            ? state.draft.cashVarianceAccountId
+                            : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'حساب فروقات الصندوق',
+                        ),
+                        items: <DropdownMenuItem<int?>>[
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('الافتراضي: 6180 عجز وزيادة الصندوق'),
+                          ),
+                          ...state.cashVarianceAccounts.map(
+                            (account) => DropdownMenuItem<int?>(
+                              value: account.id,
+                              child: Text(
+                                account.label,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) => cubit.update(
+                          state.draft.copyWith(
+                            cashVarianceAccountId: value,
+                            clearCashVarianceAccountId: value == null,
+                          ),
+                        ),
+                      ),
+                      _FieldError(state.errors['cashVarianceAccountId']),
                       TextFormField(
                         initialValue: state.draft.shiftClosingFloatAmount,
                         decoration: const InputDecoration(

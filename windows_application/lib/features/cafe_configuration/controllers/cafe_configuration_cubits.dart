@@ -206,6 +206,7 @@ class BranchEditorState extends Equatable {
     this.errors = const <String, String>{},
     this.errorMessage,
     this.isDirty = false,
+    this.cashVarianceAccounts = const <BranchFinancialAccountOption>[],
   });
   final CafeConfigurationLoadStatus status;
   final int? branchId;
@@ -214,6 +215,7 @@ class BranchEditorState extends Equatable {
   final Map<String, String> errors;
   final String? errorMessage;
   final bool isDirty;
+  final List<BranchFinancialAccountOption> cashVarianceAccounts;
   bool get isEdit => branchId != null;
   BranchEditorState copyWith({
     CafeConfigurationLoadStatus? status,
@@ -223,6 +225,7 @@ class BranchEditorState extends Equatable {
     String? errorMessage,
     bool? isDirty,
     bool clearMessages = false,
+    List<BranchFinancialAccountOption>? cashVarianceAccounts,
   }) => BranchEditorState(
     status: status ?? this.status,
     branchId: branchId,
@@ -231,6 +234,7 @@ class BranchEditorState extends Equatable {
     errors: clearMessages ? const <String, String>{} : errors ?? this.errors,
     errorMessage: clearMessages ? null : errorMessage ?? this.errorMessage,
     isDirty: isDirty ?? this.isDirty,
+    cashVarianceAccounts: cashVarianceAccounts ?? this.cashVarianceAccounts,
   );
   @override
   List<Object?> get props => <Object?>[
@@ -246,6 +250,7 @@ class BranchEditorState extends Equatable {
     draft.posInventoryWarehouseId,
     draft.posCashFinancialLocationId,
     draft.shiftCloseDestinationFinancialLocationId,
+    draft.cashVarianceAccountId,
     draft.shiftClosingFloatAmount,
     draft.shiftCloseTime,
     draft.printerConfig,
@@ -253,6 +258,7 @@ class BranchEditorState extends Equatable {
     errors,
     errorMessage,
     isDirty,
+    cashVarianceAccounts,
   ];
 }
 
@@ -287,12 +293,21 @@ class BranchEditorCubit extends Cubit<BranchEditorState> {
       final CafeConfigurationBranch branch = await _repository.getBranch(
         branchId!,
       );
+      List<BranchFinancialAccountOption> accounts =
+          const <BranchFinancialAccountOption>[];
+      try {
+        accounts = await _repository.getFinancialAccounts();
+      } catch (_) {
+        // The variance-account dropdown degrades to "default 6180" when the
+        // accounts list cannot be fetched; it must not block loading the branch.
+      }
       emit(
         BranchEditorState(
           status: CafeConfigurationLoadStatus.ready,
           branchId: branchId,
           branch: branch,
           draft: BranchDraft.fromBranch(branch),
+          cashVarianceAccounts: accounts,
         ),
       );
     } catch (_) {
@@ -356,6 +371,7 @@ class BranchEditorCubit extends Cubit<BranchEditorState> {
           branchId: branchId,
           branch: saved,
           draft: BranchDraft.fromBranch(saved),
+          cashVarianceAccounts: state.cashVarianceAccounts,
         ),
       );
     } catch (e) {
@@ -396,6 +412,7 @@ bool _differentBranch(BranchDraft draft, CafeConfigurationBranch? branch) =>
     draft.posCashFinancialLocationId != branch.posCashFinancialLocationId ||
     draft.shiftCloseDestinationFinancialLocationId !=
         branch.shiftCloseDestinationFinancialLocationId ||
+    draft.cashVarianceAccountId != branch.cashVarianceAccountId ||
     draft.shiftClosingFloatAmount != branch.shiftClosingFloatAmount ||
     draft.shiftCloseTime != branch.shiftCloseTime ||
     draft.printerConfig != branch.printerConfig ||

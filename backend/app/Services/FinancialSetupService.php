@@ -88,6 +88,7 @@ class FinancialSetupService
             ['code' => '6120', 'name_ar' => 'مصروف الخدمات', 'name_en' => 'Utilities Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
             ['code' => '6130', 'name_ar' => 'مصروف الصيانة', 'name_en' => 'Maintenance Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
             ['code' => '6140', 'name_ar' => 'مصروف التسويق', 'name_en' => 'Marketing Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
+            ['code' => '6180', 'name_ar' => 'عجز وزيادة الصندوق', 'name_en' => 'Cash Over / Short', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
             ['code' => '6190', 'name_ar' => 'مصروفات متنوعة', 'name_en' => 'Miscellaneous Expense', 'account_group' => 'expenses', 'normal_balance' => 'debit'],
         ];
     }

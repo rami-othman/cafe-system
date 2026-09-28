@@ -117,6 +117,25 @@ class BranchController extends Controller
             $data['shift_close_destination_financial_location_id'] = $data['shiftCloseDestinationFinancialLocationId'];
             unset($data['shiftCloseDestinationFinancialLocationId']);
         }
+        if (array_key_exists('cashVarianceAccountId', $data)) {
+            if ($data['cashVarianceAccountId'] !== null) {
+                $accountId = (int) $data['cashVarianceAccountId'];
+                $isCashLocationAccount = DB::table('financial_locations')
+                    ->where('tenant_id', $branch->tenant_id)->where('financial_account_id', $accountId)->exists();
+                $isValidAccount = DB::table('financial_accounts')
+                    ->where('tenant_id', $branch->tenant_id)->where('id', $accountId)
+                    ->where('is_active', true)->whereNull('deleted_at')->exists();
+                if (! $isValidAccount || $isCashLocationAccount) {
+                    throw ValidationException::withMessages([
+                        'cashVarianceAccountId' => $isCashLocationAccount
+                            ? 'حساب فروقات الصندوق لا يمكن أن يكون صندوقاً أو خزنة.'
+                            : 'الحساب المحدد غير صالح.',
+                    ]);
+                }
+            }
+            $data['cash_variance_account_id'] = $data['cashVarianceAccountId'];
+            unset($data['cashVarianceAccountId']);
+        }
         foreach (['shiftClosingFloatAmount' => 'shift_closing_float_amount', 'shiftCloseTime' => 'shift_close_time'] as $input => $column) {
             if (array_key_exists($input, $data)) {
                 $data[$column] = $data[$input];
