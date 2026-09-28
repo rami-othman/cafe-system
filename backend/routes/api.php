@@ -459,7 +459,7 @@ Route::prefix('v1')->group(function (): void {
     // Inventory and Finance extend the authenticated operational boundary;
     // branch.access remains outer policy and feature permissions are additive.
     Route::middleware(['api.token', 'password.changed', 'branch.access'])->group(function (): void {
-        Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('inventory.permission:inventory.view');
+        Route::get('warehouses', [WarehouseController::class, 'index'])->middleware('inventory.permission:inventory.view,purchase-reference');
         Route::post('warehouses', [WarehouseController::class, 'store'])->middleware('inventory.permission:inventory.locations.manage');
         Route::patch('warehouses/{warehouse}', [WarehouseController::class, 'update'])->middleware('inventory.permission:inventory.locations.manage');
         Route::patch('warehouses/{warehouse}/status', [WarehouseController::class, 'status'])->middleware('inventory.permission:inventory.locations.manage');
@@ -467,9 +467,9 @@ Route::prefix('v1')->group(function (): void {
         Route::prefix('inventory')->group(function (): void {
             Route::get('dashboard', [InventoryBalanceController::class, 'dashboard'])->middleware('inventory.permission:inventory.view');
             Route::get('balances', [InventoryBalanceController::class, 'index'])->middleware('inventory.permission:inventory.view');
-            Route::get('items', [InventoryItemController::class, 'index'])->middleware('inventory.permission:inventory.view');
+            Route::get('items', [InventoryItemController::class, 'index'])->middleware('inventory.permission:inventory.view,purchase-reference');
             Route::post('items', [InventoryItemController::class, 'store'])->middleware('inventory.permission:inventory.items.manage');
-            Route::get('items/{item}', [InventoryItemController::class, 'show'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}', [InventoryItemController::class, 'show'])->middleware('inventory.permission:inventory.view,purchase-reference');
             Route::patch('items/{item}', [InventoryItemController::class, 'update'])->middleware('inventory.permission:inventory.items.manage');
             Route::patch('items/{item}/status', [InventoryItemController::class, 'status'])->middleware('inventory.permission:inventory.items.manage');
             Route::get('items/{item}/stock', [InventoryItemController::class, 'stock'])->middleware('inventory.permission:inventory.view');
@@ -477,7 +477,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('items/{item}/recipe-usage', [InventoryItemController::class, 'recipeUsage'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/purchase-history', [InventoryItemController::class, 'purchaseHistory'])->middleware('inventory.permission:inventory.view');
             Route::get('items/{item}/production-batches', [InventoryItemController::class, 'productionBatches'])->middleware('inventory.permission:inventory.view');
-            Route::get('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'index'])->middleware('inventory.permission:inventory.view');
+            Route::get('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'index'])->middleware('inventory.permission:inventory.view,purchase-reference');
             Route::post('items/{item}/unit-conversions', [InventoryItemUnitConversionController::class, 'store'])->middleware('inventory.permission:inventory.items.manage');
             Route::patch('items/{item}/unit-conversions/{conversion}', [InventoryItemUnitConversionController::class, 'update'])->middleware('inventory.permission:inventory.items.manage');
             Route::get('units', [InventoryItemController::class, 'units'])->middleware('inventory.permission:inventory.view');

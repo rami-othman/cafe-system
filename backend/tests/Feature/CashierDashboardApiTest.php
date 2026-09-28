@@ -61,6 +61,19 @@ final class CashierDashboardApiTest extends TestCase
         $this->getJson(self::INVENTORY, ['Authorization' => 'Bearer not-a-real-token'])->assertUnauthorized();
     }
 
+    public function test_purchase_reference_access_does_not_grant_inventory_operations(): void
+    {
+        $warehouses = $this->getJson('/api/v1/warehouses', $this->cashierAHeaders)->assertOk();
+        foreach ($warehouses->json('data') as $warehouse) {
+            $this->assertSame($this->branchA, $warehouse['branchId']);
+        }
+        $this->getJson('/api/v1/inventory/items', $this->cashierAHeaders)->assertOk();
+        $this->getJson('/api/v1/inventory/balances', $this->cashierAHeaders)->assertForbidden();
+        $this->getJson('/api/v1/inventory/movements', $this->cashierAHeaders)->assertForbidden();
+        $this->postJson('/api/v1/inventory/items', [], $this->cashierAHeaders)->assertForbidden();
+        $this->postJson('/api/v1/warehouses', [], $this->cashierAHeaders)->assertForbidden();
+    }
+
     public function test_a_cashier_reads_their_own_operational_dashboard(): void
     {
         $shift = $this->openShift($this->cashierA, $this->branchA, '50000.00');
