@@ -60,7 +60,9 @@ void main() {
             'quantityOut': '1.000',
             'unitCost': '14.2500',
             'totalCost': '14.25',
-            'reference': 'order #18',
+            // behaviour changed in T8 (client decision 2026-09-28): the backend
+            // sends the resolved document reference as `referenceNumber`.
+            'referenceNumber': 'order #18',
             'userName': 'Branch manager',
             'occurredAt': '2026-08-24T10:00:00Z',
             'createdAt': '2026-08-24T10:00:00Z',

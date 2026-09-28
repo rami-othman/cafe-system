@@ -80,6 +80,8 @@ class DailyClosingConcurrencyTest extends TestCase
 
         $order = $this->makeOrder($tenant, $branch, '50.00', $date.' 12:00:00');
         $this->makePayment($tenant, $branch, $order, '50.00', $date.' 12:00:00', 'cash');
+        // behaviour changed in T4 (client decision 2026-09-28): expected/opening cash is derived from the ledger, so the test's cash sale needs its own journal entry.
+        $this->postCashSaleLedger($tenant, $branch, '50.00', $date);
         $this->completeCashReconciliation($tenant, $branch, $date);
 
         $preview = $this->getJson("/api/v1/finance/daily-closing?branchId=$branch&date=$date", $headers)->assertOk()->json('data');
@@ -104,6 +106,8 @@ class DailyClosingConcurrencyTest extends TestCase
 
         $order = $this->makeOrder($tenant, $branch, '40.00', $date.' 12:00:00');
         $this->makePayment($tenant, $branch, $order, '40.00', $date.' 12:00:00', 'cash');
+        // behaviour changed in T4 (client decision 2026-09-28): expected/opening cash is derived from the ledger, so the test's cash sale needs its own journal entry.
+        $this->postCashSaleLedger($tenant, $branch, '40.00', $date);
         $this->completeCashReconciliation($tenant, $branch, $date);
 
         $preview = $this->getJson("/api/v1/finance/daily-closing?branchId=$branch&date=$date", $headers)->assertOk()->json('data');

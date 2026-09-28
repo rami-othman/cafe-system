@@ -27,7 +27,7 @@ class PurchaseLineCostPrecisionApiTest extends TestCase
         // reported client issue. The client never types this; only quantity
         // and the line's total are sent.
         $created = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [[
                 'lineType' => 'inventory', 'description' => 'Bulk material', 'inventoryItemId' => $itemId, 'warehouseId' => $warehouseId,
@@ -58,7 +58,7 @@ class PurchaseLineCostPrecisionApiTest extends TestCase
         // Three valid lines post successfully — the third line's index (2) is
         // not itself an obstacle.
         $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-002', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-002', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [$line('10.000', '100.00'), $line('20.000', '200.00'), $line('1850.000', '350.00')],
         ], $headers)->assertCreated()->assertJsonCount(3, 'data.lines');
@@ -66,7 +66,7 @@ class PurchaseLineCostPrecisionApiTest extends TestCase
         // A malformed third line (more than 4 decimal places on unitCost)
         // produces a clear validation error, not a silent partial post.
         $response = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-003', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-003', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [
                 $line('10.000', '100.00'),
@@ -91,7 +91,7 @@ class PurchaseLineCostPrecisionApiTest extends TestCase
         // (Flutter normalizes Arabic digits/separators before submit); this
         // proves the plain "0.4" form the normalizer produces is accepted.
         $created = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-004', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-004', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [[
                 'lineType' => 'inventory', 'description' => 'Small unit', 'inventoryItemId' => $itemId, 'warehouseId' => $warehouseId,
@@ -114,7 +114,7 @@ class PurchaseLineCostPrecisionApiTest extends TestCase
         $beforeCost = DB::table('inventory_items')->where('id', $itemId)->value('latest_unit_cost');
 
         $created = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-006', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'D1-PREC-006', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory', 'receiptMode' => 'immediate', 'branchId' => (int) DB::table('branches')->where('tenant_id', $tenant)->value('id'),
             'lines' => [[
                 'lineType' => 'inventory', 'description' => 'Discounted material', 'inventoryItemId' => $itemId, 'warehouseId' => $warehouseId,

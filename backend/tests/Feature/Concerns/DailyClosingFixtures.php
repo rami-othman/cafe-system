@@ -98,6 +98,28 @@ trait DailyClosingFixtures
         ]);
     }
 
+    /**
+     * makePayment()/makeOrder() only write the operational `payments`/`orders`
+     * rows — no journal entry — so they never move the cash ledger that T4's
+     * DailyClosingSummaryService now reads expected/opening cash from. Tests
+     * that assert expectedCash for a cash sale must additionally post the
+     * real ledger effect (Dr cash location, Cr 4000) via this helper.
+     */
+    protected function postCashSaleLedger(int $tenant, int $branch, string $amount, string $date, string $locationCode = 'CASH-DRAWER'): int
+    {
+        $location = $this->locationId($tenant, $locationCode);
+        $owner = (int) DB::table('users')->where('tenant_id', $tenant)->where('role', 'owner')->value('id');
+
+        return app(\App\Services\AccountingPostingService::class)->post(\Illuminate\Http\Request::create('/'), $tenant, [
+            'branchId' => $branch, 'sourceType' => 'pos_order', 'sourceId' => random_int(1, PHP_INT_MAX),
+            'sourceEvent' => 'DAILY_CLOSING_FIXTURE_SALE', 'entryDate' => $date, 'description' => 'Daily closing test cash sale',
+            'lines' => [
+                ['accountCode' => DB::table('financial_locations')->where('financial_locations.id', $location)->join('financial_accounts', 'financial_accounts.id', '=', 'financial_locations.financial_account_id')->value('financial_accounts.code'), 'debit' => $amount, 'credit' => '0.00', 'financialLocationId' => $location],
+                ['accountCode' => '4000', 'debit' => '0.00', 'credit' => $amount],
+            ],
+        ], $owner);
+    }
+
     protected function makeShift(int $tenant, int $branch, int $userId, string $openingCash, string $openedAt, ?string $closedAt = null, string $status = 'closed'): int
     {
         return (int) DB::table('shifts')->insertGetId([

@@ -61,6 +61,9 @@ final class HistoricalShiftCloseTest extends TestCase
         $this->assertSame('580.00', $preview['period']['currentLedgerCash']);
         $this->assertSame(1, $preview['period']['laterRecords']['payments']);
         $this->assertSame(1, $preview['snapshot']['sales']['orderCount']);
+        $this->assertArrayHasKey('salesSum', $preview['snapshot']['sales']);
+        $this->assertArrayHasKey('salesTotal', $preview['snapshot']['sales']);
+        $this->assertArrayHasKey('salesNet', $preview['snapshot']['sales']);
         $this->assertTrue($preview['period']['canClose']);
         $this->assertSame($before, $this->fingerprint());
     }
@@ -83,7 +86,8 @@ final class HistoricalShiftCloseTest extends TestCase
         $this->assertSame('180.00', $this->ledger());
         $this->assertSame('180.00', app(ShiftCashSummaryService::class)->summarize($this->tenant, $next)['expectedCash']);
         $this->assertSame($journals + 1, DB::table('journal_entries')->where('tenant_id', $this->tenant)->count());
-        $this->assertDatabaseHas('cash_transfers', ['id' => $result['closeTransferId'], 'shift_id' => $next->id, 'amount' => '400.00', 'transfer_date' => '2026-09-27']);
+        // behaviour changed in T3 (client decision 2026-09-28): the transfer is dated to the closed period.
+        $this->assertDatabaseHas('cash_transfers', ['id' => $result['closeTransferId'], 'shift_id' => $next->id, 'amount' => '400.00', 'transfer_date' => '2026-09-26']);
         $this->assertDatabaseHas('shifts', ['id' => $this->shift, 'business_date' => '2026-09-26', 'closed_at' => '2026-09-26 20:59:59', 'closing_cash' => '500.00']);
         $this->assertSame(2, DB::table('shift_period_reassignments')->where('from_shift_id', $this->shift)->count());
         $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)->assertOk();
@@ -103,6 +107,25 @@ final class HistoricalShiftCloseTest extends TestCase
         $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)->assertOk();
         $data['closingCash'] = '579.00';
         $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)->assertUnprocessable();
+    }
+
+    public function test_historical_shortage_posts_on_period_date_and_continuation_opens_with_counted_cash(): void
+    {
+        $this->sale('400.00');
+        $this->today();
+        $this->sale('80.00');
+        $data = $this->closeData();
+        $data['closingCash'] = '490.00';
+        $data['cashDifferenceReason'] = 'unknown_shortage';
+        $result = $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)->assertOk()->json('data');
+        $next = DB::table('shifts')->where('continuation_of_shift_id', $this->shift)->first();
+
+        $this->assertSame('490.00', $next->opening_cash);
+        $this->assertDatabaseHas('cash_transfers', ['id' => $result['closeTransferId'], 'amount' => '390.00', 'transfer_date' => '2026-09-26']);
+        $this->assertDatabaseHas('journal_entries', ['tenant_id' => $this->tenant, 'source_type' => 'shift_cash_variance', 'entry_date' => '2026-09-26']);
+        $safeAccount = DB::table('financial_locations')->where('id', $this->safe)->value('financial_account_id');
+        $safeBalance = app(FinancialAccountBalanceQuery::class)->summary($this->tenant, $safeAccount, to: '2026-09-26', locationId: $this->safe)['balance'];
+        $this->assertSame('290.00', $safeBalance);
     }
 
     public function test_changed_preview_is_rejected_without_partial_updates(): void
@@ -134,7 +157,8 @@ final class HistoricalShiftCloseTest extends TestCase
         $wrong = $data;
         $wrong['closingCash'] = '499.00';
         $before = $this->fingerprint();
-        $this->postJson("/api/v1/shifts/{$this->shift}/close", $wrong, $this->headers)->assertUnprocessable()->assertJsonValidationErrors('closingCash');
+        // behaviour changed in T3 (client decision 2026-09-28): a cash difference needs a reason.
+        $this->postJson("/api/v1/shifts/{$this->shift}/close", $wrong, $this->headers)->assertUnprocessable()->assertJsonValidationErrors('cashDifferenceReason');
         $this->assertSame($before, $this->fingerprint());
         $result = $this->postJson("/api/v1/shifts/{$this->shift}/close", $data, $this->headers)->assertOk()->json('data');
         DB::table('orders')->where('id', $order)->update(['total' => '999.00']);
@@ -273,14 +297,14 @@ final class HistoricalShiftCloseTest extends TestCase
         $this->assertSame('130.00', app(ShiftCashSummaryService::class)->summarize($this->tenant, $next)['expectedCash']);
     }
 
-    public function test_today_close_also_rejects_a_stale_preview_before_posting_counts(): void
+    public function test_today_close_accepts_a_stale_preview(): void
     {
         $this->today();
         $preview = $this->getJson("/api/v1/shifts/{$this->shift}/close-preview?closingDate=2026-09-27", $this->headers)->assertOk()->json('data');
         $this->sale('20.00');
-        $this->postJson("/api/v1/shifts/{$this->shift}/close", ['closingDate' => '2026-09-27', 'closingCash' => 120, 'previewVersion' => $preview['period']['version']], $this->headers)
-            ->assertUnprocessable()->assertJsonValidationErrors('previewVersion');
-        $this->assertDatabaseHas('shifts', ['id' => $this->shift, 'status' => 'open']);
+        // behaviour changed in T2 (client decision 2026-09-28): today's close accepts an old preview version.
+        $this->postJson("/api/v1/shifts/{$this->shift}/close", ['closingDate' => '2026-09-27', 'closingCash' => 120, 'previewVersion' => $preview['period']['version']], $this->headers)->assertOk();
+        $this->assertDatabaseHas('shifts', ['id' => $this->shift, 'status' => 'closed']);
     }
 
     private function barFixture(): array

@@ -136,7 +136,7 @@ class SalesInvoiceLinePricingTest extends TestCase
 
     private function payload(array $s, array $lines): array
     {
-        return ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12', 'dueDate' => now()->addYear()->toDateString(), 'lines' => $lines];
+        return ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => now()->addYear()->toDateString(), 'lines' => $lines];
     }
 
     private function product(int $tenant, string $name, string $price): int

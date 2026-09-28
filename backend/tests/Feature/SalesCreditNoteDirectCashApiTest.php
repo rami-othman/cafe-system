@@ -177,7 +177,7 @@ class SalesCreditNoteDirectCashApiTest extends TestCase
     public function test_registered_customer_credit_note_flow_is_unaffected_by_direct_cash_support(): void
     {
         $s = $this->scenario(tracked: false, price: '100.00');
-        $invoice = (int) $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $s['product'], 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $invoice = (int) $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'lines' => [['productId' => $s['product'], 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'reg-post-1'], $s['headers'])->assertOk();
         [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
         $this->postJson('/api/v1/finance/customer-payments', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => '2026-09-12', 'amount' => '100.00', 'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'reg-pay-1', 'allocations' => [['invoiceId' => $invoice, 'amount' => '100.00']]], $s['headers'])->assertCreated();
@@ -226,7 +226,7 @@ class SalesCreditNoteDirectCashApiTest extends TestCase
     /** @return array{0:int,1:int} [invoiceId, directPaymentId] — a posted, fully cash-collected walk-in invoice. */
     private function directCashInvoice(array $s, string $quantity): array
     {
-        $draft = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['walkIn'], 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $s['product'], 'quantity' => $quantity]]], $s['headers'])->assertCreated();
+        $draft = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['walkIn'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'lines' => [['productId' => $s['product'], 'quantity' => $quantity]]], $s['headers'])->assertCreated();
         $invoiceId = $draft->json('data.id');
         $total = $draft->json('data.total');
         [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);

@@ -79,8 +79,10 @@ class FinancialAccountBalanceQuery
 
             return $ids;
         };
+        $neededIds = array_values(array_unique(array_merge(...array_map($descendantIds, $accountIds))));
         $movements = DB::table('journal_entry_lines as lines')->join('journal_entries as entries', 'entries.id', '=', 'lines.journal_entry_id')
             ->where('lines.tenant_id', $tenantId)->where('entries.tenant_id', $tenantId)->where('entries.status', 'posted')
+            ->whereIn('lines.financial_account_id', $neededIds)
             ->groupBy('lines.financial_account_id')
             ->selectRaw('lines.financial_account_id, COALESCE(SUM(lines.debit),0) as debit, COALESCE(SUM(lines.credit),0) as credit, MAX(entries.entry_date) as last_date')
             ->get()->keyBy('financial_account_id');

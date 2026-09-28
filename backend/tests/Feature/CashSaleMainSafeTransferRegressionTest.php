@@ -85,8 +85,9 @@ final class CashSaleMainSafeTransferRegressionTest extends TestCase
         $this->cashSale($tenant, $branch, $shift, $headers, 1);
 
         // Counted cash does not match the real drawer ledger (cashier miscounted / skimmed).
+        // behaviour changed in T2 (client decision 2026-09-28): a difference no longer blocks on `closingCash` — it requires `cashDifferenceReason` instead.
         $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => '999999.00'], $headers)
-            ->assertUnprocessable()->assertJsonValidationErrors('closingCash');
+            ->assertUnprocessable()->assertJsonValidationErrors('cashDifferenceReason');
 
         $this->assertSame('open', DB::table('shifts')->where('id', $shift)->value('status'), 'A failed transfer must never leave a falsely closed shift.');
         $this->assertSame(0, DB::table('cash_transfers')->where('tenant_id', $tenant)->where('shift_id', $shift)->count());

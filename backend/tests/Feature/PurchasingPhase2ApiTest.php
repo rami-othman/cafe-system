@@ -38,7 +38,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $item = $this->inventoryItem($headers, 'kg', [$warehouse], $factory['id']);
         $supplier = $this->supplier($headers, $factory['id']);
         $payload = ['supplierId' => $supplier, 'branchId' => $factory['id'], 'invoiceType' => 'inventory',
-            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'immediate', 'discountType' => 'fixed', 'discountValue' => '10.00',
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-17', 'receiptMode' => 'immediate', 'discountType' => 'fixed', 'discountValue' => '10.00',
             'lines' => [['lineType' => 'inventory', 'description' => 'Existing material', 'inventoryItemId' => $item,
                 'quantity' => '10.000', 'lineGrossAmount' => '100.00', 'warehouseId' => $warehouse]],
             'charges' => [['description' => 'Freight', 'treatment' => 'capitalize', 'amount' => '20.00']]];
@@ -68,7 +68,7 @@ class PurchasingPhase2ApiTest extends TestCase
         ], $headers)->assertUnprocessable();
         $item = $this->inventoryItem($headers, 'kg', [$warehouse], $factory['id']);
         $created = $this->postJson('/api/v1/finance/supplier-invoices', ['supplierId' => $this->supplier($headers, $factory['id']),
-            'branchId' => $factory['id'], 'invoiceType' => 'inventory', 'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'receiptMode' => 'receive_later',
+            'branchId' => $factory['id'], 'invoiceType' => 'inventory', 'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-17', 'receiptMode' => 'receive_later',
             'lines' => [['lineType' => 'inventory', 'description' => 'Material', 'inventoryItemId' => $item,
                 'quantity' => '10.000', 'lineGrossAmount' => '100.00', 'warehouseId' => $warehouse]]], $headers)->assertCreated()->json('data');
         $invoice = $created['id'];
@@ -181,7 +181,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $categoryId = $this->expenseCategory($tenant, $headers, '6140');
 
         $id = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'SVC-P2-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'SVC-P2-1', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
             'lines' => [['lineType' => 'expense', 'description' => 'Internet', 'quantity' => '1', 'lineGrossAmount' => '50.00']],
         ], $headers)->assertCreated()->json('data.id');
@@ -280,7 +280,7 @@ class PurchasingPhase2ApiTest extends TestCase
         ], $headers)->assertCreated();
 
         $invoiceId = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'CARTON-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'CARTON-1', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [['lineType' => 'inventory', 'description' => 'Bottled water', 'inventoryItemId' => $itemId, 'purchaseUnit' => 'carton', 'quantity' => '2', 'lineGrossAmount' => '48.00', 'warehouseId' => $warehouseId]],
         ], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/supplier-invoices/{$invoiceId}/post", ['idempotencyKey' => 'carton-post-1'], $headers)->assertOk();
@@ -472,7 +472,7 @@ class PurchasingPhase2ApiTest extends TestCase
             'branchId' => $branchId,
             'supplierId' => $supplierId,
             'invoiceNumber' => 'AUTO-260',
-            'invoiceDate' => '2026-09-17',
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق',
             'dueDate' => '2026-09-17',
             'invoiceType' => 'inventory',
             'lines' => [[
@@ -511,13 +511,15 @@ class PurchasingPhase2ApiTest extends TestCase
         $this->assertSame(1, DB::table('finance_documents')->where('tenant_id', $tenant)->where('source_type', 'supplier_payment')->count());
     }
 
-    /** C1/C2: the caller-supplied paymentDate/receiptDate must reach the
-     * payment journal entry and the stock movement — not `now()`. */
-    public function test_unified_purchase_post_honours_explicit_payment_and_receipt_dates(): void
+    /** behaviour changed in T7 (client decision 2026-09-28): payment and
+     * receipt always post on the invoice's own accounting date now — a
+     * caller-supplied paymentDate/receiptDate is accepted for API-shape
+     * compatibility but is always ignored (see PurchasePostingOrchestrator). */
+    public function test_unified_purchase_post_always_uses_the_invoice_date_for_payment_and_receipt(): void
     {
         [$tenant, $headers, $branchId, $invoiceId, $warehouseId, $itemId] = $this->unifiedInventoryFixture('explicit-dates');
-        // Invoice date is 2026-09-17. Payment and receipt happen on different,
-        // deliberately distinct, earlier-in-the-open-period dates.
+        // Invoice date is 2026-09-17. The caller supplies different dates —
+        // they must be ignored; everything must land on 2026-09-17.
         $posted = $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", [
             'idempotencyKey' => 'explicit-dates-1',
             'financialLocationId' => $this->drawer($branchId),
@@ -529,35 +531,36 @@ class PurchasingPhase2ApiTest extends TestCase
         $paymentId = (int) DB::table('payment_allocations')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->value('supplier_payment_id');
         $this->assertNotSame(0, $paymentId, 'Expected an auto-created supplier payment.');
         $payment = DB::table('supplier_payments')->where('id', $paymentId)->first();
-        $this->assertSame('2026-09-20', $payment->payment_date);
-        $this->assertNotSame('2026-09-17', $payment->payment_date);
+        $this->assertSame('2026-09-17', $payment->payment_date);
+        $this->assertNotSame('2026-09-20', $payment->payment_date);
 
         $paymentJournal = DB::table('journal_entries')->where('id', $payment->journal_entry_id)->first();
         $this->assertNotNull($paymentJournal);
-        $this->assertSame('2026-09-20', substr((string) $paymentJournal->entry_date, 0, 10));
+        $this->assertSame('2026-09-17', substr((string) $paymentJournal->entry_date, 0, 10));
 
         $receiptId = (int) DB::table('purchase_receipts')->where('tenant_id', $tenant)->where('supplier_invoice_id', $invoiceId)->value('id');
-        $this->assertSame('2026-09-21', DB::table('purchase_receipts')->where('id', $receiptId)->value('receipt_date'));
+        $this->assertSame('2026-09-17', DB::table('purchase_receipts')->where('id', $receiptId)->value('receipt_date'));
         $movement = DB::table('stock_movements')->where('tenant_id', $tenant)->where('warehouse_id', $warehouseId)
             ->where('inventory_item_id', $itemId)->where('type', 'stock_in')->first();
         $this->assertNotNull($movement);
-        $this->assertSame('2026-09-21', substr((string) $movement->occurred_at, 0, 10));
+        $this->assertSame('2026-09-17', substr((string) $movement->occurred_at, 0, 10));
     }
 
-    /** C1: a payment date landing inside a closed accounting period must be
-     * rejected — never silently moved to today. */
-    public function test_unified_purchase_post_rejects_payment_date_in_a_closed_period(): void
+    /** behaviour changed in T7 (client decision 2026-09-28): payment/receipt
+     * dates are no longer caller-controlled, so the closed-period rejection
+     * is now driven by the invoice's own date (2026-09-17) falling inside a
+     * closed period — never by a separately supplied paymentDate. */
+    public function test_unified_purchase_post_rejects_when_the_invoice_date_falls_in_a_closed_period(): void
     {
         [, $headers, $branchId, $invoiceId] = $this->unifiedInventoryFixture('closed-period-dates');
-        $this->postJson('/api/v1/finance/accounting-periods', ['name' => 'August', 'startDate' => '2026-08-01', 'endDate' => '2026-08-31'], $headers)
+        $this->postJson('/api/v1/finance/accounting-periods', ['name' => 'September', 'startDate' => '2026-09-01', 'endDate' => '2026-09-30'], $headers)
             ->assertCreated();
-        $period = (int) DB::table('accounting_periods')->where('name', 'August')->value('id');
+        $period = (int) DB::table('accounting_periods')->where('name', 'September')->value('id');
         $this->postJson("/api/v1/finance/accounting-periods/{$period}/close", [], $headers)->assertOk();
 
         $this->postJson("/api/v1/finance/purchases/{$invoiceId}/post", [
             'idempotencyKey' => 'closed-period-1',
             'financialLocationId' => $this->drawer($branchId),
-            'paymentDate' => '2026-08-15',
         ], $headers)->assertUnprocessable()->assertJsonValidationErrors('accountingPeriod');
     }
 
@@ -622,7 +625,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $itemId = $this->inventoryItem($headers, 'kg', [$warehouseA, $warehouseB]);
         $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'receiptMode' => 'immediate',
-            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-10-17', 'invoiceType' => 'inventory',
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-17', 'invoiceType' => 'inventory',
             'lines' => [[
                 'lineType' => 'inventory', 'description' => 'Selected warehouse material',
                 'inventoryItemId' => $itemId, 'quantity' => '13.000',
@@ -649,7 +652,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $itemId = $this->inventoryItem($headers, 'kg', [$warehouseA, $warehouseB]);
         $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'receiptMode' => 'receive_later',
-            'invoiceDate' => '2026-09-19', 'dueDate' => '2026-10-19', 'invoiceType' => 'inventory',
+            'invoiceDate' => '2026-09-19',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-19', 'invoiceType' => 'inventory',
             'lines' => [
                 ['lineType' => 'inventory', 'description' => 'First', 'inventoryItemId' => $itemId, 'quantity' => '1.000', 'lineGrossAmount' => '13.00', 'warehouseId' => $warehouseA],
                 ['lineType' => 'inventory', 'description' => 'Second', 'inventoryItemId' => $itemId, 'quantity' => '1.000', 'lineGrossAmount' => '13.00', 'warehouseId' => $warehouseB],
@@ -761,7 +764,7 @@ class PurchasingPhase2ApiTest extends TestCase
 
         $expenseId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'EXP-AUTO',
-            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-17', 'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
             'lines' => [['lineType' => 'expense', 'description' => 'Service', 'quantity' => '1', 'lineGrossAmount' => '80.00']],
         ], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/purchases/{$expenseId}/post", ['idempotencyKey' => 'expense-auto', 'financialLocationId' => $this->drawer($branchId)], $headers)
@@ -769,7 +772,7 @@ class PurchasingPhase2ApiTest extends TestCase
 
         $assetId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'ASSET-AUTO',
-            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'invoiceType' => 'other', 'debitAccountId' => $fixedAssetId,
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-17', 'invoiceType' => 'other', 'debitAccountId' => $fixedAssetId,
             'lines' => [['lineType' => 'asset', 'description' => 'Machine', 'quantity' => '1', 'lineGrossAmount' => '180.00']],
         ], $headers)->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/purchases/{$assetId}/post", ['idempotencyKey' => 'asset-auto', 'financialLocationId' => $this->drawer($branchId)], $headers)
@@ -826,7 +829,7 @@ class PurchasingPhase2ApiTest extends TestCase
 
         $payload = [
             'supplierId' => $supplierId,
-            'invoiceDate' => '2026-09-17',
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق',
             'dueDate' => '2026-09-17',
             'invoiceType' => 'expense',
             'expenseCategoryId' => $categoryId,
@@ -885,7 +888,7 @@ class PurchasingPhase2ApiTest extends TestCase
 
         $invoice = $this->postJson('/api/v1/finance/supplier-invoices', [
             'supplierId' => $supplierId,
-            'invoiceDate' => '2026-09-17',
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق',
             'dueDate' => '2026-09-17',
             'invoiceType' => 'expense',
             'expenseCategoryId' => $categoryId,
@@ -969,7 +972,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $grossAmount = number_format((float) $quantity * (float) $unitPrice, 2, '.', '');
 
         return (int) $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'P2-INV-'.uniqid(), 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'P2-INV-'.uniqid(), 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [['lineType' => 'inventory', 'description' => 'Goods', 'inventoryItemId' => $itemId, 'quantity' => $quantity, 'lineGrossAmount' => $grossAmount, 'warehouseId' => $warehouseId]],
         ], $headers)->assertCreated()->json('data.id');
     }
@@ -992,7 +995,7 @@ class PurchasingPhase2ApiTest extends TestCase
         $itemId = $this->inventoryItem($headers, 'kg', [$warehouseId]);
         $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'AUTO-'.uniqid(),
-            'invoiceDate' => '2026-09-17', 'dueDate' => '2026-09-17', 'invoiceType' => 'inventory',
+            'invoiceDate' => '2026-09-17',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-17', 'invoiceType' => 'inventory',
             'lines' => [['lineType' => 'inventory', 'description' => 'Material', 'inventoryItemId' => $itemId, 'quantity' => '12.000', 'lineGrossAmount' => '260.00', 'warehouseId' => $warehouseId]],
         ], $headers)->assertCreated()->json('data.id');
 

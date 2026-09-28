@@ -154,7 +154,7 @@ class PurchasePaymentSourceApiTest extends TestCase
         $categoryId = $this->expenseCategory($tenant, $headers, '6140');
         $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => $branchId, 'supplierId' => $supplierId, 'invoiceNumber' => 'D2-ZERO-1',
-            'invoiceDate' => '2026-09-01', 'dueDate' => '2026-09-01', 'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
+            'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-01', 'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
             'lines' => [['lineType' => 'expense', 'description' => 'Service', 'quantity' => '1', 'lineGrossAmount' => '50.00']],
         ], $headers)->assertCreated()->json('data.id');
 
@@ -230,7 +230,7 @@ class PurchasePaymentSourceApiTest extends TestCase
         $categoryId = $this->expenseCategory((int) $headers['X-Tenant-Id'], $headers, '6140');
         $invoiceId = (int) $this->postJson('/api/v1/finance/supplier-invoices', [
             'branchId' => (int) DB::table('branches')->where('tenant_id', $headers['X-Tenant-Id'])->orderBy('id')->value('id'),
-            'supplierId' => $supplierId, 'invoiceNumber' => 'D2-'.uniqid(), 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-09-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'D2-'.uniqid(), 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-09-01',
             'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
             'lines' => [['lineType' => 'expense', 'description' => 'Service', 'quantity' => '1', 'lineGrossAmount' => $amount]],
         ], $headers)->assertCreated()->json('data.id');

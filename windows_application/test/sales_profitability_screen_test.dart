@@ -29,8 +29,10 @@ void main() {
     await _pump(tester);
     expect(find.byType(SalesProfitabilityScreen), findsOneWidget);
     for (final label in <String>[
-      'Gross Sales',
-      'Net Sales',
+      // behaviour changed in T5 (client decision 2026-09-28): gross sales means sales sum.
+      'Gross sales',
+      // behaviour changed in T5 (client decision 2026-09-28): this KPI is sales total.
+      'Total',
       'Discounts',
       'Refunds',
       'Cost of Goods Sold (COGS)',
@@ -54,7 +56,8 @@ void main() {
       await _pump(tester);
       await _switchLanguage(tester, 'العربية');
       expect(find.text('المبيعات والربحية'), findsOneWidget);
-      expect(find.text('إجمالي المبيعات'), findsWidgets);
+      // behaviour changed in T5 (client decision 2026-09-28): pre-discount sales are «مجموع المبيعات».
+      expect(find.text('مجموع المبيعات'), findsWidgets);
       expect(
         Directionality.of(
           tester.element(find.byType(SalesProfitabilityScreen)),

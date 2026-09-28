@@ -19,7 +19,7 @@ class SalesInvoicePhaseOneApiTest extends TestCase
         // 'total' is not an accepted input field (the server always derives it) so it is silently dropped; the
         // owner-permissioned 'unitPrice' override IS honored (finance.sales.override_price) — see SalesInvoiceLinePricingTest
         // for the dedicated default-vs-override coverage. This assertion reflects the actual invoiced price: 2 x 999.99.
-        $created = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $branch, 'customerId' => $customer, 'invoiceDate' => '2026-09-12', 'idempotencyKey' => 'sales-draft-1', 'lines' => [['productId' => $product, 'quantity' => '2', 'unitPrice' => '999.99', 'total' => '9999.99']]], $headers)
+        $created = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $branch, 'customerId' => $customer, 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'idempotencyKey' => 'sales-draft-1', 'lines' => [['productId' => $product, 'quantity' => '2', 'unitPrice' => '999.99', 'total' => '9999.99']]], $headers)
             ->assertCreated()->assertJsonPath('data.status', 'draft')->assertJsonPath('data.subtotal', '1999.98')->assertJsonPath('data.taxTotal', '160.00')->assertJsonPath('data.total', '2159.98')->assertJsonPath('data.dueDate', '2026-10-12')->assertJsonPath('data.accountingStatus', 'unposted')->assertJsonPath('data.inventoryStatus', 'not_consumed');
         $id = $created->json('data.id');
         $this->assertMatchesRegularExpression('/^SI-2026-\d{6}$/', $created->json('data.invoiceNumber'));
@@ -38,7 +38,7 @@ class SalesInvoicePhaseOneApiTest extends TestCase
     public function test_create_is_idempotent_drafts_are_editable_and_cancellable_but_never_postable(): void
     {
         $tenant = $this->tenant('sales-idempotency'); $headers = $this->headers($tenant); $branch = $this->branch($tenant); $customer = $this->customer($headers, 'Al Noor Offices'); $product = $this->product($tenant, 'Cappuccino', '10.00');
-        $payload = ['branchId' => $branch, 'customerId' => $customer, 'invoiceDate' => '2026-09-12', 'idempotencyKey' => 'same-click', 'lines' => [['productId' => $product, 'quantity' => '1']]];
+        $payload = ['branchId' => $branch, 'customerId' => $customer, 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'idempotencyKey' => 'same-click', 'lines' => [['productId' => $product, 'quantity' => '1']]];
         $first = $this->postJson('/api/v1/finance/sales-invoices', $payload, $headers)->assertCreated()->json('data.id');
         $second = $this->postJson('/api/v1/finance/sales-invoices', $payload, $headers)->assertCreated()->json('data.id');
         $this->assertSame($first, $second); $this->assertSame(1, DB::table('sales_invoices')->where('tenant_id', $tenant)->count());
@@ -51,7 +51,7 @@ class SalesInvoicePhaseOneApiTest extends TestCase
     {
         $tenantA = $this->tenant('sales-a'); $headersA = $this->headers($tenantA); $productA = $this->product($tenantA, 'Cake Slice', '8.00');
         $tenantB = $this->tenant('sales-b'); $headersB = $this->headers($tenantB); $customerB = $this->customer($headersB, 'Tenant B Customer'); $branchB = $this->branch($tenantB);
-        $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $branchB, 'customerId' => $customerB, 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $productA, 'quantity' => '1']]], $headersB)->assertUnprocessable()->assertJsonValidationErrors('lines.0.productId');
+        $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $branchB, 'customerId' => $customerB, 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'lines' => [['productId' => $productA, 'quantity' => '1']]], $headersB)->assertUnprocessable()->assertJsonValidationErrors('lines.0.productId');
         $walkIn = (int) DB::table('customers')->where('tenant_id', $tenantA)->where('is_walk_in', true)->value('id');
         $this->patchJson("/api/v1/finance/customers/{$walkIn}", ['isActive' => false], $headersA)->assertUnprocessable()->assertJsonValidationErrors('isActive');
         $this->assertSame(1, DB::table('sales_account_mappings')->where('tenant_id', $tenantA)->where('mapping_key', 'sales.accounts_receivable')->count());

@@ -17,7 +17,17 @@ void main() {
           'shiftNumber': 'SH-7',
           'openedAt': '2026-09-25T08:00:00Z',
         },
-        'sales': {'grossSales': '100.00', 'discounts': '10.00'},
+        // behaviour changed in T5 (client decision 2026-09-28): the backend
+        // always sends salesSum/salesTotal/salesNet alongside the legacy
+        // grossSales/discounts breakdown — see App\Support\SalesTotals.
+        'sales': {
+          'grossSales': '100.00',
+          'discounts': '10.00',
+          'refunds': '0.00',
+          'salesSum': '100.00',
+          'salesTotal': '90.00',
+          'salesNet': '90.00',
+        },
         'drawer': {
           'openingFloat': '100.00',
           'cashSales': '90.00',

@@ -42,7 +42,7 @@ class ArabicValidationErrorPresentationTest extends TestCase
         ];
 
         $response = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'F-LINE-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'F-LINE-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [
                 $line('10.000', '100.00'),
@@ -69,7 +69,7 @@ class ArabicValidationErrorPresentationTest extends TestCase
         $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->value('id');
 
         $response = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'F-LINE-002', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'F-LINE-002', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [
                 ['lineType' => 'inventory', 'inventoryItemId' => $itemId, 'warehouseId' => $warehouseId, 'quantity' => '5.000'],
@@ -87,7 +87,7 @@ class ArabicValidationErrorPresentationTest extends TestCase
         $supplierId = $this->supplier($headers);
 
         $response = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'F-ATTR-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'F-ATTR-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'subtotal' => '10.00',
             'branchId' => 'not-an-id',
         ], $headers)->assertStatus(422);
@@ -124,7 +124,7 @@ class ArabicValidationErrorPresentationTest extends TestCase
         $warehouseId = (int) DB::table('warehouses')->where('tenant_id', $tenant)->value('id');
 
         $response = $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'F-KEYS-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'F-KEYS-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'inventory',
             'lines' => [
                 ['lineType' => 'inventory', 'description' => 'Bad', 'inventoryItemId' => $itemId, 'warehouseId' => $warehouseId,

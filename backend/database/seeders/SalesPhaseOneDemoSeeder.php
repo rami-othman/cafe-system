@@ -29,7 +29,8 @@ class SalesPhaseOneDemoSeeder extends Seeder
         ] as $demo) {
             $customer = DB::table('customers')->where('tenant_id', $tenant)->where('name', $demo['name'])->whereNull('deleted_at')->first();
             if (! $customer) $customer = $customers->create($tenant, $actor, ['name' => $demo['name'], 'defaultCreditTermsDays' => $demo['terms']]);
-            $invoices->create($tenant, $actor, ['branchId' => $branch, 'customerId' => $customer->id, 'invoiceDate' => '2026-09-12', 'reference' => $demo['reference'], 'notes' => 'Phase 1 demo draft: no journal, AR, COGS, inventory, POS order, or payment.', 'idempotencyKey' => $demo['key'], 'lines' => [['productId' => $demo['product'], 'quantity' => $demo['quantity']]]]);
+            // behaviour changed in T7 (client decision 2026-09-28): demo backdates require a reason.
+            $invoices->create($tenant, $actor, ['branchId' => $branch, 'customerId' => $customer->id, 'invoiceDate' => '2026-09-12', 'backdateReason' => 'بيانات تجريبية بتاريخ سابق', 'reference' => $demo['reference'], 'notes' => 'Phase 1 demo draft: no journal, AR, COGS, inventory, POS order, or payment.', 'idempotencyKey' => $demo['key'], 'lines' => [['productId' => $demo['product'], 'quantity' => $demo['quantity']]]]);
         }
     }
 }

@@ -231,17 +231,29 @@ final class ShiftDrawerLifecycleTest extends TestCase
         $this->assertSame('0.00', $this->ledger($this->branchA));
     }
 
-    public function test_13_close_fails_when_drawer_ledger_differs_from_counted_cash(): void
+    public function test_13_close_with_a_ledger_difference_requires_a_reason_and_posts_the_variance(): void
     {
         $this->fund($this->branchA, '100.00');
         $shift = $this->open($this->branchA, '100.00')->json('data.id');
         // Legacy/operational opening cash that the ledger never received.
         DB::table('shifts')->where('id', $shift)->update(['opening_cash' => '150.00']);
 
+        // behaviour changed in T2 (client decision 2026-09-28): a ledger/counted
+        // difference no longer blocks the close outright — it requires a reason
+        // and is then posted to the cash-variance account (6180) so the ledger
+        // ends up matching the physical count before the close transfer runs.
         $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => '150.00'], $this->headers)
-            ->assertUnprocessable()->assertJsonValidationErrors('closingCash');
+            ->assertUnprocessable()->assertJsonValidationErrors('cashDifferenceReason');
         $this->assertSame('open', DB::table('shifts')->where('id', $shift)->value('status'));
         $this->assertSame(0, DB::table('cash_transfers')->where('shift_id', $shift)->count());
+
+        $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => '150.00', 'cashDifferenceReason' => 'unknown_surplus'], $this->headers)->assertOk();
+        $row = DB::table('shifts')->where('id', $shift)->first();
+        $this->assertSame('closed', $row->status);
+        $this->assertSame('50.00', $row->cash_difference);
+        $this->assertDatabaseHas('journal_entries', ['tenant_id' => $this->tenant, 'source_type' => 'shift_cash_variance', 'source_id' => $shift]);
+        $this->assertSame(1, DB::table('cash_transfers')->where('shift_id', $shift)->count());
+        $this->assertSame('0.00', $this->ledger($this->branchA));
     }
 
     // ---- A2.5 automatic close -----------------------------------------------
@@ -702,7 +714,8 @@ final class ShiftDrawerLifecycleTest extends TestCase
         $data = ['closingCash' => 150, 'closingDate' => '2026-09-26', 'previewVersion' => $preview['period']['version'], 'cashCountBasis' => 'period_recorded', 'barCountBasis' => 'period_recorded'];
         $response = $this->postJson("/api/v1/shifts/{$shift}/close", $data, $this->headers)->assertOk();
         $this->assertSame('2026-09-26 20:59:59', DB::table('shifts')->where('id', $shift)->value('closed_at'));
-        $this->assertDatabaseHas('cash_transfers', ['id' => $response->json('data.closeTransferId'), 'transfer_date' => '2026-09-27']);
+        // behaviour changed in T3 (client decision 2026-09-28): the close transfer is dated to the closed period, not the actual posting date.
+        $this->assertDatabaseHas('cash_transfers', ['id' => $response->json('data.closeTransferId'), 'transfer_date' => '2026-09-26']);
         $this->postJson("/api/v1/shifts/{$shift}/close", $data, $this->headers)->assertOk();
         $this->postJson("/api/v1/shifts/{$shift}/close", ['closingCash' => 150, 'closingDate' => '2026-09-27'], $this->headers)->assertUnprocessable()->assertJsonValidationErrors('closingDate');
         $this->assertSame(1, DB::table('cash_transfers')->where('idempotency_key', 'shift-close-transfer:'.$shift)->count());

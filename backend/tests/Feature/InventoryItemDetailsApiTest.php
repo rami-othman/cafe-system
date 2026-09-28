@@ -183,9 +183,9 @@ class InventoryItemDetailsApiTest extends TestCase
             'lines' => [['supplierInvoiceLineId' => $invoiceLineId, 'quantity' => '10.000', 'warehouseId' => $warehouse]],
         ], $headers)->assertCreated()->json('data');
 
-        // A draft receipt has not moved any stock yet and must not appear
-        // as a purchase, and an unrelated item's purchases must not leak in.
-        $this->getJson("/api/v1/inventory/items/{$item}/purchase-history", $headers)->assertOk()->assertJsonCount(0, 'data');
+        // behaviour changed in T8 (client decision 2026-09-28): posted invoice lines appear before receipt.
+        $this->getJson("/api/v1/inventory/items/{$item}/purchase-history", $headers)->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.receiptStatus', 'not_received');
         $this->getJson("/api/v1/inventory/items/{$unrelated}/purchase-history", $headers)->assertOk()->assertJsonCount(0, 'data');
 
         $this->postJson("/api/v1/finance/purchase-receipts/{$receipt['id']}/post", ['idempotencyKey' => 'e2-receipt-post'], $headers)->assertOk();
@@ -193,6 +193,7 @@ class InventoryItemDetailsApiTest extends TestCase
         $response = $this->getJson("/api/v1/inventory/items/{$item}/purchase-history", $headers)->assertOk();
         $response->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.quantity', '10.000')
+            ->assertJsonPath('data.0.receiptStatus', 'received')
             ->assertJsonPath('data.0.unitCost', '5.0000')
             ->assertJsonPath('data.0.warehouseName', DB::table('warehouses')->where('id', $warehouse)->value('name'));
         $this->assertNotEmpty($response->json('data.0.supplierName'));
@@ -397,7 +398,8 @@ class InventoryItemDetailsApiTest extends TestCase
         $grossAmount = number_format((float) $quantity * (float) $unitPrice, 2, '.', '');
 
         return (int) $this->postJson('/api/v1/finance/supplier-invoices', [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'E-TASK-INV-'.uniqid(), 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            // behaviour changed in T7 (client decision 2026-09-28): dated fixture needs a reason.
+            'supplierId' => $supplierId, 'invoiceNumber' => 'E-TASK-INV-'.uniqid(), 'invoiceDate' => '2026-09-01', 'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [['lineType' => 'inventory', 'description' => 'Goods', 'inventoryItemId' => $itemId, 'quantity' => $quantity, 'lineGrossAmount' => $grossAmount, 'warehouseId' => $warehouseId]],
         ], $headers)->assertCreated()->json('data.id');
     }

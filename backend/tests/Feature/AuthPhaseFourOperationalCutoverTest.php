@@ -40,6 +40,8 @@ class AuthPhaseFourOperationalCutoverTest extends TestCase
             'email' => 'cashier@example.test', 'password' => Hash::make('password'), 'role' => 'cashier', 'is_active' => true,
         ]);
         app(UserBranchAssignmentService::class)->assign($employee, $allowed);
+        // behaviour changed in T2 (client decision 2026-09-28): opening needs a configured drawer and destination.
+        app(FinancialSetupService::class)->ensureForTenant($tenant->id, $allowed->id);
         $token = $this->authenticateTenantUser($tenant->id, $employee);
 
         $this->withToken($token)->getJson('/api/v1/branches')->assertOk()

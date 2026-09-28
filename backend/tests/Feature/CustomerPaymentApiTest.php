@@ -176,7 +176,7 @@ class CustomerPaymentApiTest extends TestCase
         [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
 
         $product = $this->productPriced($s, '50.00');
-        $draftId = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $draftId = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson('/api/v1/finance/customer-payments', [
             'branchId' => $s['branch'], 'customerId' => $s['customer'], 'paymentDate' => '2026-09-12', 'amount' => '50.00',
             'paymentMethodId' => $methodId, 'financialLocationId' => $locationId, 'idempotencyKey' => 'pay-draft-1',
@@ -333,7 +333,7 @@ class CustomerPaymentApiTest extends TestCase
     {
         $s = $this->scenario();
         $product = $this->productPriced($s, '80.00');
-        $invoiceId = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $invoiceId = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
 
         $this->postJson("/api/v1/finance/sales-invoices/{$invoiceId}/post-and-collect", [
@@ -348,7 +348,7 @@ class CustomerPaymentApiTest extends TestCase
 
         // A failing settlement (bad location/method mismatch) must roll back the invoice post too.
         $product2 = $this->productPriced($s, '80.00');
-        $invoice2 = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12', 'lines' => [['productId' => $product2, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $invoice2 = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'lines' => [['productId' => $product2, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice2}/post-and-collect", [
             'postIdempotencyKey' => 'immediate-post-2', 'paymentDate' => '2026-09-12', 'amount' => '80.00',
             'paymentMethodId' => $methodId, 'financialLocationId' => 999999, 'paymentIdempotencyKey' => 'immediate-pay-2',
@@ -431,7 +431,7 @@ class CustomerPaymentApiTest extends TestCase
         $walkIn = (int) DB::table('customers')->where('tenant_id', $s['tenant'])->where('is_walk_in', true)->value('id');
         $product = $this->productPriced($s, '100.00');
         $draft = $this->postJson('/api/v1/finance/sales-invoices', [
-            'branchId' => $s['branch'], 'customerId' => $walkIn, 'invoiceDate' => '2026-09-12',
+            'branchId' => $s['branch'], 'customerId' => $walkIn, 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق',
             'lines' => [['productId' => $product, 'quantity' => '1']],
         ], $s['headers'])->assertCreated()->assertJsonPath('data.status', 'draft')->assertJsonPath('data.isWalkIn', true);
         $invoiceId = $draft->json('data.id');
@@ -476,7 +476,7 @@ class CustomerPaymentApiTest extends TestCase
         $walkIn = (int) DB::table('customers')->where('tenant_id', $s['tenant'])->where('is_walk_in', true)->value('id');
         $product = $this->productPriced($s, '100.00');
         $invoiceId = $this->postJson('/api/v1/finance/sales-invoices', [
-            'branchId' => $s['branch'], 'customerId' => $walkIn, 'invoiceDate' => '2026-09-12',
+            'branchId' => $s['branch'], 'customerId' => $walkIn, 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق',
             'lines' => [['productId' => $product, 'quantity' => '1']],
         ], $s['headers'])->assertCreated()->json('data.id');
         [$methodId, $locationId] = $this->cashMethodAndLocation($s['tenant']);
@@ -522,7 +522,7 @@ class CustomerPaymentApiTest extends TestCase
     private function postedInvoice(array $s, string $total, ?int $customerId = null): int
     {
         $product = $this->productPriced($s, $total);
-        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $customerId ?? $s['customer'], 'invoiceDate' => '2026-09-12', 'dueDate' => now()->addYear()->toDateString(), 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $customerId ?? $s['customer'], 'invoiceDate' => '2026-09-12',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => now()->addYear()->toDateString(), 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'invoice-post-'.uniqid()], $s['headers'])->assertOk();
 
         return (int) $invoice;
@@ -531,7 +531,7 @@ class CustomerPaymentApiTest extends TestCase
     private function postedInvoiceWithDueDate(array $s, string $total, string $dueDate): int
     {
         $product = $this->productPriced($s, $total);
-        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-01-01', 'dueDate' => $dueDate, 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
+        $invoice = $this->postJson('/api/v1/finance/sales-invoices', ['branchId' => $s['branch'], 'customerId' => $s['customer'], 'invoiceDate' => '2026-01-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => $dueDate, 'lines' => [['productId' => $product, 'quantity' => '1']]], $s['headers'])->assertCreated()->json('data.id');
         $this->postJson("/api/v1/finance/sales-invoices/{$invoice}/post", ['idempotencyKey' => 'invoice-post-'.uniqid()], $s['headers'])->assertOk();
 
         return (int) $invoice;

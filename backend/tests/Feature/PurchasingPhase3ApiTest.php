@@ -25,7 +25,7 @@ class PurchasingPhase3ApiTest extends TestCase
         $milkId = $this->inventoryItem($headers, 'liter');
 
         $payload = [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'LANDED-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'LANDED-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [
                 ['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $beansId, 'quantity' => '10.000', 'lineGrossAmount' => '300.00'],
                 ['lineType' => 'inventory', 'description' => 'Milk', 'inventoryItemId' => $milkId, 'quantity' => '10.000', 'lineGrossAmount' => '700.00'],
@@ -58,7 +58,7 @@ class PurchasingPhase3ApiTest extends TestCase
         $rentCategoryId = $this->expenseCategory($tenant, $headers, '6100');
 
         $payload = [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'HOSP-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'HOSP-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [
                 ['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '10.000', 'lineGrossAmount' => '300.00'],
             ],
@@ -96,7 +96,7 @@ class PurchasingPhase3ApiTest extends TestCase
         $categoryId = $this->expenseCategory($tenant, $headers, '6120');
 
         $payload = [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'SVC-CHG-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'SVC-CHG-1', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01',
             'invoiceType' => 'expense', 'expenseCategoryId' => $categoryId,
             'lines' => [['lineType' => 'expense', 'description' => 'Internet', 'quantity' => '1', 'lineGrossAmount' => '100.00']],
             'charges' => [['description' => 'Delivery', 'treatment' => 'capitalize', 'amount' => '10.00']],
@@ -113,7 +113,7 @@ class PurchasingPhase3ApiTest extends TestCase
         $milkId = $this->inventoryItem($headers, 'liter');
 
         $payload = [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'DISC-001', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'DISC-001', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'discountType' => 'fixed', 'discountValue' => '100.00',
             'lines' => [
                 ['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $beansId, 'quantity' => '10.000', 'lineGrossAmount' => '300.00'],
@@ -141,7 +141,7 @@ class PurchasingPhase3ApiTest extends TestCase
         $itemId = $this->inventoryItem($headers, 'kg');
 
         $payload = [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'DISC-CAP-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'DISC-CAP-1', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'discountType' => 'fixed', 'discountValue' => '999.00',
             'lines' => [['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '1', 'lineGrossAmount' => '100.00']],
         ];
@@ -157,7 +157,7 @@ class PurchasingPhase3ApiTest extends TestCase
         $itemId = $this->inventoryItem($headers, 'kg', [$warehouseId]);
 
         $payload = [
-            'supplierId' => $supplierId, 'invoiceNumber' => 'WAC-LANDED-1', 'invoiceDate' => '2026-09-01', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
+            'supplierId' => $supplierId, 'invoiceNumber' => 'WAC-LANDED-1', 'invoiceDate' => '2026-09-01',  'backdateReason' => 'بيانات اختبار بتاريخ سابق', 'dueDate' => '2026-10-01', 'invoiceType' => 'inventory',
             'lines' => [
                 ['lineType' => 'inventory', 'description' => 'Beans', 'inventoryItemId' => $itemId, 'quantity' => '10.000', 'lineGrossAmount' => '300.00', 'warehouseId' => $warehouseId],
             ],

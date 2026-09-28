@@ -67,9 +67,10 @@ class DailyClosingListAndPaymentBreakdownTest extends TestCase
             ->assertOk()->json('data');
 
         $breakdown = collect($preview['summary']['paymentBreakdown'])->keyBy('method');
-        $this->assertSame('100.00', $breakdown['Cash']['gross']);
-        $this->assertSame('20.00', $breakdown['Cash']['refunded']);
-        $this->assertSame('80.00', $breakdown['Cash']['net']);
+        // behaviour changed in T9 (client decision 2026-09-28): the default CASH payment method's name is now Arabic.
+        $this->assertSame('100.00', $breakdown['نقدي']['gross']);
+        $this->assertSame('20.00', $breakdown['نقدي']['refunded']);
+        $this->assertSame('80.00', $breakdown['نقدي']['net']);
         $this->assertSame('50.00', $breakdown['DC-CARD']['gross']);
         $this->assertSame('0.00', $breakdown['DC-CARD']['refunded']);
     }
