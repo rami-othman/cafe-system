@@ -1076,10 +1076,9 @@ class ShiftTableFrame extends StatelessWidget {
         if (constraints.maxWidth >= minWidth) return child;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: minWidth),
-            child: child,
-          ),
+          // Rows use Expanded cells, so they need a bounded width inside
+          // the horizontal scroll view (a min-only constraint is unbounded).
+          child: SizedBox(width: minWidth, child: child),
         );
       },
     ),
