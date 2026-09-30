@@ -12,6 +12,7 @@ class DiscountDetail {
     required this.type,
     required this.scope,
     required this.value,
+    this.fixedAmountBasis = 'per_order',
     required this.isActive,
     required this.appliesToAllBranches,
     required this.customerEligibilityMode,
@@ -53,6 +54,7 @@ class DiscountDetail {
   final String type;
   final String scope;
   final double value;
+  final String fixedAmountBasis;
   final String? conditions;
   final String? startDate;
   final String? endDate;
@@ -92,6 +94,10 @@ class DiscountDetail {
     type: readString(json['type']),
     scope: readString(json['scope']),
     value: readDouble(json['value']),
+    fixedAmountBasis: readString(
+      json['fixedAmountBasis'],
+      fallback: 'per_order',
+    ),
     conditions: _nullable(json['conditions']),
     startDate: _nullable(json['startDate']),
     endDate: _nullable(json['endDate']),
@@ -141,6 +147,7 @@ class DiscountDetail {
     type: type,
     scope: scope,
     value: value,
+    fixedAmountBasis: fixedAmountBasis,
     conditions: conditions,
     startDate: startDate,
     endDate: endDate,

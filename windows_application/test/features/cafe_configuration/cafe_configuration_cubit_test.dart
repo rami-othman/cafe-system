@@ -211,6 +211,10 @@ class _FakeRepository implements CafeConfigurationRepository {
     BranchDraft draft,
   ) async => await getBranch(id);
   @override
+  Future<List<BranchFinancialAccountOption>> getFinancialAccounts({
+    String status = 'active',
+  }) async => const <BranchFinancialAccountOption>[];
+  @override
   Future<ReceiptTemplate> getReceiptTemplate(int branchId) async =>
       const ReceiptTemplate.defaultTemplate();
   @override

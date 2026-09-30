@@ -13,6 +13,7 @@ import 'package:windows_application/features/discounts/views/create_discount_pol
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_dashboard_metrics.dart';
 import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
@@ -236,11 +237,7 @@ void main() {
     final _DiscountsRepository repository = _DiscountsRepository(
       stallCreates: true,
     );
-    await _pumpScreen(
-      tester,
-      const Size(1280, 900),
-      repository: repository,
-    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
     await _selectValueType(tester, 'Fixed Amount');
     _fillRequiredFields(tester, name: 'Zero fixed', value: '0');
     await tester.pump();
@@ -249,6 +246,65 @@ void main() {
     await tester.tap(find.text('Save as Draft'));
     await tester.pump();
     expect(repository.lastCreateRequest!.value, 0);
+  });
+
+  testWidgets('fixed product discount offers per-unit basis in English', (
+    WidgetTester tester,
+  ) async {
+    final _DiscountsRepository repository = _DiscountsRepository(
+      stallCreates: true,
+    );
+    await _pumpScreen(tester, const Size(1280, 900), repository: repository);
+    await _selectDropdown(
+      tester,
+      const Key('discount-scope-field'),
+      'Selected Products',
+    );
+    await _selectValueType(tester, 'Fixed Amount');
+    final Finder basis = find.byKey(
+      const Key('discount-fixed-amount-basis-field'),
+    );
+    expect(basis, findsOneWidget);
+    await _scrollToField(tester, basis);
+    await _selectDropdown(
+      tester,
+      const Key('discount-fixed-amount-basis-field'),
+      'For each eligible unit',
+    );
+    _fillRequiredFields(tester, name: 'Coffee per unit', value: '5');
+    final Finder products = find.byKey(const Key('discount-products-selector'));
+    await _scrollToField(tester, products);
+    await tester.tap(products);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cappuccino').last);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save as Draft'));
+    await tester.pump();
+
+    expect(repository.lastCreateRequest!.fixedAmountBasis, 'per_unit');
+    expect(repository.lastCreateRequest!.targetProductIds, <int>[11]);
+  });
+
+  testWidgets('fixed product discount shows the Arabic basis choices', (
+    WidgetTester tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      const Size(1280, 900),
+      locale: const Locale('ar'),
+    );
+    final AppLocalizations l10n = AppLocalizations.of(
+      tester.element(find.byType(CreateDiscountPolicyScreen)),
+    );
+    await _selectDropdown(
+      tester,
+      const Key('discount-scope-field'),
+      l10n.discountSelectedProducts,
+    );
+    await _selectValueType(tester, l10n.discountFixedAmount);
+    expect(find.text(l10n.discountFixedAmountBasis), findsOneWidget);
+    expect(find.text(l10n.discountFixedOncePerOrder), findsOneWidget);
   });
 
   testWidgets('negative value remains invalid with the localized message', (
@@ -1040,6 +1096,10 @@ class _DiscountsRepository implements DiscountsRepository {
   @override
   Future<List<DiscountListItem>> getDiscounts() async =>
       const <DiscountListItem>[];
+
+  @override
+  Future<DiscountDashboardMetrics> getDashboardMetrics() async =>
+      const DiscountDashboardMetrics(actualSavedValueThisMonth: 0);
 
   @override
   Future<DiscountDetail> getDiscountDetail(String discountId) async {

@@ -15,6 +15,7 @@ class DiscountListItem extends Equatable {
     this.applicationMode = 'code',
     this.scope = 'order',
     this.value = 0,
+    this.fixedAmountBasis = 'per_order',
     this.conditions,
     this.minimumOrderAmount = 0,
     this.maximumDiscountAmount,
@@ -41,6 +42,7 @@ class DiscountListItem extends Equatable {
   final String applicationMode;
   final String scope;
   final double value;
+  final String fixedAmountBasis;
   final double minimumOrderAmount;
   final double? maximumDiscountAmount;
 
@@ -70,6 +72,7 @@ class DiscountListItem extends Equatable {
     applicationMode,
     scope,
     value,
+    fixedAmountBasis,
     minimumOrderAmount,
     maximumDiscountAmount,
     startDate,

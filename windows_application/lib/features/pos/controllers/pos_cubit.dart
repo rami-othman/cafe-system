@@ -1009,14 +1009,28 @@ class PosCubit extends Cubit<PosState> {
               'This order cannot be safely resumed into POS.',
         );
       }
-      if (order.status.toLowerCase() != 'held' ||
+      if ((order.status.toLowerCase() != 'held' &&
+              order.status.toLowerCase() != 'draft') ||
           order.paymentStatus.toLowerCase() != 'unpaid') {
         throw const ApiException(
-          message: 'Only an unpaid held order can be resumed.',
+          message: 'Only an unpaid draft or held order can be opened in POS.',
         );
       }
 
-      _emitBackendOrder(order);
+      final BackendOrder resumed = await _resumeHeldOrder(
+        orderId,
+        expectedBranchId,
+      );
+      if (!_isCurrentExistingOrderRequest(
+        requestVersion: requestVersion,
+        expectedBranchId: expectedBranchId,
+        expectedCurrentOrderId: expectedCurrentOrderId,
+        expectedCartItems: expectedCartItems,
+      )) {
+        return false;
+      }
+
+      _emitBackendOrder(resumed);
       emit(
         state.copyWith(
           isCartMutationInProgress: false,
@@ -1042,6 +1056,52 @@ class PosCubit extends Cubit<PosState> {
       return false;
     }
   }
+
+  Future<BackendOrder> _resumeHeldOrder(int orderId, int branchId) async {
+    try {
+      final BackendOrder resumed = await repository.resumeOrder(orderId);
+      if (_isConfirmedResumedOrder(resumed, orderId, branchId)) {
+        return resumed;
+      }
+    } catch (error) {
+      if (!_isPotentiallyUncertainHoldFailure(error)) {
+        throw const ApiException(
+          message: 'Could not resume this order. Refresh and try again.',
+        );
+      }
+    }
+
+    final BackendOrder verified;
+    try {
+      verified = await repository.getOrder(orderId);
+    } catch (_) {
+      throw const ApiException(
+        message:
+            'Resume status is uncertain. Refresh orders before trying again.',
+      );
+    }
+    if (_isConfirmedResumedOrder(verified, orderId, branchId)) {
+      return verified;
+    }
+    if (verified.id == orderId &&
+        verified.branchId == branchId &&
+        verified.status.toLowerCase() == 'held' &&
+        verified.paymentStatus.toLowerCase() == 'unpaid') {
+      throw const ApiException(
+        message: 'Could not resume this order. Please try again.',
+      );
+    }
+    throw const ApiException(
+      message:
+          'Resume status is uncertain. Refresh orders before trying again.',
+    );
+  }
+
+  bool _isConfirmedResumedOrder(BackendOrder order, int id, int branchId) =>
+      order.id == id &&
+      order.branchId == branchId &&
+      order.status.toLowerCase() == 'draft' &&
+      order.paymentStatus.toLowerCase() == 'unpaid';
 
   bool _isCurrentExistingOrderRequest({
     required int requestVersion,

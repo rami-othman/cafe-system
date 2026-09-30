@@ -269,39 +269,55 @@ void main() {
   );
 
   test(
-    'Resume rejects paid or non-held authoritative orders and does not create one',
+    'Resume reopens an unpaid active draft after an interrupted POS session',
     () async {
-      repository.detailResponses['8'] = <Object>[_activeDetail()];
-      int loadCalls = 0;
+      repository.detailResponses['7'] = <Object>[_activeDetail()];
+      final List<String> loadedIds = <String>[];
 
-      expect(
-        await cubit.resumeOrder(
-          '8',
-          loadIntoPos: (_) async {
-            loadCalls++;
-            return true;
-          },
-        ),
-        OrdersActionOutcome.retryableFailure,
+      final OrdersActionOutcome outcome = await cubit.resumeOrder(
+        '7',
+        loadIntoPos: (String orderId) async {
+          loadedIds.add(orderId);
+          return true;
+        },
       );
-      expect(loadCalls, 0);
 
-      repository.detailResponses['8'] = <Object>[
-        _heldDetail(paymentStatus: 'paid'),
-      ];
-      expect(
-        await cubit.resumeOrder(
-          '8',
-          loadIntoPos: (_) async {
-            loadCalls++;
-            return true;
-          },
-        ),
-        OrdersActionOutcome.retryableFailure,
-      );
-      expect(loadCalls, 0);
+      expect(outcome, OrdersActionOutcome.confirmed);
+      expect(loadedIds, <String>['7']);
     },
   );
+
+  test('Resume rejects paid or closed authoritative orders', () async {
+    repository.detailResponses['7'] = <Object>[_cancelledDetail()];
+    int loadCalls = 0;
+
+    expect(
+      await cubit.resumeOrder(
+        '7',
+        loadIntoPos: (_) async {
+          loadCalls++;
+          return true;
+        },
+      ),
+      OrdersActionOutcome.retryableFailure,
+    );
+    expect(loadCalls, 0);
+
+    repository.detailResponses['8'] = <Object>[
+      _heldDetail(paymentStatus: 'paid'),
+    ];
+    expect(
+      await cubit.resumeOrder(
+        '8',
+        loadIntoPos: (_) async {
+          loadCalls++;
+          return true;
+        },
+      ),
+      OrdersActionOutcome.retryableFailure,
+    );
+    expect(loadCalls, 0);
+  });
 
   test('Resume honors the server resume eligibility blocker', () async {
     repository.detailResponses['8'] = <Object>[

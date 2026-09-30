@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Database\Seeders\TenantAccessSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -69,6 +70,39 @@ class DiscountManagementApiTest extends TestCase
             ->assertJsonPath('data.value', 0);
     }
 
+    public function test_per_unit_basis_round_trips_and_is_restricted_to_fixed_product_discounts(): void
+    {
+        $this->seed();
+        $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+        $productId = (int) DB::table('products')->where('tenant_id', $tenantId)->value('id');
+        DB::table('products')->where('id', $productId)->update(['is_active' => true]);
+        $headers = $this->headers($tenantId);
+
+        $created = $this->postJson('/api/v1/discounts', $this->payload([
+            'name' => 'Per unit coffee', 'code' => 'PER-UNIT-COFFEE',
+            'type' => 'fixed', 'scope' => 'product', 'value' => 5,
+            'targetProductIds' => [$productId], 'fixedAmountBasis' => 'per_unit',
+        ]), $headers)->assertCreated()->assertJsonPath('data.fixedAmountBasis', 'per_unit');
+        $id = $created->json('data.id');
+        $this->getJson("/api/v1/discounts/{$id}", $headers)
+            ->assertOk()->assertJsonPath('data.fixedAmountBasis', 'per_unit');
+
+        $this->patchJson("/api/v1/discounts/{$id}", $this->payload([
+            'name' => 'Per order coffee', 'code' => 'PER-UNIT-COFFEE',
+            'type' => 'fixed', 'scope' => 'product', 'value' => 5,
+            'targetProductIds' => [$productId], 'fixedAmountBasis' => 'per_order',
+        ]), $headers)->assertOk()->assertJsonPath('data.fixedAmountBasis', 'per_order');
+
+        $this->postJson('/api/v1/discounts', $this->payload([
+            'code' => 'BAD-UNIT-ORDER', 'type' => 'fixed', 'scope' => 'order',
+            'fixedAmountBasis' => 'per_unit',
+        ]), $headers)->assertUnprocessable()->assertJsonValidationErrors('fixedAmountBasis');
+        $this->postJson('/api/v1/discounts', $this->payload([
+            'code' => 'BAD-UNIT-PERCENT', 'type' => 'percentage', 'scope' => 'product',
+            'targetProductIds' => [$productId], 'fixedAmountBasis' => 'per_unit',
+        ]), $headers)->assertUnprocessable()->assertJsonValidationErrors('fixedAmountBasis');
+    }
+
     public function test_configured_discount_rejects_negative_values_and_percentage_values_above_100(): void
     {
         $this->seed();
@@ -120,6 +154,42 @@ class DiscountManagementApiTest extends TestCase
     public function test_discounts_require_authentication(): void
     {
         $this->call('GET', '/api/v1/discounts')->assertUnauthorized();
+    }
+
+    public function test_metrics_returns_actual_current_month_policy_savings_only(): void
+    {
+        Carbon::setTestNow('2030-06-15 12:00:00');
+        try {
+            $this->seed();
+            $tenantId = (int) DB::table('tenants')->where('slug', 'cafe-618')->value('id');
+            $branchId = (int) DB::table('branches')->where('tenant_id', $tenantId)->orderBy('id')->value('id');
+            $discountId = (int) DB::table('discounts')->where('tenant_id', $tenantId)->orderBy('id')->value('id');
+
+            $addOrderDiscount = function (string $number, ?int $policyId, float $amount, string $paymentStatus, \DateTimeInterface $closedAt) use ($tenantId, $branchId): void {
+                $orderId = DB::table('orders')->insertGetId([
+                    'tenant_id' => $tenantId, 'branch_id' => $branchId, 'order_number' => $number,
+                    'type' => 'takeaway', 'status' => 'completed', 'payment_status' => $paymentStatus,
+                    'subtotal' => 100, 'discount_total' => $amount, 'tax_total' => 0, 'service_total' => 0, 'total' => 100 - $amount,
+                    'opened_at' => $closedAt, 'closed_at' => $closedAt, 'created_at' => $closedAt, 'updated_at' => $closedAt,
+                ]);
+                DB::table('order_discounts')->insert([
+                    'tenant_id' => $tenantId, 'order_id' => $orderId, 'discount_id' => $policyId,
+                    'discount_name' => 'Metric policy', 'discount_type' => 'fixed', 'discount_value' => $amount,
+                    'discount_amount' => $amount, 'created_at' => $closedAt, 'updated_at' => $closedAt,
+                ]);
+            };
+
+            $addOrderDiscount('METRIC-CURRENT', $discountId, 17.25, 'paid', now());
+            $addOrderDiscount('METRIC-PREVIOUS', $discountId, 50, 'paid', now()->subMonth());
+            $addOrderDiscount('METRIC-UNPAID', $discountId, 30, 'unpaid', now());
+            $addOrderDiscount('METRIC-MANUAL', null, 40, 'paid', now());
+
+            $this->getJson('/api/v1/discounts/metrics', $this->headers($tenantId))
+                ->assertOk()
+                ->assertJsonPath('data.actualSavedValueThisMonth', 17.25);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     private function payload(array $overrides = []): array

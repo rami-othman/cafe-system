@@ -41,7 +41,7 @@ class OrderSummary extends Equatable {
   }
 
   bool get canResume {
-    return status == OrderStatus.held &&
+    return (status == OrderStatus.held || status == OrderStatus.preparing) &&
         paymentStatus.toLowerCase() == 'unpaid';
   }
 

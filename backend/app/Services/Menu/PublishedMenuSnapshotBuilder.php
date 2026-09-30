@@ -8,7 +8,6 @@ use App\Models\Menu;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Catalog\MaterialCatalogService;
-use App\Services\Catalog\ProductVariantPriceResolver;
 use App\Services\Catalog\RecipeConfigurationService;
 use App\Support\InventoryDecimal;
 
@@ -17,7 +16,7 @@ class PublishedMenuSnapshotBuilder
 {
     private const SCHEMA_VERSION = 3;
 
-    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials, private readonly UnitConversionResolver $conversions) {}
+    public function __construct(private readonly MenuVariantPriceResolver $prices, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials, private readonly UnitConversionResolver $conversions) {}
 
     public function build(int $tenantId, Branch $branch, string $channel, array $menuIds): array
     {
@@ -47,29 +46,29 @@ class PublishedMenuSnapshotBuilder
         // must never re-sort a published snapshot by Catalog Menu priority.
         return ['id' => $menu->id, 'name' => $this->localized($menu, 'name'), 'description' => $this->localized($menu, 'description'), 'coverImageUrl' => $menu->cover_image_url, 'scopeOrder' => $scopeOrder,
             'availabilityRules' => $menu->availabilityRules->map(fn ($rule) => $this->rule($rule))->values()->all(),
-            'sections' => $menu->sections->map(function ($section) use ($tenantId, $branch, $channel): array {
+            'sections' => $menu->sections->map(function ($section) use ($tenantId, $menu, $branch, $channel): array {
                 return ['id' => $section->id, 'name' => $this->localized($section, 'name'), 'description' => $this->localized($section, 'description'), 'imageUrl' => $section->image_url, 'sortOrder' => $section->sort_order,
-                    'products' => $section->placements->filter(fn ($placement) => $placement->product !== null)->map(fn ($placement) => $this->product($tenantId, $placement, $placement->product, $branch, $channel))->values()->all()];
+                    'products' => $section->placements->filter(fn ($placement) => $placement->product !== null)->map(fn ($placement) => $this->product($tenantId, $menu, $placement, $placement->product, $branch, $channel))->values()->all()];
             })->values()->all()];
     }
 
-    private function product(int $tenantId, object $placement, Product $product, Branch $branch, string $channel): array
+    private function product(int $tenantId, Menu $menu, object $placement, Product $product, Branch $branch, string $channel): array
     {
         return ['placementId' => $placement->id, 'productId' => $product->id,
             'name' => $this->overrideOrLocalized($placement->display_name_override, $product, 'name'), 'description' => $this->overrideOrLocalized($placement->display_description_override, $product, 'description'), 'imageUrl' => $placement->display_image_override ?: $product->image_url,
             'isFeatured' => (bool) $placement->is_featured, 'isVisible' => (bool) $placement->is_visible, 'sortOrder' => $placement->sort_order, 'productType' => $this->value($product->product_type), 'preparationTimeMinutes' => $product->preparation_time_minutes,
             'categoryId' => $product->category_id, 'reportingCategoryId' => $product->reporting_category_id, 'kitchenStationId' => $product->kitchen_station_id,
             'productAvailabilityRules' => $product->availabilityRules->map(fn ($rule) => $this->rule($rule))->values()->all(),
-            'variants' => $product->variants->map(fn (ProductVariant $variant) => $this->variant($tenantId, $variant, $branch, $channel, $product))->values()->all(),
+            'variants' => $product->variants->map(fn (ProductVariant $variant) => $this->variant($tenantId, $menu, $variant, $branch, $channel, $product))->values()->all(),
             'modifierGroups' => $this->modifiers($product)];
     }
 
-    private function variant(int $tenantId, ProductVariant $variant, Branch $branch, string $channel, Product $product): array
+    private function variant(int $tenantId, Menu $menu, ProductVariant $variant, Branch $branch, string $channel, Product $product): array
     {
-        $price = $this->prices->resolve($tenantId, $variant->id, $branch->id, $channel);
+        $price = $this->prices->resolve($tenantId, $menu->id, $variant->id, $branch->id, $channel);
 
         return ['id' => $variant->id, 'name' => $this->localized($variant, 'name'), 'sku' => $variant->sku, 'barcode' => $variant->barcode, 'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default,
-            'basePrice' => $this->decimal($price['basePrice']), 'effectivePrice' => $this->decimal($price['effectivePrice']), 'matchedPriceScope' => $price['matchedScope'],
+            'basePrice' => $this->decimal($price['inherited']['basePrice']), 'effectivePrice' => $this->decimal($price['effectivePrice']), 'matchedPriceScope' => $price['matchedScope'],
             'baseRecipe' => collect($this->recipes->effectiveRecipe($variant)['effectiveComponents'])->map(fn (array $c) => $this->effectiveRecipeComponent($tenantId, $c))->values()->all(),
             'modifierRecipeAdjustments' => $product->modifierGroups->flatMap->options->map(function ($option) use ($product, $variant, $tenantId): array {
                 $profile = $this->recipes->effective($option, $product->id, $variant->id);

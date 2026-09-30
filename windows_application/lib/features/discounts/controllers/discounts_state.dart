@@ -7,6 +7,7 @@ import '../../pos/models/branch.dart';
 class DiscountsState extends Equatable {
   const DiscountsState({
     this.discounts = const <DiscountListItem>[],
+    this.actualSavedValueThisMonth,
     this.searchQuery = '',
     this.selectedStatus,
     this.currentPage = 1,
@@ -23,6 +24,7 @@ class DiscountsState extends Equatable {
   });
 
   final List<DiscountListItem> discounts;
+  final double? actualSavedValueThisMonth;
   final String searchQuery;
   final DiscountStatus? selectedStatus;
   final int currentPage;
@@ -39,6 +41,7 @@ class DiscountsState extends Equatable {
 
   DiscountsState copyWith({
     List<DiscountListItem>? discounts,
+    double? actualSavedValueThisMonth,
     String? searchQuery,
     DiscountStatus? selectedStatus,
     int? currentPage,
@@ -47,6 +50,7 @@ class DiscountsState extends Equatable {
     String? errorMessage,
     bool clearSelectedStatus = false,
     bool clearError = false,
+    bool clearActualSavedValueThisMonth = false,
     List<Branch>? branches,
     bool? isLoadingBranches,
     String? branchErrorMessage,
@@ -59,6 +63,9 @@ class DiscountsState extends Equatable {
     bool clearFormReferencesError = false,
   }) => DiscountsState(
     discounts: discounts ?? this.discounts,
+    actualSavedValueThisMonth: clearActualSavedValueThisMonth
+        ? null
+        : actualSavedValueThisMonth ?? this.actualSavedValueThisMonth,
     searchQuery: searchQuery ?? this.searchQuery,
     selectedStatus: clearSelectedStatus
         ? null
@@ -86,6 +93,7 @@ class DiscountsState extends Equatable {
   @override
   List<Object?> get props => <Object?>[
     discounts,
+    actualSavedValueThisMonth,
     searchQuery,
     selectedStatus,
     currentPage,

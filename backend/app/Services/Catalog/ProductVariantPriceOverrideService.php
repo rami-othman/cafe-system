@@ -4,6 +4,7 @@ namespace App\Services\Catalog;
 
 use App\Domain\Menu\Enums\MenuAuditAction;
 use App\Models\Branch;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantPriceOverride;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +40,12 @@ class ProductVariantPriceOverrideService
         $variant = $this->variant($tenantId, $variantId);
         $this->validateBranches($tenantId, $items);
 
-        return DB::transaction(function () use ($variant, $items): array {
+        return DB::transaction(function () use ($tenantId, $variant, $items): array {
+            // Lock branch parents before catalog rows. Menu price application takes
+            // the same lifecycle lock before its product/variant dependency locks;
+            // this also covers PostgreSQL's implicit FK lock on a new override.
+            $this->lockAndValidateBranches($tenantId, $items);
+            Product::query()->whereKey($variant->product_id)->lockForUpdate()->firstOrFail();
             $lockedVariant = ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail();
             $existing = ProductVariantPriceOverride::withTrashed()
                 ->where('tenant_id', $lockedVariant->tenant_id)
@@ -110,6 +116,41 @@ class ProductVariantPriceOverrideService
             }
             $branch = Branch::query()->where('tenant_id', $tenantId)->where('is_active', true)->find($item['branchId']);
             if (! $branch) {
+                throw ValidationException::withMessages(["overrides.$index.branchId" => 'The selected branch is invalid or archived.']);
+            }
+        }
+    }
+
+    /** Revalidate submitted branch scopes while retaining their lifecycle locks. */
+    private function lockAndValidateBranches(int $tenantId, array $items): void
+    {
+        $branchIds = collect($items)
+            ->pluck('branchId')
+            ->filter(fn (mixed $branchId): bool => $branchId !== null)
+            ->map(fn (mixed $branchId): int => (int) $branchId)
+            ->unique()
+            ->sort()
+            ->values();
+
+        if ($branchIds->isEmpty()) {
+            return;
+        }
+
+        $branches = Branch::withTrashed()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('id', $branchIds)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        foreach ($items as $index => $item) {
+            if (! isset($item['branchId'])) {
+                continue;
+            }
+
+            $branch = $branches->get((int) $item['branchId']);
+            if (! $branch || $branch->trashed() || ! $branch->is_active) {
                 throw ValidationException::withMessages(["overrides.$index.branchId" => 'The selected branch is invalid or archived.']);
             }
         }

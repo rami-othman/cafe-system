@@ -49,6 +49,32 @@ class DiscountController extends Controller
         return response()->json(['data' => $discounts]);
     }
 
+    public function metrics(Request $request): JsonResponse
+    {
+        $tenantId = TenantContext::id($request);
+        $now = now();
+
+        // The management dashboard represents only configured Discount
+        // policies that were applied to completed sales, never seeded display
+        // metadata or a free-form POS discount.
+        $actualSavedValue = DB::table('order_discounts')
+            ->join('orders', function ($join): void {
+                $join->on('orders.id', '=', 'order_discounts.order_id')
+                    ->on('orders.tenant_id', '=', 'order_discounts.tenant_id');
+            })
+            ->where('order_discounts.tenant_id', $tenantId)
+            ->whereNotNull('order_discounts.discount_id')
+            ->whereIn('orders.payment_status', ['paid', 'partially_refunded', 'refunded'])
+            ->where('orders.status', '!=', 'cancelled')
+            ->whereNull('orders.deleted_at')
+            ->whereBetween('orders.closed_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
+            ->sum('order_discounts.discount_amount');
+
+        return response()->json(['data' => [
+            'actualSavedValueThisMonth' => (float) $actualSavedValue,
+        ]]);
+    }
+
     public function show(Request $request, int $discount): JsonResponse
     {
         $tenantId = TenantContext::id($request);
@@ -215,6 +241,7 @@ class DiscountController extends Controller
             'name' => ['required', 'string', 'max:255'], 'code' => ['nullable', 'string', 'max:100', $codeRule],
             'description' => ['nullable', 'string'], 'applicationMode' => ['required', Rule::in(['manual', 'code'])],
             'type' => ['required', Rule::in(['percentage', 'fixed'])], 'scope' => ['required', Rule::in(['order', 'product', 'category', 'bundle'])],
+            'fixedAmountBasis' => ['nullable', Rule::in(['per_order', 'per_unit'])],
             'value' => ['required', 'numeric', 'min:0'], 'conditions' => ['nullable', 'string'],
             'startsAt' => ['nullable', 'date'], 'endsAt' => ['nullable', 'date', 'after_or_equal:startsAt'],
             'startDate' => ['nullable', 'date_format:Y-m-d'], 'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate'],
@@ -264,6 +291,10 @@ class DiscountController extends Controller
         }
         if ($data['type'] === 'percentage' && (float) $data['value'] > 100) {
             throw ValidationException::withMessages(['value' => 'A percentage discount cannot exceed 100.']);
+        }
+        $data['fixedAmountBasis'] ??= 'per_order';
+        if ($data['fixedAmountBasis'] === 'per_unit' && ($data['type'] !== 'fixed' || $data['scope'] !== 'product')) {
+            throw ValidationException::withMessages(['fixedAmountBasis' => 'Per-unit fixed amounts require a fixed product discount.']);
         }
         if (! empty($data['code']) && $this->discountQuery($tenantId)
             ->whereRaw('LOWER(code) = ?', [strtolower($data['code'])])
@@ -322,6 +353,7 @@ class DiscountController extends Controller
         $payload = [
             'name' => $data['name'], 'code' => $data['code'] ?? null, 'description' => $data['description'] ?? null,
             'application_mode' => $data['applicationMode'], 'type' => $data['type'], 'scope' => $data['scope'], 'value' => $data['value'],
+            'fixed_amount_basis' => $data['fixedAmountBasis'],
             'conditions' => $data['conditions'] ?? null, 'starts_at' => $data['startsAt'] ?? null, 'ends_at' => $data['endsAt'] ?? null,
             'start_date' => $data['startDate'] ?? null, 'end_date' => $data['endDate'] ?? null,
             'active_days' => isset($data['activeDays']) ? json_encode(array_values($data['activeDays'])) : null,
@@ -487,6 +519,7 @@ class DiscountController extends Controller
         return [
             'id' => (int) $discount->id, 'name' => $discount->name, 'code' => $discount->code, 'description' => $discount->description,
             'applicationMode' => $discount->application_mode, 'type' => $discount->type, 'scope' => $discount->scope, 'value' => (float) $discount->value,
+            'fixedAmountBasis' => $discount->fixed_amount_basis,
             'conditions' => $discount->conditions, 'startDate' => $discount->start_date, 'endDate' => $discount->end_date,
             // Legacy timestamps remain readable but are not used by V1 edits.
             'startsAt' => $discount->starts_at, 'endsAt' => $discount->ends_at,

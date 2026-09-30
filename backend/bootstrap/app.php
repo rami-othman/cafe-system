@@ -12,6 +12,8 @@ use App\Http\Middleware\CanAdministerCafePrinting;
 use App\Http\Middleware\CanManageCafeConfiguration;
 use App\Http\Middleware\CanManageEmployees;
 use App\Http\Middleware\CanManageMenuManagement;
+use App\Http\Middleware\CanManageMenuPricing;
+use App\Domain\Menu\MenuPricingException;
 use App\Http\Middleware\EnsureCafeOperationalAccess;
 use App\Http\Middleware\EnsureBarCheckPermission;
 use App\Http\Middleware\EnsureBranchAccess;
@@ -65,6 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cafe.configuration' => CanManageCafeConfiguration::class,
             'cafe.configuration.printing' => CanAdministerCafePrinting::class,
             'menu.management' => CanManageMenuManagement::class,
+            'menu.pricing' => CanManageMenuPricing::class,
             'branch.access' => EnsureBranchAccess::class,
             'cafe.operations' => EnsureCafeOperationalAccess::class,
             'inventory.permission' => EnsureInventoryPermission::class,
@@ -86,6 +89,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => DomainErrorMessages::forCode($exception->domainCode),
                     'code' => $exception->domainCode,
                 ], str_ends_with($exception->domainCode, 'IDEMPOTENCY_CONFLICT') ? 409 : 422);
+            }
+        });
+        $exceptions->render(function (MenuPricingException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => 'Menu pricing request could not be completed.', 'code' => $exception->domainCode], $exception->status);
             }
         });
         $exceptions->render(function (CustomerDomainException $exception, Request $request) {
@@ -114,6 +122,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             $errors = ValidationErrorPresenter::present($exception->errors());
+
+            if ($request->is('api/v1/admin/menus/*/pricing*')) {
+                return response()->json(['message' => 'Menu pricing request is invalid.', 'code' => 'MENU_PRICING_VALIDATION_FAILED', 'errors' => $errors], 422);
+            }
 
             if ($request->is('api/v1/orders/*/pay')) {
                 $code = match (true) {

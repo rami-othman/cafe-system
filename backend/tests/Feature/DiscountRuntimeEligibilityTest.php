@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\FinancialSetupService;
+use App\Services\PosPricingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +52,65 @@ class DiscountRuntimeEligibilityTest extends TestCase
         $this->target($scope, $discount, 'category', $scope['category']);
 
         $this->apply($scope, $discount)->assertOk()->assertJsonPath('data.discount.amount', 25);
+    }
+
+    public function test_fixed_product_discount_counts_all_targeted_units_with_line_and_order_caps(): void
+    {
+        $scope = $this->scope();
+        $secondProduct = DB::table('products')->insertGetId([
+            'tenant_id' => $scope['tenant'], 'category_id' => $scope['category'],
+            'name' => 'Second coffee', 'price' => 20, 'cost_price' => 1,
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $unrelatedProduct = DB::table('products')->insertGetId([
+            'tenant_id' => $scope['tenant'], 'category_id' => $scope['category'],
+            'name' => 'Unrelated tea', 'price' => 40, 'cost_price' => 1,
+            'is_active' => true, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('order_items')->where('order_id', $scope['order'])->update(['quantity' => 2, 'total' => 200]);
+        foreach ([[$secondProduct, 3, 20], [$unrelatedProduct, 2, 40]] as [$product, $quantity, $price]) {
+            DB::table('order_items')->insert([
+                'tenant_id' => $scope['tenant'], 'order_id' => $scope['order'],
+                'product_id' => $product, 'category_id' => $scope['category'],
+                'product_name' => 'Additional product', 'quantity' => $quantity,
+                'unit_price' => $price, 'total' => $quantity * $price,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        app(PosPricingService::class)->recalculateOrder($scope['tenant'], $scope['order']);
+        $discount = $this->discount($scope, [
+            'scope' => 'product', 'type' => 'fixed', 'value' => 30,
+            'fixed_amount_basis' => 'per_unit', 'maximum_discount_amount' => 100,
+        ]);
+        $this->target($scope, $discount, 'product', $scope['product']);
+        $this->target($scope, $discount, 'product', $secondProduct);
+
+        // Two units at 30, plus three units capped at their 20 unit price.
+        $this->apply($scope, $discount)->assertOk()
+            ->assertJsonPath('data.discount.amount', 100)
+            ->assertJsonPath('data.totals.discountTotal', 100);
+        $this->assertSame(100.0, (float) DB::table('order_discounts')->where('order_id', $scope['order'])->value('discount_amount'));
+
+        DB::table('discounts')->where('id', $discount)->update(['maximum_discount_amount' => null]);
+        app(PosPricingService::class)->recalculateOrder($scope['tenant'], $scope['order']);
+        $this->assertSame(120.0, (float) DB::table('order_discounts')->where('order_id', $scope['order'])->value('discount_amount'));
+
+        DB::table('order_items')->where('order_id', $scope['order'])->where('product_id', $scope['product'])->update(['quantity' => 1, 'total' => 100]);
+        app(PosPricingService::class)->recalculateOrder($scope['tenant'], $scope['order']);
+        $this->assertSame(90.0, (float) DB::table('order_discounts')->where('order_id', $scope['order'])->value('discount_amount'));
+
+        DB::table('discounts')->where('id', $discount)->update(['fixed_amount_basis' => 'per_order']);
+        app(PosPricingService::class)->recalculateOrder($scope['tenant'], $scope['order']);
+        $this->assertSame(30.0, (float) DB::table('order_discounts')->where('order_id', $scope['order'])->value('discount_amount'));
+
+        DB::table('discounts')->where('id', $discount)->update(['fixed_amount_basis' => 'per_unit']);
+        app(PosPricingService::class)->recalculateOrder($scope['tenant'], $scope['order']);
+        $this->postJson("/api/v1/orders/{$scope['order']}/pay", [
+            'method' => 'cash', 'paymentMethodId' => $scope['cashMethod'],
+            'amount' => 150, 'idempotencyKey' => 'per-unit-paid-once',
+        ], $this->headers($scope))->assertOk();
+        $this->assertSame(90.0, (float) DB::table('order_discounts')->where('order_id', $scope['order'])->value('discount_amount'));
+        $this->assertSame(1, DB::table('discount_usages')->where('discount_id', $discount)->count());
     }
 
     public function test_customer_payment_and_usage_limits_are_revalidated_when_paid_without_double_consumption(): void
@@ -245,12 +305,13 @@ class DiscountRuntimeEligibilityTest extends TestCase
         app(FinancialSetupService::class)->ensureForTenant($tenant, $branch, $actorId);
         $bankAccountId = (int) DB::table('financial_accounts')->where('tenant_id', $tenant)->where('code', '1030')->value('id');
         $cashMethod = (int) DB::table('payment_methods')->where('tenant_id', $tenant)->where('type', 'cash')->value('id');
+        $cashDrawerId = (int) DB::table('branches')->where('id', $branch)->value('pos_cash_financial_location_id');
         $cardMethod = (int) DB::table('payment_methods')->insertGetId([
             'tenant_id' => $tenant, 'code' => 'CARD', 'name' => 'Card', 'type' => 'card',
             'financial_account_id' => $bankAccountId, 'is_active' => true, 'sort_order' => 2,
             'created_by' => $actorId, 'updated_by' => $actorId, 'created_at' => $now, 'updated_at' => $now,
         ]);
-        $shift = DB::table('shifts')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $actorId, 'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
+        $shift = DB::table('shifts')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'user_id' => $actorId, 'financial_location_id' => $cashDrawerId, 'opening_cash' => 0, 'status' => 'open', 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         $order = DB::table('orders')->insertGetId(['tenant_id' => $tenant, 'branch_id' => $branch, 'shift_id' => $shift, 'order_number' => 'D-1', 'type' => 'takeaway', 'status' => 'draft', 'payment_status' => 'unpaid', 'subtotal' => 100, 'tax_rate' => 0, 'total' => 100, 'opened_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
         DB::table('order_items')->insert(['tenant_id' => $tenant, 'order_id' => $order, 'product_id' => $product, 'category_id' => $category, 'product_name' => 'Published Product', 'quantity' => 1, 'unit_price' => 100, 'total' => 100, 'created_at' => $now, 'updated_at' => $now]);
 

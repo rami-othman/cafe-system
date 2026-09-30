@@ -248,7 +248,7 @@ final class Cafe618PosSalesDemoSeeder extends Seeder
             return ['versionId' => (int) $existing->id, 'placements' => $placements, 'variants' => $variants];
         }
         $now = now();
-        $menuId = (int) DB::table('menus')->insertGetId(['tenant_id' => $this->tenantId, 'name' => 'Cafe 618 POS Demo Menu', 'name_en' => 'Cafe 618 POS Demo Menu', 'status' => 'published', 'created_at' => $now, 'updated_at' => $now]);
+        $menuId = (int) DB::table('menus')->insertGetId(['tenant_id' => $this->tenantId, 'name' => 'Cafe 618 POS Demo Menu', 'name_en' => 'Cafe 618 POS Demo Menu', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
         $sectionId = (int) DB::table('menu_sections')->insertGetId(['tenant_id' => $this->tenantId, 'menu_id' => $menuId, 'name' => 'Coffee', 'name_en' => 'Coffee', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
         $snapshotProducts = [];
         $placements = [];

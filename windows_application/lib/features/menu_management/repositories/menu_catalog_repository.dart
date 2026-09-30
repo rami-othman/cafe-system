@@ -19,6 +19,8 @@ import '../menus/models/product_placement.dart';
 import '../assignments/models/menu_assignment_models.dart';
 import '../../pos/models/branch.dart';
 import '../pricing/models/variant_price_models.dart';
+import '../pricing/models/menu_pricing_models.dart';
+import '../pricing/models/menu_price_adjustment_models.dart';
 import '../availability/models/availability_models.dart';
 import '../operational_availability/models/operational_availability_models.dart';
 import '../review/models/review_models.dart';
@@ -27,6 +29,28 @@ import '../catalog_setup/models/catalog_setup_models.dart';
 import '../recipes/models/recipe_models.dart';
 
 abstract class MenuCatalogRepository {
+  Future<MenuPricingOverview> getMenuPricingOverview({
+    required int menuId,
+    required int branchId,
+    required String channel,
+    String search = '',
+    int? categoryId,
+    int page = 1,
+    int perPage = 25,
+  }) => throw UnsupportedError('Menu pricing is not configured.');
+  Future<MenuPriceAdjustment> previewMenuPriceAdjustment(
+    int menuId,
+    Map<String, dynamic> request,
+  ) => throw UnsupportedError('Menu pricing is not configured.');
+  Future<MenuPriceAdjustment> getMenuPriceAdjustment(
+    int menuId,
+    int adjustmentId,
+  ) => throw UnsupportedError('Menu pricing is not configured.');
+  Future<MenuPriceAdjustment> applyMenuPriceAdjustment(
+    int menuId,
+    int adjustmentId,
+    Map<String, dynamic> request,
+  ) => throw UnsupportedError('Menu pricing is not configured.');
   Future<List<RecipeMaterial>> listRecipeMaterials({
     String search = '',
     bool includeUnavailable = false,
@@ -387,6 +411,74 @@ class BackendMenuCatalogRepository implements MenuCatalogRepository {
   const BackendMenuCatalogRepository(this._apiClient);
 
   final DioApiClient _apiClient;
+  @override
+  Future<MenuPricingOverview> getMenuPricingOverview({
+    required int menuId,
+    required int branchId,
+    required String channel,
+    String search = '',
+    int? categoryId,
+    int page = 1,
+    int perPage = 25,
+  }) async {
+    final dynamic body = await _apiClient.get(
+      'admin/menus/$menuId/pricing',
+      queryParameters: <String, dynamic>{
+        'branchId': branchId,
+        'channel': channel,
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+        if (categoryId != null) 'categoryId': categoryId,
+        'page': page,
+        'perPage': perPage,
+      },
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid menu pricing overview response.');
+    return MenuPricingOverview.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<MenuPriceAdjustment> previewMenuPriceAdjustment(
+    int menuId,
+    Map<String, dynamic> request,
+  ) async {
+    final dynamic body = await _apiClient.post(
+      'admin/menus/$menuId/pricing/adjustments/preview',
+      data: request,
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid menu pricing preview response.');
+    return MenuPriceAdjustment.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<MenuPriceAdjustment> getMenuPriceAdjustment(
+    int menuId,
+    int adjustmentId,
+  ) async {
+    final dynamic body = await _apiClient.get(
+      'admin/menus/$menuId/pricing/adjustments/$adjustmentId',
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid menu pricing adjustment response.');
+    return MenuPriceAdjustment.fromJson(Map<String, dynamic>.from(body));
+  }
+
+  @override
+  Future<MenuPriceAdjustment> applyMenuPriceAdjustment(
+    int menuId,
+    int adjustmentId,
+    Map<String, dynamic> request,
+  ) async {
+    final dynamic body = await _apiClient.post(
+      'admin/menus/$menuId/pricing/adjustments/$adjustmentId/apply',
+      data: request,
+    );
+    if (body is! Map)
+      throw const FormatException('Invalid menu pricing apply response.');
+    return MenuPriceAdjustment.fromJson(Map<String, dynamic>.from(body));
+  }
+
   @override
   Future<List<RecipeMaterial>> listRecipeMaterials({
     String search = '',

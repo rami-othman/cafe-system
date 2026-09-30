@@ -17,6 +17,8 @@
 
 # CURRENT AUTHORITATIVE STATUS
 
+- Menu Pricing V1 Flutter completion/remediation (2026-09-28): completed Flutter-only context isolation (drafts/reviews/overview are scoped to menu + branch + channel), explicit discard confirmation and registered unsaved-navigation guard, request/draft/action revision protection, single-flight Apply, stored-adjustment recovery, exact input validation, rounding presets/custom step/null no-rounding wire value, category browsing, full paginated menu selection, review detail/summary/warnings/acknowledgements, localized safe copy, and Review & Publish handoff. Backend, migrations, databases, POS, tax, and publication behavior were not changed. Automated verification: normal localization generation; focused models/Cubit suite (10 tests) passed; focused pricing analysis has no errors, warnings, or informational findings. Manual acceptance still pending: Windows build, English/Arabic constrained-window review scrolling, live owner/manager/employee route behavior, real timeout recovery, and Review & Publish handoff against a running backend. No Windows build or live POS acceptance is claimed.
+
 - Simple factory branch, Phase 4 (2026-09-26): production preview uses selected warehouse WAC and available stock net of reservations; factory warehouse selection excludes shared/foreign warehouses. Production validates recipe/output assignments, preserves atomic consumption/output and idempotency, records zero-consumption overrides, rejects unrelated consumption, fixes output base-unit cost/batch quantities and reversal value. Existing completion form accepts optional managerial labor/electricity/other costs; result/detail show material unit cost and full managerial batch/unit cost. These additional costs remain memo-only and do not create payments/journals or capitalize inventory. Production history is scoped by active branch. Backend combined purchasing/manufacturing suite: 66 passed / 927 assertions; reserved-stock/branch scenario extension passed separately (19 assertions). Flutter manufacturing/navigation: 34 passed, warehouse widgets: 5 passed. Windows Release build succeeded. No real user inventory or production documents changed. Operational acceptance and any historical non-base-unit batch audit remain pending. Report: E:/cafe6.18/docs/SIMPLE_FACTORY_PHASE_4_2026-09-26.md.
 
 - Simple factory branch, Phase 3 (2026-09-26): existing purchase/receipt flow now enforces factory-owned active warehouses in API and form selection; manufacturing materials opens the existing purchase form. Receipt retry reuses draft IDs and idempotency keys during the controller session, handles uncertain create/post responses and allows correction after rejected creation. Existing material assignment API reused without duplicate items or moving old balances. Backend purchasing/cost regression: 45 passed, 534 assertions. Flutter relevant suites: 20 passed across initial run and added correction test. Full analyze: 0 errors/warnings, 33 pre-existing infos. Real user stock and purchases were not modified; runtime data-source matching and operational acceptance remain pending. Report: E:/cafe6.18/docs/SIMPLE_FACTORY_PHASE_3_2026-09-26.md.
@@ -541,3 +543,58 @@ Factory separation phases 3 → 3b → 4 → 5 → 6 → 7 → 8 → 10 → 9 CO
 - Fixed the inventory permission denial while loading purchase forms: explicitly marked warehouse/item/unit-conversion read routes accept purchase create/edit permissions, retaining controller tenant/branch scopes. Inventory mutation and stock-report routes keep their existing permission checks.
 - Added a cashier regression test for reference reads, warehouse branch scope, and denied inventory operations.
 - PHP syntax checks and git diff --check passed. Feature test execution blocked: local PHP 8.2.12 does not meet Composer requirement >=8.4.1. No production deployment performed.
+
+### 2026-09-28 - Menu Pricing UX refinement
+
+- Reframed the pricing workspace with surfaced context controls, a clear eligibility notice, an action toolbar placed before the affected data, and a bordered, scan-friendly pricing table.
+- Retained the bulk-price dialog because it is a reversible proposal before the existing server-authoritative review/apply gate. Its form is now responsive, grouped by adjustment and rounding, shows percent/currency context, exposes an explicit scope notice, has labelled controls, and prevents duplicate preview submission with progress feedback.
+- Added a narrow-width dialog regression. The focused pricing-screen widget suite passes (3 tests). Full Flutter analysis remains blocked by an unrelated existing `CafeConfigurationRepository.getFinancialAccounts` test-double error; no pricing diagnostic was reported before that failure. No commit or deployment.
+
+### 2026-09-28 - Menu Pricing review dialog provider repair
+
+- Fixed the live `ProviderNotFoundException` in the review dialog. `showDialog` uses the root navigator while `MenuPricingCubit` is scoped to the menu-pricing route, so the dialog now receives the existing cubit through `BlocProvider.value` before building its `BlocBuilder`.
+- Updated the pricing screen harness so the cubit is route-local like production; this reproduces and guards the formerly missing provider boundary. Focused pricing-screen tests pass (3). No commit or deployment.
+
+### 2026-09-28 - Menu Pricing review workspace UX
+
+- Rebuilt the price-adjustment review from a dense text stream into a structured desktop workspace: scoped information notices, wrapped summary count cards, and a readable item card with labelled original, raw, rounding, final, difference, and configuration-effect values.
+- Kept the acknowledgement gate and server-authoritative Apply behavior intact. The primary Apply action now includes a clear progress state; all controls retain explicit text labels for RTL usability and accessibility.
+- Verification: focused English/Arabic/narrow dialog tests pass (3); direct analysis of `menu_pricing_screen.dart` has no issues. Full workspace analysis still has the unrelated `CafeConfigurationRepository.getFinancialAccounts` test-double error. No commit or deployment.
+
+### 2026-09-28 - Menu Pricing acknowledgement panel Material repair
+
+- Fixed the Windows runtime `ListTile background color or ink splashes may be invisible` assertion in the review acknowledgement panel. Its colored rounded container now gives the interactive `CheckboxListTile` children a transparent `Material` paint surface, preserving the visual design and interaction behavior.
+- Extended the review-dialog regression to scroll through and build the acknowledgement panel. Focused pricing tests pass (3); direct screen analysis has no issues. No commit or deployment.
+
+### 2026-09-28 - Arabic supplier localization coverage
+
+- Added Arabic source translations for the 120 previously untranslated Supplier Finance messages, preserving every interpolation token (`reference`, `remaining`, `days`, and `error`). Source validation confirms zero missing Arabic message keys and placeholder parity.
+- Regeneration remains pending: `flutter gen-l10n` is waiting on an already-active Flutter SDK lock, so generated localization Dart files have not been claimed as verified or manually edited. No commit or deployment.
+
+### 2026-09-28 - Actual monthly Discount value metric
+
+- Replaced the Discount dashboard's seeded `estimated_saved_value` aggregation with a protected `GET /discounts/metrics` contract. It sums immutable `order_discounts.discount_amount` only for tenant-scoped configured policies on completed, paid/partially-refunded/refunded, non-cancelled orders closed in the current month; free-form manual discounts and non-paid or prior-month orders are excluded.
+- The Flutter Discount Cubit loads that server-authoritative metric alongside the policy list. The summary card shows no amount while the metric is unavailable, rather than fabricating a zero or summing seeded display metadata. English and Arabic source labels now identify it as the actual current-month value.
+- Validation: `docker compose exec -T backend php artisan test --filter=DiscountManagementApiTest` passed 8 tests / 53 assertions, including the current-month/exclusion regression. Flutter regeneration and focused Flutter verification are pending because an active `flutter run` SDK lock prevented `flutter gen-l10n`; generated localization Dart was not edited manually. No migration, commit, or deployment.
+
+### 2026-09-29 - Cafe Configuration test fake interface repair
+
+- Added the missing `getFinancialAccounts` implementation to the Cafe Configuration Cubit test repository fake, returning an empty account list with the repository's default status argument.
+- Focused Cafe Configuration test passed (12 tests). Full `flutter analyze` found 29 info-level findings outside this file and no missing-method error. No commit or deployment.
+
+### 2026-09-30 - Repeatable POS Hold and Resume lifecycle
+
+- Added an authorized `POST /orders/{order}/resume` transition from unpaid held to draft. An eligible draft can be reopened without changing its status, so interrupted POS sessions can recover it from Active Orders. Paid, closed, unauthorized, and unsupported-snapshot orders remain blocked.
+- POS loads the server-confirmed draft before enabling Hold again. A lost Resume response is checked with one GET; the client does not repeat the mutation automatically.
+- Verification: `OrderLifecycleApiTest` passed (11 tests / 102 assertions); focused Flutter Hold, order-context, and Orders lifecycle tests passed (43). Full `flutter analyze` reported only 29 existing info-level findings outside the changed files. No migration, commit, or deployment.
+
+### 2026-09-30 - Fixed product discount per eligible unit
+
+- Added `fixedAmountBasis` (`per_order` by default, `per_unit` for fixed product discounts) to the Discount management contract, persistence, Create/Edit form, and list/detail value labels. English and Arabic choices are available when a fixed discount targets products.
+- The backend applies the fixed amount to every eligible unit across all selected products, caps each order-item line at its price, then applies the policy's optional order-wide maximum. Existing discounts remain once per order. Draft cart changes and payment revalidate the server amount.
+- Applied only `2026_09_30_000002_add_fixed_amount_basis_to_discounts` to the local application database after reviewing its single additive SQL statement. Focused Laravel runtime and management suites passed (9 tests / 101 assertions and 9 tests / 65 assertions); focused Flutter Discount tests passed (49), and Discount analysis reported no issues. The final focused Create-form submission test also passed. No commit or deployment.
+
+### 2026-09-30 - Shift status badge RTL overflow
+
+- Reproduced the Arabic shift badge `RenderFlex` overflow inside a 102.5 px table cell. The badge now wraps its label within the available width, so the full status stays visible in a taller badge.
+- A focused badge widget test and shift overview smoke tests passed. Full `flutter analyze` reported 29 info-level findings in other files and no errors or warnings. The live Windows screen has not yet been reopened for visual acceptance. No commit or deployment.

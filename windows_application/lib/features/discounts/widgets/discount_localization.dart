@@ -15,9 +15,8 @@ extension DiscountPresentation on DiscountListItem {
   };
 
   String valueLabel(AppLocalizations l10n) => switch (type) {
-    'fixed' => l10n.discountAmountOff(
-      CurrencyFormatter.format(value, locale: l10n.localeName),
-    ),
+    'fixed' =>
+      '${l10n.discountAmountOff(CurrencyFormatter.format(value, locale: l10n.localeName))}${scope == 'product' && fixedAmountBasis == 'per_unit' ? ' · ${l10n.discountFixedPerUnit}' : ''}',
     'bogo' => l10n.discountBundleValue(value.toInt()),
     _ => l10n.discountPercentOff(_decimal(value)),
   };

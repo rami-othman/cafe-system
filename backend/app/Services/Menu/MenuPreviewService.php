@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\ProductAvailabilityResolver;
-use App\Services\Catalog\ProductVariantPriceResolver;
 use App\Services\Catalog\RecipeConfigurationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -21,7 +20,7 @@ class MenuPreviewService
     public function __construct(
         private readonly MenuValidationService $validation,
         private readonly MenuAvailabilityResolver $menuAvailability,
-        private readonly ProductVariantPriceResolver $prices,
+        private readonly MenuVariantPriceResolver $prices,
         private readonly ProductAvailabilityResolver $scheduled,
         private readonly OperationalAvailabilityResolver $operational,
         private readonly RecipeConfigurationService $recipes,
@@ -98,9 +97,9 @@ class MenuPreviewService
         $schedule = $this->menuAvailability->resolve($tenantId, $menu->id, $branch->id, $channel, $at, $branch->timezone ?: config('app.timezone'));
         $assigned = $menu->assignments->contains(fn ($assignment) => $assignment->is_active && $assignment->branch_id === $branch->id && $this->value($assignment->channel) === $channel);
         $sections = $menu->sections->filter(fn ($section) => ! $section->trashed() && $section->is_active)
-            ->map(function ($section) use ($tenantId, $branch, $channel, $at, $language, $includeUnavailable, $includeHidden): array {
+            ->map(function ($section) use ($tenantId, $menu, $branch, $channel, $at, $language, $includeUnavailable, $includeHidden): array {
                 $products = $section->placements->filter(fn ($placement) => ! $placement->trashed())
-                    ->map(fn (MenuItemPlacement $placement) => $this->placement($tenantId, $placement, $branch, $channel, $at, $language))
+                    ->map(fn (MenuItemPlacement $placement) => $this->placement($tenantId, $menu, $placement, $branch, $channel, $at, $language))
                     ->filter(fn (array $placement) => $includeHidden || $placement['isVisible'])
                     ->filter(fn (array $placement) => $includeUnavailable || $placement['isSellable'])
                     ->values()->all();
@@ -114,14 +113,14 @@ class MenuPreviewService
             'isScheduledAvailable' => $schedule['isScheduledAvailable'], 'scheduleReason' => $schedule['reason'], 'sections' => $sections];
     }
 
-    private function placement(int $tenantId, MenuItemPlacement $placement, Branch $branch, string $channel, CarbonImmutable $at, string $language): array
+    private function placement(int $tenantId, Menu $menu, MenuItemPlacement $placement, Branch $branch, string $channel, CarbonImmutable $at, string $language): array
     {
         /** @var Product|null $product */
         $product = $placement->product;
         $hidden = ! $placement->is_visible;
         $productArchived = $product === null || $product->trashed() || ! $product->is_active;
         $variants = $product ? $product->variants->filter(fn (ProductVariant $variant) => ! $variant->trashed() && $variant->is_active)
-            ->map(fn (ProductVariant $variant) => $this->variant($tenantId, $product, $variant, $branch, $channel, $at, $language))->values()->all() : [];
+            ->map(fn (ProductVariant $variant) => $this->variant($tenantId, $menu, $product, $variant, $branch, $channel, $at, $language))->values()->all() : [];
         $sellableVariants = collect($variants)->where('isSellable', true)->count();
         $reasons = [];
         if ($hidden) {
@@ -149,10 +148,10 @@ class MenuPreviewService
             'unavailabilityReasons' => $reasons, 'variants' => $variants, 'modifierGroups' => $product ? $this->modifiers($product, $language) : []];
     }
 
-    private function variant(int $tenantId, Product $product, ProductVariant $variant, Branch $branch, string $channel, CarbonImmutable $at, string $language): array
+    private function variant(int $tenantId, Menu $menu, Product $product, ProductVariant $variant, Branch $branch, string $channel, CarbonImmutable $at, string $language): array
     {
         $timezone = $branch->timezone ?: config('app.timezone');
-        $price = $this->prices->resolve($tenantId, $variant->id, $branch->id, $channel);
+        $price = $this->prices->resolve($tenantId, $menu->id, $variant->id, $branch->id, $channel);
         $scheduled = $this->scheduled->resolve($tenantId, $product->id, $variant->id, $branch->id, $channel, $at, $timezone);
         $operational = $this->operational->resolve($tenantId, $product->id, $variant->id, $branch->id, $channel, $at, $timezone);
         $validPrice = is_numeric($price['effectivePrice']) && (float) $price['effectivePrice'] >= 0;
@@ -171,7 +170,7 @@ class MenuPreviewService
         $recipe = $this->recipes->effectiveRecipe($variant);
 
         return ['id' => $variant->id, 'name' => $this->localized($variant, 'name', $language), 'sku' => $variant->sku, 'barcode' => $variant->barcode,
-            'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default, 'basePrice' => (float) $price['basePrice'],
+            'sortOrder' => $variant->sort_order, 'isDefault' => (bool) $variant->is_default, 'basePrice' => (float) $price['inherited']['basePrice'],
             'effectivePrice' => (float) $price['effectivePrice'], 'matchedPriceScope' => $price['matchedScope'],
             'isScheduledAvailable' => $scheduled['isScheduledAvailable'], 'isOperationallyAvailable' => $operational['isOperationallyAvailable'],
             'isSellable' => $sellable, 'unavailabilityReasons' => $reasons,

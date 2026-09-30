@@ -20,6 +20,7 @@ class ProductVariantService
         $this->uniqueCodes($product->tenant_id, $data);
 
         return DB::transaction(function () use ($product, $data): ProductVariant {
+            $product = Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             if (($data['isDefault'] ?? false) && ! ($data['isActive'] ?? true)) {
                 throw ValidationException::withMessages(['isDefault' => 'A default variant must be active.']);
             }
@@ -42,13 +43,18 @@ class ProductVariantService
         $this->uniqueCodes($variant->tenant_id, $data, $variant->id);
 
         return DB::transaction(function () use ($variant, $data): ProductVariant {
+            $product = Product::query()->whereKey($variant->product_id)->lockForUpdate()->firstOrFail();
+            $variant = ProductVariant::withTrashed()->whereKey($variant->id)->lockForUpdate()->firstOrFail();
+            if (($data['isActive'] ?? $variant->is_active) && ! $product->is_active) {
+                throw ValidationException::withMessages(['product' => 'An active variant requires an active product.']);
+            }
             if ($variant->is_default && array_key_exists('isActive', $data) && ! $data['isActive']) {
                 throw ValidationException::withMessages(['isActive' => 'Archive or replace the default variant instead.']);
             }
             $before = $variant->toArray();
             $variant->update($this->products->variantPayload($data));
             if ($variant->is_default) {
-                $this->legacy->sync($variant->product->fresh());
+                $this->legacy->sync($product->fresh());
             }
             $this->audit->log($variant->tenant_id, $variant, MenuAuditAction::Updated, $before, $variant->fresh()->toArray());
 
@@ -64,6 +70,7 @@ class ProductVariantService
 
         return DB::transaction(function () use ($variant): ProductVariant {
             $product = Product::query()->lockForUpdate()->findOrFail($variant->product_id);
+            $variant = ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail();
             $product->variants()->lockForUpdate()->update(['is_default' => false]);
             $variant->update(['is_default' => true]);
             $this->legacy->sync($product->fresh());
@@ -78,6 +85,7 @@ class ProductVariantService
         return DB::transaction(function () use ($variant, $replacementId): ProductVariant {
             $product = Product::query()->lockForUpdate()->findOrFail($variant->product_id);
             $active = $product->variants()->where('is_active', true)->lockForUpdate()->get();
+            $variant = ProductVariant::query()->whereKey($variant->id)->lockForUpdate()->firstOrFail();
             if ($product->is_active && $active->count() <= 1) {
                 throw ValidationException::withMessages(['variant' => 'The only active variant cannot be archived.']);
             }
@@ -103,11 +111,12 @@ class ProductVariantService
     public function restore(ProductVariant $variant, bool $makeDefault): ProductVariant
     {
         return DB::transaction(function () use ($variant, $makeDefault): ProductVariant {
-            $product = Product::query()->find($variant->product_id);
+            $product = Product::query()->whereKey($variant->product_id)->lockForUpdate()->first();
             if (! $product || ! $product->is_active) {
                 throw ValidationException::withMessages(['product' => 'An archived variant can only be restored to an active product.']);
             }
-            $hasDefault = $product->variants()->where('is_active', true)->where('is_default', true)->exists();
+            $variant = ProductVariant::withTrashed()->whereKey($variant->id)->lockForUpdate()->firstOrFail();
+            $hasDefault = $product->variants()->where('is_active', true)->where('is_default', true)->lockForUpdate()->exists();
             if (! $hasDefault && ! $makeDefault) {
                 throw ValidationException::withMessages(['makeDefault' => 'Set makeDefault=true because this product has no active default variant.']);
             }
@@ -127,6 +136,7 @@ class ProductVariantService
     public function reorder(Product $product, array $items): void
     {
         DB::transaction(function () use ($product, $items): void {
+            $product = Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             $ids = collect($items)->pluck('id')->map(fn ($id) => (int) $id);
             if ($ids->unique()->count() !== $ids->count() || $product->variants()->whereIn('id', $ids)->count() !== $ids->count()) {
                 throw ValidationException::withMessages(['items' => 'Every variant must belong to this product.']);

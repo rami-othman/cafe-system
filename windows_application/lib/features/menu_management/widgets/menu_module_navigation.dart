@@ -6,6 +6,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/services/service_locator.dart';
+import '../../auth/controllers/auth_session_cubit.dart';
+import '../pricing/menu_pricing_access.dart';
 import 'menu_module_scaffold.dart';
 
 enum MenuModuleDestination {
@@ -17,7 +20,8 @@ enum MenuModuleDestination {
   ),
   menus('/menu-management/menus', Icons.restaurant_menu_outlined),
   assignments('/menu-management/assignments', Icons.calendar_month_outlined),
-  review('/menu-management/review', Icons.verified_outlined);
+  review('/menu-management/review', Icons.verified_outlined),
+  pricing('/menu-management/pricing', Icons.sell_outlined);
 
   const MenuModuleDestination(this.path, this.icon);
 
@@ -33,6 +37,9 @@ enum MenuModuleDestination {
     }
     if (path.startsWith('/menu-management/review')) {
       return MenuModuleDestination.review;
+    }
+    if (path.startsWith('/menu-management/pricing')) {
+      return MenuModuleDestination.pricing;
     }
     if (path.startsWith('/menu-management/menus')) {
       return MenuModuleDestination.menus;
@@ -77,6 +84,13 @@ class MenuModuleNavigation extends StatelessWidget {
           MenuModuleDestination.catalogSetup,
         ],
       ),
+      if (_canShowPricing)
+        _NavigationGroup(
+          label: l10n?.menuManagementPricing ?? 'Pricing',
+          destinations: const <MenuModuleDestination>[
+            MenuModuleDestination.pricing,
+          ],
+        ),
       _NavigationGroup(
         label: l10n?.menuManagementMenusGroup ?? 'Menus',
         destinations: const <MenuModuleDestination>[
@@ -139,6 +153,13 @@ class MenuModuleNavigation extends StatelessWidget {
       ),
     );
   }
+}
+
+bool get _canShowPricing {
+  if (!serviceLocator.isRegistered<AuthSessionCubit>()) return false;
+  return MenuPricingAccess.canManageRole(
+    serviceLocator<AuthSessionCubit>().state.session?.user.role,
+  );
 }
 
 class _NavigationGroup {
@@ -258,6 +279,7 @@ String _destinationLabel(
     l10n?.menuManagementAssignments ?? 'Assignments & Schedules',
   MenuModuleDestination.review =>
     l10n?.menuManagementReviewPublish ?? 'Review & Publish',
+  MenuModuleDestination.pricing => l10n?.menuManagementPricing ?? 'Pricing',
 };
 
 List<MenuBreadcrumb> menuModuleBreadcrumbsFor(BuildContext context, Uri uri) {

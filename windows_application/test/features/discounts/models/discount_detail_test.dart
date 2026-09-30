@@ -121,4 +121,27 @@ void main() {
     expect(detail.value, 0);
     expect(detail.toUpsertRequest().toJson()['value'], 0);
   });
+
+  test('fixed product basis survives detail to edit request', () {
+    final DiscountDetail detail = DiscountDetail.fromJson(<String, dynamic>{
+      'id': 91,
+      'name': 'Coffee each',
+      'applicationMode': 'manual',
+      'type': 'fixed',
+      'scope': 'product',
+      'value': 5,
+      'fixedAmountBasis': 'per_unit',
+      'targetProductIds': <int>[11, 12],
+      'customerEligibilityMode': 'all',
+      'appliesToAllBranches': true,
+      'isActive': true,
+    });
+
+    expect(detail.fixedAmountBasis, 'per_unit');
+    expect(detail.toUpsertRequest().toJson()['fixedAmountBasis'], 'per_unit');
+    expect(detail.toUpsertRequest().toJson()['targetProductIds'], <int>[
+      11,
+      12,
+    ]);
+  });
 }

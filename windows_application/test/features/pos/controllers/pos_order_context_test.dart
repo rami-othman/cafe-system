@@ -170,7 +170,10 @@ void main() {
 
       expect(loaded, isTrue);
       expect(repository.getOrderCalls, 1);
+      expect(repository.resumeCalls, 1);
       expect(cubit.state.currentOrderId, 42);
+      expect(cubit.state.currentOrderStatus, 'draft');
+      expect(cubit.state.canHoldCurrentOrder, isTrue);
       expect(cubit.state.publishedMenuVersionId, 19);
       expect(cubit.state.cartItems.single.backendItemId, 77);
       expect(cubit.state.cartItems.single.publishedMenuVersionId, 19);
@@ -198,6 +201,40 @@ void main() {
     pending.complete(_heldOrder());
     expect(await first, isTrue);
   });
+
+  test('confirms a resumed draft after a lost response', () async {
+    repository.existingOrder = _heldOrder();
+    repository.resumeError = const ApiException(
+      message: 'request timed out',
+      type: ApiErrorType.receiveTimeout,
+    );
+    repository.commitResumeBeforeError = true;
+
+    expect(await cubit.loadExistingOrder(42), isTrue);
+    expect(repository.resumeCalls, 1);
+    expect(repository.getOrderCalls, 2);
+    expect(cubit.state.currentOrderStatus, 'draft');
+    expect(cubit.state.canHoldCurrentOrder, isTrue);
+  });
+
+  test(
+    'rejected resume keeps the POS cart empty and hides backend text',
+    () async {
+      repository.existingOrder = _heldOrder();
+      repository.resumeError = const ApiException(
+        message: 'private backend detail',
+        statusCode: 422,
+      );
+
+      expect(await cubit.loadExistingOrder(42), isFalse);
+      expect(cubit.state.currentOrderId, isNull);
+      expect(cubit.state.cartItems, isEmpty);
+      expect(
+        cubit.state.cartMutationError,
+        isNot(contains('private backend detail')),
+      );
+    },
+  );
 
   test(
     'does not overwrite a non-empty cart without explicit replacement',
@@ -229,9 +266,20 @@ void main() {
     expect(cubit.state.cartItems, hasLength(1));
   });
 
-  test('paid or non-held backend orders cannot be loaded into POS', () async {
+  test('unpaid draft can be reopened after an interrupted resume', () async {
     repository.existingOrder = _heldOrder().copyWithForTest(
       status: 'draft',
+      paymentStatus: 'unpaid',
+    );
+
+    expect(await cubit.loadExistingOrder(42), isTrue);
+    expect(cubit.state.currentOrderStatus, 'draft');
+    expect(cubit.state.canHoldCurrentOrder, isTrue);
+  });
+
+  test('paid or closed backend orders cannot be loaded into POS', () async {
+    repository.existingOrder = _heldOrder().copyWithForTest(
+      status: 'cancelled',
       paymentStatus: 'unpaid',
     );
     expect(await cubit.loadExistingOrder(42), isFalse);
@@ -258,30 +306,39 @@ void main() {
       expect(await cubit.loadExistingOrder(42), isFalse);
       expect(cubit.state.currentOrderId, isNull);
       expect(cubit.state.cartItems, isEmpty);
-      expect(cubit.state.cartMutationError, contains('snapshot is unsupported'));
+      expect(
+        cubit.state.cartMutationError,
+        contains('snapshot is unsupported'),
+      );
       expect(repository.getOrderCalls, 1);
     },
   );
 
-  test('confirmed cancellation clears the matching POS order context', () async {
-    repository.existingOrder = _heldOrder();
-    expect(await cubit.loadExistingOrder(42), isTrue);
+  test(
+    'confirmed cancellation clears the matching POS order context',
+    () async {
+      repository.existingOrder = _heldOrder();
+      expect(await cubit.loadExistingOrder(42), isTrue);
 
-    cubit.clearCancelledOrderContext(42);
+      cubit.clearCancelledOrderContext(42);
 
-    expect(cubit.state.currentOrderId, isNull);
-    expect(cubit.state.cartItems, isEmpty);
-  });
+      expect(cubit.state.currentOrderId, isNull);
+      expect(cubit.state.cartItems, isEmpty);
+    },
+  );
 
-  test('cancellation does not clear a different newer POS order context', () async {
-    repository.existingOrder = _heldOrder();
-    expect(await cubit.loadExistingOrder(42), isTrue);
+  test(
+    'cancellation does not clear a different newer POS order context',
+    () async {
+      repository.existingOrder = _heldOrder();
+      expect(await cubit.loadExistingOrder(42), isTrue);
 
-    cubit.clearCancelledOrderContext(99);
+      cubit.clearCancelledOrderContext(99);
 
-    expect(cubit.state.currentOrderId, 42);
-    expect(cubit.state.cartItems, isNotEmpty);
-  });
+      expect(cubit.state.currentOrderId, 42);
+      expect(cubit.state.cartItems, isNotEmpty);
+    },
+  );
 }
 
 ProductCustomization _customization() => ProductCustomization(
@@ -322,7 +379,10 @@ class _OrderContextRepository extends PosRepository {
   Object? existingOrderError;
   BackendOrder? existingOrder;
   Future<BackendOrder>? existingOrderFuture;
+  Object? resumeError;
+  bool commitResumeBeforeError = false;
   int getOrderCalls = 0;
+  int resumeCalls = 0;
   int? _customerId;
   String _orderType = 'dine_in';
 
@@ -397,6 +457,21 @@ class _OrderContextRepository extends PosRepository {
       throw const ApiException(message: 'Order not found.');
     }
     return existingOrder!;
+  }
+
+  @override
+  Future<BackendOrder> resumeOrder(int orderId) async {
+    resumeCalls++;
+    final BackendOrder? order = existingOrder;
+    if (order == null || order.id != orderId) {
+      throw const ApiException(message: 'Order not found.');
+    }
+    final BackendOrder draft = order.copyWithForTest(status: 'draft');
+    if (resumeError != null) {
+      if (commitResumeBeforeError) existingOrder = draft;
+      throw resumeError!;
+    }
+    return existingOrder = draft;
   }
 
   @override

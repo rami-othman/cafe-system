@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../models/discount_list_item.dart';
 import '../models/discount_detail.dart';
 import '../models/discount_form_references.dart';
+import '../models/discount_dashboard_metrics.dart';
 import '../models/discount_upsert_request.dart';
 import '../repositories/discounts_repository.dart';
 import 'discounts_state.dart';
@@ -20,14 +21,25 @@ class DiscountsCubit extends Cubit<DiscountsState> {
       state.copyWith(
         isLoading: true,
         clearError: true,
+        clearActualSavedValueThisMonth: true,
         clearValidationErrors: true,
       ),
     );
     try {
-      final List<DiscountListItem> discounts = await _repository.getDiscounts();
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          _repository.getDiscounts(),
+          _repository.getDashboardMetrics(),
+        ],
+      );
+      final List<DiscountListItem> discounts =
+          results[0] as List<DiscountListItem>;
+      final DiscountDashboardMetrics metrics =
+          results[1] as DiscountDashboardMetrics;
       emit(
         state.copyWith(
           discounts: discounts,
+          actualSavedValueThisMonth: metrics.actualSavedValueThisMonth,
           isLoading: false,
           currentPage: 1,
           clearError: true,

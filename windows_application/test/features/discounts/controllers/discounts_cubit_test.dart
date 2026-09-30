@@ -3,6 +3,7 @@ import 'package:windows_application/core/network/api_exception.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_dashboard_metrics.dart';
 import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
@@ -16,6 +17,7 @@ void main() {
       final DiscountsCubit cubit = DiscountsCubit(repository: repository);
       await cubit.loadDiscounts();
       expect(cubit.state.discounts, hasLength(1));
+      expect(cubit.state.actualSavedValueThisMonth, 93.5);
 
       await cubit.createDiscount(_request);
       expect(cubit.state.discounts, hasLength(2));
@@ -70,6 +72,9 @@ class _Repository implements DiscountsRepository {
   @override
   Future<List<DiscountListItem>> getDiscounts() async =>
       List<DiscountListItem>.of(_items);
+  @override
+  Future<DiscountDashboardMetrics> getDashboardMetrics() async =>
+      const DiscountDashboardMetrics(actualSavedValueThisMonth: 93.5);
   @override
   Future<List<Branch>> getBranches() async => const <Branch>[
     Branch(

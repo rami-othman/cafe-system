@@ -48,7 +48,9 @@ class DiscountEligibilityService
 
         $amount = match ($discount->type) {
             'percentage' => $eligibleSubtotal * ((float) $discount->value / 100),
-            'fixed' => min((float) $discount->value, $eligibleSubtotal),
+            'fixed' => $discount->scope === 'product' && $discount->fixed_amount_basis === 'per_unit'
+                ? $this->perUnitFixedAmount($tenantId, $order, $discount)
+                : min((float) $discount->value, $eligibleSubtotal),
             default => 0,
         };
         if ($discount->maximum_discount_amount !== null) {
@@ -314,6 +316,21 @@ class DiscountEligibilityService
         });
 
         return (float) $items->sum('order_items.total');
+    }
+
+    private function perUnitFixedAmount(int $tenantId, object $order, object $discount): float
+    {
+        $productIds = $this->targetIds($tenantId, $discount->id, 'product');
+        $items = DB::table('order_items')
+            ->where('tenant_id', $tenantId)->where('order_id', $order->id)->whereNull('deleted_at')
+            ->whereIn('product_id', $productIds)->get(['quantity', 'total']);
+
+        $amount = 0.0;
+        foreach ($items as $item) {
+            $amount += min((float) $discount->value * (float) $item->quantity, (float) $item->total);
+        }
+
+        return $amount;
     }
 
     /**

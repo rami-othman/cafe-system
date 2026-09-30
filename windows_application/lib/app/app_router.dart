@@ -121,7 +121,10 @@ import '../features/menu_management/recipes/views/recipe_simulation_screen.dart'
 import '../features/menu_management/recipes/controllers/recipe_cubits.dart';
 import '../features/menu_management/repositories/menu_catalog_repository.dart';
 import '../features/menu_management/pricing/controllers/variant_price_overrides_cubit.dart';
+import '../features/menu_management/pricing/controllers/menu_pricing_cubit.dart';
 import '../features/menu_management/pricing/views/variant_price_overrides_screen.dart';
+import '../features/menu_management/pricing/views/menu_pricing_screen.dart';
+import '../features/menu_management/pricing/menu_pricing_access.dart';
 import '../features/menu_management/availability/controllers/availability_cubit.dart';
 import '../features/menu_management/availability/views/availability_screen.dart';
 import '../features/menu_management/operational_availability/controllers/operational_availability_cubit.dart';
@@ -1123,6 +1126,20 @@ final GoRouter appRouter = GoRouter(
               ),
               showVersions: state.uri.queryParameters['tab'] == 'versions',
             ),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.menuManagementPricing,
+          name: AppRouteNames.menuManagementPricing,
+          redirect: (_, _) {
+            final session = serviceLocator<AuthSessionCubit>().state.session;
+            return MenuPricingAccess.canManageRole(session?.user.role)
+                ? null
+                : AppRoutes.menuManagementProducts;
+          },
+          builder: (_, _) => BlocProvider<MenuPricingCubit>(
+            create: (_) => serviceLocator<MenuPricingCubit>(),
+            child: const MenuPricingScreen(),
           ),
         ),
         GoRoute(
@@ -2687,15 +2704,26 @@ String _activeDestinationFor(GoRouterState state) {
     final branchState = serviceLocator.isRegistered<OperationalBranchCubit>()
         ? serviceLocator<OperationalBranchCubit>().state
         : null;
-    final factoryUser = serviceLocator.isRegistered<AuthSessionCubit>() &&
-        (serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ?? false);
-    final factoryBranch = branchState?.branches.any(
-          (branch) => branch.id == branchState.selectedBranchId && branch.isFactory,
-        ) ?? false;
+    final factoryUser =
+        serviceLocator.isRegistered<AuthSessionCubit>() &&
+        (serviceLocator<AuthSessionCubit>().state.session?.user.isFactoryUser ??
+            false);
+    final factoryBranch =
+        branchState?.branches.any(
+          (branch) =>
+              branch.id == branchState.selectedBranchId && branch.isFactory,
+        ) ??
+        false;
     if (factoryUser || factoryBranch) {
-      if (state.uri.path.startsWith(AppRoutes.financeSales)) return 'sales';
-      if (state.uri.path.startsWith(AppRoutes.financePurchases)) return 'purchases';
-      if (state.uri.path.startsWith(AppRoutes.financeSuppliers)) return 'suppliers';
+      if (state.uri.path.startsWith(AppRoutes.financeSales)) {
+        return 'sales';
+      }
+      if (state.uri.path.startsWith(AppRoutes.financePurchases)) {
+        return 'purchases';
+      }
+      if (state.uri.path.startsWith(AppRoutes.financeSuppliers)) {
+        return 'suppliers';
+      }
     }
     return 'finance';
   }
@@ -2808,6 +2836,7 @@ abstract final class AppRoutes {
   static const String menuManagementAssignments =
       '/menu-management/assignments';
   static const String menuManagementReview = '/menu-management/review';
+  static const String menuManagementPricing = '/menu-management/pricing';
   static const String menuManagementCatalogSetup =
       '/menu-management/catalog-setup';
   static const String menuManagementMenuCreate =
@@ -2992,6 +3021,7 @@ abstract final class AppRouteNames {
   static const String menuManagementMenus = 'menu-management-menus';
   static const String menuManagementAssignments = 'menu-management-assignments';
   static const String menuManagementReview = 'menu-management-review';
+  static const String menuManagementPricing = 'menu-management-pricing';
   static const String menuManagementCatalogSetup =
       'menu-management-catalog-setup';
   static const String menuManagementMenuCreate = 'menu-management-menu-create';

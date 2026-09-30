@@ -10,7 +10,6 @@ use App\Models\ProductVariant;
 use App\Services\Catalog\MaterialCatalogService;
 use App\Services\Catalog\OperationalAvailabilityResolver;
 use App\Services\Catalog\ProductAvailabilityResolver;
-use App\Services\Catalog\ProductVariantPriceResolver;
 use App\Services\Catalog\RecipeConfigurationService;
 use App\Support\InventoryUnitCatalog;
 use Carbon\CarbonImmutable;
@@ -23,7 +22,7 @@ class MenuValidationService
 
     private array $duplicateBarcodes = [];
 
-    public function __construct(private readonly ProductVariantPriceResolver $prices, private readonly ProductAvailabilityResolver $scheduled, private readonly OperationalAvailabilityResolver $operational, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials, private readonly UnitConversionResolver $conversions) {}
+    public function __construct(private readonly MenuVariantPriceResolver $prices, private readonly ProductAvailabilityResolver $scheduled, private readonly OperationalAvailabilityResolver $operational, private readonly RecipeConfigurationService $recipes, private readonly MaterialCatalogService $materials, private readonly UnitConversionResolver $conversions) {}
 
     public function menu(int $tenantId, int $menuId): Menu
     {
@@ -240,7 +239,7 @@ class MenuValidationService
         if ($variant->barcode && in_array($variant->barcode, $this->duplicateBarcodes, true)) {
             $this->issue($result, 'VARIANT_DUPLICATE_ACTIVE_BARCODE', 'error', 'An active barcode is duplicated within the tenant.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
         }
-        $price = $this->prices->resolve($tenantId, $variant->id, $branch->id, $channel);
+        $price = $this->prices->resolve($tenantId, $menu->id, $variant->id, $branch->id, $channel);
         if (! is_numeric($price['effectivePrice']) || (float) $price['effectivePrice'] < 0) {
             $this->issue($result, 'VARIANT_INVALID_EFFECTIVE_PRICE', 'error', 'The variant effective price is invalid.', 'variant', $variant->id, $menu->id, $section->id, $placement->id);
         }

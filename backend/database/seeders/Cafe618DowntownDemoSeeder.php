@@ -137,7 +137,7 @@ final class Cafe618DowntownDemoSeeder extends Seeder
                 'name' => 'Downtown Demo Menu',
                 'name_ar' => 'قائمة داون تاون التجريبية',
                 'name_en' => 'Downtown Demo Menu',
-                'status' => 'published',
+                'status' => 'active',
                 'priority' => 0,
                 'created_at' => $now,
                 'updated_at' => $now,

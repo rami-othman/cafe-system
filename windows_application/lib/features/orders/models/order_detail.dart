@@ -94,7 +94,7 @@ class OrderDetail extends Equatable {
     if (serverCanResume != null) {
       return serverCanResume!;
     }
-    return status == OrderStatus.held &&
+    return (status == OrderStatus.held || status == OrderStatus.preparing) &&
         paymentStatus.toLowerCase() == 'unpaid' &&
         !hasCompletedPayment;
   }

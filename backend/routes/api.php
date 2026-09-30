@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Admin\Menu\MenuAvailabilityRuleController;
 use App\Http\Controllers\Api\Admin\Menu\MenuController as AdminMenuController;
 use App\Http\Controllers\Api\Admin\Menu\MenuItemPlacementController;
 use App\Http\Controllers\Api\Admin\Menu\MenuPreviewController;
+use App\Http\Controllers\Api\Admin\Menu\MenuPricingController;
 use App\Http\Controllers\Api\Admin\Menu\MenuPublishingController;
 use App\Http\Controllers\Api\Admin\Menu\MenuSectionController;
 use App\Http\Controllers\Api\Admin\Menu\MenuValidationController;
@@ -375,6 +376,12 @@ Route::prefix('v1')->group(function (): void {
                 Route::put('menus/{menu}/availability-rules', 'sync');
             });
         });
+        Route::middleware('menu.pricing')->prefix('admin')->controller(MenuPricingController::class)->group(function (): void {
+            Route::get('menus/{menu}/pricing', 'overview');
+            Route::post('menus/{menu}/pricing/adjustments/preview', 'preview');
+            Route::get('menus/{menu}/pricing/adjustments/{adjustment}', 'show');
+            Route::post('menus/{menu}/pricing/adjustments/{adjustment}/apply', 'apply');
+        });
 
         Route::get('branches', [BranchController::class, 'index']);
         Route::get('reports/daily', [DailyReportController::class, 'show'])->middleware('finance.permission:finance.reports.view');
@@ -427,6 +434,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'show']);
             Route::put('discounts/role-permissions/{role}', [DiscountRolePermissionController::class, 'replace']);
             Route::get('discounts', [DiscountController::class, 'index'])->middleware('discount.permission:discounts.view');
+            Route::get('discounts/metrics', [DiscountController::class, 'metrics'])->middleware('discount.permission:discounts.view');
             Route::post('discounts', [DiscountController::class, 'store'])->middleware('discount.permission:discounts.manage');
             Route::get('discounts/{discount}', [DiscountController::class, 'show'])->middleware('discount.permission:discounts.view');
             Route::put('discounts/{discount}', [DiscountController::class, 'update'])->middleware('discount.permission:discounts.manage');
@@ -443,6 +451,7 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('orders/{order}/items/{item}', [PosOrderController::class, 'updateItem']);
             Route::delete('orders/{order}/items/{item}', [PosOrderController::class, 'removeItem']);
             Route::post('orders/{order}/hold', [PosOrderController::class, 'hold']);
+            Route::post('orders/{order}/resume', [PosOrderController::class, 'resume']);
             Route::put('orders/{order}/discount', [PosOrderController::class, 'discount'])->middleware('discount.permission:discounts.apply_manual');
             Route::delete('orders/{order}/discount', [PosOrderController::class, 'removeDiscount'])->middleware('discount.permission:discounts.apply_manual');
             Route::post('orders/{order}/discounts/apply', [DiscountController::class, 'apply'])->middleware('discount.permission:discounts.apply_configured');

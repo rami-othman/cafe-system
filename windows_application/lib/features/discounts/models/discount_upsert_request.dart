@@ -5,6 +5,7 @@ class DiscountUpsertRequest {
     required this.type,
     required this.scope,
     required this.value,
+    this.fixedAmountBasis = 'per_order',
     required this.isActive,
     this.code,
     this.description,
@@ -42,6 +43,7 @@ class DiscountUpsertRequest {
   final String type;
   final String scope;
   final double value;
+  final String fixedAmountBasis;
   final String? conditions;
   final double? minimumOrderAmount;
   final double? maximumDiscountAmount;
@@ -77,6 +79,7 @@ class DiscountUpsertRequest {
     'type': type,
     'scope': scope,
     'value': value,
+    'fixedAmountBasis': fixedAmountBasis,
     'conditions': conditions,
     'minimumOrderAmount': minimumOrderAmount,
     'maximumDiscountAmount': maximumDiscountAmount,

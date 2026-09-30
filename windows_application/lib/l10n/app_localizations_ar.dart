@@ -5832,411 +5832,406 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get financeSupplierListSubtitle =>
-      'The supplier balance is derived exclusively from posted invoices and payments';
+      'يُحتسب رصيد المورد حصراً من الفواتير والدفعات المُرحّلة';
 
   @override
-  String get financeSupplierAddAction => 'Add Supplier';
+  String get financeSupplierAddAction => 'إضافة مورد';
 
   @override
-  String get financeSupplierListLoading => 'Loading suppliers…';
+  String get financeSupplierListLoading => 'جارٍ تحميل الموردين…';
 
   @override
   String get financeSupplierListLoadError =>
-      'Could not load suppliers. The error is not being disregarded.';
+      'تعذر تحميل الموردين. لا يتم تجاهل الخطأ.';
 
   @override
-  String get financeSupplierStatusLabel => 'Status';
+  String get financeSupplierStatusLabel => 'الحالة';
 
   @override
-  String get financeSupplierSearchHint => 'Supplier name or code…';
+  String get financeSupplierSearchHint => 'اسم المورد أو رمزه…';
 
   @override
   String get financeSupplierFilterRefreshError =>
-      'Could not refresh suppliers for these filters. Showing the last loaded data.';
+      'تعذر تحديث الموردين لعوامل التصفية هذه. يجري عرض آخر بيانات تم تحميلها.';
 
   @override
   String get financeSupplierEmptyFiltered =>
-      'No suppliers match the selected filters';
+      'لا يوجد موردون يطابقون عوامل التصفية المحددة';
 
   @override
-  String get financeSupplierEmptyNone => 'No suppliers registered yet';
+  String get financeSupplierEmptyNone => 'لا يوجد موردون مسجلون بعد';
 
   @override
-  String get financeSupplierResetFiltersAction => 'Reset Filters';
+  String get financeSupplierResetFiltersAction => 'إعادة تعيين عوامل التصفية';
 
   @override
-  String get financeSupplierKpiTotalOutstanding => 'Total Payables';
+  String get financeSupplierKpiTotalOutstanding => 'إجمالي المستحقات';
 
   @override
-  String get financeSupplierKpiOverdueLabel => 'Overdue Payments';
+  String get financeSupplierKpiOverdueLabel => 'الدفعات المتأخرة';
 
   @override
-  String get financeSupplierKpiActiveCount => 'Active Suppliers';
+  String get financeSupplierKpiActiveCount => 'الموردون النشطون';
 
   @override
-  String get financeSupplierKpiAvgPaymentTerms => 'Average Payment Terms';
+  String get financeSupplierKpiAvgPaymentTerms => 'متوسط شروط الدفع';
 
   @override
   String financeSupplierDaysUnit(int days) {
-    return '$days days';
+    return '$days يوماً';
   }
 
   @override
-  String get financeSupplierColumnSupplier => 'Supplier';
+  String get financeSupplierColumnSupplier => 'المورد';
 
   @override
-  String get financeSupplierOutstandingBalanceLabel => 'Outstanding Balance';
+  String get financeSupplierOutstandingBalanceLabel => 'الرصيد المستحق';
 
   @override
-  String get financeSupplierOverdueLabel => 'Overdue';
+  String get financeSupplierOverdueLabel => 'متأخر';
 
   @override
-  String get financeSupplierColumnOpenInvoices => 'Open Invoices';
+  String get financeSupplierColumnOpenInvoices => 'الفواتير المفتوحة';
 
   @override
-  String get financeSupplierColumnLastInvoice => 'Last Invoice';
+  String get financeSupplierColumnLastInvoice => 'آخر فاتورة';
 
   @override
-  String get financeSupplierEditAction => 'Edit Supplier';
+  String get financeSupplierEditAction => 'تعديل المورد';
 
   @override
-  String get financeSupplierNameRequired => 'Enter the supplier name.';
+  String get financeSupplierNameRequired => 'أدخل اسم المورد.';
 
   @override
-  String get financeSupplierFieldName => 'Name';
+  String get financeSupplierFieldName => 'الاسم';
 
   @override
-  String get financeSupplierFieldPhone => 'Phone';
+  String get financeSupplierFieldPhone => 'الهاتف';
 
   @override
-  String get financeSupplierFieldEmail => 'Email';
+  String get financeSupplierFieldEmail => 'البريد الإلكتروني';
 
   @override
-  String get financeSupplierFieldAddress => 'Address';
+  String get financeSupplierFieldAddress => 'العنوان';
 
   @override
-  String get financeSupplierFieldContactPerson => 'Contact Person';
+  String get financeSupplierFieldContactPerson => 'جهة الاتصال';
 
   @override
-  String get financeSupplierFieldTaxNumber => 'Tax Number';
+  String get financeSupplierFieldTaxNumber => 'الرقم الضريبي';
 
   @override
-  String get financeSupplierFieldPaymentTermsDays => 'Payment Terms (Days)';
+  String get financeSupplierFieldPaymentTermsDays => 'شروط الدفع (بالأيام)';
 
   @override
-  String get financeSupplierFieldNotes => 'Notes';
+  String get financeSupplierFieldNotes => 'ملاحظات';
 
   @override
-  String get financeSupplierInactiveBadge => 'Inactive';
+  String get financeSupplierInactiveBadge => 'غير نشط';
 
   @override
-  String get financeSupplierProfileSubtitle =>
-      'Supplier profile and financial activity';
+  String get financeSupplierProfileSubtitle => 'ملف المورد والنشاط المالي';
 
   @override
-  String get financeSupplierBackToList => 'Back to Suppliers';
+  String get financeSupplierBackToList => 'العودة إلى الموردين';
 
   @override
-  String get financeSupplierProfileLoading => 'Loading supplier profile…';
+  String get financeSupplierProfileLoading => 'جارٍ تحميل ملف المورد…';
 
   @override
   String financeSupplierProfileLoadError(String error) {
-    return 'Could not load the supplier profile. $error';
+    return 'تعذر تحميل ملف المورد. $error';
   }
 
   @override
-  String get financeSupplierNotFound =>
-      'Could not find the requested supplier.';
+  String get financeSupplierNotFound => 'تعذر العثور على المورد المطلوب.';
 
   @override
   String financeSupplierPaymentTermsWithDays(int days) {
-    return 'Payment terms $days days';
+    return 'شروط الدفع $days يوماً';
   }
 
   @override
-  String get financeSupplierStatementAction => 'Supplier Statement';
+  String get financeSupplierStatementAction => 'كشف حساب المورد';
 
   @override
-  String get financeSupplierNewInvoiceAction => 'New Invoice';
+  String get financeSupplierNewInvoiceAction => 'فاتورة جديدة';
 
   @override
-  String get financeSupplierNewPaymentAction => 'New Payment';
+  String get financeSupplierNewPaymentAction => 'دفعة جديدة';
 
   @override
-  String get financeSupplierKpiTotalInvoiced => 'Total Invoiced';
+  String get financeSupplierKpiTotalInvoiced => 'إجمالي الفواتير';
 
   @override
-  String get financeSupplierKpiTotalPaid => 'Total Paid';
+  String get financeSupplierKpiTotalPaid => 'إجمالي المدفوع';
 
   @override
-  String get financeSupplierTabInvoices => 'Invoices';
+  String get financeSupplierTabInvoices => 'الفواتير';
 
   @override
-  String get financeSupplierTabPayments => 'Payments';
+  String get financeSupplierTabPayments => 'الدفعات';
 
   @override
-  String get financeSupplierTabStatement => 'Statement';
+  String get financeSupplierTabStatement => 'كشف الحساب';
 
   @override
-  String get financeSupplierNoInvoices => 'No invoices for this supplier yet';
+  String get financeSupplierNoInvoices => 'لا توجد فواتير لهذا المورد بعد';
 
   @override
-  String get financeSupplierColumnReference => 'Reference';
+  String get financeSupplierColumnReference => 'المرجع';
 
   @override
-  String get financeSupplierColumnDate => 'Date';
+  String get financeSupplierColumnDate => 'التاريخ';
 
   @override
-  String get financeSupplierColumnDueDate => 'Due';
+  String get financeSupplierColumnDueDate => 'الاستحقاق';
 
   @override
-  String get financeSupplierTotalLabel => 'Total';
+  String get financeSupplierTotalLabel => 'الإجمالي';
 
   @override
-  String get financeSupplierColumnRemaining => 'Remaining';
+  String get financeSupplierColumnRemaining => 'المتبقي';
 
   @override
-  String get financeSupplierViewJournalAction => 'View Journal Entry';
+  String get financeSupplierViewJournalAction => 'عرض قيد اليومية';
 
   @override
-  String get financeSupplierNoPayments => 'No payments for this supplier yet';
+  String get financeSupplierNoPayments => 'لا توجد دفعات لهذا المورد بعد';
 
   @override
-  String get financeSupplierColumnAmount => 'Amount';
+  String get financeSupplierColumnAmount => 'المبلغ';
 
   @override
-  String get financeSupplierColumnPaymentMethod => 'Payment Method';
+  String get financeSupplierColumnPaymentMethod => 'طريقة الدفع';
 
   @override
-  String get financeSupplierNoStatementLines => 'No statement activity yet';
+  String get financeSupplierNoStatementLines =>
+      'لا توجد حركة في كشف الحساب بعد';
 
   @override
-  String get financeSupplierKpiTotalPayments => 'Total Payments';
+  String get financeSupplierKpiTotalPayments => 'إجمالي الدفعات';
 
   @override
-  String get financeSupplierColumnType => 'Type';
+  String get financeSupplierColumnType => 'النوع';
 
   @override
-  String get financeSupplierTypeInvoice => 'Invoice';
+  String get financeSupplierTypeInvoice => 'فاتورة';
 
   @override
-  String get financeSupplierTypePayment => 'Payment';
+  String get financeSupplierTypePayment => 'دفعة';
 
   @override
-  String get financeSupplierReverseInvoiceTitle => 'Reverse Invoice';
+  String get financeSupplierReverseInvoiceTitle => 'عكس الفاتورة';
 
   @override
   String financeSupplierReverseInvoiceMessage(String reference) {
-    return 'A reversing entry will be created for invoice $reference. This action cannot be undone.';
+    return 'سيتم إنشاء قيد عكسي للفاتورة $reference. لا يمكن التراجع عن هذا الإجراء.';
   }
 
   @override
   String financeSupplierPostInvoiceError(String error) {
-    return 'Could not post the invoice: $error';
+    return 'تعذر ترحيل الفاتورة: $error';
   }
 
   @override
   String financeSupplierReverseInvoiceError(String error) {
-    return 'Could not reverse the invoice: $error';
+    return 'تعذر عكس الفاتورة: $error';
   }
 
   @override
-  String get financeSupplierReversePaymentTitle => 'Reverse Payment';
+  String get financeSupplierReversePaymentTitle => 'عكس الدفعة';
 
   @override
   String financeSupplierReversePaymentMessage(String reference) {
-    return 'A reversing entry will be created and the balances of invoices linked to payment $reference will be restored. This action cannot be undone.';
+    return 'سيتم إنشاء قيد عكسي واستعادة أرصدة الفواتير المرتبطة بالدفعة $reference. لا يمكن التراجع عن هذا الإجراء.';
   }
 
   @override
   String financeSupplierReversePaymentError(String error) {
-    return 'Could not reverse the payment: $error';
+    return 'تعذر عكس الدفعة: $error';
   }
 
   @override
-  String get financeSupplierConfirmAction => 'Confirm';
+  String get financeSupplierConfirmAction => 'تأكيد';
 
   @override
   String get financeSupplierInvoiceNumberSubtotalRequired =>
-      'Enter an invoice number and a valid subtotal.';
+      'أدخل رقم الفاتورة وإجمالياً فرعياً صحيحاً.';
 
   @override
-  String get financeSupplierExpenseCategoryRequired =>
-      'Select an expense category.';
+  String get financeSupplierExpenseCategoryRequired => 'اختر فئة المصروف.';
 
   @override
-  String get financeSupplierDebitAccountRequired => 'Select the debit account.';
+  String get financeSupplierDebitAccountRequired => 'اختر الحساب المدين.';
 
   @override
   String financeSupplierInvoiceDialogTitleWithRef(String reference) {
-    return 'Invoice $reference';
+    return 'الفاتورة $reference';
   }
 
   @override
   String get financeSupplierInvoiceLockedMessage =>
-      'The invoice is posted and cannot be edited. Use the reverse action if needed.';
+      'الفاتورة مُرحّلة ولا يمكن تعديلها. استخدم إجراء العكس عند الحاجة.';
 
   @override
-  String get financeSupplierNewInvoiceDialogTitle => 'New Supplier Invoice';
+  String get financeSupplierNewInvoiceDialogTitle => 'فاتورة مورد جديدة';
 
   @override
   String financeSupplierEditInvoiceDialogTitle(String reference) {
-    return 'Edit invoice $reference';
+    return 'تعديل الفاتورة $reference';
   }
 
   @override
-  String get financeSupplierSaveAsDraftAction => 'Save as Draft';
+  String get financeSupplierSaveAsDraftAction => 'حفظ كمسودة';
 
   @override
-  String get financeSupplierLoadingOptions => 'Loading options…';
+  String get financeSupplierLoadingOptions => 'جارٍ تحميل الخيارات…';
 
   @override
-  String get financeSupplierFieldBranchOptional => 'Branch (Optional)';
+  String get financeSupplierFieldBranchOptional => 'الفرع (اختياري)';
 
   @override
-  String get financeSupplierGeneralOption => 'General';
+  String get financeSupplierGeneralOption => 'عام';
 
   @override
-  String get financeSupplierFieldSupplierInvoiceNumber =>
-      'Supplier Invoice Number';
+  String get financeSupplierFieldSupplierInvoiceNumber => 'رقم فاتورة المورد';
 
   @override
-  String get financeSupplierFieldInvoiceDate => 'Invoice Date';
+  String get financeSupplierFieldInvoiceDate => 'تاريخ الفاتورة';
 
   @override
-  String get financeSupplierFieldDueDate => 'Due Date';
+  String get financeSupplierFieldDueDate => 'تاريخ الاستحقاق';
 
   @override
-  String get financeSupplierFieldInvoiceType => 'Invoice Type';
+  String get financeSupplierFieldInvoiceType => 'نوع الفاتورة';
 
   @override
-  String get financeSupplierInvoiceTypeExpense => 'Expense';
+  String get financeSupplierInvoiceTypeExpense => 'مصروف';
 
   @override
   String get financeSupplierInvoiceTypeInventory =>
-      'Inventory (accounting liability only, does not create stock quantity)';
+      'مخزون (التزام محاسبي فقط، ولا ينشئ كمية مخزون)';
 
   @override
-  String get financeSupplierInvoiceTypeOther => 'Other';
+  String get financeSupplierInvoiceTypeOther => 'أخرى';
 
   @override
-  String get financeSupplierFieldExpenseCategory => 'Expense Category';
+  String get financeSupplierFieldExpenseCategory => 'فئة المصروف';
 
   @override
-  String get financeSupplierFieldDebitAccount => 'Debit Account';
+  String get financeSupplierFieldDebitAccount => 'الحساب المدين';
 
   @override
-  String get financeSupplierFieldSubtotal => 'Subtotal';
+  String get financeSupplierFieldSubtotal => 'الإجمالي الفرعي';
 
   @override
-  String get financeSupplierFieldTax => 'Tax';
+  String get financeSupplierFieldTax => 'الضريبة';
 
   @override
-  String get financeSupplierFieldDescription => 'Description';
+  String get financeSupplierFieldDescription => 'الوصف';
 
   @override
-  String get financeSupplierInvoiceDetailTitle => 'Supplier Invoice';
+  String get financeSupplierInvoiceDetailTitle => 'فاتورة المورد';
 
   @override
-  String get financeSupplierPostAction => 'Post';
+  String get financeSupplierPostAction => 'ترحيل';
 
   @override
-  String get financeSupplierReverseAction => 'Reverse';
+  String get financeSupplierReverseAction => 'عكس';
 
   @override
-  String get financeSupplierFieldBranch => 'Branch';
+  String get financeSupplierFieldBranch => 'الفرع';
 
   @override
-  String get financeSupplierPaymentDetailTitle => 'Supplier Payment';
+  String get financeSupplierPaymentDetailTitle => 'دفعة المورد';
 
   @override
-  String get financeSupplierFieldPaymentDate => 'Payment Date';
+  String get financeSupplierFieldPaymentDate => 'تاريخ الدفع';
 
   @override
-  String get financeSupplierFieldCashBankAccount => 'Cash/Bank Account';
+  String get financeSupplierFieldCashBankAccount => 'حساب النقد/البنك';
 
   @override
-  String get financeSupplierFieldExternalReference => 'External Reference';
+  String get financeSupplierFieldExternalReference => 'مرجع خارجي';
 
   @override
-  String get financeSupplierPaymentAllocationTitle =>
-      'Payment Allocation to Invoices';
+  String get financeSupplierPaymentAllocationTitle => 'تخصيص الدفعة للفواتير';
 
   @override
-  String get financeSupplierColumnInvoice => 'Invoice';
+  String get financeSupplierColumnInvoice => 'الفاتورة';
 
   @override
   String get financeSupplierPaymentMethodLocationRequired =>
-      'Select a payment method and an active cash or bank account.';
+      'اختر طريقة دفع وحساباً نقدياً أو بنكياً نشطاً.';
 
   @override
   String get financeSupplierPaymentAmountRequired =>
-      'Enter a valid payment amount greater than zero.';
+      'أدخل مبلغ دفعة صحيحاً أكبر من صفر.';
 
   @override
   String get financeSupplierAllocationRequired =>
-      'Allocate an amount to at least one invoice.';
+      'خصص مبلغاً لفاتورة واحدة على الأقل.';
 
   @override
   String financeSupplierAllocationExceedsRemaining(String reference) {
-    return 'The allocation for $reference exceeds its remaining balance.';
+    return 'يتجاوز المبلغ المخصص للمرجع $reference رصيده المتبقي.';
   }
 
   @override
   String financeSupplierAllocationMustMatchPayment(String remaining) {
-    return 'The total allocations must exactly equal the payment amount. Unallocated remaining: $remaining';
+    return 'يجب أن يساوي إجمالي المبالغ المخصصة مبلغ الدفعة تماماً. المتبقي غير المخصص: $remaining';
   }
 
   @override
-  String get financeSupplierNewPaymentDialogTitle => 'New Supplier Payment';
+  String get financeSupplierNewPaymentDialogTitle => 'دفعة مورد جديدة';
 
   @override
-  String get financeSupplierPostPaymentAction => 'Post Payment';
+  String get financeSupplierPostPaymentAction => 'ترحيل الدفعة';
 
   @override
-  String get financeSupplierLoadingPaymentOptions => 'Loading payment options…';
+  String get financeSupplierLoadingPaymentOptions => 'جارٍ تحميل خيارات الدفع…';
 
   @override
   String get financeSupplierNoPaymentMethodOrAccount =>
-      'No active payment method or cash/bank account. Add one from Finance Settings first.';
+      'لا توجد طريقة دفع نشطة أو حساب نقدي/بنكي. أضف واحداً من إعدادات المالية أولاً.';
 
   @override
-  String get financeSupplierFieldCashBankSource => 'Cash/Bank Account (Source)';
+  String get financeSupplierFieldCashBankSource => 'حساب النقد/البنك (المصدر)';
 
   @override
-  String get financeSupplierFieldPaymentAmount => 'Payment Amount';
+  String get financeSupplierFieldPaymentAmount => 'مبلغ الدفعة';
 
   @override
   String get financeSupplierFieldExternalReferenceOptional =>
-      'External Reference (Optional)';
+      'مرجع خارجي (اختياري)';
 
   @override
-  String get financeSupplierFieldNotesOptional => 'Notes (Optional)';
+  String get financeSupplierFieldNotesOptional => 'ملاحظات (اختياري)';
 
   @override
   String get financeSupplierAllocationOpenInvoicesTitle =>
-      'Payment Allocation to Open Invoices';
+      'تخصيص الدفعة للفواتير المفتوحة';
 
   @override
   String financeSupplierInvoiceRemainingLabel(
     String reference,
     String remaining,
   ) {
-    return '$reference — remaining $remaining';
+    return '$reference — المتبقي $remaining';
   }
 
   @override
-  String get financeSupplierFieldAllocation => 'Allocation';
+  String get financeSupplierFieldAllocation => 'التخصيص';
 
   @override
-  String get financeSupplierAllocatedAmountLabel => 'Allocated Amount';
+  String get financeSupplierAllocatedAmountLabel => 'المبلغ المخصص';
 
   @override
-  String get financeSupplierUnallocatedRemainingLabel =>
-      'Unallocated Remaining';
+  String get financeSupplierUnallocatedRemainingLabel => 'المتبقي غير المخصص';
 
   @override
-  String get financeSupplierOverdueBadge => 'Overdue';
+  String get financeSupplierOverdueBadge => 'متأخر';
 
   @override
   String get financeWarehouseTitle => 'إعداد المخازن';
@@ -8097,6 +8092,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get discountsSavedMetric => 'القيمة التقديرية الموفرة';
 
   @override
+  String get discountsActualSavedMetric => 'إجمالي الخصومات الفعلية هذا الشهر';
+
+  @override
   String get discountsDeleteTitle => 'حذف الخصم؟';
 
   @override
@@ -8149,6 +8147,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get discountFormValueType => 'نوع القيمة';
+
+  @override
+  String get discountFixedAmountBasis => 'تطبيق المبلغ الثابت';
+
+  @override
+  String get discountFixedOncePerOrder => 'مرة واحدة لكل طلب';
+
+  @override
+  String get discountFixedPerUnit => 'لكل وحدة مؤهلة';
 
   @override
   String get discountFormValue => 'القيمة';
@@ -9125,4 +9132,363 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get printerTestPrintSuccessful => 'تمت الطباعة بنجاح';
+
+  @override
+  String get menuManagementPricing => 'التسعير';
+
+  @override
+  String get pricingTitle => 'تسعير القائمة';
+
+  @override
+  String get pricingSubtitle =>
+      'احفظ الإعدادات هنا ثم استخدم المراجعة والنشر لتحديث أسعار البيع.';
+
+  @override
+  String get pricingMenu => 'القائمة';
+
+  @override
+  String get pricingBranch => 'الفرع';
+
+  @override
+  String get pricingChannel => 'قناة البيع';
+
+  @override
+  String get pricingCategory => 'الفئة';
+
+  @override
+  String get pricingAllCategories => 'كل الفئات';
+
+  @override
+  String get pricingSearch => 'ابحث عن المنتجات أو الخيارات';
+
+  @override
+  String get pricingContextsFailed => 'تعذر تحميل سياقات التسعير.';
+
+  @override
+  String get pricingContextsEmpty => 'اختر قائمة وفرعاً نشطين لإدارة التسعير.';
+
+  @override
+  String get pricingRetry => 'إعادة المحاولة';
+
+  @override
+  String get pricingDiscardTitle => 'تجاهل عمل التسعير؟';
+
+  @override
+  String get pricingDiscardMessage =>
+      'تغيير السياق سيتجاهل المسودات المعلقة والتعديل المُراجع.';
+
+  @override
+  String get pricingKeepEditing => 'متابعة التعديل';
+
+  @override
+  String get pricingDiscard => 'تجاهل';
+
+  @override
+  String get pricingApplyRecoveryRequired =>
+      'تحقق من نتيجة الحفظ غير المؤكدة قبل تغيير سياق التسعير.';
+
+  @override
+  String get pricingForbidden => 'لم تعد تملك صلاحية إدارة التسعير.';
+
+  @override
+  String pricingBulkScope(int eligible, int excluded) {
+    return 'ينطبق هذا التعديل على جميع الأسعار المؤهلة في هذه القائمة، وليس النتائج المفلترة فقط. $eligible مؤهل؛ $excluded مستبعد.';
+  }
+
+  @override
+  String get pricingBulkWarning =>
+      'ينطبق هذا التعديل على جميع الأسعار المؤهلة في هذه القائمة، وليس النتائج المفلترة فقط.';
+
+  @override
+  String get pricingInheritanceWarning =>
+      'سينشئ هذا التعديل أسعاراً خاصة بالقائمة للعناصر الموروثة. لن تؤثر تغييرات أسعارها الموروثة المشتركة مستقبلاً عليها حتى تعاد إلى التسعير الموروث.';
+
+  @override
+  String get pricingProductVariant => 'المنتج / الخيار';
+
+  @override
+  String get pricingConfigured => 'المضبوط';
+
+  @override
+  String get pricingInherited => 'الموروث';
+
+  @override
+  String get pricingPublished => 'المنشور';
+
+  @override
+  String get pricingActions => 'الإجراءات';
+
+  @override
+  String get pricingHiddenPlacement => 'موضع مخفي';
+
+  @override
+  String get pricingNotPublished => 'غير منشور';
+
+  @override
+  String get pricingOpenPriceReadonly => 'سعر مفتوح — للقراءة فقط';
+
+  @override
+  String get pricingChangeDraft => 'تعديل المسودة';
+
+  @override
+  String get pricingSetPrice => 'تعيين السعر';
+
+  @override
+  String get pricingResetInherited => 'إعادة للموروث';
+
+  @override
+  String get pricingAlreadyInherited => 'موروث بالفعل';
+
+  @override
+  String get pricingUndo => 'تراجع عن التغيير المعلق';
+
+  @override
+  String pricingSetFor(Object name) {
+    return 'تعيين السعر: $name';
+  }
+
+  @override
+  String get pricingPositivePrice => 'سعر موجب';
+
+  @override
+  String get pricingPositivePriceError =>
+      'أدخل مبلغاً موجباً بمنزلتين عشريتين كحد أقصى.';
+
+  @override
+  String get pricingCancel => 'إلغاء';
+
+  @override
+  String get pricingSaveDraft => 'حفظ المسودة';
+
+  @override
+  String pricingReviewChanges(int count) {
+    return 'مراجعة تغييرات السعر ($count)';
+  }
+
+  @override
+  String get pricingAdjustAll => 'تعديل كل الأسعار';
+
+  @override
+  String get pricingOpenReview => 'فتح النتائج المُراجعة';
+
+  @override
+  String get pricingPrevious => 'السابق';
+
+  @override
+  String get pricingNext => 'التالي';
+
+  @override
+  String get pricingPendingManualTitle => 'تغييرات يدوية معلقة';
+
+  @override
+  String get pricingPendingManualMessage =>
+      'راجع وطبّق، أو تجاهل المسودات اليدوية صراحة قبل بدء تعديل جماعي.';
+
+  @override
+  String get pricingOperation => 'العملية';
+
+  @override
+  String get pricingAmount => 'المبلغ';
+
+  @override
+  String get pricingAmountError =>
+      'أدخل مبلغاً موجباً صحيحاً. يجب أن يكون تخفيض النسبة أقل من 100.';
+
+  @override
+  String get pricingPercentageMustBeBelow100 =>
+      'يجب أن يكون تخفيض النسبة أقل من 100.';
+
+  @override
+  String get pricingRoundingMode => 'طريقة التقريب';
+
+  @override
+  String get pricingRoundingStep => 'خطوة التقريب';
+
+  @override
+  String get pricingCustomStep => 'خطوة مخصصة';
+
+  @override
+  String get pricingPreview => 'معاينة';
+
+  @override
+  String get pricingPercentIncrease => 'زيادة بالنسبة';
+
+  @override
+  String get pricingFixedIncrease => 'زيادة ثابتة';
+
+  @override
+  String get pricingPercentDecrease => 'تخفيض بالنسبة';
+
+  @override
+  String get pricingFixedDecrease => 'تخفيض ثابت';
+
+  @override
+  String get pricingNoRounding => 'دون تقريب';
+
+  @override
+  String get pricingRoundUp => 'تقريب للأعلى';
+
+  @override
+  String get pricingRoundDown => 'تقريب للأسفل';
+
+  @override
+  String get pricingReviewTitle => 'مراجعة تعديل السعر';
+
+  @override
+  String get pricingManualReview =>
+      'راجع النتائج الدقيقة التي أعادها الخادم قبل التطبيق.';
+
+  @override
+  String get pricingReviewedResults => 'لقد راجعت هذه النتائج.';
+
+  @override
+  String pricingOppositeAcknowledgement(int count) {
+    return 'أقر بأن $count أسعار ستتحرك في الاتجاه المعاكس بسبب قاعدة التقريب المختارة.';
+  }
+
+  @override
+  String get pricingClose => 'إغلاق';
+
+  @override
+  String get pricingApply => 'تطبيق النتائج المُراجعة';
+
+  @override
+  String get pricingOriginal => 'الأصلي';
+
+  @override
+  String get pricingRaw => 'الحساب الخام';
+
+  @override
+  String get pricingRounding => 'التقريب';
+
+  @override
+  String get pricingFinal => 'النهائي';
+
+  @override
+  String get pricingDifference => 'الفرق';
+
+  @override
+  String get pricingConfiguration => 'أثر الإعداد';
+
+  @override
+  String get pricingOpposite => 'اتجاه معاكس';
+
+  @override
+  String get pricingInheritedCount => 'موروث';
+
+  @override
+  String get pricingExistingOverrideCount => 'تجاوزات موجودة';
+
+  @override
+  String get pricingCreatedCount => 'تجاوزات منشأة';
+
+  @override
+  String get pricingUpdatedCount => 'تجاوزات محدثة';
+
+  @override
+  String get pricingRemovedCount => 'تجاوزات محذوفة';
+
+  @override
+  String get pricingIncreaseCount => 'زيادات نهائية';
+
+  @override
+  String get pricingDecreaseCount => 'تخفيضات نهائية';
+
+  @override
+  String get pricingUnchangedCount => 'دون تغيير';
+
+  @override
+  String get pricingExcludedCount => 'مستبعدات';
+
+  @override
+  String get pricingApplyUncertain =>
+      'نتيجة التطبيق غير مؤكدة. استعد التعديل المخزن قبل إعادة المحاولة أو تغيير السياق.';
+
+  @override
+  String get pricingRecover => 'استعادة التعديل';
+
+  @override
+  String get pricingSavedHandoff =>
+      'تم حفظ الأسعار. راجع وانشر لتحديث أسعار البيع.';
+
+  @override
+  String get pricingOverviewRefreshFailed =>
+      'حُفظت الأسعار لكن تعذر تحميل النظرة العامة المحدّثة. أعد تحميل النظرة العامة بشكل منفصل.';
+
+  @override
+  String get pricingReviewPublish => 'مراجعة ونشر';
+
+  @override
+  String get pricingPreviewStale => 'تغير التسعير. أنشئ وراجع معاينة جديدة.';
+
+  @override
+  String get pricingPreviewExpired =>
+      'انتهت المعاينة المُراجعة. أنشئ معاينة جديدة.';
+
+  @override
+  String get pricingAcknowledgementRequired =>
+      'أقر بالنتائج المعاكسة قبل التطبيق.';
+
+  @override
+  String get pricingFailed => 'تعذر إتمام التسعير. حاول مرة أخرى.';
+
+  @override
+  String get pricingChannelPos => 'نقطة البيع';
+
+  @override
+  String get pricingChannelWaiter => 'تطبيق النادل';
+
+  @override
+  String get pricingChannelKiosk => 'الكشك';
+
+  @override
+  String get pricingChannelQr => 'طلب QR';
+
+  @override
+  String get pricingChannelDelivery => 'التوصيل';
+
+  @override
+  String get pricingChannelOnline => 'الطلب الإلكتروني';
+
+  @override
+  String get pricingSourceMenu => 'سعر القائمة';
+
+  @override
+  String get pricingSourceBranchChannel => 'الفرع والقناة';
+
+  @override
+  String get pricingSourceBranch => 'الفرع';
+
+  @override
+  String get pricingSourceChannel => 'القناة';
+
+  @override
+  String get pricingSourceBase => 'السعر الأساسي';
+
+  @override
+  String get pricingActionSet => 'تعيين';
+
+  @override
+  String get pricingActionReset => 'إعادة للموروث';
+
+  @override
+  String get pricingMovementIncrease => 'زيادة';
+
+  @override
+  String get pricingMovementDecrease => 'تخفيض';
+
+  @override
+  String get pricingMovementUnchanged => 'دون تغيير';
+
+  @override
+  String get pricingEffectCreate => 'إنشاء تجاوز للقائمة';
+
+  @override
+  String get pricingEffectUpdate => 'تحديث تجاوز القائمة';
+
+  @override
+  String get pricingEffectRemove => 'إزالة تجاوز القائمة';
+
+  @override
+  String get pricingEffectUnchanged => 'لا تغيير في الإعداد';
 }

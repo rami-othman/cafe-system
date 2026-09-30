@@ -351,7 +351,7 @@ class OrdersCubit extends Cubit<OrdersState> {
           orderId,
           contextKey,
           detail.resumeBlockedReason ??
-              'Only an unpaid held order can be resumed.',
+              'Only an unpaid draft or held order can be opened in POS.',
         );
       }
 

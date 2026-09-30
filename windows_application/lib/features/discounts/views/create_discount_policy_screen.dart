@@ -63,6 +63,7 @@ class _CreateDiscountPolicyScreenState
   String _applicationMode = 'manual';
   String _scope = 'order';
   String _valueType = 'percentage';
+  String _fixedAmountBasis = 'per_order';
   String _customerEligibilityMode = 'all';
   bool _appliesToAllBranches = true;
   bool _allPaymentMethods = true;
@@ -182,6 +183,7 @@ class _CreateDiscountPolicyScreenState
         _ => 'order',
       };
       _valueType = detail.type == 'fixed' ? 'fixed' : 'percentage';
+      _fixedAmountBasis = detail.fixedAmountBasis;
       _customerEligibilityMode = switch (detail.customerEligibilityMode) {
         'selected_groups' => 'selected_groups',
         'selected_customers' => 'selected_customers',
@@ -484,6 +486,24 @@ class _CreateDiscountPolicyScreenState
                   errorText: _fieldError('value'),
                 ),
               ),
+              if (_scope == 'product' && _valueType == 'fixed')
+                _LabeledField(
+                  label: l10n.discountFixedAmountBasis,
+                  child: _SelectField(
+                    key: const Key('discount-fixed-amount-basis-field'),
+                    value: _fixedAmountBasis,
+                    options: <_SelectOption>[
+                      _SelectOption(
+                        'per_order',
+                        l10n.discountFixedOncePerOrder,
+                      ),
+                      _SelectOption('per_unit', l10n.discountFixedPerUnit),
+                    ],
+                    enabled: !locked,
+                    onChanged: (value) =>
+                        setState(() => _fixedAmountBasis = value),
+                  ),
+                ),
               _LabeledField(
                 label: l10n.discountFormMinSpendOptional,
                 child: _moneyField(
@@ -1173,13 +1193,7 @@ class _CreateDiscountPolicyScreenState
         DiscountSummaryPanel(
           value: _isPercentage
               ? AppLocalizations.of(context).discountPercentOff(_decimal(value))
-              : AppLocalizations.of(context).discountAmountOff(
-                  CurrencyFormatter.format(
-                    value,
-                    locale: AppLocalizations.of(context).localeName,
-                    currencyCode: _currency(state),
-                  ),
-                ),
+              : '${AppLocalizations.of(context).discountAmountOff(CurrencyFormatter.format(value, locale: AppLocalizations.of(context).localeName, currencyCode: _currency(state)))}${_scope == 'product' && _fixedAmountBasis == 'per_unit' ? ' · ${AppLocalizations.of(context).discountFixedPerUnit}' : ''}',
           isReady: isReady,
           scope: _scopeLabel(_scope),
           branches: _appliesToAllBranches
@@ -1226,6 +1240,7 @@ class _CreateDiscountPolicyScreenState
       _applicationMode = 'manual';
       _scope = 'order';
       _valueType = 'percentage';
+      _fixedAmountBasis = 'per_order';
       _customerEligibilityMode = 'all';
       _appliesToAllBranches = true;
       _allPaymentMethods = true;
@@ -1260,6 +1275,9 @@ class _CreateDiscountPolicyScreenState
       type: _valueType,
       scope: _scope,
       value: _decimalValue(_valueController.text)!,
+      fixedAmountBasis: _scope == 'product' && _valueType == 'fixed'
+          ? _fixedAmountBasis
+          : 'per_order',
       conditions: _conditions,
       minimumOrderAmount: _decimalValue(_minSpendController.text),
       maximumDiscountAmount: _decimalValue(_maxDiscountController.text),

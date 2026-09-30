@@ -403,6 +403,29 @@ class PosOrderController extends Controller
         return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
     }
 
+    public function resume(Request $request, int $order): JsonResponse
+    {
+        $tenantId = TenantContext::id($request);
+        DB::transaction(function () use ($tenantId, $order): void {
+            $lockedOrder = $this->lockedOrder($tenantId, $order);
+            $eligibility = $this->resumeEligibility($tenantId, $lockedOrder);
+            if (! $eligibility['canResume']) {
+                throw new OrderLifecycleException(
+                    $eligibility['resumeBlockerCode'] ?? 'ORDER_NOT_RESUMABLE',
+                    $eligibility['resumeBlockedReason'] ?? 'This order cannot be resumed.',
+                );
+            }
+
+            if ($lockedOrder->status === 'held') {
+                DB::table('orders')->where('tenant_id', $tenantId)->where('id', $order)->update([
+                    'status' => 'draft', 'updated_at' => now(),
+                ]);
+            }
+        });
+
+        return response()->json(['data' => $this->serializeOrder($tenantId, $this->findOrder($tenantId, $order))]);
+    }
+
     public function discount(Request $request, int $order): JsonResponse
     {
         $data = $request->validate([
@@ -669,11 +692,11 @@ class PosOrderController extends Controller
      */
     private function resumeEligibility(int $tenantId, object $order): array
     {
-        if ($order->status !== 'held') {
+        if (! in_array($order->status, ['draft', 'held'], true)) {
             return [
                 'canResume' => false,
-                'resumeBlockerCode' => 'ORDER_NOT_HELD',
-                'resumeBlockedReason' => 'Only a held order can be resumed into POS.',
+                'resumeBlockerCode' => 'ORDER_NOT_OPEN',
+                'resumeBlockedReason' => 'Only a draft or held order can be opened in POS.',
             ];
         }
 

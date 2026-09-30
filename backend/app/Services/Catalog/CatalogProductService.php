@@ -38,6 +38,7 @@ class CatalogProductService
         $this->validateReferences($product->tenant_id, $data);
 
         return DB::transaction(function () use ($product, $data): Product {
+            $product = Product::withTrashed()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             $before = $product->toArray();
             $product->update($this->productPayload($data, false));
             $product = $product->fresh(['category', 'reportingCategory', 'kitchenStation', 'variants', 'defaultVariant']);
@@ -50,6 +51,7 @@ class CatalogProductService
     public function archive(Product $product): Product
     {
         return DB::transaction(function () use ($product): Product {
+            $product = Product::query()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             $before = $product->toArray();
             $product->update(['is_active' => false]);
             $product->delete();
@@ -64,6 +66,7 @@ class CatalogProductService
         $this->validateReferences($product->tenant_id, ['categoryId' => $product->category_id, 'reportingCategoryId' => $product->reporting_category_id, 'kitchenStationId' => $product->kitchen_station_id]);
 
         return DB::transaction(function () use ($product): Product {
+            $product = Product::withTrashed()->whereKey($product->id)->lockForUpdate()->firstOrFail();
             $this->legacy->sync($product);
             $product->restore();
             $product->update(['is_active' => true]);

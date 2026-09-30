@@ -14570,6 +14570,12 @@ abstract class AppLocalizations {
   /// **'ESTIMATED VALUE SAVED'**
   String get discountsSavedMetric;
 
+  /// No description provided for @discountsActualSavedMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTUAL DISCOUNT VALUE (THIS MONTH)'**
+  String get discountsActualSavedMetric;
+
   /// No description provided for @discountsDeleteTitle.
   ///
   /// In en, this message translates to:
@@ -14665,6 +14671,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Value Type'**
   String get discountFormValueType;
+
+  /// No description provided for @discountFixedAmountBasis.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply fixed amount'**
+  String get discountFixedAmountBasis;
+
+  /// No description provided for @discountFixedOncePerOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Once per order'**
+  String get discountFixedOncePerOrder;
+
+  /// No description provided for @discountFixedPerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'For each eligible unit'**
+  String get discountFixedPerUnit;
 
   /// No description provided for @discountFormValue.
   ///
@@ -16339,6 +16363,678 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Print successful'**
   String get printerTestPrintSuccessful;
+
+  /// No description provided for @menuManagementPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get menuManagementPricing;
+
+  /// No description provided for @pricingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu Pricing'**
+  String get pricingTitle;
+
+  /// No description provided for @pricingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save configuration here, then use Review & Publish to update selling prices.'**
+  String get pricingSubtitle;
+
+  /// No description provided for @pricingMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get pricingMenu;
+
+  /// No description provided for @pricingBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get pricingBranch;
+
+  /// No description provided for @pricingChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales channel'**
+  String get pricingChannel;
+
+  /// No description provided for @pricingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get pricingCategory;
+
+  /// No description provided for @pricingAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get pricingAllCategories;
+
+  /// No description provided for @pricingSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search products or variants'**
+  String get pricingSearch;
+
+  /// No description provided for @pricingContextsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing contexts could not be loaded.'**
+  String get pricingContextsFailed;
+
+  /// No description provided for @pricingContextsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an active menu and branch to manage pricing.'**
+  String get pricingContextsEmpty;
+
+  /// No description provided for @pricingRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get pricingRetry;
+
+  /// No description provided for @pricingDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard pricing work?'**
+  String get pricingDiscardTitle;
+
+  /// No description provided for @pricingDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing context will discard pending drafts and the reviewed adjustment.'**
+  String get pricingDiscardMessage;
+
+  /// No description provided for @pricingKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get pricingKeepEditing;
+
+  /// No description provided for @pricingDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get pricingDiscard;
+
+  /// No description provided for @pricingApplyRecoveryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the uncertain Apply result before changing pricing context.'**
+  String get pricingApplyRecoveryRequired;
+
+  /// No description provided for @pricingForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You no longer have permission to manage pricing.'**
+  String get pricingForbidden;
+
+  /// No description provided for @pricingBulkScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This adjustment applies to all eligible prices in this menu, not only the currently filtered results. {eligible} eligible; {excluded} excluded.'**
+  String pricingBulkScope(int eligible, int excluded);
+
+  /// No description provided for @pricingBulkWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This adjustment applies to all eligible prices in this menu, not only the currently filtered results.'**
+  String get pricingBulkWarning;
+
+  /// No description provided for @pricingInheritanceWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This adjustment will create menu-specific prices for inherited items. Future changes to their shared inherited prices will no longer affect them until they are reset to inherited pricing.'**
+  String get pricingInheritanceWarning;
+
+  /// No description provided for @pricingProductVariant.
+  ///
+  /// In en, this message translates to:
+  /// **'Product / variant'**
+  String get pricingProductVariant;
+
+  /// No description provided for @pricingConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get pricingConfigured;
+
+  /// No description provided for @pricingInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited'**
+  String get pricingInherited;
+
+  /// No description provided for @pricingPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Published'**
+  String get pricingPublished;
+
+  /// No description provided for @pricingActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get pricingActions;
+
+  /// No description provided for @pricingHiddenPlacement.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden placement'**
+  String get pricingHiddenPlacement;
+
+  /// No description provided for @pricingNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Not published'**
+  String get pricingNotPublished;
+
+  /// No description provided for @pricingOpenPriceReadonly.
+  ///
+  /// In en, this message translates to:
+  /// **'Open price — read-only'**
+  String get pricingOpenPriceReadonly;
+
+  /// No description provided for @pricingChangeDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Change draft'**
+  String get pricingChangeDraft;
+
+  /// No description provided for @pricingSetPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Set price'**
+  String get pricingSetPrice;
+
+  /// No description provided for @pricingResetInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to inherited'**
+  String get pricingResetInherited;
+
+  /// No description provided for @pricingAlreadyInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Already inherited'**
+  String get pricingAlreadyInherited;
+
+  /// No description provided for @pricingUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo pending change'**
+  String get pricingUndo;
+
+  /// No description provided for @pricingSetFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Set price: {name}'**
+  String pricingSetFor(Object name);
+
+  /// No description provided for @pricingPositivePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Positive price'**
+  String get pricingPositivePrice;
+
+  /// No description provided for @pricingPositivePriceError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount with at most two decimal places.'**
+  String get pricingPositivePriceError;
+
+  /// No description provided for @pricingCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get pricingCancel;
+
+  /// No description provided for @pricingSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get pricingSaveDraft;
+
+  /// No description provided for @pricingReviewChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Price Changes ({count})'**
+  String pricingReviewChanges(int count);
+
+  /// No description provided for @pricingAdjustAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust All Prices'**
+  String get pricingAdjustAll;
+
+  /// No description provided for @pricingOpenReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Open reviewed results'**
+  String get pricingOpenReview;
+
+  /// No description provided for @pricingPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get pricingPrevious;
+
+  /// No description provided for @pricingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get pricingNext;
+
+  /// No description provided for @pricingPendingManualTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending manual changes'**
+  String get pricingPendingManualTitle;
+
+  /// No description provided for @pricingPendingManualMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and apply, or explicitly discard manual drafts before starting a bulk operation.'**
+  String get pricingPendingManualMessage;
+
+  /// No description provided for @pricingOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation'**
+  String get pricingOperation;
+
+  /// No description provided for @pricingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get pricingAmount;
+
+  /// No description provided for @pricingAmountError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid positive amount. Percentage decreases must be below 100.'**
+  String get pricingAmountError;
+
+  /// No description provided for @pricingPercentageMustBeBelow100.
+  ///
+  /// In en, this message translates to:
+  /// **'Percentage decreases must be below 100.'**
+  String get pricingPercentageMustBeBelow100;
+
+  /// No description provided for @pricingRoundingMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounding mode'**
+  String get pricingRoundingMode;
+
+  /// No description provided for @pricingRoundingStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounding step'**
+  String get pricingRoundingStep;
+
+  /// No description provided for @pricingCustomStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Step'**
+  String get pricingCustomStep;
+
+  /// No description provided for @pricingPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get pricingPreview;
+
+  /// No description provided for @pricingPercentIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Percentage increase'**
+  String get pricingPercentIncrease;
+
+  /// No description provided for @pricingFixedIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed increase'**
+  String get pricingFixedIncrease;
+
+  /// No description provided for @pricingPercentDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Percentage decrease'**
+  String get pricingPercentDecrease;
+
+  /// No description provided for @pricingFixedDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed decrease'**
+  String get pricingFixedDecrease;
+
+  /// No description provided for @pricingNoRounding.
+  ///
+  /// In en, this message translates to:
+  /// **'No rounding'**
+  String get pricingNoRounding;
+
+  /// No description provided for @pricingRoundUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Round up'**
+  String get pricingRoundUp;
+
+  /// No description provided for @pricingRoundDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Round down'**
+  String get pricingRoundDown;
+
+  /// No description provided for @pricingReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review price adjustment'**
+  String get pricingReviewTitle;
+
+  /// No description provided for @pricingManualReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the exact server-returned results before applying.'**
+  String get pricingManualReview;
+
+  /// No description provided for @pricingReviewedResults.
+  ///
+  /// In en, this message translates to:
+  /// **'I have reviewed these results.'**
+  String get pricingReviewedResults;
+
+  /// No description provided for @pricingOppositeAcknowledgement.
+  ///
+  /// In en, this message translates to:
+  /// **'I acknowledge that {count} prices will move in the opposite direction because of the selected rounding rule.'**
+  String pricingOppositeAcknowledgement(int count);
+
+  /// No description provided for @pricingClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get pricingClose;
+
+  /// No description provided for @pricingApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply reviewed results'**
+  String get pricingApply;
+
+  /// No description provided for @pricingOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get pricingOriginal;
+
+  /// No description provided for @pricingRaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw calculation'**
+  String get pricingRaw;
+
+  /// No description provided for @pricingRounding.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounding'**
+  String get pricingRounding;
+
+  /// No description provided for @pricingFinal.
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get pricingFinal;
+
+  /// No description provided for @pricingDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get pricingDifference;
+
+  /// No description provided for @pricingConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration effect'**
+  String get pricingConfiguration;
+
+  /// No description provided for @pricingOpposite.
+  ///
+  /// In en, this message translates to:
+  /// **'Opposite direction'**
+  String get pricingOpposite;
+
+  /// No description provided for @pricingInheritedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherited'**
+  String get pricingInheritedCount;
+
+  /// No description provided for @pricingExistingOverrideCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing overrides'**
+  String get pricingExistingOverrideCount;
+
+  /// No description provided for @pricingCreatedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overrides created'**
+  String get pricingCreatedCount;
+
+  /// No description provided for @pricingUpdatedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overrides updated'**
+  String get pricingUpdatedCount;
+
+  /// No description provided for @pricingRemovedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overrides removed'**
+  String get pricingRemovedCount;
+
+  /// No description provided for @pricingIncreaseCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Final increases'**
+  String get pricingIncreaseCount;
+
+  /// No description provided for @pricingDecreaseCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Final decreases'**
+  String get pricingDecreaseCount;
+
+  /// No description provided for @pricingUnchangedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Unchanged'**
+  String get pricingUnchangedCount;
+
+  /// No description provided for @pricingExcludedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusions'**
+  String get pricingExcludedCount;
+
+  /// No description provided for @pricingApplyUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'The Apply result is uncertain. Recover the stored adjustment before retrying or changing context.'**
+  String get pricingApplyUncertain;
+
+  /// No description provided for @pricingRecover.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover adjustment'**
+  String get pricingRecover;
+
+  /// No description provided for @pricingSavedHandoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices saved. Review and publish to update selling prices.'**
+  String get pricingSavedHandoff;
+
+  /// No description provided for @pricingOverviewRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices were saved, but the refreshed overview could not be loaded. Retry the overview separately.'**
+  String get pricingOverviewRefreshFailed;
+
+  /// No description provided for @pricingReviewPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & Publish'**
+  String get pricingReviewPublish;
+
+  /// No description provided for @pricingPreviewStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing changed. Create and review a fresh preview.'**
+  String get pricingPreviewStale;
+
+  /// No description provided for @pricingPreviewExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewed preview expired. Create a new preview.'**
+  String get pricingPreviewExpired;
+
+  /// No description provided for @pricingAcknowledgementRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Acknowledge opposite-direction results before applying.'**
+  String get pricingAcknowledgementRequired;
+
+  /// No description provided for @pricingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing could not be completed. Please try again.'**
+  String get pricingFailed;
+
+  /// No description provided for @pricingChannelPos.
+  ///
+  /// In en, this message translates to:
+  /// **'POS'**
+  String get pricingChannelPos;
+
+  /// No description provided for @pricingChannelWaiter.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiter app'**
+  String get pricingChannelWaiter;
+
+  /// No description provided for @pricingChannelKiosk.
+  ///
+  /// In en, this message translates to:
+  /// **'Kiosk'**
+  String get pricingChannelKiosk;
+
+  /// No description provided for @pricingChannelQr.
+  ///
+  /// In en, this message translates to:
+  /// **'QR ordering'**
+  String get pricingChannelQr;
+
+  /// No description provided for @pricingChannelDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get pricingChannelDelivery;
+
+  /// No description provided for @pricingChannelOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online ordering'**
+  String get pricingChannelOnline;
+
+  /// No description provided for @pricingSourceMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu price'**
+  String get pricingSourceMenu;
+
+  /// No description provided for @pricingSourceBranchChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch and channel'**
+  String get pricingSourceBranchChannel;
+
+  /// No description provided for @pricingSourceBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get pricingSourceBranch;
+
+  /// No description provided for @pricingSourceChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get pricingSourceChannel;
+
+  /// No description provided for @pricingSourceBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base price'**
+  String get pricingSourceBase;
+
+  /// No description provided for @pricingActionSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get pricingActionSet;
+
+  /// No description provided for @pricingActionReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to inherited'**
+  String get pricingActionReset;
+
+  /// No description provided for @pricingMovementIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase'**
+  String get pricingMovementIncrease;
+
+  /// No description provided for @pricingMovementDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease'**
+  String get pricingMovementDecrease;
+
+  /// No description provided for @pricingMovementUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Unchanged'**
+  String get pricingMovementUnchanged;
+
+  /// No description provided for @pricingEffectCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create menu override'**
+  String get pricingEffectCreate;
+
+  /// No description provided for @pricingEffectUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update menu override'**
+  String get pricingEffectUpdate;
+
+  /// No description provided for @pricingEffectRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove menu override'**
+  String get pricingEffectRemove;
+
+  /// No description provided for @pricingEffectUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'No configuration change'**
+  String get pricingEffectUnchanged;
 }
 
 class _AppLocalizationsDelegate

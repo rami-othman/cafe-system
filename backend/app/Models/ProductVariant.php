@@ -35,6 +35,11 @@ class ProductVariant extends Model
         return $this->hasMany(ProductVariantPriceOverride::class);
     }
 
+    public function menuPrices(): HasMany
+    {
+        return $this->hasMany(MenuVariantPrice::class);
+    }
+
     public function availabilityRules(): HasMany
     {
         return $this->hasMany(ProductAvailabilityRule::class);

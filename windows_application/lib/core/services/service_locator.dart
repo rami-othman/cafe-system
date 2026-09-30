@@ -57,6 +57,7 @@ import '../../features/menu_management/controllers/product_lifecycle_cubit.dart'
 import '../../features/menu_management/products/controllers/product_editor_cubit.dart';
 import '../../features/menu_management/variants/controllers/variants_cubit.dart';
 import '../../features/menu_management/pricing/controllers/variant_price_overrides_cubit.dart';
+import '../../features/menu_management/pricing/controllers/menu_pricing_cubit.dart';
 import '../../features/menu_management/availability/controllers/availability_cubit.dart';
 import '../../features/menu_management/operational_availability/controllers/operational_availability_cubit.dart';
 import '../../features/menu_management/repositories/menu_catalog_repository.dart';
@@ -583,6 +584,12 @@ void setupServiceLocator({bool useBackend = true}) {
       () => VariantPriceOverridesCubit(
         repository: serviceLocator<MenuCatalogRepository>(),
       ),
+    );
+  }
+  if (!serviceLocator.isRegistered<MenuPricingCubit>()) {
+    serviceLocator.registerFactory<MenuPricingCubit>(
+      () =>
+          MenuPricingCubit(repository: serviceLocator<MenuCatalogRepository>()),
     );
   }
   if (!serviceLocator.isRegistered<AvailabilityCubit>()) {

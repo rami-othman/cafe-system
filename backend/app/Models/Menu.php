@@ -39,4 +39,9 @@ class Menu extends Model
     {
         return $this->hasMany(MenuAvailabilityRule::class);
     }
+
+    public function variantPrices(): HasMany
+    {
+        return $this->hasMany(MenuVariantPrice::class);
+    }
 }

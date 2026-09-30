@@ -125,12 +125,16 @@ class OrderLifecycleApiTest extends TestCase
             'updated_at' => now(),
         ]);
         $foreignOrder = $this->order($foreignTenant, $foreignBranch, 'FOREIGN-CANCEL', 'draft');
+        $foreignHeldOrder = $this->order($foreignTenant, $foreignBranch, 'FOREIGN-RESUME', 'held');
 
         $this->json('DELETE', '/api/v1/orders/'.$foreignOrder, [], $this->headers($tenant))
             ->assertNotFound();
 
         $this->assertSame('draft', DB::table('orders')->where('id', $foreignOrder)->value('status'));
         $this->assertNull(DB::table('orders')->where('id', $foreignOrder)->value('deleted_at'));
+        $this->postJson('/api/v1/orders/'.$foreignHeldOrder.'/resume', [], $this->headers($tenant))
+            ->assertNotFound();
+        $this->assertSame('held', DB::table('orders')->where('id', $foreignHeldOrder)->value('status'));
     }
 
     public function test_user_without_order_branch_access_cannot_cancel_order(): void
@@ -144,6 +148,7 @@ class OrderLifecycleApiTest extends TestCase
             'updated_at' => now(),
         ]);
         $order = $this->order($tenant, $restrictedBranch, 'RESTRICTED-CANCEL', 'draft');
+        $heldOrder = $this->order($tenant, $restrictedBranch, 'RESTRICTED-RESUME', 'held');
         $this->assertSame($restrictedBranch, (int) DB::table('orders')->where('id', $order)->value('branch_id'));
         $user = User::query()->create([
             'tenant_id' => $tenant,
@@ -166,8 +171,10 @@ class OrderLifecycleApiTest extends TestCase
 
         $this->getJson('/api/v1/orders/'.$order, $headers)->assertForbidden();
         $this->json('DELETE', '/api/v1/orders/'.$order, [], $headers)->assertForbidden();
+        $this->postJson('/api/v1/orders/'.$heldOrder.'/resume', [], $headers)->assertForbidden();
 
         $this->assertSame('draft', DB::table('orders')->where('id', $order)->value('status'));
+        $this->assertSame('held', DB::table('orders')->where('id', $heldOrder)->value('status'));
         $this->assertNull(DB::table('orders')->where('id', $order)->value('deleted_at'));
     }
 
@@ -237,6 +244,10 @@ class OrderLifecycleApiTest extends TestCase
             ->assertJsonPath('data.id', $order)
             ->assertJsonPath('data.canResume', false)
             ->assertJsonPath('data.resumeBlockerCode', 'UNSUPPORTED_MENU_SNAPSHOT_SCHEMA');
+
+        $this->postJson('/api/v1/orders/'.$order.'/resume', [], $this->headers($tenant))
+            ->assertUnprocessable();
+        $this->assertSame('held', DB::table('orders')->where('id', $order)->value('status'));
     }
 
     public function test_compatible_held_snapshot_remains_resumable(): void
@@ -274,6 +285,58 @@ class OrderLifecycleApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.canResume', true)
             ->assertJsonPath('data.resumeBlockerCode', null);
+    }
+
+    public function test_unpaid_order_can_cycle_from_held_to_draft_and_back(): void
+    {
+        [$tenant, $branch] = $this->context();
+        $order = $this->order($tenant, $branch, 'RESUME-CYCLE', 'held');
+
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $this->postJson('/api/v1/orders/'.$order.'/resume', [], $this->headers($tenant))
+                ->assertOk()
+                ->assertJsonPath('data.id', $order)
+                ->assertJsonPath('data.status', 'draft')
+                ->assertJsonPath('data.paymentStatus', 'unpaid');
+            $this->assertSame('draft', DB::table('orders')->where('id', $order)->value('status'));
+            $this->getJson('/api/v1/orders/'.$order, $this->headers($tenant))
+                ->assertOk()
+                ->assertJsonPath('data.canResume', true);
+            $this->postJson('/api/v1/orders/'.$order.'/resume', [], $this->headers($tenant))
+                ->assertOk()
+                ->assertJsonPath('data.status', 'draft');
+
+            $this->postJson('/api/v1/orders/'.$order.'/hold', [], $this->headers($tenant))
+                ->assertOk()
+                ->assertJsonPath('data.status', 'held');
+        }
+
+        $this->assertSame(0, DB::table('payments')->where('order_id', $order)->count());
+    }
+
+    public function test_resume_rejects_paid_and_stale_paid_held_orders(): void
+    {
+        [$tenant, $branch] = $this->context();
+        $paid = $this->order($tenant, $branch, 'RESUME-PAID', 'paid', 'paid');
+        $stale = $this->order($tenant, $branch, 'RESUME-STALE', 'held');
+        DB::table('payments')->insert([
+            'tenant_id' => $tenant,
+            'branch_id' => $branch,
+            'order_id' => $stale,
+            'method' => 'cash',
+            'amount' => 5,
+            'currency' => 'SYP',
+            'status' => 'completed',
+            'paid_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ([$paid => 'paid', $stale => 'held'] as $order => $status) {
+            $this->postJson('/api/v1/orders/'.$order.'/resume', [], $this->headers($tenant))
+                ->assertUnprocessable();
+            $this->assertSame($status, DB::table('orders')->where('id', $order)->value('status'));
+        }
     }
 
     private function context(): array

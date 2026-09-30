@@ -165,6 +165,7 @@ class BranchController extends Controller
             }
         }
         DB::transaction(function () use ($branch, $data, $financialSetup, $request): void {
+            $branch = Branch::query()->whereKey($branch->id)->lockForUpdate()->firstOrFail();
             $branch->update($data);
             if ($branch->is_active) {
                 $financialSetup->ensureBranchCashDrawer((int) $branch->tenant_id, (int) $branch->id, $request->attributes->get('auth_user')->id);

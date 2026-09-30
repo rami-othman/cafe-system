@@ -9,6 +9,7 @@ import 'package:windows_application/core/utils/currency_formatter.dart';
 import 'package:windows_application/features/discounts/controllers/discounts_cubit.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_dashboard_metrics.dart';
 import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
@@ -25,7 +26,7 @@ void main() {
     expect(find.text('Student Discount'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('292'), findsOneWidget);
-    expect(find.text('520 SYP'), findsOneWidget);
+    expect(find.text('93.5 SYP'), findsOneWidget);
     expect(find.text('Manual'), findsOneWidget);
     expect(find.text('Automatic'), findsNothing);
   });
@@ -217,6 +218,10 @@ class _SearchRepository extends _Repository {
 
 class _LocalizedFormattingRepository extends _Repository {
   @override
+  Future<DiscountDashboardMetrics> getDashboardMetrics() async =>
+      const DiscountDashboardMetrics(actualSavedValueThisMonth: 1234);
+
+  @override
   Future<List<DiscountListItem>> getDiscounts() async => <DiscountListItem>[
     DiscountListItem(
       id: 'format',
@@ -262,6 +267,9 @@ class _Repository implements DiscountsRepository {
     _item('1', 'Morning Rush 15%', DiscountStatus.active, 128, '192 SYP'),
     _item('2', 'Student Discount', DiscountStatus.active, 164, '328 SYP'),
   ];
+  @override
+  Future<DiscountDashboardMetrics> getDashboardMetrics() async =>
+      const DiscountDashboardMetrics(actualSavedValueThisMonth: 93.5);
   @override
   Future<DiscountDetail> getDiscountDetail(String discountId) =>
       throw UnimplementedError();

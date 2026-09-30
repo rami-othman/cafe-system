@@ -37,6 +37,7 @@ class DiscountsListScreen extends StatelessWidget {
         final int totalPages = cubit.totalPagesFor(filteredDiscounts);
         final List<DiscountSummaryMetric> summaryMetrics = _summaryMetrics(
           state.discounts,
+          state.actualSavedValueThisMonth,
           AppLocalizations.of(context),
         );
 
@@ -183,6 +184,7 @@ class DiscountsListScreen extends StatelessWidget {
 
   List<DiscountSummaryMetric> _summaryMetrics(
     List<DiscountListItem> discounts,
+    double? actualSavedValueThisMonth,
     AppLocalizations l10n,
   ) {
     final int active = discounts
@@ -195,12 +197,6 @@ class DiscountsListScreen extends StatelessWidget {
       0,
       (int total, DiscountListItem discount) => total + discount.usageCount,
     );
-    final double saved = discounts.fold<double>(0, (
-      double total,
-      DiscountListItem discount,
-    ) {
-      return total + discount.estimatedSavedValue;
-    });
     return <DiscountSummaryMetric>[
       DiscountSummaryMetric(
         label: l10n.discountsActiveMetric,
@@ -211,8 +207,13 @@ class DiscountsListScreen extends StatelessWidget {
         value: NumberFormat.decimalPattern(l10n.localeName).format(usage),
       ),
       DiscountSummaryMetric(
-        label: l10n.discountsSavedMetric,
-        value: CurrencyFormatter.format(saved, locale: l10n.localeName),
+        label: l10n.discountsActualSavedMetric,
+        value: actualSavedValueThisMonth == null
+            ? '—'
+            : CurrencyFormatter.format(
+                actualSavedValueThisMonth,
+                locale: l10n.localeName,
+              ),
       ),
     ];
   }

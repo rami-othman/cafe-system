@@ -286,6 +286,11 @@ class PosRepository {
     return BackendOrder.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
+  Future<BackendOrder> resumeOrder(int orderId) async {
+    final dynamic response = await apiClient!.post('orders/$orderId/resume');
+    return BackendOrder.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
   Future<void> cancelOrder(int orderId) async {
     await apiClient!.delete('orders/$orderId');
   }

@@ -202,15 +202,17 @@ void main() {
     },
   );
 
-  test('already-held resumed order cannot be held again', () async {
+  test('resumed order becomes draft and can be held again', () async {
     repository.existingOrder = repository.heldOrder();
     expect(await cubit.loadExistingOrder(5), isTrue);
 
-    expect(cubit.state.currentOrderStatus, 'held');
+    expect(repository.resumeCalls, 1);
+    expect(cubit.state.currentOrderStatus, 'draft');
     expect(cubit.state.currentOrderPaymentStatus, 'unpaid');
-    expect(cubit.state.canHoldCurrentOrder, isFalse);
+    expect(cubit.state.canHoldCurrentOrder, isTrue);
     await cubit.holdCurrentOrder();
-    expect(repository.holdCalls, 0);
+    expect(repository.holdCalls, 1);
+    expect(cubit.state.currentOrderId, isNull);
   });
 
   test(
@@ -431,6 +433,7 @@ class _HoldRepository extends PosRepository {
   Completer<BackendOrder>? holdCompleter;
   int createCalls = 0;
   int holdCalls = 0;
+  int resumeCalls = 0;
   int getOrderCalls = 0;
   int? lastHeldOrderId;
 
@@ -495,6 +498,16 @@ class _HoldRepository extends PosRepository {
     if (holdError != null) throw holdError!;
     if (holdCompleter != null) return holdCompleter!.future;
     return heldOrder();
+  }
+
+  @override
+  Future<BackendOrder> resumeOrder(int orderId) async {
+    resumeCalls++;
+    final BackendOrder? held = existingOrder;
+    if (held == null || held.id != orderId || held.status != 'held') {
+      throw const ApiException(message: 'Order cannot be resumed.');
+    }
+    return _orderFromRequest(_defaultRequest());
   }
 
   @override

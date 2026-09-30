@@ -176,13 +176,11 @@ class ShiftBadge extends StatelessWidget {
       borderRadius: AppRadius.pillRadius,
       border: Border.all(color: tone.ink.withValues(alpha: 0.18)),
     ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
+    child: Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 4,
       children: <Widget>[
-        if (icon != null) ...<Widget>[
-          Icon(icon, size: 12, color: tone.ink),
-          const SizedBox(width: 4),
-        ],
+        if (icon != null) Icon(icon, size: 12, color: tone.ink),
         Text(label, style: ShiftText.badge.copyWith(color: tone.ink)),
       ],
     ),

@@ -8117,6 +8117,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discountsSavedMetric => 'ESTIMATED VALUE SAVED';
 
   @override
+  String get discountsActualSavedMetric => 'ACTUAL DISCOUNT VALUE (THIS MONTH)';
+
+  @override
   String get discountsDeleteTitle => 'Delete discount?';
 
   @override
@@ -8170,6 +8173,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discountFormValueType => 'Value Type';
+
+  @override
+  String get discountFixedAmountBasis => 'Apply fixed amount';
+
+  @override
+  String get discountFixedOncePerOrder => 'Once per order';
+
+  @override
+  String get discountFixedPerUnit => 'For each eligible unit';
 
   @override
   String get discountFormValue => 'Value';
@@ -9141,4 +9153,367 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get printerTestPrintSuccessful => 'Print successful';
+
+  @override
+  String get menuManagementPricing => 'Pricing';
+
+  @override
+  String get pricingTitle => 'Menu Pricing';
+
+  @override
+  String get pricingSubtitle =>
+      'Save configuration here, then use Review & Publish to update selling prices.';
+
+  @override
+  String get pricingMenu => 'Menu';
+
+  @override
+  String get pricingBranch => 'Branch';
+
+  @override
+  String get pricingChannel => 'Sales channel';
+
+  @override
+  String get pricingCategory => 'Category';
+
+  @override
+  String get pricingAllCategories => 'All categories';
+
+  @override
+  String get pricingSearch => 'Search products or variants';
+
+  @override
+  String get pricingContextsFailed => 'Pricing contexts could not be loaded.';
+
+  @override
+  String get pricingContextsEmpty =>
+      'Choose an active menu and branch to manage pricing.';
+
+  @override
+  String get pricingRetry => 'Retry';
+
+  @override
+  String get pricingDiscardTitle => 'Discard pricing work?';
+
+  @override
+  String get pricingDiscardMessage =>
+      'Changing context will discard pending drafts and the reviewed adjustment.';
+
+  @override
+  String get pricingKeepEditing => 'Keep editing';
+
+  @override
+  String get pricingDiscard => 'Discard';
+
+  @override
+  String get pricingApplyRecoveryRequired =>
+      'Check the uncertain Apply result before changing pricing context.';
+
+  @override
+  String get pricingForbidden =>
+      'You no longer have permission to manage pricing.';
+
+  @override
+  String pricingBulkScope(int eligible, int excluded) {
+    return 'This adjustment applies to all eligible prices in this menu, not only the currently filtered results. $eligible eligible; $excluded excluded.';
+  }
+
+  @override
+  String get pricingBulkWarning =>
+      'This adjustment applies to all eligible prices in this menu, not only the currently filtered results.';
+
+  @override
+  String get pricingInheritanceWarning =>
+      'This adjustment will create menu-specific prices for inherited items. Future changes to their shared inherited prices will no longer affect them until they are reset to inherited pricing.';
+
+  @override
+  String get pricingProductVariant => 'Product / variant';
+
+  @override
+  String get pricingConfigured => 'Configured';
+
+  @override
+  String get pricingInherited => 'Inherited';
+
+  @override
+  String get pricingPublished => 'Published';
+
+  @override
+  String get pricingActions => 'Actions';
+
+  @override
+  String get pricingHiddenPlacement => 'Hidden placement';
+
+  @override
+  String get pricingNotPublished => 'Not published';
+
+  @override
+  String get pricingOpenPriceReadonly => 'Open price — read-only';
+
+  @override
+  String get pricingChangeDraft => 'Change draft';
+
+  @override
+  String get pricingSetPrice => 'Set price';
+
+  @override
+  String get pricingResetInherited => 'Reset to inherited';
+
+  @override
+  String get pricingAlreadyInherited => 'Already inherited';
+
+  @override
+  String get pricingUndo => 'Undo pending change';
+
+  @override
+  String pricingSetFor(Object name) {
+    return 'Set price: $name';
+  }
+
+  @override
+  String get pricingPositivePrice => 'Positive price';
+
+  @override
+  String get pricingPositivePriceError =>
+      'Enter a positive amount with at most two decimal places.';
+
+  @override
+  String get pricingCancel => 'Cancel';
+
+  @override
+  String get pricingSaveDraft => 'Save draft';
+
+  @override
+  String pricingReviewChanges(int count) {
+    return 'Review Price Changes ($count)';
+  }
+
+  @override
+  String get pricingAdjustAll => 'Adjust All Prices';
+
+  @override
+  String get pricingOpenReview => 'Open reviewed results';
+
+  @override
+  String get pricingPrevious => 'Previous';
+
+  @override
+  String get pricingNext => 'Next';
+
+  @override
+  String get pricingPendingManualTitle => 'Pending manual changes';
+
+  @override
+  String get pricingPendingManualMessage =>
+      'Review and apply, or explicitly discard manual drafts before starting a bulk operation.';
+
+  @override
+  String get pricingOperation => 'Operation';
+
+  @override
+  String get pricingAmount => 'Amount';
+
+  @override
+  String get pricingAmountError =>
+      'Enter a valid positive amount. Percentage decreases must be below 100.';
+
+  @override
+  String get pricingPercentageMustBeBelow100 =>
+      'Percentage decreases must be below 100.';
+
+  @override
+  String get pricingRoundingMode => 'Rounding mode';
+
+  @override
+  String get pricingRoundingStep => 'Rounding step';
+
+  @override
+  String get pricingCustomStep => 'Custom Step';
+
+  @override
+  String get pricingPreview => 'Preview';
+
+  @override
+  String get pricingPercentIncrease => 'Percentage increase';
+
+  @override
+  String get pricingFixedIncrease => 'Fixed increase';
+
+  @override
+  String get pricingPercentDecrease => 'Percentage decrease';
+
+  @override
+  String get pricingFixedDecrease => 'Fixed decrease';
+
+  @override
+  String get pricingNoRounding => 'No rounding';
+
+  @override
+  String get pricingRoundUp => 'Round up';
+
+  @override
+  String get pricingRoundDown => 'Round down';
+
+  @override
+  String get pricingReviewTitle => 'Review price adjustment';
+
+  @override
+  String get pricingManualReview =>
+      'Review the exact server-returned results before applying.';
+
+  @override
+  String get pricingReviewedResults => 'I have reviewed these results.';
+
+  @override
+  String pricingOppositeAcknowledgement(int count) {
+    return 'I acknowledge that $count prices will move in the opposite direction because of the selected rounding rule.';
+  }
+
+  @override
+  String get pricingClose => 'Close';
+
+  @override
+  String get pricingApply => 'Apply reviewed results';
+
+  @override
+  String get pricingOriginal => 'Original';
+
+  @override
+  String get pricingRaw => 'Raw calculation';
+
+  @override
+  String get pricingRounding => 'Rounding';
+
+  @override
+  String get pricingFinal => 'Final';
+
+  @override
+  String get pricingDifference => 'Difference';
+
+  @override
+  String get pricingConfiguration => 'Configuration effect';
+
+  @override
+  String get pricingOpposite => 'Opposite direction';
+
+  @override
+  String get pricingInheritedCount => 'Inherited';
+
+  @override
+  String get pricingExistingOverrideCount => 'Existing overrides';
+
+  @override
+  String get pricingCreatedCount => 'Overrides created';
+
+  @override
+  String get pricingUpdatedCount => 'Overrides updated';
+
+  @override
+  String get pricingRemovedCount => 'Overrides removed';
+
+  @override
+  String get pricingIncreaseCount => 'Final increases';
+
+  @override
+  String get pricingDecreaseCount => 'Final decreases';
+
+  @override
+  String get pricingUnchangedCount => 'Unchanged';
+
+  @override
+  String get pricingExcludedCount => 'Exclusions';
+
+  @override
+  String get pricingApplyUncertain =>
+      'The Apply result is uncertain. Recover the stored adjustment before retrying or changing context.';
+
+  @override
+  String get pricingRecover => 'Recover adjustment';
+
+  @override
+  String get pricingSavedHandoff =>
+      'Prices saved. Review and publish to update selling prices.';
+
+  @override
+  String get pricingOverviewRefreshFailed =>
+      'Prices were saved, but the refreshed overview could not be loaded. Retry the overview separately.';
+
+  @override
+  String get pricingReviewPublish => 'Review & Publish';
+
+  @override
+  String get pricingPreviewStale =>
+      'Pricing changed. Create and review a fresh preview.';
+
+  @override
+  String get pricingPreviewExpired =>
+      'The reviewed preview expired. Create a new preview.';
+
+  @override
+  String get pricingAcknowledgementRequired =>
+      'Acknowledge opposite-direction results before applying.';
+
+  @override
+  String get pricingFailed =>
+      'Pricing could not be completed. Please try again.';
+
+  @override
+  String get pricingChannelPos => 'POS';
+
+  @override
+  String get pricingChannelWaiter => 'Waiter app';
+
+  @override
+  String get pricingChannelKiosk => 'Kiosk';
+
+  @override
+  String get pricingChannelQr => 'QR ordering';
+
+  @override
+  String get pricingChannelDelivery => 'Delivery';
+
+  @override
+  String get pricingChannelOnline => 'Online ordering';
+
+  @override
+  String get pricingSourceMenu => 'Menu price';
+
+  @override
+  String get pricingSourceBranchChannel => 'Branch and channel';
+
+  @override
+  String get pricingSourceBranch => 'Branch';
+
+  @override
+  String get pricingSourceChannel => 'Channel';
+
+  @override
+  String get pricingSourceBase => 'Base price';
+
+  @override
+  String get pricingActionSet => 'Set';
+
+  @override
+  String get pricingActionReset => 'Reset to inherited';
+
+  @override
+  String get pricingMovementIncrease => 'Increase';
+
+  @override
+  String get pricingMovementDecrease => 'Decrease';
+
+  @override
+  String get pricingMovementUnchanged => 'Unchanged';
+
+  @override
+  String get pricingEffectCreate => 'Create menu override';
+
+  @override
+  String get pricingEffectUpdate => 'Update menu override';
+
+  @override
+  String get pricingEffectRemove => 'Remove menu override';
+
+  @override
+  String get pricingEffectUnchanged => 'No configuration change';
 }

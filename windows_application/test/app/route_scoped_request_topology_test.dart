@@ -5,6 +5,7 @@ import 'package:windows_application/app/app_router.dart';
 import 'package:windows_application/core/services/service_locator.dart';
 import 'package:windows_application/features/discounts/models/discount_list_item.dart';
 import 'package:windows_application/features/discounts/models/discount_detail.dart';
+import 'package:windows_application/features/discounts/models/discount_dashboard_metrics.dart';
 import 'package:windows_application/features/discounts/models/discount_form_references.dart';
 import 'package:windows_application/features/discounts/models/discount_upsert_request.dart';
 import 'package:windows_application/features/discounts/repositories/discounts_repository.dart';
@@ -160,6 +161,10 @@ class _SpyDiscountsRepository implements DiscountsRepository {
     requests++;
     return const <DiscountListItem>[];
   }
+
+  @override
+  Future<DiscountDashboardMetrics> getDashboardMetrics() async =>
+      const DiscountDashboardMetrics(actualSavedValueThisMonth: 0);
 
   @override
   Future<List<Branch>> getBranches() async => const <Branch>[];

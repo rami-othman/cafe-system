@@ -169,6 +169,7 @@ class MenuCompositionService
         $this->uniqueSectionName($menu, $data['name']);
 
         return DB::transaction(function () use ($menu, $data): MenuSection {
+            $menu = $this->lockMenuForPricing($menu->tenant_id, $menu->id);
             $sort = $data['sortOrder'] ?? ((int) $menu->sections()->max('sort_order') + 1);
             $section = $menu->sections()->create(['tenant_id' => $menu->tenant_id] + $this->sectionPayload($data) + ['sort_order' => $sort]);
             $this->audit->log($menu->tenant_id, $section, MenuAuditAction::Created, null, $this->snapshot($section));
@@ -185,6 +186,7 @@ class MenuCompositionService
         }
 
         return DB::transaction(function () use ($section, $data): MenuSection {
+            $this->lockMenuForPricing($section->tenant_id, $section->menu_id);
             $locked = MenuSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
             $locked->update($this->sectionPayload($data, false));
@@ -199,6 +201,7 @@ class MenuCompositionService
         $this->assertMenuUsable($section->menu);
 
         return DB::transaction(function () use ($section): MenuSection {
+            $this->lockMenuForPricing($section->tenant_id, $section->menu_id);
             $locked = MenuSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
             $locked->update(['is_active' => false]);
@@ -215,6 +218,7 @@ class MenuCompositionService
         $this->assertMenuUsable($menu);
 
         return DB::transaction(function () use ($section): MenuSection {
+            $this->lockMenuForPricing($section->tenant_id, $section->menu_id);
             $locked = MenuSection::withTrashed()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
             $locked->restore();
@@ -230,6 +234,7 @@ class MenuCompositionService
         $this->assertMenuUsable($menu);
         $this->uniqueIds($items);
         DB::transaction(function () use ($menu, $items): void {
+            $this->lockMenuForPricing($menu->tenant_id, $menu->id);
             $sections = $menu->sections()->where('tenant_id', $menu->tenant_id)->whereIn('id', collect($items)->pluck('id'))->lockForUpdate()->get()->keyBy('id');
             if ($sections->count() !== count($items)) {
                 $this->invalid('items', 'The selected value is invalid.');
@@ -262,6 +267,8 @@ class MenuCompositionService
         }
 
         return DB::transaction(function () use ($section, $data, $product): MenuItemPlacement {
+            $this->lockMenuForPricing($section->tenant_id, $section->menu_id);
+            $section = MenuSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $existing = MenuItemPlacement::withTrashed()->where('tenant_id', $section->tenant_id)->where('menu_section_id', $section->id)->where('product_id', $product->id)->lockForUpdate()->first();
             if ($existing?->trashed()) {
                 $existing->restore();
@@ -282,6 +289,7 @@ class MenuCompositionService
         $this->assertSectionUsable($placement->menuSection);
 
         return DB::transaction(function () use ($placement, $data): MenuItemPlacement {
+            $this->lockMenuForPricing($placement->tenant_id, $placement->menuSection->menu_id);
             $locked = MenuItemPlacement::query()->whereKey($placement->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
             $locked->update($this->placementPayload($data, false));
@@ -296,6 +304,7 @@ class MenuCompositionService
         $this->assertSectionUsable($placement->menuSection);
 
         return DB::transaction(function () use ($placement): MenuItemPlacement {
+            $this->lockMenuForPricing($placement->tenant_id, $placement->menuSection->menu_id);
             $locked = MenuItemPlacement::query()->whereKey($placement->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
             $locked->delete();
@@ -318,6 +327,7 @@ class MenuCompositionService
         }
 
         return DB::transaction(function () use ($placement): MenuItemPlacement {
+            $this->lockMenuForPricing($placement->tenant_id, $placement->menuSection->menu_id);
             $locked = MenuItemPlacement::withTrashed()->whereKey($placement->id)->lockForUpdate()->firstOrFail();
             $locked->restore();
             $this->audit->log($locked->tenant_id, $locked, MenuAuditAction::Restored, null, $this->snapshot($locked));
@@ -331,6 +341,8 @@ class MenuCompositionService
         $this->assertSectionUsable($section);
         $this->uniqueIds($items);
         DB::transaction(function () use ($section, $items): void {
+            $this->lockMenuForPricing($section->tenant_id, $section->menu_id);
+            $section = MenuSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $placements = $section->placements()->whereIn('id', collect($items)->pluck('id'))->lockForUpdate()->get()->keyBy('id');
             $activeIds = $section->placements()->lockForUpdate()->pluck('id')->sort()->values()->all();
             $submittedIds = collect($items)->pluck('id')->sort()->values()->all();
@@ -360,6 +372,8 @@ class MenuCompositionService
         }
 
         return DB::transaction(function () use ($placement, $target, $sortOrder): MenuItemPlacement {
+            $this->lockMenuForPricing($placement->tenant_id, $placement->menuSection->menu_id);
+            MenuSection::query()->whereIn('id', [$placement->menu_section_id, $target->id])->orderBy('id')->lockForUpdate()->get();
             $locked = MenuItemPlacement::query()->whereKey($placement->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($locked);
             $locked->update(['menu_section_id' => $target->id, 'sort_order' => $sortOrder ?? ((int) $target->placements()->max('sort_order') + 1)]);
@@ -383,6 +397,8 @@ class MenuCompositionService
         }
 
         return DB::transaction(function () use ($section, $items): array {
+            $this->lockMenuForPricing($section->tenant_id, $section->menu_id);
+            $section = MenuSection::query()->whereKey($section->id)->lockForUpdate()->firstOrFail();
             $existing = MenuItemPlacement::withTrashed()->where('menu_section_id', $section->id)->lockForUpdate()->get()->keyBy('id');
             $activeIds = [];
             foreach ($items as $index => $item) {
@@ -616,6 +632,16 @@ class MenuCompositionService
     private function rulePayload(array $data): array
     {
         return ['branch_id' => $data['branchId'] ?? null, 'channel' => $data['channel'] ?? null, 'day_of_week' => $data['dayOfWeek'] ?? null, 'start_time' => $data['startTime'] ?? null, 'end_time' => $data['endTime'] ?? null, 'start_date' => $data['startDate'] ?? null, 'end_date' => $data['endDate'] ?? null, 'priority' => $data['priority'] ?? 0, 'is_active' => $data['isActive'] ?? true];
+    }
+
+    /**
+     * Menu pricing applies lock this parent before reading membership. Every
+     * section/placement mutation takes the same lock before it can add or
+     * retire an eligible product, preventing a phantom membership change.
+     */
+    private function lockMenuForPricing(int $tenantId, int $menuId): Menu
+    {
+        return Menu::withTrashed()->where('tenant_id', $tenantId)->whereKey($menuId)->lockForUpdate()->firstOrFail();
     }
 
     private function branch(int $tenantId, int $id): Branch

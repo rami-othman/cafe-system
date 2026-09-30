@@ -5,10 +5,12 @@ import '../../pos/models/branch.dart';
 import '../models/discount_list_item.dart';
 import '../models/discount_detail.dart';
 import '../models/discount_form_references.dart';
+import '../models/discount_dashboard_metrics.dart';
 import '../models/discount_upsert_request.dart';
 
 abstract class DiscountsRepository {
   Future<List<DiscountListItem>> getDiscounts();
+  Future<DiscountDashboardMetrics> getDashboardMetrics();
   Future<List<Branch>> getBranches();
 
   /// Optional for older test fakes. Production provides all V1 selectors.
@@ -39,6 +41,14 @@ class DiscountsApiRepository implements DiscountsRepository {
   Future<List<DiscountListItem>> getDiscounts() async {
     final dynamic response = await _apiClient.get('discounts');
     return readMapList(response).map(_fromJson).toList(growable: false);
+  }
+
+  @override
+  Future<DiscountDashboardMetrics> getDashboardMetrics() async {
+    final dynamic response = await _apiClient.get('discounts/metrics');
+    return DiscountDashboardMetrics.fromJson(
+      Map<String, dynamic>.from(response as Map),
+    );
   }
 
   @override
@@ -180,6 +190,10 @@ class DiscountsApiRepository implements DiscountsRepository {
       applicationMode: readString(json['applicationMode'], fallback: 'code'),
       scope: readString(json['scope'], fallback: 'order'),
       value: value,
+      fixedAmountBasis: readString(
+        json['fixedAmountBasis'],
+        fallback: 'per_order',
+      ),
       minimumOrderAmount: readDouble(json['minimumOrderAmount']),
       maximumDiscountAmount: json['maximumDiscountAmount'] == null
           ? null
